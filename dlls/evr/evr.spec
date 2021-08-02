@@ -25,4 +25,4 @@
 @ stub MFGetUncompressedVideoFormat
 @ stub MFInitVideoFormat
 @ stdcall -import MFInitVideoFormat_RGB(ptr long long long)
-@ stub MFIsFormatYUV
+@ stdcall MFIsFormatYUV(long)

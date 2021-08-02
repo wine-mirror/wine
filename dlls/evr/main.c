@@ -25,6 +25,7 @@
 
 #include "ole2.h"
 #include "rpcproxy.h"
+#include "d3d9.h"
 
 #include "evr_private.h"
 
@@ -205,4 +206,29 @@ HRESULT WINAPI MFCreateVideoMixerAndPresenter(IUnknown *mixer_outer, IUnknown *p
     }
 
     return hr;
+}
+
+/***********************************************************************
+ *      MFIsFormatYUV (evr.@)
+ */
+BOOL WINAPI MFIsFormatYUV(DWORD format)
+{
+    TRACE("%s.\n", debugstr_an((char *)&format, 4));
+
+    switch (format)
+    {
+        case D3DFMT_UYVY:
+        case D3DFMT_YUY2:
+        case MAKEFOURCC('A','Y','U','V'):
+        case MAKEFOURCC('I','M','C','1'):
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('Y','V','1','2'):
+        case MAKEFOURCC('N','V','1','1'):
+        case MAKEFOURCC('N','V','1','2'):
+        case MAKEFOURCC('Y','2','1','0'):
+        case MAKEFOURCC('Y','2','1','6'):
+            return TRUE;
+        default:
+            return FALSE;
+    }
 }

@@ -2722,6 +2722,47 @@ done:
     DestroyWindow(window);
 }
 
+static void test_MFIsFormatYUV(void)
+{
+    static const DWORD formats[] =
+    {
+        D3DFMT_UYVY,
+        D3DFMT_YUY2,
+        MAKEFOURCC('A','Y','U','V'),
+        MAKEFOURCC('I','M','C','1'),
+        MAKEFOURCC('I','M','C','2'),
+        MAKEFOURCC('Y','V','1','2'),
+        MAKEFOURCC('N','V','1','1'),
+        MAKEFOURCC('N','V','1','2'),
+        MAKEFOURCC('Y','2','1','0'),
+        MAKEFOURCC('Y','2','1','6'),
+    };
+    static const DWORD unsupported_formats[] =
+    {
+        D3DFMT_A8R8G8B8,
+        MAKEFOURCC('I','Y','U','V'),
+        MAKEFOURCC('I','4','2','0'),
+        MAKEFOURCC('Y','V','Y','U'),
+        MAKEFOURCC('Y','V','U','9'),
+        MAKEFOURCC('Y','4','1','0'),
+        MAKEFOURCC('Y','4','1','6'),
+    };
+    unsigned int i;
+    BOOL ret;
+
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        ret = MFIsFormatYUV(formats[i]);
+        ok(ret, "Unexpected ret %d, format %s.\n", ret, debugstr_an((char *)&formats[i], 4));
+    }
+
+    for (i = 0; i < ARRAY_SIZE(unsupported_formats); ++i)
+    {
+        ret = MFIsFormatYUV(unsupported_formats[i]);
+        ok(!ret, "Unexpected ret %d, format %s.\n", ret, debugstr_an((char *)&unsupported_formats[i], 4));
+    }
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -2746,6 +2787,7 @@ START_TEST(evr)
     test_mixer_output_rectangle();
     test_mixer_zorder();
     test_mixer_samples();
+    test_MFIsFormatYUV();
 
     CoUninitialize();
 }
