@@ -267,6 +267,35 @@ typedef struct
 
 typedef struct
 {
+    ULONG  Section;
+    ULONG  MappedBaseAddress;
+    ULONG  ImageBaseAddress;
+    ULONG  ImageSize;
+    ULONG  Flags;
+    USHORT LoadOrderIndex;
+    USHORT InitOrderIndex;
+    USHORT LoadCount;
+    USHORT NameOffset;
+    BYTE   Name[MAXIMUM_FILENAME_LENGTH];
+} RTL_PROCESS_MODULE_INFORMATION32;
+
+typedef struct
+{
+    ULONG                            ModulesCount;
+    RTL_PROCESS_MODULE_INFORMATION32 Modules[1];
+} RTL_PROCESS_MODULES32;
+
+typedef struct
+{
+    USHORT                           NextOffset;
+    RTL_PROCESS_MODULE_INFORMATION32 BaseInfo;
+    ULONG                            ImageCheckSum;
+    ULONG                            TimeDateStamp;
+    ULONG                            DefaultBase;
+} RTL_PROCESS_MODULE_INFORMATION_EX32;
+
+typedef struct
+{
     ULONG         BaseAddress;
     ULONG         Attributes;
     LARGE_INTEGER Size;
@@ -422,5 +451,186 @@ typedef struct
         } UnloadDll;
     } StateInfo;
 } DBGUI_WAIT_STATE_CHANGE32;
+
+typedef struct
+{
+    ULONG unknown;
+    ULONG KeMaximumIncrement;
+    ULONG PageSize;
+    ULONG MmNumberOfPhysicalPages;
+    ULONG MmLowestPhysicalPage;
+    ULONG MmHighestPhysicalPage;
+    ULONG AllocationGranularity;
+    ULONG LowestUserAddress;
+    ULONG HighestUserAddress;
+    ULONG ActiveProcessorsAffinityMask;
+    BYTE  NumberOfProcessors;
+} SYSTEM_BASIC_INFORMATION32;
+
+typedef struct
+{
+    ULONG CurrentSize;
+    ULONG PeakSize;
+    ULONG PageFaultCount;
+    ULONG MinimumWorkingSet;
+    ULONG MaximumWorkingSet;
+    ULONG CurrentSizeIncludingTransitionInPages;
+    ULONG PeakSizeIncludingTransitionInPages;
+    ULONG TransitionRePurposeCount;
+    ULONG Flags;
+} SYSTEM_CACHE_INFORMATION32;
+
+typedef struct
+{
+    ULONG  OwnerPid;
+    BYTE   ObjectType;
+    BYTE   HandleFlags;
+    USHORT HandleValue;
+    ULONG  ObjectPointer;
+    ULONG  AccessMask;
+} SYSTEM_HANDLE_ENTRY32;
+
+typedef struct
+{
+    ULONG                 Count;
+    SYSTEM_HANDLE_ENTRY32 Handle[1];
+} SYSTEM_HANDLE_INFORMATION32;
+
+typedef struct
+{
+    ULONG RegistryQuotaAllowed;
+    ULONG RegistryQuotaUsed;
+    ULONG Reserved1;
+} SYSTEM_REGISTRY_QUOTA_INFORMATION32;
+
+typedef struct
+{
+    ULONG  Object;
+    ULONG  UniqueProcessId;
+    ULONG  HandleValue;
+    ULONG  GrantedAccess;
+    USHORT CreatorBackTraceIndex;
+    USHORT ObjectTypeIndex;
+    ULONG  HandleAttributes;
+    ULONG  Reserved;
+} SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX32;
+
+typedef struct
+{
+    ULONG  NumberOfHandles;
+    ULONG  Reserved;
+    SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX32 Handles[1];
+} SYSTEM_HANDLE_INFORMATION_EX32;
+
+typedef struct
+{
+    ULONG ProcessorMask;
+    LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+    union
+    {
+        struct
+        {
+            BYTE Flags;
+        } ProcessorCore;
+        struct
+        {
+            DWORD NodeNumber;
+        } NumaNode;
+        CACHE_DESCRIPTOR Cache;
+        ULONGLONG Reserved[2];
+    };
+} SYSTEM_LOGICAL_PROCESSOR_INFORMATION32;
+
+typedef struct
+{
+    BYTE Flags;
+    BYTE EfficiencyClass;
+    BYTE Reserved[20];
+    WORD GroupCount;
+    GROUP_AFFINITY32 GroupMask[ANYSIZE_ARRAY];
+} PROCESSOR_RELATIONSHIP32;
+
+typedef struct
+{
+    DWORD NodeNumber;
+    BYTE Reserved[20];
+    GROUP_AFFINITY32 GroupMask;
+} NUMA_NODE_RELATIONSHIP32;
+
+typedef struct
+{
+    BYTE Level;
+    BYTE Associativity;
+    WORD LineSize;
+    DWORD CacheSize;
+    PROCESSOR_CACHE_TYPE Type;
+    BYTE Reserved[20];
+    GROUP_AFFINITY32 GroupMask;
+} CACHE_RELATIONSHIP32;
+
+typedef struct
+{
+    BYTE MaximumProcessorCount;
+    BYTE ActiveProcessorCount;
+    BYTE Reserved[38];
+    ULONG ActiveProcessorMask;
+} PROCESSOR_GROUP_INFO32;
+
+typedef struct
+{
+    WORD MaximumGroupCount;
+    WORD ActiveGroupCount;
+    BYTE Reserved[20];
+    PROCESSOR_GROUP_INFO32 GroupInfo[ANYSIZE_ARRAY];
+} GROUP_RELATIONSHIP32;
+
+typedef struct
+{
+    LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+    DWORD Size;
+    union
+    {
+        PROCESSOR_RELATIONSHIP32 Processor;
+        NUMA_NODE_RELATIONSHIP32 NumaNode;
+        CACHE_RELATIONSHIP32 Cache;
+        GROUP_RELATIONSHIP32 Group;
+    };
+} SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX32;
+
+typedef struct
+{
+    LARGE_INTEGER KernelTime;
+    LARGE_INTEGER UserTime;
+    LARGE_INTEGER CreateTime;
+    DWORD         dwTickCount;
+    ULONG         StartAddress;
+    CLIENT_ID32   ClientId;
+    DWORD         dwCurrentPriority;
+    DWORD         dwBasePriority;
+    DWORD         dwContextSwitches;
+    DWORD         dwThreadState;
+    DWORD         dwWaitReason;
+    DWORD         dwUnknown;
+} SYSTEM_THREAD_INFORMATION32;
+
+typedef struct
+{
+    ULONG            NextEntryOffset;
+    DWORD            dwThreadCount;
+    DWORD            dwUnknown1[6];
+    LARGE_INTEGER    CreationTime;
+    LARGE_INTEGER    UserTime;
+    LARGE_INTEGER    KernelTime;
+    UNICODE_STRING32 ProcessName;
+    DWORD            dwBasePriority;
+    ULONG            UniqueProcessId;
+    ULONG            ParentProcessId;
+    ULONG            HandleCount;
+    ULONG            SessionId;
+    DWORD            dwUnknown4;
+    VM_COUNTERS_EX32 vmCounters;
+    IO_COUNTERS      ioCounters;
+    SYSTEM_THREAD_INFORMATION32 ti[1];
+} SYSTEM_PROCESS_INFORMATION32;
 
 #endif /* __WOW64_STRUCT32_H */

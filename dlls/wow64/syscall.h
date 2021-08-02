@@ -156,6 +156,8 @@
     SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
     SYSCALL_ENTRY( NtQuerySystemEnvironmentValue ) \
     SYSCALL_ENTRY( NtQuerySystemEnvironmentValueEx ) \
+    SYSCALL_ENTRY( NtQuerySystemInformation ) \
+    SYSCALL_ENTRY( NtQuerySystemInformationEx ) \
     SYSCALL_ENTRY( NtQuerySystemTime ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
     SYSCALL_ENTRY( NtQueryTimerResolution ) \
@@ -225,6 +227,7 @@
     SYSCALL_ENTRY( NtWaitForMultipleObjects ) \
     SYSCALL_ENTRY( NtWaitForSingleObject ) \
     SYSCALL_ENTRY( NtWow64AllocateVirtualMemory64 ) \
+    SYSCALL_ENTRY( NtWow64GetNativeSystemInformation ) \
     SYSCALL_ENTRY( NtWow64ReadVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWow64WriteVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWriteFile ) \
