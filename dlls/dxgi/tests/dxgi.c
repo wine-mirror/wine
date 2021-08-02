@@ -6982,20 +6982,30 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(frame_latency == 1, "Got unexpected frame latency %#x.\n", frame_latency);
 
-    hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 2);
+    hr = IDXGISwapChain2_SetMaximumFrameLatency(swapchain2, 3);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain2_GetMaximumFrameLatency(swapchain2, &frame_latency);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(frame_latency == 2, "Got unexpected frame latency %#x.\n", frame_latency);
+    ok(frame_latency == 3, "Got unexpected frame latency %#x.\n", frame_latency);
+
+    wait_result = WaitForSingleObject(event, 0);
+    todo_wine ok(!wait_result, "Got unexpected wait result %#x.\n", wait_result);
+    wait_result = WaitForSingleObject(event, 0);
+    todo_wine ok(!wait_result, "Got unexpected wait result %#x.\n", wait_result);
+    wait_result = WaitForSingleObject(event, 100);
+    ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#x.\n", wait_result);
 
     for (i = 0; i < 5; i++)
     {
         hr = IDXGISwapChain2_Present(swapchain2, 0, 0);
         ok(hr == S_OK, "Present %u failed with hr %#x.\n", i, hr);
+
+        wait_result = WaitForSingleObject(event, 100);
+        ok(!wait_result, "Got unexpected wait result %#x.\n", wait_result);
     }
 
-    wait_result = WaitForSingleObject(event, 1000);
-    ok(!wait_result, "Got unexpected wait result %#x.\n", wait_result);
+    wait_result = WaitForSingleObject(event, 100);
+    ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#x.\n", wait_result);
 
     ref_count = IDXGISwapChain2_Release(swapchain2);
     ok(!ref_count, "Swap chain has %u references left.\n", ref_count);
