@@ -1925,8 +1925,6 @@ static void current_config( struct console *console, struct console_config *conf
     config->popup_attr = console->active->popup_attr;
     memcpy( config->color_map, console->active->color_map, sizeof(config->color_map) );
 
-    config->win_height  = console->active->win.bottom - console->active->win.top + 1;
-    config->win_width   = console->active->win.right - console->active->win.left + 1;
     config->cell_width  = console->active->font.width;
     config->cell_height = console->active->font.height;
     config->font_weight = console->active->font.weight;
