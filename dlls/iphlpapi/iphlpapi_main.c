@@ -2278,6 +2278,43 @@ err:
     return err;
 }
 
+/******************************************************************
+ *    AllocateAndGetIpForwardTableFromStack (IPHLPAPI.@)
+ *
+ * Get the route table.
+ * Like GetIpForwardTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  table            [Out] pointer into which the MIB_IPFORWARDTABLE is
+ *                         allocated and returned.
+ *  sort             [In]  whether to sort the table
+ *  heap             [In]  heap from which the table is allocated
+ *  flags            [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, other error codes
+ *  on failure, NO_ERROR on success.
+ */
+DWORD WINAPI AllocateAndGetIpForwardTableFromStack( MIB_IPFORWARDTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    DWORD err, size = FIELD_OFFSET(MIB_IPFORWARDTABLE, table[2]), attempt;
+
+    TRACE( "table %p, sort %d, heap %p, flags 0x%08x\n", table, sort, heap, flags );
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        *table = HeapAlloc( heap, flags, size );
+        if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
+
+        err = GetIpForwardTable( *table, &size, sort );
+        if (!err) break;
+        HeapFree( heap, flags, *table );
+        if (err != ERROR_INSUFFICIENT_BUFFER) break;
+    }
+
+    return err;
+}
+
 static void forward_row2_fill( MIB_IPFORWARD_ROW2 *row, USHORT fam, void *key, struct nsi_ip_forward_rw *rw,
                                void *dyn, struct nsi_ip_forward_static *stat )
 {
