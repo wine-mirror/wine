@@ -394,6 +394,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
     const ULONG in_size = stack->Parameters.DeviceIoControl.InputBufferLength;
     const ULONG out_size = stack->Parameters.DeviceIoControl.OutputBufferLength;
     const ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    static BYTE seq = 0;
     NTSTATUS ret;
     BOOL removed;
     KIRQL irql;
@@ -485,6 +486,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             {
                 memset(irp->UserBuffer, 0xa5, expected_size);
                 if (report_id) ((char *)irp->UserBuffer)[0] = report_id;
+                ((char *)irp->UserBuffer)[1] = seq++;
                 irp->IoStatus.Information = 3;
                 ret = STATUS_SUCCESS;
             }
@@ -539,6 +541,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
             memset(packet->reportBuffer, 0xa5, 3);
             if (report_id) ((char *)packet->reportBuffer)[0] = report_id;
+            ((char *)packet->reportBuffer)[1] = seq++;
             irp->IoStatus.Information = 3;
             ret = STATUS_SUCCESS;
             break;
