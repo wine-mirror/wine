@@ -93,7 +93,6 @@ typedef struct tagDC
     SIZE         vport_ext;        /* Viewport extent */
     SIZE         virtual_res;      /* Initially HORZRES,VERTRES. Changed by SetVirtualResolution */
     SIZE         virtual_size;     /* Initially HORZSIZE,VERTSIZE. Changed by SetVirtualResolution */
-    RECT         vis_rect;         /* visible rectangle in screen coords */
     RECT         device_rect;      /* rectangle for the whole device */
     int          pixel_format;     /* pixel format (for memory DCs) */
     UINT         aa_flags;         /* anti-aliasing flags to pass to GetGlyphOutline for current font */

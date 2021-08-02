@@ -329,7 +329,8 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
     xform->eM22 = scaleY;
     xform->eDx  = (double)dc->vport_org.x - scaleX * (double)dc->wnd_org.x;
     xform->eDy  = (double)dc->vport_org.y - scaleY * (double)dc->wnd_org.y;
-    if (dc->attr->layout & LAYOUT_RTL) xform->eDx = dc->vis_rect.right - dc->vis_rect.left - 1 - xform->eDx;
+    if (dc->attr->layout & LAYOUT_RTL)
+        xform->eDx = dc->attr->vis_rect.right - dc->attr->vis_rect.left - 1 - xform->eDx;
 }
 
 /***********************************************************************
@@ -672,10 +673,10 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         dc->display[p - display] = '\0';
     }
 
-    dc->vis_rect.left   = 0;
-    dc->vis_rect.top    = 0;
-    dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
-    dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+    dc->attr->vis_rect.left   = 0;
+    dc->attr->vis_rect.top    = 0;
+    dc->attr->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
+    dc->attr->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
 
     DC_InitDC( dc );
     release_dc_ptr( dc );
@@ -709,11 +710,11 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
-    dc->vis_rect.left   = 0;
-    dc->vis_rect.top    = 0;
-    dc->vis_rect.right  = 1;
-    dc->vis_rect.bottom = 1;
-    dc->device_rect = dc->vis_rect;
+    dc->attr->vis_rect.left   = 0;
+    dc->attr->vis_rect.top    = 0;
+    dc->attr->vis_rect.right  = 1;
+    dc->attr->vis_rect.bottom = 1;
+    dc->device_rect = dc->attr->vis_rect;
 
     ret = dc->hSelf;
 
@@ -784,10 +785,10 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
         if (ret)  /* reset the visible region */
         {
             dc->dirty = 0;
-            dc->vis_rect.left   = 0;
-            dc->vis_rect.top    = 0;
-            dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
-            dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+            dc->attr->vis_rect.left   = 0;
+            dc->attr->vis_rect.top    = 0;
+            dc->attr->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
+            dc->attr->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
             if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
             dc->hVisRgn = 0;
             update_dc_clipping( dc );
@@ -855,22 +856,6 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
         release_dc_ptr( dc );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           GetDCOrgEx  (GDI32.@)
- */
-BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
-{
-    DC * dc;
-
-    if (!lpp) return FALSE;
-    if (!(dc = get_dc_ptr( hDC ))) return FALSE;
-    lpp->x = dc->vis_rect.left;
-    lpp->y = dc->vis_rect.top;
-    release_dc_ptr( dc );
-    return TRUE;
 }
 
 
@@ -1238,8 +1223,8 @@ UINT WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags )
             *rect = dc->bounds;
             rect->left   = max( rect->left, 0 );
             rect->top    = max( rect->top, 0 );
-            rect->right  = min( rect->right, dc->vis_rect.right - dc->vis_rect.left );
-            rect->bottom = min( rect->bottom, dc->vis_rect.bottom - dc->vis_rect.top );
+            rect->right  = min( rect->right, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
+            rect->bottom = min( rect->bottom, dc->attr->vis_rect.bottom - dc->attr->vis_rect.top );
             ret = DCB_SET;
         }
         dp_to_lp( dc, (POINT *)rect, 2 );

@@ -331,6 +331,18 @@ INT WINAPI GetStretchBltMode( HDC hdc )
 }
 
 /***********************************************************************
+ *           GetDCOrgEx  (GDI32.@)
+ */
+BOOL WINAPI GetDCOrgEx( HDC hdc, POINT *point )
+{
+    DC_ATTR *dc_attr;
+    if (!point || !(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    point->x = dc_attr->vis_rect.left;
+    point->y = dc_attr->vis_rect.top;
+    return TRUE;
+}
+
+/***********************************************************************
  *		SetStretchBltMode (GDI32.@)
  */
 INT WINAPI SetStretchBltMode( HDC hdc, INT mode )

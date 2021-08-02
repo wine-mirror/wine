@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipping);
 static inline BOOL get_dc_device_rect( DC *dc, RECT *rect )
 {
     *rect = dc->device_rect;
-    offset_rect( rect, -dc->vis_rect.left, -dc->vis_rect.top );
+    offset_rect( rect, -dc->attr->vis_rect.left, -dc->attr->vis_rect.top );
     return !is_rect_empty( rect );
 }
 
@@ -171,7 +171,7 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
         if (dc->attr->layout & LAYOUT_RTL)
         {
             if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
-            mirror_region( mirrored, rgn, dc->vis_rect.right - dc->vis_rect.left );
+            mirror_region( mirrored, rgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
             rgn = mirrored;
         }
 
@@ -289,7 +289,7 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, 
 
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     dc->dirty = 0;
-    dc->vis_rect = *vis_rect;
+    dc->attr->vis_rect = *vis_rect;
     dc->device_rect = *device_rect;
     dc->hVisRgn = hrgn;
     dibdrv_set_window_surface( dc, surface );
@@ -426,8 +426,8 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     }
     else
     {
-        ret = is_rect_empty( &dc->vis_rect ) ? ERROR : SIMPLEREGION;
-        *rect = dc->vis_rect;
+        ret = is_rect_empty( &dc->attr->vis_rect ) ? ERROR : SIMPLEREGION;
+        *rect = dc->attr->vis_rect;
     }
 
     if (get_dc_device_rect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect )) ret = NULLREGION;
@@ -460,7 +460,7 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
           {
               ret = 1;
               if (dc->attr->layout & LAYOUT_RTL)
-                  mirror_region( hRgn, hRgn, dc->vis_rect.right - dc->vis_rect.left );
+                  mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
           }
       }
       else ret = 0;
@@ -484,7 +484,7 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
         {
             ret = 1;
             if (dc->attr->layout & LAYOUT_RTL)
-                mirror_region( hRgn, hRgn, dc->vis_rect.right - dc->vis_rect.left );
+                mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
         }
         release_dc_ptr( dc );
     }
@@ -535,7 +535,8 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
         {
             NtGdiCombineRgn( hRgn, dc->hVisRgn, 0, RGN_COPY );
             /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
-            if (!(GetVersion() & 0x80000000)) NtGdiOffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
+            if (!(GetVersion() & 0x80000000))
+                NtGdiOffsetRgn( hRgn, dc->attr->vis_rect.left, dc->attr->vis_rect.top );
         }
         else if (!is_rect_empty( &dc->device_rect ))
             NtGdiSetRectRgn( hRgn, dc->device_rect.left, dc->device_rect.top,

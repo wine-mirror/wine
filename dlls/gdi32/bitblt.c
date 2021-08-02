@@ -977,8 +977,8 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
         if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
             src.log_width < 0 || src.log_height < 0 ||
             (!is_rect_empty( &dcSrc->device_rect ) &&
-             (src.width > dcSrc->device_rect.right - dcSrc->vis_rect.left - src.x ||
-              src.height > dcSrc->device_rect.bottom - dcSrc->vis_rect.top - src.y)))
+             (src.width > dcSrc->device_rect.right - dcSrc->attr->vis_rect.left - src.x ||
+              src.height > dcSrc->device_rect.bottom - dcSrc->attr->vis_rect.top - src.y)))
         {
             WARN( "Invalid src coords: (%d,%d), size %dx%d\n", src.x, src.y, src.width, src.height );
             SetLastError( ERROR_INVALID_PARAMETER );

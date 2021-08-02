@@ -114,6 +114,7 @@ typedef struct DC_ATTR
     WORD      rel_abs_mode;
     WORD      stretch_blt_mode;
     INT       map_mode;
+    RECT      vis_rect;            /* visible rectangle in screen coords */
     FLOAT     miter_limit;
     void     *emf;
 } DC_ATTR;
