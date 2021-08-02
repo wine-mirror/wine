@@ -856,3 +856,32 @@ NTSTATUS WINAPI wow64_NtWriteFileGather( UINT *args )
     put_iosb( io32, &io );
     return status;
 }
+
+
+/**********************************************************************
+ *           wow64_wine_nt_to_unix_file_name
+ */
+NTSTATUS WINAPI wow64_wine_nt_to_unix_file_name( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    char *nameA = get_ptr( &args );
+    ULONG *size = get_ptr( &args );
+    UINT disposition = get_ulong( &args );
+
+    struct object_attr64 attr;
+
+    return wine_nt_to_unix_file_name( objattr_32to64_redirect( &attr, attr32 ), nameA, size, disposition );
+}
+
+
+/**********************************************************************
+ *           wow64_wine_unix_to_nt_file_name
+ */
+NTSTATUS WINAPI wow64_wine_unix_to_nt_file_name( UINT *args )
+{
+    const char *name = get_ptr( &args );
+    WCHAR *buffer = get_ptr( &args );
+    ULONG *size = get_ptr( &args );
+
+    return wine_unix_to_nt_file_name( name, buffer, size );
+}
