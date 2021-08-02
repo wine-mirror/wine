@@ -1081,17 +1081,17 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
 }
 
 /***********************************************************************
- *           GetDeviceGammaRamp    (GDI32.@)
+ *           NtGdiGetDeviceGammaRamp    (win32u.@)
  */
-BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
+BOOL WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr )
 {
     BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hDC );
+    DC *dc = get_dc_ptr( hdc );
 
-    TRACE("%p, %p\n", hDC, ptr);
+    TRACE("%p, %p\n", hdc, ptr);
     if( dc )
     {
-        if (GetObjectType( hDC ) != OBJ_MEMDC)
+        if (GetObjectType( hdc ) != OBJ_MEMDC)
         {
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
             ret = physdev->funcs->pGetDeviceGammaRamp( physdev, ptr );
@@ -1181,17 +1181,17 @@ static BOOL check_gamma_ramps(void *ptr)
 }
 
 /***********************************************************************
- *           SetDeviceGammaRamp    (GDI32.@)
+ *           NtGdiSetDeviceGammaRamp    (win32u.@)
  */
-BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
+BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
 {
     BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hDC );
+    DC *dc = get_dc_ptr( hdc );
 
-    TRACE("%p, %p\n", hDC, ptr);
+    TRACE( "%p, %p\n", hdc, ptr );
     if( dc )
     {
-        if (GetObjectType( hDC ) != OBJ_MEMDC)
+        if (GetObjectType( hdc ) != OBJ_MEMDC)
         {
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
 

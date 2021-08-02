@@ -275,7 +275,7 @@
 @ stdcall GetDIBColorTable(long long long ptr)
 @ stdcall GetDIBits(long long long long ptr ptr long)
 @ stdcall GetDeviceCaps(long long)
-@ stdcall GetDeviceGammaRamp(long ptr)
+@ stdcall GetDeviceGammaRamp(long ptr) NtGdiGetDeviceGammaRamp
 @ stub GetETM
 # @ stub GetEUDCTimeStamp
 # @ stub GetEUDCTimeStampExW
@@ -488,7 +488,7 @@
 @ stdcall SetDIBColorTable(long long long ptr)
 @ stdcall SetDIBits(long long long long ptr ptr long)
 @ stdcall SetDIBitsToDevice(long long long long long long long long long ptr ptr long)
-@ stdcall SetDeviceGammaRamp(long ptr)
+@ stdcall SetDeviceGammaRamp(long ptr) NtGdiSetDeviceGammaRamp
 @ stdcall SetEnhMetaFileBits(long ptr)
 @ stub SetFontEnumeration
 @ stdcall SetGraphicsMode(long long)
