@@ -560,11 +560,13 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         {
             if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(ULONG))
             {
+                irp->IoStatus.Information = 0;
                 irp->IoStatus.Status = rc = STATUS_BUFFER_TOO_SMALL;
             }
             else
             {
                 *(ULONG *)irp->AssociatedIrp.SystemBuffer = RingBuffer_GetSize(ext->u.pdo.ring_buffer);
+                irp->IoStatus.Information = sizeof(ULONG);
                 rc = irp->IoStatus.Status = STATUS_SUCCESS;
             }
             break;

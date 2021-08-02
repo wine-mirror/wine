@@ -2750,7 +2750,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     SetLastError(0xdeadbeef);
     ret = HidD_GetNumInputBuffers(file, &count);
     ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
-    todo_wine ok(count == 32, "HidD_GetNumInputBuffers returned %u\n", count);
+    ok(count == 32, "HidD_GetNumInputBuffers returned %u\n", count);
 
     SetLastError(0xdeadbeef);
     ret = HidD_SetNumInputBuffers(file, 1);
@@ -2769,7 +2769,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     SetLastError(0xdeadbeef);
     ret = HidD_GetNumInputBuffers(file, &count);
     ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
-    todo_wine ok(count == 16, "HidD_GetNumInputBuffers returned %u\n", count);
+    ok(count == 16, "HidD_GetNumInputBuffers returned %u\n", count);
 
     async_file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
@@ -2790,7 +2790,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     SetLastError(0xdeadbeef);
     ret = HidD_GetNumInputBuffers(async_file, &count);
     ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
-    todo_wine ok(count == 2, "HidD_GetNumInputBuffers returned %u\n", count);
+    ok(count == 2, "HidD_GetNumInputBuffers returned %u\n", count);
     count = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = HidD_GetNumInputBuffers(file, &count);
