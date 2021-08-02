@@ -2182,51 +2182,100 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL s
     return err;
 }
 
+static int ipforward_row_cmp( const void *a, const void *b )
+{
+    const MIB_IPFORWARDROW *rowA = a;
+    const MIB_IPFORWARDROW *rowB = b;
+    int ret;
+
+    if ((ret = rowA->dwForwardDest - rowB->dwForwardDest) != 0) return ret;
+    if ((ret = rowA->u2.dwForwardProto - rowB->u2.dwForwardProto) != 0) return ret;
+    if ((ret = rowA->dwForwardPolicy - rowB->dwForwardPolicy) != 0) return ret;
+    return rowA->dwForwardNextHop - rowB->dwForwardNextHop;
+}
+
 /******************************************************************
  *    GetIpForwardTable (IPHLPAPI.@)
  *
  * Get the route table.
  *
  * PARAMS
- *  pIpForwardTable [Out]    buffer for route table
- *  pdwSize         [In/Out] length of output buffer
- *  bOrder          [In]     whether to sort the table
+ *  table           [Out]    buffer for route table
+ *  size            [In/Out] length of output buffer
+ *  sort            [In]     whether to sort the table
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
- *
- * NOTES
- *  If pdwSize is less than required, the function will return
- *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to the required byte
- *  size.
- *  If bOrder is true, the returned table will be sorted by the next hop and
- *  an assortment of arbitrary parameters.
  */
-DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSize, BOOL bOrder)
+DWORD WINAPI GetIpForwardTable( MIB_IPFORWARDTABLE *table, ULONG *size, BOOL sort )
 {
-    DWORD ret;
-    PMIB_IPFORWARDTABLE table;
+    DWORD err, count, uni_count, needed, i, addr;
+    struct nsi_ipv4_forward_key *keys;
+    struct nsi_ip_forward_rw *rw;
+    struct nsi_ipv4_forward_dynamic *dyn;
+    struct nsi_ip_forward_static *stat;
+    struct nsi_ipv4_unicast_key *uni_keys = NULL;
 
-    TRACE("pIpForwardTable %p, pdwSize %p, bOrder %d\n", pIpForwardTable, pdwSize, bOrder);
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-    if (!pdwSize) return ERROR_INVALID_PARAMETER;
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_FORWARD_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    ret = AllocateAndGetIpForwardTableFromStack(&table, bOrder, GetProcessHeap(), 0);
-    if (!ret) {
-        DWORD size = FIELD_OFFSET( MIB_IPFORWARDTABLE, table[table->dwNumEntries] );
-        if (!pIpForwardTable || *pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          *pdwSize = size;
-          memcpy(pIpForwardTable, table, size);
-        }
-        HeapFree(GetProcessHeap(), 0, table);
+    needed = FIELD_OFFSET( MIB_IPFORWARDTABLE, table[count] );
+
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto err;
     }
-    TRACE("returning %d\n", ret);
-    return ret;
+
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE, (void **)&uni_keys, sizeof(*uni_keys),
+                                  NULL, 0, NULL, 0, NULL, 0, &uni_count, 0 );
+    if (err) goto err;
+
+    table->dwNumEntries = count;
+    for (i = 0; i < count; i++)
+    {
+        MIB_IPFORWARDROW *row = table->table + i;
+
+        row->dwForwardDest = keys[i].prefix.WS_s_addr;
+        ConvertLengthToIpv4Mask( keys[i].prefix_len, &row->dwForwardMask );
+        row->dwForwardPolicy = 0;
+        row->dwForwardNextHop = keys[i].next_hop.WS_s_addr;
+        row->u1.dwForwardType = row->dwForwardNextHop ? MIB_IPROUTE_TYPE_INDIRECT : MIB_IPROUTE_TYPE_DIRECT;
+        if (!row->dwForwardNextHop) /* find the interface's addr */
+        {
+            for (addr = 0; addr < uni_count; addr++)
+            {
+                if (uni_keys[addr].luid.Value == keys[i].luid.Value)
+                {
+                    row->dwForwardNextHop = uni_keys[addr].addr.WS_s_addr;
+                    break;
+                }
+            }
+        }
+        row->dwForwardIfIndex = stat[i].if_index;
+        row->u2.dwForwardProto = rw[i].protocol;
+        row->dwForwardAge = dyn[i].age;
+        row->dwForwardNextHopAS = 0;
+        row->dwForwardMetric1 = rw[i].metric; /* FIXME: add interface metric */
+        row->dwForwardMetric2 = 0;
+        row->dwForwardMetric3 = 0;
+        row->dwForwardMetric4 = 0;
+        row->dwForwardMetric5 = 0;
+    }
+
+    if (sort) qsort( table->table, count, sizeof(MIB_IPFORWARDROW), ipforward_row_cmp );
+err:
+    NsiFreeTable( uni_keys, NULL, NULL, NULL );
+    NsiFreeTable( keys, rw, dyn, stat );
+
+    return err;
 }
 
 static void forward_row2_fill( MIB_IPFORWARD_ROW2 *row, USHORT fam, void *key, struct nsi_ip_forward_rw *rw,

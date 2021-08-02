@@ -286,63 +286,83 @@ static void testGetIfTable(void)
 
 static void testGetIpForwardTable(void)
 {
-    DWORD apiReturn;
-    ULONG dwSize = 0;
+    DWORD err, i, j;
+    ULONG size = 0;
+    MIB_IPFORWARDTABLE *buf;
+    MIB_IPFORWARD_TABLE2 *table2;
+    MIB_UNICASTIPADDRESS_TABLE *unicast;
 
-    apiReturn = GetIpForwardTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED) {
-        skip("GetIpForwardTable is not supported\n");
-        return;
-    }
-    ok(apiReturn == ERROR_INVALID_PARAMETER,
-       "GetIpForwardTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
-       apiReturn);
-    apiReturn = GetIpForwardTable(NULL, &dwSize, FALSE);
-    ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-       "GetIpForwardTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
-       apiReturn);
-    if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-        PMIB_IPFORWARDTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
+    err = GetIpForwardTable( NULL, NULL, FALSE );
+    ok( err == ERROR_INVALID_PARAMETER, "got %d\n", err );
 
-        apiReturn = GetIpForwardTable(buf, &dwSize, FALSE);
-        ok(apiReturn == NO_ERROR,
-           "GetIpForwardTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
-           apiReturn);
+    err = GetIpForwardTable( NULL, &size, FALSE );
+    ok( err == ERROR_INSUFFICIENT_BUFFER, "got %d\n", err );
 
-        if (apiReturn == NO_ERROR)
+    buf = malloc( size );
+    err = GetIpForwardTable( buf, &size, FALSE );
+    ok( !err, "got %d\n", err );
+
+    err = GetIpForwardTable2( AF_INET, &table2 );
+    ok( !err, "got %d\n", err );
+    ok( buf->dwNumEntries == table2->NumEntries, "got %d vs %d\n",
+        buf->dwNumEntries, table2->NumEntries );
+
+    err = GetUnicastIpAddressTable( AF_INET, &unicast );
+    ok( !err, "got %d\n", err );
+
+    trace( "IP forward table: %u entries\n", buf->dwNumEntries );
+    for (i = 0; i < buf->dwNumEntries; i++)
+    {
+        MIB_IPFORWARDROW *row = buf->table + i;
+        MIB_IPFORWARD_ROW2 *row2 = table2->Table + i;
+        DWORD mask, next_hop;
+
+        winetest_push_context( "%d", i );
+
+        trace( "dest %s mask %s gw %s if %u type %u proto %u\n",
+               ntoa( row->dwForwardDest ), ntoa( row->dwForwardMask ),
+               ntoa( row->dwForwardNextHop ), row->dwForwardIfIndex,
+               row->dwForwardType, row->dwForwardProto );
+        ok( row->dwForwardDest == row2->DestinationPrefix.Prefix.Ipv4.sin_addr.s_addr,
+            "got %08x vs %08x\n", row->dwForwardDest, row2->DestinationPrefix.Prefix.Ipv4.sin_addr.s_addr );
+        ConvertLengthToIpv4Mask( row2->DestinationPrefix.PrefixLength, &mask );
+        ok( row->dwForwardMask == mask, "got %08x vs %08x\n", row->dwForwardMask, mask );
+        ok( row->dwForwardPolicy == 0, "got %d\n", row->dwForwardPolicy );
+
+        next_hop = row2->NextHop.Ipv4.sin_addr.s_addr;
+        if (!next_hop) /* for direct addresses, dwForwardNextHop is set to the address of the appropriate interface */
         {
-            DWORD i;
-
-            trace( "IP forward table: %u entries\n", buf->dwNumEntries );
-            for (i = 0; i < buf->dwNumEntries; i++)
+            for (j = 0; j < unicast->NumEntries; j++)
             {
-                if (!U1(buf->table[i]).dwForwardDest) /* Default route */
+                if (unicast->Table[j].InterfaceLuid.Value == row2->InterfaceLuid.Value)
                 {
-                    todo_wine
-                    ok (U1(buf->table[i]).dwForwardProto == MIB_IPPROTO_NETMGMT,
-                            "Unexpected dwForwardProto %d\n", U1(buf->table[i]).dwForwardProto);
-                    ok (U1(buf->table[i]).dwForwardType == MIB_IPROUTE_TYPE_INDIRECT,
-                        "Unexpected dwForwardType %d\n",  U1(buf->table[i]).dwForwardType);
+                    next_hop = unicast->Table[j].Address.Ipv4.sin_addr.s_addr;
+                    break;
                 }
-                else
-                {
-                    /* In general we should get MIB_IPPROTO_LOCAL but does not work
-                     * for Vista, 2008 and 7. */
-                    ok (U1(buf->table[i]).dwForwardProto == MIB_IPPROTO_LOCAL ||
-                        broken(U1(buf->table[i]).dwForwardProto == MIB_IPPROTO_NETMGMT),
-                        "Unexpected dwForwardProto %d\n", U1(buf->table[i]).dwForwardProto);
-                    /* The forward type varies depending on the address and gateway
-                     * value so it is not worth testing in this case. */
-                }
-
-                trace( "%u: dest %s mask %s gw %s if %u type %u proto %u\n", i,
-                       ntoa( buf->table[i].dwForwardDest ), ntoa( buf->table[i].dwForwardMask ),
-                       ntoa( buf->table[i].dwForwardNextHop ), buf->table[i].dwForwardIfIndex,
-                       U1(buf->table[i]).dwForwardType, U1(buf->table[i]).dwForwardProto );
             }
         }
-        HeapFree(GetProcessHeap(), 0, buf);
+        ok( row->dwForwardNextHop == next_hop, "got %08x vs %08x\n", row->dwForwardNextHop, next_hop );
+
+        ok( row->dwForwardIfIndex == row2->InterfaceIndex, "got %d vs %d\n", row->dwForwardIfIndex, row2->InterfaceIndex );
+        if (!row2->NextHop.Ipv4.sin_addr.s_addr)
+            ok( buf->table[i].dwForwardType == MIB_IPROUTE_TYPE_DIRECT, "got %d\n", buf->table[i].dwForwardType );
+        else
+            ok( buf->table[i].dwForwardType == MIB_IPROUTE_TYPE_INDIRECT, "got %d\n", buf->table[i].dwForwardType );
+        ok( row->dwForwardProto == row2->Protocol, "got %d vs %d\n", row->dwForwardProto, row2->Protocol );
+        ok( row->dwForwardAge == row2->Age, "got %d vs %d\n", row->dwForwardAge, row2->Age );
+        ok( row->dwForwardNextHopAS == 0, "got %08x\n", row->dwForwardNextHopAS );
+        /* FIXME: need to add the interface's metric from GetIpInterfaceTable() */
+        ok( row->dwForwardMetric1 >= row2->Metric, "got %d vs %d\n", row->dwForwardMetric1, row2->Metric );
+        ok( row->dwForwardMetric2 == 0, "got %d\n", row->dwForwardMetric2 );
+        ok( row->dwForwardMetric3 == 0, "got %d\n", row->dwForwardMetric3 );
+        ok( row->dwForwardMetric4 == 0, "got %d\n", row->dwForwardMetric4 );
+        ok( row->dwForwardMetric5 == 0, "got %d\n", row->dwForwardMetric5 );
+
+        winetest_pop_context();
     }
+    FreeMibTable( unicast );
+    FreeMibTable( table2 );
+    free( buf );
 }
 
 static void testGetIpNetTable(void)
