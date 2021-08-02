@@ -2714,7 +2714,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     HDEVINFO set;
     HANDLE file;
 
-    winetest_push_context("report %d, polled %d", report_id, polled);
+    winetest_push_context("id %d%s", report_id, polled ? " poll" : "");
 
     set = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
