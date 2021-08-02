@@ -869,7 +869,6 @@ static void test_query_cache(void)
     ULONG expected;
     INT i;
 
-    /* the large SYSTEM_CACHE_INFORMATION on WIN64 is not documented */
     expected = sizeof(SYSTEM_CACHE_INFORMATION);
     for (i = sizeof(buffer); i>= expected; i--)
     {

@@ -2444,15 +2444,15 @@ typedef struct _SYSTEM_HANDLE_INFORMATION_EX
 /* System Information Class 0x15 */
 
 typedef struct _SYSTEM_CACHE_INFORMATION {
-    ULONG CurrentSize;
-    ULONG PeakSize;
+    SIZE_T CurrentSize;
+    SIZE_T PeakSize;
     ULONG PageFaultCount;
-    ULONG MinimumWorkingSet;
-    ULONG MaximumWorkingSet;
-    ULONG unused[4];
-#ifdef _WIN64
-    ULONG unknown64[7];
-#endif
+    SIZE_T MinimumWorkingSet;
+    SIZE_T MaximumWorkingSet;
+    SIZE_T CurrentSizeIncludingTransitionInPages;
+    SIZE_T PeakSizeIncludingTransitionInPages;
+    ULONG TransitionRePurposeCount;
+    ULONG Flags;
 } SYSTEM_CACHE_INFORMATION, *PSYSTEM_CACHE_INFORMATION;
 
 /* System Information Class 0x17 */
