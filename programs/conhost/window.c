@@ -256,7 +256,7 @@ static void load_config( const WCHAR *key_name, struct console_config *config )
     config->menu_mask    = 0;
     config->popup_attr   = 0xF5;
     config->quick_edit   = 0;
-    config->sb_height    = 25;
+    config->sb_height    = 150;
     config->sb_width     = 80;
     config->attr         = 0x000F;
     config->win_height   = 25;
