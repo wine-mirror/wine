@@ -1231,6 +1231,48 @@ interface IMFVideoProcessorControl2 : IMFVideoProcessorControl
     );
 }
 
+typedef enum _MFVideoSphericalFormat
+{
+    MFVideoSphericalFormat_Unsupported,
+    MFVideoSphericalFormat_Equirectangular,
+} MFVideoSphericalFormat;
+
+typedef enum MFVideoSphericalProjectionMode
+{
+    MFVideoSphericalProjectionMode_Spherical,
+    MFVideoSphericalProjectionMode_Flat,
+} MFVideoSphericalProjectionMode;
+
+[
+    object,
+    uuid(2424b3f2-eb23-40f1-91aa-74bddeea0883),
+    local
+]
+interface IMFVideoProcessorControl3 : IMFVideoProcessorControl2
+{
+    HRESULT GetNaturalOutputType(
+        [out] IMFMediaType **media_type
+    );
+
+    HRESULT EnableSphericalVideoProcessing(
+        [in] BOOL enable,
+        [in] MFVideoSphericalFormat format,
+        [in] MFVideoSphericalProjectionMode projection_mode
+    );
+
+    HRESULT SetSphericalVideoProperties(
+        [in] float x,
+        [in] float y,
+        [in] float z,
+        [in] float w,
+        [in] float fov
+    );
+
+    HRESULT SetOutputDevice(
+        [in] IUnknown *output_device
+    );
+}
+
 [
    object,
    uuid(2347d60b-3fb5-480c-8803-8df3adcd3ef0),
