@@ -2696,7 +2696,6 @@ static void test_hidp(HANDLE file, int report_id, BOOL polled)
 
 
     HidD_FreePreparsedData(preparsed_data);
-    CloseHandle(file);
 }
 
 static void test_hid_device(DWORD report_id, DWORD polled)
