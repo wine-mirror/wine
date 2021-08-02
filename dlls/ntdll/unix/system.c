@@ -2161,11 +2161,14 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     switch (class)
     {
+    case SystemNativeBasicInformation:  /* 114 */
+        if (!is_win64) return STATUS_INVALID_INFO_CLASS;
+        /* fall through */
     case SystemBasicInformation:  /* 0 */
     {
         SYSTEM_BASIC_INFORMATION sbi;
 
-        virtual_get_system_info( &sbi );
+        virtual_get_system_info( &sbi, FALSE );
         len = sizeof(sbi);
         if (size == len)
         {
@@ -2447,15 +2450,15 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         };
 
         ULONG i;
-        SYSTEM_MODULE_INFORMATION *smi = info;
+        RTL_PROCESS_MODULES *smi = info;
 
-        len = offsetof( SYSTEM_MODULE_INFORMATION, Modules[ARRAY_SIZE(fake_modules)] );
+        len = offsetof( RTL_PROCESS_MODULES, Modules[ARRAY_SIZE(fake_modules)] );
         if (len <= size)
         {
             memset( smi, 0, len );
             for (i = 0; i < ARRAY_SIZE(fake_modules); i++)
             {
-                SYSTEM_MODULE *sm = &smi->Modules[i];
+                RTL_PROCESS_MODULE_INFORMATION *sm = &smi->Modules[i];
                 sm->ImageBaseAddress = (char *)0x10000000 + 0x200000 * i;
                 sm->ImageSize = 0x200000;
                 sm->LoadOrderIndex = i;
@@ -2659,6 +2662,37 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemEmulationBasicInformation:  /* 62 */
+    {
+        SYSTEM_BASIC_INFORMATION sbi;
+
+        virtual_get_system_info( &sbi, !!NtCurrentTeb()->WowTebOffset );
+        len = sizeof(sbi);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &sbi, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemEmulationProcessorInformation:  /* 63 */
+        if (size >= (len = sizeof(cpu_info)))
+        {
+            SYSTEM_CPU_INFORMATION cpu = cpu_info;
+            if (is_win64)
+            {
+                if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+                    cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
+                else if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
+                    cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
+            }
+            memcpy(info, &cpu, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
     case SystemExtendedHandleInformation:  /* 64 */
     {
         struct handle_info *handle_info;
@@ -2780,7 +2814,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             memset( info, 0, len );
             for (i = 0; i < ARRAY_SIZE(fake_modules); i++)
             {
-                SYSTEM_MODULE *sm = &module_info[i].BaseInfo;
+                RTL_PROCESS_MODULE_INFORMATION *sm = &module_info[i].BaseInfo;
                 sm->ImageBaseAddress = (char *)0x10000000 + 0x200000 * i;
                 sm->ImageSize = 0x200000;
                 sm->LoadOrderIndex = i;
@@ -2823,6 +2857,24 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             integrity_info->CodeIntegrityOptions = CODEINTEGRITY_OPTION_ENABLED;
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemKernelDebuggerInformationEx:  /* 149 */
+    {
+        SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX skdi;
+
+        skdi.DebuggerAllowed = FALSE;
+        skdi.DebuggerEnabled = FALSE;
+        skdi.DebuggerPresent = FALSE;
+
+        len = sizeof(skdi);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &skdi, len );
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
 

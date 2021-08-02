@@ -174,7 +174,7 @@ static HRESULT diactionformat_atow( const DIACTIONFORMATA *in, DIACTIONFORMATW *
     out->dwDataSize = in->dwDataSize;
     out->dwNumActions = in->dwNumActions;
 
-    for (i = 0; i < out->dwNumActions && !FAILED(hr); ++i)
+    for (i = 0; i < out->dwNumActions && SUCCEEDED(hr); ++i)
     {
         out->rgoAction[i].uAppData = in->rgoAction[i].uAppData;
         out->rgoAction[i].dwSemantic = in->rgoAction[i].dwSemantic;

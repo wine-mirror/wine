@@ -17,6 +17,7 @@
  */
 
 import "d2d1.idl";
+import "d2d1effects.idl";
 
 interface ID2D1DeviceContext;
 interface ID2D1PathGeometry1;

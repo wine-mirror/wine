@@ -74,3 +74,6 @@ REGINST REGINST mshtml.inf
 
 /* @makedep: blank.htm */
 blank.htm HTML "blank.htm"
+
+/* @makedep: mshtml_private_iface.tlb */
+1 TYPELIB mshtml_private_iface.tlb

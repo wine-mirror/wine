@@ -57,6 +57,7 @@ sync_test("elem_props", function() {
     test_exposed("sheet", v >= 9);
     test_exposed("readyState", v < 11);
     test_exposed("styleSheet", v < 11);
+    test_exposed("classList", v >= 10);
 });
 
 sync_test("doc_props", function() {
@@ -121,6 +122,7 @@ sync_test("window_props", function() {
     test_exposed("Set", v >= 11);
     if(v >= 9) /* FIXME: native exposes it in all compat modes */
         test_exposed("performance", true);
+    test_exposed("console", v >= 10);
 });
 
 sync_test("xhr_props", function() {

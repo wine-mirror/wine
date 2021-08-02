@@ -1056,6 +1056,9 @@ static void test_default_mixer_type_negotiation(void)
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        hr = IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(value == MFVideoInterlace_Progressive, "Unexpected interlace mode.\n");
 
         IMFMediaType_Release(media_type);
     }

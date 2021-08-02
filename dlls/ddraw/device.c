@@ -270,6 +270,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
      * wined3d device when the render target is released. */
     if (!ref)
     {
+        static struct wined3d_rendertarget_view *const null_rtv;
         DWORD i;
         struct list *vp_entry, *vp_entry2;
 
@@ -283,7 +284,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
         if (This->vertex_buffer)
             wined3d_buffer_decref(This->vertex_buffer);
 
-        wined3d_device_context_set_rendertarget_view(This->immediate_context, 0, NULL, FALSE);
+        wined3d_device_context_set_rendertarget_views(This->immediate_context, 0, 1, &null_rtv, FALSE);
 
         wined3d_stateblock_decref(This->state);
         if (This->recording)
@@ -1848,6 +1849,7 @@ static BOOL validate_surface_palette(struct ddraw_surface *surface)
 static HRESULT d3d_device_set_render_target(struct d3d_device *device,
         struct ddraw_surface *target, IUnknown *rt_iface)
 {
+    struct wined3d_rendertarget_view *rtv;
     HRESULT hr;
 
     if (device->rt_iface == rt_iface)
@@ -1861,8 +1863,8 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device,
         return DDERR_INVALIDPARAMS;
     }
 
-    if (FAILED(hr = wined3d_device_context_set_rendertarget_view(device->immediate_context,
-            0, ddraw_surface_get_rendertarget_view(target), FALSE)))
+    rtv = ddraw_surface_get_rendertarget_view(target);
+    if (FAILED(hr = wined3d_device_context_set_rendertarget_views(device->immediate_context, 0, 1, &rtv, FALSE)))
         return hr;
 
     IUnknown_AddRef(rt_iface);
@@ -5373,8 +5375,8 @@ static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
     surface = wined3d_rendertarget_view_get_sub_resource_parent(rtv);
     wined3d_texture_get_sub_resource_desc(surface->wined3d_texture, surface->sub_resource_idx, &rt_desc);
 
-    if (viewport->dwX > rt_desc.width || viewport->dwWidth > rt_desc.width - viewport->dwX
-            || viewport->dwY > rt_desc.height || viewport->dwHeight > rt_desc.height - viewport->dwY)
+    if (!wined3d_bound_range(viewport->dwX, viewport->dwWidth, rt_desc.width)
+            || !wined3d_bound_range(viewport->dwY, viewport->dwHeight, rt_desc.height))
     {
         WARN("Invalid viewport, returning E_INVALIDARG.\n");
         wined3d_mutex_unlock();
@@ -6994,6 +6996,7 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f,
     };
+    struct wined3d_rendertarget_view *rtv;
     HRESULT hr;
 
     if (ddraw->cooperative_level & DDSCL_FPUPRESERVE)
@@ -7043,8 +7046,8 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
     wined3d_stateblock_incref(ddraw->state);
 
     /* Render to the back buffer */
-    if (FAILED(hr = wined3d_device_context_set_rendertarget_view(device->immediate_context,
-            0, ddraw_surface_get_rendertarget_view(target), TRUE)))
+    rtv = ddraw_surface_get_rendertarget_view(target);
+    if (FAILED(hr = wined3d_device_context_set_rendertarget_views(device->immediate_context, 0, 1, &rtv, TRUE)))
     {
         ERR("Failed to set render target, hr %#x.\n", hr);
         wined3d_stateblock_decref(device->state);

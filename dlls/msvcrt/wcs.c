@@ -798,7 +798,13 @@ double CDECL _wtof_l(const wchar_t *str, _locale_t locale)
  */
 float CDECL _wcstof_l( const wchar_t *str, wchar_t **end, _locale_t locale )
 {
-    return _wcstod_l(str, end, locale);
+    double ret = _wcstod_l(str, end, locale);
+    if (ret && isfinite(ret)) {
+        float f = ret;
+        if (!f || !isfinite(f))
+            *_errno() = ERANGE;
+    }
+    return ret;
 }
 
 /*********************************************************************

@@ -50,6 +50,11 @@ DEFINE_GUID(UUID_test_struct, 0x4029f190, 0xca4a, 0x4611, 0xae,0xb9,0x67,0x39,0x
 #  endif
 #endif
 
+/* When comparing floating point values we cannot expect an exact match
+ * because the rounding errors depend on the exact algorithm.
+ */
+#define EQ_DOUBLE(a,b)     (fabs((a)-(b)) / (1.0+fabs(a)+fabs(b)) < 1e-14)
+
 static HMODULE hOleaut32;
 
 /* Has I8/UI8 data type? */
@@ -77,7 +82,9 @@ static BOOL has_locales;
   ok(hres == S_OK && out == (CONV_TYPE)(x), "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #define EXPECT(x)       EXPECTRES(S_OK, (x))
 #define EXPECT_DBL(x)   \
-  ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08x\n", (x), out, hres)
+  ok(hres == S_OK && EQ_DOUBLE(out, (x)), "expected %.16g, got %.16g; hres=0x%08x\n", (x), out, hres)
+#define EXPECT_DBL2(new,old) \
+  ok(hres == S_OK && (EQ_DOUBLE(out, (new)) || broken(EQ_DOUBLE(out, (old)))), "expected %.16g or %.16g, got %.16g; hres=0x%08x\n", (new), (old), out, hres)
 
 #define CONVERT(func, val) in = val; hres = func(in, &out)
 #define CONVERTRANGE(func,start,end) for (i = start; i < end; i+=1) { CONVERT(func, i); EXPECT(i); };
@@ -3043,21 +3050,23 @@ static void test_VarDateFromStr(void)
    */
   DFS("14 1");   MKRELDATE(14,1); EXPECT_DBL(relative);
   DFS("1 14");   EXPECT_DBL(relative);
-  /* If the numbers can't be day/month, they are assumed to be year/month */
-  DFS("30 2");   EXPECT_DBL(10990.0);
-  DFS("2 30");   EXPECT_DBL(10990.0);
+  /* If the numbers can't be day/month, they are assumed to be year/month.
+   * But see the Y2K cutoff below.
+   */
+  DFS("30 2");   EXPECT_DBL2(47515.0, 10990.0);
+  DFS("2 30");   EXPECT_DBL2(47515.0, 10990.0);
   DFS("32 49");  EXPECT_MISMATCH; /* Can't be any format */
   DFS("0 49");   EXPECT_MISMATCH; /* Can't be any format */
   /* If a month name is given the other number is the day */
   DFS("Jan 2");  MKRELDATE(2,1); EXPECT_DBL(relative);
   DFS("2 Jan");  EXPECT_DBL(relative);
   /* Unless it can't be, in which case it becomes the year */
-  DFS("Jan 35"); EXPECT_DBL(12785.0);
-  DFS("35 Jan"); EXPECT_DBL(12785.0);
-  DFS("Jan-35"); EXPECT_DBL(12785.0);
-  DFS("35-Jan"); EXPECT_DBL(12785.0);
-  DFS("Jan/35"); EXPECT_DBL(12785.0);
-  DFS("35/Jan"); EXPECT_DBL(12785.0);
+  DFS("Jan 35"); EXPECT_DBL2(49310.0, 12785.0);
+  DFS("35 Jan"); EXPECT_DBL2(49310.0, 12785.0);
+  DFS("Jan-35"); EXPECT_DBL2(49310.0, 12785.0);
+  DFS("35-Jan"); EXPECT_DBL2(49310.0, 12785.0);
+  DFS("Jan/35"); EXPECT_DBL2(49310.0, 12785.0);
+  DFS("35/Jan"); EXPECT_DBL2(49310.0, 12785.0);
   /* 3 elements */
   /* 3 numbers and time separator => h:m:s */
   DFS("0.1.0");  EXPECT_DBL(0.0006944444444444445);
@@ -3067,12 +3076,21 @@ static void test_VarDateFromStr(void)
   DFS("14 2 3"); EXPECT_DBL(41673.0);
   DFS("2 14 3"); EXPECT_DBL(37666.0);
   DFS("2 3 14"); EXPECT_DBL(41673.0);
-  DFS("32 2 3"); EXPECT_DBL(11722.0);
-  DFS("2 3 32"); EXPECT_DBL(11722.0);
-  DFS("1 2 29"); EXPECT_DBL(47120.0);
-  /* After 30, two digit dates are expected to be in the 1900's */
-  DFS("1 2 30"); EXPECT_DBL(10960.0);
-  DFS("1 2 31"); EXPECT_DBL(11325.0);
+  DFS("32 2 3"); EXPECT_DBL2(48247.0, 11722.0);
+  DFS("2 3 32"); EXPECT_DBL2(48247.0, 11722.0);
+
+  /* Old Windows versions use 29 as the Y2K cutoff:
+   * years 00-29 map to 2000-2029 while years 30-99 map to 1930-1999
+   */
+  DFS("1 1 0"); EXPECT_DBL(36526.0);
+  DFS("12 31 29"); EXPECT_DBL(47483.0);
+  DFS("1 1 30"); EXPECT_DBL2(47484.0, 10959.0);
+  /* But Windows 1903+ uses 49 as the Y2K cutoff */
+  DFS("31 12 49"); EXPECT_DBL2(54788.0, 18263.0);
+  DFS("1 1 50"); EXPECT_DBL(18264.0);
+  DFS("12 31 99"); EXPECT_DBL(36525.0);
+  DFS("1 1 100"); EXPECT_DBL(-657434.0);
+
   DFS("3 am 1 2"); MKRELDATE(2,1); relative += 0.125; EXPECT_DBL(relative);
   DFS("1 2 3 am"); EXPECT_DBL(relative);
 

@@ -706,6 +706,8 @@ static void test_command(HINTERNET hFtp)
     BOOL ret;
     DWORD error;
     unsigned int i;
+    BOOL had_error_zero = FALSE;
+    BOOL had_error_zero_size_positive = FALSE;
     static const struct
     {
         BOOL  ret;
@@ -738,7 +740,8 @@ static void test_command(HINTERNET hFtp)
 
     for (i = 0; i < ARRAY_SIZE(command_test); i++)
     {
-        DWORD size;
+        DWORD size, orig_size;
+        char *buffer;
 
         SetLastError(0xdeadbeef);
         ret = pFtpCommandA(hFtp, FALSE, FTP_TRANSFER_TYPE_ASCII, command_test[i].cmd, 0, NULL);
@@ -747,11 +750,40 @@ static void test_command(HINTERNET hFtp)
         ok(ret == command_test[i].ret, "%d: expected FtpCommandA to %s\n", i, command_test[i].ret ? "succeed" : "fail");
         ok(error == command_test[i].error, "%d: expected error %u, got %u\n", i, command_test[i].error, error);
 
+        size = 0;
         ret = InternetGetLastResponseInfoA(&error, NULL, NULL);
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "%d: ret %d, lasterr %d\n", i, ret, GetLastError());
         ret = InternetGetLastResponseInfoA(NULL, NULL, &size);
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "%d: ret %d, lasterr %d\n", i, ret, GetLastError());
+        /* Zero size */
+        size = 0;
+        ret = InternetGetLastResponseInfoA(&error, NULL, &size);
+        ok((ret && size == 0) || (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER), "%d: got ret %d, size %d, lasterr %d\n", i, ret, size, GetLastError());
+        /* Positive size, NULL buffer */
+        size++;
+        ret = InternetGetLastResponseInfoA(&error, NULL, &size);
+        ok((ret && size == 0) || (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER), "%d: got ret %d, size %u, lasterr %d\n", i, ret, size, GetLastError());
+        /* When buffer is 1 char too short, it succeeds but trims the string: */
+        orig_size = size;
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        ok(buffer != NULL, "%d: no memory\n", i);
+        ret = InternetGetLastResponseInfoA(&error, buffer, &size);
+        ok(ret, "%d: got ret %d\n", i, ret);
+        ok(orig_size == 0 ? size == 0 : size == orig_size - 1, "%d: got orig_size %d, size %d\n", i, orig_size, size);
+        ok(size == 0 || strlen(buffer) == size, "%d: size %d, buffer size %d\n", i, size, size ? strlen(buffer) : 0);
+        HeapFree(GetProcessHeap(), 0, buffer);
+        /* Long enough buffer */
+        buffer = HeapAlloc(GetProcessHeap(), 0, ++size);
+        ok(buffer != NULL, "%d: no memory\n", i);
+        ret = InternetGetLastResponseInfoA(&error, buffer, &size);
+        ok(ret, "%d: got ret %d\n", i, ret);
+        ok(size == 0 || strlen(buffer) == size, "%d: size %d, buffer size %d\n", i, size, size ? strlen(buffer) : 0);
+        had_error_zero |= (error == 0);
+        had_error_zero_size_positive |= (error == 0 && size > 0);
+        HeapFree(GetProcessHeap(), 0, buffer);
     }
+
+    ok(!had_error_zero || had_error_zero_size_positive, "never observed error 0 with positive size\n");
 }
 
 static void test_find_first_file(HINTERNET hFtp, HINTERNET hConnect)

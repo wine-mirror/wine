@@ -56,9 +56,12 @@
 #include "netioapi.h"
 #include "tcpestats.h"
 #include "ip2string.h"
+#include "netiodef.h"
 
+#include "wine/nsi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
@@ -69,6 +72,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 #ifndef INADDR_NONE
 #define INADDR_NONE ~0UL
 #endif
+
+#define CHARS_IN_GUID 39
+
+DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
+DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
+
+static const NPI_MODULEID *ip_module_id( USHORT family )
+{
+    if (family == WS_AF_INET) return &NPI_MS_IPV4_MODULEID;
+    if (family == WS_AF_INET6) return &NPI_MS_IPV6_MODULEID;
+    return NULL;
+}
+
+DWORD WINAPI ConvertGuidToStringA( const GUID *guid, char *str, DWORD len )
+{
+    if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
+    sprintf( str, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+             guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
+             guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI ConvertGuidToStringW( const GUID *guid, WCHAR *str, DWORD len )
+{
+    static const WCHAR fmt[] = { '{','%','0','8','X','-','%','0','4','X','-','%','0','4','X','-',
+                                 '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X',
+                                 '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','}',0 };
+
+    if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
+    sprintfW( str, fmt,
+              guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
+              guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI ConvertStringToGuidW( const WCHAR *str, GUID *guid )
+{
+    UNICODE_STRING ustr;
+
+    RtlInitUnicodeString( &ustr, str );
+    return RtlNtStatusToDosError( RtlGUIDFromString( &ustr, guid ) );
+}
 
 /******************************************************************
  *    AddIPAddress (IPHLPAPI.@)
@@ -94,102 +139,6 @@ DWORD WINAPI AddIPAddress(IPAddr Address, IPMask IpMask, DWORD IfIndex, PULONG N
   FIXME(":stub\n");
   return ERROR_NOT_SUPPORTED;
 }
-
-
-/******************************************************************
- *    AllocateAndGetIfTableFromStack (IPHLPAPI.@)
- *
- * Get table of local interfaces.
- * Like GetIfTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppIfTable [Out] pointer into which the MIB_IFTABLE is
- *                  allocated and returned.
- *  bOrder    [In]  whether to sort the table
- *  heap      [In]  heap from which the table is allocated
- *  flags     [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, whatever
- *  GetIfTable() returns otherwise.
- */
-DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppIfTable %p, bOrder %d, heap %p, flags 0x%08x\n", ppIfTable,
-        bOrder, heap, flags);
-  if (!ppIfTable)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD dwSize = 0;
-
-    ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
-    if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppIfTable = HeapAlloc(heap, flags, dwSize);
-      ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
-    }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
-static int IpAddrTableNumericSorter(const void *a, const void *b)
-{
-  int ret = 0;
-
-  if (a && b)
-    ret = ((const MIB_IPADDRROW*)a)->dwAddr - ((const MIB_IPADDRROW*)b)->dwAddr;
-  return ret;
-}
-
-static int IpAddrTableLoopbackSorter(const void *a, const void *b)
-{
-  const MIB_IPADDRROW *left = a, *right = b;
-  int ret = 0;
-
-  if (isIfIndexLoopback(left->dwIndex))
-    ret = 1;
-  else if (isIfIndexLoopback(right->dwIndex))
-    ret = -1;
-
-  return ret;
-}
-
-/******************************************************************
- *    AllocateAndGetIpAddrTableFromStack (IPHLPAPI.@)
- *
- * Get interface-to-IP address mapping table. 
- * Like GetIpAddrTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppIpAddrTable [Out] pointer into which the MIB_IPADDRTABLE is
- *                      allocated and returned.
- *  bOrder        [In]  whether to sort the table
- *  heap          [In]  heap from which the table is allocated
- *  flags         [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppIpAddrTable is NULL, other error codes on
- *  failure, NO_ERROR on success.
- */
-DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppIpAddrTable %p, bOrder %d, heap %p, flags 0x%08x\n",
-   ppIpAddrTable, bOrder, heap, flags);
-  ret = getIPAddrTable(ppIpAddrTable, heap, flags);
-  if (!ret && bOrder)
-    qsort((*ppIpAddrTable)->table, (*ppIpAddrTable)->dwNumEntries,
-     sizeof(MIB_IPADDRROW), IpAddrTableNumericSorter);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
 
 /******************************************************************
  *    CancelIPChangeNotify (IPHLPAPI.@)
@@ -402,7 +351,7 @@ DWORD WINAPI CreateSortedAddressPairs( const PSOCKADDR_IN6 src_list, DWORD src_c
     if (!(pairs = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_NOT_ENOUGH_MEMORY;
     ptr = (SOCKADDR_IN6 *)&pairs[dst_count];
 
-    if ((ret = getIPAddrTable( &table, GetProcessHeap(), 0 )))
+    if ((ret = AllocateAndGetIpAddrTableFromStack( &table, FALSE, GetProcessHeap(), 0 )))
     {
         HeapFree( GetProcessHeap(), 0, pairs );
         return ret;
@@ -593,28 +542,35 @@ void WINAPI FreeMibTable(void *ptr)
  * Get interface index from its name.
  *
  * PARAMS
- *  AdapterName [In]  unicode string with the adapter name
- *  IfIndex     [Out] returns found interface index
+ *  adapter_name [In]  unicode string with the adapter name
+ *  index        [Out] returns found interface index
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
+DWORD WINAPI GetAdapterIndex( WCHAR *adapter_name, ULONG *index )
 {
-  char adapterName[MAX_ADAPTER_NAME];
-  unsigned int i;
-  DWORD ret;
+    MIB_IFTABLE *if_table;
+    DWORD err, i;
 
-  TRACE("(AdapterName %p, IfIndex %p)\n", AdapterName, IfIndex);
-  /* The adapter name is guaranteed not to have any unicode characters, so
-   * this translation is never lossy */
-  for (i = 0; i < sizeof(adapterName) - 1 && AdapterName[i]; i++)
-    adapterName[i] = (char)AdapterName[i];
-  adapterName[i] = '\0';
-  ret = getInterfaceIndexByName(adapterName, IfIndex);
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE( "name %s, index %p\n", debugstr_w( adapter_name ), index );
+
+    err = AllocateAndGetIfTableFromStack( &if_table, 0, GetProcessHeap(), 0 );
+    if (err) return err;
+
+    err = ERROR_INVALID_PARAMETER;
+    for (i = 0; i < if_table->dwNumEntries; i++)
+    {
+        if (!strcmpW( adapter_name, if_table->table[i].wszName ))
+        {
+            *index = if_table->table[i].dwIndex;
+            err = ERROR_SUCCESS;
+            break;
+        }
+    }
+    heap_free( if_table );
+    return err;
 }
 
 
@@ -712,10 +668,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               /* on Win98 this is left empty, but whatever */
               ConvertInterfaceIndexToLuid(table->indexes[ndx], &luid);
               ConvertInterfaceLuidToGuid(&luid, &guid);
-              sprintf(ptr->AdapterName, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                      guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-                      guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-                      guid.Data4[6], guid.Data4[7]);
+              ConvertGuidToStringA( &guid, ptr->AdapterName, ARRAY_SIZE(ptr->AdapterName) );
               getInterfaceNameByIndex(table->indexes[ndx], ptr->Description);
               ptr->AddressLength = sizeof(ptr->Address);
               getInterfacePhysicalByIndex(table->indexes[ndx],
@@ -986,7 +939,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     }
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
-    total_size += 39; /* "{00000000-0000-0000-0000-000000000000}" */
+    total_size += CHARS_IN_GUID;
     total_size += IF_NAMESIZE * sizeof(WCHAR);
     if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
         total_size += IF_NAMESIZE * sizeof(WCHAR);
@@ -1022,12 +975,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
 
         ConvertInterfaceIndexToLuid(index, &luid);
         ConvertInterfaceLuidToGuid(&luid, &guid);
-        sprintf(ptr, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-                guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-                guid.Data4[6], guid.Data4[7]);
+        ConvertGuidToStringA( &guid, ptr, CHARS_IN_GUID );
         aa->AdapterName = ptr;
-        ptr += 39;
+        ptr += CHARS_IN_GUID;
 
         getInterfaceNameByIndex(index, name);
         if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
@@ -1739,6 +1689,39 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   return IfIndex;
 }
 
+static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
+                         struct nsi_ndis_ifinfo_static *stat )
+{
+    static const WCHAR name_prefix[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
+
+    memcpy( row->wszName, name_prefix, sizeof(name_prefix) );
+    ConvertGuidToStringW( &stat->if_guid, row->wszName + ARRAY_SIZE(name_prefix) - 1, CHARS_IN_GUID );
+    row->dwIndex = stat->if_index;
+    row->dwType = stat->type;
+    row->dwMtu = dyn->mtu;
+    row->dwSpeed = dyn->rcv_speed;
+    row->dwPhysAddrLen = rw->phys_addr.Length;
+    if (row->dwPhysAddrLen > sizeof(row->bPhysAddr)) row->dwPhysAddrLen = 0;
+    memcpy( row->bPhysAddr, rw->phys_addr.Address, row->dwPhysAddrLen );
+    row->dwAdminStatus = rw->admin_status;
+    row->dwOperStatus = (dyn->oper_status == IfOperStatusUp) ? MIB_IF_OPER_STATUS_OPERATIONAL : MIB_IF_OPER_STATUS_NON_OPERATIONAL;
+    row->dwLastChange = 0;
+    row->dwInOctets = dyn->in_octets;
+    row->dwInUcastPkts = dyn->in_ucast_pkts;
+    row->dwInNUcastPkts = dyn->in_bcast_pkts + dyn->in_mcast_pkts;
+    row->dwInDiscards = dyn->in_discards;
+    row->dwInErrors = dyn->in_errors;
+    row->dwInUnknownProtos = 0;
+    row->dwOutOctets = dyn->out_octets;
+    row->dwOutUcastPkts = dyn->out_ucast_pkts;
+    row->dwOutNUcastPkts = dyn->out_bcast_pkts + dyn->out_mcast_pkts;
+    row->dwOutDiscards = dyn->out_discards;
+    row->dwOutErrors = dyn->out_errors;
+    row->dwOutQLen = 0;
+    row->dwDescrLen = WideCharToMultiByte( CP_ACP, 0, stat->descr.String, stat->descr.Length / sizeof(WCHAR),
+                                           (char *)row->bDescr, sizeof(row->bDescr) - 1, NULL, NULL );
+    row->bDescr[row->dwDescrLen] = '\0';
+}
 
 /******************************************************************
  *    GetIfEntry (IPHLPAPI.@)
@@ -1753,94 +1736,31 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
+DWORD WINAPI GetIfEntry( MIB_IFROW *row )
 {
-  DWORD ret;
-  char nameBuf[MAX_ADAPTER_NAME];
-  char *name;
+    struct nsi_ndis_ifinfo_rw rw;
+    struct nsi_ndis_ifinfo_dynamic dyn;
+    struct nsi_ndis_ifinfo_static stat;
+    NET_LUID luid;
+    DWORD err;
 
-  TRACE("pIfRow %p\n", pIfRow);
-  if (!pIfRow)
-    return ERROR_INVALID_PARAMETER;
+    TRACE( "row %p\n", row );
+    if (!row) return ERROR_INVALID_PARAMETER;
 
-  name = getInterfaceNameByIndex(pIfRow->dwIndex, nameBuf);
-  if (name) {
-    ret = getInterfaceEntryByName(name, pIfRow);
-    if (ret == NO_ERROR)
-      ret = getInterfaceStatsByName(name, pIfRow);
-  }
-  else
-    ret = ERROR_INVALID_DATA;
-  TRACE("returning %d\n", ret);
-  return ret;
+    err = ConvertInterfaceIndexToLuid( row->dwIndex, &luid );
+    if (err) return err;
+
+    err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                               &luid, sizeof(luid), &rw, sizeof(rw),
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (!err) if_row_fill( row, &rw, &dyn, &stat );
+    return err;
 }
 
-/******************************************************************
- *    GetIfEntry2 (IPHLPAPI.@)
- */
-DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
+static int ifrow_cmp( const void *a, const void *b )
 {
-    DWORD ret;
-    char buf[MAX_ADAPTER_NAME], *name;
-    MIB_IFROW row;
-
-    TRACE("%p\n", row2);
-
-    if (!row2 || (!(name = getInterfaceNameByIndex( row2->InterfaceIndex, buf )) &&
-                  !(name = getInterfaceNameByIndex( row2->InterfaceLuid.Info.NetLuidIndex, buf ))))
-    {
-        return ERROR_INVALID_PARAMETER;
-    }
-    if ((ret = getInterfaceEntryByName( name, &row ))) return ret;
-    if ((ret = getInterfaceStatsByName( name, &row ))) return ret;
-
-    memset( row2, 0, sizeof(*row2) );
-    row2->InterfaceIndex                  = row.dwIndex;
-    ConvertInterfaceIndexToLuid( row2->InterfaceIndex, &row2->InterfaceLuid );
-    ConvertInterfaceLuidToGuid( &row2->InterfaceLuid, &row2->InterfaceGuid );
-    row2->Type                            = row.dwType;
-    row2->Mtu                             = row.dwMtu;
-    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Description, ARRAY_SIZE(row2->Description) );
-    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Alias, ARRAY_SIZE(row2->Alias) );
-    row2->PhysicalAddressLength           = row.dwPhysAddrLen;
-    memcpy( &row2->PhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
-    memcpy( &row2->PermanentPhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
-    row2->OperStatus                      = row.dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL ? IfOperStatusUp : IfOperStatusDown;
-    row2->AdminStatus                     = NET_IF_ADMIN_STATUS_UP;
-    row2->MediaConnectState               = MediaConnectStateConnected;
-    row2->ConnectionType                  = NET_IF_CONNECTION_DEDICATED;
-    row2->TransmitLinkSpeed = row2->ReceiveLinkSpeed = row.dwSpeed;
-    row2->AccessType = (row2->Type == MIB_IF_TYPE_LOOPBACK) ? NET_IF_ACCESS_LOOPBACK : NET_IF_ACCESS_BROADCAST;
-    row2->InterfaceAndOperStatusFlags.ConnectorPresent = row2->Type != MIB_IF_TYPE_LOOPBACK;
-    row2->InterfaceAndOperStatusFlags.HardwareInterface = row2->Type != MIB_IF_TYPE_LOOPBACK;
-
-    /* stats */
-    row2->InOctets        = row.dwInOctets;
-    row2->InUcastPkts     = row.dwInUcastPkts;
-    row2->InNUcastPkts    = row.dwInNUcastPkts;
-    row2->InDiscards      = row.dwInDiscards;
-    row2->InErrors        = row.dwInErrors;
-    row2->InUnknownProtos = row.dwInUnknownProtos;
-    row2->OutOctets       = row.dwOutOctets;
-    row2->OutUcastPkts    = row.dwOutUcastPkts;
-    row2->OutNUcastPkts   = row.dwOutNUcastPkts;
-    row2->OutDiscards     = row.dwOutDiscards;
-    row2->OutErrors       = row.dwOutErrors;
-
-    return NO_ERROR;
+    return ((const MIB_IFROW*)a)->dwIndex - ((const MIB_IFROW*)b)->dwIndex;
 }
-
-static int IfTableSorter(const void *a, const void *b)
-{
-  int ret;
-
-  if (a && b)
-    ret = ((const MIB_IFROW*)a)->dwIndex - ((const MIB_IFROW*)b)->dwIndex;
-  else
-    ret = 0;
-  return ret;
-}
-
 
 /******************************************************************
  *    GetIfTable (IPHLPAPI.@)
@@ -1848,73 +1768,214 @@ static int IfTableSorter(const void *a, const void *b)
  * Get a table of local interfaces.
  *
  * PARAMS
- *  pIfTable [Out]    buffer for local interfaces table
- *  pdwSize  [In/Out] length of output buffer
- *  bOrder   [In]     whether to sort the table
+ *  table [Out]    buffer for local interfaces table
+ *  size  [In/Out] length of output buffer
+ *  sort  [In]     whether to sort the table
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  *
  * NOTES
- *  If pdwSize is less than required, the function will return
+ *  If size is less than required, the function will return
  *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to the required byte
  *  size.
- *  If bOrder is true, the returned table will be sorted by interface index.
+ *  If sort is true, the returned table will be sorted by interface index.
  */
-DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
+DWORD WINAPI GetIfTable( MIB_IFTABLE *table, ULONG *size, BOOL sort )
 {
-  DWORD ret;
+    DWORD i, count, needed, err;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
 
-  TRACE("pIfTable %p, pdwSize %p, bOrder %d\n", pIfTable, pdwSize, bOrder);
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numInterfaces = get_interface_indices( FALSE, NULL );
-    ULONG size = sizeof(MIB_IFTABLE);
+    /* While this could be implemented on top of GetIfTable2(), it would require
+       an additional copy of the data */
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    if (numInterfaces > 1)
-      size += (numInterfaces - 1) * sizeof(MIB_IFROW);
-    if (!pIfTable || *pdwSize < size) {
-      *pdwSize = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
+    needed = FIELD_OFFSET( MIB_IFTABLE, table[count] );
+
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto err;
     }
-    else {
-      InterfaceIndexTable *table;
-      get_interface_indices( FALSE, &table );
 
-      if (table) {
-        size = sizeof(MIB_IFTABLE);
-        if (table->numIndexes > 1)
-          size += (table->numIndexes - 1) * sizeof(MIB_IFROW);
-        if (*pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          DWORD ndx;
+    table->dwNumEntries = count;
+    for (i = 0; i < count; i++)
+    {
+        MIB_IFROW *row = table->table + i;
 
-          *pdwSize = size;
-          pIfTable->dwNumEntries = 0;
-          for (ndx = 0; ndx < table->numIndexes; ndx++) {
-            pIfTable->table[ndx].dwIndex = table->indexes[ndx];
-            GetIfEntry(&pIfTable->table[ndx]);
-            pIfTable->dwNumEntries++;
-          }
-          if (bOrder)
-            qsort(pIfTable->table, pIfTable->dwNumEntries, sizeof(MIB_IFROW),
-             IfTableSorter);
-          ret = NO_ERROR;
-        }
-        HeapFree(GetProcessHeap(), 0, table);
-      }
-      else
-        ret = ERROR_OUTOFMEMORY;
+        if_row_fill( row, rw + i, dyn + i, stat + i );
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+
+    if (sort) qsort( table->table, count, sizeof(MIB_IFROW), ifrow_cmp );
+
+err:
+    NsiFreeTable( keys, rw, dyn, stat );
+    return err;
+}
+
+/******************************************************************
+ *    AllocateAndGetIfTableFromStack (IPHLPAPI.@)
+ *
+ * Get table of local interfaces.
+ * Like GetIfTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  table     [Out] pointer into which the MIB_IFTABLE is
+ *                  allocated and returned.
+ *  sort      [In]  whether to sort the table
+ *  heap      [In]  heap from which the table is allocated
+ *  flags     [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, whatever
+ *  GetIfTable() returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    DWORD i, count, size, err;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
+
+    if (!table) return ERROR_INVALID_PARAMETER;
+
+    /* While this could be implemented on top of GetIfTable(), it would require
+       an additional call to retrieve the size */
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
+
+    size = FIELD_OFFSET( MIB_IFTABLE, table[count] );
+    *table = HeapAlloc( heap, flags, size );
+    if (!*table)
+    {
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
+
+    (*table)->dwNumEntries = count;
+    for (i = 0; i < count; i++)
+    {
+        MIB_IFROW *row = (*table)->table + i;
+
+        if_row_fill( row, rw + i, dyn + i, stat + i );
+    }
+    if (sort) qsort( (*table)->table, count, sizeof(MIB_IFROW), ifrow_cmp );
+
+err:
+    NsiFreeTable( keys, rw, dyn, stat );
+    return err;
+}
+
+static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src )
+{
+    unsigned int copy = src->Length;
+
+    if (copy >= len * sizeof(WCHAR)) copy = 0;
+    memcpy( dst, src->String, copy );
+    memset( (char *)dst + copy, 0, len * sizeof(WCHAR) - copy );
+}
+
+static void if_row2_fill( MIB_IF_ROW2 *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
+                          struct nsi_ndis_ifinfo_static *stat )
+{
+    row->InterfaceIndex = stat->if_index;
+    row->InterfaceGuid = stat->if_guid;
+    if_counted_string_copy( row->Alias, ARRAY_SIZE(row->Alias), &rw->alias );
+    if_counted_string_copy( row->Description, ARRAY_SIZE(row->Description), &stat->descr );
+    row->PhysicalAddressLength = rw->phys_addr.Length;
+    if (row->PhysicalAddressLength > sizeof(row->PhysicalAddress)) row->PhysicalAddressLength = 0;
+    memcpy( row->PhysicalAddress, rw->phys_addr.Address, row->PhysicalAddressLength );
+    memcpy( row->PermanentPhysicalAddress, stat->perm_phys_addr.Address, row->PhysicalAddressLength );
+    row->Mtu = dyn->mtu;
+    row->Type = stat->type;
+    row->TunnelType = TUNNEL_TYPE_NONE; /* fixme */
+    row->MediaType = stat->media_type;
+    row->PhysicalMediumType = stat->phys_medium_type;
+    row->AccessType = stat->access_type;
+    row->DirectionType = NET_IF_DIRECTION_SENDRECEIVE; /* fixme */
+    row->InterfaceAndOperStatusFlags.HardwareInterface = stat->flags.hw;
+    row->InterfaceAndOperStatusFlags.FilterInterface = stat->flags.filter;
+    row->InterfaceAndOperStatusFlags.ConnectorPresent = !!stat->conn_present;
+    row->InterfaceAndOperStatusFlags.NotAuthenticated = 0; /* fixme */
+    row->InterfaceAndOperStatusFlags.NotMediaConnected = dyn->flags.not_media_conn;
+    row->InterfaceAndOperStatusFlags.Paused = 0; /* fixme */
+    row->InterfaceAndOperStatusFlags.LowPower = 0; /* fixme */
+    row->InterfaceAndOperStatusFlags.EndPointInterface = 0; /* fixme */
+    row->OperStatus = dyn->oper_status;
+    row->AdminStatus = rw->admin_status;
+    row->MediaConnectState = dyn->media_conn_state;
+    row->NetworkGuid = rw->network_guid;
+    row->ConnectionType = stat->conn_type;
+    row->TransmitLinkSpeed = dyn->xmit_speed;
+    row->ReceiveLinkSpeed = dyn->rcv_speed;
+    row->InOctets = dyn->in_octets;
+    row->InUcastPkts = dyn->in_ucast_pkts;
+    row->InNUcastPkts = dyn->in_bcast_pkts + dyn->in_mcast_pkts;
+    row->InDiscards = dyn->in_discards;
+    row->InErrors = dyn->in_errors;
+    row->InUnknownProtos = 0; /* fixme */
+    row->InUcastOctets = dyn->in_ucast_octs;
+    row->InMulticastOctets = dyn->in_mcast_octs;
+    row->InBroadcastOctets = dyn->in_bcast_octs;
+    row->OutOctets = dyn->out_octets;
+    row->OutUcastPkts = dyn->out_ucast_pkts;
+    row->OutNUcastPkts = dyn->out_bcast_pkts + dyn->out_mcast_pkts;
+    row->OutDiscards = dyn->out_discards;
+    row->OutErrors = dyn->out_errors;
+    row->OutUcastOctets = dyn->out_ucast_octs;
+    row->OutMulticastOctets = dyn->out_mcast_octs;
+    row->OutBroadcastOctets = dyn->out_bcast_octs;
+    row->OutQLen = 0; /* fixme */
+}
+
+/******************************************************************
+ *    GetIfEntry2Ex (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfEntry2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_ROW2 *row )
+{
+    DWORD err;
+    struct nsi_ndis_ifinfo_rw rw;
+    struct nsi_ndis_ifinfo_dynamic dyn;
+    struct nsi_ndis_ifinfo_static stat;
+
+    TRACE( "(%d, %p)\n", level, row );
+
+    if (level != MibIfTableNormal) FIXME( "level %u not fully supported\n", level );
+    if (!row) return ERROR_INVALID_PARAMETER;
+
+    if (!row->InterfaceLuid.Value)
+    {
+        if (!row->InterfaceIndex) return ERROR_INVALID_PARAMETER;
+        err = ConvertInterfaceIndexToLuid( row->InterfaceIndex, &row->InterfaceLuid );
+        if (err) return err;
+    }
+
+    err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                               &row->InterfaceLuid, sizeof(row->InterfaceLuid),
+                               &rw, sizeof(rw), &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (!err) if_row2_fill( row, &rw, &dyn, &stat );
+    return err;
+}
+
+/******************************************************************
+ *    GetIfEntry2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row )
+{
+    return GetIfEntry2Ex( MibIfTableNormal, row );
 }
 
 /******************************************************************
@@ -1922,9 +1983,11 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
  */
 DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
 {
-    DWORD i, nb_interfaces, size = sizeof(MIB_IF_TABLE2);
-    InterfaceIndexTable *index_table;
-    MIB_IF_TABLE2 *ret;
+    DWORD i, count, size, err;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
 
     TRACE( "level %u, table %p\n", level, table );
 
@@ -1934,29 +1997,30 @@ DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
     if (level != MibIfTableNormal)
         FIXME("level %u not fully supported\n", level);
 
-    if ((nb_interfaces = get_interface_indices( FALSE, NULL )) > 1)
-        size += (nb_interfaces - 1) * sizeof(MIB_IF_ROW2);
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
+    size = FIELD_OFFSET( MIB_IF_TABLE2, Table[count] );
 
-    get_interface_indices( FALSE, &index_table );
-    if (!index_table)
+    if (!(*table = heap_alloc_zero( size )))
     {
-        HeapFree( GetProcessHeap(), 0, ret );
-        return ERROR_OUTOFMEMORY;
+        err = ERROR_OUTOFMEMORY;
+        goto err;
     }
 
-    ret->NumEntries = 0;
-    for (i = 0; i < index_table->numIndexes; i++)
+    (*table)->NumEntries = count;
+    for (i = 0; i < count; i++)
     {
-        ret->Table[i].InterfaceIndex = index_table->indexes[i];
-        GetIfEntry2( &ret->Table[i] );
-        ret->NumEntries++;
-    }
+        MIB_IF_ROW2 *row = (*table)->Table + i;
 
-    HeapFree( GetProcessHeap(), 0, index_table );
-    *table = ret;
-    return NO_ERROR;
+        row->InterfaceLuid.Value = keys[i].Value;
+        if_row2_fill( row, rw + i, dyn + i, stat + i );
+    }
+err:
+    NsiFreeTable( keys, rw, dyn, stat );
+    return err;
 }
 
 /******************************************************************
@@ -1965,7 +2029,7 @@ DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
 DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
 {
     TRACE( "table %p\n", table );
-    return GetIfTable2Ex(MibIfTableNormal, table);
+    return GetIfTable2Ex( MibIfTableNormal, table );
 }
 
 /******************************************************************
@@ -1984,67 +2048,39 @@ DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
  * BUGS
  *  MSDN states this should return non-loopback interfaces only.
  */
-DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
+DWORD WINAPI GetInterfaceInfo( IP_INTERFACE_INFO *table, ULONG *size )
 {
-  DWORD ret;
+    MIB_IFTABLE *if_table;
+    DWORD err, needed, i;
 
-  TRACE("pIfTable %p, dwOutBufLen %p\n", pIfTable, dwOutBufLen);
-  if (!dwOutBufLen)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numInterfaces = get_interface_indices( FALSE, NULL );
-    ULONG size = sizeof(IP_INTERFACE_INFO);
+    TRACE("table %p, size %p\n", table, size );
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-    if (numInterfaces > 1)
-      size += (numInterfaces - 1) * sizeof(IP_ADAPTER_INDEX_MAP);
-    if (!pIfTable || *dwOutBufLen < size) {
-      *dwOutBufLen = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
+    err = AllocateAndGetIfTableFromStack( &if_table, 0, GetProcessHeap(), 0 );
+    if (err) return err;
+
+    needed = FIELD_OFFSET(IP_INTERFACE_INFO, Adapter[if_table->dwNumEntries]);
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        heap_free( if_table );
+        return ERROR_INSUFFICIENT_BUFFER;
     }
-    else {
-      InterfaceIndexTable *table;
-      get_interface_indices( FALSE, &table );
 
-      if (table) {
-        size = sizeof(IP_INTERFACE_INFO);
-        if (table->numIndexes > 1)
-          size += (table->numIndexes - 1) * sizeof(IP_ADAPTER_INDEX_MAP);
-        if (*dwOutBufLen < size) {
-          *dwOutBufLen = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          DWORD ndx;
-          char nameBuf[MAX_ADAPTER_NAME];
-
-          *dwOutBufLen = size;
-          pIfTable->NumAdapters = 0;
-          for (ndx = 0; ndx < table->numIndexes; ndx++) {
-            const char *walker, *name;
-            WCHAR *assigner;
-
-            pIfTable->Adapter[ndx].Index = table->indexes[ndx];
-            name = getInterfaceNameByIndex(table->indexes[ndx], nameBuf);
-            for (walker = name, assigner = pIfTable->Adapter[ndx].Name;
-             walker && *walker &&
-             assigner - pIfTable->Adapter[ndx].Name < MAX_ADAPTER_NAME - 1;
-             walker++, assigner++)
-              *assigner = *walker;
-            *assigner = 0;
-            pIfTable->NumAdapters++;
-          }
-          ret = NO_ERROR;
-        }
-        HeapFree(GetProcessHeap(), 0, table);
-      }
-      else
-        ret = ERROR_OUTOFMEMORY;
+    table->NumAdapters = if_table->dwNumEntries;
+    for (i = 0; i < if_table->dwNumEntries; i++)
+    {
+        table->Adapter[i].Index = if_table->table[i].dwIndex;
+        strcpyW( table->Adapter[i].Name, if_table->table[i].wszName );
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    heap_free( if_table );
+    return ERROR_SUCCESS;
 }
 
+static int ipaddrrow_cmp( const void *a, const void *b )
+{
+    return ((const MIB_IPADDRROW*)a)->dwAddr - ((const MIB_IPADDRROW*)b)->dwAddr;
+}
 
 /******************************************************************
  *    GetIpAddrTable (IPHLPAPI.@)
@@ -2052,61 +2088,99 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
  * Get interface-to-IP address mapping table. 
  *
  * PARAMS
- *  pIpAddrTable [Out]    buffer for mapping table
- *  pdwSize      [In/Out] length of output buffer
- *  bOrder       [In]     whether to sort the table
+ *  table        [Out]    buffer for mapping table
+ *  size         [In/Out] length of output buffer
+ *  sort         [In]     whether to sort the table
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  *
- * NOTES
- *  If pdwSize is less than required, the function will return
- *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to the required byte
- *  size.
- *  If bOrder is true, the returned table will be sorted by the next hop and
- *  an assortment of arbitrary parameters.
  */
-DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL bOrder)
+DWORD WINAPI GetIpAddrTable( MIB_IPADDRTABLE *table, ULONG *size, BOOL sort )
 {
-  DWORD ret;
+    DWORD err, count, needed, i, loopback, row_num = 0;
+    struct nsi_ipv4_unicast_key *keys;
+    struct nsi_ip_unicast_rw *rw;
 
-  TRACE("pIpAddrTable %p, pdwSize %p, bOrder %d\n", pIpAddrTable, pdwSize,
-   (DWORD)bOrder);
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    PMIB_IPADDRTABLE table;
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-    ret = getIPAddrTable(&table, GetProcessHeap(), 0);
-    if (ret == NO_ERROR)
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), NULL, 0, NULL, 0, &count, 0 );
+    if (err) return err;
+
+    needed = FIELD_OFFSET( MIB_IPADDRTABLE, table[count] );
+
+    if (!table || *size < needed)
     {
-      ULONG size = FIELD_OFFSET(MIB_IPADDRTABLE, table[table->dwNumEntries]);
-
-      if (!pIpAddrTable || *pdwSize < size) {
-        *pdwSize = size;
-        ret = ERROR_INSUFFICIENT_BUFFER;
-      }
-      else {
-        *pdwSize = size;
-        memcpy(pIpAddrTable, table, size);
-        /* sort by numeric IP value */
-        if (bOrder)
-          qsort(pIpAddrTable->table, pIpAddrTable->dwNumEntries,
-           sizeof(MIB_IPADDRROW), IpAddrTableNumericSorter);
-        /* sort ensuring loopback interfaces are in the end */
-        else
-          qsort(pIpAddrTable->table, pIpAddrTable->dwNumEntries,
-           sizeof(MIB_IPADDRROW), IpAddrTableLoopbackSorter);
-        ret = NO_ERROR;
-      }
-      HeapFree(GetProcessHeap(), 0, table);
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto err;
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+
+    table->dwNumEntries = count;
+
+    for (loopback = 0; loopback < 2; loopback++) /* Move the loopback addresses to the end */
+    {
+        for (i = 0; i < count; i++)
+        {
+            MIB_IPADDRROW *row = table->table + row_num;
+
+            if (!!loopback != (keys[i].luid.Info.IfType == MIB_IF_TYPE_LOOPBACK)) continue;
+
+            row->dwAddr = keys[i].addr.WS_s_addr;
+            ConvertInterfaceLuidToIndex( &keys[i].luid, &row->dwIndex );
+            ConvertLengthToIpv4Mask( rw[i].on_link_prefix, &row->dwMask );
+            row->dwBCastAddr = 1;
+            row->dwReasmSize = 0xffff;
+            row->unused1 = 0;
+            row->wType = MIB_IPADDR_PRIMARY;
+            row_num++;
+        }
+    }
+
+    if (sort) qsort( table->table, count, sizeof(MIB_IPADDRROW), ipaddrrow_cmp );
+err:
+    NsiFreeTable( keys, rw, NULL, NULL );
+
+    return err;
 }
 
+
+/******************************************************************
+ *    AllocateAndGetIpAddrTableFromStack (IPHLPAPI.@)
+ *
+ * Get interface-to-IP address mapping table.
+ * Like GetIpAddrTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  table         [Out] pointer into which the MIB_IPADDRTABLE is
+ *                      allocated and returned.
+ *  sort          [In]  whether to sort the table
+ *  heap          [In]  heap from which the table is allocated
+ *  flags         [In]  flags to HeapAlloc
+ *
+ */
+DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    DWORD err, size = FIELD_OFFSET(MIB_IPADDRTABLE, table[2]), attempt;
+
+    TRACE( "table %p, sort %d, heap %p, flags 0x%08x\n", table, sort, heap, flags );
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        *table = HeapAlloc( heap, flags, size );
+        if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
+
+        err = GetIpAddrTable( *table, &size, sort );
+        if (!err) break;
+        HeapFree( heap, flags, *table );
+        if (err != ERROR_INSUFFICIENT_BUFFER) break;
+    }
+
+    return err;
+}
 
 /******************************************************************
  *    GetIpForwardTable (IPHLPAPI.@)
@@ -2326,21 +2400,18 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
  * RETURNS
  *  NO_ERROR on success, ERROR_INVALID_PARAMETER if pdwNumIf is NULL.
  */
-DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
+DWORD WINAPI GetNumberOfInterfaces( DWORD *count )
 {
-  DWORD ret;
+    DWORD err, num;
 
-  TRACE("pdwNumIf %p\n", pdwNumIf);
-  if (!pdwNumIf)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    *pdwNumIf = get_interface_indices( FALSE, NULL );
-    ret = NO_ERROR;
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE( "count %p\n", count );
+    if (!count) return ERROR_INVALID_PARAMETER;
+
+    err = NsiEnumerateObjectsAllParameters( 1, 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, NULL, 0,
+                                            NULL, 0, NULL, 0, NULL, 0, &num );
+    *count = err ? 0 : num;
+    return err;
 }
-
 
 /******************************************************************
  *    GetPerAdapterInfo (IPHLPAPI.@)
@@ -2575,149 +2646,141 @@ DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
     return ret;
 }
 
+static void unicast_row_fill( MIB_UNICASTIPADDRESS_ROW *row, USHORT fam, void *key, struct nsi_ip_unicast_rw *rw,
+                              struct nsi_ip_unicast_dynamic *dyn, struct nsi_ip_unicast_static *stat )
+{
+    struct nsi_ipv4_unicast_key *key4 = (struct nsi_ipv4_unicast_key *)key;
+    struct nsi_ipv6_unicast_key *key6 = (struct nsi_ipv6_unicast_key *)key;
+
+    if (fam == WS_AF_INET)
+    {
+        row->Address.Ipv4.sin_family = fam;
+        row->Address.Ipv4.sin_port = 0;
+        row->Address.Ipv4.sin_addr = key4->addr;
+        memset( row->Address.Ipv4.sin_zero, 0, sizeof(row->Address.Ipv4.sin_zero) );
+        row->InterfaceLuid.Value = key4->luid.Value;
+    }
+    else
+    {
+        row->Address.Ipv6.sin6_family = fam;
+        row->Address.Ipv6.sin6_port = 0;
+        row->Address.Ipv6.sin6_flowinfo = 0;
+        row->Address.Ipv6.sin6_addr = key6->addr;
+        row->Address.Ipv6.sin6_scope_id = dyn->scope_id;
+        row->InterfaceLuid.Value = key6->luid.Value;
+    }
+
+    ConvertInterfaceLuidToIndex( &row->InterfaceLuid, &row->InterfaceIndex );
+    row->PrefixOrigin = rw->prefix_origin;
+    row->SuffixOrigin = rw->suffix_origin;
+    row->ValidLifetime = rw->valid_lifetime;
+    row->PreferredLifetime = rw->preferred_lifetime;
+    row->OnLinkPrefixLength = rw->on_link_prefix;
+    row->SkipAsSource = 0;
+    row->DadState = dyn->dad_state;
+    row->ScopeId.u.Value = dyn->scope_id;
+    row->CreationTimeStamp.QuadPart = stat->creation_time;
+}
+
 DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW *row)
 {
-    IP_ADAPTER_ADDRESSES *aa, *ptr;
-    ULONG size = 0;
-    DWORD ret;
+    struct nsi_ipv4_unicast_key key4;
+    struct nsi_ipv6_unicast_key key6;
+    struct nsi_ip_unicast_rw rw;
+    struct nsi_ip_unicast_dynamic dyn;
+    struct nsi_ip_unicast_static stat;
+    const NPI_MODULEID *mod;
+    DWORD err, key_size;
+    void *key;
 
-    TRACE("%p\n", row);
+    TRACE( "%p\n", row );
 
-    if (!row)
-        return ERROR_INVALID_PARAMETER;
+    if (!row) return ERROR_INVALID_PARAMETER;
+    mod = ip_module_id( row->Address.si_family );
+    if (!mod) return ERROR_INVALID_PARAMETER;
 
-    ret = GetAdaptersAddresses(row->Address.si_family, 0, NULL, NULL, &size);
-    if (ret != ERROR_BUFFER_OVERFLOW)
-        return ret;
-    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size)))
-        return ERROR_OUTOFMEMORY;
-    if ((ret = GetAdaptersAddresses(row->Address.si_family, 0, NULL, ptr, &size)))
+    if (!row->InterfaceLuid.Value)
     {
-        HeapFree(GetProcessHeap(), 0, ptr);
-        return ret;
+        err = ConvertInterfaceIndexToLuid( row->InterfaceIndex, &row->InterfaceLuid );
+        if (err) return err;
     }
 
-    ret = ERROR_FILE_NOT_FOUND;
-    for (aa = ptr; aa; aa = aa->Next)
+    if (row->Address.si_family == WS_AF_INET)
     {
-        IP_ADAPTER_UNICAST_ADDRESS *ua;
-
-        if (aa->u.s.IfIndex != row->InterfaceIndex &&
-            memcmp(&aa->Luid, &row->InterfaceLuid, sizeof(row->InterfaceLuid)))
-            continue;
-        ret = ERROR_NOT_FOUND;
-
-        ua = aa->FirstUnicastAddress;
-        while (ua)
-        {
-            SOCKADDR_INET *uaaddr = (SOCKADDR_INET *)ua->Address.lpSockaddr;
-
-            if ((row->Address.si_family == WS_AF_INET6 &&
-                 !memcmp(&row->Address.Ipv6.sin6_addr, &uaaddr->Ipv6.sin6_addr, sizeof(uaaddr->Ipv6.sin6_addr))) ||
-                (row->Address.si_family == WS_AF_INET &&
-                 row->Address.Ipv4.sin_addr.S_un.S_addr == uaaddr->Ipv4.sin_addr.S_un.S_addr))
-            {
-                memcpy(&row->InterfaceLuid, &aa->Luid, sizeof(aa->Luid));
-                row->InterfaceIndex     = aa->u.s.IfIndex;
-                row->PrefixOrigin       = ua->PrefixOrigin;
-                row->SuffixOrigin       = ua->SuffixOrigin;
-                row->ValidLifetime      = ua->ValidLifetime;
-                row->PreferredLifetime  = ua->PreferredLifetime;
-                row->OnLinkPrefixLength = ua->OnLinkPrefixLength;
-                row->SkipAsSource       = 0;
-                row->DadState           = ua->DadState;
-                if (row->Address.si_family == WS_AF_INET6)
-                    row->ScopeId.u.Value  = row->Address.Ipv6.sin6_scope_id;
-                else
-                    row->ScopeId.u.Value  = 0;
-                NtQuerySystemTime(&row->CreationTimeStamp);
-                HeapFree(GetProcessHeap(), 0, ptr);
-                return NO_ERROR;
-            }
-            ua = ua->Next;
-        }
+        key4.luid = row->InterfaceLuid;
+        key4.addr = row->Address.Ipv4.sin_addr;
+        key4.pad = 0;
+        key = &key4;
+        key_size = sizeof(key4);
     }
-    HeapFree(GetProcessHeap(), 0, ptr);
+    else if (row->Address.si_family == WS_AF_INET6)
+    {
+        key6.luid = row->InterfaceLuid;
+        key6.addr = row->Address.Ipv6.sin6_addr;
+        key = &key6;
+        key_size = sizeof(key6);
+    }
+    else return ERROR_INVALID_PARAMETER;
 
-    return ret;
+    err = NsiGetAllParameters( 1, mod, NSI_IP_UNICAST_TABLE, key, key_size, &rw, sizeof(rw),
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (!err) unicast_row_fill( row, row->Address.si_family, key, &rw, &dyn, &stat );
+    return err;
 }
 
 DWORD WINAPI GetUnicastIpAddressTable(ADDRESS_FAMILY family, MIB_UNICASTIPADDRESS_TABLE **table)
 {
-    IP_ADAPTER_ADDRESSES *aa, *ptr;
-    MIB_UNICASTIPADDRESS_TABLE *data;
-    DWORD ret, count = 0;
-    ULONG size, flags;
+    void *key[2] = { NULL, NULL };
+    struct nsi_ip_unicast_rw *rw[2] = { NULL, NULL };
+    struct nsi_ip_unicast_dynamic *dyn[2] = { NULL, NULL };
+    struct nsi_ip_unicast_static *stat[2] = { NULL, NULL };
+    static const USHORT fam[2] = { WS_AF_INET, WS_AF_INET6 };
+    static const DWORD key_size[2] = { sizeof(struct nsi_ipv4_unicast_key), sizeof(struct nsi_ipv6_unicast_key) };
+    DWORD err, i, size, count[2] = { 0, 0 };
 
-    TRACE("%u, %p\n", family, table);
+    TRACE( "%u, %p\n", family, table );
 
     if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
         return ERROR_INVALID_PARAMETER;
 
-    flags = GAA_FLAG_SKIP_ANYCAST |
-            GAA_FLAG_SKIP_MULTICAST |
-            GAA_FLAG_SKIP_DNS_SERVER |
-            GAA_FLAG_SKIP_FRIENDLY_NAME;
-
-    ret = GetAdaptersAddresses(family, flags, NULL, NULL, &size);
-    if (ret != ERROR_BUFFER_OVERFLOW)
-        return ret;
-    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size)))
-        return ERROR_OUTOFMEMORY;
-    if ((ret = GetAdaptersAddresses(family, flags, NULL, ptr, &size)))
+    for (i = 0; i < 2; i++)
     {
-        HeapFree(GetProcessHeap(), 0, ptr);
-        return ret;
+        if (family != WS_AF_UNSPEC && family != fam[i]) continue;
+
+        err = NsiAllocateAndGetTable( 1, ip_module_id( fam[i] ), NSI_IP_UNICAST_TABLE, key + i, key_size[i],
+                                      (void **)rw + i, sizeof(**rw), (void **)dyn + i, sizeof(**dyn),
+                                      (void **)stat + i, sizeof(**stat), count + i, 0 );
+        if (err) goto err;
     }
 
-    for (aa = ptr; aa; aa = aa->Next)
+    size = FIELD_OFFSET(MIB_UNICASTIPADDRESS_TABLE, Table[ count[0] + count[1] ]);
+    *table = heap_alloc( size );
+    if (!*table)
     {
-        IP_ADAPTER_UNICAST_ADDRESS *ua = aa->FirstUnicastAddress;
-        while (ua)
-        {
-            count++;
-            ua = ua->Next;
-        }
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
     }
 
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) + (count - 1) * sizeof(data->Table[0]))))
+    (*table)->NumEntries = count[0] + count[1];
+    for (i = 0; i < count[0]; i++)
     {
-        HeapFree(GetProcessHeap(), 0, ptr);
-        return ERROR_OUTOFMEMORY;
+        MIB_UNICASTIPADDRESS_ROW *row = (*table)->Table + i;
+        struct nsi_ipv4_unicast_key *key4 = (struct nsi_ipv4_unicast_key *)key[0];
+
+        unicast_row_fill( row, fam[0], (void *)(key4 + i), rw[0] + i, dyn[0] + i, stat[0] + i );
     }
 
-    data->NumEntries = 0;
-    for (aa = ptr; aa; aa = aa->Next)
+    for (i = 0; i < count[1]; i++)
     {
-        IP_ADAPTER_UNICAST_ADDRESS *ua = aa->FirstUnicastAddress;
-        while (ua)
-        {
-            MIB_UNICASTIPADDRESS_ROW *row = &data->Table[data->NumEntries];
-            memcpy(&row->Address, ua->Address.lpSockaddr, ua->Address.iSockaddrLength);
-            memcpy(&row->InterfaceLuid, &aa->Luid, sizeof(aa->Luid));
-            row->InterfaceIndex     = aa->u.s.IfIndex;
-            row->PrefixOrigin       = ua->PrefixOrigin;
-            row->SuffixOrigin       = ua->SuffixOrigin;
-            row->ValidLifetime      = ua->ValidLifetime;
-            row->PreferredLifetime  = ua->PreferredLifetime;
-            row->OnLinkPrefixLength = ua->OnLinkPrefixLength;
-            row->SkipAsSource       = 0;
-            row->DadState           = ua->DadState;
-            if (row->Address.si_family == WS_AF_INET6)
-                row->ScopeId.u.Value  = row->Address.Ipv6.sin6_scope_id;
-            else
-                row->ScopeId.u.Value  = 0;
-            NtQuerySystemTime(&row->CreationTimeStamp);
+        MIB_UNICASTIPADDRESS_ROW *row = (*table)->Table + count[0] + i;
+        struct nsi_ipv6_unicast_key *key6 = (struct nsi_ipv6_unicast_key *)key[1];
 
-            data->NumEntries++;
-            ua = ua->Next;
-        }
+        unicast_row_fill( row, fam[1], (void *)(key6 + i), rw[1] + i, dyn[1] + i, stat[1] + i );
     }
 
-    HeapFree(GetProcessHeap(), 0, ptr);
-
-    *table = data;
-    return ret;
+err:
+    for (i = 0; i < 2; i++) NsiFreeTable( key[i], rw[i], dyn[i], stat[i] );
+    return err;
 }
 
 /******************************************************************
@@ -3158,24 +3221,68 @@ ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
 }
 
 /******************************************************************
+ *    ConvertInterfaceAliasToLuid (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceAliasToLuid( const WCHAR *alias, NET_LUID *luid )
+{
+    struct nsi_ndis_ifinfo_rw *data;
+    DWORD err, count, i, len;
+    NET_LUID *keys;
+
+    TRACE( "(%s %p)\n", debugstr_w(alias), luid );
+
+    if (!alias || !*alias || !luid) return ERROR_INVALID_PARAMETER;
+    luid->Value = 0;
+    len = strlenW( alias );
+
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&data, sizeof(*data), NULL, 0, NULL, 0, &count, 0 );
+    if (err) return err;
+
+    err = ERROR_INVALID_PARAMETER;
+    for (i = 0; i < count; i++)
+    {
+        if (data[i].alias.Length == len * 2 && !memcmp( data[i].alias.String, alias, len * 2 ))
+        {
+            luid->Value = keys[i].Value;
+            err = ERROR_SUCCESS;
+            break;
+        }
+    }
+    NsiFreeTable( keys, data, NULL, NULL );
+    return err;
+}
+
+/******************************************************************
  *    ConvertInterfaceGuidToLuid (IPHLPAPI.@)
  */
 DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID *guid, NET_LUID *luid)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    struct nsi_ndis_ifinfo_static *data;
+    DWORD err, count, i;
+    NET_LUID *keys;
 
-    TRACE("(%s %p)\n", debugstr_guid(guid), luid);
+    TRACE( "(%s %p)\n", debugstr_guid(guid), luid );
 
     if (!guid || !luid) return ERROR_INVALID_PARAMETER;
+    luid->Value = 0;
 
-    row.dwIndex = guid->Data1;
-    if ((ret = GetIfEntry( &row ))) return ret;
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  NULL, 0, NULL, 0, (void **)&data, sizeof(*data), &count, 0 );
+    if (err) return err;
 
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = guid->Data1;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+    err = ERROR_INVALID_PARAMETER;
+    for (i = 0; i < count; i++)
+    {
+        if (IsEqualGUID( &data[i].if_guid, guid ))
+        {
+            luid->Value = keys[i].Value;
+            err = ERROR_SUCCESS;
+            break;
+        }
+    }
+    NsiFreeTable( keys, NULL, NULL, data );
+    return err;
 }
 
 /******************************************************************
@@ -3183,20 +3290,40 @@ DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID *guid, NET_LUID *luid)
  */
 DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX index, NET_LUID *luid)
 {
-    MIB_IFROW row;
+    DWORD err;
 
-    TRACE("(%u %p)\n", index, luid);
+    TRACE( "(%u %p)\n", index, luid );
 
     if (!luid) return ERROR_INVALID_PARAMETER;
-    memset( luid, 0, sizeof(*luid) );
 
-    row.dwIndex = index;
-    if (GetIfEntry( &row )) return ERROR_FILE_NOT_FOUND;
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &index, sizeof(index),
+                           NSI_PARAM_TYPE_STATIC, luid, sizeof(*luid), 0 );
+    if (err) luid->Value = 0;
+    return err;
+}
 
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = index;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+/******************************************************************
+ *    ConvertInterfaceLuidToAlias (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceLuidToAlias( const NET_LUID *luid, WCHAR *alias, SIZE_T len )
+{
+    DWORD err;
+    IF_COUNTED_STRING name;
+
+    TRACE( "(%p %p %u)\n", luid, alias, (DWORD)len );
+
+    if (!luid || !alias) return ERROR_INVALID_PARAMETER;
+
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid, sizeof(*luid),
+                           NSI_PARAM_TYPE_RW, &name, sizeof(name),
+                           FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias) );
+    if (err) return err;
+
+    if (len <= name.Length / sizeof(WCHAR)) return ERROR_NOT_ENOUGH_MEMORY;
+    memcpy( alias, name.String, name.Length );
+    alias[name.Length / sizeof(WCHAR)] = '\0';
+
+    return err;
 }
 
 /******************************************************************
@@ -3204,20 +3331,17 @@ DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX index, NET_LUID *luid)
  */
 DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    DWORD err;
 
-    TRACE("(%p %p)\n", luid, guid);
+    TRACE( "(%p %p)\n", luid, guid );
 
     if (!luid || !guid) return ERROR_INVALID_PARAMETER;
 
-    row.dwIndex = luid->Info.NetLuidIndex;
-    if ((ret = GetIfEntry( &row ))) return ret;
-
-    memset( guid, 0, sizeof(*guid) );
-    guid->Data1 = luid->Info.NetLuidIndex;
-    memcpy( guid->Data4+2, "NetDev", 6 );
-    return NO_ERROR;
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid, sizeof(*luid),
+                           NSI_PARAM_TYPE_STATIC, guid, sizeof(*guid),
+                           FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
+    if (err) memset( guid, 0, sizeof(*guid) );
+    return err;
 }
 
 /******************************************************************
@@ -3225,18 +3349,17 @@ DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
  */
 DWORD WINAPI ConvertInterfaceLuidToIndex(const NET_LUID *luid, NET_IFINDEX *index)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    DWORD err;
 
-    TRACE("(%p %p)\n", luid, index);
+    TRACE( "(%p %p)\n", luid, index );
 
     if (!luid || !index) return ERROR_INVALID_PARAMETER;
 
-    row.dwIndex = luid->Info.NetLuidIndex;
-    if ((ret = GetIfEntry( &row ))) return ret;
-
-    *index = luid->Info.NetLuidIndex;
-    return NO_ERROR;
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid, sizeof(*luid),
+                           NSI_PARAM_TYPE_STATIC, index, sizeof(*index),
+                           FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_index) );
+    if (err) *index = 0;
+    return err;
 }
 
 /******************************************************************
@@ -3260,24 +3383,64 @@ DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_
     return err;
 }
 
+static const WCHAR otherW[] = {'o','t','h','e','r',0};
+static const WCHAR ethernetW[] = {'e','t','h','e','r','n','e','t',0};
+static const WCHAR tokenringW[] = {'t','o','k','e','n','r','i','n','g',0};
+static const WCHAR pppW[] = {'p','p','p',0};
+static const WCHAR loopbackW[] = {'l','o','o','p','b','a','c','k',0};
+static const WCHAR atmW[] = {'a','t','m',0};
+static const WCHAR wirelessW[] = {'w','i','r','e','l','e','s','s',0};
+static const WCHAR tunnelW[] = {'t','u','n','n','e','l',0};
+static const WCHAR ieee1394W[] = {'i','e','e','e','1','3','9','4',0};
+
+struct name_prefix
+{
+    const WCHAR *prefix;
+    DWORD type;
+};
+static const struct name_prefix name_prefixes[] =
+{
+    { otherW, IF_TYPE_OTHER },
+    { ethernetW, IF_TYPE_ETHERNET_CSMACD },
+    { tokenringW, IF_TYPE_ISO88025_TOKENRING },
+    { pppW, IF_TYPE_PPP },
+    { loopbackW, IF_TYPE_SOFTWARE_LOOPBACK },
+    { atmW, IF_TYPE_ATM },
+    { wirelessW, IF_TYPE_IEEE80211 },
+    { tunnelW, IF_TYPE_TUNNEL },
+    { ieee1394W, IF_TYPE_IEEE1394 }
+};
+
 /******************************************************************
  *    ConvertInterfaceLuidToNameW (IPHLPAPI.@)
  */
 DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE_T len)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    DWORD i, needed;
+    const WCHAR *prefix = NULL;
+    WCHAR buf[IF_MAX_STRING_SIZE + 1];
+    static const WCHAR prefix_fmt[] = {'%','s','_','%','d',0};
+    static const WCHAR unk_fmt[] = {'i','f','t','y','p','e','%','d','_','%','d',0};
 
-    TRACE("(%p %p %u)\n", luid, name, (DWORD)len);
+    TRACE( "(%p %p %u)\n", luid, name, (DWORD)len );
 
     if (!luid || !name) return ERROR_INVALID_PARAMETER;
 
-    row.dwIndex = luid->Info.NetLuidIndex;
-    if ((ret = GetIfEntry( &row ))) return ret;
+    for (i = 0; i < ARRAY_SIZE(name_prefixes); i++)
+    {
+        if (luid->Info.IfType == name_prefixes[i].type)
+        {
+            prefix = name_prefixes[i].prefix;
+            break;
+        }
+    }
 
-    if (len < strlenW( row.wszName ) + 1) return ERROR_NOT_ENOUGH_MEMORY;
-    strcpyW( name, row.wszName );
-    return NO_ERROR;
+    if (prefix) needed = snprintfW( buf, len, prefix_fmt, prefix, luid->Info.NetLuidIndex );
+    else needed = snprintfW( buf, len, unk_fmt, luid->Info.IfType, luid->Info.NetLuidIndex );
+
+    if (needed >= len) return ERROR_NOT_ENOUGH_MEMORY;
+    memcpy( name, buf, (needed + 1) * sizeof(WCHAR) );
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************
@@ -3301,28 +3464,40 @@ DWORD WINAPI ConvertInterfaceNameToLuidA(const char *name, NET_LUID *luid)
  */
 DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
 {
-    DWORD ret;
-    IF_INDEX index;
-    MIB_IFROW row;
-    char nameA[IF_MAX_STRING_SIZE + 1];
+    const WCHAR *sep;
+    static const WCHAR iftype[] = {'i','f','t','y','p','e',0};
+    DWORD type = ~0u, i;
+    WCHAR buf[IF_MAX_STRING_SIZE + 1];
 
-    TRACE("(%s %p)\n", debugstr_w(name), luid);
+    TRACE( "(%s %p)\n", debugstr_w(name), luid );
 
     if (!luid) return ERROR_INVALID_PARAMETER;
     memset( luid, 0, sizeof(*luid) );
 
-    if (!WideCharToMultiByte( CP_UNIXCP, 0, name, -1, nameA, sizeof(nameA), NULL, NULL ))
-        return ERROR_INVALID_NAME;
+    if (!name || !(sep = strchrW( name, '_' )) || sep >= name + ARRAY_SIZE(buf)) return ERROR_INVALID_NAME;
+    memcpy( buf, name, (sep - name) * sizeof(WCHAR) );
+    buf[sep - name] = '\0';
 
-    if ((ret = getInterfaceIndexByName( nameA, &index ))) return ret;
+    if (sep - name > ARRAY_SIZE(iftype) - 1 && !memcmp( buf, iftype, (ARRAY_SIZE(iftype) - 1) * sizeof(WCHAR) ))
+    {
+        type = atoiW( buf + ARRAY_SIZE(iftype) - 1 );
+    }
+    else
+    {
+        for (i = 0; i < ARRAY_SIZE(name_prefixes); i++)
+        {
+            if (!strcmpW( buf, name_prefixes[i].prefix ))
+            {
+                type = name_prefixes[i].type;
+                break;
+            }
+        }
+    }
+    if (type == ~0u) return ERROR_INVALID_NAME;
 
-    row.dwIndex = index;
-    if ((ret = GetIfEntry( &row ))) return ret;
-
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = index;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+    luid->Info.NetLuidIndex = atoiW( sep + 1 );
+    luid->Info.IfType = type;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************

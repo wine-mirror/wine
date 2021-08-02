@@ -1,0 +1,120 @@
+/*
+ * Copyright 2021      Paul Gofman for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep typelib
+
+import "ocidl.idl";
+
+[
+    version(1.0),
+    hidden,
+    uuid(90de541e-380b-4530-94a9-97367fe49d8d)
+]
+library MSHTML_private
+{
+
+importlib("stdole2.tlb");
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(fd55b4b6-2813-4fb4-829d-380099474ab1)
+]
+interface IWineMSHTMLConsole : IDispatch
+{
+    [id(1)]
+    HRESULT assert([in] VARIANT_BOOL *assertion,
+                   [in, optional] VARIANT *varargStart);
+    [id(2)]
+    HRESULT clear();
+    [id(3)]
+    HRESULT count([in, optional] VARIANT *label);
+    [id(4)]
+    HRESULT debug([in, optional] VARIANT *varargStart);
+    [id(5)]
+    HRESULT dir([in, optional] VARIANT *object);
+    [id(6)]
+    HRESULT dirxml([in, optional] VARIANT *object);
+    [id(7)]
+    HRESULT error([in, optional] VARIANT *varargStart);
+    [id(8)]
+    HRESULT group([in, optional] VARIANT *label);
+    [id(9)]
+    HRESULT groupCollapsed([in, optional] VARIANT *label);
+    [id(10)]
+    HRESULT groupEnd();
+    [id(11)]
+    HRESULT info([in, optional] VARIANT *varargStart);
+    [id(12)]
+    HRESULT log([in, optional] VARIANT *varargStart);
+    [id(13)]
+    HRESULT time([in, optional] VARIANT *label);
+    [id(14)]
+    HRESULT timeEnd([in, optional] VARIANT *label);
+    [id(15)]
+    HRESULT trace([in, optional] VARIANT *varargStart);
+    [id(16)]
+    HRESULT warn([in, optional] VARIANT *varargStart);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(1b5939fc-8f84-43f3-8d89-f9a92069fad7)
+]
+interface IWineHTMLWindowPrivate : IDispatch
+{
+    [id(1)]
+    HRESULT requestAnimationFrame([in] VARIANT *expr, [retval, out] VARIANT *timer_id);
+    [propget, id(2)]
+    HRESULT console([retval, out] IDispatch **console);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eec)
+]
+interface IWineHTMLElementPrivate : IDispatch
+{
+    [propget, id(1)]
+    HRESULT classList([retval, out] IDispatch **class_list);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(08ef0edd-5fb8-4178-a2f0-9f686e00441b)
+]
+interface IWineDOMTokenList : IDispatch
+{
+    [id(1)]
+    HRESULT add([in] BSTR token);
+    [id(2)]
+    HRESULT remove([in] BSTR token);
+}
+
+} /* library MSHTML_private */

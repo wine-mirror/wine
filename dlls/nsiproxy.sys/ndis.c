@@ -38,6 +38,10 @@
 #include <net/if_arp.h>
 #endif
 
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
 #endif
@@ -607,6 +611,48 @@ static NTSTATUS index_luid_get_parameter( const void *key, DWORD key_size, DWORD
     }
     LeaveCriticalSection( &if_list_cs );
     return status;
+}
+
+BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid )
+{
+    struct if_entry *entry;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection( &if_list_cs );
+
+    update_if_table();
+
+    LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
+        if (!strcmp( entry->if_unix_name, unix_name ))
+        {
+            *luid = entry->if_luid;
+            ret = TRUE;
+            break;
+        }
+    LeaveCriticalSection( &if_list_cs );
+
+    return ret;
+}
+
+BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name )
+{
+    struct if_entry *entry;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection( &if_list_cs );
+
+    update_if_table();
+
+    LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
+        if (entry->if_luid.Value == luid->Value)
+        {
+            *unix_name = entry->if_unix_name;
+            ret = TRUE;
+
+        }
+    LeaveCriticalSection( &if_list_cs );
+
+    return ret;
 }
 
 static const struct module_table tables[] =

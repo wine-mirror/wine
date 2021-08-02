@@ -31,94 +31,103 @@
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
 /**********************************************************************
- *	     MFDRV_MoveTo
+ *	     METADC_MoveTo
  */
-BOOL CDECL MFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
+BOOL METADC_MoveTo( HDC hdc, INT x, INT y )
 {
-    return MFDRV_MetaParam2(dev,META_MOVETO,x,y);
+    return metadc_param2( hdc, META_MOVETO, x, y );
 }
 
 /***********************************************************************
- *           MFDRV_LineTo
+ *           METADC_LineTo
  */
-BOOL CDECL MFDRV_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL METADC_LineTo( HDC hdc, INT x, INT y )
 {
-     return MFDRV_MetaParam2(dev, META_LINETO, x, y);
-}
-
-
-/***********************************************************************
- *           MFDRV_Arc
- */
-BOOL CDECL MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                      INT xstart, INT ystart, INT xend, INT yend )
-{
-     return MFDRV_MetaParam8(dev, META_ARC, left, top, right, bottom,
-			     xstart, ystart, xend, yend);
+     return metadc_param2( hdc, META_LINETO, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_Pie
+ *           METADC_Arc
  */
-BOOL CDECL MFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                      INT xstart, INT ystart, INT xend, INT yend )
+BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
-    return MFDRV_MetaParam8(dev, META_PIE, left, top, right, bottom,
-			    xstart, ystart, xend, yend);
+     return metadc_param8( hdc, META_ARC, left, top, right, bottom,
+                           xstart, ystart, xend, yend );
 }
 
 
 /***********************************************************************
- *           MFDRV_Chord
+ *           MFDRV_ArcTo
  */
-BOOL CDECL MFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+BOOL CDECL MFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend )
 {
-    return MFDRV_MetaParam8(dev, META_CHORD, left, top, right, bottom,
-			    xstart, ystart, xend, yend);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           METADC_Pie
+ */
+BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
+{
+    return metadc_param8( hdc, META_PIE, left, top, right, bottom,
+                          xstart, ystart, xend, yend );
+}
+
+
+/***********************************************************************
+ *           METADC_Chord
+ */
+BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
+{
+    return metadc_param8( hdc, META_CHORD, left, top, right, bottom,
+                          xstart, ystart, xend, yend );
 }
 
 /***********************************************************************
- *           MFDRV_Ellipse
+ *           METADC_Ellipse
  */
-BOOL CDECL MFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    return MFDRV_MetaParam4(dev, META_ELLIPSE, left, top, right, bottom);
+    return metadc_param4( hdc, META_ELLIPSE, left, top, right, bottom );
 }
 
 /***********************************************************************
- *           MFDRV_Rectangle
+ *           METADC_Rectangle
  */
-BOOL CDECL MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    return MFDRV_MetaParam4(dev, META_RECTANGLE, left, top, right, bottom);
+    return metadc_param4( hdc, META_RECTANGLE, left, top, right, bottom );
 }
 
 /***********************************************************************
- *           MFDRV_RoundRect
+ *           MF_RoundRect
  */
-BOOL CDECL MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
-                            INT bottom, INT ell_width, INT ell_height )
+BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right,
+                       INT bottom, INT ell_width, INT ell_height )
 {
-    return MFDRV_MetaParam6(dev, META_ROUNDRECT, left, top, right, bottom,
-			    ell_width, ell_height);
+    return metadc_param6( hdc, META_ROUNDRECT, left, top, right, bottom,
+                          ell_width, ell_height );
 }
 
 /***********************************************************************
- *           MFDRV_SetPixel
+ *           METADC_SetPixel
  */
-COLORREF CDECL MFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+BOOL METADC_SetPixel( HDC hdc, INT x, INT y, COLORREF color )
 {
-    return MFDRV_MetaParam4(dev, META_SETPIXEL, x, y,HIWORD(color),
-			    LOWORD(color));
+    return metadc_param4( hdc, META_SETPIXEL, x, y, HIWORD(color), LOWORD(color) );
 }
 
 
 /******************************************************************
- *         MFDRV_MetaPoly - implements Polygon and Polyline
+ *         metadc_poly - implements Polygon and Polyline
  */
-static BOOL MFDRV_MetaPoly(PHYSDEV dev, short func, POINTS *pt, short count)
+static BOOL metadc_poly( HDC hdc, short func, POINTS *pt, short count )
 {
     BOOL ret;
     DWORD len;
@@ -132,16 +141,16 @@ static BOOL MFDRV_MetaPoly(PHYSDEV dev, short func, POINTS *pt, short count)
     mr->rdFunction = func;
     *(mr->rdParm) = count;
     memcpy(mr->rdParm + 1, pt, count * 4);
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+    ret = metadc_record( hdc, mr, mr->rdSize * 2);
     HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
 
 
 /**********************************************************************
- *          MFDRV_Polyline
+ *          METADC_Polyline
  */
-BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+BOOL METADC_Polyline( HDC hdc, const POINT *pt, INT count )
 {
     int i;
     POINTS *pts;
@@ -154,7 +163,7 @@ BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
         pts[i].x = pt[i].x;
         pts[i].y = pt[i].y;
     }
-    ret = MFDRV_MetaPoly(dev, META_POLYLINE, pts, count);
+    ret = metadc_poly( hdc, META_POLYLINE, pts, count );
 
     HeapFree( GetProcessHeap(), 0, pts );
     return ret;
@@ -162,9 +171,9 @@ BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 
 
 /**********************************************************************
- *          MFDRV_Polygon
+ *          METADC_Polygon
  */
-BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
+BOOL METADC_Polygon( HDC hdc, const POINT *pt, INT count )
 {
     int i;
     POINTS *pts;
@@ -177,7 +186,7 @@ BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
         pts[i].x = pt[i].x;
         pts[i].y = pt[i].y;
     }
-    ret = MFDRV_MetaPoly(dev, META_POLYGON, pts, count);
+    ret = metadc_poly( hdc, META_POLYGON, pts, count );
 
     HeapFree( GetProcessHeap(), 0, pts );
     return ret;
@@ -185,9 +194,9 @@ BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 
 
 /**********************************************************************
- *          MFDRV_PolyPolygon
+ *          METADC_PolyPolygon
  */
-BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons)
+BOOL METADC_PolyPolygon( HDC hdc, const POINT *pt, const INT *counts, UINT polygons )
 {
     BOOL ret;
     DWORD len;
@@ -229,7 +238,7 @@ BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, U
     *(mr->rdParm) = polygons;
     memcpy(mr->rdParm + 1, pointcounts, polygons*sizeof(INT16));
     memcpy(mr->rdParm + 1+polygons, pts , totalpoint16*sizeof(*pts));
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+    ret = metadc_record( hdc, mr, mr->rdSize * 2);
 
     HeapFree( GetProcessHeap(), 0, pts );
     HeapFree( GetProcessHeap(), 0, pointcounts );
@@ -239,12 +248,11 @@ BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, U
 
 
 /**********************************************************************
- *          MFDRV_ExtFloodFill
+ *          METADC_ExtFloodFill
  */
-BOOL CDECL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
+BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_type )
 {
-    return MFDRV_MetaParam4(dev,META_FLOODFILL,x,y,HIWORD(color),
-			    LOWORD(color));
+    return metadc_param5( hdc, META_EXTFLOODFILL, x, y, HIWORD(color), LOWORD(color), fill_type );
 }
 
 
@@ -264,12 +272,12 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     WORD *Param, *StartBand;
     BOOL ret;
 
-    if (!(len = GetRegionData( hrgn, 0, NULL ))) return -1;
+    if (!(len = NtGdiGetRegionData( hrgn, 0, NULL ))) return -1;
     if( !(rgndata = HeapAlloc( GetProcessHeap(), 0, len )) ) {
         WARN("Can't alloc rgndata buffer\n");
 	return -1;
     }
-    GetRegionData( hrgn, len, rgndata );
+    NtGdiGetRegionData( hrgn, len, rgndata );
 
     /* Overestimate of length:
      * Assume every rect is a separate band -> 6 WORDs per rect
@@ -345,59 +353,78 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 
 
 /**********************************************************************
- *          MFDRV_PaintRgn
+ *          METADC_PaintRgn
  */
-BOOL CDECL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
 {
+    METAFILEDRV_PDEVICE *mf;
     INT16 index;
-    index = MFDRV_CreateRegion( dev, hrgn );
+    if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
+    index = MFDRV_CreateRegion( &mf->dev, hrgn );
     if(index == -1)
         return FALSE;
-    return MFDRV_MetaParam1( dev, META_PAINTREGION, index );
+    return MFDRV_MetaParam1( &mf->dev, META_PAINTREGION, index );
 }
 
 
 /**********************************************************************
- *          MFDRV_InvertRgn
+ *          METADC_InvertRgn
  */
-BOOL CDECL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
+BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn )
 {
+    METAFILEDRV_PDEVICE *mf;
     INT16 index;
-    index = MFDRV_CreateRegion( dev, hrgn );
+    if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
+    index = MFDRV_CreateRegion( &mf->dev, hrgn );
     if(index == -1)
         return FALSE;
-    return MFDRV_MetaParam1( dev, META_INVERTREGION, index );
+    return MFDRV_MetaParam1( &mf->dev, META_INVERTREGION, index );
 }
 
+
+/**********************************************************************
+ *          METADC_FillRgn
+ */
+BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
+{
+    METAFILEDRV_PDEVICE *mf;
+    INT16 iRgn, iBrush;
+
+    if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
+
+    iRgn = MFDRV_CreateRegion( &mf->dev, hrgn );
+    if(iRgn == -1)
+        return FALSE;
+    iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
+    if(!iBrush)
+        return FALSE;
+    return MFDRV_MetaParam2( &mf->dev, META_FILLREGION, iRgn, iBrush );
+}
 
 /**********************************************************************
  *          MFDRV_FillRgn
  */
 BOOL CDECL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 {
-    INT16 iRgn, iBrush;
-    iRgn = MFDRV_CreateRegion( dev, hrgn );
-    if(iRgn == -1)
-        return FALSE;
-    iBrush = MFDRV_CreateBrushIndirect( dev, hbrush );
-    if(!iBrush)
-        return FALSE;
-    return MFDRV_MetaParam2( dev, META_FILLREGION, iRgn, iBrush );
+    return TRUE;
 }
 
 /**********************************************************************
- *          MFDRV_FrameRgn
+ *          METADC_FrameRgn
  */
-BOOL CDECL MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
+BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 {
+    METAFILEDRV_PDEVICE *mf;
     INT16 iRgn, iBrush;
-    iRgn = MFDRV_CreateRegion( dev, hrgn );
+
+    if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
+    iRgn = MFDRV_CreateRegion( &mf->dev, hrgn );
     if(iRgn == -1)
         return FALSE;
-    iBrush = MFDRV_CreateBrushIndirect( dev, hbrush );
+    iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
     if(!iBrush)
         return FALSE;
-    return MFDRV_MetaParam4( dev, META_FRAMEREGION, iRgn, iBrush, x, y );
+    return MFDRV_MetaParam4( &mf->dev, META_FRAMEREGION, iRgn, iBrush, x, y );
 }
 
 

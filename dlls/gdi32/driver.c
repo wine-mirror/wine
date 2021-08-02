@@ -38,7 +38,7 @@
 #include "setupapi.h"
 #include "ddk/d3dkmthk.h"
 
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -703,21 +703,6 @@ static BOOL CDECL nulldrv_PolyPolyline( PHYSDEV dev, const POINT *points, const 
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
-{
-    INT counts[1] = { count };
-
-    return PolyPolygon( dev->hdc, points, counts, 1 );
-}
-
-static BOOL CDECL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
-{
-    DWORD counts[1] = { count };
-
-    if (count < 0) return FALSE;
-    return PolyPolyline( dev->hdc, points, counts, 1 );
-}
-
 static DWORD CDECL nulldrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                      const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                      struct bitblt_coords *dst, DWORD rop )
@@ -776,19 +761,9 @@ static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen, const struct brush_p
     return pen;
 }
 
-static INT CDECL nulldrv_SetArcDirection( PHYSDEV dev, INT dir )
-{
-    return dir;
-}
-
 static COLORREF CDECL nulldrv_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     return color;
-}
-
-static INT CDECL nulldrv_SetBkMode( PHYSDEV dev, INT mode )
-{
-    return mode;
 }
 
 static UINT CDECL nulldrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
@@ -815,11 +790,11 @@ static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
     DC *dc = get_nulldrv_dc( dev );
     DWORD old_layout;
 
-    old_layout = dc->layout;
-    dc->layout = layout;
+    old_layout = dc->attr->layout;
+    dc->attr->layout = layout;
     if (layout != old_layout)
     {
-        if (layout & LAYOUT_RTL) dc->MapMode = MM_ANISOTROPIC;
+        if (layout & LAYOUT_RTL) dc->attr->map_mode = MM_ANISOTROPIC;
         DC_UpdateXforms( dc );
     }
 
@@ -840,31 +815,6 @@ static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
 static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return color;
-}
-
-static INT CDECL nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
-{
-    return mode;
-}
-
-static INT CDECL nulldrv_SetROP2( PHYSDEV dev, INT rop )
-{
-    return rop;
-}
-
-static INT CDECL nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
-{
-    return mode;
-}
-
-static INT CDECL nulldrv_SetStretchBltMode( PHYSDEV dev, INT mode )
-{
-    return mode;
-}
-
-static UINT CDECL nulldrv_SetTextAlign( PHYSDEV dev, UINT align )
-{
-    return align;
 }
 
 static INT CDECL nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
@@ -993,8 +943,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_PolyDraw,                   /* pPolyDraw */
     nulldrv_PolyPolygon,                /* pPolyPolygon */
     nulldrv_PolyPolyline,               /* pPolyPolyline */
-    nulldrv_Polygon,                    /* pPolygon */
-    nulldrv_Polyline,                   /* pPolyline */
     nulldrv_PolylineTo,                 /* pPolylineTo */
     nulldrv_PutImage,                   /* pPutImage */
     nulldrv_RealizeDefaultPalette,      /* pRealizeDefaultPalette */
@@ -1003,7 +951,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_ResetDC,                    /* pResetDC */
     nulldrv_RestoreDC,                  /* pRestoreDC */
     nulldrv_RoundRect,                  /* pRoundRect */
-    nulldrv_SaveDC,                     /* pSaveDC */
     nulldrv_ScaleViewportExtEx,         /* pScaleViewportExt */
     nulldrv_ScaleWindowExtEx,           /* pScaleWindowExt */
     nulldrv_SelectBitmap,               /* pSelectBitmap */
@@ -1012,9 +959,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SelectFont,                 /* pSelectFont */
     nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
-    nulldrv_SetArcDirection,            /* pSetArcDirection */
     nulldrv_SetBkColor,                 /* pSetBkColor */
-    nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetBoundsRect,              /* pSetBoundsRect */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
@@ -1025,11 +970,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetMapMode,                 /* pSetMapMode */
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
-    nulldrv_SetPolyFillMode,            /* pSetPolyFillMode */
-    nulldrv_SetROP2,                    /* pSetROP2 */
-    nulldrv_SetRelAbs,                  /* pSetRelAbs */
-    nulldrv_SetStretchBltMode,          /* pSetStretchBltMode */
-    nulldrv_SetTextAlign,               /* pSetTextAlign */
     nulldrv_SetTextCharacterExtra,      /* pSetTextCharacterExtra */
     nulldrv_SetTextColor,               /* pSetTextColor */
     nulldrv_SetTextJustification,       /* pSetTextJustification */

@@ -85,8 +85,6 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     screen_buffer->cursor_visible = 1;
     screen_buffer->width          = width;
     screen_buffer->height         = height;
-    screen_buffer->attr           = 0x07;
-    screen_buffer->popup_attr     = 0xf5;
     screen_buffer->font.weight    = FW_NORMAL;
     screen_buffer->font.pitch_family = FIXED_PITCH | FF_DONTCARE;
 
@@ -96,6 +94,8 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         screen_buffer->max_height = console->active->max_height;
         screen_buffer->win.right  = console->active->win.right  - console->active->win.left;
         screen_buffer->win.bottom = console->active->win.bottom - console->active->win.top;
+        screen_buffer->attr       = console->active->attr;
+        screen_buffer->popup_attr = console->active->attr;
     }
     else
     {
@@ -103,6 +103,8 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         screen_buffer->max_height = height;
         screen_buffer->win.right  = width - 1;
         screen_buffer->win.bottom = height - 1;
+        screen_buffer->attr       = FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED;
+        screen_buffer->popup_attr = 0xf5;
     }
 
     if (wine_rb_put( &screen_buffer_map, LongToPtr(id), &screen_buffer->entry ))

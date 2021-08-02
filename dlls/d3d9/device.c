@@ -2028,7 +2028,7 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
 
     wined3d_mutex_lock();
     rtv = surface_impl ? d3d9_surface_acquire_rendertarget_view(surface_impl) : NULL;
-    hr = wined3d_device_context_set_rendertarget_view(device->immediate_context, idx, rtv, TRUE);
+    hr = wined3d_device_context_set_rendertarget_views(device->immediate_context, idx, 1, &rtv, TRUE);
     d3d9_surface_release_rendertarget_view(surface_impl, rtv);
     if (SUCCEEDED(hr))
     {
@@ -3684,7 +3684,7 @@ static HRESULT WINAPI d3d9_device_GetVertexShaderConstantF(IDirect3DDevice9Ex *i
     if (!constants)
         return D3DERR_INVALIDCALL;
 
-    if (start_idx >= device->vs_uniform_count || count > device->vs_uniform_count - start_idx)
+    if (!wined3d_bound_range(start_idx, count, device->vs_uniform_count))
     {
         WARN("Trying to access %u constants, but d3d9 only supports %u\n",
              start_idx + count, device->vs_uniform_count);
@@ -4033,7 +4033,7 @@ static HRESULT WINAPI d3d9_device_GetPixelShaderConstantF(IDirect3DDevice9Ex *if
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= WINED3D_MAX_PS_CONSTS_F || count > WINED3D_MAX_PS_CONSTS_F - start_idx)
+    if (!constants || !wined3d_bound_range(start_idx, count, WINED3D_MAX_PS_CONSTS_F))
         return WINED3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();

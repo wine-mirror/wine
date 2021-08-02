@@ -101,6 +101,8 @@ struct audio_renderer
     HANDLE buffer_ready_event;
     MFWORKITEM_KEY buffer_ready_key;
     unsigned int frame_size;
+    unsigned int queued_frames;
+    unsigned int max_frames;
     struct list queue;
     enum stream_state state;
     unsigned int flags;
@@ -234,6 +236,7 @@ static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
     {
         release_pending_object(obj);
     }
+    renderer->queued_frames = 0;
     renderer->buffer_ready_key = 0;
     if (renderer->audio_client)
     {
@@ -1330,6 +1333,13 @@ static HRESULT WINAPI audio_renderer_stream_GetMediaTypeHandler(IMFStreamSink *i
 static HRESULT stream_queue_sample(struct audio_renderer *renderer, IMFSample *sample)
 {
     struct queued_object *object;
+    DWORD sample_len, sample_frames;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFSample_GetTotalLength(sample, &sample_len)))
+        return hr;
+
+    sample_frames = sample_len / renderer->frame_size;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1339,6 +1349,7 @@ static HRESULT stream_queue_sample(struct audio_renderer *renderer, IMFSample *s
     IMFSample_AddRef(object->u.sample.sample);
 
     list_add_tail(&renderer->queue, &object->entry);
+    renderer->queued_frames += sample_frames;
 
     return S_OK;
 }
@@ -1357,9 +1368,17 @@ static HRESULT WINAPI audio_renderer_stream_ProcessSample(IMFStreamSink *iface, 
         return MF_E_STREAMSINK_REMOVED;
 
     EnterCriticalSection(&renderer->cs);
+
     if (renderer->state == STREAM_STATE_RUNNING)
         hr = stream_queue_sample(renderer, sample);
     renderer->flags &= ~SAR_SAMPLE_REQUESTED;
+
+    if (renderer->queued_frames < renderer->max_frames && renderer->state == STREAM_STATE_RUNNING)
+    {
+        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+        renderer->flags |= SAR_SAMPLE_REQUESTED;
+    }
+
     LeaveCriticalSection(&renderer->cs);
 
     return hr;
@@ -1428,6 +1447,7 @@ static HRESULT WINAPI audio_renderer_stream_Flush(IMFStreamSink *iface)
             release_pending_object(obj);
         }
     }
+    renderer->queued_frames = 0;
     LeaveCriticalSection(&renderer->cs);
 
     return hr;
@@ -1573,6 +1593,12 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
     if (FAILED(hr = IAudioClient_SetEventHandle(renderer->audio_client, renderer->buffer_ready_event)))
     {
         WARN("Failed to set event handle, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IAudioClient_GetBufferSize(renderer->audio_client, &renderer->max_frames)))
+    {
+        WARN("Failed to get buffer size, hr %#x.\n", hr);
         return hr;
     }
 
@@ -1789,6 +1815,7 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
                                     IAudioRenderClient_ReleaseBuffer(renderer->audio_render_client, dst_frames, 0);
 
                                     obj->u.sample.frame_offset += dst_frames;
+                                    renderer->queued_frames -= dst_frames;
                                 }
 
                                 keep_sample = FAILED(hr) || src_frames > max_frames;
@@ -1886,6 +1913,11 @@ failed:
     IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
 
     return hr;
+}
+
+BOOL mf_is_sar_sink(IMFMediaSink *sink)
+{
+    return sink->lpVtbl == &audio_renderer_sink_vtbl;
 }
 
 static void sar_shutdown_object(void *user_context, IUnknown *obj)

@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipping);
@@ -51,7 +51,7 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
     rect.right  = right;
     rect.bottom = bottom;
     lp_to_dp( dc, (POINT *)&rect, 2 );
-    if (dc->layout & LAYOUT_RTL)
+    if (dc->attr->layout & LAYOUT_RTL)
     {
         int tmp = rect.left;
         rect.left = rect.right + 1;
@@ -84,7 +84,7 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
     RECT clip;
 
     if (!clip_device_rect( dc, dst, src )) return FALSE;
-    if (GetRgnBox( get_dc_region(dc), &clip )) return intersect_rect( dst, dst, &clip );
+    if (NtGdiGetRgnBox( get_dc_region(dc), &clip )) return intersect_rect( dst, dst, &clip );
     return TRUE;
 }
 
@@ -105,9 +105,9 @@ void update_dc_clipping( DC * dc )
 
     if (count > 1)
     {
-        if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( dc->region, regions[0], regions[1], RGN_AND );
-        if (count > 2) CombineRgn( dc->region, dc->region, regions[2], RGN_AND );
+        if (!dc->region) dc->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( dc->region, regions[0], regions[1], RGN_AND );
+        if (count > 2) NtGdiCombineRgn( dc->region, dc->region, regions[2], RGN_AND );
     }
     else  /* only one region, we don't need the total region */
     {
@@ -168,9 +168,9 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
     {
         HRGN mirrored = 0;
 
-        if (dc->layout & LAYOUT_RTL)
+        if (dc->attr->layout & LAYOUT_RTL)
         {
-            if (!(mirrored = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
+            if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
             mirror_region( mirrored, rgn, dc->vis_rect.right - dc->vis_rect.left );
             rgn = mirrored;
         }
@@ -179,9 +179,9 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
             create_default_clip_region( dc );
 
         if (mode == RGN_COPY)
-            ret = CombineRgn( dc->hClipRgn, rgn, 0, mode );
+            ret = NtGdiCombineRgn( dc->hClipRgn, rgn, 0, mode );
         else
-            ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, mode);
+            ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, mode );
 
         if (mirrored) DeleteObject( mirrored );
     }
@@ -198,7 +198,7 @@ INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, IN
 
     if (!(rgn = CreateRectRgnIndirect( &rect ))) return ERROR;
     if (!dc->hClipRgn) create_default_clip_region( dc );
-    ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
+    ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
     DeleteObject( rgn );
     if (ret != ERROR) update_dc_clipping( dc );
     return ret;
@@ -219,7 +219,7 @@ INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, 
     else
     {
         if (!(rgn = CreateRectRgnIndirect( &rect ))) return ERROR;
-        ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
+        ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
         DeleteObject( rgn );
     }
     if (ret != ERROR) update_dc_clipping( dc );
@@ -235,8 +235,8 @@ INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
     {
         x = MulDiv( x, dc->vport_ext.cx, dc->wnd_ext.cx );
         y = MulDiv( y, dc->vport_ext.cy, dc->wnd_ext.cy );
-        if (dc->layout & LAYOUT_RTL) x = -x;
-        ret = OffsetRgn( dc->hClipRgn, x, y );
+        if (dc->attr->layout & LAYOUT_RTL) x = -x;
+        ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
 	update_dc_clipping( dc );
     }
     return ret;
@@ -285,7 +285,7 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, 
            wine_dbgstr_rect(vis_rect), wine_dbgstr_rect(device_rect), surface );
 
     /* map region to DC coordinates */
-    OffsetRgn( hrgn, -vis_rect->left, -vis_rect->top );
+    NtGdiOffsetRgn( hrgn, -vis_rect->left, -vis_rect->top );
 
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     dc->dirty = 0;
@@ -380,7 +380,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     ret = (!get_dc_device_rect( dc, &visrect ) ||
            (pt.x >= visrect.left && pt.x < visrect.right &&
             pt.y >= visrect.top && pt.y < visrect.bottom));
-    if (ret && get_dc_region( dc )) ret = PtInRegion( get_dc_region( dc ), pt.x, pt.y );
+    if (ret && get_dc_region( dc )) ret = NtGdiPtInRegion( get_dc_region( dc ), pt.x, pt.y );
     release_dc_ptr( dc );
     return ret;
 }
@@ -403,7 +403,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 
     update_dc( dc );
     ret = (!get_dc_device_rect( dc, &visrect ) || intersect_rect( &visrect, &visrect, &tmpRect ));
-    if (ret && get_dc_region( dc )) ret = RectInRegion( get_dc_region( dc ), &tmpRect );
+    if (ret && get_dc_region( dc )) ret = NtGdiRectInRegion( get_dc_region( dc ), &tmpRect );
     release_dc_ptr( dc );
     return ret;
 }
@@ -422,7 +422,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     update_dc( dc );
     if (get_dc_region( dc ))
     {
-        ret = GetRgnBox( get_dc_region( dc ), rect );
+        ret = NtGdiGetRgnBox( get_dc_region( dc ), rect );
     }
     else
     {
@@ -432,7 +432,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 
     if (get_dc_device_rect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect )) ret = NULLREGION;
 
-    if (dc->layout & LAYOUT_RTL)
+    if (dc->attr->layout & LAYOUT_RTL)
     {
         int tmp = rect->left;
         rect->left = rect->right - 1;
@@ -456,10 +456,10 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
     {
       if( dc->hClipRgn )
       {
-          if( CombineRgn(hRgn, dc->hClipRgn, 0, RGN_COPY) != ERROR )
+          if (NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY ) != ERROR)
           {
               ret = 1;
-              if (dc->layout & LAYOUT_RTL)
+              if (dc->attr->layout & LAYOUT_RTL)
                   mirror_region( hRgn, hRgn, dc->vis_rect.right - dc->vis_rect.left );
           }
       }
@@ -480,10 +480,10 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 
     if (dc)
     {
-        if (dc->hMetaRgn && CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY ) != ERROR)
+        if (dc->hMetaRgn && NtGdiCombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY ) != ERROR)
         {
             ret = 1;
-            if (dc->layout & LAYOUT_RTL)
+            if (dc->attr->layout & LAYOUT_RTL)
                 mirror_region( hRgn, hRgn, dc->vis_rect.right - dc->vis_rect.left );
         }
         release_dc_ptr( dc );
@@ -516,30 +516,30 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
     switch (iCode)
     {
     case 1:
-        if (dc->hClipRgn) CombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
+        if (dc->hClipRgn) NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
         else ret = 0;
         break;
     case 2:
-        if (dc->hMetaRgn) CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
+        if (dc->hMetaRgn) NtGdiCombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
         else ret = 0;
         break;
     case 3:
-        if (dc->hClipRgn && dc->hMetaRgn) CombineRgn( hRgn, dc->hClipRgn, dc->hMetaRgn, RGN_AND );
-        else if (dc->hClipRgn) CombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
-        else if (dc->hMetaRgn) CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
+        if (dc->hClipRgn && dc->hMetaRgn) NtGdiCombineRgn( hRgn, dc->hClipRgn, dc->hMetaRgn, RGN_AND );
+        else if (dc->hClipRgn) NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
+        else if (dc->hMetaRgn) NtGdiCombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
         else ret = 0;
         break;
     case SYSRGN: /* == 4 */
         update_dc( dc );
         if (dc->hVisRgn)
         {
-            CombineRgn( hRgn, dc->hVisRgn, 0, RGN_COPY );
+            NtGdiCombineRgn( hRgn, dc->hVisRgn, 0, RGN_COPY );
             /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
-            if (!(GetVersion() & 0x80000000)) OffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
+            if (!(GetVersion() & 0x80000000)) NtGdiOffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
         }
         else if (!is_rect_empty( &dc->device_rect ))
-            SetRectRgn( hRgn, dc->device_rect.left, dc->device_rect.top,
-                        dc->device_rect.right, dc->device_rect.bottom );
+            NtGdiSetRectRgn( hRgn, dc->device_rect.left, dc->device_rect.top,
+                             dc->device_rect.right, dc->device_rect.bottom );
         else
             ret = 0;
         break;
@@ -569,7 +569,7 @@ INT WINAPI SetMetaRgn( HDC hdc )
         if (dc->hMetaRgn)
         {
             /* the intersection becomes the new meta region */
-            CombineRgn( dc->hMetaRgn, dc->hMetaRgn, dc->hClipRgn, RGN_AND );
+            NtGdiCombineRgn( dc->hMetaRgn, dc->hMetaRgn, dc->hClipRgn, RGN_AND );
             DeleteObject( dc->hClipRgn );
             dc->hClipRgn = 0;
         }
@@ -583,7 +583,7 @@ INT WINAPI SetMetaRgn( HDC hdc )
 
     /* Note: no need to call update_dc_clipping, the overall clip region hasn't changed */
 
-    ret = GetRgnBox( dc->hMetaRgn, &dummy );
+    ret = NtGdiGetRgnBox( dc->hMetaRgn, &dummy );
     release_dc_ptr( dc );
     return ret;
 }

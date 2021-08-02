@@ -2109,3 +2109,12 @@ BOOL WINAPI DllDebugObjectRPCHook(BOOL trace, /* ORPC_INIT_ARGS * */ void *args)
 
     return TRUE;
 }
+
+/******************************************************************************
+ *            CoDecodeProxy    (combase.@)
+ */
+HRESULT WINAPI CoDecodeProxy(DWORD client_pid, UINT64 proxy_addr, ServerInformation *server_info)
+{
+    FIXME("%x %s %p\n", client_pid, wine_dbgstr_longlong(proxy_addr), server_info);
+    return E_NOTIMPL;
+}

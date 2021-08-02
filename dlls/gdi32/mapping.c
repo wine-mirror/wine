@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
@@ -117,14 +117,14 @@ BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT 
     if (size)
         *size = dc->vport_ext;
 
-    if (dc->MapMode != MM_ISOTROPIC && dc->MapMode != MM_ANISOTROPIC) return TRUE;
+    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
     if (!x_num || !x_denom || !y_num || !y_denom) return FALSE;
 
     dc->vport_ext.cx = (dc->vport_ext.cx * x_num) / x_denom;
     dc->vport_ext.cy = (dc->vport_ext.cy * y_num) / y_denom;
     if (dc->vport_ext.cx == 0) dc->vport_ext.cx = 1;
     if (dc->vport_ext.cy == 0) dc->vport_ext.cy = 1;
-    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
     return TRUE;
 }
@@ -136,14 +136,14 @@ BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_
     if (size)
         *size = dc->wnd_ext;
 
-    if (dc->MapMode != MM_ISOTROPIC && dc->MapMode != MM_ANISOTROPIC) return TRUE;
+    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
     if (!x_num || !x_denom || !y_num || !y_denom) return FALSE;
 
     dc->wnd_ext.cx = (dc->wnd_ext.cx * x_num) / x_denom;
     dc->wnd_ext.cy = (dc->wnd_ext.cy * y_num) / y_denom;
     if (dc->wnd_ext.cx == 0) dc->wnd_ext.cx = 1;
     if (dc->wnd_ext.cy == 0) dc->wnd_ext.cy = 1;
-    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
     return TRUE;
 }
@@ -151,10 +151,10 @@ BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_
 INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
 {
     DC *dc = get_nulldrv_dc( dev );
-    INT ret = dc->MapMode;
+    INT ret = dc->attr->map_mode;
     SIZE virtual_size, virtual_res;
 
-    if (mode == dc->MapMode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC)) return ret;
+    if (mode == dc->attr->map_mode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC)) return ret;
 
     virtual_size = get_dc_virtual_size( dc );
     virtual_res = get_dc_virtual_res( dc );
@@ -203,7 +203,7 @@ INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
         return 0;
     }
     /* RTL layout is always MM_ANISOTROPIC */
-    if (!(dc->layout & LAYOUT_RTL)) dc->MapMode = mode;
+    if (!(dc->attr->layout & LAYOUT_RTL)) dc->attr->map_mode = mode;
     DC_UpdateXforms( dc );
     return ret;
 }
@@ -215,11 +215,11 @@ BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     if (size)
         *size = dc->vport_ext;
 
-    if (dc->MapMode != MM_ISOTROPIC && dc->MapMode != MM_ANISOTROPIC) return TRUE;
+    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
     if (!cx || !cy) return FALSE;
     dc->vport_ext.cx = cx;
     dc->vport_ext.cy = cy;
-    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
     return TRUE;
 }
@@ -244,14 +244,14 @@ BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     if (size)
         *size = dc->wnd_ext;
 
-    if (dc->MapMode != MM_ISOTROPIC && dc->MapMode != MM_ANISOTROPIC) return TRUE;
+    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
     if (!cx || !cy) return FALSE;
     dc->wnd_ext.cx = cx;
     dc->wnd_ext.cy = cy;
     /* The API docs say that you should call SetWindowExtEx before
        SetViewportExtEx. This advice does not imply that Windows
        doesn't ensure the isotropic mapping after SetWindowExtEx! */
-    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
     return TRUE;
 }
@@ -561,7 +561,7 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
     if ((dc = get_dc_ptr( hdc )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pModifyWorldTransform );
-        if (dc->GraphicsMode == GM_ADVANCED)
+        if (dc->attr->graphics_mode == GM_ADVANCED)
             ret = physdev->funcs->pModifyWorldTransform( physdev, xform, mode );
         release_dc_ptr( dc );
     }
@@ -587,7 +587,7 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
     if ((dc = get_dc_ptr( hdc )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetWorldTransform );
-        if (dc->GraphicsMode == GM_ADVANCED)
+        if (dc->attr->graphics_mode == GM_ADVANCED)
             ret = physdev->funcs->pSetWorldTransform( physdev, xform );
         release_dc_ptr( dc );
     }

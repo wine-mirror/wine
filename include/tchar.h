@@ -154,6 +154,7 @@ extern "C" {
 #define _tcsupr       WINE_tchar_routine(_strupr,         _mbsupr,     _wcsupr)
 #define _tcsupr_s     WINE_tchar_routine(_strupr_s,       _mbsupr_s,   _wcsupr_s)
 #define _tcsxfrm      WINE_tchar_routine(strxfrm,         strxfrm,     wcsxfrm)
+#define _tcsxfrm_l    WINE_tchar_routine(_strxfrm_l,      _strxfrm_l,  _wcsxfrm_l)
 #define _tctime       WINE_tchar_routine(ctime,           ctime,       _wctime)
 #define _tenviron     WINE_tchar_routine(_environ,        _environ,    _wenviron)
 #define _texecl       WINE_tchar_routine(execl,           _execl,      _wexecl)

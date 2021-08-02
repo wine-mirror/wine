@@ -21,6 +21,8 @@
 #ifndef _MOUNTMGR_
 #define _MOUNTMGR_
 
+#include "ifdef.h"
+
 #define MOUNTMGRCONTROLTYPE  ((ULONG)'m')
 #define MOUNTDEVCONTROLTYPE  ((ULONG)'M')
 
@@ -119,7 +121,7 @@ struct mountmgr_dhcp_request_params
 {
     ULONG size;
     ULONG count;
-    WCHAR adapter[IF_MAX_STRING_SIZE + 1];
+    NET_LUID adapter;
     struct mountmgr_dhcp_request_param params[1];
 };
 

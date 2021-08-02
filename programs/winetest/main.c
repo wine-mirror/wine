@@ -811,6 +811,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         report (R_STEP, "Running: %s:%s", test->name, subtest);
         xprintf ("%s:%s start %s\n", test->name, subtest, file);
         status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
+        if (status == -2) status = -GetLastError();
         heap_free (cmd);
         xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
         if (status) failures++;
@@ -1023,6 +1024,7 @@ run_tests (char *logname, char *outdir)
     DWORD strsize;
     SECURITY_ATTRIBUTES sa;
     char tmppath[MAX_PATH], tempdir[MAX_PATH+4];
+    BOOL newdir;
     DWORD needed;
     HMODULE kernel32;
 
@@ -1063,22 +1065,26 @@ run_tests (char *logname, char *outdir)
     if (logfile == INVALID_HANDLE_VALUE)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
 
-    /* try stable path for ZoneAlarm */
-    if (!outdir) {
-        strcpy( tempdir, tmppath );
-        strcat( tempdir, "wct" );
-
-        if (!CreateDirectoryA( tempdir, NULL ))
-        {
-            if (!GetTempFileNameA( tmppath, "wct", 0, tempdir ))
-                report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
-            DeleteFileA( tempdir );
-            if (!CreateDirectoryA( tempdir, NULL ))
-                report (R_FATAL, "Could not create directory: %s", tempdir);
-        }
+    if (outdir)
+    {
+        /* Get a full path so it is still valid after a chdir */
+        GetFullPathNameA( outdir, ARRAY_SIZE(tempdir), tempdir, NULL );
     }
     else
-        strcpy( tempdir, outdir);
+    {
+        strcpy( tempdir, tmppath );
+        strcat( tempdir, "wct" ); /* try stable path for ZoneAlarm */
+    }
+    newdir = CreateDirectoryA( tempdir, NULL );
+    if (!newdir && !outdir)
+    {
+        if (!GetTempFileNameA( tmppath, "wct", 0, tempdir ))
+            report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
+        DeleteFileA( tempdir );
+        newdir = CreateDirectoryA( tempdir, NULL );
+    }
+    if (!newdir && (!outdir || GetLastError() != ERROR_ALREADY_EXISTS))
+        report (R_FATAL, "Could not create directory %s (%d)", tempdir, GetLastError());
 
     report (R_DIR, tempdir);
 
@@ -1171,7 +1177,7 @@ run_tests (char *logname, char *outdir)
     report (R_STATUS, "Cleaning up - %u failures", failures);
     CloseHandle( logfile );
     logfile = 0;
-    if (!outdir)
+    if (newdir)
         remove_dir (tempdir);
     heap_free(wine_tests);
     heap_free(curpath);

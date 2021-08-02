@@ -87,13 +87,6 @@ DWORD getInterfaceIndexByName(const char *name, IF_INDEX *index) DECLSPEC_HIDDEN
 DWORD getInterfacePhysicalByIndex(IF_INDEX index, PDWORD len, PBYTE addr,
  PDWORD type) DECLSPEC_HIDDEN;
 
-/* Fills in the MIB_IFROW by name.  Doesn't fill in interface statistics,
- * see ipstats.h for that.
- * Returns ERROR_INVALID_PARAMETER if name is NULL, ERROR_INVALID_DATA
- * if name isn't valid, and NO_ERROR otherwise.
- */
-DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry) DECLSPEC_HIDDEN;
-
 DWORD getNumIPAddresses(void) DECLSPEC_HIDDEN;
 
 /* Gets the configured IP addresses for the system, and sets *ppIpAddrTable to

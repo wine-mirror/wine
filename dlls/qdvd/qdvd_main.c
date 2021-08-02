@@ -21,7 +21,7 @@
 #include "qdvd_private.h"
 #include "rpcproxy.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(qdvd);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 struct class_factory
 {

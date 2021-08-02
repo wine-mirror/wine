@@ -6798,6 +6798,12 @@ static void test_sample_allocator(void)
         D3D11_USAGE_STAGING,
         D3D11_USAGE_STAGING + 1,
     };
+    static const unsigned int sharing[] =
+    {
+        D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+        D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+        D3D11_RESOURCE_MISC_SHARED,
+    };
 
     if (!pMFCreateVideoSampleAllocatorEx)
     {
@@ -7145,6 +7151,67 @@ todo_wine
                     desc.CPUAccessFlags);
         }
         ok(desc.MiscFlags == 0, "Unexpected misc flags %#x.\n", desc.MiscFlags);
+
+        ID3D11Texture2D_Release(texture);
+        IMFDXGIBuffer_Release(dxgi_buffer);
+        IMFMediaBuffer_Release(buffer);
+
+        IMFSample_Release(sample);
+
+        IMFVideoSampleAllocatorEx_Release(allocatorex);
+    }
+
+    /* MF_SA_D3D11_SHARED, MF_SA_D3D11_SHARED_WITHOUT_MUTEX */
+    for (i = 0; i < ARRAY_SIZE(sharing); ++i)
+    {
+        hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocatorEx, (void **)&allocatorex);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFVideoSampleAllocatorEx_SetDirectXManager(allocatorex, (IUnknown *)manager);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFAttributes_DeleteAllItems(attributes);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_USAGE, D3D11_USAGE_DEFAULT);
+        ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+        if (sharing[i] & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX)
+        {
+            hr = IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_SHARED, TRUE);
+            ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+        }
+
+        if (sharing[i] & D3D11_RESOURCE_MISC_SHARED)
+        {
+            hr = IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_SHARED_WITHOUT_MUTEX, TRUE);
+            ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+        }
+
+        hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, video_type);
+        if (sharing[i] == (D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED))
+        {
+        todo_wine
+            ok(hr == E_INVALIDARG, "%u: Unexpected hr %#x.\n", i, hr);
+            IMFVideoSampleAllocatorEx_Release(allocatorex);
+            continue;
+        }
+        ok(hr == S_OK, "%u: Unexpected hr %#x.\n", i, hr);
+
+        hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+        ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+        hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)&texture);
+        ok(hr == S_OK, "Failed to get resource, hr %#x.\n", hr);
+
+        ID3D11Texture2D_GetDesc(texture, &desc);
+        ok(desc.MiscFlags == sharing[i], "%u: unexpected misc flags %#x.\n", i, desc.MiscFlags);
 
         ID3D11Texture2D_Release(texture);
         IMFDXGIBuffer_Release(dxgi_buffer);

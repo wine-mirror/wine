@@ -3166,7 +3166,7 @@ static void test_keyboard_layout_name(void)
             swprintf( tmpklid, KL_NAMELENGTH, L"%08X", layouts_preload[j] );
             if (!wcscmp( tmpklid, klid )) break;
         }
-        ok(j < len, "Could not find keyboard layout %p in preload list\n", layout);
+        ok(j < len, "Could not find keyboard layout %s in preload list\n", wine_dbgstr_w(klid));
 
         if (id & 0x80000000)
         {

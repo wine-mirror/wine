@@ -40,14 +40,24 @@
 #include "wingdi.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "ntgdi_private.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
+
+static CRITICAL_SECTION enhmetafile_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &enhmetafile_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": enhmetafile_cs") }
+};
+static CRITICAL_SECTION enhmetafile_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 typedef struct
 {
-    struct gdi_obj_header obj;
     ENHMETAHEADER        *emh;
     BOOL                  on_disk;   /* true if metafile is on disk */
 } ENHMETAFILEOBJ;
@@ -277,7 +287,9 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on
     metaObj->emh = emh;
     metaObj->on_disk = on_disk;
 
-    if (!(hmf = alloc_gdi_handle( &metaObj->obj, OBJ_ENHMETAFILE, NULL )))
+    if ((hmf = NtGdiCreateClientObj( NTGDI_OBJ_ENHMETAFILE )))
+        set_gdi_client_ptr( hmf, metaObj );
+    else
         HeapFree( GetProcessHeap(), 0, metaObj );
     return hmf;
 }
@@ -287,15 +299,23 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on
  */
 static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 {
-    ENHMETAFILEOBJ *metaObj = free_gdi_handle( hmf );
+    ENHMETAFILEOBJ *metafile;
 
-    if(!metaObj) return FALSE;
+    EnterCriticalSection( &enhmetafile_cs );
+    if (!(metafile = get_gdi_client_ptr( hmf, NTGDI_OBJ_ENHMETAFILE )) ||
+        !NtGdiDeleteClientObj( hmf ))
+    {
+        LeaveCriticalSection( &enhmetafile_cs );
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
 
-    if(metaObj->on_disk)
-        UnmapViewOfFile( metaObj->emh );
+    if (metafile->on_disk)
+        UnmapViewOfFile( metafile->emh );
     else
-        HeapFree( GetProcessHeap(), 0, metaObj->emh );
-    HeapFree( GetProcessHeap(), 0, metaObj );
+        HeapFree( GetProcessHeap(), 0, metafile->emh );
+    HeapFree( GetProcessHeap(), 0, metafile );
+    LeaveCriticalSection( &enhmetafile_cs );
     return TRUE;
 }
 
@@ -307,13 +327,16 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
 {
     ENHMETAHEADER *ret = NULL;
-    ENHMETAFILEOBJ *metaObj = GDI_GetObjPtr( hmf, OBJ_ENHMETAFILE );
-    TRACE("hmf %p -> enhmetaObj %p\n", hmf, metaObj);
-    if (metaObj)
+    ENHMETAFILEOBJ *metafile;
+
+    EnterCriticalSection( &enhmetafile_cs );
+    if ((metafile = get_gdi_client_ptr( hmf, NTGDI_OBJ_ENHMETAFILE )))
     {
-        ret = metaObj->emh;
-        GDI_ReleaseObj( hmf );
+        TRACE( "hmf %p -> enhmetafile %p\n", hmf, metafile );
+        ret = metafile->emh;
     }
+    else SetLastError( ERROR_INVALID_HANDLE );
+    LeaveCriticalSection( &enhmetafile_cs );
     return ret;
 }
 
@@ -1893,7 +1916,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             PatBlt(hdc, pBitBlt->xDest, pBitBlt->yDest, pBitBlt->cxDest, pBitBlt->cyDest,
                    pBitBlt->dwRop);
         } else { /* BitBlt */
-            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
             HBRUSH hBrush, hBrushOld;
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pBitBlt->offBmiSrc);
@@ -1936,7 +1959,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             PatBlt(hdc, pStretchBlt->xDest, pStretchBlt->yDest, pStretchBlt->cxDest, pStretchBlt->cyDest,
                    pStretchBlt->dwRop);
         } else { /* StretchBlt */
-            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
             HBRUSH hBrush, hBrushOld;
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pStretchBlt->offBmiSrc);
@@ -1979,7 +2002,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if(pAlphaBlend->offBmiSrc == 0) {
             FIXME("EMR_ALPHABLEND: offBmiSrc == 0\n");
         } else {
-            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pAlphaBlend->offBmiSrc);
             void *bits;
@@ -2005,7 +2028,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_MASKBLT:
     {
 	const EMRMASKBLT *pMaskBlt = (const EMRMASKBLT *)mr;
-	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
 	const BITMAPINFO *pbi;
@@ -2053,7 +2076,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_PLGBLT:
     {
 	const EMRPLGBLT *pPlgBlt = (const EMRPLGBLT *)mr;
-	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
 	const BITMAPINFO *pbi;
@@ -2413,7 +2436,7 @@ BOOL WINAPI EnumEnhMetaFile(
 	hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
 	hFont = GetCurrentObject(hdc, OBJ_FONT);
 
-        hRgn = CreateRectRgn(0, 0, 0, 0);
+        hRgn = NtGdiCreateRectRgn(0, 0, 0, 0);
         if (!GetClipRgn(hdc, hRgn))
         {
             DeleteObject(hRgn);

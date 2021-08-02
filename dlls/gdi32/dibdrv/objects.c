@@ -21,7 +21,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "dibdrv.h"
 
 #include "wine/debug.h"
@@ -193,8 +193,8 @@ DWORD get_pixel_color( DC *dc, const dib_info *dib, COLORREF color, BOOL mono_fi
     if(rgbquad_equal(&fg_quad, color_table + 1))
         return 1;
 
-    pixel = get_pixel_color( dc, dib, dc->backgroundColor, FALSE );
-    if (color == dc->backgroundColor) return pixel;
+    pixel = get_pixel_color( dc, dib, dc->attr->background_color, FALSE );
+    if (color == dc->attr->background_color) return pixel;
     else return !pixel;
 }
 
@@ -219,8 +219,8 @@ static inline void get_color_masks( DC *dc, const dib_info *dib, UINT rop, COLOR
         return;
     }
 
-    if (dib->bit_count != 1) color = get_pixel_color( dc, dib, dc->backgroundColor, FALSE );
-    else if (colorref != dc->backgroundColor) color = !color;
+    if (dib->bit_count != 1) color = get_pixel_color( dc, dib, dc->attr->background_color, FALSE );
+    else if (colorref != dc->attr->background_color) color = !color;
 
     calc_rop_masks( rop, color, bg_mask );
 }
@@ -819,7 +819,7 @@ static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clos
         DWORD color, and, xor;
 
         color = get_pixel_color( dc, &pdev->dib, pdev->pen_brush.colorref, TRUE );
-        calc_and_xor_masks( dc->ROPmode, color, &and, &xor );
+        calc_and_xor_masks( dc->attr->rop_mode, color, &and, &xor );
 
         for (i = 0; i < num - 1; i++)
             if (!solid_pen_line( pdev, pts + i, pts + i + 1, and, xor ))
@@ -1229,8 +1229,8 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
     }
     else
     {
-        get_color_masks( dc, &pdev->dib, dc->ROPmode, pdev->pen_brush.colorref,
-                         pdev->pen_is_ext ? TRANSPARENT : dc->backgroundMode,
+        get_color_masks( dc, &pdev->dib, dc->attr->rop_mode, pdev->pen_brush.colorref,
+                         pdev->pen_is_ext ? TRANSPARENT : dc->attr->background_mode,
                          &pdev->dash_masks[1], &pdev->dash_masks[0] );
 
         for (i = 0; i < num - 1; i++)
@@ -1259,9 +1259,9 @@ static void add_cap( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const PO
     default: FIXME( "Unknown end cap %x\n", pdev->pen_endcap );
         /* fall through */
     case PS_ENDCAP_ROUND:
-        OffsetRgn( round_cap, pt->x, pt->y );
-        CombineRgn( region, region, round_cap, RGN_OR );
-        OffsetRgn( round_cap, -pt->x, -pt->y );
+        NtGdiOffsetRgn( round_cap, pt->x, pt->y );
+        NtGdiCombineRgn( region, region, round_cap, RGN_OR );
+        NtGdiOffsetRgn( round_cap, -pt->x, -pt->y );
         return;
 
     case PS_ENDCAP_SQUARE: /* already been handled */
@@ -1316,7 +1316,7 @@ static HRGN create_miter_region( dibdrv_physdev *pdev, const POINT *pt,
     y = a * face_1->dy - b * face_2->dy;
 
     if (((x - pt->x) * (x - pt->x) + (y - pt->y) * (y - pt->y)) * 4 >
-        dc->miterLimit * dc->miterLimit * pdev->pen_width * pdev->pen_width)
+        dc->attr->miter_limit * dc->attr->miter_limit * pdev->pen_width * pdev->pen_width)
         return 0;
 
     pts[0] = face_2->start;
@@ -1341,13 +1341,13 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
     default: FIXME( "Unknown line join %x\n", pdev->pen_join );
         /* fall through */
     case PS_JOIN_ROUND:
-        GetRgnBox( round_cap, &rect );
+        NtGdiGetRgnBox( round_cap, &rect );
         offset_rect( &rect, pt->x, pt->y );
         if (clip_rect_to_dib( &pdev->dib, &rect ))
         {
-            OffsetRgn( round_cap, pt->x, pt->y );
-            CombineRgn( region, region, round_cap, RGN_OR );
-            OffsetRgn( round_cap, -pt->x, -pt->y );
+            NtGdiOffsetRgn( round_cap, pt->x, pt->y );
+            NtGdiCombineRgn( region, region, round_cap, RGN_OR );
+            NtGdiOffsetRgn( round_cap, -pt->x, -pt->y );
         }
         return;
 
@@ -1364,9 +1364,9 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
         break;
     }
 
-    GetRgnBox( join, &rect );
+    NtGdiGetRgnBox( join, &rect );
     if (clip_rect_to_dib( &pdev->dib, &rect ))
-        CombineRgn( region, region, join, RGN_OR );
+        NtGdiCombineRgn( region, region, join, RGN_OR );
     DeleteObject( join );
     return;
 }
@@ -1498,7 +1498,7 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
         if (clip_rect_to_dib( &pdev->dib, &clip_rect ))
         {
             segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
-            CombineRgn( total, total, segment, RGN_OR );
+            NtGdiCombineRgn( total, total, segment, RGN_OR );
             DeleteObject( segment );
         }
 
@@ -1575,8 +1575,8 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     while (num > 2 && pts[num - 1].x == pts[num - 2].x && pts[num - 1].y == pts[num - 2].y) num--;
 
     if (pdev->pen_join == PS_JOIN_ROUND || pdev->pen_endcap == PS_ENDCAP_ROUND)
-        round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
-                                       (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1 );
+        round_cap = NtGdiCreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
+                                            (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1 );
 
     if (close)
         wide_line_segments( pdev, num, pts, TRUE, 0, num, &pts[0], &pts[0], round_cap, total );
@@ -1601,8 +1601,8 @@ static BOOL dashed_wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOO
     while (num > 2 && pts[num - 1].x == pts[num - 2].x && pts[num - 1].y == pts[num - 2].y) num--;
 
     if (pdev->pen_join == PS_JOIN_ROUND || pdev->pen_endcap == PS_ENDCAP_ROUND)
-        round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
-                                       (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1);
+        round_cap = NtGdiCreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
+                                            (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1 );
 
     start = 0;
     cur_len = 0;
@@ -1891,12 +1891,12 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
 
     if (!init_hatch_brush( pdev, brush )) return FALSE;
 
-    get_color_masks( dc, &pdev->dib, brush->rop, brush->colorref, dc->backgroundMode,
+    get_color_masks( dc, &pdev->dib, brush->rop, brush->colorref, dc->attr->background_mode,
                      &fg_mask, &bg_mask );
 
     if (brush->colorref & (1 << 24))  /* PALETTEINDEX */
         *needs_reselect = TRUE;
-    if (dc->backgroundMode != TRANSPARENT && (dc->backgroundColor & (1 << 24)))
+    if (dc->attr->background_mode != TRANSPARENT && (dc->attr->background_color & (1 << 24)))
         *needs_reselect = TRUE;
 
     brush->dib.funcs->create_rop_masks( &brush->dib, hatches[brush->hatch],
@@ -1981,13 +1981,13 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         BOOL got_pixel;
         COLORREF color;
 
-        color = make_rgb_colorref( dc, &pdev->dib, dc->textColor, &got_pixel, &pixel );
+        color = make_rgb_colorref( dc, &pdev->dib, dc->attr->text_color, &got_pixel, &pixel );
         color_table[0].rgbRed      = GetRValue( color );
         color_table[0].rgbGreen    = GetGValue( color );
         color_table[0].rgbBlue     = GetBValue( color );
         color_table[0].rgbReserved = 0;
 
-        color = make_rgb_colorref( dc, &pdev->dib, dc->backgroundColor, &got_pixel, &pixel );
+        color = make_rgb_colorref( dc, &pdev->dib, dc->attr->background_color, &got_pixel, &pixel );
         color_table[1].rgbRed      = GetRValue( color );
         color_table[1].rgbGreen    = GetGValue( color );
         color_table[1].rgbBlue     = GetBValue( color );
@@ -2137,7 +2137,7 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_
     GetObjectW( hbrush, sizeof(logbrush), &logbrush );
 
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = dc->dcBrushColor;
+        logbrush.lbColor = dc->attr->brush_color;
 
     select_brush( pdev, &pdev->brush, &logbrush, pattern, TRUE );
     return hbrush;
@@ -2189,7 +2189,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
     pdev->pen_width  = get_pen_device_width( dc, logpen.lopnWidth.x );
 
     if (hpen == GetStockObject( DC_PEN ))
-        logbrush.lbColor = dc->dcPenColor;
+        logbrush.lbColor = dc->attr->pen_color;
 
     set_dash_pattern( &pdev->pen_pattern, 0, NULL );
     select_brush( pdev, &pdev->pen_brush, &logbrush, pattern, dither );

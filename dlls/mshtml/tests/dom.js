@@ -508,3 +508,101 @@ sync_test("hasAttribute", function() {
     r = elem.hasAttribute("attr");
     ok(r === false, "hasAttribute(attr) returned " + r);
 });
+
+sync_test("classList", function() {
+    var elem = document.createElement("div");
+    var classList = elem.classList;
+
+    classList.add("a");
+    ok(elem.className === "a", "Expected className 'a', got " + elem.className);
+
+    classList.add("b");
+    ok(elem.className === "a b", "Expected className 'a b', got " + elem.className);
+
+    classList.add("c");
+    ok(elem.className === "a b c", "Expected className 'a b c', got " + elem.className);
+
+    classList.add(4);
+    ok(elem.className === "a b c 4", "Expected className 'a b c 4', got " + elem.className);
+
+    classList.add("c");
+    ok(elem.className === "a b c 4", "(2) Expected className 'a b c 4', got " + elem.className);
+
+    var exception = false
+
+    try
+    {
+        classList.add();
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception && elem.className === "a b c 4", "Expected exception, className 'a b c 4', got exception "
+            + exception + ", className" + elem.className);
+
+    exception = false
+    try
+    {
+        classList.add("");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.add(\"\")");
+
+    exception = false
+    try
+    {
+        classList.add("e f");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.add(\"e f\")");
+
+    classList.remove("e");
+    ok(elem.className === "a b c 4", "remove: expected className 'a b c 4', got " + elem.className);
+
+    exception = false
+    try
+    {
+        classList.remove("e f");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "remove: expected exception for classList.remove(\"e f\")");
+
+    exception = false
+    try
+    {
+        classList.remove("");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "remove: expected exception for classList.remove(\"\")");
+
+    classList.remove("d");
+    ok(elem.className === "a b c 4", "remove: expected className 'a b c 4', got " + elem.className);
+
+    classList.remove("c");
+    ok(elem.className === "a b 4", "remove: expected className 'a b 4', got " + elem.className);
+
+    classList.remove(4);
+    ok(elem.className === "a b", "remove: expected className 'a b', got " + elem.className);
+
+    classList.remove('a');
+    ok(elem.className === "b", "remove: expected className 'b', got " + elem.className);
+
+    classList.remove("a");
+    ok(elem.className === "b", "remove (2): expected className 'b', got " + elem.className);
+
+    classList.remove("b");
+    ok(elem.className === "", "remove: expected className '', got " + elem.className);
+});

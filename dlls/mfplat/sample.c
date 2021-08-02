@@ -74,6 +74,7 @@ struct sample_allocator
         DXGI_FORMAT dxgi_format;
         unsigned int usage;
         unsigned int bindflags;
+        unsigned int miscflags;
         unsigned int buffer_count;
     } frame_desc;
 
@@ -1352,6 +1353,7 @@ static HRESULT sample_allocator_allocate_sample(struct sample_allocator *allocat
                 desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
             else if (desc.Usage == D3D11_USAGE_STAGING)
                 desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+            desc.MiscFlags = allocator->frame_desc.miscflags;
 
             if (SUCCEEDED(hr = ID3D11Device_CreateTexture2D(service->d3d11_device, &desc, NULL, &texture)))
             {
@@ -1380,7 +1382,7 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
 {
     struct surface_service service;
     DXGI_FORMAT dxgi_format;
-    unsigned int i;
+    unsigned int i, value;
     GUID major, subtype;
     UINT64 frame_size;
     IMFSample *sample;
@@ -1415,6 +1417,7 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     dxgi_format = MFMapDX9FormatToDXGIFormat(subtype.Data1);
 
     allocator->frame_desc.bindflags = 0;
+    allocator->frame_desc.miscflags = 0;
     allocator->frame_desc.usage = D3D11_USAGE_DEFAULT;
 
     if (dxgi_format == DXGI_FORMAT_B8G8R8A8_UNORM ||
@@ -1428,7 +1431,13 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     }
 
     if (attributes)
+    {
         IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_BINDFLAGS, &allocator->frame_desc.bindflags);
+        if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_SHARED, &value)) && value)
+            allocator->frame_desc.miscflags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+        if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_SHARED_WITHOUT_MUTEX, &value)) && value)
+            allocator->frame_desc.miscflags |= D3D11_RESOURCE_MISC_SHARED;
+    }
 
     sample_allocator_set_media_type(allocator, media_type);
     sample_allocator_set_attributes(allocator, attributes);

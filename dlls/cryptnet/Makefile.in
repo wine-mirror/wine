@@ -1,6 +1,6 @@
 MODULE    = cryptnet.dll
 IMPORTLIB = cryptnet
-IMPORTS   = crypt32
+IMPORTS   = crypt32 shell32 ole32
 DELAYIMPORTS = wininet
 
 EXTRADLLFLAGS = -mno-cygwin

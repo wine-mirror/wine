@@ -20,7 +20,7 @@
 
 #include "strmbase_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 /* The following quality-of-service code is based on GstBaseSink QoS code, which
  * is covered by the following copyright information:

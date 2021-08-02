@@ -379,11 +379,16 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
     {
         IO_STATUS_BLOCK *iosb = wine_server_get_ptr( call->async_io.sb );
         struct async_fileio *user = wine_server_get_ptr( call->async_io.user );
+        ULONG_PTR info = 0;
 
         result->type = call->type;
-        result->async_io.status = user->callback( user, iosb, call->async_io.status );
+        result->async_io.status = user->callback( user, &info, call->async_io.status );
         if (result->async_io.status != STATUS_PENDING)
-            result->async_io.total = iosb->Information;
+        {
+            result->async_io.total = info;
+            iosb->Status = result->async_io.status;
+            iosb->Information = info;
+        }
         break;
     }
     case APC_VIRTUAL_ALLOC:
@@ -603,6 +608,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     apc_call_t call;
     apc_result_t result;
     sigset_t old_set;
+    int signaled;
 
     memset( &result, 0, sizeof(result) );
 
@@ -628,6 +634,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 }
                 if (context) wine_server_set_reply( req, context, 2 * sizeof(*context) );
                 ret = server_call_unlocked( req );
+                signaled    = reply->signaled;
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
             }
@@ -646,7 +653,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             mutex_unlock( mutex );
             mutex = NULL;
         }
-        if (ret != STATUS_PENDING) break;
+        if (signaled) break;
 
         ret = wait_select_reply( &cookie );
     }
@@ -1660,6 +1667,8 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
     sigset_t sigset;
     NTSTATUS ret;
     int fd = -1;
+
+    if (dest) *dest = 0;
 
     if ((options & DUPLICATE_CLOSE_SOURCE) && source_process != NtCurrentProcess())
     {

@@ -20,7 +20,7 @@
 
 #include <assert.h>
 
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "dibdrv.h"
 
 #include "wine/wgl.h"
@@ -356,7 +356,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
 static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP );
     dib_info dib;
 
     TRACE("(%p, %p)\n", dev, bitmap);
@@ -535,7 +535,7 @@ static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
     if (!context) return osmesa_funcs->make_current( NULL, NULL, 0, 0, 0, 0 );
 
     bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
-    bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+    bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP );
     if (!bmp) return FALSE;
 
     if (init_dib_info_from_bitmapobj( &dib, bmp ))
@@ -696,8 +696,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pPolyDraw */
     dibdrv_PolyPolygon,                 /* pPolyPolygon */
     dibdrv_PolyPolyline,                /* pPolyPolyline */
-    dibdrv_Polygon,                     /* pPolygon */
-    dibdrv_Polyline,                    /* pPolyline */
     NULL,                               /* pPolylineTo */
     dibdrv_PutImage,                    /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
@@ -706,7 +704,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     dibdrv_RoundRect,                   /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     dibdrv_SelectBitmap,                /* pSelectBitmap */
@@ -715,9 +712,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SelectFont,                  /* pSelectFont */
     NULL,                               /* pSelectPalette */
     dibdrv_SelectPen,                   /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
     dibdrv_SetBoundsRect,               /* pSetBoundsRect */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
@@ -728,11 +723,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     dibdrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
-    NULL,                               /* pSetTextAlign */
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */
@@ -1102,30 +1092,6 @@ static BOOL CDECL windrv_PolyPolyline( PHYSDEV dev, const POINT *points, const D
     return ret;
 }
 
-static BOOL CDECL windrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
-{
-    struct windrv_physdev *physdev = get_windrv_physdev( dev );
-    BOOL ret;
-
-    lock_surface( physdev );
-    dev = GET_NEXT_PHYSDEV( dev, pPolygon );
-    ret = dev->funcs->pPolygon( dev, points, count );
-    unlock_surface( physdev );
-    return ret;
-}
-
-static BOOL CDECL windrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
-{
-    struct windrv_physdev *physdev = get_windrv_physdev( dev );
-    BOOL ret;
-
-    lock_surface( physdev );
-    dev = GET_NEXT_PHYSDEV( dev, pPolyline );
-    ret = dev->funcs->pPolyline( dev, points, count );
-    unlock_surface( physdev );
-    return ret;
-}
-
 static DWORD CDECL windrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                     const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                     struct bitblt_coords *dst, DWORD rop )
@@ -1321,8 +1287,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pPolyDraw */
     windrv_PolyPolygon,                 /* pPolyPolygon */
     windrv_PolyPolyline,                /* pPolyPolyline */
-    windrv_Polygon,                     /* pPolygon */
-    windrv_Polyline,                    /* pPolyline */
     NULL,                               /* pPolylineTo */
     windrv_PutImage,                    /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
@@ -1331,7 +1295,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     windrv_RoundRect,                   /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */
@@ -1340,9 +1303,7 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
     windrv_SetBoundsRect,               /* pSetBoundsRect */
     NULL,                               /* pSetDCBrushColor */
     NULL,                               /* pSetDCPenColor */
@@ -1353,11 +1314,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     windrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
-    NULL,                               /* pSetTextAlign */
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */

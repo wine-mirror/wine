@@ -37,9 +37,6 @@ C_SRCS = \
 	syslink.c \
 	tab.c \
 	taskdialog.c \
-	theme_dialog.c \
-	theme_scrollbar.c \
-	theming.c \
 	toolbar.c \
 	tooltips.c \
 	trackbar.c \

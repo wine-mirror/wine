@@ -20,8 +20,11 @@
  */
 
 #include "ntdll_test.h"
+#include "winioctl.h"
 
+static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
+static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
@@ -31,6 +34,7 @@ static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
 #else
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
+static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
@@ -45,7 +49,9 @@ static void init(void)
     if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
+    GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
+    GET_PROC( RtlGetNativeSystemInformation );
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
     GET_PROC( RtlWow64GetThreadContext );
@@ -55,6 +61,7 @@ static void init(void)
     GET_PROC( RtlWow64GetThreadSelectorEntry );
 #else
     GET_PROC( NtWow64AllocateVirtualMemory64 );
+    GET_PROC( NtWow64GetNativeSystemInformation );
     GET_PROC( NtWow64ReadVirtualMemory64 );
     GET_PROC( NtWow64WriteVirtualMemory64 );
 #endif
@@ -884,7 +891,388 @@ static void test_nt_wow64(void)
     }
     else win_skip( "NtWow64AllocateVirtualMemory64 not supported\n" );
 
+    if (pNtWow64GetNativeSystemInformation)
+    {
+        ULONG i, len;
+        SYSTEM_BASIC_INFORMATION sbi, sbi2, sbi3;
+
+        memset( &sbi, 0xcc, sizeof(sbi) );
+        status = pNtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi), "wrong length %d\n", len );
+
+        memset( &sbi2, 0xcc, sizeof(sbi2) );
+        status = pRtlGetNativeSystemInformation( SystemBasicInformation, &sbi2, sizeof(sbi2), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi2), "wrong length %d\n", len );
+
+        ok( sbi.HighestUserAddress == (void *)0x7ffeffff, "wrong limit %p\n", sbi.HighestUserAddress);
+        todo_wine_if( is_wow64 )
+        ok( sbi2.HighestUserAddress == (is_wow64 ? (void *)0xfffeffff : (void *)0x7ffeffff),
+            "wrong limit %p\n", sbi.HighestUserAddress);
+
+        memset( &sbi3, 0xcc, sizeof(sbi3) );
+        status = pNtWow64GetNativeSystemInformation( SystemBasicInformation, &sbi3, sizeof(sbi3), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi3), "wrong length %d\n", len );
+        ok( !memcmp( &sbi2, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+            "info is different\n" );
+
+        memset( &sbi3, 0xcc, sizeof(sbi3) );
+        status = pNtWow64GetNativeSystemInformation( SystemEmulationBasicInformation, &sbi3, sizeof(sbi3), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi3), "wrong length %d\n", len );
+        ok( !memcmp( &sbi, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+            "info is different\n" );
+
+        for (i = 0; i < 256; i++)
+        {
+            NTSTATUS expect = pNtQuerySystemInformation( i, NULL, 0, &len );
+            status = pNtWow64GetNativeSystemInformation( i, NULL, 0, &len );
+            switch (i)
+            {
+            case SystemNativeBasicInformation:
+                ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_INFO_LENGTH_MISMATCH ||
+                    broken(status == STATUS_NOT_IMPLEMENTED) /* vista */, "%u: %x / %x\n", i, status, expect );
+                break;
+            case SystemBasicInformation:
+            case SystemCpuInformation:
+            case SystemEmulationBasicInformation:
+            case SystemEmulationProcessorInformation:
+                ok( status == expect, "%u: %x / %x\n", i, status, expect );
+                break;
+            default:
+                if (is_wow64)  /* only a few info classes are supported on Wow64 */
+                    ok( status == STATUS_INVALID_INFO_CLASS ||
+                        broken(status == STATUS_NOT_IMPLEMENTED), /* vista */
+                        "%u: %x\n", i, status );
+                else
+                    ok( status == expect, "%u: %x / %x\n", i, status, expect );
+                break;
+            }
+        }
+    }
+    else win_skip( "NtWow64GetNativeSystemInformation not supported\n" );
+
     NtClose( process );
+}
+
+static void test_init_block(void)
+{
+    HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
+    ULONG i, size = 0, *init_block;
+    ULONG64 ptr64, *block64;
+    void *ptr;
+
+    if (!is_wow64) return;
+    if ((ptr = GetProcAddress( ntdll, "LdrSystemDllInitBlock" )))
+    {
+        init_block = ptr;
+        trace( "got init block %08x\n", init_block[0] );
+#define CHECK_FUNC(val,func) \
+            ok( (val) == (ULONG_PTR)GetProcAddress( ntdll, func ), \
+                "got %p for %s %p\n", (void *)(ULONG_PTR)(val), func, GetProcAddress( ntdll, func ))
+        switch (init_block[0])
+        {
+        case 0x44:  /* vistau64 */
+            CHECK_FUNC( init_block[1], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[2], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[3], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[4], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[5], "LdrHotPatchRoutine" );
+            CHECK_FUNC( init_block[6], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[7], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[8], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[9], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[10], "RtlpQueryProcessDebugInformationRemote" );
+            CHECK_FUNC( init_block[11], "EtwpNotificationThread" );
+            ok( init_block[12] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[12], ntdll );
+            size = 13 * sizeof(*init_block);
+            break;
+        case 0x50:  /* win7 */
+            CHECK_FUNC( init_block[4], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[5], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[6], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[7], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[8], "LdrHotPatchRoutine" );
+            CHECK_FUNC( init_block[9], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[10], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[11], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[12], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[13], "RtlpQueryProcessDebugInformationRemote" );
+            CHECK_FUNC( init_block[14], "EtwpNotificationThread" );
+            ok( init_block[15] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[15], ntdll );
+            CHECK_FUNC( init_block[16], "LdrSystemDllInitBlock" );
+            size = 17 * sizeof(*init_block);
+            break;
+        case 0x70:  /* win8 */
+            CHECK_FUNC( init_block[4], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[5], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[6], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[7], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[8], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[9], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[10], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[11], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[12], "RtlpQueryProcessDebugInformationRemote" );
+            ok( init_block[13] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[13], ntdll );
+            CHECK_FUNC( init_block[14], "LdrSystemDllInitBlock" );
+            size = 15 * sizeof(*init_block);
+            break;
+        case 0x80:  /* win10 1507 */
+            CHECK_FUNC( init_block[4], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[5], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[6], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[7], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[8], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[9], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[10], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[11], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[12], "RtlpQueryProcessDebugInformationRemote" );
+            ok( init_block[13] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[13], ntdll );
+            CHECK_FUNC( init_block[14], "LdrSystemDllInitBlock" );
+            size = 15 * sizeof(*init_block);
+            break;
+        case 0xe0:  /* win10 1809 */
+        case 0xf0:  /* win10 2004 */
+            block64 = ptr;
+            CHECK_FUNC( block64[3], "LdrInitializeThunk" );
+            CHECK_FUNC( block64[4], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( block64[5], "KiUserApcDispatcher" );
+            todo_wine CHECK_FUNC( block64[6], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( block64[7], "RtlUserThreadStart" );
+            CHECK_FUNC( block64[8], "RtlpQueryProcessDebugInformationRemote" );
+            todo_wine ok( block64[9] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)block64[9], ntdll );
+            CHECK_FUNC( block64[10], "LdrSystemDllInitBlock" );
+            CHECK_FUNC( block64[11], "RtlpFreezeTimeBias" );
+            size = 12 * sizeof(*block64);
+            break;
+        default:
+            ok( 0, "unknown init block %08x\n", init_block[0] );
+            for (i = 0; i < 32; i++) trace("%04x: %08x\n", i, init_block[i]);
+            break;
+        }
+#undef CHECK_FUNC
+
+        if (size && (ptr64 = get_proc_address64( ntdll_module, "LdrSystemDllInitBlock" )))
+        {
+            DWORD buffer[64];
+            HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+            NTSTATUS status = pNtWow64ReadVirtualMemory64( process, ptr64, buffer, size, NULL );
+            ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+            ok( !memcmp( buffer, init_block, size ), "wrong 64-bit init block\n" );
+            NtClose( process );
+        }
+    }
+    else todo_wine win_skip( "LdrSystemDllInitBlock not supported\n" );
+}
+
+
+static void test_iosb(void)
+{
+    static const char pipe_name[] = "\\\\.\\pipe\\wow64iosbnamedpipe";
+    HANDLE client, server;
+    NTSTATUS status;
+    ULONG64 func;
+    DWORD id;
+    IO_STATUS_BLOCK iosb32;
+    struct
+    {
+        union
+        {
+            NTSTATUS Status;
+            ULONG64 Pointer;
+        };
+        ULONG64 Information;
+    } iosb64;
+    ULONG64 args[] = { 0, 0, 0, 0, (ULONG_PTR)&iosb64, FSCTL_PIPE_LISTEN, 0, 0, 0, 0 };
+
+    if (!is_wow64) return;
+    if (!ntdll_module) return;
+    func = get_proc_address64( ntdll_module, "NtFsControlFile" );
+
+    /* async calls set iosb32 but not iosb64 */
+
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+
+    args[0] = (LONG_PTR)server;
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_PENDING, "NtFsControlFile returned %x\n", status );
+    ok( U(iosb32).Status == 0x55555555, "status changed to %x\n", U(iosb32).Status );
+    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == 0xdeadbeef, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
+
+    ok( U(iosb32).Status == 0, "Wrong iostatus %x\n", U(iosb32).Status );
+    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == 0xdeadbeef, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+    id = 0xdeadbeef;
+
+    args[5] = FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE;
+    args[6] = (ULONG_PTR)"ClientProcessId";
+    args[7] = sizeof("ClientProcessId");
+    args[8] = (ULONG_PTR)&id;
+    args[9] = sizeof(id);
+
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_PENDING || status == STATUS_SUCCESS, "NtFsControlFile returned %x\n", status );
+    todo_wine
+    {
+    ok( U(iosb32).Status == STATUS_SUCCESS, "status changed to %x\n", U(iosb32).Status );
+    ok( iosb32.Information == sizeof(id), "info changed to %lx\n", iosb32.Information );
+    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == 0xdeadbeef, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+    }
+    ok( id == GetCurrentProcessId(), "wrong id %x / %x\n", id, GetCurrentProcessId() );
+    CloseHandle( client );
+    CloseHandle( server );
+
+    /* synchronous calls set iosb64 but not iosb32 */
+
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+    id = 0xdeadbeef;
+
+    args[0] = (LONG_PTR)server;
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_SUCCESS, "NtFsControlFile returned %x\n", status );
+    ok( U(iosb32).Status == 0x55555555, "status changed to %x\n", U(iosb32).Status );
+    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( U(iosb64).Pointer == STATUS_SUCCESS, "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == sizeof(id), "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+    ok( id == GetCurrentProcessId(), "wrong id %x / %x\n", id, GetCurrentProcessId() );
+    CloseHandle( client );
+    CloseHandle( server );
+}
+
+static NTSTATUS invoke_syscall( const char *name, ULONG args32[] )
+{
+    ULONG64 args64[] = { -1, PtrToUlong( args32 ) };
+    ULONG64 func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
+    BYTE *syscall = (BYTE *)GetProcAddress( GetModuleHandleA("ntdll.dll"), name );
+
+    ok( syscall != NULL, "syscall %s not found\n", name );
+    if (syscall[0] == 0xb8)
+        args64[0] = *(DWORD *)(syscall + 1);
+    else
+        win_skip( "syscall thunk %s not recognized\n", name );
+
+    return call_func64( func, ARRAY_SIZE(args64), args64 );
+}
+
+static void test_syscalls(void)
+{
+    ULONG64 func;
+    ULONG args32[8];
+    HANDLE event, event2;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+    NTSTATUS status;
+
+    if (!is_wow64) return;
+    if (!ntdll_module) return;
+
+    func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
+    ok( func, "Wow64SystemServiceEx not found\n" );
+
+    event = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    status = NtSetEvent( event, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+    args32[0] = HandleToLong( event );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( !status, "syscall failed %x\n", status );
+    status = NtSetEvent( event, NULL );
+    ok( status == STATUS_INVALID_HANDLE, "NtSetEvent failed %x\n", status );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( status == STATUS_INVALID_HANDLE, "syscall failed %x\n", status );
+    args32[0] = 0xdeadbeef;
+    status = invoke_syscall( "NtClose", args32 );
+    ok( status == STATUS_INVALID_HANDLE, "syscall failed %x\n", status );
+
+    RtlInitUnicodeString( &name, L"\\BaseNamedObjects\\wow64-test");
+    InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, 0, NULL );
+    event = (HANDLE)0xdeadbeef;
+    args32[0] = PtrToUlong(&event );
+    args32[1] = EVENT_ALL_ACCESS;
+    args32[2] = PtrToUlong( &attr );
+    args32[3] = NotificationEvent;
+    args32[4] = 0;
+    status = invoke_syscall( "NtCreateEvent", args32 );
+    ok( !status, "syscall failed %x\n", status );
+    status = NtSetEvent( event, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+
+    event2 = (HANDLE)0xdeadbeef;
+    args32[0] = PtrToUlong( &event2 );
+    status = invoke_syscall( "NtOpenEvent", args32 );
+    ok( !status, "syscall failed %x\n", status );
+    status = NtSetEvent( event2, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+    args32[0] = HandleToLong( event2 );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( !status, "syscall failed %x\n", status );
+
+    event2 = (HANDLE)0xdeadbeef;
+    args32[0] = PtrToUlong( &event2 );
+    status = invoke_syscall( "NtCreateEvent", args32 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "syscall failed %x\n", status );
+    status = NtSetEvent( event2, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+    args32[0] = HandleToLong( event2 );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( !status, "syscall failed %x\n", status );
+
+    status = NtClose( event );
+    ok( !status, "NtClose failed %x\n", status );
+
+    if (pNtWow64ReadVirtualMemory64)
+    {
+        TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
+        PEB64 peb64, peb64_2;
+        ULONG64 res, res2;
+        HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+        ULONG args32[] = { HandleToLong( process ), (ULONG)teb64->Peb, teb64->Peb >> 32,
+                           PtrToUlong(&peb64_2), sizeof(peb64_2), 0, PtrToUlong(&res2) };
+
+        ok( process != 0, "failed to open current process %u\n", GetLastError() );
+        status = pNtWow64ReadVirtualMemory64( process, teb64->Peb, &peb64, sizeof(peb64), &res );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        status = invoke_syscall( "NtWow64ReadVirtualMemory64", args32 );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        ok( res2 == res, "wrong len %s / %s\n", wine_dbgstr_longlong(res), wine_dbgstr_longlong(res2) );
+        ok( !memcmp( &peb64, &peb64_2, res ), "data is different\n" );
+        NtClose( process );
+    }
 }
 
 static void test_cpu_area(void)
@@ -928,6 +1316,9 @@ START_TEST(wow64)
 #ifndef _WIN64
     test_nt_wow64();
     test_modules();
+    test_init_block();
+    test_iosb();
+    test_syscalls();
 #endif
     test_cpu_area();
 }

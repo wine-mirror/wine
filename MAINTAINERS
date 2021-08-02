@@ -29,7 +29,7 @@ Maintainers List
 		-----------------------------------
 
 ARM, ARM64
-M:	André Hentschel <nerv@dawncrow.de>
+M:	André Zwing <nerv@dawncrow.de>
 F:	dlls/dbghelp/cpu_arm*
 F:	dlls/msvcrt/except_arm.c
 F:	dlls/ntdll/signal_arm*
@@ -175,14 +175,19 @@ P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/msi/
 
 Netstat
-M:	André Hentschel <nerv@dawncrow.de>
+M:	André Zwing <nerv@dawncrow.de>
 F:	programs/netstat/
 
 Network
 P:	Bruno Jesus <00cpxxx@gmail.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
-F:	dlls/iphlpapi/
 F:	dlls/ws2_32/
+
+Network Store Interface
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/iphlpapi/
+F:	dlls/nsi/
+F:	dlls/nsiproxy.sys/
 
 OLE Embedding
 M:	Huw Davies <huw@codeweavers.com>
@@ -297,7 +302,7 @@ P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
 F:	server/
 
 Winemaker
-M:	André Hentschel <nerv@dawncrow.de>
+M:	André Zwing <nerv@dawncrow.de>
 F:	tools/winemaker/
 
 WinHTTP
@@ -309,7 +314,7 @@ P:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/wininet/
 
 WPcap
-M:	André Hentschel <nerv@dawncrow.de>
+M:	André Zwing <nerv@dawncrow.de>
 F:	dlls/wpcap/
 
 X11 Driver

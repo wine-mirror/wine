@@ -53,9 +53,6 @@
 static HMODULE hLibrary = NULL;
 
 static DWORD (WINAPI *pAllocateAndGetTcpExTableFromStack)(void**,BOOL,HANDLE,DWORD,DWORD);
-static DWORD (WINAPI *pGetIfEntry2)(PMIB_IF_ROW2);
-static DWORD (WINAPI *pGetIfTable2)(PMIB_IF_TABLE2*);
-static DWORD (WINAPI *pGetIfTable2Ex)(MIB_IF_TABLE_LEVEL,PMIB_IF_TABLE2*);
 static DWORD (WINAPI *pGetTcp6Table)(PMIB_TCP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUdp6Table)(PMIB_UDP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUnicastIpAddressEntry)(MIB_UNICASTIPADDRESS_ROW*);
@@ -64,32 +61,21 @@ static DWORD (WINAPI *pGetExtendedTcpTable)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CL
 static DWORD (WINAPI *pGetExtendedUdpTable)(PVOID,PDWORD,BOOL,ULONG,UDP_TABLE_CLASS,ULONG);
 static DWORD (WINAPI *pCreateSortedAddressPairs)(const PSOCKADDR_IN6,ULONG,const PSOCKADDR_IN6,ULONG,ULONG,
                                                  PSOCKADDR_IN6_PAIR*,ULONG*);
-static void (WINAPI *pFreeMibTable)(void*);
-static DWORD (WINAPI *pConvertInterfaceGuidToLuid)(const GUID*,NET_LUID*);
-static DWORD (WINAPI *pConvertInterfaceIndexToLuid)(NET_IFINDEX,NET_LUID*);
-static DWORD (WINAPI *pConvertInterfaceLuidToGuid)(const NET_LUID*,GUID*);
-static DWORD (WINAPI *pConvertInterfaceLuidToIndex)(const NET_LUID*,NET_IFINDEX*);
-static DWORD (WINAPI *pConvertInterfaceLuidToNameW)(const NET_LUID*,WCHAR*,SIZE_T);
-static DWORD (WINAPI *pConvertInterfaceLuidToNameA)(const NET_LUID*,char*,SIZE_T);
-static DWORD (WINAPI *pConvertInterfaceNameToLuidA)(const char*,NET_LUID*);
-static DWORD (WINAPI *pConvertInterfaceNameToLuidW)(const WCHAR*,NET_LUID*);
 static DWORD (WINAPI *pConvertLengthToIpv4Mask)(ULONG,ULONG*);
 static DWORD (WINAPI *pParseNetworkString)(const WCHAR*,DWORD,NET_ADDRESS_INFO*,USHORT*,BYTE*);
 static DWORD (WINAPI *pNotifyUnicastIpAddressChange)(ADDRESS_FAMILY, PUNICAST_IPADDRESS_CHANGE_CALLBACK,
                                                 PVOID, BOOLEAN, HANDLE *);
 static DWORD (WINAPI *pCancelMibChangeNotify2)(HANDLE);
 
-static PCHAR (WINAPI *pif_indextoname)(NET_IFINDEX,PCHAR);
-static NET_IFINDEX (WINAPI *pif_nametoindex)(const char*);
+DWORD WINAPI ConvertGuidToStringA( const GUID *, char *, DWORD );
+DWORD WINAPI ConvertGuidToStringW( const GUID *, WCHAR *, DWORD );
+DWORD WINAPI ConvertStringToGuidW( const WCHAR *, GUID * );
 
 static void loadIPHlpApi(void)
 {
   hLibrary = LoadLibraryA("iphlpapi.dll");
   if (hLibrary) {
     pAllocateAndGetTcpExTableFromStack = (void *)GetProcAddress(hLibrary, "AllocateAndGetTcpExTableFromStack");
-    pGetIfEntry2 = (void *)GetProcAddress(hLibrary, "GetIfEntry2");
-    pGetIfTable2 = (void *)GetProcAddress(hLibrary, "GetIfTable2");
-    pGetIfTable2Ex = (void *)GetProcAddress(hLibrary, "GetIfTable2Ex");
     pGetTcp6Table = (void *)GetProcAddress(hLibrary, "GetTcp6Table");
     pGetUdp6Table = (void *)GetProcAddress(hLibrary, "GetUdp6Table");
     pGetUnicastIpAddressEntry = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressEntry");
@@ -97,19 +83,8 @@ static void loadIPHlpApi(void)
     pGetExtendedTcpTable = (void *)GetProcAddress(hLibrary, "GetExtendedTcpTable");
     pGetExtendedUdpTable = (void *)GetProcAddress(hLibrary, "GetExtendedUdpTable");
     pCreateSortedAddressPairs = (void *)GetProcAddress(hLibrary, "CreateSortedAddressPairs");
-    pFreeMibTable = (void *)GetProcAddress(hLibrary, "FreeMibTable");
-    pConvertInterfaceGuidToLuid = (void *)GetProcAddress(hLibrary, "ConvertInterfaceGuidToLuid");
-    pConvertInterfaceIndexToLuid = (void *)GetProcAddress(hLibrary, "ConvertInterfaceIndexToLuid");
-    pConvertInterfaceLuidToGuid = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToGuid");
-    pConvertInterfaceLuidToIndex = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToIndex");
-    pConvertInterfaceLuidToNameA = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToNameA");
-    pConvertInterfaceLuidToNameW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToNameW");
-    pConvertInterfaceNameToLuidA = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidA");
-    pConvertInterfaceNameToLuidW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidW");
     pConvertLengthToIpv4Mask = (void *)GetProcAddress(hLibrary, "ConvertLengthToIpv4Mask");
     pParseNetworkString = (void *)GetProcAddress(hLibrary, "ParseNetworkString");
-    pif_indextoname = (void *)GetProcAddress(hLibrary, "if_indextoname");
-    pif_nametoindex = (void *)GetProcAddress(hLibrary, "if_nametoindex");
     pNotifyUnicastIpAddressChange = (void *)GetProcAddress(hLibrary, "NotifyUnicastIpAddressChange");
     pCancelMibChangeNotify2 = (void *)GetProcAddress(hLibrary, "CancelMibChangeNotify2");
   }
@@ -167,10 +142,6 @@ static void testGetNumberOfInterfaces(void)
     }
 
     apiReturn = GetNumberOfInterfaces(&numInterfaces);
-    if (apiReturn == ERROR_NOT_SUPPORTED) {
-        skip("GetNumberOfInterfaces is not supported\n");
-        return;
-    }
     ok(apiReturn == NO_ERROR,
        "GetNumberOfInterfaces returned %d, expected 0\n", apiReturn);
 }
@@ -232,6 +203,8 @@ static void testGetIpAddrTable(void)
             for (i = 0; i < buf->dwNumEntries; i++)
             {
                 ok (buf->table[i].wType != 0, "Test[%d]: expected wType > 0\n", i);
+                ok (buf->table[i].dwBCastAddr == 1, "Test[%d]: got %08x\n", i, buf->table[i].dwBCastAddr);
+                ok (buf->table[i].dwReasmSize == 0xffff, "Test[%d]: got %08x\n", i, buf->table[i].dwReasmSize);
                 trace("Entry[%d]: addr %s, dwIndex %u, wType 0x%x\n", i,
                       ntoa(buf->table[i].dwAddr), buf->table[i].dwIndex, buf->table[i].wType);
             }
@@ -265,27 +238,46 @@ static void testGetIfTable(void)
            "GetIfTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n\n",
            apiReturn);
 
-        if (apiReturn == NO_ERROR && winetest_debug > 1)
+        if (apiReturn == NO_ERROR)
         {
-            DWORD i, j;
-            char name[MAX_INTERFACE_NAME_LEN];
+            char descr[MAX_INTERFACE_NAME_LEN];
+            WCHAR name[MAX_INTERFACE_NAME_LEN];
+            DWORD i, index;
 
-            trace( "interface table: %u entries\n", buf->dwNumEntries );
+            if (winetest_debug > 1) trace( "interface table: %u entries\n", buf->dwNumEntries );
             for (i = 0; i < buf->dwNumEntries; i++)
             {
                 MIB_IFROW *row = &buf->table[i];
-                WideCharToMultiByte( CP_ACP, 0, row->wszName, -1, name, MAX_INTERFACE_NAME_LEN, NULL, NULL );
-                trace( "%u: '%s' type %u mtu %u speed %u phys",
-                       row->dwIndex, name, row->dwType, row->dwMtu, row->dwSpeed );
-                for (j = 0; j < row->dwPhysAddrLen; j++)
-                    printf( " %02x", row->bPhysAddr[j] );
-                printf( "\n" );
-                trace( "        in: bytes %u upkts %u nupkts %u disc %u err %u unk %u\n",
-                       row->dwInOctets, row->dwInUcastPkts, row->dwInNUcastPkts,
-                       row->dwInDiscards, row->dwInErrors, row->dwInUnknownProtos );
-                trace( "        out: bytes %u upkts %u nupkts %u disc %u err %u\n",
-                       row->dwOutOctets, row->dwOutUcastPkts, row->dwOutNUcastPkts,
-                       row->dwOutDiscards, row->dwOutErrors );
+                MIB_IF_ROW2 row2;
+                GUID *guid;
+
+                if (winetest_debug > 1)
+                {
+                    trace( "%u: '%s' type %u mtu %u speed %u\n",
+                           row->dwIndex, debugstr_w(row->wszName), row->dwType, row->dwMtu, row->dwSpeed );
+                    trace( "        in: bytes %u upkts %u nupkts %u disc %u err %u unk %u\n",
+                           row->dwInOctets, row->dwInUcastPkts, row->dwInNUcastPkts,
+                           row->dwInDiscards, row->dwInErrors, row->dwInUnknownProtos );
+                    trace( "        out: bytes %u upkts %u nupkts %u disc %u err %u\n",
+                           row->dwOutOctets, row->dwOutUcastPkts, row->dwOutNUcastPkts,
+                           row->dwOutDiscards, row->dwOutErrors );
+                }
+                apiReturn = GetAdapterIndex( row->wszName, &index );
+                ok( !apiReturn, "got %d\n", apiReturn );
+                ok( index == row->dwIndex ||
+                    broken( index != row->dwIndex && index ), /* Win8 can have identical guids for two different ifaces */
+                    "got %d vs %d\n", index, row->dwIndex );
+                memset( &row2, 0, sizeof(row2) );
+                row2.InterfaceIndex = row->dwIndex;
+                GetIfEntry2( &row2 );
+                WideCharToMultiByte( CP_ACP, 0, row2.Description, -1, descr, sizeof(descr), NULL, NULL );
+                ok( !strcmp( (char *)row->bDescr, descr ), "got %s vs %s\n", row->bDescr, descr );
+                guid = &row2.InterfaceGuid;
+                swprintf( name, ARRAY_SIZE(name), L"\\DEVICE\\TCPIP_{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                          guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
+                          guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
+                          guid->Data4[6], guid->Data4[7]);
+                ok( !wcscmp( row->wszName, name ), "got %s vs %s\n", debugstr_w( row->wszName ), debugstr_w( name ) );
             }
         }
         HeapFree(GetProcessHeap(), 0, buf);
@@ -1069,7 +1061,7 @@ static void testWinNT4Functions(void)
 static void testGetInterfaceInfo(void)
 {
     DWORD apiReturn;
-    ULONG len = 0;
+    ULONG len = 0, i;
 
     apiReturn = GetInterfaceInfo(NULL, NULL);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
@@ -1090,6 +1082,16 @@ static void testGetInterfaceInfo(void)
         ok(apiReturn == NO_ERROR,
            "GetInterfaceInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
            apiReturn);
+
+        for (i = 0; i < buf->NumAdapters; i++)
+        {
+            MIB_IFROW row = { .dwIndex = buf->Adapter[i].Index };
+            GetIfEntry( &row );
+            ok( !wcscmp( buf->Adapter[i].Name, row.wszName ), "got %s vs %s\n",
+                debugstr_w( buf->Adapter[i].Name ), debugstr_w( row.wszName ) );
+todo_wine_if( row.dwType == IF_TYPE_SOFTWARE_LOOPBACK)
+            ok( row.dwType != IF_TYPE_SOFTWARE_LOOPBACK, "got loopback\n" );
+        }
         HeapFree(GetProcessHeap(), 0, buf);
     }
 }
@@ -1384,16 +1386,13 @@ static void test_GetAdaptersAddresses(void)
               aa->Ipv4Metric, aa->Ipv6Metric, wine_dbgstr_guid((GUID*) &aa->NetworkGuid),
               aa->ConnectionType, aa->TunnelType);
 
-        if (pConvertInterfaceLuidToGuid)
-        {
-            status = pConvertInterfaceLuidToGuid(&aa->Luid, &guid);
-            ok(!status, "got %u\n", status);
-            sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-                    guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-                    guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-                    guid.Data4[6], guid.Data4[7]);
-            ok(!strcasecmp(aa->AdapterName, buf), "expected '%s' got '%s'\n", aa->AdapterName, buf);
-        }
+        status = ConvertInterfaceLuidToGuid(&aa->Luid, &guid);
+        ok(!status, "got %u\n", status);
+        sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
+                guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
+                guid.Data4[6], guid.Data4[7]);
+        ok(!strcasecmp(aa->AdapterName, buf), "expected '%s' got '%s'\n", aa->AdapterName, buf);
     }
     ok(dns_eligible_found, "Did not find any dns eligible addresses.\n");
     HeapFree(GetProcessHeap(), 0, ptr);
@@ -1600,7 +1599,7 @@ static void test_CreateSortedAddressPairs(void)
     ok( pair_count >= 1, "got %u\n", pair_count );
     ok( pair[0].SourceAddress != NULL, "src address not set\n" );
     ok( pair[0].DestinationAddress != NULL, "dst address not set\n" );
-    pFreeMibTable( pair );
+    FreeMibTable( pair );
 
     dst[1].sin6_family = AF_INET6;
     dst[1].sin6_addr.u.Word[5] = 0xffff;
@@ -1617,7 +1616,7 @@ static void test_CreateSortedAddressPairs(void)
     ok( pair[0].DestinationAddress != NULL, "dst address not set\n" );
     ok( pair[1].SourceAddress != NULL, "src address not set\n" );
     ok( pair[1].DestinationAddress != NULL, "dst address not set\n" );
-    pFreeMibTable( pair );
+    FreeMibTable( pair );
 }
 
 static DWORD get_interface_index(void)
@@ -1642,206 +1641,242 @@ static DWORD get_interface_index(void)
     return ret;
 }
 
+static void convert_luid_to_name( NET_LUID *luid, WCHAR *expect_nameW, int len )
+{
+    struct
+    {
+        const WCHAR *prefix;
+        DWORD type;
+    } prefixes[] =
+    {
+        { L"other", IF_TYPE_OTHER },
+        { L"ethernet", IF_TYPE_ETHERNET_CSMACD },
+        { L"tokenring", IF_TYPE_ISO88025_TOKENRING },
+        { L"ppp", IF_TYPE_PPP },
+        { L"loopback", IF_TYPE_SOFTWARE_LOOPBACK },
+        { L"atm", IF_TYPE_ATM },
+        { L"wireless", IF_TYPE_IEEE80211 },
+        { L"tunnel", IF_TYPE_TUNNEL },
+        { L"ieee1394", IF_TYPE_IEEE1394 }
+    };
+    DWORD i;
+    const WCHAR *prefix = NULL;
+
+    for (i = 0; i < ARRAY_SIZE(prefixes); i++)
+    {
+        if (prefixes[i].type == luid->Info.IfType)
+        {
+            prefix = prefixes[i].prefix;
+            break;
+        }
+    }
+    if (prefix)
+        swprintf( expect_nameW, len, L"%s_%d", prefix, luid->Info.NetLuidIndex );
+    else
+        swprintf( expect_nameW, len, L"iftype%d_%d", luid->Info.IfType, luid->Info.NetLuidIndex );
+}
+
 static void test_interface_identifier_conversion(void)
 {
-    DWORD ret;
+    DWORD ret, i;
     NET_LUID luid;
     GUID guid;
     SIZE_T len;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
+    WCHAR alias[IF_MAX_STRING_SIZE + 1];
+    WCHAR expect_nameW[IF_MAX_STRING_SIZE + 1];
     char nameA[IF_MAX_STRING_SIZE + 1], *name;
-    NET_IFINDEX index, index2;
+    char expect_nameA[IF_MAX_STRING_SIZE + 1];
+    NET_IFINDEX index;
+    MIB_IF_TABLE2 *table;
 
-    if (!pConvertInterfaceIndexToLuid)
+    ret = GetIfTable2( &table );
+    ok( !ret, "got %d\n", ret );
+
+    for (i = 0; i < table->NumEntries; i++)
     {
-        win_skip( "ConvertInterfaceIndexToLuid not available\n" );
-        return;
+        MIB_IF_ROW2 *row = table->Table + i;
+
+        /* ConvertInterfaceIndexToLuid */
+        ret = ConvertInterfaceIndexToLuid( 0, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        memset( &luid, 0xff, sizeof(luid) );
+        ret = ConvertInterfaceIndexToLuid( 0, &luid );
+        ok( ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret );
+        ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
+        ok( !luid.Info.NetLuidIndex, "got %u\n", luid.Info.NetLuidIndex );
+        ok( !luid.Info.IfType, "got %u\n", luid.Info.IfType );
+
+        luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
+        ret = ConvertInterfaceIndexToLuid( row->InterfaceIndex, &luid );
+        ok( !ret, "got %u\n", ret );
+        ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+
+        /* ConvertInterfaceLuidToIndex */
+        ret = ConvertInterfaceLuidToIndex( NULL, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToIndex( NULL, &index );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToIndex( &luid, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToIndex( &luid, &index );
+        ok( !ret, "got %u\n", ret );
+        ok( index == row->InterfaceIndex, "mismatch\n" );
+
+        /* ConvertInterfaceLuidToGuid */
+        ret = ConvertInterfaceLuidToGuid( NULL, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        memset( &guid, 0xff, sizeof(guid) );
+        ret = ConvertInterfaceLuidToGuid( NULL, &guid );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+        ok( guid.Data1 == 0xffffffff, "got %x\n", guid.Data1 );
+
+        ret = ConvertInterfaceLuidToGuid( &luid, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        memset( &guid, 0, sizeof(guid) );
+        ret = ConvertInterfaceLuidToGuid( &luid, &guid );
+        ok( !ret, "got %u\n", ret );
+        ok( IsEqualGUID( &guid, &row->InterfaceGuid ), "mismatch\n" );
+
+        /* ConvertInterfaceGuidToLuid */
+        ret = ConvertInterfaceGuidToLuid( NULL, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        luid.Info.NetLuidIndex = 1;
+        ret = ConvertInterfaceGuidToLuid( NULL, &luid );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+        ok( luid.Info.NetLuidIndex == 1, "got %u\n", luid.Info.NetLuidIndex );
+
+        ret = ConvertInterfaceGuidToLuid( &guid, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
+        ret = ConvertInterfaceGuidToLuid( &guid, &luid );
+        ok( !ret, "got %u\n", ret );
+        ok( luid.Value == row->InterfaceLuid.Value ||
+            broken( luid.Value != row->InterfaceLuid.Value), /* Win8 can have identical guids for two different ifaces */
+            "mismatch\n" );
+        if (luid.Value != row->InterfaceLuid.Value) continue;
+
+        /* ConvertInterfaceLuidToNameW */
+        ret = ConvertInterfaceLuidToNameW( NULL, NULL, 0 );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToNameW( &luid, NULL, 0 );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToNameW( NULL, nameW, 0 );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToNameW( &luid, nameW, 0 );
+        ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
+
+        nameW[0] = 0;
+        len = ARRAY_SIZE(nameW);
+        ret = ConvertInterfaceLuidToNameW( &luid, nameW, len );
+        ok( !ret, "got %u\n", ret );
+        convert_luid_to_name( &luid, expect_nameW, len );
+        ok( !wcscmp( nameW, expect_nameW ), "got %s vs %s\n", debugstr_w( nameW ), debugstr_w( expect_nameW ) );
+
+        /* ConvertInterfaceLuidToNameA */
+        ret = ConvertInterfaceLuidToNameA( NULL, NULL, 0 );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToNameA( &luid, NULL, 0 );
+        ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToNameA( NULL, nameA, 0 );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        ret = ConvertInterfaceLuidToNameA( &luid, nameA, 0 );
+        ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
+
+        nameA[0] = 0;
+        len = ARRAY_SIZE(nameA);
+        ret = ConvertInterfaceLuidToNameA( &luid, nameA, len );
+        ok( !ret, "got %u\n", ret );
+        ok( nameA[0], "name not set\n" );
+
+        /* ConvertInterfaceNameToLuidW */
+        ret = ConvertInterfaceNameToLuidW( NULL, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
+        ret = ConvertInterfaceNameToLuidW( NULL, &luid );
+        ok( ret == ERROR_INVALID_NAME, "got %u\n", ret );
+        ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
+        ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
+        ok( !luid.Info.IfType, "got %u\n", luid.Info.IfType );
+
+        ret = ConvertInterfaceNameToLuidW( nameW, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
+        ret = ConvertInterfaceNameToLuidW( nameW, &luid );
+        ok( !ret, "got %u\n", ret );
+        ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+
+        /* ConvertInterfaceNameToLuidA */
+        ret = ConvertInterfaceNameToLuidA( NULL, NULL );
+        ok( ret == ERROR_INVALID_NAME, "got %u\n", ret );
+
+        luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
+        ret = ConvertInterfaceNameToLuidA( NULL, &luid );
+        ok( ret == ERROR_INVALID_NAME, "got %u\n", ret );
+        ok( luid.Info.Reserved == 0xdead, "reserved set\n" );
+        ok( luid.Info.NetLuidIndex == 0xdead, "index set\n" );
+        ok( luid.Info.IfType == 0xdead, "type set\n" );
+
+        ret = ConvertInterfaceNameToLuidA( nameA, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+        luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
+        ret = ConvertInterfaceNameToLuidA( nameA, &luid );
+        ok( !ret, "got %u\n", ret );
+        ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+
+        /* ConvertInterfaceAliasToLuid */
+        ret = ConvertInterfaceAliasToLuid( row->Alias, &luid );
+        ok( !ret, "got %u\n", ret );
+        ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+
+        /* ConvertInterfaceLuidToAlias */
+        ret = ConvertInterfaceLuidToAlias( &row->InterfaceLuid, alias, ARRAY_SIZE(alias) );
+        ok( !ret, "got %u\n", ret );
+        ok( !wcscmp( alias, row->Alias ), "got %s vs %s\n", wine_dbgstr_w( alias ), wine_dbgstr_w( row->Alias ) );
+
+        index = if_nametoindex( NULL );
+        ok( !index, "Got unexpected index %u\n", index );
+        index = if_nametoindex( nameA );
+        ok( index == row->InterfaceIndex, "Got index %u for %s, expected %u\n", index, nameA, row->InterfaceIndex );
+        /* Wargaming.net Game Center passes a GUID-like string. */
+        index = if_nametoindex( "{00000001-0000-0000-0000-000000000000}" );
+        ok( !index, "Got unexpected index %u\n", index );
+        index = if_nametoindex( wine_dbgstr_guid( &guid ) );
+        ok( !index, "Got unexpected index %u for input %s\n", index, wine_dbgstr_guid( &guid ) );
+
+        name = if_indextoname( 0, NULL );
+        ok( name == NULL, "got %s\n", name );
+
+        name = if_indextoname( 0, nameA );
+        ok( name == NULL, "got %p\n", name );
+
+        name = if_indextoname( ~0u, nameA );
+        ok( name == NULL, "got %p\n", name );
+
+        nameA[0] = 0;
+        name = if_indextoname( row->InterfaceIndex, nameA );
+        ConvertInterfaceLuidToNameA( &row->InterfaceLuid, expect_nameA, ARRAY_SIZE(expect_nameA) );
+        ok( name == nameA, "mismatch\n" );
+        ok( !strcmp( nameA, expect_nameA ), "mismatch\n" );
     }
-    if (!(index = get_interface_index()))
-    {
-        skip( "no suitable interface found\n" );
-        return;
-    }
-
-    /* ConvertInterfaceIndexToLuid */
-    ret = pConvertInterfaceIndexToLuid( 0, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    memset( &luid, 0xff, sizeof(luid) );
-    ret = pConvertInterfaceIndexToLuid( 0, &luid );
-    ok( ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret );
-    ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
-    ok( !luid.Info.NetLuidIndex, "got %u\n", luid.Info.NetLuidIndex );
-    ok( !luid.Info.IfType, "got %u\n", luid.Info.IfType );
-
-    luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
-    ret = pConvertInterfaceIndexToLuid( index, &luid );
-    ok( !ret, "got %u\n", ret );
-    ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
-    ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
-    ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
-
-    /* ConvertInterfaceLuidToIndex */
-    ret = pConvertInterfaceLuidToIndex( NULL, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToIndex( NULL, &index );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToIndex( &luid, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToIndex( &luid, &index );
-    ok( !ret, "got %u\n", ret );
-
-    /* ConvertInterfaceLuidToGuid */
-    ret = pConvertInterfaceLuidToGuid( NULL, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    memset( &guid, 0xff, sizeof(guid) );
-    ret = pConvertInterfaceLuidToGuid( NULL, &guid );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-    ok( guid.Data1 == 0xffffffff, "got %x\n", guid.Data1 );
-
-    ret = pConvertInterfaceLuidToGuid( &luid, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    memset( &guid, 0, sizeof(guid) );
-    ret = pConvertInterfaceLuidToGuid( &luid, &guid );
-    ok( !ret, "got %u\n", ret );
-    ok( guid.Data1, "got %x\n", guid.Data1 );
-
-    /* ConvertInterfaceGuidToLuid */
-    ret = pConvertInterfaceGuidToLuid( NULL, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    luid.Info.NetLuidIndex = 1;
-    ret = pConvertInterfaceGuidToLuid( NULL, &luid );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-    ok( luid.Info.NetLuidIndex == 1, "got %u\n", luid.Info.NetLuidIndex );
-
-    ret = pConvertInterfaceGuidToLuid( &guid, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
-    ret = pConvertInterfaceGuidToLuid( &guid, &luid );
-    ok( !ret, "got %u\n", ret );
-    ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
-    ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
-    ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
-
-    /* ConvertInterfaceLuidToNameW */
-    ret = pConvertInterfaceLuidToNameW( NULL, NULL, 0 );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToNameW( &luid, NULL, 0 );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToNameW( NULL, nameW, 0 );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToNameW( &luid, nameW, 0 );
-    ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
-
-    nameW[0] = 0;
-    len = ARRAY_SIZE(nameW);
-    ret = pConvertInterfaceLuidToNameW( &luid, nameW, len );
-    ok( !ret, "got %u\n", ret );
-    ok( nameW[0], "name not set\n" );
-
-    /* ConvertInterfaceLuidToNameA */
-    ret = pConvertInterfaceLuidToNameA( NULL, NULL, 0 );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToNameA( &luid, NULL, 0 );
-    ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToNameA( NULL, nameA, 0 );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pConvertInterfaceLuidToNameA( &luid, nameA, 0 );
-    ok( ret == ERROR_NOT_ENOUGH_MEMORY, "got %u\n", ret );
-
-    nameA[0] = 0;
-    len = ARRAY_SIZE(nameA);
-    ret = pConvertInterfaceLuidToNameA( &luid, nameA, len );
-    ok( !ret, "got %u\n", ret );
-    ok( nameA[0], "name not set\n" );
-
-    /* ConvertInterfaceNameToLuidW */
-    ret = pConvertInterfaceNameToLuidW( NULL, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
-    ret = pConvertInterfaceNameToLuidW( NULL, &luid );
-    ok( ret == ERROR_INVALID_NAME, "got %u\n", ret );
-    ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
-    ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
-    ok( !luid.Info.IfType, "got %u\n", luid.Info.IfType );
-
-    ret = pConvertInterfaceNameToLuidW( nameW, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
-    ret = pConvertInterfaceNameToLuidW( nameW, &luid );
-    ok( !ret, "got %u\n", ret );
-    ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
-    ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
-    ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
-
-    /* ConvertInterfaceNameToLuidA */
-    ret = pConvertInterfaceNameToLuidA( NULL, NULL );
-    ok( ret == ERROR_INVALID_NAME, "got %u\n", ret );
-
-    luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
-    ret = pConvertInterfaceNameToLuidA( NULL, &luid );
-    ok( ret == ERROR_INVALID_NAME, "got %u\n", ret );
-    ok( luid.Info.Reserved == 0xdead, "reserved set\n" );
-    ok( luid.Info.NetLuidIndex == 0xdead, "index set\n" );
-    ok( luid.Info.IfType == 0xdead, "type set\n" );
-
-    ret = pConvertInterfaceNameToLuidA( nameA, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    luid.Info.Reserved = luid.Info.NetLuidIndex = luid.Info.IfType = 0xdead;
-    ret = pConvertInterfaceNameToLuidA( nameA, &luid );
-    ok( !ret, "got %u\n", ret );
-    ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
-    ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
-    ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
-
-    if (!pif_nametoindex || !pif_indextoname)
-    {
-        skip("if_nametoindex/if_indextoname not supported\n");
-        return;
-    }
-
-    index2 = pif_nametoindex( NULL );
-    ok( !index2, "Got unexpected index %u\n", index2 );
-    index2 = pif_nametoindex( nameA );
-    ok( index2 == index, "Got index %u for %s, expected %u\n", index2, nameA, index );
-    /* Wargaming.net Game Center passes a GUID-like string. */
-    index2 = pif_nametoindex( "{00000001-0000-0000-0000-000000000000}" );
-    ok( !index2, "Got unexpected index %u\n", index2 );
-    index2 = pif_nametoindex( wine_dbgstr_guid( &guid ) );
-    ok( !index2, "Got unexpected index %u for input %s\n", index2, wine_dbgstr_guid( &guid ) );
-
-    name = pif_indextoname( 0, NULL );
-    ok( name == NULL, "got %s\n", name );
-
-    name = pif_indextoname( 0, nameA );
-    ok( name == NULL, "got %p\n", name );
-
-    name = pif_indextoname( ~0u, nameA );
-    ok( name == NULL, "got %p\n", name );
-
-    nameA[0] = 0;
-    name = pif_indextoname( 1, nameA );
-    if (name != NULL)
-    {
-        ok( name[0], "empty name\n" );
-        ok( name == nameA, "got %p\n", name );
-    }
+    FreeMibTable( table );
 }
 
 static void test_GetIfEntry2(void)
@@ -1850,27 +1885,22 @@ static void test_GetIfEntry2(void)
     MIB_IF_ROW2 row;
     NET_IFINDEX index;
 
-    if (!pGetIfEntry2)
-    {
-        win_skip( "GetIfEntry2 not available\n" );
-        return;
-    }
     if (!(index = get_interface_index()))
     {
         skip( "no suitable interface found\n" );
         return;
     }
 
-    ret = pGetIfEntry2( NULL );
+    ret = GetIfEntry2( NULL );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
-    ret = pGetIfEntry2( &row );
+    ret = GetIfEntry2( &row );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
     row.InterfaceIndex = index;
-    ret = pGetIfEntry2( &row );
+    ret = GetIfEntry2( &row );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( row.InterfaceIndex == index, "got %u\n", index );
 }
@@ -1880,17 +1910,11 @@ static void test_GetIfTable2(void)
     DWORD ret;
     MIB_IF_TABLE2 *table;
 
-    if (!pGetIfTable2)
-    {
-        win_skip( "GetIfTable2 not available\n" );
-        return;
-    }
-
     table = NULL;
-    ret = pGetIfTable2( &table );
+    ret = GetIfTable2( &table );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( table != NULL, "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 }
 
 static void test_GetIfTable2Ex(void)
@@ -1898,35 +1922,29 @@ static void test_GetIfTable2Ex(void)
     DWORD ret;
     MIB_IF_TABLE2 *table;
 
-    if (!pGetIfTable2Ex)
-    {
-        win_skip( "GetIfTable2Ex not available\n" );
-        return;
-    }
-
     table = NULL;
-    ret = pGetIfTable2Ex( MibIfTableNormal, &table );
+    ret = GetIfTable2Ex( MibIfTableNormal, &table );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( table != NULL, "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( MibIfTableRaw, &table );
+    ret = GetIfTable2Ex( MibIfTableRaw, &table );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( table != NULL, "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( MibIfTableNormalWithoutStatistics, &table );
+    ret = GetIfTable2Ex( MibIfTableNormalWithoutStatistics, &table );
     ok( ret == NO_ERROR || broken(ret == ERROR_INVALID_PARAMETER), "got %u\n", ret );
     ok( table != NULL || broken(!table), "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( 3, &table );
+    ret = GetIfTable2Ex( 3, &table );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
     ok( !table, "table should not be set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 }
 
 static void test_GetUnicastIpAddressEntry(void)
@@ -1946,7 +1964,7 @@ static void test_GetUnicastIpAddressEntry(void)
 
     memset( &row, 0, sizeof(row) );
     ret = pGetUnicastIpAddressEntry( &row );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
     row.Address.Ipv4.sin_family = AF_INET;
@@ -1958,7 +1976,7 @@ static void test_GetUnicastIpAddressEntry(void)
     memset( &row, 0, sizeof(row) );
     row.InterfaceIndex = 123;
     ret = pGetUnicastIpAddressEntry( &row );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
     row.InterfaceIndex = get_interface_index();
@@ -2058,12 +2076,12 @@ static void test_GetUnicastIpAddressTable(void)
     ret = pGetUnicastIpAddressTable(AF_INET, &table);
     ok( ret == NO_ERROR, "got %u\n", ret );
     trace("GetUnicastIpAddressTable(AF_INET): NumEntries %u\n", table->NumEntries);
-    pFreeMibTable(table);
+    FreeMibTable( table );
 
     ret = pGetUnicastIpAddressTable(AF_INET6, &table);
     ok( ret == NO_ERROR, "got %u\n", ret );
     trace("GetUnicastIpAddressTable(AF_INET6): NumEntries %u\n", table->NumEntries);
-    pFreeMibTable(table);
+    FreeMibTable( table );
 
     ret = pGetUnicastIpAddressTable(AF_UNSPEC, &table);
     ok( ret == NO_ERROR, "got %u\n", ret );
@@ -2087,7 +2105,7 @@ static void test_GetUnicastIpAddressTable(void)
         trace("CreationTimeStamp:               %08x%08x\n", table->Table[i].CreationTimeStamp.HighPart, table->Table[i].CreationTimeStamp.LowPart);
     }
 
-    pFreeMibTable(table);
+    FreeMibTable( table );
 }
 
 static void test_ConvertLengthToIpv4Mask(void)
@@ -2348,6 +2366,33 @@ static void test_NotifyUnicastIpAddressChange(void)
     ok(!CloseHandle(handle), "CloseHandle() succeeded.\n");
 }
 
+static void test_ConvertGuidToString( void )
+{
+    DWORD err;
+    char bufA[39];
+    WCHAR bufW[39];
+    GUID guid = { 0xa, 0xb, 0xc, { 0xd, 0, 0xe, 0xf } }, guid2;
+
+    err = ConvertGuidToStringA( &guid, bufA, 38 );
+    ok( err, "got %d\n", err );
+    err = ConvertGuidToStringA( &guid, bufA, 39 );
+    ok( !err, "got %d\n", err );
+    ok( !strcmp( bufA, "{0000000A-000B-000C-0D00-0E0F00000000}" ), "got %s\n", bufA );
+
+    err = ConvertGuidToStringW( &guid, bufW, 38 );
+    ok( err, "got %d\n", err );
+    err = ConvertGuidToStringW( &guid, bufW, 39 );
+    ok( !err, "got %d\n", err );
+    ok( !wcscmp( bufW, L"{0000000A-000B-000C-0D00-0E0F00000000}" ), "got %s\n", debugstr_w( bufW ) );
+
+    err = ConvertStringToGuidW( bufW, &guid2 );
+    ok( !err, "got %d\n", err );
+    ok( IsEqualGUID( &guid, &guid2 ), "guid mismatch\n" );
+
+    err = ConvertStringToGuidW( L"foo", &guid2 );
+    ok( err == ERROR_INVALID_PARAMETER, "got %d\n", err );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2380,6 +2425,7 @@ START_TEST(iphlpapi)
     test_GetUdp6Table();
     test_ParseNetworkString();
     test_NotifyUnicastIpAddressChange();
+    test_ConvertGuidToString();
     freeIPHlpApi();
   }
 }

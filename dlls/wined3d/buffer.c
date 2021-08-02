@@ -1410,12 +1410,12 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
         FIXME("Ignoring some bind flags %#x.\n", bind_flags);
 
     memory_type = 0;
-    if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
-        memory_type |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_R)
         memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
     else if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_W)
         memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    else if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
+        memory_type |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     if (!(wined3d_context_vk_create_bo(context_vk, resource->size, usage, memory_type, &buffer_vk->bo)))
     {

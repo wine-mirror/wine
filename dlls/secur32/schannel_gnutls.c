@@ -292,7 +292,15 @@ static DWORD CDECL schan_get_enabled_protocols(void)
 
 static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 {
-    return 0;
+    struct schan_transport *t = (struct schan_transport*)transport;
+    gnutls_session_t s = (gnutls_session_t)callbacks->get_session_for_transport(t);
+    SIZE_T count = 0;
+
+    TRACE("\n");
+
+    if (callbacks->get_buffer(t, &t->in, &count)) return 1;
+    pgnutls_transport_set_errno(s, EAGAIN);
+    return -1;
 }
 
 static BOOL CDECL schan_create_session(schan_session *session, schan_credentials *cred)

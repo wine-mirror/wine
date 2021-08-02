@@ -27,6 +27,7 @@ static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_QueryInterface(ID2D1Effect *iface, REFIID iid, void **out)
 {
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_ID2D1Effect)
@@ -35,6 +36,14 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_QueryInterface(ID2D1Effect *iface, R
     {
         ID2D1Effect_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_ID2D1Image)
+            || IsEqualGUID(iid, &IID_ID2D1Resource))
+    {
+        ID2D1Image_AddRef(&effect->ID2D1Image_iface);
+        *out = &effect->ID2D1Image_iface;
         return S_OK;
     }
 
@@ -62,7 +71,10 @@ static ULONG STDMETHODCALLTYPE d2d_effect_Release(ID2D1Effect *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        ID2D1Factory_Release(effect->factory);
         heap_free(effect);
+    }
 
     return refcount;
 }
@@ -178,7 +190,11 @@ static UINT32 STDMETHODCALLTYPE d2d_effect_GetInputCount(ID2D1Effect *iface)
 
 static void STDMETHODCALLTYPE d2d_effect_GetOutput(ID2D1Effect *iface, ID2D1Image **output)
 {
-    FIXME("iface %p, output %p stub!\n", iface, output);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+
+    TRACE("iface %p, output %p.\n", iface, output);
+
+    ID2D1Image_AddRef(*output = &effect->ID2D1Image_iface);
 }
 
 static const ID2D1EffectVtbl d2d_effect_vtbl =
@@ -204,8 +220,59 @@ static const ID2D1EffectVtbl d2d_effect_vtbl =
     d2d_effect_GetOutput,
 };
 
-void d2d_effect_init(struct d2d_effect *effect)
+static inline struct d2d_effect *impl_from_ID2D1Image(ID2D1Image *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_effect, ID2D1Image_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_image_QueryInterface(ID2D1Image *iface, REFIID iid, void **out)
+{
+    struct d2d_effect *effect = impl_from_ID2D1Image(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    return d2d_effect_QueryInterface(&effect->ID2D1Effect_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_effect_image_AddRef(ID2D1Image *iface)
+{
+    struct d2d_effect *effect = impl_from_ID2D1Image(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d2d_effect_AddRef(&effect->ID2D1Effect_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_effect_image_Release(ID2D1Image *iface)
+{
+    struct d2d_effect *effect = impl_from_ID2D1Image(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d2d_effect_Release(&effect->ID2D1Effect_iface);
+}
+
+static void STDMETHODCALLTYPE d2d_effect_image_GetFactory(ID2D1Image *iface, ID2D1Factory **factory)
+{
+    struct d2d_effect *effect = impl_from_ID2D1Image(iface);
+
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = effect->factory);
+}
+
+static const ID2D1ImageVtbl d2d_effect_image_vtbl =
+{
+    d2d_effect_image_QueryInterface,
+    d2d_effect_image_AddRef,
+    d2d_effect_image_Release,
+    d2d_effect_image_GetFactory,
+};
+
+void d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory)
 {
     effect->ID2D1Effect_iface.lpVtbl = &d2d_effect_vtbl;
+    effect->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
     effect->refcount = 1;
+    ID2D1Factory_AddRef(effect->factory = factory);
 }

@@ -768,6 +768,25 @@ DWORD WINAPI RtlGetLongestNtPathLength(void)
     return MAX_NT_PATH_LENGTH;
 }
 
+
+/******************************************************************
+ *             RtlDoesFileExists_U   (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
+{
+    UNICODE_STRING nt_name;
+    FILE_BASIC_INFORMATION basic_info;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    if (!RtlDosPathNameToNtPathName_U( file_name, &nt_name, NULL, NULL )) return FALSE;
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    status = NtQueryAttributesFile(&attr, &basic_info);
+    RtlFreeUnicodeString( &nt_name );
+    return !status;
+}
+
+
 /******************************************************************
  *             RtlIsNameLegalDOS8Dot3   (NTDLL.@)
  *

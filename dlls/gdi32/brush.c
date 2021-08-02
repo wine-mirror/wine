@@ -24,7 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -44,7 +44,6 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs brush_funcs =
 {
-    BRUSH_GetObject,     /* pGetObjectA */
     BRUSH_GetObject,     /* pGetObjectW */
     NULL,                /* pUnrealizeObject */
     BRUSH_DeleteObject   /* pDeleteObject */
@@ -57,7 +56,7 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct gdi_image_bits bits;
     struct bitblt_coords src;
-    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP );
 
     if (!bmp) return FALSE;
 
@@ -152,7 +151,7 @@ BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *
     BRUSHOBJ *brush;
     BOOL ret = FALSE;
 
-    if (!(brush = GDI_GetObjPtr( handle, OBJ_BRUSH ))) return FALSE;
+    if (!(brush = GDI_GetObjPtr( handle, NTGDI_OBJ_BRUSH ))) return FALSE;
 
     if (brush->pattern.info)
     {
@@ -197,7 +196,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     ptr->logbrush = *brush;
 
     if (store_brush_pattern( &ptr->logbrush, &ptr->pattern ) &&
-        (hbrush = alloc_gdi_handle( &ptr->obj, OBJ_BRUSH, &brush_funcs )))
+        (hbrush = alloc_gdi_handle( &ptr->obj, NTGDI_OBJ_BRUSH, &brush_funcs )))
     {
         TRACE("%p\n", hbrush);
         return hbrush;
@@ -425,7 +424,7 @@ HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if ((brush = GDI_GetObjPtr( handle, OBJ_BRUSH )))
+    if ((brush = GDI_GetObjPtr( handle, NTGDI_OBJ_BRUSH )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
         struct brush_pattern *pattern = &brush->pattern;
@@ -470,7 +469,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
  */
 static INT BRUSH_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    BRUSHOBJ *brush = GDI_GetObjPtr( handle, OBJ_BRUSH );
+    BRUSHOBJ *brush = GDI_GetObjPtr( handle, NTGDI_OBJ_BRUSH );
 
     if (!brush) return 0;
     if (buffer)

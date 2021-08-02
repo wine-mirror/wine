@@ -155,7 +155,7 @@ static BOOL init_function_ptrs(void)
         !pNtRequestPort || !pNtRegisterThreadTerminatePort ||
         !pNtConnectPort || !pRtlInitUnicodeString)
     {
-        win_skip("Needed port functions are not available\n");
+        skip("Needed port functions are not available\n");
         FreeLibrary(hntdll);
         return FALSE;
     }
@@ -384,7 +384,7 @@ START_TEST(port)
 
     status = pNtCreatePort(&port_handle, &obj, 100, 100, 0);
     if (status == STATUS_ACCESS_DENIED) skip("Not enough rights\n");
-    else todo_wine ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
+    else ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
 
     if (status == STATUS_SUCCESS)
     {

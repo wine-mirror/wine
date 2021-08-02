@@ -162,7 +162,6 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
                                      's','o','r','t','i','n','g','\\',0};
 
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
-    IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING valueW;
     WCHAR buffer[ARRAY_SIZE(sortdirW) + 16];
@@ -179,10 +178,12 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 
     status = open_unix_file( file, path, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
                              FILE_OPEN, FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    if (status == STATUS_NO_SUCH_FILE)
-        /* try to open file in system dir */
-        status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
+    free( path );
+    if (status != STATUS_NO_SUCH_FILE) return status;
 
+    if ((status = nt_to_unix_file_name( &attr, &path, FILE_OPEN ))) return status;
+    status = open_unix_file( file, path, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
+                             FILE_OPEN, FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
     free( path );
     return status;
 }
@@ -1084,7 +1085,7 @@ static void init_locale(void)
         CFStringRef locale_string;
 
         if (country)
-            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
+            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@-%@"), lang, country);
         else
             locale_string = CFStringCreateCopy(NULL, lang);
 
@@ -1113,7 +1114,7 @@ static void init_locale(void)
                     country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
                 }
                 if (country)
-                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
+                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@-%@"), lang, country );
                 else
                     locale_string = CFStringCreateCopy( NULL, lang );
                 CFStringGetCString( locale_string, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );

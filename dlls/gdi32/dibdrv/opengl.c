@@ -27,7 +27,7 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "dibdrv.h"
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"

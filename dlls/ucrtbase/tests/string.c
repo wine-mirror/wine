@@ -152,6 +152,42 @@ static void test_strtod(void)
     test_strtod_str_errno("2.47e-324", 0, 9, ERANGE);
 }
 
+static void test_strtof(void)
+{
+    static const struct {
+        const char *str;
+        int len;
+        float ret;
+        int err;
+    } tests[] = {
+        { "12.1", 4, 12.1f },
+        { "-13.721", 7, -13.721f },
+        { "1.e40", 5, INFINITY, ERANGE },
+        { "-1.e40", 6, -INFINITY, ERANGE },
+        { "0.0", 3, 0.0f },
+        { "-0.0", 4, 0.0f },
+        { "1.4e-45", 7, 1.4e-45f },
+        { "-1.4e-45", 8, -1.4e-45f },
+        { "1.e-60", 6, 0, ERANGE },
+        { "-1.e-60", 7, 0, ERANGE },
+    };
+
+    char *end;
+    float f;
+    int i;
+
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        errno = 0xdeadbeef;
+        f = strtof(tests[i].str, &end);
+        ok(f == tests[i].ret, "%d) f = %.16e\n", i, f);
+        ok(end == tests[i].str + tests[i].len, "%d) len = %d\n",
+                i, (int)(end - tests[i].str));
+        ok(errno == tests[i].err || (!tests[i].err && errno == 0xdeadbeef),
+                "%d) errno = %d\n", i, errno);
+    }
+}
+
 static void test__memicmp(void)
 {
     static const char *s1 = "abc";
@@ -558,6 +594,7 @@ START_TEST(string)
             "Invalid parameter handler was already set\n");
 
     test_strtod();
+    test_strtof();
     test__memicmp();
     test__memicmp_l();
     test___strncnt();

@@ -526,20 +526,20 @@ static HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *forma
 	    TRACE("         "); _dump_EnumObjects_flags(asked_format->rgodf[j].dwType); TRACE("\n");
             TRACE("       * dwFlags: 0x%08x\n", asked_format->rgodf[j].dwFlags);
 	    TRACE("         "); _dump_ObjectDataFormat_flags(asked_format->rgodf[j].dwFlags); TRACE("\n");
-	    
+
+            same = 0;
+
+            if (!(asked_format->rgodf[j].dwType & DIDFT_POV))
+                continue; /* fill_DataFormat memsets the buffer to 0 */
+
 	    if (asked_format->rgodf[j].dwType & DIDFT_BUTTON)
 		dt[index].size = sizeof(BYTE);
 	    else
 		dt[index].size = sizeof(DWORD);
 	    dt[index].offset_in  = -1;
 	    dt[index].offset_out = asked_format->rgodf[j].dwOfs;
-            if (asked_format->rgodf[j].dwType & DIDFT_POV)
-                dt[index].value = -1;
-            else
-                dt[index].value = 0;
+            dt[index].value      = -1;
 	    index++;
-
-	    same = 0;
 	}
     }
     

@@ -30,7 +30,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winnt.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 
 
 static HMODULE opengl32;

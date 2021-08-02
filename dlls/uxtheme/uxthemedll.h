@@ -21,6 +21,8 @@
 #ifndef __WINE_UXTHEMEDLL_H
 #define __WINE_UXTHEMEDLL_H
 
+#include <winuser.h>
+
 typedef HANDLE HTHEMEFILE;
 
 /**********************************************************************
@@ -93,8 +95,20 @@ HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
                               DWORD dwSizeNum, PTHEMENAMES pszColorNames) DECLSPEC_HIDDEN;
 HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
                                  ParseThemeIniFileProc callback, LPVOID lpData) DECLSPEC_HIDDEN;
+BOOL WINAPI ThemeHooksInstall(void) DECLSPEC_HIDDEN;
+BOOL WINAPI ThemeHooksRemove(void) DECLSPEC_HIDDEN;
 
 extern void UXTHEME_InitSystem(HINSTANCE hInst) DECLSPEC_HIDDEN;
+extern void UXTHEME_UninitSystem(void) DECLSPEC_HIDDEN;
+
+extern struct user_api_hook user_api DECLSPEC_HIDDEN;
+LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode) DECLSPEC_HIDDEN;
+void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTEST hit_test,
+                                  const struct SCROLL_TRACKING_INFO *tracking_info,
+                                  BOOL draw_arrows, BOOL draw_interior, RECT *rect, INT arrowsize,
+                                  INT thumbpos, INT thumbsize, BOOL vertical) DECLSPEC_HIDDEN;
+LRESULT WINAPI UXTHEME_ScrollbarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                        BOOL unicode) DECLSPEC_HIDDEN;
 
 /* No alpha blending */
 #define ALPHABLEND_NONE             0

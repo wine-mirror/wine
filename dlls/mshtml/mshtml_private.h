@@ -40,6 +40,10 @@
 
 #include "nsiface.h"
 
+#include "mshtml_private_iface.h"
+
+#include <assert.h>
+
 #define NS_ERROR_GENERATE_FAILURE(module,code) \
     ((nsresult) (((UINT32)(1u<<31)) | ((UINT32)(module+0x45)<<16) | ((UINT32)(code))))
 #define NS_ERROR_GENERATE_SUCCESS(module,code) \
@@ -268,10 +272,18 @@ typedef struct EventTarget EventTarget;
     XIID(ISVGTSpanElement) \
     XIID(ISVGTextContentElement)
 
+#define PRIVATE_TID_LIST \
+    XIID(IWineDOMTokenList) \
+    XIID(IWineHTMLElementPrivate) \
+    XIID(IWineHTMLWindowPrivate) \
+    XIID(IWineMSHTMLConsole)
+
 typedef enum {
 #define XIID(iface) iface ## _tid,
 #define XDIID(iface) iface ## _tid,
 TID_LIST
+    LAST_public_tid,
+PRIVATE_TID_LIST
 #undef XIID
 #undef XDIID
     LAST_tid
@@ -481,6 +493,9 @@ struct HTMLWindow {
     ITravelLogClient   ITravelLogClient_iface;
     IObjectIdentity    IObjectIdentity_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
+    IWineHTMLWindowPrivate IWineHTMLWindowPrivate_iface;
+
+    IWineMSHTMLConsole *console;
 
     LONG ref;
 
@@ -815,6 +830,7 @@ typedef struct {
     IElementSelector IElementSelector_iface;
     IElementTraversal IElementTraversal_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
+    IWineHTMLElementPrivate IWineHTMLElementPrivate_iface;
 
     nsIDOMElement *dom_element;       /* NULL for legacy comments represented as HTML elements */
     nsIDOMHTMLElement *html_element;  /* NULL for non-HTML elements (like SVG elements) */
@@ -1397,3 +1413,4 @@ void set_statustext(HTMLDocumentObj*,INT,LPCWSTR) DECLSPEC_HIDDEN;
 IInternetSecurityManager *get_security_manager(void) DECLSPEC_HIDDEN;
 
 extern HINSTANCE hInst DECLSPEC_HIDDEN;
+void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret) DECLSPEC_HIDDEN;

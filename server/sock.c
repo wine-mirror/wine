@@ -214,6 +214,8 @@ struct sock
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
+    unsigned int        hangup : 1;  /* has the read end received a hangup? */
+    unsigned int        aborted : 1; /* did we get a POLLERR or irregular POLLHUP? */
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
     unsigned int        bound : 1;   /* is the socket bound? */
 };
@@ -311,7 +313,7 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
     {
         struct WS_sockaddr_in6 win = {0};
 
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return -1;
+        if (wsaddrlen < sizeof(win)) return -1;
         win.sin6_family = WS_AF_INET6;
         win.sin6_port = uaddr->in6.sin6_port;
         win.sin6_flowinfo = uaddr->in6.sin6_flowinfo;
@@ -319,13 +321,8 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
         win.sin6_scope_id = uaddr->in6.sin6_scope_id;
 #endif
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
-        {
-            memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6) );
-            return sizeof(struct WS_sockaddr_in6);
-        }
-        memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6_old) );
-        return sizeof(struct WS_sockaddr_in6_old);
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
     }
 
 #ifdef HAS_IPX
@@ -391,19 +388,14 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
     {
         struct WS_sockaddr_in6 win = {0};
 
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return 0;
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6))
-            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6_old) );
-        else
-            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6) );
-
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
         uaddr->in6.sin6_family = AF_INET6;
         uaddr->in6.sin6_port = win.sin6_port;
         uaddr->in6.sin6_flowinfo = win.sin6_flowinfo;
         memcpy( &uaddr->in6.sin6_addr, &win.sin6_addr, sizeof(win.sin6_addr) );
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
-            uaddr->in6.sin6_scope_id = win.sin6_scope_id;
+        uaddr->in6.sin6_scope_id = win.sin6_scope_id;
 #endif
         return sizeof(uaddr->in6);
     }
@@ -462,7 +454,6 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
 #endif
 
         case sizeof(struct WS_sockaddr_in6):
-        case sizeof(struct WS_sockaddr_in6_old):
             return sizeof(uaddr->in6);
         }
 
@@ -941,7 +932,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         int status = sock_get_ntstatus( error );
         struct accept_req *req, *next;
 
-        if (sock->rd_shutdown)
+        if (sock->rd_shutdown || sock->hangup)
             async_wake_up( &sock->read_q, status );
         if (sock->wr_shutdown)
             async_wake_up( &sock->write_q, status );
@@ -983,7 +974,10 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
 
     case SOCK_CONNECTING:
         if (event & POLLOUT)
+        {
             post_socket_event( sock, AFD_POLL_BIT_CONNECT, 0 );
+            sock->errors[AFD_POLL_BIT_CONNECT_ERR] = 0;
+        }
         if (event & (POLLERR | POLLHUP))
             post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR, error );
         break;
@@ -1080,15 +1074,16 @@ static void sock_poll_event( struct fd *fd, int event )
             }
         }
 
-        if ((hangup_seen || event & (POLLHUP | POLLERR)) && (!sock->rd_shutdown || !sock->wr_shutdown))
+        if (hangup_seen || (sock_shutdown_type == SOCK_SHUTDOWN_POLLHUP && (event & POLLHUP)))
         {
-            error = error ? error : sock_error( fd );
-            if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
-                sock->wr_shutdown = 1;
-            sock->rd_shutdown = 1;
+            sock->hangup = 1;
+        }
+        else if (event & (POLLHUP | POLLERR))
+        {
+            sock->aborted = 1;
 
             if (debug_level)
-                fprintf(stderr, "socket %p aborted by error %d, event: %x\n", sock, error, event);
+                fprintf( stderr, "socket %p aborted by error %d, event %#x\n", sock, error, event );
         }
 
         if (hangup_seen)
@@ -1166,6 +1161,23 @@ static int sock_get_poll_events( struct fd *fd )
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
+        if (sock->hangup && sock->wr_shutdown && !sock->wr_shutdown_pending)
+        {
+            /* Linux returns POLLHUP if a socket is both SHUT_RD and SHUT_WR, or
+             * if both the socket and its peer are SHUT_WR.
+             *
+             * We don't use SHUT_RD, so we can only encounter this in the latter
+             * case. In that case there can't be any pending read requests (they
+             * would have already been completed with a length of zero), the
+             * above condition ensures that we don't have any pending write
+             * requests, and nothing that can change about the socket state that
+             * would complete a pending poll request. */
+            return -1;
+        }
+
+        if (sock->aborted)
+            return -1;
+
         if (sock->accept_recv_req)
         {
             ev |= POLLIN;
@@ -1176,7 +1188,9 @@ static int sock_get_poll_events( struct fd *fd )
         }
         else
         {
-            if (!sock->rd_shutdown)
+            /* Don't ask for POLLIN if we got a hangup. We won't receive more
+             * data anyway, but we will get POLLIN if SOCK_SHUTDOWN_EOF. */
+            if (!sock->hangup)
             {
                 if (mask & AFD_POLL_READ)
                     ev |= POLLIN;
@@ -1270,7 +1284,10 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
     struct sock *sock = get_fd_user( fd );
 
     if (sock->wr_shutdown_pending && list_empty( &sock->write_q.queue ))
+    {
         shutdown( get_unix_fd( sock->fd ), SHUT_WR );
+        sock->wr_shutdown_pending = 0;
+    }
 
     /* Don't reselect the ifchange queue; we always ask for POLLIN.
      * Don't reselect an uninitialized socket; we can't call set_fd_events() on
@@ -1388,6 +1405,8 @@ static struct sock *create_socket(void)
     sock->rd_shutdown = 0;
     sock->wr_shutdown = 0;
     sock->wr_shutdown_pending = 0;
+    sock->hangup = 0;
+    sock->aborted = 0;
     sock->nonblocking = 0;
     sock->bound = 0;
     sock->rcvbuf = 0;
@@ -1841,8 +1860,42 @@ static int bind_to_interface( struct sock *sock, const struct sockaddr_in *addr 
             return 1;
         }
     }
+
+    freeifaddrs( ifaddrs );
     return 0;
 }
+
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+static unsigned int get_ipv6_interface_index( const struct in6_addr *addr )
+{
+    struct ifaddrs *ifaddrs, *ifaddr;
+
+    if (getifaddrs( &ifaddrs ) < 0) return 0;
+
+    for (ifaddr = ifaddrs; ifaddr != NULL; ifaddr = ifaddr->ifa_next)
+    {
+        if (ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET6
+                && !memcmp( &((struct sockaddr_in6 *)ifaddr->ifa_addr)->sin6_addr, addr, sizeof(*addr) ))
+        {
+            unsigned int index = if_nametoindex( ifaddr->ifa_name );
+
+            if (!index)
+            {
+                if (debug_level)
+                    fprintf( stderr, "Unable to look up interface index for %s: %s\n",
+                             ifaddr->ifa_name, strerror( errno ) );
+                continue;
+            }
+
+            freeifaddrs( ifaddrs );
+            return index;
+        }
+    }
+
+    freeifaddrs( ifaddrs );
+    return 0;
+}
+#endif
 
 /* return an errno value mapped to a WSA error */
 static unsigned int sock_get_error( int err )
@@ -1939,6 +1992,9 @@ static int sock_get_ntstatus( int err )
         case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
         case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
         case EADDRINUSE:        return STATUS_SHARING_VIOLATION;
+        /* Linux returns ENODEV when specifying an invalid sin6_scope_id;
+         * Windows returns STATUS_INVALID_ADDRESS_COMPONENT */
+        case ENODEV:
         case EADDRNOTAVAIL:     return STATUS_INVALID_ADDRESS_COMPONENT;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
@@ -2161,12 +2217,25 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
-        if (sock->state == SOCK_CONNECTING)
+        switch (sock->state)
         {
-            /* FIXME: STATUS_ADDRESS_ALREADY_ASSOCIATED probably isn't right,
-             * but there's no status code that maps to WSAEALREADY... */
-            set_error( params->synchronous ? STATUS_ADDRESS_ALREADY_ASSOCIATED : STATUS_INVALID_PARAMETER );
-            return 0;
+            case SOCK_LISTENING:
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+
+            case SOCK_CONNECTING:
+                /* FIXME: STATUS_ADDRESS_ALREADY_ASSOCIATED probably isn't right,
+                 * but there's no status code that maps to WSAEALREADY... */
+                set_error( params->synchronous ? STATUS_ADDRESS_ALREADY_ASSOCIATED : STATUS_INVALID_PARAMETER );
+                return 0;
+
+            case SOCK_CONNECTED:
+                set_error( STATUS_CONNECTION_ACTIVE );
+                return 0;
+
+            case SOCK_UNCONNECTED:
+            case SOCK_CONNECTIONLESS:
+                break;
         }
 
         unix_len = sockaddr_to_unix( addr, params->addr_len, &unix_addr );
@@ -2439,7 +2508,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         in_size = get_req_data_size() - get_reply_max_size();
         if (in_size < offsetof(struct afd_bind_params, addr.sa_data)
-                || get_reply_max_size() < sizeof(struct WS_sockaddr))
+                || get_reply_max_size() < in_size - sizeof(int))
         {
             set_error( STATUS_INVALID_PARAMETER );
             return 0;
@@ -2459,11 +2528,21 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         bind_addr = unix_addr;
 
-        if (unix_addr.addr.sa_family == WS_AF_INET)
+        if (unix_addr.addr.sa_family == AF_INET)
         {
             if (!memcmp( &unix_addr.in.sin_addr, magic_loopback_addr, 4 )
                     || bind_to_interface( sock, &unix_addr.in ))
                 bind_addr.in.sin_addr.s_addr = htonl( INADDR_ANY );
+        }
+        else if (unix_addr.addr.sa_family == AF_INET6)
+        {
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+            /* Windows allows specifying zero to use the default scope. Linux
+             * interprets it as an interface index and requires that it be
+             * nonzero. */
+            if (!unix_addr.in6.sin6_scope_id)
+                bind_addr.in6.sin6_scope_id = get_ipv6_interface_index( &unix_addr.in6.sin6_addr );
+#endif
         }
 
         if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
@@ -2587,7 +2666,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             {
                 if (sock->errors[i])
                 {
-                    error = sock->errors[i];
+                    error = sock_get_error( sock->errors[i] );
                     break;
                 }
             }
@@ -2734,6 +2813,29 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     }
 }
 
+static int poll_single_socket( struct sock *sock, int mask )
+{
+    struct pollfd pollfd;
+
+    pollfd.fd = get_unix_fd( sock->fd );
+    pollfd.events = poll_flags_from_afd( sock, mask );
+    if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0)
+        return 0;
+
+    if ((mask & AFD_POLL_HUP) && (pollfd.revents & POLLIN) && sock->type == WS_SOCK_STREAM)
+    {
+        char dummy;
+
+        if (!recv( get_unix_fd( sock->fd ), &dummy, 1, MSG_PEEK ))
+        {
+            pollfd.revents &= ~POLLIN;
+            pollfd.revents |= POLLHUP;
+        }
+    }
+
+    return get_poll_flags( sock, pollfd.revents ) & mask;
+}
+
 static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t timeout,
                         unsigned int count, const struct poll_socket_input *input )
 {
@@ -2788,31 +2890,22 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
     for (i = 0; i < count; ++i)
     {
         struct sock *sock = req->sockets[i].sock;
-        struct pollfd pollfd;
-        int flags;
+        int mask = req->sockets[i].flags;
+        int flags = poll_single_socket( sock, mask );
 
-        pollfd.fd = get_unix_fd( sock->fd );
-        pollfd.events = poll_flags_from_afd( sock, req->sockets[i].flags );
-        if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0) continue;
-
-        if ((req->sockets[i].flags & AFD_POLL_HUP) && (pollfd.revents & POLLIN) &&
-            sock->type == WS_SOCK_STREAM)
-        {
-            char dummy;
-
-            if (!recv( get_unix_fd( sock->fd ), &dummy, 1, MSG_PEEK ))
-            {
-                pollfd.revents &= ~POLLIN;
-                pollfd.revents |= POLLHUP;
-            }
-        }
-
-        flags = get_poll_flags( sock, pollfd.revents ) & req->sockets[i].flags;
         if (flags)
         {
             req->iosb->status = STATUS_SUCCESS;
             output[i].flags = flags;
             output[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
+        }
+
+        /* FIXME: do other error conditions deserve a similar treatment? */
+        if (sock->state != SOCK_CONNECTING && sock->errors[AFD_POLL_BIT_CONNECT_ERR] && (mask & AFD_POLL_CONNECT_ERR))
+        {
+            req->iosb->status = STATUS_SUCCESS;
+            output[i].flags |= AFD_POLL_CONNECT_ERR;
+            output[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
         }
     }
 
@@ -3150,7 +3243,8 @@ DECL_HANDLER(recv_socket)
         status = STATUS_PENDING;
     }
 
-    if (status == STATUS_PENDING && sock->rd_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->rd_shutdown)
+        status = STATUS_PIPE_DISCONNECTED;
 
     sock->pending_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
     sock->reported_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
@@ -3260,7 +3354,8 @@ DECL_HANDLER(send_socket)
         status = STATUS_PENDING;
     }
 
-    if (status == STATUS_PENDING && sock->wr_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->wr_shutdown)
+        status = STATUS_PIPE_DISCONNECTED;
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {

@@ -4407,6 +4407,42 @@ WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 
 #ifdef __WINESRC__
 WINUSERAPI BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
+
+/* Uxtheme hook functions and struct */
+
+/* Scroll bar hit testing */
+enum SCROLL_HITTEST
+{
+    SCROLL_NOWHERE,      /* Outside the scroll bar */
+    SCROLL_TOP_ARROW,    /* Top or left arrow */
+    SCROLL_TOP_RECT,     /* Rectangle between the top arrow and the thumb */
+    SCROLL_THUMB,        /* Thumb rectangle */
+    SCROLL_BOTTOM_RECT,  /* Rectangle between the thumb and the bottom arrow */
+    SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
+};
+
+/* Scroll bar tracking information */
+struct SCROLL_TRACKING_INFO
+{
+    HWND win;                       /* Tracking window */
+    INT bar;                        /* SB_HORZ/SB_VERT/SB_CTL */
+    INT thumb_pos;                  /* Thumb position */
+    INT thumb_val;                  /* Current thumb value from thumb position */
+    BOOL vertical;                  /* Is scroll bar vertical */
+    enum SCROLL_HITTEST hit_test;   /* Hit Test code of the last button-down event */
+};
+
+struct user_api_hook
+{
+    LRESULT (WINAPI *pDefDlgProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
+    void (WINAPI *pScrollBarDraw)(HWND, HDC, INT, enum SCROLL_HITTEST,
+                                  const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, INT, INT,
+                                  INT, BOOL);
+    LRESULT (WINAPI *pScrollBarWndProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
+};
+
+WINUSERAPI BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new, struct user_api_hook *old);
+WINUSERAPI void WINAPI UnregisterUserApiHook(void);
 #endif
 
 #ifdef __cplusplus

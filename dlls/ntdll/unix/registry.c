@@ -79,13 +79,12 @@ NTSTATUS WINAPI NtCreateKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
     data_size_t len;
     struct object_attributes *objattr;
 
-    if (!key || !attr) return STATUS_ACCESS_VIOLATION;
-    if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
+    *key = 0;
+    if (attr->Length != sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
     TRACE( "(%p,%s,%s,%x,%x,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, key );
-
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
     SERVER_START_REQ( create_key )
     {
@@ -125,7 +124,7 @@ NTSTATUS WINAPI NtOpenKeyEx( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRI
 {
     NTSTATUS ret;
 
-    if (!key || !attr || !attr->ObjectName) return STATUS_ACCESS_VIOLATION;
+    *key = 0;
     if (attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
     if (attr->ObjectName->Length & 1) return STATUS_OBJECT_NAME_INVALID;
 
@@ -661,14 +660,23 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
 {
     NTSTATUS ret;
     HANDLE key;
-    IO_STATUS_BLOCK io;
     data_size_t len;
     struct object_attributes *objattr;
+    char *unix_name;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES new_attr = *file;
 
     TRACE("(%p,%p)\n", attr, file);
 
-    ret = NtCreateFile( &key, GENERIC_READ | SYNCHRONIZE, file, &io, NULL, FILE_ATTRIBUTE_NORMAL, 0,
-                        FILE_OPEN, 0, NULL, 0);
+    get_redirect( &new_attr, &nt_name );
+    if (!(ret = nt_to_unix_file_name( &new_attr, &unix_name, FILE_OPEN )))
+    {
+        ret = open_unix_file( &key, unix_name, GENERIC_READ | SYNCHRONIZE,
+                              &new_attr, 0, 0, FILE_OPEN, 0, NULL, 0 );
+        free( unix_name );
+    }
+    free( nt_name.Buffer );
+
     if (ret) return ret;
 
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;

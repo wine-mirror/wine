@@ -653,6 +653,24 @@ static void InternetCrackUrl_test(void)
   GLE = GetLastError();
   ok(ret == FALSE, "Expected InternetCrackUrl to fail\n");
   ok(GLE == ERROR_INTERNET_UNRECOGNIZED_SCHEME, "Expected GLE to represent a failure\n");
+
+  /* Windows treats dwUrlLength as a maximum - if there is a null before
+   * that length, it stops there. */
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 1024, 1024);
+  ret = InternetCrackUrlA("http://x.org", 13 /* includes the nul */, 0, &urlComponents);
+  ok(ret, "InternetCrackUrlA failed with error %d\n", GetLastError());
+  ok(urlComponents.dwHostNameLength == 5,
+     "Expected dwHostNameLength of 5, got %d\n", urlComponents.dwHostNameLength);
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 1024, 1024);
+  ret = InternetCrackUrlA("http://\0x.org", 13, 0, &urlComponents);
+  todo_wine ok(ret == FALSE, "Expected InternetCrackUrlA to fail\n");
+
+  copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 1024, 1024);
+  ret = InternetCrackUrlA("http://x.org\0/x", 15, 0, &urlComponents);
+  ok(ret, "InternetCrackUrlA failed with error %d\n", GetLastError());
+  ok(urlComponents.dwUrlPathLength == 0,
+    "Expected dwUrlPathLength of 0, got %d\n", urlComponents.dwUrlPathLength);
 }
 
 static void InternetCrackUrlW_test(void)
@@ -664,6 +682,8 @@ static void InternetCrackUrlW_test(void)
         'U','L','T', 0 };
     static const WCHAR url2[] = { '.','.','/','R','i','t','z','.','x','m','l',0 };
     static const WCHAR url3[] = { 'h','t','t','p',':','/','/','x','.','o','r','g',0 };
+    static const WCHAR url4[] = { 'h','t','t','p',':','/','/',0,'x','.','o','r','g',0 };
+    static const WCHAR url5[] = { 'h','t','t','p',':','/','/','x','.','o','r','g',0,'/','x',0 };
     URL_COMPONENTSW comp;
     WCHAR scheme[20], host[20], user[20], pwd[20], urlpart[50], extra[50];
     DWORD error;
@@ -825,6 +845,39 @@ static void InternetCrackUrlW_test(void)
     ok(r, "InternetCrackUrlW failed unexpectedly\n");
     ok(!strcmp_wa(host, "x.org"), "host is %s, should be x.org\n", wine_dbgstr_w(host));
     todo_wine ok(urlpart[0] == 0, "urlpart should be empty\n");
+
+    /* Windows treats dwUrlLength as a maximum - if there is a null before
+     * that length, it stops there. */
+    host[0] = 0;
+    memset(&comp, 0, sizeof(comp));
+    comp.dwStructSize = sizeof(comp);
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = ARRAY_SIZE(host);
+    r = InternetCrackUrlW(url3, 13 /* includes the nul */, 0, &comp);
+    ok(r, "InternetCrackUrlW failed with error %d\n", GetLastError());
+    ok(comp.dwHostNameLength == 5,
+        "Expected dwHostNameLength of 5, got %d\n", comp.dwHostNameLength);
+
+    host[0] = 0;
+    memset(&comp, 0, sizeof(comp));
+    comp.dwStructSize = sizeof(comp);
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = ARRAY_SIZE(host);
+    r = InternetCrackUrlW(url4, 13, 0, &comp);
+    todo_wine ok(r == FALSE, "Expected InternetCrackUrlW to fail\n");
+
+    host[0] = 0;
+    urlpart[0] = 0;
+    memset(&comp, 0, sizeof(comp));
+    comp.dwStructSize = sizeof(comp);
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = ARRAY_SIZE(host);
+    comp.lpszUrlPath = urlpart;
+    comp.dwUrlPathLength = ARRAY_SIZE(urlpart);
+    r = InternetCrackUrlW(url5, 15, 0, &comp);
+    ok(r, "InternetCrackUrlW failed with error %d\n", GetLastError());
+    ok(comp.dwUrlPathLength == 0,
+        "Expected dwUrlPathLength of 0, got %d\n", comp.dwUrlPathLength);
 }
 
 static void fill_url_components(URL_COMPONENTSA *lpUrlComponents)

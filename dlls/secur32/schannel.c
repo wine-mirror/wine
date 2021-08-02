@@ -659,7 +659,8 @@ static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int sta
     for (i = start_idx; i < desc->cBuffers; ++i)
     {
         buffer = &desc->pBuffers[i];
-        if (buffer->BufferType == buffer_type) return i;
+        if ((buffer->BufferType | SECBUFFER_ATTRMASK) == (buffer_type | SECBUFFER_ATTRMASK))
+            return i;
     }
 
     return -1;

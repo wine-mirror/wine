@@ -152,7 +152,10 @@ static inline WCHAR *heap_strndupAtoW(const char *str, int len_a, DWORD *len_w)
 
     if(str) {
         size_t len;
-        if(len_a < 0) len_a = strlen(str);
+        if(len_a < 0)
+            len_a = strlen(str);
+        else if(len_a > 0)
+            len_a = strnlen(str, len_a);
         len = MultiByteToWideChar(CP_ACP, 0, str, len_a, NULL, 0);
         ret = heap_alloc((len+1)*sizeof(WCHAR));
         if(ret) {

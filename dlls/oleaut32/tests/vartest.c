@@ -1262,27 +1262,34 @@ static void test_VariantCopyInd(void)
      "CopyInd(ref->ref): expected E_INVALIDARG, got 0x%08x\n", hres);
 }
 
-static HRESULT (WINAPI *pVarParseNumFromStr)(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
+static HRESULT (WINAPI *pVarParseNumFromStr)(const OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
 
 /* Macros for converting and testing the result of VarParseNumFromStr */
 #define FAILDIG 255
+
+static HRESULT wconvert_str( const OLECHAR *str, INT dig, ULONG npflags,
+                             NUMPARSE *np, BYTE rgb[128], LCID lcid, ULONG flags)
+{
+    memset( rgb, FAILDIG, 128 );
+    memset( np, 255, sizeof(*np) );
+    np->cDig = dig;
+    np->dwInFlags = npflags;
+    return pVarParseNumFromStr( str, lcid, flags, np, rgb);
+}
 
 static HRESULT convert_str( const char *str, INT dig, ULONG flags,
                             NUMPARSE *np, BYTE rgb[128], LCID lcid )
 {
     OLECHAR buff[128];
     MultiByteToWideChar( CP_ACP,0, str, -1, buff, ARRAY_SIZE( buff ));
-    memset( rgb, FAILDIG, 128 );
-    memset( np, 255, sizeof(*np) );
-    np->cDig = dig;
-    np->dwInFlags = flags;
-    return pVarParseNumFromStr( buff, lcid, LOCALE_NOUSEROVERRIDE, np, rgb);
+    return wconvert_str(buff, dig, flags, np, rgb, lcid, LOCALE_NOUSEROVERRIDE);
 }
 
 static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULONG b, ULONG c,
                                INT d, INT e, INT f )
 {
-    if (hres == (HRESULT)S_OK)
+    ok_(__FILE__,line)(hres == S_OK, "returned %08x\n", hres);
+    if (hres == S_OK)
     {
         ok_(__FILE__,line)(np->cDig == a, "Expected cDig = %d, got %d\n", a, np->cDig);
         ok_(__FILE__,line)(np->dwInFlags == b, "Expected dwInFlags = 0x%x, got 0x%x\n", b, np->dwInFlags);
@@ -1293,25 +1300,33 @@ static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULON
     }
 }
 
+#define WCONVERTN(str,dig,flags) hres = wconvert_str( str, dig, flags, &np, rgb, lcid, LOCALE_NOUSEROVERRIDE )
+#define WCONVERT(str,flags) WCONVERTN(str,sizeof(rgb),flags)
 #define CONVERTN(str,dig,flags) hres = convert_str( str, dig, flags, &np, rgb, lcid )
 #define CONVERT(str,flags) CONVERTN(str,sizeof(rgb),flags)
 #define EXPECT(a,b,c,d,e,f) expect_NumFromStr( __LINE__, hres, &np, a, b, c, d, e, f )
 #define EXPECTRGB(a,b) ok(rgb[a] == b, "Digit[%d], expected %d, got %d\n", a, b, rgb[a])
-#define EXPECTFAIL ok(hres == (HRESULT)DISP_E_TYPEMISMATCH, "Call succeeded, hres = %08x\n", hres)
+#define EXPECTFAIL ok(hres == DISP_E_TYPEMISMATCH, "Call succeeded, hres = %08x\n", hres)
 #define EXPECT2(a,b) EXPECTRGB(0,a); EXPECTRGB(1,b)
 
-static void test_VarParseNumFromStr(void)
+static void test_VarParseNumFromStrEn(void)
 {
   HRESULT hres;
   /* Ensure all tests are using the same locale characters for '$', ',' etc */
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
   NUMPARSE np;
   BYTE rgb[128];
-  WCHAR str[128];
+  OLECHAR wstr[128];
+  OLECHAR spaces[] = L" \xa0\f\n\r\t\v"; /* man isspace() */
+  int i;
 
   /** No flags **/
 
   CHECKPTR(VarParseNumFromStr);
+
+  /* Consume an empty string */
+  CONVERT("", 0);
+  EXPECTFAIL;
 
   /* Consume a single digit */
   CONVERT("7", 0);
@@ -1356,16 +1371,18 @@ static void test_VarParseNumFromStr(void)
   EXPECTRGB(0,FAILDIG);
 
 
-  /* With flag, consumes whitespace */
-  CONVERT(" 0", NUMPRS_LEADING_WHITE);
-  EXPECT(1,NUMPRS_LEADING_WHITE,NUMPRS_LEADING_WHITE,2,0,0);
-  EXPECT2(0,FAILDIG);
+  /* With flag, consumes any type of space */
+  for (i = 0; i < ARRAY_SIZE(spaces)-1; i++)
+  {
+      winetest_push_context("%d", i);
 
-  /* Test TAB once, then assume it acts as space for all cases */
-  CONVERT("\t0", NUMPRS_LEADING_WHITE);
-  EXPECT(1,NUMPRS_LEADING_WHITE,NUMPRS_LEADING_WHITE,2,0,0);
-  EXPECT2(0,FAILDIG);
+      wsprintfW(wstr, L"%c0", spaces[i]);
+      WCONVERT(wstr, NUMPRS_LEADING_WHITE);
+      EXPECT(1,NUMPRS_LEADING_WHITE,NUMPRS_LEADING_WHITE,2,0,0);
+      EXPECT2(0,FAILDIG);
 
+      winetest_pop_context();
+  }
 
   /* Doesn't pick up trailing whitespace without flag */
   CONVERT("0 ", 0);
@@ -1478,7 +1495,7 @@ static void test_VarParseNumFromStr(void)
   EXPECTFAIL;
   EXPECTRGB(0,FAILDIG);
 
-  /* Octal */
+  /* A leading 0 does not an octal number make */
   CONVERT("0100", NUMPRS_HEX_OCT);
   EXPECT(1,NUMPRS_HEX_OCT,0,4,0,2);
   EXPECTRGB(0,1);
@@ -1488,7 +1505,7 @@ static void test_VarParseNumFromStr(void)
 
   /* VB hex */
   CONVERT("&HF800", NUMPRS_HEX_OCT);
-  EXPECT(4,NUMPRS_HEX_OCT,0x40,6,4,0);
+  EXPECT(4,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,6,4,0);
   EXPECTRGB(0,15);
   EXPECTRGB(1,8);
   EXPECTRGB(2,0);
@@ -1497,7 +1514,7 @@ static void test_VarParseNumFromStr(void)
 
   /* VB hex lower case and leading zero */
   CONVERT("&h0abcdef", NUMPRS_HEX_OCT);
-  EXPECT(6,NUMPRS_HEX_OCT,0x40,9,4,0);
+  EXPECT(6,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,9,4,0);
   EXPECTRGB(0,10);
   EXPECTRGB(1,11);
   EXPECTRGB(2,12);
@@ -1508,7 +1525,7 @@ static void test_VarParseNumFromStr(void)
 
   /* VB oct */
   CONVERT("&O300", NUMPRS_HEX_OCT);
-  EXPECT(3,NUMPRS_HEX_OCT,0x40,5,3,0);
+  EXPECT(3,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,5,3,0);
   EXPECTRGB(0,3);
   EXPECTRGB(1,0);
   EXPECTRGB(2,0);
@@ -1516,7 +1533,7 @@ static void test_VarParseNumFromStr(void)
 
   /* VB oct lower case and leading zero */
   CONVERT("&o0777", NUMPRS_HEX_OCT);
-  EXPECT(3,NUMPRS_HEX_OCT,0x40,6,3,0);
+  EXPECT(3,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,6,3,0);
   EXPECTRGB(0,7);
   EXPECTRGB(1,7);
   EXPECTRGB(2,7);
@@ -1524,9 +1541,23 @@ static void test_VarParseNumFromStr(void)
 
   /* VB oct char bigger than 7 */
   CONVERT("&o128", NUMPRS_HEX_OCT);
-  EXPECT(2,NUMPRS_HEX_OCT,0x40,4,3,0);
+  EXPECT(2,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,4,3,0);
   EXPECTRGB(0,1);
   EXPECTRGB(1,2);
+  EXPECTRGB(3,FAILDIG);
+
+  /* Only integers are allowed when using an alternative radix */
+  CONVERT("&ha.2", NUMPRS_HEX_OCT|NUMPRS_DECIMAL);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_DECIMAL,NUMPRS_HEX_OCT,3,4,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECTRGB(0,10);
+  todo_wine EXPECTRGB(1,FAILDIG);
+
+  /* Except if it looks like a plain decimal number */
+  CONVERT("01.2", NUMPRS_HEX_OCT|NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_HEX_OCT|NUMPRS_DECIMAL,NUMPRS_DECIMAL,4,0,-1);
+  EXPECT2(1,2);
   EXPECTRGB(3,FAILDIG);
 
   /** NUMPRS_PARENS **/
@@ -1553,15 +1584,56 @@ static void test_VarParseNumFromStr(void)
   EXPECT(1,NUMPRS_THOUSANDS,0,1,0,0);
   EXPECT2(0,FAILDIG);
 
+  /* Without flag stop at thousands separator */
+  CONVERT("1,000", 0);
+  EXPECT(1,0,0,1,0,0);
+  EXPECT2(1,FAILDIG);
+
   /* With flag, thousands sep. and following digits consumed */
   CONVERT("1,000", NUMPRS_THOUSANDS);
   EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,3);
   EXPECTRGB(0,1);
+  /* VarParseNumFromStr() may have added more digits to rgb but they are not
+   * part of the returned value. So consider that an implementation detail.
+   */
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, thousands sep. and following digits consumed */
+  CONVERT("&h1,000", NUMPRS_HEX_OCT|NUMPRS_THOUSANDS);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_THOUSANDS,NUMPRS_HEX_OCT,3,4,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECTRGB(0,1);
+  todo_wine EXPECTRGB(1,FAILDIG);
 
   /* With flag and decimal point, thousands sep. but not decimals consumed */
-  CONVERT("1,000.0", NUMPRS_THOUSANDS);
-  EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,3);
-  EXPECTRGB(0,1);
+  CONVERT("1,001.0", NUMPRS_THOUSANDS);
+  EXPECT(4,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,0);
+  EXPECT2(1,0);
+  EXPECTRGB(2,0);
+  EXPECTRGB(3,1);
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, consecutive thousands separators are allowed */
+  CONVERT("1,,000", NUMPRS_THOUSANDS);
+  EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,6,0,3);
+  EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, thousands separators can be sprinkled at random */
+  CONVERT("1,00,0,,", NUMPRS_THOUSANDS);
+  EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,8,0,3);
+  EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, but leading thousands separators are not allowed */
+  CONVERT(",1,000", NUMPRS_THOUSANDS);
+  EXPECTFAIL;
+
+  /* With flag, thousands separator not needed but still reported */
+  CONVERT("1,", NUMPRS_THOUSANDS);
+  EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,2,0,0);
+  EXPECT2(1,FAILDIG);
 
   /** NUMPRS_CURRENCY **/
 
@@ -1570,11 +1642,91 @@ static void test_VarParseNumFromStr(void)
   EXPECTFAIL;
   EXPECTRGB(0,FAILDIG);
 
+  /* With flag, allows having no currency sign */
+  CONVERT("11", NUMPRS_CURRENCY);
+  EXPECT(2,NUMPRS_CURRENCY,0,2,0,0);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag, does not allow a lone currency sign */
+  CONVERT("$", NUMPRS_CURRENCY);
+  EXPECTFAIL;
+
   /* With flag, consumes currency sign */
   CONVERT("$11", NUMPRS_CURRENCY);
   EXPECT(2,NUMPRS_CURRENCY,NUMPRS_CURRENCY,3,0,0);
   EXPECT2(1,1);
   EXPECTRGB(2,FAILDIG);
+
+  /* With flag, currency amounts cannot be in hexadecimal */
+  CONVERT("$&ha", NUMPRS_HEX_OCT|NUMPRS_CURRENCY);
+  todo_wine EXPECTFAIL;
+
+  CONVERT("&ha$", NUMPRS_HEX_OCT|NUMPRS_CURRENCY);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_CURRENCY,NUMPRS_HEX_OCT,3,4,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECTRGB(0,10);
+  EXPECTRGB(1,FAILDIG);
+
+  /* With flag, the sign cannot be repeated before the amount */
+  CONVERT("$$11", NUMPRS_CURRENCY);
+  EXPECTFAIL;
+
+  /* With flag, but is allowed after the amount and can even be repeated! */
+  CONVERT("$11$$", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  EXPECT(2,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,5,0,0);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag, the British Pound is not allowed "1L" */
+  WCONVERT(L"\x31\xa3", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  EXPECTFAIL;
+
+  /* With flag, minus can go after the currency sign */
+  CONVERT("$-11", NUMPRS_CURRENCY|NUMPRS_LEADING_MINUS);
+  EXPECT(2,NUMPRS_CURRENCY|NUMPRS_LEADING_MINUS,NUMPRS_CURRENCY|NUMPRS_LEADING_MINUS|NUMPRS_NEG,4,0,0);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag, or before */
+  CONVERT("-$11", NUMPRS_CURRENCY|NUMPRS_LEADING_MINUS);
+  EXPECT(2,NUMPRS_CURRENCY|NUMPRS_LEADING_MINUS,NUMPRS_CURRENCY|NUMPRS_LEADING_MINUS|NUMPRS_NEG,4,0,0);
+  EXPECT2(1,1);
+  EXPECTRGB(2,FAILDIG);
+
+  for (i = 0; i < ARRAY_SIZE(spaces)-1; i++)
+  {
+      winetest_push_context("%d", i);
+
+      /* With flag, no space is allowed after the currency sign */
+      wsprintfW(wstr, L"$%c11", spaces[i]);
+      WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+      EXPECTFAIL;
+
+      /* With flag, unless explicitly allowed before the digits */
+      WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_LEADING_WHITE);
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_LEADING_WHITE,NUMPRS_CURRENCY|NUMPRS_LEADING_WHITE,4,0,0);
+      EXPECT2(1,1);
+      EXPECTRGB(2,FAILDIG);
+
+      /* With flag, no space is allowed before the trailing currency sign */
+      wsprintfW(wstr, L"11%c$", spaces[i]);
+      WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+      EXPECTFAIL;
+
+      /* With flag, even with thousands flag (see the French situation) */
+      WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+      EXPECTFAIL;
+
+      /* With flag, unless explicitly allowed */
+      WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL);
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE,4,0,0);
+      EXPECT2(1,1);
+      EXPECTRGB(2,FAILDIG);
+
+      winetest_pop_context();
+  }
 
   /* With flag only, doesn't consume decimal point */
   CONVERT("$11.1", NUMPRS_CURRENCY);
@@ -1589,13 +1741,29 @@ static void test_VarParseNumFromStr(void)
   EXPECTRGB(2,1);
   EXPECTRGB(3,FAILDIG);
 
-  /* Thousands flag can only be used with currency */
+  /* With flag, the currency cannot replace the decimal sign (see comment about
+   * the Cape Verdean escudo).
+   */
+  CONVERT("1$99", NUMPRS_CURRENCY|NUMPRS_DECIMAL);
+  EXPECT(1,NUMPRS_CURRENCY|NUMPRS_DECIMAL,NUMPRS_CURRENCY,2,0,0);
+  EXPECT2(1,FAILDIG);
+
+  /* Thousands flag can also be used with currency */
   CONVERT("$1,234", NUMPRS_CURRENCY|NUMPRS_THOUSANDS);
   EXPECT(4,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,6,0,0);
   EXPECT2(1,2);
   EXPECTRGB(2,3);
   EXPECTRGB(3,4);
   EXPECTRGB(4,FAILDIG);
+
+  /* Thousands flag can also be used with currency and decimal numbers */
+  CONVERT("$1,234.5", NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL);
+  EXPECT(5,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL,8,0,-1);
+  EXPECT2(1,2);
+  EXPECTRGB(2,3);
+  EXPECTRGB(3,4);
+  EXPECTRGB(4,5);
+  EXPECTRGB(5,FAILDIG);
 
   /** NUMPRS_DECIMAL **/
 
@@ -1616,6 +1784,11 @@ static void test_VarParseNumFromStr(void)
   EXPECT2(1,1);
   EXPECTRGB(2,FAILDIG);
 
+  /* With flag, including if they are consecutive */
+  CONVERT("1..1", NUMPRS_DECIMAL);
+  EXPECT(1,NUMPRS_DECIMAL,NUMPRS_DECIMAL,2,0,0);
+  EXPECT2(1,FAILDIG);
+
   /** NUMPRS_EXPONENT **/
 
   /* Without flag, doesn't consume exponent */
@@ -1627,6 +1800,20 @@ static void test_VarParseNumFromStr(void)
   CONVERT("1e1", NUMPRS_EXPONENT);
   EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,3,0,1);
   EXPECT2(1,FAILDIG);
+
+  /* With flag, incompatible with NUMPRS_HEX_OCT */
+  CONVERT("&o1e1", NUMPRS_HEX_OCT|NUMPRS_EXPONENT);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_EXPONENT,NUMPRS_HEX_OCT,3,3,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECT2(1,FAILDIG);
+
+  /* With flag, even if it sort of looks like an exponent */
+  CONVERT("&h1e2", NUMPRS_HEX_OCT|NUMPRS_EXPONENT);
+  EXPECT(3,NUMPRS_HEX_OCT|NUMPRS_EXPONENT,NUMPRS_HEX_OCT,5,4,0);
+  EXPECT2(1,0xe);
+  EXPECTRGB(2,2);
+  EXPECTRGB(3,FAILDIG);
 
   /* Negative exponents are accepted without flags */
   CONVERT("1e-1", NUMPRS_EXPONENT);
@@ -1731,10 +1918,558 @@ static void test_VarParseNumFromStr(void)
   EXPECT(1,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-1);
   EXPECT2(1,0);
 
-  str[0] = 0x0660;
-  str[1] = 0;
-  hres = pVarParseNumFromStr(str, lcid, LOCALE_NOUSEROVERRIDE, &np, rgb);
-  ok(hres == DISP_E_TYPEMISMATCH, "VarParseNumFromStr returned %08x\n", hres);
+  /* Arabic numerals are not allowed "0" */
+  WCONVERT(L"\x660", NUMPRS_STD);
+  EXPECTFAIL;
+}
+
+static void test_VarParseNumFromStrFr(void)
+{
+  HRESULT hres;
+  /* Test some aspects that are different in a non-English locale */
+  LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH),SORT_DEFAULT);
+  NUMPARSE np;
+  BYTE rgb[128];
+  OLECHAR wstr[128];
+  OLECHAR spaces[] = L" \xa0\f\n\r\t\v"; /* man isspace() */
+  int i;
+
+  CHECKPTR(VarParseNumFromStr);
+
+  /** White spaces **/
+
+  for (i = 0; i < ARRAY_SIZE(spaces)-1; i++)
+  {
+    winetest_push_context("%d", i);
+
+    /* Leading spaces must be explicitly allowed */
+    wsprintfW(wstr, L"%c2", spaces[i]);
+    WCONVERT(wstr, NUMPRS_USE_ALL);
+    EXPECTFAIL;
+
+    WCONVERT(wstr, NUMPRS_LEADING_WHITE|NUMPRS_USE_ALL);
+    EXPECT(1,NUMPRS_LEADING_WHITE|NUMPRS_USE_ALL,NUMPRS_LEADING_WHITE,2,0,0);
+    EXPECT2(2,FAILDIG);
+
+    /* But trailing spaces... */
+    wsprintfW(wstr, L"3%c", spaces[i]);
+    WCONVERT(wstr, NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL);
+    if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
+    {
+      /* Spaces aliased to the thousands separator are never allowed! */
+      EXPECTFAIL;
+    }
+    else
+    {
+      /* The others behave normally */
+      EXPECT(1,NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_TRAILING_WHITE,2,0,0);
+      EXPECT2(3,FAILDIG);
+    }
+
+    WCONVERT(wstr, NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+    if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
+    {
+      /* Trailing thousands separators are allowed as usual */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,2,0,0);
+      EXPECT2(3,FAILDIG);
+    }
+    else
+    {
+      /* But not other spaces */
+      EXPECTFAIL;
+    }
+
+    winetest_pop_context();
+  }
+
+
+  /** NUMPRS_PARENS **/
+
+  /* With flag, Number in parens made negative and parens consumed */
+  CONVERT("(0)", NUMPRS_PARENS);
+  EXPECT(1,NUMPRS_PARENS,NUMPRS_NEG|NUMPRS_PARENS,3,0,0);
+  EXPECT2(0,FAILDIG);
+
+  /** NUMPRS_THOUSANDS **/
+
+  for (i = 0; i < ARRAY_SIZE(spaces)-1; i++)
+  {
+    winetest_push_context("%d", i);
+
+    /* With flag, thousands separator and following digits consumed */
+    wsprintfW(wstr, L"1%c000", spaces[i]);
+    WCONVERT(wstr, NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+    if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
+    {
+      /* Non-breaking space and regular spaces work */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+    }
+    else
+    {
+      /* But not other spaces */
+      EXPECTFAIL;
+    }
+
+    winetest_pop_context();
+  }
+
+  /* With flag and decimal point, thousands sep. but not decimals consumed */
+  CONVERT("1 001,0", NUMPRS_THOUSANDS);
+  EXPECT(4,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,0);
+  EXPECT2(1,0);
+  EXPECTRGB(2,0);
+  EXPECTRGB(3,1);
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, consecutive thousands separators are allowed */
+  CONVERT("1  000", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+  EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,6,0,3);
+  EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, thousands separators can be sprinkled at random */
+  CONVERT("1 00 0  ", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+  EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,8,0,3);
+  EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+  EXPECTRGB(4,FAILDIG);
+
+  /* With flag, but leading thousands separators are not allowed */
+  CONVERT(" 1 000", NUMPRS_THOUSANDS);
+  EXPECTFAIL;
+
+  /* With flag, thousands separator not needed but still reported */
+  CONVERT("1 ", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+  EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,2,0,0);
+  EXPECT2(1,FAILDIG);
+
+
+  /** NUMPRS_CURRENCY **/
+
+  /* With flag, consumes currency sign "E12" */
+  WCONVERT(L"\x20ac\x31\x32", NUMPRS_CURRENCY);
+  EXPECT(2,NUMPRS_CURRENCY,NUMPRS_CURRENCY,3,0,0);
+  EXPECT2(1,2);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag, consumes all currency signs! "E12EE" */
+  WCONVERT(L"\x20ac\x31\x32\x20ac\x20ac", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  EXPECT(2,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,5,0,0);
+  EXPECT2(1,2);
+  EXPECTRGB(2,FAILDIG);
+
+  /* The presence of a trailing currency sign changes nothing for spaces */
+  for (i = 0; i < ARRAY_SIZE(spaces)-1; i++)
+  {
+    winetest_push_context("%d", i);
+
+    /* With flag, no space is allowed before the currency sign "12 E" */
+    wsprintfW(wstr, L"12%c\x20ac", spaces[i]);
+    WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+    EXPECTFAIL;
+
+    /* With flag, even if explicitly allowed "12 E" */
+    WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL);
+    if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
+    {
+      /* Spaces aliased to thousands separator are never allowed! */
+      EXPECTFAIL;
+    }
+    else
+    {
+      /* The others behave normally */
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE,4,0,0);
+      EXPECT2(1,2);
+      EXPECTRGB(2,FAILDIG);
+    }
+
+    WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
+    if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
+    {
+      /* Spaces aliased to thousands separator are never allowed! */
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,4,0,0);
+      EXPECT2(1,2);
+      EXPECTRGB(2,FAILDIG);
+    }
+    else
+    {
+      /* The others behave normally */
+      EXPECTFAIL;
+    }
+
+    winetest_pop_context();
+  }
+
+  /* With flag only, doesn't consume decimal point */
+  WCONVERT(L"12,1\x20ac", NUMPRS_CURRENCY);
+  EXPECT(2,NUMPRS_CURRENCY,0,2,0,0);
+  EXPECT2(1,2);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag and decimal flag, consumes decimal point and following digits */
+  WCONVERT(L"12,1\x20ac", NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL);
+  EXPECT(3,NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_DECIMAL,5,0,-1);
+  EXPECT2(1,2);
+  EXPECTRGB(2,1);
+  EXPECTRGB(3,FAILDIG);
+
+  /* Thousands flag can also be used with currency */
+  WCONVERT(L"1 234,5 \x20ac", NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL);
+  EXPECT(5,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL,9,0,-1);
+  EXPECT2(1,2);
+  EXPECTRGB(2,3);
+  EXPECTRGB(3,4);
+  EXPECTRGB(4,5);
+  EXPECTRGB(5,FAILDIG);
+
+
+  /** NUMPRS_DECIMAL **/
+
+  /* With flag, consumes decimal point */
+  CONVERT("1,2", NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL,3,0,-1);
+  EXPECT2(1,2);
+  EXPECTRGB(2,FAILDIG);
+
+  /* With flag, but not regular point */
+  CONVERT("1.2", NUMPRS_DECIMAL);
+  EXPECT(1,NUMPRS_DECIMAL,0,1,0,0);
+  EXPECT2(1,FAILDIG);
+}
+
+static void test_VarParseNumFromStrMisc(void)
+{
+  HRESULT hres;
+  LCID lcid;
+  NUMPARSE np;
+  BYTE rgb[128];
+  OLECHAR currency[8], t1000[8], mont1000[8], dec[8], mondec[8];
+
+  CHECKPTR(VarParseNumFromStr);
+
+  /* Customize the regional settings to perform extra tests */
+
+  if (GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, currency, ARRAY_SIZE(currency)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, t1000, ARRAY_SIZE(t1000)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, mont1000, ARRAY_SIZE(mont1000)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, dec, ARRAY_SIZE(dec)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, mondec, ARRAY_SIZE(mondec)))
+  {
+      /* Start from a known configuration */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, L"$");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L",");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L",");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, L".");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L".");
+
+      /* SCURRENCY defaults to '$' */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, L"");
+      hres = wconvert_str(L"$1", ARRAY_SIZE(rgb), NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECT(1,NUMPRS_CURRENCY,NUMPRS_CURRENCY,2,0,0);
+      EXPECT2(1,FAILDIG);
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, L"$");
+
+      /* STHOUSAND has no default */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L"~");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L"");
+      hres = wconvert_str(L"1,000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECTFAIL;
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L"~");
+
+      /* But SMONTHOUSANDSEP defaults to ','! */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L"");
+      hres = wconvert_str(L"$1,000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,6,0,3);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L",");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L",");
+
+      /* SDECIMAL defaults to '.' */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"~");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, L"");
+      hres = wconvert_str(L"4.2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL,3,0,-1);
+      EXPECT2(4,2);
+      EXPECTRGB(2,FAILDIG);
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, L"~");
+
+      /* But SMONDECIMALSEP has no default! */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"");
+      hres = wconvert_str(L"3.9", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECTFAIL;
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, L".");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L".");
+
+      /* Non-breaking spaces are not allowed if sThousand is a regular space */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L" ");
+
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,3);
+      todo_wine ok(np.dwOutFlags == NUMPRS_THOUSANDS, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+      hres = wconvert_str(L"1\xa0\x30\x30\x30", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+
+      /* Show that NUMPRS_THOUSANDS activates sThousand and that
+       * NUMPRS_THOUSANDS+NUMPRS_CURRENCY activates sMonThousandSep
+       * whether a currency sign is present or not. Also the presence of
+       * sMonThousandSep flags the value as being a currency.
+       */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L"|");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L" ");
+
+      hres = wconvert_str(L"1|000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,3);
+      todo_wine ok(np.dwOutFlags == NUMPRS_THOUSANDS, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+      hres = wconvert_str(L"1|000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,NUMPRS_THOUSANDS,5,0,3);
+      todo_wine ok(np.dwOutFlags == NUMPRS_THOUSANDS, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,5,0,3);
+      todo_wine ok(np.dwOutFlags == (NUMPRS_THOUSANDS|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+
+      /* Leading sMonThousandSep are not allowed (same as sThousand) */
+      hres = wconvert_str(L" 1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+      /* But trailing ones are allowed (same as sThousand) */
+      hres = wconvert_str(L"1 000 ", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,6,0,3);
+      todo_wine ok(np.dwOutFlags == (NUMPRS_THOUSANDS|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+      /* And they break NUMPRS_TRAILING_WHITE (same as sThousand) */
+      hres = wconvert_str(L"1000 ", ARRAY_SIZE(rgb), NUMPRS_TRAILING_WHITE|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECTFAIL;
+
+
+      /* NUMPRS_CURRENCY is not enough for sMonThousandSep */
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+
+      /* Even with a currency sign, the regular thousands separator works */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, L"$");
+      /* Make sure SMONDECIMALSEP is not the currency sign (see the
+       * Cape Verdean escudo comment).
+       */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"/");
+      hres = wconvert_str(L"$1|000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,6,0,3);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+      /* Mixing both thousands separators is allowed */
+      hres = wconvert_str(L"1 000|000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,9,0,6);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(7,FAILDIG);
+
+
+      /* SMONTHOUSANDSEP does not consider regular spaces to be equivalent to
+       * non-breaking spaces!
+       */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L"\xa0");
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L"\xa0");
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+
+      /* Regular thousands separators also have precedence over the currency ones */
+      hres = wconvert_str(L"1\xa0\x30\x30\x30", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+
+      /* Show that the decimal separator masks the thousands one in all
+       * positions, sometimes even without NUMPRS_DECIMAL.
+       */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L",");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L"~");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, L",");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"~");
+
+      hres = wconvert_str(L",1", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL,NUMPRS_DECIMAL,2,0,-1);
+      todo_wine EXPECTRGB(0,1);
+      EXPECTRGB(1,FAILDIG);
+
+      hres = wconvert_str(L"1,000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECTFAIL;
+
+      hres = wconvert_str(L"1,", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_DECIMAL,2,0,0);
+      todo_wine ok(np.dwOutFlags == NUMPRS_DECIMAL, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECT2(1,FAILDIG);
+
+      /* But not for their monetary equivalents */
+      hres = wconvert_str(L"~1", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY,NUMPRS_DECIMAL|NUMPRS_CURRENCY,2,0,-1);
+      todo_wine EXPECTRGB(0,1);
+      EXPECTRGB(1,FAILDIG);
+
+      hres = wconvert_str(L"1~", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,2,0,0);
+      todo_wine ok(np.dwOutFlags == (NUMPRS_THOUSANDS|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECT2(1,FAILDIG);
+
+
+      /* Only the first sThousand character is used (sigh of relief) */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, L" \xa0");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L" \xa0");
+
+      hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
+      EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
+      EXPECTRGB(4,FAILDIG);
+
+      hres = wconvert_str(L"1\xa0\x30\x30\x30", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+      hres = wconvert_str(L"1 \xa0\x30\x30\x30", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECTFAIL;
+
+
+      /* Show that the currency decimal separator is active even without
+       * NUMPRS_CURRENCY.
+       */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, L".");
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L",");
+
+      hres = wconvert_str(L"1.2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECT(2,NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_DECIMAL,3,0,-1);
+      EXPECT2(1,2);
+      EXPECTRGB(2,FAILDIG);
+
+      hres = wconvert_str(L"1,2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,3,0,-1);
+      todo_wine ok(np.dwOutFlags == (NUMPRS_DECIMAL|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1);
+      todo_wine EXPECTRGB(1,2);
+      EXPECTRGB(2,FAILDIG);
+
+      hres = wconvert_str(L"1.2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECT(2,NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_DECIMAL,3,0,-1);
+      EXPECT2(1,2);
+      EXPECTRGB(2,FAILDIG);
+
+      hres = wconvert_str(L"1,2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(2,NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,3,0,-1);
+      todo_wine ok(np.dwOutFlags == (NUMPRS_DECIMAL|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1);
+      todo_wine EXPECTRGB(1,2);
+      EXPECTRGB(2,FAILDIG);
+
+      hres = wconvert_str(L"1.2,3", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      EXPECT(2,NUMPRS_DECIMAL|NUMPRS_CURRENCY,NUMPRS_DECIMAL,3,0,-1);
+      EXPECT2(1,2);
+      EXPECTRGB(2,FAILDIG);
+
+      hres = wconvert_str(L"1,2.3", ARRAY_SIZE(rgb), NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      if (broken(1)) /* FIXME Reenable once Wine is less broken */
+      EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,3,0,-1);
+      todo_wine ok(np.dwOutFlags == (NUMPRS_DECIMAL|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
+      EXPECTRGB(0,1);
+      todo_wine EXPECTRGB(1,2);
+      EXPECTRGB(2,FAILDIG);
+
+
+      /* In some locales the decimal separator is the currency sign.
+       * For instance the Cape Verdean escudo.
+       */
+      SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"$");
+      hres = wconvert_str(L"1$99", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
+      todo_wine EXPECT(3,NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,4,0,-2);
+      EXPECTRGB(0,1);
+      todo_wine EXPECTRGB(1,9);
+      todo_wine EXPECTRGB(2,9);
+      EXPECTRGB(3,FAILDIG);
+
+
+      /* Restore all the settings */
+      ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, currency), "Restoring SCURRENCY failed\n");
+      ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, t1000), "Restoring STHOUSAND failed\n");
+      ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, mont1000), "Restoring SMONTHOUSANDSEP failed\n");
+      ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, dec), "Restoring SDECIMAL failed\n");
+      ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, mondec), "Restoring SMONDECIMALSEP failed\n");
+  }
+
+
+  /* Test currencies of various lengths */
+
+  /* 2 Polish zloty */
+  lcid = MAKELCID(MAKELANGID(LANG_POLISH,SUBLANG_POLISH_POLAND),SORT_DEFAULT);
+  WCONVERT(L"z\x142\x32", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,3,0,0);
+  EXPECT2(2,FAILDIG);
+
+  /* Multi-character currencies can be repeated too "zl2zlzl" */
+  WCONVERT(L"z\x142\x32z\x142z\x142", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,7,0,0);
+  EXPECT2(2,FAILDIG);
+
+  lcid = MAKELCID(MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_SWISS),SORT_DEFAULT);
+  WCONVERT(L"3CHF", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  /* Windows <= 8.1 uses an old currency symbol: "fr. 5" */
+  todo_wine ok(hres == S_OK || broken(hres == DISP_E_TYPEMISMATCH), "returned %08x\n", hres);
+  if (hres == S_OK)
+  {
+    todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,4,0,0);
+    EXPECT2(3,FAILDIG);
+  }
+
+  /* 5 Moroccan dirham */
+  lcid = MAKELCID(MAKELANGID(LANG_ARABIC,SUBLANG_ARABIC_MOROCCO),SORT_DEFAULT);
+  WCONVERT(L"5\x62f.\x645.\x200f", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
+  /* Windows 8.1 incorrectly doubles the right-to-left mark:
+   * "\x62f.\x645.\x200f\x200f 5"
+   */
+  todo_wine ok(hres == S_OK || broken(hres == DISP_E_TYPEMISMATCH), "returned %08x\n", hres);
+  if (hres == S_OK)
+  {
+    todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,6,0,0);
+    EXPECT2(5,FAILDIG);
+  }
+
+
+  /* Test Arabic numerals in an Arabic locale */
+
+  lcid = MAKELCID(MAKELANGID(LANG_ARABIC,SUBLANG_ARABIC_MOROCCO),SORT_DEFAULT);
+  WCONVERT(L"\x660", NUMPRS_STD);
+  EXPECTFAIL;
 }
 
 static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
@@ -1746,10 +2481,10 @@ static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
     np.cDig = (a); np.dwInFlags = (b); np.dwOutFlags = (c); np.cchUsed = (d); \
     np.nBaseShift = (e); np.nPwr10 = (f); hres = pVarNumFromParseNum(&np, rgb, bits, &vOut)
 static const char *szFailOverflow = "Expected overflow, hres = %08x\n";
-#define EXPECT_OVERFLOW ok(hres == (HRESULT)DISP_E_OVERFLOW, szFailOverflow, hres)
+#define EXPECT_OVERFLOW ok(hres == DISP_E_OVERFLOW, szFailOverflow, hres)
 static const char *szFailOk = "Call failed, hres = %08x\n";
-#define EXPECT_OK ok(hres == (HRESULT)S_OK, szFailOk, hres); \
-  if (hres == (HRESULT)S_OK)
+#define EXPECT_OK ok(hres == S_OK, szFailOk, hres); \
+  if (hres == S_OK)
 #define EXPECT_TYPE(typ) ok(V_VT(&vOut) == typ,"Expected Type = " #typ ", got %d\n", V_VT(&vOut))
 #define EXPECT_I1(val) EXPECT_OK { EXPECT_TYPE(VT_I1); \
   ok(V_I1(&vOut) == val, "Expected i1 = %d, got %d\n", (signed char)val, V_I1(&vOut)); }
@@ -2086,7 +2821,7 @@ static void test_VarDateFromUdate(void)
 }
 
 static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
-                       WORD s, WORD ms, INT r, double dt)
+                       WORD s, WORD ms, INT r, double dt, double dt2)
 {
     SYSTEMTIME st;
     double out;
@@ -2101,26 +2836,35 @@ static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
     st.wMilliseconds = ms;
     st.wDayOfWeek = 0;
     res = pSystemTimeToVariantTime(&st, &out);
-    ok_(__FILE__,line)(r == res && (!r || EQ_DOUBLE(out, dt)),
-                       "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out);
+    ok_(__FILE__,line)(r == res, "expected %d, got %d\n", r, res);
+    if (r && res)
+        ok_(__FILE__,line)(EQ_DOUBLE(out, dt) || (dt2 && broken(EQ_DOUBLE(out, dt2))),
+                           "expected %.16g or %.16g, got %.16g\n", dt, dt2, out);
 }
-#define ST2DT(d,m,y,h,mn,s,ms,r,dt) test_st2dt(__LINE__,d,m,y,h,mn,s,ms,r,dt)
+#define ST2DT(d,m,y,h,mn,s,ms,r,dt,dt2) test_st2dt(__LINE__,d,m,y,h,mn,s,ms,r,dt,dt2)
 
 static void test_SystemTimeToVariantTime(void)
 {
   CHECKPTR(SystemTimeToVariantTime);
-  ST2DT(1,1,1980,0,0,0,0,TRUE,29221.0);
-  ST2DT(2,1,1980,0,0,0,0,TRUE,29222.0);
-  ST2DT(0,1,1980,0,0,0,0,TRUE,29220.0);   /* Rolls back to 31 Dec 1899 */
-  ST2DT(1,13,1980,0,0,0,0,FALSE,29587.0); /* Fails on invalid month */
-  ST2DT(32,1,1980,0,0,0,0,FALSE,0.0);     /* Fails on invalid day */
-  ST2DT(1,1,-1,0,0,0,0,FALSE,0.0);        /* Fails on invalid year */
-  ST2DT(1,1,10000,0,0,0,0,FALSE,0.0);     /* Fails on invalid year */
-  ST2DT(1,1,9999,0,0,0,0,TRUE,2958101.0); /* 9999 is last valid year */
-  ST2DT(31,12,90,0,0,0,0,TRUE,33238.0);   /* 30 <= year < 100 is 1900+year */
-  ST2DT(1,1,30,0,0,0,0,TRUE,10959.0);     /* 30 <= year < 100 is 1900+year */
-  ST2DT(1,1,29,0,0,0,0,TRUE,47119.0);     /* 0 <= year < 30 is 2000+year */
-  ST2DT(1,1,0,0,0,0,0,TRUE,36526.0);      /* 0 <= year < 30 is 2000+year */
+  ST2DT(1,1,1980,0,0,0,0,TRUE,29221.0,0.0);
+  ST2DT(2,1,1980,0,0,0,0,TRUE,29222.0,0.0);
+  ST2DT(0,1,1980,0,0,0,0,TRUE,29220.0,0.0);   /* Rolls back to 31 Dec 1899 */
+  ST2DT(1,13,1980,0,0,0,0,FALSE,0.0,0.0);     /* Fails on invalid month */
+  ST2DT(32,1,1980,0,0,0,0,FALSE,0.0,0.0);     /* Fails on invalid day */
+  ST2DT(1,1,-1,0,0,0,0,FALSE,0.0,0.0);        /* Fails on invalid year */
+  ST2DT(1,1,10000,0,0,0,0,FALSE,0.0,0.0);     /* Fails on invalid year */
+  ST2DT(1,1,9999,0,0,0,0,TRUE,2958101.0,0.0); /* 9999 is last valid year */
+
+  /* Old Windows versions use 29 as the Y2K cutoff:
+   * years 00-29 map to 2000-2029 while years 30-99 map to 1930-1999
+   */
+  ST2DT(1,1,0,0,0,0,0,TRUE,36526.0,0.0);
+  ST2DT(1,1,29,0,0,0,0,TRUE,47119.0,0.0);
+  ST2DT(1,1,30,0,0,0,0,TRUE,47484.0,10959.0);
+  /* But Windows 1903+ uses 49 as the Y2K cutoff */
+  ST2DT(1,1,49,0,0,0,0,TRUE,54424.0,17899.0);
+  ST2DT(1,1,50,0,0,0,0,TRUE,18264.0,0.0);
+  ST2DT(31,12,99,0,0,0,0,TRUE,36525.0,0.0);
 }
 
 static void test_dt2st(int line, double dt, INT r, WORD d, WORD m, WORD y,
@@ -9183,7 +9927,9 @@ START_TEST(vartest)
   test_VariantClear();
   test_VariantCopy();
   test_VariantCopyInd();
-  test_VarParseNumFromStr();
+  test_VarParseNumFromStrEn();
+  test_VarParseNumFromStrFr();
+  test_VarParseNumFromStrMisc();
   test_VarNumFromParseNum();
   test_VarUdateFromDate();
   test_VarDateFromUdate();

@@ -1137,6 +1137,7 @@ static float __expo2f(float x, float sign)
 float CDECL coshf( float x )
 {
     UINT32 ui = *(UINT32*)&x;
+    UINT32 sign = ui & 0x80000000;
     float t;
 
     /* |x| */
@@ -1160,7 +1161,10 @@ float CDECL coshf( float x )
     }
 
     /* |x| > log(FLT_MAX) or nan */
-    t = __expo2f(x, 1.0f);
+    if (ui > 0x7f800000)
+        *(UINT32*)&t = ui | sign | 0x400000;
+    else
+        t = __expo2f(x, 1.0f);
     return t;
 }
 
@@ -1200,7 +1204,7 @@ float CDECL expf( float x )
        ideally ties-to-even rule is used, otherwise the magnitude of r
        can be bigger which gives larger approximation error.  */
     kd = __round(z);
-    ki = kd;
+    ki = (INT64)kd;
     r = z - kd;
 
     /* exp(x) = 2^(k/N) * 2^(r/N) ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
@@ -1504,7 +1508,7 @@ static float powf_exp2(double xd, UINT32 sign_bias)
 
     /* N*x = k + r with r in [-1/2, 1/2] */
     kd = __round(xd); /* k */
-    ki = kd;
+    ki = (INT64)kd;
     r = xd - kd;
 
     /* exp2(x) = 2^(k/N) * 2^r ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
@@ -1695,7 +1699,10 @@ float CDECL sinhf( float x )
     }
 
     /* |x| > logf(FLT_MAX) or nan */
-    t = __expo2f(absx, 2 * h);
+    if (ui > 0x7f800000)
+        *(DWORD*)&t = *(DWORD*)&x | 0x400000;
+    else
+        t = __expo2f(absx, 2 * h);
     return t;
 }
 
@@ -1874,21 +1881,24 @@ float CDECL tanf( float x )
 float CDECL tanhf( float x )
 {
     UINT32 ui = *(UINT32*)&x;
-    int sign;
+    UINT32 sign = ui & 0x80000000;
     float t;
 
     /* x = |x| */
-    sign = ui >> 31;
     ui &= 0x7fffffff;
     x = *(float*)&ui;
 
     if (ui > 0x3f0c9f54) {
         /* |x| > log(3)/2 ~= 0.5493 or nan */
         if (ui > 0x41200000) {
+            if (ui > 0x7f800000) {
+                *(UINT32*)&x = ui | sign | 0x400000;
 #if _MSVCR_VER < 140
-            if (isnan(x))
                 return math_error(_DOMAIN, "tanhf", x, 0, x);
+#else
+                return x;
 #endif
+            }
             /* |x| > 10 */
             fp_barrierf(x + 0x1p120f);
             t = 1 + 0 / x;
@@ -2766,6 +2776,7 @@ static double __expo2(double x, double sign)
 double CDECL cosh( double x )
 {
     UINT64 ux = *(UINT64*)&x;
+    UINT64 sign = ux & 0x8000000000000000ULL;
     UINT32 w;
     double t;
 
@@ -2793,7 +2804,10 @@ double CDECL cosh( double x )
 
     /* |x| > log(DBL_MAX) or nan */
     /* note: the result is stored to handle overflow */
-    t = __expo2(x, 1.0);
+    if (ux > 0x7ff0000000000000ULL)
+        *(UINT64*)&t = ux | sign | 0x0008000000000000ULL;
+    else
+        t = __expo2(x, 1.0);
     return t;
 }
 
@@ -3810,7 +3824,7 @@ static double pow_exp(double argx, double argy, double x, double xtail, UINT32 s
     /* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N]. */
     z = invln2N * x;
     kd = __round(z);
-    ki = kd;
+    ki = (INT64)kd;
     r = x + kd * negln2hiN + kd * negln2loN;
     /* The code assumes 2^-200 < |xtail| < 2^-8/N. */
     r += xtail;
@@ -4032,6 +4046,7 @@ double CDECL sin( double x )
 double CDECL sinh( double x )
 {
     UINT64 ux = *(UINT64*)&x;
+    UINT64 sign = ux & 0x8000000000000000ULL;
     UINT32 w;
     double t, h, absx;
 
@@ -4056,7 +4071,10 @@ double CDECL sinh( double x )
 
     /* |x| > log(DBL_MAX) or nan */
     /* note: the result is stored to handle overflow */
-    t = __expo2(absx, 2 * h);
+    if (ux > 0x7ff0000000000000ULL)
+        *(UINT64*)&t = ux | sign | 0x0008000000000000ULL;
+    else
+        t = __expo2(absx, 2 * h);
     return t;
 }
 
@@ -4318,12 +4336,11 @@ double CDECL tan( double x )
 double CDECL tanh( double x )
 {
     UINT64 ui = *(UINT64*)&x;
+    UINT64 sign = ui & 0x8000000000000000ULL;
     UINT32 w;
-    int sign;
     double t;
 
     /* x = |x| */
-    sign = ui >> 63;
     ui &= (UINT64)-1 / 2;
     x = *(double*)&ui;
     w = ui >> 32;
@@ -4331,11 +4348,15 @@ double CDECL tanh( double x )
     if (w > 0x3fe193ea) {
         /* |x| > log(3)/2 ~= 0.5493 or nan */
         if (w > 0x40340000) {
+            if (ui > 0x7ff0000000000000ULL) {
+                *(UINT64*)&x = ui | sign | 0x0008000000000000ULL;
 #if _MSVCR_VER < 140
-            if (isnan(x))
                 return math_error(_DOMAIN, "tanh", x, 0, x);
+#else
+                return x;
 #endif
-            /* |x| > 20 or nan */
+            }
+            /* |x| > 20 */
             /* note: this branch avoids raising overflow */
             fp_barrier(x + 0x1p120f);
             t = 1 - 0 / x;
@@ -5586,6 +5607,7 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
 {
     __msvcrt_ulong ret = 0;
 
+#ifdef __i386__
     if (x & _EM_INVALID) ret |= FENV_X_INVALID;
     if (x & _EM_DENORMAL) ret |= FENV_X_DENORMAL;
     if (x & _EM_ZERODIVIDE) ret |= FENV_X_ZERODIVIDE;
@@ -5597,6 +5619,7 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
     if (x & _RC_DOWN) ret |= FENV_X_DOWN;
     if (x & _PC_24) ret |= FENV_X_24;
     if (x & _PC_53) ret |= FENV_X_53;
+#endif
     x &= ~(_MCW_EM | _MCW_IC | _MCW_RC | _MCW_PC);
 
     if (y & _EM_INVALID) ret |= FENV_Y_INVALID;
@@ -5648,6 +5671,19 @@ static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
         WARN("can't decode: %lx\n", enc);
         return FALSE;
     }
+    return TRUE;
+}
+#endif
+#elif _MSVCR_VER >= 120
+static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
+{
+    return x | y;
+}
+
+#if (defined(__i386__) || defined(__x86_64__))
+static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
+{
+    *x = *y = enc;
     return TRUE;
 }
 #endif
@@ -5708,16 +5744,8 @@ int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
         return 0;
 
     fegetenv(&env);
-#if _MSVCR_VER>=140 && (defined(__i386__) || defined(__x86_64__))
     env._Fe_stat &= ~fenv_encode(excepts, excepts);
     env._Fe_stat |= *status & fenv_encode(excepts, excepts);
-#elif _MSVCR_VER>=140
-    env._Fe_stat &= ~fenv_encode(0, excepts);
-    env._Fe_stat |= *status & fenv_encode(0, excepts);
-#else
-    env._Fe_stat &= ~excepts;
-    env._Fe_stat |= *status & excepts;
-#endif
     return fesetenv(&env);
 }
 
@@ -5730,13 +5758,7 @@ int CDECL feraiseexcept(int flags)
 
     flags &= FE_ALL_EXCEPT;
     fegetenv(&env);
-#if _MSVCR_VER>=140 && defined(__i386__)
     env._Fe_stat |= fenv_encode(flags, flags);
-#elif _MSVCR_VER>=140
-    env._Fe_stat |= fenv_encode(0, flags);
-#else
-    env._Fe_stat |= flags;
-#endif
     return fesetenv(&env);
 }
 
@@ -5749,11 +5771,7 @@ int CDECL feclearexcept(int flags)
 
     fegetenv(&env);
     flags &= FE_ALL_EXCEPT;
-#if _MSVCR_VER>=140
     env._Fe_stat &= ~fenv_encode(flags, flags);
-#else
-    env._Fe_stat &= ~flags;
-#endif
     return fesetenv(&env);
 }
 
@@ -5766,10 +5784,8 @@ int CDECL fegetexceptflag(fexcept_t *status, int excepts)
     unsigned int x87, sse;
     _statusfp2(&x87, &sse);
     *status = fenv_encode(x87 & excepts, sse & excepts);
-#elif _MSVCR_VER>=140
-    *status = fenv_encode(0, _statusfp() & excepts);
 #else
-    *status = _statusfp() & excepts;
+    *status = fenv_encode(0, _statusfp() & excepts);
 #endif
     return 0;
 }
@@ -5801,7 +5817,7 @@ int CDECL __fpe_flt_rounds(void)
  */
 int CDECL fegetround(void)
 {
-    return _controlfp(0, 0) & _RC_CHOP;
+    return _controlfp(0, 0) & _MCW_RC;
 }
 
 /*********************************************************************
@@ -5809,9 +5825,9 @@ int CDECL fegetround(void)
  */
 int CDECL fesetround(int round_mode)
 {
-    if (round_mode & (~_RC_CHOP))
+    if (round_mode & (~_MCW_RC))
         return 1;
-    _controlfp(round_mode, _RC_CHOP);
+    _controlfp(round_mode, _MCW_RC);
     return 0;
 }
 
@@ -5865,6 +5881,7 @@ int CDECL fesetenv(const fenv_t *env)
 {
 #if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
     unsigned int x87_cw, sse_cw, x87_stat, sse_stat;
+#ifdef __i386__
     struct {
         WORD control_word;
         WORD unused1;
@@ -5879,6 +5896,7 @@ int CDECL fesetenv(const fenv_t *env)
         WORD data_segment;
         WORD unused5;
     } fenv;
+#endif
 
     TRACE( "(%p)\n", env );
 
@@ -5887,16 +5905,12 @@ int CDECL fesetenv(const fenv_t *env)
         return 0;
     }
 
-#if _MSVCR_VER>=140
     if (!fenv_decode(env->_Fe_ctl, &x87_cw, &sse_cw))
         return 1;
     if (!fenv_decode(env->_Fe_stat, &x87_stat, &sse_stat))
         return 1;
-#else
-    x87_cw = sse_cw = env->_Fe_ctl;
-    x87_stat = sse_stat = env->_Fe_stat;
-#endif
 
+#ifdef __i386__
     __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
 
     fenv.control_word &= ~0xc3d;
@@ -5935,6 +5949,7 @@ int CDECL fesetenv(const fenv_t *env)
 
     __asm__ __volatile__( "fldenv %0" : : "m" (fenv) : "st", "st(1)",
             "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)" );
+#endif
 
     if (sse2_supported)
     {

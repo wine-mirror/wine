@@ -28,7 +28,7 @@
 
 #include "amstream_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(amstream);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 struct multimedia_stream
 {

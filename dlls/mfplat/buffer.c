@@ -1473,7 +1473,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
     object->_2d.width = stride;
     object->_2d.height = desc.Height;
     object->max_length = object->_2d.plane_size;
-    object->_2d.copy_image = get_2d_buffer_copy_func(desc.Format);
+    object->_2d.copy_image = get_2d_buffer_copy_func(format);
 
     if (FAILED(hr = init_attributes_object(&object->dxgi_surface.attributes, 0)))
     {

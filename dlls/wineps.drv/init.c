@@ -851,8 +851,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pPolyDraw */
     PSDRV_PolyPolygon,                  /* pPolyPolygon */
     PSDRV_PolyPolyline,                 /* pPolyPolyline */
-    NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
     PSDRV_PutImage,                     /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
@@ -861,7 +859,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_ResetDC,                      /* pResetDC */
     NULL,                               /* pRestoreDC */
     PSDRV_RoundRect,                    /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */
@@ -870,9 +867,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_SelectFont,                   /* pSelectFont */
     NULL,                               /* pSelectPalette */
     PSDRV_SelectPen,                    /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     PSDRV_SetBkColor,                   /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
     NULL,                               /* pSetBoundsRect */
     PSDRV_SetDCBrushColor,              /* pSetDCBrushColor */
     PSDRV_SetDCPenColor,                /* pSetDCPenColor */
@@ -883,11 +878,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     PSDRV_SetPixel,                     /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
-    NULL,                               /* pSetTextAlign */
     NULL,                               /* pSetTextCharacterExtra */
     PSDRV_SetTextColor,                 /* pSetTextColor */
     NULL,                               /* pSetTextJustification */

@@ -1124,11 +1124,11 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
 
   if (iYear > 9999 || iYear < -9999)
     return E_INVALIDARG; /* Invalid value */
-  /* Year 0 to 29 are treated as 2000 + year */
-  if (iYear >= 0 && iYear < 30)
+  /* Years 0 to 49 are treated as 2000 + year, see also VARIANT_MakeDate() */
+  if (0 <= iYear && iYear <= 49)
     iYear += 2000;
-  /* Remaining years < 100 are treated as 1900 + year */
-  else if (iYear >= 30 && iYear < 100)
+  /* Remaining years 50 to 99 are treated as 1900 + year */
+  else if (50 <= iYear && iYear <= 99)
     iYear += 1900;
 
   iMinute += iSecond / 60;
@@ -1554,8 +1554,8 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
             break;
     default: WARN("buffer too small for LOCALE_SCURRENCY\n");
   }
-  TRACE("lcid 0x%x, cCurrencyLocal =%d,%d '%c','%c'\n", lcid, lpChars->cCurrencyLocal,
-        lpChars->cCurrencyLocal2, lpChars->cCurrencyLocal, lpChars->cCurrencyLocal2);
+  TRACE("lcid 0x%x, cCurrencyLocal=%d,%d %s\n", lcid, lpChars->cCurrencyLocal,
+        lpChars->cCurrencyLocal2, wine_dbgstr_w(buff));
 
   memcpy(&lastChars, lpChars, sizeof(defaultChars));
   lastLcid = lcid;
@@ -1607,7 +1607,7 @@ static inline BOOL is_digit(WCHAR c)
  *  - I am unsure if this function should parse non-Arabic (e.g. Thai)
  *   numerals, so this has not been implemented.
  */
-HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
+HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
                                   NUMPARSE *pNumprs, BYTE *rgbDig)
 {
   VARIANT_NUMBER_CHARS chars;
@@ -1615,6 +1615,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   DWORD dwState = B_EXPONENT_START|B_INEXACT_ZEROS;
   int iMaxDigits = ARRAY_SIZE(rgbTmp);
   int cchUsed = 0;
+  OLECHAR cDigitSeparator2;
 
   TRACE("(%s,%d,0x%08x,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
 
@@ -1634,6 +1635,10 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
     return DISP_E_TYPEMISMATCH;
 
   VARIANT_GetLocalisedNumberChars(&chars, lcid, dwFlags);
+  /* Setting the thousands separator to a non-breaking space implies regular
+   * spaces are allowed too. But the converse is not true.
+   */
+  cDigitSeparator2 = chars.cDigitSeparator == 0xa0 ? ' ' : 0;
 
   /* First consume all the leading symbols and space from the string */
   while (1)
@@ -1646,6 +1651,12 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         cchUsed++;
         lpszStr++;
       } while (iswspace(*lpszStr));
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_THOUSANDS &&
+             ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
+              (cDigitSeparator2 && *lpszStr == cDigitSeparator2)))
+    {
+      return DISP_E_TYPEMISMATCH; /* Not allowed before the first digit */
     }
     else if (pNumprs->dwInFlags & NUMPRS_LEADING_PLUS &&
              *lpszStr == chars.cPositiveSymbol &&
@@ -1669,11 +1680,12 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
              (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
     {
       pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
-      cchUsed++;
-      lpszStr++;
+      cchUsed += chars.cCurrencyLocal2 ? 2 : 1;
+      lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
       /* Only accept currency characters */
       chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
       chars.cDigitSeparator = chars.cCurrencyDigitSeparator;
+      cDigitSeparator2 = chars.cDigitSeparator == 0xa0 ? ' ' : 0;
     }
     else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == '(' &&
              !(pNumprs->dwOutFlags & NUMPRS_PARENS))
@@ -1781,7 +1793,9 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         cchUsed++;
       }
     }
-    else if (*lpszStr == chars.cDigitSeparator && pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+    else if (pNumprs->dwInFlags & NUMPRS_THOUSANDS &&
+             ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
+              (cDigitSeparator2 && *lpszStr == cDigitSeparator2)))
     {
       pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
       cchUsed++;
@@ -1909,7 +1923,22 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   /* Consume any trailing symbols and space */
   while (1)
   {
-    if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && iswspace(*lpszStr))
+    if ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
+        (cDigitSeparator2 && *lpszStr == cDigitSeparator2))
+    {
+      if (pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+      {
+        pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
+        cchUsed++;
+        lpszStr++;
+      }
+      else
+      {
+        /* Not allowed, even with NUMPRS_TRAILING_WHITE */
+        break;
+      }
+    }
+    else if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && iswspace(*lpszStr))
     {
       pNumprs->dwOutFlags |= NUMPRS_TRAILING_WHITE;
       do
@@ -1940,6 +1969,14 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       cchUsed++;
       lpszStr++;
       pNumprs->dwOutFlags |= NUMPRS_NEG;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_CURRENCY &&
+             *lpszStr == chars.cCurrencyLocal &&
+             (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
+      cchUsed += chars.cCurrencyLocal2 ? 2 : 1;
+      lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
     }
     else
       break;

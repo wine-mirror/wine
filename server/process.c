@@ -1399,7 +1399,7 @@ DECL_HANDLER(init_process_done)
     process->ldt_copy = req->ldt_copy;
 
     process->start_time = current_time;
-    current->entry_point = image_info->entry_point;
+    current->entry_point = base + image_info->entry_point;
 
     init_process_tracing( process );
     generate_startup_debug_events( process );
@@ -1408,7 +1408,7 @@ DECL_HANDLER(init_process_done)
     if (image_info->subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI)
         process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
     if (process->debug_obj) set_process_debug_flag( process, 1 );
-    reply->entry = image_info->entry_point;
+    reply->entry = current->entry_point;
     reply->suspend = (current->suspend || process->suspend);
 }
 

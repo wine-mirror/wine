@@ -258,27 +258,12 @@ static UInt8 map_option( ULONG option )
 }
 
 #define IF_NAMESIZE 16
-static BOOL map_adapter_name( const WCHAR *name, WCHAR *unix_name, DWORD len )
+static BOOL map_adapter_name( const NET_LUID *luid, WCHAR *unix_name, DWORD len )
 {
-    WCHAR buf[IF_NAMESIZE];
-    UNICODE_STRING str;
-    GUID guid;
-
-    RtlInitUnicodeString( &str, name );
-    if (!RtlGUIDFromString( &str, &guid ))
-    {
-        NET_LUID luid;
-        if (ConvertInterfaceGuidToLuid( &guid, &luid ) ||
-            ConvertInterfaceLuidToNameW( &luid, buf, ARRAY_SIZE(buf) )) return FALSE;
-
-        name = buf;
-    }
-    if (lstrlenW( name ) >= len) return FALSE;
-    lstrcpyW( unix_name, name );
-    return TRUE;
+    return !ConvertInterfaceLuidToAlias( luid, unix_name, len );
 }
 
-static CFStringRef find_service_id( const WCHAR *adapter )
+static CFStringRef find_service_id( const NET_LUID *adapter )
 {
     SCPreferencesRef prefs;
     SCNetworkSetRef set = NULL;
@@ -318,7 +303,7 @@ done:
     return ret;
 }
 
-ULONG get_dhcp_request_param( const WCHAR *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
                               ULONG size )
 {
     CFStringRef service_id = find_service_id( adapter );
@@ -387,7 +372,7 @@ ULONG get_dhcp_request_param( const WCHAR *adapter, struct mountmgr_dhcp_request
 
 #elif !defined(SONAME_LIBDBUS_1)
 
-ULONG get_dhcp_request_param( const WCHAR *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
                               ULONG size )
 {
     FIXME( "support not compiled in\n" );

@@ -31,6 +31,14 @@
 static BOOL (WINAPI *pCryptDecodeObjectEx)(DWORD,LPCSTR,const BYTE*,DWORD,DWORD,PCRYPT_DECODE_PARA,void*,DWORD*);
 static BOOL (WINAPI *pCryptEncodeObjectEx)(DWORD,LPCSTR,const void*,DWORD,PCRYPT_ENCODE_PARA,void*,DWORD*);
 
+void CRYPT_CopyReversed(BYTE *dst, const BYTE *src, size_t len)
+{
+    DWORD i;
+    for (i = 0; i < len; i++) {
+        dst[len - i - 1] = src[i];
+    }
+}
+
 struct encodedInt
 {
     int val;
@@ -2568,6 +2576,126 @@ static void test_decodeRsaPublicKey(DWORD dwEncoding)
              rsaPubKeys[i].modulus, rsaPubKeys[i].decodedModulusLen),
              "Unexpected modulus\n");
             LocalFree(buf);
+        }
+    }
+}
+
+static void test_encodeRsaPublicKey_Bcrypt(DWORD dwEncoding)
+{
+    BYTE toEncode[sizeof(BCRYPT_RSAKEY_BLOB) + sizeof(DWORD) + sizeof(modulus1)];
+    BCRYPT_RSAKEY_BLOB *hdr = (BCRYPT_RSAKEY_BLOB *)toEncode;
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0, i;
+    BYTE pubexp[] = {0x01,0x00,0x01,0x00}; /* 65537 */
+
+    /* Verify that the Magic value doesn't matter */
+    hdr->Magic = 1;
+    hdr->BitLength = sizeof(modulus1) * 8;
+    hdr->cbPublicExp = sizeof(pubexp);
+    hdr->cbModulus = sizeof(modulus1);
+    hdr->cbPrime1 = 0;
+    hdr->cbPrime2 = 0;
+
+    /* CNG_RSA_PUBLIC_KEY_BLOB stores the exponent and modulus
+     * in big-endian format, so we need convert them
+     * from little-endian format before encoding
+     */
+    CRYPT_CopyReversed(toEncode + sizeof(BCRYPT_RSAKEY_BLOB), pubexp, sizeof(pubexp));
+    CRYPT_CopyReversed(toEncode + sizeof(BCRYPT_RSAKEY_BLOB) + sizeof(pubexp), modulus1, sizeof(modulus1));
+
+    ret = pCryptEncodeObjectEx(dwEncoding, CNG_RSA_PUBLIC_KEY_BLOB,
+     toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+
+    /* Finally, all valid */
+    hdr->Magic = BCRYPT_RSAPUBLIC_MAGIC;
+    for (i = 0; i < ARRAY_SIZE(rsaPubKeys); i++)
+    {
+        hdr->BitLength = rsaPubKeys[i].modulusLen * 8;
+        hdr->cbModulus = rsaPubKeys[i].modulusLen;
+
+        CRYPT_CopyReversed(toEncode + sizeof(BCRYPT_RSAKEY_BLOB) + sizeof(DWORD),
+         rsaPubKeys[i].modulus, rsaPubKeys[i].modulusLen);
+
+        ret = pCryptEncodeObjectEx(dwEncoding, CNG_RSA_PUBLIC_KEY_BLOB,
+         toEncode, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            ok(bufSize == rsaPubKeys[i].encoded[1] + 2,
+             "Expected size %d, got %d\n", rsaPubKeys[i].encoded[1] + 2,
+             bufSize);
+            ok(!memcmp(buf, rsaPubKeys[i].encoded, bufSize),
+             "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodeRsaPublicKey_Bcrypt(DWORD dwEncoding)
+{
+    DWORD i;
+    LPBYTE buf = NULL;
+    LPBYTE leModulus = NULL;
+    DWORD bufSize = 0;
+    BOOL ret;
+
+    /* Try with a bad length */
+    ret = pCryptDecodeObjectEx(dwEncoding, CNG_RSA_PUBLIC_KEY_BLOB,
+     rsaPubKeys[0].encoded, rsaPubKeys[0].encoded[1],
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &bufSize);
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == OSS_MORE_INPUT /* Win9x/NT4 */),
+     "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n",
+     GetLastError());
+    /* Now try success cases */
+    for (i = 0; i < ARRAY_SIZE(rsaPubKeys); i++)
+    {
+        bufSize = 0;
+        ret = pCryptDecodeObjectEx(dwEncoding, CNG_RSA_PUBLIC_KEY_BLOB,
+         rsaPubKeys[i].encoded, rsaPubKeys[i].encoded[1] + 2,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            BCRYPT_RSAKEY_BLOB *hdr = (BCRYPT_RSAKEY_BLOB *)buf;
+            BYTE pubexp[] = {0xff,0xff,0xff,0xff}, pubexp_expected[] = {0x01,0x00,0x01};
+            /* CNG_RSA_PUBLIC_KEY_BLOB stores the exponent
+             * in big-endian format, so we need to convert it to little-endian
+             */
+            CRYPT_CopyReversed((BYTE *)&pubexp, buf + sizeof(BCRYPT_RSAKEY_BLOB), hdr->cbPublicExp);
+            ok(bufSize >= sizeof(BCRYPT_RSAKEY_BLOB) +
+             rsaPubKeys[i].decodedModulusLen,
+             "Wrong size %d\n", bufSize);
+            ok(hdr->Magic == BCRYPT_RSAPUBLIC_MAGIC,
+             "Expected magic BCRYPT_RSAPUBLIC_MAGIC (%d), got %d\n", BCRYPT_RSAPUBLIC_MAGIC,
+             hdr->Magic);
+            ok(hdr->BitLength == rsaPubKeys[i].decodedModulusLen * 8,
+             "Wrong bit len %d\n", hdr->BitLength);
+            /* Windows decodes the exponent to 3 bytes, since it will fit.
+             * Our implementation currently unconditionally decodes to a DWORD (4 bytes)
+             */
+            todo_wine ok(hdr->cbPublicExp == 3, "Expected cbPublicExp 3, got %d\n", hdr->cbPublicExp);
+            ok(hdr->cbModulus == rsaPubKeys[i].decodedModulusLen,
+              "Wrong modulus len %d\n", hdr->cbModulus);
+            ok(hdr->cbPrime1 == 0,"Wrong cbPrime1 %d\n", hdr->cbPrime1);
+            ok(hdr->cbPrime2 == 0,"Wrong cbPrime2 %d\n", hdr->cbPrime2);
+            ok(!memcmp(pubexp, pubexp_expected, sizeof(pubexp_expected)), "Wrong exponent\n");
+            todo_wine ok(pubexp[3] == 0xff, "Got %02x\n", pubexp[3]);
+
+            leModulus = HeapAlloc(GetProcessHeap(), 0, hdr->cbModulus);
+             /*
+              * CNG_RSA_PUBLIC_KEY_BLOB stores the modulus in big-endian format,
+              * so we need to convert it to little-endian
+              */
+            CRYPT_CopyReversed(leModulus, buf + sizeof(BCRYPT_RSAKEY_BLOB) + hdr->cbPublicExp,
+                    hdr->cbModulus);
+            ok(!memcmp(leModulus,
+             rsaPubKeys[i].modulus, rsaPubKeys[i].decodedModulusLen),
+             "Unexpected modulus\n");
+            LocalFree(buf);
+            LocalFree(leModulus);
         }
     }
 }
@@ -8547,6 +8675,8 @@ START_TEST(encode)
         test_decodeBasicConstraints(encodings[i]);
         test_encodeRsaPublicKey(encodings[i]);
         test_decodeRsaPublicKey(encodings[i]);
+        test_encodeRsaPublicKey_Bcrypt(encodings[i]);
+        test_decodeRsaPublicKey_Bcrypt(encodings[i]);
         test_encodeSequenceOfAny(encodings[i]);
         test_decodeSequenceOfAny(encodings[i]);
         test_encodeExtensions(encodings[i]);

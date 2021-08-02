@@ -81,6 +81,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(hook);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+static struct user_api_hook original_user_api =
+{
+    USER_DefDlgProc,
+    USER_ScrollBarDraw,
+    USER_ScrollBarProc,
+};
+static struct user_api_hook hooked_user_api;
+struct user_api_hook *user_api = &original_user_api;
+
 struct hook_info
 {
     INT id;
@@ -960,4 +969,25 @@ BOOL WINAPI IsWinEventHookInstalled(DWORD dwEvent)
     /* FIXME: Needed by Office 2007 installer */
     WARN("(%d)-stub!\n", dwEvent);
     return TRUE;
+}
+
+/* Undocumented RegisterUserApiHook() */
+BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new, struct user_api_hook *old)
+{
+    if (!new)
+        return FALSE;
+
+    USER_Lock();
+    hooked_user_api = *new;
+    user_api = &hooked_user_api;
+    if (old)
+        *old = original_user_api;
+    USER_Unlock();
+    return TRUE;
+}
+
+/* Undocumented UnregisterUserApiHook() */
+void WINAPI UnregisterUserApiHook(void)
+{
+    InterlockedExchangePointer((void **)&user_api, &original_user_api);
 }

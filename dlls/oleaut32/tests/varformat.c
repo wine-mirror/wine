@@ -639,14 +639,14 @@ static void test_VarFormatCurrency(void)
     V_VT(&in) = VT_BSTR;
     V_BSTR(&in) = str;
     hr = VarFormatCurrency(&in, 1, -2, -2, -2, 0, &str2);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#x for %s\n", hr, wine_dbgstr_w(str));
     ok(lstrcmpW(str, str2), "Expected different string.\n");
     SysFreeString(str2);
 
     V_VT(&in) = VT_BSTR | VT_BYREF;
     V_BSTRREF(&in) = &str;
     hr = VarFormatCurrency(&in, 1, -2, -2, -2, 0, &str2);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#x for %s\n", hr, wine_dbgstr_w(str));
     ok(lstrcmpW(str, str2), "Expected different string.\n");
 
     SysFreeString(str);

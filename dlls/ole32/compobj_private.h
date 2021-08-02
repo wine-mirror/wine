@@ -132,6 +132,8 @@ extern UINT object_descriptor_clipboard_format DECLSPEC_HIDDEN;
 extern UINT link_source_descriptor_clipboard_format DECLSPEC_HIDDEN;
 extern UINT ole_private_data_clipboard_format DECLSPEC_HIDDEN;
 
+void clipbrd_destroy(void) DECLSPEC_HIDDEN;
+
 extern LSTATUS create_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HIDDEN;
 extern LSTATUS open_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HIDDEN;
 

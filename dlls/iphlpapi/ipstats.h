@@ -27,11 +27,6 @@
 #include "winbase.h"
 #include "iprtrmib.h"
 
-/* Fills in entry's interface stats, using name to find them.
- * Returns ERROR_INVALID_PARAMETER if name or entry is NULL, NO_ERROR otherwise.
- */
-DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry) DECLSPEC_HIDDEN;
-
 DWORD build_tcp_table(TCP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 DWORD build_tcp6_table(TCP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;
 DWORD build_udp_table(UDP_TABLE_CLASS, void **, BOOL, HANDLE, DWORD, DWORD *) DECLSPEC_HIDDEN;

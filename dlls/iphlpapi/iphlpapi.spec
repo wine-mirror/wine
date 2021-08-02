@@ -10,12 +10,12 @@
 @ stdcall AllocateAndGetUdpTableFromStack( ptr long long long )
 @ stdcall CancelIPChangeNotify( ptr )
 @ stdcall CancelMibChangeNotify2( ptr )
-#@ stub ConvertGuidToStringA
-#@ stub ConvertGuidToStringW
-#@ stub ConvertInterfaceAliasToLuid
+@ stdcall ConvertGuidToStringA( ptr ptr long )
+@ stdcall ConvertGuidToStringW( ptr ptr long )
+@ stdcall ConvertInterfaceAliasToLuid( ptr ptr )
 @ stdcall ConvertInterfaceGuidToLuid( ptr ptr )
 @ stdcall ConvertInterfaceIndexToLuid( long ptr )
-#@ stub ConvertInterfaceLuidToAlias
+@ stdcall ConvertInterfaceLuidToAlias( ptr ptr long )
 @ stdcall ConvertInterfaceLuidToGuid( ptr ptr )
 @ stdcall ConvertInterfaceLuidToIndex( ptr ptr )
 @ stdcall ConvertInterfaceLuidToNameA( ptr ptr long )
@@ -32,7 +32,7 @@
 #@ stub ConvertRemoteInterfaceLuidToGuid
 #@ stub ConvertRemoteInterfaceLuidToIndex
 #@ stub ConvertStringToGuidA
-#@ stub ConvertStringToGuidW
+@ stdcall ConvertStringToGuidW( ptr ptr )
 #@ stub ConvertStringToInterfacePhysicalAddress
 #@ stub CPNatfwtCreateProviderInstance
 #@ stub CPNatfwtDeregisterProviderInstance
@@ -89,6 +89,7 @@
 @ stub GetIcmpStatsFromStack
 @ stdcall GetIfEntry( ptr )
 @ stdcall GetIfEntry2( ptr )
+@ stdcall GetIfEntry2Ex( long ptr )
 @ stub GetIfEntryFromStack
 #@ stub GetIfStackTable
 @ stdcall GetIfTable( ptr ptr long )

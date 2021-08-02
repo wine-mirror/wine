@@ -411,10 +411,87 @@ static void test_ndis_index_luid( void )
     ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
 }
 
+static void test_ip_unicast( int family )
+{
+    DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ip_unicast_rw, unk[0]), FIELD_OFFSET(struct nsi_ip_unicast_rw, unk[1]),
+                         sizeof(struct nsi_ip_unicast_rw) };
+    struct nsi_ipv4_unicast_key *key_tbl, *key4, get_key;
+    struct nsi_ipv6_unicast_key *key6;
+    struct nsi_ip_unicast_rw *rw_tbl, *rw, get_rw;
+    struct nsi_ip_unicast_dynamic *dyn_tbl, *dyn, get_dyn;
+    struct nsi_ip_unicast_static *stat_tbl, *stat, get_stat;
+    MIB_UNICASTIPADDRESS_TABLE *table;
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    DWORD err, count, i, rw_size, key_size = (family == AF_INET) ? sizeof(*key4) : sizeof(*key6);
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    for (i = 0; i < ARRAY_SIZE(rw_sizes); i++)
+    {
+        err = NsiAllocateAndGetTable( 1, mod, NSI_IP_UNICAST_TABLE, (void **)&key_tbl, key_size,
+                                      (void **)&rw_tbl, rw_sizes[i], (void **)&dyn_tbl, sizeof(*dyn_tbl),
+                                      (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
+        if (!err) break;
+    }
+    ok( !err, "got %d\n", err );
+    rw_size = rw_sizes[i];
+
+    err = GetUnicastIpAddressTable( family, &table );
+    ok( !err, "got %d\n", err );
+    ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
+
+    for (i = 0; i < count; i++)
+    {
+        MIB_UNICASTIPADDRESS_ROW *row = table->Table + i;
+        rw = (struct nsi_ip_unicast_rw *)((BYTE *)rw_tbl + i * rw_size);
+        dyn = dyn_tbl + i;
+        stat = stat_tbl + i;
+        winetest_push_context( "%d", i );
+
+        ok( row->Address.si_family == family, "mismatch\n" );
+
+        if (family == AF_INET)
+        {
+            key4 = key_tbl + i;
+            ok( !memcmp( &row->Address.Ipv4.sin_addr, &key4->addr, sizeof(struct in_addr) ), "mismatch\n" );
+            ok( row->InterfaceLuid.Value == key4->luid.Value, "mismatch\n" );
+        }
+        else
+        {
+            key6 = (struct nsi_ipv6_unicast_key *)key_tbl + i;
+            ok( !memcmp( &row->Address.Ipv6.sin6_addr, &key6->addr, sizeof(struct in6_addr) ), "mismatch\n" );
+            ok( row->InterfaceLuid.Value == key6->luid.Value, "mismatch\n" );
+        }
+        ok( row->PrefixOrigin == rw->prefix_origin, "mismatch\n" );
+        ok( row->SuffixOrigin == rw->suffix_origin, "mismatch\n" );
+        ok( row->ValidLifetime == rw->valid_lifetime, "mismatch\n" );
+        ok( row->PreferredLifetime == rw->preferred_lifetime, "mismatch\n" );
+        ok( row->OnLinkPrefixLength == rw->on_link_prefix, "mismatch\n" );
+        /* SkipAsSource */
+        ok( row->DadState == dyn->dad_state, "mismatch\n" );
+        ok( row->ScopeId.Value == dyn->scope_id, "mismatch\n" );
+        ok( row->CreationTimeStamp.QuadPart == stat->creation_time, "mismatch\n" );
+        winetest_pop_context();
+    }
+
+    get_key.luid.Value = ~0u;
+    get_key.addr.s_addr = 0;
+    err = NsiGetAllParameters( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE, &get_key, sizeof(get_key),
+                                   &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
+    ok( err == ERROR_NOT_FOUND, "got %d\n", err );
+
+    FreeMibTable( table );
+    NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, stat_tbl );
+    winetest_pop_context();
+}
+
 START_TEST( nsi )
 {
     test_nsi_api();
 
     test_ndis_ifinfo();
     test_ndis_index_luid();
+
+    test_ip_unicast( AF_INET );
+    test_ip_unicast( AF_INET6 );
 }

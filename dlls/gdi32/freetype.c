@@ -105,7 +105,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
@@ -1245,7 +1245,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         This->style_name = decode_opentype_name( &style_name.face_name );
 
         memset( &full_name, 0, sizeof(full_name) );
-        style_name.primary_langid = primary_langid;
+        full_name.primary_langid = primary_langid;
         opentype_enum_full_names( tt_name_v0, search_face_name_callback, &full_name );
         This->full_name = decode_opentype_name( &full_name.face_name );
 

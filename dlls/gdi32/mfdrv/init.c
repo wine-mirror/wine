@@ -24,7 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 
@@ -78,12 +78,14 @@ static UINT CDECL MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 
 
 /******************************************************************
- *         MFDRV_GetDeviceCaps
+ *         METADC_GetDeviceCaps
  *
  *A very simple implementation that returns DT_METAFILE
  */
-static INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+INT METADC_GetDeviceCaps( HDC hdc, INT cap )
 {
+    if (!get_metadc_ptr( hdc )) return 0;
+
     switch(cap)
     {
     case TECHNOLOGY:
@@ -103,18 +105,18 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_AbortPath,                 /* pAbortPath */
     NULL,                            /* pAlphaBlend */
     NULL,                            /* pAngleArc */
-    MFDRV_Arc,                       /* pArc */
-    NULL,                            /* pArcTo */
+    NULL,                            /* pArc */
+    MFDRV_ArcTo,                     /* pArcTo */
     MFDRV_BeginPath,                 /* pBeginPath */
     NULL,                            /* pBlendImage */
-    MFDRV_Chord,                     /* pChord */
+    NULL,                            /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     MFDRV_DeleteDC,                  /* pDeleteDC */
     MFDRV_DeleteObject,              /* pDeleteObject */
     NULL,                            /* pDeviceCapabilities */
-    MFDRV_Ellipse,                   /* pEllipse */
+    NULL,                            /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
     MFDRV_EndPath,                   /* pEndPath */
@@ -123,21 +125,21 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     MFDRV_ExtEscape,                 /* pExtEscape */
-    MFDRV_ExtFloodFill,              /* pExtFloodFill */
+    NULL,                            /* pExtFloodFill */
     MFDRV_ExtSelectClipRgn,          /* pExtSelectClipRgn */
-    MFDRV_ExtTextOut,                /* pExtTextOut */
+    NULL,                            /* pExtTextOut */
     MFDRV_FillPath,                  /* pFillPath */
     MFDRV_FillRgn,                   /* pFillRgn */
     MFDRV_FlattenPath,               /* pFlattenPath */
     NULL,                            /* pFontIsLinked */
-    MFDRV_FrameRgn,                  /* pFrameRgn */
+    NULL,                            /* pFrameRgn */
     NULL,                            /* pGdiComment */
     MFDRV_GetBoundsRect,             /* pGetBoundsRect */
     NULL,                            /* pGetCharABCWidths */
     NULL,                            /* pGetCharABCWidthsI */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetCharWidthInfo */
-    MFDRV_GetDeviceCaps,             /* pGetDeviceCaps */
+    NULL,                            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetFontData */
     NULL,                            /* pGetFontRealizationInfo */
@@ -158,32 +160,29 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pGetTextMetrics */
     NULL,                            /* pGradientFill */
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
-    MFDRV_InvertRgn,                 /* pInvertRgn */
-    MFDRV_LineTo,                    /* pLineTo */
+    NULL,                            /* pInvertRgn */
+    NULL,                            /* pLineTo */
     NULL,                            /* pModifyWorldTransform */
-    MFDRV_MoveTo,                    /* pMoveTo */
+    NULL,                            /* pMoveTo */
     MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrgEx,       /* pOffsetViewportOrgEx */
     MFDRV_OffsetWindowOrgEx,         /* pOffsetWindowOrgEx */
-    MFDRV_PaintRgn,                  /* pPaintRgn */
+    NULL,                            /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
-    MFDRV_Pie,                       /* pPie */
+    NULL,                            /* pPie */
     MFDRV_PolyBezier,                /* pPolyBezier */
     MFDRV_PolyBezierTo,              /* pPolyBezierTo */
     NULL,                            /* pPolyDraw */
-    MFDRV_PolyPolygon,               /* pPolyPolygon */
+    NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */
-    MFDRV_Polygon,                   /* pPolygon */
-    MFDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pPolylineTo */
     NULL,                            /* pPutImage */
     NULL,                            /* pRealizeDefaultPalette */
     MFDRV_RealizePalette,            /* pRealizePalette */
-    MFDRV_Rectangle,                 /* pRectangle */
+    NULL,                            /* pRectangle */
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
-    MFDRV_RoundRect,                 /* pRoundRect */
-    MFDRV_SaveDC,                    /* pSaveDC */
+    NULL,                            /* pRoundRect */
     MFDRV_ScaleViewportExtEx,        /* pScaleViewportExtEx */
     MFDRV_ScaleWindowExtEx,          /* pScaleWindowExtEx */
     MFDRV_SelectBitmap,              /* pSelectBitmap */
@@ -192,9 +191,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SelectFont,                /* pSelectFont */
     MFDRV_SelectPalette,             /* pSelectPalette */
     MFDRV_SelectPen,                 /* pSelectPen */
-    NULL,                            /* pSetArcDirection */
     MFDRV_SetBkColor,                /* pSetBkColor */
-    MFDRV_SetBkMode,                 /* pSetBkMode */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
     MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
@@ -204,12 +201,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetLayout,                 /* pSetLayout */
     MFDRV_SetMapMode,                /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
-    MFDRV_SetPixel,                  /* pSetPixel */
-    MFDRV_SetPolyFillMode,           /* pSetPolyFillMode */
-    MFDRV_SetROP2,                   /* pSetROP2 */
-    MFDRV_SetRelAbs,                 /* pSetRelAbs */
-    MFDRV_SetStretchBltMode,         /* pSetStretchBltMode */
-    MFDRV_SetTextAlign,              /* pSetTextAlign */
+    NULL,                            /* pSetPixel */
     MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
     MFDRV_SetTextJustification,      /* pSetTextJustification */
@@ -243,7 +235,7 @@ static DC *MFDRV_AllocMetaFile(void)
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
 
-    if (!(dc = alloc_dc_ptr( OBJ_METADC ))) return NULL;
+    if (!(dc = alloc_dc_ptr( NTGDI_OBJ_METADC ))) return NULL;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
@@ -259,6 +251,7 @@ static DC *MFDRV_AllocMetaFile(void)
     }
 
     push_dc_driver( &dc->physDev, &physDev->dev, &MFDRV_Funcs );
+    set_gdi_client_ptr( dc->hSelf, physDev );
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;
@@ -596,4 +589,90 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
     params[6] = param2;
     params[7] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+}
+
+METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc )
+{
+    METAFILEDRV_PDEVICE *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
+    if (!metafile) SetLastError( ERROR_INVALID_HANDLE );
+    return metafile;
+}
+
+BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_WriteRecord( &dev->dev, mr, rlen );
+}
+
+BOOL metadc_param1( HDC hdc, short func, short param )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam1( &dev->dev, func, param );
+}
+
+BOOL metadc_param0( HDC hdc, short func )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam0( &dev->dev, func );
+}
+
+BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam2( &dev->dev, func, param1, param2 );
+}
+
+BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4 )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam4( &dev->dev, func, param1, param2, param3, param4 );
+}
+
+BOOL metadc_param5( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4, short param5 )
+{
+    char buffer[FIELD_OFFSET(METARECORD, rdParm[5])];
+    METARECORD *mr = (METARECORD *)&buffer;
+
+    mr->rdSize = sizeof(buffer) / sizeof(WORD);
+    mr->rdFunction = func;
+    mr->rdParm[0] = param5;
+    mr->rdParm[1] = param4;
+    mr->rdParm[2] = param3;
+    mr->rdParm[3] = param2;
+    mr->rdParm[4] = param1;
+    return metadc_record( hdc, mr, sizeof(buffer) );
+}
+
+BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4, short param5,
+                    short param6 )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam6( &dev->dev, func, param1, param2, param3,
+                             param4, param5, param6 );
+}
+
+BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4, short param5,
+                    short param6, short param7, short param8)
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam8( &dev->dev, func, param1, param2, param3,
+                             param4, param5, param6, param7, param8 );
 }

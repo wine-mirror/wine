@@ -84,7 +84,7 @@ static inline void VARIANT_CopyData(const VARIANT *srcVar, VARTYPE vt, void *pOu
 
 
 /* Coerce VT_BSTR to a numeric type */
-static HRESULT VARIANT_NumberFromBstr(OLECHAR* pStrIn, LCID lcid, ULONG ulFlags,
+static HRESULT VARIANT_NumberFromBstr(const OLECHAR* pStrIn, LCID lcid, ULONG ulFlags,
                                       void* pOut, VARTYPE vt)
 {
   VARIANTARG dstVar;
@@ -421,7 +421,7 @@ HRESULT WINAPI VarI1FromCy(CY cyIn, signed char* pcOut)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, signed char* pcOut)
+HRESULT WINAPI VarI1FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, signed char* pcOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pcOut, VT_I1);
 }
@@ -714,7 +714,7 @@ HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pbOut, VT_UI1);
 }
@@ -1015,7 +1015,7 @@ HRESULT WINAPI VarI2FromDate(DATE dateIn, SHORT* psOut)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, SHORT* psOut)
+HRESULT WINAPI VarI2FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, SHORT* psOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, psOut, VT_I2);
 }
@@ -1329,7 +1329,7 @@ HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut)
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* pusOut)
+HRESULT WINAPI VarUI2FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* pusOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pusOut, VT_UI2);
 }
@@ -1605,7 +1605,7 @@ HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG *piOut)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if strIn cannot be converted
  */
-HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG *piOut)
+HRESULT WINAPI VarI4FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG *piOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, piOut, VT_I4);
 }
@@ -1914,7 +1914,7 @@ HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG *pulOut)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if strIn cannot be converted
  */
-HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG *pulOut)
+HRESULT WINAPI VarUI4FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG *pulOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pulOut, VT_UI4);
 }
@@ -2221,7 +2221,7 @@ HRESULT WINAPI VarI8FromDate(DATE dateIn, LONG64* pi64Out)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarI8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG64* pi64Out)
+HRESULT WINAPI VarI8FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG64* pi64Out)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pi64Out, VT_I8);
 }
@@ -2549,7 +2549,7 @@ HRESULT WINAPI VarUI8FromDate(DATE dateIn, ULONG64* pui64Out)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarUI8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG64* pui64Out)
+HRESULT WINAPI VarUI8FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG64* pui64Out)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pui64Out, VT_UI8);
 }
@@ -2824,7 +2824,7 @@ HRESULT WINAPI VarR4FromDate(DATE dateIn, float *pFltOut)
  *  Failure: E_INVALIDARG, if strIn or pFltOut is invalid.
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, float *pFltOut)
+HRESULT WINAPI VarR4FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, float *pFltOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pFltOut, VT_R4);
 }
@@ -3145,7 +3145,7 @@ HRESULT WINAPI VarR8FromDate(DATE dateIn, double *pDblOut)
  *  Failure: E_INVALIDARG, if strIn or pDblOut is invalid.
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double *pDblOut)
+HRESULT WINAPI VarR8FromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, double *pDblOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pDblOut, VT_R8);
 }
@@ -3569,7 +3569,7 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pCyOut)
  *           DISP_E_OVERFLOW, if the value will not fit in the destination
  *           DISP_E_TYPEMISMATCH, if the type cannot be converted
  */
-HRESULT WINAPI VarCyFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CY* pCyOut)
+HRESULT WINAPI VarCyFromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, CY* pCyOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pCyOut, VT_CY);
 }
@@ -4267,7 +4267,7 @@ HRESULT WINAPI VarDecFromCy(CY cyIn, DECIMAL* pDecOut)
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
  */
-HRESULT WINAPI VarDecFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DECIMAL* pDecOut)
+HRESULT WINAPI VarDecFromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, DECIMAL* pDecOut)
 {
   return VARIANT_NumberFromBstr(strIn, lcid, dwFlags, pDecOut, VT_DECIMAL);
 }
@@ -6108,7 +6108,7 @@ static BOOL VARIANT_GetLocalisedText(LANGID langId, DWORD dwId, WCHAR *lpszDest)
  *  - If the text is not numeric and does not match any of the above, then
  *  DISP_E_TYPEMISMATCH is returned.
  */
-HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL *pBoolOut)
+HRESULT WINAPI VarBoolFromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL *pBoolOut)
 {
   WCHAR szBuff[64];
   LANGID langId = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
@@ -7554,12 +7554,19 @@ VARIANT_MakeDate_OK:
 
   st->wDay = v1;
   st->wMonth = v2;
-  /* FIXME: For 2 digit dates, I'm not sure if 30 is hard coded or not. It may
-   * be retrieved from:
-   * HKCU\Control Panel\International\Calendars\TwoDigitYearMax
-   * But Wine doesn't have/use that key as at the time of writing.
+  /* FIXME: For 2 digit dates old versions of Windows used 29 but
+   * Windows 10 1903 and greater use 49. This cutoff may also be modified by
+   * setting the value as a string for the relevant calendar id in the
+   * registry.
+   *
+   * For instance to emulate old Windows versions:
+   * [HKCU\Control Panel\International\Calendars\TwoDigitYearMax]
+   * "1"="29"
+   * (also 2, 9, 10, 11 and 12 for the other Gregorian calendars)
+   *
+   * But Wine doesn't have/use that key at the time of writing.
    */
-  st->wYear = v3 < 30 ? 2000 + v3 : v3 < 100 ? 1900 + v3 : v3;
+  st->wYear = v3 <= 49 ? 2000 + v3 : v3 <= 99 ? 1900 + v3 : v3;
   TRACE("Returning date %d/%d/%d\n", v1, v2, st->wYear);
   return S_OK;
 }
@@ -7588,7 +7595,7 @@ VARIANT_MakeDate_OK:
  *  the date is invalid in that format, in which the most compatible format
  *  that produces a valid date will be used.
  */
-HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
+HRESULT WINAPI VarDateFromStr(const OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
 {
   static const USHORT ParseDateTokens[] =
   {
@@ -7657,14 +7664,15 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
   {
     if ('0' <= *strIn && *strIn <= '9')
     {
+      OLECHAR* end;
       if (dp.dwCount >= 6)
       {
         hRet = DISP_E_TYPEMISMATCH;
         break;
       }
-      dp.dwValues[dp.dwCount] = wcstoul(strIn, &strIn, 10);
+      dp.dwValues[dp.dwCount] = wcstoul(strIn, &end, 10);
       dp.dwCount++;
-      strIn--;
+      strIn = end - 1;
     }
     else if (iswalpha(*strIn))
     {

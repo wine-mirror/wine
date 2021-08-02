@@ -378,12 +378,43 @@ static GDI_SHARED_MEMORY *get_gdi_shared(void)
     return (GDI_SHARED_MEMORY *)NtCurrentTeb()->Peb->GdiSharedHandleTable;
 }
 
+static void test_shared_handle_entry( HGDIOBJ obj, unsigned int type, BOOL is_stock )
+{
+    GDI_SHARED_MEMORY *gdi_shared = get_gdi_shared();
+    unsigned int handle = HandleToULong( obj );
+    GDI_HANDLE_ENTRY *entry;
+
+    entry = &gdi_shared->Handles[handle & 0xffff];
+    ok(entry->Unique == handle >> 16, "Unique = %x, expected %x\n",
+       entry->Unique, handle >> 16);
+    if (type != NTGDI_OBJ_MEMDC)
+    {
+        ok(entry->ExtType == type, "ExtType = %x, expected %x\n", entry->ExtType, type);
+    }
+    else
+    {
+        todo_wine
+        ok(entry->ExtType == NTGDI_OBJ_DC, "ExtType = %x, expected NTGDI_OBJ_DC\n", entry->ExtType);
+    }
+    todo_wine_if(is_stock)
+    ok(entry->StockFlag == is_stock, "StockFlag = %x\n", entry->StockFlag);
+    ok(entry->Type == (type & 0x1f), "Type = %x, expected %x\n", entry->Type, type & 0x1f);
+    ok(entry->Object, "Object = NULL\n");
+    ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);
+}
+
 static void test_shared_handle_table(void)
 {
     GDI_SHARED_MEMORY *gdi_shared;
     GDI_HANDLE_ENTRY *entry;
     unsigned int handle;
+    HENHMETAFILE enhmetafile;
+    HMETAFILE metafile;
+    HPEN pen;
     HRGN hrgn;
+    HBRUSH brush;
+    LOGBRUSH lb;
+    HDC dc;
 
     if (sizeof(void *) == 4 && !is_wow64)
     {
@@ -394,18 +425,13 @@ static void test_shared_handle_table(void)
 
     hrgn = CreateRectRgn(10, 10, 20, 20);
     ok(hrgn != 0, "CreateRectRgn failed\n");
-
-    handle = (UINT_PTR)hrgn;
+    handle = HandleToULong( hrgn );
     entry = &gdi_shared->Handles[handle & 0xffff];
-    ok(entry->Unique == handle >> 16, "Unique = %x, expected %x\n",
-       entry->Unique, handle >> 16);
-    todo_wine
-    ok(entry->Type == 4, "Type = %x\n", entry->Type);
-    ok(entry->Object, "Object = NULL\n");
     todo_wine
     ok(entry->Owner.ProcessId == GetCurrentProcessId(), "ProcessId = %x, expected %x\n",
        entry->Owner.ProcessId, GetCurrentProcessId());
-    ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);
+
+    test_shared_handle_entry( hrgn, NTGDI_OBJ_REGION, FALSE );
 
     DeleteObject(hrgn);
     ok(entry->Unique == handle >> 16, "Unique = %x, expected %x\n",
@@ -417,6 +443,45 @@ static void test_shared_handle_table(void)
     ok(entry->Owner.ProcessId == GetCurrentProcessId(), "ProcessId = %x, expected %x\n",
        entry->Owner.ProcessId, GetCurrentProcessId());
     ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);
+
+    test_shared_handle_entry( GetStockObject( WHITE_PEN ), NTGDI_OBJ_PEN, TRUE );
+    test_shared_handle_entry( GetStockObject( WHITE_BRUSH ), NTGDI_OBJ_BRUSH, TRUE );
+
+    brush = CreateSolidBrush(0);
+    test_shared_handle_entry( brush, NTGDI_OBJ_BRUSH, FALSE );
+    DeleteObject(brush);
+
+    lb.lbStyle = BS_SOLID;
+    lb.lbColor = RGB(12,34,56);
+    lb.lbHatch = HS_CROSS;
+    pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
+    test_shared_handle_entry( pen, NTGDI_OBJ_EXTPEN, FALSE );
+    DeleteObject(pen);
+
+    test_shared_handle_entry( GetStockObject( SYSTEM_FONT ), NTGDI_OBJ_FONT, TRUE );
+    test_shared_handle_entry( GetStockObject( DEFAULT_PALETTE ), NTGDI_OBJ_PAL, TRUE );
+    test_shared_handle_entry( GetStockObject( STOCK_LAST + 1 ), NTGDI_OBJ_BITMAP, TRUE );
+
+    dc = CreateDCW(L"display", NULL, NULL, NULL);
+    ok(GetObjectType(dc) == OBJ_DC, "GetObjectType(dc) = %x\n", GetObjectType(dc));
+    test_shared_handle_entry( dc, NTGDI_OBJ_DC, FALSE );
+    DeleteDC(dc);
+
+    dc = CreateMetaFileW(NULL);
+    test_shared_handle_entry( dc, NTGDI_OBJ_METADC, FALSE );
+    metafile = CloseMetaFile(dc);
+    test_shared_handle_entry( metafile, NTGDI_OBJ_METAFILE, FALSE );
+    DeleteObject(metafile);
+
+    dc = CreateEnhMetaFileW(NULL, NULL, NULL, NULL);
+    test_shared_handle_entry( dc, NTGDI_OBJ_ENHMETADC, FALSE );
+    enhmetafile = CloseEnhMetaFile(dc);
+    test_shared_handle_entry( enhmetafile, NTGDI_OBJ_ENHMETAFILE, FALSE );
+    DeleteObject(metafile);
+
+    dc = CreateCompatibleDC(NULL);
+    test_shared_handle_entry( dc, NTGDI_OBJ_MEMDC, FALSE );
+    DeleteDC(dc);
 }
 
 START_TEST(gdiobj)

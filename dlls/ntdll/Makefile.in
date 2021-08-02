@@ -12,7 +12,6 @@ C_SRCS = \
 	critsection.c \
 	crypt.c \
 	debugbuffer.c \
-	directory.c \
 	env.c \
 	error.c \
 	exception.c \
@@ -22,7 +21,6 @@ C_SRCS = \
 	loader.c \
 	locale.c \
 	misc.c \
-	nt.c \
 	path.c \
 	printf.c \
 	process.c \
@@ -64,7 +62,6 @@ C_SRCS = \
 	unix/thread.c \
 	unix/virtual.c \
 	version.c \
-	virtual.c \
 	wcstring.c
 
 RC_SRCS = version.rc

@@ -170,7 +170,7 @@ typedef struct PresentationDataHeader
 } PresentationDataHeader;
 
 /*
- * The one and only ole_clipbrd object which is created by OLEClipbrd_Initialize()
+ * The one and only ole_clipbrd object which is created by clipbrd_create()
  */
 static ole_clipbrd* theOleClipboard;
 
@@ -182,18 +182,6 @@ static CRITICAL_SECTION_DEBUG latest_snapshot_cs_debug =
         0, 0, { (DWORD_PTR)(__FILE__ ": clipboard last snapshot") }
 };
 static CRITICAL_SECTION latest_snapshot_cs = { &latest_snapshot_cs_debug, -1, 0, 0, 0, 0 };
-
-static inline HRESULT get_ole_clipbrd(ole_clipbrd **clipbrd)
-{
-    struct oletls *info = COM_CurrentInfo();
-    *clipbrd = NULL;
-
-    if(!info->ole_inits)
-        return CO_E_NOTINITIALIZED;
-    *clipbrd = theOleClipboard;
-
-    return S_OK;
-}
 
 /*
  * Name of our registered OLE clipboard window class
@@ -213,6 +201,78 @@ UINT link_source_descriptor_clipboard_format = 0;
 UINT ole_private_data_clipboard_format = 0;
 
 static UINT wine_marshal_clipboard_format;
+
+static void register_clipboard_formats(void)
+{
+    ownerlink_clipboard_format = RegisterClipboardFormatW(L"OwnerLink");
+    filename_clipboard_format = RegisterClipboardFormatW(L"FileName");
+    filenameW_clipboard_format = RegisterClipboardFormatW(L"FileNameW");
+    dataobject_clipboard_format = RegisterClipboardFormatW(L"DataObject");
+    embedded_object_clipboard_format = RegisterClipboardFormatW(L"Embedded Object");
+    embed_source_clipboard_format = RegisterClipboardFormatW(L"Embed Source");
+    custom_link_source_clipboard_format = RegisterClipboardFormatW(L"Custom Link Source");
+    link_source_clipboard_format = RegisterClipboardFormatW(L"Link Source");
+    object_descriptor_clipboard_format = RegisterClipboardFormatW(L"Object Descriptor");
+    link_source_descriptor_clipboard_format = RegisterClipboardFormatW(L"Link Source Descriptor");
+    ole_private_data_clipboard_format = RegisterClipboardFormatW(L"Ole Private Data");
+
+    wine_marshal_clipboard_format = RegisterClipboardFormatW(L"Wine Marshalled DataObject");
+}
+
+static BOOL WINAPI clipbrd_create(INIT_ONCE *init_once, void *parameter, void **context)
+{
+    ole_clipbrd* clipbrd;
+    HGLOBAL h;
+
+    TRACE("()\n");
+
+    register_clipboard_formats();
+
+    clipbrd = HeapAlloc( GetProcessHeap(), 0, sizeof(*clipbrd) );
+    if (!clipbrd)
+    {
+        ERR("No memory.\n");
+        return FALSE;
+    }
+
+    clipbrd->latest_snapshot = NULL;
+    clipbrd->window = NULL;
+    clipbrd->src_data = NULL;
+    clipbrd->cached_enum = NULL;
+
+    h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, 0);
+    if(!h)
+    {
+        ERR("No memory.\n");
+        HeapFree(GetProcessHeap(), 0, clipbrd);
+        return FALSE;
+    }
+
+    if(FAILED(CreateStreamOnHGlobal(h, TRUE, &clipbrd->marshal_data)))
+    {
+        ERR("CreateStreamOnHGlobal failed.\n");
+        GlobalFree(h);
+        HeapFree(GetProcessHeap(), 0, clipbrd);
+        return FALSE;
+    }
+
+    theOleClipboard = clipbrd;
+    return TRUE;
+}
+
+static inline HRESULT get_ole_clipbrd(ole_clipbrd **clipbrd)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    if (!InitOnceExecuteOnce(&init_once, clipbrd_create, NULL, NULL))
+    {
+        *clipbrd = NULL;
+        return CO_E_NOTINITIALIZED;
+    }
+
+    *clipbrd = theOleClipboard;
+    return S_OK;
+}
 
 static inline const char *dump_fmtetc(FORMATETC *fmt)
 {
@@ -1739,67 +1799,6 @@ static snapshot *snapshot_construct(DWORD seq_no)
     return This;
 }
 
-/*********************************************************
- *               register_clipboard_formats
- */
-static void register_clipboard_formats(void)
-{
-    ownerlink_clipboard_format = RegisterClipboardFormatW(L"OwnerLink");
-    filename_clipboard_format = RegisterClipboardFormatW(L"FileName");
-    filenameW_clipboard_format = RegisterClipboardFormatW(L"FileNameW");
-    dataobject_clipboard_format = RegisterClipboardFormatW(L"DataObject");
-    embedded_object_clipboard_format = RegisterClipboardFormatW(L"Embedded Object");
-    embed_source_clipboard_format = RegisterClipboardFormatW(L"Embed Source");
-    custom_link_source_clipboard_format = RegisterClipboardFormatW(L"Custom Link Source");
-    link_source_clipboard_format = RegisterClipboardFormatW(L"Link Source");
-    object_descriptor_clipboard_format = RegisterClipboardFormatW(L"Object Descriptor");
-    link_source_descriptor_clipboard_format = RegisterClipboardFormatW(L"Link Source Descriptor");
-    ole_private_data_clipboard_format = RegisterClipboardFormatW(L"Ole Private Data");
-
-    wine_marshal_clipboard_format = RegisterClipboardFormatW(L"Wine Marshalled DataObject");
-}
-
-/***********************************************************************
- * OLEClipbrd_Initialize()
- * Initializes the OLE clipboard.
- */
-void OLEClipbrd_Initialize(void)
-{
-    register_clipboard_formats();
-
-    if ( !theOleClipboard )
-    {
-        ole_clipbrd* clipbrd;
-        HGLOBAL h;
-
-        TRACE("()\n");
-
-        clipbrd = HeapAlloc( GetProcessHeap(), 0, sizeof(*clipbrd) );
-        if (!clipbrd) return;
-
-        clipbrd->latest_snapshot = NULL;
-        clipbrd->window = NULL;
-        clipbrd->src_data = NULL;
-        clipbrd->cached_enum = NULL;
-
-        h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, 0);
-        if(!h)
-        {
-            HeapFree(GetProcessHeap(), 0, clipbrd);
-            return;
-        }
-
-        if(FAILED(CreateStreamOnHGlobal(h, TRUE, &clipbrd->marshal_data)))
-        {
-            GlobalFree(h);
-            HeapFree(GetProcessHeap(), 0, clipbrd);
-            return;
-        }
-
-        theOleClipboard = clipbrd;
-    }
-}
-
 /*********************************************************************
  *          set_clipboard_formats
  *
@@ -2000,10 +1999,10 @@ static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
 }
 
 /***********************************************************************
- * OLEClipbrd_UnInitialize()
+ * clipbrd_uninitialize()
  * Un-Initializes the OLE clipboard
  */
-void OLEClipbrd_UnInitialize(void)
+void clipbrd_uninitialize(void)
 {
     ole_clipbrd *clipbrd = theOleClipboard;
 
@@ -2023,12 +2022,26 @@ void OLEClipbrd_UnInitialize(void)
         {
             DestroyWindow(clipbrd->window);
             UnregisterClassW( clipbrd_wndclass, GetModuleHandleW(L"ole32") );
+            clipbrd->window = NULL;
         }
-
-        IStream_Release(clipbrd->marshal_data);
-        HeapFree(GetProcessHeap(), 0, clipbrd);
-        theOleClipboard = NULL;
     }
+}
+
+/***********************************************************************
+ * clipbrd_destroy()
+ * Destroy the OLE clipboard
+ */
+void clipbrd_destroy(void)
+{
+    ole_clipbrd *clipbrd = theOleClipboard;
+
+    if (!clipbrd) return;
+
+    clipbrd_uninitialize();
+
+    IStream_Release(clipbrd->marshal_data);
+    HeapFree(GetProcessHeap(), 0, clipbrd);
+    theOleClipboard = NULL;
 }
 
 /***********************************************************************
@@ -2164,11 +2177,15 @@ static HRESULT set_dataobject_format(HWND hwnd)
 
 HRESULT WINAPI OleSetClipboard(IDataObject* data)
 {
+  struct oletls *info = COM_CurrentInfo();
   HRESULT hr;
   ole_clipbrd *clipbrd;
   HWND wnd;
 
   TRACE("(%p)\n", data);
+
+  if(!info->ole_inits)
+    return CO_E_NOTINITIALIZED;
 
   if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
 
@@ -2258,6 +2275,7 @@ HRESULT WINAPI OleGetClipboard(IDataObject **obj)
  */
 HRESULT WINAPI OleFlushClipboard(void)
 {
+  struct oletls *info = COM_CurrentInfo();
   HRESULT hr;
   ole_clipbrd *clipbrd;
   HWND wnd;
@@ -2265,6 +2283,9 @@ HRESULT WINAPI OleFlushClipboard(void)
   TRACE("()\n");
 
   if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
+
+  if(!info->ole_inits)
+    return E_FAIL;
 
   if(FAILED(hr = get_clipbrd_window(clipbrd, &wnd))) return hr;
 

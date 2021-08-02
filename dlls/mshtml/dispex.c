@@ -17,7 +17,6 @@
  */
 
 #include <stdarg.h>
-#include <assert.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -112,7 +111,7 @@ struct dispex_dynamic_data_t {
 
 #define FDEX_VERSION_MASK 0xf0000000
 
-static ITypeLib *typelib;
+static ITypeLib *typelib, *typelib_private;
 static ITypeInfo *typeinfos[LAST_tid];
 static struct list dispex_data_list = LIST_INIT(dispex_data_list);
 
@@ -120,14 +119,18 @@ static REFIID tid_ids[] = {
 #define XIID(iface) &IID_ ## iface,
 #define XDIID(iface) &DIID_ ## iface,
 TID_LIST
+    NULL,
+PRIVATE_TID_LIST
 #undef XIID
 #undef XDIID
 };
 
 static HRESULT load_typelib(void)
 {
+    WCHAR module_path[MAX_PATH + 3];
     HRESULT hres;
     ITypeLib *tl;
+    DWORD len;
 
     hres = LoadRegTypeLib(&LIBID_MSHTML, 4, 0, LOCALE_SYSTEM_DEFAULT, &tl);
     if(FAILED(hres)) {
@@ -137,7 +140,25 @@ static HRESULT load_typelib(void)
 
     if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
         ITypeLib_Release(tl);
-    return hres;
+
+    len = GetModuleFileNameW(hInst, module_path, MAX_PATH + 1);
+    if (!len || len == MAX_PATH + 1)
+    {
+        ERR("Could not get module file name, len %u.\n", len);
+        return E_FAIL;
+    }
+    lstrcatW(module_path, L"\\1");
+
+    hres = LoadTypeLibEx(module_path, REGKIND_NONE, &tl);
+    if(FAILED(hres)) {
+        ERR("LoadTypeLibEx failed for private typelib: %08x\n", hres);
+        return hres;
+    }
+
+    if(InterlockedCompareExchangePointer((void**)&typelib_private, tl, NULL))
+        ITypeLib_Release(tl);
+
+    return S_OK;
 }
 
 static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
@@ -152,7 +173,7 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
     if(!typeinfos[tid]) {
         ITypeInfo *ti;
 
-        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        hres = ITypeLib_GetTypeInfoOfGuid(tid > LAST_public_tid ? typelib_private : typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
             ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_mshtml_guid(tid_ids[tid]), hres);
             return hres;
@@ -198,6 +219,7 @@ void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+    ITypeLib_Release(typelib_private);
     DeleteCriticalSection(&cs_dispex_static_data);
 }
 
@@ -211,6 +233,8 @@ HRESULT get_class_typeinfo(const CLSID *clsid, ITypeInfo **typeinfo)
         return hres;
 
     hres = ITypeLib_GetTypeInfoOfGuid(typelib, clsid, typeinfo);
+    if (FAILED(hres))
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib_private, clsid, typeinfo);
     if(FAILED(hres))
         ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
     return hres;

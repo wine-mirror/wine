@@ -111,6 +111,7 @@ static const BYTE printersType[] = { PT_YAGUID, PT_SHELLEXT, 0x71 };
 static const BYTE ieSpecialType[] = { PT_IESPECIAL2 };
 static const BYTE shellExtType[] = { PT_SHELLEXT };
 static const BYTE workgroupType[] = { PT_WORKGRP };
+static const BYTE missingType[] = { 0xff };
 #define DECLARE_TYPE(x, y) { x, ARRAY_SIZE(y), y }
 static const struct shellExpectedValues requiredShellValues[] = {
  DECLARE_TYPE(CSIDL_BITBUCKET, guidType),
@@ -177,6 +178,14 @@ static const struct shellExpectedValues optionalShellValues[] = {
  DECLARE_TYPE(CSIDL_COMPUTERSNEARME, workgroupType),
  DECLARE_TYPE(CSIDL_RESOURCES, folderType),
  DECLARE_TYPE(CSIDL_RESOURCES_LOCALIZED, folderType),
+};
+static const struct shellExpectedValues undefinedShellValues[] = {
+ DECLARE_TYPE(0x0f, missingType),
+ DECLARE_TYPE(0x32, missingType),
+ DECLARE_TYPE(0x33, missingType),
+ DECLARE_TYPE(0x34, missingType),
+ DECLARE_TYPE(0x3c, missingType),
+ DECLARE_TYPE(0x45, missingType),
 };
 #undef DECLARE_TYPE
 
@@ -1399,8 +1408,7 @@ static BYTE testSHGetSpecialFolderLocation(int folder)
     HRESULT hr;
     BYTE ret = 0xff;
 
-    /* treat absence of function as success */
-    if (!pSHGetSpecialFolderLocation) return TRUE;
+    if (!pSHGetSpecialFolderLocation) return ret;
 
     pidl = NULL;
     hr = pSHGetSpecialFolderLocation(NULL, folder, &pidl);
@@ -1447,8 +1455,14 @@ static void test_SHGetSpecialFolderPath(BOOL optional, int folder)
      getFolderName(folder));
 }
 
+enum ShellValuesTestExpect {
+    ShellValuesTestExpect_Required,
+    ShellValuesTestExpect_Optional,
+    ShellValuesTestExpect_Missing,
+};
+
 static void test_ShellValues(const struct shellExpectedValues testEntries[],
- int numEntries, BOOL optional)
+ int numEntries, enum ShellValuesTestExpect expect)
 {
     int i;
 
@@ -1462,7 +1476,9 @@ static void test_ShellValues(const struct shellExpectedValues testEntries[],
         for (j = 0; !foundTypeMatch && j < testEntries[i].numTypes; j++)
             if (testEntries[i].types[j] == type)
                 foundTypeMatch = TRUE;
-        ok(foundTypeMatch || optional || broken(type == 0xff) /* Win9x */,
+        ok((expect == ShellValuesTestExpect_Required && foundTypeMatch) ||
+                (expect == ShellValuesTestExpect_Optional) ||
+                (expect == ShellValuesTestExpect_Missing && type == 0xff),
          "%s has unexpected type %d (0x%02x)\n",
          getFolderName(testEntries[i].folder), type, type);
 
@@ -1471,18 +1487,23 @@ static void test_ShellValues(const struct shellExpectedValues testEntries[],
          j < testEntries[i].numTypes; j++)
             if (testEntries[i].types[j] == type)
                 foundTypeMatch = TRUE;
-        ok(foundTypeMatch || optional || broken(type == 0xff) /* Win9x */,
+        ok((expect == ShellValuesTestExpect_Required && foundTypeMatch) ||
+                (expect == ShellValuesTestExpect_Optional) ||
+                (expect == ShellValuesTestExpect_Missing && type == 0xff),
          "%s has unexpected type %d (0x%02x)\n",
          getFolderName(testEntries[i].folder), type, type);
-        switch (type)
+        if (expect != ShellValuesTestExpect_Missing)
         {
-            case PT_FOLDER:
-            case PT_DRIVE:
-            case PT_DRIVE2:
-            case PT_IESPECIAL2:
-                test_SHGetFolderPath(optional, testEntries[i].folder);
-                test_SHGetSpecialFolderPath(optional, testEntries[i].folder);
-                break;
+            switch (type)
+            {
+                case PT_FOLDER:
+                case PT_DRIVE:
+                case PT_DRIVE2:
+                case PT_IESPECIAL2:
+                    test_SHGetFolderPath(expect == ShellValuesTestExpect_Optional, testEntries[i].folder);
+                    test_SHGetSpecialFolderPath(expect == ShellValuesTestExpect_Optional, testEntries[i].folder);
+                    break;
+            }
         }
     }
 }
@@ -1555,8 +1576,9 @@ static void test_PidlTypes(void)
     test_SHGetFolderPath(FALSE, CSIDL_DESKTOP);
     test_SHGetSpecialFolderPath(FALSE, CSIDL_DESKTOP);
 
-    test_ShellValues(requiredShellValues, ARRAY_SIZE(requiredShellValues), FALSE);
-    test_ShellValues(optionalShellValues, ARRAY_SIZE(optionalShellValues), TRUE);
+    test_ShellValues(requiredShellValues, ARRAY_SIZE(requiredShellValues), ShellValuesTestExpect_Required);
+    test_ShellValues(optionalShellValues, ARRAY_SIZE(optionalShellValues), ShellValuesTestExpect_Optional);
+    test_ShellValues(undefinedShellValues, ARRAY_SIZE(undefinedShellValues), ShellValuesTestExpect_Missing);
 }
 
 /* FIXME: Should be in shobjidl.idl */
@@ -2641,8 +2663,9 @@ static void test_DoEnvironmentSubst(void)
                             "%HOMEDRIVE%%HOMEPATH%",
                             "%OS% %windir%"}; /* always the last entry in the table */
 
-    for (i = 0; i < (ARRAY_SIZE(names)); i++)
+    for (i = 0; i < ARRAY_SIZE(names); i++)
     {
+        winetest_push_context("%d", i);
         memset(bufferA, '#', MAX_PATH - 1);
         bufferA[MAX_PATH - 1] = 0;
         lstrcpyA(bufferA, names[i]);
@@ -2655,19 +2678,21 @@ static void test_DoEnvironmentSubst(void)
         if (!i && HIWORD(res) && (LOWORD(res) == (lstrlenA(bufferA))))
         {
             win_skip("DoEnvironmentSubstA/W are broken on NT 4\n");
+            winetest_pop_context();
             return;
         }
         ok(HIWORD(res) && (LOWORD(res) == res2),
-            "%d: got %d/%d (expected TRUE/%d)\n", i, HIWORD(res), LOWORD(res), res2);
+            "got %d/%d (expected TRUE/%d)\n", HIWORD(res), LOWORD(res), res2);
         ok(!lstrcmpA(bufferA, expectedA),
-            "%d: got %s (expected %s)\n", i, bufferA, expectedA);
+            "got %s (expected %s)\n", bufferA, expectedA);
 
         res2 = ExpandEnvironmentStringsW(bufferW, expectedW, MAX_PATH);
         res = DoEnvironmentSubstW(bufferW, MAX_PATH);
         ok(HIWORD(res) && (LOWORD(res) == res2),
-            "%d: got %d/%d (expected TRUE/%d)\n", i, HIWORD(res), LOWORD(res), res2);
+            "got %d/%d (expected TRUE/%d)\n", HIWORD(res), LOWORD(res), res2);
         ok(!lstrcmpW(bufferW, expectedW),
-            "%d: got %s (expected %s)\n", i, wine_dbgstr_w(bufferW), wine_dbgstr_w(expectedW));
+            "got %s (expected %s)\n", wine_dbgstr_w(bufferW), wine_dbgstr_w(expectedW));
+        winetest_pop_context();
     }
 
     i--; /* reuse data in the last table entry */
@@ -3002,15 +3027,19 @@ static void test_PathResolve(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
+        winetest_push_context("test %d", i);
         lstrcpyW(path, tests[i].path);
 
         if (!tests[i].expected) SetLastError(0xdeadbeef);
         ret = pPathResolve(path, dirs, tests[i].flags);
-        ok(ret == tests[i].expected, "test %d: expected %d, got %d\n", i, tests[i].expected, ret);
+        ok(ret == tests[i].expected, "expected %d, got %d\n", tests[i].expected, ret);
         ok(!lstrcmpiW(path, tests[i].expected_path),
-                "test %d: expected %s, got %s\n", i, wine_dbgstr_w(tests[i].expected_path), wine_dbgstr_w(path));
+                "expected %s, got %s\n", wine_dbgstr_w(tests[i].expected_path), wine_dbgstr_w(path));
         if (!tests[i].expected)
-            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+               broken(GetLastError() == ERROR_PATH_NOT_FOUND /* some win 8.1 & 10 */),
+               "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+        winetest_pop_context();
     }
 
     CloseHandle(file);

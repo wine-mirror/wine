@@ -24,12 +24,6 @@
 
 static ULONGLONG (WINAPI *pGetTickCount64)(void);
 
-static BOOL compare_time(REFERENCE_TIME x, REFERENCE_TIME y, unsigned int max_diff)
-{
-    REFERENCE_TIME diff = x > y ? x - y : y - x;
-    return diff <= max_diff;
-}
-
 static IReferenceClock *create_system_clock(void)
 {
     IReferenceClock *clock = NULL;
@@ -172,7 +166,7 @@ static void test_aggregation(void)
 static void test_get_time(void)
 {
     IReferenceClock *clock = create_system_clock();
-    REFERENCE_TIME time1, time2;
+    REFERENCE_TIME time1, ticks, time2;
     HRESULT hr;
     ULONG ref;
 
@@ -180,18 +174,21 @@ static void test_get_time(void)
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     hr = IReferenceClock_GetTime(clock, &time1);
-    if (pGetTickCount64)
-        time2 = pGetTickCount64() * 10000;
-    else
-        time2 = (REFERENCE_TIME)GetTickCount() * 10000;
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
             wine_dbgstr_longlong(time1));
-    ok(compare_time(time1, time2, 20 * 10000), "Expected about %s, got %s.\n",
-            wine_dbgstr_longlong(time2), wine_dbgstr_longlong(time1));
+
+    if (pGetTickCount64)
+        ticks = pGetTickCount64() * 10000;
+    else
+        ticks = (REFERENCE_TIME)GetTickCount() * 10000;
 
     hr = IReferenceClock_GetTime(clock, &time2);
     ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#x.\n", hr);
+    ok(time2 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
+            wine_dbgstr_longlong(time1));
+
+    ok(time2 >= ticks && ticks >= time1, "Got timestamps %I64d, %I64d, %I64d.\n", time1, ticks, time2);
 
     Sleep(100);
     hr = IReferenceClock_GetTime(clock, &time2);
@@ -275,11 +272,19 @@ static void test_advise(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(WaitForSingleObject(semaphore, 200) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
 
-    CloseHandle(event);
-    CloseHandle(semaphore);
+    ResetEvent(event);
+    hr = IReferenceClock_GetTime(clock, &current);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    hr = IReferenceClock_AdviseTime(clock, current, 500 * 10000, (HEVENT)event, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = IReferenceClock_Release(clock);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    CloseHandle(event);
+    CloseHandle(semaphore);
 }
 
 START_TEST(systemclock)

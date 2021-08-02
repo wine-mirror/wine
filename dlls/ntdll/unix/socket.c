@@ -88,6 +88,10 @@
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 
+#if defined(linux) && !defined(IP_UNICAST_IF)
+#define IP_UNICAST_IF 50
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
@@ -232,19 +236,14 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
     {
         struct WS_sockaddr_in6 win = {0};
 
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return 0;
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6))
-            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6_old) );
-        else
-            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6) );
-
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
         uaddr->in6.sin6_family = AF_INET6;
         uaddr->in6.sin6_port = win.sin6_port;
         uaddr->in6.sin6_flowinfo = win.sin6_flowinfo;
         memcpy( &uaddr->in6.sin6_addr, &win.sin6_addr, sizeof(win.sin6_addr) );
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
-            uaddr->in6.sin6_scope_id = win.sin6_scope_id;
+        uaddr->in6.sin6_scope_id = win.sin6_scope_id;
 #endif
         return sizeof(uaddr->in6);
     }
@@ -303,7 +302,6 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
 #endif
 
         case sizeof(struct WS_sockaddr_in6):
-        case sizeof(struct WS_sockaddr_in6_old):
             return sizeof(uaddr->in6);
         }
 
@@ -335,7 +333,7 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
     {
         struct WS_sockaddr_in6 win = {0};
 
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return -1;
+        if (wsaddrlen < sizeof(win)) return -1;
         win.sin6_family = WS_AF_INET6;
         win.sin6_port = uaddr->in6.sin6_port;
         win.sin6_flowinfo = uaddr->in6.sin6_flowinfo;
@@ -343,13 +341,8 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
         win.sin6_scope_id = uaddr->in6.sin6_scope_id;
 #endif
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
-        {
-            memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6) );
-            return sizeof(struct WS_sockaddr_in6);
-        }
-        memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6_old) );
-        return sizeof(struct WS_sockaddr_in6_old);
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
     }
 
 #ifdef HAS_IPX
@@ -543,7 +536,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
     return status;
 }
 
-static NTSTATUS async_recv_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_recv_ioctl *async = user;
     ULONG_PTR information = 0;
@@ -566,8 +559,7 @@ static NTSTATUS async_recv_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
     }
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = information;
+        *info = information;
         release_fileio( &async->io );
     }
     return status;
@@ -627,12 +619,6 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (status == STATUS_DEVICE_NOT_READY && force_async)
         status = STATUS_PENDING;
 
-    if (!NT_ERROR(status))
-    {
-        io->Status = status;
-        io->Information = information;
-    }
-
     SERVER_START_REQ( recv_socket )
     {
         req->status = status;
@@ -642,6 +628,11 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if ((!NT_ERROR(status) || wait_handle) && status != STATUS_PENDING)
+        {
+            io->Status = status;
+            io->Information = information;
+        }
     }
     SERVER_END_REQ;
 
@@ -684,7 +675,7 @@ static ULONG_PTR fill_poll_output( struct async_poll_ioctl *async, NTSTATUS stat
     return offsetof( struct afd_poll_params, sockets[count] );
 }
 
-static NTSTATUS async_poll_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_poll_ioctl *async = user;
     ULONG_PTR information = 0;
@@ -704,8 +695,7 @@ static NTSTATUS async_poll_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
 
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = information;
+        *info = information;
         free( async->input );
         release_fileio( &async->io );
     }
@@ -868,7 +858,7 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS async_send_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_send_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_send_ioctl *async = user;
     int fd, needs_close;
@@ -890,8 +880,7 @@ static NTSTATUS async_send_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
     }
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = async->sent_len;
+        *info = async->sent_len;
         release_fileio( &async->io );
     }
     return status;
@@ -936,12 +925,6 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (status == STATUS_DEVICE_NOT_READY && force_async)
         status = STATUS_PENDING;
 
-    if (!NT_ERROR(status))
-    {
-        io->Status = status;
-        io->Information = async->sent_len;
-    }
-
     SERVER_START_REQ( send_socket )
     {
         req->status = status;
@@ -950,6 +933,11 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if ((!NT_ERROR(status) || wait_handle) && status != STATUS_PENDING)
+        {
+            io->Status = status;
+            io->Information = async->sent_len;
+        }
     }
     SERVER_END_REQ;
 
@@ -1033,7 +1021,7 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS async_transmit_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_transmit_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     int sock_fd, file_fd = -1, sock_needs_close = FALSE, file_needs_close = FALSE;
     struct async_transmit_ioctl *async = user;
@@ -1062,8 +1050,7 @@ static NTSTATUS async_transmit_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS s
     }
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = async->head_cursor + async->file_cursor + async->tail_cursor;
+        *info = async->head_cursor + async->file_cursor + async->tail_cursor;
         release_fileio( &async->io );
     }
     return status;
@@ -1126,6 +1113,10 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        /* In theory we'd fill the iosb here, as above in sock_send(), but it's
+         * actually currently impossible to get STATUS_SUCCESS. The server will
+         * either return STATUS_PENDING or an error code, and in neither case
+         * should the iosb be filled. */
     }
     SERVER_END_REQ;
 
@@ -1735,6 +1726,201 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return STATUS_SUCCESS; /* fake success */
         }
 #endif
+
+        case IOCTL_AFD_WINE_SET_IP_DROP_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_DROP_MEMBERSHIP, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_SET_IP_DROP_SOURCE_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_DROP_SOURCE_MEMBERSHIP, in_buffer, in_size );
+
+#ifdef IP_HDRINCL
+        case IOCTL_AFD_WINE_GET_IP_HDRINCL:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_HDRINCL, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_HDRINCL:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_HDRINCL, in_buffer, in_size );
+#endif
+
+        case IOCTL_AFD_WINE_GET_IP_MULTICAST_IF:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_MULTICAST_IF, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_MULTICAST_IF:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_MULTICAST_IF, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IP_MULTICAST_LOOP:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_MULTICAST_LOOP, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_MULTICAST_LOOP:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_MULTICAST_LOOP, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IP_MULTICAST_TTL:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_MULTICAST_TTL, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_MULTICAST_TTL:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_MULTICAST_TTL, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IP_OPTIONS:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_OPTIONS, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_OPTIONS:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_OPTIONS, in_buffer, in_size );
+
+#ifdef IP_PKTINFO
+        case IOCTL_AFD_WINE_GET_IP_PKTINFO:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_PKTINFO, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_PKTINFO:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_PKTINFO, in_buffer, in_size );
+#elif defined(IP_RECVDSTADDR)
+        case IOCTL_AFD_WINE_GET_IP_PKTINFO:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_PKTINFO:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, in_buffer, in_size );
+#endif
+
+        case IOCTL_AFD_WINE_GET_IP_TOS:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_TOS, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_TOS:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_TOS, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IP_TTL:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_TTL, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_TTL:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_TTL, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_SET_IP_UNBLOCK_SOURCE:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_UNBLOCK_SOURCE, in_buffer, in_size );
+
+#ifdef IP_UNICAST_IF
+        case IOCTL_AFD_WINE_GET_IP_UNICAST_IF:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_UNICAST_IF, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_UNICAST_IF:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_UNICAST_IF, in_buffer, in_size );
+#endif
+
+#ifdef IPV6_ADD_MEMBERSHIP
+        case IOCTL_AFD_WINE_SET_IPV6_ADD_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, in_buffer, in_size );
+#endif
+
+        case IOCTL_AFD_WINE_GET_IPV6_DONTFRAG:
+        {
+            socklen_t len = out_size;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+#ifdef IPV6_DONTFRAG
+            ret = getsockopt( fd, IPPROTO_IPV6, IPV6_DONTFRAG, out_buffer, &len );
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
+            {
+                int value;
+
+                len = sizeof(value);
+                ret = getsockopt( fd, IPPROTO_IPV6, IPV6_MTU_DISCOVER, &value, &len );
+                if (!ret) *(DWORD *)out_buffer = (value != IPV6_PMTUDISC_DONT);
+            }
+#else
+            {
+                static int once;
+
+                if (!once++)
+                    FIXME( "IPV6_DONTFRAGMENT is not supported on this platform\n" );
+                ret = 0; /* fake success */
+            }
+#endif
+            if (needs_close) close( fd );
+            if (ret) return sock_errno_to_status( errno );
+            io->Information = len;
+            return STATUS_SUCCESS;
+        }
+
+        case IOCTL_AFD_WINE_SET_IPV6_DONTFRAG:
+#ifdef IPV6_DONTFRAG
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_DONTFRAG, in_buffer, in_size );
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO) && defined(IPV6_PMTUDISC_DONT)
+        {
+            int value = *(DWORD *)in_buffer ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
+
+            return do_setsockopt( handle, io, IPPROTO_IP, IPV6_MTU_DISCOVER, &value, sizeof(value) );
+        }
+#else
+        {
+            static int once;
+
+            if (!once++)
+                FIXME( "IPV6_DONTFRAGMENT is not supported on this platform\n" );
+            return STATUS_SUCCESS; /* fake success */
+        }
+#endif
+
+#ifdef IPV6_DROP_MEMBERSHIP
+        case IOCTL_AFD_WINE_SET_IPV6_DROP_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, in_buffer, in_size );
+#endif
+
+        case IOCTL_AFD_WINE_GET_IPV6_MULTICAST_HOPS:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_MULTICAST_HOPS:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IPV6_MULTICAST_IF:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_IF, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_MULTICAST_IF:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_IF, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IPV6_MULTICAST_LOOP:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_IPV6_UNICAST_HOPS:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_UNICAST_HOPS, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_UNICAST_HOPS:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_UNICAST_HOPS, in_buffer, in_size );
+
+#ifdef IPV6_UNICAST_IF
+        case IOCTL_AFD_WINE_GET_IPV6_UNICAST_IF:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_UNICAST_IF, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_UNICAST_IF:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_UNICAST_IF, in_buffer, in_size );
+#endif
+
+        case IOCTL_AFD_WINE_GET_IPV6_V6ONLY:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_V6ONLY, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_V6ONLY:
+        {
+            int fd, needs_close = FALSE;
+            union unix_sockaddr addr;
+            socklen_t len = sizeof(addr);
+            NTSTATUS status;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (!getsockname( fd, &addr.addr, &len ) && addr.addr.sa_family == AF_INET && !addr.in.sin_port)
+            {
+                /* changing IPV6_V6ONLY succeeds on an unbound IPv4 socket */
+                WARN( "ignoring IPV6_V6ONLY on an unbound IPv4 socket\n" );
+                return STATUS_SUCCESS;
+            }
+
+            ret = setsockopt( fd, IPPROTO_IPV6, IPV6_V6ONLY, in_buffer, in_size );
+            if (needs_close) close( fd );
+            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+        }
 
         default:
         {

@@ -2139,10 +2139,80 @@ static void test_tp_io(void)
     ok(!userdata.length, "got length %lu\n", userdata.length);
     ok(userdata.io == io, "expected %p, got %p\n", io, userdata.io);
 
+    userdata.count = 0;
+    pTpStartAsyncIoOperation(io);
+    pTpCancelAsyncIoOperation(io);
+    ret = ReadFile(server, in, sizeof(in), NULL, &ovl);
+    ok(!ret, "wrong ret %d\n", ret);
+    ret = WriteFile(client, out, sizeof(out), &ret_size, NULL);
+    ok(ret, "WriteFile() failed, error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_IO_PENDING, "wrong error %u\n", GetLastError());
+
+    pTpWaitForIoCompletion(io, FALSE);
+    if (0)
+    {
+        /* Add a sleep to check that callback is not called later. Commented out to
+         * save the test time. */
+        Sleep(200);
+    }
+    ok(userdata.count == 0, "callback ran %u times\n", userdata.count);
+
+    pTpReleaseIoCompletion(io);
+    CloseHandle(server);
+
+    /* Test TPIO object destruction. */
+    server = CreateNamedPipeA("\\\\.\\pipe\\wine_tp_test",
+            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, 0, 1, 1024, 1024, 0, NULL);
+    ok(server != INVALID_HANDLE_VALUE, "Failed to create server pipe, error %u.\n", GetLastError());
+    io = NULL;
+    status = pTpAllocIoCompletion(&io, server, io_cb, &userdata, &environment);
+    ok(!status, "got %#x\n", status);
+
+    ret = HeapValidate(GetProcessHeap(), 0, io);
+    ok(ret, "Got unexpected ret %#x.\n", ret);
+    pTpReleaseIoCompletion(io);
+    ret = HeapValidate(GetProcessHeap(), 0, io);
+    ok(!ret, "Got unexpected ret %#x.\n", ret);
+    CloseHandle(server);
+    CloseHandle(client);
+
+    server = CreateNamedPipeA("\\\\.\\pipe\\wine_tp_test",
+            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, 0, 1, 1024, 1024, 0, NULL);
+    ok(server != INVALID_HANDLE_VALUE, "Failed to create server pipe, error %u.\n", GetLastError());
+    client = CreateFileA("\\\\.\\pipe\\wine_tp_test", GENERIC_READ | GENERIC_WRITE,
+            0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "Failed to create client pipe, error %u.\n", GetLastError());
+
+    io = NULL;
+    status = pTpAllocIoCompletion(&io, server, io_cb, &userdata, &environment);
+    ok(!status, "got %#x\n", status);
+    pTpStartAsyncIoOperation(io);
+    pTpWaitForIoCompletion(io, TRUE);
+    ret = HeapValidate(GetProcessHeap(), 0, io);
+    ok(ret, "Got unexpected ret %#x.\n", ret);
+    pTpReleaseIoCompletion(io);
+    ret = HeapValidate(GetProcessHeap(), 0, io);
+    ok(ret, "Got unexpected ret %#x.\n", ret);
+
+    if (0)
+    {
+        /* Object destruction will wait until one completion arrives (which was started but not cancelled).
+         * Commented out to save test time. */
+        Sleep(1000);
+        ret = HeapValidate(GetProcessHeap(), 0, io);
+        ok(ret, "Got unexpected ret %#x.\n", ret);
+        ret = ReadFile(server, in, sizeof(in), NULL, &ovl);
+        ok(!ret, "wrong ret %d\n", ret);
+        ret = WriteFile(client, out, sizeof(out), &ret_size, NULL);
+        ok(ret, "WriteFile() failed, error %u\n", GetLastError());
+        Sleep(2000);
+        ret = HeapValidate(GetProcessHeap(), 0, io);
+        ok(!ret, "Got unexpected ret %#x.\n", ret);
+    }
+
+    CloseHandle(server);
     CloseHandle(ovl.hEvent);
     CloseHandle(client);
-    CloseHandle(server);
-    pTpReleaseIoCompletion(io);
     pTpReleasePool(pool);
 }
 

@@ -141,8 +141,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pPolyDraw)(PHYSDEV,const POINT*,const BYTE *,DWORD);
     BOOL     (CDECL *pPolyPolygon)(PHYSDEV,const POINT*,const INT*,UINT);
     BOOL     (CDECL *pPolyPolyline)(PHYSDEV,const POINT*,const DWORD*,DWORD);
-    BOOL     (CDECL *pPolygon)(PHYSDEV,const POINT*,INT);
-    BOOL     (CDECL *pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (CDECL *pPolylineTo)(PHYSDEV,const POINT*,INT);
     DWORD    (CDECL *pPutImage)(PHYSDEV,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
     UINT     (CDECL *pRealizeDefaultPalette)(PHYSDEV);
@@ -151,7 +149,6 @@ struct gdi_dc_funcs
     HDC      (CDECL *pResetDC)(PHYSDEV,const DEVMODEW*);
     BOOL     (CDECL *pRestoreDC)(PHYSDEV,INT);
     BOOL     (CDECL *pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
-    INT      (CDECL *pSaveDC)(PHYSDEV);
     BOOL     (CDECL *pScaleViewportExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     BOOL     (CDECL *pScaleWindowExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     HBITMAP  (CDECL *pSelectBitmap)(PHYSDEV,HBITMAP);
@@ -160,9 +157,7 @@ struct gdi_dc_funcs
     HFONT    (CDECL *pSelectFont)(PHYSDEV,HFONT,UINT*);
     HPALETTE (CDECL *pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (CDECL *pSelectPen)(PHYSDEV,HPEN,const struct brush_pattern*);
-    INT      (CDECL *pSetArcDirection)(PHYSDEV,INT);
     COLORREF (CDECL *pSetBkColor)(PHYSDEV,COLORREF);
-    INT      (CDECL *pSetBkMode)(PHYSDEV,INT);
     UINT     (CDECL *pSetBoundsRect)(PHYSDEV,RECT*,UINT);
     COLORREF (CDECL *pSetDCBrushColor)(PHYSDEV, COLORREF);
     COLORREF (CDECL *pSetDCPenColor)(PHYSDEV, COLORREF);
@@ -173,11 +168,6 @@ struct gdi_dc_funcs
     INT      (CDECL *pSetMapMode)(PHYSDEV,INT);
     DWORD    (CDECL *pSetMapperFlags)(PHYSDEV,DWORD);
     COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);
-    INT      (CDECL *pSetPolyFillMode)(PHYSDEV,INT);
-    INT      (CDECL *pSetROP2)(PHYSDEV,INT);
-    INT      (CDECL *pSetRelAbs)(PHYSDEV,INT);
-    INT      (CDECL *pSetStretchBltMode)(PHYSDEV,INT);
-    UINT     (CDECL *pSetTextAlign)(PHYSDEV,UINT);
     INT      (CDECL *pSetTextCharacterExtra)(PHYSDEV,INT);
     COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
     BOOL     (CDECL *pSetTextJustification)(PHYSDEV,INT,INT);
@@ -204,7 +194,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 51
+#define WINE_GDI_DRIVER_VERSION 55
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

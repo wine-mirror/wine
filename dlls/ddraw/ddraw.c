@@ -958,7 +958,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
 
         if (rtv)
         {
-            wined3d_device_context_set_rendertarget_view(ddraw->immediate_context, 0, rtv, FALSE);
+            wined3d_device_context_set_rendertarget_views(ddraw->immediate_context, 0, 1, &rtv, FALSE);
             wined3d_rendertarget_view_decref(rtv);
         }
 

@@ -34,7 +34,10 @@
 #include <gst/video/video.h>
 #include <gst/audio/audio.h>
 
-WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
+/* GStreamer callbacks may be called on threads not created by Wine, and
+ * therefore cannot access the Wine TEB. This means that we must use GStreamer
+ * debug logging instead of Wine debug logging. In order to be safe we forbid
+ * any use of Wine debug logging in this entire file. */
 
 GST_DEBUG_CATEGORY_STATIC(wine);
 #define GST_CAT_DEFAULT wine
@@ -609,7 +612,7 @@ static bool CDECL wg_parser_stream_get_event(struct wg_parser_stream *stream, st
     if (parser->flushing)
     {
         pthread_mutex_unlock(&parser->mutex);
-        TRACE("Filter is flushing.\n");
+        GST_DEBUG("Filter is flushing.\n");
         return false;
     }
 
@@ -706,13 +709,13 @@ static void CDECL wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
         /* This can happen legitimately if the sample falls outside of the
          * segment bounds. GStreamer elements shouldn't present the sample in
          * that case, but DirectShow doesn't care. */
-        TRACE("Ignoring QoS event.\n");
+        GST_LOG("Ignoring QoS event.\n");
         return;
     }
 
     if (!(event = gst_event_new_qos(underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
             proportion, diff * 100, stream_time)))
-        ERR("Failed to create QOS event.\n");
+        GST_ERROR("Failed to create QOS event.\n");
     gst_pad_push_event(stream->my_sink, event);
 }
 
@@ -721,7 +724,7 @@ static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
 {
     const char *name = gst_element_factory_get_longname(fact);
 
-    GST_TRACE("Using \"%s\".", name);
+    GST_INFO("Using \"%s\".", name);
 
     if (strstr(name, "Player protection"))
     {
@@ -977,7 +980,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_parse_accept_caps(query, &caps);
             wg_format_from_caps(&format, caps);
             ret = wg_format_compare(&format, &stream->current_format);
-            if (!ret && WARN_ON(gstreamer))
+            if (!ret && gst_debug_category_get_threshold(GST_CAT_DEFAULT) >= GST_LEVEL_WARNING)
             {
                 gchar *str = gst_caps_to_string(caps);
                 GST_WARNING("Rejecting caps \"%s\".", str);
@@ -990,6 +993,16 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
         default:
             return gst_pad_query_default (pad, parent, query);
     }
+}
+
+static GstElement *create_element(const char *name, const char *plugin_set)
+{
+    GstElement *element;
+
+    if (!(element = gst_element_factory_make(name, NULL)))
+        fprintf(stderr, "winegstreamer: failed to create %s, are %u-bit GStreamer \"%s\" plugins installed?\n",
+                name, 8 * (unsigned int)sizeof(void *), plugin_set);
+    return element;
 }
 
 static struct wg_parser_stream *create_stream(struct wg_parser *parser)
@@ -1046,39 +1059,23 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 
         /* DirectShow can express interlaced video, but downstream filters can't
          * necessarily consume it. In particular, the video renderer can't. */
-        if (!(deinterlace = gst_element_factory_make("deinterlace", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create deinterlace, are %u-bit GStreamer \"good\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(deinterlace = create_element("deinterlace", "good")))
             goto out;
-        }
 
         /* decodebin considers many YUV formats to be "raw", but some quartz
          * filters can't handle those. Also, videoflip can't handle all "raw"
          * formats either. Add a videoconvert to swap color spaces. */
-        if (!(vconv = gst_element_factory_make("videoconvert", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(vconv = create_element("videoconvert", "base")))
             goto out;
-        }
 
         /* GStreamer outputs RGB video top-down, but DirectShow expects bottom-up. */
-        if (!(flip = gst_element_factory_make("videoflip", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(flip = create_element("videoflip", "good")))
             goto out;
-        }
 
         /* videoflip does not support 15 and 16-bit RGB so add a second videoconvert
          * to do the final conversion. */
-        if (!(vconv2 = gst_element_factory_make("videoconvert", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(vconv2 = create_element("videoconvert", "base")))
             goto out;
-        }
 
         /* The bin takes ownership of these elements. */
         gst_bin_add(GST_BIN(parser->container), deinterlace);
@@ -1106,12 +1103,8 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
          * surround-sound configurations. Native dsound can't always handle
          * 64-bit formats either. Add an audioconvert to allow changing bit
          * depth and channel count. */
-        if (!(convert = gst_element_factory_make("audioconvert", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create audioconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(convert = create_element("audioconvert", "base")))
             goto out;
-        }
 
         gst_bin_add(GST_BIN(parser->container), convert);
         gst_element_sync_state_with_parent(convert);
@@ -1496,26 +1489,6 @@ static gboolean src_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
     return ret;
 }
 
-static LONGLONG query_duration(GstPad *pad)
-{
-    gint64 duration, byte_length;
-
-    if (gst_pad_query_duration(pad, GST_FORMAT_TIME, &duration))
-        return duration / 100;
-
-    WARN("Failed to query time duration; trying to convert from byte length.\n");
-
-    /* To accurately get a duration for the stream, we want to only consider the
-     * length of that stream. Hence, query for the pad duration, instead of
-     * using the file duration. */
-    if (gst_pad_query_duration(pad, GST_FORMAT_BYTES, &byte_length)
-            && gst_pad_query_convert(pad, GST_FORMAT_BYTES, byte_length, GST_FORMAT_TIME, &duration))
-        return duration / 100;
-
-    ERR("Failed to query duration.\n");
-    return 0;
-}
-
 static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_size)
 {
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE("quartz_src",
@@ -1552,20 +1525,71 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     for (i = 0; i < parser->stream_count; ++i)
     {
         struct wg_parser_stream *stream = parser->streams[i];
+        gint64 duration;
 
         while (!stream->has_caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
-        if (parser->error)
-        {
-            pthread_mutex_unlock(&parser->mutex);
-            return E_FAIL;
-        }
+
         /* GStreamer doesn't actually provide any guarantees about when duration
-         * is available, even for seekable streams. However, many elements (e.g.
-         * avidemux, wavparse, qtdemux) in practice record duration before
-         * fixing caps, so as a heuristic, wait until we get caps before trying
-         * to query for duration. */
-        stream->duration = query_duration(stream->their_src);
+         * is available, even for seekable streams. It's basically built for
+         * applications that don't care, e.g. movie players that can display
+         * a duration once it's available, and update it visually if a better
+         * estimate is found. This doesn't really match well with DirectShow or
+         * Media Foundation, which both expect duration to be available
+         * immediately on connecting, so we have to use some complex heuristics
+         * to try to actually get a usable duration.
+         *
+         * Some elements (avidemux, wavparse, qtdemux) record duration almost
+         * immediately, before fixing caps. Such elements don't send
+         * duration-changed messages. Therefore always try querying duration
+         * after caps have been found.
+         *
+         * Some elements (mpegaudioparse) send duration-changed. In the case of
+         * a mp3 stream without seek tables it will not be sent immediately, but
+         * only after enough frames have been parsed to form an estimate. They
+         * may send it multiple times with increasingly accurate estimates, but
+         * unfortunately we have no way of knowing whether another estimate will
+         * be sent, so we always take the first one. We assume that if the
+         * duration is not immediately available then the element will always
+         * send duration-changed.
+         */
+
+        for (;;)
+        {
+            if (parser->error)
+            {
+                pthread_mutex_unlock(&parser->mutex);
+                return E_FAIL;
+            }
+            if (gst_pad_query_duration(stream->their_src, GST_FORMAT_TIME, &duration))
+            {
+                stream->duration = duration / 100;
+                break;
+            }
+
+            if (stream->eos)
+            {
+                stream->duration = 0;
+                GST_WARNING("Failed to query duration.\n");
+                break;
+            }
+
+            /* Elements based on GstBaseParse send duration-changed before
+             * actually updating the duration in GStreamer versions prior
+             * to 1.17.1. See <gstreamer.git:d28e0b4147fe7073b2>. So after
+             * receiving duration-changed we have to continue polling until
+             * the query succeeds. */
+            if (parser->has_duration)
+            {
+                pthread_mutex_unlock(&parser->mutex);
+                g_usleep(10000);
+                pthread_mutex_lock(&parser->mutex);
+            }
+            else
+            {
+                pthread_cond_wait(&parser->init_cond, &parser->mutex);
+            }
+        }
     }
 
     pthread_mutex_unlock(&parser->mutex);
@@ -1636,15 +1660,11 @@ static void CDECL wg_parser_disconnect(struct wg_parser *parser)
 
 static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 {
-    GstElement *element = gst_element_factory_make("decodebin", NULL);
+    GstElement *element;
     int ret;
 
-    if (!element)
-    {
-        ERR("Failed to create decodebin; are %u-bit GStreamer \"base\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("decodebin", "base")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
     parser->decodebin = element;
@@ -1662,7 +1682,7 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        ERR("Failed to link pads, error %d.\n", ret);
+        GST_ERROR("Failed to link pads, error %d.\n", ret);
         return FALSE;
     }
 
@@ -1670,7 +1690,7 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        ERR("Failed to play stream.\n");
+        GST_ERROR("Failed to play stream.\n");
         return FALSE;
     }
 
@@ -1689,15 +1709,11 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 
 static BOOL avi_parser_init_gst(struct wg_parser *parser)
 {
-    GstElement *element = gst_element_factory_make("avidemux", NULL);
+    GstElement *element;
     int ret;
 
-    if (!element)
-    {
-        ERR("Failed to create avidemux; are %u-bit GStreamer \"good\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("avidemux", "good")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
 
@@ -1713,7 +1729,7 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
 
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        ERR("Failed to link pads, error %d.\n", ret);
+        GST_ERROR("Failed to link pads, error %d.\n", ret);
         return FALSE;
     }
 
@@ -1721,7 +1737,7 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        ERR("Failed to play stream.\n");
+        GST_ERROR("Failed to play stream.\n");
         return FALSE;
     }
 
@@ -1744,19 +1760,15 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
     GstElement *element;
     int ret;
 
-    if (!(element = gst_element_factory_make("mpegaudioparse", NULL)))
-    {
-        ERR("Failed to create mpegaudioparse; are %u-bit GStreamer \"good\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("mpegaudioparse", "good")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        ERR("Failed to link sink pads, error %d.\n", ret);
+        GST_ERROR("Failed to link sink pads, error %d.\n", ret);
         return FALSE;
     }
 
@@ -1766,7 +1778,7 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
     gst_object_ref(stream->their_src = gst_element_get_static_pad(element, "src"));
     if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
-        ERR("Failed to link source pads, error %d.\n", ret);
+        GST_ERROR("Failed to link source pads, error %d.\n", ret);
         return FALSE;
     }
 
@@ -1775,19 +1787,10 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        ERR("Failed to play stream.\n");
+        GST_ERROR("Failed to play stream.\n");
         return FALSE;
     }
 
-    pthread_mutex_lock(&parser->mutex);
-    while (!parser->has_duration && !parser->error && !stream->eos)
-        pthread_cond_wait(&parser->init_cond, &parser->mutex);
-    if (parser->error)
-    {
-        pthread_mutex_unlock(&parser->mutex);
-        return FALSE;
-    }
-    pthread_mutex_unlock(&parser->mutex);
     return TRUE;
 }
 
@@ -1797,19 +1800,15 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     GstElement *element;
     int ret;
 
-    if (!(element = gst_element_factory_make("wavparse", NULL)))
-    {
-        ERR("Failed to create wavparse; are %u-bit GStreamer \"good\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("wavparse", "good")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
-        ERR("Failed to link sink pads, error %d.\n", ret);
+        GST_ERROR("Failed to link sink pads, error %d.\n", ret);
         return FALSE;
     }
 
@@ -1820,7 +1819,7 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     gst_object_ref(stream->their_src);
     if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
-        ERR("Failed to link source pads, error %d.\n", ret);
+        GST_ERROR("Failed to link source pads, error %d.\n", ret);
         return FALSE;
     }
 
@@ -1829,7 +1828,7 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        ERR("Failed to play stream.\n");
+        GST_ERROR("Failed to play stream.\n");
         return FALSE;
     }
 
@@ -1849,7 +1848,7 @@ static struct wg_parser *wg_parser_create(void)
     pthread_cond_init(&parser->read_done_cond, NULL);
     parser->flushing = true;
 
-    TRACE("Created winegstreamer parser %p.\n", parser);
+    GST_DEBUG("Created winegstreamer parser %p.\n", parser);
     return parser;
 }
 
@@ -1953,14 +1952,15 @@ NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *pt
 
         if (!gst_init_check(&argc, &argv, &err))
         {
-            ERR("Failed to initialize GStreamer: %s\n", debugstr_a(err->message));
+            fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", debugstr_a(err->message));
             g_error_free(err);
             return STATUS_UNSUCCESSFUL;
         }
-        TRACE("GStreamer library version %s; wine built with %d.%d.%d.\n",
-                gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 
         GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
+
+        GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.\n",
+                gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 
         *(const struct unix_funcs **)ptr_out = &funcs;
     }

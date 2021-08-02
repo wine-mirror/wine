@@ -17,7 +17,6 @@
  */
 
 #include <stdarg.h>
-#include <assert.h>
 
 #define COBJMACROS
 
@@ -829,15 +828,10 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
                 DWORD zone;
                 HRESULT hres;
 
-                /*
-                 * Internet URL zone is treated differently. Native defaults to latest supported
-                 * mode. We default to IE8. Ideally, we'd sync that with version used for IE=edge
-                 * X-UA-Compatible version, allow configuration and default to higher version
-                 * (once it's well supported).
-                 */
+                /* Internet URL zone is treated differently and defaults to the latest supported mode. */
                 hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), window->url, &zone, 0);
                 if(SUCCEEDED(hres) && zone == URLZONE_INTERNET)
-                    mode = COMPAT_MODE_IE8;
+                    mode = COMPAT_MODE_IE11;
             }
 
             set_document_mode(This, mode, FALSE);

@@ -55,6 +55,8 @@ NTSTATUS WINAPI NtOpenProcessTokenEx( HANDLE process, DWORD access, DWORD attrib
 
     TRACE( "(%p,0x%08x,0x%08x,%p)\n", process, access, attributes, handle );
 
+    *handle = 0;
+
     SERVER_START_REQ( open_token )
     {
         req->handle     = wine_server_obj_handle( process );
@@ -88,6 +90,8 @@ NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN self, 
 
     TRACE( "(%p,0x%08x,%u,0x%08x,%p)\n", thread, access, self, attributes, handle );
 
+    *handle = 0;
+
     SERVER_START_REQ( open_token )
     {
         req->handle     = wine_server_obj_handle( thread );
@@ -113,6 +117,7 @@ NTSTATUS WINAPI NtDuplicateToken( HANDLE token, ACCESS_MASK access, OBJECT_ATTRI
     data_size_t len;
     struct object_attributes *objattr;
 
+    *handle = 0;
     if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
 
     if (attr && attr->SecurityQualityOfService)

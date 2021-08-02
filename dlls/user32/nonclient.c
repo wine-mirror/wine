@@ -635,6 +635,39 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
     return HTNOWHERE;
 }
 
+LRESULT NC_HandleNCMouseMove(HWND hwnd, POINT pt)
+{
+    LONG hittest;
+    RECT rect;
+
+    TRACE("hwnd=%p pt=%s\n", hwnd, wine_dbgstr_point(&pt));
+
+    hittest = NC_HandleNCHitTest(hwnd, pt);
+    if (hittest != HTHSCROLL && hittest != HTVSCROLL)
+        return 0;
+
+    WIN_GetRectangles(hwnd, COORDS_CLIENT, &rect, NULL);
+    ScreenToClient(hwnd, &pt);
+    pt.x -= rect.left;
+    pt.y -= rect.top;
+    SCROLL_HandleScrollEvent(hwnd, hittest == HTHSCROLL ? SB_HORZ : SB_VERT, WM_NCMOUSEMOVE, pt);
+    return 0;
+}
+
+LRESULT NC_HandleNCMouseLeave(HWND hwnd)
+{
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+    POINT pt = {0, 0};
+
+    TRACE("hwnd=%p\n", hwnd);
+
+    if (style & WS_HSCROLL)
+        SCROLL_HandleScrollEvent(hwnd, SB_HORZ, WM_NCMOUSELEAVE, pt);
+    if (style & WS_VSCROLL)
+        SCROLL_HandleScrollEvent(hwnd, SB_VERT, WM_NCMOUSELEAVE, pt);
+
+    return 0;
+}
 
 /******************************************************************************
  *
@@ -1027,11 +1060,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
 	DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     /* Draw the scroll-bars */
-
-    if (dwStyle & WS_VSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
-    if (dwStyle & WS_HSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
+    SCROLL_DrawNCScrollBar( hwnd, hdc, dwStyle & WS_HSCROLL, dwStyle & WS_VSCROLL );
 
     /* Draw the "size-box" */
     if ((dwStyle & WS_VSCROLL) && (dwStyle & WS_HSCROLL))

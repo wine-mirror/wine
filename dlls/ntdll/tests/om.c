@@ -80,6 +80,10 @@ static NTSTATUS (WINAPI *pNtOpenProcess)( HANDLE *, ACCESS_MASK, const OBJECT_AT
 static NTSTATUS (WINAPI *pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
 static NTSTATUS (WINAPI *pNtGetNextThread)(HANDLE process, HANDLE thread, ACCESS_MASK access, ULONG attributes,
                                             ULONG flags, HANDLE *handle);
+static NTSTATUS (WINAPI *pNtOpenProcessToken)(HANDLE,DWORD,HANDLE*);
+static NTSTATUS (WINAPI *pNtOpenThreadToken)(HANDLE,DWORD,BOOLEAN,HANDLE*);
+static NTSTATUS (WINAPI *pNtDuplicateToken)(HANDLE,ACCESS_MASK,OBJECT_ATTRIBUTES*,SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,HANDLE*);
+static NTSTATUS (WINAPI *pNtDuplicateObject)(HANDLE,HANDLE,HANDLE,HANDLE*,ACCESS_MASK,ULONG,ULONG);
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -144,21 +148,29 @@ static void test_namespace_pipe(void)
 
     pRtlInitUnicodeString(&str, L"\\??\\PIPE\\test\\pipe");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    status = pNtCreateNamedPipeFile((HANDLE *)0xdeadbee0, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                    FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
+    ok(status == STATUS_ACCESS_VIOLATION, "Failed to create NamedPipe(%08x)\n", status);
+
     status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
     ok(status == STATUS_SUCCESS, "Failed to create NamedPipe(%08x)\n", status);
 
-    status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    h = (HANDLE)0xdeadbeef;
+    status = pNtCreateNamedPipeFile(&h, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
     ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
         "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08x)\n", status);
+    ok( !h || broken(h == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", h );
 
     pRtlInitUnicodeString(&str, L"\\??\\PIPE\\TEST\\PIPE");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
-    status = pNtCreateNamedPipeFile(&pipe, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    h = (HANDLE)0xdeadbeef;
+    status = pNtCreateNamedPipeFile(&h, GENERIC_READ|GENERIC_WRITE, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout);
     ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
         "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08x)\n", status);
+    ok( !h || broken(h == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", h );
 
     h = CreateFileA("\\\\.\\pipe\\test\\pipe", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
                     OPEN_EXISTING, 0, 0 );
@@ -167,19 +179,23 @@ static void test_namespace_pipe(void)
 
     pRtlInitUnicodeString(&str, L"\\??\\pipe\\test\\pipe");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    h = (HANDLE)0xdeadbeef;
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, 0);
     ok(status == STATUS_OBJECT_PATH_NOT_FOUND ||
        status == STATUS_PIPE_NOT_AVAILABLE ||
        status == STATUS_OBJECT_NAME_INVALID || /* vista */
        status == STATUS_OBJECT_NAME_NOT_FOUND, /* win8 */
         "NtOpenFile should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08x)\n", status);
+    ok( !h || broken(h == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", h );
 
     pRtlInitUnicodeString(&str, L"\\??\\pipe\\test");
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
+    h = (HANDLE)0xdeadbeef;
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, 0);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND ||
        status == STATUS_OBJECT_NAME_INVALID, /* vista */
         "NtOpenFile should have failed with STATUS_OBJECT_NAME_NOT_FOUND got(%08x)\n", status);
+    ok( !h || broken(h == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", h );
 
     str.Length -= 4 * sizeof(WCHAR);
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, 0);
@@ -361,69 +377,174 @@ static void test_all_kernel_objects( UINT line, OBJECT_ATTRIBUTES *attr,
     RtlInitUnicodeString( &target, L"\\DosDevices" );
     size.QuadPart = 4096;
 
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateMutant( &ret, GENERIC_ALL, attr, FALSE );
     ok( status == create_expect, "%u: NtCreateMutant failed %x\n", line, status );
     status2 = pNtOpenMutant( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenMutant failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateMutant handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenMutant handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, attr, 1, 2 );
     ok( status == create_expect, "%u: NtCreateSemaphore failed %x\n", line, status );
     status2 = pNtOpenSemaphore( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenSemaphore failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateSemaphore handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenSemaphore handle %p\n", line, ret );
+    ret = (HANDLE)0xdeadbeef;
+    status = pNtCreateSemaphore( &ret, GENERIC_ALL, attr, 2, 1 );
+    ok( status == STATUS_INVALID_PARAMETER ||
+        (status == STATUS_ACCESS_VIOLATION && create_expect == STATUS_ACCESS_VIOLATION),
+        "%u: NtCreateSemaphore failed %x\n", line, status );
+    ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+        "%u: NtCreateSemaphore handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateEvent( &ret, GENERIC_ALL, attr, SynchronizationEvent, 0 );
     ok( status == create_expect, "%u: NtCreateEvent failed %x\n", line, status );
     status2 = pNtOpenEvent( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenEvent failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateEvent handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenEvent handle %p\n", line, ret );
+    ret = (HANDLE)0xdeadbeef;
+    status = pNtCreateEvent( &ret, GENERIC_ALL, attr, 2, 0 );
+    ok( status == STATUS_INVALID_PARAMETER ||
+        (status == STATUS_ACCESS_VIOLATION && create_expect == STATUS_ACCESS_VIOLATION),
+        "%u: NtCreateEvent failed %x\n", line, status );
+    ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+        "%u: NtCreateEvent handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, attr, 0 );
     ok( status == create_expect, "%u: NtCreateKeyedEvent failed %x\n", line, status );
     status2 = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenKeyedEvent failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateKeyedEvent handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenKeyedEvent handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateTimer( &ret, GENERIC_ALL, attr, NotificationTimer );
     ok( status == create_expect, "%u: NtCreateTimer failed %x\n", line, status );
     status2 = pNtOpenTimer( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenTimer failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateTimer handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenTimer handle %p\n", line, ret );
+    ret = (HANDLE)0xdeadbeef;
+    status = pNtCreateTimer( &ret, GENERIC_ALL, attr, 2 );
+    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_PARAMETER_4 ||
+        (status == STATUS_ACCESS_VIOLATION && create_expect == STATUS_ACCESS_VIOLATION),
+        "%u: NtCreateTimer failed %x\n", line, status );
+    ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+        "%u: NtCreateTimer handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, attr, 0 );
-    ok( status == create_expect, "%u: NtCreateCompletion failed %x\n", line, status );
+    ok( status == create_expect, "%u: NtCreateIoCompletion failed %x\n", line, status );
     status2 = pNtOpenIoCompletion( &ret2, GENERIC_ALL, attr );
-    ok( status2 == open_expect, "%u: NtOpenCompletion failed %x\n", line, status2 );
+    ok( status2 == open_expect, "%u: NtOpenIoCompletion failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateIoCompletion handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenIoCompletion handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateJobObject( &ret, GENERIC_ALL, attr );
     ok( status == create_expect, "%u: NtCreateJobObject failed %x\n", line, status );
     status2 = pNtOpenJobObject( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenJobObject failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateJobObject handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenJobObject handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, attr );
     ok( status == create_expect, "%u: NtCreateDirectoryObject failed %x\n", line, status );
     status2 = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenDirectoryObject failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateDirectoryObject handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenDirectoryObject handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, attr, &target );
     ok( status == create_expect, "%u: NtCreateSymbolicLinkObject failed %x\n", line, status );
     status2 = pNtOpenSymbolicLinkObject( &ret2, GENERIC_ALL, attr );
     ok( status2 == open_expect, "%u: NtOpenSymbolicLinkObject failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateSymbolicLinkObject handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenSymbolicLinkObject handle %p\n", line, ret );
+    ret = (HANDLE)0xdeadbeef;
+    target.MaximumLength = 0;
+    status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, attr, &target );
+    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_PARAMETER_4 ||
+        (status == STATUS_ACCESS_VIOLATION && create_expect == STATUS_ACCESS_VIOLATION),
+        "%u: NtCreateSymbolicLinkObject failed %x\n", line, status );
+    ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+        "%u: NtCreateSymbolicLinkObject handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == create_expect, "%u: NtCreateSection failed %x\n", line, status );
     status2 = pNtOpenSection( &ret2, SECTION_MAP_WRITE, attr );
     ok( status2 == open_expect, "%u: NtOpenSection failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateSection handle %p\n", line, ret );
     if (!status2) pNtClose( ret2 );
+    else ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtOpenSection handle %p\n", line, ret );
+    ret = (HANDLE)0xdeadbeef;
+    status = pNtCreateSection( &ret, SECTION_MAP_WRITE, attr, &size, 0x1234, SEC_COMMIT, 0 );
+    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_PAGE_PROTECTION ||
+        (status == STATUS_ACCESS_VIOLATION && create_expect == STATUS_ACCESS_VIOLATION),
+        "%u: NtCreateSection failed %x\n", line, status );
+    ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+        "%u: NtCreateSection handle %p\n", line, ret );
+
+    ret = ret2 = (HANDLE)0xdeadbeef;
     status = pNtCreateDebugObject( &ret, DEBUG_ALL_ACCESS, attr, 0 );
     ok( status == create_expect, "%u: NtCreateDebugObject failed %x\n", line, status );
     if (!status) pNtClose( ret );
+    else ok( !ret || broken( ret == (HANDLE)0xdeadbeef ) /* vista */,
+             "%u: NtCreateDebugObject handle %p\n", line, ret );
+    status = pNtCreateDebugObject( &ret2, DEBUG_ALL_ACCESS, attr, 0xdead );
+    ok( status == STATUS_INVALID_PARAMETER ||
+        (status == STATUS_ACCESS_VIOLATION && create_expect == STATUS_ACCESS_VIOLATION),
+        "%u: NtCreateDebugObject failed %x\n", line, status );
+    ok( !ret2 || broken( ret2 == (HANDLE)0xdeadbeef ) /* vista */,
+        "%u: NtCreateDebugObject handle %p\n", line, ret );
 }
 
 static void test_name_limits(void)
@@ -567,6 +688,18 @@ static void test_name_limits(void)
     attr2.ObjectName = attr3.ObjectName = NULL;
     test_all_kernel_objects( __LINE__, &attr2, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_INVALID );
     test_all_kernel_objects( __LINE__, &attr3, STATUS_SUCCESS, STATUS_OBJECT_PATH_SYNTAX_BAD );
+    attr2.ObjectName = attr3.ObjectName = (void *)0xdeadbeef;
+    test_all_kernel_objects( __LINE__, &attr2, STATUS_ACCESS_VIOLATION, STATUS_ACCESS_VIOLATION );
+    test_all_kernel_objects( __LINE__, &attr3, STATUS_ACCESS_VIOLATION, STATUS_ACCESS_VIOLATION );
+    attr2.ObjectName = attr3.ObjectName = &str2;
+    str2.Buffer = (WCHAR *)0xdeadbeef;
+    str2.Length = 3;
+    test_all_kernel_objects( __LINE__, &attr2, STATUS_DATATYPE_MISALIGNMENT, STATUS_DATATYPE_MISALIGNMENT );
+    test_all_kernel_objects( __LINE__, &attr3, STATUS_DATATYPE_MISALIGNMENT, STATUS_DATATYPE_MISALIGNMENT );
+    str2.Buffer = (WCHAR *)0xdeadbee0;
+    str2.Length = 2;
+    test_all_kernel_objects( __LINE__, &attr2, STATUS_ACCESS_VIOLATION, STATUS_ACCESS_VIOLATION );
+    test_all_kernel_objects( __LINE__, &attr3, STATUS_ACCESS_VIOLATION, STATUS_ACCESS_VIOLATION );
 
     attr3.ObjectName = &str2;
     pRtlInitUnicodeString( &str2, L"\\BaseNamedObjects\\Local" );
@@ -580,54 +713,123 @@ static void test_name_limits(void)
     status = pNtCreateMutant( &ret, GENERIC_ALL, NULL, FALSE );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateMutant failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateMutant( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, FALSE );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateMutant failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenMutant( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenMutant failed %x\n", status );
+    ok( !ret || broken(ret == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", ret );
+    status = pNtOpenMutant( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenMutant failed %x\n", status );
+
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, NULL, 1, 2 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSemaphore failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateSemaphore( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, 1, 2 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSemaphore failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenSemaphore( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenSemaphore failed %x\n", status );
+    ok( !ret || broken(ret == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", ret );
+    status = pNtOpenSemaphore( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenSemaphore failed %x\n", status );
+
     status = pNtCreateEvent( &ret, GENERIC_ALL, NULL, SynchronizationEvent, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateEvent failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateEvent( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, SynchronizationEvent, 0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateEvent failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenEvent( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenEvent failed %x\n", status );
+    ok( !ret || broken(ret == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", ret );
+    status = pNtOpenEvent( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenEvent failed %x\n", status );
+
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, NULL, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateKeyedEvent failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateKeyedEvent( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, 0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKeyedEvent failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenKeyedEvent failed %x\n", status );
+    ok( !ret, "handle set %p\n", ret );
+    status = pNtOpenKeyedEvent( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKeyedEvent failed %x\n", status );
+
     status = pNtCreateTimer( &ret, GENERIC_ALL, NULL, NotificationTimer );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateTimer failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateTimer( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, NotificationTimer );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateTimer failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenTimer( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenTimer failed %x\n", status );
+    ok( !ret || broken(ret == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", ret );
+    status = pNtOpenTimer( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenTimer failed %x\n", status );
+
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, NULL, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateCompletion failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateIoCompletion( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, 0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateCompletion failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenIoCompletion( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenCompletion failed %x\n", status );
+    ok( !ret || broken(ret == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", ret );
+    status = pNtOpenIoCompletion( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenCompletion failed %x\n", status );
+
     status = pNtCreateJobObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateJobObject failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateJobObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateJobObject failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenJobObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenJobObject failed %x\n", status );
+    ok( !ret || broken(ret == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", ret );
+    status = pNtOpenJobObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenJobObject failed %x\n", status );
+
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateDirectoryObject failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateDirectoryObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateDirectoryObject failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenDirectoryObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenDirectoryObject failed %x\n", status );
+    ok( !ret, "handle set %p\n", ret );
+    status = pNtOpenDirectoryObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenDirectoryObject failed %x\n", status );
+
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, NULL, &target );
     ok( status == STATUS_ACCESS_VIOLATION || broken( status == STATUS_SUCCESS), /* winxp */
         "NULL: NtCreateSymbolicLinkObject failed %x\n", status );
     if (!status) pNtClose( ret );
+    status = pNtCreateSymbolicLinkObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, &target );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSymbolicLinkObject failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenSymbolicLinkObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenSymbolicLinkObject failed %x\n", status );
+    ok( !ret, "handle set %p\n", ret );
+    status = pNtOpenSymbolicLinkObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenSymbolicLinkObject failed %x\n", status );
+
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSection failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateSection( (HANDLE *)0xdeadbee0, SECTION_MAP_WRITE, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSection failed %x\n", status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenSection( &ret, SECTION_MAP_WRITE, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenSection failed %x\n", status );
+    ok( !ret, "handle set %p\n", ret );
+    status = pNtOpenSection( (HANDLE *)0xdeadbee0, SECTION_MAP_WRITE, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenSection failed %x\n", status );
     attr2.ObjectName = attr3.ObjectName = &str;
 
     /* named pipes */
@@ -750,11 +952,15 @@ static void test_name_limits(void)
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
     ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
         "%u: NtCreateKey failed %x\n", str.Length, status );
+    status = pNtCreateKey( (HANDLE *)0xdeadbee0, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "%u: NtCreateKey failed %x\n", str.Length, status );
     if (!status)
     {
         status = pNtOpenKey( &ret2, KEY_READ, &attr );
         ok( status == STATUS_SUCCESS, "%u: NtOpenKey failed %x\n", str.Length, status );
         pNtClose( ret2 );
+        status = pNtOpenKey( (HANDLE *)0xdeadbee0, KEY_READ, &attr );
+        ok( status == STATUS_ACCESS_VIOLATION, "%u: NtOpenKey failed %x\n", str.Length, status );
         attr3.RootDirectory = ret;
         str.Length = 0;
         status = pNtOpenKey( &ret2, KEY_READ, &attr3 );
@@ -821,24 +1027,30 @@ static void test_name_limits(void)
         status == STATUS_BUFFER_TOO_SMALL ||
         status == STATUS_INVALID_PARAMETER,
         "%u: NtCreateKey failed %x\n", str.Length, status );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
     todo_wine
     ok( status == STATUS_BUFFER_OVERFLOW ||
         status == STATUS_BUFFER_TOO_SMALL ||
         status == STATUS_INVALID_PARAMETER,
          "%u: NtOpenKey failed %x\n", str.Length, status );
+    ok( !ret, "handle set %p\n", ret );
     str.Length = 65534;
+    ret = (HANDLE)0xdeadbeef;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
     ok( status == STATUS_OBJECT_NAME_INVALID ||
         status == STATUS_BUFFER_OVERFLOW ||
         status == STATUS_BUFFER_TOO_SMALL,
         "%u: NtCreateKey failed %x\n", str.Length, status );
+    ok( !ret, "handle set %p\n", ret );
+    ret = (HANDLE)0xdeadbeef;
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
     todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID ||
         status == STATUS_BUFFER_OVERFLOW ||
         status == STATUS_BUFFER_TOO_SMALL,
          "%u: NtOpenKey failed %x\n", str.Length, status );
+    ok( !ret, "handle set %p\n", ret );
     attr3.RootDirectory = 0;
     attr2.ObjectName = attr3.ObjectName = NULL;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr2, 0, NULL, 0, NULL );
@@ -967,22 +1179,28 @@ static void test_directory(void)
     ok( buffer[len / sizeof(WCHAR) - 1] == 0, "no terminating null\n" );
 
     str.MaximumLength = str.Length;
+    str.Length = 0x4444;
     len = 0xdeadbeef;
     status = pNtQuerySymbolicLinkObject( dir, &str, &len );
     ok( status == STATUS_BUFFER_TOO_SMALL, "NtQuerySymbolicLinkObject failed %08x\n", status );
     ok( len == full_len, "bad length %u/%u\n", len, full_len );
+    ok( str.Length == 0x4444, "len set to %x\n", str.Length );
 
     str.MaximumLength = 0;
+    str.Length = 0x4444;
     len = 0xdeadbeef;
     status = pNtQuerySymbolicLinkObject( dir, &str, &len );
     ok( status == STATUS_BUFFER_TOO_SMALL, "NtQuerySymbolicLinkObject failed %08x\n", status );
     ok( len == full_len, "bad length %u/%u\n", len, full_len );
+    ok( str.Length == 0x4444, "len set to %x\n", str.Length );
 
-    str.MaximumLength = str.Length + sizeof(WCHAR);
+    str.MaximumLength = full_len;
+    str.Length = 0x4444;
     len = 0xdeadbeef;
     status = pNtQuerySymbolicLinkObject( dir, &str, &len );
     ok( status == STATUS_SUCCESS, "NtQuerySymbolicLinkObject failed %08x\n", status );
     ok( len == full_len, "bad length %u/%u\n", len, full_len );
+    ok( str.Length == full_len - sizeof(WCHAR), "len set to %x\n", str.Length );
 
     pNtClose(dir);
 
@@ -1387,7 +1605,6 @@ static void test_query_object(void)
     char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
     WCHAR expect[100];
     LARGE_INTEGER size;
-    BOOL ret;
 
     InitializeObjectAttributes( &attr, &path, 0, 0, 0 );
 
@@ -1683,8 +1900,8 @@ static void test_query_object(void)
     test_object_type( GetCurrentThread(), L"Thread" );
     test_no_file_info( GetCurrentThread() );
 
-    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle);
-    ok(ret, "OpenProcessToken failed: %u\n", GetLastError());
+    status = pNtOpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle);
+    ok(!status, "OpenProcessToken failed: %x\n", status);
 
     test_object_name( handle, L"", FALSE );
     test_object_type( handle, L"Token" );
@@ -2266,10 +2483,10 @@ static void test_semaphore(void)
 
 static void test_wait_on_address(void)
 {
-    DWORD ticks;
     SIZE_T size;
     NTSTATUS status;
-    LARGE_INTEGER timeout;
+    LARGE_INTEGER start, end, timeout;
+    DWORD elapsed;
     LONG64 address, compare;
 
     if (!pRtlWaitOnAddress)
@@ -2298,13 +2515,13 @@ static void test_wait_on_address(void)
     /* values match */
     address = 0;
     compare = 0;
-    pNtQuerySystemTime(&timeout);
-    timeout.QuadPart += 100*10000;
-    ticks = GetTickCount();
+    pNtQuerySystemTime(&start);
+    timeout.QuadPart = start.QuadPart + 100 * 10000;
     status = pRtlWaitOnAddress(&address, &compare, 8, &timeout);
-    ticks = GetTickCount() - ticks;
+    pNtQuerySystemTime(&end);
     ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
-    ok(ticks >= 80 && ticks <= 1000, "got %u\n", ticks);
+    elapsed = (end.QuadPart - start.QuadPart) / 10000;
+    ok(90 <= elapsed && elapsed <= 900, "timed out in %u ms\n", elapsed);
     ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
     ok(compare == 0, "got %s\n", wine_dbgstr_longlong(compare));
 
@@ -2314,12 +2531,13 @@ static void test_wait_on_address(void)
         compare = ~0;
         compare <<= size * 8;
 
+        pNtQuerySystemTime(&start);
         timeout.QuadPart = -100 * 10000;
-        ticks = GetTickCount();
         status = pRtlWaitOnAddress(&address, &compare, size, &timeout);
-        ticks = GetTickCount() - ticks;
+        pNtQuerySystemTime(&end);
         ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
-        ok(ticks >= 80 && ticks <= 1000, "got %u\n", ticks);
+        elapsed = (end.QuadPart - start.QuadPart) / 10000;
+        ok(90 <= elapsed && elapsed <= 900, "timed out in %u ms\n", elapsed);
 
         status = pRtlWaitOnAddress(&address, &compare, size << 1, &timeout);
         ok(!status, "got 0x%08x\n", status);
@@ -2366,13 +2584,17 @@ static void test_process(void)
 
     cid.UniqueProcess = ULongToHandle( 0xdeadbeef );
     cid.UniqueThread = ULongToHandle( 0xdeadbeef );
+    process = (HANDLE)0xdeadbeef;
     status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
     ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+    ok( !process || broken(process == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", process );
 
     cid.UniqueProcess = ULongToHandle( GetCurrentThreadId() );
     cid.UniqueThread = 0;
+    process = (HANDLE)0xdeadbeef;
     status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
     ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+    ok( !process || broken(process == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", process );
 
     cid.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
     cid.UniqueThread = 0;
@@ -2385,6 +2607,40 @@ static void test_process(void)
     status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
     ok( !status, "NtOpenProcess returned %x\n", status );
     pNtClose( process );
+    status = pNtOpenProcess( (HANDLE *)0xdeadbee0, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+    ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcess returned %x\n", status );
+}
+
+static void test_token(void)
+{
+    NTSTATUS status;
+    HANDLE handle, handle2;
+
+    status = pNtOpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, (HANDLE *)0xdeadbee0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %x\n", status);
+    status = pNtOpenThreadToken( GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, (HANDLE *)0xdeadbee0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %x\n", status);
+    handle = (HANDLE)0xdeadbeef;
+    status = NtOpenProcessToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, &handle );
+    ok( status == STATUS_INVALID_HANDLE, "NtOpenProcessToken failed: %x\n", status);
+    ok( !handle || broken(handle == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle );
+    handle = (HANDLE)0xdeadbeef;
+    status = pNtOpenThreadToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, TRUE, &handle );
+    ok( status == STATUS_INVALID_HANDLE, "NtOpenThreadToken failed: %x\n", status);
+    ok( !handle || broken(handle == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle );
+
+    status = pNtOpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle );
+    ok( status == STATUS_SUCCESS, "NtOpenProcessToken failed: %x\n", status);
+    status = pNtDuplicateToken( handle, TOKEN_ALL_ACCESS, NULL, 0, TokenPrimary, &handle2 );
+    ok( status == STATUS_SUCCESS, "NtOpenProcessToken failed: %x\n", status);
+    pNtClose( handle2 );
+    status = pNtDuplicateToken( handle, TOKEN_ALL_ACCESS, NULL, 0, TokenPrimary, (HANDLE *)0xdeadbee0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %x\n", status);
+    handle2 = (HANDLE)0xdeadbeef;
+    status = pNtDuplicateToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, NULL, 0, TokenPrimary, &handle2 );
+    ok( status == STATUS_INVALID_HANDLE, "NtOpenProcessToken failed: %x\n", status);
+    ok( !handle2 || broken(handle2 == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle2 );
+    pNtClose( handle );
 }
 
 #define DEBUG_GENERIC_EXECUTE         (STANDARD_RIGHTS_EXECUTE|SYNCHRONIZE)
@@ -2469,6 +2725,39 @@ static void *align_ptr( void *ptr )
 {
     ULONG align = sizeof(DWORD_PTR) - 1;
     return (void *)(((DWORD_PTR)ptr + align) & ~align);
+}
+
+static void test_duplicate_object(void)
+{
+    NTSTATUS status;
+    HANDLE handle;
+
+    status = pNtDuplicateObject( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                                 &handle, PROCESS_ALL_ACCESS, 0, 0 );
+    ok( !status, "NtDuplicateObject failed %x\n", status );
+    pNtClose( handle );
+    status = pNtDuplicateObject( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                                 NULL, PROCESS_ALL_ACCESS, 0, 0 );
+    ok( !status, "NtDuplicateObject failed %x\n", status );
+
+    status = pNtDuplicateObject( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                                 (HANDLE *)0xdeadbee0, PROCESS_ALL_ACCESS, 0, 0 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NtDuplicateObject failed %x\n", status );
+
+    handle = (HANDLE)0xdeadbeef;
+    status = pNtDuplicateObject( GetCurrentProcess(), (HANDLE)0xdead, GetCurrentProcess(),
+                                 &handle, PROCESS_ALL_ACCESS, 0, 0 );
+    ok( status == STATUS_INVALID_HANDLE, "NtDuplicateObject failed %x\n", status );
+    ok( !handle, "handle set %p\n", handle );
+
+    handle = (HANDLE)0xdeadbeef;
+    status = pNtDuplicateObject( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                                 &handle, ~0u, 0, 0 );
+    todo_wine
+    ok( status == STATUS_ACCESS_DENIED, "NtDuplicateObject failed %x\n", status );
+    todo_wine
+    ok( !handle, "handle set %p\n", handle );
+    if (!status) pNtClose( handle );
 }
 
 static void test_object_types(void)
@@ -2707,6 +2996,10 @@ START_TEST(om)
     pNtOpenProcess          =  (void *)GetProcAddress(hntdll, "NtOpenProcess");
     pNtCreateDebugObject    =  (void *)GetProcAddress(hntdll, "NtCreateDebugObject");
     pNtGetNextThread        =  (void *)GetProcAddress(hntdll, "NtGetNextThread");
+    pNtOpenProcessToken     =  (void *)GetProcAddress(hntdll, "NtOpenProcessToken");
+    pNtOpenThreadToken      =  (void *)GetProcAddress(hntdll, "NtOpenThreadToken");
+    pNtDuplicateToken       =  (void *)GetProcAddress(hntdll, "NtDuplicateToken");
+    pNtDuplicateObject      =  (void *)GetProcAddress(hntdll, "NtDuplicateObject");
 
     test_case_sensitive();
     test_namespace_pipe();
@@ -2723,6 +3016,8 @@ START_TEST(om)
     test_null_device();
     test_wait_on_address();
     test_process();
+    test_token();
+    test_duplicate_object();
     test_object_types();
     test_get_next_thread();
 }

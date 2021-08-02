@@ -1898,14 +1898,14 @@ WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_p
     while(1)
     {
         symbol = 0;
-        amp = strchr(h, '&');
+        amp = memchr(h, '&', html_fragment + html_fragment_len - h);
         if(!amp) break;
         len = amp-h;
         /* Copy the characters prior to the HTML encoded character */
         memcpy(&tmp[tmp_len], h, len);
         tmp_len += len;
         amp++; /* skip ampersand */
-        sem = strchr(amp, ';');
+        sem = memchr(amp, ';', html_fragment + html_fragment_len - amp);
         /* Require a semicolon after the ampersand */
         if(!sem)
         {

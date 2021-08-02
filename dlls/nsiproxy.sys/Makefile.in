@@ -4,5 +4,6 @@ EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	device.c \
+	ip.c \
 	ndis.c \
 	nsi.c

@@ -378,14 +378,17 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
                 q[0] = '\r';
                 q[1] = '\n';
             }
-            if (q[0] == '\r' && q[1] == '\n') break;
+            if (q[0] == '\r') break;
             q++;
         }
         if (!*p) break;
         if (*q == '\r')
         {
             *q = 0;
-            q += 2; /* jump over \r\n */
+            if (q[1] == '\n')
+                q += 2; /* jump over \r\n */
+            else
+                q++; /* jump over \r */
         }
         if ((header = parse_header( p )))
         {

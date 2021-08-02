@@ -21,7 +21,7 @@
 #include "qcap_private.h"
 #include "winternl.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(qcap);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const struct video_capture_funcs *capture_funcs;
 

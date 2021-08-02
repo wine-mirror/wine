@@ -110,6 +110,7 @@ NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) = NULL
 void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
 void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
 void     (WINAPI *p__wine_ctrl_routine)(void*);
+SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
 
@@ -710,20 +711,6 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     return STATUS_SUCCESS;
 }
 
-static const IMAGE_EXPORT_DIRECTORY *get_export_dir( HMODULE module )
-{
-    const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)module;
-    const IMAGE_NT_HEADERS *nt;
-    DWORD addr;
-
-    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return NULL;
-    nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
-    if (nt->Signature != IMAGE_NT_SIGNATURE) return NULL;
-    addr = nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY].VirtualAddress;
-    if (!addr) return NULL;
-    return (IMAGE_EXPORT_DIRECTORY *)((BYTE *)module + addr);
-}
-
 static ULONG_PTR find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports, DWORD ordinal )
 {
     const DWORD *functions = (const DWORD *)((BYTE *)module + exports->AddressOfFunctions);
@@ -771,19 +758,29 @@ static inline void *get_rva( void *module, ULONG_PTR addr )
     return (BYTE *)module + addr;
 }
 
+static const void *get_module_data_dir( HMODULE module, ULONG dir, ULONG *size )
+{
+    const IMAGE_NT_HEADERS *nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
+    const IMAGE_DATA_DIRECTORY *data;
+
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        data = &((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.DataDirectory[dir];
+    else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        data = &((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.DataDirectory[dir];
+    else
+        return NULL;
+    if (!data->VirtualAddress || !data->Size) return NULL;
+    if (size) *size = data->Size;
+    return get_rva( module, data->VirtualAddress );
+}
+
 static NTSTATUS fixup_ntdll_imports( const char *name, HMODULE module )
 {
-    const IMAGE_NT_HEADERS *nt;
     const IMAGE_IMPORT_DESCRIPTOR *descr;
-    const IMAGE_DATA_DIRECTORY *dir;
     const IMAGE_THUNK_DATA *import_list;
     IMAGE_THUNK_DATA *thunk_list;
 
-    nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
-    if (!dir->VirtualAddress || !dir->Size) return STATUS_SUCCESS;
-
-    descr = get_rva( module, dir->VirtualAddress );
+    if (!(descr = get_module_data_dir( module, IMAGE_FILE_IMPORT_DIRECTORY, NULL ))) return STATUS_SUCCESS;
     for (; descr->Name && descr->FirstThunk; descr++)
     {
         thunk_list = get_rva( module, descr->FirstThunk );
@@ -824,7 +821,7 @@ static void load_ntdll_functions( HMODULE module )
 {
     void **ptr;
 
-    ntdll_exports = get_export_dir( module );
+    ntdll_exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
     assert( ntdll_exports );
 
 #define GET_FUNC(name) \
@@ -836,6 +833,7 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( KiUserExceptionDispatcher );
     GET_FUNC( KiUserApcDispatcher );
     GET_FUNC( LdrInitializeThunk );
+    GET_FUNC( LdrSystemDllInitBlock );
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_ctrl_routine );
     GET_FUNC( __wine_set_unix_funcs );
@@ -851,9 +849,34 @@ static void load_ntdll_functions( HMODULE module )
 #undef SET_PTR
 }
 
+static void load_ntdll_wow64_functions( HMODULE module )
+{
+    const IMAGE_EXPORT_DIRECTORY *exports;
+
+    exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
+    assert( exports );
+
+    pLdrSystemDllInitBlock->ntdll_handle = (ULONG_PTR)module;
+
+#define GET_FUNC(name) pLdrSystemDllInitBlock->p##name = find_named_export( module, exports, #name )
+    GET_FUNC( KiUserApcDispatcher );
+    GET_FUNC( KiUserCallbackDispatcher );
+    GET_FUNC( KiUserExceptionDispatcher );
+    GET_FUNC( LdrInitializeThunk );
+    GET_FUNC( LdrSystemDllInitBlock );
+    GET_FUNC( RtlUserThreadStart );
+    GET_FUNC( RtlpFreezeTimeBias );
+    GET_FUNC( RtlpQueryProcessDebugInformationRemote );
+#undef GET_FUNC
+
+    /* also set the 32-bit LdrSystemDllInitBlock */
+    memcpy( (void *)(ULONG_PTR)pLdrSystemDllInitBlock->pLdrSystemDllInitBlock,
+            pLdrSystemDllInitBlock, sizeof(*pLdrSystemDllInitBlock) );
+}
+
 /* reimplementation of LdrProcessRelocationBlock */
-static IMAGE_BASE_RELOCATION *process_relocation_block( void *module, IMAGE_BASE_RELOCATION *rel,
-                                                        INT_PTR delta )
+static const IMAGE_BASE_RELOCATION *process_relocation_block( void *module, const IMAGE_BASE_RELOCATION *rel,
+                                                              INT_PTR delta )
 {
     char *page = get_rva( module, rel->VirtualAddress );
     UINT count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT);
@@ -875,11 +898,9 @@ static IMAGE_BASE_RELOCATION *process_relocation_block( void *module, IMAGE_BASE
         case IMAGE_REL_BASED_HIGHLOW:
             *(int *)(page + offset) += delta;
             break;
-#ifdef _WIN64
         case IMAGE_REL_BASED_DIR64:
-            *(INT_PTR *)(page + offset) += delta;
+            *(INT64 *)(page + offset) += delta;
             break;
-#elif defined(__arm__)
         case IMAGE_REL_BASED_THUMB_MOV32:
         {
             DWORD *inst = (DWORD *)(page + offset);
@@ -897,7 +918,6 @@ static IMAGE_BASE_RELOCATION *process_relocation_block( void *module, IMAGE_BASE
                                                ((hi << 20) & 0x70000000) + ((hi << 16) & 0xff0000);
             break;
         }
-#endif
         default:
             FIXME("Unknown/unsupported relocation %x\n", *relocs);
             return NULL;
@@ -909,18 +929,15 @@ static IMAGE_BASE_RELOCATION *process_relocation_block( void *module, IMAGE_BASE
 
 static void relocate_ntdll( void *module )
 {
-    IMAGE_DOS_HEADER *dos = module;
-    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
-    IMAGE_DATA_DIRECTORY *relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-    IMAGE_BASE_RELOCATION *rel, *end;
-    IMAGE_SECTION_HEADER *sec;
-    ULONG protect_old[96], i;
+    const IMAGE_NT_HEADERS *nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
+    const IMAGE_BASE_RELOCATION *rel, *end;
+    const IMAGE_SECTION_HEADER *sec;
+    ULONG protect_old[96], i, size;
     INT_PTR delta;
 
-    ERR( "ntdll could not be mapped at preferred address (%p/%p), expect trouble\n",
-         module, (void *)nt->OptionalHeader.ImageBase );
+    ERR( "ntdll could not be mapped at preferred address (%p), expect trouble\n", module );
 
-    if (!relocs->Size || !relocs->VirtualAddress) return;
+    if (!(rel = get_module_data_dir( module, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size ))) return;
 
     sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
@@ -930,8 +947,7 @@ static void relocate_ntdll( void *module )
         NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &protect_old[i] );
     }
 
-    rel = get_rva( module, relocs->VirtualAddress );
-    end = get_rva( module, relocs->VirtualAddress + relocs->Size );
+    end = (IMAGE_BASE_RELOCATION *)((const char *)rel + size);
     delta = (char *)module - (char *)nt->OptionalHeader.ImageBase;
     while (rel && rel < end - 1 && rel->SizeOfBlock) rel = process_relocation_block( module, rel, delta );
 
@@ -1001,7 +1017,7 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
     const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
 
     info->base            = nt->OptionalHeader.ImageBase;
-    info->entry_point     = info->base + nt->OptionalHeader.AddressOfEntryPoint;
+    info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
     info->map_size        = nt->OptionalHeader.SizeOfImage;
     info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
     info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
@@ -1770,6 +1786,40 @@ static void load_ntdll(void)
 
 
 /***********************************************************************
+ *           load_wow64_ntdll
+ */
+static void load_wow64_ntdll( USHORT machine )
+{
+    static const WCHAR ntdllW[] = {'n','t','d','l','l','.','d','l','l',0};
+    SECTION_IMAGE_INFORMATION info;
+    UNICODE_STRING nt_name;
+    void *module;
+    NTSTATUS status;
+    SIZE_T size;
+    WCHAR *path = malloc( sizeof("\\??\\C:\\windows\\system32\\ntdll.dll") * sizeof(WCHAR) );
+
+    wcscpy( path, get_machine_wow64_dir( machine ));
+    wcscat( path, ntdllW );
+    init_unicode_string( &nt_name, path );
+    status = find_builtin_dll( &nt_name, &module, &size, &info, machine, FALSE );
+    switch (status)
+    {
+    case STATUS_IMAGE_NOT_AT_BASE:
+        relocate_ntdll( module );
+        /* fall through */
+    case STATUS_SUCCESS:
+        load_ntdll_wow64_functions( module );
+        TRACE("loaded %s at %p\n", debugstr_w(path), module );
+        break;
+    default:
+        ERR( "failed to load %s error %x\n", debugstr_w(path), status );
+        break;
+    }
+    free( path );
+}
+
+
+/***********************************************************************
  *           get_image_address
  */
 static ULONG_PTR get_image_address(void)
@@ -1879,6 +1929,7 @@ static void start_main_thread(void)
     init_thread_stack( teb, is_win64 ? 0x7fffffff : 0, 0, 0 );
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
+    if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     if (status == STATUS_REVISION_MISMATCH)
     {

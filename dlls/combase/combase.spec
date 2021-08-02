@@ -85,7 +85,7 @@
 @ stdcall CoCreateInstanceFromApp(ptr ptr long ptr long ptr)
 @ stub CoCreateObjectInContext
 @ stub CoDeactivateObject
-@ stub CoDecodeProxy
+@ stdcall CoDecodeProxy(long int64 ptr)
 @ stdcall CoDecrementMTAUsage(ptr)
 @ stdcall CoDisableCallCancellation(ptr)
 @ stub CoDisconnectContext

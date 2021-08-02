@@ -1544,7 +1544,8 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         rtv = render_target ? d3d8_surface_acquire_rendertarget_view(rt_impl) : NULL;
         if (render_target)
         {
-            if (SUCCEEDED(hr = wined3d_device_context_set_rendertarget_view(device->immediate_context, 0, rtv, TRUE)))
+            if (SUCCEEDED(hr = wined3d_device_context_set_rendertarget_views(device->immediate_context,
+                    0, 1, &rtv, TRUE)))
                 device_reset_viewport_state(device);
             else
                 wined3d_device_context_set_depth_stencil_view(device->immediate_context, original_dsv);
@@ -3071,7 +3072,7 @@ static HRESULT WINAPI d3d8_device_GetVertexShaderConstant(IDirect3DDevice8 *ifac
     if (!constants)
         return D3DERR_INVALIDCALL;
 
-    if (start_idx >= device->vs_uniform_count || count > device->vs_uniform_count - start_idx)
+    if (!wined3d_bound_range(start_idx, count, device->vs_uniform_count))
     {
         WARN("Trying to access %u constants, but d3d8 only supports %u.\n",
              start_idx + count, device->vs_uniform_count);
@@ -3375,8 +3376,7 @@ static HRESULT WINAPI d3d8_device_GetPixelShaderConstant(IDirect3DDevice8 *iface
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= D3D8_MAX_PIXEL_SHADER_CONSTANTF
-            || count > D3D8_MAX_PIXEL_SHADER_CONSTANTF - start_idx)
+    if (!constants || !wined3d_bound_range(start_idx, count, D3D8_MAX_PIXEL_SHADER_CONSTANTF))
         return WINED3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();

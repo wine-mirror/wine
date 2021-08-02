@@ -20,9 +20,9 @@
 
 #include "mfdrv/metafiledrv.h"
 
-INT CDECL MFDRV_SaveDC( PHYSDEV dev )
+BOOL METADC_SaveDC( HDC hdc )
 {
-    return MFDRV_MetaParam0( dev, META_SAVEDC );
+    return metadc_param0( hdc, META_SAVEDC );
 }
 
 BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
@@ -30,14 +30,14 @@ BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
     return MFDRV_MetaParam1( dev, META_RESTOREDC, level );
 }
 
-UINT CDECL MFDRV_SetTextAlign( PHYSDEV dev, UINT align )
+BOOL METADC_SetTextAlign( HDC hdc, UINT align )
 {
-    return MFDRV_MetaParam2( dev, META_SETTEXTALIGN, HIWORD(align), LOWORD(align)) ? align : GDI_ERROR;
+    return metadc_param2( hdc, META_SETTEXTALIGN, HIWORD(align), LOWORD(align) );
 }
 
-INT CDECL MFDRV_SetBkMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetBkMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETBKMODE, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETBKMODE, (WORD)mode );
 }
 
 COLORREF CDECL MFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
@@ -50,24 +50,24 @@ COLORREF CDECL MFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
     return MFDRV_MetaParam2(dev, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color)) ? color : CLR_INVALID;
 }
 
-INT CDECL MFDRV_SetROP2( PHYSDEV dev, INT rop )
+BOOL METADC_SetROP2( HDC hdc, INT rop )
 {
-    return MFDRV_MetaParam1( dev, META_SETROP2, (WORD)rop) ? rop : 0;
+    return metadc_param1( hdc, META_SETROP2, (WORD)rop );
 }
 
-INT CDECL MFDRV_SetRelAbs( PHYSDEV dev, INT mode )
+BOOL METADC_SetRelAbs( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETRELABS, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETRELABS, (WORD)mode );
 }
 
-INT CDECL MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetPolyFillMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETPOLYFILLMODE, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETPOLYFILLMODE, mode );
 }
 
-INT CDECL MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetStretchBltMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETSTRETCHBLTMODE, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETSTRETCHBLTMODE, mode );
 }
 
 INT CDECL MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )

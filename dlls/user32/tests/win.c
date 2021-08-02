@@ -2145,6 +2145,7 @@ static void test_mdi(void)
         SCROLLINFO si;
         BOOL ret, gotit;
 
+        winetest_push_context("style %#x", style[i]);
         mdi_client = CreateWindowExA(0, "mdiclient", NULL,
                                  WS_CHILD | style[i],
                                  0, 0, rc.right, rc.bottom,
@@ -2183,7 +2184,7 @@ static void test_mdi(void)
         ret = GetScrollInfo(mdi_client, SB_HORZ, &si);
         if (style[i] & (WS_HSCROLL | WS_VSCROLL))
         {
-            ok(ret, "style %#x: GetScrollInfo(SB_HORZ) failed\n", style[i]);
+            ok(ret, "GetScrollInfo(SB_HORZ) failed\n");
             ok(si.nPage == 0, "expected 0\n");
             ok(si.nPos == 0, "expected 0\n");
             ok(si.nTrackPos == 0, "expected 0\n");
@@ -2191,12 +2192,12 @@ static void test_mdi(void)
             ok(si.nMax == 100, "expected 100\n");
         }
         else
-            ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
+            ok(!ret, "GetScrollInfo(SB_HORZ) should fail\n");
 
         ret = GetScrollInfo(mdi_client, SB_VERT, &si);
         if (style[i] & (WS_HSCROLL | WS_VSCROLL))
         {
-            ok(ret, "style %#x: GetScrollInfo(SB_VERT) failed\n", style[i]);
+            ok(ret, "GetScrollInfo(SB_VERT) failed\n");
             ok(si.nPage == 0, "expected 0\n");
             ok(si.nPos == 0, "expected 0\n");
             ok(si.nTrackPos == 0, "expected 0\n");
@@ -2204,7 +2205,7 @@ static void test_mdi(void)
             ok(si.nMax == 100, "expected 100\n");
         }
         else
-            ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
+            ok(!ret, "GetScrollInfo(SB_VERT) should fail\n");
 
         SetWindowPos(mdi_child, 0, -100, -100, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
 
@@ -2213,7 +2214,7 @@ static void test_mdi(void)
         ret = GetScrollInfo(mdi_client, SB_HORZ, &si);
         if (style[i] & (WS_HSCROLL | WS_VSCROLL))
         {
-            ok(ret, "style %#x: GetScrollInfo(SB_HORZ) failed\n", style[i]);
+            ok(ret, "GetScrollInfo(SB_HORZ) failed\n");
             ok(si.nPage == 0, "expected 0\n");
             ok(si.nPos == 0, "expected 0\n");
             ok(si.nTrackPos == 0, "expected 0\n");
@@ -2221,12 +2222,12 @@ static void test_mdi(void)
             ok(si.nMax == 100, "expected 100\n");
         }
         else
-            ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
+            ok(!ret, "GetScrollInfo(SB_HORZ) should fail\n");
 
         ret = GetScrollInfo(mdi_client, SB_VERT, &si);
         if (style[i] & (WS_HSCROLL | WS_VSCROLL))
         {
-            ok(ret, "style %#x: GetScrollInfo(SB_VERT) failed\n", style[i]);
+            ok(ret, "GetScrollInfo(SB_VERT) failed\n");
             ok(si.nPage == 0, "expected 0\n");
             ok(si.nPos == 0, "expected 0\n");
             ok(si.nTrackPos == 0, "expected 0\n");
@@ -2234,7 +2235,7 @@ static void test_mdi(void)
             ok(si.nMax == 100, "expected 100\n");
         }
         else
-            ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
+            ok(!ret, "GetScrollInfo(SB_VERT) should fail\n");
 
         gotit = FALSE;
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
@@ -2261,7 +2262,7 @@ static void test_mdi(void)
         ret = GetScrollInfo(mdi_client, SB_HORZ, &si);
         if (style[i] & (WS_HSCROLL | WS_VSCROLL))
         {
-            ok(ret, "style %#x: GetScrollInfo(SB_HORZ) failed\n", style[i]);
+            ok(ret, "GetScrollInfo(SB_HORZ) failed\n");
 todo_wine
             ok(si.nPage != 0, "expected !0\n");
             ok(si.nPos == 0, "expected 0\n");
@@ -2270,12 +2271,12 @@ todo_wine
             ok(si.nMax != 100, "expected !100\n");
         }
         else
-            ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
+            ok(!ret, "GetScrollInfo(SB_HORZ) should fail\n");
 
         ret = GetScrollInfo(mdi_client, SB_VERT, &si);
         if (style[i] & (WS_HSCROLL | WS_VSCROLL))
         {
-            ok(ret, "style %#x: GetScrollInfo(SB_VERT) failed\n", style[i]);
+            ok(ret, "GetScrollInfo(SB_VERT) failed\n");
 todo_wine
             ok(si.nPage != 0, "expected !0\n");
             ok(si.nPos == 0, "expected 0\n");
@@ -2284,11 +2285,12 @@ todo_wine
             ok(si.nMax != 100, "expected !100\n");
         }
         else
-            ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
+            ok(!ret, "GetScrollInfo(SB_VERT) should fail\n");
 
         DestroyMenu(child_menu);
         DestroyWindow(mdi_child);
         DestroyWindow(mdi_client);
+        winetest_pop_context();
     }
 
     SetMenu(mdi_hwndMain, frame_menu);

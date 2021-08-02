@@ -28,16 +28,11 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "uxtheme.h"
+#include "uxthemedll.h"
 #include "vssym32.h"
-#include "comctl32.h"
 #include "wine/debug.h"
 
-/**********************************************************************
- * The dialog subclass window proc.
- */
-LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg, 
-                                             WPARAM wParam, LPARAM lParam, 
-                                             ULONG_PTR dwRefData)
+LRESULT WINAPI UXTHEME_DefDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode)
 {
     HTHEME theme = GetWindowTheme ( hWnd );
     static const WCHAR themeClass[] = L"Window";
@@ -48,7 +43,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
     switch (msg)
     {
     case WM_CREATE:
-	result = THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+        result = user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
 	theme = OpenThemeData( hWnd, themeClass );
 	return result;
     
@@ -56,7 +51,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
         CloseThemeData ( theme );
         SetWindowTheme( hWnd, NULL, NULL );
         OpenThemeData( hWnd, NULL );
-        return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+        return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
 
     case WM_THEMECHANGED:
         CloseThemeData ( theme );
@@ -65,7 +60,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
 	return 0;
 
     case WM_ERASEBKGND:
-	if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+        if (!doTheming) return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
         {
             RECT rc;
             WNDPROC dlgp = (WNDPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
@@ -82,7 +77,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
                     DrawThemeBackground (theme, (HDC)wParam, WP_DIALOG, 0, &rc, 
                         NULL);
 #endif
-                    return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+                    return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
                 else 
                 /* We might have gotten a TAB theme class, so check if we can 
                  * draw as a tab page. */
@@ -90,13 +85,13 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
                     DrawThemeBackground (theme, (HDC)wParam, TABP_BODY, 0, &rc, 
                         NULL);
                 else
-                    return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+                    return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
             }
             return 1;
         }
 
     case WM_CTLCOLORSTATIC:
-        if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+        if (!doTheming) return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
         {
             WNDPROC dlgp = (WNDPROC)GetWindowLongPtrW (hWnd, DWLP_DLGPROC);
             LRESULT result = CallWindowProcW(dlgp, hWnd, msg, wParam, lParam);
@@ -121,7 +116,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
                     return (LRESULT)GetStockObject (NULL_BRUSH);
                 }
                 else
-                    return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+                    return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
 
             }
             return result;
@@ -129,7 +124,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
 
     default: 
 	/* Call old proc */
-	return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
+        return user_api.pDefDlgProc(hWnd, msg, wParam, lParam, unicode);
     }
     return 0;
 }

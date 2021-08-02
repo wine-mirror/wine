@@ -3130,6 +3130,52 @@ static BOOL WINAPI CRYPT_AsnEncodeCertPolicyConstraints(
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey_Bcrypt(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        const BCRYPT_RSAKEY_BLOB *hdr = pvStructInfo;
+
+        BYTE *pubexp = (BYTE*)pvStructInfo + sizeof(BCRYPT_RSAKEY_BLOB);
+        BYTE *modulus = (BYTE*)pvStructInfo + sizeof(BCRYPT_RSAKEY_BLOB) + hdr->cbPublicExp;
+        BYTE *pubexp_be = CryptMemAlloc(hdr->cbPublicExp);
+        BYTE *modulus_be = CryptMemAlloc(hdr->cbModulus);
+        CRYPT_INTEGER_BLOB pubexp_int = { hdr->cbPublicExp, pubexp_be };
+        CRYPT_INTEGER_BLOB modulus_int = { hdr->cbModulus, modulus_be};
+
+        struct AsnEncodeSequenceItem items[] = {
+         { &modulus_int, CRYPT_AsnEncodeUnsignedInteger, 0 },
+         { &pubexp_int, CRYPT_AsnEncodeInteger, 0 },
+        };
+
+        /* CNG_RSA_PUBLIC_KEY_BLOB stores the exponent and modulus
+         * in big-endian format, so we need to convert them
+         * to little-endian format before encoding
+         */
+        CRYPT_CopyReversed(pubexp_be, pubexp, hdr->cbPublicExp);
+        CRYPT_CopyReversed(modulus_be, modulus, hdr->cbModulus);
+
+        ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+         ARRAY_SIZE(items), dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+
+        CryptMemFree(pubexp_be);
+        CryptMemFree(modulus_be);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+
+}
+
+
 static BOOL WINAPI CRYPT_AsnEncodeRsaPubKey(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -4563,6 +4609,11 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         case LOWORD(CMS_SIGNER_INFO):
             encodeFunc = CRYPT_AsnEncodeCMSSignerInfo;
             break;
+        case LOWORD(CNG_RSA_PUBLIC_KEY_BLOB):
+            encodeFunc = CRYPT_AsnEncodeRsaPubKey_Bcrypt;
+            break;
+        default:
+            FIXME("Unimplemented encoder for lpszStructType OID %d\n", LOWORD(lpszStructType));
         }
     }
     else if (!strcmp(lpszStructType, szOID_CERT_EXTENSIONS))
@@ -4617,6 +4668,8 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         encodeFunc = CRYPT_AsnEncodePolicyQualifierUserNotice;
     else if (!strcmp(lpszStructType, szOID_CTL))
         encodeFunc = CRYPT_AsnEncodeCTL;
+    else
+        FIXME("Unsupported encoder for lpszStructType %s\n", lpszStructType);
     return encodeFunc;
 }
 

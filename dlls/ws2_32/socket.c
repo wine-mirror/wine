@@ -192,8 +192,8 @@ const char *debugstr_sockaddr( const struct WS_sockaddr *a )
         p = WS_inet_ntop( WS_AF_INET6, &sin->sin6_addr, buf, sizeof(buf) );
         if (!p)
             p = "(unknown IPv6 address)";
-        return wine_dbg_sprintf("{ family AF_INET6, address %s, port %d }",
-                                p, ntohs(sin->sin6_port));
+        return wine_dbg_sprintf("{ family AF_INET6, address %s, flow label %#x, port %d, scope %u }",
+                                p, sin->sin6_flowinfo, ntohs(sin->sin6_port), sin->sin6_scope_id );
     }
     case WS_AF_IPX:
     {
@@ -694,108 +694,6 @@ static inline void release_sock_fd( SOCKET s, int fd )
     close( fd );
 }
 
-static BOOL set_dont_fragment(SOCKET s, int level, BOOL value)
-{
-    int fd, optname;
-
-    if (level == IPPROTO_IP)
-    {
-#ifdef IP_DONTFRAG
-        optname = IP_DONTFRAG;
-#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO) && defined(IP_PMTUDISC_DONT)
-        optname = IP_MTU_DISCOVER;
-        value = value ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
-#else
-        static int once;
-        if (!once++)
-            FIXME("IP_DONTFRAGMENT for IPv4 not supported in this platform\n");
-        return TRUE; /* fake success */
-#endif
-    }
-    else
-    {
-#ifdef IPV6_DONTFRAG
-        optname = IPV6_DONTFRAG;
-#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO) && defined(IPV6_PMTUDISC_DONT)
-        optname = IPV6_MTU_DISCOVER;
-        value = value ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
-#else
-        static int once;
-        if (!once++)
-            FIXME("IP_DONTFRAGMENT for IPv6 not supported in this platform\n");
-        return TRUE; /* fake success */
-#endif
-    }
-
-    fd = get_sock_fd(s, 0, NULL);
-    if (fd == -1) return FALSE;
-
-    if (!setsockopt(fd, level, optname, &value, sizeof(value)))
-        value = TRUE;
-    else
-    {
-        WSASetLastError(wsaErrno());
-        value = FALSE;
-    }
-
-    release_sock_fd(s, fd);
-    return value;
-}
-
-static BOOL get_dont_fragment(SOCKET s, int level, BOOL *out)
-{
-    int fd, optname, value, not_expected;
-    socklen_t optlen = sizeof(value);
-
-    if (level == IPPROTO_IP)
-    {
-#ifdef IP_DONTFRAG
-        optname = IP_DONTFRAG;
-        not_expected = 0;
-#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
-        optname = IP_MTU_DISCOVER;
-        not_expected = IP_PMTUDISC_DONT;
-#else
-        static int once;
-        if (!once++)
-            FIXME("IP_DONTFRAGMENT for IPv4 not supported in this platform\n");
-        return TRUE; /* fake success */
-#endif
-    }
-    else
-    {
-#ifdef IPV6_DONTFRAG
-        optname = IPV6_DONTFRAG;
-        not_expected = 0;
-#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
-        optname = IPV6_MTU_DISCOVER;
-        not_expected = IPV6_PMTUDISC_DONT;
-#else
-        static int once;
-        if (!once++)
-            FIXME("IP_DONTFRAGMENT for IPv6 not supported in this platform\n");
-        return TRUE; /* fake success */
-#endif
-    }
-
-    fd = get_sock_fd(s, 0, NULL);
-    if (fd == -1) return FALSE;
-
-    if (!getsockopt(fd, level, optname, &value, &optlen))
-    {
-        *out = value != not_expected;
-        value = TRUE;
-    }
-    else
-    {
-        WSASetLastError(wsaErrno());
-        value = FALSE;
-    }
-
-    release_sock_fd(s, fd);
-    return value;
-}
-
 struct per_thread_data *get_per_thread_data(void)
 {
     struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
@@ -1097,14 +995,14 @@ unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *wsaddr, int wsaddrlen,
         /* Note: Windows has 2 versions of the sockaddr_in6 struct, one with
          * scope_id, one without.
          */
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6_old)) {
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
             uaddrlen = sizeof(struct sockaddr_in6);
             memset( uaddr, 0, uaddrlen );
             uin6->sin6_family   = AF_INET6;
             uin6->sin6_port     = win6->sin6_port;
             uin6->sin6_flowinfo = win6->sin6_flowinfo;
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-            if (wsaddrlen >= sizeof(struct WS_sockaddr_in6)) uin6->sin6_scope_id = win6->sin6_scope_id;
+            uin6->sin6_scope_id = win6->sin6_scope_id;
 #endif
             memcpy(&uin6->sin6_addr,&win6->sin6_addr,16); /* 16 bytes = 128 address bits */
             break;
@@ -1183,56 +1081,6 @@ unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *wsaddr, int wsaddrlen,
     return uaddrlen;
 }
 
-static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
-{
-    switch (uaddr->sa_family)
-    {
-#ifdef HAS_IPX
-        case AF_IPX:
-        {
-            static const struct sockaddr_ipx emptyAddr;
-            struct sockaddr_ipx *ipx = (struct sockaddr_ipx*) uaddr;
-            return ipx->sipx_port
-            || memcmp(&ipx->sipx_network, &emptyAddr.sipx_network, sizeof(emptyAddr.sipx_network))
-            || memcmp(&ipx->sipx_node, &emptyAddr.sipx_node, sizeof(emptyAddr.sipx_node));
-        }
-#endif
-        case AF_INET6:
-        {
-            static const struct sockaddr_in6 emptyAddr;
-            const struct sockaddr_in6 *in6 = (const struct sockaddr_in6*) uaddr;
-            return in6->sin6_port || memcmp(&in6->sin6_addr, &emptyAddr.sin6_addr, sizeof(struct in6_addr));
-        }
-        case AF_INET:
-        {
-            static const struct sockaddr_in emptyAddr;
-            const struct sockaddr_in *in = (const struct sockaddr_in*) uaddr;
-            return in->sin_port || memcmp(&in->sin_addr, &emptyAddr.sin_addr, sizeof(struct in_addr));
-        }
-        case AF_UNSPEC:
-            return FALSE;
-        default:
-            FIXME("unknown address family %d\n", uaddr->sa_family);
-            return TRUE;
-    }
-}
-
-/* Returns -1 if getsockname fails, 0 if not bound, 1 otherwise */
-static int is_fd_bound(int fd, union generic_unix_sockaddr *uaddr, socklen_t *uaddrlen)
-{
-    union generic_unix_sockaddr inaddr;
-    socklen_t inlen;
-    int res;
-
-    if (!uaddr) uaddr = &inaddr;
-    if (!uaddrlen) uaddrlen = &inlen;
-
-    *uaddrlen = sizeof(inaddr);
-    res = getsockname(fd, &uaddr->addr, uaddrlen);
-    if (!res) res = is_sockaddr_bound(&uaddr->addr, *uaddrlen);
-    return res;
-}
-
 /* Returns 0 if successful, -1 if the buffer is too small */
 int ws_sockaddr_u2ws(const struct sockaddr *uaddr, struct WS_sockaddr *wsaddr, int *wsaddrlen)
 {
@@ -1299,25 +1147,20 @@ int ws_sockaddr_u2ws(const struct sockaddr *uaddr, struct WS_sockaddr *wsaddr, i
 #endif
     case AF_INET6: {
         const struct sockaddr_in6* uin6 = (const struct sockaddr_in6*)uaddr;
-        struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
+        struct WS_sockaddr_in6 *win6 = (struct WS_sockaddr_in6 *)wsaddr;
 
-        if (*wsaddrlen < sizeof(struct WS_sockaddr_in6_old))
+        if (*wsaddrlen < sizeof(struct WS_sockaddr_in6))
             return -1;
-        win6old->sin6_family   = WS_AF_INET6;
-        win6old->sin6_port     = uin6->sin6_port;
-        win6old->sin6_flowinfo = uin6->sin6_flowinfo;
-        memcpy(&win6old->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
+        win6->sin6_family   = WS_AF_INET6;
+        win6->sin6_port     = uin6->sin6_port;
+        win6->sin6_flowinfo = uin6->sin6_flowinfo;
+        memcpy(&win6->sin6_addr, &uin6->sin6_addr, 16); /* 16 bytes = 128 address bits */
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        if (*wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
-            struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
-            win6->sin6_scope_id = uin6->sin6_scope_id;
-            *wsaddrlen = sizeof(struct WS_sockaddr_in6);
-        }
-        else
-            *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+        win6->sin6_scope_id = uin6->sin6_scope_id;
 #else
-        *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+        win6->sin6_scope_id = 0;
 #endif
+        *wsaddrlen = sizeof(struct WS_sockaddr_in6);
         return 0;
     }
     case AF_INET: {
@@ -1775,10 +1618,50 @@ int WINAPI WS_bind( SOCKET s, const struct WS_sockaddr *addr, int len )
 
     TRACE( "socket %#lx, addr %s\n", s, debugstr_sockaddr(addr) );
 
-    if (!addr || (addr->sa_family && !supported_pf( addr->sa_family )))
+    if (!addr)
     {
         SetLastError( WSAEAFNOSUPPORT );
         return -1;
+    }
+
+    switch (addr->sa_family)
+    {
+        case WS_AF_INET:
+            if (len < sizeof(struct WS_sockaddr_in))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        case WS_AF_INET6:
+            if (len < sizeof(struct WS_sockaddr_in6))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        case WS_AF_IPX:
+            if (len < sizeof(struct WS_sockaddr_ipx))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        case WS_AF_IRDA:
+            if (len < sizeof(SOCKADDR_IRDA))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        default:
+            FIXME( "unknown protocol %u\n", addr->sa_family );
+            SetLastError( WSAEAFNOSUPPORT );
+            return -1;
     }
 
     if (!(sync_event = get_sync_event())) return -1;
@@ -1807,7 +1690,7 @@ int WINAPI WS_bind( SOCKET s, const struct WS_sockaddr *addr, int len )
     HeapFree( GetProcessHeap(), 0, params );
     HeapFree( GetProcessHeap(), 0, ret_addr );
 
-    SetLastError( status == STATUS_INVALID_PARAMETER ? WSAEFAULT : NtStatusToWSAError( status ) );
+    SetLastError( NtStatusToWSAError( status ) );
     return status ? -1 : 0;
 }
 
@@ -2436,31 +2319,32 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IP_DONTFRAGMENT:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_DONTFRAGMENT, optval, optlen );
 
-#ifdef IP_HDRINCL
         case WS_IP_HDRINCL:
-#endif
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_HDRINCL, optval, optlen );
+
         case WS_IP_MULTICAST_IF:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_MULTICAST_IF, optval, optlen );
+
         case WS_IP_MULTICAST_LOOP:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_MULTICAST_LOOP, optval, optlen );
+
         case WS_IP_MULTICAST_TTL:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_MULTICAST_TTL, optval, optlen );
+
         case WS_IP_OPTIONS:
-#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_OPTIONS, optval, optlen );
+
         case WS_IP_PKTINFO:
-#endif
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_PKTINFO, optval, optlen );
+
         case WS_IP_TOS:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_TOS, optval, optlen );
+
         case WS_IP_TTL:
-#ifdef IP_UNICAST_IF
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_TTL, optval, optlen );
+
         case WS_IP_UNICAST_IF:
-#endif
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            convert_sockopt(&level, &optname);
-            if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            release_sock_fd( s, fd );
-            return ret;
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_UNICAST_IF, optval, optlen );
 
         default:
             FIXME( "unrecognized IP option %u\n", optname );
@@ -2475,26 +2359,26 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     case WS_IPPROTO_IPV6:
         switch(optname)
         {
-        case WS_IPV6_MULTICAST_IF:
-        case WS_IPV6_MULTICAST_HOPS:
-        case WS_IPV6_MULTICAST_LOOP:
-        case WS_IPV6_UNICAST_HOPS:
-        case WS_IPV6_V6ONLY:
-#ifdef IPV6_UNICAST_IF
-        case WS_IPV6_UNICAST_IF:
-#endif
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            convert_sockopt(&level, &optname);
-            if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            release_sock_fd( s, fd );
-            return ret;
         case WS_IPV6_DONTFRAG:
-            return get_dont_fragment(s, IPPROTO_IPV6, (BOOL *)optval) ? 0 : SOCKET_ERROR;
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_DONTFRAG, optval, optlen );
+
+        case WS_IPV6_MULTICAST_HOPS:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_HOPS, optval, optlen );
+
+        case WS_IPV6_MULTICAST_IF:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_IF, optval, optlen );
+
+        case WS_IPV6_MULTICAST_LOOP:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_LOOP, optval, optlen );
+
+        case WS_IPV6_UNICAST_HOPS:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_UNICAST_HOPS, optval, optlen );
+
+        case WS_IPV6_UNICAST_IF:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_UNICAST_IF, optval, optlen );
+
+        case WS_IPV6_V6ONLY:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_V6ONLY, optval, optlen );
 
         default:
             FIXME( "unrecognized IPv6 option %u\n", optname );
@@ -3457,7 +3341,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 {
     int fd;
     int woptval;
-    struct ip_mreq_source mreq_source;
 
     TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
           debugstr_sockopt(level, optname), debugstr_optval(optval, optlen),
@@ -3637,38 +3520,41 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_DONTFRAGMENT:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_DONTFRAGMENT, optval, optlen );
 
-        case WS_IP_DROP_SOURCE_MEMBERSHIP:
-        case WS_IP_UNBLOCK_SOURCE:
-        {
-            WS_IP_MREQ_SOURCE* val = (void*)optval;
-            mreq_source.imr_interface.s_addr = val->imr_interface.S_un.S_addr;
-            mreq_source.imr_multiaddr.s_addr = val->imr_multiaddr.S_un.S_addr;
-            mreq_source.imr_sourceaddr.s_addr = val->imr_sourceaddr.S_un.S_addr;
-
-            optval = (char*)&mreq_source;
-            optlen = sizeof(mreq_source);
-
-            convert_sockopt(&level, &optname);
-            break;
-        }
         case WS_IP_DROP_MEMBERSHIP:
-#ifdef IP_HDRINCL
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_DROP_MEMBERSHIP, optval, optlen );
+
+        case WS_IP_DROP_SOURCE_MEMBERSHIP:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_DROP_SOURCE_MEMBERSHIP, optval, optlen );
+
         case WS_IP_HDRINCL:
-#endif
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_HDRINCL, optval, optlen );
+
         case WS_IP_MULTICAST_IF:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_MULTICAST_IF, optval, optlen );
+
         case WS_IP_MULTICAST_LOOP:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_MULTICAST_LOOP, optval, optlen );
+
         case WS_IP_MULTICAST_TTL:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_MULTICAST_TTL, optval, optlen );
+
         case WS_IP_OPTIONS:
-#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_OPTIONS, optval, optlen );
+
         case WS_IP_PKTINFO:
-#endif
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_PKTINFO, optval, optlen );
+
         case WS_IP_TOS:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TOS, optval, optlen );
+
         case WS_IP_TTL:
-#ifdef IP_UNICAST_IF
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TTL, optval, optlen );
+
+        case WS_IP_UNBLOCK_SOURCE:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_UNBLOCK_SOURCE, optval, optlen );
+
         case WS_IP_UNICAST_IF:
-#endif
-            convert_sockopt(&level, &optname);
-            break;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_UNICAST_IF, optval, optlen );
 
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
@@ -3679,50 +3565,37 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_IPPROTO_IPV6:
         switch(optname)
         {
-#ifdef IPV6_ADD_MEMBERSHIP
         case WS_IPV6_ADD_MEMBERSHIP:
-#endif
-#ifdef IPV6_DROP_MEMBERSHIP
-        case WS_IPV6_DROP_MEMBERSHIP:
-#endif
-        case WS_IPV6_MULTICAST_IF:
-        case WS_IPV6_MULTICAST_HOPS:
-        case WS_IPV6_MULTICAST_LOOP:
-        case WS_IPV6_UNICAST_HOPS:
-#ifdef IPV6_UNICAST_IF
-        case WS_IPV6_UNICAST_IF:
-#endif
-            convert_sockopt(&level, &optname);
-            break;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_ADD_MEMBERSHIP, optval, optlen );
+
         case WS_IPV6_DONTFRAG:
-            return set_dont_fragment(s, IPPROTO_IPV6, *(BOOL *)optval) ? 0 : SOCKET_ERROR;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_DONTFRAG, optval, optlen );
+
+        case WS_IPV6_DROP_MEMBERSHIP:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_DROP_MEMBERSHIP, optval, optlen );
+
+        case WS_IPV6_MULTICAST_HOPS:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_HOPS, optval, optlen );
+
+        case WS_IPV6_MULTICAST_IF:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_IF, optval, optlen );
+
+        case WS_IPV6_MULTICAST_LOOP:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP, optval, optlen );
+
         case WS_IPV6_PROTECTION_LEVEL:
             FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
             return 0;
+
+        case WS_IPV6_UNICAST_HOPS:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_UNICAST_HOPS, optval, optlen );
+
+        case WS_IPV6_UNICAST_IF:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_UNICAST_IF, optval, optlen );
+
         case WS_IPV6_V6ONLY:
-        {
-            union generic_unix_sockaddr uaddr;
-            socklen_t uaddrlen;
-            int bound;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_V6ONLY, optval, optlen );
 
-            fd = get_sock_fd( s, 0, NULL );
-            if (fd == -1) return SOCKET_ERROR;
-
-            bound = is_fd_bound(fd, &uaddr, &uaddrlen);
-            release_sock_fd( s, fd );
-            if (bound == 0 && uaddr.addr.sa_family == AF_INET)
-            {
-                /* Changing IPV6_V6ONLY succeeds on AF_INET (IPv4) socket
-                 * on Windows (with IPv6 support) if the socket is unbound.
-                 * It is essentially a noop, though Windows does store the value
-                 */
-                WARN("Silently ignoring IPPROTO_IPV6+IPV6_V6ONLY on AF_INET socket\n");
-                return 0;
-            }
-            level = IPPROTO_IPV6;
-            optname = IPV6_V6ONLY;
-            break;
-        }
         default:
             FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
             return SOCKET_ERROR;

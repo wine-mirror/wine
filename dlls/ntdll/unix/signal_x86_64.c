@@ -41,6 +41,9 @@
 #ifdef HAVE_MACHINE_SYSARCH_H
 # include <machine/sysarch.h>
 #endif
+#ifdef HAVE_SYS_AUXV_H
+# include <sys/auxv.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -78,7 +81,8 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DEFAULT_DEBUG_CHANNEL(unwind);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -87,6 +91,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 #include <asm/prctl.h>
 static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
+
+extern int CDECL alloc_fs_sel( int sel, void *base );
+__ASM_GLOBAL_FUNC( alloc_fs_sel,
+                   /* switch to 32-bit stack */
+                   "pushq %rbx\n\t"
+                   "pushq %rdi\n\t"
+                   "movq %rsp,%rdi\n\t"
+                   "movq %gs:0x8,%rsp\n\t"    /* NtCurrentTeb()->Tib.StackBase */
+                   "subl $0x10,%esp\n\t"
+                   /* setup modify_ldt struct on 32-bit stack */
+                   "movl %ecx,(%rsp)\n\t"     /* entry_number */
+                   "movl %edx,4(%rsp)\n\t"    /* base */
+                   "movl $~0,8(%rsp)\n\t"     /* limit */
+                   "movl $0x41,12(%rsp)\n\t"  /* seg_32bit | usable */
+                   /* invoke 32-bit syscall */
+                   "movl %esp,%ebx\n\t"
+                   "movl $0xf3,%eax\n\t"      /* SYS_set_thread_area */
+                   "int $0x80\n\t"
+                   /* restore stack */
+                   "movl (%rsp),%eax\n\t"     /* entry_number */
+                   "movq %rdi,%rsp\n\t"
+                   "popq %rdi\n\t"
+                   "popq %rbx\n\t"
+                   "ret" );
 
 #ifndef FP_XSTATE_MAGIC1
 #define FP_XSTATE_MAGIC1 0x46505853
@@ -252,8 +280,10 @@ C_ASSERT( sizeof(XSTATE) == 0x140 );
 C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in call_user_exception_dispatcher(). */
 
 /* flags to control the behavior of the syscall dispatcher */
-#define SYSCALL_HAVE_XSAVE    1
-#define SYSCALL_HAVE_XSAVEC   2
+#define SYSCALL_HAVE_XSAVE       1
+#define SYSCALL_HAVE_XSAVEC      2
+#define SYSCALL_HAVE_PTHREAD_TEB 4
+#define SYSCALL_HAVE_WRFSGSBASE  8
 
 /* stack layout when calling an user apc function.
  * FIXME: match Windows ABI. */
@@ -311,11 +341,13 @@ struct amd64_thread_data
     DWORD_PTR             dr7;           /* 0318 */
     void                 *exit_frame;    /* 0320 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
+    void                 *pthread_teb;   /* 0330 thread data for pthread */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x320 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_frame ) == 0x328 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x330 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -365,6 +397,7 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 static USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
 static USHORT cs64_sel;  /* selector for %cs in 64-bit mode */
 static USHORT ds64_sel;  /* selector for %ds/%es/%ss in 64-bit mode */
+static USHORT fs32_sel;  /* selector for %fs in 32-bit mode */
 
 /***********************************************************************
  * Definitions for Dwarf unwind tables
@@ -1494,6 +1527,29 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 
 
 /***********************************************************************
+ *           init_handler
+ */
+static inline void init_handler( const ucontext_t *sigcontext )
+{
+#ifdef __linux__
+    if (fs32_sel) arch_prctl( ARCH_SET_FS, amd64_thread_data()->pthread_teb );
+#endif
+}
+
+
+/***********************************************************************
+ *           leave_handler
+ */
+static inline void leave_handler( const ucontext_t *sigcontext )
+{
+#ifdef __linux__
+    if (fs32_sel && !is_inside_signal_stack( (void *)RSP_sig(sigcontext )))
+        __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
+#endif
+}
+
+
+/***********************************************************************
  *           save_context
  *
  * Set the register values from a sigcontext.
@@ -1501,6 +1557,8 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontext )
 {
     CONTEXT *context = &xcontext->c;
+
+    init_handler( sigcontext );
 
     context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_DEBUG_REGISTERS;
     context->Rax    = RAX_sig(sigcontext);
@@ -1584,6 +1642,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
     if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = XState_sig(FPU_sig(sigcontext))))
         xs->CompactionMask = xcontext->host_compaction_mask;
+    leave_handler( sigcontext );
 }
 
 
@@ -1909,7 +1968,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
     {
         wow_frame->SegDs = ds64_sel;
         wow_frame->SegEs = ds64_sel;
-        wow_frame->SegFs = 0;  /* FIXME */
+        wow_frame->SegFs = fs32_sel;
         wow_frame->SegGs = ds64_sel;
     }
     if (flags & CONTEXT_I386_DEBUG_REGISTERS)
@@ -1940,7 +1999,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
             memcpy( &frame->xstate.YmmContext, &xs->YmmContext, sizeof(xs->YmmContext) );
         }
         else frame->xstate.Mask &= ~XSTATE_MASK_GSSE;
-        frame->restore_flags |= CONTEXT_I386_XSTATE;
+        frame->restore_flags |= CONTEXT_XSTATE;
     }
     return STATUS_SUCCESS;
 }
@@ -2112,6 +2171,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     RSP_sig(sigcontext) = (ULONG_PTR)stack;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
+    leave_handler( sigcontext );
 }
 
 
@@ -2316,6 +2376,7 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
             case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
             case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
                 RIP_sig(sigcontext) += 3;
+                leave_handler( sigcontext );
                 return TRUE;
         }
         context->Rip += 3;
@@ -2344,23 +2405,23 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
 
     if (!is_inside_syscall( sigcontext )) return FALSE;
 
-    TRACE( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-           context->Rip, GetCurrentThreadId() );
+    TRACE_(seh)( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
+                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+                 context->Rip, GetCurrentThreadId() );
     for (i = 0; i < rec->NumberParameters; i++)
-        TRACE( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
-    TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
-          context->Rax, context->Rbx, context->Rcx, context->Rdx );
-    TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-          context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-    TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
-          context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-          context->R12, context->R13, context->R14, context->R15 );
+        TRACE_(seh)( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
+    TRACE_(seh)( " rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+                 context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE_(seh)( " rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+                 context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE_(seh)( "  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+                 context->R8, context->R9, context->R10, context->R11 );
+    TRACE_(seh)( " r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+                 context->R12, context->R13, context->R14, context->R15 );
 
     if (ntdll_get_thread_data()->jmp_buf)
     {
-        TRACE( "returning to handler\n" );
+        TRACE_(seh)( "returning to handler\n" );
         RCX_sig(sigcontext) = (ULONG_PTR)ntdll_get_thread_data()->jmp_buf;
         RDX_sig(sigcontext) = 1;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_longjmp;
@@ -2368,7 +2429,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     }
     else
     {
-        TRACE( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
+        TRACE_(seh)( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
         RCX_sig(sigcontext) = (ULONG_PTR)frame;
         RDX_sig(sigcontext) = rec->ExceptionCode;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_syscall_dispatcher_return;
@@ -2391,8 +2452,8 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 
     if ((void *)RIP_sig( sigcontext ) != __wine_syscall_dispatcher) return FALSE;
 
-    TRACE( "ignoring trap in syscall rip=%p eflags=%08x\n",
-           (void *)RIP_sig(sigcontext), (ULONG)EFL_sig(sigcontext) );
+    TRACE_(seh)( "ignoring trap in syscall rip=%p eflags=%08x\n",
+                 (void *)RIP_sig(sigcontext), (ULONG)EFL_sig(sigcontext) );
 
     frame->rip = *(ULONG64 *)RSP_sig( sigcontext );
     frame->eflags = EFL_sig(sigcontext);
@@ -2452,18 +2513,23 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
                                                   (void *)RSP_sig(ucontext) );
-        if (!rec.ExceptionCode) return;
+        if (!rec.ExceptionCode)
+        {
+            leave_handler( sigcontext );
+            return;
+        }
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         if (EFL_sig(ucontext) & 0x00040000)
         {
             EFL_sig(ucontext) &= ~0x00040000;  /* reset AC flag */
+            leave_handler( sigcontext );
             return;
         }
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        ERR( "Got unexpected trap %ld\n", (ULONG_PTR)TRAP_sig(ucontext) );
+        ERR_(seh)( "Got unexpected trap %ld\n", (ULONG_PTR)TRAP_sig(ucontext) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
@@ -2600,6 +2666,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *ucontext )
 {
+    init_handler( ucontext );
     abort_thread(0);
 }
 
@@ -2740,6 +2807,8 @@ void signal_init_thread( TEB *teb )
 
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
+    arch_prctl( ARCH_GET_FS, &amd64_thread_data()->pthread_teb );
+    if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, (char *)teb + teb->WowTebOffset );
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -2751,11 +2820,12 @@ void signal_init_thread( TEB *teb )
     __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
                       :
                       : "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
+    amd64_thread_data()->pthread_teb = mac_thread_gsbase();
 
     /* alloc_tls_slot() needs to poke a value to an address relative to each
        thread's gsbase.  Have each thread record its gsbase pointer into its
        TEB so alloc_tls_slot() can find it. */
-    teb->Reserved5[0] = mac_thread_gsbase();
+    teb->Reserved5[0] = amd64_thread_data()->pthread_teb;
 #else
 # error Please define setting %gs for your architecture
 #endif
@@ -2763,7 +2833,7 @@ void signal_init_thread( TEB *teb )
 #ifdef __GNUC__
     __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
 #else
-    FIXME("FPU setup not implemented for this platform.\n");
+    FIXME_(seh)("FPU setup not implemented for this platform.\n");
 #endif
 }
 
@@ -2789,7 +2859,17 @@ void signal_init_process(void)
 #ifdef __linux__
     if (NtCurrentTeb()->WowTebOffset)
     {
+        void *teb32 = (char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset;
+        int sel;
+
         cs32_sel = 0x23;
+        if ((sel = alloc_fs_sel( -1, teb32 )) != -1)
+        {
+            fs32_sel = (sel << 3) | 3;
+            __wine_syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
+            if (getauxval( AT_HWCAP2 ) & 2) __wine_syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
+        }
+        else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
 #endif
 
@@ -2838,6 +2918,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     context.SegCs  = cs64_sel;
     context.SegDs  = ds64_sel;
     context.SegEs  = ds64_sel;
+    context.SegFs  = fs32_sel;
     context.SegGs  = ds64_sel;
     context.SegSs  = ds64_sel;
     context.EFlags = 0x200;
@@ -2850,7 +2931,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
         wow_context->Eax = (ULONG_PTR)entry;
         wow_context->Ebx = (ULONG_PTR)arg;
         wow_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
-        wow_context->Eip = (ULONG_PTR)pRtlUserThreadStart;
+        wow_context->Eip = pLdrSystemDllInitBlock->pRtlUserThreadStart;
         wow_context->SegCs = cs32_sel;
         wow_context->SegDs = context.SegDs;
         wow_context->SegEs = context.SegEs;

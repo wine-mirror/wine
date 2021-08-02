@@ -132,8 +132,7 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
             return NULL;
 
         buffer_size = buffer->resource.size / element_size;
-        if (desc->u.buffer.start_idx >= buffer_size
-                || desc->u.buffer.count > buffer_size - desc->u.buffer.start_idx)
+        if (!wined3d_bound_range(desc->u.buffer.start_idx, desc->u.buffer.count, buffer_size))
             return NULL;
     }
     else
@@ -156,11 +155,9 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
 
         if (!desc->u.texture.level_count
                 || (mip_slice && desc->u.texture.level_count != 1)
-                || desc->u.texture.level_idx >= texture->level_count
-                || desc->u.texture.level_count > texture->level_count - desc->u.texture.level_idx
+                || !wined3d_bound_range(desc->u.texture.level_idx, desc->u.texture.level_count, texture->level_count)
                 || !desc->u.texture.layer_count
-                || desc->u.texture.layer_idx >= depth_or_layer_count
-                || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
+                || !wined3d_bound_range(desc->u.texture.layer_idx, desc->u.texture.layer_count, depth_or_layer_count))
             return NULL;
     }
 

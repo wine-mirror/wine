@@ -9678,6 +9678,106 @@ static void test_mt_factory(BOOL d3d11)
     ID2D1Factory_Release(factory);
 }
 
+static void test_effect(BOOL d3d11)
+{
+    unsigned int i, min_inputs, max_inputs;
+    D2D1_BUFFER_PRECISION precision;
+    ID2D1Image *image_a, *image_b;
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    ID2D1Factory1 *factory;
+    ID2D1Effect *effect;
+    BOOL cached;
+    CLSID clsid;
+    HRESULT hr;
+
+    const struct effect_test
+    {
+        const CLSID *clsid;
+        UINT32 min_inputs;
+        UINT32 max_inputs;
+    }
+    effect_tests[] =
+    {
+        {&CLSID_D2D12DAffineTransform,       1, 1},
+        {&CLSID_D2D13DPerspectiveTransform,  1, 1},
+        {&CLSID_D2D1Composite,               1, 0xffffffff},
+    };
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(effect_tests); ++i)
+    {
+        const struct effect_test *test = effect_tests + i;
+
+        winetest_push_context("Test %u", i);
+
+        hr = ID2D1DeviceContext_CreateEffect(context, test->clsid, &effect);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = ID2D1Effect_QueryInterface(effect, &IID_ID2D1Image, (void **)&image_a);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Effect_GetOutput(effect, &image_b);
+        ok(image_b == image_a, "Got unexpected image_b %p, expected %p.\n", image_b, image_a);
+        ID2D1Image_Release(image_b);
+        ID2D1Image_Release(image_a);
+
+        todo_wine
+        {
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID,
+                D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            ok(IsEqualGUID(&clsid, test->clsid), "Got unexpected clsid %s, expected %s.\n",
+                    debugstr_guid(&clsid), debugstr_guid(test->clsid));
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CACHED,
+                D2D1_PROPERTY_TYPE_BOOL, (BYTE *)&cached, sizeof(cached));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            ok(cached == FALSE, "Got unexpected cached %d.\n", cached);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_PRECISION,
+                D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&precision, sizeof(precision));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            ok(precision == D2D1_BUFFER_PRECISION_UNKNOWN, "Got unexpected precision %u.\n", precision);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&min_inputs, sizeof(min_inputs));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            ok(min_inputs == test->min_inputs, "Got unexpected min inputs %u, expected %u.\n",
+                    min_inputs, test->min_inputs);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&max_inputs, sizeof(max_inputs));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            ok(max_inputs == test->max_inputs, "Got unexpected max inputs %u, expected %u.\n",
+                    max_inputs, test->max_inputs);
+        }
+
+        ID2D1Effect_Release(effect);
+        winetest_pop_context();
+    }
+
+    ID2D1DeviceContext_Release(context);
+    ID2D1Factory1_Release(factory);
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -9739,6 +9839,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_colour_space);
     queue_test(test_geometry_group);
     queue_test(test_mt_factory);
+    queue_test(test_effect);
 
     run_queued_tests();
 }

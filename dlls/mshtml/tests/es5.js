@@ -1448,3 +1448,67 @@ sync_test("functions scope", function() {
     ok(val == 8, "val != 8");
     ok(w == 9, "w != 9");
 });
+
+sync_test("console", function() {
+    var except
+
+    window.console.log('1', '2');
+    console.info('1', '2', '3');
+    console.info();
+    console.log();
+    console.trace();
+    console.warn();
+    console.debug();
+    console.error();
+
+    console.assert(false, '1');
+    console.assert(true, '1');
+    console.assert('1');
+
+    console.clear();
+    console.count('1');
+    console.count(1);
+
+
+    except = false;
+    try
+    {
+        console.countReset('1');
+    }
+    catch(e)
+    {
+        except = true;
+    }
+    ok(except, "console.countReset: expected exception");
+    console.dir(document);
+    console.dir();
+    console.dirxml(document);
+    console.group('1');
+    console.groupCollapsed('1');
+    console.groupEnd();
+
+    except = false;
+    try
+    {
+        console.table(['1', '2']);
+    }
+    catch(e)
+    {
+        except = true;
+    }
+    ok(except, "console.table: expected exception");
+
+    console.time('1');
+    console.timeEnd('1');
+
+    except = false;
+    try
+    {
+        console.timeLog('1');
+    }
+    catch(e)
+    {
+        except = true;
+    }
+    ok(except, "console.timeLog: expected exception");
+});

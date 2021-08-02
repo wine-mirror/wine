@@ -26,7 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
@@ -261,8 +261,8 @@ static RGBQUAD get_dc_rgb_color( DC *dc, int color_table_size, COLORREF color )
 /* helper to retrieve either both colors or only the background color for monochrome blits */
 void get_mono_dc_colors( DC *dc, int color_table_size, BITMAPINFO *info, int count )
 {
-    info->bmiColors[count - 1] = get_dc_rgb_color( dc, color_table_size, dc->backgroundColor );
-    if (count > 1) info->bmiColors[0] = get_dc_rgb_color( dc, color_table_size, dc->textColor );
+    info->bmiColors[count - 1] = get_dc_rgb_color( dc, color_table_size, dc->attr->background_color );
+    if (count > 1) info->bmiColors[0] = get_dc_rgb_color( dc, color_table_size, dc->attr->text_color );
     info->bmiHeader.biClrUsed = count;
 }
 
@@ -313,7 +313,7 @@ BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         ((src->width != dst->width) || (src->height != dst->height)))
     {
         copy_bitmapinfo( src_info, dst_info );
-        err = stretch_bits( src_info, src, dst_info, dst, &bits, dc_dst->stretchBltMode );
+        err = stretch_bits( src_info, src, dst_info, dst, &bits, dc_dst->attr->stretch_blt_mode );
         if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
     }
 
@@ -482,9 +482,9 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
         pts[i].y -= dst.visrect.top;
     }
 
-    rgn = CreateRectRgn( 0, 0, 0, 0 );
+    rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
     gradient_bitmapinfo( info, bits.ptr, vert_array, nvert, grad_array, ngrad, mode, pts, rgn );
-    OffsetRgn( rgn, dst.visrect.left, dst.visrect.top );
+    NtGdiOffsetRgn( rgn, dst.visrect.left, dst.visrect.top );
     ret = !dev->funcs->pPutImage( dev, rgn, info, &bits, &src, &dst, SRCCOPY );
 
     if (bits.free) bits.free( &bits );
@@ -543,7 +543,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
         dst.log_y      = top;
         dst.log_width  = width;
         dst.log_height = height;
-        dst.layout     = dc->layout;
+        dst.layout     = dc->attr->layout;
         if (rop & NOMIRRORBITMAP)
         {
             dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
@@ -602,12 +602,12 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
         src.log_y      = ySrc;
         src.log_width  = widthSrc;
         src.log_height = heightSrc;
-        src.layout     = dcSrc->layout;
+        src.layout     = dcSrc->attr->layout;
         dst.log_x      = xDst;
         dst.log_y      = yDst;
         dst.log_width  = widthDst;
         dst.log_height = heightDst;
-        dst.layout     = dcDst->layout;
+        dst.layout     = dcDst->attr->layout;
         if (rop & NOMIRRORBITMAP)
         {
             src.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
@@ -788,7 +788,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     hbrDst = NtGdiSelectBrush(hdcDest, GetStockObject(NULL_BRUSH));
 
     /* make bitmap */
-    hDC1 = CreateCompatibleDC(hdcDest);
+    hDC1 = NtGdiCreateCompatibleDC( hdcDest );
     hBitmap1 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
     hOldBitmap1 = NtGdiSelectBitmap(hDC1, hBitmap1);
 
@@ -799,7 +799,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     NtGdiSelectBrush(hDC1, hbrTmp);
 
     /* make bitmap */
-    hDC2 = CreateCompatibleDC(hdcDest);
+    hDC2 = NtGdiCreateCompatibleDC( hdcDest );
     hBitmap2 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
     hOldBitmap2 = NtGdiSelectBitmap(hDC2, hBitmap2);
 
@@ -864,7 +864,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     oldStretchMode = GetStretchBltMode(hdcSrc);
     if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
-    hdcWork = CreateCompatibleDC(hdcDest);
+    hdcWork = NtGdiCreateCompatibleDC( hdcDest );
     if ((GetObjectType( hdcDest ) != OBJ_MEMDC ||
          GetObjectW( GetCurrentObject( hdcDest, OBJ_BITMAP ), sizeof(dib), &dib ) == sizeof(BITMAP)) &&
         GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
@@ -888,7 +888,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     SetBkColor(hdcWork, crTransparent);
 
     /* Create mask */
-    hdcMask = CreateCompatibleDC(hdcDest);
+    hdcMask = NtGdiCreateCompatibleDC( hdcDest );
     bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
     oldMask = NtGdiSelectBitmap(hdcMask, bmpMask);
     if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) {
@@ -958,12 +958,12 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
         src.log_y      = ySrc;
         src.log_width  = widthSrc;
         src.log_height = heightSrc;
-        src.layout     = dcSrc->layout;
+        src.layout     = dcSrc->attr->layout;
         dst.log_x      = xDst;
         dst.log_y      = yDst;
         dst.log_width  = widthDst;
         dst.log_height = heightDst;
-        dst.layout     = dcDst->layout;
+        dst.layout     = dcDst->attr->layout;
         ret = !get_vis_rectangles( dcDst, &dst, dcSrc, &src );
 
         TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  blend=%02x/%02x/%02x/%02x\n",

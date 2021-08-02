@@ -207,6 +207,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->module.TypeInfo = FALSE;
     module->module.SourceIndexed = FALSE;
     module->module.Publics = FALSE;
+    module->module.MachineType = 0;
+    module->module.Reserved = 0;
 
     module->reloc_delta       = 0;
     module->type              = type;
@@ -1201,6 +1203,8 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     mi64.TypeInfo      = miw64.TypeInfo;
     mi64.SourceIndexed = miw64.SourceIndexed;
     mi64.Publics       = miw64.Publics;
+    mi64.MachineType   = miw64.MachineType;
+    mi64.Reserved      = miw64.Reserved;
 
     memcpy(ModuleInfo, &mi64, ModuleInfo->SizeOfStruct);
 

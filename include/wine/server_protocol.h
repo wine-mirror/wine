@@ -767,10 +767,10 @@ typedef union
 typedef struct
 {
     client_ptr_t   base;
-    client_ptr_t   entry_point;
-    mem_size_t     map_size;
     mem_size_t     stack_size;
     mem_size_t     stack_commit;
+    unsigned int   entry_point;
+    unsigned int   map_size;
     unsigned int   zerobits;
     unsigned int   subsystem;
     unsigned short subsystem_minor;
@@ -1313,8 +1313,8 @@ struct select_reply
     struct reply_header __header;
     apc_call_t   call;
     obj_handle_t apc_handle;
+    int          signaled;
     /* VARARG(contexts,contexts); */
-    char __pad_60[4];
 };
 #define SELECT_ALERTABLE     1
 #define SELECT_INTERRUPTIBLE 2
@@ -6252,7 +6252,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 724
+#define SERVER_PROTOCOL_VERSION 726
 
 /* ### protocol_version end ### */
 

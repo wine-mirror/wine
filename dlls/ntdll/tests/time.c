@@ -234,10 +234,12 @@ static void test_RtlQueryTimeZoneInformation(void)
     status = pRtlQueryDynamicTimeZoneInformation(&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryDynamicTimeZoneInformation failed, got %08x\n", status);
-    ok(tzinfo.StandardName[0] == '@',
+    ok(tzinfo.StandardName[0] == '@' ||
+       broken(tzinfo.StandardName[0]), /* some win10 2004 */
        "standard time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.StandardName));
-    ok(tzinfo.DaylightName[0] == '@',
+    ok(tzinfo.DaylightName[0] == '@' ||
+       broken(tzinfo.DaylightName[0]), /* some win10 2004 */
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
 
@@ -251,10 +253,12 @@ static void test_RtlQueryTimeZoneInformation(void)
     status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryTimeZoneInformation failed, got %08x\n", status);
-    ok(tzinfo.StandardName[0] == '@',
+    ok(tzinfo.StandardName[0] == '@' ||
+       broken(tzinfo.StandardName[0]), /* some win10 2004 */
        "standard time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.StandardName));
-    ok(tzinfo.DaylightName[0] == '@',
+    ok(tzinfo.DaylightName[0] == '@' ||
+       broken(tzinfo.DaylightName[0]), /* some win10 2004 */
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
 
@@ -262,10 +266,12 @@ static void test_RtlQueryTimeZoneInformation(void)
     status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryTimeZoneInformation failed, got %08x\n", status);
-    ok(tzinfo.StandardName[0] == '@',
+    ok(tzinfo.StandardName[0] == '@' ||
+       broken(tzinfo.StandardName[0]), /* some win10 2004 */
        "standard time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.StandardName));
-    ok(tzinfo.DaylightName[0] == '@',
+    ok(tzinfo.DaylightName[0] == '@' ||
+       broken(tzinfo.DaylightName[0]), /* some win10 2004 */
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
 

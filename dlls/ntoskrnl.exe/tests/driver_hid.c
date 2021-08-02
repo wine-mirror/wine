@@ -41,11 +41,66 @@ static UNICODE_STRING control_symlink;
 
 static unsigned int got_start_device;
 static DWORD report_id;
+static DWORD polled;
+
+struct irp_queue
+{
+    KSPIN_LOCK lock;
+    LIST_ENTRY list;
+};
+
+static IRP *irp_queue_pop(struct irp_queue *queue)
+{
+    KIRQL irql;
+    IRP *irp;
+
+    KeAcquireSpinLock(&queue->lock, &irql);
+    if (IsListEmpty(&queue->list)) irp = NULL;
+    else irp = CONTAINING_RECORD(RemoveHeadList(&queue->list), IRP, Tail.Overlay.ListEntry);
+    KeReleaseSpinLock(&queue->lock, irql);
+
+    return irp;
+}
+
+static void irp_queue_push(struct irp_queue *queue, IRP *irp)
+{
+    KIRQL irql;
+
+    KeAcquireSpinLock(&queue->lock, &irql);
+    InsertTailList(&queue->list, &irp->Tail.Overlay.ListEntry);
+    KeReleaseSpinLock(&queue->lock, irql);
+}
+
+static void irp_queue_clear(struct irp_queue *queue)
+{
+    IRP *irp;
+
+    while ((irp = irp_queue_pop(queue)))
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+}
+
+static void irp_queue_init(struct irp_queue *queue)
+{
+    KeInitializeSpinLock(&queue->lock);
+    InitializeListHead(&queue->list);
+}
+
+struct hid_device
+{
+    BOOL removed;
+    KSPIN_LOCK lock;
+    struct irp_queue irp_queue;
+};
 
 static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct hid_device *impl = ext->MiniDeviceExtension;
+    KIRQL irql;
 
     if (winetest_debug > 1) trace("pnp %#x\n", stack->MinorFunction);
 
@@ -53,17 +108,35 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
     {
         case IRP_MN_START_DEVICE:
             ++got_start_device;
+            impl->removed = FALSE;
+            KeInitializeSpinLock(&impl->lock);
+            irp_queue_init(&impl->irp_queue);
             IoSetDeviceInterfaceState(&control_symlink, TRUE);
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_SURPRISE_REMOVAL:
         case IRP_MN_QUERY_REMOVE_DEVICE:
+            KeAcquireSpinLock(&impl->lock, &irql);
+            impl->removed = TRUE;
+            KeReleaseSpinLock(&impl->lock, irql);
+            irp_queue_clear(&impl->irp_queue);
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+
+        case IRP_MN_CANCEL_REMOVE_DEVICE:
+            KeAcquireSpinLock(&impl->lock, &irql);
+            impl->removed = FALSE;
+            KeReleaseSpinLock(&impl->lock, irql);
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+
         case IRP_MN_STOP_DEVICE:
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
+            irp_queue_clear(&impl->irp_queue);
             IoSetDeviceInterfaceState(&control_symlink, FALSE);
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
@@ -290,6 +363,26 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 REPORT_SIZE(1, 1),
                 FEATURE(1, Data|Var|Abs),
             END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+            USAGE(1, HID_USAGE_LED_GREEN),
+            COLLECTION(1, Report),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id, 0),
+                USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+                REPORT_COUNT(1, 8),
+                REPORT_SIZE(1, 1),
+                OUTPUT(1, Cnst|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+            USAGE(1, HID_USAGE_LED_RED),
+            COLLECTION(1, Report),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id, 1),
+                USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+                REPORT_COUNT(1, 8),
+                REPORT_SIZE(1, 1),
+                OUTPUT(1, Cnst|Var|Abs),
+            END_COLLECTION,
         END_COLLECTION,
     };
 #undef REPORT_ID_OR_USAGE_PAGE
@@ -297,16 +390,31 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     static BOOL test_failed;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct hid_device *impl = ext->MiniDeviceExtension;
     const ULONG in_size = stack->Parameters.DeviceIoControl.InputBufferLength;
     const ULONG out_size = stack->Parameters.DeviceIoControl.OutputBufferLength;
     const ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     NTSTATUS ret;
+    BOOL removed;
+    KIRQL irql;
 
     if (winetest_debug > 1) trace("ioctl %#x\n", code);
 
     ok(got_start_device, "expected IRP_MN_START_DEVICE before any ioctls\n");
 
     irp->IoStatus.Information = 0;
+
+    KeAcquireSpinLock(&impl->lock, &irql);
+    removed = impl->removed;
+    KeReleaseSpinLock(&impl->lock, irql);
+
+    if (removed)
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_DELETE_PENDING;
+    }
 
     switch (code)
     {
@@ -378,7 +486,127 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             }
             if (out_size != expected_size) test_failed = TRUE;
 
-            ret = STATUS_NOT_IMPLEMENTED;
+            if (polled)
+            {
+                memset(irp->UserBuffer, 0xa5, expected_size);
+                if (report_id) ((char *)irp->UserBuffer)[0] = report_id;
+                irp->IoStatus.Information = 3;
+                ret = STATUS_SUCCESS;
+            }
+            else
+            {
+                IoMarkIrpPending(irp);
+                irp_queue_push(&impl->irp_queue, irp);
+                ret = STATUS_PENDING;
+            }
+            break;
+        }
+
+        case IOCTL_HID_WRITE_REPORT:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 2;
+
+            todo_wine
+            ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
+            todo_wine
+            ok(!out_size, "got output size %u\n", out_size);
+            ok(packet->reportBufferLen >= expected_size, "got report size %u\n", packet->reportBufferLen);
+
+            if (report_id)
+            {
+                todo_wine_if(packet->reportBuffer[0] == 0xa5)
+                ok(packet->reportBuffer[0] == report_id, "got report id %x\n", packet->reportBuffer[0]);
+            }
+            else
+            {
+                todo_wine
+                ok(packet->reportBuffer[0] == 0xcd, "got first byte %x\n", packet->reportBuffer[0]);
+            }
+
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        case IOCTL_HID_GET_INPUT_REPORT:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 23;
+            ok(!in_size, "got input size %u\n", in_size);
+            ok(out_size == sizeof(*packet), "got output size %u\n", out_size);
+
+            todo_wine_if(packet->reportId == 0x5a || (polled && report_id && packet->reportId == 0))
+            ok(packet->reportId == report_id, "report %d, polled %d got packet report id %u\n",
+               report_id, polled, packet->reportId);
+            todo_wine_if(packet->reportBufferLen == 21 || packet->reportBufferLen == 22)
+            ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
+               packet->reportBufferLen, expected_size);
+            ok(!!packet->reportBuffer, "got packet buffer %p\n", packet->reportBuffer);
+
+            memset(packet->reportBuffer, 0xa5, 3);
+            if (report_id) ((char *)packet->reportBuffer)[0] = report_id;
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        case IOCTL_HID_SET_OUTPUT_REPORT:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 2;
+            todo_wine ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
+            todo_wine ok(!out_size, "got output size %u\n", out_size);
+
+            todo_wine_if(packet->reportId != report_id)
+            ok(packet->reportId == report_id, "got packet report id %u\n", packet->reportId);
+            todo_wine_if(packet->reportBufferLen == 0 || packet->reportBufferLen == 1)
+            ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
+               packet->reportBufferLen, expected_size);
+            ok(!!packet->reportBuffer, "got packet buffer %p\n", packet->reportBuffer);
+
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        case IOCTL_HID_GET_FEATURE:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 17;
+            ok(!in_size, "got input size %u\n", in_size);
+            ok(out_size == sizeof(*packet), "got output size %u\n", out_size);
+
+            todo_wine_if(packet->reportId == 0x5a || packet->reportId == 0xa5)
+            ok(packet->reportId == report_id, "got packet report id %u\n", packet->reportId);
+            todo_wine_if(packet->reportBufferLen == 16)
+            ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
+               packet->reportBufferLen, expected_size);
+            ok(!!packet->reportBuffer, "got packet buffer %p\n", packet->reportBuffer);
+
+            memset(packet->reportBuffer, 0xa5, 3);
+            if (report_id) ((char *)packet->reportBuffer)[0] = report_id;
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        case IOCTL_HID_SET_FEATURE:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 17;
+            todo_wine ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
+            todo_wine ok(!out_size, "got output size %u\n", out_size);
+
+            todo_wine_if(packet->reportId != report_id)
+            ok(packet->reportId == report_id, "got packet report id %u\n", packet->reportId);
+            todo_wine_if(packet->reportBufferLen == 0 || packet->reportBufferLen == 16)
+            ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
+               packet->reportBufferLen, expected_size);
+            ok(!!packet->reportBuffer, "got packet buffer %p\n", packet->reportBuffer);
+
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
             break;
         }
 
@@ -394,8 +622,11 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ret = STATUS_NOT_IMPLEMENTED;
     }
 
-    irp->IoStatus.Status = ret;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    if (ret != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = ret;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
     return ret;
 }
 
@@ -455,6 +686,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
     {
         .Revision = HID_REVISION,
         .DriverObject = driver,
+        .DeviceExtensionSize = sizeof(struct hid_device),
         .RegistryPath = registry,
     };
     UNICODE_STRING name_str;
@@ -475,6 +707,13 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
     ret = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, buffer, size, &size);
     ok(!ret, "ZwQueryValueKey returned %#x\n", ret);
     memcpy(&report_id, buffer + info_size, size - info_size);
+
+    RtlInitUnicodeString(&name_str, L"PolledMode");
+    size = info_size + sizeof(polled);
+    ret = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, buffer, size, &size);
+    ok(!ret, "ZwQueryValueKey returned %#x\n", ret);
+    memcpy(&polled, buffer + info_size, size - info_size);
+    params.DevicesArePolled = polled;
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;

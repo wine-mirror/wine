@@ -67,6 +67,8 @@ enum target_cpu target_cpu = CPU_ARM64;
 
 #ifdef __APPLE__
 enum target_platform target_platform = PLATFORM_APPLE;
+#elif defined(__linux__)
+enum target_platform target_platform = PLATFORM_LINUX;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 enum target_platform target_platform = PLATFORM_FREEBSD;
 #elif defined(__sun)
@@ -132,6 +134,7 @@ static const struct
 {
     { "macos",       PLATFORM_APPLE },
     { "darwin",      PLATFORM_APPLE },
+    { "linux",       PLATFORM_LINUX },
     { "freebsd",     PLATFORM_FREEBSD },
     { "solaris",     PLATFORM_SOLARIS },
     { "mingw32",     PLATFORM_MINGW },

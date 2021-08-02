@@ -89,9 +89,13 @@ extern const char *hex_types_test;
 extern const char *slashes_test;
 extern const char *embedded_null_test;
 extern const char *escaped_null_test;
+extern const char *registry_view_test;
 
 /* import.c */
 BOOL is_elevated_process(void);
+
+#define delete_file(f) delete_file_(__FILE__,__LINE__,f)
+BOOL delete_file_(const char *file, unsigned line, const char *fname);
 
 #define test_import_str(c,r) import_reg(__FILE__,__LINE__,c,FALSE,r)
 #define test_import_wstr(c,r) import_reg(__FILE__,__LINE__,c,TRUE,r)

@@ -333,7 +333,7 @@ static BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
   case LANG_MARATHI:
   case LANG_PUNJABI:
   case LANG_SANSKRIT:
-    TRACE("lcid 0x%08x: langid 0x%4x is Unicode Only\n", lcid, PRIMARYLANGID(lcid));
+    TRACE("lcid 0x%08x: langid 0x%04x is Unicode Only\n", lcid, PRIMARYLANGID(lcid));
     return TRUE;
   default:
     return FALSE;

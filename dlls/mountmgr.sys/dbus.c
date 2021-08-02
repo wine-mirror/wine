@@ -999,25 +999,15 @@ static DBusMessage *device_by_iface_request( const char *iface )
 }
 
 #define IF_NAMESIZE 16
-static BOOL map_adapter_name( const WCHAR *name, char *unix_name, DWORD len )
+static BOOL map_adapter_name( const NET_LUID *luid, char *unix_name, DWORD len )
 {
     WCHAR unix_nameW[IF_NAMESIZE];
-    UNICODE_STRING str;
-    GUID guid;
 
-    RtlInitUnicodeString( &str, name );
-    if (!RtlGUIDFromString( &str, &guid ))
-    {
-        NET_LUID luid;
-        if (ConvertInterfaceGuidToLuid( &guid, &luid ) ||
-            ConvertInterfaceLuidToNameW( &luid, unix_nameW, ARRAY_SIZE(unix_nameW) )) return FALSE;
-
-        name = unix_nameW;
-    }
-    return WideCharToMultiByte( CP_UNIXCP, 0, name, -1, unix_name, len, NULL, NULL ) != 0;
+    if (ConvertInterfaceLuidToAlias( luid, unix_nameW, ARRAY_SIZE(unix_nameW) )) return FALSE;
+    return WideCharToMultiByte( CP_UNIXCP, 0, unix_nameW, -1, unix_name, len, NULL, NULL ) != 0;
 }
 
-static DBusMessage *dhcp4_config_request( const WCHAR *adapter )
+static DBusMessage *dhcp4_config_request( const NET_LUID *adapter )
 {
     static const char *device = "org.freedesktop.NetworkManager.Device";
     static const char *dhcp4_config = "Dhcp4Config";
@@ -1057,7 +1047,7 @@ static DBusMessage *dhcp4_config_request( const WCHAR *adapter )
     return reply;
 }
 
-static DBusMessage *dhcp4_config_options_request( const WCHAR *adapter )
+static DBusMessage *dhcp4_config_options_request( const NET_LUID *adapter )
 {
     static const char *dhcp4_config = "org.freedesktop.NetworkManager.DHCP4Config";
     static const char *options = "Options";
@@ -1116,7 +1106,7 @@ static const char *dhcp4_config_option_next_dict_entry( DBusMessageIter *iter, D
     return name;
 }
 
-static DBusMessage *dhcp4_config_option_request( const WCHAR *adapter, const char *option, const char **value )
+static DBusMessage *dhcp4_config_option_request( const NET_LUID *adapter, const char *option, const char **value )
 {
     DBusMessage *reply;
     DBusMessageIter iter, variant;
@@ -1162,7 +1152,7 @@ static const char *map_option( ULONG option )
     }
 }
 
-ULONG get_dhcp_request_param( const WCHAR *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+ULONG get_dhcp_request_param( const NET_LUID *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
                               ULONG size )
 {
     DBusMessage *reply;

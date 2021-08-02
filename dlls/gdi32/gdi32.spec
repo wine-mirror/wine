@@ -32,7 +32,7 @@
 @ stdcall CloseMetaFile(long)
 @ stub ColorCorrectPalette
 @ stub ColorMatchToTarget
-@ stdcall CombineRgn(long long long long)
+@ stdcall CombineRgn(long long long long) NtGdiCombineRgn
 @ stdcall CombineTransform(ptr ptr ptr)
 @ stdcall CopyEnhMetaFileA(long str)
 @ stdcall CopyEnhMetaFileW(long wstr)
@@ -44,7 +44,7 @@
 @ stdcall CreateColorSpaceA(ptr)
 @ stdcall CreateColorSpaceW(ptr)
 @ stdcall CreateCompatibleBitmap(long long long)
-@ stdcall CreateCompatibleDC(long)
+@ stdcall CreateCompatibleDC(long) NtGdiCreateCompatibleDC
 @ stdcall CreateDCA(str str str ptr)
 @ stdcall CreateDCW(wstr wstr wstr ptr)
 @ stdcall CreateDIBPatternBrush(long long)
@@ -52,7 +52,7 @@
 @ stdcall CreateDIBSection(long ptr long ptr long long)
 @ stdcall CreateDIBitmap(long ptr long ptr ptr long)
 @ stdcall CreateDiscardableBitmap(long long long)
-@ stdcall CreateEllipticRgn(long long long long)
+@ stdcall CreateEllipticRgn(long long long long) NtGdiCreateEllipticRgn
 @ stdcall CreateEllipticRgnIndirect(ptr)
 @ stdcall CreateEnhMetaFileA(long str ptr str)
 @ stdcall CreateEnhMetaFileW(long wstr ptr wstr)
@@ -74,9 +74,9 @@
 @ stdcall CreatePenIndirect(ptr)
 @ stdcall CreatePolyPolygonRgn(ptr ptr long long)
 @ stdcall CreatePolygonRgn(ptr long long)
-@ stdcall CreateRectRgn(long long long long)
+@ stdcall CreateRectRgn(long long long long) NtGdiCreateRectRgn
 @ stdcall CreateRectRgnIndirect(ptr)
-@ stdcall CreateRoundRectRgn(long long long long long long)
+@ stdcall CreateRoundRectRgn(long long long long long long) NtGdiCreateRoundRectRgn
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)
@@ -120,7 +120,7 @@
 @ stdcall EnumICMProfilesW(long ptr long)
 @ stdcall EnumMetaFile(long long ptr ptr)
 @ stdcall EnumObjects(long long ptr long)
-@ stdcall EqualRgn(long long)
+@ stdcall EqualRgn(long long) NtGdiEqualRgn
 @ stdcall Escape(long long long ptr ptr)
 # @ stub EudcLoadLinkW
 # @ stub EudcUnloadLinkW
@@ -181,9 +181,9 @@
 @ stub GdiDeleteLocalDC
 @ stub GdiDeleteLocalObject
 # @ stub GdiDeleteSpoolFileHandle
-@ stdcall GdiDescribePixelFormat(long long long ptr)
+@ stdcall GdiDescribePixelFormat(long long long ptr) NtGdiDescribePixelFormat
 @ stdcall GdiDllInitialize(ptr long ptr)
-@ stdcall GdiDrawStream(long long ptr)
+@ stdcall GdiDrawStream(long long ptr) NtGdiDrawStream
 # @ stub GdiEndDocEMF
 # @ stub GdiEndPageEMF
 @ stdcall GdiEntry13()
@@ -230,7 +230,7 @@
 @ stub GdiSetServerAttr
 # @ stub GdiStartDocEMF
 # @ stub GdiStartPageEMF
-@ stdcall GdiSwapBuffers(long)
+@ stdcall GdiSwapBuffers(long) NtGdiSwapBuffers
 @ stdcall GdiTransparentBlt(long long long long long long long long long long long)
 # @ stub GdiValidateHandle
 @ stub GdiWinWatchClose
@@ -240,8 +240,8 @@
 @ stdcall GetArcDirection(long)
 @ stdcall GetAspectRatioFilterEx(long ptr)
 # @ stub GetBitmapAttributes
-@ stdcall GetBitmapBits(long long ptr)
-@ stdcall GetBitmapDimensionEx(long ptr)
+@ stdcall GetBitmapBits(long long ptr) NtGdiGetBitmapBits
+@ stdcall GetBitmapDimensionEx(long ptr) NtGdiGetBitmapDimension
 @ stdcall GetBkColor(long)
 @ stdcall GetBkMode(long)
 @ stdcall GetBoundsRect(long ptr long)
@@ -327,15 +327,15 @@
 @ stdcall GetOutlineTextMetricsW(long long ptr)
 @ stdcall GetPaletteEntries(long long long ptr)
 @ stdcall GetPath(long ptr ptr long)
-@ stdcall GetPixel(long long long)
+@ stdcall GetPixel(long long long) NtGdiGetPixel
 @ stdcall GetPixelFormat(long)
 @ stdcall GetPolyFillMode(long)
 @ stdcall GetROP2(long)
 @ stdcall GetRandomRgn(long long long)
 @ stdcall GetRasterizerCaps(ptr long)
-@ stdcall GetRegionData(long long ptr)
+@ stdcall GetRegionData(long long ptr) NtGdiGetRegionData
 @ stdcall GetRelAbs(long long)
-@ stdcall GetRgnBox(long ptr)
+@ stdcall GetRgnBox(long ptr) NtGdiGetRgnBox
 @ stdcall GetStockObject(long)
 @ stdcall GetStretchBltMode(long)
 # @ stub GetStringBitmapA
@@ -383,7 +383,7 @@
 @ stdcall MoveToEx(long long long ptr)
 @ stdcall NamedEscape(long wstr long long ptr long ptr)
 @ stdcall OffsetClipRgn(long long long)
-@ stdcall OffsetRgn(long long long)
+@ stdcall OffsetRgn(long long long) NtGdiOffsetRgn
 @ stdcall OffsetViewportOrgEx(long long long ptr)
 @ stdcall OffsetWindowOrgEx(long long long ptr)
 @ stdcall PaintRgn(long long)
@@ -406,11 +406,11 @@
 @ stdcall Polygon(long ptr long)
 @ stdcall Polyline(long ptr long)
 @ stdcall PolylineTo(long ptr long)
-@ stdcall PtInRegion(long long long)
+@ stdcall PtInRegion(long long long) NtGdiPtInRegion
 @ stdcall PtVisible(long long long)
 # @ stub QueryFontAssocStatus
 @ stdcall RealizePalette(long)
-@ stdcall RectInRegion(long ptr)
+@ stdcall RectInRegion(long ptr) NtGdiRectInRegion
 @ stdcall RectVisible(long ptr)
 @ stdcall Rectangle(long long long long long)
 @ stdcall RemoveFontMemResourceEx(ptr)
@@ -474,8 +474,8 @@
 @ stdcall SetAbortProc(long ptr)
 @ stdcall SetArcDirection(long long)
 # @ stub SetBitmapAttributes
-@ stdcall SetBitmapBits(long long ptr)
-@ stdcall SetBitmapDimensionEx(long long long ptr)
+@ stdcall SetBitmapBits(long long ptr) NtGdiSetBitmapBits
+@ stdcall SetBitmapDimensionEx(long long long ptr) NtGdiSetBitmapDimension
 @ stdcall SetBkColor(long long)
 @ stdcall SetBkMode(long long)
 @ stdcall SetBoundsRect(long ptr long)
@@ -510,7 +510,7 @@
 @ stdcall SetPixelV(long long long long)
 @ stdcall SetPolyFillMode(long long)
 @ stdcall SetROP2(long long)
-@ stdcall SetRectRgn(long long long long long)
+@ stdcall SetRectRgn(long long long long long) NtGdiSetRectRgn
 @ stdcall SetRelAbs(long long)
 @ stdcall SetStretchBltMode(long long)
 @ stdcall SetSystemPaletteUse(long long)
