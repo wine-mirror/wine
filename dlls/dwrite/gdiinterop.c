@@ -737,17 +737,19 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop1 *if
     return S_OK;
 }
 
-struct font_realization_info {
+struct font_realization_info
+{
     DWORD size;
     DWORD flags;
     DWORD cache_num;
     DWORD instance_id;
-    DWORD unk;
+    DWORD file_count;
     WORD  face_index;
     WORD  simulations;
 };
 
-struct font_fileinfo {
+struct font_fileinfo
+{
     FILETIME writetime;
     LARGE_INTEGER size;
     WCHAR path[1];
@@ -755,8 +757,8 @@ struct font_fileinfo {
 
 /* Undocumented gdi32 exports, used to access actually selected font information */
 extern BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info);
-extern BOOL WINAPI GetFontFileInfo(DWORD instance_id, DWORD unknown, struct font_fileinfo *info, SIZE_T size, SIZE_T *needed);
-extern BOOL WINAPI GetFontFileData(DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size);
+extern BOOL WINAPI GetFontFileInfo(DWORD instance_id, DWORD file_index, struct font_fileinfo *info, SIZE_T size, SIZE_T *needed);
+extern BOOL WINAPI GetFontFileData(DWORD instance_id, DWORD file_index, UINT64 offset, void *buff, DWORD buff_size);
 
 static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface,
     HDC hdc, IDWriteFontFace **fontface)

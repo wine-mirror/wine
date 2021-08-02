@@ -289,7 +289,7 @@ struct font_realization_info
     DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
     DWORD cache_num;   /* keeps incrementing - num of fonts that have been created allowing for caching?? */
     DWORD instance_id; /* identifies a realized font instance */
-    DWORD unk;         /* unknown */
+    DWORD file_count;  /* number of files that make up this font */
     WORD  face_index;  /* face index in case of font collections */
     WORD  simulations; /* 0 bit - bold simulation, 1 bit - oblique simulation */
 };

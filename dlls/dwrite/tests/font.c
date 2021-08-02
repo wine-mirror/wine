@@ -4276,7 +4276,7 @@ struct font_realization_info
     DWORD flags;
     DWORD cache_num;
     DWORD instance_id;
-    DWORD unk;
+    DWORD file_count;
     WORD  face_index;
     WORD  simulations;
 };

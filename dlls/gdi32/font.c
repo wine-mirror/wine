@@ -3177,7 +3177,7 @@ static BOOL CDECL font_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
     info->instance_id = physdev->font->handle;
     if (info->size == sizeof(*info))
     {
-        info->unk = 0;
+        info->file_count = 1;
         info->face_index = physdev->font->face_index;
         info->simulations = 0;
         if (physdev->font->fake_bold) info->simulations |= 0x1;
@@ -8304,7 +8304,7 @@ BOOL WINAPI FontIsLinked(HDC hdc)
  */
 BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info)
 {
-    BOOL is_v0 = info->size == FIELD_OFFSET(struct font_realization_info, unk);
+    BOOL is_v0 = info->size == FIELD_OFFSET(struct font_realization_info, file_count);
     PHYSDEV dev;
     BOOL ret;
     DC *dc;
@@ -8334,7 +8334,7 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 /*************************************************************************
  *             GetFontFileData   (GDI32.@)
  */
-BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
+BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD file_index, UINT64 offset, void *buff, DWORD buff_size )
 {
     struct gdi_font *font;
     DWORD tag = 0, size;
@@ -8366,7 +8366,7 @@ struct font_fileinfo
 /*************************************************************************
  *             GetFontFileInfo   (GDI32.@)
  */
-BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info,
+BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
                              SIZE_T size, SIZE_T *needed )
 {
     SIZE_T required_size = 0;
