@@ -98,6 +98,7 @@ struct nsi_ndis_ifinfo_static
 
 /* Undocumented NSI IP tables */
 #define NSI_IP_UNICAST_TABLE              10
+#define NSI_IP_FORWARD_TABLE              16
 
 struct nsi_ipv4_unicast_key
 {
@@ -131,6 +132,67 @@ struct nsi_ip_unicast_dynamic
 struct nsi_ip_unicast_static
 {
     ULONG64 creation_time;
+};
+
+struct nsi_ipv4_forward_key
+{
+    DWORD unk;
+    IN_ADDR prefix;
+    BYTE prefix_len;
+    BYTE unk2[3];
+    DWORD unk3[3];
+    NET_LUID luid;
+    NET_LUID luid2;
+    IN_ADDR next_hop;
+    DWORD pad;
+};
+
+struct nsi_ipv6_forward_key
+{
+    DWORD unk;
+    IN6_ADDR prefix;
+    BYTE prefix_len;
+    BYTE unk2[3];
+    DWORD unk3[3];
+    DWORD pad;
+    NET_LUID luid;
+    NET_LUID luid2;
+    IN6_ADDR next_hop;
+};
+
+struct nsi_ip_forward_rw
+{
+    DWORD site_prefix_len;
+    DWORD valid_lifetime;
+    DWORD preferred_lifetime;
+    DWORD metric;
+    DWORD protocol;
+    BYTE loopback;
+    BYTE autoconf;
+    BYTE publish;
+    BYTE immortal;
+    BYTE unk[4];
+    DWORD unk2;
+};
+
+struct nsi_ipv4_forward_dynamic
+{
+    DWORD age;
+    DWORD unk[3];
+    IN_ADDR addr2; /* often a repeat of prefix */
+};
+
+struct nsi_ipv6_forward_dynamic
+{
+    DWORD age;
+    DWORD unk[3];
+    IN6_ADDR addr2; /* often a repeat of prefix */
+};
+
+struct nsi_ip_forward_static
+{
+    DWORD origin;
+    DWORD if_index;
 };
 
 /* Wine specific ioctl interface */

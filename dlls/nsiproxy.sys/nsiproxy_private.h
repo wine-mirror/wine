@@ -25,6 +25,44 @@ NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params ) DECLSPEC_HI
 BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name ) DECLSPEC_HIDDEN;
 BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid ) DECLSPEC_HIDDEN;
 
+static inline BOOL convert_luid_to_index( const NET_LUID *luid, DWORD *index )
+{
+    struct nsi_get_parameter_ex params;
+    params.unknown[0] = 0;
+    params.unknown[1] = 0;
+    params.first_arg = 1;
+    params.unknown2 = 0;
+    params.module = &NPI_MS_NDIS_MODULEID;
+    params.table = NSI_NDIS_IFINFO_TABLE;
+    params.key = luid;
+    params.key_size = sizeof(*luid);
+    params.param_type = NSI_PARAM_TYPE_STATIC;
+    params.data = index;
+    params.data_size = sizeof(*index);
+    params.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_index);
+
+    return !nsi_get_parameter_ex( &params );
+}
+
+static inline BOOL convert_index_to_luid( DWORD index, NET_LUID *luid )
+{
+    struct nsi_get_parameter_ex params;
+    params.unknown[0] = 0;
+    params.unknown[1] = 0;
+    params.first_arg = 1;
+    params.unknown2 = 0;
+    params.module = &NPI_MS_NDIS_MODULEID;
+    params.table = NSI_NDIS_INDEX_LUID_TABLE;
+    params.key = &index;
+    params.key_size = sizeof(index);
+    params.param_type = NSI_PARAM_TYPE_STATIC;
+    params.data = luid;
+    params.data_size = sizeof(*luid);
+    params.data_offset = 0;
+
+    return !nsi_get_parameter_ex( &params );
+}
+
 struct module_table
 {
     DWORD table;

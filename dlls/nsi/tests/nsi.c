@@ -485,6 +485,121 @@ static void test_ip_unicast( int family )
     winetest_pop_context();
 }
 
+static void test_ip_forward( int family )
+{
+    DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ip_forward_rw, unk),
+                         FIELD_OFFSET(struct nsi_ip_forward_rw, unk2), sizeof(struct nsi_ip_forward_rw) };
+    DWORD dyn_sizes4[] = { sizeof(struct nsi_ipv4_forward_dynamic) - 3 * sizeof(DWORD),
+                           sizeof(struct nsi_ipv4_forward_dynamic) };
+    DWORD dyn_sizes6[] = { sizeof(struct nsi_ipv6_forward_dynamic) - 3 * sizeof(DWORD),
+                           sizeof(struct nsi_ipv6_forward_dynamic) };
+    DWORD *dyn_sizes = family == AF_INET ? dyn_sizes4 : dyn_sizes6;
+    struct nsi_ipv4_forward_key *key_tbl, *key4;
+    struct nsi_ipv6_forward_key *key6;
+    struct nsi_ip_forward_rw *rw_tbl, *rw;
+    struct nsi_ipv4_forward_dynamic *dyn_tbl, *dyn4;
+    struct nsi_ipv6_forward_dynamic *dyn6;
+    struct nsi_ip_forward_static *stat_tbl, *stat;
+    MIB_IPFORWARD_TABLE2 *table;
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    DWORD key_size = (family == AF_INET) ? sizeof(*key4) : sizeof(*key6);
+    DWORD err, count, i, rw_size, dyn_size;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    for (i = 0; i < ARRAY_SIZE(rw_sizes); i++)
+    {
+        err = NsiAllocateAndGetTable( 1, mod, NSI_IP_FORWARD_TABLE, (void **)&key_tbl, key_size,
+                                      (void **)&rw_tbl, rw_sizes[i], NULL, 0,
+                                      NULL, 0, &count, 0 );
+        if (!err) break;
+    }
+todo_wine_if (family == AF_INET6)
+    ok( !err, "got %d\n", err );
+    if (err) { winetest_pop_context(); return; }
+    rw_size = rw_sizes[i];
+    NsiFreeTable( key_tbl, rw_tbl, NULL, NULL );
+
+    for (i = 0; i < ARRAY_SIZE(dyn_sizes4); i++)
+    {
+        err = NsiAllocateAndGetTable( 1, mod, NSI_IP_FORWARD_TABLE, (void **)&key_tbl, key_size,
+                                      (void **)&rw_tbl, rw_size, (void **)&dyn_tbl, dyn_sizes[i],
+                                      (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
+        if (!err) break;
+    }
+    ok( !err, "got %d\n", err );
+    dyn_size = dyn_sizes[i];
+
+    err = GetIpForwardTable2( family, &table );
+todo_wine
+    ok( !err, "got %d\n", err );
+    if (err) { winetest_pop_context(); return; }
+    ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
+
+    for (i = 0; i < count; i++)
+    {
+        MIB_IPFORWARD_ROW2 *row = table->Table + i;
+        rw = (struct nsi_ip_forward_rw *)((BYTE *)rw_tbl + i * rw_size);
+        stat = stat_tbl + i;
+        winetest_push_context( "%d", i );
+
+        ok( row->DestinationPrefix.Prefix.si_family == family, "mismatch\n" );
+
+        if (family == AF_INET)
+        {
+            key4 = key_tbl + i;
+            dyn4 = (struct nsi_ipv4_forward_dynamic *)((BYTE *)dyn_tbl + i * dyn_size);
+
+            ok( row->InterfaceLuid.Value == key4->luid.Value, "mismatch\n" );
+            ok( row->InterfaceLuid.Value == key4->luid2.Value, "mismatch\n" );
+            ok( row->DestinationPrefix.Prefix.Ipv4.sin_addr.s_addr == key4->prefix.s_addr, "mismatch\n" );
+            ok( row->DestinationPrefix.Prefix.Ipv4.sin_port == 0, "mismatch\n" );
+            ok( row->DestinationPrefix.PrefixLength == key4->prefix_len, "mismatch\n" );
+            ok( row->NextHop.Ipv4.sin_addr.s_addr == key4->next_hop.s_addr, "mismatch\n" );
+            ok( row->NextHop.Ipv4.sin_port == 0, "mismatch\n" );
+            ok( row->Age == dyn4->age, "mismatch\n" );
+        }
+        else
+        {
+            key6 = (struct nsi_ipv6_forward_key *)key_tbl + i;
+            dyn6 = (struct nsi_ipv6_forward_dynamic *)((BYTE *)dyn_tbl + i * dyn_size);
+
+            ok( row->InterfaceLuid.Value == key6->luid.Value, "mismatch\n" );
+            ok( row->InterfaceLuid.Value == key6->luid2.Value, "mismatch\n" );
+            ok( !memcmp( &row->DestinationPrefix.Prefix.Ipv6.sin6_addr, &key6->prefix, sizeof(key6->prefix) ),
+                "mismatch\n" );
+            ok( row->DestinationPrefix.Prefix.Ipv6.sin6_port == 0, "mismatch\n" );
+            ok( row->DestinationPrefix.Prefix.Ipv6.sin6_flowinfo == 0, "mismatch\n" );
+            ok( row->DestinationPrefix.Prefix.Ipv6.sin6_scope_id == 0, "mismatch\n" );
+            ok( row->DestinationPrefix.PrefixLength == key6->prefix_len, "mismatch\n" );
+            ok( !memcmp( &row->NextHop.Ipv6.sin6_addr, &key6->next_hop, sizeof(key6->next_hop) ), "mismatch\n" );
+            ok( row->NextHop.Ipv6.sin6_port == 0, "mismatch\n" );
+            ok( row->NextHop.Ipv6.sin6_flowinfo == 0, "mismatch\n" );
+            ok( row->NextHop.Ipv6.sin6_scope_id == 0, "mismatch\n" );
+            ok( row->Age == dyn6->age, "mismatch\n" );
+        }
+
+        ok( row->InterfaceIndex == stat->if_index, "mismatch\n" );
+        ok( row->SitePrefixLength == rw->site_prefix_len, "mismatch\n" );
+        ok( row->ValidLifetime == rw->valid_lifetime, "mismatch\n" );
+        ok( row->PreferredLifetime == rw->preferred_lifetime, "mismatch\n" );
+
+        ok( row->Metric == rw->metric, "mismatch\n" );
+        ok( row->Protocol == rw->protocol, "mismatch\n" );
+        ok( row->Loopback == rw->loopback, "mismatch\n" );
+        ok( row->AutoconfigureAddress == rw->autoconf, "mismatch\n" );
+        ok( row->Publish == rw->publish, "mismatch\n" );
+        ok( row->Immortal == rw->immortal, "mismatch\n" );
+        ok( row->Origin == stat->origin, "mismatch\n" );
+
+        winetest_pop_context();
+    }
+
+    FreeMibTable( table );
+    NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, stat_tbl );
+    winetest_pop_context();
+}
+
 START_TEST( nsi )
 {
     test_nsi_api();
@@ -494,4 +609,6 @@ START_TEST( nsi )
 
     test_ip_unicast( AF_INET );
     test_ip_unicast( AF_INET6 );
+    test_ip_forward( AF_INET );
+    test_ip_forward( AF_INET6 );
 }
