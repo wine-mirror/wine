@@ -531,9 +531,7 @@ todo_wine_if (family == AF_INET6)
     dyn_size = dyn_sizes[i];
 
     err = GetIpForwardTable2( family, &table );
-todo_wine
     ok( !err, "got %d\n", err );
-    if (err) { winetest_pop_context(); return; }
     ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
 
     for (i = 0; i < count; i++)

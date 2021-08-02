@@ -2229,6 +2229,123 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
     return ret;
 }
 
+static void forward_row2_fill( MIB_IPFORWARD_ROW2 *row, USHORT fam, void *key, struct nsi_ip_forward_rw *rw,
+                               void *dyn, struct nsi_ip_forward_static *stat )
+{
+    struct nsi_ipv4_forward_key *key4 = (struct nsi_ipv4_forward_key *)key;
+    struct nsi_ipv6_forward_key *key6 = (struct nsi_ipv6_forward_key *)key;
+    struct nsi_ipv4_forward_dynamic *dyn4 = (struct nsi_ipv4_forward_dynamic *)dyn;
+    struct nsi_ipv6_forward_dynamic *dyn6 = (struct nsi_ipv6_forward_dynamic *)dyn;
+
+    if (fam == WS_AF_INET)
+    {
+        row->InterfaceLuid = key4->luid;
+        row->DestinationPrefix.Prefix.Ipv4.sin_family = fam;
+        row->DestinationPrefix.Prefix.Ipv4.sin_port = 0;
+        row->DestinationPrefix.Prefix.Ipv4.sin_addr = key4->prefix;
+        memset( &row->DestinationPrefix.Prefix.Ipv4.sin_zero, 0, sizeof(row->DestinationPrefix.Prefix.Ipv4.sin_zero) );
+        row->DestinationPrefix.PrefixLength = key4->prefix_len;
+        row->NextHop.Ipv4.sin_family = fam;
+        row->NextHop.Ipv4.sin_port = 0;
+        row->NextHop.Ipv4.sin_addr = key4->next_hop;
+        memset( &row->NextHop.Ipv4.sin_zero, 0, sizeof(row->NextHop.Ipv4.sin_zero) );
+
+        row->Age = dyn4->age;
+    }
+    else
+    {
+        row->InterfaceLuid = key6->luid;
+
+        row->DestinationPrefix.Prefix.Ipv6.sin6_family = fam;
+        row->DestinationPrefix.Prefix.Ipv6.sin6_port = 0;
+        row->DestinationPrefix.Prefix.Ipv6.sin6_flowinfo = 0;
+        row->DestinationPrefix.Prefix.Ipv6.sin6_addr = key6->prefix;
+        row->DestinationPrefix.Prefix.Ipv6.sin6_scope_id = 0;
+        row->DestinationPrefix.PrefixLength = key6->prefix_len;
+        row->NextHop.Ipv6.sin6_family = fam;
+        row->NextHop.Ipv6.sin6_port = 0;
+        row->NextHop.Ipv6.sin6_flowinfo = 0;
+        row->NextHop.Ipv6.sin6_addr = key6->next_hop;
+        row->NextHop.Ipv6.sin6_scope_id = 0;
+
+        row->Age = dyn6->age;
+    }
+
+    row->InterfaceIndex = stat->if_index;
+
+    row->SitePrefixLength = rw->site_prefix_len;
+    row->ValidLifetime = rw->valid_lifetime;
+    row->PreferredLifetime = rw->preferred_lifetime;
+    row->Metric = rw->metric;
+    row->Protocol = rw->protocol;
+    row->Loopback = rw->loopback;
+    row->AutoconfigureAddress = rw->autoconf;
+    row->Publish = rw->publish;
+    row->Immortal = rw->immortal;
+
+    row->Origin = stat->origin;
+}
+
+/******************************************************************
+ *    GetIpForwardTable2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIpForwardTable2( ADDRESS_FAMILY family, MIB_IPFORWARD_TABLE2 **table )
+{
+    void *key[2] = { NULL, NULL };
+    struct nsi_ip_forward_rw *rw[2] = { NULL, NULL };
+    void *dyn[2] = { NULL, NULL };
+    struct nsi_ip_forward_static *stat[2] = { NULL, NULL };
+    static const USHORT fam[2] = { WS_AF_INET, WS_AF_INET6 };
+    static const DWORD key_size[2] = { sizeof(struct nsi_ipv4_forward_key), sizeof(struct nsi_ipv6_forward_key) };
+    static const DWORD dyn_size[2] = { sizeof(struct nsi_ipv4_forward_dynamic), sizeof(struct nsi_ipv6_forward_dynamic) };
+    DWORD err = ERROR_SUCCESS, i, size, count[2] = { 0, 0 };
+
+    TRACE( "%u, %p\n", family, table );
+
+    if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
+        return ERROR_INVALID_PARAMETER;
+
+    for (i = 0; i < 2; i++)
+    {
+        if (family != WS_AF_UNSPEC && family != fam[i]) continue;
+
+        err = NsiAllocateAndGetTable( 1, ip_module_id( fam[i] ), NSI_IP_FORWARD_TABLE, key + i, key_size[i],
+                                      (void **)rw + i, sizeof(**rw), dyn + i, dyn_size[i],
+                                      (void **)stat + i, sizeof(**stat), count + i, 0 );
+        if (err) count[i] = 0;
+    }
+
+    size = FIELD_OFFSET(MIB_IPFORWARD_TABLE2, Table[ count[0] + count[1] ]);
+    *table = heap_alloc( size );
+    if (!*table)
+    {
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
+
+    (*table)->NumEntries = count[0] + count[1];
+    for (i = 0; i < count[0]; i++)
+    {
+        MIB_IPFORWARD_ROW2 *row = (*table)->Table + i;
+        struct nsi_ipv4_forward_key *key4 = (struct nsi_ipv4_forward_key *)key[0];
+        struct nsi_ipv4_forward_dynamic *dyn4 = (struct nsi_ipv4_forward_dynamic *)dyn[0];
+
+        forward_row2_fill( row, fam[0], key4 + i, rw[0] + i, dyn4 + i, stat[0] + i );
+    }
+
+    for (i = 0; i < count[1]; i++)
+    {
+        MIB_IPFORWARD_ROW2 *row = (*table)->Table + count[0] + i;
+        struct nsi_ipv6_forward_key *key6 = (struct nsi_ipv6_forward_key *)key[1];
+        struct nsi_ipv6_forward_dynamic *dyn6 = (struct nsi_ipv6_forward_dynamic *)dyn[1];
+
+        forward_row2_fill( row, fam[1], key6 + i, rw[1] + i, dyn6 + i, stat[1] + i );
+    }
+
+err:
+    for (i = 0; i < 2; i++) NsiFreeTable( key[i], rw[i], dyn[i], stat[i] );
+    return err;
+}
 
 /******************************************************************
  *    GetIpNetTable (IPHLPAPI.@)
@@ -3554,17 +3671,6 @@ char *WINAPI IPHLP_if_indextoname( NET_IFINDEX index, char *name )
     err = ConvertInterfaceLuidToNameA( &luid, name, IF_MAX_STRING_SIZE );
     if (err) return NULL;
     return name;
-}
-
-/******************************************************************
- *    GetIpForwardTable2 (IPHLPAPI.@)
- */
-DWORD WINAPI GetIpForwardTable2(ADDRESS_FAMILY family, PMIB_IPFORWARD_TABLE2 *table)
-{
-    static int once;
-
-    if (!once++) FIXME("(%u %p): stub\n", family, table);
-    return ERROR_NOT_SUPPORTED;
 }
 
 /******************************************************************
