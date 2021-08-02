@@ -21,6 +21,8 @@
 #ifndef __WOW64_STRUCT32_H
 #define __WOW64_STRUCT32_H
 
+#include "wine/server.h"
+
 typedef struct
 {
     ULONG Length;
@@ -632,5 +634,23 @@ typedef struct
     IO_COUNTERS      ioCounters;
     SYSTEM_THREAD_INFORMATION32 ti[1];
 } SYSTEM_PROCESS_INFORMATION32;
+
+struct __server_iovec32
+{
+    ULONG        ptr;
+    data_size_t  size;
+};
+
+struct __server_request_info32
+{
+    union
+    {
+        union generic_request req;
+        union generic_reply   reply;
+    } u;
+    unsigned int            data_count;
+    ULONG                   reply_data;
+    struct __server_iovec32 data[__SERVER_MAX_DATA];
+};
 
 #endif /* __WOW64_STRUCT32_H */
