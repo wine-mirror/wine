@@ -2704,6 +2704,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVINFO_DATA device = {sizeof(device)};
+    HANDLE file, async_file;
     BOOL ret, found = FALSE;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
@@ -2711,7 +2712,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     NTSTATUS status;
     unsigned int i;
     HDEVINFO set;
-    HANDLE file;
+    ULONG count;
 
     winetest_push_context("id %d%s", report_id, polled ? " poll" : "");
 
@@ -2745,8 +2746,60 @@ static void test_hid_device(DWORD report_id, DWORD polled)
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
 
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = HidD_GetNumInputBuffers(file, &count);
+    ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
+    todo_wine ok(count == 32, "HidD_GetNumInputBuffers returned %u\n", count);
+
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetNumInputBuffers(file, 1);
+    ok(!ret, "HidD_SetNumInputBuffers succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "HidD_SetNumInputBuffers returned error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetNumInputBuffers(file, 513);
+    ok(!ret, "HidD_SetNumInputBuffers succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "HidD_SetNumInputBuffers returned error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetNumInputBuffers(file, 16);
+    ok(ret, "HidD_SetNumInputBuffers failed last error %u\n", GetLastError());
+
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = HidD_GetNumInputBuffers(file, &count);
+    ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
+    todo_wine ok(count == 16, "HidD_GetNumInputBuffers returned %u\n", count);
+
+    async_file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+            FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL);
+    ok(async_file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = HidD_GetNumInputBuffers(async_file, &count);
+    ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
+    todo_wine ok(count == 32, "HidD_GetNumInputBuffers returned %u\n", count);
+
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetNumInputBuffers(async_file, 2);
+    ok(ret, "HidD_SetNumInputBuffers failed last error %u\n", GetLastError());
+
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = HidD_GetNumInputBuffers(async_file, &count);
+    ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
+    todo_wine ok(count == 2, "HidD_GetNumInputBuffers returned %u\n", count);
+    count = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = HidD_GetNumInputBuffers(file, &count);
+    ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
+    todo_wine ok(count == 16, "HidD_GetNumInputBuffers returned %u\n", count);
+
     test_hidp(file, report_id, polled);
 
+    CloseHandle(async_file);
     CloseHandle(file);
 
     RtlInitUnicodeString(&string, L"\\??\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}");
