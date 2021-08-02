@@ -3435,17 +3435,16 @@ NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, U
  * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
  * returned, but the unix name is still filled in properly.
  */
-NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nameA, SIZE_T *size,
+NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *nameA, ULONG *size,
                                           UINT disposition )
 {
     char *buffer = NULL;
     NTSTATUS status;
     UNICODE_STRING redir;
-    OBJECT_ATTRIBUTES attr;
+    OBJECT_ATTRIBUTES new_attr = *attr;
 
-    InitializeObjectAttributes( &attr, (UNICODE_STRING *)nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
-    get_redirect( &attr, &redir );
-    status = nt_to_unix_file_name( &attr, &buffer, disposition );
+    get_redirect( &new_attr, &redir );
+    status = nt_to_unix_file_name( &new_attr, &buffer, disposition );
 
     if (buffer)
     {
@@ -3576,7 +3575,7 @@ NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
 /******************************************************************
  *           wine_unix_to_nt_file_name
  */
-NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
+NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, ULONG *size )
 {
     WCHAR *nt_name = NULL;
     NTSTATUS status;

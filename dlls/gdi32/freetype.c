@@ -1352,7 +1352,7 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
 static WCHAR *get_dos_file_name( LPCSTR str )
 {
     WCHAR *buffer;
-    SIZE_T len = strlen(str) + 1;
+    ULONG len = strlen(str) + 1;
 
     len += 8;  /* \??\unix prefix */
     if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
@@ -1374,11 +1374,13 @@ static WCHAR *get_dos_file_name( LPCSTR str )
 static char *get_unix_file_name( LPCWSTR dosW )
 {
     UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
-    SIZE_T size = 256;
+    ULONG size = 256;
     char *buffer;
 
     if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
+    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
     for (;;)
     {
         if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, size )))
@@ -1386,7 +1388,7 @@ static char *get_unix_file_name( LPCWSTR dosW )
             RtlFreeUnicodeString( &nt_name );
             return NULL;
         }
-        status = wine_nt_to_unix_file_name( &nt_name, buffer, &size, FILE_OPEN_IF );
+        status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
         if (status != STATUS_BUFFER_TOO_SMALL) break;
         RtlFreeHeap( GetProcessHeap(), 0, buffer );
     }
