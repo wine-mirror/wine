@@ -39,7 +39,8 @@
 #include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+# define __APPLE_USE_RFC_3542
+# include <netinet/in.h>
 #endif
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
@@ -448,6 +449,25 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 #endif /* IP_PKTINFO */
                     default:
                         FIXME("Unhandled IPPROTO_IP message header type %d\n", cmsg_unix->cmsg_type);
+                        break;
+                }
+                break;
+
+            case IPPROTO_IPV6:
+                switch (cmsg_unix->cmsg_type)
+                {
+#if defined(IPV6_HOPLIMIT)
+                    case IPV6_HOPLIMIT:
+                    {
+                        ptr = fill_control_message( WS_IPPROTO_IPV6, WS_IPV6_HOPLIMIT, ptr, &ctlsize,
+                                                    CMSG_DATA(cmsg_unix), sizeof(INT) );
+                        if (!ptr) goto error;
+                        break;
+                    }
+#endif /* IPV6_HOPLIMIT */
+
+                    default:
+                        FIXME("Unhandled IPPROTO_IPV6 message header type %d\n", cmsg_unix->cmsg_type);
                         break;
                 }
                 break;
@@ -1881,6 +1901,14 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP:
             return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, in_buffer, in_size );
+
+#ifdef IPV6_RECVHOPLIMIT
+        case IOCTL_AFD_WINE_GET_IPV6_RECVHOPLIMIT:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_RECVHOPLIMIT:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, in_buffer, in_size );
+#endif
 
         case IOCTL_AFD_WINE_GET_IPV6_UNICAST_HOPS:
             return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_UNICAST_HOPS, out_buffer, out_size );

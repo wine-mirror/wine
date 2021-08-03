@@ -314,6 +314,7 @@ static inline const char *debugstr_sockopt(int level, int optname)
         {
             DEBUG_SOCKOPT(WS_IPV6_ADD_MEMBERSHIP);
             DEBUG_SOCKOPT(WS_IPV6_DROP_MEMBERSHIP);
+            DEBUG_SOCKOPT(WS_IPV6_HOPLIMIT);
             DEBUG_SOCKOPT(WS_IPV6_MULTICAST_IF);
             DEBUG_SOCKOPT(WS_IPV6_MULTICAST_HOPS);
             DEBUG_SOCKOPT(WS_IPV6_MULTICAST_LOOP);
@@ -1925,6 +1926,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IPV6_DONTFRAG:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_DONTFRAG, optval, optlen );
 
+        case WS_IPV6_HOPLIMIT:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_RECVHOPLIMIT, optval, optlen );
+
         case WS_IPV6_MULTICAST_HOPS:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_HOPS, optval, optlen );
 
@@ -3130,6 +3134,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 
         case WS_IPV6_DROP_MEMBERSHIP:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_DROP_MEMBERSHIP, optval, optlen );
+
+        case WS_IPV6_HOPLIMIT:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_RECVHOPLIMIT, optval, optlen );
 
         case WS_IPV6_MULTICAST_HOPS:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_HOPS, optval, optlen );

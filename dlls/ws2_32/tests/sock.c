@@ -2028,28 +2028,21 @@ static void test_ipv6_cmsg(void)
     memset(control, 0, sizeof(control));
     msg.Control.len = sizeof(control);
     rc = setsockopt(server, IPPROTO_IPV6, IPV6_HOPLIMIT, (const char *)&on, sizeof(on));
-todo_wine
     ok(!rc, "failed to set IPV6_HOPLIMIT, error %u\n", WSAGetLastError());
     state = 0;
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IPV6, IPV6_HOPLIMIT, (char *)&state, (INT *)&count);
-todo_wine
     ok(!rc, "failed to get IPV6_HOPLIMIT, error %u\n", WSAGetLastError());
-todo_wine
     ok(state == 1, "expected 1, got %u\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
     rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
     ok(count == sizeof(payload), "expected length %i, got %i\n", (INT)sizeof(payload), count);
-todo_wine
     ok(header->cmsg_level == IPPROTO_IPV6, "expected IPPROTO_IPV6, got %i\n", header->cmsg_level);
-todo_wine
     ok(header->cmsg_type == IPV6_HOPLIMIT, "expected IPV6_HOPLIMIT, got %i\n", header->cmsg_type);
-todo_wine
     ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
        "expected length %i, got %i\n", (INT)(sizeof(*header) + sizeof(INT)), (INT)header->cmsg_len);
-todo_wine
     ok(*hop_limit >= 32, "expected at least 32, got %i\n", *hop_limit);
     setsockopt(server, IPPROTO_IPV6, IPV6_HOPLIMIT, (const char *)&off, sizeof(off));
     ok(!rc, "failed to clear IPV6_HOPLIMIT, error %u\n", WSAGetLastError());
