@@ -110,8 +110,6 @@ typedef struct tagDC
     const struct font_gamma_ramp *font_gamma_ramp;
 
     UINT          font_code_page;
-    POINT         brush_org;
-
     DWORD         mapperFlags;       /* Font mapper flags */
     INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
     INT           breakExtra;        /* breakTotalExtra / breakCount */

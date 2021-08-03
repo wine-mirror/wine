@@ -91,8 +91,8 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->brush_color      = RGB( 255, 255, 255 );
     dc->attr->pen_color        = RGB( 0, 0, 0 );
     dc->attr->text_color    = RGB( 0, 0, 0 );
-    dc->brush_org.x         = 0;
-    dc->brush_org.y         = 0;
+    dc->attr->brush_org.x   = 0;
+    dc->attr->brush_org.y   = 0;
     dc->mapperFlags         = 0;
     dc->attr->text_align    = TA_LEFT | TA_TOP | TA_NOUPDATECP;
     dc->charExtra           = 0;
@@ -410,7 +410,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->text_color       = dcs->attr->text_color;
     dc->attr->brush_color      = dcs->attr->brush_color;
     dc->attr->pen_color        = dcs->attr->pen_color;
-    dc->brush_org        = dcs->brush_org;
+    dc->attr->brush_org        = dcs->attr->brush_org;
     dc->mapperFlags      = dcs->mapperFlags;
     dc->attr->text_align = dcs->attr->text_align;
     dc->charExtra        = dcs->charExtra;
@@ -544,7 +544,6 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
     newdc->hFont            = dc->hFont;
     newdc->hBitmap          = dc->hBitmap;
     newdc->hPalette         = dc->hPalette;
-    newdc->brush_org        = dc->brush_org;
     newdc->mapperFlags      = dc->mapperFlags;
     newdc->charExtra        = dc->charExtra;
     newdc->breakExtra       = dc->breakExtra;
@@ -1271,19 +1270,6 @@ UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
 
     release_dc_ptr( dc );
     return ret;
-}
-
-
-/***********************************************************************
- *		GetBrushOrgEx (GDI32.@)
- */
-BOOL WINAPI GetBrushOrgEx( HDC hdc, LPPOINT pt )
-{
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-    *pt = dc->brush_org;
-    release_dc_ptr( dc );
-    return TRUE;
 }
 
 

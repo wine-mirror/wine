@@ -1030,7 +1030,7 @@ DWORD CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
         }
         else
             ret = execute_rop( pdev, &dst->visrect, &src_dib, &src->visrect, &clipped_rects,
-                               &dc->brush_org, rop );
+                               &dc->attr->brush_org, rop );
         free_clipped_rects( &clipped_rects );
     }
     free_dib_info( &src_dib );

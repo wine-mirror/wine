@@ -73,7 +73,7 @@ static BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect
 
     if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
     ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                        &dc->brush_org, dc->attr->rop_mode );
+                        &dc->attr->brush_org, dc->attr->rop_mode );
     free_clipped_rects( &clipped_rects );
     return ret;
 }
@@ -1203,7 +1203,7 @@ BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
         break;
     default:
         ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                            &dc->brush_org, rop2 );
+                            &dc->attr->brush_org, rop2 );
         break;
     }
     free_clipped_rects( &clipped_rects );

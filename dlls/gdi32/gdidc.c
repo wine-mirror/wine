@@ -331,6 +331,17 @@ INT WINAPI GetStretchBltMode( HDC hdc )
 }
 
 /***********************************************************************
+ *		GetBrushOrgEx (GDI32.@)
+ */
+BOOL WINAPI GetBrushOrgEx( HDC hdc, POINT *point )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    *point = dc_attr->brush_org;
+    return TRUE;
+}
+
+/***********************************************************************
  *           GetDCOrgEx  (GDI32.@)
  */
 BOOL WINAPI GetDCOrgEx( HDC hdc, POINT *point )

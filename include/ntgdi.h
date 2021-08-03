@@ -116,6 +116,7 @@ typedef struct DC_ATTR
     INT       map_mode;
     RECT      vis_rect;            /* visible rectangle in screen coords */
     FLOAT     miter_limit;
+    POINT     brush_org;           /* brush origin */
     POINT     wnd_org;             /* window origin */
     SIZE      wnd_ext;             /* window extent */
     POINT     vport_org;           /* viewport origin */
