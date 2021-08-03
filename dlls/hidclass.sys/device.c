@@ -312,8 +312,8 @@ static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, SHOR
 
     InputBuffer = MAKELONG(index, 0);
 
-    irp->IoStatus.Status = call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( InputBuffer ),
-                                            sizeof(InputBuffer), buffer, sizeof(buffer) );
+    call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( InputBuffer ),
+                     sizeof(InputBuffer), buffer, sizeof(buffer), &irp->IoStatus );
 
     if (irp->IoStatus.Status == STATUS_SUCCESS)
     {
@@ -351,7 +351,8 @@ static void HID_get_feature( BASE_DEVICE_EXTENSION *ext, IRP *irp )
 
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet->reportId, packet->reportBufferLen, packet->reportBuffer);
 
-    irp->IoStatus.Status = call_minidriver( IOCTL_HID_GET_FEATURE, ext->u.pdo.parent_fdo, NULL, 0, packet, sizeof(*packet) );
+    call_minidriver( IOCTL_HID_GET_FEATURE, ext->u.pdo.parent_fdo, NULL, 0, packet, sizeof(*packet),
+                     &irp->IoStatus );
 
     if (irp->IoStatus.Status == STATUS_SUCCESS)
     {
@@ -400,8 +401,8 @@ static void HID_set_to_device( DEVICE_OBJECT *device, IRP *irp )
 
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
-    irp->IoStatus.Status = call_minidriver( irpsp->Parameters.DeviceIoControl.IoControlCode,
-                                            ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet) );
+    call_minidriver( irpsp->Parameters.DeviceIoControl.IoControlCode, ext->u.pdo.parent_fdo, NULL,
+                     0, &packet, sizeof(packet), &irp->IoStatus );
 
     if (irp->IoStatus.Status == STATUS_SUCCESS)
         irp->IoStatus.Information = irpsp->Parameters.DeviceIoControl.InputBufferLength;
@@ -521,7 +522,8 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
             packet->reportBufferLen = buffer_len - 1;
 
-            irp->IoStatus.Status = call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, packet, sizeof(*packet) );
+            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, packet,
+                             sizeof(*packet), &irp->IoStatus );
 
             if (irp->IoStatus.Status == STATUS_SUCCESS)
             {
@@ -658,7 +660,8 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
             packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
             packet.reportBufferLen = irpsp->Parameters.Read.Length - 1;
 
-            irp->IoStatus.Status = call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet) );
+            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, &packet,
+                             sizeof(packet), &irp->IoStatus );
 
             if (irp->IoStatus.Status == STATUS_SUCCESS)
             {
@@ -731,7 +734,8 @@ NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp)
 
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
-    irp->IoStatus.Status = call_minidriver( IOCTL_HID_WRITE_REPORT, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet) );
+    call_minidriver( IOCTL_HID_WRITE_REPORT, ext->u.pdo.parent_fdo, NULL, 0, &packet,
+                     sizeof(packet), &irp->IoStatus );
 
     if (irp->IoStatus.Status == STATUS_SUCCESS)
         irp->IoStatus.Information = irpsp->Parameters.Write.Length;

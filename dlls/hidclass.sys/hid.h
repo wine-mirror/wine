@@ -108,7 +108,8 @@ typedef struct _minidriver
     PDRIVER_DISPATCH PNPDispatch;
 } minidriver;
 
-NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size) DECLSPEC_HIDDEN;
+void call_minidriver( ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size,
+                      void *out_buff, ULONG out_size, IO_STATUS_BLOCK *io ) DECLSPEC_HIDDEN;
 
 /* Internal device functions */
 void HID_StartDeviceThread(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
