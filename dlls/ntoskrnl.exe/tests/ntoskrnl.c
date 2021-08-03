@@ -2441,7 +2441,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     SetLastError(0xdeadbeef);
     ret = HidD_GetInputReport(file, report, 0);
     ok(!ret, "HidD_GetInputReport succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetInputReport returned error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetInputReport returned error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = HidD_GetInputReport(file, report, caps.InputReportByteLength - 1);

@@ -499,7 +499,12 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             BYTE *buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
             ULONG out_length;
 
-            if (!irpsp->Parameters.DeviceIoControl.OutputBufferLength || !buffer)
+            if (!buffer)
+            {
+                irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
+                break;
+            }
+            if (!irpsp->Parameters.DeviceIoControl.OutputBufferLength)
             {
                 irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
                 break;
