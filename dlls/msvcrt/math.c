@@ -5554,6 +5554,37 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
     case _RC_DOWN: fpcr |= 0x800000; break;
     }
     __asm__ __volatile__( "msr fpcr, %0" :: "r" (fpcr) );
+#elif defined(__arm__) && !defined(__SOFTFP__)
+    DWORD fpscr;
+
+    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
+    if (!(fpscr & 0x100))  flags |= _EM_INVALID;
+    if (!(fpscr & 0x200))  flags |= _EM_ZERODIVIDE;
+    if (!(fpscr & 0x400))  flags |= _EM_OVERFLOW;
+    if (!(fpscr & 0x800))  flags |= _EM_UNDERFLOW;
+    if (!(fpscr & 0x1000)) flags |= _EM_INEXACT;
+    if (!(fpscr & 0x8000)) flags |= _EM_DENORMAL;
+    switch (fpscr & 0xc00000)
+    {
+    case 0x400000: flags |= _RC_UP; break;
+    case 0x800000: flags |= _RC_DOWN; break;
+    case 0xc00000: flags |= _RC_CHOP; break;
+    }
+    flags = (flags & ~mask) | (newval & mask);
+    fpscr &= ~0xc09f00ul;
+    if (!(flags & _EM_INVALID))    fpscr |= 0x100;
+    if (!(flags & _EM_ZERODIVIDE)) fpscr |= 0x200;
+    if (!(flags & _EM_OVERFLOW))   fpscr |= 0x400;
+    if (!(flags & _EM_UNDERFLOW))  fpscr |= 0x800;
+    if (!(flags & _EM_INEXACT))    fpscr |= 0x1000;
+    if (!(flags & _EM_DENORMAL))   fpscr |= 0x8000;
+    switch (flags & _MCW_RC)
+    {
+    case _RC_CHOP: fpscr |= 0xc00000; break;
+    case _RC_UP:   fpscr |= 0x400000; break;
+    case _RC_DOWN: fpscr |= 0x800000; break;
+    }
+    __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
 #else
     FIXME( "not implemented\n" );
 #endif
