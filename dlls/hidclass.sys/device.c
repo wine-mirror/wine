@@ -526,12 +526,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
                              sizeof(*packet), &irp->IoStatus );
 
             if (irp->IoStatus.Status == STATUS_SUCCESS)
-            {
                 irp->IoStatus.Status = copy_packet_into_buffer( packet, buffer, buffer_len, &out_length );
-                irp->IoStatus.Information = out_length;
-            }
-            else
-                irp->IoStatus.Information = 0;
             free(packet);
             break;
         }

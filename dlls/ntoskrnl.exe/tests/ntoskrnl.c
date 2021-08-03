@@ -2475,7 +2475,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     value = caps.InputReportByteLength * 2;
     ret = sync_ioctl(file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &value);
     ok(ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %u\n", GetLastError());
-    todo_wine ok(value == 3, "got length %u, expected 3\n", value);
+    ok(value == 3, "got length %u, expected 3\n", value);
     ok(report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id);
 
 
