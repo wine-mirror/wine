@@ -1118,53 +1118,50 @@ todo_wine_if( row.dwType == IF_TYPE_SOFTWARE_LOOPBACK)
 
 static void testGetAdaptersInfo(void)
 {
-    DWORD apiReturn;
+    IP_ADAPTER_INFO *ptr, *buf;
+    NET_LUID luid;
+    GUID guid;
+    char name[ARRAY_SIZE(ptr->AdapterName)];
+    DWORD err;
     ULONG len = 0;
+    MIB_IFROW row;
 
-    apiReturn = GetAdaptersInfo(NULL, NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED) {
-        skip("GetAdaptersInfo is not supported\n");
-        return;
-    }
-    ok(apiReturn == ERROR_INVALID_PARAMETER,
-       "GetAdaptersInfo returned %d, expected ERROR_INVALID_PARAMETER\n",
-       apiReturn);
-    apiReturn = GetAdaptersInfo(NULL, &len);
-    ok(apiReturn == ERROR_NO_DATA || apiReturn == ERROR_BUFFER_OVERFLOW,
-       "GetAdaptersInfo returned %d, expected ERROR_NO_DATA or ERROR_BUFFER_OVERFLOW\n",
-       apiReturn);
-    if (apiReturn == ERROR_NO_DATA)
-        ; /* no adapter's, that's okay */
-    else if (apiReturn == ERROR_BUFFER_OVERFLOW) {
-        PIP_ADAPTER_INFO ptr, buf = HeapAlloc(GetProcessHeap(), 0, len);
-        NET_LUID luid;
-        GUID guid;
-        char AdapterName[ARRAY_SIZE(ptr->AdapterName)];
+    err = GetAdaptersInfo( NULL, NULL );
+    ok( err == ERROR_INVALID_PARAMETER, "got %d\n", err );
+    err = GetAdaptersInfo( NULL, &len );
+    ok( err == ERROR_NO_DATA || err == ERROR_BUFFER_OVERFLOW, "got %d\n", err );
+    if (err == ERROR_NO_DATA) return;
 
-        apiReturn = GetAdaptersInfo(buf, &len);
-        ok(apiReturn == NO_ERROR,
-           "GetAdaptersInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
-           apiReturn);
-        ptr = buf;
-        while (ptr) {
-            ConvertInterfaceIndexToLuid(ptr->Index, &luid);
-            ConvertInterfaceLuidToGuid(&luid, &guid);
-            sprintf(AdapterName, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                    guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-                    guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-                    guid.Data4[6], guid.Data4[7]);
-            ok(!strcmp(ptr->AdapterName, AdapterName), "expected '%s' got '%s'\n", ptr->AdapterName, AdapterName);
-            ok(ptr->IpAddressList.IpAddress.String[0], "A valid IP address must be present\n");
-            ok(ptr->IpAddressList.IpMask.String[0], "A valid mask must be present\n");
-            ok(ptr->GatewayList.IpAddress.String[0], "A valid IP address must be present\n");
-            ok(ptr->GatewayList.IpMask.String[0], "A valid mask must be present\n");
-            trace("adapter '%s', address %s/%s gateway %s/%s\n", ptr->AdapterName,
-                  ptr->IpAddressList.IpAddress.String, ptr->IpAddressList.IpMask.String,
-                  ptr->GatewayList.IpAddress.String, ptr->GatewayList.IpMask.String);
-            ptr = ptr->Next;
-        }
-        HeapFree(GetProcessHeap(), 0, buf);
+    buf = malloc( len );
+    err = GetAdaptersInfo( buf, &len );
+    ok( !err, "got %d\n", err );
+    ptr = buf;
+    while (ptr)
+    {
+        trace( "adapter '%s', address %s/%s gateway %s/%s\n", ptr->AdapterName,
+               ptr->IpAddressList.IpAddress.String, ptr->IpAddressList.IpMask.String,
+               ptr->GatewayList.IpAddress.String, ptr->GatewayList.IpMask.String );
+        row.dwIndex = ptr->Index;
+        GetIfEntry( &row );
+        ConvertInterfaceIndexToLuid( ptr->Index, &luid );
+        ConvertInterfaceLuidToGuid( &luid, &guid );
+        sprintf( name, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                 guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
+                 guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
+                 guid.Data4[6], guid.Data4[7] );
+        ok( !strcmp( ptr->AdapterName, name ), "expected '%s' got '%s'\n", ptr->AdapterName, name );
+        ok( !strcmp( ptr->Description, (char *)row.bDescr ), "got %s vs %s\n", ptr->Description, (char *)row.bDescr );
+        ok( ptr->AddressLength == row.dwPhysAddrLen, "got %d vs %d\n", ptr->AddressLength, row.dwPhysAddrLen );
+        ok( !memcmp(ptr->Address, row.bPhysAddr, ptr->AddressLength ), "mismatch\n" );
+        ok( ptr->Type == row.dwType, "got %d vs %d\n", ptr->Type, row.dwType );
+        ok( ptr->Type != MIB_IF_TYPE_LOOPBACK, "shouldn't get loopback\n" );
+        ok( ptr->IpAddressList.IpAddress.String[0], "A valid IP address must be present\n" );
+        ok( ptr->IpAddressList.IpMask.String[0], "A valid mask must be present\n" );
+        ok( ptr->GatewayList.IpAddress.String[0], "A valid IP address must be present\n" );
+        ok( ptr->GatewayList.IpMask.String[0], "A valid mask must be present\n" );
+        ptr = ptr->Next;
     }
+    free( buf );
 }
 
 static void testGetNetworkParams(void)
