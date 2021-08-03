@@ -573,6 +573,40 @@ DWORD WINAPI GetAdapterIndex( WCHAR *adapter_name, ULONG *index )
     return err;
 }
 
+static DWORD get_wins_servers( SOCKADDR_INET **servers )
+{
+    HKEY key;
+    char buf[4 * 4];
+    DWORD size, i, count = 0;
+    static const char *values[] = { "WinsServer", "BackupWinsServer" };
+    IN_ADDR addrs[ARRAY_SIZE(values)];
+
+    *servers = NULL;
+    /* @@ Wine registry key: HKCU\Software\Wine\Network */
+    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Network", &key )) return 0;
+
+    for (i = 0; i < ARRAY_SIZE(values); i++)
+    {
+        size = sizeof(buf);
+        if (!RegQueryValueExA( key, values[i], NULL, NULL, (LPBYTE)buf, &size ))
+            if (!RtlIpv4StringToAddressA( buf, TRUE, NULL, addrs + count ) &&
+                addrs[count].WS_s_addr != INADDR_NONE && addrs[count].WS_s_addr != INADDR_ANY)
+                count++;
+    }
+    RegCloseKey( key );
+
+    if (count)
+    {
+        *servers = heap_alloc_zero( count * sizeof(**servers) );
+        if (!*servers) return 0;
+        for (i = 0; i < count; i++)
+        {
+            (*servers)[i].Ipv4.sin_family = WS_AF_INET;
+            (*servers)[i].Ipv4.sin_addr = addrs[i];
+        }
+    }
+    return count;
+}
 
 /******************************************************************
  *    GetAdaptersInfo (IPHLPAPI.@)
@@ -630,33 +664,12 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
             ret = ERROR_INSUFFICIENT_BUFFER;
           }
           else {
-            DWORD ndx;
-            HKEY hKey;
-            BOOL winsEnabled = FALSE;
-            IP_ADDRESS_STRING primaryWINS, secondaryWINS;
+            SOCKADDR_INET *wins_servers = NULL;
+            DWORD ndx, wins_server_count = get_wins_servers( &wins_servers );
             PIP_ADDR_STRING nextIPAddr = (PIP_ADDR_STRING)((LPBYTE)pAdapterInfo
              + numNonLoopbackInterfaces * sizeof(IP_ADAPTER_INFO));
 
             memset(pAdapterInfo, 0, size);
-            /* @@ Wine registry key: HKCU\Software\Wine\Network */
-            if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Network",
-             &hKey) == ERROR_SUCCESS) {
-              DWORD size = sizeof(primaryWINS.String);
-              unsigned long addr;
-
-              RegQueryValueExA(hKey, "WinsServer", NULL, NULL,
-               (LPBYTE)primaryWINS.String, &size);
-              addr = inet_addr(primaryWINS.String);
-              if (addr != INADDR_NONE && addr != INADDR_ANY)
-                winsEnabled = TRUE;
-              size = sizeof(secondaryWINS.String);
-              RegQueryValueExA(hKey, "BackupWinsServer", NULL, NULL,
-               (LPBYTE)secondaryWINS.String, &size);
-              addr = inet_addr(secondaryWINS.String);
-              if (addr != INADDR_NONE && addr != INADDR_ANY)
-                winsEnabled = TRUE;
-              RegCloseKey(hKey);
-            }
             for (ndx = 0; ndx < table->numIndexes; ndx++) {
               PIP_ADAPTER_INFO ptr = &pAdapterInfo[ndx];
               DWORD i;
@@ -714,12 +727,12 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                   RtlIpv4AddressToStringA((IN_ADDR *)&routeTable->table[i].dwForwardMask,
                    ptr->GatewayList.IpMask.String);
                 }
-              if (winsEnabled) {
+              if (wins_server_count)
+              {
                 ptr->HaveWins = TRUE;
-                memcpy(ptr->PrimaryWinsServer.IpAddress.String,
-                 primaryWINS.String, sizeof(primaryWINS.String));
-                memcpy(ptr->SecondaryWinsServer.IpAddress.String,
-                 secondaryWINS.String, sizeof(secondaryWINS.String));
+                RtlIpv4AddressToStringA( &wins_servers[0].Ipv4.sin_addr, ptr->PrimaryWinsServer.IpAddress.String );
+                if (wins_server_count > 1)
+                  RtlIpv4AddressToStringA( &wins_servers[1].Ipv4.sin_addr, ptr->SecondaryWinsServer.IpAddress.String );
               }
               if (ndx < table->numIndexes - 1)
                 ptr->Next = &pAdapterInfo[ndx + 1];
@@ -728,6 +741,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
 
               ptr->DhcpEnabled = TRUE;
             }
+            heap_free( wins_servers );
             ret = NO_ERROR;
           }
           HeapFree(GetProcessHeap(), 0, table);
