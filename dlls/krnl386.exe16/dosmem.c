@@ -307,7 +307,6 @@ static void DOSMEM_InitSegments(void)
     {
         0xca, 0x04, 0x00, /* 16-bit far return and pop 4 bytes (relay void* arg) */
         0xcd, 0x31,       /* int 31 */
-        0xfb, 0x66, 0xcb  /* sti and 32-bit far return */
     };
 
     /*
@@ -332,7 +331,6 @@ static void DOSMEM_InitSegments(void)
     /*
      * PM / offset 0: Stub where __wine_call_from_16_regs returns.
      * PM / offset 3: Stub which swaps back to 32-bit application code/stack.
-     * PM / offset 5: Stub which enables interrupts
      */
     relay_code_sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(relay), 0, LDT_FLAGS_CODE );
     ptr = GlobalLock16( relay_code_sel );
