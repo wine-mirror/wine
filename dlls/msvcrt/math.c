@@ -5260,6 +5260,18 @@ unsigned int CDECL _clearfp(void)
     if (fpsr & 0x80) flags |= _SW_DENORMAL;
     fpsr &= ~0x9f;
     __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
+#elif defined(__arm__) && !defined(__SOFTFP__)
+    DWORD fpscr;
+
+    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
+    if (fpscr & 0x1)  flags |= _SW_INVALID;
+    if (fpscr & 0x2)  flags |= _SW_ZERODIVIDE;
+    if (fpscr & 0x4)  flags |= _SW_OVERFLOW;
+    if (fpscr & 0x8)  flags |= _SW_UNDERFLOW;
+    if (fpscr & 0x10) flags |= _SW_INEXACT;
+    if (fpscr & 0x80) flags |= _SW_DENORMAL;
+    fpscr &= ~0x9f;
+    __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
 #else
     FIXME( "not implemented\n" );
 #endif
