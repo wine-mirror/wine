@@ -2025,10 +2025,13 @@ int WINAPI WSAAddressToStringW( struct WS_sockaddr *addr, DWORD addr_len,
 /***********************************************************************
  *      inet_addr   (ws2_32.11)
  */
-WS_u_long WINAPI WS_inet_addr( const char *cp )
+WS_u_long WINAPI WS_inet_addr( const char *str )
 {
-    if (!cp) return INADDR_NONE;
-    return inet_addr( cp );
+    WS_u_long addr;
+
+    if (WS_inet_pton( WS_AF_INET, str, &addr ) == 1)
+        return addr;
+    return WS_INADDR_NONE;
 }
 
 

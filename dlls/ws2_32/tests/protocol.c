@@ -945,7 +945,7 @@ static void test_inet_pton(void)
     WSASetLastError(0xdeadbeef);
     ret = inet_addr(NULL);
     ok(ret == INADDR_NONE, "got %#x\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     for (i = 0; i < ARRAY_SIZE(ipv4_tests); ++i)
     {
