@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 123
+#define NTDLL_UNIXLIB_VERSION 124
 
 struct unix_funcs
 {
@@ -68,9 +68,6 @@ struct unix_funcs
     double        (CDECL *sin)( double d );
     double        (CDECL *sqrt)( double d );
     double        (CDECL *tan)( double d );
-
-    /* virtual memory functions */
-    void          (CDECL *virtual_release_address_space)(void);
 
     /* loader functions */
     NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );

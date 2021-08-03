@@ -1895,7 +1895,6 @@ static struct unix_funcs unix_funcs =
     ntdll_sin,
     ntdll_sqrt,
     ntdll_tan,
-    virtual_release_address_space,
     load_so_dll,
     init_builtin_dll,
     init_unix_lib,

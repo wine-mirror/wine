@@ -3775,6 +3775,17 @@ static void init_wow64( CONTEXT *context )
 #endif
 
 
+/* release some address space once dlls are loaded*/
+static void release_address_space(void)
+{
+#ifndef _WIN64
+    void *addr = (void *)1;
+    SIZE_T size = 0;
+
+    NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
+#endif
+}
+
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
@@ -3901,7 +3912,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
                 NtTerminateProcess( GetCurrentProcess(), status );
             }
         }
-        unix_funcs->virtual_release_address_space();
+        release_address_space();
         if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
         if (wm->ldr.Flags & LDR_WINE_INTERNAL) unix_funcs->init_builtin_dll( wm->ldr.DllBase );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );

@@ -580,6 +580,20 @@ static void mmap_init( const struct preload_info *preload_info )
 #endif
 }
 
+
+/***********************************************************************
+ *           get_wow_user_space_limit
+ */
+static void *get_wow_user_space_limit(void)
+{
+#ifdef _WIN64
+    if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) return (void *)0xc0000000;
+    return (void *)0x7fff0000;
+#endif
+    return user_space_limit;
+}
+
+
 /***********************************************************************
  *           add_builtin_module
  */
@@ -2703,17 +2717,8 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
     info->LowestUserAddress       = (void *)0x10000;
     info->ActiveProcessorsAffinityMask = get_system_affinity_mask();
     info->NumberOfProcessors      = peb->NumberOfProcessors;
-#ifdef _WIN64
-    if (wow64)
-    {
-        if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
-            info->HighestUserAddress = (char *)0xc0000000 - 1;
-        else
-            info->HighestUserAddress = (char *)0x7fff0000 - 1;
-        return;
-    }
-#endif
-    info->HighestUserAddress = (char *)user_space_limit - 1;
+    if (wow64) info->HighestUserAddress = (char *)get_wow_user_space_limit() - 1;
+    else info->HighestUserAddress = (char *)user_space_limit - 1;
 }
 
 
@@ -3639,38 +3644,29 @@ static int CDECL free_reserved_memory( void *base, SIZE_T size, void *arg )
  *
  * Release some address space once we have loaded and initialized the app.
  */
-void CDECL virtual_release_address_space(void)
+static void virtual_release_address_space(void)
 {
     struct free_range range;
-    sigset_t sigset;
-
-    if (is_win64) return;
-
-    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
     range.base  = (char *)0x82000000;
-    range.limit = user_space_limit;
+    range.limit = get_wow_user_space_limit();
+
+    if (range.limit > (char *)0xfffff000) return;  /* 64-bit limit, nothing to do */
 
     if (range.limit > range.base)
     {
         while (mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
 #ifdef __APPLE__
         /* On macOS, we still want to free some of low memory, for OpenGL resources */
-        range.base  = (char *)0x40000000;
+        range.base = (char *)0x40000000;
 #else
-        range.base  = NULL;
+        return;
 #endif
     }
-    else
-        range.base = (char *)0x20000000;
+    else range.base = (char *)0x20000000;
 
-    if (range.base)
-    {
-        range.limit = (char *)0x7f000000;
-        while (mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
-    }
-
-    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    range.limit = (char *)0x7f000000;
+    while (mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
 }
 
 
@@ -3884,12 +3880,16 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
 
-    /* avoid freeing the DOS area when a broken app passes a NULL pointer */
-    if (!base) return STATUS_INVALID_PARAMETER;
-
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    if (!(view = find_view( base, size )) || !is_view_valloc( view ))
+    /* avoid freeing the DOS area when a broken app passes a NULL pointer */
+    if (!base)
+    {
+        /* address 1 is magic to mean release reserved space */
+        if (addr == (void *)1 && !*size_ptr && type == MEM_RELEASE) virtual_release_address_space();
+        else status = STATUS_INVALID_PARAMETER;
+    }
+    else if (!(view = find_view( base, size )) || !is_view_valloc( view ))
     {
         status = STATUS_INVALID_PARAMETER;
     }
