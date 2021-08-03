@@ -2415,26 +2415,27 @@ BOOL WINAPI EnumEnhMetaFile(
     info->state.next = NULL;
     info->save_level = 0;
     info->saved_state = NULL;
+    info->init_transform = info->state.world_transform;
 
     ht = (HANDLETABLE*) &info[1];
     ht->objectHandle[0] = hmf;
     for(i = 1; i < emh->nHandles; i++)
         ht->objectHandle[i] = NULL;
 
-    if(hdc)
+    if (hdc && !is_meta_dc( hdc ))
     {
-	savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
-	GetWorldTransform(hdc, &savedXform);
+        savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
+        GetWorldTransform(hdc, &savedXform);
         GetViewportExtEx(hdc, &vp_size);
         GetWindowExtEx(hdc, &win_size);
         GetViewportOrgEx(hdc, &vp_org);
         GetWindowOrgEx(hdc, &win_org);
         mapMode = GetMapMode(hdc);
 
-	/* save DC */
-	hPen = GetCurrentObject(hdc, OBJ_PEN);
-	hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
-	hFont = GetCurrentObject(hdc, OBJ_FONT);
+        /* save DC */
+        hPen = GetCurrentObject(hdc, OBJ_PEN);
+        hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
+        hFont = GetCurrentObject(hdc, OBJ_FONT);
 
         hRgn = NtGdiCreateRectRgn(0, 0, 0, 0);
         if (!GetClipRgn(hdc, hRgn))
@@ -2451,17 +2452,7 @@ BOOL WINAPI EnumEnhMetaFile(
         old_polyfill = SetPolyFillMode(hdc, ALTERNATE);
         old_stretchblt = SetStretchBltMode(hdc, BLACKONWHITE);
 
-        if ( IS_WIN9X() )
-        {
-            /* Win95 leaves the vp/win ext/org info alone */
-            info->init_transform.eM11 = 1.0;
-            info->init_transform.eM12 = 0.0;
-            info->init_transform.eM21 = 0.0;
-            info->init_transform.eM22 = 1.0;
-            info->init_transform.eDx  = 0.0;
-            info->init_transform.eDy  = 0.0;
-        }
-        else
+        if (!IS_WIN9X())
         {
             /* WinNT combines the vp/win ext/org info into a transform */
             double xscale, yscale;
@@ -2505,7 +2496,7 @@ BOOL WINAPI EnumEnhMetaFile(
         }
 
         /* WinNT resets the current vp/win org/ext */
-        if ( !IS_WIN9X() )
+        if (!IS_WIN9X())
         {
             SetMapMode(hdc, MM_TEXT);
             SetWindowOrgEx(hdc, 0, 0, NULL);
@@ -2537,7 +2528,7 @@ BOOL WINAPI EnumEnhMetaFile(
 	offset += emr->nSize;
     }
 
-    if (hdc)
+    if (hdc && !is_meta_dc( hdc ))
     {
         SetStretchBltMode(hdc, old_stretchblt);
         SetPolyFillMode(hdc, old_polyfill);
@@ -2554,9 +2545,9 @@ BOOL WINAPI EnumEnhMetaFile(
         ExtSelectClipRgn(hdc, hRgn, RGN_COPY);
         DeleteObject(hRgn);
 
-	SetWorldTransform(hdc, &savedXform);
-	if (savedMode)
-	    SetGraphicsMode(hdc, savedMode);
+        SetWorldTransform(hdc, &savedXform);
+        if (savedMode)
+            SetGraphicsMode(hdc, savedMode);
         SetMapMode(hdc, mapMode);
         SetWindowOrgEx(hdc, win_org.x, win_org.y, NULL);
         SetWindowExtEx(hdc, win_size.cx, win_size.cy, NULL);
