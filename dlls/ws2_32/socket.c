@@ -396,7 +396,7 @@ static BOOL socket_list_find( SOCKET socket )
 }
 
 
-static void socket_list_remove(SOCKET socket)
+static BOOL socket_list_remove( SOCKET socket )
 {
     unsigned int i;
 
@@ -406,10 +406,12 @@ static void socket_list_remove(SOCKET socket)
         if (socket_list[i] == socket)
         {
             socket_list[i] = 0;
-            break;
+            LeaveCriticalSection( &cs_socket_list );
+            return TRUE;
         }
     }
     LeaveCriticalSection(&cs_socket_list);
+    return FALSE;
 }
 
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
@@ -584,29 +586,6 @@ static DWORD NtStatusToWSAError( NTSTATUS status )
     return NT_SUCCESS(status) ? RtlNtStatusToDosErrorNoTeb(status) : WSAEINVAL;
 }
 
-/* set last error code from NT status without mapping WSA errors */
-static inline unsigned int set_error( unsigned int err )
-{
-    if (err)
-    {
-        err = NtStatusToWSAError( err );
-        SetLastError( err );
-    }
-    return err;
-}
-
-static inline int get_sock_fd( SOCKET s, DWORD access, unsigned int *options )
-{
-    int fd;
-    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, options ) ))
-        return -1;
-    return fd;
-}
-
-static inline void release_sock_fd( SOCKET s, int fd )
-{
-    close( fd );
-}
 
 struct per_thread_data *get_per_thread_data(void)
 {
@@ -1514,26 +1493,26 @@ int WINAPI WS_bind( SOCKET s, const struct WS_sockaddr *addr, int len )
 
 
 /***********************************************************************
- *		closesocket		(WS2_32.3)
+ *      closesocket   (ws2_32.3)
  */
-int WINAPI WS_closesocket(SOCKET s)
+int WINAPI WS_closesocket( SOCKET s )
 {
-    int res = SOCKET_ERROR, fd;
-    if (num_startup)
+    TRACE( "%#lx\n", s );
+
+    if (!num_startup)
     {
-        fd = get_sock_fd(s, FILE_READ_DATA, NULL);
-        if (fd >= 0)
-        {
-            release_sock_fd(s, fd);
-            socket_list_remove(s);
-            if (CloseHandle(SOCKET2HANDLE(s)))
-                res = 0;
-        }
+        SetLastError( WSANOTINITIALISED );
+        return -1;
     }
-    else
-        SetLastError(WSANOTINITIALISED);
-    TRACE("(socket %04lx) -> %d\n", s, res);
-    return res;
+
+    if (!socket_list_remove( s ))
+    {
+        SetLastError( WSAENOTSOCK );
+        return -1;
+    }
+
+    CloseHandle( (HANDLE)s );
+    return 0;
 }
 
 
