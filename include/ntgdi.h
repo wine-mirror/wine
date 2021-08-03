@@ -116,6 +116,7 @@ typedef struct DC_ATTR
     INT       map_mode;
     RECT      vis_rect;            /* visible rectangle in screen coords */
     FLOAT     miter_limit;
+    SIZE      vport_ext;           /* viewport extent */
     void     *emf;
 } DC_ATTR;
 

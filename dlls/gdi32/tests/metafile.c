@@ -865,7 +865,7 @@ static void test_mf_SaveDC(void)
     ret = GetViewportOrgEx(hdcMetafile, &pt);
     todo_wine ok (!ret, "GetViewportOrgEx should fail\n");
     ret = GetViewportExtEx(hdcMetafile, &size);
-    todo_wine ok (!ret, "GetViewportExtEx should fail\n");
+    ok(!ret, "GetViewportExtEx should fail\n");
     ret = SaveDC(hdcMetafile);
     ok(ret == 1, "ret = %d\n", ret);
 
