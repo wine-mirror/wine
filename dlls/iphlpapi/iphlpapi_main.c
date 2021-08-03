@@ -608,155 +608,162 @@ static DWORD get_wins_servers( SOCKADDR_INET **servers )
     return count;
 }
 
+static void ip_addr_string_init( IP_ADDR_STRING *s, const IN_ADDR *addr, const IN_ADDR *mask, DWORD ctxt )
+{
+    s->Next = NULL;
+
+    if (addr) RtlIpv4AddressToStringA( addr, s->IpAddress.String );
+    else s->IpAddress.String[0] = '\0';
+    if (mask) RtlIpv4AddressToStringA( mask, s->IpMask.String );
+    else s->IpMask.String[0] = '\0';
+    s->Context = ctxt;
+}
+
 /******************************************************************
  *    GetAdaptersInfo (IPHLPAPI.@)
  *
  * Get information about adapters.
  *
  * PARAMS
- *  pAdapterInfo [Out] buffer for adapter infos
- *  pOutBufLen   [In]  length of output buffer
- *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
+ *  info [Out] buffer for adapter infos
+ *  size [In]  length of output buffer
  */
-DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
+DWORD WINAPI GetAdaptersInfo( IP_ADAPTER_INFO *info, ULONG *size )
 {
-  DWORD ret;
+    DWORD err, if_count, if_num = 0, uni_count, fwd_count, needed, wins_server_count;
+    DWORD len, i, uni, fwd;
+    NET_LUID *if_keys = NULL;
+    struct nsi_ndis_ifinfo_rw *if_rw = NULL;
+    struct nsi_ndis_ifinfo_dynamic *if_dyn = NULL;
+    struct nsi_ndis_ifinfo_static *if_stat = NULL;
+    struct nsi_ipv4_unicast_key *uni_keys = NULL;
+    struct nsi_ip_unicast_rw *uni_rw = NULL;
+    struct nsi_ipv4_forward_key *fwd_keys = NULL;
+    SOCKADDR_INET *wins_servers = NULL;
+    IP_ADDR_STRING *extra_ip_addrs, *cursor;
+    IN_ADDR gw, mask;
 
-  TRACE("pAdapterInfo %p, pOutBufLen %p\n", pAdapterInfo, pOutBufLen);
-  if (!pOutBufLen)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numNonLoopbackInterfaces = get_interface_indices( TRUE, NULL );
+    TRACE( "info %p, size %p\n", info, size );
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-    if (numNonLoopbackInterfaces > 0) {
-      DWORD numIPAddresses = getNumIPAddresses();
-      ULONG size;
-
-      /* This may slightly overestimate the amount of space needed, because
-       * the IP addresses include the loopback address, but it's easier
-       * to make sure there's more than enough space than to make sure there's
-       * precisely enough space.
-       */
-      size = sizeof(IP_ADAPTER_INFO) * numNonLoopbackInterfaces;
-      size += numIPAddresses  * sizeof(IP_ADDR_STRING); 
-      if (!pAdapterInfo || *pOutBufLen < size) {
-        *pOutBufLen = size;
-        ret = ERROR_BUFFER_OVERFLOW;
-      }
-      else {
-        InterfaceIndexTable *table = NULL;
-        PMIB_IPADDRTABLE ipAddrTable = NULL;
-        PMIB_IPFORWARDTABLE routeTable = NULL;
-
-        ret = getIPAddrTable(&ipAddrTable, GetProcessHeap(), 0);
-        if (!ret)
-          ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE, GetProcessHeap(), 0);
-        if (!ret)
-          get_interface_indices( TRUE, &table );
-        if (table) {
-          size = sizeof(IP_ADAPTER_INFO) * table->numIndexes;
-          size += ipAddrTable->dwNumEntries * sizeof(IP_ADDR_STRING); 
-          if (*pOutBufLen < size) {
-            *pOutBufLen = size;
-            ret = ERROR_INSUFFICIENT_BUFFER;
-          }
-          else {
-            SOCKADDR_INET *wins_servers = NULL;
-            DWORD ndx, wins_server_count = get_wins_servers( &wins_servers );
-            PIP_ADDR_STRING nextIPAddr = (PIP_ADDR_STRING)((LPBYTE)pAdapterInfo
-             + numNonLoopbackInterfaces * sizeof(IP_ADAPTER_INFO));
-
-            memset(pAdapterInfo, 0, size);
-            for (ndx = 0; ndx < table->numIndexes; ndx++) {
-              PIP_ADAPTER_INFO ptr = &pAdapterInfo[ndx];
-              DWORD i;
-              PIP_ADDR_STRING currentIPAddr = &ptr->IpAddressList;
-              BOOL firstIPAddr = TRUE;
-              NET_LUID luid;
-              GUID guid;
-
-              /* on Win98 this is left empty, but whatever */
-              ConvertInterfaceIndexToLuid(table->indexes[ndx], &luid);
-              ConvertInterfaceLuidToGuid(&luid, &guid);
-              ConvertGuidToStringA( &guid, ptr->AdapterName, ARRAY_SIZE(ptr->AdapterName) );
-              getInterfaceNameByIndex(table->indexes[ndx], ptr->Description);
-              ptr->AddressLength = sizeof(ptr->Address);
-              getInterfacePhysicalByIndex(table->indexes[ndx],
-               &ptr->AddressLength, ptr->Address, &ptr->Type);
-              ptr->Index = table->indexes[ndx];
-              for (i = 0; i < ipAddrTable->dwNumEntries; i++) {
-                if (ipAddrTable->table[i].dwIndex == ptr->Index) {
-                  if (firstIPAddr) {
-                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwAddr,
-                     ptr->IpAddressList.IpAddress.String);
-                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwMask,
-                     ptr->IpAddressList.IpMask.String);
-                    firstIPAddr = FALSE;
-                  }
-                  else {
-                    currentIPAddr->Next = nextIPAddr;
-                    currentIPAddr = nextIPAddr;
-                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwAddr,
-                     currentIPAddr->IpAddress.String);
-                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwMask,
-                     currentIPAddr->IpMask.String);
-                    nextIPAddr++;
-                  }
-                }
-              }
-              /* If no IP was found it probably means that the interface is not
-               * configured. In this case we have to return a zeroed IP and mask. */
-              if (firstIPAddr) {
-                strcpy(ptr->IpAddressList.IpAddress.String, "0.0.0.0");
-                strcpy(ptr->IpAddressList.IpMask.String, "0.0.0.0");
-              }
-              /* Find first router through this interface, which we'll assume
-               * is the default gateway for this adapter */
-              strcpy(ptr->GatewayList.IpAddress.String, "0.0.0.0");
-              strcpy(ptr->GatewayList.IpMask.String, "255.255.255.255");
-              for (i = 0; i < routeTable->dwNumEntries; i++)
-                if (routeTable->table[i].dwForwardIfIndex == ptr->Index
-                 && routeTable->table[i].u1.ForwardType ==
-                 MIB_IPROUTE_TYPE_INDIRECT)
-                {
-                  RtlIpv4AddressToStringA((IN_ADDR *)&routeTable->table[i].dwForwardNextHop,
-                   ptr->GatewayList.IpAddress.String);
-                  RtlIpv4AddressToStringA((IN_ADDR *)&routeTable->table[i].dwForwardMask,
-                   ptr->GatewayList.IpMask.String);
-                }
-              if (wins_server_count)
-              {
-                ptr->HaveWins = TRUE;
-                RtlIpv4AddressToStringA( &wins_servers[0].Ipv4.sin_addr, ptr->PrimaryWinsServer.IpAddress.String );
-                if (wins_server_count > 1)
-                  RtlIpv4AddressToStringA( &wins_servers[1].Ipv4.sin_addr, ptr->SecondaryWinsServer.IpAddress.String );
-              }
-              if (ndx < table->numIndexes - 1)
-                ptr->Next = &pAdapterInfo[ndx + 1];
-              else
-                ptr->Next = NULL;
-
-              ptr->DhcpEnabled = TRUE;
-            }
-            heap_free( wins_servers );
-            ret = NO_ERROR;
-          }
-          HeapFree(GetProcessHeap(), 0, table);
-        }
-        else
-          ret = ERROR_OUTOFMEMORY;
-        HeapFree(GetProcessHeap(), 0, routeTable);
-        HeapFree(GetProcessHeap(), 0, ipAddrTable);
-      }
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                                  (void **)&if_keys, sizeof(*if_keys), (void **)&if_rw, sizeof(*if_rw),
+                                  (void **)&if_dyn, sizeof(*if_dyn), (void **)&if_stat, sizeof(*if_stat), &if_count, 0 );
+    if (err) return err;
+    for (i = 0; i < if_count; i++)
+    {
+        if (if_stat[i].type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+        if_num++;
     }
-    else
-      ret = ERROR_NO_DATA;
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+
+    if (!if_num)
+    {
+        err = ERROR_NO_DATA;
+        goto err;
+    }
+
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE,
+                                  (void **)&uni_keys, sizeof(*uni_keys), (void **)&uni_rw, sizeof(*uni_rw),
+                                  NULL, 0, NULL, 0, &uni_count, 0 );
+    if (err) goto err;
+
+    /* Slightly overestimate the needed size by assuming that all
+       unicast addresses require a separate IP_ADDR_STRING. */
+
+    needed = if_num * sizeof(*info) + uni_count * sizeof(IP_ADDR_STRING);
+    if (!info || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_BUFFER_OVERFLOW;
+        goto err;
+    }
+
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_FORWARD_TABLE,
+                                  (void **)&fwd_keys, sizeof(*fwd_keys), NULL, 0,
+                                  NULL, 0, NULL, 0, &fwd_count, 0 );
+    if (err) goto err;
+
+    wins_server_count = get_wins_servers( &wins_servers );
+
+    extra_ip_addrs = (IP_ADDR_STRING *)(info + if_num);
+    for (i = 0; i < if_count; i++)
+    {
+        if (if_stat[i].type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+
+        info->Next = info + 1;
+        info->ComboIndex = 0;
+        ConvertGuidToStringA( &if_stat[i].if_guid, info->AdapterName, sizeof(info->AdapterName) );
+        len = WideCharToMultiByte( CP_ACP, 0, if_stat[i].descr.String, if_stat[i].descr.Length / sizeof(WCHAR),
+                                   info->Description, sizeof(info->Description) - 1, NULL, NULL );
+        info->Description[len] = '\0';
+        info->AddressLength = if_rw[i].phys_addr.Length;
+        if (info->AddressLength > sizeof(info->Address)) info->AddressLength = 0;
+        memcpy( info->Address, if_rw[i].phys_addr.Address, info->AddressLength );
+        memset( info->Address + info->AddressLength, 0, sizeof(info->Address) - info->AddressLength );
+        info->Index = if_stat[i].if_index;
+        info->Type = if_stat[i].type;
+        info->DhcpEnabled = TRUE; /* FIXME */
+        info->CurrentIpAddress = NULL;
+
+        cursor = NULL;
+        for (uni = 0; uni < uni_count; uni++)
+        {
+            if (uni_keys[uni].luid.Value != if_keys[i].Value) continue;
+            if (!cursor) cursor = &info->IpAddressList;
+            else
+            {
+                cursor->Next = extra_ip_addrs++;
+                cursor = cursor->Next;
+            }
+            ConvertLengthToIpv4Mask( uni_rw[uni].on_link_prefix, &mask.WS_s_addr );
+            ip_addr_string_init( cursor, &uni_keys[uni].addr, &mask, 0 );
+        }
+        if (!cursor)
+        {
+            mask.WS_s_addr = INADDR_ANY;
+            ip_addr_string_init( &info->IpAddressList, &mask, &mask, 0 );
+        }
+
+        gw.WS_s_addr = INADDR_ANY;
+        mask.WS_s_addr = INADDR_NONE;
+        for (fwd = 0; fwd < fwd_count; fwd++)
+        { /* find the first router on this interface */
+            if (fwd_keys[fwd].luid.Value == if_keys[i].Value &&
+                fwd_keys[fwd].next_hop.WS_s_addr != INADDR_ANY &&
+                !fwd_keys[fwd].prefix_len)
+            {
+                gw = fwd_keys[fwd].next_hop;
+                break;
+            }
+        }
+        ip_addr_string_init( &info->GatewayList, &gw, &mask, 0 );
+
+        ip_addr_string_init( &info->DhcpServer, NULL, NULL, 0 );
+
+        info->HaveWins = !!wins_server_count;
+        ip_addr_string_init( &info->PrimaryWinsServer, NULL, NULL, 0 );
+        ip_addr_string_init( &info->SecondaryWinsServer, NULL, NULL, 0 );
+        if (info->HaveWins)
+        {
+            mask.WS_s_addr = INADDR_NONE;
+            ip_addr_string_init( &info->PrimaryWinsServer, &wins_servers[0].Ipv4.sin_addr, &mask, 0 );
+            if (wins_server_count > 1)
+                ip_addr_string_init( &info->SecondaryWinsServer, &wins_servers[1].Ipv4.sin_addr, &mask, 0 );
+        }
+
+        info->LeaseObtained = 0;
+        info->LeaseExpires = 0;
+
+        info++;
+    }
+    info[-1].Next = NULL;
+
+err:
+    heap_free( wins_servers );
+    NsiFreeTable( fwd_keys, NULL, NULL, NULL );
+    NsiFreeTable( uni_keys, uni_rw, NULL, NULL );
+    NsiFreeTable( if_keys, if_rw, if_dyn, if_stat );
+    return err;
 }
 
 static DWORD typeFromMibType(DWORD mib_type)
