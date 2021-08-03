@@ -286,6 +286,18 @@ static NTSTATUS get_usage( const struct hid_value_caps *caps, void *user )
 {
     struct get_usage_params *params = user;
     ULONG bit, last;
+    BYTE index;
+
+    if (HID_VALUE_CAPS_IS_ARRAY( caps ))
+    {
+        for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
+        {
+            if (!(index = params->report_buf[bit / 8])) continue;
+            if (params->usages < params->usages_end) *params->usages = caps->usage_min + index - caps->start_index;
+            params->usages++;
+        }
+        return HIDP_STATUS_SUCCESS;
+    }
 
     for (bit = caps->start_bit, last = bit + caps->usage_max - caps->usage_min; bit <= last; ++bit)
     {
@@ -423,7 +435,22 @@ struct set_usage_params
 static NTSTATUS set_usage( const struct hid_value_caps *caps, void *user )
 {
     struct set_usage_params *params = user;
-    ULONG bit = caps->start_bit + params->usage - caps->usage_min;
+    ULONG bit, last;
+
+    if (HID_VALUE_CAPS_IS_ARRAY( caps ))
+    {
+        for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
+        {
+            if (params->report_buf[bit / 8]) continue;
+            params->report_buf[bit / 8] = caps->start_index + params->usage - caps->usage_min;
+            break;
+        }
+
+        if (bit > last) return HIDP_STATUS_BUFFER_TOO_SMALL;
+        return HIDP_STATUS_NULL;
+    }
+
+    bit = caps->start_bit + params->usage - caps->usage_min;
     params->report_buf[bit / 8] |= (1 << (bit % 8));
     return HIDP_STATUS_NULL;
 }
@@ -595,6 +622,22 @@ static NTSTATUS get_usage_and_page( const struct hid_value_caps *caps, void *use
 {
     struct get_usage_and_page_params *params = user;
     ULONG bit, last;
+    BYTE index;
+
+    if (HID_VALUE_CAPS_IS_ARRAY( caps ))
+    {
+        for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
+        {
+            if (!(index = params->report_buf[bit / 8])) continue;
+            if (params->usages < params->usages_end)
+            {
+                params->usages->UsagePage = caps->usage_page;
+                params->usages->Usage = caps->usage_min + index - caps->start_index;
+            }
+            params->usages++;
+        }
+        return HIDP_STATUS_SUCCESS;
+    }
 
     for (bit = caps->start_bit, last = bit + caps->usage_max - caps->usage_min; bit <= last; bit++)
     {
@@ -667,9 +710,24 @@ static NTSTATUS find_all_data( const struct hid_value_caps *caps, void *user )
     HIDP_DATA *data = params->data, *data_end = params->data_end;
     ULONG bit, last, bit_count = caps->bit_size * caps->report_count;
     char *report_buf = params->report_buf;
+    BYTE index;
 
     if (!caps->bit_size) return HIDP_STATUS_SUCCESS;
-    if (caps->bit_size == 1)
+
+    if (HID_VALUE_CAPS_IS_ARRAY( caps ))
+    {
+        for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
+        {
+            if (!(index = report_buf[bit / 8])) continue;
+            if (data < data_end)
+            {
+                data->DataIndex = caps->data_index_min + index - caps->start_index;
+                data->On = 1;
+            }
+            data++;
+        }
+    }
+    else if (HID_VALUE_CAPS_IS_BUTTON( caps ))
     {
         for (bit = caps->start_bit, last = bit + caps->usage_max - caps->usage_min; bit <= last; bit++)
         {

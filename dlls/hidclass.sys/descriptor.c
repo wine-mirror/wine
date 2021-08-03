@@ -460,6 +460,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     USHORT *data_idx = state->data_idx[type];
     ULONG *bit_size = &state->bit_size[type][state->items.report_id];
     struct feature *feature;
+    BOOL is_array;
     int j;
 
     for (j = 0; j < state->items.report_count; j++)
@@ -496,10 +497,14 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     }
     value = state->values[type] + *value_idx;
 
-    state->items.report_count -= usages_size - 1;
+    state->items.start_index = 0;
+    if (!(is_array = HID_VALUE_CAPS_IS_ARRAY( &state->items ))) state->items.report_count -= usages_size - 1;
+    else state->items.start_bit -= state->items.report_count * state->items.bit_size;
+
     while (usages_size--)
     {
-        state->items.start_bit -= state->items.report_count * state->items.bit_size;
+        if (!is_array) state->items.start_bit -= state->items.report_count * state->items.bit_size;
+        else state->items.start_index += 1;
         state->items.usage_page = state->usages_page[usages_size];
         state->items.usage_min = state->usages_min[usages_size];
         state->items.usage_max = state->usages_max[usages_size];
@@ -508,7 +513,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         if (state->items.usage_max || state->items.usage_min) *data_idx = state->items.data_index_max + 1;
         *value++ = state->items;
         *value_idx += 1;
-        state->items.report_count = 1;
+        if (!is_array) state->items.report_count = 1;
     }
 
     state->items.usage_page = usage_page;
