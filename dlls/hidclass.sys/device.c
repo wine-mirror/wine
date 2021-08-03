@@ -415,6 +415,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    const WINE_HIDP_PREPARSED_DATA *data = ext->u.pdo.preparsed_data;
     NTSTATUS status;
     BOOL removed;
     KIRQL irql;
@@ -495,7 +496,8 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_GET_INPUT_REPORT:
         {
             HID_XFER_PACKET *packet;
-            UINT packet_size = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+            ULONG buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+            UINT packet_size = sizeof(*packet) + buffer_len;
             BYTE *buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
             ULONG out_length;
 
@@ -504,9 +506,9 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
                 break;
             }
-            if (!irpsp->Parameters.DeviceIoControl.OutputBufferLength)
+            if (buffer_len < data->caps.InputReportByteLength)
             {
-                irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+                irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
                 break;
             }
 
@@ -517,13 +519,13 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             else
                 packet->reportId = 0;
             packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
-            packet->reportBufferLen = irpsp->Parameters.DeviceIoControl.OutputBufferLength - 1;
+            packet->reportBufferLen = buffer_len - 1;
 
             irp->IoStatus.Status = call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, packet, sizeof(*packet) );
 
             if (irp->IoStatus.Status == STATUS_SUCCESS)
             {
-                irp->IoStatus.Status = copy_packet_into_buffer( packet, buffer, irpsp->Parameters.DeviceIoControl.OutputBufferLength, &out_length );
+                irp->IoStatus.Status = copy_packet_into_buffer( packet, buffer, buffer_len, &out_length );
                 irp->IoStatus.Information = out_length;
             }
             else
