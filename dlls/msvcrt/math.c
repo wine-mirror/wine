@@ -66,8 +66,6 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 BOOL sse2_supported;
 static BOOL sse2_enabled;
 
-static const struct unix_funcs *unix_funcs;
-
 void msvcrt_init_math( void *module )
 {
     sse2_supported = IsProcessorFeaturePresent( PF_XMMI64_INSTRUCTIONS_AVAILABLE );
@@ -76,7 +74,6 @@ void msvcrt_init_math( void *module )
 #else
     sse2_enabled = sse2_supported;
 #endif
-    __wine_init_unix_lib( module, DLL_PROCESS_ATTACH, NULL, &unix_funcs );
 }
 
 /* Copied from musl: src/internal/libm.h */
