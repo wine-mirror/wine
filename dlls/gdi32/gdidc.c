@@ -985,6 +985,20 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
 }
 
 /***********************************************************************
+ *           PatBlt    (GDI32.@)
+ */
+BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_PatBlt( hdc, left, top, width, height, rop );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_PatBlt( dc_attr, left, top, width, height, rop ))
+        return FALSE;
+    return NtGdiPatBlt( hdc, left, top, width, height, rop );
+}
+
+/***********************************************************************
  *           BeginPath    (GDI32.@)
  */
 BOOL WINAPI BeginPath(HDC hdc)

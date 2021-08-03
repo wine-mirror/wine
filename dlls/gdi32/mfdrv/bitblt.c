@@ -26,13 +26,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
 /***********************************************************************
- *           MFDRV_PatBlt
+ *           METADC_PatBlt
  */
-BOOL CDECL MFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL METADC_PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )
 {
-    MFDRV_MetaParam6( dev, META_PATBLT, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
-                      HIWORD(rop), LOWORD(rop) );
-    return TRUE;
+    return metadc_param6( hdc, META_PATBLT, left, top, width, height,
+                          HIWORD(rop), LOWORD(rop) );
 }
 
 

@@ -5693,7 +5693,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
         {
             orig = NtGdiSelectBrush( dev->hdc, brush );
             dp_to_lp( dc, (POINT *)&rc, 2 );
-            PatBlt( dev->hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+            NtGdiPatBlt( dev->hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
             NtGdiSelectBrush( dev->hdc, orig );
             DeleteObject( brush );
         }

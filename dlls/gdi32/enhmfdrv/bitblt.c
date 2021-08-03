@@ -130,19 +130,26 @@ BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
 
 BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
+    /* FIXME: update bound rect */
+    return TRUE;
+}
+
+BOOL EMFDC_PatBlt( DC_ATTR *dc_attr, INT left, INT top, INT width, INT height, DWORD rop )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRBITBLT emr;
     BOOL ret;
 
     emr.emr.iType = EMR_BITBLT;
     emr.emr.nSize = sizeof(emr);
-    emr.rclBounds.left = dst->log_x;
-    emr.rclBounds.top = dst->log_y;
-    emr.rclBounds.right = dst->log_x + dst->log_width - 1;
-    emr.rclBounds.bottom = dst->log_y + dst->log_height - 1;
-    emr.xDest = dst->log_x;
-    emr.yDest = dst->log_y;
-    emr.cxDest = dst->log_width;
-    emr.cyDest = dst->log_height;
+    emr.rclBounds.left = left;
+    emr.rclBounds.top = top;
+    emr.rclBounds.right = left + width - 1;
+    emr.rclBounds.bottom = top + height - 1;
+    emr.xDest = left;
+    emr.yDest = top;
+    emr.cxDest = width;
+    emr.cyDest = height;
     emr.dwRop = rop;
     emr.xSrc = 0;
     emr.ySrc = 0;
@@ -159,9 +166,9 @@ BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     emr.offBitsSrc = 0;
     emr.cbBitsSrc = 0;
 
-    ret = EMFDRV_WriteRecord( dev, &emr.emr );
+    ret = EMFDRV_WriteRecord( &emf->dev, &emr.emr );
     if(ret)
-        EMFDRV_UpdateBBox( dev, &emr.rclBounds );
+        EMFDRV_UpdateBBox( &emf->dev, &emr.rclBounds );
     return ret;
 }
 

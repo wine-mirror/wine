@@ -168,7 +168,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_OffsetViewportOrgEx,       /* pOffsetViewportOrgEx */
     MFDRV_OffsetWindowOrgEx,         /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
-    MFDRV_PatBlt,                    /* pPatBlt */
+    NULL,                            /* pPatBlt */
     NULL,                            /* pPie */
     MFDRV_PolyBezier,                /* pPolyBezier */
     MFDRV_PolyBezierTo,              /* pPolyBezierTo */

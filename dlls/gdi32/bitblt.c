@@ -525,9 +525,9 @@ COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 
 
 /***********************************************************************
- *           PatBlt    (GDI32.@)
+ *           NtGdiPatBlt    (win32u.@)
  */
-BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop)
+BOOL WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )
 {
     DC * dc;
     BOOL ret = FALSE;
