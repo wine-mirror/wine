@@ -343,6 +343,17 @@ BOOL WINAPI GetDCOrgEx( HDC hdc, POINT *point )
 }
 
 /***********************************************************************
+ *		GetWindowExtEx (GDI32.@)
+ */
+BOOL WINAPI GetWindowExtEx( HDC hdc, SIZE *size )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    *size = dc_attr->wnd_ext;
+    return TRUE;
+}
+
+/***********************************************************************
  *		GetWindowOrgEx (GDI32.@)
  */
 BOOL WINAPI GetWindowOrgEx( HDC hdc, POINT *point )

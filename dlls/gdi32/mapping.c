@@ -63,9 +63,9 @@ static void MAPPING_FixIsotropic( DC * dc )
     SIZE virtual_size = get_dc_virtual_size( dc );
     SIZE virtual_res = get_dc_virtual_res( dc );
     double xdim = fabs((double)dc->attr->vport_ext.cx * virtual_size.cx /
-                       (virtual_res.cx * dc->wnd_ext.cx));
+                       (virtual_res.cx * dc->attr->wnd_ext.cx));
     double ydim = fabs((double)dc->attr->vport_ext.cy * virtual_size.cy /
-                       (virtual_res.cy * dc->wnd_ext.cy));
+                       (virtual_res.cy * dc->attr->wnd_ext.cy));
 
     if (xdim > ydim)
     {
@@ -135,15 +135,15 @@ BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_
     DC *dc = get_nulldrv_dc( dev );
 
     if (size)
-        *size = dc->wnd_ext;
+        *size = dc->attr->wnd_ext;
 
     if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
     if (!x_num || !x_denom || !y_num || !y_denom) return FALSE;
 
-    dc->wnd_ext.cx = (dc->wnd_ext.cx * x_num) / x_denom;
-    dc->wnd_ext.cy = (dc->wnd_ext.cy * y_num) / y_denom;
-    if (dc->wnd_ext.cx == 0) dc->wnd_ext.cx = 1;
-    if (dc->wnd_ext.cy == 0) dc->wnd_ext.cy = 1;
+    dc->attr->wnd_ext.cx = (dc->attr->wnd_ext.cx * x_num) / x_denom;
+    dc->attr->wnd_ext.cy = (dc->attr->wnd_ext.cy * y_num) / y_denom;
+    if (dc->attr->wnd_ext.cx == 0) dc->attr->wnd_ext.cx = 1;
+    if (dc->attr->wnd_ext.cy == 0) dc->attr->wnd_ext.cy = 1;
     if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
     return TRUE;
@@ -162,39 +162,39 @@ INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
     switch (mode)
     {
     case MM_TEXT:
-        dc->wnd_ext.cx   = 1;
-        dc->wnd_ext.cy   = 1;
+        dc->attr->wnd_ext.cx   = 1;
+        dc->attr->wnd_ext.cy   = 1;
         dc->attr->vport_ext.cx = 1;
         dc->attr->vport_ext.cy = 1;
         break;
     case MM_LOMETRIC:
     case MM_ISOTROPIC:
-        dc->wnd_ext.cx   = virtual_size.cx * 10;
-        dc->wnd_ext.cy   = virtual_size.cy * 10;
+        dc->attr->wnd_ext.cx   = virtual_size.cx * 10;
+        dc->attr->wnd_ext.cy   = virtual_size.cy * 10;
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_HIMETRIC:
-        dc->wnd_ext.cx   = virtual_size.cx * 100;
-        dc->wnd_ext.cy   = virtual_size.cy * 100;
+        dc->attr->wnd_ext.cx   = virtual_size.cx * 100;
+        dc->attr->wnd_ext.cy   = virtual_size.cy * 100;
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_LOENGLISH:
-        dc->wnd_ext.cx   = MulDiv(1000, virtual_size.cx, 254);
-        dc->wnd_ext.cy   = MulDiv(1000, virtual_size.cy, 254);
+        dc->attr->wnd_ext.cx   = MulDiv(1000, virtual_size.cx, 254);
+        dc->attr->wnd_ext.cy   = MulDiv(1000, virtual_size.cy, 254);
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_HIENGLISH:
-        dc->wnd_ext.cx   = MulDiv(10000, virtual_size.cx, 254);
-        dc->wnd_ext.cy   = MulDiv(10000, virtual_size.cy, 254);
+        dc->attr->wnd_ext.cx   = MulDiv(10000, virtual_size.cx, 254);
+        dc->attr->wnd_ext.cy   = MulDiv(10000, virtual_size.cy, 254);
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
     case MM_TWIPS:
-        dc->wnd_ext.cx   = MulDiv(14400, virtual_size.cx, 254);
-        dc->wnd_ext.cy   = MulDiv(14400, virtual_size.cy, 254);
+        dc->attr->wnd_ext.cx   = MulDiv(14400, virtual_size.cx, 254);
+        dc->attr->wnd_ext.cy   = MulDiv(14400, virtual_size.cy, 254);
         dc->attr->vport_ext.cx = virtual_res.cx;
         dc->attr->vport_ext.cy = -virtual_res.cy;
         break;
@@ -243,12 +243,12 @@ BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     DC *dc = get_nulldrv_dc( dev );
 
     if (size)
-        *size = dc->wnd_ext;
+        *size = dc->attr->wnd_ext;
 
     if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
     if (!cx || !cy) return FALSE;
-    dc->wnd_ext.cx = cx;
-    dc->wnd_ext.cy = cy;
+    dc->attr->wnd_ext.cx = cx;
+    dc->attr->wnd_ext.cy = cy;
     /* The API docs say that you should call SetWindowExtEx before
        SetViewportExtEx. This advice does not imply that Windows
        doesn't ensure the isotropic mapping after SetWindowExtEx! */

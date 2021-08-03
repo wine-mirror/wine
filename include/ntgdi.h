@@ -117,6 +117,7 @@ typedef struct DC_ATTR
     RECT      vis_rect;            /* visible rectangle in screen coords */
     FLOAT     miter_limit;
     POINT     wnd_org;             /* window origin */
+    SIZE      wnd_ext;             /* window extent */
     POINT     vport_org;           /* viewport origin */
     SIZE      vport_ext;           /* viewport extent */
     void     *emf;

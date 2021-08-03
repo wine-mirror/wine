@@ -73,8 +73,8 @@ static void set_initial_dc_state( DC *dc )
 {
     dc->attr->wnd_org.x     = 0;
     dc->attr->wnd_org.y     = 0;
-    dc->wnd_ext.cx          = 1;
-    dc->wnd_ext.cy          = 1;
+    dc->attr->wnd_ext.cx    = 1;
+    dc->attr->wnd_ext.cy    = 1;
     dc->attr->vport_org.x   = 0;
     dc->attr->vport_org.y   = 0;
     dc->attr->vport_ext.cx  = 1;
@@ -319,8 +319,8 @@ static BOOL DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
 static void construct_window_to_viewport(DC *dc, XFORM *xform)
 {
     double scaleX, scaleY;
-    scaleX = (double)dc->attr->vport_ext.cx / (double)dc->wnd_ext.cx;
-    scaleY = (double)dc->attr->vport_ext.cy / (double)dc->wnd_ext.cy;
+    scaleX = (double)dc->attr->vport_ext.cx / (double)dc->attr->wnd_ext.cx;
+    scaleY = (double)dc->attr->vport_ext.cy / (double)dc->attr->wnd_ext.cy;
 
     if (dc->attr->layout & LAYOUT_RTL) scaleX = -scaleX;
     xform->eM11 = scaleX;
@@ -425,7 +425,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->xformVport2World = dcs->xformVport2World;
     dc->vport2WorldValid = dcs->vport2WorldValid;
     dc->attr->wnd_org          = dcs->attr->wnd_org;
-    dc->wnd_ext          = dcs->wnd_ext;
+    dc->attr->wnd_ext          = dcs->attr->wnd_ext;
     dc->attr->vport_org        = dcs->attr->vport_org;
     dc->attr->vport_ext  = dcs->attr->vport_ext;
     dc->virtual_res      = dcs->virtual_res;
@@ -553,7 +553,6 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
     newdc->xformWorld2Vport = dc->xformWorld2Vport;
     newdc->xformVport2World = dc->xformVport2World;
     newdc->vport2WorldValid = dc->vport2WorldValid;
-    newdc->wnd_ext          = dc->wnd_ext;
     newdc->virtual_res      = dc->virtual_res;
     newdc->virtual_size     = dc->virtual_size;
 
@@ -1283,19 +1282,6 @@ BOOL WINAPI GetBrushOrgEx( HDC hdc, LPPOINT pt )
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
     *pt = dc->brush_org;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		GetWindowExtEx (GDI32.@)
- */
-BOOL WINAPI GetWindowExtEx( HDC hdc, LPSIZE size )
-{
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-    *size = dc->wnd_ext;
     release_dc_ptr( dc );
     return TRUE;
 }

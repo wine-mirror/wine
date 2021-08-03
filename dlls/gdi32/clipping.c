@@ -233,8 +233,8 @@ INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 
     if (dc->hClipRgn)
     {
-        x = MulDiv( x, dc->attr->vport_ext.cx, dc->wnd_ext.cx );
-        y = MulDiv( y, dc->attr->vport_ext.cy, dc->wnd_ext.cy );
+        x = MulDiv( x, dc->attr->vport_ext.cx, dc->attr->wnd_ext.cx );
+        y = MulDiv( y, dc->attr->vport_ext.cy, dc->attr->wnd_ext.cy );
         if (dc->attr->layout & LAYOUT_RTL) x = -x;
         ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
 	update_dc_clipping( dc );
