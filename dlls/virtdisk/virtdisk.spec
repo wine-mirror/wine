@@ -4,7 +4,7 @@
 @ stub CompactVirtualDisk
 @ stub CreateVirtualDisk
 @ stub DeleteVirtualDiskMetadata
-@ stub DetachVirtualDisk
+@ stdcall DetachVirtualDisk(ptr long long)
 @ stub EnumerateVirtualDiskMetadata
 @ stub ExpandVirtualDisk
 @ stub GetAllAttachedVirtualDiskPhysicalPaths

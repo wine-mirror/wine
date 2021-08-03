@@ -58,3 +58,9 @@ DWORD WINAPI OpenVirtualDisk(VIRTUAL_STORAGE_TYPE *type, const WCHAR *path, VIRT
 
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+DWORD WINAPI DetachVirtualDisk(HANDLE handle, DETACH_VIRTUAL_DISK_FLAG flags, ULONG specific_flags)
+{
+    FIXME("(%p, 0x%x, %d): stub\n", handle, flags, specific_flags);
+    return ERROR_INVALID_PARAMETER;
+}
