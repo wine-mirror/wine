@@ -177,6 +177,11 @@ typedef struct WS(in_pktinfo) {
     UINT    ipi_ifindex;
 } IN_PKTINFO, *PIN_PKTINFO;
 
+typedef struct WS(in6_pktinfo) {
+    IN6_ADDR ipi6_addr;
+    ULONG    ipi6_ifindex;
+} IN6_PKTINFO, *PIN6_PKTINFO;
+
 #ifndef USE_WS_PREFIX
 #define IPV6_OPTIONS                    1
 #define IPV6_HDRINCL                    2
