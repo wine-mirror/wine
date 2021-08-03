@@ -1,5 +1,5 @@
 TESTDLL   = dnsapi.dll
-IMPORTS   = dnsapi ws2_32
+IMPORTS   = dnsapi ws2_32 iphlpapi
 
 C_SRCS = \
 	cache.c \

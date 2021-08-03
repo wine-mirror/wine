@@ -25,6 +25,7 @@
 #include "windns.h"
 #include "winsock2.h"
 #include "ws2ipdef.h"
+#include "iphlpapi.h"
 
 #include "wine/test.h"
 
@@ -118,6 +119,80 @@ static void test_DnsQuery(void)
     }
 }
 
+static IP_ADAPTER_ADDRESSES *get_adapters(void)
+{
+    ULONG err, size = 1024;
+    IP_ADAPTER_ADDRESSES *ret = malloc( size );
+    for (;;)
+    {
+        err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+                                               GAA_FLAG_SKIP_FRIENDLY_NAME,
+                                    NULL, ret, &size );
+        if (err != ERROR_BUFFER_OVERFLOW) break;
+        ret = realloc( ret, size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
+static void test_DnsQueryConfig( void )
+{
+    DWORD err, size, i;
+    WCHAR name[MAX_ADAPTER_NAME_LENGTH + 1];
+    IP_ADAPTER_ADDRESSES *adapters, *ptr;
+    DNS_ADDR_ARRAY *ipv4;
+    IP4_ARRAY *ip4_array;
+
+    if (!(adapters = get_adapters())) return;
+
+    for (ptr = adapters; ptr; ptr = ptr->Next)
+    {
+        MultiByteToWideChar( CP_ACP, 0, ptr->AdapterName, -1, name, ARRAY_SIZE(name) );
+        if (ptr->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+
+        size = 0;
+        err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, NULL, &size );
+        if (err) continue;
+        ipv4 = malloc( size );
+        err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, ipv4, &size );
+        ok( !err, "got %d\n", err );
+
+        ok( ipv4->AddrCount == ipv4->MaxCount, "got %d vs %d\n", ipv4->AddrCount, ipv4->MaxCount );
+        ok( !ipv4->Tag, "got %08x\n", ipv4->Tag );
+        ok( !ipv4->Family, "got %d\n", ipv4->Family );
+        ok( !ipv4->WordReserved, "got %04x\n", ipv4->WordReserved );
+        ok( !ipv4->Flags, "got %08x\n", ipv4->Flags );
+        ok( !ipv4->MatchFlag, "got %08x\n", ipv4->MatchFlag );
+        ok( !ipv4->Reserved1, "got %08x\n", ipv4->Reserved1 );
+        ok( !ipv4->Reserved2, "got %08x\n", ipv4->Reserved2 );
+
+        size = 0;
+        err = DnsQueryConfig( DnsConfigDnsServerList, 0, name, NULL, NULL, &size );
+        ok( !err, "got %d\n", err );
+        ip4_array = malloc( size );
+        err = DnsQueryConfig( DnsConfigDnsServerList, 0, name, NULL, ip4_array, &size );
+        ok( !err, "got %d\n", err );
+
+        ok( ipv4->AddrCount == ip4_array->AddrCount, "got %d vs %d\n", ipv4->AddrCount, ip4_array->AddrCount );
+
+        for (i = 0; i < ipv4->AddrCount; i++)
+        {
+            SOCKADDR_IN *sa = (SOCKADDR_IN *)ipv4->AddrArray[i].MaxSa;
+
+            ok( sa->sin_family == AF_INET, "got %d\n", sa->sin_family );
+            ok( sa->sin_addr.s_addr == ip4_array->AddrArray[i], "got %08x vs %08x\n",
+                sa->sin_addr.s_addr, ip4_array->AddrArray[i] );
+            ok( ipv4->AddrArray[i].Data.DnsAddrUserDword[0] == sizeof(*sa), "got %d\n",
+                ipv4->AddrArray[i].Data.DnsAddrUserDword[0] );
+        }
+        free( ip4_array );
+        free( ipv4 );
+    }
+
+    free( adapters );
+}
+
 START_TEST(query)
 {
     WSADATA data;
@@ -125,4 +200,5 @@ START_TEST(query)
     WSAStartup(MAKEWORD(2, 2), &data);
 
     test_DnsQuery();
+    test_DnsQueryConfig();
 }

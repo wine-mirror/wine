@@ -50,6 +50,9 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "windns.h"
+#define USE_WS_PREFIX
+#include "ws2def.h"
+#include "ws2ipdef.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -225,25 +228,33 @@ static DNS_STATUS map_h_errno( int error )
     }
 }
 
-DNS_STATUS CDECL resolv_get_serverlist( IP4_ARRAY *addrs, DWORD *len )
+DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
 {
-    unsigned int size;
-    int i;
+    DWORD needed, i;
 
     init_resolver();
 
-    size = FIELD_OFFSET(IP4_ARRAY, AddrArray[_res.nscount]);
-    if (!addrs || *len < size)
+    if (family != WS_AF_INET) return ERROR_NOT_SUPPORTED;
+
+    needed = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[_res.nscount]);
+
+    if (!addrs || *len < needed)
     {
-        *len = size;
-        return ERROR_INSUFFICIENT_BUFFER;
+        *len = needed;
+        return !addrs ? ERROR_SUCCESS : ERROR_MORE_DATA;
     }
 
-    addrs->AddrCount = _res.nscount;
+    *len = needed;
+    memset( addrs, 0, needed );
+    addrs->AddrCount = addrs->MaxCount = _res.nscount;
 
     for (i = 0; i < _res.nscount; i++)
-        addrs->AddrArray[i] = _res.nsaddr_list[i].sin_addr.s_addr;
-
+    {
+        SOCKADDR_INET *inet = (SOCKADDR_INET *)addrs->AddrArray[i].MaxSa;
+        inet->Ipv4.sin_family = WS_AF_INET;
+        inet->Ipv4.sin_addr.WS_s_addr = _res.nsaddr_list[i].sin_addr.s_addr;
+        addrs->AddrArray[i].Data.DnsAddrUserDword[0] = sizeof(SOCKADDR_IN);
+    }
     return ERROR_SUCCESS;
 }
 

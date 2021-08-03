@@ -25,6 +25,7 @@
 #include "winnls.h"
 #include "windns.h"
 #include "nb30.h"
+#include "ws2def.h"
 
 #include "wine/debug.h"
 #include "dnsapi.h"
@@ -259,6 +260,46 @@ static DNS_STATUS get_hostname_w( COMPUTER_NAME_FORMAT format, PWSTR buffer, PDW
     return ERROR_SUCCESS;
 }
 
+static DNS_STATUS get_dns_server_list( IP4_ARRAY *out, DWORD *len )
+{
+    char buf[FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[3])];
+    DNS_ADDR_ARRAY *servers = (DNS_ADDR_ARRAY *)buf;
+    DWORD ret, needed, i, num, array_len = sizeof(buf);
+
+    for (;;)
+    {
+        ret = resolv_funcs->get_serverlist( AF_INET, servers, &array_len );
+        if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) goto err;
+        num = (array_len - FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[0])) / sizeof(DNS_ADDR);
+        needed = FIELD_OFFSET(IP4_ARRAY, AddrArray[num]);
+        if (!out || *len < needed)
+        {
+            *len = needed;
+            ret = !out ? ERROR_SUCCESS : ERROR_MORE_DATA;
+            goto err;
+        }
+        if (!ret) break;
+
+        if ((char *)servers != buf) heap_free( servers );
+        servers = heap_alloc( array_len );
+        if (!servers)
+        {
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+            goto err;
+        }
+    }
+
+    out->AddrCount = num;
+    for (i = 0; i < num; i++)
+        out->AddrArray[i] = ((SOCKADDR_IN *)servers->AddrArray[i].MaxSa)->sin_addr.s_addr;
+    *len = needed;
+    ret = ERROR_SUCCESS;
+
+err:
+    if ((char *)servers != buf) heap_free( servers );
+    return ret;
+}
+
 /******************************************************************************
  * DnsQueryConfig          [DNSAPI.@]
  *
@@ -276,10 +317,8 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
     switch (config)
     {
     case DnsConfigDnsServerList:
-    {
-        ret = resolv_funcs->get_serverlist( buffer, len );
-        break;
-    }
+        return get_dns_server_list( buffer, len );
+
     case DnsConfigHostName_A:
     case DnsConfigHostName_UTF8:
         return get_hostname_a( ComputerNameDnsHostname, buffer, len );
@@ -311,6 +350,9 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
     case DnsConfigAddressRegistrationMaxCount:
         FIXME( "unimplemented config type %d\n", config );
         break;
+
+    case DnsConfigDnsServersIpv4:
+        return resolv_funcs->get_serverlist( AF_INET, buffer, len );
 
     default:
         WARN( "unknown config type: %d\n", config );
