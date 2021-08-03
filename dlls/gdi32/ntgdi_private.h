@@ -89,7 +89,6 @@ typedef struct tagDC
 
     POINT        wnd_org;          /* Window origin */
     SIZE         wnd_ext;          /* Window extent */
-    POINT        vport_org;        /* Viewport origin */
     SIZE         virtual_res;      /* Initially HORZRES,VERTRES. Changed by SetVirtualResolution */
     SIZE         virtual_size;     /* Initially HORZSIZE,VERTSIZE. Changed by SetVirtualResolution */
     RECT         device_rect;      /* rectangle for the whole device */

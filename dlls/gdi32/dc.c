@@ -75,8 +75,8 @@ static void set_initial_dc_state( DC *dc )
     dc->wnd_org.y           = 0;
     dc->wnd_ext.cx          = 1;
     dc->wnd_ext.cy          = 1;
-    dc->vport_org.x         = 0;
-    dc->vport_org.y         = 0;
+    dc->attr->vport_org.x   = 0;
+    dc->attr->vport_org.y   = 0;
     dc->attr->vport_ext.cx  = 1;
     dc->attr->vport_ext.cy  = 1;
     dc->attr->miter_limit   = 10.0f; /* 10.0 is the default, from MSDN */
@@ -327,8 +327,8 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
     xform->eM12 = 0.0;
     xform->eM21 = 0.0;
     xform->eM22 = scaleY;
-    xform->eDx  = (double)dc->vport_org.x - scaleX * (double)dc->wnd_org.x;
-    xform->eDy  = (double)dc->vport_org.y - scaleY * (double)dc->wnd_org.y;
+    xform->eDx  = (double)dc->attr->vport_org.x - scaleX * (double)dc->wnd_org.x;
+    xform->eDy  = (double)dc->attr->vport_org.y - scaleY * (double)dc->wnd_org.y;
     if (dc->attr->layout & LAYOUT_RTL)
         xform->eDx = dc->attr->vis_rect.right - dc->attr->vis_rect.left - 1 - xform->eDx;
 }
@@ -426,7 +426,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->vport2WorldValid = dcs->vport2WorldValid;
     dc->wnd_org          = dcs->wnd_org;
     dc->wnd_ext          = dcs->wnd_ext;
-    dc->vport_org        = dcs->vport_org;
+    dc->attr->vport_org        = dcs->attr->vport_org;
     dc->attr->vport_ext  = dcs->attr->vport_ext;
     dc->virtual_res      = dcs->virtual_res;
     dc->virtual_size     = dcs->virtual_size;
@@ -555,7 +555,6 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
     newdc->vport2WorldValid = dc->vport2WorldValid;
     newdc->wnd_org          = dc->wnd_org;
     newdc->wnd_ext          = dc->wnd_ext;
-    newdc->vport_org        = dc->vport_org;
     newdc->virtual_res      = dc->virtual_res;
     newdc->virtual_size     = dc->virtual_size;
 
@@ -1285,19 +1284,6 @@ BOOL WINAPI GetBrushOrgEx( HDC hdc, LPPOINT pt )
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
     *pt = dc->brush_org;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		GetViewportOrgEx (GDI32.@)
- */
-BOOL WINAPI GetViewportOrgEx( HDC hdc, LPPOINT pt )
-{
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-    *pt = dc->vport_org;
     release_dc_ptr( dc );
     return TRUE;
 }

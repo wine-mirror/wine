@@ -90,11 +90,10 @@ BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    if (pt)
-        *pt = dc->vport_org;
+    if (pt) *pt = dc->attr->vport_org;
 
-    dc->vport_org.x += x;
-    dc->vport_org.y += y;
+    dc->attr->vport_org.x += x;
+    dc->attr->vport_org.y += y;
     DC_UpdateXforms( dc );
     return TRUE;
 }
@@ -231,10 +230,10 @@ BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     DC *dc = get_nulldrv_dc( dev );
 
     if (pt)
-        *pt = dc->vport_org;
+        *pt = dc->attr->vport_org;
 
-    dc->vport_org.x = x;
-    dc->vport_org.y = y;
+    dc->attr->vport_org.x = x;
+    dc->attr->vport_org.y = y;
     DC_UpdateXforms( dc );
     return TRUE;
 }

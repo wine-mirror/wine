@@ -354,6 +354,17 @@ BOOL WINAPI GetViewportExtEx( HDC hdc, SIZE *size )
 }
 
 /***********************************************************************
+ *		GetViewportOrgEx (GDI32.@)
+ */
+BOOL WINAPI GetViewportOrgEx( HDC hdc, POINT *point )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    *point = dc_attr->vport_org;
+    return TRUE;
+}
+
+/***********************************************************************
  *		SetStretchBltMode (GDI32.@)
  */
 INT WINAPI SetStretchBltMode( HDC hdc, INT mode )

@@ -863,7 +863,7 @@ static void test_mf_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    todo_wine ok (!ret, "GetViewportOrgEx should fail\n");
+    ok(!ret, "GetViewportOrgEx should fail\n");
     ret = GetViewportExtEx(hdcMetafile, &size);
     ok(!ret, "GetViewportExtEx should fail\n");
     ret = SaveDC(hdcMetafile);
