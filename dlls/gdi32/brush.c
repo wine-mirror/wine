@@ -371,49 +371,6 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 
 
 /***********************************************************************
- *           SetBrushOrgEx    (GDI32.@)
- *
- * Set the brush origin for a device context.
- *
- * PARAMS
- *  hdc    [I] Device context to set the brush origin for
- *  x      [I] New x origin
- *  y      [I] New y origin
- *  oldorg [O] If non NULL, destination for previously set brush origin.
- *
- * RETURNS
- *  Success: TRUE. The origin is set to (x,y), and oldorg is updated if given.
- */
-BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
-{
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return FALSE;
-    if (oldorg)
-        *oldorg = dc->attr->brush_org;
-
-    dc->attr->brush_org.x = x;
-    dc->attr->brush_org.y = y;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-/***********************************************************************
- *           FixBrushOrgEx    (GDI32.@)
- *
- * See SetBrushOrgEx.
- *
- * NOTES
- *  This function is no longer documented by MSDN, but in Win95 GDI32 it
- *  is the same as SetBrushOrgEx().
- */
-BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
-{
-    return SetBrushOrgEx(hdc,x,y,oldorg);
-}
-
-
-/***********************************************************************
  *           NtGdiSelectBrush (win32u.@)
  */
 HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )

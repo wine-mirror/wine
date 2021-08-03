@@ -342,6 +342,27 @@ BOOL WINAPI GetBrushOrgEx( HDC hdc, POINT *point )
 }
 
 /***********************************************************************
+ *           SetBrushOrgEx    (GDI32.@)
+ */
+BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, POINT *oldorg )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (oldorg) *oldorg = dc_attr->brush_org;
+    dc_attr->brush_org.x = x;
+    dc_attr->brush_org.y = y;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           FixBrushOrgEx    (GDI32.@)
+ */
+BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, POINT *oldorg )
+{
+    return SetBrushOrgEx( hdc, x, y, oldorg );
+}
+
+/***********************************************************************
  *           GetDCOrgEx  (GDI32.@)
  */
 BOOL WINAPI GetDCOrgEx( HDC hdc, POINT *point )
