@@ -279,7 +279,7 @@ lend:
  *
  * Get DMO Name from the registry
  */
-HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR name[])
+HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR name[80])
 {
     static const INT max_name_len = 80*sizeof(WCHAR);
     DWORD count = max_name_len;
