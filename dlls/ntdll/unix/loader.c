@@ -1700,26 +1700,21 @@ static BOOL get_relocbase(caddr_t mapbase, caddr_t *relocbase)
 #endif
 
 /*************************************************************************
- *              init_builtin_dll
+ *              get_builtin_init_funcs
  */
-static void CDECL init_builtin_dll( void *module )
+NTSTATUS get_builtin_init_funcs( void *handle, void **funcs, SIZE_T len, SIZE_T *retlen )
 {
 #ifdef HAVE_DLINFO
-    void *handle = NULL;
     struct link_map *map;
-    void (*init_func)(int, char **, char **) = NULL;
-    void (**init_array)(int, char **, char **) = NULL;
-    ULONG_PTR i, init_arraysz = 0;
+    void *init_func = NULL, **init_array = NULL;
+    ULONG_PTR i, count, init_arraysz = 0;
 #ifdef _WIN64
     const Elf64_Dyn *dyn;
 #else
     const Elf32_Dyn *dyn;
 #endif
 
-    if (!(handle = get_builtin_so_handle( module ))) return;
-    if (dlinfo( handle, RTLD_DI_LINKMAP, &map )) map = NULL;
-    release_builtin_module( module );
-    if (!map) return;
+    if (dlinfo( handle, RTLD_DI_LINKMAP, &map )) return STATUS_INVALID_IMAGE_FORMAT;
 
     for (dyn = map->l_ld; dyn->d_tag; dyn++)
     {
@@ -1738,13 +1733,16 @@ static void CDECL init_builtin_dll( void *module )
         }
     }
 
-    TRACE( "%p: got init_func %p init_array %p %lu\n", module, init_func, init_array, init_arraysz );
+    TRACE( "%p: got init_func %p init_array %p %lu\n", handle, init_func, init_array, init_arraysz );
 
-    if (init_func) init_func( main_argc, main_argv, main_envp );
+    count = init_arraysz / sizeof(*init_array);
+    if (init_func) count++;
+    if (retlen) *retlen = count * sizeof(*funcs);
 
-    if (init_array)
-        for (i = 0; i < init_arraysz / sizeof(*init_array); i++)
-            init_array[i]( main_argc, main_argv, main_envp );
+    if (count > len / sizeof(*funcs)) return STATUS_BUFFER_TOO_SMALL;
+    if (init_func) *funcs++ = init_func;
+    for (i = 0; i < init_arraysz / sizeof(*init_array); i++) funcs[i] = init_array[i];
+    return STATUS_SUCCESS;
 #endif
 }
 
@@ -1896,7 +1894,6 @@ static struct unix_funcs unix_funcs =
     ntdll_sqrt,
     ntdll_tan,
     load_so_dll,
-    init_builtin_dll,
     init_unix_lib,
     unwind_builtin_dll,
 };

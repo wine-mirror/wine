@@ -4281,6 +4281,21 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         case MemoryMappedFilenameInformation:
             return get_memory_section_name( process, addr, buffer, len, res_len );
 
+        case MemoryWineImageInitFuncs:
+            if (process == GetCurrentProcess())
+            {
+                void *module = (void *)addr;
+                void *handle = get_builtin_so_handle( module );
+
+                if (handle)
+                {
+                    NTSTATUS status = get_builtin_init_funcs( handle, buffer, len, res_len );
+                    release_builtin_module( module );
+                    return status;
+                }
+            }
+            return STATUS_INVALID_HANDLE;
+
         default:
             FIXME("(%p,%p,info_class=%d,%p,%ld,%p) Unknown information class\n",
                   process, addr, info_class, buffer, len, res_len);
