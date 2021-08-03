@@ -312,7 +312,7 @@ static void output_relay_debug( DLLSPEC *spec )
             if (has_float) output( "\tvpush {s0-s15}\n" );
             output( "\tpush {LR}\n" );
             output( "\tsub SP, #4\n");
-            output( "\tmov r1,#%u\n", i - spec->base );
+            output( "\tmovw r1,#%u\n", i - spec->base );
             output( "\tmovt r1,#%u\n", odp->u.func.args_str_offset );
             if (UsePIC)
             {
