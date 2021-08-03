@@ -19366,6 +19366,21 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct in6_pktinfo" "ipi6_addr" "ac_cv_member_struct_in6_pktinfo_ipi6_addr" "#ifdef HAVE_NETINET_IN_H
+#define _GNU_SOURCE
+#include <netinet/in.h>
+#endif
+"
+if test "x$ac_cv_member_struct_in6_pktinfo_ipi6_addr" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_IN6_PKTINFO_IPI6_ADDR 1
+_ACEOF
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct ipstat" "ips_total" "ac_cv_member_struct_ipstat_ips_total" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

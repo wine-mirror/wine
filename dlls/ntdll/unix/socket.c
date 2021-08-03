@@ -23,6 +23,7 @@
 #endif
 
 #include "config.h"
+#define _GNU_SOURCE /* for struct in6_pktinfo */
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -465,6 +466,20 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                         break;
                     }
 #endif /* IPV6_HOPLIMIT */
+
+#if defined(IPV6_PKTINFO) && defined(HAVE_STRUCT_IN6_PKTINFO_IPI6_ADDR)
+                    case IPV6_PKTINFO:
+                    {
+                        struct in6_pktinfo *data_unix = (struct in6_pktinfo *)CMSG_DATA(cmsg_unix);
+                        struct WS_in6_pktinfo data_win;
+
+                        memcpy(&data_win.ipi6_addr, &data_unix->ipi6_addr.s6_addr, 16);
+                        data_win.ipi6_ifindex = data_unix->ipi6_ifindex;
+                        ptr = fill_control_message( WS_IPPROTO_IPV6, WS_IPV6_PKTINFO, ptr, &ctlsize,
+                                                    (void *)&data_win, sizeof(data_win) );
+                        if (!ptr) goto error;
+                    }
+#endif /* IPV6_PKTINFO */
 
                     default:
                         FIXME("Unhandled IPPROTO_IPV6 message header type %d\n", cmsg_unix->cmsg_type);
@@ -1908,6 +1923,14 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_SET_IPV6_RECVHOPLIMIT:
             return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, in_buffer, in_size );
+#endif
+
+#ifdef IPV6_RECVPKTINFO
+        case IOCTL_AFD_WINE_GET_IPV6_RECVPKTINFO:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVPKTINFO, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPV6_RECVPKTINFO:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_RECVPKTINFO, in_buffer, in_size );
 #endif
 
         case IOCTL_AFD_WINE_GET_IPV6_UNICAST_HOPS:

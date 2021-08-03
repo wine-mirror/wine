@@ -318,6 +318,7 @@ static inline const char *debugstr_sockopt(int level, int optname)
             DEBUG_SOCKOPT(WS_IPV6_MULTICAST_IF);
             DEBUG_SOCKOPT(WS_IPV6_MULTICAST_HOPS);
             DEBUG_SOCKOPT(WS_IPV6_MULTICAST_LOOP);
+            DEBUG_SOCKOPT(WS_IPV6_PKTINFO);
             DEBUG_SOCKOPT(WS_IPV6_UNICAST_HOPS);
             DEBUG_SOCKOPT(WS_IPV6_V6ONLY);
             DEBUG_SOCKOPT(WS_IPV6_UNICAST_IF);
@@ -1938,6 +1939,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IPV6_MULTICAST_LOOP:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_LOOP, optval, optlen );
 
+        case WS_IPV6_PKTINFO:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_RECVPKTINFO, optval, optlen );
+
         case WS_IPV6_UNICAST_HOPS:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_UNICAST_HOPS, optval, optlen );
 
@@ -3146,6 +3150,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 
         case WS_IPV6_MULTICAST_LOOP:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP, optval, optlen );
+
+        case WS_IPV6_PKTINFO:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_RECVPKTINFO, optval, optlen );
 
         case WS_IPV6_PROTECTION_LEVEL:
             FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
