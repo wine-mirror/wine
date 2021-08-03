@@ -2155,11 +2155,7 @@ static int pre_exec(void)
     int temp;
 
     check_vmsplit( &temp );
-#ifdef __i386__
-    return 1;  /* we have a preloader on x86 */
-#else
-    return 0;
-#endif
+    return 1;  /* we have a preloader on x86/arm */
 }
 
 #elif defined(__linux__) && (defined(__x86_64__) || defined(__aarch64__))

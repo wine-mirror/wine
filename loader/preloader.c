@@ -111,7 +111,7 @@
 
 static struct wine_preload_info preload_info[] =
 {
-#ifdef __i386__
+#if defined(__i386__) || defined(__arm__)
     { (void *)0x00000000, 0x00010000 },  /* low 64k */
     { (void *)0x00010000, 0x00100000 },  /* DOS area */
     { (void *)0x00110000, 0x67ef0000 },  /* low memory area */
@@ -536,6 +536,125 @@ SYSCALL_NOERR( wld_geteuid, 175 /* SYS_geteuid */ );
 gid_t wld_getegid(void);
 SYSCALL_NOERR( wld_getegid, 177 /* SYS_getegid */ );
 
+#elif defined(__arm__)
+
+void *thread_data[256];
+
+/*
+ * The _start function is the entry and exit point of this program
+ *
+ *  It calls wld_start, passing a pointer to the args it receives
+ *  then jumps to the address wld_start returns.
+ */
+void _start(void);
+extern char _end[];
+__ASM_GLOBAL_FUNC(_start,
+                  "mov r0, sp\n\t"
+                  "sub sp, sp, #144\n\t" /* allocate some space for extra aux values */
+                  "str r0, [sp]\n\t"     /* orig stack pointer */
+                  "ldr r0, =thread_data\n\t"
+                  "movw r7, #0x0005\n\t" /* __ARM_NR_set_tls */
+                  "movt r7, #0xf\n\t"    /* __ARM_NR_set_tls */
+                  "svc #0\n\t"
+                  "mov r0, sp\n\t"       /* ptr to orig stack pointer */
+                  "bl wld_start\n\t"
+                  "ldr r1, [sp]\n\t"     /* new stack pointer */
+                  "mov sp, r1\n\t"
+                  "mov lr, r0\n\t"
+                  "mov r0, #0\n\t"
+                  "mov r1, #0\n\t"
+                  "mov r2, #0\n\t"
+                  "mov r3, #0\n\t"
+                  "mov r12, #0\n\t"
+                  "bx lr\n\t"
+                  ".ltorg\n\t")
+
+#define SYSCALL_FUNC( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "push {r4-r5,r7,lr}\n\t" \
+                       "ldr r4, [sp, #16]\n\t" \
+                       "ldr r5, [sp, #20]\n\t" \
+                       "mov r7, #" #nr "\n\t" \
+                       "svc #0\n\t" \
+                       "cmn r0, #4096\n\t" \
+                       "it hi\n\t" \
+                       "movhi r0, #-1\n\t" \
+                       "pop {r4-r5,r7,pc}\n\t" )
+
+#define SYSCALL_NOERR( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "push {r7,lr}\n\t" \
+                       "mov r7, #" #nr "\n\t" \
+                       "svc #0\n\t" \
+                       "pop {r7,pc}\n\t" )
+
+void wld_exit( int code ) __attribute__((noreturn));
+SYSCALL_NOERR( wld_exit, 1 /* SYS_exit */ );
+
+ssize_t wld_read( int fd, void *buffer, size_t len );
+SYSCALL_FUNC( wld_read, 3 /* SYS_read */ );
+
+ssize_t wld_write( int fd, const void *buffer, size_t len );
+SYSCALL_FUNC( wld_write, 4 /* SYS_write */ );
+
+int wld_openat( int dirfd, const char *name, int flags );
+SYSCALL_FUNC( wld_openat, 322 /* SYS_openat */ );
+
+int wld_open( const char *name, int flags )
+{
+    return wld_openat(-100 /* AT_FDCWD */, name, flags);
+}
+
+int wld_close( int fd );
+SYSCALL_FUNC( wld_close, 6 /* SYS_close */ );
+
+void *wld_mmap2( void *start, size_t len, int prot, int flags, int fd, int offset );
+SYSCALL_FUNC( wld_mmap2, 192 /* SYS_mmap2 */ );
+
+void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset )
+{
+    return wld_mmap2(start, len, prot, flags, fd, offset >> 12);
+}
+
+int wld_mprotect( const void *addr, size_t len, int prot );
+SYSCALL_FUNC( wld_mprotect, 125 /* SYS_mprotect */ );
+
+int wld_prctl( int code, long arg );
+SYSCALL_FUNC( wld_prctl, 172 /* SYS_prctl */ );
+
+uid_t wld_getuid(void);
+SYSCALL_NOERR( wld_getuid, 24 /* SYS_getuid */ );
+
+gid_t wld_getgid(void);
+SYSCALL_NOERR( wld_getgid, 47 /* SYS_getgid */ );
+
+uid_t wld_geteuid(void);
+SYSCALL_NOERR( wld_geteuid, 49 /* SYS_geteuid */ );
+
+gid_t wld_getegid(void);
+SYSCALL_NOERR( wld_getegid, 50 /* SYS_getegid */ );
+
+unsigned long long __aeabi_uidivmod(unsigned int num, unsigned int den)
+{
+    unsigned int bit = 1;
+    unsigned int quota = 0;
+    if (!den)
+        wld_exit(1);
+    while (den < num && !(den & 0x80000000)) {
+        den <<= 1;
+        bit <<= 1;
+    }
+    do {
+        if (den <= num) {
+            quota |= bit;
+            num   -= den;
+        }
+        bit >>= 1;
+        den >>= 1;
+    } while (bit);
+    return ((unsigned long long)num << 32) | quota;
+}
+
 #else
 #error preloader not implemented for this CPU
 #endif
@@ -809,6 +928,9 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 #elif defined(__aarch64__)
     if( header->e_machine != EM_AARCH64 )
         fatal_error("%s: not an aarch64 ELF binary... don't know how to load it\n", name );
+#elif defined(__arm__)
+    if( header->e_machine != EM_ARM )
+        fatal_error("%s: not an arm ELF binary... don't know how to load it\n", name );
 #endif
 
     if (header->e_phnum > sizeof(loadcmds)/sizeof(loadcmds[0]))

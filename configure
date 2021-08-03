@@ -9473,7 +9473,7 @@ fi
       WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
       case $host_cpu in
-        *i[3456789]86* | x86_64 | *aarch64*)
+        *i[3456789]86* | x86_64 | *aarch64* | arm*)
           { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000... " >&6; }
 if ${ac_cv_cflags__Wl__Ttext_segment_0x7bc00000+:} false; then :
@@ -18025,7 +18025,7 @@ esac
 case $host_os in
   linux*)
     case $host_cpu in
-      *i[3456789]86*|x86_64*|*aarch64*)
+      *i[3456789]86*|x86_64*|*aarch64*|arm*)
         test "$wine_binary" = wine || wine_fn_append_file CONFIGURE_TARGETS "loader/wine-preloader"
         WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
         ;;
