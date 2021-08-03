@@ -514,7 +514,6 @@ static void test_ip_forward( int family )
                                       NULL, 0, &count, 0 );
         if (!err) break;
     }
-todo_wine_if (family == AF_INET6)
     ok( !err, "got %d\n", err );
     if (err) { winetest_pop_context(); return; }
     rw_size = rw_sizes[i];

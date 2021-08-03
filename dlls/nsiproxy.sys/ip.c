@@ -470,7 +470,8 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, DWORD key_size, void
                                             void *static_data, DWORD static_size, DWORD_PTR *count )
 {
     FIXME( "not implemented\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    *count = 0;
+    return STATUS_SUCCESS;
 }
 
 static struct module_table ipv4_tables[] =

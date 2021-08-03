@@ -343,7 +343,6 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
     case DnsConfigAdapterDomainName_A:
     case DnsConfigAdapterDomainName_W:
     case DnsConfigAdapterDomainName_UTF8:
-    case DnsConfigSearchList:
     case DnsConfigAdapterInfo:
     case DnsConfigPrimaryHostNameRegistrationEnabled:
     case DnsConfigAdapterHostNameRegistrationEnabled:
@@ -357,6 +356,9 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
         return resolv_funcs->get_serverlist( AF_INET, buffer, len );
     case DnsConfigDnsServersIpv6:
         return resolv_funcs->get_serverlist( AF_INET6, buffer, len );
+
+    case DnsConfigSearchList:
+        return resolv_funcs->get_searchlist( buffer, len );
 
     default:
         WARN( "unknown config type: %d\n", config );

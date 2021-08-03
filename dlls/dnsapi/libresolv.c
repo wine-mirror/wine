@@ -61,6 +61,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
+static CPTABLEINFO unix_cptable;
+static ULONG unix_cp = CP_UTF8;
+
+static DWORD WINAPI get_unix_codepage_once( RTL_RUN_ONCE *once, void *param, void **context )
+{
+    static const WCHAR wineunixcpW[] = { 'W','I','N','E','U','N','I','X','C','P',0 };
+    UNICODE_STRING name, value;
+    WCHAR value_buffer[13];
+    SIZE_T size;
+    void *ptr;
+
+    RtlInitUnicodeString( &name, wineunixcpW );
+    value.Buffer = value_buffer;
+    value.MaximumLength = sizeof(value_buffer);
+    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
+        RtlUnicodeStringToInteger( &value, 10, &unix_cp );
+    if (unix_cp != CP_UTF8 && !NtGetNlsSectionPtr( 11, unix_cp, NULL, &ptr, &size ))
+        RtlInitCodePageTable( ptr, &unix_cptable );
+    return TRUE;
+}
+
+static BOOL get_unix_codepage( void )
+{
+    static RTL_RUN_ONCE once = RTL_RUN_ONCE_INIT;
+
+    return !RtlRunOnceExecuteOnce( &once, get_unix_codepage_once, NULL, NULL );
+}
+
+static DWORD dnsapi_umbstowcs( const char *src, WCHAR *dst, DWORD dstlen )
+{
+    DWORD srclen = strlen( src ) + 1;
+    DWORD len;
+
+    get_unix_codepage();
+
+    if (unix_cp == CP_UTF8)
+    {
+        RtlUTF8ToUnicodeN( dst, dstlen, &len, src, srclen );
+        return len;
+    }
+    else
+    {
+        len = srclen * sizeof(WCHAR);
+        if (dst) RtlCustomCPToUnicodeN( &unix_cptable, dst, dstlen, &len, src, srclen );
+        return len;
+    }
+}
+
 static const char *debugstr_type( unsigned short type )
 {
     const char *str;
@@ -228,6 +276,38 @@ static DNS_STATUS map_h_errno( int error )
         return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
     }
 }
+
+DNS_STATUS CDECL resolv_get_searchlist( DNS_TXT_DATAW *list, DWORD *len )
+{
+    DWORD i, needed, str_needed = 0;
+    char *ptr, *end;
+
+    init_resolver();
+
+    for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
+        str_needed += dnsapi_umbstowcs( _res.dnsrch[i], NULL, 0 );
+
+    needed = FIELD_OFFSET(DNS_TXT_DATAW, pStringArray[i]) + str_needed;
+
+    if (!list || *len < needed)
+    {
+        *len = needed;
+        return !list ? ERROR_SUCCESS : ERROR_MORE_DATA;
+    }
+
+    *len = needed;
+    list->dwStringCount = i;
+
+    ptr = (char *)(list->pStringArray + i);
+    end = ptr + str_needed;
+    for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
+    {
+        list->pStringArray[i] = (WCHAR *)ptr;
+        ptr += dnsapi_umbstowcs( _res.dnsrch[i], list->pStringArray[i], end - ptr );
+    }
+    return ERROR_SUCCESS;
+}
+
 
 static inline int filter( unsigned short sin_family, USHORT family )
 {
@@ -851,6 +931,7 @@ exit:
 
 static const struct resolv_funcs funcs =
 {
+    resolv_get_searchlist,
     resolv_get_serverlist,
     resolv_query,
     resolv_set_serverlist
