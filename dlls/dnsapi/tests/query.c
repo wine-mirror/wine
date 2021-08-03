@@ -138,10 +138,10 @@ static IP_ADAPTER_ADDRESSES *get_adapters(void)
 
 static void test_DnsQueryConfig( void )
 {
-    DWORD err, size, i;
+    DWORD err, size, i, ipv6_count;
     WCHAR name[MAX_ADAPTER_NAME_LENGTH + 1];
     IP_ADAPTER_ADDRESSES *adapters, *ptr;
-    DNS_ADDR_ARRAY *ipv4;
+    DNS_ADDR_ARRAY *ipv4, *ipv6, *unspec;
     IP4_ARRAY *ip4_array;
 
     if (!(adapters = get_adapters())) return;
@@ -186,7 +186,33 @@ static void test_DnsQueryConfig( void )
             ok( ipv4->AddrArray[i].Data.DnsAddrUserDword[0] == sizeof(*sa), "got %d\n",
                 ipv4->AddrArray[i].Data.DnsAddrUserDword[0] );
         }
+
+        size = 0;
+        err = DnsQueryConfig( DnsConfigDnsServersIpv6, 0, name, NULL, NULL, &size );
+        ok( !err || err == DNS_ERROR_NO_DNS_SERVERS, "got %d\n", err );
+        ipv6_count = 0;
+        ipv6 = NULL;
+        if (!err)
+        {
+            ipv6 = malloc( size );
+            err = DnsQueryConfig( DnsConfigDnsServersIpv6, 0, name, NULL, ipv6, &size );
+            ok( !err, "got %d\n", err );
+            ipv6_count = ipv6->AddrCount;
+        }
+
+        size = 0;
+        err = DnsQueryConfig( DnsConfigDnsServersUnspec, 0, name, NULL, NULL, &size );
+        ok( !err, "got %d\n", err );
+        unspec = malloc( size );
+        err = DnsQueryConfig( DnsConfigDnsServersUnspec, 0, name, NULL, unspec, &size );
+        ok( !err, "got %d\n", err );
+
+        ok( unspec->AddrCount == ipv4->AddrCount + ipv6_count, "got %d vs %d + %d\n",
+            unspec->AddrCount, ipv4->AddrCount, ipv6_count );
+
         free( ip4_array );
+        free( unspec );
+        free( ipv6 );
         free( ipv4 );
     }
 

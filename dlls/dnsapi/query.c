@@ -351,8 +351,12 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
         FIXME( "unimplemented config type %d\n", config );
         break;
 
+    case DnsConfigDnsServersUnspec:
+        return resolv_funcs->get_serverlist( AF_UNSPEC, buffer, len );
     case DnsConfigDnsServersIpv4:
         return resolv_funcs->get_serverlist( AF_INET, buffer, len );
+    case DnsConfigDnsServersIpv6:
+        return resolv_funcs->get_serverlist( AF_INET6, buffer, len );
 
     default:
         WARN( "unknown config type: %d\n", config );
