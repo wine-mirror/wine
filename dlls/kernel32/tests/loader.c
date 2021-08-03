@@ -4028,7 +4028,7 @@ static void test_Wow64Transition(void)
     }
 
     status = NtQueryVirtualMemory(GetCurrentProcess(), *pWow64Transition,
-            MemorySectionName, name, sizeof(buffer), NULL);
+                                  MemoryMappedFilenameInformation, name, sizeof(buffer), NULL);
     ok(!status, "got %#x\n", status);
     filepart = name->SectionFileName.Buffer + name->SectionFileName.Length / sizeof(WCHAR);
     while (*filepart != '\\') --filepart;

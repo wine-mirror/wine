@@ -1133,7 +1133,8 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetMappedFileNameW( HANDLE process, void *addr, W
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (!set_ntstatus( NtQueryVirtualMemory( process, addr, MemorySectionName, mem, sizeof(buffer), NULL )))
+    if (!set_ntstatus( NtQueryVirtualMemory( process, addr, MemoryMappedFilenameInformation,
+                                             mem, sizeof(buffer), NULL )))
         return 0;
 
     len = mem->SectionFileName.Length / sizeof(WCHAR);
@@ -1504,7 +1505,8 @@ BOOL WINAPI /* DECLSPEC_HOTPATCH */ InitializeProcessForWsWatch( HANDLE process 
 BOOL WINAPI DECLSPEC_HOTPATCH QueryWorkingSet( HANDLE process, void *buffer, DWORD size )
 {
     TRACE( "(%p, %p, %d)\n", process, buffer, size );
-    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL ));
+    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetInformation,
+                                               buffer, size, NULL ));
 }
 
 

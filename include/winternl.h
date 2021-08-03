@@ -1907,10 +1907,17 @@ typedef enum _WINSTATIONINFOCLASS {
 
 typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryBasicInformation,
-    MemoryWorkingSetList,
-    MemorySectionName,
-    MemoryBasicVlmInformation,
-    MemoryWorkingSetExInformation
+    MemoryWorkingSetInformation,
+    MemoryMappedFilenameInformation,
+    MemoryRegionInformation,
+    MemoryWorkingSetExInformation,
+    MemorySharedCommitInformation,
+    MemoryImageInformation,
+    MemoryRegionInformationEx,
+    MemoryPrivilegedBasicInformation,
+    MemoryEnclaveImageInformation,
+    MemoryBasicInformationCapped,
+    MemoryPhysicalContiguityInformation,
 } MEMORY_INFORMATION_CLASS;
 
 typedef struct _MEMORY_SECTION_NAME

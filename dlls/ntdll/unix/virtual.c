@@ -4258,10 +4258,6 @@ static NTSTATUS get_memory_section_name( HANDLE process, LPCVOID addr,
     return status;
 }
 
-#define UNIMPLEMENTED_INFO_CLASS(c) \
-    case c: \
-        FIXME("(process=%p,addr=%p) Unimplemented information class: " #c "\n", process, addr); \
-        return STATUS_INVALID_INFO_CLASS
 
 /***********************************************************************
  *             NtQueryVirtualMemory   (NTDLL.@)
@@ -4278,13 +4274,12 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     {
         case MemoryBasicInformation:
             return get_basic_memory_info( process, addr, buffer, len, res_len );
+
         case MemoryWorkingSetExInformation:
             return get_working_set_ex( process, addr, buffer, len, res_len );
-        case MemorySectionName:
-            return get_memory_section_name( process, addr, buffer, len, res_len );
 
-        UNIMPLEMENTED_INFO_CLASS(MemoryWorkingSetList);
-        UNIMPLEMENTED_INFO_CLASS(MemoryBasicVlmInformation);
+        case MemoryMappedFilenameInformation:
+            return get_memory_section_name( process, addr, buffer, len, res_len );
 
         default:
             FIXME("(%p,%p,info_class=%d,%p,%ld,%p) Unknown information class\n",

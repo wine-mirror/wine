@@ -2649,7 +2649,7 @@ static void test_queryvirtualmemory(void)
     module = GetModuleHandleA( "ntdll.dll" );
     memset(buffer, 0xcc, sizeof(buffer));
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), module, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), module, MemoryMappedFilenameInformation,
                                    name, sizeof(*name) + 16, &readcount);
     ok(status == STATUS_BUFFER_OVERFLOW, "got %08x\n", status);
     ok(name->SectionFileName.Length == 0xcccc || broken(!name->SectionFileName.Length),  /* vista64 */
@@ -2658,7 +2658,7 @@ static void test_queryvirtualmemory(void)
 
     memset(buffer, 0xcc, sizeof(buffer));
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemoryMappedFilenameInformation,
                                    name, sizeof(buffer), &readcount);
     ok(status == STATUS_SUCCESS, "got %08x\n", status);
     ok(name->SectionFileName.Buffer == (WCHAR *)(name + 1), "Wrong ptr %p/%p\n",
@@ -2672,18 +2672,18 @@ static void test_queryvirtualmemory(void)
         "buffer not null-terminated\n" );
 
     memset(buffer, 0xcc, sizeof(buffer));
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemoryMappedFilenameInformation,
                                    name, sizeof(buffer), NULL);
     ok(status == STATUS_SUCCESS, "got %08x\n", status);
 
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemoryMappedFilenameInformation,
                                    NULL, sizeof(buffer), NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "got %08x\n", status);
 
     memset(buffer, 0xcc, sizeof(buffer));
     prev = readcount;
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 321, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 321, MemoryMappedFilenameInformation,
                                    name, sizeof(*name) - 1, &readcount);
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status);
     ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
@@ -2691,7 +2691,7 @@ static void test_queryvirtualmemory(void)
 
     memset(buffer, 0xcc, sizeof(buffer));
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory((HANDLE)0xdead, (char *)module + 1234, MemorySectionName,
+    status = pNtQueryVirtualMemory((HANDLE)0xdead, (char *)module + 1234, MemoryMappedFilenameInformation,
                                    name, sizeof(buffer), &readcount);
     ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
     ok(readcount == 0xdeadbeef || broken(readcount == 1024 + sizeof(*name)), /* wow64 */
@@ -2699,7 +2699,7 @@ static void test_queryvirtualmemory(void)
 
     memset(buffer, 0xcc, sizeof(buffer));
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), buffer, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), buffer, MemoryMappedFilenameInformation,
                                    name, sizeof(buffer), &readcount);
     ok(status == STATUS_INVALID_ADDRESS, "got %08x\n", status);
     ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
@@ -2707,7 +2707,7 @@ static void test_queryvirtualmemory(void)
        "Wrong count %lu\n", readcount);
 
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)0x1234, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)0x1234, MemoryMappedFilenameInformation,
                                    name, sizeof(buffer), &readcount);
     ok(status == STATUS_INVALID_ADDRESS, "got %08x\n", status);
     ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
@@ -2715,7 +2715,7 @@ static void test_queryvirtualmemory(void)
        "Wrong count %lu\n", readcount);
 
     readcount = 0xdeadbeef;
-    status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)0x1234, MemorySectionName,
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)0x1234, MemoryMappedFilenameInformation,
                                    name, sizeof(*name) - 1, &readcount);
     ok(status == STATUS_INVALID_ADDRESS, "got %08x\n", status);
     ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);

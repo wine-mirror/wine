@@ -328,7 +328,7 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         res_len = sizeof(MEMORY_BASIC_INFORMATION32);
         break;
 
-    case MemorySectionName:  /* MEMORY_SECTION_NAME */
+    case MemoryMappedFilenameInformation:  /* MEMORY_SECTION_NAME */
     {
         MEMORY_SECTION_NAME *info;
         MEMORY_SECTION_NAME32 *info32 = ptr;
