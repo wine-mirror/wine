@@ -942,6 +942,11 @@ static void test_inet_pton(void)
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEAFNOSUPPORT, "got error %u\n", WSAGetLastError());
 
+    WSASetLastError(0xdeadbeef);
+    ret = inet_addr(NULL);
+    ok(ret == INADDR_NONE, "got %#x\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
     for (i = 0; i < ARRAY_SIZE(ipv4_tests); ++i)
     {
         WCHAR inputW[32];
@@ -963,6 +968,13 @@ static void test_inet_pton(void)
         ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "%s: got error %u\n",
                 debugstr_a(ipv4_tests[i].input), WSAGetLastError());
         ok(addr == ipv4_tests[i].addr, "%s: got addr %#08x\n", debugstr_a(ipv4_tests[i].input), addr);
+
+        WSASetLastError(0xdeadbeef);
+        addr = inet_addr(ipv4_tests[i].input);
+        ok(addr == ipv4_tests[i].ret ? ipv4_tests[i].addr : INADDR_NONE,
+                "%s: got addr %#08x\n", debugstr_a(ipv4_tests[i].input), addr);
+        ok(WSAGetLastError() == 0xdeadbeef, "%s: got error %u\n",
+                debugstr_a(ipv4_tests[i].input), WSAGetLastError());
     }
 
     for (i = 0; i < ARRAY_SIZE(ipv6_tests); ++i)
@@ -1503,14 +1515,6 @@ static void test_WSAStringToAddress(void)
                 wine_dbgstr_a( ipv6_tests[j].input ), len, expected_len );
         }
     }
-}
-
-static void test_inet_addr(void)
-{
-    u_long addr;
-
-    addr = inet_addr(NULL);
-    ok(addr == INADDR_NONE, "inet_addr succeeded unexpectedly\n");
 }
 
 /* Tests used in both getaddrinfo and GetAddrInfoW */
@@ -2818,7 +2822,6 @@ START_TEST( protocol )
     test_addr_to_print();
     test_WSAAddressToString();
     test_WSAStringToAddress();
-    test_inet_addr();
 
     test_GetAddrInfoW();
     test_GetAddrInfoExW();
