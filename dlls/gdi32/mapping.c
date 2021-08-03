@@ -103,10 +103,10 @@ BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     DC *dc = get_nulldrv_dc( dev );
 
     if (pt)
-        *pt = dc->wnd_org;
+        *pt = dc->attr->wnd_org;
 
-    dc->wnd_org.x += x;
-    dc->wnd_org.y += y;
+    dc->attr->wnd_org.x += x;
+    dc->attr->wnd_org.y += y;
     DC_UpdateXforms( dc );
     return TRUE;
 }
@@ -262,10 +262,10 @@ BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     DC *dc = get_nulldrv_dc( dev );
 
     if (pt)
-        *pt = dc->wnd_org;
+        *pt = dc->attr->wnd_org;
 
-    dc->wnd_org.x = x;
-    dc->wnd_org.y = y;
+    dc->attr->wnd_org.x = x;
+    dc->attr->wnd_org.y = y;
     DC_UpdateXforms( dc );
     return TRUE;
 }
