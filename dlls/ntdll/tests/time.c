@@ -216,18 +216,20 @@ static void test_RtlQueryPerformanceCounter(void)
 }
 #endif
 
+#define TIMER_LEEWAY 10
 #define CHECK_CURRENT_TIMER(expected) \
     do { \
         ok(status == STATUS_SUCCESS, "NtSetTimerResolution failed %x\n", status); \
-        ok(cur2 == (expected), "expected new timer resolution %u, got %u\n", (expected), cur2); \
-        min2 = min + 10; \
+        ok(cur2 == (expected) || broken(abs((int)((expected) - cur2)) <= TIMER_LEEWAY), "expected new timer resolution %u, got %u\n", (expected), cur2); \
+        set = cur2; \
+        min2 = min + 20000; \
         cur2 = min2 + 1; \
         max2 = cur2 + 1; \
         status = NtQueryTimerResolution(&min2, &max2, &cur2); \
         ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed %x\n", status); \
         ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2); \
         ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2); \
-        ok(cur2 == expected, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", (expected), cur2); \
+        ok(cur2 == set, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", set, cur2); \
     } while (0)
 
 static void test_TimerResolution(void)
@@ -252,7 +254,8 @@ static void test_TimerResolution(void)
     ok(min == 156250 /* 1/64s HPET */ || min == 156001 /* RTC */,
        "unexpected minimum timer resolution %u\n", min);
     ok(0 < max, "invalid maximum timer resolution, should be 0 < %u\n", max);
-    ok(max <= cur && cur <= min, "invalid timer resolutions, should be %u <= %u <= %u\n", max, cur, min);
+    ok(max <= cur || broken(max - TIMER_LEEWAY <= cur), "invalid timer resolutions, should be %u <= %u\n", max, cur);
+    ok(cur <= min || broken(cur <= min + TIMER_LEEWAY), "invalid timer resolutions, should be %u <= %u\n", cur, min);
 
     status = NtSetTimerResolution(0, FALSE, NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution(,,NULL) success\n");
@@ -261,7 +264,7 @@ static void test_TimerResolution(void)
     status = NtSetTimerResolution(cur - 1, TRUE, NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution() failed %x\n", status);
 
-    min2 = min + 1;
+    min2 = min + 10000;
     cur2 = min2 + 1;
     max2 = cur2 + 1;
     status = NtQueryTimerResolution(&min2, &max2, &cur2);
@@ -311,7 +314,7 @@ static void test_TimerResolution(void)
     set = max < cur ? cur - 1 : max;
     status = NtSetTimerResolution(set, TRUE, &cur2);
     ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
-    ok(cur2 <= set, "expected new timer resolution %u <= %u\n", cur2, set);
+    ok(cur2 <= set || broken(cur2 <= set + TIMER_LEEWAY), "expected new timer resolution %u <= %u\n", cur2, set);
     trace("timer resolution: %u(max) <= %u(cur) <= %u(prev) <= %u(min)\n", max, cur2, cur, min);
 
     cur2 = 7654321;
