@@ -1047,6 +1047,22 @@ BOOL WINAPI CloseFigure( HDC hdc )
 }
 
 /***********************************************************************
+ *           IntersectClipRect    (GDI32.@)
+ */
+INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
+
+    if (is_meta_dc( hdc )) return METADC_IntersectClipRect( hdc, left, top, right, bottom );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_IntersectClipRect( dc_attr, left, top, right, bottom ))
+        return FALSE;
+    return NtGdiIntersectClipRect( hdc, left, top, right, bottom );
+}
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )

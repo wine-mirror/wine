@@ -94,7 +94,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pGetTextFace */
     NULL,                            /* pGetTextMetrics */
     EMFDRV_GradientFill,             /* pGradientFill */
-    EMFDRV_IntersectClipRect,        /* pIntersectClipRect */
+    NULL,                            /* pIntersectClipRect */
     EMFDRV_InvertRgn,                /* pInvertRgn */
     EMFDRV_LineTo,                   /* pLineTo */
     EMFDRV_ModifyWorldTransform,     /* pModifyWorldTransform */

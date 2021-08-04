@@ -82,7 +82,6 @@ extern BOOL     CDECL EMFDRV_GdiComment( PHYSDEV dev, UINT bytes, const BYTE *bu
 extern INT      CDECL EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                                            void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
-extern INT      CDECL EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode ) DECLSPEC_HIDDEN;

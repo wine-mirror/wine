@@ -206,24 +206,7 @@ INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, IN
 
 INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    RECT rect = get_clip_rect( dc, left, top, right, bottom );
-    INT ret;
-    HRGN rgn;
-
-    if (!dc->hClipRgn)
-    {
-        dc->hClipRgn = CreateRectRgnIndirect( &rect );
-        ret = SIMPLEREGION;
-    }
-    else
-    {
-        if (!(rgn = CreateRectRgnIndirect( &rect ))) return ERROR;
-        ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
-        DeleteObject( rgn );
-    }
-    if (ret != ERROR) update_dc_clipping( dc );
-    return ret;
+    return ERROR;
 }
 
 INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
@@ -341,20 +324,30 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
 
 
 /***********************************************************************
- *           IntersectClipRect    (GDI32.@)
+ *           NtGdiIntersectClipRect    (win32u.@)
  */
-INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
+INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    PHYSDEV physdev;
-    INT ret;
-    DC *dc = get_dc_ptr( hdc );
+    INT ret = ERROR;
+    RECT rect;
+    HRGN rgn;
+    DC *dc;
 
-    TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
-
-    if (!dc) return ERROR;
+    if (!(dc = get_dc_ptr( hdc ))) return ERROR;
     update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pIntersectClipRect );
-    ret = physdev->funcs->pIntersectClipRect( physdev, left, top, right, bottom );
+
+    rect = get_clip_rect( dc, left, top, right, bottom );
+    if (!dc->hClipRgn)
+    {
+        if ((dc->hClipRgn = CreateRectRgnIndirect( &rect )))
+            ret = SIMPLEREGION;
+    }
+    else if ((rgn = CreateRectRgnIndirect( &rect )))
+    {
+        ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
+        DeleteObject( rgn );
+    }
+    if (ret != ERROR) update_dc_clipping( dc );
     release_dc_ptr( dc );
     return ret;
 }

@@ -161,9 +161,8 @@ INT CDECL EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT
     return next->funcs->pExcludeClipRect( next, left, top, right, bottom );
 }
 
-INT CDECL EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom)
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pIntersectClipRect );
     EMRINTERSECTCLIPRECT emr;
 
     emr.emr.iType      = EMR_INTERSECTCLIPRECT;
@@ -172,8 +171,7 @@ INT CDECL EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, I
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return ERROR;
-    return next->funcs->pIntersectClipRect( next, left, top, right, bottom );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 INT CDECL EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )

@@ -54,6 +54,8 @@ extern BOOL METADC_ExtTextOut( HDC hdc, INT x, INT y, UINT flags, const RECT *re
 extern BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y ) DECLSPEC_HIDDEN;
 extern INT  METADC_GetDeviceCaps( HDC hdc, INT cap );
+extern BOOL METADC_IntersectClipRect( HDC hdc, INT left, INT top, INT right,
+                                      INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
@@ -98,6 +100,8 @@ extern BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT widt
                             INT height ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_GradientFill( DC_ATTR *dc_attr, TRIVERTEX *vert_array, ULONG nvert,
                                 void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right,
+                                     INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_InvertRgn( DC_ATTR *dc_attr, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
