@@ -1976,7 +1976,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (needs_close) close( fd );
             if (ret) return sock_errno_to_status( errno );
 
-            io->Information = offsetof( DEVICELIST, unix_list->len );
+            io->Information = offsetof( DEVICELIST, Device[unix_list->len] );
             if (out_size < io->Information)
                 return STATUS_BUFFER_TOO_SMALL;
 
