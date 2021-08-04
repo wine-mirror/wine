@@ -1314,12 +1314,15 @@ void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *conte
         context_vk->vk_framebuffer = VK_NULL_HANDLE;
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(pool_vk, pool_vk_next, &context_vk->completed_query_pools,
-            struct wined3d_query_pool_vk, completed_entry)
+    if (vk_command_buffer)
     {
-        list_remove(&pool_vk->completed_entry);
-        list_init(&pool_vk->completed_entry);
-        wined3d_query_pool_vk_reset(pool_vk, context_vk, vk_command_buffer);
+        LIST_FOR_EACH_ENTRY_SAFE(pool_vk, pool_vk_next, &context_vk->completed_query_pools,
+                struct wined3d_query_pool_vk, completed_entry)
+        {
+            list_remove(&pool_vk->completed_entry);
+            list_init(&pool_vk->completed_entry);
+            wined3d_query_pool_vk_reset(pool_vk, context_vk, vk_command_buffer);
+        }
     }
 }
 
