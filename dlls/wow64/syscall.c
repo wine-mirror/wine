@@ -543,7 +543,71 @@ void * WINAPI Wow64AllocateTemp( SIZE_T size )
  */
 void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CONTEXT *context )
 {
-    FIXME( "stub %lx %lx %lx\n", arg1, arg2, arg3 );
+    NTSTATUS retval;
+
+#ifdef __x86_64__
+    retval = context->Rax;
+#elif defined(__aarch64__)
+    retval = context->X0;
+#endif
+
+    /* cf. 32-bit call_user_apc_dispatcher */
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        {
+            struct apc_stack_layout
+            {
+                ULONG         ret;
+                ULONG         context_ptr;
+                ULONG         arg1;
+                ULONG         arg2;
+                ULONG         arg3;
+                ULONG         func;
+                I386_CONTEXT  context;
+            } *stack;
+            I386_CONTEXT ctx = { CONTEXT_I386_FULL };
+
+            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+            stack = (struct apc_stack_layout *)ULongToPtr( ctx.Esp & ~3 ) - 1;
+            stack->context_ptr = PtrToUlong( &stack->context );
+            stack->func = arg1 >> 32;
+            stack->arg1 = arg1;
+            stack->arg2 = arg2;
+            stack->arg3 = arg3;
+            stack->context = ctx;
+            stack->context.Eax = retval;
+            ctx.Esp = PtrToUlong( stack );
+            ctx.Eip = pLdrSystemDllInitBlock->pKiUserApcDispatcher;
+            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+        }
+        break;
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+        {
+            struct apc_stack_layout
+            {
+                ULONG       func;
+                ULONG       align[3];
+                ARM_CONTEXT context;
+            } *stack;
+            ARM_CONTEXT ctx = { CONTEXT_ARM_FULL };
+
+            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+            stack = (struct apc_stack_layout *)ULongToPtr( ctx.Sp & ~15 ) - 1;
+            stack->func = arg1 >> 32;
+            stack->context = ctx;
+            stack->context.R0 = retval;
+            ctx.Sp = PtrToUlong( stack );
+            ctx.Pc = pLdrSystemDllInitBlock->pKiUserApcDispatcher;
+            ctx.R0 = PtrToUlong( &stack->context );
+            ctx.R1 = arg1;
+            ctx.R2 = arg2;
+            ctx.R3 = arg3;
+            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+        }
+        break;
+    }
 }
 
 
