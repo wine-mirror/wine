@@ -869,6 +869,8 @@ static void load_ntdll_wow64_functions( HMODULE module )
     GET_FUNC( RtlpQueryProcessDebugInformationRemote );
 #undef GET_FUNC
 
+    p__wine_ctrl_routine = (void *)find_named_export( module, exports, "__wine_ctrl_routine" );
+
     /* also set the 32-bit LdrSystemDllInitBlock */
     memcpy( (void *)(ULONG_PTR)pLdrSystemDllInitBlock->pLdrSystemDllInitBlock,
             pLdrSystemDllInitBlock, sizeof(*pLdrSystemDllInitBlock) );
