@@ -462,13 +462,11 @@ extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
 #include <pshpack2.h>
 typedef struct
 {
-    DWORD magic;   /* WMFC */
-    WORD unk04;    /* 1 */
-    WORD unk06;    /* 0 */
-    WORD unk08;    /* 0 */
-    WORD unk0a;    /* 1 */
+    DWORD comment_id;   /* WMFC */
+    DWORD comment_type; /* Always 0x00000001 */
+    DWORD version;      /* Always 0x00010000 */
     WORD checksum;
-    DWORD unk0e;   /* 0 */
+    DWORD flags;        /* Always 0 */
     DWORD num_chunks;
     DWORD chunk_size;
     DWORD remaining_size;

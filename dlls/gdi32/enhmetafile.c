@@ -2804,7 +2804,7 @@ static HENHMETAFILE extract_emf_from_comment( const BYTE *buf, UINT mf_size )
         chunk = (emf_in_wmf_comment *)(mr->rdParm + 2);
 
         if (mr->rdFunction != META_ESCAPE || mr->rdParm[0] != MFCOMMENT) goto done;
-        if (chunk->magic != WMFC_MAGIC) goto done;
+        if (chunk->comment_id != WMFC_MAGIC) goto done;
 
         if (!emf_bits)
         {
