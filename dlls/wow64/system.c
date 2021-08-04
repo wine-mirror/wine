@@ -647,6 +647,23 @@ NTSTATUS WINAPI wow64_NtQuerySystemTime( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtRaiseHardError
+ */
+NTSTATUS WINAPI wow64_NtRaiseHardError( UINT *args )
+{
+    NTSTATUS status = get_ulong( &args );
+    ULONG count = get_ulong( &args );
+    ULONG params_mask = get_ulong( &args );
+    ULONG *params = get_ptr( &args );
+    HARDERROR_RESPONSE_OPTION option = get_ulong( &args );
+    HARDERROR_RESPONSE *response = get_ptr( &args );
+
+    FIXME( "%08x %u %x %p %u %p: stub\n", status, count, params_mask, params, option, response );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/**********************************************************************
  *           wow64_NtSetIntervalProfile
  */
 NTSTATUS WINAPI wow64_NtSetIntervalProfile( UINT *args )

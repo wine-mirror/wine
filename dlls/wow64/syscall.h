@@ -26,6 +26,7 @@
     SYSCALL_ENTRY( NtAccessCheck ) \
     SYSCALL_ENTRY( NtAccessCheckAndAuditAlarm ) \
     SYSCALL_ENTRY( NtAddAtom ) \
+    SYSCALL_ENTRY( NtAdjustGroupsToken ) \
     SYSCALL_ENTRY( NtAdjustPrivilegesToken ) \
     SYSCALL_ENTRY( NtAlertResumeThread ) \
     SYSCALL_ENTRY( NtAlertThread ) \
@@ -53,6 +54,7 @@
     SYSCALL_ENTRY( NtCreateKey ) \
     SYSCALL_ENTRY( NtCreateKeyTransacted ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
+    SYSCALL_ENTRY( NtCreateLowBoxToken ) \
     SYSCALL_ENTRY( NtCreateMailslotFile ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreateNamedPipeFile ) \
@@ -88,6 +90,7 @@
     SYSCALL_ENTRY( NtFreeVirtualMemory ) \
     SYSCALL_ENTRY( NtGetContextThread ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
+    SYSCALL_ENTRY( NtGetNextThread ) \
     SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
     SYSCALL_ENTRY( NtGetWriteWatch ) \
     SYSCALL_ENTRY( NtImpersonateAnonymousToken ) \
@@ -166,9 +169,11 @@
     SYSCALL_ENTRY( NtQueryVirtualMemory ) \
     SYSCALL_ENTRY( NtQueryVolumeInformationFile ) \
     SYSCALL_ENTRY( NtQueueApcThread ) \
+    SYSCALL_ENTRY( NtRaiseHardError ) \
     SYSCALL_ENTRY( NtReadFile ) \
     SYSCALL_ENTRY( NtReadFileScatter ) \
     SYSCALL_ENTRY( NtReadVirtualMemory ) \
+    SYSCALL_ENTRY( NtRegisterThreadTerminatePort ) \
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
@@ -201,6 +206,7 @@
     SYSCALL_ENTRY( NtSetInformationToken ) \
     SYSCALL_ENTRY( NtSetIntervalProfile ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
+    SYSCALL_ENTRY( NtSetLdtEntries ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetSecurityObject ) \
     SYSCALL_ENTRY( NtSetSystemInformation ) \
@@ -236,8 +242,11 @@
     SYSCALL_ENTRY( NtWriteFileGather ) \
     SYSCALL_ENTRY( NtWriteVirtualMemory ) \
     SYSCALL_ENTRY( NtYieldExecution ) \
+    SYSCALL_ENTRY( __wine_dbg_write ) \
     SYSCALL_ENTRY( wine_nt_to_unix_file_name ) \
     SYSCALL_ENTRY( wine_server_call ) \
+    SYSCALL_ENTRY( wine_server_fd_to_handle ) \
+    SYSCALL_ENTRY( wine_server_handle_to_fd ) \
     SYSCALL_ENTRY( wine_unix_to_nt_file_name )
 
 #endif /* __WOW64_SYSCALL_H */

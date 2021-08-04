@@ -1164,6 +1164,17 @@ NTSTATUS WINAPI wow64_NtQueryTimerResolution( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtRegisterThreadTerminatePort
+ */
+NTSTATUS WINAPI wow64_NtRegisterThreadTerminatePort( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtRegisterThreadTerminatePort( handle );
+}
+
+
+/**********************************************************************
  *           wow64_NtReleaseKeyedEvent
  */
 NTSTATUS WINAPI wow64_NtReleaseKeyedEvent( UINT *args )

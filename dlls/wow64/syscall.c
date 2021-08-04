@@ -251,6 +251,18 @@ NTSTATUS WINAPI wow64_NtSetDefaultUILanguage( UINT *args )
 
 
 /**********************************************************************
+ *           wow64___wine_dbg_write
+ */
+NTSTATUS WINAPI wow64___wine_dbg_write( UINT *args )
+{
+    const char *str = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    return __wine_dbg_write( str, len );
+}
+
+
+/**********************************************************************
  *           wow64_wine_server_call
  */
 NTSTATUS WINAPI wow64_wine_server_call( UINT *args )

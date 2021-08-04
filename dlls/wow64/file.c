@@ -875,6 +875,40 @@ NTSTATUS WINAPI wow64_wine_nt_to_unix_file_name( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_wine_server_fd_to_handle
+ */
+NTSTATUS WINAPI wow64_wine_server_fd_to_handle( UINT *args )
+{
+    int fd = get_ulong( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    ULONG attributes = get_ulong( &args );
+    ULONG *handle_ptr = get_ptr( &args );
+
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = wine_server_fd_to_handle( fd, access, attributes, &handle );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_wine_server_handle_to_fd
+ */
+NTSTATUS WINAPI wow64_wine_server_handle_to_fd( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    int *unix_fd = get_ptr( &args );
+    unsigned int *options = get_ptr( &args );
+
+    return wine_server_handle_to_fd( handle, access, unix_fd, options );
+}
+
+
+/**********************************************************************
  *           wow64_wine_unix_to_nt_file_name
  */
 NTSTATUS WINAPI wow64_wine_unix_to_nt_file_name( UINT *args )

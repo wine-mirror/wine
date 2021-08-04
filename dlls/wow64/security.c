@@ -99,6 +99,23 @@ NTSTATUS WINAPI wow64_NtAccessCheckAndAuditAlarm( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtAdjustGroupsToken
+ */
+NTSTATUS WINAPI wow64_NtAdjustGroupsToken( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    BOOLEAN reset = get_ulong( &args );
+    TOKEN_GROUPS32 *groups = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    TOKEN_GROUPS32 *prev = get_ptr( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    FIXME( "%p %d %p %u %p %p\n", handle, reset, groups, len, prev, retlen );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/**********************************************************************
  *           wow64_NtAdjustPrivilegesToken
  */
 NTSTATUS WINAPI wow64_NtAdjustPrivilegesToken( UINT *args )
@@ -111,6 +128,29 @@ NTSTATUS WINAPI wow64_NtAdjustPrivilegesToken( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtAdjustPrivilegesToken( handle, disable, privs, len, prev, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtCreateLowBoxToken
+ */
+NTSTATUS WINAPI wow64_NtCreateLowBoxToken( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    HANDLE token = get_handle( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    SID *sid = get_ptr( &args );
+    ULONG count = get_ulong( &args );
+    SID_AND_ATTRIBUTES32 *capabilities32 = get_ptr( &args );
+    ULONG handle_count = get_ulong( &args );
+    ULONG *handles32 = get_ptr( &args );
+
+    FIXME( "%p %p %x %p %p %u %p %u %p: stub\n",
+           handle_ptr, token, access, attr32, sid, count, capabilities32, handle_count, handles32 );
+
+    *handle_ptr = 0;
+    return STATUS_SUCCESS;
 }
 
 
