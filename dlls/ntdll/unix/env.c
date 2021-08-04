@@ -1931,6 +1931,76 @@ static inline void dup_unicode_string( const UNICODE_STRING *src, WCHAR **dst, U
 
 
 /*************************************************************************
+ *		get_dword_option
+ */
+static ULONG get_dword_option( HANDLE key, const WCHAR *name, ULONG defval )
+{
+    UNICODE_STRING str;
+    ULONG size;
+    WCHAR buffer[64];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+
+    init_unicode_string( &str, name );
+    size = sizeof(buffer) - sizeof(WCHAR);
+    if (NtQueryValueKey( key, &str, KeyValuePartialInformation, buffer, size, &size )) return defval;
+    if (info->Type != REG_DWORD) return defval;
+    return *(ULONG *)info->Data;
+}
+
+
+/*************************************************************************
+ *		load_global_options
+ */
+static void load_global_options( const UNICODE_STRING *image )
+{
+    static const WCHAR optionsW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','N','T','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'I','m','a','g','e',' ','F','i','l','e',' ','E','x','e','c','u','t','i','o','n',' ','O','p','t','i','o','n','s',0};
+    static const WCHAR sessionW[] = {'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\','S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
+    static const WCHAR critsectionW[] = {'C','r','i','t','i','c','a','l','S','e','c','t','i','o','n','T','i','m','e','o','u','t',0};
+    static const WCHAR heapreserveW[] = {'H','e','a','p','S','e','g','m','e','n','t','R','e','s','e','r','v','e',0};
+    static const WCHAR heapcommitW[] = {'H','e','a','p','S','e','g','m','e','n','t','C','o','m','m','i','t',0};
+    static const WCHAR heapdecommittotalW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','T','o','t','a','l','F','r','e','e','T','h','r','e','s','h','o','l','d',0};
+    static const WCHAR heapdecommitblockW[] = {'H','e','a','p','D','e','C','o','m','m','i','t','F','r','e','e','B','l','o','c','k','T','h','r','e','s','h','o','l','d',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE key;
+    ULONG i;
+
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
+    init_unicode_string( &nameW, sessionW );
+    if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
+    {
+        peb->NtGlobalFlag = get_dword_option( key, globalflagW, 0 );
+        peb->CriticalSectionTimeout.QuadPart = get_dword_option( key, critsectionW, 30 * 24 * 60 * 60 ) * (ULONGLONG)-10000000;
+        peb->HeapSegmentReserve = get_dword_option( key, heapreserveW, 0x100000 );
+        peb->HeapSegmentCommit = get_dword_option( key, heapcommitW, 0x10000 );
+        peb->HeapDeCommitTotalFreeThreshold = get_dword_option( key, heapdecommittotalW, 0x10000 );
+        peb->HeapDeCommitFreeBlockThreshold = get_dword_option( key, heapdecommitblockW, 0x1000 );
+        NtClose( key );
+    }
+    init_unicode_string( &nameW, optionsW );
+    if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
+    {
+        attr.RootDirectory = key;
+        for (i = image->Length / sizeof(WCHAR); i; i--) if (image->Buffer[i - 1] == '\\') break;
+        nameW.Buffer = image->Buffer + i;
+        nameW.Length = image->Length - i * sizeof(WCHAR);
+        if (!NtOpenKey( &key, KEY_QUERY_VALUE, &attr ))
+        {
+            peb->NtGlobalFlag = get_dword_option( key, globalflagW, peb->NtGlobalFlag );
+            NtClose( key );
+        }
+        NtClose( attr.RootDirectory );
+    }
+}
+
+
+/*************************************************************************
  *		build_wow64_parameters
  */
 static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
@@ -2008,6 +2078,8 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
     peb->ImageSubSystemMajorVersion = main_image_info.MajorSubsystemVersion;
     peb->ImageSubSystemMinorVersion = main_image_info.MinorSubsystemVersion;
 
+    load_global_options( &params->ImagePathName );
+
     if (NtCurrentTeb()->WowTebOffset)
     {
         void *wow64_params = build_wow64_parameters( params );
@@ -2016,17 +2088,23 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
 #else
         PEB64 *wow64_peb = (PEB64 *)((char *)peb - page_size);
 #endif
-        wow64_peb->ImageBaseAddress           = PtrToUlong( peb->ImageBaseAddress );
-        wow64_peb->ProcessParameters          = PtrToUlong( wow64_params );
-        wow64_peb->NumberOfProcessors         = peb->NumberOfProcessors;
-        wow64_peb->OSMajorVersion             = peb->OSMajorVersion;
-        wow64_peb->OSMinorVersion             = peb->OSMinorVersion;
-        wow64_peb->OSBuildNumber              = peb->OSBuildNumber;
-        wow64_peb->OSPlatformId               = peb->OSPlatformId;
-        wow64_peb->ImageSubSystem             = peb->ImageSubSystem;
-        wow64_peb->ImageSubSystemMajorVersion = peb->ImageSubSystemMajorVersion;
-        wow64_peb->ImageSubSystemMinorVersion = peb->ImageSubSystemMinorVersion;
-        wow64_peb->SessionId                  = peb->SessionId;
+        wow64_peb->ImageBaseAddress                = PtrToUlong( peb->ImageBaseAddress );
+        wow64_peb->ProcessParameters               = PtrToUlong( wow64_params );
+        wow64_peb->NumberOfProcessors              = peb->NumberOfProcessors;
+        wow64_peb->NtGlobalFlag                    = peb->NtGlobalFlag;
+        wow64_peb->CriticalSectionTimeout.QuadPart = peb->CriticalSectionTimeout.QuadPart;
+        wow64_peb->HeapSegmentReserve              = peb->HeapSegmentReserve;
+        wow64_peb->HeapSegmentCommit               = peb->HeapSegmentCommit;
+        wow64_peb->HeapDeCommitTotalFreeThreshold  = peb->HeapDeCommitTotalFreeThreshold;
+        wow64_peb->HeapDeCommitFreeBlockThreshold  = peb->HeapDeCommitFreeBlockThreshold;
+        wow64_peb->OSMajorVersion                  = peb->OSMajorVersion;
+        wow64_peb->OSMinorVersion                  = peb->OSMinorVersion;
+        wow64_peb->OSBuildNumber                   = peb->OSBuildNumber;
+        wow64_peb->OSPlatformId                    = peb->OSPlatformId;
+        wow64_peb->ImageSubSystem                  = peb->ImageSubSystem;
+        wow64_peb->ImageSubSystemMajorVersion      = peb->ImageSubSystemMajorVersion;
+        wow64_peb->ImageSubSystemMinorVersion      = peb->ImageSubSystemMinorVersion;
+        wow64_peb->SessionId                       = peb->SessionId;
     }
 }
 

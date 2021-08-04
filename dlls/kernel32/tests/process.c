@@ -3384,7 +3384,7 @@ static void test_SuspendProcessState(void)
     ULONG pipe_magic, numb;
     BOOL ret;
     void *user_thread_start, *start_ptr, *entry_ptr, *peb_ptr;
-    PEB child_peb;
+    PEB child_peb, *peb = NtCurrentTeb()->Peb;
 
     exit_process_ptr = GetProcAddress(hkernel32, "ExitProcess");
     ok(exit_process_ptr != NULL, "GetProcAddress ExitProcess failed\n");
@@ -3515,9 +3515,19 @@ static void test_SuspendProcessState(void)
     ok( !child_peb.ProcessHeap, "ProcessHeap set %p\n", child_peb.ProcessHeap );
     ok( !child_peb.CSDVersion.Buffer, "CSDVersion set %s\n", debugstr_w(child_peb.CSDVersion.Buffer) );
 
-    ok( child_peb.OSMajorVersion, "OSMajorVersion not set %u\n", child_peb.OSMajorVersion );
-    ok( child_peb.OSPlatformId == VER_PLATFORM_WIN32_NT, "OSPlatformId not set %u\n", child_peb.OSPlatformId );
-    ok( child_peb.SessionId == 1, "SessionId not set %u\n", child_peb.SessionId );
+    ok( child_peb.OSMajorVersion == peb->OSMajorVersion, "OSMajorVersion not set %u\n", child_peb.OSMajorVersion );
+    ok( child_peb.OSPlatformId == peb->OSPlatformId, "OSPlatformId not set %u\n", child_peb.OSPlatformId );
+    ok( child_peb.SessionId == peb->SessionId, "SessionId not set %u\n", child_peb.SessionId );
+    ok( child_peb.CriticalSectionTimeout.QuadPart, "CriticalSectionTimeout not set %s\n",
+        wine_dbgstr_longlong(child_peb.CriticalSectionTimeout.QuadPart) );
+    ok( child_peb.HeapSegmentReserve == peb->HeapSegmentReserve,
+        "HeapSegmentReserve not set %lu\n", child_peb.HeapSegmentReserve );
+    ok( child_peb.HeapSegmentCommit == peb->HeapSegmentCommit,
+        "HeapSegmentCommit not set %lu\n", child_peb.HeapSegmentCommit );
+    ok( child_peb.HeapDeCommitTotalFreeThreshold == peb->HeapDeCommitTotalFreeThreshold,
+        "HeapDeCommitTotalFreeThreshold not set %lu\n", child_peb.HeapDeCommitTotalFreeThreshold );
+    ok( child_peb.HeapDeCommitFreeBlockThreshold == peb->HeapDeCommitFreeBlockThreshold,
+        "HeapDeCommitFreeBlockThreshold not set %lu\n", child_peb.HeapDeCommitFreeBlockThreshold );
 
     if (pNtQueryInformationThread)
     {
