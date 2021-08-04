@@ -5731,7 +5731,7 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
     return x | y;
 }
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
 static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
 {
     if (enc & 0x20)
@@ -6067,6 +6067,32 @@ int CDECL fesetenv(const fenv_t *env)
     if (fp_stat & _SW_INEXACT)    fpsr |= 0x10;
     if (fp_stat & _SW_DENORMAL)   fpsr |= 0x80;
     __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
+    _control87(fp_cw, 0xffffffff);
+    return 0;
+#elif defined(__arm__) && !defined(__SOFTFP__)
+    DWORD fpscr;
+    unsigned int tmp, fp_cw, fp_stat;
+
+    if (!env->_Fe_ctl && !env->_Fe_stat) {
+        _fpreset();
+        return 0;
+    }
+
+    if (!fenv_decode(env->_Fe_ctl, &tmp, &fp_cw))
+        return 1;
+    if (!fenv_decode(env->_Fe_stat, &tmp, &fp_stat))
+        return 1;
+
+    _control87(_MCW_EM, _MCW_EM);
+    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
+    fpscr &= ~0x9f;
+    if (fp_stat & _SW_INVALID)    fpscr |= 0x1;
+    if (fp_stat & _SW_ZERODIVIDE) fpscr |= 0x2;
+    if (fp_stat & _SW_OVERFLOW)   fpscr |= 0x4;
+    if (fp_stat & _SW_UNDERFLOW)  fpscr |= 0x8;
+    if (fp_stat & _SW_INEXACT)    fpscr |= 0x10;
+    if (fp_stat & _SW_DENORMAL)   fpscr |= 0x80;
+    __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
     _control87(fp_cw, 0xffffffff);
     return 0;
 #else
