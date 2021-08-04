@@ -150,7 +150,6 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
 /* Wine extensions: call register function, context ptr is passed in the return value LPDWORD */
 #define WCB16_REGS       2
-#define WCB16_REGS_LONG  4  /* function uses 32-bit lret */
 
 DWORD WINAPI WOWCallback16(DWORD,DWORD);
 BOOL  WINAPI WOWCallback16Ex(DWORD,DWORD,DWORD,LPVOID,LPDWORD);

@@ -400,7 +400,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
     memcpy( stack, pArgs, cbArgs );
 
-    if (dwFlags & (WCB16_REGS|WCB16_REGS_LONG))
+    if (dwFlags & WCB16_REGS)
     {
         CONTEXT *context = (CONTEXT *)pdwRetCode;
 
@@ -420,20 +420,9 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
         }
 
         /* push return address */
-        if (dwFlags & WCB16_REGS_LONG)
-        {
-            stack -= sizeof(DWORD);
-            *((DWORD *)stack) = HIWORD(call16_ret_addr);
-            stack -= sizeof(DWORD);
-            *((DWORD *)stack) = LOWORD(call16_ret_addr);
-            cbArgs += 2 * sizeof(DWORD);
-        }
-        else
-        {
-            stack -= sizeof(SEGPTR);
-            *((SEGPTR *)stack) = call16_ret_addr;
-            cbArgs += sizeof(SEGPTR);
-        }
+        stack -= sizeof(SEGPTR);
+        *((SEGPTR *)stack) = call16_ret_addr;
+        cbArgs += sizeof(SEGPTR);
 
         _EnterWin16Lock();
         wine_call_to_16_regs( context, cbArgs, call16_handler );
