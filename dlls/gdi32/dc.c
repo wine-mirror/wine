@@ -881,21 +881,7 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 
 
 /***********************************************************************
- *           GetWorldTransform    (GDI32.@)
- */
-BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
-{
-    DC * dc;
-    if (!xform) return FALSE;
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
-    *xform = dc->xformWorld2Wnd;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetTransform    (GDI32.@)
+ *           NtGdiGetTransform    (win32u.@)
  *
  * Undocumented
  *
@@ -911,7 +897,7 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
  *    xform [O] The xform.
  *
  */
-BOOL WINAPI GetTransform( HDC hdc, DWORD which, XFORM *xform )
+BOOL WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform )
 {
     BOOL ret = TRUE;
     DC *dc = get_dc_ptr( hdc );

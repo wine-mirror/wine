@@ -85,7 +85,7 @@ static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, PHYSD
         emr_stretchblt->cySrc = src->log_height;
     }
     emr->dwRop = rop;
-    GetTransform(dev_src->hdc, 0x204, &emr->xformSrc);
+    NtGdiGetTransform( dev_src->hdc, 0x204, &emr->xformSrc );
     emr->crBkColorSrc = GetBkColor(dev_src->hdc);
     emr->iUsageSrc = DIB_RGB_COLORS;
     emr->offBmiSrc = emr_size;

@@ -419,6 +419,14 @@ BOOL WINAPI GetViewportOrgEx( HDC hdc, POINT *point )
 }
 
 /***********************************************************************
+ *           GetWorldTransform    (GDI32.@)
+ */
+BOOL WINAPI GetWorldTransform( HDC hdc, XFORM *xform )
+{
+    return NtGdiGetTransform( hdc, 0x203, xform );
+}
+
+/***********************************************************************
  *		SetStretchBltMode (GDI32.@)
  */
 INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
