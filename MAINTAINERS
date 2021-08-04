@@ -244,7 +244,6 @@ RPC Runtime
 P:	Huw Davies <huw@codeweavers.com>
 P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/rpcrt4
-F:	tools/widl
 
 TWAIN
 P:	Esme Povirk <vincent@codeweavers.com>
@@ -273,6 +272,11 @@ M:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/ieframe/
 F:	dlls/mshtml/
 F:	dlls/shdocvw/
+
+WIDL
+P:	Huw Davies <huw@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
+F:	tools/widl
 
 Windows Imaging Component
 M:	Esme Povirk <vincent@codeweavers.com>
