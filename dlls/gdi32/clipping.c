@@ -143,8 +143,19 @@ static inline void create_default_clip_region( DC * dc )
 
 INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    INT ret;
+    return ERROR;
+}
+
+/******************************************************************************
+ *		NtGdiExtSelectClipRgn  (win32u.@)
+ */
+INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN rgn, INT mode )
+{
+    INT ret = ERROR;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return ERROR;
+    update_dc( dc );
 
     if (!rgn)
     {
@@ -157,11 +168,11 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
             break;
 
         case RGN_DIFF:
-            return ERROR;
+            break;
 
         default:
             FIXME("Unimplemented: hrgn NULL in mode: %d\n", mode);
-            return ERROR;
+            break;
         }
     }
     else
@@ -170,7 +181,11 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 
         if (dc->attr->layout & LAYOUT_RTL)
         {
-            if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
+            if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
+            {
+                release_dc_ptr( dc );
+                return ERROR;
+            }
             mirror_region( mirrored, rgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
             rgn = mirrored;
         }
@@ -185,7 +200,8 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 
         if (mirrored) DeleteObject( mirrored );
     }
-    update_dc_clipping( dc );
+    if (ret != ERROR) update_dc_clipping( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -202,35 +218,6 @@ INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, 
 INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 {
     return ERROR;
-}
-
-
-/***********************************************************************
- *           SelectClipRgn    (GDI32.@)
- */
-INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
-{
-    return ExtSelectClipRgn( hdc, hrgn, RGN_COPY );
-}
-
-
-/******************************************************************************
- *		ExtSelectClipRgn	[GDI32.@]
- */
-INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
-{
-    PHYSDEV physdev;
-    INT retval;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("%p %p %d\n", hdc, hrgn, fnMode );
-
-    if (!dc) return ERROR;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pExtSelectClipRgn );
-    retval = physdev->funcs->pExtSelectClipRgn( physdev, hrgn, fnMode );
-    release_dc_ptr( dc );
-    return retval;
 }
 
 /***********************************************************************

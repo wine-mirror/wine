@@ -429,20 +429,22 @@ BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 
 
 /**********************************************************************
- *          MFDRV_ExtSelectClipRgn
+ *          METADC_ExtSelectClipRgn
  */
-INT CDECL MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
+BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
 {
+    METAFILEDRV_PDEVICE *metadc;
     INT16 iRgn;
     INT ret;
 
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
     if (mode != RGN_COPY) return ERROR;
     if (!hrgn) return NULLREGION;
-    iRgn = MFDRV_CreateRegion( dev, hrgn );
+    iRgn = MFDRV_CreateRegion( &metadc->dev, hrgn );
     if(iRgn == -1) return ERROR;
-    ret = MFDRV_MetaParam1( dev, META_SELECTOBJECT, iRgn ) ? NULLREGION : ERROR;
-    MFDRV_MetaParam1( dev, META_DELETEOBJECT, iRgn );
-    MFDRV_RemoveHandle( dev, iRgn );
+    ret = MFDRV_MetaParam1( &metadc->dev, META_SELECTOBJECT, iRgn ) ? NULLREGION : ERROR;
+    MFDRV_MetaParam1( &metadc->dev, META_DELETEOBJECT, iRgn );
+    MFDRV_RemoveHandle( &metadc->dev, iRgn );
     return ret;
 }
 

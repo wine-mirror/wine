@@ -183,9 +183,8 @@ BOOL EMFDC_OffsetClipRgn( DC_ATTR *dc_attr, INT x, INT y )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-INT CDECL EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
+BOOL EMFDC_ExtSelectClipRgn( DC_ATTR *dc_attr, HRGN hrgn, INT mode )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExtSelectClipRgn );
     EMREXTSELECTCLIPRGN *emr;
     DWORD size, rgnsize;
     BOOL ret;
@@ -206,9 +205,9 @@ INT CDECL EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
     emr->cbRgnData = rgnsize;
     emr->iMode     = mode;
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
-    return ret ? next->funcs->pExtSelectClipRgn( next, hrgn, mode ) : ERROR;
+    return ret;
 }
 
 INT CDECL EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
@@ -522,7 +521,6 @@ BOOL CDECL EMFDRV_FlattenPath( PHYSDEV dev )
 
 BOOL CDECL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectClipPath );
     EMRSELECTCLIPPATH emr;
     BOOL ret = FALSE;
     HRGN hrgn;
@@ -535,7 +533,7 @@ BOOL CDECL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
     hrgn = PathToRegion( dev->hdc );
     if (hrgn)
     {
-        ret = next->funcs->pExtSelectClipRgn( next, hrgn, iMode );
+        ret = NtGdiExtSelectClipRgn( dev->hdc, hrgn, iMode );
         DeleteObject( hrgn );
     }
     return ret;

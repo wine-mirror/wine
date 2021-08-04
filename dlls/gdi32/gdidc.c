@@ -1089,6 +1089,30 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
     return NtGdiExcludeClipRect( hdc, left, top, right, bottom );
 }
 
+/******************************************************************************
+ *		ExtSelectClipRgn     (GDI32.@)
+ */
+INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE("%p %p %d\n", hdc, hrgn, mode );
+
+    if (is_meta_dc( hdc )) return METADC_ExtSelectClipRgn( hdc, hrgn, mode );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ExtSelectClipRgn( dc_attr, hrgn, mode ))
+        return FALSE;
+    return NtGdiExtSelectClipRgn( hdc, hrgn, mode );
+}
+
+/***********************************************************************
+ *           SelectClipRgn    (GDI32.@)
+ */
+INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
+{
+    return ExtSelectClipRgn( hdc, hrgn, RGN_COPY );
+}
+
 /***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
