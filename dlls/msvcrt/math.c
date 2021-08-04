@@ -5626,7 +5626,7 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
     return 0;
 }
 
-#if _MSVCR_VER >= 140
+#if _MSVCR_VER >= 140 && (defined(__i386__) || defined(__x86_64__))
 enum fenv_masks
 {
     FENV_X_INVALID = 0x00100010,
@@ -5689,7 +5689,6 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
 }
 
 /* decodes x87/sse control/status word, returns FALSE on error */
-#if (defined(__i386__) || defined(__x86_64__))
 static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
 {
     *x = *y = 0;
@@ -5723,16 +5722,21 @@ static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
     }
     return TRUE;
 }
-#endif
 #elif _MSVCR_VER >= 120
 static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
 {
+    if (y & _EM_DENORMAL)
+        y = (y & ~_EM_DENORMAL) | 0x20;
+
     return x | y;
 }
 
-#if (defined(__i386__) || defined(__x86_64__))
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
 static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
 {
+    if (enc & 0x20)
+        enc = (enc & ~0x20) | _EM_DENORMAL;
+
     *x = *y = enc;
     return TRUE;
 }
@@ -6038,6 +6042,32 @@ int CDECL fesetenv(const fenv_t *env)
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
     }
 
+    return 0;
+#elif defined(__aarch64__)
+    ULONG_PTR fpsr;
+    unsigned int tmp, fp_cw, fp_stat;
+
+    if (!env->_Fe_ctl && !env->_Fe_stat) {
+        _fpreset();
+        return 0;
+    }
+
+    if (!fenv_decode(env->_Fe_ctl, &tmp, &fp_cw))
+        return 1;
+    if (!fenv_decode(env->_Fe_stat, &tmp, &fp_stat))
+        return 1;
+
+    _control87(_MCW_EM, _MCW_EM);
+    __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
+    fpsr &= ~0x9f;
+    if (fp_stat & _SW_INVALID)    fpsr |= 0x1;
+    if (fp_stat & _SW_ZERODIVIDE) fpsr |= 0x2;
+    if (fp_stat & _SW_OVERFLOW)   fpsr |= 0x4;
+    if (fp_stat & _SW_UNDERFLOW)  fpsr |= 0x8;
+    if (fp_stat & _SW_INEXACT)    fpsr |= 0x10;
+    if (fp_stat & _SW_DENORMAL)   fpsr |= 0x80;
+    __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
+    _control87(fp_cw, 0xffffffff);
     return 0;
 #else
     FIXME( "not implemented\n" );
