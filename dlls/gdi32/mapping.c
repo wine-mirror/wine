@@ -597,7 +597,7 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 
 
 /***********************************************************************
- *           SetVirtualResolution   (GDI32.@)
+ *           NtGdiSetVirtualResolution   (win32u.@)
  *
  * Undocumented on msdn.
  *
@@ -622,8 +622,8 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
  *    Calling with the last four params equal to zero sets the values
  *    back to their defaults obtained by calls to GetDeviceCaps.
  */
-BOOL WINAPI SetVirtualResolution(HDC hdc, DWORD horz_res, DWORD vert_res,
-                                 DWORD horz_size, DWORD vert_size)
+BOOL WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,
+                                       DWORD horz_size, DWORD vert_size )
 {
     DC * dc;
     TRACE("(%p %d %d %d %d)\n", hdc, horz_res, vert_res, horz_size, vert_size);

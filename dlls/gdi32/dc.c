@@ -281,7 +281,7 @@ void DC_InitDC( DC* dc )
     NtGdiSelectBrush( dc->hSelf, dc->hBrush );
     NtGdiSelectFont( dc->hSelf, dc->hFont );
     update_dc_clipping( dc );
-    SetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
+    NtGdiSetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
     physdev = GET_DC_PHYSDEV( dc, pSetBoundsRect );
     physdev->funcs->pSetBoundsRect( physdev, &dc->bounds, dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE );
 }
@@ -493,7 +493,7 @@ static BOOL reset_dc_state( HDC hdc )
     NtGdiSelectBrush( hdc, GetStockObject( WHITE_BRUSH ));
     NtGdiSelectFont( hdc, GetStockObject( SYSTEM_FONT ));
     NtGdiSelectPen( hdc, GetStockObject( BLACK_PEN ));
-    SetVirtualResolution( hdc, 0, 0, 0, 0 );
+    NtGdiSetVirtualResolution( hdc, 0, 0, 0, 0 );
     GDISelectPalette( hdc, GetStockObject( DEFAULT_PALETTE ), FALSE );
     NtGdiSetBoundsRect( hdc, NULL, DCB_DISABLE );
     AbortPath( hdc );

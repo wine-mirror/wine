@@ -367,7 +367,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     if (!hdc) DeleteDC( ref_dc );
 
-    SetVirtualResolution(physDev->dev.hdc, 0, 0, 0, 0);
+    NtGdiSetVirtualResolution(physDev->dev.hdc, 0, 0, 0, 0);
 
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;

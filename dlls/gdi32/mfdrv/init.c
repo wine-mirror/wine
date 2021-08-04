@@ -262,7 +262,7 @@ static DC *MFDRV_AllocMetaFile(void)
     physDev->mh->mtMaxRecord    = 0;
     physDev->mh->mtNoParameters = 0;
 
-    SetVirtualResolution( physDev->dev.hdc, 0, 0, 0, 0);
+    NtGdiSetVirtualResolution( physDev->dev.hdc, 0, 0, 0, 0);
 
     return dc;
 }
