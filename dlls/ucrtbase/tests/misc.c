@@ -1377,14 +1377,15 @@ static unsigned long fenv_encode(unsigned int e)
 
 #if defined(__i386__)
     return e<<24 | e<<16 | e;
-#else
+#elif defined(__x86_64__)
     return e<<24 | e;
+#else
+    return e;
 #endif
 }
 
 static void test_fenv(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
     static const int tests[] = {
         0,
         FE_INEXACT,
@@ -1425,11 +1426,13 @@ static void test_fenv(void)
 
     ret = fegetenv(&env);
     ok(!ret, "fegetenv returned %x\n", ret);
+#if defined(__i386__) || defined(__x86_64__)
     if (env._Fe_ctl >> 24 != (env._Fe_ctl & 0xff))
     {
         win_skip("fenv_t format not supported (too old ucrtbase)\n");
         return;
     }
+#endif
     fesetround(FE_UPWARD);
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
     ret = fegetenv(&env2);
@@ -1485,13 +1488,13 @@ static void test_fenv(void)
         ret = fegetexceptflag(&except, ~0);
         ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
         ok(except == fenv_encode(flags),
-                "Test %d: expected %x, got %lx\n", i, flags, except);
+                "Test %d: expected %lx, got %lx\n", i, fenv_encode(flags), except);
 
         except = ~0;
         ret = fegetexceptflag(&except, tests[i]);
         ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
         ok(except == fenv_encode(tests[i]),
-                "Test %d: expected %x, got %lx\n", i, tests[i], except);
+                "Test %d: expected %lx, got %lx\n", i, fenv_encode(tests[i]), except);
     }
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
@@ -1534,7 +1537,6 @@ static void test_fenv(void)
     ok(!ret, "feclearexceptflag returned %x\n", ret);
     except = fetestexcept(FE_ALL_EXCEPT);
     ok(!except, "expected 0, got %lx\n", except);
-#endif
 }
 
 START_TEST(misc)
