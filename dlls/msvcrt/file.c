@@ -22,8 +22,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * TODO
- * Use the file flag hints O_SEQUENTIAL, O_RANDOM, O_SHORT_LIVED
  */
 
 #include <direct.h>
@@ -1609,8 +1607,12 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
     case 'w':
       break;
     case 'S':
+      if (!(*open_flags & _O_RANDOM))
+          *open_flags |= _O_SEQUENTIAL;
+      break;
     case 'R':
-      FIXME("ignoring cache optimization flag: %c\n", mode[-1]);
+      if (!(*open_flags & _O_SEQUENTIAL))
+          *open_flags |= _O_RANDOM;
       break;
     default:
       ERR("incorrect mode flag: %c\n", mode[-1]);
@@ -2268,6 +2270,13 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
       access |= DELETE;
       sharing |= FILE_SHARE_DELETE;
   }
+
+  if (oflags & _O_RANDOM)
+      attrib |= FILE_FLAG_RANDOM_ACCESS;
+  if (oflags & _O_SEQUENTIAL)
+      attrib |= FILE_FLAG_SEQUENTIAL_SCAN;
+  if (oflags & _O_SHORT_LIVED)
+      attrib |= FILE_ATTRIBUTE_TEMPORARY;
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
