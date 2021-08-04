@@ -5235,7 +5235,7 @@ static BOOL _setfp_sse( unsigned int *cw, unsigned int cw_mask,
 }
 #endif
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
 static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
         unsigned int *sw, unsigned int sw_mask )
 {
@@ -5435,6 +5435,74 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
     if (old_fpcr != fpcr)
         __asm__ __volatile__( "msr fpcr, %0" :: "r" (fpcr) );
     return TRUE;
+#elif defined(__arm__) && !defined(__SOFTFP__)
+    DWORD old_fpscr, fpscr;
+    unsigned int flags;
+
+    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
+    old_fpscr = fpscr;
+
+    cw_mask &= _MCW_EM | _MCW_RC;
+    sw_mask &= _MCW_EM;
+
+    if (sw)
+    {
+        flags = 0;
+        if (fpscr & 0x1) flags |= _SW_INVALID;
+        if (fpscr & 0x2) flags |= _SW_ZERODIVIDE;
+        if (fpscr & 0x4) flags |= _SW_OVERFLOW;
+        if (fpscr & 0x8) flags |= _SW_UNDERFLOW;
+        if (fpscr & 0x10) flags |= _SW_INEXACT;
+        if (fpscr & 0x80) flags |= _SW_DENORMAL;
+
+        *sw = (flags & ~sw_mask) | (*sw & sw_mask);
+        TRACE("arm update sw %08x to %08x\n", flags, *sw);
+        fpscr &= ~0x9f;
+        if (*sw & _SW_INVALID) fpscr |= 0x1;
+        if (*sw & _SW_ZERODIVIDE) fpscr |= 0x2;
+        if (*sw & _SW_OVERFLOW) fpscr |= 0x4;
+        if (*sw & _SW_UNDERFLOW) fpscr |= 0x8;
+        if (*sw & _SW_INEXACT) fpscr |= 0x10;
+        if (*sw & _SW_DENORMAL) fpscr |= 0x80;
+        *sw = flags;
+    }
+
+    if (cw)
+    {
+        flags = 0;
+        if (!(fpscr & 0x100)) flags |= _EM_INVALID;
+        if (!(fpscr & 0x200)) flags |= _EM_ZERODIVIDE;
+        if (!(fpscr & 0x400)) flags |= _EM_OVERFLOW;
+        if (!(fpscr & 0x800)) flags |= _EM_UNDERFLOW;
+        if (!(fpscr & 0x1000)) flags |= _EM_INEXACT;
+        if (!(fpscr & 0x8000)) flags |= _EM_DENORMAL;
+        switch (fpscr & 0xc00000)
+        {
+        case 0x400000: flags |= _RC_UP; break;
+        case 0x800000: flags |= _RC_DOWN; break;
+        case 0xc00000: flags |= _RC_CHOP; break;
+        }
+
+        *cw = (flags & ~cw_mask) | (*cw & cw_mask);
+        TRACE("arm update cw %08x to %08x\n", flags, *cw);
+        fpscr &= ~0xc09f00ul;
+        if (!(*cw & _EM_INVALID)) fpscr |= 0x100;
+        if (!(*cw & _EM_ZERODIVIDE)) fpscr |= 0x200;
+        if (!(*cw & _EM_OVERFLOW)) fpscr |= 0x400;
+        if (!(*cw & _EM_UNDERFLOW)) fpscr |= 0x800;
+        if (!(*cw & _EM_INEXACT)) fpscr |= 0x1000;
+        if (!(*cw & _EM_DENORMAL)) fpscr |= 0x8000;
+        switch (*cw & _MCW_RC)
+        {
+        case _RC_CHOP: fpscr |= 0xc00000; break;
+        case _RC_UP: fpscr |= 0x400000; break;
+        case _RC_DOWN: fpscr |= 0x800000; break;
+        }
+    }
+
+    if (old_fpscr != fpscr)
+        __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
+    return TRUE;
 #endif
 #else
     FIXME("not implemented\n");
@@ -5472,18 +5540,8 @@ unsigned int CDECL _statusfp(void)
     _statusfp2( &x86_sw, &sse2_sw );
     /* FIXME: there's no definition for ambiguous status, just return all status bits for now */
     flags = x86_sw | sse2_sw;
-#elif defined(__x86_64__) || defined(__aarch64__)
+#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
     _setfp(NULL, 0, &flags, 0);
-#elif defined(__arm__) && !defined(__SOFTFP__)
-    DWORD fpscr;
-
-    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
-    if (fpscr & 0x1)  flags |= _SW_INVALID;
-    if (fpscr & 0x2)  flags |= _SW_ZERODIVIDE;
-    if (fpscr & 0x4)  flags |= _SW_OVERFLOW;
-    if (fpscr & 0x8)  flags |= _SW_UNDERFLOW;
-    if (fpscr & 0x10) flags |= _SW_INEXACT;
-    if (fpscr & 0x80) flags |= _SW_DENORMAL;
 #else
     FIXME( "not implemented\n" );
 #endif
@@ -5505,20 +5563,8 @@ unsigned int CDECL _clearfp(void)
         _setfp_sse(NULL, 0, &sse_sw, _MCW_EM);
         flags |= sse_sw;
     }
-#elif defined(__x86_64__) || defined(__aarch64__)
+#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
     _setfp(NULL, 0, &flags, _MCW_EM);
-#elif defined(__arm__) && !defined(__SOFTFP__)
-    DWORD fpscr;
-
-    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
-    if (fpscr & 0x1)  flags |= _SW_INVALID;
-    if (fpscr & 0x2)  flags |= _SW_ZERODIVIDE;
-    if (fpscr & 0x4)  flags |= _SW_OVERFLOW;
-    if (fpscr & 0x8)  flags |= _SW_UNDERFLOW;
-    if (fpscr & 0x10) flags |= _SW_INEXACT;
-    if (fpscr & 0x80) flags |= _SW_DENORMAL;
-    fpscr &= ~0x9f;
-    __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
 #else
     FIXME( "not implemented\n" );
 #endif
@@ -5608,40 +5654,9 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 
     if ((flags ^ sse2_cw) & (_MCW_EM | _MCW_RC)) flags |= _EM_AMBIGUOUS;
     flags |= sse2_cw;
-#elif defined(__x86_64__) || defined(__aarch64__)
+#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
     flags = newval;
     _setfp(&flags, mask, NULL, 0);
-#elif defined(__arm__) && !defined(__SOFTFP__)
-    DWORD fpscr;
-
-    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
-    if (!(fpscr & 0x100))  flags |= _EM_INVALID;
-    if (!(fpscr & 0x200))  flags |= _EM_ZERODIVIDE;
-    if (!(fpscr & 0x400))  flags |= _EM_OVERFLOW;
-    if (!(fpscr & 0x800))  flags |= _EM_UNDERFLOW;
-    if (!(fpscr & 0x1000)) flags |= _EM_INEXACT;
-    if (!(fpscr & 0x8000)) flags |= _EM_DENORMAL;
-    switch (fpscr & 0xc00000)
-    {
-    case 0x400000: flags |= _RC_UP; break;
-    case 0x800000: flags |= _RC_DOWN; break;
-    case 0xc00000: flags |= _RC_CHOP; break;
-    }
-    flags = (flags & ~mask) | (newval & mask);
-    fpscr &= ~0xc09f00ul;
-    if (!(flags & _EM_INVALID))    fpscr |= 0x100;
-    if (!(flags & _EM_ZERODIVIDE)) fpscr |= 0x200;
-    if (!(flags & _EM_OVERFLOW))   fpscr |= 0x400;
-    if (!(flags & _EM_UNDERFLOW))  fpscr |= 0x800;
-    if (!(flags & _EM_INEXACT))    fpscr |= 0x1000;
-    if (!(flags & _EM_DENORMAL))   fpscr |= 0x8000;
-    switch (flags & _MCW_RC)
-    {
-    case _RC_CHOP: fpscr |= 0xc00000; break;
-    case _RC_UP:   fpscr |= 0x400000; break;
-    case _RC_DOWN: fpscr |= 0x800000; break;
-    }
-    __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
 #else
     FIXME( "not implemented\n" );
 #endif
@@ -5993,7 +6008,7 @@ void CDECL _fpreset(void)
  */
 int CDECL fesetenv(const fenv_t *env)
 {
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
     unsigned int x87_cw, cw, x87_stat, stat;
     unsigned int mask;
 
@@ -6030,32 +6045,6 @@ int CDECL fesetenv(const fenv_t *env)
         return 1;
     return 0;
 #endif
-#elif defined(__arm__) && !defined(__SOFTFP__)
-    DWORD fpscr;
-    unsigned int tmp, fp_cw, fp_stat;
-
-    if (!env->_Fe_ctl && !env->_Fe_stat) {
-        _fpreset();
-        return 0;
-    }
-
-    if (!fenv_decode(env->_Fe_ctl, &tmp, &fp_cw))
-        return 1;
-    if (!fenv_decode(env->_Fe_stat, &tmp, &fp_stat))
-        return 1;
-
-    _control87(_MCW_EM, _MCW_EM);
-    __asm__ __volatile__( "vmrs %0, fpscr" : "=r" (fpscr) );
-    fpscr &= ~0x9f;
-    if (fp_stat & _SW_INVALID)    fpscr |= 0x1;
-    if (fp_stat & _SW_ZERODIVIDE) fpscr |= 0x2;
-    if (fp_stat & _SW_OVERFLOW)   fpscr |= 0x4;
-    if (fp_stat & _SW_UNDERFLOW)  fpscr |= 0x8;
-    if (fp_stat & _SW_INEXACT)    fpscr |= 0x10;
-    if (fp_stat & _SW_DENORMAL)   fpscr |= 0x80;
-    __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
-    _control87(fp_cw, 0xffffffff);
-    return 0;
 #else
     FIXME( "not implemented\n" );
     return 1;
