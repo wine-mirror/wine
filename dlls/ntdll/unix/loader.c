@@ -1745,6 +1745,8 @@ NTSTATUS get_builtin_init_funcs( void *handle, void **funcs, SIZE_T len, SIZE_T 
     if (init_func) *funcs++ = init_func;
     for (i = 0; i < init_arraysz / sizeof(*init_array); i++) funcs[i] = init_array[i];
     return STATUS_SUCCESS;
+#else
+    return STATUS_NOT_SUPPORTED;
 #endif
 }
 
