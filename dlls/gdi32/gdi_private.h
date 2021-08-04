@@ -47,6 +47,8 @@ extern BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
 extern BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom, INT xstart,
                           INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern BOOL METADC_ExcludeClipRect( HDC hdc, INT left, INT top, INT right,
+                                    INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
                                  UINT fill_type ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ExtTextOut( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
@@ -92,6 +94,8 @@ extern BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
                            INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_EndPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_ExcludeClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right,
+                                   INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_ExtFloodFill( DC_ATTR *dc_attr, INT x, INT y, COLORREF color,
                                 UINT fill_type ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *rect,

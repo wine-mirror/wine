@@ -1076,6 +1076,20 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 }
 
 /***********************************************************************
+ *           ExcludeClipRect    (GDI32.@)
+ */
+INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_ExcludeClipRect( hdc, left, top, right, bottom );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ExcludeClipRect( dc_attr, left, top, right, bottom ))
+        return FALSE;
+    return NtGdiExcludeClipRect( hdc, left, top, right, bottom );
+}
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )

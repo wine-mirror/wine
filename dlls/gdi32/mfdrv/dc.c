@@ -75,9 +75,9 @@ BOOL METADC_IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom
     return metadc_param4( hdc, META_INTERSECTCLIPRECT, left, top, right, bottom );
 }
 
-INT CDECL MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL METADC_ExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    return MFDRV_MetaParam4( dev, META_EXCLUDECLIPRECT, left, top, right, bottom );
+    return metadc_param4( hdc, META_EXCLUDECLIPRECT, left, top, right, bottom );
 }
 
 BOOL METADC_OffsetClipRgn( HDC hdc, INT x, INT y )

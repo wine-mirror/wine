@@ -122,7 +122,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_EndPath,                   /* pEndPath */
     NULL,                            /* pEnumFonts */
     NULL,                            /* pEnumICMProfiles */
-    MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
+    NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     MFDRV_ExtEscape,                 /* pExtEscape */
     NULL,                            /* pExtFloodFill */

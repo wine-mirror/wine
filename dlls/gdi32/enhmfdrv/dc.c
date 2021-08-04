@@ -146,9 +146,8 @@ BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-INT CDECL EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+INT EMFDC_ExcludeClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExcludeClipRect );
     EMREXCLUDECLIPRECT emr;
 
     emr.emr.iType      = EMR_EXCLUDECLIPRECT;
@@ -157,8 +156,7 @@ INT CDECL EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return ERROR;
-    return next->funcs->pExcludeClipRect( next, left, top, right, bottom );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom)

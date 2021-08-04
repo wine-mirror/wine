@@ -57,7 +57,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pEndPath */
     NULL,                            /* pEnumFonts */
     NULL,                            /* pEnumICMProfiles */
-    EMFDRV_ExcludeClipRect,          /* pExcludeClipRect */
+    NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     NULL,                            /* pExtEscape */
     NULL,                            /* pExtFloodFill */

@@ -191,17 +191,7 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 
 INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    RECT rect = get_clip_rect( dc, left, top, right, bottom );
-    INT ret;
-    HRGN rgn;
-
-    if (!(rgn = CreateRectRgnIndirect( &rect ))) return ERROR;
-    if (!dc->hClipRgn) create_default_clip_region( dc );
-    ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
-    DeleteObject( rgn );
-    if (ret != ERROR) update_dc_clipping( dc );
-    return ret;
+    return ERROR;
 }
 
 INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
@@ -296,21 +286,29 @@ INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           ExcludeClipRect    (GDI32.@)
+ *           NtGdiExcludeClipRect    (win32u.@)
  */
-INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
-                                INT right, INT bottom )
+INT WINAPI NtGdiExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    PHYSDEV physdev;
-    INT ret;
+    INT ret = ERROR;
+    RECT rect;
+    HRGN rgn;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("%p %d,%d-%d,%d\n", hdc, left, top, right, bottom );
 
     if (!dc) return ERROR;
     update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pExcludeClipRect );
-    ret = physdev->funcs->pExcludeClipRect( physdev, left, top, right, bottom );
+
+    rect = get_clip_rect( dc, left, top, right, bottom );
+
+    if ((rgn = CreateRectRgnIndirect( &rect )))
+    {
+        if (!dc->hClipRgn) create_default_clip_region( dc );
+        ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
+        DeleteObject( rgn );
+        if (ret != ERROR) update_dc_clipping( dc );
+    }
     release_dc_ptr( dc );
     return ret;
 }
