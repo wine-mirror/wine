@@ -735,10 +735,65 @@ static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
 }
 
 
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
+static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const host, unsigned int *size )
+{
+    struct hostent stack_host, *unix_host;
+    char *unix_buffer, *new_buffer;
+    int unix_size = 1024;
+    int locerr;
+    int ret;
+
+    if (!(unix_buffer = malloc( unix_size )))
+        return WSAENOBUFS;
+
+    while (gethostbyname_r( name, &stack_host, unix_buffer, unix_size, &unix_host, &locerr ) == ERANGE)
+    {
+        unix_size *= 2;
+        if (!(new_buffer = realloc( unix_buffer, unix_size )))
+        {
+            free( unix_buffer );
+            return WSAENOBUFS;
+        }
+        unix_buffer = new_buffer;
+    }
+
+    if (!unix_host)
+        return (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
+
+    ret = hostent_from_unix( unix_host, host, size );
+
+    free( unix_buffer );
+    return ret;
+}
+#else
+static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const host, unsigned int *size )
+{
+    struct hostent *unix_host;
+    int ret;
+
+    pthread_mutex_lock( &host_mutex );
+
+    if (!(unix_host = gethostbyname( name )))
+    {
+        ret = (h_errno < 0 ? errno_from_unix( errno ) : host_errno_from_unix( h_errno ));
+        pthread_mutex_unlock( &host_mutex );
+        return ret;
+    }
+
+    ret = hostent_from_unix( unix_host, host, size );
+
+    pthread_mutex_unlock( &host_mutex );
+    return ret;
+}
+#endif
+
+
 static const struct unix_funcs funcs =
 {
     unix_getaddrinfo,
     unix_gethostbyaddr,
+    unix_gethostbyname,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )

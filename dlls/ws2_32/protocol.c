@@ -53,33 +53,6 @@ static const int ws_eai_map[][2] =
     { 0, 0 }
 };
 
-static const int ws_af_map[][2] =
-{
-    MAP_OPTION( AF_UNSPEC ),
-    MAP_OPTION( AF_INET ),
-    MAP_OPTION( AF_INET6 ),
-#ifdef HAS_IPX
-    MAP_OPTION( AF_IPX ),
-#endif
-#ifdef AF_IRDA
-    MAP_OPTION( AF_IRDA ),
-#endif
-    {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
-};
-
-static int convert_af_u2w( int family )
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(ws_af_map); i++)
-    {
-        if (ws_af_map[i][1] == family)
-            return ws_af_map[i][0];
-    }
-    FIXME( "unhandled UNIX address family %d\n", family );
-    return -1;
-}
-
 int convert_eai_u2w( int unixret )
 {
     int i;
@@ -706,24 +679,6 @@ int WINAPI GetNameInfoW( const SOCKADDR *addr, WS_socklen_t addr_len, WCHAR *hos
 }
 
 
-static UINT host_errno_from_unix( int err )
-{
-    WARN( "%d\n", err );
-
-    switch (err)
-    {
-        case HOST_NOT_FOUND:    return WSAHOST_NOT_FOUND;
-        case TRY_AGAIN:         return WSATRY_AGAIN;
-        case NO_RECOVERY:       return WSANO_RECOVERY;
-        case NO_DATA:           return WSANO_DATA;
-        case ENOBUFS:           return WSAENOBUFS;
-        case 0:                 return 0;
-        default:
-            WARN( "Unknown h_errno %d!\n", err );
-            return WSAEOPNOTSUPP;
-    }
-}
-
 static struct WS_hostent *get_hostent_buffer( unsigned int size )
 {
     struct per_thread_data *data = get_per_thread_data();
@@ -787,37 +742,6 @@ static struct WS_hostent *create_hostent( char *name, int alias_count, int alias
 
     p_to->h_name = p;
     strcpy( p, name );
-
-    return p_to;
-}
-
-static struct WS_hostent *hostent_from_unix( const struct hostent *p_he )
-{
-    int i, addresses = 0, alias_size = 0;
-    struct WS_hostent *p_to;
-    char *p;
-
-    for (i = 0; p_he->h_aliases[i]; i++)
-        alias_size += strlen( p_he->h_aliases[i] ) + 1;
-    while (p_he->h_addr_list[addresses])
-        addresses++;
-
-    p_to = create_hostent( p_he->h_name, i + 1, alias_size, addresses + 1, p_he->h_length );
-
-    if (!p_to) return NULL;
-    p_to->h_addrtype = convert_af_u2w( p_he->h_addrtype );
-    p_to->h_length = p_he->h_length;
-
-    for (i = 0, p = p_to->h_addr_list[0]; p_he->h_addr_list[i]; i++, p += p_to->h_length)
-        memcpy( p, p_he->h_addr_list[i], p_to->h_length );
-
-    /* Fill the aliases after the IP data */
-    for (i = 0; p_he->h_aliases[i]; i++)
-    {
-        p_to->h_aliases[i] = p;
-        strcpy( p, p_he->h_aliases[i] );
-        p += strlen(p) + 1;
-    }
 
     return p_to;
 }
@@ -987,15 +911,10 @@ cleanup:
  */
 struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
 {
-    struct WS_hostent *retval = NULL;
-    struct hostent *host;
-#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-    char *extrabuf;
-    int ebufsize = 1024;
-    struct hostent hostentry;
-    int locerr = ENOBUFS;
-#endif
+    struct WS_hostent *host = NULL;
     char hostname[100];
+
+    TRACE( "%s\n", debugstr_a(name) );
 
     if (!num_startup)
     {
@@ -1006,7 +925,7 @@ struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
     if (gethostname( hostname, 100 ) == -1)
     {
         SetLastError( WSAENOBUFS );
-        return retval;
+        return NULL;
     }
 
     if (!name || !name[0])
@@ -1015,45 +934,36 @@ struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
     /* If the hostname of the local machine is requested then return the
      * complete list of local IP addresses */
     if (!strcmp( name, hostname ))
-        retval = get_local_ips( hostname );
+        host = get_local_ips( hostname );
 
     /* If any other hostname was requested (or the routing table lookup failed)
      * then return the IP found by the host OS */
-    if (!retval)
+    if (!host)
     {
-#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-        host = NULL;
-        extrabuf = HeapAlloc( GetProcessHeap(), 0, ebufsize );
-        while (extrabuf)
+        unsigned int size = 1024;
+        int ret;
+
+        if (!(host = get_hostent_buffer( size )))
+            return NULL;
+
+        while ((ret = unix_funcs->gethostbyname( name, host, &size )) == ERROR_INSUFFICIENT_BUFFER)
         {
-            int res = gethostbyname_r( name, &hostentry, extrabuf, ebufsize, &host, &locerr );
-            if (res != ERANGE) break;
-            ebufsize *= 2;
-            extrabuf = HeapReAlloc( GetProcessHeap(), 0, extrabuf, ebufsize );
+            if (!(host = get_hostent_buffer( size )))
+                return NULL;
         }
-        if (!host) SetLastError( (locerr < 0) ? sock_get_error( errno ) : host_errno_from_unix( locerr ) );
-#else
-        EnterCriticalSection( &csWSgetXXXbyYYY );
-        host = gethostbyname( name );
-        if (!host) SetLastError( (h_errno < 0) ? sock_get_error( errno ) : host_errno_from_unix( h_errno ) );
-#endif
-        if (host) retval = hostent_from_unix( host );
-#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
-        HeapFree( GetProcessHeap(), 0, extrabuf );
-#else
-        LeaveCriticalSection( &csWSgetXXXbyYYY );
-#endif
+
+        SetLastError( ret );
+        return ret ? NULL : host;
     }
 
-    if (retval && retval->h_addr_list[0][0] == 127 && strcmp( name, "localhost" ))
+    if (host && host->h_addr_list[0][0] == 127 && strcmp( name, "localhost" ))
     {
         /* hostname != "localhost" but has loopback address. replace by our
          * special address.*/
-        memcpy( retval->h_addr_list[0], magic_loopback_addr, 4 );
+        memcpy( host->h_addr_list[0], magic_loopback_addr, 4 );
     }
 
-    TRACE( "%s ret %p\n", debugstr_a(name), retval );
-    return retval;
+    return host;
 }
 
 
