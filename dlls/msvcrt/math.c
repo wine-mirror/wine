@@ -5315,7 +5315,7 @@ unsigned int CDECL _statusfp(void)
 unsigned int CDECL _clearfp(void)
 {
     unsigned int flags = 0;
-#if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
     unsigned long fpword;
 
     __asm__ __volatile__( "fnstsw %0; fnclex" : "=m" (fpword) );
@@ -5333,6 +5333,8 @@ unsigned int CDECL _clearfp(void)
         _setfp_sse(NULL, 0, &sse_sw, _MCW_EM);
         flags |= sse_sw;
     }
+#elif defined(__x86_64__)
+    _setfp_sse(NULL, 0, &flags, _MCW_EM);
 #elif defined(__aarch64__)
     ULONG_PTR fpsr;
 
