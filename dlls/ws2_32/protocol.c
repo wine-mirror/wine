@@ -33,21 +33,6 @@ DECLARE_CRITICAL_SECTION(csWSgetXXXbyYYY);
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
-static const int ws_aiflag_map[][2] =
-{
-    MAP_OPTION( AI_PASSIVE ),
-    MAP_OPTION( AI_CANONNAME ),
-    MAP_OPTION( AI_NUMERICHOST ),
-#ifdef AI_NUMERICSERV
-    MAP_OPTION( AI_NUMERICSERV ),
-#endif
-#ifdef AI_V4MAPPED
-    MAP_OPTION( AI_V4MAPPED ),
-#endif
-    MAP_OPTION( AI_ALL ),
-    MAP_OPTION( AI_ADDRCONFIG ),
-};
-
 static const int ws_eai_map[][2] =
 {
     MAP_OPTION( EAI_AGAIN ),
@@ -82,21 +67,6 @@ static const int ws_af_map[][2] =
     {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
 };
 
-static const int ws_proto_map[][2] =
-{
-    MAP_OPTION( IPPROTO_IP ),
-    MAP_OPTION( IPPROTO_TCP ),
-    MAP_OPTION( IPPROTO_UDP ),
-    MAP_OPTION( IPPROTO_IPV6 ),
-    MAP_OPTION( IPPROTO_ICMP ),
-    MAP_OPTION( IPPROTO_IGMP ),
-    MAP_OPTION( IPPROTO_RAW ),
-    {WS_IPPROTO_IPV4, IPPROTO_IPIP},
-    {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
-};
-
-#define IS_IPX_PROTO(X) ((X) >= WS_NSPROTO_IPX && (X) <= WS_NSPROTO_IPX + 255)
-
 static int convert_af_w2u( int family )
 {
     unsigned int i;
@@ -121,78 +91,6 @@ static int convert_af_u2w( int family )
     }
     FIXME( "unhandled UNIX address family %d\n", family );
     return -1;
-}
-
-static int convert_proto_w2u( int protocol )
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(ws_proto_map); i++)
-    {
-        if (ws_proto_map[i][0] == protocol)
-            return ws_proto_map[i][1];
-    }
-
-    if (IS_IPX_PROTO(protocol))
-      return protocol;
-
-    FIXME( "unhandled Windows socket protocol %d\n", protocol );
-    return -1;
-}
-
-static int convert_proto_u2w( int protocol )
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(ws_proto_map); i++)
-    {
-        if (ws_proto_map[i][1] == protocol)
-            return ws_proto_map[i][0];
-    }
-
-    /* if value is inside IPX range just return it - the kernel simply
-     * echoes the value used in the socket() function */
-    if (IS_IPX_PROTO(protocol))
-        return protocol;
-
-    FIXME("unhandled UNIX socket protocol %d\n", protocol);
-    return -1;
-}
-
-static int convert_aiflag_w2u( int winflags )
-{
-    unsigned int i;
-    int unixflags = 0;
-
-    for (i = 0; i < ARRAY_SIZE(ws_aiflag_map); i++)
-    {
-        if (ws_aiflag_map[i][0] & winflags)
-        {
-            unixflags |= ws_aiflag_map[i][1];
-            winflags &= ~ws_aiflag_map[i][0];
-        }
-    }
-    if (winflags)
-        FIXME( "Unhandled windows AI_xxx flags 0x%x\n", winflags );
-    return unixflags;
-}
-
-static int convert_aiflag_u2w( int unixflags )
-{
-    unsigned int i;
-    int winflags = 0;
-
-    for (i = 0; i < ARRAY_SIZE(ws_aiflag_map); i++)
-    {
-        if (ws_aiflag_map[i][1] & unixflags)
-        {
-            winflags |= ws_aiflag_map[i][0];
-            unixflags &= ~ws_aiflag_map[i][1];
-        }
-    }
-    if (unixflags)
-        WARN( "Unhandled UNIX AI_xxx flags 0x%x\n", unixflags );
-    return winflags;
 }
 
 int convert_eai_u2w( int unixret )
@@ -232,62 +130,37 @@ static char *get_fqdn(void)
     return ret;
 }
 
-static BOOL addrinfo_in_list( const struct WS_addrinfo *list, const struct WS_addrinfo *ai )
-{
-    const struct WS_addrinfo *cursor = list;
-    while (cursor)
-    {
-        if (ai->ai_flags == cursor->ai_flags &&
-            ai->ai_family == cursor->ai_family &&
-            ai->ai_socktype == cursor->ai_socktype &&
-            ai->ai_protocol == cursor->ai_protocol &&
-            ai->ai_addrlen == cursor->ai_addrlen &&
-            !memcmp(ai->ai_addr, cursor->ai_addr, ai->ai_addrlen) &&
-            ((ai->ai_canonname && cursor->ai_canonname && !strcmp(ai->ai_canonname, cursor->ai_canonname))
-            || (!ai->ai_canonname && !cursor->ai_canonname)))
-        {
-            return TRUE;
-        }
-        cursor = cursor->ai_next;
-    }
-    return FALSE;
-}
 
 
 /***********************************************************************
  *      getaddrinfo   (ws2_32.@)
  */
-int WINAPI WS_getaddrinfo( const char *nodename, const char *servname,
-                           const struct WS_addrinfo *hints, struct WS_addrinfo **res )
+int WINAPI WS_getaddrinfo( const char *node, const char *service,
+                           const struct WS_addrinfo *hints, struct WS_addrinfo **info )
 {
-#ifdef HAVE_GETADDRINFO
-    struct addrinfo *unixaires = NULL;
-    int result;
-    struct addrinfo unixhints, *punixhints = NULL;
     char *nodev6 = NULL, *fqdn = NULL;
-    const char *node;
+    int ret;
 
-    *res = NULL;
-    if (!nodename && !servname)
+    TRACE( "node %s, service %s, hints %p\n", debugstr_a(node), debugstr_a(service), hints );
+
+    *info = NULL;
+
+    if (!node && !service)
     {
-        SetLastError(WSAHOST_NOT_FOUND);
+        SetLastError( WSAHOST_NOT_FOUND );
         return WSAHOST_NOT_FOUND;
     }
 
-    if (!nodename)
-        node = NULL;
-    else if (!nodename[0])
+    if (node)
     {
-        if (!(fqdn = get_fqdn())) return WSA_NOT_ENOUGH_MEMORY;
-        node = fqdn;
-    }
-    else
-    {
-        node = nodename;
-
-        /* Check for [ipv6] or [ipv6]:portnumber, which are supported by Windows */
-        if (!hints || hints->ai_family == WS_AF_UNSPEC || hints->ai_family == WS_AF_INET6)
+        if (!node[0])
         {
+            if (!(fqdn = get_fqdn())) return WSA_NOT_ENOUGH_MEMORY;
+            node = fqdn;
+        }
+        else if (!hints || hints->ai_family == WS_AF_UNSPEC || hints->ai_family == WS_AF_INET6)
+        {
+            /* [ipv6] or [ipv6]:portnumber are supported by Windows */
             char *close_bracket;
 
             if (node[0] == '[' && (close_bracket = strchr(node + 1, ']')))
@@ -300,50 +173,9 @@ int WINAPI WS_getaddrinfo( const char *nodename, const char *servname,
         }
     }
 
-    /* servname tweak required by OSX and BSD kernels */
-    if (servname && !servname[0]) servname = "0";
+    ret = unix_funcs->getaddrinfo( node, service, hints, info );
 
-    if (hints)
-    {
-        punixhints = &unixhints;
-
-        memset( &unixhints, 0, sizeof(unixhints) );
-        punixhints->ai_flags = convert_aiflag_w2u( hints->ai_flags );
-
-        /* zero is a wildcard, no need to convert */
-        if (hints->ai_family)
-            punixhints->ai_family = convert_af_w2u( hints->ai_family );
-        if (hints->ai_socktype)
-            punixhints->ai_socktype = convert_socktype_w2u( hints->ai_socktype );
-        if (hints->ai_protocol)
-            punixhints->ai_protocol = max( convert_proto_w2u( hints->ai_protocol ), 0 );
-
-        if (punixhints->ai_socktype < 0)
-        {
-            SetLastError( WSAESOCKTNOSUPPORT );
-            HeapFree( GetProcessHeap(), 0, fqdn );
-            HeapFree( GetProcessHeap(), 0, nodev6 );
-            return -1;
-        }
-
-        /* windows allows invalid combinations of socket type and protocol, unix does not.
-         * fix the parameters here to make getaddrinfo call always work */
-        if (punixhints->ai_protocol == IPPROTO_TCP
-                && punixhints->ai_socktype != SOCK_STREAM
-                && punixhints->ai_socktype != SOCK_SEQPACKET)
-            punixhints->ai_socktype = 0;
-        else if (punixhints->ai_protocol == IPPROTO_UDP && punixhints->ai_socktype != SOCK_DGRAM)
-            punixhints->ai_socktype = 0;
-        else if (IS_IPX_PROTO(punixhints->ai_protocol) && punixhints->ai_socktype != SOCK_DGRAM)
-            punixhints->ai_socktype = 0;
-        else if (punixhints->ai_protocol == IPPROTO_IPV6)
-            punixhints->ai_protocol = 0;
-    }
-
-    /* getaddrinfo(3) is thread safe, no need to wrap in CS */
-    result = getaddrinfo( node, servname, punixhints, &unixaires );
-
-    if (result && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && node)
+    if (ret && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && node)
     {
         if (!fqdn && !(fqdn = get_fqdn()))
         {
@@ -356,115 +188,33 @@ int WINAPI WS_getaddrinfo( const char *nodename, const char *servname,
              * by sending a NULL host and avoid sending a NULL servname too because that
              * is invalid */
             ERR_(winediag)( "Failed to resolve your host name IP\n" );
-            result = getaddrinfo( NULL, servname ? servname : "0", punixhints, &unixaires );
-            if (!result && punixhints && (punixhints->ai_flags & AI_CANONNAME) && unixaires && !unixaires->ai_canonname)
+            ret = unix_funcs->getaddrinfo( NULL, service, hints, info );
+            if (!ret && hints && (hints->ai_flags & WS_AI_CANONNAME) && *info && !(*info)->ai_canonname)
             {
-                freeaddrinfo( unixaires );
-                result = EAI_NONAME;
+                WS_freeaddrinfo( *info );
+                *info = NULL;
+                return EAI_NONAME;
             }
         }
     }
-    TRACE( "%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result );
+
     HeapFree( GetProcessHeap(), 0, fqdn );
     HeapFree( GetProcessHeap(), 0, nodev6 );
 
-    if (!result)
+    if (!ret && TRACE_ON(winsock))
     {
-        struct addrinfo *xuai = unixaires;
-        struct WS_addrinfo **xai = res;
+        struct WS_addrinfo *ai;
 
-        *xai = NULL;
-        while (xuai)
+        for (ai = *info; ai != NULL; ai = ai->ai_next)
         {
-            struct WS_addrinfo *ai = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct WS_addrinfo) );
-            SIZE_T len;
-
-            if (!ai)
-                goto outofmem;
-
-            ai->ai_flags    = convert_aiflag_u2w( xuai->ai_flags );
-            ai->ai_family   = convert_af_u2w( xuai->ai_family );
-            /* copy whatever was sent in the hints */
-            if (hints)
-            {
-                ai->ai_socktype = hints->ai_socktype;
-                ai->ai_protocol = hints->ai_protocol;
-            }
-            else
-            {
-                ai->ai_socktype = convert_socktype_u2w( xuai->ai_socktype );
-                ai->ai_protocol = convert_proto_u2w( xuai->ai_protocol );
-            }
-            if (xuai->ai_canonname)
-            {
-                TRACE( "canon name - %s\n", debugstr_a(xuai->ai_canonname) );
-                ai->ai_canonname = HeapAlloc( GetProcessHeap(), 0, strlen( xuai->ai_canonname ) + 1 );
-                if (!ai->ai_canonname)
-                    goto outofmem;
-                strcpy( ai->ai_canonname, xuai->ai_canonname );
-            }
-            len = xuai->ai_addrlen;
-            ai->ai_addr = HeapAlloc( GetProcessHeap(), 0, len );
-            if (!ai->ai_addr)
-                goto outofmem;
-            ai->ai_addrlen = len;
-            do
-            {
-                int winlen = ai->ai_addrlen;
-
-                if (!ws_sockaddr_u2ws( xuai->ai_addr, ai->ai_addr, &winlen ))
-                {
-                    ai->ai_addrlen = winlen;
-                    break;
-                }
-                len *= 2;
-                ai->ai_addr = HeapReAlloc( GetProcessHeap(), 0, ai->ai_addr, len );
-                if (!ai->ai_addr)
-                    goto outofmem;
-                ai->ai_addrlen = len;
-            } while (1);
-
-            if (addrinfo_in_list( *res, ai ))
-            {
-                HeapFree( GetProcessHeap(), 0, ai->ai_canonname );
-                HeapFree( GetProcessHeap(), 0, ai->ai_addr );
-                HeapFree( GetProcessHeap(), 0, ai );
-            }
-            else
-            {
-                *xai = ai;
-                xai = &ai->ai_next;
-            }
-            xuai = xuai->ai_next;
-        }
-        freeaddrinfo( unixaires );
-
-        if (TRACE_ON(winsock))
-        {
-            struct WS_addrinfo *ai = *res;
-            while (ai)
-            {
-                TRACE( "=> %p, flags %#x, family %d, type %d, protocol %d, len %ld, name %s, addr %s\n",
-                       ai, ai->ai_flags, ai->ai_family, ai->ai_socktype, ai->ai_protocol, ai->ai_addrlen,
-                       ai->ai_canonname, debugstr_sockaddr(ai->ai_addr) );
-                ai = ai->ai_next;
-            }
+            TRACE( "=> %p, flags %#x, family %d, type %d, protocol %d, len %ld, name %s, addr %s\n",
+                   ai, ai->ai_flags, ai->ai_family, ai->ai_socktype, ai->ai_protocol, ai->ai_addrlen,
+                   ai->ai_canonname, debugstr_sockaddr(ai->ai_addr) );
         }
     }
-    else
-        result = convert_eai_u2w( result );
 
-    SetLastError( result );
-    return result;
-
-outofmem:
-    if (*res) WS_freeaddrinfo( *res );
-    if (unixaires) freeaddrinfo( unixaires );
-    return WSA_NOT_ENOUGH_MEMORY;
-#else
-    FIXME( "getaddrinfo() failed, not found during build time.\n" );
-    return EAI_FAIL;
-#endif
+    SetLastError( ret );
+    return ret;
 }
 
 

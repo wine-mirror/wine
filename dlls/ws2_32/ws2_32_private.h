@@ -172,10 +172,6 @@ union generic_unix_sockaddr
 };
 
 int convert_eai_u2w( int ret ) DECLSPEC_HIDDEN;
-int convert_socktype_u2w( int type ) DECLSPEC_HIDDEN;
-int convert_socktype_w2u( int type ) DECLSPEC_HIDDEN;
-int ws_sockaddr_u2ws( const struct sockaddr *unix_addr, struct WS_sockaddr *win_addr,
-                      int *win_addr_len ) DECLSPEC_HIDDEN;
 unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *win_addr, int win_addr_len,
                                union generic_unix_sockaddr *unix_addr ) DECLSPEC_HIDDEN;
 
@@ -199,5 +195,13 @@ struct per_thread_data
 extern int num_startup;
 
 struct per_thread_data *get_per_thread_data(void) DECLSPEC_HIDDEN;
+
+struct unix_funcs
+{
+    int (CDECL *getaddrinfo)( const char *node, const char *service,
+                              const struct WS(addrinfo) *hints, struct WS(addrinfo) **info );
+};
+
+extern const struct unix_funcs *unix_funcs;
 
 #endif

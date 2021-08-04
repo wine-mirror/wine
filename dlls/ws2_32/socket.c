@@ -41,6 +41,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+const struct unix_funcs *unix_funcs = NULL;
+
 static const WSAPROTOCOL_INFOW supported_protocols[] =
 {
     {
@@ -426,14 +428,6 @@ static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, in
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
-static const int ws_socktype_map[][2] =
-{
-    MAP_OPTION( SOCK_DGRAM ),
-    MAP_OPTION( SOCK_STREAM ),
-    MAP_OPTION( SOCK_RAW ),
-    {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
-};
-
 UINT sock_get_error( int err )
 {
 	switch(err)
@@ -626,36 +620,18 @@ static HANDLE get_sync_event(void)
     return data->sync_event;
 }
 
-/***********************************************************************
- *		DllMain (WS2_32.init)
- */
+
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
-    if (reason == DLL_THREAD_DETACH)
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        return !__wine_init_unix_lib( instance, reason, NULL, &unix_funcs );
+
+    case DLL_THREAD_DETACH:
         free_per_thread_data();
+    }
     return TRUE;
-}
-
-int
-convert_socktype_w2u(int windowssocktype) {
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(ws_socktype_map); i++)
-    	if (ws_socktype_map[i][0] == windowssocktype)
-	    return ws_socktype_map[i][1];
-    FIXME("unhandled Windows socket type %d\n", windowssocktype);
-    return -1;
-}
-
-int
-convert_socktype_u2w(int unixsocktype) {
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(ws_socktype_map); i++)
-    	if (ws_socktype_map[i][1] == unixsocktype)
-	    return ws_socktype_map[i][0];
-    FIXME("unhandled UNIX socket type %d\n", unixsocktype);
-    return -1;
 }
 
 
@@ -856,112 +832,6 @@ unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *wsaddr, int wsaddrlen,
         return 0;
     }
     return uaddrlen;
-}
-
-/* Returns 0 if successful, -1 if the buffer is too small */
-int ws_sockaddr_u2ws(const struct sockaddr *uaddr, struct WS_sockaddr *wsaddr, int *wsaddrlen)
-{
-    int res;
-
-    switch(uaddr->sa_family)
-    {
-#ifdef HAS_IPX
-    case AF_IPX:
-        {
-            const struct sockaddr_ipx* uipx=(const struct sockaddr_ipx*)uaddr;
-            struct WS_sockaddr_ipx* wsipx=(struct WS_sockaddr_ipx*)wsaddr;
-
-            res=-1;
-            switch (*wsaddrlen) /* how much can we copy? */
-            {
-            default:
-                res=0; /* enough */
-                *wsaddrlen = sizeof(*wsipx);
-                wsipx->sa_socket=uipx->sipx_port;
-                /* fall through */
-            case 13:
-            case 12:
-                memcpy(wsipx->sa_nodenum,uipx->sipx_node,sizeof(wsipx->sa_nodenum));
-                /* fall through */
-            case 11:
-            case 10:
-            case 9:
-            case 8:
-            case 7:
-            case 6:
-                memcpy(wsipx->sa_netnum,&uipx->sipx_network,sizeof(wsipx->sa_netnum));
-                /* fall through */
-            case 5:
-            case 4:
-            case 3:
-            case 2:
-                wsipx->sa_family=WS_AF_IPX;
-                /* fall through */
-            case 1:
-            case 0:
-                /* way too small */
-                break;
-            }
-        }
-        break;
-#endif
-#ifdef HAS_IRDA
-    case AF_IRDA: {
-        const struct sockaddr_irda *uin = (const struct sockaddr_irda *)uaddr;
-        SOCKADDR_IRDA *win = (SOCKADDR_IRDA *)wsaddr;
-
-        if (*wsaddrlen < sizeof(SOCKADDR_IRDA))
-            return -1;
-        win->irdaAddressFamily = WS_AF_IRDA;
-        memcpy( win->irdaDeviceID, &uin->sir_addr, sizeof(win->irdaDeviceID) );
-        if (uin->sir_lsap_sel != LSAP_ANY)
-            sprintf( win->irdaServiceName, "LSAP-SEL%u", uin->sir_lsap_sel );
-        else
-            memcpy( win->irdaServiceName, uin->sir_name,
-                    sizeof(win->irdaServiceName) );
-        return 0;
-    }
-#endif
-    case AF_INET6: {
-        const struct sockaddr_in6* uin6 = (const struct sockaddr_in6*)uaddr;
-        struct WS_sockaddr_in6 *win6 = (struct WS_sockaddr_in6 *)wsaddr;
-
-        if (*wsaddrlen < sizeof(struct WS_sockaddr_in6))
-            return -1;
-        win6->sin6_family   = WS_AF_INET6;
-        win6->sin6_port     = uin6->sin6_port;
-        win6->sin6_flowinfo = uin6->sin6_flowinfo;
-        memcpy(&win6->sin6_addr, &uin6->sin6_addr, 16); /* 16 bytes = 128 address bits */
-#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        win6->sin6_scope_id = uin6->sin6_scope_id;
-#else
-        win6->sin6_scope_id = 0;
-#endif
-        *wsaddrlen = sizeof(struct WS_sockaddr_in6);
-        return 0;
-    }
-    case AF_INET: {
-        const struct sockaddr_in* uin = (const struct sockaddr_in*)uaddr;
-        struct WS_sockaddr_in* win = (struct WS_sockaddr_in*)wsaddr;
-
-        if (*wsaddrlen < sizeof(struct WS_sockaddr_in))
-            return -1;
-        win->sin_family = WS_AF_INET;
-        win->sin_port   = uin->sin_port;
-        memcpy(&win->sin_addr,&uin->sin_addr,4); /* 4 bytes = 32 address bits */
-        memset(win->sin_zero, 0, 8); /* Make sure the null padding is null */
-        *wsaddrlen = sizeof(struct WS_sockaddr_in);
-        return 0;
-    }
-    case AF_UNSPEC: {
-        memset(wsaddr,0,*wsaddrlen);
-        return 0;
-    }
-    default:
-        FIXME("Unknown address family %d\n", uaddr->sa_family);
-        return -1;
-    }
-    return res;
 }
 
 static INT WS_DuplicateSocket(BOOL unicode, SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOW lpProtocolInfo)

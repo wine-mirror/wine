@@ -7,6 +7,7 @@ EXTRALIBS = $(POLL_LIBS)
 C_SRCS = \
 	async.c \
 	protocol.c \
-	socket.c
+	socket.c \
+	unixlib.c
 
 RC_SRCS = version.rc

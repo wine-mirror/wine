@@ -1740,7 +1740,7 @@ static void test_GetAddrInfoW(void)
         result = NULL;
         SetLastError(0xdeadbeef);
         ret = GetAddrInfoW(localhost, NULL, &hint, &result);
-        todo_wine_if (hinttests[i].error) ok(ret == hinttests[i].error, "test %d: wrong ret %d\n", i, ret);
+        ok(ret == hinttests[i].error, "test %d: wrong ret %d\n", i, ret);
         if (!ret)
         {
             for (p = result; p; p = p->ai_next)
@@ -2293,7 +2293,7 @@ static void test_getaddrinfo(void)
         result = NULL;
         SetLastError(0xdeadbeef);
         ret = getaddrinfo("localhost", NULL, &hint, &result);
-        todo_wine_if (hinttests[i].error) ok(ret == hinttests[i].error, "test %d: wrong ret %d\n", i, ret);
+        ok(ret == hinttests[i].error, "test %d: wrong ret %d\n", i, ret);
         if (!ret)
         {
             for (p = result; p; p = p->ai_next)
