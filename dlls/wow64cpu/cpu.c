@@ -82,13 +82,33 @@ __ASM_GLOBAL_FUNC( syscall_32to64,
                    "movl 0xa0(%r13),%esi\n\t"   /* context->Esi */
                    "movl 0xa4(%r13),%ebx\n\t"   /* context->Ebx */
                    "movl 0xb4(%r13),%ebp\n\t"   /* context->Ebp */
+                   "btrl $0,-4(%r13)\n\t"       /* cpu->Flags & WOW64_CPURESERVED_FLAG_RESET_STATE */
+                   "jc 1f\n\t"
                    "movl 0xb8(%r13),%edx\n\t"   /* context->Eip */
                    "movl %edx,(%rsp)\n\t"
                    "movl 0xbc(%r13),%edx\n\t"   /* context->SegCs */
                    "movl %edx,4(%rsp)\n\t"
                    "movl 0xc4(%r13),%r14d\n\t"  /* context->Esp */
                    "xchgq %r14,%rsp\n\t"
-                   "ljmp *(%r14)" )
+                   "ljmp *(%r14)\n"
+                   "1:\tmovq %rsp,%r14\n\t"
+                   "movl 0xa8(%r13),%edx\n\t"   /* context->Edx */
+                   "movl 0xac(%r13),%ecx\n\t"   /* context->Ecx */
+                   "movl 0xc8(%r13),%eax\n\t"   /* context->SegSs */
+                   "movq %rax,0x20(%rsp)\n\t"
+                   "mov %ax,%ds\n\t"
+                   "mov %ax,%es\n\t"
+                   "mov 0x90(%r13),%fs\n\t"     /* context->SegFs */
+                   "movl 0xc4(%r13),%eax\n\t"   /* context->Esp */
+                   "movq %rax,0x18(%rsp)\n\t"
+                   "movl 0xc0(%r13),%eax\n\t"   /* context->EFlags */
+                   "movq %rax,0x10(%rsp)\n\t"
+                   "movl 0xbc(%r13),%eax\n\t"   /* context->SegCs */
+                   "movq %rax,0x8(%rsp)\n\t"
+                   "movl 0xb8(%r13),%eax\n\t"   /* context->Eip */
+                   "movq %rax,(%rsp)\n\t"
+                   "movl 0xb0(%r13),%eax\n\t"   /* context->Eax */
+                   "iretq" )
 
 
 /**********************************************************************
@@ -136,4 +156,22 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
 void * WINAPI BTCpuGetBopCode(void)
 {
     return code_buffer;
+}
+
+
+/**********************************************************************
+ *           BTCpuGetContext  (wow64cpu.@)
+ */
+NTSTATUS WINAPI BTCpuGetContext( HANDLE thread, HANDLE process, void *unknown, I386_CONTEXT *ctx )
+{
+    return NtQueryInformationThread( thread, ThreadWow64Context, ctx, sizeof(*ctx), NULL );
+}
+
+
+/**********************************************************************
+ *           BTCpuSetContext  (wow64cpu.@)
+ */
+NTSTATUS WINAPI BTCpuSetContext( HANDLE thread, HANDLE process, void *unknown, I386_CONTEXT *ctx )
+{
+    return NtSetInformationThread( thread, ThreadWow64Context, ctx, sizeof(*ctx) );
 }

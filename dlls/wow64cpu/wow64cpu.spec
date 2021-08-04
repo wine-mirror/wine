@@ -1,8 +1,8 @@
 @ stdcall BTCpuGetBopCode()
-#@ stub BTCpuGetContext
+@ stdcall BTCpuGetContext(long long ptr ptr)
 @ stdcall BTCpuProcessInit()
 #@ stub BTCpuResetToConsistentState
-#@ stub BTCpuSetContext
+@ stdcall BTCpuSetContext(long long ptr ptr)
 @ stdcall BTCpuSimulate()
 #@ stub BTCpuTurboThunkControl
 #@ stub TurboDispatchJumpAddressEnd

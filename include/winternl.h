@@ -3727,6 +3727,8 @@ typedef struct _WOW64_CPURESERVED
     /* CONTEXT_EX *context_ex */
 } WOW64_CPURESERVED, *PWOW64_CPURESERVED;
 
+#define WOW64_CPURESERVED_FLAG_RESET_STATE 1
+
 typedef struct _WOW64_CPU_AREA_INFO
 {
     void              *Context;
