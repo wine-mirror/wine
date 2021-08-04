@@ -751,6 +751,74 @@ static void test_scriptdisp(void)
     ok(!ref, "ref = %d\n", ref);
 }
 
+static void test_param_ids(void)
+{
+    static const WCHAR *const names1[] = { L"test", L"c", L"foo", L"b", L"a" };
+    static const WCHAR *const names2[] = { L"test", L"bar" };
+    static const WCHAR *const names3[] = { L"bar", L"test" };
+    DISPID id[ARRAY_SIZE(names1)];
+    IActiveScriptParse *parser;
+    IActiveScript *vbscript;
+    IDispatchEx *script_disp;
+    HRESULT hr;
+
+    vbscript = create_vbscript();
+
+    hr = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hr == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hr);
+
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScriptParse_InitNew(parser);
+    ok(hr == S_OK, "InitNew failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    parse_script(parser, "function test(byval a, byval b, byval c, byval foo)\ntest = a + b + c - foo\nend function\n"
+                         "function bar\nend function");
+    script_disp = get_script_dispatch(vbscript, NULL);
+
+    hr = IDispatchEx_GetIDsOfNames(script_disp, &IID_NULL, (WCHAR**)names1, ARRAY_SIZE(names1), 0, id);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames returned %08x, expected %08x\n", hr, DISP_E_UNKNOWNNAME);
+    ok(id[0] > 0, "Unexpected DISPID for \"test\": %d\n", id[0]);
+    ok(id[4] == DISPID_UNKNOWN, "Unexpected DISPID for \"a\" parameter: %d\n", id[4]);
+    ok(id[3] == DISPID_UNKNOWN, "Unexpected DISPID for \"b\" parameter: %d\n", id[3]);
+    ok(id[1] == DISPID_UNKNOWN, "Unexpected DISPID for \"c\" parameter: %d\n", id[1]);
+    ok(id[2] == DISPID_UNKNOWN, "Unexpected DISPID for \"foo\" parameter: %d\n", id[2]);
+
+    hr = IDispatchEx_GetIDsOfNames(script_disp, &IID_NULL, (WCHAR**)names2, ARRAY_SIZE(names2), 0, id);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames returned %08x, expected %08x\n", hr, DISP_E_UNKNOWNNAME);
+    ok(id[0] > 0, "Unexpected DISPID for \"test\": %d\n", id[0]);
+    ok(id[1] == DISPID_UNKNOWN, "Unexpected DISPID for \"bar\": %d\n", id[1]);
+
+    hr = IDispatchEx_GetIDsOfNames(script_disp, &IID_NULL, (WCHAR**)names3, ARRAY_SIZE(names3), 0, id);
+    ok(hr == DISP_E_UNKNOWNNAME, "GetIDsOfNames returned %08x, expected %08x\n", hr, DISP_E_UNKNOWNNAME);
+    ok(id[0] > 0, "Unexpected DISPID for \"bar\": %d\n", id[0]);
+    ok(id[1] == DISPID_UNKNOWN, "Unexpected DISPID for \"test\": %d\n", id[1]);
+
+    IDispatchEx_Release(script_disp);
+    IActiveScriptParse_Release(parser);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hr = IActiveScript_Close(vbscript);
+    ok(hr == S_OK, "Close failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    IActiveScript_Release(vbscript);
+}
+
 static void test_code_persistence(void)
 {
     IActiveScriptParse *parser;
@@ -2641,6 +2709,7 @@ START_TEST(vbscript)
         test_vbscript_release();
         test_vbscript_simplecreate();
         test_vbscript_initializing();
+        test_param_ids();
         test_named_items();
         test_scriptdisp();
         test_code_persistence();
