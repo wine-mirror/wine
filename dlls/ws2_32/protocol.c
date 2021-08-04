@@ -67,19 +67,6 @@ static const int ws_af_map[][2] =
     {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
 };
 
-static int convert_af_w2u( int family )
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(ws_af_map); i++)
-    {
-        if (ws_af_map[i][0] == family)
-            return ws_af_map[i][1];
-    }
-    FIXME( "unhandled Windows address family %d\n", family );
-    return -1;
-}
-
 static int convert_af_u2w( int family )
 {
     unsigned int i;
@@ -839,54 +826,23 @@ static struct WS_hostent *hostent_from_unix( const struct hostent *p_he )
 /***********************************************************************
  *      gethostbyaddr   (ws2_32.51)
  */
-struct WS_hostent * WINAPI WS_gethostbyaddr( const char *addr, int len, int type )
+struct WS_hostent * WINAPI WS_gethostbyaddr( const char *addr, int len, int family )
 {
-    struct WS_hostent *retval = NULL;
-    struct hostent *host;
-    int unixtype = convert_af_w2u(type);
-    const char *paddr = addr;
-    unsigned long loopback;
-#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-    char *extrabuf;
-    int ebufsize = 1024;
-    struct hostent hostentry;
-    int locerr = ENOBUFS;
-#endif
+    unsigned int size = 1024;
+    struct WS_hostent *host;
+    int ret;
 
-    /* convert back the magic loopback address if necessary */
-    if (unixtype == AF_INET && len == 4 && !memcmp( addr, magic_loopback_addr, 4 ))
+    if (!(host = get_hostent_buffer( size )))
+        return NULL;
+
+    while ((ret = unix_funcs->gethostbyaddr( addr, len, family, host, &size )) == ERROR_INSUFFICIENT_BUFFER)
     {
-        loopback = htonl( INADDR_LOOPBACK );
-        paddr = (char *)&loopback;
+        if (!(host = get_hostent_buffer( size )))
+            return NULL;
     }
 
-#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-    host = NULL;
-    extrabuf = HeapAlloc( GetProcessHeap(), 0, ebufsize );
-    while (extrabuf)
-    {
-        int res = gethostbyaddr_r( paddr, len, unixtype, &hostentry, extrabuf, ebufsize, &host, &locerr );
-        if (res != ERANGE) break;
-        ebufsize *= 2;
-        extrabuf = HeapReAlloc( GetProcessHeap(), 0, extrabuf, ebufsize );
-    }
-    if (host)
-        retval = hostent_from_unix( host );
-    else
-        SetLastError( (locerr < 0) ? sock_get_error( errno ) : host_errno_from_unix( locerr ) );
-    HeapFree( GetProcessHeap(), 0, extrabuf );
-#else
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    host = gethostbyaddr( paddr, len, unixtype );
-    if (host)
-        retval = hostent_from_unix( host );
-    else
-        SetLastError( (h_errno < 0) ? sock_get_error( errno ) : host_errno_from_unix( h_errno ) );
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#endif
-
-    TRACE( "ptr %p, len %d, type %d ret %p\n", addr, len, type, retval );
-    return retval;
+    SetLastError( ret );
+    return ret ? NULL : host;
 }
 
 

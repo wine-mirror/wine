@@ -200,6 +200,8 @@ struct unix_funcs
 {
     int (CDECL *getaddrinfo)( const char *node, const char *service, const struct WS(addrinfo) *hints,
                               struct WS(addrinfo) *info, unsigned int *size );
+    int (CDECL *gethostbyaddr)( const void *addr, int len, int family,
+                                struct WS(hostent) *host, unsigned int *size );
 };
 
 extern const struct unix_funcs *unix_funcs;

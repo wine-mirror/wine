@@ -28,6 +28,7 @@
 
 #include "config.h"
 #include <errno.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -74,6 +75,10 @@
 #include "ws2_32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
+
+#ifndef HAVE_LINUX_GETHOSTBYNAME_R_6
+static pthread_mutex_t host_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 #define MAP(x) {WS_ ## x, x}
 
@@ -316,6 +321,24 @@ static unsigned int errno_from_unix( int err )
         default:
             FIXME( "unknown error: %s", strerror( err ) );
             return WSAEFAULT;
+    }
+}
+
+static UINT host_errno_from_unix( int err )
+{
+    WARN( "%d\n", err );
+
+    switch (err)
+    {
+        case HOST_NOT_FOUND:    return WSAHOST_NOT_FOUND;
+        case TRY_AGAIN:         return WSATRY_AGAIN;
+        case NO_RECOVERY:       return WSANO_RECOVERY;
+        case NO_DATA:           return WSANO_DATA;
+        case ENOBUFS:           return WSAENOBUFS;
+        case 0:                 return 0;
+        default:
+            WARN( "Unknown h_errno %d!\n", err );
+            return WSAEOPNOTSUPP;
     }
 }
 
@@ -595,9 +618,127 @@ static int CDECL unix_getaddrinfo( const char *node, const char *service, const 
 #endif
 }
 
+
+static int hostent_from_unix( const struct hostent *unix_host, struct WS_hostent *host, unsigned int *const size )
+{
+    unsigned int needed_size = sizeof( struct WS_hostent ), alias_count = 0, addr_count = 0, i;
+    char *p;
+
+    needed_size += strlen( unix_host->h_name );
+
+    for (alias_count = 0; unix_host->h_aliases[alias_count] != NULL; ++alias_count)
+        needed_size += sizeof(char *) + strlen( unix_host->h_aliases[alias_count] ) + 1;
+    needed_size += sizeof(char *); /* null terminator */
+
+    for (addr_count = 0; unix_host->h_addr_list[addr_count] != NULL; ++addr_count)
+        needed_size += sizeof(char *) + unix_host->h_length;
+    needed_size += sizeof(char *); /* null terminator */
+
+    if (*size < needed_size)
+    {
+        *size = needed_size;
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    memset( host, 0, needed_size );
+
+    /* arrange the memory in the same order as windows >= XP */
+
+    host->h_addrtype = family_from_unix( unix_host->h_addrtype );
+    host->h_length = unix_host->h_length;
+
+    p = (char *)(host + 1);
+    host->h_aliases = (char **)p;
+    p += (alias_count + 1) * sizeof(char *);
+    host->h_addr_list = (char **)p;
+    p += (addr_count + 1) * sizeof(char *);
+
+    for (i = 0; i < addr_count; ++i)
+    {
+        host->h_addr_list[i] = p;
+        memcpy( host->h_addr_list[i], unix_host->h_addr_list[i], unix_host->h_length );
+        p += unix_host->h_length;
+    }
+
+    for (i = 0; i < alias_count; ++i)
+    {
+        size_t len = strlen( unix_host->h_aliases[i] ) + 1;
+
+        host->h_aliases[i] = p;
+        memcpy( host->h_aliases[i], unix_host->h_aliases[i], len );
+        p += len;
+    }
+
+    host->h_name = p;
+    strcpy( host->h_name, unix_host->h_name );
+
+    return 0;
+}
+
+
+static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
+                                     struct WS_hostent *const host, unsigned int *size )
+{
+    const struct in_addr loopback = { htonl( INADDR_LOOPBACK ) };
+    int unix_family = family_to_unix( family );
+    struct hostent *unix_host;
+    int ret;
+
+    if (family == WS_AF_INET && len == 4 && !memcmp( addr, magic_loopback_addr, 4 ))
+        addr = &loopback;
+
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
+    {
+        char *unix_buffer, *new_buffer;
+        struct hostent stack_host;
+        int unix_size = 1024;
+        int locerr;
+
+        if (!(unix_buffer = malloc( unix_size )))
+            return WSAENOBUFS;
+
+        while (gethostbyaddr_r( addr, len, unix_family, &stack_host, unix_buffer,
+                                unix_size, &unix_host, &locerr ) == ERANGE)
+        {
+            unix_size *= 2;
+            if (!(new_buffer = realloc( unix_buffer, unix_size )))
+            {
+                free( unix_buffer );
+                return WSAENOBUFS;
+            }
+            unix_buffer = new_buffer;
+        }
+
+        if (!unix_host)
+            return (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
+
+        ret = hostent_from_unix( unix_host, host, size );
+
+        free( unix_buffer );
+        return ret;
+    }
+#else
+    pthread_mutex_lock( &host_mutex );
+
+    if (!(unix_host = gethostbyaddr( addr, len, unix_family )))
+    {
+        ret = (h_errno < 0 ? errno_from_unix( errno ) : host_errno_from_unix( h_errno ));
+        pthread_mutex_unlock( &host_mutex );
+        return ret;
+    }
+
+    ret = hostent_from_unix( unix_host, host, size );
+
+    pthread_mutex_unlock( &host_mutex );
+    return ret;
+#endif
+}
+
+
 static const struct unix_funcs funcs =
 {
     unix_getaddrinfo,
+    unix_gethostbyaddr,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
