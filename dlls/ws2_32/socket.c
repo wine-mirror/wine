@@ -727,26 +727,6 @@ void WINAPI WSASetLastError(INT iError) {
     SetLastError(iError);
 }
 
-static inline BOOL supported_pf(int pf)
-{
-    switch (pf)
-    {
-    case WS_AF_INET:
-    case WS_AF_INET6:
-        return TRUE;
-#ifdef HAS_IPX
-    case WS_AF_IPX:
-        return TRUE;
-#endif
-#ifdef HAS_IRDA
-    case WS_AF_IRDA:
-        return TRUE;
-#endif
-    default:
-        return FALSE;
-    }
-}
-
 /**********************************************************************/
 
 /* Returns the length of the converted address if successful, 0 if it was too
