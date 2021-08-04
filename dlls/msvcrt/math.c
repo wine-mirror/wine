@@ -5982,11 +5982,9 @@ void CDECL _fpreset(void)
         unsigned int cw = _MCW_EM, sw = 0;
         _setfp_sse(&cw, ~0, &sw, ~0);
     }
-#elif defined(__x86_64__)
+#else
     unsigned int cw = _MCW_EM, sw = 0;
     _setfp(&cw, ~0, &sw, ~0);
-#else
-    FIXME( "not implemented\n" );
 #endif
 }
 
