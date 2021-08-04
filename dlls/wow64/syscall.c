@@ -62,7 +62,15 @@ struct mem_header
     BYTE               data[1];
 };
 
+static void **pWow64Transition;
+static void **p__wine_syscall_dispatcher;
 static SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
+
+/* cpu backend dll functions */
+static void *   (WINAPI *pBTCpuGetBopCode)(void);
+static void     (WINAPI *pBTCpuProcessInit)(void);
+static void     (WINAPI *pBTCpuSimulate)(void);
+
 
 void *dummy = RtlUnwind;
 
@@ -400,9 +408,17 @@ static void process_init(void)
     GET_PTR( LdrSystemDllInitBlock );
 
     module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
+    GET_PTR( Wow64Transition );
+    GET_PTR( __wine_syscall_dispatcher );
     init_syscall_table( module );
 
-    load_cpu_dll();
+    module = load_cpu_dll();
+    GET_PTR( BTCpuGetBopCode );
+    GET_PTR( BTCpuProcessInit );
+    GET_PTR( BTCpuSimulate );
+
+    pBTCpuProcessInit();
+    *pWow64Transition = *p__wine_syscall_dispatcher = pBTCpuGetBopCode();
 
     init_file_redirects();
 
