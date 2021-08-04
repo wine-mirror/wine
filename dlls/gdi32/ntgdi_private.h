@@ -570,8 +570,6 @@ extern DWORD CDECL nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const stru
                                        struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
                                       LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
@@ -584,10 +582,8 @@ extern COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y ) DECLSPEC_HID
 extern UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, PALETTEENTRY *entries ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                                         void * grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;

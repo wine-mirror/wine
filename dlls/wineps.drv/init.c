@@ -798,11 +798,9 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pEndPath */
     PSDRV_EnumFonts,                    /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     PSDRV_ExtDeviceMode,                /* pExtDeviceMode */
     PSDRV_ExtEscape,                    /* pExtEscape */
     NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     PSDRV_ExtTextOut,                   /* pExtTextOut */
     PSDRV_FillPath,                     /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -835,12 +833,10 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pGetTextFace */
     PSDRV_GetTextMetrics,               /* pGetTextMetrics */
     NULL,                               /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     PSDRV_LineTo,                       /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     PSDRV_PaintRgn,                     /* pPaintRgn */

@@ -122,11 +122,9 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_EndPath,                   /* pEndPath */
     NULL,                            /* pEnumFonts */
     NULL,                            /* pEnumICMProfiles */
-    NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     MFDRV_ExtEscape,                 /* pExtEscape */
     NULL,                            /* pExtFloodFill */
-    NULL,                            /* pExtSelectClipRgn */
     NULL,                            /* pExtTextOut */
     MFDRV_FillPath,                  /* pFillPath */
     MFDRV_FillRgn,                   /* pFillRgn */
@@ -159,12 +157,10 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pGetTextFace */
     NULL,                            /* pGetTextMetrics */
     NULL,                            /* pGradientFill */
-    NULL,                            /* pIntersectClipRect */
     NULL,                            /* pInvertRgn */
     NULL,                            /* pLineTo */
     NULL,                            /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
-    NULL,                            /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrgEx,       /* pOffsetViewportOrgEx */
     MFDRV_OffsetWindowOrgEx,         /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */

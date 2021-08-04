@@ -2175,11 +2175,9 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     xrenderdrv_ExtEscape,               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     xrenderdrv_ExtTextOut,              /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -2212,12 +2210,10 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
     xrenderdrv_GradientFill,            /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */

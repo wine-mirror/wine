@@ -137,15 +137,6 @@ static inline void create_default_clip_region( DC * dc )
 }
 
 
-/***********************************************************************
- *           null driver fallback implementations
- */
-
-INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
-{
-    return ERROR;
-}
-
 /******************************************************************************
  *		NtGdiExtSelectClipRgn  (win32u.@)
  */
@@ -203,21 +194,6 @@ INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN rgn, INT mode )
     if (ret != ERROR) update_dc_clipping( dc );
     release_dc_ptr( dc );
     return ret;
-}
-
-INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
-{
-    return ERROR;
-}
-
-INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
-{
-    return ERROR;
-}
-
-INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
-{
-    return ERROR;
 }
 
 /***********************************************************************

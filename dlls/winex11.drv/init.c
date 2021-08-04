@@ -363,11 +363,9 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
     X11DRV_EnumICMProfiles,             /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     X11DRV_ExtEscape,                   /* pExtEscape */
     X11DRV_ExtFloodFill,                /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
     X11DRV_FillPath,                    /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -400,12 +398,10 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
     X11DRV_GradientFill,                /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     X11DRV_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     X11DRV_PaintRgn,                    /* pPaintRgn */

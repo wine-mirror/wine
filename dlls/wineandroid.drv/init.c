@@ -304,11 +304,9 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -341,12 +339,10 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */

@@ -890,11 +890,9 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_EndPath,                    /* pEndPath */
     nulldrv_EnumFonts,                  /* pEnumFonts */
     nulldrv_EnumICMProfiles,            /* pEnumICMProfiles */
-    nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
     nulldrv_ExtDeviceMode,              /* pExtDeviceMode */
     nulldrv_ExtEscape,                  /* pExtEscape */
     nulldrv_ExtFloodFill,               /* pExtFloodFill */
-    nulldrv_ExtSelectClipRgn,           /* pExtSelectClipRgn */
     nulldrv_ExtTextOut,                 /* pExtTextOut */
     nulldrv_FillPath,                   /* pFillPath */
     nulldrv_FillRgn,                    /* pFillRgn */
@@ -927,12 +925,10 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetTextFace,                /* pGetTextFace */
     nulldrv_GetTextMetrics,             /* pGetTextMetrics */
     nulldrv_GradientFill,               /* pGradientFill */
-    nulldrv_IntersectClipRect,          /* pIntersectClipRect */
     nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */
     nulldrv_ModifyWorldTransform,       /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
-    nulldrv_OffsetClipRgn,              /* pOffsetClipRgn */
     nulldrv_OffsetViewportOrgEx,        /* pOffsetViewportOrg */
     nulldrv_OffsetWindowOrgEx,          /* pOffsetWindowOrg */
     nulldrv_PaintRgn,                   /* pPaintRgn */

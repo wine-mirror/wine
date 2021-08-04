@@ -57,11 +57,9 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pEndPath */
     NULL,                            /* pEnumFonts */
     NULL,                            /* pEnumICMProfiles */
-    NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     NULL,                            /* pExtEscape */
     NULL,                            /* pExtFloodFill */
-    NULL,                            /* pExtSelectClipRgn */
     EMFDRV_ExtTextOut,               /* pExtTextOut */
     EMFDRV_FillPath,                 /* pFillPath */
     EMFDRV_FillRgn,                  /* pFillRgn */
@@ -94,12 +92,10 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pGetTextFace */
     NULL,                            /* pGetTextMetrics */
     EMFDRV_GradientFill,             /* pGradientFill */
-    NULL,                            /* pIntersectClipRect */
     EMFDRV_InvertRgn,                /* pInvertRgn */
     EMFDRV_LineTo,                   /* pLineTo */
     EMFDRV_ModifyWorldTransform,     /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
-    NULL,                            /* pOffsetClipRgn */
     EMFDRV_OffsetViewportOrgEx,      /* pOffsetViewportOrgEx */
     EMFDRV_OffsetWindowOrgEx,        /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */

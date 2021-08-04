@@ -2095,11 +2095,9 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_EndPath,                    /* pEndPath */
     NULL,                               /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     pathdrv_ExtTextOut,                 /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -2132,12 +2130,10 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     pathdrv_LineTo,                     /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     pathdrv_MoveTo,                     /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */

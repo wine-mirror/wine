@@ -3834,11 +3834,9 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pEndPath */
     font_EnumFonts,                 /* pEnumFonts */
     NULL,                           /* pEnumICMProfiles */
-    NULL,                           /* pExcludeClipRect */
     NULL,                           /* pExtDeviceMode */
     NULL,                           /* pExtEscape */
     NULL,                           /* pExtFloodFill */
-    NULL,                           /* pExtSelectClipRgn */
     NULL,                           /* pExtTextOut */
     NULL,                           /* pFillPath */
     NULL,                           /* pFillRgn */
@@ -3871,12 +3869,10 @@ const struct gdi_dc_funcs font_driver =
     font_GetTextFace,               /* pGetTextFace */
     font_GetTextMetrics,            /* pGetTextMetrics */
     NULL,                           /* pGradientFill */
-    NULL,                           /* pIntersectClipRect */
     NULL,                           /* pInvertRgn */
     NULL,                           /* pLineTo */
     NULL,                           /* pModifyWorldTransform */
     NULL,                           /* pMoveTo */
-    NULL,                           /* pOffsetClipRgn */
     NULL,                           /* pOffsetViewportOrg */
     NULL,                           /* pOffsetWindowOrg */
     NULL,                           /* pPaintRgn */

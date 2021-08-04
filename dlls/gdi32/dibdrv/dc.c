@@ -643,11 +643,9 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     dibdrv_ExtFloodFill,                /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     dibdrv_ExtTextOut,                  /* pExtTextOut */
     dibdrv_FillPath,                    /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -680,12 +678,10 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
     dibdrv_GradientFill,                /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     dibdrv_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     dibdrv_PaintRgn,                    /* pPaintRgn */
@@ -1234,11 +1230,9 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
-    NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     windrv_ExtFloodFill,                /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
     windrv_ExtTextOut,                  /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
@@ -1271,12 +1265,10 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
     windrv_GradientFill,                /* pGradientFill */
-    NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     windrv_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     windrv_PaintRgn,                    /* pPaintRgn */
