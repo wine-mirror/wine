@@ -470,11 +470,15 @@ static HRESULT Object_defineProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     }else {
         hres = JS_E_OBJECT_EXPECTED;
     }
-    jsstr_release(name_str);
+
     if(FAILED(hres))
+    {
+        jsstr_release(name_str);
         return hres;
+    }
 
     hres = jsdisp_define_property(obj, name, &prop_desc);
+    jsstr_release(name_str);
     release_property_descriptor(&prop_desc);
     if(SUCCEEDED(hres) && r)
         *r = jsval_obj(jsdisp_addref(obj));
