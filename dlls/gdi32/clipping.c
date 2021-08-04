@@ -526,9 +526,9 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
 
 
 /***********************************************************************
- *           SetMetaRgn    (GDI32.@)
+ *           NtGdiSetMetaRgn    (win32u.@)
  */
-INT WINAPI SetMetaRgn( HDC hdc )
+INT WINAPI NtGdiSetMetaRgn( HDC hdc )
 {
     INT ret;
     RECT dummy;

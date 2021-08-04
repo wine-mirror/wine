@@ -1114,6 +1114,18 @@ INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
 }
 
 /***********************************************************************
+ *           SetMetaRgn    (GDI32.@)
+ */
+INT WINAPI SetMetaRgn( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf) FIXME( "EMFs are not yet supported\n" );
+    return NtGdiSetMetaRgn( hdc );
+}
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
