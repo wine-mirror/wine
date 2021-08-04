@@ -80,9 +80,9 @@ INT CDECL MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT 
     return MFDRV_MetaParam4( dev, META_EXCLUDECLIPRECT, left, top, right, bottom );
 }
 
-INT CDECL MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
+BOOL METADC_OffsetClipRgn( HDC hdc, INT x, INT y )
 {
-    return MFDRV_MetaParam2( dev, META_OFFSETCLIPRGN, x, y );
+    return metadc_param2( hdc, META_OFFSETCLIPRGN, x, y );
 }
 
 DWORD CDECL MFDRV_SetLayout( PHYSDEV dev, DWORD layout )

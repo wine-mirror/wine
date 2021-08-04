@@ -164,7 +164,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pLineTo */
     NULL,                            /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
-    MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
+    NULL,                            /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrgEx,       /* pOffsetViewportOrgEx */
     MFDRV_OffsetWindowOrgEx,         /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */

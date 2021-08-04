@@ -211,18 +211,7 @@ INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, 
 
 INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    INT ret = NULLREGION;
-
-    if (dc->hClipRgn)
-    {
-        x = MulDiv( x, dc->attr->vport_ext.cx, dc->attr->wnd_ext.cx );
-        y = MulDiv( y, dc->attr->vport_ext.cy, dc->attr->wnd_ext.cy );
-        if (dc->attr->layout & LAYOUT_RTL) x = -x;
-        ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
-	update_dc_clipping( dc );
-    }
-    return ret;
+    return ERROR;
 }
 
 
@@ -283,20 +272,24 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, 
 
 
 /***********************************************************************
- *           OffsetClipRgn    (GDI32.@)
+ *           NtGdiOffsetClipRgn    (win32u.@)
  */
-INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
+INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
 {
-    PHYSDEV physdev;
-    INT ret;
+    INT ret = NULLREGION;
     DC *dc = get_dc_ptr( hdc );
-
-    TRACE("%p %d,%d\n", hdc, x, y );
 
     if (!dc) return ERROR;
     update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pOffsetClipRgn );
-    ret = physdev->funcs->pOffsetClipRgn( physdev, x, y );
+
+    if (dc->hClipRgn)
+    {
+        x = MulDiv( x, dc->attr->vport_ext.cx, dc->attr->wnd_ext.cx );
+        y = MulDiv( y, dc->attr->vport_ext.cy, dc->attr->wnd_ext.cy );
+        if (dc->attr->layout & LAYOUT_RTL) x = -x;
+        ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
+        update_dc_clipping( dc );
+    }
     release_dc_ptr( dc );
     return ret;
 }

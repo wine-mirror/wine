@@ -1063,6 +1063,19 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
 }
 
 /***********************************************************************
+ *           OffsetClipRgn    (GDI32.@)
+ */
+INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_OffsetClipRgn( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_OffsetClipRgn( dc_attr, x, y )) return FALSE;
+    return NtGdiOffsetClipRgn( hdc, x, y );
+}
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )

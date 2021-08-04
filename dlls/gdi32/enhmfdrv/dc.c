@@ -174,17 +174,15 @@ BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, IN
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-INT CDECL EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
+BOOL EMFDC_OffsetClipRgn( DC_ATTR *dc_attr, INT x, INT y )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetClipRgn );
     EMROFFSETCLIPRGN emr;
 
     emr.emr.iType   = EMR_OFFSETCLIPRGN;
     emr.emr.nSize   = sizeof(emr);
     emr.ptlOffset.x = x;
     emr.ptlOffset.y = y;
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return ERROR;
-    return next->funcs->pOffsetClipRgn( next, x, y );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 INT CDECL EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
