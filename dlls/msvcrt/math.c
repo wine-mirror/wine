@@ -5235,12 +5235,10 @@ static BOOL _setfp_sse( unsigned int *cw, unsigned int cw_mask,
 }
 #endif
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
 static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
         unsigned int *sw, unsigned int sw_mask )
 {
-#if defined(__GNUC__) || defined(__clang__)
-#ifdef __i386__
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
     unsigned long oldcw = 0, newcw = 0;
     unsigned long oldsw = 0, newsw = 0;
     unsigned int flags;
@@ -5503,7 +5501,6 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
     if (old_fpscr != fpscr)
         __asm__ __volatile__( "vmsr fpscr, %0" :: "r" (fpscr) );
     return TRUE;
-#endif
 #else
     FIXME("not implemented\n");
     if (cw) *cw = 0;
@@ -5511,7 +5508,6 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
     return FALSE;
 #endif
 }
-#endif
 
 /**********************************************************************
  *		_statusfp2 (MSVCR80.@)
@@ -5540,10 +5536,8 @@ unsigned int CDECL _statusfp(void)
     _statusfp2( &x86_sw, &sse2_sw );
     /* FIXME: there's no definition for ambiguous status, just return all status bits for now */
     flags = x86_sw | sse2_sw;
-#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
-    _setfp(NULL, 0, &flags, 0);
 #else
-    FIXME( "not implemented\n" );
+    _setfp(NULL, 0, &flags, 0);
 #endif
     return flags;
 }
@@ -5563,10 +5557,8 @@ unsigned int CDECL _clearfp(void)
         _setfp_sse(NULL, 0, &sse_sw, _MCW_EM);
         flags |= sse_sw;
     }
-#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
-    _setfp(NULL, 0, &flags, _MCW_EM);
 #else
-    FIXME( "not implemented\n" );
+    _setfp(NULL, 0, &flags, _MCW_EM);
 #endif
     return flags;
 }
@@ -5654,11 +5646,9 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 
     if ((flags ^ sse2_cw) & (_MCW_EM | _MCW_RC)) flags |= _EM_AMBIGUOUS;
     flags |= sse2_cw;
-#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
+#else
     flags = newval;
     _setfp(&flags, mask, NULL, 0);
-#else
-    FIXME( "not implemented\n" );
 #endif
     return flags;
 }
@@ -5803,7 +5793,6 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
     return x | y;
 }
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
 static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
 {
     if (enc & 0x20)
@@ -5812,7 +5801,6 @@ static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
     *x = *y = enc;
     return TRUE;
 }
-#endif
 #endif
 
 #if _MSVCR_VER>=120
@@ -6008,7 +5996,6 @@ void CDECL _fpreset(void)
  */
 int CDECL fesetenv(const fenv_t *env)
 {
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || (defined(__arm__) && !defined(__SOFTFP__))
     unsigned int x87_cw, cw, x87_stat, stat;
     unsigned int mask;
 
@@ -6044,10 +6031,6 @@ int CDECL fesetenv(const fenv_t *env)
     if (!_setfp(&cw, mask, &stat, ~0))
         return 1;
     return 0;
-#endif
-#else
-    FIXME( "not implemented\n" );
-    return 1;
 #endif
 }
 #endif
