@@ -5236,11 +5236,9 @@ static BOOL _setfp_sse( unsigned int *cw, unsigned int cw_mask,
 #endif
 
 /**********************************************************************
- *		_statusfp2 (MSVCRT.@)
- *
- * Not exported by native msvcrt, added in msvcr80.
+ *		_statusfp2 (MSVCR80.@)
  */
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__)
 void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
 {
 #if defined(__GNUC__) || defined(__clang__)
@@ -5277,12 +5275,14 @@ void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
 unsigned int CDECL _statusfp(void)
 {
     unsigned int flags = 0;
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__)
     unsigned int x86_sw, sse2_sw;
 
     _statusfp2( &x86_sw, &sse2_sw );
     /* FIXME: there's no definition for ambiguous status, just return all status bits for now */
     flags = x86_sw | sse2_sw;
+#elif defined(__x86_64__)
+    _setfp_sse(NULL, 0, &flags, 0);
 #elif defined(__aarch64__)
     ULONG_PTR fpsr;
 
