@@ -1462,6 +1462,15 @@ NTSTATUS WINAPI wow64_NtTerminateJobObject( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtTestAlert
+ */
+NTSTATUS WINAPI wow64_NtTestAlert( UINT *args )
+{
+    return NtTestAlert();
+}
+
+
+/**********************************************************************
  *           wow64_NtWaitForDebugEvent
  */
 NTSTATUS WINAPI wow64_NtWaitForDebugEvent( UINT *args )

@@ -310,6 +310,21 @@ NTSTATUS WINAPI wow64_NtAssignProcessToJobObject( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtContinue
+ */
+NTSTATUS WINAPI wow64_NtContinue( UINT *args )
+{
+    void *context = get_ptr( &args );
+    BOOLEAN alertable = get_ulong( &args );
+
+    NtSetInformationThread( GetCurrentThread(), ThreadWow64Context,
+                            context, get_machine_context_size( current_machine ));
+    if (alertable) NtTestAlert();
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateThread
  */
 NTSTATUS WINAPI wow64_NtCreateThread( UINT *args )

@@ -393,7 +393,7 @@ static HMODULE load_cpu_dll(void)
 /**********************************************************************
  *           process_init
  */
-static void process_init(void)
+static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
     HMODULE module;
     UNICODE_STRING str;
@@ -421,8 +421,60 @@ static void process_init(void)
     *pWow64Transition = *p__wine_syscall_dispatcher = pBTCpuGetBopCode();
 
     init_file_redirects();
+    return TRUE;
 
 #undef GET_PTR
+}
+
+
+/**********************************************************************
+ *           thread_init
+ */
+static void thread_init(void)
+{
+    /* update initial context to jump to 32-bit LdrInitializeThunk (cf. 32-bit call_init_thunk) */
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        {
+            I386_CONTEXT *ctx_ptr, ctx = { CONTEXT_I386_ALL };
+            ULONG *stack;
+
+            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+            ctx_ptr = (I386_CONTEXT *)ULongToPtr( ctx.Esp ) - 1;
+            *ctx_ptr = ctx;
+
+            stack = (ULONG *)ctx_ptr;
+            *(--stack) = 0;
+            *(--stack) = 0;
+            *(--stack) = 0;
+            *(--stack) = PtrToUlong( ctx_ptr );
+            *(--stack) = 0xdeadbabe;
+            ctx.Esp = PtrToUlong( stack );
+            ctx.Eip = pLdrSystemDllInitBlock->pLdrInitializeThunk;
+            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+        }
+        break;
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+        {
+            ARM_CONTEXT *ctx_ptr, ctx = { CONTEXT_ARM_ALL };
+
+            NtQueryInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx), NULL );
+            ctx_ptr = (ARM_CONTEXT *)ULongToPtr( ctx.Sp & ~15 ) - 1;
+            *ctx_ptr = ctx;
+
+            ctx.R0 = PtrToUlong( ctx_ptr );
+            ctx.Sp = PtrToUlong( ctx_ptr );
+            ctx.Pc = pLdrSystemDllInitBlock->pLdrInitializeThunk;
+            NtSetInformationThread( GetCurrentThread(), ThreadWow64Context, &ctx, sizeof(ctx) );
+        }
+        break;
+
+    default:
+        ERR( "not supported machine %x\n", current_machine );
+        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_IMAGE_FORMAT );
+    }
 }
 
 
@@ -500,11 +552,9 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
  */
 void WINAPI Wow64LdrpInitialize( CONTEXT *context )
 {
-    static BOOL init_done;
+    static RTL_RUN_ONCE init_done;
 
-    if (!init_done)
-    {
-        init_done = TRUE;
-        process_init();
-    }
+    RtlRunOnceExecuteOnce( &init_done, process_init, NULL, NULL );
+    thread_init();
+    pBTCpuSimulate();
 }
