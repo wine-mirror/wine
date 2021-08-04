@@ -372,6 +372,27 @@ typedef struct tagRASCONNSTATUSW
 
 DECL_WINELIB_TYPE_AW(RASCONNSTATUS)
 
+typedef struct tagRASCREDENTIALSA
+{
+    DWORD dwSize;
+    DWORD dwMask;
+    CHAR szUserName[UNLEN + 1];
+    CHAR szPassword[PWLEN + 1];
+    CHAR szDomain[DNLEN + 1];
+} RASCREDENTIALSA, *LPRASCREDENTIALSA;
+
+typedef struct tagRASCREDENTIALSW
+{
+    DWORD dwSize;
+    DWORD dwMask;
+    WCHAR szUserName[UNLEN + 1];
+    WCHAR szPassword[PWLEN + 1];
+    WCHAR szDomain[DNLEN + 1];
+} RASCREDENTIALSW, *LPRASCREDENTIALSW;
+
+DECL_WINELIB_TYPE_AW(RASCREDENTIALS)
+DECL_WINELIB_TYPE_AW(LPRASCREDENTIALS)
+
 typedef enum tagRASPROJECTION
 {
     RASP_Amb =    0x10000,
