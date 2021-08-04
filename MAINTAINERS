@@ -89,6 +89,7 @@ F:	dlls/d3dxof/
 
 DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/dinput/
 
 DirectMusic
@@ -139,6 +140,7 @@ F:	dlls/gphoto2.ds/
 
 HID support
 M:	Aric Stewart <aric@codeweavers.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/hid/
 F:	dlls/hidclass.sys/
 F:	dlls/winehid.sys/
@@ -147,6 +149,12 @@ HTTP server
 M:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/httpapi/
 F:	dlls/http.sys/
+
+Input events
+P:	Rémi Bernon <rbernon@codeweavers.com>
+F:	dlls/user32/input.c
+F:	dlls/user32/rawinput.c
+F:	server/queue.c
 
 Input methods
 M:	Aric Stewart <aric@codeweavers.com>
@@ -275,6 +283,7 @@ F:	dlls/shdocvw/
 
 WIDL
 P:	Huw Davies <huw@codeweavers.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 P:	Zebediah Figura <z.figura12@gmail.com>
 F:	tools/widl
 
@@ -300,6 +309,10 @@ F:	dlls/mfreadwrite/
 F:	dlls/mfuuid/
 F:	dlls/rtworkq/
 
+Wine debugger (GDB backend)
+P:	Rémi Bernon <rbernon@codeweavers.com>
+F:	programs/winedbg/gdbproxy.c
+
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
@@ -323,6 +336,7 @@ F:	dlls/wpcap/
 
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org>
+P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/winex11.drv/
 
 XML parsing
