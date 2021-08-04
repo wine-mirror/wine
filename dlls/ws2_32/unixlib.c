@@ -468,16 +468,15 @@ static BOOL addrinfo_in_list( const struct WS_addrinfo *list, const struct WS_ad
     return FALSE;
 }
 
-static int CDECL unix_getaddrinfo( const char *node, const char *service,
-                                   const struct WS_addrinfo *hints, struct WS_addrinfo **info )
+static int CDECL unix_getaddrinfo( const char *node, const char *service, const struct WS_addrinfo *hints,
+                                   struct WS_addrinfo *info, unsigned int *size )
 {
 #ifdef HAVE_GETADDRINFO
     struct addrinfo unix_hints = {0};
     struct addrinfo *unix_info, *src;
     struct WS_addrinfo *dst, *prev = NULL;
+    unsigned int needed_size = 0;
     int ret;
-
-    *info = NULL;
 
     /* servname tweak required by OSX and BSD kernels */
     if (service && !service[0]) service = "0";
@@ -528,12 +527,28 @@ static int CDECL unix_getaddrinfo( const char *node, const char *service,
     if (ret)
         return addrinfo_err_from_unix( ret );
 
-    *info = NULL;
+    for (src = unix_info; src != NULL; src = src->ai_next)
+    {
+        needed_size += sizeof(struct WS_addrinfo);
+        if (src->ai_canonname)
+            needed_size += strlen( src->ai_canonname ) + 1;
+        needed_size += sockaddr_from_unix( (const union unix_sockaddr *)src->ai_addr, NULL, 0 );
+    }
+
+    if (*size < needed_size)
+    {
+        *size = needed_size;
+        freeaddrinfo( unix_info );
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    dst = info;
+
+    memset( info, 0, needed_size );
 
     for (src = unix_info; src != NULL; src = src->ai_next)
     {
-        if (!(dst = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dst) )))
-            goto fail;
+        void *next = dst + 1;
 
         dst->ai_flags = addrinfo_flags_from_unix( src->ai_flags );
         dst->ai_family = family_from_unix( src->ai_family );
@@ -549,55 +564,31 @@ static int CDECL unix_getaddrinfo( const char *node, const char *service,
         }
         if (src->ai_canonname)
         {
-            if (!(dst->ai_canonname = RtlAllocateHeap( GetProcessHeap(), 0, strlen( src->ai_canonname ) + 1 )))
-            {
-                RtlFreeHeap( GetProcessHeap(), 0, dst );
-                goto fail;
-            }
-            strcpy( dst->ai_canonname, src->ai_canonname );
+            size_t len = strlen( src->ai_canonname ) + 1;
+
+            dst->ai_canonname = next;
+            memcpy( dst->ai_canonname, src->ai_canonname, len );
+            next = dst->ai_canonname + len;
         }
 
         dst->ai_addrlen = sockaddr_from_unix( (const union unix_sockaddr *)src->ai_addr, NULL, 0 );
-        if (!(dst->ai_addr = RtlAllocateHeap( GetProcessHeap(), 0, dst->ai_addrlen )))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, dst->ai_canonname );
-            RtlFreeHeap( GetProcessHeap(), 0, dst );
-            goto fail;
-        }
+        dst->ai_addr = next;
         sockaddr_from_unix( (const union unix_sockaddr *)src->ai_addr, dst->ai_addr, dst->ai_addrlen );
+        next = (char *)dst->ai_addr + dst->ai_addrlen;
 
-        if (addrinfo_in_list( *info, dst ))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, dst->ai_canonname );
-            RtlFreeHeap( GetProcessHeap(), 0, dst->ai_addr );
-            RtlFreeHeap( GetProcessHeap(), 0, dst );
-        }
-        else
+        if (dst == info || !addrinfo_in_list( info, dst ))
         {
             if (prev)
                 prev->ai_next = dst;
-            else
-                *info = dst;
             prev = dst;
+            dst = next;
         }
     }
 
+    dst->ai_next = NULL;
+
     freeaddrinfo( unix_info );
     return 0;
-
-fail:
-    dst = *info;
-    while (dst)
-    {
-        struct WS_addrinfo *next;
-
-        RtlFreeHeap( GetProcessHeap(), 0, dst->ai_canonname );
-        RtlFreeHeap( GetProcessHeap(), 0, dst->ai_addr );
-        next = dst->ai_next;
-        RtlFreeHeap( GetProcessHeap(), 0, dst );
-        dst = next;
-    }
-    return WS_EAI_MEMORY;
 #else
     FIXME( "getaddrinfo() not found during build time\n" );
     return WS_EAI_FAIL;

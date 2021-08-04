@@ -130,6 +130,33 @@ static char *get_fqdn(void)
     return ret;
 }
 
+/* call Unix getaddrinfo, allocating a large enough buffer */
+static int do_getaddrinfo( const char *node, const char *service,
+                           const struct WS_addrinfo *hints, struct WS_addrinfo **info )
+{
+    struct WS_addrinfo *buffer, *new_buffer;
+    unsigned int size = 1024;
+    int ret;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
+        return WSA_NOT_ENOUGH_MEMORY;
+
+    while ((ret = unix_funcs->getaddrinfo( node, service, hints, buffer, &size )) == ERROR_INSUFFICIENT_BUFFER)
+    {
+        if (!(new_buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, size )))
+        {
+            HeapFree( GetProcessHeap(), 0, buffer );
+            return WSA_NOT_ENOUGH_MEMORY;
+        }
+        buffer = new_buffer;
+    }
+
+    if (!ret)
+        *info = buffer;
+    else
+        HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
 
 
 /***********************************************************************
@@ -173,7 +200,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
         }
     }
 
-    ret = unix_funcs->getaddrinfo( node, service, hints, info );
+    ret = do_getaddrinfo( node, service, hints, info );
 
     if (ret && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && node)
     {
@@ -188,7 +215,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
              * by sending a NULL host and avoid sending a NULL servname too because that
              * is invalid */
             ERR_(winediag)( "Failed to resolve your host name IP\n" );
-            ret = unix_funcs->getaddrinfo( NULL, service, hints, info );
+            ret = do_getaddrinfo( NULL, service, hints, info );
             if (!ret && hints && (hints->ai_flags & WS_AI_CANONNAME) && *info && !(*info)->ai_canonname)
             {
                 WS_freeaddrinfo( *info );
@@ -542,18 +569,11 @@ int WINAPI GetAddrInfoW(const WCHAR *nodename, const WCHAR *servname, const ADDR
 /***********************************************************************
  *      freeaddrinfo   (ws2_32.@)
  */
-void WINAPI WS_freeaddrinfo( struct WS_addrinfo *res )
+void WINAPI WS_freeaddrinfo( struct WS_addrinfo *info )
 {
-    while (res)
-    {
-        struct WS_addrinfo *next;
+    TRACE( "%p\n", info );
 
-        HeapFree( GetProcessHeap(), 0, res->ai_canonname );
-        HeapFree( GetProcessHeap(), 0, res->ai_addr );
-        next = res->ai_next;
-        HeapFree( GetProcessHeap(), 0, res );
-        res = next;
-    }
+    HeapFree( GetProcessHeap(), 0, info );
 }
 
 

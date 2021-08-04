@@ -198,8 +198,8 @@ struct per_thread_data *get_per_thread_data(void) DECLSPEC_HIDDEN;
 
 struct unix_funcs
 {
-    int (CDECL *getaddrinfo)( const char *node, const char *service,
-                              const struct WS(addrinfo) *hints, struct WS(addrinfo) **info );
+    int (CDECL *getaddrinfo)( const char *node, const char *service, const struct WS(addrinfo) *hints,
+                              struct WS(addrinfo) *info, unsigned int *size );
 };
 
 extern const struct unix_funcs *unix_funcs;
