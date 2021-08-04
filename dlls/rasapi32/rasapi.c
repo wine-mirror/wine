@@ -496,6 +496,18 @@ DWORD WINAPI RasRenameEntryW(LPCWSTR lpszPhonebook, LPCWSTR lpszOldEntry, LPCWST
     return 0;
 }
 
+DWORD WINAPI RasSetCredentialsA(const char *phonebook, const char *entry, RASCREDENTIALSA *credentials, BOOL clear)
+{
+    FIXME("(%s,%s,%p,0x%x), stub!\n", debugstr_a(phonebook), debugstr_a(entry), credentials, clear);
+    return ERROR_UNKNOWN;
+}
+
+DWORD WINAPI RasSetCredentialsW(const WCHAR *phonebook, const WCHAR *entry, RASCREDENTIALSW *credentials, BOOL clear)
+{
+    FIXME("(%s,%s,%p,0x%x), stub!\n", debugstr_w(phonebook), debugstr_w(entry), credentials, clear);
+    return ERROR_UNKNOWN;
+}
+
 DWORD WINAPI RasSetCustomAuthDataA(const char *phonebook, const char *entry, BYTE *authdata, DWORD size)
 {
     FIXME("(%s,%s,%p,0x%08x), stub!\n", debugstr_a(phonebook), debugstr_a(entry), authdata, size);
