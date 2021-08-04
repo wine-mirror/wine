@@ -407,11 +407,11 @@
 @ stdcall Polyline(long ptr long)
 @ stdcall PolylineTo(long ptr long)
 @ stdcall PtInRegion(long long long) NtGdiPtInRegion
-@ stdcall PtVisible(long long long)
+@ stdcall PtVisible(long long long) NtGdiPtVisible
 # @ stub QueryFontAssocStatus
 @ stdcall RealizePalette(long)
 @ stdcall RectInRegion(long ptr) NtGdiRectInRegion
-@ stdcall RectVisible(long ptr)
+@ stdcall RectVisible(long ptr) NtGdiRectVisible
 @ stdcall Rectangle(long long long long long)
 @ stdcall RemoveFontMemResourceEx(ptr)
 @ stdcall RemoveFontResourceA(str)

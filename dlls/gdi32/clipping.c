@@ -345,9 +345,9 @@ INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bo
 
 
 /***********************************************************************
- *           PtVisible    (GDI32.@)
+ *           NtGdiPtVisible    (win32u.@)
  */
-BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
+BOOL WINAPI NtGdiPtVisible( HDC hdc, INT x, INT y )
 {
     POINT pt;
     RECT visrect;
@@ -371,9 +371,9 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           RectVisible    (GDI32.@)
+ *           NtGdiRectVisible    (win32u.@)
  */
-BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
+BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
 {
     RECT tmpRect, visrect;
     BOOL ret;
