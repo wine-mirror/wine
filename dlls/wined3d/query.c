@@ -1838,12 +1838,14 @@ static BOOL wined3d_query_timestamp_vk_issue(struct wined3d_query *query, uint32
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
         vk_info = context_vk->vk_info;
 
-        wined3d_context_vk_end_current_render_pass(context_vk);
         command_buffer = wined3d_context_vk_get_command_buffer(context_vk);
-        if (!query_vk->pool_idx.pool_vk)
-            wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx);
-        VK_CALL(vkCmdResetQueryPool(command_buffer, query_vk->pool_idx.pool_vk->vk_query_pool,
-                query_vk->pool_idx.idx, 1));
+        if (query_vk->pool_idx.pool_vk)
+            wined3d_query_pool_vk_mark_complete(query_vk->pool_idx.pool_vk, query_vk->pool_idx.idx, context_vk);
+        if (!wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx))
+        {
+            ERR("Failed to allocate new query.\n");
+            return FALSE;
+        }
         VK_CALL(vkCmdWriteTimestamp(command_buffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 query_vk->pool_idx.pool_vk->vk_query_pool, query_vk->pool_idx.idx));
         wined3d_context_vk_reference_query(context_vk, query_vk);
