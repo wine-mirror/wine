@@ -5901,7 +5901,7 @@ int CDECL _finite(double num)
  */
 void CDECL _fpreset(void)
 {
-#if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
     const unsigned int x86_cw = 0x27f;
     __asm__ __volatile__( "fninit; fldcw %0" : : "m" (x86_cw) );
     if (sse2_supported)
@@ -5909,6 +5909,9 @@ void CDECL _fpreset(void)
         unsigned int cw = _MCW_EM, sw = 0;
         _setfp_sse(&cw, ~0, &sw, ~0);
     }
+#elif defined(__x86_64__)
+    unsigned int cw = _MCW_EM, sw = 0;
+    _setfp_sse(&cw, ~0, &sw, ~0);
 #else
     FIXME( "not implemented\n" );
 #endif
