@@ -1213,10 +1213,6 @@ static void testGetPerAdapterInfo(void)
     void *buffer;
 
     ret = GetPerAdapterInfo(1, NULL, NULL);
-    if (ret == ERROR_NOT_SUPPORTED) {
-      skip("GetPerAdapterInfo is not supported\n");
-      return;
-    }
     ok( ret == ERROR_INVALID_PARAMETER, "got %u instead of ERROR_INVALID_PARAMETER\n", ret );
     needed = 0xdeadbeef;
     ret = GetPerAdapterInfo(1, NULL, &needed);

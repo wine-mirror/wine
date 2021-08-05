@@ -2343,12 +2343,14 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
  * Returns ERROR_BUFFER_OVERFLOW if *len is insufficient,
  * ERROR_SUCCESS otherwise.
  */
-static DWORD get_dns_server_list( IP_ADDR_STRING *list, IP_ADDR_STRING *second, DWORD *len )
+static DWORD get_dns_server_list( const NET_LUID *luid, IP_ADDR_STRING *list, IP_ADDR_STRING *second, DWORD *len )
 {
     char buf[FIELD_OFFSET(IP4_ARRAY, AddrArray[3])];
     IP4_ARRAY *servers = (IP4_ARRAY *)buf;
     DWORD needed, num, err, i, array_len = sizeof(buf);
     IP_ADDR_STRING *ptr;
+
+    if (luid && luid->Info.IfType == MIB_IF_TYPE_LOOPBACK) return ERROR_NO_DATA;
 
     for (;;)
     {
@@ -2415,7 +2417,7 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
   if (!pOutBufLen)
     return ERROR_INVALID_PARAMETER;
 
-  get_dns_server_list(NULL, NULL, &serverListSize);
+  get_dns_server_list( NULL, NULL, NULL, &serverListSize );
   size = sizeof(FIXED_INFO) + serverListSize - sizeof(IP_ADDR_STRING);
   if (!pFixedInfo || *pOutBufLen < size) {
     *pOutBufLen = size;
@@ -2427,9 +2429,8 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
   GetComputerNameExA(ComputerNameDnsHostname, pFixedInfo->HostName, &size);
   size = sizeof(pFixedInfo->DomainName);
   GetComputerNameExA(ComputerNameDnsDomain, pFixedInfo->DomainName, &size);
-  get_dns_server_list(&pFixedInfo->DnsServerList,
-   (PIP_ADDR_STRING)((BYTE *)pFixedInfo + sizeof(FIXED_INFO)),
-   &serverListSize);
+  get_dns_server_list( NULL, &pFixedInfo->DnsServerList, (IP_ADDR_STRING *)(pFixedInfo + 1),
+                       &serverListSize );
   /* Assume the first DNS server in the list is the "current" DNS server: */
   pFixedInfo->CurrentDnsServer = &pFixedInfo->DnsServerList;
   pFixedInfo->NodeType = HYBRID_NODETYPE;
@@ -2493,35 +2494,31 @@ DWORD WINAPI GetNumberOfInterfaces( DWORD *count )
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterInfo, PULONG pOutBufLen)
+DWORD WINAPI GetPerAdapterInfo( ULONG index, IP_PER_ADAPTER_INFO *info, ULONG *size )
 {
-  ULONG bytesNeeded = sizeof(IP_PER_ADAPTER_INFO), serverListSize = 0;
-  DWORD ret = NO_ERROR;
+    DWORD needed = sizeof(*info), dns_size;
+    NET_LUID luid;
 
-  TRACE("(IfIndex %d, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex, pPerAdapterInfo, pOutBufLen);
+    TRACE( "(index %d, info %p, size %p)\n", index, info, size );
 
-  if (!pOutBufLen) return ERROR_INVALID_PARAMETER;
+    if (!size) return ERROR_INVALID_PARAMETER;
+    if (ConvertInterfaceIndexToLuid( index, &luid )) return ERROR_NO_DATA;
 
-  if (!isIfIndexLoopback(IfIndex)) {
-    get_dns_server_list(NULL, NULL, &serverListSize);
-    if (serverListSize > sizeof(IP_ADDR_STRING))
-      bytesNeeded += serverListSize - sizeof(IP_ADDR_STRING);
-  }
-  if (!pPerAdapterInfo || *pOutBufLen < bytesNeeded)
-  {
-    *pOutBufLen = bytesNeeded;
-    return ERROR_BUFFER_OVERFLOW;
-  }
+    if (get_dns_server_list( &luid, NULL, NULL, &dns_size ) == ERROR_BUFFER_OVERFLOW)
+        needed += dns_size - sizeof(IP_ADDR_STRING);
 
-  memset(pPerAdapterInfo, 0, bytesNeeded);
-  if (!isIfIndexLoopback(IfIndex)) {
-    ret = get_dns_server_list(&pPerAdapterInfo->DnsServerList,
-     (PIP_ADDR_STRING)((PBYTE)pPerAdapterInfo + sizeof(IP_PER_ADAPTER_INFO)),
-     &serverListSize);
-    /* Assume the first DNS server in the list is the "current" DNS server: */
-    pPerAdapterInfo->CurrentDnsServer = &pPerAdapterInfo->DnsServerList;
-  }
-  return ret;
+    if (!info || *size < needed)
+    {
+        *size = needed;
+        return ERROR_BUFFER_OVERFLOW;
+    }
+
+    memset( info, 0, needed );
+    get_dns_server_list( &luid, &info->DnsServerList, (IP_ADDR_STRING *)(info + 1), &dns_size );
+    info->CurrentDnsServer = &info->DnsServerList;
+
+    /* FIXME Autoconfig: get unicast addresses and compare to 169.254.x.x */
+    return ERROR_SUCCESS;
 }
 
 
