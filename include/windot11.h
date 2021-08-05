@@ -35,4 +35,7 @@ typedef enum _DOT11_PHY_TYPE
     dot11_phy_type_IHV_end = 0xFFFFFFFF
 } DOT11_PHY_TYPE, *PDOT11_PHY_TYPE;
 
+typedef UCHAR DOT11_MAC_ADDRESS[6];
+typedef DOT11_MAC_ADDRESS *PDOT11_MAC_ADDRESS;
+
 #endif /* _WINDOT11_H */

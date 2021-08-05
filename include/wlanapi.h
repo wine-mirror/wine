@@ -214,6 +214,36 @@ typedef enum _WLAN_HOSTED_NETWORK_REASON
     wlan_hosted_network_reason_service_available_on_virtual_station
 } WLAN_HOSTED_NETWORK_REASON, *PWLAN_HOSTED_NETWORK_REASON;
 
+typedef enum _WLAN_HOSTED_NETWORK_STATE
+{
+    wlan_hosted_network_unavailable,
+    wlan_hosted_network_idle,
+    wlan_hosted_network_active
+} WLAN_HOSTED_NETWORK_STATE, *PWLAN_HOSTED_NETWORK_STATE;
+
+typedef enum _WLAN_HOSTED_NETWORK_PEER_AUTH_STATE
+{
+    wlan_hosted_network_peer_state_invalid,
+    wlan_hosted_network_peer_state_authenticated
+} WLAN_HOSTED_NETWORK_PEER_AUTH_STATE, *PWLAN_HOSTED_NETWORK_PEER_AUTH_STATE;
+
+typedef struct _WLAN_HOSTED_NETWORK_PEER_STATE
+{
+    DOT11_MAC_ADDRESS PeerMacAddress;
+    WLAN_HOSTED_NETWORK_PEER_AUTH_STATE PeerAuthState;
+} WLAN_HOSTED_NETWORK_PEER_STATE, *PWLAN_HOSTED_NETWORK_PEER_STATE;
+
+typedef struct _WLAN_HOSTED_NETWORK_STATUS
+{
+    WLAN_HOSTED_NETWORK_STATE HostedNetworkState;
+    GUID IPDeviceID;
+    DOT11_MAC_ADDRESS wlanHostedNetworkBSSID;
+    DOT11_PHY_TYPE dot11PhyType;
+    ULONG ulChannelFrequency;
+    DWORD dwNumberOfPeers;
+    WLAN_HOSTED_NETWORK_PEER_STATE PeerList[1];
+} WLAN_HOSTED_NETWORK_STATUS, *PWLAN_HOSTED_NETWORK_STATUS;
+
 DWORD WINAPI WlanCloseHandle(HANDLE, void *);
 DWORD WINAPI WlanEnumInterfaces(HANDLE, void *, WLAN_INTERFACE_INFO_LIST **);
 DWORD WINAPI WlanOpenHandle(DWORD, void *, DWORD *, HANDLE *);

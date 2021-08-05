@@ -193,6 +193,13 @@ DWORD WINAPI WlanHostedNetworkQuerySecondaryKey(HANDLE handle, DWORD *key_size, 
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI WlanHostedNetworkQueryStatus(HANDLE handle, WLAN_HOSTED_NETWORK_STATUS *status, void *reserved)
+{
+    FIXME("(%p, %p, %p) stub\n", handle, status, reserved);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 void WINAPI WlanFreeMemory(void *ptr)
 {
     TRACE("(%p)\n", ptr);
