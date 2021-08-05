@@ -71,6 +71,20 @@ struct hid_platform_private {
 
 static DWORD last_check = 0;
 
+static BOOL find_opened_device(xinput_controller *devices, SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
+{
+    struct hid_platform_private *private;
+    int i;
+
+    *free_slot = XUSER_MAX_COUNT;
+    for (i = XUSER_MAX_COUNT; i > 0; i--)
+    {
+        if (!(private = devices[i - 1].platform_private)) *free_slot = i - 1;
+        else if (!wcscmp(detail->DevicePath, private->device_path)) return TRUE;
+    }
+    return FALSE;
+}
+
 static void MarkUsage(struct hid_platform_private *private, WORD usage, LONG min, LONG max, USHORT bits)
 {
     struct axis_info info = {min, max-min, bits};
@@ -219,7 +233,7 @@ void HID_find_gamepads(xinput_controller *devices)
     HIDP_CAPS caps;
     NTSTATUS status;
     DWORD idx;
-    int i, open_device_idx;
+    int i;
 
     idx = GetTickCount();
     if ((idx - last_check) < 2000)
@@ -255,24 +269,9 @@ void HID_find_gamepads(xinput_controller *devices)
         if (!wcsstr(data->DevicePath, L"IG_"))
             continue;
 
-        open_device_idx = -1;
-        for (i = 0; i < XUSER_MAX_COUNT; i++)
-        {
-            struct hid_platform_private *private = devices[i].platform_private;
-            if (devices[i].platform_private)
-            {
-                if (!wcscmp(data->DevicePath, private->device_path))
-                    break;
-            }
-            else if(open_device_idx < 0)
-                open_device_idx = i;
-        }
-        if (i != XUSER_MAX_COUNT)
-            /* this device is already opened */
-            continue;
-        if (open_device_idx < 0)
-            /* no open device slots */
-            break;
+        if (find_opened_device(devices, data, &i)) continue; /* already opened */
+        if (i == XUSER_MAX_COUNT) break; /* no more slots */
+
         device = CreateFileW(data->DevicePath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
         if (device == INVALID_HANDLE_VALUE)
             continue;
@@ -286,7 +285,7 @@ void HID_find_gamepads(xinput_controller *devices)
             WARN("ignoring HID device, unsupported usage page %04x\n", caps.UsagePage);
         else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK && caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
             WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
-        else if (!init_controller(&devices[open_device_idx], ppd, &caps, device, data->DevicePath))
+        else if (!init_controller(&devices[i], ppd, &caps, device, data->DevicePath))
             WARN("ignoring HID device, failed to initialize\n");
         else
             goto done;
