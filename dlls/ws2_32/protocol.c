@@ -29,8 +29,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-DECLARE_CRITICAL_SECTION(csWSgetXXXbyYYY);
-
 static char *get_fqdn(void)
 {
     char *ret;
@@ -949,39 +947,6 @@ int WINAPI GetHostNameW( WCHAR *name, int namelen )
 }
 
 
-static int list_size( char **list, int item_size )
-{
-    int i, size = 0;
-    if (list)
-    {
-        for (i = 0; list[i]; i++)
-            size += (item_size ? item_size : strlen(list[i]) + 1);
-        size += (i + 1) * sizeof(char *);
-    }
-    return size;
-}
-
-static int list_dup( char **src, char **dst, int item_size )
-{
-    char *p;
-    int i;
-
-    for (i = 0; src[i]; i++)
-        ;
-    p = (char *)(dst + i + 1);
-
-    for (i = 0; src[i]; i++)
-    {
-        int count = item_size ? item_size : strlen(src[i]) + 1;
-        memcpy( p, src[i], count );
-        dst[i] = p;
-        p += count;
-    }
-    dst[i] = NULL;
-    return p - (char *)dst;
-}
-
-
 static char *read_etc_file( const WCHAR *filename, DWORD *ret_size )
 {
     static const WCHAR key_pathW[] = {'S','y','s','t','e','m',
@@ -1225,20 +1190,6 @@ struct WS_protoent * WINAPI WS_getprotobynumber( int number )
 }
 
 
-static char *strdup_lower( const char *str )
-{
-    char *ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
-    int i;
-
-    if (ret)
-    {
-        for (i = 0; str[i]; i++) ret[i] = tolower( str[i] );
-        ret[i] = 0;
-    }
-    else SetLastError( WSAENOBUFS );
-    return ret;
-}
-
 static struct WS_servent *get_servent_buffer( int size )
 {
     struct per_thread_data *data = get_per_thread_data();
@@ -1253,31 +1204,120 @@ static struct WS_servent *get_servent_buffer( int size )
     return data->se_buffer;
 }
 
-static struct WS_servent *servent_from_unix( const struct servent *p_se )
+/* Parse the first valid line into a servent structure, returning NULL if
+ * there is no valid line. Updates cursor to point to the start of the next
+ * line or the end of the file. */
+static struct WS_servent *get_next_service( const char **cursor, const char *end )
 {
-    char *p;
-    struct WS_servent *p_to;
+    const char *p = *cursor;
 
-    int size = (sizeof(*p_se) +
-                strlen(p_se->s_proto) + 1 +
-                strlen(p_se->s_name) + 1 +
-                list_size(p_se->s_aliases, 0));
+    while (p < end)
+    {
+        const char *line_end, *next_line;
+        size_t needed_size, line_len;
+        unsigned int alias_count = 0;
+        struct WS_servent *serv;
+        const char *name;
+        int port;
+        char *q;
 
-    if (!(p_to = get_servent_buffer( size ))) return NULL;
-    p_to->s_port = p_se->s_port;
+        for (line_end = p; line_end < end && *line_end != '\n' && *line_end != '#'; ++line_end)
+            ;
+        TRACE( "parsing line %s\n", debugstr_an(p, line_end - p) );
 
-    p = (char *)(p_to + 1);
-    p_to->s_name = p;
-    strcpy( p, p_se->s_name );
-    p += strlen(p) + 1;
+        for (next_line = line_end; next_line < end && *next_line != '\n'; ++next_line)
+            ;
+        if (next_line < end)
+            ++next_line; /* skip over the newline */
 
-    p_to->s_proto = p;
-    strcpy( p, p_se->s_proto );
-    p += strlen(p) + 1;
+        p = next_non_space( p, line_end );
+        if (p == line_end)
+        {
+            p = next_line;
+            continue;
+        }
 
-    p_to->s_aliases = (char **)p;
-    list_dup( p_se->s_aliases, p_to->s_aliases, 0 );
-    return p_to;
+        /* parse the name */
+
+        name = p;
+        line_len = line_end - name;
+
+        p = next_space( p, line_end );
+        if (p == line_end)
+        {
+            p = next_line;
+            continue;
+        }
+
+        p = next_non_space( p, line_end );
+
+        /* parse the port */
+
+        port = atoi( p );
+        p = memchr( p, '/', line_end - p );
+        if (!p)
+        {
+            p = next_line;
+            continue;
+        }
+
+        p = next_space( p, line_end );
+        p = next_non_space( p, line_end );
+
+        /* we will copy the entire line after the servent structure, then
+         * replace spaces with null bytes as necessary */
+
+        while (p < line_end)
+        {
+            ++alias_count;
+
+            p = next_space( p, line_end );
+            p = next_non_space( p, line_end );
+        }
+        needed_size = sizeof(*serv) + line_len + 1 + (alias_count + 1) * sizeof(char *);
+
+        if (!(serv = get_servent_buffer( needed_size )))
+        {
+            SetLastError( WSAENOBUFS );
+            return NULL;
+        }
+
+        serv->s_port = htons( port );
+        serv->s_aliases = (char **)(serv + 1);
+        serv->s_name = (char *)(serv->s_aliases + alias_count + 1);
+
+        memcpy( serv->s_name, name, line_len );
+        serv->s_name[line_len] = 0;
+
+        line_end = serv->s_name + line_len;
+
+        q = serv->s_name;
+        q = next_space( q, line_end );
+        *q++ = 0;
+        q = next_non_space( q, line_end );
+        /* skip over the number */
+        q = memchr( q, '/', line_end - q );
+        serv->s_proto = ++q;
+        q = next_space( q, line_end );
+        if (q < line_end) *q++ = 0;
+        q = next_non_space( q, line_end );
+
+        alias_count = 0;
+        while (q < line_end)
+        {
+            serv->s_aliases[alias_count++] = q;
+            q = next_space( q, line_end );
+            if (q < line_end) *q++ = 0;
+            q = next_non_space( q, line_end );
+        }
+        serv->s_aliases[alias_count] = NULL;
+
+        *cursor = next_line;
+        return serv;
+    }
+
+    SetLastError( WSANO_DATA );
+    return NULL;
 }
 
 
@@ -1286,34 +1326,29 @@ static struct WS_servent *servent_from_unix( const struct servent *p_se )
  */
 struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto )
 {
-    struct WS_servent *retval = NULL;
-    struct servent *serv;
-    char *name_str;
-    char *proto_str = NULL;
+    static const WCHAR servicesW[] = {'s','e','r','v','i','c','e','s',0};
+    struct WS_servent *serv;
+    const char *cursor;
+    char *file;
+    DWORD size;
 
-    if (!(name_str = strdup_lower( name ))) return NULL;
+    TRACE( "name %s, proto %s\n", debugstr_a(name), debugstr_a(proto) );
 
-    if (proto && *proto)
+    if (!(file = read_etc_file( servicesW, &size )))
     {
-        if (!(proto_str = strdup_lower( proto )))
-        {
-            HeapFree( GetProcessHeap(), 0, name_str );
-            return NULL;
-        }
+        SetLastError( WSANO_DATA );
+        return NULL;
     }
 
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    serv = getservbyname( name_str, proto_str );
-    if (serv)
-        retval = servent_from_unix( serv );
-    else
-        SetLastError( WSANO_DATA );
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
+    cursor = file;
+    while ((serv = get_next_service( &cursor, file + size )))
+    {
+        if (!strcasecmp( serv->s_name, name ) && (!proto || !strcasecmp( serv->s_proto, proto )))
+            break;
+    }
 
-    HeapFree( GetProcessHeap(), 0, proto_str );
-    HeapFree( GetProcessHeap(), 0, name_str );
-    TRACE( "%s, %s ret %p\n", debugstr_a(name), debugstr_a(proto), retval );
-    return retval;
+    HeapFree( GetProcessHeap(), 0, file );
+    return serv;
 }
 
 
@@ -1322,27 +1357,29 @@ struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto
  */
 struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
 {
-    struct WS_servent *retval = NULL;
-#ifdef HAVE_GETSERVBYPORT
-    struct servent *serv;
-    char *proto_str = NULL;
+    static const WCHAR servicesW[] = {'s','e','r','v','i','c','e','s',0};
+    struct WS_servent *serv;
+    const char *cursor;
+    char *file;
+    DWORD size;
 
-    if (proto && *proto)
+    TRACE( "port %d, proto %s\n", port, debugstr_a(proto) );
+
+    if (!(file = read_etc_file( servicesW, &size )))
     {
-        if (!(proto_str = strdup_lower( proto ))) return NULL;
+        SetLastError( WSANO_DATA );
+        return NULL;
     }
 
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    if ((serv = getservbyport( port, proto_str )))
-        retval = servent_from_unix( serv );
-    else
-        SetLastError( WSANO_DATA );
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
+    cursor = file;
+    while ((serv = get_next_service( &cursor, file + size )))
+    {
+        if (serv->s_port == port && (!proto || !strcasecmp( serv->s_proto, proto )))
+            break;
+    }
 
-    HeapFree( GetProcessHeap(), 0, proto_str );
-#endif
-    TRACE( "%d (i.e. port %d), %s ret %p\n", port, (int)ntohl(port), debugstr_a(proto), retval );
-    return retval;
+    HeapFree( GetProcessHeap(), 0, file );
+    return serv;
 }
 
 
