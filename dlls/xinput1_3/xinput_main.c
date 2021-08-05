@@ -104,7 +104,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
             break;
         case DLL_PROCESS_DETACH:
             if (reserved) break;
-            HID_destroy_gamepads(controllers);
+            HID_destroy_gamepads();
             break;
     }
     return TRUE;
@@ -120,7 +120,7 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
     to the controllers. Setting to true will send the last vibration
     value (sent to XInputSetState) to the controller and allow messages to
     be sent */
-    HID_find_gamepads(controllers);
+    HID_find_gamepads();
 
     for (index = 0; index < XUSER_MAX_COUNT; index ++)
     {
@@ -136,7 +136,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION* vib
 
     TRACE("(index %u, vibration %p)\n", index, vibration);
 
-    HID_find_gamepads(controllers);
+    HID_find_gamepads();
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
@@ -157,7 +157,7 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
     if (!state)
         return ERROR_BAD_ARGUMENTS;
 
-    HID_find_gamepads(controllers);
+    HID_find_gamepads();
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
@@ -421,7 +421,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, X
 {
     TRACE("(index %u, flags 0x%x, capabilities %p)\n", index, flags, capabilities);
 
-    HID_find_gamepads(controllers);
+    HID_find_gamepads();
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;

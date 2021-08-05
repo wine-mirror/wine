@@ -30,8 +30,8 @@ typedef struct _xinput_controller
 extern CRITICAL_SECTION xinput_crit;
 extern xinput_controller controllers[XUSER_MAX_COUNT];
 
-void HID_find_gamepads(xinput_controller *devices) DECLSPEC_HIDDEN;
-void HID_destroy_gamepads(xinput_controller *devices) DECLSPEC_HIDDEN;
+void HID_find_gamepads(void) DECLSPEC_HIDDEN;
+void HID_destroy_gamepads(void) DECLSPEC_HIDDEN;
 void HID_update_state(xinput_controller* device, XINPUT_STATE *state) DECLSPEC_HIDDEN;
 DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state) DECLSPEC_HIDDEN;
 void HID_enable(xinput_controller* device, BOOL enable) DECLSPEC_HIDDEN;

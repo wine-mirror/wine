@@ -71,7 +71,7 @@ struct hid_platform_private {
 
 static DWORD last_check = 0;
 
-static BOOL find_opened_device(xinput_controller *devices, SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
+static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
 {
     struct hid_platform_private *private;
     int i;
@@ -79,7 +79,7 @@ static BOOL find_opened_device(xinput_controller *devices, SP_DEVICE_INTERFACE_D
     *free_slot = XUSER_MAX_COUNT;
     for (i = XUSER_MAX_COUNT; i > 0; i--)
     {
-        if (!(private = devices[i - 1].platform_private)) *free_slot = i - 1;
+        if (!(private = controllers[i - 1].platform_private)) *free_slot = i - 1;
         else if (!wcscmp(detail->DevicePath, private->device_path)) return TRUE;
     }
     return FALSE;
@@ -221,7 +221,7 @@ failed:
     return FALSE;
 }
 
-void HID_find_gamepads(xinput_controller *devices)
+void HID_find_gamepads(void)
 {
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
@@ -266,7 +266,7 @@ void HID_find_gamepads(xinput_controller *devices)
         if (!wcsstr(detail->DevicePath, L"IG_"))
             continue;
 
-        if (find_opened_device(devices, detail, &i)) continue; /* already opened */
+        if (find_opened_device(detail, &i)) continue; /* already opened */
         if (i == XUSER_MAX_COUNT) break; /* no more slots */
 
         device = CreateFileW(detail->DevicePath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
@@ -282,7 +282,7 @@ void HID_find_gamepads(xinput_controller *devices)
             WARN("ignoring HID device, unsupported usage page %04x\n", caps.UsagePage);
         else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK && caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
             WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
-        else if (!init_controller(&devices[i], ppd, &caps, device, detail->DevicePath))
+        else if (!init_controller(&controllers[i], ppd, &caps, device, detail->DevicePath))
             WARN("ignoring HID device, failed to initialize\n");
         else
             continue;
@@ -317,11 +317,11 @@ static void remove_gamepad(xinput_controller *device)
     LeaveCriticalSection(&device->crit);
 }
 
-void HID_destroy_gamepads(xinput_controller *devices)
+void HID_destroy_gamepads(void)
 {
     int i;
     for (i = 0; i < XUSER_MAX_COUNT; i++)
-        remove_gamepad(&devices[i]);
+        remove_gamepad(&controllers[i]);
 }
 
 static SHORT scale_short(LONG value, const struct axis_info *axis)
