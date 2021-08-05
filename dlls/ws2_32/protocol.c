@@ -31,49 +31,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 DECLARE_CRITICAL_SECTION(csWSgetXXXbyYYY);
 
-#define MAP_OPTION(opt) { WS_##opt, opt }
-
-static const int ws_eai_map[][2] =
-{
-    MAP_OPTION( EAI_AGAIN ),
-    MAP_OPTION( EAI_BADFLAGS ),
-    MAP_OPTION( EAI_FAIL ),
-    MAP_OPTION( EAI_FAMILY ),
-    MAP_OPTION( EAI_MEMORY ),
-/* Note: EAI_NODATA is deprecated, but still used by Windows and Linux. We map
- * the newer EAI_NONAME to EAI_NODATA for now until Windows changes too. */
-#ifdef EAI_NODATA
-    MAP_OPTION( EAI_NODATA ),
-#endif
-#ifdef EAI_NONAME
-    { WS_EAI_NODATA, EAI_NONAME },
-#endif
-    MAP_OPTION( EAI_SERVICE ),
-    MAP_OPTION( EAI_SOCKTYPE ),
-    { 0, 0 }
-};
-
-int convert_eai_u2w( int unixret )
-{
-    int i;
-
-    if (!unixret) return 0;
-
-    for (i = 0; ws_eai_map[i][0]; i++)
-    {
-        if (ws_eai_map[i][1] == unixret)
-            return ws_eai_map[i][0];
-    }
-
-    if (unixret == EAI_SYSTEM)
-        /* There are broken versions of glibc which return EAI_SYSTEM
-         * and set errno to 0 instead of returning EAI_NONAME. */
-        return errno ? sock_get_error( errno ) : WS_EAI_NONAME;
-
-    FIXME("Unhandled unix EAI_xxx ret %d\n", unixret);
-    return unixret;
-}
-
 static char *get_fqdn(void)
 {
     char *ret;
@@ -592,60 +549,16 @@ void WINAPI FreeAddrInfoExW( ADDRINFOEXW *ai )
 }
 
 
-static const int ws_niflag_map[][2] =
-{
-    MAP_OPTION( NI_NOFQDN ),
-    MAP_OPTION( NI_NUMERICHOST ),
-    MAP_OPTION( NI_NAMEREQD ),
-    MAP_OPTION( NI_NUMERICSERV ),
-    MAP_OPTION( NI_DGRAM ),
-};
-
-static int convert_niflag_w2u( int winflags )
-{
-    unsigned int i;
-    int unixflags = 0;
-
-    for (i = 0; i < ARRAY_SIZE(ws_niflag_map); i++)
-    {
-        if (ws_niflag_map[i][0] & winflags)
-        {
-            unixflags |= ws_niflag_map[i][1];
-            winflags &= ~ws_niflag_map[i][0];
-        }
-    }
-    if (winflags)
-        FIXME("Unhandled windows NI_xxx flags 0x%x\n", winflags);
-    return unixflags;
-}
-
-
 /***********************************************************************
  *      getnameinfo   (ws2_32.@)
  */
 int WINAPI WS_getnameinfo( const SOCKADDR *addr, WS_socklen_t addr_len, char *host,
                            DWORD host_len, char *serv, DWORD serv_len, int flags )
 {
-#ifdef HAVE_GETNAMEINFO
-    int ret;
-    union generic_unix_sockaddr uaddr;
-    unsigned int uaddr_len;
-
     TRACE( "addr %s, addr_len %d, host %p, host_len %u, serv %p, serv_len %d, flags %#x\n",
            debugstr_sockaddr(addr), addr_len, host, host_len, serv, serv_len, flags );
 
-    uaddr_len = ws_sockaddr_ws2u( addr, addr_len, &uaddr );
-    if (!uaddr_len)
-    {
-        SetLastError( WSAEFAULT );
-        return WSA_NOT_ENOUGH_MEMORY;
-    }
-    ret = getnameinfo( &uaddr.addr, uaddr_len, host, host_len, serv, serv_len, convert_niflag_w2u(flags) );
-    return convert_eai_u2w( ret );
-#else
-    FIXME( "getnameinfo() failed, not found during buildtime.\n" );
-    return EAI_FAIL;
-#endif
+    return unix_funcs->getnameinfo( addr, addr_len, host, host_len, serv, serv_len, flags );
 }
 
 

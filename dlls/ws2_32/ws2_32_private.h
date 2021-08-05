@@ -165,19 +165,7 @@
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
-union generic_unix_sockaddr
-{
-    struct sockaddr addr;
-    char data[128]; /* should be big enough for all families */
-};
-
-int convert_eai_u2w( int ret ) DECLSPEC_HIDDEN;
-unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *win_addr, int win_addr_len,
-                               union generic_unix_sockaddr *unix_addr ) DECLSPEC_HIDDEN;
-
 const char *debugstr_sockaddr( const struct WS_sockaddr *addr ) DECLSPEC_HIDDEN;
-
-UINT sock_get_error( int err ) DECLSPEC_HIDDEN;
 
 struct per_thread_data
 {
@@ -204,6 +192,8 @@ struct unix_funcs
                                 struct WS(hostent) *host, unsigned int *size );
     int (CDECL *gethostbyname)( const char *name, struct WS(hostent) *host, unsigned int *size );
     int (CDECL *gethostname)( char *name, int len );
+    int (CDECL *getnameinfo)( const struct WS(sockaddr) *addr, int addr_len, char *host,
+                              DWORD host_len, char *serv, DWORD serv_len, int flags );
 };
 
 extern const struct unix_funcs *unix_funcs;

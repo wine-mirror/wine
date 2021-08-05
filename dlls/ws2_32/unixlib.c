@@ -98,6 +98,15 @@ static const int addrinfo_flag_map[][2] =
     MAP( AI_ADDRCONFIG ),
 };
 
+static const int nameinfo_flag_map[][2] =
+{
+    MAP( NI_DGRAM ),
+    MAP( NI_NAMEREQD ),
+    MAP( NI_NOFQDN ),
+    MAP( NI_NUMERICHOST ),
+    MAP( NI_NUMERICSERV ),
+};
+
 static const int family_map[][2] =
 {
     MAP( AF_UNSPEC ),
@@ -162,6 +171,25 @@ static int addrinfo_flags_to_unix( int flags )
         {
             unix_flags |= addrinfo_flag_map[i][1];
             flags &= ~addrinfo_flag_map[i][0];
+        }
+    }
+
+    if (flags)
+        FIXME( "unhandled flags %#x\n", flags );
+    return unix_flags;
+}
+
+static int nameinfo_flags_to_unix( int flags )
+{
+    int unix_flags = 0;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(nameinfo_flag_map); ++i)
+    {
+        if (flags & nameinfo_flag_map[i][0])
+        {
+            unix_flags |= nameinfo_flag_map[i][1];
+            flags &= ~nameinfo_flag_map[i][0];
         }
     }
 
@@ -467,6 +495,103 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
 
     default:
         FIXME( "unknown address family %d\n", uaddr->addr.sa_family );
+        return 0;
+    }
+}
+
+static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrlen, union unix_sockaddr *uaddr )
+{
+    memset( uaddr, 0, sizeof(*uaddr) );
+
+    switch (wsaddr->sa_family)
+    {
+    case WS_AF_INET:
+    {
+        struct WS_sockaddr_in win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->in.sin_family = AF_INET;
+        uaddr->in.sin_port = win.sin_port;
+        memcpy( &uaddr->in.sin_addr, &win.sin_addr, sizeof(win.sin_addr) );
+        return sizeof(uaddr->in);
+    }
+
+    case WS_AF_INET6:
+    {
+        struct WS_sockaddr_in6 win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->in6.sin6_family = AF_INET6;
+        uaddr->in6.sin6_port = win.sin6_port;
+        uaddr->in6.sin6_flowinfo = win.sin6_flowinfo;
+        memcpy( &uaddr->in6.sin6_addr, &win.sin6_addr, sizeof(win.sin6_addr) );
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+        uaddr->in6.sin6_scope_id = win.sin6_scope_id;
+#endif
+        return sizeof(uaddr->in6);
+    }
+
+#ifdef HAS_IPX
+    case WS_AF_IPX:
+    {
+        struct WS_sockaddr_ipx win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->ipx.sipx_family = AF_IPX;
+        memcpy( &uaddr->ipx.sipx_network, win.sa_netnum, sizeof(win.sa_netnum) );
+        memcpy( &uaddr->ipx.sipx_node, win.sa_nodenum, sizeof(win.sa_nodenum) );
+        uaddr->ipx.sipx_port = win.sa_socket;
+        return sizeof(uaddr->ipx);
+    }
+#endif
+
+#ifdef HAS_IRDA
+    case WS_AF_IRDA:
+    {
+        SOCKADDR_IRDA win = {0};
+        unsigned int lsap_sel;
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->irda.sir_family = AF_IRDA;
+        if (sscanf( win.irdaServiceName, "LSAP-SEL%u", &lsap_sel ) == 1)
+            uaddr->irda.sir_lsap_sel = lsap_sel;
+        else
+        {
+            uaddr->irda.sir_lsap_sel = LSAP_ANY;
+            memcpy( uaddr->irda.sir_name, win.irdaServiceName, sizeof(win.irdaServiceName) );
+        }
+        memcpy( &uaddr->irda.sir_addr, win.irdaDeviceID, sizeof(win.irdaDeviceID) );
+        return sizeof(uaddr->irda);
+    }
+#endif
+
+    case WS_AF_UNSPEC:
+        switch (wsaddrlen)
+        {
+        default: /* likely an ipv4 address */
+        case sizeof(struct WS_sockaddr_in):
+            return sizeof(uaddr->in);
+
+#ifdef HAS_IPX
+        case sizeof(struct WS_sockaddr_ipx):
+            return sizeof(uaddr->ipx);
+#endif
+
+#ifdef HAS_IRDA
+        case sizeof(SOCKADDR_IRDA):
+            return sizeof(uaddr->irda);
+#endif
+
+        case sizeof(struct WS_sockaddr_in6):
+            return sizeof(uaddr->in6);
+        }
+
+    default:
+        FIXME( "unknown address family %u\n", wsaddr->sa_family );
         return 0;
     }
 }
@@ -798,12 +923,26 @@ static int CDECL unix_gethostname( char *name, int len )
 }
 
 
+static int CDECL unix_getnameinfo( const struct WS(sockaddr) *addr, int addr_len, char *host,
+                                   DWORD host_len, char *serv, DWORD serv_len, int flags )
+{
+    union unix_sockaddr unix_addr;
+    socklen_t unix_addr_len;
+
+    unix_addr_len = sockaddr_to_unix( addr, addr_len, &unix_addr );
+
+    return addrinfo_err_from_unix( getnameinfo( &unix_addr.addr, unix_addr_len, host, host_len,
+                                                serv, serv_len, nameinfo_flags_to_unix( flags ) ) );
+}
+
+
 static const struct unix_funcs funcs =
 {
     unix_getaddrinfo,
     unix_gethostbyaddr,
     unix_gethostbyname,
     unix_gethostname,
+    unix_getnameinfo,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
