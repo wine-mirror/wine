@@ -2463,7 +2463,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     else
     {
         ok(ret, "HidD_GetInputReport failed, last error %u\n", GetLastError());
-        todo_wine ok(buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0]);
+        ok(buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0]);
     }
 
     SetLastError(0xdeadbeef);
@@ -2685,7 +2685,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
         SetLastError(0xdeadbeef);
         ret = ReadFile(file, report, caps.InputReportByteLength, &value, NULL);
         ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-        todo_wine ok(value == (report_id ? 3 : 4), "ReadFile returned %x\n", value);
+        ok(value == (report_id ? 3 : 4), "ReadFile returned %x\n", value);
         ok(report[0] == report_id, "unexpected report data\n");
 
         overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -2698,7 +2698,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
         ok(GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError());
         ret = GetOverlappedResult(async_file, &overlapped, &value, TRUE);
         ok(ret, "GetOverlappedResult failed, last error %u\n", GetLastError());
-        todo_wine ok(value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value);
+        ok(value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value);
         ResetEvent(overlapped.hEvent);
 
         memcpy(buffer, report, caps.InputReportByteLength);
@@ -2717,11 +2717,11 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
         /* wait for first report to be ready */
         ret = GetOverlappedResult(async_file, &overlapped, &value, TRUE);
         ok(ret, "GetOverlappedResult failed, last error %u\n", GetLastError());
-        todo_wine ok(value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value);
+        ok(value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value);
         /* second report should be ready and the same */
         ret = GetOverlappedResult(async_file, &overlapped2, &value, FALSE);
         ok(ret, "GetOverlappedResult failed, last error %u\n", GetLastError());
-        todo_wine ok(value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value);
+        ok(value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value);
         ok(memcmp(report, buffer + caps.InputReportByteLength, caps.InputReportByteLength),
            "expected different report\n");
         ok(!memcmp(report, buffer, caps.InputReportByteLength), "expected identical reports\n");
