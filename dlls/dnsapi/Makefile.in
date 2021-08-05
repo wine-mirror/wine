@@ -1,6 +1,6 @@
 MODULE    = dnsapi.dll
 IMPORTLIB = dnsapi
-IMPORTS   = netapi32
+DELAYIMPORTS = netapi32
 EXTRALIBS = $(RESOLV_LIBS)
 
 EXTRADLLFLAGS = -mno-cygwin
