@@ -3739,6 +3739,7 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
     UNICODE_STRING nt_name;
     char *unix_name;
     BOOL created = FALSE;
+    NTSTATUS status;
 
     TRACE( "handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p "
            "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
@@ -3754,38 +3755,38 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
     new_attr = *attr;
     if (options & FILE_OPEN_BY_FILE_ID)
     {
-        io->u.Status = file_id_to_unix_file_name( &new_attr, &unix_name, &nt_name );
-        if (!io->u.Status) new_attr.ObjectName = &nt_name;
+        status = file_id_to_unix_file_name( &new_attr, &unix_name, &nt_name );
+        if (!status) new_attr.ObjectName = &nt_name;
     }
     else
     {
         get_redirect( &new_attr, &nt_name );
-        io->u.Status = nt_to_unix_file_name( &new_attr, &unix_name, disposition );
+        status = nt_to_unix_file_name( &new_attr, &unix_name, disposition );
     }
 
-    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    if (status == STATUS_BAD_DEVICE_TYPE)
     {
-        io->u.Status = server_open_file_object( handle, access, &new_attr, sharing, options );
-        if (io->u.Status == STATUS_SUCCESS) io->Information = FILE_OPENED;
+        status = server_open_file_object( handle, access, &new_attr, sharing, options );
+        if (status == STATUS_SUCCESS) io->Information = FILE_OPENED;
         free( nt_name.Buffer );
-        return io->u.Status;
+        return io->u.Status = status;
     }
 
-    if (io->u.Status == STATUS_NO_SUCH_FILE && disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
+    if (status == STATUS_NO_SUCH_FILE && disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
     {
         created = TRUE;
-        io->u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
     }
 
-    if (io->u.Status == STATUS_SUCCESS)
+    if (status == STATUS_SUCCESS)
     {
-        io->u.Status = open_unix_file( handle, unix_name, access, &new_attr, attributes,
-                                       sharing, disposition, options, ea_buffer, ea_length );
+        status = open_unix_file( handle, unix_name, access, &new_attr, attributes,
+                                 sharing, disposition, options, ea_buffer, ea_length );
         free( unix_name );
     }
-    else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );
+    else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
 
-    if (io->u.Status == STATUS_SUCCESS)
+    if (status == STATUS_SUCCESS)
     {
         if (created) io->Information = FILE_CREATED;
         else switch(disposition)
@@ -3806,14 +3807,14 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
             break;
         }
     }
-    else if (io->u.Status == STATUS_TOO_MANY_OPENED_FILES)
+    else if (status == STATUS_TOO_MANY_OPENED_FILES)
     {
         static int once;
         if (!once++) ERR_(winediag)( "Too many open files, ulimit -n probably needs to be increased\n" );
     }
 
     free( nt_name.Buffer );
-    return io->u.Status;
+    return io->u.Status = status;
 }
 
 
@@ -4091,6 +4092,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     int fd, needs_close = FALSE;
     ULONG attr;
     unsigned int options;
+    NTSTATUS status;
 
     TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class);
 
@@ -4103,9 +4105,9 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
+    if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
     {
-        if (io->u.Status != STATUS_BAD_DEVICE_TYPE) return io->u.Status;
+        if (status != STATUS_BAD_DEVICE_TYPE) return io->u.Status = status;
         return server_get_file_info( handle, io, ptr, len, class );
     }
 
@@ -4113,9 +4115,9 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     {
     case FileBasicInformation:
         if (fd_get_file_info( fd, options, &st, &attr ) == -1)
-            io->u.Status = errno_to_status( errno );
+            status = errno_to_status( errno );
         else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-            io->u.Status = STATUS_INVALID_INFO_CLASS;
+            status = STATUS_INVALID_INFO_CLASS;
         else
             fill_file_info( &st, attr, ptr, class );
         break;
@@ -4123,7 +4125,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         {
             FILE_STANDARD_INFORMATION *info = ptr;
 
-            if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = errno_to_status( errno );
+            if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
             else
             {
                 fill_file_info( &st, attr, info, class );
@@ -4135,12 +4137,12 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         {
             FILE_POSITION_INFORMATION *info = ptr;
             off_t res = lseek( fd, 0, SEEK_CUR );
-            if (res == (off_t)-1) io->u.Status = errno_to_status( errno );
+            if (res == (off_t)-1) status = errno_to_status( errno );
             else info->CurrentByteOffset.QuadPart = res;
         }
         break;
     case FileInternalInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = errno_to_status( errno );
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
         else fill_file_info( &st, attr, ptr, class );
         break;
     case FileEaInformation:
@@ -4150,7 +4152,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileEndOfFileInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = errno_to_status( errno );
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
         else fill_file_info( &st, attr, ptr, class );
         break;
     case FileAllInformation:
@@ -4158,10 +4160,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             FILE_ALL_INFORMATION *info = ptr;
             char *unix_name;
 
-            if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = errno_to_status( errno );
+            if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
             else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-                io->u.Status = STATUS_INVALID_INFO_CLASS;
-            else if (!(io->u.Status = server_get_unix_name( handle, &unix_name )))
+                status = STATUS_INVALID_INFO_CLASS;
+            else if (!(status = server_get_unix_name( handle, &unix_name )))
             {
                 LONG name_len = len - FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName);
 
@@ -4173,7 +4175,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 info->ModeInformation.Mode = 0;  /* FIXME */
                 info->AlignmentInformation.AlignmentRequirement = 1;  /* FIXME */
 
-                io->u.Status = fill_name_info( unix_name, &info->NameInformation, &name_len );
+                status = fill_name_info( unix_name, &info->NameInformation, &name_len );
                 free( unix_name );
                 io->Information = FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation.FileName) + name_len;
             }
@@ -4187,8 +4189,8 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             {
                 req->handle = wine_server_obj_handle( handle );
                 req->flags = 0;
-                io->u.Status = wine_server_call( req );
-                if( io->u.Status == STATUS_SUCCESS )
+                status = wine_server_call( req );
+                if (status == STATUS_SUCCESS)
                 {
                     info->MaximumMessageSize = reply->max_msgsize;
                     info->MailslotQuota = 0;
@@ -4198,7 +4200,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 }
             }
             SERVER_END_REQ;
-            if (!io->u.Status)
+            if (!status)
             {
                 char *tmpbuf;
                 ULONG size = info->MaximumMessageSize ? info->MaximumMessageSize : 0x10000;
@@ -4222,10 +4224,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             FILE_NAME_INFORMATION *info = ptr;
             char *unix_name;
 
-            if (!(io->u.Status = server_get_unix_name( handle, &unix_name )))
+            if (!(status = server_get_unix_name( handle, &unix_name )))
             {
                 LONG name_len = len - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName);
-                io->u.Status = fill_name_info( unix_name, info, &name_len );
+                status = fill_name_info( unix_name, info, &name_len );
                 free( unix_name );
                 io->Information = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + name_len;
             }
@@ -4236,15 +4238,15 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             FILE_NETWORK_OPEN_INFORMATION *info = ptr;
             char *unix_name;
 
-            if (!(io->u.Status = server_get_unix_name( handle, &unix_name )))
+            if (!(status = server_get_unix_name( handle, &unix_name )))
             {
                 ULONG attributes;
                 struct stat st;
 
                 if (get_file_info( unix_name, &st, &attributes ) == -1)
-                    io->u.Status = errno_to_status( errno );
+                    status = errno_to_status( errno );
                 else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-                    io->u.Status = STATUS_INVALID_INFO_CLASS;
+                    status = STATUS_INVALID_INFO_CLASS;
                 else
                 {
                     FILE_BASIC_INFORMATION basic;
@@ -4266,7 +4268,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileIdInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = errno_to_status( errno );
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
         else
         {
             struct mountmgr_unix_drive drive;
@@ -4280,7 +4282,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         }
         break;
     case FileAttributeTagInformation:
-        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = errno_to_status( errno );
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
         else
         {
             FILE_ATTRIBUTE_TAG_INFORMATION *info = ptr;
@@ -4292,12 +4294,12 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         break;
     default:
         FIXME("Unsupported class (%d)\n", class);
-        io->u.Status = STATUS_NOT_IMPLEMENTED;
+        status = STATUS_NOT_IMPLEMENTED;
         break;
     }
     if (needs_close) close( fd );
-    if (io->u.Status == STATUS_SUCCESS && !io->Information) io->Information = info_sizes[class];
-    return io->u.Status;
+    if (status == STATUS_SUCCESS && !io->Information) io->Information = info_sizes[class];
+    return io->u.Status = status;
 }
 
 
@@ -4308,10 +4310,10 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                                       void *ptr, ULONG len, FILE_INFORMATION_CLASS class )
 {
     int fd, needs_close;
+    NTSTATUS status = STATUS_SUCCESS;
 
     TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class );
 
-    io->u.Status = STATUS_SUCCESS;
     switch (class)
     {
     case FileBasicInformation:
@@ -4321,18 +4323,18 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             const FILE_BASIC_INFORMATION *info = ptr;
             LARGE_INTEGER mtime, atime;
 
-            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-                return io->u.Status;
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status = status;
 
             mtime.QuadPart = info->LastWriteTime.QuadPart == -1 ? 0 : info->LastWriteTime.QuadPart;
             atime.QuadPart = info->LastAccessTime.QuadPart == -1 ? 0 : info->LastAccessTime.QuadPart;
 
             if (atime.QuadPart || mtime.QuadPart)
-                io->u.Status = set_file_times( fd, &mtime, &atime );
+                status = set_file_times( fd, &mtime, &atime );
 
-            if (io->u.Status == STATUS_SUCCESS && info->FileAttributes)
+            if (status == STATUS_SUCCESS && info->FileAttributes)
             {
-                if (fstat( fd, &st ) == -1) io->u.Status = errno_to_status( errno );
+                if (fstat( fd, &st ) == -1) status = errno_to_status( errno );
                 else
                 {
                     if (info->FileAttributes & FILE_ATTRIBUTE_READONLY)
@@ -4347,13 +4349,13 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                         /* add write permission only where we already have read permission */
                         st.st_mode |= (0600 | ((st.st_mode & 044) >> 1)) & (~start_umask);
                     }
-                    if (fchmod( fd, st.st_mode ) == -1) io->u.Status = errno_to_status( errno );
+                    if (fchmod( fd, st.st_mode ) == -1) status = errno_to_status( errno );
                 }
             }
 
             if (needs_close) close( fd );
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FilePositionInformation:
@@ -4361,15 +4363,15 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         {
             const FILE_POSITION_INFORMATION *info = ptr;
 
-            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-                return io->u.Status;
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status = status;
 
             if (lseek( fd, info->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
-                io->u.Status = errno_to_status( errno );
+                status = errno_to_status( errno );
 
             if (needs_close) close( fd );
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FileEndOfFileInformation:
@@ -4381,11 +4383,11 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->eof      = info->EndOfFile.QuadPart;
-                io->u.Status  = wine_server_call( req );
+                status = wine_server_call( req );
             }
             SERVER_END_REQ;
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FilePipeInformation:
@@ -4395,7 +4397,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
 
             if ((info->CompletionMode | info->ReadMode) & ~1)
             {
-                io->u.Status = STATUS_INVALID_PARAMETER;
+                status = STATUS_INVALID_PARAMETER;
                 break;
             }
 
@@ -4404,11 +4406,11 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 req->handle = wine_server_obj_handle( handle );
                 req->flags  = (info->CompletionMode ? NAMED_PIPE_NONBLOCKING_MODE    : 0) |
                               (info->ReadMode       ? NAMED_PIPE_MESSAGE_STREAM_READ : 0);
-                io->u.Status = wine_server_call( req );
+                status = wine_server_call( req );
             }
             SERVER_END_REQ;
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FileMailslotSetInformation:
@@ -4420,7 +4422,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 req->handle = wine_server_obj_handle( handle );
                 req->flags = MAILSLOT_SET_READ_TIMEOUT;
                 req->read_timeout = info->ReadTimeout.QuadPart;
-                io->u.Status = wine_server_call( req );
+                status = wine_server_call( req );
             }
             SERVER_END_REQ;
         }
@@ -4436,11 +4438,11 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 req->handle   = wine_server_obj_handle( handle );
                 req->chandle  = wine_server_obj_handle( info->CompletionPort );
                 req->ckey     = info->CompletionKey;
-                io->u.Status  = wine_server_call( req );
+                status = wine_server_call( req );
             }
             SERVER_END_REQ;
-        } else
-            io->u.Status = STATUS_INVALID_PARAMETER_3;
+        }
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FileIoCompletionNotificationInformation:
@@ -4455,11 +4457,11 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->flags    = info->Flags;
-                io->u.Status  = wine_server_call( req );
+                status = wine_server_call( req );
             }
             SERVER_END_REQ;
-        } else
-            io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        else status = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
     case FileIoPriorityHintInformation:
@@ -4469,13 +4471,13 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             if (info->PriorityHint < MaximumIoPriorityHintType)
                 TRACE( "ignoring FileIoPriorityHintInformation %u\n", info->PriorityHint );
             else
-                io->u.Status = STATUS_INVALID_PARAMETER;
+                status = STATUS_INVALID_PARAMETER;
         }
-        else io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+        else status = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
     case FileAllInformation:
-        io->u.Status = STATUS_INVALID_INFO_CLASS;
+        status = STATUS_INVALID_INFO_CLASS;
         break;
 
     case FileValidDataLengthInformation:
@@ -4484,20 +4486,19 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             struct stat st;
             const FILE_VALID_DATA_LENGTH_INFORMATION *info = ptr;
 
-            if ((io->u.Status = server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL )))
-                return io->u.Status;
+            if ((status = server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status = status;
 
-            if (fstat( fd, &st ) == -1) io->u.Status = errno_to_status( errno );
+            if (fstat( fd, &st ) == -1) status = errno_to_status( errno );
             else if (info->ValidDataLength.QuadPart <= 0 || (off_t)info->ValidDataLength.QuadPart > st.st_size)
-                io->u.Status = STATUS_INVALID_PARAMETER;
+                status = STATUS_INVALID_PARAMETER;
             else
             {
 #ifdef HAVE_FALLOCATE
                 if (fallocate( fd, 0, 0, (off_t)info->ValidDataLength.QuadPart ) == -1)
                 {
-                    NTSTATUS status = errno_to_status( errno );
-                    if (status == STATUS_NOT_SUPPORTED) WARN( "fallocate not supported on this filesystem\n" );
-                    else io->u.Status = status;
+                    if (errno == EOPNOTSUPP) WARN( "fallocate not supported on this filesystem\n" );
+                    else status = errno_to_status( errno );
                 }
 #else
                 FIXME( "setting valid data length not supported\n" );
@@ -4505,7 +4506,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             }
             if (needs_close) close( fd );
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FileDispositionInformation:
@@ -4517,11 +4518,11 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->unlink   = info->DoDeleteFile;
-                io->u.Status  = wine_server_call( req );
+                status = wine_server_call( req );
             }
             SERVER_END_REQ;
-        } else
-            io->u.Status = STATUS_INVALID_PARAMETER_3;
+        }
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FileRenameInformation:
@@ -4538,8 +4539,8 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             InitializeObjectAttributes( &attr, &name_str, OBJ_CASE_INSENSITIVE, info->RootDirectory, NULL );
             get_redirect( &attr, &redir );
 
-            io->u.Status = nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN_IF );
-            if (io->u.Status == STATUS_SUCCESS || io->u.Status == STATUS_NO_SUCH_FILE)
+            status = nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN_IF );
+            if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
             {
                 SERVER_START_REQ( set_fd_name_info )
                 {
@@ -4550,7 +4551,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                     req->replace  = info->ReplaceIfExists;
                     wine_server_add_data( req, attr.ObjectName->Buffer, attr.ObjectName->Length );
                     wine_server_add_data( req, unix_name, strlen(unix_name) );
-                    io->u.Status = wine_server_call( req );
+                    status = wine_server_call( req );
                 }
                 SERVER_END_REQ;
 
@@ -4558,7 +4559,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             }
             free( redir.Buffer );
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     case FileLinkInformation:
@@ -4575,8 +4576,8 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             InitializeObjectAttributes( &attr, &name_str, OBJ_CASE_INSENSITIVE, info->RootDirectory, NULL );
             get_redirect( &attr, &redir );
 
-            io->u.Status = nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN_IF );
-            if (io->u.Status == STATUS_SUCCESS || io->u.Status == STATUS_NO_SUCH_FILE)
+            status = nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN_IF );
+            if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
             {
                 SERVER_START_REQ( set_fd_name_info )
                 {
@@ -4587,7 +4588,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                     req->replace  = info->ReplaceIfExists;
                     wine_server_add_data( req, attr.ObjectName->Buffer, attr.ObjectName->Length );
                     wine_server_add_data( req, unix_name, strlen(unix_name) );
-                    io->u.Status  = wine_server_call( req );
+                    status  = wine_server_call( req );
                 }
                 SERVER_END_REQ;
 
@@ -4595,16 +4596,16 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             }
             free( redir.Buffer );
         }
-        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        else status = STATUS_INVALID_PARAMETER_3;
         break;
 
     default:
         FIXME("Unsupported class (%d)\n", class);
-        io->u.Status = STATUS_NOT_IMPLEMENTED;
+        status = STATUS_NOT_IMPLEMENTED;
         break;
     }
     io->Information = 0;
-    return io->u.Status;
+    return io->u.Status = status;
 }
 
 
@@ -6425,30 +6426,30 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
     }
     else if (status) return io->u.Status = status;
 
-    io->u.Status = STATUS_NOT_IMPLEMENTED;
     io->Information = 0;
 
     switch( info_class )
     {
     case FileFsLabelInformation:
         FIXME( "%p: label info not supported\n", handle );
+        status = STATUS_NOT_IMPLEMENTED;
         break;
 
     case FileFsSizeInformation:
         if (length < sizeof(FILE_FS_SIZE_INFORMATION))
-            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+            status = STATUS_BUFFER_TOO_SMALL;
         else
         {
             FILE_FS_SIZE_INFORMATION *info = buffer;
 
             if (fstat( fd, &st ) < 0)
             {
-                io->u.Status = errno_to_status( errno );
+                status = errno_to_status( errno );
                 break;
             }
             if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             {
-                io->u.Status = STATUS_INVALID_DEVICE_REQUEST;
+                status = STATUS_INVALID_DEVICE_REQUEST;
             }
             else
             {
@@ -6459,7 +6460,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 
                 if (fstatvfs( fd, &stfs ) < 0)
                 {
-                    io->u.Status = errno_to_status( errno );
+                    status = errno_to_status( errno );
                     break;
                 }
                 bsize = stfs.f_frsize;
@@ -6467,7 +6468,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
                 struct statfs stfs;
                 if (fstatfs( fd, &stfs ) < 0)
                 {
-                    io->u.Status = errno_to_status( errno );
+                    status = errno_to_status( errno );
                     break;
                 }
                 bsize = stfs.f_bsize;
@@ -6485,19 +6486,19 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
                 info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (info->BytesPerSector * info->SectorsPerAllocationUnit);
                 info->AvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (info->BytesPerSector * info->SectorsPerAllocationUnit);
                 io->Information = sizeof(*info);
-                io->u.Status = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
         }
         break;
 
     case FileFsDeviceInformation:
         if (length < sizeof(FILE_FS_DEVICE_INFORMATION))
-            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+            status = STATUS_BUFFER_TOO_SMALL;
         else
         {
             FILE_FS_DEVICE_INFORMATION *info = buffer;
 
-            if ((io->u.Status = get_device_info( fd, info )) == STATUS_SUCCESS)
+            if ((status = get_device_info( fd, info )) == STATUS_SUCCESS)
                 io->Information = sizeof(*info);
         }
         break;
@@ -6516,7 +6517,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 
         if (length < sizeof(FILE_FS_ATTRIBUTE_INFORMATION))
         {
-            io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            status = STATUS_INFO_LENGTH_MISMATCH;
             break;
         }
 
@@ -6588,7 +6589,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         }
 
         io->Information = offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) + info->FileSystemNameLength;
-        io->u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
         break;
     }
 
@@ -6601,13 +6602,13 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 
         if (length < sizeof(FILE_FS_VOLUME_INFORMATION))
         {
-            io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            status = STATUS_INFO_LENGTH_MISMATCH;
             break;
         }
 
         if (get_mountmgr_fs_info( handle, fd, drive, sizeof(data) ))
         {
-            io->u.Status = STATUS_NOT_IMPLEMENTED;
+            status = STATUS_NOT_IMPLEMENTED;
             break;
         }
 
@@ -6619,32 +6620,36 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         info->SupportsObjects = (drive->fs_type == MOUNTMGR_FS_TYPE_NTFS);
         memcpy( info->VolumeLabel, label, info->VolumeLabelLength );
         io->Information = offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) + info->VolumeLabelLength;
-        io->u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
         break;
     }
 
     case FileFsControlInformation:
         FIXME( "%p: control info not supported\n", handle );
+        status = STATUS_NOT_IMPLEMENTED;
         break;
 
     case FileFsFullSizeInformation:
         FIXME( "%p: full size info not supported\n", handle );
+        status = STATUS_NOT_IMPLEMENTED;
         break;
 
     case FileFsObjectIdInformation:
         FIXME( "%p: object id info not supported\n", handle );
+        status = STATUS_NOT_IMPLEMENTED;
         break;
 
     case FileFsMaximumInformation:
         FIXME( "%p: maximum info not supported\n", handle );
+        status = STATUS_NOT_IMPLEMENTED;
         break;
 
     default:
-        io->u.Status = STATUS_INVALID_PARAMETER;
+        status = STATUS_INVALID_PARAMETER;
         break;
     }
     if (needs_close) close( fd );
-    return io->u.Status;
+    return io->u.Status = status;
 }
 
 
