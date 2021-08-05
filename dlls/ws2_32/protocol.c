@@ -981,33 +981,64 @@ static int list_dup( char **src, char **dst, int item_size )
     return p - (char *)dst;
 }
 
-static const struct
+
+static char *read_etc_file( const WCHAR *filename, DWORD *ret_size )
 {
-    int prot;
-    const char *names[3];
+    static const WCHAR key_pathW[] = {'S','y','s','t','e','m',
+            '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+            '\\','S','e','r','v','i','c','e','s',
+            '\\','t','c','p','i','p',
+            '\\','P','a','r','a','m','e','t','e','r','s',0};
+    static const WCHAR databasepathW[] = {'D','a','t','a','b','a','s','e','P','a','t','h',0};
+    static const WCHAR backslashW[] = {'\\',0};
+    WCHAR path[MAX_PATH];
+    DWORD size = sizeof(path);
+    HANDLE file;
+    char *data;
+    LONG ret;
+
+    if ((ret = RegGetValueW( HKEY_LOCAL_MACHINE, key_pathW, databasepathW, RRF_RT_REG_SZ, NULL, path, &size )))
+    {
+        ERR( "failed to get database path, error %u\n", ret );
+        return NULL;
+    }
+    lstrcatW( path, backslashW );
+    lstrcatW( path, filename );
+
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ERR( "failed to open %s, error %u\n", debugstr_w( path ), GetLastError() );
+        return NULL;
+    }
+
+    size = GetFileSize( file, NULL );
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size )) ||
+        !ReadFile( file, data, size, ret_size, NULL ))
+    {
+        WARN( "failed to read file, error %u\n", GetLastError() );
+        HeapFree( GetProcessHeap(), 0, data );
+        data = NULL;
+    }
+    CloseHandle( file );
+    return data;
 }
-protocols[] =
+
+/* returns "end" if there was no space */
+static char *next_space( const char *p, const char *end )
 {
-    { 0, {"ip", "IP"}},
-    { 1, {"icmp", "ICMP"}},
-    { 3, {"ggp", "GGP"}},
-    { 6, {"tcp", "TCP"}},
-    { 8, {"egp", "EGP"}},
-    {12, {"pup", "PUP"}},
-    {17, {"udp", "UDP"}},
-    {20, {"hmp", "HMP"}},
-    {22, {"xns-idp", "XNS-IDP"}},
-    {27, {"rdp", "RDP"}},
-    {41, {"ipv6", "IPv6"}},
-    {43, {"ipv6-route", "IPv6-Route"}},
-    {44, {"ipv6-frag", "IPv6-Frag"}},
-    {50, {"esp", "ESP"}},
-    {51, {"ah", "AH"}},
-    {58, {"ipv6-icmp", "IPv6-ICMP"}},
-    {59, {"ipv6-nonxt", "IPv6-NoNxt"}},
-    {60, {"ipv6-opts", "IPv6-Opts"}},
-    {66, {"rvd", "RVD"}},
-};
+    while (p < end && !isspace( *p ))
+        ++p;
+    return (char *)p;
+}
+
+/* returns "end" if there was no non-space */
+static char *next_non_space( const char *p, const char *end )
+{
+    while (p < end && isspace( *p ))
+        ++p;
+    return (char *)p;
+}
 
 static struct WS_protoent *get_protoent_buffer( unsigned int size )
 {
@@ -1024,18 +1055,111 @@ static struct WS_protoent *get_protoent_buffer( unsigned int size )
     return data->pe_buffer;
 }
 
-static struct WS_protoent *create_protoent( const char *name, char **aliases, int prot )
+/* Parse the first valid line into a protoent structure, returning NULL if
+ * there is no valid line. Updates cursor to point to the start of the next
+ * line or the end of the file. */
+static struct WS_protoent *get_next_protocol( const char **cursor, const char *end )
 {
-    struct WS_protoent *ret;
-    unsigned int size = sizeof(*ret) + strlen( name ) + sizeof(char *) + list_size( aliases, 0 );
+    const char *p = *cursor;
 
-    if (!(ret = get_protoent_buffer( size ))) return NULL;
-    ret->p_proto = prot;
-    ret->p_name = (char *)(ret + 1);
-    strcpy( ret->p_name, name );
-    ret->p_aliases = (char **)ret->p_name + strlen( name ) / sizeof(char *) + 1;
-    list_dup( aliases, ret->p_aliases, 0 );
-    return ret;
+    while (p < end)
+    {
+        const char *line_end, *next_line;
+        size_t needed_size, line_len;
+        unsigned int alias_count = 0;
+        struct WS_protoent *proto;
+        const char *name;
+        int number;
+        char *q;
+
+        for (line_end = p; line_end < end && *line_end != '\n' && *line_end != '#'; ++line_end)
+            ;
+        TRACE( "parsing line %s\n", debugstr_an(p, line_end - p) );
+
+        for (next_line = line_end; next_line < end && *next_line != '\n'; ++next_line)
+            ;
+        if (next_line < end)
+            ++next_line; /* skip over the newline */
+
+        p = next_non_space( p, line_end );
+        if (p == line_end)
+        {
+            p = next_line;
+            continue;
+        }
+
+        /* parse the name */
+
+        name = p;
+        line_len = line_end - name;
+
+        p = next_space( p, line_end );
+        if (p == line_end)
+        {
+            p = next_line;
+            continue;
+        }
+
+        p = next_non_space( p, line_end );
+
+        /* parse the number */
+
+        number = atoi( p );
+
+        p = next_space( p, line_end );
+        p = next_non_space( p, line_end );
+
+        /* we will copy the entire line after the protoent structure, then
+         * replace spaces with null bytes as necessary */
+
+        while (p < line_end)
+        {
+            ++alias_count;
+
+            p = next_space( p, line_end );
+            p = next_non_space( p, line_end );
+        }
+        needed_size = sizeof(*proto) + line_len + 1 + (alias_count + 1) * sizeof(char *);
+
+        if (!(proto = get_protoent_buffer( needed_size )))
+        {
+            SetLastError( WSAENOBUFS );
+            return NULL;
+        }
+
+        proto->p_proto = number;
+        proto->p_aliases = (char **)(proto + 1);
+        proto->p_name = (char *)(proto->p_aliases + alias_count + 1);
+
+        memcpy( proto->p_name, name, line_len );
+        proto->p_name[line_len] = 0;
+
+        line_end = proto->p_name + line_len;
+
+        q = proto->p_name;
+        q = next_space( q, line_end );
+        *q++ = 0;
+        q = next_non_space( q, line_end );
+        /* skip over the number */
+        q = next_space( q, line_end );
+        q = next_non_space( q, line_end );
+
+        alias_count = 0;
+        while (q < line_end)
+        {
+            proto->p_aliases[alias_count++] = q;
+            q = next_space( q, line_end );
+            if (q < line_end) *q++ = 0;
+            q = next_non_space( q, line_end );
+        }
+        proto->p_aliases[alias_count] = NULL;
+
+        *cursor = next_line;
+        return proto;
+    }
+
+    SetLastError( WSANO_DATA );
+    return NULL;
 }
 
 
@@ -1044,25 +1168,29 @@ static struct WS_protoent *create_protoent( const char *name, char **aliases, in
  */
 struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
 {
-    struct WS_protoent *retval = NULL;
-    unsigned int i;
+    static const WCHAR protocolW[] = {'p','r','o','t','o','c','o','l',0};
+    struct WS_protoent *proto;
+    const char *cursor;
+    char *file;
+    DWORD size;
 
-    for (i = 0; i < ARRAY_SIZE(protocols); i++)
+    TRACE( "%s\n", debugstr_a(name) );
+
+    if (!(file = read_etc_file( protocolW, &size )))
     {
-        if (!_strnicmp( protocols[i].names[0], name, -1 ))
-        {
-            retval = create_protoent( protocols[i].names[0], (char **)protocols[i].names + 1,
-                                      protocols[i].prot );
-            break;
-        }
-    }
-    if (!retval)
-    {
-        WARN( "protocol %s not found\n", debugstr_a(name) );
         SetLastError( WSANO_DATA );
+        return NULL;
     }
-    TRACE( "%s ret %p\n", debugstr_a(name), retval );
-    return retval;
+
+    cursor = file;
+    while ((proto = get_next_protocol( &cursor, file + size )))
+    {
+        if (!strcasecmp( proto->p_name, name ))
+            break;
+    }
+
+    HeapFree( GetProcessHeap(), 0, file );
+    return proto;
 }
 
 
@@ -1071,25 +1199,29 @@ struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
  */
 struct WS_protoent * WINAPI WS_getprotobynumber( int number )
 {
-    struct WS_protoent *retval = NULL;
-    unsigned int i;
+    static const WCHAR protocolW[] = {'p','r','o','t','o','c','o','l',0};
+    struct WS_protoent *proto;
+    const char *cursor;
+    char *file;
+    DWORD size;
 
-    for (i = 0; i < ARRAY_SIZE(protocols); i++)
+    TRACE( "%d\n", number );
+
+    if (!(file = read_etc_file( protocolW, &size )))
     {
-        if (protocols[i].prot == number)
-        {
-            retval = create_protoent( protocols[i].names[0], (char **)protocols[i].names + 1,
-                                      protocols[i].prot );
-            break;
-        }
-    }
-    if (!retval)
-    {
-        WARN( "protocol %d not found\n", number );
         SetLastError( WSANO_DATA );
+        return NULL;
     }
-    TRACE( "%d ret %p\n", number, retval );
-    return retval;
+
+    cursor = file;
+    while ((proto = get_next_protocol( &cursor, file + size )))
+    {
+        if (proto->p_proto == number)
+            break;
+    }
+
+    HeapFree( GetProcessHeap(), 0, file );
+    return proto;
 }
 
 
