@@ -913,6 +913,7 @@ struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
 {
     struct WS_hostent *host = NULL;
     char hostname[100];
+    int ret;
 
     TRACE( "%s\n", debugstr_a(name) );
 
@@ -922,9 +923,9 @@ struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
         return NULL;
     }
 
-    if (gethostname( hostname, 100 ) == -1)
+    if ((ret = unix_funcs->gethostname( hostname, 100 )))
     {
-        SetLastError( WSAENOBUFS );
+        SetLastError( ret );
         return NULL;
     }
 
@@ -973,7 +974,7 @@ struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
 int WINAPI WS_gethostname( char *name, int namelen )
 {
     char buf[256];
-    int len;
+    int len, ret;
 
     TRACE( "name %p, len %d\n", name, namelen );
 
@@ -983,9 +984,9 @@ int WINAPI WS_gethostname( char *name, int namelen )
         return -1;
     }
 
-    if (gethostname( buf, sizeof(buf) ) != 0)
+    if ((ret = unix_funcs->gethostname( buf, sizeof(buf) )))
     {
-        SetLastError( sock_get_error( errno ) );
+        SetLastError( ret );
         return -1;
     }
 
@@ -1009,6 +1010,7 @@ int WINAPI WS_gethostname( char *name, int namelen )
 int WINAPI GetHostNameW( WCHAR *name, int namelen )
 {
     char buf[256];
+    int ret;
 
     TRACE( "name %p, len %d\n", name, namelen );
 
@@ -1018,9 +1020,9 @@ int WINAPI GetHostNameW( WCHAR *name, int namelen )
         return -1;
     }
 
-    if (gethostname( buf, sizeof(buf) ))
+    if ((ret = unix_funcs->gethostname( buf, sizeof(buf) )))
     {
-        SetLastError( sock_get_error( errno ) );
+        SetLastError( ret );
         return -1;
     }
 

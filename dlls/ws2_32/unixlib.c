@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -789,11 +790,20 @@ static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const 
 #endif
 
 
+static int CDECL unix_gethostname( char *name, int len )
+{
+    if (!gethostname( name, len ))
+        return 0;
+    return errno_from_unix( errno );
+}
+
+
 static const struct unix_funcs funcs =
 {
     unix_getaddrinfo,
     unix_gethostbyaddr,
     unix_gethostbyname,
+    unix_gethostname,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )

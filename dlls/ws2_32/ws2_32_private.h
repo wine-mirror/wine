@@ -203,6 +203,7 @@ struct unix_funcs
     int (CDECL *gethostbyaddr)( const void *addr, int len, int family,
                                 struct WS(hostent) *host, unsigned int *size );
     int (CDECL *gethostbyname)( const char *name, struct WS(hostent) *host, unsigned int *size );
+    int (CDECL *gethostname)( char *name, int len );
 };
 
 extern const struct unix_funcs *unix_funcs;
