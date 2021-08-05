@@ -2486,13 +2486,11 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     SetLastError(0xdeadbeef);
     ret = HidD_GetFeature(file, report, 0);
     ok(!ret, "HidD_GetFeature succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetFeature returned error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetFeature returned error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = HidD_GetFeature(file, report, caps.FeatureReportByteLength - 1);
-    todo_wine
     ok(!ret, "HidD_GetFeature succeeded\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
        "HidD_GetFeature returned error %u\n", GetLastError());
 
@@ -2510,21 +2508,19 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     else
     {
         ok(ret, "HidD_GetFeature failed, last error %u\n", GetLastError());
-        todo_wine ok(buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0]);
+        ok(buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0]);
     }
 
     SetLastError(0xdeadbeef);
     ret = HidD_GetFeature(file, report, caps.FeatureReportByteLength);
     ok(ret, "HidD_GetFeature failed, last error %u\n", GetLastError());
-    todo_wine_if(!report_id)
     ok(report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id);
 
     value = caps.FeatureReportByteLength * 2;
     SetLastError(0xdeadbeef);
     ret = sync_ioctl(file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &value);
     ok(ret, "IOCTL_HID_GET_FEATURE failed, last error %u\n", GetLastError());
-    todo_wine ok(value == 3, "got length %u, expected 3\n", value);
-    todo_wine_if(!report_id)
+    ok(value == 3, "got length %u, expected 3\n", value);
     ok(report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id);
 
 

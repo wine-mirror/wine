@@ -299,46 +299,48 @@ static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, SHOR
     }
 }
 
-static void HID_get_feature( BASE_DEVICE_EXTENSION *ext, IRP *irp )
+static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
 {
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    HID_XFER_PACKET *packet;
-    DWORD len;
-    BYTE *out_buffer;
+    const WINE_HIDP_PREPARSED_DATA *preparsed = ext->u.pdo.preparsed_data;
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    ULONG report_len = 0, buffer_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    BYTE *buffer = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
+    BYTE report_id = HID_INPUT_VALUE_CAPS( preparsed )->report_id;
+    HID_XFER_PACKET packet;
 
-    irp->IoStatus.Information = 0;
-
-    out_buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
-    TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", ext, irpsp->Parameters.DeviceIoControl.OutputBufferLength, out_buffer);
-
-    if (!irpsp->Parameters.DeviceIoControl.OutputBufferLength || !out_buffer)
+    switch (code)
     {
-        irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+    case IOCTL_HID_GET_INPUT_REPORT:
+        report_len = preparsed->caps.InputReportByteLength;
+        break;
+    case IOCTL_HID_GET_FEATURE:
+        report_len = preparsed->caps.FeatureReportByteLength;
+        break;
+    }
+
+    if (!buffer)
+    {
+        irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
+        return;
+    }
+    if (buffer_len < report_len)
+    {
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
         return;
     }
 
-    len = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
-    packet = malloc(len);
-    packet->reportBufferLen = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
-    packet->reportBuffer = ((BYTE*)packet) + sizeof(*packet);
-    packet->reportId = out_buffer[0];
+    packet.reportId = buffer[0];
+    packet.reportBuffer = buffer;
+    packet.reportBufferLen = buffer_len;
 
-    TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet->reportId, packet->reportBufferLen, packet->reportBuffer);
-
-    call_minidriver( IOCTL_HID_GET_FEATURE, ext->u.pdo.parent_fdo, NULL, 0, packet, sizeof(*packet),
-                     &irp->IoStatus );
-
-    if (irp->IoStatus.Status == STATUS_SUCCESS)
+    if (!report_id)
     {
-        irp->IoStatus.Information = packet->reportBufferLen;
-        memcpy(out_buffer, packet->reportBuffer, packet->reportBufferLen);
+        packet.reportId = 0;
+        packet.reportBuffer++;
+        packet.reportBufferLen--;
     }
-    else
-        irp->IoStatus.Information = 0;
 
-    TRACE_(hid_report)( "Result 0x%x get %li bytes\n", irp->IoStatus.Status, irp->IoStatus.Information );
-
-    free(packet);
+    call_minidriver( code, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet), &irp->IoStatus );
 }
 
 static void HID_set_to_device( DEVICE_OBJECT *device, IRP *irp )
@@ -390,10 +392,9 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    const WINE_HIDP_PREPARSED_DATA *data = ext->u.pdo.preparsed_data;
-    BYTE report_id = HID_INPUT_VALUE_CAPS( data )->report_id;
     NTSTATUS status;
     BOOL removed;
+    ULONG code;
     KIRQL irql;
 
     irp->IoStatus.Information = 0;
@@ -411,7 +412,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         return STATUS_DELETE_PENDING;
     }
 
-    switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
+    switch ((code = irpsp->Parameters.DeviceIoControl.IoControlCode))
     {
         case IOCTL_HID_GET_POLL_FREQUENCY_MSEC:
             TRACE("IOCTL_HID_GET_POLL_FREQUENCY_MSEC\n");
@@ -469,38 +470,6 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR( irp, ext );
             break;
         }
-        case IOCTL_HID_GET_INPUT_REPORT:
-        {
-            HID_XFER_PACKET packet;
-            ULONG buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
-            BYTE *buffer = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
-
-            if (!buffer)
-            {
-                irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
-                break;
-            }
-            if (buffer_len < data->caps.InputReportByteLength)
-            {
-                irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-                break;
-            }
-
-            packet.reportId = buffer[0];
-            packet.reportBuffer = buffer;
-            packet.reportBufferLen = buffer_len;
-
-            if (!report_id)
-            {
-                packet.reportId = 0;
-                packet.reportBuffer++;
-                packet.reportBufferLen--;
-            }
-
-            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, &packet,
-                             sizeof(packet), &irp->IoStatus );
-            break;
-        }
         case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
         {
             irp->IoStatus.Information = 0;
@@ -527,7 +496,8 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
         case IOCTL_HID_GET_FEATURE:
-            HID_get_feature( ext, irp );
+        case IOCTL_HID_GET_INPUT_REPORT:
+            hid_device_xfer_report( ext, code, irp );
             break;
         case IOCTL_HID_SET_FEATURE:
         case IOCTL_HID_SET_OUTPUT_REPORT:
