@@ -343,11 +343,54 @@ static void pump_messages(void)
     }
 }
 
+#define wait_for_device_data_and_discard(device) wait_for_device_data_and_discard_(__LINE__, device)
+static BOOL wait_for_device_data_and_discard_(int line, IDirectInputDeviceA *device)
+{
+    DWORD cnt;
+    HRESULT hr;
+    DWORD start_time;
+
+    pump_messages();
+
+    start_time = GetTickCount();
+    do
+    {
+        cnt = 10;
+        hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), NULL, &cnt, 0);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceData() failed: %08x\n", hr);
+        ok_(__FILE__, line)(cnt == 0 || cnt == 1, "Unexpected number of events: %d\n", cnt);
+    } while (cnt != 1 && (GetTickCount() - start_time < 500));
+
+    return cnt == 1;
+}
+
+#define acquire_and_wait(device, valid_dik) acquire_and_wait_(__LINE__, device, valid_dik)
+static void acquire_and_wait_(int line, IDirectInputDeviceA *device, DWORD valid_dik)
+{
+    HRESULT hr;
+    int tries = 2;
+
+    hr = IDirectInputDevice_Acquire(device);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
+    do
+    {
+        keybd_event(0, valid_dik, KEYEVENTF_SCANCODE, 0);
+    } while (!wait_for_device_data_and_discard(device) && tries--);
+
+    keybd_event(0, valid_dik, KEYEVENTF_SCANCODE|KEYEVENTF_KEYUP, 0);
+    ok_(__FILE__, line)(wait_for_device_data_and_discard(device),
+                        "Timed out while waiting for injected events to be picked up by DirectInput.\n");
+}
+
 void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
 {
     HRESULT hr;
     struct overlapped_state state;
     IDirectInputDeviceA *keyboard = NULL;
+    DIPROPDWORD dp;
+
+    SetFocus(hwnd);
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &keyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
@@ -355,15 +398,21 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
     /* test overlapped slider - default value 0 */
     hr = IDirectInputDevice_SetDataFormat(keyboard, &overlapped_slider_format);
     ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
-    hr = IDirectInputDevice_Acquire(keyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
 
-    SetFocus(hwnd);
-    pump_messages();
+    dp.diph.dwSize = sizeof(DIPROPDWORD);
+    dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dp.diph.dwHow = DIPH_DEVICE;
+    dp.diph.dwObj = 0;
+    dp.dwData = 10;
+    hr = IDirectInputDevice_SetProperty(keyboard, DIPROP_BUFFERSIZE, &dp.diph);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
+
+    acquire_and_wait(keyboard, DIK_F);
 
     /* press D */
     keybd_event(0, DIK_D, KEYEVENTF_SCANCODE, 0);
-    pump_messages();
+    ok(wait_for_device_data_and_discard(keyboard),
+       "Timed out while waiting for injected events to be picked up by DirectInput.\n");
 
     memset(&state, 0xFF, sizeof(state));
     hr = IDirectInputDevice_GetDeviceState(keyboard, sizeof(state), &state);
@@ -377,7 +426,8 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
 
     /* release D */
     keybd_event(0, DIK_D, KEYEVENTF_SCANCODE|KEYEVENTF_KEYUP, 0);
-    pump_messages();
+    ok(wait_for_device_data_and_discard(keyboard),
+            "Timed out while waiting for injected events to be picked up by DirectInput.\n");
 
     hr = IDirectInputDevice_Unacquire(keyboard);
     ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
@@ -385,15 +435,13 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
     /* test overlapped pov - default value - 0xFFFFFFFF */
     hr = IDirectInputDevice_SetDataFormat(keyboard, &overlapped_pov_format);
     ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
-    hr = IDirectInputDevice_Acquire(keyboard);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
 
-    SetFocus(hwnd);
-    pump_messages();
+    acquire_and_wait(keyboard, DIK_F);
 
     /* press D */
     keybd_event(0, DIK_D, KEYEVENTF_SCANCODE, 0);
-    pump_messages();
+    ok(wait_for_device_data_and_discard(keyboard),
+       "Timed out while waiting for injected events to be picked up by DirectInput.\n");
 
     memset(&state, 0xFF, sizeof(state));
     hr = IDirectInputDevice_GetDeviceState(keyboard, sizeof(state), &state);
@@ -407,7 +455,8 @@ void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
 
     /* release D */
     keybd_event(0, DIK_D, KEYEVENTF_SCANCODE|KEYEVENTF_KEYUP, 0);
-    pump_messages();
+    ok(wait_for_device_data_and_discard(keyboard),
+            "Timed out while waiting for injected events to be picked up by DirectInput.\n");
 
     if (keyboard) IUnknown_Release(keyboard);
 }
