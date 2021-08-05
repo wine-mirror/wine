@@ -353,6 +353,32 @@ NTSTATUS WINAPI wow64_NtDeleteFile( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtDeviceIoControlFile
+ */
+NTSTATUS WINAPI wow64_NtDeviceIoControlFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    ULONG code = get_ulong( &args );
+    void *in_buf = get_ptr( &args );
+    ULONG in_len = get_ulong( &args );
+    void *out_buf = get_ptr( &args );
+    ULONG out_len = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtDeviceIoControlFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                                    iosb_32to64( &io, io32 ), code, in_buf, in_len, out_buf, out_len );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtFlushBuffersFile
  */
 NTSTATUS WINAPI wow64_NtFlushBuffersFile( UINT *args )
@@ -364,6 +390,32 @@ NTSTATUS WINAPI wow64_NtFlushBuffersFile( UINT *args )
     NTSTATUS status;
 
     status = NtFlushBuffersFile( handle, iosb_32to64( &io, io32 ));
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtFsControlFile
+ */
+NTSTATUS WINAPI wow64_NtFsControlFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    ULONG code = get_ulong( &args );
+    void *in_buf = get_ptr( &args );
+    ULONG in_len = get_ulong( &args );
+    void *out_buf = get_ptr( &args );
+    ULONG out_len = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtFsControlFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                              iosb_32to64( &io, io32 ), code, in_buf, in_len, out_buf, out_len );
     put_iosb( io32, &io );
     return status;
 }

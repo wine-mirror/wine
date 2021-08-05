@@ -75,6 +75,7 @@
     SYSCALL_ENTRY( NtDeleteFile ) \
     SYSCALL_ENTRY( NtDeleteKey ) \
     SYSCALL_ENTRY( NtDeleteValueKey ) \
+    SYSCALL_ENTRY( NtDeviceIoControlFile ) \
     SYSCALL_ENTRY( NtDisplayString ) \
     SYSCALL_ENTRY( NtDuplicateObject ) \
     SYSCALL_ENTRY( NtDuplicateToken ) \
@@ -88,6 +89,7 @@
     SYSCALL_ENTRY( NtFlushProcessWriteBuffers ) \
     SYSCALL_ENTRY( NtFlushVirtualMemory ) \
     SYSCALL_ENTRY( NtFreeVirtualMemory ) \
+    SYSCALL_ENTRY( NtFsControlFile ) \
     SYSCALL_ENTRY( NtGetContextThread ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtGetNextThread ) \
