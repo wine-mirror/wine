@@ -95,7 +95,7 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->brush_org.y   = 0;
     dc->mapperFlags         = 0;
     dc->attr->text_align    = TA_LEFT | TA_TOP | TA_NOUPDATECP;
-    dc->charExtra           = 0;
+    dc->attr->char_extra    = 0;
     dc->breakExtra          = 0;
     dc->breakRem            = 0;
     dc->attr->map_mode      = MM_TEXT;
@@ -413,7 +413,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->brush_org        = dcs->attr->brush_org;
     dc->mapperFlags      = dcs->mapperFlags;
     dc->attr->text_align = dcs->attr->text_align;
-    dc->charExtra        = dcs->charExtra;
+    dc->attr->char_extra       = dcs->attr->char_extra;
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
     dc->attr->map_mode         = dcs->attr->map_mode;
@@ -545,7 +545,6 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
     newdc->hBitmap          = dc->hBitmap;
     newdc->hPalette         = dc->hPalette;
     newdc->mapperFlags      = dc->mapperFlags;
-    newdc->charExtra        = dc->charExtra;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;

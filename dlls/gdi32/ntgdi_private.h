@@ -111,7 +111,6 @@ typedef struct tagDC
 
     UINT          font_code_page;
     DWORD         mapperFlags;       /* Font mapper flags */
-    INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
     INT           breakExtra;        /* breakTotalExtra / breakCount */
     INT           breakRem;          /* breakTotalExtra % breakCount */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */

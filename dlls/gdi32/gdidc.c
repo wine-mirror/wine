@@ -306,6 +306,15 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 }
 
 /***********************************************************************
+ *           GetTextCharacterExtra    (GDI32.@)
+ */
+INT WINAPI GetTextCharacterExtra( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->char_extra : 0x80000000;
+}
+
+/***********************************************************************
  *		GetPolyFillMode  (GDI32.@)
  */
 INT WINAPI GetPolyFillMode( HDC hdc )

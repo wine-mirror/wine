@@ -4736,20 +4736,6 @@ INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
 
 
 /***********************************************************************
- *           GetTextCharacterExtra    (GDI32.@)
- */
-INT WINAPI GetTextCharacterExtra( HDC hdc )
-{
-    INT ret;
-    DC *dc = get_dc_ptr( hdc );
-    if (!dc) return 0x80000000;
-    ret = dc->charExtra;
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
  *           SetTextCharacterExtra    (GDI32.@)
  */
 INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
@@ -4763,8 +4749,8 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
         extra = physdev->funcs->pSetTextCharacterExtra( physdev, extra );
         if (extra != 0x80000000)
         {
-            ret = dc->charExtra;
-            dc->charExtra = extra;
+            ret = dc->attr->char_extra;
+            dc->attr->char_extra = extra;
         }
         release_dc_ptr( dc );
     }
@@ -4943,14 +4929,15 @@ BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT 
         {
             for (i = 0; i < count; i++)
             {
-                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) + (i + 1) * dc->charExtra;
+                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) +
+                    (i + 1) * dc->attr->char_extra;
                 if (nfit && dx > (unsigned int)max_ext) break;
                 if (dxs) dxs[i] = dx;
             }
             if (nfit) *nfit = i;
         }
 
-        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->charExtra;
+        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->attr->char_extra;
         size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
     }
 
@@ -5080,14 +5067,15 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count, INT max_ext,
         {
             for (i = 0; i < count; i++)
             {
-                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) + (i + 1) * dc->charExtra;
+                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) +
+                    (i + 1) * dc->attr->char_extra;
                 if (nfit && dx > (unsigned int)max_ext) break;
 		if (dxs) dxs[i] = dx;
             }
             if (nfit) *nfit = i;
         }
 
-        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->charExtra;
+        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->attr->char_extra;
         size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
     }
 
