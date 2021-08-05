@@ -785,20 +785,10 @@ static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
 }
 
-static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
-{
-    return layout;
-}
-
 static BOOL CDECL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
     SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
-}
-
-static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
-{
-    return flags;
 }
 
 static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
@@ -806,19 +796,9 @@ static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF colo
     return color;
 }
 
-static INT CDECL nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
-{
-    return extra;
-}
-
 static COLORREF CDECL nulldrv_SetTextColor( PHYSDEV dev, COLORREF color )
 {
     return color;
-}
-
-static BOOL CDECL nulldrv_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
-{
-    return TRUE;
 }
 
 static INT CDECL nulldrv_StartDoc( PHYSDEV dev, const DOCINFOW *info )
@@ -951,13 +931,8 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetDIBitsToDevice,          /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
-    nulldrv_SetLayout,                  /* pSetLayout */
-    nulldrv_SetMapMode,                 /* pSetMapMode */
-    nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
-    nulldrv_SetTextCharacterExtra,      /* pSetTextCharacterExtra */
     nulldrv_SetTextColor,               /* pSetTextColor */
-    nulldrv_SetTextJustification,       /* pSetTextJustification */
     nulldrv_SetViewportExtEx,           /* pSetViewportExt */
     nulldrv_SetViewportOrgEx,           /* pSetViewportOrg */
     nulldrv_SetWindowExtEx,             /* pSetWindowExt */

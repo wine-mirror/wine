@@ -715,13 +715,8 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetDIBitsToDevice */
     dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     dibdrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */
@@ -1302,13 +1297,8 @@ static const struct gdi_dc_funcs window_driver =
     windrv_SetDIBitsToDevice,           /* pSetDIBitsToDevice */
     windrv_SetDeviceClipping,           /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     windrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */

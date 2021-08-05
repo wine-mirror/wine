@@ -194,13 +194,8 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
-    NULL,                            /* pSetLayout */
-    NULL,                            /* pSetMapMode */
-    NULL,                            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
-    NULL,                            /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
-    NULL,                            /* pSetTextJustification */
     MFDRV_SetViewportExtEx,          /* pSetViewportExtEx */
     MFDRV_SetViewportOrgEx,          /* pSetViewportOrgEx */
     MFDRV_SetWindowExtEx,            /* pSetWindowExtEx */

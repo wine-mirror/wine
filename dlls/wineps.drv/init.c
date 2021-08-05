@@ -870,13 +870,8 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetDIBitsToDevice */
     NULL,                               /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     PSDRV_SetPixel,                     /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     PSDRV_SetTextColor,                 /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */

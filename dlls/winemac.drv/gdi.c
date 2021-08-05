@@ -356,13 +356,8 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pSetDIBitsToDevice */
     NULL,                                   /* pSetDeviceClipping */
     macdrv_SetDeviceGammaRamp,              /* pSetDeviceGammaRamp */
-    NULL,                                   /* pSetLayout */
-    NULL,                                   /* pSetMapMode */
-    NULL,                                   /* pSetMapperFlags */
     NULL,                                   /* pSetPixel */
-    NULL,                                   /* pSetTextCharacterExtra */
     NULL,                                   /* pSetTextColor */
-    NULL,                                   /* pSetTextJustification */
     NULL,                                   /* pSetViewportExt */
     NULL,                                   /* pSetViewportOrg */
     NULL,                                   /* pSetWindowExt */

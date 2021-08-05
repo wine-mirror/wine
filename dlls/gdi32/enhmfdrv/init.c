@@ -129,13 +129,8 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
-    NULL,                            /* pSetLayout */
-    NULL,                            /* pSetMapMode */
-    NULL,                            /* pSetMapperFlags */
     EMFDRV_SetPixel,                 /* pSetPixel */
-    NULL,                            /* pSetTextCharacterExtra */
     EMFDRV_SetTextColor,             /* pSetTextColor */
-    NULL,                            /* pSetTextJustification */
     EMFDRV_SetViewportExtEx,         /* pSetViewportExtEx */
     EMFDRV_SetViewportOrgEx,         /* pSetViewportOrgEx */
     EMFDRV_SetWindowExtEx,           /* pSetWindowExtEx */

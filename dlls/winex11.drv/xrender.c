@@ -2247,13 +2247,8 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSetDIBitsToDevice */
     xrenderdrv_SetDeviceClipping,       /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */

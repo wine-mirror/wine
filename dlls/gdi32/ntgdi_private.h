@@ -594,7 +594,6 @@ extern BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode ) DECLSPEC_HIDDE
 extern INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
                                             INT x_src, INT y_src, UINT start, UINT lines,
                                             const void *bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
-extern INT  CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;

@@ -435,13 +435,8 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSetDIBitsToDevice */
     X11DRV_SetDeviceClipping,           /* pSetDeviceClipping */
     X11DRV_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     X11DRV_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */

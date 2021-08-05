@@ -160,13 +160,8 @@ struct gdi_dc_funcs
     INT      (CDECL *pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,BITMAPINFO*,UINT);
     VOID     (CDECL *pSetDeviceClipping)(PHYSDEV,HRGN);
     BOOL     (CDECL *pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
-    DWORD    (CDECL *pSetLayout)(PHYSDEV,DWORD);
-    INT      (CDECL *pSetMapMode)(PHYSDEV,INT);
-    DWORD    (CDECL *pSetMapperFlags)(PHYSDEV,DWORD);
     COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);
-    INT      (CDECL *pSetTextCharacterExtra)(PHYSDEV,INT);
     COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
-    BOOL     (CDECL *pSetTextJustification)(PHYSDEV,INT,INT);
     BOOL     (CDECL *pSetViewportExtEx)(PHYSDEV,INT,INT,SIZE*);
     BOOL     (CDECL *pSetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pSetWindowExtEx)(PHYSDEV,INT,INT,SIZE*);
@@ -190,7 +185,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 56
+#define WINE_GDI_DRIVER_VERSION 57
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

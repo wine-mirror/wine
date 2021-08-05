@@ -376,13 +376,8 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pSetDIBitsToDevice */
     NULL,                               /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */

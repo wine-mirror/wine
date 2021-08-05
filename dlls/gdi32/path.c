@@ -2167,13 +2167,8 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSetDIBitsToDevice */
     NULL,                               /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetLayout */
-    NULL,                               /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
     NULL,                               /* pSetWindowExt */

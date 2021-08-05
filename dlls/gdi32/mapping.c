@@ -149,11 +149,6 @@ BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_
     return TRUE;
 }
 
-INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
-{
-    return 0;
-}
-
 BOOL set_map_mode( DC *dc, int mode )
 {
     SIZE virtual_size, virtual_res;
