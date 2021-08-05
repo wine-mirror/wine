@@ -90,9 +90,9 @@ DWORD CDECL MFDRV_SetLayout( PHYSDEV dev, DWORD layout )
     return MFDRV_MetaParam2( dev, META_SETLAYOUT, HIWORD(layout), LOWORD(layout) );
 }
 
-INT CDECL MFDRV_SetMapMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetMapMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETMAPMODE, mode );
+    return metadc_param1( hdc, META_SETMAPMODE, mode );
 }
 
 BOOL CDECL MFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size )

@@ -210,22 +210,14 @@ BOOL EMFDC_ExtSelectClipRgn( DC_ATTR *dc_attr, HRGN hrgn, INT mode )
     return ret;
 }
 
-INT CDECL EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
+BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetMapMode );
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSETMAPMODE emr;
-    INT ret;
 
     emr.emr.iType = EMR_SETMAPMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
-    physDev->modifying_transform++;
-    ret = next->funcs->pSetMapMode( next, mode );
-    physDev->modifying_transform--;
-    return ret;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )

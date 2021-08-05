@@ -151,11 +151,15 @@ BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_
 
 INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    INT ret = dc->attr->map_mode;
+    return 0;
+}
+
+BOOL set_map_mode( DC *dc, int mode )
+{
     SIZE virtual_size, virtual_res;
 
-    if (mode == dc->attr->map_mode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC)) return ret;
+    if (mode == dc->attr->map_mode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC))
+        return TRUE;
 
     virtual_size = get_dc_virtual_size( dc );
     virtual_res = get_dc_virtual_res( dc );
@@ -201,12 +205,12 @@ INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
     case MM_ANISOTROPIC:
         break;
     default:
-        return 0;
+        return FALSE;
     }
     /* RTL layout is always MM_ANISOTROPIC */
     if (!(dc->attr->layout & LAYOUT_RTL)) dc->attr->map_mode = mode;
     DC_UpdateXforms( dc );
-    return ret;
+    return TRUE;
 }
 
 BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
@@ -405,25 +409,6 @@ void lp_to_dp( DC *dc, POINT *points, INT count )
                            dc->xformWorld2Vport.eDy + 0.5 );
         points++;
     }
-}
-
-/***********************************************************************
- *           SetMapMode    (GDI32.@)
- */
-INT WINAPI SetMapMode( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("%p %d\n", hdc, mode );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetMapMode );
-        ret = physdev->funcs->pSetMapMode( physdev, mode );
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 

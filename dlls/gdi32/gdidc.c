@@ -290,6 +290,22 @@ INT WINAPI GetMapMode( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetMapMode    (GDI32.@)
+ */
+INT WINAPI SetMapMode( HDC hdc, INT mode )
+{
+    DC_ATTR *dc_attr;
+    DWORD ret;
+
+    TRACE("%p %d\n", hdc, mode );
+
+    if (is_meta_dc( hdc )) return METADC_SetMapMode( hdc, mode );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    if (dc_attr->emf && !EMFDC_SetMapMode( dc_attr, mode )) return 0;
+    return NtGdiGetAndSetDCDword( hdc, NtGdiSetMapMode, mode, &ret ) ? ret : 0;
+}
+
+/***********************************************************************
  *		GetPolyFillMode  (GDI32.@)
  */
 INT WINAPI GetPolyFillMode( HDC hdc )

@@ -195,7 +195,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
     MFDRV_SetLayout,                 /* pSetLayout */
-    MFDRV_SetMapMode,                /* pSetMapMode */
+    NULL,                            /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
     MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */

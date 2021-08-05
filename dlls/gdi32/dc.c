@@ -855,6 +855,34 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
+ *           NtGdiGetAndSetDCDword    (win32u.@)
+ */
+BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *prev_value )
+{
+    BOOL ret;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
+
+    switch (method)
+    {
+    case NtGdiSetMapMode:
+        *prev_value = dc->attr->map_mode;
+        ret = set_map_mode( dc, value );
+        break;
+
+    default:
+        WARN( "unknown method %u\n", method );
+        ret = FALSE;
+        break;
+    }
+
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
  *           SetGraphicsMode    (GDI32.@)
  */
 INT WINAPI SetGraphicsMode( HDC hdc, INT mode )

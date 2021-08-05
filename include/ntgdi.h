@@ -99,6 +99,11 @@ enum
     NtGdiDPtoLP,
 };
 
+enum
+{
+    NtGdiSetMapMode = 8,
+};
+
 /* structs not compatible with native Windows */
 #ifdef __WINESRC__
 

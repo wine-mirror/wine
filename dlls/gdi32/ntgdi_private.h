@@ -454,6 +454,7 @@ extern DWORD get_system_dpi(void) DECLSPEC_HIDDEN;
 /* mapping.c */
 extern BOOL dp_to_lp( DC *dc, POINT *points, INT count ) DECLSPEC_HIDDEN;
 extern void lp_to_dp( DC *dc, POINT *points, INT count ) DECLSPEC_HIDDEN;
+extern BOOL set_map_mode( DC *dc, int mode ) DECLSPEC_HIDDEN;
 
 /* metafile.c */
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
