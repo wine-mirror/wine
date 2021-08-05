@@ -2395,64 +2395,60 @@ err:
  * Get the network parameters for the local computer.
  *
  * PARAMS
- *  pFixedInfo [Out]    buffer for network parameters
- *  pOutBufLen [In/Out] length of output buffer
+ *  info [Out]    buffer for network parameters
+ *  size [In/Out] length of output buffer
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  *
  * NOTES
- *  If pOutBufLen is less than required, the function will return
- *  ERROR_INSUFFICIENT_BUFFER, and pOutBufLen will be set to the required byte
+ *  If size is less than required, the function will return
+ *  ERROR_INSUFFICIENT_BUFFER, and size will be set to the required byte
  *  size.
  */
-DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
+DWORD WINAPI GetNetworkParams( FIXED_INFO *info, ULONG *size )
 {
-  DWORD ret, size, serverListSize;
-  LONG regReturn;
-  HKEY hKey;
+    DWORD needed = sizeof(*info), dns_size, err;
+    MIB_IPSTATS ip_stats;
+    HKEY key;
 
-  TRACE("pFixedInfo %p, pOutBufLen %p\n", pFixedInfo, pOutBufLen);
-  if (!pOutBufLen)
-    return ERROR_INVALID_PARAMETER;
+    TRACE( "info %p, size %p\n", info, size );
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-  get_dns_server_list( NULL, NULL, NULL, &serverListSize );
-  size = sizeof(FIXED_INFO) + serverListSize - sizeof(IP_ADDR_STRING);
-  if (!pFixedInfo || *pOutBufLen < size) {
-    *pOutBufLen = size;
-    return ERROR_BUFFER_OVERFLOW;
-  }
+    if (get_dns_server_list( NULL, NULL, NULL, &dns_size ) == ERROR_BUFFER_OVERFLOW)
+        needed += dns_size - sizeof(IP_ADDR_STRING);
+    if (!info || *size < needed)
+    {
+        *size = needed;
+        return ERROR_BUFFER_OVERFLOW;
+    }
 
-  memset(pFixedInfo, 0, size);
-  size = sizeof(pFixedInfo->HostName);
-  GetComputerNameExA(ComputerNameDnsHostname, pFixedInfo->HostName, &size);
-  size = sizeof(pFixedInfo->DomainName);
-  GetComputerNameExA(ComputerNameDnsDomain, pFixedInfo->DomainName, &size);
-  get_dns_server_list( NULL, &pFixedInfo->DnsServerList, (IP_ADDR_STRING *)(pFixedInfo + 1),
-                       &serverListSize );
-  /* Assume the first DNS server in the list is the "current" DNS server: */
-  pFixedInfo->CurrentDnsServer = &pFixedInfo->DnsServerList;
-  pFixedInfo->NodeType = HYBRID_NODETYPE;
-  regReturn = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-   "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
-  if (regReturn != ERROR_SUCCESS)
-    regReturn = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-     "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters", 0, KEY_READ,
-     &hKey);
-  if (regReturn == ERROR_SUCCESS)
-  {
-    DWORD size = sizeof(pFixedInfo->ScopeId);
+    *size = needed;
+    memset( info, 0, needed );
+    needed = sizeof(info->HostName);
+    GetComputerNameExA( ComputerNameDnsHostname, info->HostName, &needed );
+    needed = sizeof(info->DomainName);
+    GetComputerNameExA( ComputerNameDnsDomain, info->DomainName, &needed );
+    get_dns_server_list( NULL, &info->DnsServerList, (IP_ADDR_STRING *)(info + 1), &dns_size );
+    info->CurrentDnsServer = &info->DnsServerList;
+    info->NodeType = HYBRID_NODETYPE;
+    err = RegOpenKeyExA( HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP",
+                         0, KEY_READ, &key );
+    if (err)
+        err = RegOpenKeyExA( HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters",
+                             0, KEY_READ, &key );
+    if (!err)
+    {
+        needed = sizeof(info->ScopeId);
+        RegQueryValueExA( key, "ScopeID", NULL, NULL, (BYTE *)info->ScopeId, &needed );
+        RegCloseKey( key );
+    }
 
-    RegQueryValueExA(hKey, "ScopeID", NULL, NULL, (LPBYTE)pFixedInfo->ScopeId, &size);
-    RegCloseKey(hKey);
-  }
+    if (!GetIpStatistics( &ip_stats ))
+        info->EnableRouting = (ip_stats.u.Forwarding == MIB_IP_FORWARDING);
 
-  /* FIXME: can check whether routing's enabled in /proc/sys/net/ipv4/ip_forward
-     I suppose could also check for a listener on port 53 to set EnableDns */
-  ret = NO_ERROR;
-  TRACE("returning %d\n", ret);
-  return ret;
+    return ERROR_SUCCESS;
 }
 
 
