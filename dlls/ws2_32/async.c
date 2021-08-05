@@ -128,15 +128,15 @@ static int list_dup(char** l_src, char* ref, int item_size)
 
 /* ----- hostent */
 
-static LPARAM copy_he(void *base, int size, const struct WS_hostent *he)
+static LPARAM copy_he(void *base, int size, const struct hostent *he)
 {
     char *p;
     int needed;
-    struct WS_hostent *to = base;
+    struct hostent *to = base;
 
     if (!he) return MAKELPARAM( 0, GetLastError() );
 
-    needed = sizeof(struct WS_hostent) + strlen(he->h_name) + 1 +
+    needed = sizeof(struct hostent) + strlen(he->h_name) + 1 +
                  list_size(he->h_aliases, 0) +
                  list_size(he->h_addr_list, he->h_length );
     if (size < needed) return MAKELPARAM( needed, WSAENOBUFS );
@@ -156,7 +156,7 @@ static LPARAM copy_he(void *base, int size, const struct WS_hostent *he)
 static LPARAM async_gethostbyname( struct async_query_header *query )
 {
     struct async_query_gethostbyname *aq = CONTAINING_RECORD( query, struct async_query_gethostbyname, query );
-    struct WS_hostent *he = WS_gethostbyname( aq->host_name );
+    struct hostent *he = gethostbyname( aq->host_name );
 
     return copy_he( query->sbuf, query->sbuflen, he );
 }
@@ -164,22 +164,22 @@ static LPARAM async_gethostbyname( struct async_query_header *query )
 static LPARAM async_gethostbyaddr( struct async_query_header *query )
 {
     struct async_query_gethostbyaddr *aq = CONTAINING_RECORD( query, struct async_query_gethostbyaddr, query );
-    struct WS_hostent *he = WS_gethostbyaddr( aq->host_addr, aq->host_len, aq->host_type );
+    struct hostent *he = gethostbyaddr( aq->host_addr, aq->host_len, aq->host_type );
 
     return copy_he( query->sbuf, query->sbuflen, he );
 }
 
 /* ----- protoent */
 
-static LPARAM copy_pe(void *base, int size, const struct WS_protoent* pe)
+static LPARAM copy_pe( void *base, int size, const struct protoent *pe )
 {
     char *p;
     int needed;
-    struct WS_protoent *to = base;
+    struct protoent *to = base;
 
     if (!pe) return MAKELPARAM( 0, GetLastError() );
 
-    needed = sizeof(struct WS_protoent) + strlen(pe->p_name) + 1 + list_size(pe->p_aliases, 0);
+    needed = sizeof(struct protoent) + strlen( pe->p_name ) + 1 + list_size( pe->p_aliases, 0 );
     if (size < needed) return MAKELPARAM( needed, WSAENOBUFS );
 
     to->p_proto = pe->p_proto;
@@ -194,7 +194,7 @@ static LPARAM copy_pe(void *base, int size, const struct WS_protoent* pe)
 static LPARAM async_getprotobyname( struct async_query_header *query )
 {
     struct async_query_getprotobyname *aq = CONTAINING_RECORD( query, struct async_query_getprotobyname, query );
-    struct WS_protoent *pe = WS_getprotobyname( aq->proto_name );
+    struct protoent *pe = getprotobyname( aq->proto_name );
 
     return copy_pe( query->sbuf, query->sbuflen, pe );
 }
@@ -202,22 +202,22 @@ static LPARAM async_getprotobyname( struct async_query_header *query )
 static LPARAM async_getprotobynumber( struct async_query_header *query )
 {
     struct async_query_getprotobynumber *aq = CONTAINING_RECORD( query, struct async_query_getprotobynumber, query );
-    struct WS_protoent *pe = WS_getprotobynumber( aq->proto_number );
+    struct protoent *pe = getprotobynumber( aq->proto_number );
 
     return copy_pe( query->sbuf, query->sbuflen, pe );
 }
 
 /* ----- servent */
 
-static LPARAM copy_se(void *base, int size, const struct WS_servent* se)
+static LPARAM copy_se( void *base, int size, const struct servent *se )
 {
     char *p;
     int needed;
-    struct WS_servent *to = base;
+    struct servent *to = base;
 
     if (!se) return MAKELPARAM( 0, GetLastError() );
 
-    needed = sizeof(struct WS_servent) + strlen(se->s_proto) + strlen(se->s_name) + 2 + list_size(se->s_aliases, 0);
+    needed = sizeof(struct servent) + strlen( se->s_proto ) + strlen( se->s_name ) + 2 + list_size( se->s_aliases, 0 );
     if (size < needed) return MAKELPARAM( needed, WSAENOBUFS );
 
     to->s_port = se->s_port;
@@ -234,7 +234,7 @@ static LPARAM copy_se(void *base, int size, const struct WS_servent* se)
 static LPARAM async_getservbyname( struct async_query_header *query )
 {
     struct async_query_getservbyname *aq = CONTAINING_RECORD( query, struct async_query_getservbyname, query );
-    struct WS_servent *se = WS_getservbyname( aq->serv_name, aq->serv_proto );
+    struct servent *se = getservbyname( aq->serv_name, aq->serv_proto );
 
     return copy_se( query->sbuf, query->sbuflen, se );
 }
@@ -242,7 +242,7 @@ static LPARAM async_getservbyname( struct async_query_header *query )
 static LPARAM async_getservbyport( struct async_query_header *query )
 {
     struct async_query_getservbyport *aq = CONTAINING_RECORD( query, struct async_query_getservbyport, query );
-    struct WS_servent *se = WS_getservbyport( aq->serv_port, aq->serv_proto );
+    struct servent *se = getservbyport( aq->serv_port, aq->serv_proto );
 
     return copy_se( query->sbuf, query->sbuflen, se );
 }

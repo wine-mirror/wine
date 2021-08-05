@@ -27,26 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static inline unsigned short ntohs( unsigned short netshort )
-{
-    return RtlUshortByteSwap( netshort );
-}
-
-static inline unsigned short htons( unsigned short hostshort )
-{
-    return RtlUshortByteSwap( hostshort );
-}
-
-static inline unsigned int ntohl( unsigned int netlong )
-{
-    return RtlUlongByteSwap( netlong );
-}
-
-static inline unsigned int htonl( unsigned int hostlong )
-{
-    return RtlUlongByteSwap( hostlong );
-}
-
 static char *get_fqdn(void)
 {
     char *ret;
@@ -65,9 +45,9 @@ static char *get_fqdn(void)
 
 /* call Unix getaddrinfo, allocating a large enough buffer */
 static int do_getaddrinfo( const char *node, const char *service,
-                           const struct WS_addrinfo *hints, struct WS_addrinfo **info )
+                           const struct addrinfo *hints, struct addrinfo **info )
 {
-    struct WS_addrinfo *buffer, *new_buffer;
+    struct addrinfo *buffer, *new_buffer;
     unsigned int size = 1024;
     int ret;
 
@@ -95,8 +75,8 @@ static int do_getaddrinfo( const char *node, const char *service,
 /***********************************************************************
  *      getaddrinfo   (ws2_32.@)
  */
-int WINAPI WS_getaddrinfo( const char *node, const char *service,
-                           const struct WS_addrinfo *hints, struct WS_addrinfo **info )
+int WINAPI getaddrinfo( const char *node, const char *service,
+                        const struct addrinfo *hints, struct addrinfo **info )
 {
     char *nodev6 = NULL, *fqdn = NULL;
     int ret;
@@ -118,7 +98,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
             if (!(fqdn = get_fqdn())) return WSA_NOT_ENOUGH_MEMORY;
             node = fqdn;
         }
-        else if (!hints || hints->ai_family == WS_AF_UNSPEC || hints->ai_family == WS_AF_INET6)
+        else if (!hints || hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET6)
         {
             /* [ipv6] or [ipv6]:portnumber are supported by Windows */
             char *close_bracket;
@@ -135,7 +115,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
 
     ret = do_getaddrinfo( node, service, hints, info );
 
-    if (ret && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && node)
+    if (ret && (!hints || !(hints->ai_flags & AI_NUMERICHOST)) && node)
     {
         if (!fqdn && !(fqdn = get_fqdn()))
         {
@@ -149,11 +129,11 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
              * is invalid */
             ERR_(winediag)( "Failed to resolve your host name IP\n" );
             ret = do_getaddrinfo( NULL, service, hints, info );
-            if (!ret && hints && (hints->ai_flags & WS_AI_CANONNAME) && *info && !(*info)->ai_canonname)
+            if (!ret && hints && (hints->ai_flags & AI_CANONNAME) && *info && !(*info)->ai_canonname)
             {
-                WS_freeaddrinfo( *info );
+                freeaddrinfo( *info );
                 *info = NULL;
-                return WS_EAI_NONAME;
+                return EAI_NONAME;
             }
         }
     }
@@ -163,7 +143,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
 
     if (!ret && TRACE_ON(winsock))
     {
-        struct WS_addrinfo *ai;
+        struct addrinfo *ai;
 
         for (ai = *info; ai != NULL; ai = ai->ai_next)
         {
@@ -178,7 +158,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
 }
 
 
-static ADDRINFOEXW *addrinfo_AtoW( const struct WS_addrinfo *ai )
+static ADDRINFOEXW *addrinfo_AtoW( const struct addrinfo *ai )
 {
     ADDRINFOEXW *ret;
 
@@ -217,7 +197,7 @@ static ADDRINFOEXW *addrinfo_AtoW( const struct WS_addrinfo *ai )
     return ret;
 }
 
-static ADDRINFOEXW *addrinfo_list_AtoW( const struct WS_addrinfo *info )
+static ADDRINFOEXW *addrinfo_list_AtoW( const struct addrinfo *info )
 {
     ADDRINFOEXW *ret, *infoW;
 
@@ -235,11 +215,11 @@ static ADDRINFOEXW *addrinfo_list_AtoW( const struct WS_addrinfo *info )
     return ret;
 }
 
-static struct WS_addrinfo *addrinfo_WtoA( const struct WS_addrinfoW *ai )
+static struct addrinfo *addrinfo_WtoA( const struct addrinfoW *ai )
 {
-    struct WS_addrinfo *ret;
+    struct addrinfo *ret;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(struct WS_addrinfo) ))) return NULL;
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(struct addrinfo) ))) return NULL;
     ret->ai_flags     = ai->ai_flags;
     ret->ai_family    = ai->ai_family;
     ret->ai_socktype  = ai->ai_socktype;
@@ -260,13 +240,13 @@ static struct WS_addrinfo *addrinfo_WtoA( const struct WS_addrinfoW *ai )
     }
     if (ai->ai_addr)
     {
-        if (!(ret->ai_addr = HeapAlloc( GetProcessHeap(), 0, sizeof(struct WS_sockaddr) )))
+        if (!(ret->ai_addr = HeapAlloc( GetProcessHeap(), 0, sizeof(struct sockaddr) )))
         {
             HeapFree( GetProcessHeap(), 0, ret->ai_canonname );
             HeapFree( GetProcessHeap(), 0, ret );
             return NULL;
         }
-        memcpy( ret->ai_addr, ai->ai_addr, sizeof(struct WS_sockaddr) );
+        memcpy( ret->ai_addr, ai->ai_addr, sizeof(struct sockaddr) );
     }
     return ret;
 }
@@ -278,7 +258,7 @@ struct getaddrinfo_args
     ADDRINFOEXW **result;
     char *nodename;
     char *servname;
-    struct WS_addrinfo *hints;
+    struct addrinfo *hints;
 };
 
 static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *context)
@@ -287,15 +267,15 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     OVERLAPPED *overlapped = args->overlapped;
     HANDLE event = overlapped->hEvent;
     LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine = args->completion_routine;
-    struct WS_addrinfo *res;
+    struct addrinfo *res;
     int ret;
 
-    ret = WS_getaddrinfo( args->nodename, args->servname, args->hints, &res );
+    ret = getaddrinfo( args->nodename, args->servname, args->hints, &res );
     if (res)
     {
         *args->result = addrinfo_list_AtoW(res);
         overlapped->u.Pointer = args->result;
-        WS_freeaddrinfo(res);
+        freeaddrinfo(res);
     }
 
     HeapFree( GetProcessHeap(), 0, args->nodename );
@@ -307,13 +287,13 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     if (event) SetEvent( event );
 }
 
-static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
-                            const struct WS_addrinfo *hints, ADDRINFOEXW **res, OVERLAPPED *overlapped,
+static int getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
+                            const struct addrinfo *hints, ADDRINFOEXW **res, OVERLAPPED *overlapped,
                             LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine )
 {
-    int ret = WS_EAI_MEMORY, len, i;
+    int ret = EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
-    struct WS_addrinfo *resA;
+    struct addrinfo *resA;
     WCHAR *local_nodenameW = (WCHAR *)nodename;
 
     *res = NULL;
@@ -329,7 +309,7 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
         }
         if (nodename[i])
         {
-            if (hints && (hints->ai_flags & WS_AI_DISABLE_IDN_ENCODING))
+            if (hints && (hints->ai_flags & AI_DISABLE_IDN_ENCODING))
             {
                 /* Name requires conversion but it was disabled */
                 ret = WSAHOST_NOT_FOUND;
@@ -341,7 +321,7 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
             if (!len)
             {
                 ERR("Failed to convert %s to punycode\n", debugstr_w(nodename));
-                ret = WS_EAI_FAIL;
+                ret = EAI_FAIL;
                 goto end;
             }
             if (!(local_nodenameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto end;
@@ -379,7 +359,7 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
         args->servname = servnameA;
         if (hints)
         {
-            args->hints = (struct WS_addrinfo *)(args + 1);
+            args->hints = (struct addrinfo *)(args + 1);
             args->hints->ai_flags    = hints->ai_flags;
             args->hints->ai_family   = hints->ai_family;
             args->hints->ai_socktype = hints->ai_socktype;
@@ -401,11 +381,11 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
         return ERROR_IO_PENDING;
     }
 
-    ret = WS_getaddrinfo( nodenameA, servnameA, hints, &resA );
+    ret = getaddrinfo( nodenameA, servnameA, hints, &resA );
     if (!ret)
     {
         *res = addrinfo_list_AtoW( resA );
-        WS_freeaddrinfo( resA );
+        freeaddrinfo( resA );
     }
 
 end:
@@ -422,7 +402,7 @@ end:
  */
 int WINAPI GetAddrInfoExW( const WCHAR *name, const WCHAR *servname, DWORD namespace,
                            GUID *namespace_id, const ADDRINFOEXW *hints, ADDRINFOEXW **result,
-                           struct WS_timeval *timeout, OVERLAPPED *overlapped,
+                           struct timeval *timeout, OVERLAPPED *overlapped,
                            LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle )
 {
     int ret;
@@ -439,7 +419,7 @@ int WINAPI GetAddrInfoExW( const WCHAR *name, const WCHAR *servname, DWORD names
     if (handle)
         FIXME( "Unsupported cancel handle\n" );
 
-    ret = WS_getaddrinfoW( name, servname, (struct WS_addrinfo *)hints, result, overlapped, completion_routine );
+    ret = getaddrinfoW( name, servname, (struct addrinfo *)hints, result, overlapped, completion_routine );
     if (ret) return ret;
     if (handle) *handle = (HANDLE)0xdeadbeef;
     return 0;
@@ -471,17 +451,17 @@ int WINAPI GetAddrInfoExCancel( HANDLE *handle )
  */
 int WINAPI GetAddrInfoW(const WCHAR *nodename, const WCHAR *servname, const ADDRINFOW *hints, ADDRINFOW **res)
 {
-    struct WS_addrinfo *hintsA = NULL;
+    struct addrinfo *hintsA = NULL;
     ADDRINFOEXW *resex;
-    int ret = WS_EAI_MEMORY;
+    int ret = EAI_MEMORY;
 
     TRACE( "nodename %s, servname %s, hints %p, result %p\n",
            debugstr_w(nodename), debugstr_w(servname), hints, res );
 
     *res = NULL;
     if (hints) hintsA = addrinfo_WtoA( hints );
-    ret = WS_getaddrinfoW( nodename, servname, hintsA, &resex, NULL, NULL );
-    WS_freeaddrinfo( hintsA );
+    ret = getaddrinfoW( nodename, servname, hintsA, &resex, NULL, NULL );
+    freeaddrinfo( hintsA );
     if (ret) return ret;
 
     if (resex)
@@ -502,7 +482,7 @@ int WINAPI GetAddrInfoW(const WCHAR *nodename, const WCHAR *servname, const ADDR
 /***********************************************************************
  *      freeaddrinfo   (ws2_32.@)
  */
-void WINAPI WS_freeaddrinfo( struct WS_addrinfo *info )
+void WINAPI freeaddrinfo( struct addrinfo *info )
 {
     TRACE( "%p\n", info );
 
@@ -568,7 +548,7 @@ void WINAPI FreeAddrInfoExW( ADDRINFOEXW *ai )
 /***********************************************************************
  *      getnameinfo   (ws2_32.@)
  */
-int WINAPI WS_getnameinfo( const SOCKADDR *addr, WS_socklen_t addr_len, char *host,
+int WINAPI getnameinfo( const SOCKADDR *addr, socklen_t addr_len, char *host,
                            DWORD host_len, char *serv, DWORD serv_len, int flags )
 {
     TRACE( "addr %s, addr_len %d, host %p, host_len %u, serv %p, serv_len %d, flags %#x\n",
@@ -581,21 +561,21 @@ int WINAPI WS_getnameinfo( const SOCKADDR *addr, WS_socklen_t addr_len, char *ho
 /***********************************************************************
  *      GetNameInfoW   (ws2_32.@)
  */
-int WINAPI GetNameInfoW( const SOCKADDR *addr, WS_socklen_t addr_len, WCHAR *host,
+int WINAPI GetNameInfoW( const SOCKADDR *addr, socklen_t addr_len, WCHAR *host,
                          DWORD host_len, WCHAR *serv, DWORD serv_len, int flags )
 {
     int ret;
     char *hostA = NULL, *servA = NULL;
 
     if (host && (!(hostA = HeapAlloc( GetProcessHeap(), 0, host_len ))))
-        return WS_EAI_MEMORY;
+        return EAI_MEMORY;
     if (serv && (!(servA = HeapAlloc( GetProcessHeap(), 0, serv_len ))))
     {
         HeapFree( GetProcessHeap(), 0, hostA );
-        return WS_EAI_MEMORY;
+        return EAI_MEMORY;
     }
 
-    ret = WS_getnameinfo( addr, addr_len, hostA, host_len, servA, serv_len, flags );
+    ret = getnameinfo( addr, addr_len, hostA, host_len, servA, serv_len, flags );
     if (!ret)
     {
         if (host) MultiByteToWideChar( CP_ACP, 0, hostA, -1, host, host_len );
@@ -608,7 +588,7 @@ int WINAPI GetNameInfoW( const SOCKADDR *addr, WS_socklen_t addr_len, WCHAR *hos
 }
 
 
-static struct WS_hostent *get_hostent_buffer( unsigned int size )
+static struct hostent *get_hostent_buffer( unsigned int size )
 {
     struct per_thread_data *data = get_per_thread_data();
     if (data->he_buffer)
@@ -632,12 +612,12 @@ static struct WS_hostent *get_hostent_buffer( unsigned int size )
  * the list has no items ("aliases" and "addresses" must be
  * at least "1", a truly empty list is invalid).
  */
-static struct WS_hostent *create_hostent( char *name, int alias_count, int aliases_size,
-                                          int address_count, int address_length )
+static struct hostent *create_hostent( char *name, int alias_count, int aliases_size,
+                                       int address_count, int address_length )
 {
-    struct WS_hostent *p_to;
+    struct hostent *p_to;
     char *p;
-    unsigned int size = sizeof(struct WS_hostent), i;
+    unsigned int size = sizeof(struct hostent), i;
 
     size += strlen(name) + 1;
     size += alias_count * sizeof(char *);
@@ -679,10 +659,10 @@ static struct WS_hostent *create_hostent( char *name, int alias_count, int alias
 /***********************************************************************
  *      gethostbyaddr   (ws2_32.51)
  */
-struct WS_hostent * WINAPI WS_gethostbyaddr( const char *addr, int len, int family )
+struct hostent * WINAPI gethostbyaddr( const char *addr, int len, int family )
 {
     unsigned int size = 1024;
-    struct WS_hostent *host;
+    struct hostent *host;
     int ret;
 
     if (!(host = get_hostent_buffer( size )))
@@ -701,7 +681,7 @@ struct WS_hostent * WINAPI WS_gethostbyaddr( const char *addr, int len, int fami
 
 struct route
 {
-    struct WS_in_addr addr;
+    struct in_addr addr;
     IF_INDEX interface;
     DWORD metric, default_route;
 };
@@ -727,11 +707,11 @@ static int __cdecl compare_routes_by_metric_asc( const void *left, const void *r
  * Please note that the returned hostent is only freed when the thread
  * closes and is replaced if another hostent is requested.
  */
-static struct WS_hostent *get_local_ips( char *hostname )
+static struct hostent *get_local_ips( char *hostname )
 {
     int numroutes = 0, i, j, default_routes = 0;
     IP_ADAPTER_INFO *adapters = NULL, *k;
-    struct WS_hostent *hostlist = NULL;
+    struct hostent *hostlist = NULL;
     MIB_IPFORWARDTABLE *routes = NULL;
     struct route *route_addrs = NULL;
     DWORD adap_size, route_size, n;
@@ -788,7 +768,7 @@ static struct WS_hostent *get_local_ips( char *hostname )
         /* If no IP is found in the next step (for whatever reason)
          * then fall back to the magic loopback address.
          */
-        memcpy( &route_addrs[numroutes].addr.WS_s_addr, magic_loopback_addr, 4 );
+        memcpy( &route_addrs[numroutes].addr.s_addr, magic_loopback_addr, 4 );
         numroutes++;
     }
     if (numroutes == 0)
@@ -802,20 +782,20 @@ static struct WS_hostent *get_local_ips( char *hostname )
             char *ip = k->IpAddressList.IpAddress.String;
 
             if (route_addrs[i].interface == k->Index)
-                route_addrs[i].addr.WS_s_addr = WS_inet_addr(ip);
+                route_addrs[i].addr.s_addr = inet_addr(ip);
         }
     }
 
     /* Allocate a hostent and enough memory for all the IPs,
      * including the NULL at the end of the list.
      */
-    hostlist = create_hostent( hostname, 1, 0, numroutes+1, sizeof(struct WS_in_addr) );
+    hostlist = create_hostent( hostname, 1, 0, numroutes+1, sizeof(struct in_addr) );
     if (hostlist == NULL)
         goto cleanup;
     hostlist->h_addr_list[numroutes] = NULL;
     hostlist->h_aliases[0] = NULL;
-    hostlist->h_addrtype = WS_AF_INET;
-    hostlist->h_length = sizeof(struct WS_in_addr);
+    hostlist->h_addrtype = AF_INET;
+    hostlist->h_length = sizeof(struct in_addr);
 
     /* Reorder the entries before placing them in the host list. Windows expects
      * the IP list in order from highest priority to lowest (the critical thing
@@ -825,7 +805,7 @@ static struct WS_hostent *get_local_ips( char *hostname )
         qsort( route_addrs, numroutes, sizeof(struct route), compare_routes_by_metric_asc );
 
     for (i = 0; i < numroutes; i++)
-        *(struct WS_in_addr *)hostlist->h_addr_list[i] = route_addrs[i].addr;
+        *(struct in_addr *)hostlist->h_addr_list[i] = route_addrs[i].addr;
 
 cleanup:
     HeapFree( GetProcessHeap(), 0, route_addrs );
@@ -838,9 +818,9 @@ cleanup:
 /***********************************************************************
  *      gethostbyname   (ws2_32.52)
  */
-struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
+struct hostent * WINAPI gethostbyname( const char *name )
 {
-    struct WS_hostent *host = NULL;
+    struct hostent *host = NULL;
     char hostname[100];
     int ret;
 
@@ -900,7 +880,7 @@ struct WS_hostent * WINAPI WS_gethostbyname( const char *name )
 /***********************************************************************
  *      gethostname   (ws2_32.57)
  */
-int WINAPI WS_gethostname( char *name, int namelen )
+int WINAPI gethostname( char *name, int namelen )
 {
     char buf[256];
     int len, ret;
@@ -1017,7 +997,8 @@ static char *next_non_space( const char *p, const char *end )
     return (char *)p;
 }
 
-static struct WS_protoent *get_protoent_buffer( unsigned int size )
+
+static struct protoent *get_protoent_buffer( unsigned int size )
 {
     struct per_thread_data *data = get_per_thread_data();
 
@@ -1035,7 +1016,7 @@ static struct WS_protoent *get_protoent_buffer( unsigned int size )
 /* Parse the first valid line into a protoent structure, returning NULL if
  * there is no valid line. Updates cursor to point to the start of the next
  * line or the end of the file. */
-static struct WS_protoent *get_next_protocol( const char **cursor, const char *end )
+static struct protoent *get_next_protocol( const char **cursor, const char *end )
 {
     const char *p = *cursor;
 
@@ -1044,7 +1025,7 @@ static struct WS_protoent *get_next_protocol( const char **cursor, const char *e
         const char *line_end, *next_line;
         size_t needed_size, line_len;
         unsigned int alias_count = 0;
-        struct WS_protoent *proto;
+        struct protoent *proto;
         const char *name;
         int number;
         char *q;
@@ -1143,9 +1124,9 @@ static struct WS_protoent *get_next_protocol( const char **cursor, const char *e
 /***********************************************************************
  *      getprotobyname   (ws2_32.53)
  */
-struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
+struct protoent * WINAPI getprotobyname( const char *name )
 {
-    struct WS_protoent *proto;
+    struct protoent *proto;
     const char *cursor;
     char *file;
     DWORD size;
@@ -1173,9 +1154,9 @@ struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
 /***********************************************************************
  *      getprotobynumber   (ws2_32.54)
  */
-struct WS_protoent * WINAPI WS_getprotobynumber( int number )
+struct protoent * WINAPI getprotobynumber( int number )
 {
-    struct WS_protoent *proto;
+    struct protoent *proto;
     const char *cursor;
     char *file;
     DWORD size;
@@ -1200,7 +1181,7 @@ struct WS_protoent * WINAPI WS_getprotobynumber( int number )
 }
 
 
-static struct WS_servent *get_servent_buffer( int size )
+static struct servent *get_servent_buffer( int size )
 {
     struct per_thread_data *data = get_per_thread_data();
     if (data->se_buffer)
@@ -1217,7 +1198,7 @@ static struct WS_servent *get_servent_buffer( int size )
 /* Parse the first valid line into a servent structure, returning NULL if
  * there is no valid line. Updates cursor to point to the start of the next
  * line or the end of the file. */
-static struct WS_servent *get_next_service( const char **cursor, const char *end )
+static struct servent *get_next_service( const char **cursor, const char *end )
 {
     const char *p = *cursor;
 
@@ -1226,7 +1207,7 @@ static struct WS_servent *get_next_service( const char **cursor, const char *end
         const char *line_end, *next_line;
         size_t needed_size, line_len;
         unsigned int alias_count = 0;
-        struct WS_servent *serv;
+        struct servent *serv;
         const char *name;
         int port;
         char *q;
@@ -1334,9 +1315,9 @@ static struct WS_servent *get_next_service( const char **cursor, const char *end
 /***********************************************************************
  *      getservbyname   (ws2_32.55)
  */
-struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto )
+struct servent * WINAPI getservbyname( const char *name, const char *proto )
 {
-    struct WS_servent *serv;
+    struct servent *serv;
     const char *cursor;
     char *file;
     DWORD size;
@@ -1364,9 +1345,9 @@ struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto
 /***********************************************************************
  *      getservbyport   (ws2_32.56)
  */
-struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
+struct servent * WINAPI getservbyport( int port, const char *proto )
 {
-    struct WS_servent *serv;
+    struct servent *serv;
     const char *cursor;
     char *file;
     DWORD size;
@@ -1394,9 +1375,9 @@ struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
 /***********************************************************************
  *      inet_ntoa   (ws2_32.12)
  */
-char * WINAPI WS_inet_ntoa( struct WS_in_addr in )
+char * WINAPI inet_ntoa( struct in_addr in )
 {
-    unsigned int long_ip = ntohl( in.WS_s_addr );
+    unsigned int long_ip = ntohl( in.s_addr );
     struct per_thread_data *data = get_per_thread_data();
 
     sprintf( data->ntoa_buffer, "%u.%u.%u.%u",
@@ -1412,7 +1393,7 @@ char * WINAPI WS_inet_ntoa( struct WS_in_addr in )
 /***********************************************************************
  *      inet_ntop   (ws2_32.@)
  */
-const char * WINAPI WS_inet_ntop( int family, void *addr, char *buffer, SIZE_T len )
+const char * WINAPI inet_ntop( int family, void *addr, char *buffer, SIZE_T len )
 {
     NTSTATUS status;
     ULONG size = min( len, (ULONG)-1 );
@@ -1426,12 +1407,12 @@ const char * WINAPI WS_inet_ntop( int family, void *addr, char *buffer, SIZE_T l
 
     switch (family)
     {
-    case WS_AF_INET:
+    case AF_INET:
     {
         status = RtlIpv4AddressToStringExA( (IN_ADDR *)addr, 0, buffer, &size );
         break;
     }
-    case WS_AF_INET6:
+    case AF_INET6:
     {
         status = RtlIpv6AddressToStringExA( (IN6_ADDR *)addr, 0, 0, buffer, &size );
         break;
@@ -1449,7 +1430,7 @@ const char * WINAPI WS_inet_ntop( int family, void *addr, char *buffer, SIZE_T l
 /***********************************************************************
  *      inet_pton   (ws2_32.@)
  */
-int WINAPI WS_inet_pton( int family, const char *addr, void *buffer )
+int WINAPI inet_pton( int family, const char *addr, void *buffer )
 {
     NTSTATUS status;
     const char *terminator;
@@ -1464,10 +1445,10 @@ int WINAPI WS_inet_pton( int family, const char *addr, void *buffer )
 
     switch (family)
     {
-    case WS_AF_INET:
+    case AF_INET:
         status = RtlIpv4StringToAddressA(addr, TRUE, &terminator, buffer);
         break;
-    case WS_AF_INET6:
+    case AF_INET6:
         status = RtlIpv6StringToAddressA(addr, &terminator, buffer);
         break;
     default:
@@ -1503,7 +1484,7 @@ int WINAPI InetPtonW( int family, const WCHAR *addr, void *buffer )
     }
     WideCharToMultiByte( CP_ACP, 0, addr, -1, addrA, len, NULL, NULL );
 
-    ret = WS_inet_pton( family, addrA, buffer );
+    ret = inet_pton( family, addrA, buffer );
     if (!ret) SetLastError( WSAEINVAL );
 
     HeapFree( GetProcessHeap(), 0, addrA );
@@ -1515,12 +1496,12 @@ int WINAPI InetPtonW( int family, const WCHAR *addr, void *buffer )
  */
 const WCHAR * WINAPI InetNtopW( int family, void *addr, WCHAR *buffer, SIZE_T len )
 {
-    char bufferA[WS_INET6_ADDRSTRLEN];
+    char bufferA[INET6_ADDRSTRLEN];
     PWSTR ret = NULL;
 
     TRACE( "family %d, addr %p, buffer %p, len %ld\n", family, addr, buffer, len );
 
-    if (WS_inet_ntop( family, addr, bufferA, sizeof(bufferA) ))
+    if (inet_ntop( family, addr, bufferA, sizeof(bufferA) ))
     {
         if (MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, len ))
             ret = buffer;
@@ -1535,7 +1516,7 @@ const WCHAR * WINAPI InetNtopW( int family, void *addr, WCHAR *buffer, SIZE_T le
  *      WSAStringToAddressA   (ws2_32.@)
  */
 int WINAPI WSAStringToAddressA( char *string, int family, WSAPROTOCOL_INFOA *protocol_info,
-                                struct WS_sockaddr *addr, int *addr_len )
+                                struct sockaddr *addr, int *addr_len )
 {
     NTSTATUS status;
 
@@ -1554,17 +1535,17 @@ int WINAPI WSAStringToAddressA( char *string, int family, WSAPROTOCOL_INFOA *pro
 
     switch (family)
     {
-    case WS_AF_INET:
+    case AF_INET:
     {
-        struct WS_sockaddr_in *addr4 = (struct WS_sockaddr_in *)addr;
+        struct sockaddr_in *addr4 = (struct sockaddr_in *)addr;
 
-        if (*addr_len < sizeof(struct WS_sockaddr_in))
+        if (*addr_len < sizeof(struct sockaddr_in))
         {
-            *addr_len = sizeof(struct WS_sockaddr_in);
+            *addr_len = sizeof(struct sockaddr_in);
             SetLastError( WSAEFAULT );
             return -1;
         }
-        memset( addr, 0, sizeof(struct WS_sockaddr_in) );
+        memset( addr, 0, sizeof(struct sockaddr_in) );
 
         status = RtlIpv4StringToAddressExA( string, FALSE, &addr4->sin_addr, &addr4->sin_port );
         if (status != STATUS_SUCCESS)
@@ -1572,21 +1553,21 @@ int WINAPI WSAStringToAddressA( char *string, int family, WSAPROTOCOL_INFOA *pro
             SetLastError( WSAEINVAL );
             return -1;
         }
-        addr4->sin_family = WS_AF_INET;
-        *addr_len = sizeof(struct WS_sockaddr_in);
+        addr4->sin_family = AF_INET;
+        *addr_len = sizeof(struct sockaddr_in);
         return 0;
     }
-    case WS_AF_INET6:
+    case AF_INET6:
     {
-        struct WS_sockaddr_in6 *addr6 = (struct WS_sockaddr_in6 *)addr;
+        struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
 
-        if (*addr_len < sizeof(struct WS_sockaddr_in6))
+        if (*addr_len < sizeof(struct sockaddr_in6))
         {
-            *addr_len = sizeof(struct WS_sockaddr_in6);
+            *addr_len = sizeof(struct sockaddr_in6);
             SetLastError( WSAEFAULT );
             return -1;
         }
-        memset( addr, 0, sizeof(struct WS_sockaddr_in6) );
+        memset( addr, 0, sizeof(struct sockaddr_in6) );
 
         status = RtlIpv6StringToAddressExA( string, &addr6->sin6_addr, &addr6->sin6_scope_id, &addr6->sin6_port );
         if (status != STATUS_SUCCESS)
@@ -1594,8 +1575,8 @@ int WINAPI WSAStringToAddressA( char *string, int family, WSAPROTOCOL_INFOA *pro
             SetLastError( WSAEINVAL );
             return -1;
         }
-        addr6->sin6_family = WS_AF_INET6;
-        *addr_len = sizeof(struct WS_sockaddr_in6);
+        addr6->sin6_family = AF_INET6;
+        *addr_len = sizeof(struct sockaddr_in6);
         return 0;
     }
     default:
@@ -1611,7 +1592,7 @@ int WINAPI WSAStringToAddressA( char *string, int family, WSAPROTOCOL_INFOA *pro
  *      WSAStringToAddressW   (ws2_32.@)
  */
 int WINAPI WSAStringToAddressW( WCHAR *string, int family, WSAPROTOCOL_INFOW *protocol_info,
-                                struct WS_sockaddr *addr, int *addr_len )
+                                struct sockaddr *addr, int *addr_len )
 {
     WSAPROTOCOL_INFOA infoA;
     WSAPROTOCOL_INFOA *protocol_infoA = NULL;
@@ -1657,7 +1638,7 @@ int WINAPI WSAStringToAddressW( WCHAR *string, int family, WSAPROTOCOL_INFOW *pr
 /***********************************************************************
  *      WSAAddressToStringA   (ws2_32.@)
  */
-int WINAPI WSAAddressToStringA( struct WS_sockaddr *addr, DWORD addr_len,
+int WINAPI WSAAddressToStringA( struct sockaddr *addr, DWORD addr_len,
                                 WSAPROTOCOL_INFOA *info, char *string, DWORD *string_len )
 {
     char buffer[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
@@ -1670,13 +1651,13 @@ int WINAPI WSAAddressToStringA( struct WS_sockaddr *addr, DWORD addr_len,
 
     switch (addr->sa_family)
     {
-    case WS_AF_INET:
+    case AF_INET:
     {
-        const struct WS_sockaddr_in *addr4 = (const struct WS_sockaddr_in *)addr;
-        unsigned int long_ip = ntohl( addr4->sin_addr.WS_s_addr );
+        const struct sockaddr_in *addr4 = (const struct sockaddr_in *)addr;
+        unsigned int long_ip = ntohl( addr4->sin_addr.s_addr );
         char *p;
 
-        if (addr_len < sizeof(struct WS_sockaddr_in)) return -1;
+        if (addr_len < sizeof(struct sockaddr_in)) return -1;
         sprintf( buffer, "%u.%u.%u.%u:%u",
                  (long_ip >> 24) & 0xff,
                  (long_ip >> 16) & 0xff,
@@ -1688,17 +1669,17 @@ int WINAPI WSAAddressToStringA( struct WS_sockaddr *addr, DWORD addr_len,
         if (!addr4->sin_port) *p = 0;
         break;
     }
-    case WS_AF_INET6:
+    case AF_INET6:
     {
-        struct WS_sockaddr_in6 *addr6 = (struct WS_sockaddr_in6 *)addr;
+        struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
         size_t len;
 
         buffer[0] = 0;
-        if (addr_len < sizeof(struct WS_sockaddr_in6)) return -1;
+        if (addr_len < sizeof(struct sockaddr_in6)) return -1;
         if (addr6->sin6_port)
             strcpy( buffer, "[" );
         len = strlen( buffer );
-        if (!WS_inet_ntop( WS_AF_INET6, &addr6->sin6_addr, &buffer[len], sizeof(buffer) - len ))
+        if (!inet_ntop( AF_INET6, &addr6->sin6_addr, &buffer[len], sizeof(buffer) - len ))
         {
             SetLastError( WSAEINVAL );
             return -1;
@@ -1734,7 +1715,7 @@ int WINAPI WSAAddressToStringA( struct WS_sockaddr *addr, DWORD addr_len,
 /***********************************************************************
  *      WSAAddressToStringW   (ws2_32.@)
  */
-int WINAPI WSAAddressToStringW( struct WS_sockaddr *addr, DWORD addr_len,
+int WINAPI WSAAddressToStringW( struct sockaddr *addr, DWORD addr_len,
                                 WSAPROTOCOL_INFOW *info, WCHAR *string, DWORD *string_len )
 {
     INT ret;
@@ -1753,20 +1734,20 @@ int WINAPI WSAAddressToStringW( struct WS_sockaddr *addr, DWORD addr_len,
 /***********************************************************************
  *      inet_addr   (ws2_32.11)
  */
-WS_u_long WINAPI WS_inet_addr( const char *str )
+u_long WINAPI inet_addr( const char *str )
 {
-    WS_u_long addr;
+    u_long addr;
 
-    if (WS_inet_pton( WS_AF_INET, str, &addr ) == 1)
+    if (inet_pton( AF_INET, str, &addr ) == 1)
         return addr;
-    return WS_INADDR_NONE;
+    return INADDR_NONE;
 }
 
 
 /***********************************************************************
  *      htonl   (ws2_32.8)
  */
-WS_u_long WINAPI WS_htonl( WS_u_long hostlong )
+u_long WINAPI WS_htonl( u_long hostlong )
 {
     return htonl( hostlong );
 }
@@ -1775,7 +1756,7 @@ WS_u_long WINAPI WS_htonl( WS_u_long hostlong )
 /***********************************************************************
  *      htons   (ws2_32.9)
  */
-WS_u_short WINAPI WS_htons( WS_u_short hostshort )
+u_short WINAPI WS_htons( u_short hostshort )
 {
     return htons( hostshort );
 }
@@ -1784,7 +1765,7 @@ WS_u_short WINAPI WS_htons( WS_u_short hostshort )
 /***********************************************************************
  *      WSAHtonl   (ws2_32.@)
  */
-int WINAPI WSAHtonl( SOCKET s, WS_u_long hostlong, WS_u_long *netlong )
+int WINAPI WSAHtonl( SOCKET s, u_long hostlong, u_long *netlong )
 {
     if (netlong)
     {
@@ -1799,7 +1780,7 @@ int WINAPI WSAHtonl( SOCKET s, WS_u_long hostlong, WS_u_long *netlong )
 /***********************************************************************
  *      WSAHtons   (ws2_32.@)
  */
-int WINAPI WSAHtons( SOCKET s, WS_u_short hostshort, WS_u_short *netshort )
+int WINAPI WSAHtons( SOCKET s, u_short hostshort, u_short *netshort )
 {
     if (netshort)
     {
@@ -1814,7 +1795,7 @@ int WINAPI WSAHtons( SOCKET s, WS_u_short hostshort, WS_u_short *netshort )
 /***********************************************************************
  *      ntohl   (ws2_32.14)
  */
-WS_u_long WINAPI WS_ntohl( WS_u_long netlong )
+u_long WINAPI WS_ntohl( u_long netlong )
 {
     return ntohl( netlong );
 }
@@ -1823,7 +1804,7 @@ WS_u_long WINAPI WS_ntohl( WS_u_long netlong )
 /***********************************************************************
  *      ntohs   (ws2_32.15)
  */
-WS_u_short WINAPI WS_ntohs( WS_u_short netshort )
+u_short WINAPI WS_ntohs( u_short netshort )
 {
     return ntohs( netshort );
 }
@@ -1832,7 +1813,7 @@ WS_u_short WINAPI WS_ntohs( WS_u_short netshort )
 /***********************************************************************
  *      WSANtohl   (ws2_32.@)
  */
-int WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long *hostlong )
+int WINAPI WSANtohl( SOCKET s, u_long netlong, u_long *hostlong )
 {
     if (!hostlong) return WSAEFAULT;
 
@@ -1844,7 +1825,7 @@ int WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long *hostlong )
 /***********************************************************************
  *      WSANtohs   (ws2_32.@)
  */
-int WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short *hostshort )
+int WINAPI WSANtohs( SOCKET s, u_short netshort, u_short *hostshort )
 {
     if (!hostshort) return WSAEFAULT;
 

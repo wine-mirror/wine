@@ -62,15 +62,15 @@
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
-const char *debugstr_sockaddr( const struct WS_sockaddr *addr ) DECLSPEC_HIDDEN;
+const char *debugstr_sockaddr( const struct sockaddr *addr ) DECLSPEC_HIDDEN;
 
 struct per_thread_data
 {
     HANDLE sync_event; /* event to wait on for synchronous ioctls */
     int opentype;
-    struct WS_hostent *he_buffer;
-    struct WS_servent *se_buffer;
-    struct WS_protoent *pe_buffer;
+    struct hostent *he_buffer;
+    struct servent *se_buffer;
+    struct protoent *pe_buffer;
     int he_len;
     int se_len;
     int pe_len;

@@ -101,6 +101,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winternl.h"
+#define USE_WS_PREFIX
 #include "winsock2.h"
 #include "ws2tcpip.h"
 #include "wsipx.h"
