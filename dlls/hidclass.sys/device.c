@@ -77,32 +77,6 @@ static void WINAPI read_cancel_routine(DEVICE_OBJECT *device, IRP *irp)
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
-static NTSTATUS copy_packet_into_buffer(HID_XFER_PACKET *packet, BYTE* buffer, ULONG buffer_length, ULONG *out_length)
-{
-    BOOL zero_id = (packet->reportId == 0);
-
-    *out_length = 0;
-
-    if ((zero_id && buffer_length > packet->reportBufferLen) ||
-        (!zero_id && buffer_length >= packet->reportBufferLen))
-    {
-        if (packet->reportId != 0)
-        {
-            memcpy(buffer, packet->reportBuffer, packet->reportBufferLen);
-            *out_length = packet->reportBufferLen;
-        }
-        else
-        {
-            buffer[0] = 0;
-            memcpy(&buffer[1], packet->reportBuffer, packet->reportBufferLen);
-            *out_length = packet->reportBufferLen + 1;
-        }
-        return STATUS_SUCCESS;
-    }
-    else
-        return STATUS_BUFFER_OVERFLOW;
-}
-
 static void hid_device_send_input(DEVICE_OBJECT *device, HID_XFER_PACKET *packet)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
@@ -145,24 +119,24 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
     IRP *irp;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     UINT buffer_size = RingBuffer_GetBufferSize(ext->u.pdo.ring_buffer);
+    const WINE_HIDP_PREPARSED_DATA *data = ext->u.pdo.preparsed_data;
     HID_XFER_PACKET *packet;
 
     packet = malloc(buffer_size);
 
     while((irp = pop_irp_from_queue(ext)))
     {
-        int ptr;
-        ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
+        BYTE *buffer = irp->AssociatedIrp.SystemBuffer, *dst = buffer;
+        int ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
 
         RingBuffer_Read(ext->u.pdo.ring_buffer, ptr, packet, &buffer_size);
         if (buffer_size)
         {
-            ULONG out_length;
-            IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
-            packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
             TRACE_(hid_report)("Processing Request (%i)\n",ptr);
-            irp->IoStatus.Status = copy_packet_into_buffer( packet, irp->AssociatedIrp.SystemBuffer, irpsp->Parameters.Read.Length, &out_length );
-            irp->IoStatus.Information = out_length;
+            if (!data->reports[0].reportID) *dst++ = 0;
+            memcpy( dst, packet + 1, data->caps.InputReportByteLength - (dst - buffer) );
+            irp->IoStatus.Information = packet->reportBufferLen;
+            irp->IoStatus.Status = STATUS_SUCCESS;
         }
         else
         {
@@ -483,8 +457,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             HID_XFER_PACKET *packet;
             ULONG buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
             UINT packet_size = sizeof(*packet) + buffer_len;
-            BYTE *buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
-            ULONG out_length;
+            BYTE *buffer = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority ), *dst = buffer;
 
             if (!buffer)
             {
@@ -510,7 +483,10 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
                              sizeof(*packet), &irp->IoStatus );
 
             if (irp->IoStatus.Status == STATUS_SUCCESS)
-                irp->IoStatus.Status = copy_packet_into_buffer( packet, buffer, buffer_len, &out_length );
+            {
+                if (!data->reports[0].reportID) *dst++ = 0;
+                memcpy( dst, packet + 1, data->caps.InputReportByteLength - (dst - buffer) );
+            }
             free(packet);
             break;
         }
@@ -568,6 +544,7 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
     const WINE_HIDP_PREPARSED_DATA *data = ext->u.pdo.preparsed_data;
     UINT buffer_size = RingBuffer_GetBufferSize(ext->u.pdo.ring_buffer);
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    BYTE *buffer = irp->AssociatedIrp.SystemBuffer, *dst = buffer;
     NTSTATUS status;
     int ptr = -1;
     BOOL removed;
@@ -599,13 +576,10 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
 
     if (buffer_size)
     {
-        IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-        ULONG out_length;
-        packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
-        TRACE_(hid_report)("Got Packet %p %i\n", packet->reportBuffer, packet->reportBufferLen);
-
-        irp->IoStatus.Status = copy_packet_into_buffer( packet, irp->AssociatedIrp.SystemBuffer, irpsp->Parameters.Read.Length, &out_length );
-        irp->IoStatus.Information = out_length;
+        if (!data->reports[0].reportID) *dst++ = 0;
+        memcpy( dst, packet + 1, data->caps.InputReportByteLength - (dst - buffer) );
+        irp->IoStatus.Information = packet->reportBufferLen;
+        irp->IoStatus.Status = STATUS_SUCCESS;
     }
     else
     {
