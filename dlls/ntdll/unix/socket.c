@@ -638,7 +638,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     {
         req->status = status;
         req->total  = information;
-        req->async  = server_async( handle, &async->io, event, apc, apc_user, io );
+        req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         req->oob    = !!(unix_flags & MSG_OOB);
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -781,7 +781,7 @@ static NTSTATUS sock_poll( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 
     SERVER_START_REQ( poll_socket )
     {
-        req->async = server_async( handle, &async->io, event, apc, apc_user, io );
+        req->async = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         req->timeout = params->timeout;
         wine_server_add_data( req, input, params->count * sizeof(*input) );
         wine_server_set_reply( req, async->sockets, params->count * sizeof(async->sockets[0]) );
@@ -944,7 +944,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     {
         req->status = status;
         req->total  = async->sent_len;
-        req->async  = server_async( handle, &async->io, event, apc, apc_user, io );
+        req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
@@ -1124,7 +1124,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     {
         req->status = STATUS_PENDING;
         req->total  = 0;
-        req->async  = server_async( handle, &async->io, event, apc, apc_user, io );
+        req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
@@ -1144,10 +1144,12 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
 static void complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                             IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR information )
 {
+    ULONG_PTR iosb_ptr = iosb_client_ptr(io);
+
     io->Status = status;
     io->Information = information;
     if (event) NtSetEvent( event, NULL );
-    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, (ULONG_PTR)io, 0 );
+    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
     if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
 }
 

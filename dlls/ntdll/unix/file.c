@@ -4811,7 +4811,7 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
 
     SERVER_START_REQ( read )
     {
-        req->async = server_async( handle, &async->io, event, apc, apc_context, io );
+        req->async = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
         req->pos   = offset ? offset->QuadPart : 0;
         wine_server_set_reply( req, buffer, size );
         status = virtual_locked_server_call( req );
@@ -4849,7 +4849,7 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
 
     SERVER_START_REQ( write )
     {
-        req->async = server_async( handle, &async->io, event, apc, apc_context, io );
+        req->async = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
         req->pos   = offset ? offset->QuadPart : 0;
         wine_server_add_data( req, buffer, size );
         status = wine_server_call( req );
@@ -4889,7 +4889,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     SERVER_START_REQ( ioctl )
     {
         req->code        = code;
-        req->async       = server_async( handle, &async->io, event, apc, apc_context, io );
+        req->async       = server_async( handle, &async->io, event, apc, apc_context, iosb_client_ptr(io) );
         wine_server_add_data( req, in_buffer, in_size );
         if ((code & 3) != METHOD_BUFFERED) wine_server_add_data( req, out_buffer, out_size );
         wine_server_set_reply( req, out_buffer, out_size );
@@ -5048,7 +5048,7 @@ static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL
 /* register an async I/O for a file read; helper for NtReadFile */
 static NTSTATUS register_async_file_read( HANDLE handle, HANDLE event,
                                           PIO_APC_ROUTINE apc, void *apc_user,
-                                          IO_STATUS_BLOCK *iosb, void *buffer,
+                                          client_ptr_t iosb, void *buffer,
                                           ULONG already, ULONG length, BOOL avail_mode )
 {
     struct async_fileio_read *fileio;
@@ -5116,6 +5116,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
     struct io_timeouts timeouts;
     NTSTATUS status, ret_status;
     ULONG total = 0;
+    client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
     BOOL send_completion = FALSE, async_read, timeout_init_done = FALSE;
@@ -5179,7 +5180,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
         if ((status = get_io_timeouts( handle, type, length, TRUE, &timeouts ))) goto err;
         if (timeouts.interval)
         {
-            status = register_async_file_read( handle, event, apc, apc_user, io,
+            status = register_async_file_read( handle, event, apc, apc_user, iosb_ptr,
                                                buffer, total, length, FALSE );
             goto err;
         }
@@ -5235,7 +5236,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
                 status = STATUS_SUCCESS;
                 goto done;
             }
-            status = register_async_file_read( handle, event, apc, apc_user, io,
+            status = register_async_file_read( handle, event, apc, apc_user, iosb_ptr,
                                                buffer, total, length, avail_mode );
             goto err;
         }
@@ -5284,7 +5285,7 @@ err:
         TRACE("= SUCCESS (%u)\n", total);
         if (event) NtSetEvent( event, NULL );
         if (apc && (!status || async_read)) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
-                                              (ULONG_PTR)apc_user, (ULONG_PTR)io, 0 );
+                                                              (ULONG_PTR)apc_user, iosb_ptr, 0 );
     }
     else
     {
@@ -5311,6 +5312,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     unsigned int options;
     NTSTATUS status;
     ULONG pos = 0, total = 0;
+    client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
     BOOL send_completion = FALSE;
@@ -5364,8 +5366,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     io->Information = total;
     TRACE("= 0x%08x (%u)\n", status, total);
     if (event) NtSetEvent( event, NULL );
-    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
-                               (ULONG_PTR)apc_user, (ULONG_PTR)io, 0 );
+    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
     if (send_completion) add_completion( file, cvalue, status, total, TRUE );
 
     return STATUS_PENDING;
@@ -5390,6 +5391,7 @@ NTSTATUS WINAPI NtWriteFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
     struct io_timeouts timeouts;
     NTSTATUS status, ret_status;
     ULONG total = 0;
+    client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
     BOOL send_completion = FALSE, async_write, append_write = FALSE, timeout_init_done = FALSE;
@@ -5532,7 +5534,7 @@ NTSTATUS WINAPI NtWriteFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
             {
                 req->type   = ASYNC_TYPE_WRITE;
                 req->count  = length;
-                req->async  = server_async( handle, &fileio->io, event, apc, apc_user, io );
+                req->async  = server_async( handle, &fileio->io, event, apc, apc_user, iosb_ptr );
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -5587,8 +5589,7 @@ err:
         io->Information = total;
         TRACE("= SUCCESS (%u)\n", total);
         if (event) NtSetEvent( event, NULL );
-        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
-                                   (ULONG_PTR)apc_user, (ULONG_PTR)io, 0 );
+        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
     }
     else
     {
@@ -5613,6 +5614,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     unsigned int options;
     NTSTATUS status;
     ULONG pos = 0, total = 0;
+    client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
     BOOL send_completion = FALSE;
@@ -5677,8 +5679,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
         io->Information = total;
         TRACE("= SUCCESS (%u)\n", total);
         if (event) NtSetEvent( event, NULL );
-        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
-                                   (ULONG_PTR)apc_user, (ULONG_PTR)io, 0 );
+        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
     }
     else
     {
@@ -5894,7 +5895,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
 
         SERVER_START_REQ( flush )
         {
-            req->async = server_async( handle, &async->io, NULL, NULL, NULL, io );
+            req->async = server_async( handle, &async->io, NULL, NULL, NULL, iosb_client_ptr(io) );
             ret = wine_server_call( req );
             wait_handle = wine_server_ptr_handle( reply->event );
             if (wait_handle && ret != STATUS_PENDING)
@@ -6168,7 +6169,7 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
         req->filter    = filter;
         req->want_data = (buffer != NULL);
         req->subtree   = subtree;
-        req->async     = server_async( handle, &fileio->io, event, apc, apc_context, iosb );
+        req->async     = server_async( handle, &fileio->io, event, apc, apc_context, iosb_client_ptr(iosb) );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -6390,13 +6391,13 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 {
     int fd, needs_close;
     struct stat st;
+    NTSTATUS status;
 
-    io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
-    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
+    if (status == STATUS_BAD_DEVICE_TYPE)
     {
         struct async_irp *async;
         HANDLE wait_handle;
-        NTSTATUS status;
 
         if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
             return STATUS_NO_MEMORY;
@@ -6405,7 +6406,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 
         SERVER_START_REQ( get_volume_info )
         {
-            req->async = server_async( handle, &async->io, NULL, NULL, NULL, io );
+            req->async = server_async( handle, &async->io, NULL, NULL, NULL, iosb_client_ptr(io) );
             req->handle = wine_server_obj_handle( handle );
             req->info_class = info_class;
             wine_server_set_reply( req, buffer, length );
@@ -6422,7 +6423,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         if (wait_handle) status = wait_async( wait_handle, FALSE );
         return status;
     }
-    else if (io->u.Status) return io->u.Status;
+    else if (status) return io->u.Status = status;
 
     io->u.Status = STATUS_NOT_IMPLEMENTED;
     io->Information = 0;

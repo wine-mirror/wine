@@ -337,12 +337,12 @@ static inline void mutex_unlock( pthread_mutex_t *mutex )
 }
 
 static inline async_data_t server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
-                                         PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
+                                         PIO_APC_ROUTINE apc, void *apc_context, client_ptr_t iosb )
 {
     async_data_t async;
     async.handle      = wine_server_obj_handle( handle );
     async.user        = wine_server_client_ptr( user );
-    async.iosb        = wine_server_client_ptr( io );
+    async.iosb        = iosb;
     async.event       = wine_server_obj_handle( event );
     async.apc         = wine_server_client_ptr( apc );
     async.apc_context = wine_server_client_ptr( apc_context );
@@ -352,6 +352,11 @@ static inline async_data_t server_async( HANDLE handle, struct async_fileio *use
 static inline NTSTATUS wait_async( HANDLE handle, BOOL alertable )
 {
     return NtWaitForSingleObject( handle, alertable, NULL );
+}
+
+static inline client_ptr_t iosb_client_ptr( IO_STATUS_BLOCK *io )
+{
+    return wine_server_client_ptr( io );
 }
 
 #ifdef _WIN64
