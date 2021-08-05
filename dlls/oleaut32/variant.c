@@ -42,14 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
-static CRITICAL_SECTION cache_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &cache_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": cache_cs") }
-};
-static CRITICAL_SECTION cache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* Convert a variant from one type to another */
 static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
@@ -1518,23 +1510,8 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
   static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',',','$',0,'.',',' };
-  static VARIANT_NUMBER_CHARS lastChars;
-  static LCID lastLcid = -1;
-  static DWORD lastFlags = 0;
   LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR buff[4];
-
-  /* To make caching thread-safe, a critical section is needed */
-  EnterCriticalSection(&cache_cs);
-
-  /* Asking for default locale entries is very expensive: It is a registry
-     server call. So cache one locally, as Microsoft does it too */
-  if(lcid == lastLcid && dwFlags == lastFlags)
-  {
-    memcpy(lpChars, &lastChars, sizeof(defaultChars));
-    LeaveCriticalSection(&cache_cs);
-    return;
-  }
 
   memcpy(lpChars, &defaultChars, sizeof(defaultChars));
   GET_NUMBER_TEXT(LOCALE_SNEGATIVESIGN, cNegativeSymbol);
@@ -1555,11 +1532,6 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
   }
   TRACE("lcid 0x%x, cCurrencyLocal=%d,%d %s\n", lcid, lpChars->cCurrencyLocal,
         lpChars->cCurrencyLocal2, wine_dbgstr_w(buff));
-
-  memcpy(&lastChars, lpChars, sizeof(defaultChars));
-  lastLcid = lcid;
-  lastFlags = dwFlags;
-  LeaveCriticalSection(&cache_cs);
 }
 
 /* Number Parsing States */
