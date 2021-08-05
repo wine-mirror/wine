@@ -285,13 +285,12 @@ void HID_find_gamepads(xinput_controller *devices)
         else if (!init_controller(&devices[i], ppd, &caps, device, detail->DevicePath))
             WARN("ignoring HID device, failed to initialize\n");
         else
-            goto done;
+            continue;
 
         CloseHandle(device);
         HidD_FreePreparsedData(ppd);
     }
 
-done:
     SetupDiDestroyDeviceInfoList(device_info_set);
     LeaveCriticalSection(&xinput_crit);
 }
