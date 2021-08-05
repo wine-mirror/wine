@@ -177,9 +177,8 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
 static DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-
-    IO_STATUS_BLOCK irp_status;
     HID_XFER_PACKET *packet;
+    IO_STATUS_BLOCK io;
     DWORD rc;
 
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
@@ -196,9 +195,9 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportId = 0;
 
             call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, packet,
-                             sizeof(*packet), &irp_status );
+                             sizeof(*packet), &io );
 
-            if (irp_status.Status == STATUS_SUCCESS)
+            if (io.Status == STATUS_SUCCESS)
             {
                 RingBuffer_Write(ext->u.pdo.ring_buffer, packet);
                 hid_device_send_input(device, packet);
@@ -221,15 +220,15 @@ static DWORD CALLBACK hid_device_thread(void *args)
         while(1)
         {
             call_minidriver( IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
-                             packet->reportBuffer, report_size, &irp_status );
+                             packet->reportBuffer, report_size, &io );
 
             rc = WaitForSingleObject(ext->u.pdo.halt_event, 0);
             if (rc == WAIT_OBJECT_0)
                 exit_now = TRUE;
 
-            if (!exit_now && irp_status.Status == STATUS_SUCCESS)
+            if (!exit_now && io.Status == STATUS_SUCCESS)
             {
-                packet->reportBufferLen = irp_status.Information;
+                packet->reportBufferLen = io.Information;
                 if (ext->u.pdo.preparsed_data->reports[0].reportID)
                     packet->reportId = packet->reportBuffer[0];
                 else
