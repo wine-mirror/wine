@@ -1223,34 +1223,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     return ERROR_SUCCESS;
 }
 
-static void sockaddr_in_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sockaddr_in *src )
-{
-    SOCKADDR_IN *s = (SOCKADDR_IN *)dst;
-
-    s->sin_family = WS_AF_INET;
-    s->sin_port = src->sin_port;
-    memcpy( &s->sin_addr, &src->sin_addr, sizeof(IN_ADDR) );
-    memset( (char *)s + FIELD_OFFSET( SOCKADDR_IN, sin_zero ), 0,
-            sizeof(SOCKADDR_STORAGE) - FIELD_OFFSET( SOCKADDR_IN, sin_zero) );
-}
-
-#if defined(HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6) || \
-    (defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS)) || \
-    defined(HAVE_RES_GETSERVERS)
-static void sockaddr_in6_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sockaddr_in6 *src )
-{
-    SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)dst;
-
-    s->sin6_family = WS_AF_INET6;
-    s->sin6_port = src->sin6_port;
-    s->sin6_flowinfo = src->sin6_flowinfo;
-    memcpy( &s->sin6_addr, &src->sin6_addr, sizeof(IN6_ADDR) );
-    s->sin6_scope_id = src->sin6_scope_id;
-    memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
-                    sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
-}
-#endif
-
 #ifdef HAVE_STRUCT___RES_STATE
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
 /* Call once per thread on systems that have per-thread _res. */
@@ -1269,129 +1241,6 @@ static void initialise_resolver(void)
     if ((_res.options & RES_INIT) == 0)
         res_init();
     LeaveCriticalSection(&res_init_cs);
-}
-
-#ifdef HAVE_RES_GETSERVERS
-static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
-{
-    struct __res_state *state = &_res;
-    int i, found = 0, total;
-    SOCKADDR_STORAGE *addr = servers;
-    union res_sockaddr_union *buf;
-
-    initialise_resolver();
-
-    total = res_getservers( state, NULL, 0 );
-
-    if ((!servers || !num) && !ip4_only) return total;
-
-    buf = HeapAlloc( GetProcessHeap(), 0, total * sizeof(union res_sockaddr_union) );
-    total = res_getservers( state, buf, total );
-
-    for (i = 0; i < total; i++)
-    {
-        if (buf[i].sin6.sin6_family == AF_INET6 && ip4_only) continue;
-        if (buf[i].sin.sin_family != AF_INET && buf[i].sin6.sin6_family != AF_INET6) continue;
-
-        found++;
-        if (!servers || !num) continue;
-
-        if (buf[i].sin6.sin6_family == AF_INET6)
-        {
-            sockaddr_in6_to_WS_storage( addr, &buf[i].sin6 );
-        }
-        else
-        {
-            sockaddr_in_to_WS_storage( addr, &buf[i].sin );
-        }
-        if (++addr >= servers + num) break;
-    }
-
-    HeapFree( GetProcessHeap(), 0, buf );
-    return found;
-}
-#else
-
-static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
-{
-    int i, ip6_count = 0;
-    SOCKADDR_STORAGE *addr;
-
-    initialise_resolver();
-
-#ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
-    ip6_count = _res._u._ext.nscount6;
-#endif
-
-    if (!servers || !num)
-    {
-        num = _res.nscount;
-        if (ip4_only) num -= ip6_count;
-        return num;
-    }
-
-    for (i = 0, addr = servers; addr < (servers + num) && i < _res.nscount; i++)
-    {
-#ifdef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
-        if (_res._u._ext.nsaddrs[i] && _res._u._ext.nsaddrs[i]->sin6_family == AF_INET6)
-        {
-            if (ip4_only) continue;
-            sockaddr_in6_to_WS_storage( addr, _res._u._ext.nsaddrs[i] );
-        }
-        else
-#endif
-        {
-            sockaddr_in_to_WS_storage( addr, _res.nsaddr_list + i );
-        }
-        addr++;
-    }
-    return addr - servers;
-}
-#endif
-#elif defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS)
-
-static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
-{
-    extern struct res_state *__res_get_state( void );
-    extern int __res_getservers( struct res_state *, struct sockaddr_storage *, int );
-    struct res_state *state = __res_get_state();
-    int i, found = 0, total = __res_getservers( state, NULL, 0 );
-    SOCKADDR_STORAGE *addr = servers;
-    struct sockaddr_storage *buf;
-
-    if ((!servers || !num) && !ip4_only) return total;
-
-    buf = HeapAlloc( GetProcessHeap(), 0, total * sizeof(struct sockaddr_storage) );
-    total = __res_getservers( state, buf, total );
-
-    for (i = 0; i < total; i++)
-    {
-        if (buf[i].ss_family == AF_INET6 && ip4_only) continue;
-        if (buf[i].ss_family != AF_INET && buf[i].ss_family != AF_INET6) continue;
-
-        found++;
-        if (!servers || !num) continue;
-
-        if (buf[i].ss_family == AF_INET6)
-        {
-            sockaddr_in6_to_WS_storage( addr, (struct sockaddr_in6 *)(buf + i) );
-        }
-        else
-        {
-            sockaddr_in_to_WS_storage( addr, (struct sockaddr_in *)(buf + i) );
-        }
-        if (++addr >= servers + num) break;
-    }
-
-    HeapFree( GetProcessHeap(), 0, buf );
-    return found;
-}
-#else
-
-static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
-{
-    FIXME("Unimplemented on this system\n");
-    return 0;
 }
 #endif
 
@@ -2528,45 +2377,55 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
  * a single server address may be placed at list if *len is at least
  * sizeof(IP_ADDR_STRING) long.  Otherwise, list->Next is set to firstDynamic,
  * and assumes that all remaining DNS servers are contiguously located
- * beginning at firstDynamic.  On input, *len is assumed to be the total number
+ * beginning at second.  On input, *len is assumed to be the total number
  * of bytes available for all DNS servers, and is ignored if list is NULL.
  * On return, *len is set to the total number of bytes required for all DNS
  * servers.
  * Returns ERROR_BUFFER_OVERFLOW if *len is insufficient,
  * ERROR_SUCCESS otherwise.
  */
-static DWORD get_dns_server_list(PIP_ADDR_STRING list,
- PIP_ADDR_STRING firstDynamic, DWORD *len)
+static DWORD get_dns_server_list( IP_ADDR_STRING *list, IP_ADDR_STRING *second, DWORD *len )
 {
-  DWORD size;
-  int num = get_dns_servers( NULL, 0, TRUE );
+    char buf[FIELD_OFFSET(IP4_ARRAY, AddrArray[3])];
+    IP4_ARRAY *servers = (IP4_ARRAY *)buf;
+    DWORD needed, num, err, i, array_len = sizeof(buf);
+    IP_ADDR_STRING *ptr;
 
-  size = num * sizeof(IP_ADDR_STRING);
-  if (!list || *len < size) {
-    *len = size;
-    return ERROR_BUFFER_OVERFLOW;
-  }
-  *len = size;
-  if (num > 0) {
-    PIP_ADDR_STRING ptr;
-    int i;
-    SOCKADDR_STORAGE *addr = HeapAlloc( GetProcessHeap(), 0, num * sizeof(SOCKADDR_STORAGE) );
+    for (;;)
+    {
+        err = DnsQueryConfig( DnsConfigDnsServerList, 0, NULL, NULL, servers, &array_len );
+        num = (array_len - FIELD_OFFSET(IP4_ARRAY, AddrArray[0])) / sizeof(IP4_ADDRESS);
+        needed = num * sizeof(IP_ADDR_STRING);
+        if (!list || *len < needed)
+        {
+            *len = needed;
+            err = ERROR_BUFFER_OVERFLOW;
+            goto err;
+        }
+        if (!err) break;
 
-    get_dns_servers( addr, num, TRUE );
-
-    for (i = 0, ptr = list; i < num; i++, ptr = ptr->Next) {
-        RtlIpv4AddressToStringA((IN_ADDR *)&((struct sockaddr_in *)(addr + i))->sin_addr.s_addr,
-       ptr->IpAddress.String);
-      if (i == num - 1)
-        ptr->Next = NULL;
-      else if (i == 0)
-        ptr->Next = firstDynamic;
-      else
-        ptr->Next = (PIP_ADDR_STRING)((PBYTE)ptr + sizeof(IP_ADDR_STRING));
+        if ((char *)servers != buf) heap_free( servers );
+        servers = heap_alloc( array_len );
+        if (!servers)
+        {
+            err = ERROR_NOT_ENOUGH_MEMORY;
+            goto err;
+        }
     }
-    HeapFree( GetProcessHeap(), 0, addr );
-  }
-  return ERROR_SUCCESS;
+
+    *len = needed;
+
+    for (i = 0, ptr = list; i < num; i++, ptr = ptr->Next)
+    {
+        RtlIpv4AddressToStringA( (IN_ADDR *)&servers->AddrArray[i], ptr->IpAddress.String );
+        if (i == num - 1) ptr->Next = NULL;
+        else if (i == 0) ptr->Next = second;
+        else ptr->Next = ptr + 1;
+    }
+
+err:
+    if ((char *)servers != buf) heap_free( servers );
+    return err;
 }
 
 /******************************************************************
