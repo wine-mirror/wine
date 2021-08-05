@@ -223,12 +223,12 @@ failed:
 
 void HID_find_gamepads(xinput_controller *devices)
 {
+    char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
     HDEVINFO device_info_set;
     GUID hid_guid;
     SP_DEVICE_INTERFACE_DATA interface_data;
-    SP_DEVICE_INTERFACE_DETAIL_DATA_W *data;
     PHIDP_PREPARSED_DATA ppd;
-    DWORD detail_size = MAX_PATH * sizeof(WCHAR);
     HANDLE device;
     HIDP_CAPS caps;
     NTSTATUS status;
@@ -251,9 +251,7 @@ void HID_find_gamepads(xinput_controller *devices)
     HidD_GetHidGuid(&hid_guid);
 
     device_info_set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-
-    if (!(data = malloc(sizeof(*data) + detail_size))) goto done;
-    data->cbSize = sizeof(*data);
+    detail->cbSize = sizeof(*detail);
 
     ZeroMemory(&interface_data, sizeof(interface_data));
     interface_data.cbSize = sizeof(interface_data);
@@ -262,17 +260,16 @@ void HID_find_gamepads(xinput_controller *devices)
     while (SetupDiEnumDeviceInterfaces(device_info_set, NULL, &hid_guid, idx++,
            &interface_data))
     {
-        if (!SetupDiGetDeviceInterfaceDetailW(device_info_set,
-                &interface_data, data, sizeof(*data) + detail_size, NULL, NULL))
+        if (!SetupDiGetDeviceInterfaceDetailW(device_info_set, &interface_data, detail, sizeof(buffer), NULL, NULL))
             continue;
 
-        if (!wcsstr(data->DevicePath, L"IG_"))
+        if (!wcsstr(detail->DevicePath, L"IG_"))
             continue;
 
-        if (find_opened_device(devices, data, &i)) continue; /* already opened */
+        if (find_opened_device(devices, detail, &i)) continue; /* already opened */
         if (i == XUSER_MAX_COUNT) break; /* no more slots */
 
-        device = CreateFileW(data->DevicePath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+        device = CreateFileW(detail->DevicePath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
         if (device == INVALID_HANDLE_VALUE)
             continue;
 
@@ -285,7 +282,7 @@ void HID_find_gamepads(xinput_controller *devices)
             WARN("ignoring HID device, unsupported usage page %04x\n", caps.UsagePage);
         else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK && caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
             WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
-        else if (!init_controller(&devices[i], ppd, &caps, device, data->DevicePath))
+        else if (!init_controller(&devices[i], ppd, &caps, device, detail->DevicePath))
             WARN("ignoring HID device, failed to initialize\n");
         else
             goto done;
@@ -295,7 +292,6 @@ void HID_find_gamepads(xinput_controller *devices)
     }
 
 done:
-    free(data);
     SetupDiDestroyDeviceInfoList(device_info_set);
     LeaveCriticalSection(&xinput_crit);
 }
