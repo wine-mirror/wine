@@ -5856,9 +5856,11 @@ static void test_occlusion_query(void)
 
     get_query_data(context, query, &data, sizeof(data));
     /* This test occasionally succeeds with CSMT enabled because of a race condition. */
-if (0)
-    todo_wine ok(data.dword[0] == 0x1000 && !data.dword[1],
-            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    if (0)
+    {
+        todo_wine ok(data.dword[0] == 0x1000 && !data.dword[1],
+                "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    }
 
     ID3D11Asynchronous_Release(query);
     ID3D11RenderTargetView_Release(rtv);
