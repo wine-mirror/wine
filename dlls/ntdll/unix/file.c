@@ -1966,7 +1966,7 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
     char *unix_name;
-    IO_STATUS_BLOCK io;
+    IO_STATUS_BLOCK io = {0};
     HANDLE mountmgr;
     NTSTATUS status;
     int letter;
@@ -4937,7 +4937,7 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
     {
         /* GetCommTimeouts */
         SERIAL_TIMEOUTS st;
-        IO_STATUS_BLOCK io;
+        IO_STATUS_BLOCK io = {0};
 
         status = NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io,
                                         IOCTL_SERIAL_GET_TIMEOUTS, NULL, 0, &st, sizeof(st) );
@@ -5024,7 +5024,7 @@ static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL
     {
         /* GetCommTimeouts */
         SERIAL_TIMEOUTS st;
-        IO_STATUS_BLOCK io;
+        IO_STATUS_BLOCK io = {0};
 
         status = NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io,
                                         IOCTL_SERIAL_GET_TIMEOUTS, NULL, 0, &st, sizeof(st) );

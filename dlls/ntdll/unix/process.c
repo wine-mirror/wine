@@ -407,7 +407,7 @@ static void set_stdio_fd( int stdin_fd, int stdout_fd )
  */
 static BOOL is_unix_console_handle( HANDLE handle )
 {
-    IO_STATUS_BLOCK io;
+    IO_STATUS_BLOCK io = {0};
     return !NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io, IOCTL_CONDRV_IS_UNIX,
                                    NULL, 0, NULL, 0 );
 }

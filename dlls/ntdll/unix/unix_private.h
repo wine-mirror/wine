@@ -354,8 +354,42 @@ static inline NTSTATUS wait_async( HANDLE handle, BOOL alertable )
     return NtWaitForSingleObject( handle, alertable, NULL );
 }
 
+static inline void set_async_iosb( client_ptr_t iosb, NTSTATUS status, ULONG_PTR info )
+{
+    if (!iosb) return;
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        struct iosb32
+        {
+            NTSTATUS Status;
+            ULONG    Information;
+        } *io = wine_server_get_ptr( iosb );
+        io->Status = status;
+        io->Information = info;
+    }
+    else
+#endif
+    {
+        IO_STATUS_BLOCK *io = wine_server_get_ptr( iosb );
+#ifdef NONAMELESSUNION
+        io->u.Status = status;
+#else
+        io->Status = status;
+#endif
+        io->Information = info;
+    }
+}
+
 static inline client_ptr_t iosb_client_ptr( IO_STATUS_BLOCK *io )
 {
+#ifdef _WIN64
+#ifdef NONAMELESSUNION
+    if (io && NtCurrentTeb()->WowTebOffset) return wine_server_client_ptr( io->u.Pointer );
+#else
+    if (io && NtCurrentTeb()->WowTebOffset) return wine_server_client_ptr( io->Pointer );
+#endif
+#endif
     return wine_server_client_ptr( io );
 }
 
