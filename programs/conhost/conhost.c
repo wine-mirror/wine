@@ -68,6 +68,7 @@ static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
     if (screen_buffer->console->active == screen_buffer)
         screen_buffer->console->active = NULL;
     wine_rb_remove( &screen_buffer_map, &screen_buffer->entry );
+    free( screen_buffer->font.face_name );
     free( screen_buffer->data );
     free( screen_buffer );
 }
@@ -85,8 +86,6 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     screen_buffer->cursor_visible = 1;
     screen_buffer->width          = width;
     screen_buffer->height         = height;
-    screen_buffer->font.weight    = FW_NORMAL;
-    screen_buffer->font.pitch_family = FIXED_PITCH | FF_DONTCARE;
 
     if (console->active)
     {
@@ -96,15 +95,22 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         screen_buffer->win.bottom = console->active->win.bottom - console->active->win.top;
         screen_buffer->attr       = console->active->attr;
         screen_buffer->popup_attr = console->active->attr;
+        screen_buffer->font       = console->active->font;
+
+        if (!(screen_buffer->font.face_name = malloc( screen_buffer->font.face_len ))) return NULL;
+        memcpy( screen_buffer->font.face_name, console->active->font.face_name,
+                screen_buffer->font.face_len );
     }
     else
     {
-        screen_buffer->max_width  = width;
-        screen_buffer->max_height = height;
-        screen_buffer->win.right  = width - 1;
-        screen_buffer->win.bottom = height - 1;
-        screen_buffer->attr       = FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED;
-        screen_buffer->popup_attr = 0xf5;
+        screen_buffer->max_width   = width;
+        screen_buffer->max_height  = height;
+        screen_buffer->win.right   = width - 1;
+        screen_buffer->win.bottom  = height - 1;
+        screen_buffer->attr        = FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED;
+        screen_buffer->popup_attr  = 0xf5;
+        screen_buffer->font.weight = FW_NORMAL;
+        screen_buffer->font.pitch_family = FIXED_PITCH | FF_DONTCARE;
     }
 
     if (wine_rb_put( &screen_buffer_map, LongToPtr(id), &screen_buffer->entry ))
