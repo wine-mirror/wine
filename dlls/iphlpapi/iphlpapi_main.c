@@ -1395,41 +1395,65 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
 }
 #endif
 
-static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, ULONG *len)
+static DWORD dns_servers_query_code( ULONG family )
 {
-    int num = get_dns_servers( NULL, 0, FALSE );
-    DWORD size;
+    if (family == WS_AF_INET) return DnsConfigDnsServersIpv4;
+    if (family == WS_AF_INET6) return DnsConfigDnsServersIpv6;
+    return DnsConfigDnsServersUnspec;
+}
 
-    size = num * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR_STORAGE));
-    if (!address || *len < size)
+static ULONG get_dns_server_addresses( ULONG family, IP_ADAPTER_DNS_SERVER_ADDRESS *address, ULONG *len )
+{
+    char buf[FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[3])];
+    DNS_ADDR_ARRAY *servers = (DNS_ADDR_ARRAY *)buf;
+    DWORD err, num, i, needed, array_len = sizeof(buf);
+    DWORD query = dns_servers_query_code( family );
+    SOCKADDR_INET *out_addrs;
+
+    for (;;)
     {
-        *len = size;
-        return ERROR_BUFFER_OVERFLOW;
-    }
-    *len = size;
-    if (num > 0)
-    {
-        PIP_ADAPTER_DNS_SERVER_ADDRESS addr = address;
-        SOCKADDR_STORAGE *sock_addrs = (SOCKADDR_STORAGE *)(address + num);
-        int i;
-
-        get_dns_servers( sock_addrs, num, FALSE );
-
-        for (i = 0; i < num; i++, addr = addr->Next)
+        err = DnsQueryConfig( query, 0, NULL, NULL, servers, &array_len );
+        if (err != ERROR_SUCCESS && err != ERROR_MORE_DATA) goto err;
+        num = (array_len - FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[0])) / sizeof(DNS_ADDR);
+        needed = num * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(*out_addrs));
+        if (!address || *len < needed)
         {
-            addr->u.s.Length = sizeof(*addr);
-            if (sock_addrs[i].ss_family == WS_AF_INET6)
-                addr->Address.iSockaddrLength = sizeof(SOCKADDR_IN6);
-            else
-                addr->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
-            addr->Address.lpSockaddr = (SOCKADDR *)(sock_addrs + i);
-            if (i == num - 1)
-                addr->Next = NULL;
-            else
-                addr->Next = addr + 1;
+            *len = needed;
+            err = ERROR_BUFFER_OVERFLOW;
+            goto err;
+        }
+        if (!err) break;
+
+        if ((char *)servers != buf) heap_free( servers );
+        servers = heap_alloc( array_len );
+        if (!servers)
+        {
+            err = ERROR_NOT_ENOUGH_MEMORY;
+            goto err;
         }
     }
-    return ERROR_SUCCESS;
+
+    *len = needed;
+    out_addrs = (SOCKADDR_INET *)(address + num);
+    for (i = 0; i < num; i++)
+    {
+        address[i].u.s.Length = sizeof(*address);
+        address[i].u.s.Reserved = 0;
+        address[i].Next = NULL;
+        address[i].Address.iSockaddrLength = servers->AddrArray[i].Data.DnsAddrUserDword[0];
+        if (address[i].Address.iSockaddrLength > sizeof(*out_addrs))
+            address[i].Address.iSockaddrLength = 0;
+        address[i].Address.lpSockaddr = (SOCKADDR *)(out_addrs + i);
+        memcpy( out_addrs + i, servers->AddrArray[i].MaxSa, address[i].Address.iSockaddrLength );
+        memset( (BYTE *)(out_addrs + i) + address[i].Address.iSockaddrLength, 0,
+                sizeof(*out_addrs) - address[i].Address.iSockaddrLength );
+        if (i) address[i - 1].Next = address + i;
+    }
+    err = ERROR_SUCCESS;
+
+err:
+    if ((char *)servers != buf) heap_free( servers );
+    return err;
 }
 
 #ifdef HAVE_STRUCT___RES_STATE
@@ -1506,7 +1530,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
         /* Since DNS servers aren't really per adapter, get enough space for a
          * single copy of them.
          */
-        get_dns_server_addresses(NULL, &dns_server_size);
+        get_dns_server_addresses( family, NULL, &dns_server_size );
         total_size += dns_server_size;
     }
     /* Since DNS suffix also isn't really per adapter, get enough space for a
@@ -1538,7 +1562,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
         if (dns_server_size)
         {
             firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)first_aa + total_size - dns_server_size - dns_suffix_size);
-            get_dns_server_addresses(firstDns, &dns_server_size);
+            get_dns_server_addresses( family, firstDns, &dns_server_size );
             for (aa = first_aa; aa; aa = aa->Next)
             {
                 if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
