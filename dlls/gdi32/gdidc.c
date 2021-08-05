@@ -1156,6 +1156,15 @@ BOOL WINAPI DPtoLP( HDC hdc, POINT *points, INT count )
 }
 
 /***********************************************************************
+ *           LPtoDP    (GDI32.@)
+ */
+BOOL WINAPI LPtoDP( HDC hdc, POINT *points, INT count )
+{
+    return NtGdiTransformPoints( hdc, points, points, count, NtGdiLPtoDP );
+}
+
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )

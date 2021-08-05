@@ -345,6 +345,21 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
 
     switch (mode)
     {
+    case NtGdiLPtoDP:
+        for (i = 0; i < count; i++)
+        {
+            double x = points_in[i].x;
+            double y = points_in[i].y;
+            points_out[i].x = floor( x * dc->xformWorld2Vport.eM11 +
+                                     y * dc->xformWorld2Vport.eM21 +
+                                     dc->xformWorld2Vport.eDx + 0.5 );
+            points_out[i].y = floor( x * dc->xformWorld2Vport.eM12 +
+                                     y * dc->xformWorld2Vport.eM22 +
+                                     dc->xformWorld2Vport.eDy + 0.5 );
+        }
+        ret = TRUE;
+        break;
+
     case NtGdiDPtoLP:
         if (!dc->vport2WorldValid) break;
         for (i = 0; i < count; i++)
@@ -391,21 +406,6 @@ void lp_to_dp( DC *dc, POINT *points, INT count )
         points++;
     }
 }
-
-/***********************************************************************
- *           LPtoDP    (GDI32.@)
- */
-BOOL WINAPI LPtoDP( HDC hdc, POINT *points, INT count )
-{
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-
-    lp_to_dp( dc, points, count );
-
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           SetMapMode    (GDI32.@)
