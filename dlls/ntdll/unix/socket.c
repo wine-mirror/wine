@@ -96,26 +96,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
-#define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
-
-static async_data_t server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
-                                  PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
-{
-    async_data_t async;
-    async.handle      = wine_server_obj_handle( handle );
-    async.user        = wine_server_client_ptr( user );
-    async.iosb        = wine_server_client_ptr( io );
-    async.event       = wine_server_obj_handle( event );
-    async.apc         = wine_server_client_ptr( apc );
-    async.apc_context = wine_server_client_ptr( apc_context );
-    return async;
-}
-
-static NTSTATUS wait_async( HANDLE handle, BOOL alertable )
-{
-    return NtWaitForSingleObject( handle, alertable, NULL );
-}
-
 union unix_sockaddr
 {
     struct sockaddr addr;

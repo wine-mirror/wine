@@ -135,9 +135,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define MAX_DOS_DRIVES 26
 
-#define FILE_WRITE_TO_END_OF_FILE      ((LONGLONG)-1)
-#define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
-
 /* just in case... */
 #undef VFAT_IOCTL_READDIR_BOTH
 #undef EXT2_IOC_GETFLAGS
@@ -4678,24 +4675,6 @@ struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE
         io->handle   = handle;
     }
     return io;
-}
-
-static async_data_t server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
-                                  PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
-{
-    async_data_t async;
-    async.handle      = wine_server_obj_handle( handle );
-    async.user        = wine_server_client_ptr( user );
-    async.iosb        = wine_server_client_ptr( io );
-    async.event       = wine_server_obj_handle( event );
-    async.apc         = wine_server_client_ptr( apc );
-    async.apc_context = wine_server_client_ptr( apc_context );
-    return async;
-}
-
-static NTSTATUS wait_async( HANDLE handle, BOOL alertable )
-{
-    return NtWaitForSingleObject( handle, alertable, NULL );
 }
 
 /* callback for irp async I/O completion */
