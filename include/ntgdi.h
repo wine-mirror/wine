@@ -93,6 +93,12 @@ enum
     NtGdiPolyPolygonRgn,
 };
 
+enum
+{
+    NtGdiLPtoDP,
+    NtGdiDPtoLP,
+};
+
 /* structs not compatible with native Windows */
 #ifdef __WINESRC__
 
@@ -251,7 +257,8 @@ INT      WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc );
 INT      WINAPI NtGdiStartPage( HDC hdc );
 BOOL     WINAPI NtGdiStrokePath( HDC hdc );
 BOOL     WINAPI NtGdiStrokeAndFillPath( HDC hdc );
-BOOL     WINAPI NtGdiTransformPoints( HDC hdc, POINT *points, INT count, UINT mode );
+BOOL     WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points_out,
+                                      INT count, UINT mode );
 BOOL     WINAPI NtGdiUnrealizeObject( HGDIOBJ obj );
 BOOL     WINAPI NtGdiWidenPath( HDC hdc );
 

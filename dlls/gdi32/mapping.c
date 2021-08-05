@@ -332,16 +332,39 @@ BOOL dp_to_lp( DC *dc, POINT *points, INT count )
 }
 
 /***********************************************************************
- *           DPtoLP    (GDI32.@)
+ *           NtGdiTransformPoints    (win32u.@)
  */
-BOOL WINAPI DPtoLP( HDC hdc, POINT *points, INT count )
+BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points_out,
+                                  INT count, UINT mode )
 {
-    DC * dc = get_dc_ptr( hdc );
-    BOOL ret;
+    DC *dc = get_dc_ptr( hdc );
+    int i = 0;
+    BOOL ret = FALSE;
 
     if (!dc) return FALSE;
 
-    ret = dp_to_lp( dc, points, count );
+    switch (mode)
+    {
+    case NtGdiDPtoLP:
+        if (!dc->vport2WorldValid) break;
+        for (i = 0; i < count; i++)
+        {
+            double x = points_in[i].x;
+            double y = points_in[i].y;
+            points_out[i].x = floor( x * dc->xformVport2World.eM11 +
+                                     y * dc->xformVport2World.eM21 +
+                                     dc->xformVport2World.eDx + 0.5 );
+            points_out[i].y = floor( x * dc->xformVport2World.eM12 +
+                                     y * dc->xformVport2World.eM22 +
+                                     dc->xformVport2World.eDy + 0.5 );
+        }
+        ret = TRUE;
+        break;
+
+    default:
+        WARN( "invalid mode %x\n", mode );
+        break;
+    }
 
     release_dc_ptr( dc );
     return ret;

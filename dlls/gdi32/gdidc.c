@@ -1148,6 +1148,14 @@ INT WINAPI SetMetaRgn( HDC hdc )
 }
 
 /***********************************************************************
+ *           DPtoLP    (GDI32.@)
+ */
+BOOL WINAPI DPtoLP( HDC hdc, POINT *points, INT count )
+{
+    return NtGdiTransformPoints( hdc, points, points, count, NtGdiDPtoLP );
+}
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
