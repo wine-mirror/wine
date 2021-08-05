@@ -187,6 +187,14 @@ typedef struct _WLAN_AVAILABLE_NETWORK_LIST
     WLAN_AVAILABLE_NETWORK Network[1];
 } WLAN_AVAILABLE_NETWORK_LIST, *PWLAN_AVAILABLE_NETWORK_LIST;
 
+typedef enum _WLAN_HOSTED_NETWORK_OPCODE
+{
+    wlan_hosted_network_opcode_connection_settings,
+    wlan_hosted_network_opcode_security_settings,
+    wlan_hosted_network_opcode_station_profile,
+    wlan_hosted_network_opcode_enable
+} WLAN_HOSTED_NETWORK_OPCODE, *PWLAN_HOSTED_NETWORK_OPCODE;
+
 DWORD WINAPI WlanCloseHandle(HANDLE, void *);
 DWORD WINAPI WlanEnumInterfaces(HANDLE, void *, WLAN_INTERFACE_INFO_LIST **);
 DWORD WINAPI WlanOpenHandle(DWORD, void *, DWORD *, HANDLE *);

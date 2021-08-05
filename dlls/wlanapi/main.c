@@ -172,6 +172,17 @@ DWORD WINAPI WlanQueryInterface(HANDLE handle, const GUID *guid, WLAN_INTF_OPCOD
 
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+DWORD WINAPI WlanHostedNetworkQueryProperty(HANDLE handle, WLAN_HOSTED_NETWORK_OPCODE opcode,
+                                            DWORD *data_size, void **data,
+                                            WLAN_OPCODE_VALUE_TYPE *opcode_type, void *reserved)
+{
+    FIXME("(%p, 0x%x, %p, %p, %p, %p) stub\n",
+          handle, opcode, data_size, data, opcode_type, reserved);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 void WINAPI WlanFreeMemory(void *ptr)
 {
     TRACE("(%p)\n", ptr);
