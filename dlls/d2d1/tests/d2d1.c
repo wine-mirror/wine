@@ -9680,13 +9680,16 @@ static void test_mt_factory(BOOL d3d11)
 
 static void test_effect(BOOL d3d11)
 {
-    unsigned int i, min_inputs, max_inputs, str_size;
+    unsigned int i, j, min_inputs, max_inputs, str_size, input_count;
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
     D2D1_BUFFER_PRECISION precision;
     ID2D1Image *image_a, *image_b;
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
     ID2D1Factory1 *factory;
+    ID2D1Bitmap *bitmap;
     ID2D1Effect *effect;
+    D2D1_SIZE_U size;
     BYTE buffer[64];
     BOOL cached;
     CLSID clsid;
@@ -9695,14 +9698,15 @@ static void test_effect(BOOL d3d11)
     const struct effect_test
     {
         const CLSID *clsid;
+        UINT32 default_input_count;
         UINT32 min_inputs;
         UINT32 max_inputs;
     }
     effect_tests[] =
     {
-        {&CLSID_D2D12DAffineTransform,       1, 1},
-        {&CLSID_D2D13DPerspectiveTransform,  1, 1},
-        {&CLSID_D2D1Composite,               1, 0xffffffff},
+        {&CLSID_D2D12DAffineTransform,       1, 1, 1},
+        {&CLSID_D2D13DPerspectiveTransform,  1, 1, 1},
+        {&CLSID_D2D1Composite,               2, 1, 0xffffffff},
     };
 
     if (!init_test_context(&ctx, d3d11))
@@ -9796,6 +9800,76 @@ static void test_effect(BOOL d3d11)
             ok(max_inputs == test->max_inputs, "Got unexpected max inputs %u, expected %u.\n",
                     max_inputs, test->max_inputs);
         }
+
+        input_count = ID2D1Effect_GetInputCount(effect);
+        todo_wine
+        ok (input_count == test->default_input_count, "Got unexpected input count %u, expected %u.\n",
+                input_count, test->default_input_count);
+
+        input_count = (test->max_inputs < 16 ? test->max_inputs : 16);
+        for (j = 0; j < input_count + 4; ++j)
+        {
+            winetest_push_context("Input %u", j);
+            hr = ID2D1Effect_SetInputCount(effect, j);
+            if (j < test->min_inputs || j > test->max_inputs)
+                todo_wine
+                ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+            else
+                todo_wine
+                ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+            winetest_pop_context();
+        }
+
+        input_count = ID2D1Effect_GetInputCount(effect);
+        for (j = 0; j < input_count + 4; ++j)
+        {
+            winetest_push_context("Input %u", j);
+            ID2D1Effect_GetInput(effect, j, &image_a);
+            todo_wine
+            ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
+            winetest_pop_context();
+        }
+
+        set_size_u(&size, 1, 1);
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        bitmap_desc.dpiX = 96.0f;
+        bitmap_desc.dpiY = 96.0f;
+        hr = ID2D1RenderTarget_CreateBitmap(ctx.rt, size, NULL, 4, &bitmap_desc, &bitmap);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
+        for (j = 0; j < input_count + 4; ++j)
+        {
+            winetest_push_context("Input %u", j);
+            image_a = (ID2D1Image *)0xdeadbeef;
+            ID2D1Effect_GetInput(effect, j, &image_a);
+            if (j == 0)
+            {
+                todo_wine
+                ok(image_a == (ID2D1Image *)bitmap, "Got unexpected image_a %p.\n", image_a);
+                if (image_a == (ID2D1Image *)bitmap)
+                    ID2D1Image_Release(image_a);
+            }
+            else
+            {
+                todo_wine
+                ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
+            }
+            winetest_pop_context();
+        }
+
+        for (j = input_count; j < input_count + 4; ++j)
+        {
+            winetest_push_context("Input %u", j);
+            image_a = (ID2D1Image *)0xdeadbeef;
+            ID2D1Effect_SetInput(effect, j, (ID2D1Image *)bitmap, FALSE);
+            ID2D1Effect_GetInput(effect, j, &image_a);
+            todo_wine
+            ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
+            winetest_pop_context();
+        }
+        ID2D1Bitmap_Release(bitmap);
 
         ID2D1Effect_Release(effect);
         winetest_pop_context();
