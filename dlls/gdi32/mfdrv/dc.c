@@ -140,9 +140,9 @@ BOOL METADC_SetTextJustification( HDC hdc, INT extra, INT breaks )
     return metadc_param2( hdc, META_SETTEXTJUSTIFICATION, extra, breaks );
 }
 
-INT CDECL MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra )
+BOOL METADC_SetTextCharacterExtra( HDC hdc, INT extra )
 {
-    return MFDRV_MetaParam1( dev, META_SETTEXTCHAREXTRA, extra ) ? extra : 0x80000000;
+    return metadc_param1( hdc, META_SETTEXTCHAREXTRA, extra );
 }
 
 DWORD CDECL MFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )

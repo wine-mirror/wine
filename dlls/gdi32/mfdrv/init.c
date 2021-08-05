@@ -198,7 +198,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
-    MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */
+    NULL,                            /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
     MFDRV_SetViewportExtEx,          /* pSetViewportExtEx */

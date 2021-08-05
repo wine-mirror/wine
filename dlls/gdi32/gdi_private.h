@@ -76,6 +76,7 @@ extern BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right, INT bottom,
                               INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SaveDC( HDC hdc ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetBkMode( HDC hdc, INT mode ) DECLSPEC_HIDDEN;
+extern BOOL METADC_SetTextCharacterExtra( HDC hdc, INT extra ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetMapMode( HDC hdc, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetPixel( HDC hdc, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetPolyFillMode( HDC hdc, INT mode ) DECLSPEC_HIDDEN;

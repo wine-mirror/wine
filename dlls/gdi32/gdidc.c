@@ -315,6 +315,21 @@ INT WINAPI GetTextCharacterExtra( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetTextCharacterExtra    (GDI32.@)
+ */
+INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
+{
+    DC_ATTR *dc_attr;
+    INT ret;
+
+    if (is_meta_dc( hdc )) return METADC_SetTextCharacterExtra( hdc, extra );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0x8000000;
+    ret = dc_attr->char_extra;
+    dc_attr->char_extra = extra;
+    return ret;
+}
+
+/***********************************************************************
  *		GetPolyFillMode  (GDI32.@)
  */
 INT WINAPI GetPolyFillMode( HDC hdc )

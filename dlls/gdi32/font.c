@@ -4736,29 +4736,6 @@ INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
 
 
 /***********************************************************************
- *           SetTextCharacterExtra    (GDI32.@)
- */
-INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
-{
-    INT ret = 0x80000000;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetTextCharacterExtra );
-        extra = physdev->funcs->pSetTextCharacterExtra( physdev, extra );
-        if (extra != 0x80000000)
-        {
-            ret = dc->attr->char_extra;
-            dc->attr->char_extra = extra;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           NtGdiSetTextJustification    (win32u.@)
  */
 BOOL WINAPI NtGdiSetTextJustification( HDC hdc, INT extra, INT breaks )
