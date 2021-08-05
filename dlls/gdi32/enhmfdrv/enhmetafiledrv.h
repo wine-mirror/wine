@@ -119,7 +119,6 @@ extern INT      CDECL EMFDRV_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN
 extern DWORD    CDECL EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_SetTextJustification( PHYSDEV dev, INT nBreakExtra, INT nBreakCount ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetWindowExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;

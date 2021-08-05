@@ -4773,36 +4773,30 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 
 
 /***********************************************************************
- *           SetTextJustification    (GDI32.@)
+ *           NtGdiSetTextJustification    (win32u.@)
  */
-BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
+BOOL WINAPI NtGdiSetTextJustification( HDC hdc, INT extra, INT breaks )
 {
-    BOOL ret;
-    PHYSDEV physdev;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (!dc) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
-    physdev = GET_DC_PHYSDEV( dc, pSetTextJustification );
-    ret = physdev->funcs->pSetTextJustification( physdev, extra, breaks );
-    if (ret)
+    extra = abs( (extra * dc->attr->vport_ext.cx + dc->attr->wnd_ext.cx / 2) /
+                 dc->attr->wnd_ext.cx );
+    if (!extra) breaks = 0;
+    if (breaks)
     {
-        extra = abs( (extra * dc->attr->vport_ext.cx + dc->attr->wnd_ext.cx / 2) /
-                     dc->attr->wnd_ext.cx );
-        if (!extra) breaks = 0;
-        if (breaks)
-        {
-            dc->breakExtra = extra / breaks;
-            dc->breakRem   = extra - (breaks * dc->breakExtra);
-        }
-        else
-        {
-            dc->breakExtra = 0;
-            dc->breakRem   = 0;
-        }
+        dc->breakExtra = extra / breaks;
+        dc->breakRem   = extra - (breaks * dc->breakExtra);
     }
+    else
+    {
+        dc->breakExtra = 0;
+        dc->breakRem   = 0;
+    }
+
     release_dc_ptr( dc );
-    return ret;
+    return TRUE;
 }
 
 

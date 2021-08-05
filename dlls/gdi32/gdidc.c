@@ -993,6 +993,20 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
 }
 
 /***********************************************************************
+ *           SetTextJustification    (GDI32.@)
+ */
+BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SetTextJustification( hdc, extra, breaks );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SetTextJustification( dc_attr, extra, breaks ))
+        return FALSE;
+    return NtGdiSetTextJustification( hdc, extra, breaks );
+}
+
+/***********************************************************************
  *           PatBlt    (GDI32.@)
  */
 BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )

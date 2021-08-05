@@ -135,9 +135,9 @@ BOOL CDECL MFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, 
     return MFDRV_MetaParam4( dev, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom );
 }
 
-BOOL CDECL MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
+BOOL METADC_SetTextJustification( HDC hdc, INT extra, INT breaks )
 {
-    return MFDRV_MetaParam2( dev, META_SETTEXTJUSTIFICATION, extra, breaks );
+    return metadc_param2( hdc, META_SETTEXTJUSTIFICATION, extra, breaks );
 }
 
 INT CDECL MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra )

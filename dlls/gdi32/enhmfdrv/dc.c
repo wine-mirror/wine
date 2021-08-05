@@ -63,14 +63,14 @@ BOOL EMFDC_SetTextAlign( DC_ATTR *dc_attr, UINT align )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_SetTextJustification(PHYSDEV dev, INT nBreakExtra, INT nBreakCount)
+BOOL EMFDC_SetTextJustification( DC_ATTR *dc_attr, INT extra, INT breaks )
 {
     EMRSETTEXTJUSTIFICATION emr;
     emr.emr.iType = EMR_SETTEXTJUSTIFICATION;
     emr.emr.nSize = sizeof(emr);
-    emr.nBreakExtra = nBreakExtra;
-    emr.nBreakCount = nBreakCount;
-    return EMFDRV_WriteRecord(dev, &emr.emr);
+    emr.nBreakExtra = extra;
+    emr.nBreakCount = breaks;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode )
