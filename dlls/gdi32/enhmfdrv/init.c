@@ -131,7 +131,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetLayout,                /* pSetLayout */
     NULL,                            /* pSetMapMode */
-    EMFDRV_SetMapperFlags,           /* pSetMapperFlags */
+    NULL,                            /* pSetMapperFlags */
     EMFDRV_SetPixel,                 /* pSetPixel */
     NULL,                            /* pSetTextCharacterExtra */
     EMFDRV_SetTextColor,             /* pSetTextColor */

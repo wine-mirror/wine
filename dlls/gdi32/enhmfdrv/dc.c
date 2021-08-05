@@ -443,7 +443,7 @@ BOOL CDECL EMFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return ret;
 }
 
-DWORD CDECL EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
+BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags )
 {
     EMRSETMAPPERFLAGS emr;
 
@@ -451,7 +451,7 @@ DWORD CDECL EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
     emr.emr.nSize = sizeof(emr);
     emr.dwFlags   = flags;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? flags : GDI_ERROR;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_AbortPath( DC_ATTR *dc_attr )

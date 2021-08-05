@@ -330,6 +330,22 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 }
 
 /***********************************************************************
+ *           SetMapperFlags    (GDI32.@)
+ */
+DWORD WINAPI SetMapperFlags( HDC hdc, DWORD flags )
+{
+    DC_ATTR *dc_attr;
+    DWORD ret;
+
+    if (is_meta_dc( hdc )) return METADC_SetMapperFlags( hdc, flags );
+    if (!(dc_attr = get_dc_attr( hdc ))) return GDI_ERROR;
+    if (dc_attr->emf && !EMFDC_SetMapperFlags( dc_attr, flags )) return GDI_ERROR;
+    ret = dc_attr->mapper_flags;
+    dc_attr->mapper_flags = flags;
+    return ret;
+}
+
+/***********************************************************************
  *		GetPolyFillMode  (GDI32.@)
  */
 INT WINAPI GetPolyFillMode( HDC hdc )

@@ -93,7 +93,7 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->text_color    = RGB( 0, 0, 0 );
     dc->attr->brush_org.x   = 0;
     dc->attr->brush_org.y   = 0;
-    dc->mapperFlags         = 0;
+    dc->attr->mapper_flags  = 0;
     dc->attr->text_align    = TA_LEFT | TA_TOP | TA_NOUPDATECP;
     dc->attr->char_extra    = 0;
     dc->breakExtra          = 0;
@@ -411,8 +411,8 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->brush_color      = dcs->attr->brush_color;
     dc->attr->pen_color        = dcs->attr->pen_color;
     dc->attr->brush_org        = dcs->attr->brush_org;
-    dc->mapperFlags      = dcs->mapperFlags;
-    dc->attr->text_align = dcs->attr->text_align;
+    dc->attr->mapper_flags     = dcs->attr->mapper_flags;
+    dc->attr->text_align       = dcs->attr->text_align;
     dc->attr->char_extra       = dcs->attr->char_extra;
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
@@ -544,7 +544,6 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
     newdc->hFont            = dc->hFont;
     newdc->hBitmap          = dc->hBitmap;
     newdc->hPalette         = dc->hPalette;
-    newdc->mapperFlags      = dc->mapperFlags;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;

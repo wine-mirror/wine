@@ -115,7 +115,6 @@ extern INT      CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDes
                                                 INT ySrc, UINT startscan, UINT lines, LPCVOID bits,
                                                 BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern DWORD    CDECL EMFDRV_SetLayout( PHYSDEV dev, DWORD layout ) DECLSPEC_HIDDEN;
-extern DWORD    CDECL EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;

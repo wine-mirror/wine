@@ -126,6 +126,7 @@ typedef struct DC_ATTR
     WORD      stretch_blt_mode;
     INT       map_mode;
     INT       char_extra;
+    DWORD     mapper_flags;        /* font mapper flags */
     RECT      vis_rect;            /* visible rectangle in screen coords */
     FLOAT     miter_limit;
     POINT     brush_org;           /* brush origin */

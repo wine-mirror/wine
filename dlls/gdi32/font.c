@@ -6312,28 +6312,6 @@ BOOL WINAPI PolyTextOutW( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
 
 
 /***********************************************************************
- *           SetMapperFlags    (GDI32.@)
- */
-DWORD WINAPI SetMapperFlags( HDC hdc, DWORD flags )
-{
-    DC *dc = get_dc_ptr( hdc );
-    DWORD ret = GDI_ERROR;
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetMapperFlags );
-        flags = physdev->funcs->pSetMapperFlags( physdev, flags );
-        if (flags != GDI_ERROR)
-        {
-            ret = dc->mapperFlags;
-            dc->mapperFlags = flags;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
  *          GetAspectRatioFilterEx  (GDI32.@)
  */
 BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )

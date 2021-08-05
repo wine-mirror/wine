@@ -145,9 +145,9 @@ BOOL METADC_SetTextCharacterExtra( HDC hdc, INT extra )
     return metadc_param1( hdc, META_SETTEXTCHAREXTRA, extra );
 }
 
-DWORD CDECL MFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
+BOOL METADC_SetMapperFlags( HDC hdc, DWORD flags )
 {
-    return MFDRV_MetaParam2( dev, META_SETMAPPERFLAGS, HIWORD(flags), LOWORD(flags) ) ? flags : GDI_ERROR;
+    return metadc_param2( hdc, META_SETMAPPERFLAGS, HIWORD(flags), LOWORD(flags) );
 }
 
 BOOL CDECL MFDRV_AbortPath( PHYSDEV dev )
