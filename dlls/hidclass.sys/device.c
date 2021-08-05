@@ -178,7 +178,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
 
-    IRP *irp;
     IO_STATUS_BLOCK irp_status;
     HID_XFER_PACKET *packet;
     DWORD rc;
@@ -221,15 +220,8 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
         while(1)
         {
-            KEVENT event;
-
-            KeInitializeEvent(&event, NotificationEvent, FALSE);
-
-            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo,
-                    NULL, 0, packet->reportBuffer, report_size, TRUE, &event, &irp_status);
-
-            if (IoCallDriver(ext->u.pdo.parent_fdo, irp) == STATUS_PENDING)
-                KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+            call_minidriver( IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
+                             packet->reportBuffer, report_size, &irp_status );
 
             rc = WaitForSingleObject(ext->u.pdo.halt_event, 0);
             if (rc == WAIT_OBJECT_0)
