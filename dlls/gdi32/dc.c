@@ -1286,26 +1286,30 @@ UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
 
 
 /***********************************************************************
- *           SetLayout    (GDI32.@)
+ *           NtGdiSetLayout    (win32u.@)
  *
  * Sets left->right or right->left text layout flags of a dc.
  *
  */
-DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
+DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
 {
-    DWORD oldlayout = GDI_ERROR;
+    DWORD old_layout = GDI_ERROR;
+    DC *dc;
 
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
+    if ((dc = get_dc_ptr( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetLayout );
-        oldlayout = physdev->funcs->pSetLayout( physdev, layout );
-        release_dc_ptr( dc );
+        old_layout = dc->attr->layout;
+        dc->attr->layout = layout;
+        if (layout != old_layout)
+        {
+            if (layout & LAYOUT_RTL) dc->attr->map_mode = MM_ANISOTROPIC;
+            DC_UpdateXforms( dc );
+        }
     }
 
-    TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, oldlayout, layout);
+    TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, old_layout, layout);
 
-    return oldlayout;
+    return old_layout;
 }
 
 /***********************************************************************

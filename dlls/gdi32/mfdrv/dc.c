@@ -85,9 +85,9 @@ BOOL METADC_OffsetClipRgn( HDC hdc, INT x, INT y )
     return metadc_param2( hdc, META_OFFSETCLIPRGN, x, y );
 }
 
-DWORD CDECL MFDRV_SetLayout( PHYSDEV dev, DWORD layout )
+BOOL METADC_SetLayout( HDC hdc, DWORD layout )
 {
-    return MFDRV_MetaParam2( dev, META_SETLAYOUT, HIWORD(layout), LOWORD(layout) );
+    return metadc_param2( hdc, META_SETLAYOUT, HIWORD(layout), LOWORD(layout) );
 }
 
 BOOL METADC_SetMapMode( HDC hdc, INT mode )

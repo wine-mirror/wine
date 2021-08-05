@@ -281,6 +281,19 @@ DWORD WINAPI GetLayout( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetLayout    (GDI32.@)
+ */
+DWORD WINAPI SetLayout( HDC hdc, DWORD layout )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SetLayout( hdc, layout );
+    if (!(dc_attr = get_dc_attr( hdc ))) return GDI_ERROR;
+    if (dc_attr->emf && !EMFDC_SetLayout( dc_attr, layout )) return GDI_ERROR;
+    return NtGdiSetLayout( hdc, -1, layout );
+}
+
+/***********************************************************************
  *           GetMapMode  (GDI32.@)
  */
 INT WINAPI GetMapMode( HDC hdc )

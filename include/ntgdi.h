@@ -251,7 +251,7 @@ BOOL     WINAPI NtGdiSetBitmapDimension( HBITMAP hbitmap, INT x, INT y, SIZE *pr
 BOOL     WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *prev_org );
 UINT     WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags );
 BOOL     WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr );
-DWORD    WINAPI NtGdiSetLayout( HDC hdc, DWORD layout );
+DWORD    WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout );
 INT      WINAPI NtGdiSetMetaRgn( HDC hdc );
 BOOL     WINAPI NtGdiSetMiterLimit( HDC hdc, FLOAT limit, FLOAT *prev_limit );
 COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color );

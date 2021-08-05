@@ -787,18 +787,7 @@ static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 
 static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    DWORD old_layout;
-
-    old_layout = dc->attr->layout;
-    dc->attr->layout = layout;
-    if (layout != old_layout)
-    {
-        if (layout & LAYOUT_RTL) dc->attr->map_mode = MM_ANISOTROPIC;
-        DC_UpdateXforms( dc );
-    }
-
-    return old_layout;
+    return layout;
 }
 
 static BOOL CDECL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
