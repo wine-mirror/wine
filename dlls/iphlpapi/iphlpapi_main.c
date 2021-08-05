@@ -30,12 +30,6 @@
 #ifdef HAVE_ARPA_INET_H
 # include <arpa/inet.h>
 #endif
-#ifdef HAVE_ARPA_NAMESER_H
-# include <arpa/nameser.h>
-#endif
-#ifdef HAVE_RESOLV_H
-# include <resolv.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -1223,27 +1217,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     return ERROR_SUCCESS;
 }
 
-#ifdef HAVE_STRUCT___RES_STATE
-/* call res_init() just once because of a bug in Mac OS X 10.4 */
-/* Call once per thread on systems that have per-thread _res. */
-
-static CRITICAL_SECTION res_init_cs;
-static CRITICAL_SECTION_DEBUG res_init_cs_debug = {
-    0, 0, &res_init_cs,
-    { &res_init_cs_debug.ProcessLocksList, &res_init_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": res_init_cs") }
-};
-static CRITICAL_SECTION res_init_cs = { &res_init_cs_debug, -1, 0, 0, 0, 0 };
-
-static void initialise_resolver(void)
-{
-    EnterCriticalSection(&res_init_cs);
-    if ((_res.options & RES_INIT) == 0)
-        res_init();
-    LeaveCriticalSection(&res_init_cs);
-}
-#endif
-
 static DWORD dns_servers_query_code( ULONG family )
 {
     if (family == WS_AF_INET) return DnsConfigDnsServersIpv4;
@@ -1305,46 +1278,32 @@ err:
     return err;
 }
 
-#ifdef HAVE_STRUCT___RES_STATE
-static BOOL is_ip_address_string(const char *str)
-{
-    struct in_addr in;
-    int ret;
-
-    ret = inet_aton(str, &in);
-    return ret != 0;
-}
-#endif
-
 static ULONG get_dns_suffix(WCHAR *suffix, ULONG *len)
 {
-    ULONG size;
-    const char *found_suffix = "";
-    /* Always return a NULL-terminated string, even if it's empty. */
+    DWORD err, list_len = 0, needed = 1;
+    DNS_TXT_DATAW *search = NULL;
 
-#ifdef HAVE_STRUCT___RES_STATE
-    {
-        ULONG i;
-        initialise_resolver();
-        for (i = 0; !*found_suffix && i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
-        {
-            /* This uses a heuristic to select a DNS suffix:
-             * the first, non-IP address string is selected.
-             */
-            if (!is_ip_address_string(_res.dnsrch[i]))
-                found_suffix = _res.dnsrch[i];
-        }
-    }
-#endif
+    if (suffix && *len > 0) *suffix = '\0';
 
-    size = MultiByteToWideChar( CP_UNIXCP, 0, found_suffix, -1, NULL, 0 ) * sizeof(WCHAR);
-    if (!suffix || *len < size)
+    err = DnsQueryConfig( DnsConfigSearchList, 0, NULL, NULL, NULL, &list_len );
+    if (err) goto err;
+
+    search = heap_alloc( list_len );
+    err = DnsQueryConfig( DnsConfigSearchList, 0, NULL, NULL, search, &list_len );
+    if (err || !search->dwStringCount) goto err;
+
+    needed = (strlenW( search->pStringArray[0] ) + 1) * sizeof(WCHAR);
+    if (!suffix || *len < needed)
     {
-        *len = size;
-        return ERROR_BUFFER_OVERFLOW;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto err;
     }
-    *len = MultiByteToWideChar( CP_UNIXCP, 0, found_suffix, -1, suffix, *len / sizeof(WCHAR) ) * sizeof(WCHAR);
-    return ERROR_SUCCESS;
+    memcpy( suffix, search->pStringArray[0], needed );
+
+err:
+    *len = needed;
+    heap_free( search );
+    return err;
 }
 
 ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
