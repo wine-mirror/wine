@@ -26,10 +26,17 @@
  * clients and servers (www.winsite.com got a lot of those).
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "ws2_32_private.h"
+
+static inline unsigned short ntohs( unsigned short netshort )
+{
+    return RtlUshortByteSwap( netshort );
+}
+
+static inline unsigned int ntohl( unsigned int netlong )
+{
+    return RtlUlongByteSwap( netlong );
+}
 
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
 
@@ -53,7 +60,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iMinSockAddr = sizeof(struct WS_sockaddr_in),
         .iSocketType = WS_SOCK_STREAM,
         .iProtocol = WS_IPPROTO_TCP,
-        .szProtocol = {'T','C','P','/','I','P',0},
+        .szProtocol = L"TCP/IP",
     },
     {
         .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST
@@ -69,7 +76,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iSocketType = WS_SOCK_DGRAM,
         .iProtocol = WS_IPPROTO_UDP,
         .dwMessageSize = 0xffbb,
-        .szProtocol = {'U','D','P','/','I','P',0},
+        .szProtocol = L"UDP/IP",
     },
     {
         .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA | XP1_GRACEFUL_CLOSE
@@ -84,7 +91,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iMinSockAddr = sizeof(struct WS_sockaddr_in6),
         .iSocketType = WS_SOCK_STREAM,
         .iProtocol = WS_IPPROTO_TCP,
-        .szProtocol = {'T','C','P','/','I','P','v','6',0},
+        .szProtocol = L"TCP/IPv6",
     },
     {
         .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST
@@ -100,7 +107,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iSocketType = WS_SOCK_DGRAM,
         .iProtocol = WS_IPPROTO_UDP,
         .dwMessageSize = 0xffbb,
-        .szProtocol = {'U','D','P','/','I','P','v','6',0},
+        .szProtocol = L"UDP/IPv6",
     },
     {
         .dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST
@@ -117,7 +124,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iProtocol = WS_NSPROTO_IPX,
         .iProtocolMaxOffset = 255,
         .dwMessageSize = 0x240,
-        .szProtocol = {'I','P','X',0},
+        .szProtocol = L"IPX",
     },
     {
         .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_PSEUDO_STREAM | XP1_MESSAGE_ORIENTED
@@ -133,7 +140,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iSocketType = WS_SOCK_SEQPACKET,
         .iProtocol = WS_NSPROTO_SPX,
         .dwMessageSize = UINT_MAX,
-        .szProtocol = {'S','P','X',0},
+        .szProtocol = L"SPX",
     },
     {
         .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_GRACEFUL_CLOSE | XP1_PSEUDO_STREAM
@@ -149,7 +156,7 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .iSocketType = WS_SOCK_SEQPACKET,
         .iProtocol = WS_NSPROTO_SPXII,
         .dwMessageSize = UINT_MAX,
-        .szProtocol = {'S','P','X',' ','I','I',0},
+        .szProtocol = L"SPX II",
     },
 };
 
@@ -1388,9 +1395,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 return -1;
 
             if (infow.iAddressFamily == WS_AF_INET)
-                addr_size = sizeof(struct sockaddr_in);
+                addr_size = sizeof(struct WS_sockaddr_in);
             else if (infow.iAddressFamily == WS_AF_INET6)
-                addr_size = sizeof(struct sockaddr_in6);
+                addr_size = sizeof(struct WS_sockaddr_in6);
             else
             {
                 FIXME( "family %d is unsupported for SO_BSP_STATE\n", infow.iAddressFamily );
@@ -1507,7 +1514,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if (!ws_protocol_info( s, TRUE, &info, &size ))
                 return -1;
 
-            if (info.iSocketType == SOCK_DGRAM)
+            if (info.iSocketType == WS_SOCK_DGRAM)
             {
                 SetLastError( WSAENOPROTOOPT );
                 return -1;
@@ -2061,7 +2068,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
                 sockaddr[i].sin_family = WS_AF_INET;
                 sockaddr[i].sin_port = 0;
-                sockaddr[i].sin_addr.WS_s_addr = inet_addr(p->IpAddressList.IpAddress.String);
+                sockaddr[i].sin_addr.WS_s_addr = WS_inet_addr(p->IpAddressList.IpAddress.String);
                 i++;
             }
 
@@ -3222,7 +3229,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
                          LPWSAPROTOCOL_INFOW lpProtocolInfo,
                          GROUP g, DWORD flags)
 {
-    static const WCHAR afdW[] = {'\\','D','e','v','i','c','e','\\','A','f','d',0};
     struct afd_create_params create_params;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
@@ -3302,7 +3308,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         }
     }
 
-    RtlInitUnicodeString(&string, afdW);
+    RtlInitUnicodeString(&string, L"\\Device\\Afd");
     InitializeObjectAttributes(&attr, &string, (flags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT, NULL, NULL);
     if ((status = NtOpenFile(&handle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr,
             &io, 0, (flags & WSA_FLAG_OVERLAPPED) ? 0 : FILE_SYNCHRONOUS_IO_NONALERT)))
@@ -3323,7 +3329,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         err = RtlNtStatusToDosError( status );
         if (err == WSAEACCES) /* raw socket denied */
         {
-            if (type == SOCK_RAW)
+            if (type == WS_SOCK_RAW)
                 ERR_(winediag)("Failed to create a socket of type SOCK_RAW, this requires special permissions.\n");
             else
                 ERR_(winediag)("Failed to create socket, this requires special permissions.\n");

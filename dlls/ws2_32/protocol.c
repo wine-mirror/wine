@@ -22,12 +22,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include "ws2_32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+static inline unsigned short ntohs( unsigned short netshort )
+{
+    return RtlUshortByteSwap( netshort );
+}
+
+static inline unsigned short htons( unsigned short hostshort )
+{
+    return RtlUshortByteSwap( hostshort );
+}
+
+static inline unsigned int ntohl( unsigned int netlong )
+{
+    return RtlUlongByteSwap( netlong );
+}
+
+static inline unsigned int htonl( unsigned int hostlong )
+{
+    return RtlUlongByteSwap( hostlong );
+}
 
 static char *get_fqdn(void)
 {
@@ -135,7 +153,7 @@ int WINAPI WS_getaddrinfo( const char *node, const char *service,
             {
                 WS_freeaddrinfo( *info );
                 *info = NULL;
-                return EAI_NONAME;
+                return WS_EAI_NONAME;
             }
         }
     }
@@ -293,7 +311,7 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
                             const struct WS_addrinfo *hints, ADDRINFOEXW **res, OVERLAPPED *overlapped,
                             LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine )
 {
-    int ret = EAI_MEMORY, len, i;
+    int ret = WS_EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
     struct WS_addrinfo *resA;
     WCHAR *local_nodenameW = (WCHAR *)nodename;
@@ -323,7 +341,7 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
             if (!len)
             {
                 ERR("Failed to convert %s to punycode\n", debugstr_w(nodename));
-                ret = EAI_FAIL;
+                ret = WS_EAI_FAIL;
                 goto end;
             }
             if (!(local_nodenameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto end;
@@ -455,7 +473,7 @@ int WINAPI GetAddrInfoW(const WCHAR *nodename, const WCHAR *servname, const ADDR
 {
     struct WS_addrinfo *hintsA = NULL;
     ADDRINFOEXW *resex;
-    int ret = EAI_MEMORY;
+    int ret = WS_EAI_MEMORY;
 
     TRACE( "nodename %s, servname %s, hints %p, result %p\n",
            debugstr_w(nodename), debugstr_w(servname), hints, res );
@@ -570,11 +588,11 @@ int WINAPI GetNameInfoW( const SOCKADDR *addr, WS_socklen_t addr_len, WCHAR *hos
     char *hostA = NULL, *servA = NULL;
 
     if (host && (!(hostA = HeapAlloc( GetProcessHeap(), 0, host_len ))))
-        return EAI_MEMORY;
+        return WS_EAI_MEMORY;
     if (serv && (!(servA = HeapAlloc( GetProcessHeap(), 0, serv_len ))))
     {
         HeapFree( GetProcessHeap(), 0, hostA );
-        return EAI_MEMORY;
+        return WS_EAI_MEMORY;
     }
 
     ret = WS_getnameinfo( addr, addr_len, hostA, host_len, servA, serv_len, flags );
@@ -683,12 +701,12 @@ struct WS_hostent * WINAPI WS_gethostbyaddr( const char *addr, int len, int fami
 
 struct route
 {
-    struct in_addr addr;
+    struct WS_in_addr addr;
     IF_INDEX interface;
     DWORD metric, default_route;
 };
 
-static int compare_routes_by_metric_asc( const void *left, const void *right )
+static int __cdecl compare_routes_by_metric_asc( const void *left, const void *right )
 {
     const struct route *a = left, *b = right;
     if (a->default_route && b->default_route)
@@ -770,7 +788,7 @@ static struct WS_hostent *get_local_ips( char *hostname )
         /* If no IP is found in the next step (for whatever reason)
          * then fall back to the magic loopback address.
          */
-        memcpy( &route_addrs[numroutes].addr.s_addr, magic_loopback_addr, 4 );
+        memcpy( &route_addrs[numroutes].addr.WS_s_addr, magic_loopback_addr, 4 );
         numroutes++;
     }
     if (numroutes == 0)
@@ -784,20 +802,20 @@ static struct WS_hostent *get_local_ips( char *hostname )
             char *ip = k->IpAddressList.IpAddress.String;
 
             if (route_addrs[i].interface == k->Index)
-                route_addrs[i].addr.s_addr = inet_addr(ip);
+                route_addrs[i].addr.WS_s_addr = WS_inet_addr(ip);
         }
     }
 
     /* Allocate a hostent and enough memory for all the IPs,
      * including the NULL at the end of the list.
      */
-    hostlist = create_hostent( hostname, 1, 0, numroutes+1, sizeof(struct in_addr) );
+    hostlist = create_hostent( hostname, 1, 0, numroutes+1, sizeof(struct WS_in_addr) );
     if (hostlist == NULL)
         goto cleanup;
     hostlist->h_addr_list[numroutes] = NULL;
     hostlist->h_aliases[0] = NULL;
-    hostlist->h_addrtype = AF_INET;
-    hostlist->h_length = sizeof(struct in_addr);
+    hostlist->h_addrtype = WS_AF_INET;
+    hostlist->h_length = sizeof(struct WS_in_addr);
 
     /* Reorder the entries before placing them in the host list. Windows expects
      * the IP list in order from highest priority to lowest (the critical thing
@@ -807,7 +825,7 @@ static struct WS_hostent *get_local_ips( char *hostname )
         qsort( route_addrs, numroutes, sizeof(struct route), compare_routes_by_metric_asc );
 
     for (i = 0; i < numroutes; i++)
-        *(struct in_addr *)hostlist->h_addr_list[i] = route_addrs[i].addr;
+        *(struct WS_in_addr *)hostlist->h_addr_list[i] = route_addrs[i].addr;
 
 cleanup:
     HeapFree( GetProcessHeap(), 0, route_addrs );
@@ -949,26 +967,20 @@ int WINAPI GetHostNameW( WCHAR *name, int namelen )
 
 static char *read_etc_file( const WCHAR *filename, DWORD *ret_size )
 {
-    static const WCHAR key_pathW[] = {'S','y','s','t','e','m',
-            '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-            '\\','S','e','r','v','i','c','e','s',
-            '\\','t','c','p','i','p',
-            '\\','P','a','r','a','m','e','t','e','r','s',0};
-    static const WCHAR databasepathW[] = {'D','a','t','a','b','a','s','e','P','a','t','h',0};
-    static const WCHAR backslashW[] = {'\\',0};
     WCHAR path[MAX_PATH];
     DWORD size = sizeof(path);
     HANDLE file;
     char *data;
     LONG ret;
 
-    if ((ret = RegGetValueW( HKEY_LOCAL_MACHINE, key_pathW, databasepathW, RRF_RT_REG_SZ, NULL, path, &size )))
+    if ((ret = RegGetValueW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\tcpip\\Parameters",
+                             L"DatabasePath", RRF_RT_REG_SZ, NULL, path, &size )))
     {
         ERR( "failed to get database path, error %u\n", ret );
         return NULL;
     }
-    lstrcatW( path, backslashW );
-    lstrcatW( path, filename );
+    wcscat( path, L"\\" );
+    wcscat( path, filename );
 
     file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     if (file == INVALID_HANDLE_VALUE)
@@ -1133,7 +1145,6 @@ static struct WS_protoent *get_next_protocol( const char **cursor, const char *e
  */
 struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
 {
-    static const WCHAR protocolW[] = {'p','r','o','t','o','c','o','l',0};
     struct WS_protoent *proto;
     const char *cursor;
     char *file;
@@ -1141,7 +1152,7 @@ struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
 
     TRACE( "%s\n", debugstr_a(name) );
 
-    if (!(file = read_etc_file( protocolW, &size )))
+    if (!(file = read_etc_file( L"protocol", &size )))
     {
         SetLastError( WSANO_DATA );
         return NULL;
@@ -1164,7 +1175,6 @@ struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
  */
 struct WS_protoent * WINAPI WS_getprotobynumber( int number )
 {
-    static const WCHAR protocolW[] = {'p','r','o','t','o','c','o','l',0};
     struct WS_protoent *proto;
     const char *cursor;
     char *file;
@@ -1172,7 +1182,7 @@ struct WS_protoent * WINAPI WS_getprotobynumber( int number )
 
     TRACE( "%d\n", number );
 
-    if (!(file = read_etc_file( protocolW, &size )))
+    if (!(file = read_etc_file( L"protocol", &size )))
     {
         SetLastError( WSANO_DATA );
         return NULL;
@@ -1326,7 +1336,6 @@ static struct WS_servent *get_next_service( const char **cursor, const char *end
  */
 struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto )
 {
-    static const WCHAR servicesW[] = {'s','e','r','v','i','c','e','s',0};
     struct WS_servent *serv;
     const char *cursor;
     char *file;
@@ -1334,7 +1343,7 @@ struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto
 
     TRACE( "name %s, proto %s\n", debugstr_a(name), debugstr_a(proto) );
 
-    if (!(file = read_etc_file( servicesW, &size )))
+    if (!(file = read_etc_file( L"services", &size )))
     {
         SetLastError( WSANO_DATA );
         return NULL;
@@ -1357,7 +1366,6 @@ struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto
  */
 struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
 {
-    static const WCHAR servicesW[] = {'s','e','r','v','i','c','e','s',0};
     struct WS_servent *serv;
     const char *cursor;
     char *file;
@@ -1365,7 +1373,7 @@ struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
 
     TRACE( "port %d, proto %s\n", port, debugstr_a(proto) );
 
-    if (!(file = read_etc_file( servicesW, &size )))
+    if (!(file = read_etc_file( L"services", &size )))
     {
         SetLastError( WSANO_DATA );
         return NULL;

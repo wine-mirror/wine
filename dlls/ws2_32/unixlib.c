@@ -38,6 +38,40 @@
 #ifdef HAVE_NETDB_H
 # include <netdb.h>
 #endif
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SOCKIO_H
+# include <sys/sockio.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
+#ifdef HAVE_NET_IF_H
+# define if_indextoname unix_if_indextoname
+# define if_nametoindex unix_if_nametoindex
+# include <net/if.h>
+# undef if_indextoname
+# undef if_nametoindex
+#endif
+#ifdef HAVE_IFADDRS_H
+# include <ifaddrs.h>
+#endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
