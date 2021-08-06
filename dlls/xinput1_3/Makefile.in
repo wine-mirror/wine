@@ -5,7 +5,6 @@ DELAYIMPORTS = hid setupapi
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	hid.c \
-	xinput_main.c
+	main.c
 
 RC_SRCS = version.rc
