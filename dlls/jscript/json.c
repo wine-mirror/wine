@@ -291,15 +291,13 @@ static HRESULT JSON_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
     parse_ctx.end = buf + jsstr_length(str);
     parse_ctx.ctx = ctx;
     hres = parse_json_value(&parse_ctx, &ret);
+    if(SUCCEEDED(hres) && skip_spaces(&parse_ctx)) {
+        FIXME("syntax error\n");
+        hres = E_FAIL;
+    }
     jsstr_release(str);
     if(FAILED(hres))
         return hres;
-
-    if(skip_spaces(&parse_ctx)) {
-        FIXME("syntax error\n");
-        jsval_release(ret);
-        return E_FAIL;
-    }
 
     if(r)
         *r = ret;
