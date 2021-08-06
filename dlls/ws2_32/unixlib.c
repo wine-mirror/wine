@@ -383,7 +383,7 @@ static unsigned int errno_from_unix( int err )
         case EREMOTE:           return WSAEREMOTE;
 #endif
         default:
-            FIXME( "unknown error: %s", strerror( err ) );
+            FIXME( "unknown error: %s\n", strerror( err ) );
             return WSAEFAULT;
     }
 }
