@@ -420,8 +420,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     X11DRV_RoundRect,                   /* pRoundRect */
-    NULL,                               /* pScaleViewportExt */
-    NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */
     X11DRV_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */

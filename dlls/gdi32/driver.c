@@ -916,8 +916,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_ResetDC,                    /* pResetDC */
     nulldrv_RestoreDC,                  /* pRestoreDC */
     nulldrv_RoundRect,                  /* pRoundRect */
-    nulldrv_ScaleViewportExtEx,         /* pScaleViewportExt */
-    nulldrv_ScaleWindowExtEx,           /* pScaleWindowExt */
     nulldrv_SelectBitmap,               /* pSelectBitmap */
     nulldrv_SelectBrush,                /* pSelectBrush */
     nulldrv_SelectClipPath,             /* pSelectClipPath */

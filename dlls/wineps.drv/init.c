@@ -855,8 +855,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_ResetDC,                      /* pResetDC */
     NULL,                               /* pRestoreDC */
     PSDRV_RoundRect,                    /* pRoundRect */
-    NULL,                               /* pScaleViewportExt */
-    NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */
     PSDRV_SelectBrush,                  /* pSelectBrush */
     NULL,                               /* pSelectClipPath */

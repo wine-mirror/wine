@@ -3891,8 +3891,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pResetDC */
     NULL,                           /* pRestoreDC */
     NULL,                           /* pRoundRect */
-    NULL,                           /* pScaleViewportExt */
-    NULL,                           /* pScaleWindowExt */
     NULL,                           /* pSelectBitmap */
     NULL,                           /* pSelectBrush */
     NULL,                           /* pSelectClipPath */

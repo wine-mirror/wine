@@ -179,8 +179,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
     NULL,                            /* pRoundRect */
-    NULL,                            /* pScaleViewportExtEx */
-    NULL,                            /* pScaleWindowExtEx */
     MFDRV_SelectBitmap,              /* pSelectBitmap */
     MFDRV_SelectBrush,               /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */

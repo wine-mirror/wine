@@ -111,16 +111,6 @@ BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size )
-{
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size )
-{
-    return TRUE;
-}
-
 BOOL set_map_mode( DC *dc, int mode )
 {
     SIZE virtual_size, virtual_res;
