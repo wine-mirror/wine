@@ -1248,6 +1248,21 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom,
 }
 
 /***********************************************************************
+ *           ScaleWindowExtEx    (GDI32.@)
+ */
+BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
+                              INT y_num, INT y_denom, SIZE *size )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_ScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ScaleWindowExtEx( dc_attr, x_num, x_denom, y_num, y_denom ))
+        return FALSE;
+    return NtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
+}
+
+/***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */
 BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )

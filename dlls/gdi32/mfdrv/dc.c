@@ -130,9 +130,9 @@ BOOL METADC_ScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom, INT y_num, INT 
     return metadc_param4( hdc, META_SCALEVIEWPORTEXT, x_num, x_denom, y_num, y_denom );
 }
 
-BOOL CDECL MFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size )
+BOOL METADC_ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom, INT y_num, INT y_denom )
 {
-    return MFDRV_MetaParam4( dev, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom );
+    return metadc_param4( hdc, META_SCALEWINDOWEXT, x_num, x_denom, y_num, y_denom );
 }
 
 BOOL METADC_SetTextJustification( HDC hdc, INT extra, INT breaks )

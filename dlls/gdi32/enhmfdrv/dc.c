@@ -309,20 +309,17 @@ BOOL EMFDC_ScaleViewportExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_n
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size )
+BOOL EMFDC_ScaleWindowExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_num, INT y_denom )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pScaleWindowExtEx );
     EMRSCALEWINDOWEXTEX emr;
 
     emr.emr.iType = EMR_SCALEWINDOWEXTEX;
     emr.emr.nSize = sizeof(emr);
-    emr.xNum      = xNum;
-    emr.xDenom    = xDenom;
-    emr.yNum      = yNum;
-    emr.yDenom    = yDenom;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    return next->funcs->pScaleWindowExtEx( next, xNum, xDenom, yNum, yDenom, size );
+    emr.xNum      = x_num;
+    emr.xDenom    = x_denom;
+    emr.yNum      = y_num;
+    emr.yDenom    = y_denom;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout )
