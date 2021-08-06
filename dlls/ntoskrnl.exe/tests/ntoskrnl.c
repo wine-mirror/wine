@@ -2582,7 +2582,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     SetLastError(0xdeadbeef);
     ret = HidD_SetOutputReport(file, report, 0);
     ok(!ret, "HidD_SetOutputReport succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = HidD_SetOutputReport(file, report, caps.OutputReportByteLength - 1);
@@ -2614,7 +2614,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     SetLastError(0xdeadbeef);
     ret = sync_ioctl(file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &value);
     ok(!ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError());
     value = 0;
     SetLastError(0xdeadbeef);
     ret = sync_ioctl(file, IOCTL_HID_SET_OUTPUT_REPORT, report, caps.OutputReportByteLength * 2, NULL, &value);

@@ -334,7 +334,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         break;
     }
 
-    if (!buffer)
+    if (!buffer || !buffer_len)
     {
         irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
         return;
