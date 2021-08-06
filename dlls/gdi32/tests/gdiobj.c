@@ -396,7 +396,6 @@ static void test_shared_handle_entry( HGDIOBJ obj, unsigned int type, BOOL is_st
         todo_wine
         ok(entry->ExtType == NTGDI_OBJ_DC, "ExtType = %x, expected NTGDI_OBJ_DC\n", entry->ExtType);
     }
-    todo_wine_if(is_stock)
     ok(entry->StockFlag == is_stock, "StockFlag = %x\n", entry->StockFlag);
     ok(entry->Type == (type & 0x1f), "Type = %x, expected %x\n", entry->Type, type & 0x1f);
     ok(entry->Object, "Object = NULL\n");

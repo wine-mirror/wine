@@ -613,6 +613,16 @@ static void set_gdi_shared(void)
     NtCurrentTeb()->Peb->GdiSharedHandleTable = &gdi_shared;
 }
 
+static HGDIOBJ make_stock_object( HGDIOBJ obj )
+{
+    GDI_HANDLE_ENTRY *entry;
+
+    if (!(entry = handle_entry( obj ))) return 0;
+    entry_obj( entry )->system = TRUE;
+    entry->StockFlag = 1;
+    return entry_to_handle( entry );
+}
+
 /***********************************************************************
  *           DllMain
  *
@@ -668,8 +678,8 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     /* clear the NOSYSTEM bit on all stock objects*/
     for (i = 0; i < NB_STOCK_OBJECTS; i++)
     {
-        if (stock_objects[i]) __wine_make_gdi_object_system( stock_objects[i], TRUE );
-        if (scaled_stock_objects[i]) __wine_make_gdi_object_system( scaled_stock_objects[i], TRUE );
+        stock_objects[i] = make_stock_object( stock_objects[i] );
+        scaled_stock_objects[i] = make_stock_object( scaled_stock_objects[i] );
     }
     return TRUE;
 }

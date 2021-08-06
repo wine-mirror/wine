@@ -67,8 +67,9 @@ typedef struct _GDI_HANDLE_ENTRY
 /* Wine extension, native uses NTGDI_OBJ_DC */
 #define NTGDI_OBJ_MEMDC           0x41
 
-#define NTGDI_HANDLE_TYPE_SHIFT  16
-#define NTGDI_HANDLE_TYPE_MASK   0x007f0000
+#define NTGDI_HANDLE_TYPE_SHIFT    16
+#define NTGDI_HANDLE_TYPE_MASK     0x007f0000
+#define NTGDI_HANDLE_STOCK_OBJECT  0x00800000
 
 typedef struct _GDI_SHARED_MEMORY
 {
