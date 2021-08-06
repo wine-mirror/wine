@@ -2313,17 +2313,14 @@ static void test_VarParseNumFromStrMisc(void)
       SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"~");
 
       hres = wconvert_str(L",1", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL,NUMPRS_DECIMAL,2,0,-1);
-      todo_wine EXPECTRGB(0,1);
-      EXPECTRGB(1,FAILDIG);
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL,NUMPRS_DECIMAL,2,0,-1);
+      EXPECT2(1,FAILDIG);
 
       hres = wconvert_str(L"1,000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      todo_wine EXPECTFAIL;
+      EXPECTFAIL;
 
       hres = wconvert_str(L"1,", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      if (broken(1)) /* FIXME Reenable once Wine is less broken */
       EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_DECIMAL,2,0,0);
-      todo_wine ok(np.dwOutFlags == NUMPRS_DECIMAL, "Got dwOutFlags=%08x\n", np.dwOutFlags);
       EXPECT2(1,FAILDIG);
 
       /* But not for their monetary equivalents */

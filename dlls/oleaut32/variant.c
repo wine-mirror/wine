@@ -1607,6 +1607,9 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
     return DISP_E_TYPEMISMATCH;
 
   VARIANT_GetLocalisedNumberChars(&chars, lcid, dwFlags);
+  if (chars.cDigitSeparator == chars.cDecimalPoint)
+    /* The decimal point completely masks the digit separator */
+    chars.cDigitSeparator = 0;
   /* Setting the thousands separator to a non-breaking space implies regular
    * spaces are allowed too. But the converse is not true.
    */
