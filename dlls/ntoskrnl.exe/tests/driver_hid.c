@@ -552,9 +552,8 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             todo_wine ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
             todo_wine ok(!out_size, "got output size %u\n", out_size);
 
-            todo_wine_if(packet->reportId != report_id)
+            todo_wine_if(packet->reportId == 0x5a)
             ok(packet->reportId == report_id, "got id %u\n", packet->reportId);
-            todo_wine_if(packet->reportBufferLen == 0 || packet->reportBufferLen == 1)
             ok(packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen);
             ok(!!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer);
 
