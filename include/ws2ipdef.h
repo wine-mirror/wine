@@ -207,6 +207,17 @@ typedef struct WS(in6_pktinfo) {
 #define IPV6_UNICAST_IF                 31
 #define IPV6_RTHDR                      32
 #define IPV6_RECVRTHDR                  38
+#define IPV6_TCLASS                     39
+#define IPV6_RECVTCLASS                 40
+#define IPV6_ECN                        50
+#define IPV6_PKTINFO_EX                 51
+#define IPV6_WFP_REDIRECT_RECORDS       60
+#define IPV6_WFP_REDIRECT_CONTEXT       70
+#define IPV6_MTU_DISCOVER               71
+#define IPV6_MTU                        72
+#define IPV6_NRT_INTERFACE              74
+#define IPV6_RECVERR                    75
+#define IPV6_USER_MTU                   76
 #else
 #define WS_IPV6_OPTIONS                 1
 #define WS_IPV6_HDRINCL                 2
@@ -231,6 +242,17 @@ typedef struct WS(in6_pktinfo) {
 #define WS_IPV6_UNICAST_IF              31
 #define WS_IPV6_RTHDR                   32
 #define WS_IPV6_RECVRTHDR               38
+#define WS_IPV6_TCLASS                  39
+#define WS_IPV6_RECVTCLASS              40
+#define WS_IPV6_ECN                     50
+#define WS_IPV6_PKTINFO_EX              51
+#define WS_IPV6_WFP_REDIRECT_RECORDS    60
+#define WS_IPV6_WFP_REDIRECT_CONTEXT    70
+#define WS_IPV6_MTU_DISCOVER            71
+#define WS_IPV6_MTU                     72
+#define WS_IPV6_NRT_INTERFACE           74
+#define WS_IPV6_RECVERR                 75
+#define WS_IPV6_USER_MTU                76
 #endif /* USE_WS_PREFIX */
 
 #ifndef USE_WS_PREFIX
