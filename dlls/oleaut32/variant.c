@@ -1510,7 +1510,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 /* Get the valid number characters for an lcid */
 static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
-  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',',','$',0,'.',',' };
+  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',0,'$',0,'.',',' };
   LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR buff[4];
 
@@ -1633,6 +1633,11 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
     {
       return DISP_E_TYPEMISMATCH; /* Not allowed before the first digit */
     }
+    else if ((pNumprs->dwInFlags & (NUMPRS_THOUSANDS|NUMPRS_CURRENCY)) == (NUMPRS_THOUSANDS|NUMPRS_CURRENCY) &&
+             chars.cCurrencyDigitSeparator && *lpszStr == chars.cCurrencyDigitSeparator)
+    {
+      return DISP_E_TYPEMISMATCH; /* Not allowed before the first digit */
+    }
     else if (pNumprs->dwInFlags & NUMPRS_LEADING_PLUS &&
              *lpszStr == chars.cPositiveSymbol &&
              !(pNumprs->dwOutFlags & NUMPRS_LEADING_PLUS))
@@ -1659,8 +1664,6 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
       /* Only accept currency characters */
       chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
-      chars.cDigitSeparator = chars.cCurrencyDigitSeparator;
-      cDigitSeparator2 = chars.cDigitSeparator == 0xa0 ? ' ' : 0;
     }
     else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == '(' &&
              !(pNumprs->dwOutFlags & NUMPRS_PARENS))
@@ -1677,7 +1680,6 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
   {
     /* Only accept non-currency characters */
     chars.cCurrencyDecimalPoint = chars.cDecimalPoint;
-    chars.cCurrencyDigitSeparator = chars.cDigitSeparator;
   }
 
   if ((*lpszStr == '&' && (*(lpszStr+1) == 'H' || *(lpszStr+1) == 'h')) &&
@@ -1769,10 +1771,18 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       }
     }
     else if (pNumprs->dwInFlags & NUMPRS_THOUSANDS &&
+             !(pNumprs->dwOutFlags & NUMPRS_HEX_OCT) &&
              ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
               (cDigitSeparator2 && *lpszStr == cDigitSeparator2)))
     {
       pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
+      cchUsed++;
+    }
+    else if ((pNumprs->dwInFlags & (NUMPRS_THOUSANDS|NUMPRS_CURRENCY)) == (NUMPRS_THOUSANDS|NUMPRS_CURRENCY) &&
+             !(pNumprs->dwOutFlags & NUMPRS_HEX_OCT) &&
+             chars.cCurrencyDigitSeparator && *lpszStr == chars.cCurrencyDigitSeparator)
+    {
+      pNumprs->dwOutFlags |= NUMPRS_THOUSANDS|NUMPRS_CURRENCY;
       cchUsed++;
     }
     else if (*lpszStr == chars.cDecimalPoint &&
@@ -1901,9 +1911,25 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
     if ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
         (cDigitSeparator2 && *lpszStr == cDigitSeparator2))
     {
-      if (pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+      if (pNumprs->dwInFlags & NUMPRS_THOUSANDS &&
+          !(pNumprs->dwOutFlags & NUMPRS_HEX_OCT))
       {
         pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
+        cchUsed++;
+        lpszStr++;
+      }
+      else
+      {
+        /* Not allowed, even with NUMPRS_TRAILING_WHITE */
+        break;
+      }
+    }
+    else if (*lpszStr == chars.cCurrencyDigitSeparator)
+    {
+      if ((pNumprs->dwInFlags & (NUMPRS_THOUSANDS|NUMPRS_CURRENCY)) == (NUMPRS_THOUSANDS|NUMPRS_CURRENCY) &&
+          !(pNumprs->dwOutFlags & NUMPRS_HEX_OCT))
+      {
+        pNumprs->dwOutFlags |= NUMPRS_THOUSANDS|NUMPRS_CURRENCY;
         cchUsed++;
         lpszStr++;
       }
