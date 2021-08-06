@@ -114,7 +114,7 @@ struct hid_platform_private
     HIDP_CAPS caps;
 
     HANDLE device;
-    WCHAR *device_path;
+    WCHAR device_path[MAX_PATH];
     BOOL enabled;
 
     char *input_report_buf[2];
@@ -243,7 +243,6 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA preparsed, XINPUT_CAPABILITIES *x
 static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
-    size_t size;
     struct hid_platform_private *private;
 
     if (!(private = calloc(1, sizeof(struct hid_platform_private)))) return FALSE;
@@ -257,9 +256,7 @@ static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSE
     if (!(private->input_report_buf[0] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->input_report_buf[1] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->output_report_buf = calloc(1, private->caps.OutputReportByteLength))) goto failed;
-    size = (lstrlenW(device_path) + 1) * sizeof(WCHAR);
-    if (!(private->device_path = malloc(size))) goto failed;
-    memcpy(private->device_path, device_path, size);
+    lstrcpynW(private->device_path, device_path, MAX_PATH);
     private->enabled = TRUE;
 
     memset(&controller->state, 0, sizeof(controller->state));
@@ -269,7 +266,6 @@ static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSE
     return TRUE;
 
 failed:
-    free(private->device_path);
     free(private->input_report_buf[0]);
     free(private->input_report_buf[1]);
     free(private->output_report_buf);
@@ -360,7 +356,6 @@ static void remove_gamepad(struct xinput_controller *device)
         free(private->input_report_buf[0]);
         free(private->input_report_buf[1]);
         free(private->output_report_buf);
-        free(private->device_path);
         HidD_FreePreparsedData(private->preparsed);
         free(private);
     }
