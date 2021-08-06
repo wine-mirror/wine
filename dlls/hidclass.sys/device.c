@@ -315,6 +315,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         buffer_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
         buffer = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
         break;
+    case IOCTL_HID_SET_FEATURE:
     case IOCTL_HID_SET_OUTPUT_REPORT:
         buffer_len = stack->Parameters.DeviceIoControl.InputBufferLength;
         buffer = irp->AssociatedIrp.SystemBuffer;
@@ -330,6 +331,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         report_len = preparsed->caps.OutputReportByteLength;
         break;
     case IOCTL_HID_GET_FEATURE:
+    case IOCTL_HID_SET_FEATURE:
         report_len = preparsed->caps.FeatureReportByteLength;
         break;
     }
@@ -362,49 +364,11 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
     case IOCTL_HID_GET_INPUT_REPORT:
         call_minidriver( code, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet), &irp->IoStatus );
         break;
+    case IOCTL_HID_SET_FEATURE:
     case IOCTL_HID_SET_OUTPUT_REPORT:
         call_minidriver( code, ext->u.pdo.parent_fdo, NULL, sizeof(packet), &packet, 0, &irp->IoStatus );
         break;
     }
-}
-
-static void HID_set_to_device( DEVICE_OBJECT *device, IRP *irp )
-{
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    const WINE_HIDP_PREPARSED_DATA *data = ext->u.pdo.preparsed_data;
-    HID_XFER_PACKET packet;
-    ULONG max_len;
-
-    TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.DeviceIoControl.InputBufferLength, irp->AssociatedIrp.SystemBuffer);
-    packet.reportId = ((BYTE*)irp->AssociatedIrp.SystemBuffer)[0];
-    if (packet.reportId == 0)
-    {
-        packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
-        packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength - 1;
-        max_len = data->caps.FeatureReportByteLength;
-    }
-    else
-    {
-        packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
-        packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength;
-        max_len = data->reports[data->reportIdx[HidP_Feature][packet.reportId]].bitSize;
-        max_len = (max_len + 7) / 8;
-    }
-    if (packet.reportBufferLen > max_len)
-        packet.reportBufferLen = max_len;
-
-    TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
-
-    call_minidriver( irpsp->Parameters.DeviceIoControl.IoControlCode, ext->u.pdo.parent_fdo, NULL,
-                     0, &packet, sizeof(packet), &irp->IoStatus );
-
-    if (irp->IoStatus.Status == STATUS_SUCCESS)
-        irp->IoStatus.Information = irpsp->Parameters.DeviceIoControl.InputBufferLength;
-    else
-        irp->IoStatus.Information = 0;
-
-    TRACE_(hid_report)( "Result 0x%x set %li bytes\n", irp->IoStatus.Status, irp->IoStatus.Information );
 }
 
 NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
@@ -515,12 +479,10 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
         case IOCTL_HID_GET_FEATURE:
+        case IOCTL_HID_SET_FEATURE:
         case IOCTL_HID_GET_INPUT_REPORT:
         case IOCTL_HID_SET_OUTPUT_REPORT:
             hid_device_xfer_report( ext, code, irp );
-            break;
-        case IOCTL_HID_SET_FEATURE:
-            HID_set_to_device( device, irp );
             break;
         default:
         {
