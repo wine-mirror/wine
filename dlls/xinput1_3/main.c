@@ -56,6 +56,7 @@ struct xinput_controller
     XINPUT_STATE state;
     XINPUT_GAMEPAD last_keystroke;
     XINPUT_VIBRATION vibration;
+    BOOL enabled;
 };
 
 /* xinput_crit guards controllers array */
@@ -115,7 +116,6 @@ struct hid_platform_private
 
     HANDLE device;
     WCHAR device_path[MAX_PATH];
-    BOOL enabled;
 
     char *input_report_buf[2];
     char *output_report_buf;
@@ -251,7 +251,7 @@ static DWORD HID_set_state(struct xinput_controller *device, XINPUT_VIBRATION *s
         device->vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
         device->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
 
-        if (private->enabled)
+        if (device->enabled)
         {
             memset(output_report_buf, 0, output_report_len);
             output_report_buf[0] = /* report id */ 0;
@@ -274,22 +274,20 @@ static DWORD HID_set_state(struct xinput_controller *device, XINPUT_VIBRATION *s
 
 static void controller_enable(struct xinput_controller *controller)
 {
-    struct hid_platform_private *private = controller->platform_private;
     XINPUT_VIBRATION state = controller->vibration;
 
-    if (private->enabled) return;
+    if (controller->enabled) return;
     if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
-    private->enabled = TRUE;
+    controller->enabled = TRUE;
 }
 
 static void controller_disable(struct xinput_controller *controller)
 {
-    struct hid_platform_private *private = controller->platform_private;
     XINPUT_VIBRATION state = {0};
 
-    if (!private->enabled) return;
+    if (!controller->enabled) return;
     if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
-    private->enabled = FALSE;
+    controller->enabled = FALSE;
 }
 
 static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
@@ -309,10 +307,10 @@ static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSE
     if (!(private->input_report_buf[1] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->output_report_buf = calloc(1, private->caps.OutputReportByteLength))) goto failed;
     lstrcpynW(private->device_path, device_path, MAX_PATH);
-    private->enabled = FALSE;
 
     memset(&controller->state, 0, sizeof(controller->state));
     memset(&controller->vibration, 0, sizeof(controller->vibration));
+    controller->enabled = FALSE;
 
     EnterCriticalSection(&controller->crit);
     controller->platform_private = private;
@@ -447,7 +445,7 @@ static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *sta
     ULONG button_length, hat_value;
     LONG value;
 
-    if (!private->enabled) return;
+    if (!device->enabled) return;
 
     if (!HidD_GetInputReport(private->device, report_buf[0], report_len))
     {
