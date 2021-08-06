@@ -2128,6 +2128,7 @@ static HRESULT reader_parse_reference(xmlreader *reader)
         memmove(start + 1, ptr + 1, len);
 
         buffer->written -= (reader_get_cur(reader) - cur) * sizeof(WCHAR);
+        *(WCHAR*)(buffer->data + buffer->written) = 0;
         buffer->cur = cur + 1;
 
         *start = ch;
@@ -2151,6 +2152,7 @@ static HRESULT reader_parse_reference(xmlreader *reader)
             memmove(start+1, ptr+1, len);
             buffer->cur = cur + 1;
             buffer->written -= (ptr - start) * sizeof(WCHAR);
+            *(WCHAR*)(buffer->data + buffer->written) = 0;
 
             *start = ch;
         }
