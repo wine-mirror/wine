@@ -240,6 +240,58 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA preparsed, XINPUT_CAPABILITIES *x
     return TRUE;
 }
 
+static DWORD HID_set_state(struct xinput_controller *device, XINPUT_VIBRATION *state)
+{
+    struct hid_platform_private *private = device->platform_private;
+    char *output_report_buf = private->output_report_buf;
+    ULONG output_report_len = private->caps.OutputReportByteLength;
+
+    if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
+    {
+        device->vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
+        device->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
+
+        if (private->enabled)
+        {
+            memset(output_report_buf, 0, output_report_len);
+            output_report_buf[0] = /* report id */ 0;
+            output_report_buf[1] = 0x8;
+            output_report_buf[3] = (BYTE)(state->wLeftMotorSpeed / 256);
+            output_report_buf[4] = (BYTE)(state->wRightMotorSpeed / 256);
+
+            if (!HidD_SetOutputReport(private->device, output_report_buf, output_report_len))
+            {
+                WARN("unable to set output report, HidD_SetOutputReport failed with error %u\n", GetLastError());
+                return GetLastError();
+            }
+
+            return ERROR_SUCCESS;
+        }
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static void controller_enable(struct xinput_controller *controller)
+{
+    struct hid_platform_private *private = controller->platform_private;
+    XINPUT_VIBRATION state = controller->vibration;
+
+    if (private->enabled) return;
+    if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
+    private->enabled = TRUE;
+}
+
+static void controller_disable(struct xinput_controller *controller)
+{
+    struct hid_platform_private *private = controller->platform_private;
+    XINPUT_VIBRATION state = {0};
+
+    if (!private->enabled) return;
+    if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
+    private->enabled = FALSE;
+}
+
 static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
@@ -257,12 +309,15 @@ static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSE
     if (!(private->input_report_buf[1] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->output_report_buf = calloc(1, private->caps.OutputReportByteLength))) goto failed;
     lstrcpynW(private->device_path, device_path, MAX_PATH);
-    private->enabled = TRUE;
+    private->enabled = FALSE;
 
     memset(&controller->state, 0, sizeof(controller->state));
     memset(&controller->vibration, 0, sizeof(controller->vibration));
 
+    EnterCriticalSection(&controller->crit);
     controller->platform_private = private;
+    controller_enable(controller);
+    LeaveCriticalSection(&controller->crit);
     return TRUE;
 
 failed:
@@ -350,6 +405,7 @@ static void remove_gamepad(struct xinput_controller *device)
     {
         struct hid_platform_private *private = device->platform_private;
 
+        controller_disable(device);
         device->platform_private = NULL;
 
         CloseHandle(private->device);
@@ -499,60 +555,6 @@ static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *sta
     memcpy(state, &device->state, sizeof(*state));
 }
 
-static DWORD HID_set_state(struct xinput_controller *device, XINPUT_VIBRATION *state)
-{
-    struct hid_platform_private *private = device->platform_private;
-    char *output_report_buf = private->output_report_buf;
-    ULONG output_report_len = private->caps.OutputReportByteLength;
-
-    if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
-    {
-        device->vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
-        device->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
-
-        if (private->enabled)
-        {
-            memset(output_report_buf, 0, output_report_len);
-            output_report_buf[0] = /* report id */ 0;
-            output_report_buf[1] = 0x8;
-            output_report_buf[3] = (BYTE)(state->wLeftMotorSpeed / 256);
-            output_report_buf[4] = (BYTE)(state->wRightMotorSpeed / 256);
-
-            if (!HidD_SetOutputReport(private->device, output_report_buf, output_report_len))
-            {
-                WARN("unable to set output report, HidD_SetOutputReport failed with error %u\n", GetLastError());
-                return GetLastError();
-            }
-
-            return ERROR_SUCCESS;
-        }
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static void HID_enable(struct xinput_controller *device, BOOL enable)
-{
-    struct hid_platform_private *private = device->platform_private;
-
-    if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
-    {
-        if (private->enabled && !enable)
-        {
-            XINPUT_VIBRATION state;
-            state.wLeftMotorSpeed = 0;
-            state.wRightMotorSpeed = 0;
-            HID_set_state(device, &state);
-        }
-        else if (!private->enabled && enable)
-        {
-            HID_set_state(device, &device->vibration);
-        }
-    }
-
-    private->enabled = enable;
-}
-
 static BOOL verify_and_lock_device(struct xinput_controller *device)
 {
     if (!device->platform_private) return FALSE;
@@ -603,7 +605,8 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
     for (index = 0; index < XUSER_MAX_COUNT; index++)
     {
         if (!verify_and_lock_device(&controllers[index])) continue;
-        HID_enable(&controllers[index], enable);
+        if (enable) controller_enable(&controllers[index]);
+        else controller_disable(&controllers[index]);
         unlock_device(&controllers[index]);
     }
 }
