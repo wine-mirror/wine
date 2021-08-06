@@ -549,8 +549,8 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = irp->UserBuffer;
             ULONG expected_size = 2;
-            todo_wine ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
-            todo_wine ok(!out_size, "got output size %u\n", out_size);
+            ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
+            ok(!out_size, "got output size %u\n", out_size);
 
             todo_wine_if(packet->reportId == 0x5a)
             ok(packet->reportId == report_id, "got id %u\n", packet->reportId);

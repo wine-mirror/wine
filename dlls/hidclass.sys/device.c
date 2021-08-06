@@ -356,7 +356,16 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         packet.reportBufferLen--;
     }
 
-    call_minidriver( code, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet), &irp->IoStatus );
+    switch (code)
+    {
+    case IOCTL_HID_GET_FEATURE:
+    case IOCTL_HID_GET_INPUT_REPORT:
+        call_minidriver( code, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet), &irp->IoStatus );
+        break;
+    case IOCTL_HID_SET_OUTPUT_REPORT:
+        call_minidriver( code, ext->u.pdo.parent_fdo, NULL, sizeof(packet), &packet, 0, &irp->IoStatus );
+        break;
+    }
 }
 
 static void HID_set_to_device( DEVICE_OBJECT *device, IRP *irp )
