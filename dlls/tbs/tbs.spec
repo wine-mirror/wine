@@ -6,7 +6,7 @@
 @ stdcall Tbsi_Context_Create(ptr ptr)
 @ stub Tbsi_Create_Windows_Key
 @ stub Tbsi_FilterLog
-@ stub Tbsi_GetDeviceInfo
+@ stdcall Tbsi_GetDeviceInfo(long ptr)
 @ stub Tbsi_Get_OwnerAuth
 @ stub Tbsi_Get_TCG_Log
 @ stub Tbsi_Get_TCG_Log_Ex

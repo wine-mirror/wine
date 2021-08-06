@@ -29,3 +29,9 @@ TBS_RESULT WINAPI Tbsi_Context_Create(const TBS_CONTEXT_PARAMS *params, TBS_HCON
     FIXME("(%p, %p) stub\n", params, out);
     return TBS_E_TPM_NOT_FOUND;
 }
+
+TBS_RESULT WINAPI Tbsi_GetDeviceInfo(UINT32 size, void *info)
+{
+    FIXME("(%u, %p) stub\n", size, info);
+    return TBS_E_TPM_NOT_FOUND;
+}
