@@ -179,7 +179,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
     NULL,                            /* pRoundRect */
-    MFDRV_ScaleViewportExtEx,        /* pScaleViewportExtEx */
+    NULL,                            /* pScaleViewportExtEx */
     MFDRV_ScaleWindowExtEx,          /* pScaleWindowExtEx */
     MFDRV_SelectBitmap,              /* pSelectBitmap */
     MFDRV_SelectBrush,               /* pSelectBrush */

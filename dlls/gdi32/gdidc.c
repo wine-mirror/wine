@@ -1232,6 +1232,20 @@ BOOL WINAPI LPtoDP( HDC hdc, POINT *points, INT count )
     return NtGdiTransformPoints( hdc, points, points, count, NtGdiLPtoDP );
 }
 
+/***********************************************************************
+ *           ScaleViewportExtEx    (GDI32.@)
+ */
+BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom,
+                                INT y_num, INT y_denom, SIZE *size )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_ScaleViewportExtEx( hdc, x_num, x_denom, y_num, y_denom );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ScaleViewportExtEx( dc_attr, x_num, x_denom, y_num, y_denom ))
+        return FALSE;
+    return NtGdiScaleViewportExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
+}
 
 /***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)

@@ -113,20 +113,6 @@ BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 
 BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (size)
-        *size = dc->attr->vport_ext;
-
-    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
-    if (!x_num || !x_denom || !y_num || !y_denom) return FALSE;
-
-    dc->attr->vport_ext.cx = (dc->attr->vport_ext.cx * x_num) / x_denom;
-    dc->attr->vport_ext.cy = (dc->attr->vport_ext.cy * y_num) / y_denom;
-    if (dc->attr->vport_ext.cx == 0) dc->attr->vport_ext.cx = 1;
-    if (dc->attr->vport_ext.cy == 0) dc->attr->vport_ext.cy = 1;
-    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -516,21 +502,35 @@ BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 
 
 /***********************************************************************
- *           ScaleViewportExtEx    (GDI32.@)
+ *           NtGdiScaleViewportExtEx    (win32u.@)
  */
-BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
-                                    INT yNum, INT yDenom, LPSIZE size )
+BOOL WINAPI NtGdiScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom,
+                                     INT y_num, INT y_denom, SIZE *size )
 {
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (dc)
+    if ((!(dc = get_dc_ptr( hdc )))) return FALSE;
+
+    if (size) *size = dc->attr->vport_ext;
+
+    if (dc->attr->map_mode == MM_ISOTROPIC || dc->attr->map_mode == MM_ANISOTROPIC)
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pScaleViewportExtEx );
-        ret = physdev->funcs->pScaleViewportExtEx( physdev, xNum, xDenom, yNum, yDenom, size );
-        release_dc_ptr( dc );
+        if (!x_num || !x_denom || !y_num || !y_denom)
+        {
+            release_dc_ptr( dc );
+            return FALSE;
+        }
+
+        dc->attr->vport_ext.cx = (dc->attr->vport_ext.cx * x_num) / x_denom;
+        dc->attr->vport_ext.cy = (dc->attr->vport_ext.cy * y_num) / y_denom;
+        if (dc->attr->vport_ext.cx == 0) dc->attr->vport_ext.cx = 1;
+        if (dc->attr->vport_ext.cy == 0) dc->attr->vport_ext.cy = 1;
+        if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+        DC_UpdateXforms( dc );
     }
-    return ret;
+
+    release_dc_ptr( dc );
+    return TRUE;
 }
 
 

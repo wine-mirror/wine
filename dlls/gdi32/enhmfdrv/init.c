@@ -114,7 +114,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pResetDC */
     EMFDRV_RestoreDC,                /* pRestoreDC */
     EMFDRV_RoundRect,                /* pRoundRect */
-    EMFDRV_ScaleViewportExtEx,       /* pScaleViewportExtEx */
+    NULL,                            /* pScaleViewportExtEx */
     EMFDRV_ScaleWindowExtEx,         /* pScaleWindowExtEx */
     EMFDRV_SelectBitmap,             /* pSelectBitmap */
     EMFDRV_SelectBrush,              /* pSelectBrush */

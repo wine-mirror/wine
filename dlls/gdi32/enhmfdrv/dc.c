@@ -296,25 +296,17 @@ BOOL CDECL EMFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return ret;
 }
 
-BOOL CDECL EMFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size )
+BOOL EMFDC_ScaleViewportExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_num, INT y_denom )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pScaleViewportExtEx );
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSCALEVIEWPORTEXTEX emr;
-    BOOL ret;
 
     emr.emr.iType = EMR_SCALEVIEWPORTEXTEX;
     emr.emr.nSize = sizeof(emr);
-    emr.xNum      = xNum;
-    emr.xDenom    = xDenom;
-    emr.yNum      = yNum;
-    emr.yDenom    = yDenom;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    physDev->modifying_transform++;
-    ret = next->funcs->pScaleViewportExtEx( next, xNum, xDenom, yNum, yDenom, size );
-    physDev->modifying_transform--;
-    return ret;
+    emr.xNum      = x_num;
+    emr.xDenom    = x_denom;
+    emr.yNum      = y_num;
+    emr.yDenom    = y_denom;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size )
