@@ -48,7 +48,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
-typedef struct _xinput_controller
+struct xinput_controller
 {
     CRITICAL_SECTION crit;
     XINPUT_CAPABILITIES caps;
@@ -56,7 +56,7 @@ typedef struct _xinput_controller
     XINPUT_STATE state;
     XINPUT_GAMEPAD last_keystroke;
     XINPUT_VIBRATION vibration;
-} xinput_controller;
+};
 
 /* xinput_crit guards controllers array */
 static CRITICAL_SECTION xinput_crit;
@@ -68,7 +68,7 @@ static CRITICAL_SECTION_DEBUG xinput_critsect_debug =
 };
 static CRITICAL_SECTION xinput_crit = { &xinput_critsect_debug, -1, 0, 0, 0, 0 };
 
-static xinput_controller controllers[XUSER_MAX_COUNT];
+static struct xinput_controller controllers[XUSER_MAX_COUNT];
 static CRITICAL_SECTION_DEBUG controller_critsect_debug[XUSER_MAX_COUNT] =
 {
     {
@@ -93,7 +93,7 @@ static CRITICAL_SECTION_DEBUG controller_critsect_debug[XUSER_MAX_COUNT] =
     },
 };
 
-static xinput_controller controllers[XUSER_MAX_COUNT] =
+static struct xinput_controller controllers[XUSER_MAX_COUNT] =
 {
     {{ &controller_critsect_debug[0], -1, 0, 0, 0, 0 }},
     {{ &controller_critsect_debug[1], -1, 0, 0, 0, 0 }},
@@ -240,7 +240,7 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA preparsed, XINPUT_CAPABILITIES *x
     return TRUE;
 }
 
-static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
+static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
     size_t size;
@@ -346,7 +346,7 @@ static void HID_find_gamepads(void)
     LeaveCriticalSection(&xinput_crit);
 }
 
-static void remove_gamepad(xinput_controller *device)
+static void remove_gamepad(struct xinput_controller *device)
 {
     EnterCriticalSection(&device->crit);
 
@@ -384,7 +384,7 @@ static BYTE scale_byte(LONG value, const struct axis_info *axis)
     return (((ULONGLONG)(value - axis->min)) * 0xff) / axis->range;
 }
 
-static void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
+static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *state)
 {
     struct hid_platform_private *private = device->platform_private;
     int i;
@@ -504,7 +504,7 @@ static void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
     memcpy(state, &device->state, sizeof(*state));
 }
 
-static DWORD HID_set_state(xinput_controller *device, XINPUT_VIBRATION *state)
+static DWORD HID_set_state(struct xinput_controller *device, XINPUT_VIBRATION *state)
 {
     struct hid_platform_private *private = device->platform_private;
     char *output_report_buf = private->output_report_buf;
@@ -536,7 +536,7 @@ static DWORD HID_set_state(xinput_controller *device, XINPUT_VIBRATION *state)
     return ERROR_SUCCESS;
 }
 
-static void HID_enable(xinput_controller *device, BOOL enable)
+static void HID_enable(struct xinput_controller *device, BOOL enable)
 {
     struct hid_platform_private *private = device->platform_private;
 
@@ -558,7 +558,7 @@ static void HID_enable(xinput_controller *device, BOOL enable)
     private->enabled = enable;
 }
 
-static BOOL verify_and_lock_device(xinput_controller *device)
+static BOOL verify_and_lock_device(struct xinput_controller *device)
 {
     if (!device->platform_private) return FALSE;
 
@@ -573,7 +573,7 @@ static BOOL verify_and_lock_device(xinput_controller *device)
     return TRUE;
 }
 
-static void unlock_device(xinput_controller *device)
+static void unlock_device(struct xinput_controller *device)
 {
     LeaveCriticalSection(&device->crit);
 }
@@ -772,7 +772,7 @@ static BOOL trigger_is_on(const BYTE value)
 
 static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
 {
-    xinput_controller *device = &controllers[index];
+    struct xinput_controller *device = &controllers[index];
     const XINPUT_GAMEPAD *cur;
     DWORD ret = ERROR_EMPTY;
     int i;
