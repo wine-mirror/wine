@@ -458,6 +458,7 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                         ptr = fill_control_message( WS_IPPROTO_IPV6, WS_IPV6_PKTINFO, ptr, &ctlsize,
                                                     (void *)&data_win, sizeof(data_win) );
                         if (!ptr) goto error;
+                        break;
                     }
 #endif /* IPV6_PKTINFO */
 
