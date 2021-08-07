@@ -1498,6 +1498,19 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
   return S_OK;
 }
 
+/* The localised characters that make up a valid number */
+typedef struct tagVARIANT_NUMBER_CHARS
+{
+  WCHAR cNegativeSymbol;
+  WCHAR cPositiveSymbol;
+  WCHAR cDecimalPoint;
+  WCHAR cDigitSeparator;
+  DWORD sCurrencyLen;
+  WCHAR sCurrency[8];
+  WCHAR cCurrencyDecimalPoint;
+  WCHAR cCurrencyDigitSeparator;
+} VARIANT_NUMBER_CHARS;
+
 #define GET_NUMBER_TEXT(fld,name) \
   buff[0] = 0; \
   if (!GetLocaleInfoW(lcid, lctype|fld, buff, 2)) \
@@ -1509,7 +1522,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 /* Get the valid number characters for an lcid */
 static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
-  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',0,'$',0,'.',',' };
+  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',0,1,{'$',0},'.',',' };
   LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR buff[4];
 
@@ -1521,17 +1534,16 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
   GET_NUMBER_TEXT(LOCALE_SMONDECIMALSEP, cCurrencyDecimalPoint);
   GET_NUMBER_TEXT(LOCALE_SMONTHOUSANDSEP, cCurrencyDigitSeparator);
 
-  /* Local currency symbols are often 2 characters */
-  lpChars->cCurrencyLocal2 = '\0';
-  switch(GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, buff, ARRAY_SIZE(buff)))
+  if (!GetLocaleInfoW(lcid, lctype|LOCALE_SCURRENCY, lpChars->sCurrency, ARRAY_SIZE(lpChars->sCurrency)))
   {
-    case 3: lpChars->cCurrencyLocal2 = buff[1]; /* Fall through */
-    case 2: lpChars->cCurrencyLocal  = buff[0];
-            break;
-    default: WARN("buffer too small for LOCALE_SCURRENCY\n");
+    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+      WARN("buffer too small for LOCALE_SCURRENCY\n");
+    *lpChars->sCurrency = 0;
   }
-  TRACE("lcid 0x%x, cCurrencyLocal=%d,%d %s\n", lcid, lpChars->cCurrencyLocal,
-        lpChars->cCurrencyLocal2, wine_dbgstr_w(buff));
+  if (!*lpChars->sCurrency)
+    wcscpy(lpChars->sCurrency, L"$");
+  lpChars->sCurrencyLen = wcslen(lpChars->sCurrency);
+  TRACE("lcid 0x%x, sCurrency=%u %s\n", lcid, lpChars->sCurrencyLen, wine_dbgstr_w(lpChars->sCurrency));
 }
 
 /* Number Parsing States */
@@ -1652,12 +1664,11 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
     }
     else if (pNumprs->dwInFlags & NUMPRS_CURRENCY &&
              !(pNumprs->dwOutFlags & NUMPRS_CURRENCY) &&
-             *lpszStr == chars.cCurrencyLocal &&
-             (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
+             wcsncmp(lpszStr, chars.sCurrency, chars.sCurrencyLen) == 0)
     {
       pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
-      cchUsed += chars.cCurrencyLocal2 ? 2 : 1;
-      lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
+      cchUsed += chars.sCurrencyLen;
+      lpszStr += chars.sCurrencyLen;
       /* Only accept currency characters */
       chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
     }
@@ -1968,12 +1979,11 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       pNumprs->dwOutFlags |= NUMPRS_NEG;
     }
     else if (pNumprs->dwInFlags & NUMPRS_CURRENCY &&
-             *lpszStr == chars.cCurrencyLocal &&
-             (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
+             wcsncmp(lpszStr, chars.sCurrency, chars.sCurrencyLen) == 0)
     {
       pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
-      cchUsed += chars.cCurrencyLocal2 ? 2 : 1;
-      lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
+      cchUsed += chars.sCurrencyLen;
+      lpszStr += chars.sCurrencyLen;
     }
     else
       break;

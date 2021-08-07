@@ -2441,10 +2441,10 @@ static void test_VarParseNumFromStrMisc(void)
   /* Windows 8.1 incorrectly doubles the right-to-left mark:
    * "\x62f.\x645.\x200f\x200f 5"
    */
-  todo_wine ok(hres == S_OK || broken(hres == DISP_E_TYPEMISMATCH), "returned %08x\n", hres);
+  ok(hres == S_OK || broken(hres == DISP_E_TYPEMISMATCH), "returned %08x\n", hres);
   if (hres == S_OK)
   {
-    todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,6,0,0);
+    EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,6,0,0);
     EXPECT2(5,FAILDIG);
   }
 
