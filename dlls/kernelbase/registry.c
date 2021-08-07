@@ -121,6 +121,25 @@ static HANDLE open_wow6432node( HANDLE key )
     return ret;
 }
 
+static HKEY get_perflib_key( HANDLE key )
+{
+    static const WCHAR performance_text[] =
+            L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\009";
+    char buffer[200];
+    OBJECT_NAME_INFORMATION *info = (OBJECT_NAME_INFORMATION *)buffer;
+
+    if (!NtQueryObject( key, ObjectNameInformation, buffer, sizeof(buffer), NULL ))
+    {
+        if (!wcsicmp( info->Name.Buffer, performance_text ))
+        {
+            NtClose( key );
+            return HKEY_PERFORMANCE_TEXT;
+        }
+    }
+
+    return key;
+}
+
 /* wrapper for NtCreateKey that creates the key recursively if necessary */
 static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                             const UNICODE_STRING *class, ULONG options, PULONG dispos )
@@ -172,7 +191,7 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
                                       options & ~REG_OPTION_CREATE_LINK, dispos );
             }
             if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
-            if (status) return status;
+            if (!NT_SUCCESS(status)) return status;
             if (i == len) break;
             attr->RootDirectory = subkey;
             while (i < len && buffer[i] == '\\') i++;
@@ -185,6 +204,11 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
     {
         if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
         attr->RootDirectory = subkey;
+    }
+    if (status == STATUS_PREDEFINED_HANDLE)
+    {
+        attr->RootDirectory = get_perflib_key( attr->RootDirectory );
+        status = STATUS_SUCCESS;
     }
     *retkey = attr->RootDirectory;
     return status;
@@ -205,7 +229,13 @@ static NTSTATUS open_key( HKEY *retkey, DWORD options, ACCESS_MASK access, OBJEC
     if (!force_wow32)
     {
         if (options & REG_OPTION_OPEN_LINK) attr->Attributes |= OBJ_OPENLINK;
-        return NtOpenKeyEx( (HANDLE *)retkey, access, attr, options );
+        status = NtOpenKeyEx( (HANDLE *)retkey, access, attr, options );
+        if (status == STATUS_PREDEFINED_HANDLE)
+        {
+            *retkey = get_perflib_key( *retkey );
+            status = STATUS_SUCCESS;
+        }
+        return status;
     }
 
     if (len && buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
@@ -248,6 +278,11 @@ static NTSTATUS open_key( HKEY *retkey, DWORD options, ACCESS_MASK access, OBJEC
     {
         if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
         attr->RootDirectory = subkey;
+    }
+    if (status == STATUS_PREDEFINED_HANDLE)
+    {
+        attr->RootDirectory = get_perflib_key( attr->RootDirectory );
+        status = STATUS_SUCCESS;
     }
     *retkey = attr->RootDirectory;
     return status;

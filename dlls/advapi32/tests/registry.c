@@ -3832,10 +3832,10 @@ static void test_perflib_key(void)
     ok(!ret, "got %u\n", ret);
 
     ret = RegOpenKeyExA(perflib_key, "009", 0, KEY_READ, &key);
-    todo_wine ok(!ret, "got %u\n", ret);
+    ok(!ret, "got %u\n", ret);
     /* English always returns TEXT; most other languages return NLSTEXT, but
      * some (e.g. Hindi) return TEXT */
-    todo_wine ok(key == HKEY_PERFORMANCE_TEXT || key == HKEY_PERFORMANCE_NLSTEXT, "got key %p\n", key);
+    ok(key == HKEY_PERFORMANCE_TEXT || key == HKEY_PERFORMANCE_NLSTEXT, "got key %p\n", key);
 
     ret = RegCloseKey(key);
     ok(!ret, "got %u\n", ret);
