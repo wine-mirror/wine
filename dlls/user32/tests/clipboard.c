@@ -1543,6 +1543,11 @@ static void test_handles( HWND hwnd )
     data = GetClipboardData( 0xdeadfade );
     ok( data == ptr, "wrong data %p\n", data );
 
+    SetLastError( 0xdeadbeef );
+    data = GetClipboardData( CF_RIFF );
+    ok( GetLastError() == 0xdeadbeef, "unexpected last error %d\n", GetLastError() );
+    ok( !data, "wrong data %p\n", data );
+
     h = SetClipboardData( CF_PRIVATEFIRST + 7, htext4 );
     ok( h == htext4, "got %p\n", h );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );

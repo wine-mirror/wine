@@ -1070,6 +1070,7 @@ HANDLE WINAPI GetClipboardData( UINT format )
         GlobalFree( data );
 
         if (status == STATUS_BUFFER_OVERFLOW) continue;  /* retry with the new size */
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0; /* no such format */
         if (status)
         {
             SetLastError( RtlNtStatusToDosError( status ));
