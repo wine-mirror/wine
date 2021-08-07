@@ -701,7 +701,7 @@
 @ stub MmFreeMappingAddress
 @ stdcall MmFreeNonCachedMemory(ptr long)
 @ stub MmFreePagesFromMdl
-@ stub MmGetPhysicalAddress
+@ stdcall MmGetPhysicalAddress(ptr)
 @ stub MmGetPhysicalMemoryRanges
 @ stdcall MmGetSystemRoutineAddress(ptr)
 @ stub MmGetVirtualForPhysical

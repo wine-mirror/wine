@@ -2671,6 +2671,17 @@ BOOLEAN WINAPI MmIsAddressValid(PVOID VirtualAddress)
 }
 
 /***********************************************************************
+ *           MmGetPhysicalAddress   (NTOSKRNL.EXE.@)
+ */
+PHYSICAL_ADDRESS WINAPI MmGetPhysicalAddress(void *virtual_address)
+{
+    PHYSICAL_ADDRESS ret;
+    FIXME("(%p): semi-stub\n", virtual_address);
+    ret.QuadPart = (ULONG_PTR)virtual_address;
+    return ret;
+}
+
+/***********************************************************************
  *           MmMapIoSpace   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes, DWORD CacheType )
