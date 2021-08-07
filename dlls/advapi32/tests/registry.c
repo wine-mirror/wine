@@ -3838,12 +3838,12 @@ static void test_perflib_key(void)
     todo_wine ok(key == HKEY_PERFORMANCE_TEXT || key == HKEY_PERFORMANCE_NLSTEXT, "got key %p\n", key);
 
     ret = RegCloseKey(key);
-    todo_wine ok(!ret, "got %u\n", ret);
+    ok(!ret, "got %u\n", ret);
 
     RtlInitUnicodeString(&string, L"009");
     InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, perflib_key, NULL);
     ret = NtOpenKey((HANDLE *)&key, KEY_ALL_ACCESS, &attr);
-    todo_wine ok(ret == STATUS_PREDEFINED_HANDLE || ret == STATUS_ACCESS_DENIED
+    ok(ret == STATUS_PREDEFINED_HANDLE || ret == STATUS_ACCESS_DENIED
             || ret == STATUS_SUCCESS /* Win < 7 */, "got %#x\n", ret);
     if (ret == STATUS_PREDEFINED_HANDLE)
         ok(!is_special_key(key), "expected a normal handle, got %p\n", key);

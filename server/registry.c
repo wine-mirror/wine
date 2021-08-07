@@ -101,6 +101,7 @@ struct key
 #define KEY_SYMLINK  0x0008  /* key is a symbolic link */
 #define KEY_WOW64    0x0010  /* key contains a Wow6432Node subkey */
 #define KEY_WOWSHARE 0x0020  /* key is a Wow64 shared key (used for Software\Classes) */
+#define KEY_PREDEF   0x0040  /* key is marked as predefined */
 
 /* a key value */
 struct key_value
@@ -801,6 +802,7 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
         return NULL;
     }
     if (debug_level > 1) dump_operation( key, NULL, "Open" );
+    if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
     grab_object( key );
     return key;
 }
@@ -831,6 +833,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
             return NULL;
         }
         if (debug_level > 1) dump_operation( key, NULL, "Open" );
+        if (key->flags & KEY_PREDEF) set_error( STATUS_PREDEFINED_HANDLE );
         grab_object( key );
         return key;
     }
@@ -924,6 +927,12 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
     data_size_t max_value = 0, max_data = 0;
     WCHAR *fullname = NULL;
     char *data;
+
+    if (key->flags & KEY_PREDEF)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
 
     if (index != -1)  /* -1 means use the specified key directly */
     {
@@ -1019,6 +1028,12 @@ static int delete_key( struct key *key, int recurse )
         return -1;
     }
     assert( parent );
+
+    if (key->flags & KEY_PREDEF)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return -1;
+    }
 
     while (recurse && (key->last_subkey>=0))
         if (0 > delete_key(key->subkeys[key->last_subkey], 1))
@@ -1126,6 +1141,12 @@ static void set_value( struct key *key, const struct unicode_str *name,
     void *ptr = NULL;
     int index;
 
+    if (key->flags & KEY_PREDEF)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+
     if ((value = find_value( key, name, &index )))
     {
         /* check if the new value is identical to the existing one */
@@ -1172,6 +1193,12 @@ static void get_value( struct key *key, const struct unicode_str *name, int *typ
     struct key_value *value;
     int index;
 
+    if (key->flags & KEY_PREDEF)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+
     if ((value = find_value( key, name, &index )))
     {
         *type = value->type;
@@ -1190,6 +1217,12 @@ static void get_value( struct key *key, const struct unicode_str *name, int *typ
 static void enum_value( struct key *key, int i, int info_class, struct enum_key_value_reply *reply )
 {
     struct key_value *value;
+
+    if (key->flags & KEY_PREDEF)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
 
     if (i < 0 || i > key->last_value) set_error( STATUS_NO_MORE_ENTRIES );
     else
@@ -1242,6 +1275,12 @@ static void delete_value( struct key *key, const struct unicode_str *name )
 {
     struct key_value *value;
     int i, index, nb_values;
+
+    if (key->flags & KEY_PREDEF)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
 
     if (!(value = find_value( key, name, &index )))
     {
@@ -1817,9 +1856,16 @@ void init_registry(void)
     static const WCHAR classes_arm64[] = {'S','o','f','t','w','a','r','e','\\',
                                           'C','l','a','s','s','e','s','\\',
                                           'W','o','w','A','A','6','4','N','o','d','e'};
+    static const WCHAR perflib[] = {'S','o','f','t','w','a','r','e','\\',
+                                    'M','i','c','r','o','s','o','f','t','\\',
+                                    'W','i','n','d','o','w','s',' ','N','T','\\',
+                                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                    'P','e','r','f','l','i','b','\\',
+                                    '0','0','9'};
     static const struct unicode_str root_name = { NULL, 0 };
     static const struct unicode_str HKLM_name = { HKLM, sizeof(HKLM) };
     static const struct unicode_str HKU_name = { HKU_default, sizeof(HKU_default) };
+    static const struct unicode_str perflib_name = { perflib, sizeof(perflib) };
 
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
@@ -1889,6 +1935,12 @@ void init_registry(void)
             release_object( key );
         }
         /* FIXME: handle HKCU too */
+    }
+
+    if ((key = create_key_recursive( hklm, &perflib_name, current_time )))
+    {
+        key->flags |= KEY_PREDEF;
+        release_object( key );
     }
 
     release_object( hklm );
