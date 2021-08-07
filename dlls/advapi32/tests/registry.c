@@ -99,6 +99,11 @@ static void InitFunctionPtrs(void)
     pNtUnloadKey = (void *)GetProcAddress( hntdll, "NtUnloadKey" );
 }
 
+static BOOL is_special_key(HKEY key)
+{
+    return !!((ULONG_PTR)key & 0x80000000);
+}
+
 /* delete key and all its subkeys */
 static DWORD delete_key( HKEY hkey )
 {
@@ -3809,6 +3814,139 @@ todo_wine
     ok(dwret == ERROR_SUCCESS, "got %u\n", dwret);
 }
 
+static void test_perflib_key(void)
+{
+    unsigned int primary_lang = PRIMARYLANGID(GetUserDefaultLangID());
+    unsigned int buffer_size = 1024 * 1024;
+    OBJECT_NAME_INFORMATION *name_info;
+    HKEY perflib_key, key, key2;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    char lang_name[4];
+    char *buffer;
+    DWORD size;
+    LONG ret;
+
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+            "Software\\Microsoft\\Windows NT\\CurrentVersion\\Perflib", 0, KEY_READ, &perflib_key);
+    ok(!ret, "got %u\n", ret);
+
+    ret = RegOpenKeyExA(perflib_key, "009", 0, KEY_READ, &key);
+    todo_wine ok(!ret, "got %u\n", ret);
+    /* English always returns TEXT; most other languages return NLSTEXT, but
+     * some (e.g. Hindi) return TEXT */
+    todo_wine ok(key == HKEY_PERFORMANCE_TEXT || key == HKEY_PERFORMANCE_NLSTEXT, "got key %p\n", key);
+
+    ret = RegCloseKey(key);
+    todo_wine ok(!ret, "got %u\n", ret);
+
+    RtlInitUnicodeString(&string, L"009");
+    InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, perflib_key, NULL);
+    ret = NtOpenKey((HANDLE *)&key, KEY_ALL_ACCESS, &attr);
+    todo_wine ok(ret == STATUS_PREDEFINED_HANDLE || ret == STATUS_ACCESS_DENIED
+            || ret == STATUS_SUCCESS /* Win < 7 */, "got %#x\n", ret);
+    if (ret == STATUS_PREDEFINED_HANDLE)
+        ok(!is_special_key(key), "expected a normal handle, got %p\n", key);
+    else if (ret == STATUS_SUCCESS)
+        ok(key == HKEY_PERFORMANCE_TEXT, "got key %p\n", key);
+    else
+    {
+        skip("Not enough permissions to test the perflib key.\n");
+        RegCloseKey(perflib_key);
+        return;
+    }
+
+    buffer = malloc(buffer_size);
+
+    ret = NtQueryKey(key, KeyFullInformation, buffer, buffer_size, &size);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    ret = NtEnumerateKey(key, 0, KeyFullInformation, buffer, buffer_size, &size);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    RtlInitUnicodeString(&string, L"counter");
+    ret = NtQueryValueKey(key, &string, KeyValuePartialInformation, buffer, buffer_size, &size);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    ret = NtEnumerateValueKey(key, 0, KeyValuePartialInformation, buffer, buffer_size, &size);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    ret = NtSetValueKey(key, &string, 0, REG_SZ, "test", 5);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    ret = NtDeleteValueKey(key, &string);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    ret = NtDeleteKey(key);
+    ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+
+    RtlInitUnicodeString(&string, L"subkey");
+    InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, key, NULL);
+    ret = NtOpenKey((HANDLE *)&key2, KEY_READ, &attr);
+    if (is_special_key(key))
+        ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+    else
+        ok(ret == STATUS_OBJECT_NAME_NOT_FOUND
+                || broken(ret == STATUS_INVALID_HANDLE) /* WoW64 */, "got %#x\n", ret);
+
+    ret = NtCreateKey((HANDLE *)&key2, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL);
+    if (is_special_key(key))
+        ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+    else
+        ok(!ret || broken(ret == STATUS_ACCESS_DENIED) /* w8adm */
+                || broken(ret == STATUS_INVALID_HANDLE) /* WoW64 */, "got %#x\n", ret);
+    if (!ret)
+    {
+        NtDeleteKey(key2);
+        NtClose(key2);
+    }
+
+    /* it's a real handle, though */
+    ret = NtQueryObject(key, ObjectNameInformation, buffer, buffer_size, &size);
+    if (is_special_key(key))
+        ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+    else
+        ok(!ret, "got %#x\n", ret);
+    if (!ret)
+    {
+        name_info = (OBJECT_NAME_INFORMATION *)buffer;
+        ok(!wcsicmp(name_info->Name.Buffer, L"\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT"
+                "\\CurrentVersion\\Perflib\\009"), "got name %s\n", debugstr_w(name_info->Name.Buffer));
+    }
+
+    ret = NtClose(key);
+    if (is_special_key(key))
+        ok(ret == STATUS_INVALID_HANDLE, "got %#x\n", ret);
+    else
+        ok(!ret, "got %#x\n", ret);
+
+    /* multilingual support was not really completely thought through */
+
+    sprintf(lang_name, "%03x", primary_lang);
+    if (primary_lang != LANG_ENGLISH)
+    {
+        ret = RegOpenKeyExA(perflib_key, lang_name, 0, KEY_READ, &key);
+        todo_wine ok(!ret, "got %u\n", ret);
+        ok(!is_special_key(key), "expected a normal handle, got %p\n", key);
+
+        ret = RegQueryValueExA(key, "counter", NULL, NULL, (BYTE *)buffer, &size);
+        todo_wine ok(ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret);
+
+        ret = RegCloseKey(key);
+        todo_wine ok(!ret, "got %u\n", ret);
+    }
+
+    ret = RegCloseKey(perflib_key);
+    ok(!ret, "got %u\n", ret);
+
+    RtlInitUnicodeString(&string, L"\\Registry\\PerfData");
+    InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    ret = NtOpenKey((HANDLE *)&key, KEY_READ, &attr);
+    todo_wine ok(ret == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", ret);
+
+    free(buffer);
+}
+
 static void test_RegLoadMUIString(void)
 {
     HMODULE hUser32, hResDll, hFile;
@@ -4213,6 +4351,7 @@ START_TEST(registry)
     test_RegQueryValueExPerformanceData();
     test_RegLoadMUIString();
     test_EnumDynamicTimeZoneInformation();
+    test_perflib_key();
 
     /* cleanup */
     delete_key( hkey_main );
