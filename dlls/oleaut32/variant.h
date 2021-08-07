@@ -101,19 +101,6 @@
 #define  VAR_BOOLYESNO 0x0800 /* Convert bool to "Yes"/"No" */
 #define  VAR_NEGATIVE  0x1000 /* Number is negative */
 
-/* The localised characters that make up a valid number */
-typedef struct tagVARIANT_NUMBER_CHARS
-{
-  WCHAR cNegativeSymbol;
-  WCHAR cPositiveSymbol;
-  WCHAR cDecimalPoint;
-  WCHAR cDigitSeparator;
-  WCHAR cCurrencyLocal;
-  WCHAR cCurrencyLocal2;
-  WCHAR cCurrencyDecimalPoint;
-  WCHAR cCurrencyDigitSeparator;
-} VARIANT_NUMBER_CHARS;
-
 unsigned int get_type_size(ULONG*, VARTYPE) DECLSPEC_HIDDEN;
 HRESULT VARIANT_ClearInd(VARIANTARG *) DECLSPEC_HIDDEN;
 BOOL get_date_format(LCID, DWORD, const SYSTEMTIME *,
