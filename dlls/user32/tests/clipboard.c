@@ -1927,7 +1927,7 @@ static void test_data_handles(void)
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ok( is_moveable( text ), "expected moveable mem %p\n", text );
     ptr = GlobalLock( h );
-    ok( !strcmp( ptr, "foobar" ), "wrong data '%.8s'\n", ptr );
+    ok( ptr && !strcmp( ptr, "foobar" ), "wrong data %s\n", wine_dbgstr_a(ptr) );
     GlobalUnlock( h );
 
     r = EmptyClipboard();
