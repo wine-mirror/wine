@@ -1548,11 +1548,8 @@ static void test_VarParseNumFromStrEn(void)
 
   /* Only integers are allowed when using an alternative radix */
   CONVERT("&ha.2", NUMPRS_HEX_OCT|NUMPRS_DECIMAL);
-  if (broken(1)) /* FIXME Reenable once Wine is less broken */
   EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_DECIMAL,NUMPRS_HEX_OCT,3,4,0);
-  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
-  EXPECTRGB(0,10);
-  todo_wine EXPECTRGB(1,FAILDIG);
+  EXPECT2(10,FAILDIG);
 
   /* Except if it looks like a plain decimal number */
   CONVERT("01.2", NUMPRS_HEX_OCT|NUMPRS_DECIMAL);
@@ -2318,9 +2315,8 @@ static void test_VarParseNumFromStrMisc(void)
 
       /* But not for their monetary equivalents */
       hres = wconvert_str(L"~1", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY,NUMPRS_DECIMAL|NUMPRS_CURRENCY,2,0,-1);
-      todo_wine EXPECTRGB(0,1);
-      EXPECTRGB(1,FAILDIG);
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY,NUMPRS_DECIMAL|NUMPRS_CURRENCY,2,0,-1);
+      EXPECT2(1,FAILDIG);
 
       hres = wconvert_str(L"1~", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
       EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_THOUSANDS|NUMPRS_CURRENCY,2,0,0);
@@ -2355,11 +2351,8 @@ static void test_VarParseNumFromStrMisc(void)
       EXPECTRGB(2,FAILDIG);
 
       hres = wconvert_str(L"1,2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      if (broken(1)) /* FIXME Reenable once Wine is less broken */
       EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,3,0,-1);
-      todo_wine ok(np.dwOutFlags == (NUMPRS_DECIMAL|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
-      EXPECTRGB(0,1);
-      todo_wine EXPECTRGB(1,2);
+      EXPECT2(1,2);
       EXPECTRGB(2,FAILDIG);
 
       hres = wconvert_str(L"1.2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
@@ -2368,11 +2361,8 @@ static void test_VarParseNumFromStrMisc(void)
       EXPECTRGB(2,FAILDIG);
 
       hres = wconvert_str(L"1,2", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      if (broken(1)) /* FIXME Reenable once Wine is less broken */
       EXPECT(2,NUMPRS_DECIMAL|NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,3,0,-1);
-      todo_wine ok(np.dwOutFlags == (NUMPRS_DECIMAL|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
-      EXPECTRGB(0,1);
-      todo_wine EXPECTRGB(1,2);
+      EXPECT2(1,2);
       EXPECTRGB(2,FAILDIG);
 
       hres = wconvert_str(L"1.2,3", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_CURRENCY, &np, rgb, LOCALE_USER_DEFAULT, 0);
@@ -2381,11 +2371,8 @@ static void test_VarParseNumFromStrMisc(void)
       EXPECTRGB(2,FAILDIG);
 
       hres = wconvert_str(L"1,2.3", ARRAY_SIZE(rgb), NUMPRS_DECIMAL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      if (broken(1)) /* FIXME Reenable once Wine is less broken */
       EXPECT(2,NUMPRS_DECIMAL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,3,0,-1);
-      todo_wine ok(np.dwOutFlags == (NUMPRS_DECIMAL|NUMPRS_CURRENCY), "Got dwOutFlags=%08x\n", np.dwOutFlags);
-      EXPECTRGB(0,1);
-      todo_wine EXPECTRGB(1,2);
+      EXPECT2(1,2);
       EXPECTRGB(2,FAILDIG);
 
 
@@ -2394,10 +2381,9 @@ static void test_VarParseNumFromStrMisc(void)
        */
       SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONDECIMALSEP, L"$");
       hres = wconvert_str(L"1$99", ARRAY_SIZE(rgb), NUMPRS_DECIMAL|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      todo_wine EXPECT(3,NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,4,0,-2);
-      EXPECTRGB(0,1);
-      todo_wine EXPECTRGB(1,9);
-      todo_wine EXPECTRGB(2,9);
+      EXPECT(3,NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_DECIMAL|NUMPRS_CURRENCY,4,0,-2);
+      EXPECT2(1,9);
+      EXPECTRGB(2,9);
       EXPECTRGB(3,FAILDIG);
 
 

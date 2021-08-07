@@ -1523,7 +1523,7 @@ typedef struct tagVARIANT_NUMBER_CHARS
 /* Get the valid number characters for an lcid */
 static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
-  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',0,1,{'$',0},'.',',' };
+  static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',0,1,{'$',0},0,',' };
   LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR buff[4];
 
@@ -1630,7 +1630,31 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
   /* First consume all the leading symbols and space from the string */
   while (1)
   {
-    if (pNumprs->dwInFlags & NUMPRS_LEADING_WHITE && iswspace(*lpszStr))
+    if (pNumprs->dwInFlags & NUMPRS_DECIMAL &&
+        (*lpszStr == chars.cDecimalPoint ||
+         *lpszStr == chars.cCurrencyDecimalPoint))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_DECIMAL;
+      if (*lpszStr == chars.cCurrencyDecimalPoint &&
+        chars.cDecimalPoint != chars.cCurrencyDecimalPoint)
+        pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
+      cchUsed++;
+      lpszStr++;
+
+      /* If we have no digits so far, skip leading zeros */
+      if (!pNumprs->cDig)
+      {
+        while (lpszStr[1] == '0')
+        {
+          dwState |= B_LEADING_ZERO;
+          cchUsed++;
+          lpszStr++;
+          pNumprs->nPwr10--;
+        }
+      }
+      break;
+    }
+    else if (pNumprs->dwInFlags & NUMPRS_LEADING_WHITE && iswspace(*lpszStr))
     {
       pNumprs->dwOutFlags |= NUMPRS_LEADING_WHITE;
       do
@@ -1673,8 +1697,6 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
       cchUsed += chars.sCurrencyLen;
       lpszStr += chars.sCurrencyLen;
-      /* Only accept currency characters */
-      chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
     }
     else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == '(' &&
              !(pNumprs->dwOutFlags & NUMPRS_PARENS))
@@ -1687,27 +1709,24 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       break;
   }
 
-  if (!(pNumprs->dwOutFlags & NUMPRS_CURRENCY))
+  if (!(pNumprs->dwOutFlags & NUMPRS_DECIMAL))
   {
-    /* Only accept non-currency characters */
-    chars.cCurrencyDecimalPoint = chars.cDecimalPoint;
-  }
-
-  if ((*lpszStr == '&' && (*(lpszStr+1) == 'H' || *(lpszStr+1) == 'h')) &&
-    pNumprs->dwInFlags & NUMPRS_HEX_OCT)
-  {
+    if ((*lpszStr == '&' && (*(lpszStr+1) == 'H' || *(lpszStr+1) == 'h')) &&
+        pNumprs->dwInFlags & NUMPRS_HEX_OCT)
+    {
       dwState |= B_PROCESSING_HEX;
       pNumprs->dwOutFlags |= NUMPRS_HEX_OCT;
       cchUsed=cchUsed+2;
       lpszStr=lpszStr+2;
-  }
-  else if ((*lpszStr == '&' && (*(lpszStr+1) == 'O' || *(lpszStr+1) == 'o')) &&
-    pNumprs->dwInFlags & NUMPRS_HEX_OCT)
-  {
+    }
+    else if ((*lpszStr == '&' && (*(lpszStr+1) == 'O' || *(lpszStr+1) == 'o')) &&
+             pNumprs->dwInFlags & NUMPRS_HEX_OCT)
+    {
       dwState |= B_PROCESSING_OCT;
       pNumprs->dwOutFlags |= NUMPRS_HEX_OCT;
       cchUsed=cchUsed+2;
       lpszStr=lpszStr+2;
+    }
   }
 
   /* Strip Leading zeros */
@@ -1796,11 +1815,15 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       pNumprs->dwOutFlags |= NUMPRS_THOUSANDS|NUMPRS_CURRENCY;
       cchUsed++;
     }
-    else if (*lpszStr == chars.cDecimalPoint &&
-             pNumprs->dwInFlags & NUMPRS_DECIMAL &&
-             !(pNumprs->dwOutFlags & (NUMPRS_DECIMAL|NUMPRS_EXPONENT)))
+    else if (pNumprs->dwInFlags & NUMPRS_DECIMAL &&
+             (*lpszStr == chars.cDecimalPoint ||
+              *lpszStr == chars.cCurrencyDecimalPoint) &&
+             !(pNumprs->dwOutFlags & (NUMPRS_HEX_OCT|NUMPRS_DECIMAL|NUMPRS_EXPONENT)))
     {
       pNumprs->dwOutFlags |= NUMPRS_DECIMAL;
+      if (*lpszStr == chars.cCurrencyDecimalPoint &&
+        chars.cDecimalPoint != chars.cCurrencyDecimalPoint)
+        pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
       cchUsed++;
 
       /* If we have no digits so far, skip leading zeros */
