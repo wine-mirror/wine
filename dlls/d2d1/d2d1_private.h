@@ -577,7 +577,7 @@ struct d2d_effect
     size_t input_count;
 };
 
-HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory) DECLSPEC_HIDDEN;
+HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory, const CLSID *effect_id) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

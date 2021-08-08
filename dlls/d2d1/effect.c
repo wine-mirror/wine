@@ -20,6 +20,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+struct d2d_effect_info
+{
+    const CLSID *clsid;
+    UINT32 default_input_count;
+};
+
+static const struct d2d_effect_info builtin_effects[] =
+{
+    {&CLSID_D2D12DAffineTransform,      1},
+    {&CLSID_D2D13DPerspectiveTransform, 1},
+    {&CLSID_D2D1Composite,              2}
+};
+
 static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_effect, ID2D1Effect_iface);
@@ -277,19 +290,31 @@ static const ID2D1ImageVtbl d2d_effect_image_vtbl =
     d2d_effect_image_GetFactory,
 };
 
-HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory)
+HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory, const CLSID *effect_id)
 {
+    unsigned int i;
+
     effect->ID2D1Effect_iface.lpVtbl = &d2d_effect_vtbl;
     effect->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
     effect->refcount = 1;
 
-    effect->input_count = 1;
-    if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
-            effect->input_count, sizeof(*effect->inputs)))
-        return E_OUTOFMEMORY;
-    memset(effect->inputs, 0, sizeof(*effect->inputs) * effect->input_count);
+    for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
+    {
+        if (IsEqualGUID(effect_id, builtin_effects[i].clsid))
+        {
+            effect->input_count = builtin_effects[i].default_input_count;
 
-    ID2D1Factory_AddRef(effect->factory = factory);
+            if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
+                    effect->input_count, sizeof(*effect->inputs)))
+                return E_OUTOFMEMORY;
+            memset(effect->inputs, 0, sizeof(*effect->inputs) * effect->input_count);
 
-    return S_OK;
+            ID2D1Factory_AddRef(effect->factory = factory);
+
+            return S_OK;
+        }
+    }
+
+    WARN("Unsupported effect clsid %s.\n", debugstr_guid(effect_id));
+    return E_FAIL;
 }

@@ -1894,7 +1894,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceCont
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_effect_init(object, context->factory)))
+    if (FAILED(hr = d2d_effect_init(object, context->factory, effect_id)))
     {
         WARN("Failed to initialize effect, hr %#x.\n", hr);
         heap_free(object);
