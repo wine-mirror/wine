@@ -35,6 +35,7 @@
  * ====================================================
  */
 
+#include <assert.h>
 #include <complex.h>
 #include <stdio.h>
 #include <fenv.h>
@@ -5321,7 +5322,7 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
         if (*cw & _IC_AFFINE) newcw |= 0x1000;
     }
 
-    if (oldsw != newsw && newsw)
+    if (oldsw != newsw && (newsw & 0x3f))
     {
         struct {
             WORD control_word;
@@ -5337,6 +5338,8 @@ static BOOL _setfp( unsigned int *cw, unsigned int cw_mask,
             WORD data_segment;
             WORD unused5;
         } fenv;
+
+        assert(cw);
 
         __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
         fenv.control_word = newcw;
