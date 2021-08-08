@@ -9802,7 +9802,7 @@ static void test_effect(BOOL d3d11)
         }
 
         input_count = ID2D1Effect_GetInputCount(effect);
-        todo_wine
+        todo_wine_if(test->default_input_count != 1)
         ok (input_count == test->default_input_count, "Got unexpected input count %u, expected %u.\n",
                 input_count, test->default_input_count);
 

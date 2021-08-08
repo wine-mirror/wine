@@ -25,6 +25,12 @@ static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)
     return CONTAINING_RECORD(iface, struct d2d_effect, ID2D1Effect_iface);
 }
 
+static void d2d_effect_cleanup(struct d2d_effect *effect)
+{
+    heap_free(effect->inputs);
+    ID2D1Factory_Release(effect->factory);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_effect_QueryInterface(ID2D1Effect *iface, REFIID iid, void **out)
 {
     struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
@@ -72,7 +78,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_Release(ID2D1Effect *iface)
 
     if (!refcount)
     {
-        ID2D1Factory_Release(effect->factory);
+        d2d_effect_cleanup(effect);
         heap_free(effect);
     }
 
@@ -183,9 +189,11 @@ static void STDMETHODCALLTYPE d2d_effect_GetInput(ID2D1Effect *iface, UINT32 ind
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetInputCount(ID2D1Effect *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return effect->input_count;
 }
 
 static void STDMETHODCALLTYPE d2d_effect_GetOutput(ID2D1Effect *iface, ID2D1Image **output)
@@ -269,10 +277,19 @@ static const ID2D1ImageVtbl d2d_effect_image_vtbl =
     d2d_effect_image_GetFactory,
 };
 
-void d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory)
+HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory)
 {
     effect->ID2D1Effect_iface.lpVtbl = &d2d_effect_vtbl;
     effect->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
     effect->refcount = 1;
+
+    effect->input_count = 1;
+    if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
+            effect->input_count, sizeof(*effect->inputs)))
+        return E_OUTOFMEMORY;
+    memset(effect->inputs, 0, sizeof(*effect->inputs) * effect->input_count);
+
     ID2D1Factory_AddRef(effect->factory = factory);
+
+    return S_OK;
 }

@@ -572,9 +572,12 @@ struct d2d_effect
     LONG refcount;
 
     ID2D1Factory *factory;
+    ID2D1Image **inputs;
+    size_t inputs_size;
+    size_t input_count;
 };
 
-void d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory) DECLSPEC_HIDDEN;
+HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

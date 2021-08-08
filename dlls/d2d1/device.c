@@ -1887,13 +1887,19 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceCont
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     struct d2d_effect *object;
+    HRESULT hr;
 
     FIXME("iface %p, effect_id %s, effect %p stub!\n", iface, debugstr_guid(effect_id), effect);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_effect_init(object, context->factory);
+    if (FAILED(hr = d2d_effect_init(object, context->factory)))
+    {
+        WARN("Failed to initialize effect, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
+    }
 
     TRACE("Created effect %p.\n", object);
     *effect = &object->ID2D1Effect_iface;
