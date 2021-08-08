@@ -9824,7 +9824,6 @@ static void test_effect(BOOL d3d11)
         {
             winetest_push_context("Input %u", j);
             ID2D1Effect_GetInput(effect, j, &image_a);
-            todo_wine
             ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
             winetest_pop_context();
         }
@@ -9845,14 +9844,11 @@ static void test_effect(BOOL d3d11)
             ID2D1Effect_GetInput(effect, j, &image_a);
             if (j == 0)
             {
-                todo_wine
                 ok(image_a == (ID2D1Image *)bitmap, "Got unexpected image_a %p.\n", image_a);
-                if (image_a == (ID2D1Image *)bitmap)
-                    ID2D1Image_Release(image_a);
+                ID2D1Image_Release(image_a);
             }
             else
             {
-                todo_wine
                 ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
             }
             winetest_pop_context();
@@ -9864,7 +9860,6 @@ static void test_effect(BOOL d3d11)
             image_a = (ID2D1Image *)0xdeadbeef;
             ID2D1Effect_SetInput(effect, j, (ID2D1Image *)bitmap, FALSE);
             ID2D1Effect_GetInput(effect, j, &image_a);
-            todo_wine
             ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
             winetest_pop_context();
         }

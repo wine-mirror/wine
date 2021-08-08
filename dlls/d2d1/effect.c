@@ -214,7 +214,14 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UI
 
 static void STDMETHODCALLTYPE d2d_effect_GetInput(ID2D1Effect *iface, UINT32 index, ID2D1Image **input)
 {
-    FIXME("iface %p, index %u, input %p stub!\n", iface, index, input);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+
+    TRACE("iface %p, index %u, input %p.\n", iface, index, input);
+
+    if (index < effect->input_count && effect->inputs[index])
+        ID2D1Image_AddRef(*input = effect->inputs[index]);
+    else
+        *input = NULL;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetInputCount(ID2D1Effect *iface)
