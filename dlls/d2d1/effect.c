@@ -40,6 +40,13 @@ static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)
 
 static void d2d_effect_cleanup(struct d2d_effect *effect)
 {
+    unsigned int i;
+
+    for (i = 0; i < effect->input_count; ++i)
+    {
+        if (effect->inputs[i])
+            ID2D1Image_Release(effect->inputs[i]);
+    }
     heap_free(effect->inputs);
     ID2D1Factory_Release(effect->factory);
 }
@@ -185,7 +192,17 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_GetSubProperties(ID2D1Effect *iface,
 
 static void STDMETHODCALLTYPE d2d_effect_SetInput(ID2D1Effect *iface, UINT32 index, ID2D1Image *input, BOOL invalidate)
 {
-    FIXME("iface %p, index %u, input %p, invalidate %d stub!\n", iface, index, input, invalidate);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+
+    TRACE("iface %p, index %u, input %p, invalidate %#x.\n", iface, index, input, invalidate);
+
+    if (index >= effect->input_count)
+        return;
+
+    ID2D1Image_AddRef(input);
+    if (effect->inputs[index])
+        ID2D1Image_Release(effect->inputs[index]);
+    effect->inputs[index] = input;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UINT32 count)
