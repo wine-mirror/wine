@@ -89,6 +89,7 @@ MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
 MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
 const char* (CDECL *mono_assembly_name_get_name)(MonoAssemblyName *aname);
 const char* (CDECL *mono_assembly_name_get_culture)(MonoAssemblyName *aname);
+WORD (CDECL *mono_assembly_name_get_version)(MonoAssemblyName *aname, WORD *minor, WORD *build, WORD *revision);
 MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
 void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly);
 MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
@@ -199,6 +200,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_assembly_load_from);
         LOAD_MONO_FUNCTION(mono_assembly_name_get_name);
         LOAD_MONO_FUNCTION(mono_assembly_name_get_culture);
+        LOAD_MONO_FUNCTION(mono_assembly_name_get_version);
         LOAD_MONO_FUNCTION(mono_assembly_open);
         LOAD_MONO_FUNCTION(mono_config_parse);
         LOAD_MONO_FUNCTION(mono_class_from_mono_type);
@@ -1553,8 +1555,9 @@ static DWORD get_basename_search_flags(const char *basename, MonoAssemblyName *a
         return reg_entry.flags;
     }
 
-    if (strcmp(basename, "Microsoft.Xna.Framework.*") == 0)
-        /* XNA redist is broken in Wine Mono, use FNA instead. */
+    if (strcmp(basename, "Microsoft.Xna.Framework.*") == 0 &&
+        mono_assembly_name_get_version(aname, NULL, NULL, NULL) == 4)
+        /* Use FNA as a replacement for XNA4. */
         return 0;
 
     return ASSEMBLY_SEARCH_UNDEFINED;
