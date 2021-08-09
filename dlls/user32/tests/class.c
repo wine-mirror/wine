@@ -1490,6 +1490,55 @@ static void test_actctx_classes(void)
     ReleaseActCtx(context);
 }
 
+static void test_uxtheme(void)
+{
+    static const CHAR *class_name = "test_uxtheme_class";
+    BOOL (WINAPI * pIsThemeActive)(void);
+    BOOL dll_loaded, is_theme_active;
+    WNDCLASSEXA class;
+    HMODULE uxtheme;
+    ATOM atom;
+    HWND hwnd;
+
+    memset(&class, 0, sizeof(class));
+    class.cbSize = sizeof(class);
+    class.lpfnWndProc = DefWindowProcA;
+    class.hInstance = GetModuleHandleA(NULL);
+    class.lpszClassName = class_name;
+    atom = RegisterClassExA(&class);
+    ok(atom, "RegisterClassExA failed, error %u.\n", GetLastError());
+
+    dll_loaded = !!GetModuleHandleA("comctl32.dll");
+    ok(!dll_loaded, "Expected comctl32.dll not loaded.\n");
+    dll_loaded = !!GetModuleHandleA("uxtheme.dll");
+    ok(!dll_loaded, "Expected uxtheme.dll not loaded.\n");
+
+    /* Creating a window triggers uxtheme load when theming is active */
+    hwnd = CreateWindowA(class_name, "Test", WS_POPUP, 0, 0, 1, 1, NULL, NULL,
+                         GetModuleHandleA(NULL), NULL);
+    ok(!!hwnd, "Failed to create a test window, error %u.\n", GetLastError());
+
+    dll_loaded = !!GetModuleHandleA("comctl32.dll");
+    ok(!dll_loaded, "Expected comctl32.dll not loaded.\n");
+
+    /* Uxtheme is loaded when theming is active */
+    dll_loaded = !!GetModuleHandleA("uxtheme.dll");
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    ok(!!uxtheme, "Failed to load uxtheme.dll, error %u.\n", GetLastError());
+    pIsThemeActive = (void *)GetProcAddress(uxtheme, "IsThemeActive");
+    ok(!!pIsThemeActive, "Failed to load IsThemeActive, error %u.\n", GetLastError());
+    is_theme_active = pIsThemeActive();
+    FreeLibrary(uxtheme);
+
+    todo_wine_if(is_theme_active)
+    ok(dll_loaded == is_theme_active, "Expected uxtheme %s when theming is %s.\n",
+       is_theme_active ? "loaded" : "not loaded", is_theme_active ? "active" : "inactive");
+
+    DestroyWindow(hwnd);
+    UnregisterClassA(class_name, GetModuleHandleA(NULL));
+}
+
 START_TEST(class)
 {
     char **argv;
@@ -1502,6 +1551,7 @@ START_TEST(class)
         return;
     }
 
+    test_uxtheme();
     test_IME();
     test_GetClassInfo();
     test_extra_values();
