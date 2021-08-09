@@ -56,6 +56,8 @@ struct xinput_controller
     XINPUT_STATE state;
     XINPUT_GAMEPAD last_keystroke;
     XINPUT_VIBRATION vibration;
+    HANDLE device;
+    WCHAR device_path[MAX_PATH];
     BOOL enabled;
 };
 
@@ -114,9 +116,6 @@ struct hid_platform_private
     PHIDP_PREPARSED_DATA preparsed;
     HIDP_CAPS caps;
 
-    HANDLE device;
-    WCHAR device_path[MAX_PATH];
-
     char *input_report_buf[2];
     char *output_report_buf;
 
@@ -127,14 +126,13 @@ static DWORD last_check = 0;
 
 static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
 {
-    struct hid_platform_private *private;
     int i;
 
     *free_slot = XUSER_MAX_COUNT;
     for (i = XUSER_MAX_COUNT; i > 0; i--)
     {
-        if (!(private = controllers[i - 1].platform_private)) *free_slot = i - 1;
-        else if (!wcscmp(detail->DevicePath, private->device_path)) return TRUE;
+        if (!controllers[i - 1].device) *free_slot = i - 1;
+        else if (!wcscmp(detail->DevicePath, controllers[i - 1].device_path)) return TRUE;
     }
     return FALSE;
 }
@@ -259,7 +257,7 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
             output_report_buf[3] = (BYTE)(state->wLeftMotorSpeed / 256);
             output_report_buf[4] = (BYTE)(state->wRightMotorSpeed / 256);
 
-            if (!HidD_SetOutputReport(private->device, output_report_buf, output_report_len))
+            if (!HidD_SetOutputReport(controller->device, output_report_buf, output_report_len))
             {
                 WARN("unable to set output report, HidD_SetOutputReport failed with error %u\n", GetLastError());
                 return GetLastError();
@@ -302,18 +300,18 @@ static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSE
     TRACE("Found gamepad %s\n", debugstr_w(device_path));
 
     private->preparsed = preparsed;
-    private->device = device;
     if (!(private->input_report_buf[0] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->input_report_buf[1] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->output_report_buf = calloc(1, private->caps.OutputReportByteLength))) goto failed;
-    lstrcpynW(private->device_path, device_path, MAX_PATH);
+    controller->platform_private = private;
 
     memset(&controller->state, 0, sizeof(controller->state));
     memset(&controller->vibration, 0, sizeof(controller->vibration));
+    lstrcpynW(controller->device_path, device_path, MAX_PATH);
     controller->enabled = FALSE;
 
     EnterCriticalSection(&controller->crit);
-    controller->platform_private = private;
+    controller->device = device;
     controller_enable(controller);
     LeaveCriticalSection(&controller->crit);
     return TRUE;
@@ -399,14 +397,15 @@ static void remove_gamepad(struct xinput_controller *controller)
 {
     EnterCriticalSection(&controller->crit);
 
-    if (controller->platform_private)
+    if (controller->device)
     {
         struct hid_platform_private *private = controller->platform_private;
 
         controller_disable(controller);
+        CloseHandle(controller->device);
+        controller->device = NULL;
         controller->platform_private = NULL;
 
-        CloseHandle(private->device);
         free(private->input_report_buf[0]);
         free(private->input_report_buf[1]);
         free(private->output_report_buf);
@@ -447,7 +446,7 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
 
     if (!controller->enabled) return;
 
-    if (!HidD_GetInputReport(private->device, report_buf[0], report_len))
+    if (!HidD_GetInputReport(controller->device, report_buf[0], report_len))
     {
         if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE)
         {
@@ -555,11 +554,11 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
 
 static BOOL verify_and_lock_device(struct xinput_controller *controller)
 {
-    if (!controller->platform_private) return FALSE;
+    if (!controller->device) return FALSE;
 
     EnterCriticalSection(&controller->crit);
 
-    if (!controller->platform_private)
+    if (!controller->device)
     {
         LeaveCriticalSection(&controller->crit);
         return FALSE;
@@ -640,7 +639,7 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
 
     HID_update_state(&controllers[index], state);
 
-    if (!controllers[index].platform_private)
+    if (!controllers[index].device)
     {
         /* update_state may have disconnected the controller */
         unlock_device(&controllers[index]);
@@ -913,7 +912,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID
     FIXME("(index %u, render guid %p, capture guid %p) Stub!\n", index, render_guid, capture_guid);
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].platform_private) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
 
     return ERROR_NOT_SUPPORTED;
 }
@@ -925,7 +924,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetBatteryInformation(DWORD index, BYTE typ
     if (!once++) FIXME("(index %u, type %u, battery %p) Stub!\n", index, type, battery);
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].platform_private) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!controllers[index].device) return ERROR_DEVICE_NOT_CONNECTED;
 
     return ERROR_NOT_SUPPORTED;
 }
