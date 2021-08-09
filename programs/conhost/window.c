@@ -303,7 +303,8 @@ static void save_registry_key( HKEY key, const struct console_config *config )
     val = config->edition_mode;
     RegSetValueExW( key, L"EditionMode", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
 
-    RegSetValueExW( key, L"FaceName", 0, REG_SZ, (BYTE *)&config->face_name, sizeof(config->face_name) );
+    RegSetValueExW( key, L"FaceName", 0, REG_SZ, (BYTE *)&config->face_name,
+                    (lstrlenW(config->face_name) + 1) * sizeof(WCHAR) );
 
     val = config->font_pitch_family;
     RegSetValueExW( key, L"FontPitchFamily", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
