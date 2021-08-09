@@ -214,6 +214,7 @@ typedef struct WS(in6_pktinfo) {
 
 #ifndef USE_WS_PREFIX
 #define IPV6_OPTIONS                    1
+#define IPV6_HOPOPTS                    1
 #define IPV6_HDRINCL                    2
 #define IPV6_UNICAST_HOPS               4
 #define IPV6_MULTICAST_IF               9
@@ -236,6 +237,7 @@ typedef struct WS(in6_pktinfo) {
 #define IPV6_DEL_IFLIST                 30
 #define IPV6_UNICAST_IF                 31
 #define IPV6_RTHDR                      32
+#define IPV6_GET_IFLIST                 33
 #define IPV6_RECVRTHDR                  38
 #define IPV6_TCLASS                     39
 #define IPV6_RECVTCLASS                 40
@@ -250,6 +252,7 @@ typedef struct WS(in6_pktinfo) {
 #define IPV6_USER_MTU                   76
 #else
 #define WS_IPV6_OPTIONS                 1
+#define WS_IPV6_HOPOPTS                 1
 #define WS_IPV6_HDRINCL                 2
 #define WS_IPV6_UNICAST_HOPS            4
 #define WS_IPV6_MULTICAST_IF            9
@@ -271,6 +274,7 @@ typedef struct WS(in6_pktinfo) {
 #define WS_IPV6_DEL_IFLIST              30
 #define WS_IPV6_UNICAST_IF              31
 #define WS_IPV6_RTHDR                   32
+#define WS_IPV6_GET_IFLIST              33
 #define WS_IPV6_RECVRTHDR               38
 #define WS_IPV6_TCLASS                  39
 #define WS_IPV6_RECVTCLASS              40
