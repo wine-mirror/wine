@@ -1036,6 +1036,37 @@ static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
     return row;
 }
 
+static BOOL sockaddr_is_loopback( SOCKADDR *sock )
+{
+    if (sock->sa_family == WS_AF_INET)
+    {
+        SOCKADDR_IN *sin = (SOCKADDR_IN *)sock;
+        return (sin->sin_addr.WS_s_addr & 0xff) == 127;
+    }
+    else if (sock->sa_family == WS_AF_INET6)
+    {
+        SOCKADDR_IN6 *sin6 = (SOCKADDR_IN6 *)sock;
+        return WS_IN6_IS_ADDR_LOOPBACK( &sin6->sin6_addr );
+    }
+    return FALSE;
+}
+
+static BOOL sockaddr_is_linklocal( SOCKADDR *sock )
+{
+    if (sock->sa_family == WS_AF_INET6)
+    {
+        SOCKADDR_IN6 *sin6 = (SOCKADDR_IN6 *)sock;
+        return WS_IN6_IS_ADDR_LINKLOCAL( &sin6->sin6_addr );
+    }
+    return FALSE;
+}
+
+static BOOL unicast_is_dns_eligible( IP_ADAPTER_UNICAST_ADDRESS *uni )
+{
+    return !sockaddr_is_loopback( uni->Address.lpSockaddr ) &&
+        !sockaddr_is_linklocal( uni->Address.lpSockaddr );
+}
+
 static void fill_unicast_addr_data(IP_ADAPTER_ADDRESSES *aa, IP_ADAPTER_UNICAST_ADDRESS *ua)
 {
     /* Actually this information should be read somewhere from the system
@@ -1059,6 +1090,8 @@ static void fill_unicast_addr_data(IP_ADAPTER_ADDRESSES *aa, IP_ADAPTER_UNICAST_
     ua->ValidLifetime = 60000;
     ua->PreferredLifetime = 60000;
     ua->LeaseLifetime = 60000;
+
+    if (unicast_is_dns_eligible( ua )) ua->u.s.Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
 }
 
 static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index,
@@ -1186,8 +1219,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
                 ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
                 ua->Address.lpSockaddr      = (SOCKADDR *)(ua + 1);
-                if (num_v4_gateways)
-                    ua->u.s.Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
 
                 sa = (struct WS_sockaddr_in *)ua->Address.lpSockaddr;
                 sa->sin_family           = WS_AF_INET;
