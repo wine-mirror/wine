@@ -414,7 +414,7 @@ DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DW
     if (!addrs || *len < needed)
     {
         *len = needed;
-        return !addrs ? ERROR_SUCCESS : ERROR_INSUFFICIENT_BUFFER;
+        return !addrs ? ERROR_SUCCESS : ERROR_MORE_DATA;
     }
     *len = needed;
     memset( addrs, 0, needed );

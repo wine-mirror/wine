@@ -155,6 +155,10 @@ static void test_DnsQueryConfig( void )
         err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, NULL, &size );
         if (err) continue;
         ipv4 = malloc( size );
+        size--;
+        err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, ipv4, &size );
+        ok( err == ERROR_MORE_DATA, "got %d\n", err );
+        size++;
         err = DnsQueryConfig( DnsConfigDnsServersIpv4, 0, name, NULL, ipv4, &size );
         ok( !err, "got %d\n", err );
 
