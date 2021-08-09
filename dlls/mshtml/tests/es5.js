@@ -1447,6 +1447,35 @@ sync_test("functions scope", function() {
     val = with_function();
     ok(val == 8, "val != 8");
     ok(w == 9, "w != 9");
+
+    var func, func_outer, ret;
+    var o = new Object();
+
+    func_outer = function e()
+    {
+        function func_inner()
+        {
+            ok(typeof e == "function", "typeof e == " + typeof e);
+            ret = e
+        }
+        func = func_inner
+    }
+    func_outer();
+    func();
+    ok(ret === func_outer, "ret != func_outer");
+
+    func_outer = function f(f)
+    {
+        function func_inner()
+        {
+            ok(typeof f == "object", "typeof f == " + typeof f);
+            ret = f
+        }
+        func = func_inner
+    }
+    func_outer(o);
+    func();
+    ok(ret === o, "ret != o");
 });
 
 sync_test("console", function() {

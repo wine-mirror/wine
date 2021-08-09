@@ -573,6 +573,7 @@ HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
 
 static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t *scope)
 {
+    function_code_t *func = frame->function;
     unsigned int i, index;
     HRESULT hres;
 
@@ -590,6 +591,9 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
             return hres;
         scope->obj = to_disp(scope->jsobj);
     }
+
+    if (scope == frame->base_scope && func->name && ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+        jsdisp_propput_name(scope->jsobj, func->name, jsval_obj(jsdisp_addref(frame->function_instance)));
 
     index = scope->scope_index;
     for(i = 0; i < frame->function->local_scopes[index].locals_cnt; i++)
