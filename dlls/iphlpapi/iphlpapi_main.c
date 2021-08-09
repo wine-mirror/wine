@@ -760,6 +760,159 @@ err:
     return err;
 }
 
+static void address_entry_free( void *ptr, ULONG offset, void *ctxt )
+{
+    heap_free( ptr );
+}
+
+static void address_entry_size( void *ptr, ULONG offset, void *ctxt )
+{
+    IP_ADAPTER_DNS_SERVER_ADDRESS *src_addr = ptr; /* all list types are super-sets of this type */
+    ULONG *total = (ULONG *)ctxt, align = sizeof(ULONGLONG) - 1;
+
+    *total = (*total + src_addr->u.s.Length + src_addr->Address.iSockaddrLength + align) & ~align;
+}
+
+struct address_entry_copy_params
+{
+    IP_ADAPTER_ADDRESSES *src, *dst;
+    char *ptr;
+    void *next;
+    ULONG cur_offset;
+};
+
+static void address_entry_copy( void *ptr, ULONG offset, void *ctxt )
+{
+    struct address_entry_copy_params *params = ctxt;
+    IP_ADAPTER_DNS_SERVER_ADDRESS *src_addr = ptr; /* all list types are super-sets of this type */
+    IP_ADAPTER_DNS_SERVER_ADDRESS *dst_addr = (IP_ADAPTER_DNS_SERVER_ADDRESS *)params->ptr;
+    ULONG align = sizeof(ULONGLONG) - 1;
+
+    memcpy( dst_addr, src_addr, src_addr->u.s.Length );
+    params->ptr += src_addr->u.s.Length;
+    dst_addr->Address.lpSockaddr = (SOCKADDR *)params->ptr;
+    memcpy( dst_addr->Address.lpSockaddr, src_addr->Address.lpSockaddr, src_addr->Address.iSockaddrLength );
+    params->ptr += (src_addr->Address.iSockaddrLength + align) & ~align;
+
+    if (params->cur_offset != offset) /* new list */
+    {
+        params->next = (BYTE *)params->dst + offset;
+        params->cur_offset = offset;
+    }
+    *(IP_ADAPTER_DNS_SERVER_ADDRESS **)params->next = dst_addr;
+    params->next = &dst_addr->Next;
+}
+
+static void address_lists_iterate( IP_ADAPTER_ADDRESSES *aa, void (*fn)(void *entry, ULONG offset, void *ctxt), void *ctxt )
+{
+    IP_ADAPTER_UNICAST_ADDRESS *uni;
+    IP_ADAPTER_DNS_SERVER_ADDRESS *dns;
+    IP_ADAPTER_GATEWAY_ADDRESS *gw;
+    IP_ADAPTER_PREFIX *prefix;
+    void *next;
+
+    for (uni = aa->FirstUnicastAddress; uni; uni = next)
+    {
+        next = uni->Next;
+        fn( uni, FIELD_OFFSET( IP_ADAPTER_ADDRESSES, FirstUnicastAddress ), ctxt );
+    }
+
+    for (dns = aa->FirstDnsServerAddress; dns; dns = next)
+    {
+        next = dns->Next;
+        fn( dns, FIELD_OFFSET( IP_ADAPTER_ADDRESSES, FirstDnsServerAddress ), ctxt );
+    }
+
+    for (gw = aa->FirstGatewayAddress; gw; gw = next)
+    {
+        next = gw->Next;
+        fn( gw, FIELD_OFFSET( IP_ADAPTER_ADDRESSES, FirstGatewayAddress ), ctxt );
+    }
+
+    for (prefix = aa->FirstPrefix; prefix; prefix = next)
+    {
+        next = prefix->Next;
+        fn( prefix, FIELD_OFFSET( IP_ADAPTER_ADDRESSES, FirstPrefix ), ctxt );
+    }
+}
+
+void adapters_addresses_free( IP_ADAPTER_ADDRESSES *info )
+{
+    IP_ADAPTER_ADDRESSES *aa;
+
+    for (aa = info; aa; aa = aa->Next)
+    {
+        address_lists_iterate( aa, address_entry_free, NULL );
+
+        heap_free( aa->DnsSuffix );
+    }
+    heap_free( info );
+}
+
+ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
+{
+    IP_ADAPTER_ADDRESSES *aa;
+    ULONG size = 0, align = sizeof(ULONGLONG) - 1;
+
+    for (aa = info; aa; aa = aa->Next)
+    {
+        size += sizeof(*aa) + ((strlen( aa->AdapterName ) + 1 + 1) & ~1);
+        size += (strlenW( aa->Description ) + 1 + strlenW( aa->DnsSuffix ) + 1) * sizeof(WCHAR);
+        if (aa->FriendlyName) size += (strlenW(aa->FriendlyName) + 1) * sizeof(WCHAR);
+        size = (size + align) & ~align;
+        address_lists_iterate( aa, address_entry_size, &size );
+    }
+    return size;
+}
+
+void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES *src )
+{
+    char *ptr;
+    DWORD len, align = sizeof(ULONGLONG) - 1;
+    struct address_entry_copy_params params;
+
+    while (src)
+    {
+        ptr = (char *)(dst + 1);
+        *dst = *src;
+        dst->AdapterName = ptr;
+        len = strlen( src->AdapterName ) + 1;
+        memcpy( dst->AdapterName, src->AdapterName, len );
+        ptr += (len + 1) & ~1;
+        dst->Description = (WCHAR *)ptr;
+        len = (strlenW( src->Description ) + 1) * sizeof(WCHAR);
+        memcpy( dst->Description, src->Description, len );
+        ptr += len;
+        dst->DnsSuffix = (WCHAR *)ptr;
+        len = (strlenW( src->DnsSuffix ) + 1) * sizeof(WCHAR);
+        memcpy( dst->DnsSuffix, src->DnsSuffix, len );
+        ptr += len;
+        if (src->FriendlyName)
+        {
+            dst->FriendlyName = (WCHAR *)ptr;
+            len = (strlenW( src->FriendlyName ) + 1) * sizeof(WCHAR);
+            memcpy( dst->FriendlyName, src->FriendlyName, len );
+            ptr += len;
+        }
+        ptr = (char *)(((UINT_PTR)ptr + align) & ~align);
+
+        params.src = src;
+        params.dst = dst;
+        params.ptr = ptr;
+        params.next = NULL;
+        params.cur_offset = ~0u;
+        address_lists_iterate( src, address_entry_copy, &params );
+        ptr = params.ptr;
+
+        if (src->Next)
+        {
+            dst->Next = (IP_ADAPTER_ADDRESSES *)ptr;
+            dst = dst->Next;
+        }
+        src = src->Next;
+    }
+}
+
 static DWORD typeFromMibType(DWORD mib_type)
 {
     switch (mib_type)
@@ -909,13 +1062,19 @@ static void fill_unicast_addr_data(IP_ADAPTER_ADDRESSES *aa, IP_ADAPTER_UNICAST_
 }
 
 static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index,
-                                       IP_ADAPTER_ADDRESSES *aa, ULONG *size)
+                                       IP_ADAPTER_ADDRESSES *aa, char **ptr)
 {
-    ULONG ret = ERROR_SUCCESS, i, j, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
+    ULONG ret = ERROR_SUCCESS, i, j, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0;
     DWORD *v4addrs = NULL, *v4masks = NULL;
     SOCKET_ADDRESS *v6addrs = NULL, *v6masks = NULL;
     PMIB_IPFORWARDTABLE routeTable = NULL;
     BOOL output_gateways;
+    char name[IF_NAMESIZE], *src;
+    WCHAR *dst;
+    DWORD buflen, type;
+    INTERNAL_IF_OPER_STATUS status;
+    NET_LUID luid;
+    GUID guid;
 
     if ((flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS) || !(flags & GAA_FLAG_SKIP_UNICAST))
     {
@@ -953,61 +1112,32 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         return ret;
     }
 
-    total_size = sizeof(IP_ADAPTER_ADDRESSES);
-    total_size += CHARS_IN_GUID;
-    total_size += IF_NAMESIZE * sizeof(WCHAR);
-    if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
-        total_size += IF_NAMESIZE * sizeof(WCHAR);
-    if (flags & GAA_FLAG_INCLUDE_PREFIX)
+    if (1)
     {
-        total_size += sizeof(IP_ADAPTER_PREFIX) * num_v4addrs;
-        total_size += sizeof(IP_ADAPTER_PREFIX) * num_v6addrs;
-        total_size += sizeof(struct sockaddr_in) * num_v4addrs;
-        for (i = 0; i < num_v6addrs; i++)
-            total_size += v6masks[i].iSockaddrLength;
-    }
-    total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v4addrs;
-    total_size += sizeof(struct sockaddr_in) * num_v4addrs;
-    if (output_gateways)
-        total_size += (sizeof(IP_ADAPTER_GATEWAY_ADDRESS) + sizeof(SOCKADDR_IN)) * num_v4_gateways;
-    total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v6addrs;
-    total_size += sizeof(SOCKET_ADDRESS) * num_v6addrs;
-    for (i = 0; i < num_v6addrs; i++)
-        total_size += v6addrs[i].iSockaddrLength;
-
-    if (aa && *size >= total_size)
-    {
-        char name[IF_NAMESIZE], *ptr = (char *)aa + sizeof(IP_ADAPTER_ADDRESSES), *src;
-        WCHAR *dst;
-        DWORD buflen, type;
-        INTERNAL_IF_OPER_STATUS status;
-        NET_LUID luid;
-        GUID guid;
-
         memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
         aa->u.s.Length  = sizeof(IP_ADAPTER_ADDRESSES);
         aa->u.s.IfIndex = index;
 
         ConvertInterfaceIndexToLuid(index, &luid);
         ConvertInterfaceLuidToGuid(&luid, &guid);
-        ConvertGuidToStringA( &guid, ptr, CHARS_IN_GUID );
-        aa->AdapterName = ptr;
-        ptr += CHARS_IN_GUID;
+        ConvertGuidToStringA( &guid, *ptr, CHARS_IN_GUID );
+        aa->AdapterName = *ptr;
+        *ptr += (CHARS_IN_GUID + 1) & ~1;
 
         getInterfaceNameByIndex(index, name);
         if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
         {
-            aa->FriendlyName = (WCHAR *)ptr;
-            for (src = name, dst = (WCHAR *)ptr; *src; src++, dst++)
+            aa->FriendlyName = (WCHAR *)*ptr;
+            for (src = name, dst = (WCHAR *)*ptr; *src; src++, dst++)
                 *dst = *src;
             *dst++ = 0;
-            ptr = (char *)dst;
+            *ptr = (char *)dst;
         }
         aa->Description = (WCHAR *)ptr;
-        for (src = name, dst = (WCHAR *)ptr; *src; src++, dst++)
+        for (src = name, dst = (WCHAR *)*ptr; *src; src++, dst++)
             *dst = *src;
         *dst++ = 0;
-        ptr = (char *)dst;
+        *ptr = (char *)dst;
 
         TRACE("%s: %d IPv4 addresses, %d IPv6 addresses:\n", name, num_v4addrs,
               num_v6addrs);
@@ -1028,12 +1158,11 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 PIP_ADAPTER_GATEWAY_ADDRESS gw;
                 PSOCKADDR_IN sin;
 
-                gw = (PIP_ADAPTER_GATEWAY_ADDRESS)ptr;
+                gw = heap_alloc( sizeof(IP_ADAPTER_GATEWAY_ADDRESS) + sizeof(SOCKADDR_IN) );
                 aa->FirstGatewayAddress = gw;
 
                 gw->u.s.Length = sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
-                ptr += sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
-                sin = (PSOCKADDR_IN)ptr;
+                sin = (PSOCKADDR_IN)(gw + 1);
                 sin->sin_family = WS_AF_INET;
                 sin->sin_port = 0;
                 memcpy(&sin->sin_addr, &adapterRow->dwForwardNextHop,
@@ -1041,7 +1170,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 gw->Address.lpSockaddr = (LPSOCKADDR)sin;
                 gw->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
                 gw->Next = NULL;
-                ptr += sizeof(SOCKADDR_IN);
             }
         }
         if (num_v4addrs && !(flags & GAA_FLAG_SKIP_UNICAST))
@@ -1049,7 +1177,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct WS_sockaddr_in *sa;
             aa->u1.s1.Ipv4Enabled = TRUE;
-            ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+            ua = aa->FirstUnicastAddress = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN) );
             for (i = 0; i < num_v4addrs; i++)
             {
                 char addr_buf[16];
@@ -1057,7 +1185,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
                 ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
                 ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
-                ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->u.s.Length);
+                ua->Address.lpSockaddr      = (SOCKADDR *)(ua + 1);
                 if (num_v4_gateways)
                     ua->u.s.Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
 
@@ -1071,10 +1199,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
 
                 ua->OnLinkPrefixLength = mask_v4_to_prefix(v4masks[i]);
 
-                ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v4addrs - 1)
                 {
-                    ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                    ua->Next = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN) );
                     ua = ua->Next;
                 }
             }
@@ -1089,11 +1216,11 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
             {
                 for (ua = aa->FirstUnicastAddress; ua->Next; ua = ua->Next)
                     ;
-                ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
-                ua = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                ua->Next = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN6) );
+                ua = ua->Next;
             }
             else
-                ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                ua = aa->FirstUnicastAddress = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN6) );
             for (i = 0; i < num_v6addrs; i++)
             {
                 char addr_buf[46];
@@ -1101,7 +1228,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
                 ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
                 ua->Address.iSockaddrLength = v6addrs[i].iSockaddrLength;
-                ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->u.s.Length);
+                ua->Address.lpSockaddr      = (SOCKADDR *)(ua + 1);
 
                 sa = (struct WS_sockaddr_in6 *)ua->Address.lpSockaddr;
                 memcpy(sa, v6addrs[i].lpSockaddr, sizeof(*sa));
@@ -1111,10 +1238,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
 
                 ua->OnLinkPrefixLength = mask_v6_to_prefix(&v6masks[i]);
 
-                ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v6addrs - 1)
                 {
-                    ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                    ua->Next = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN6) );
                     ua = ua->Next;
                 }
             }
@@ -1123,7 +1249,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         {
             IP_ADAPTER_PREFIX *prefix;
 
-            prefix = aa->FirstPrefix = (IP_ADAPTER_PREFIX *)ptr;
+            prefix = aa->FirstPrefix = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN) );
             for (i = 0; i < num_v4addrs; i++)
             {
                 char addr_buf[16];
@@ -1133,7 +1259,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 prefix->u.s.Flags  = 0;
                 prefix->Next       = NULL;
                 prefix->Address.iSockaddrLength = sizeof(struct sockaddr_in);
-                prefix->Address.lpSockaddr      = (SOCKADDR *)((char *)prefix + prefix->u.s.Length);
+                prefix->Address.lpSockaddr      = (SOCKADDR *)(prefix + 1);
 
                 sa = (struct WS_sockaddr_in *)prefix->Address.lpSockaddr;
                 sa->sin_family           = WS_AF_INET;
@@ -1146,10 +1272,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                       debugstr_ipv4((const in_addr_t *)&sa->sin_addr.S_un.S_addr, addr_buf),
                       prefix->PrefixLength);
 
-                ptr += prefix->u.s.Length + prefix->Address.iSockaddrLength;
                 if (i < num_v4addrs - 1)
                 {
-                    prefix->Next = (IP_ADAPTER_PREFIX *)ptr;
+                    prefix->Next = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN) );
                     prefix = prefix->Next;
                 }
             }
@@ -1162,11 +1287,11 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
             {
                 for (prefix = aa->FirstPrefix; prefix->Next; prefix = prefix->Next)
                     ;
-                prefix->Next = (IP_ADAPTER_PREFIX *)ptr;
-                prefix = (IP_ADAPTER_PREFIX *)ptr;
+                prefix->Next = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN6) );
+                prefix = prefix->Next;
             }
             else
-                prefix = aa->FirstPrefix = (IP_ADAPTER_PREFIX *)ptr;
+                prefix = aa->FirstPrefix = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN6) );
             for (i = 0; i < num_v6addrs; i++)
             {
                 char addr_buf[46];
@@ -1177,7 +1302,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 prefix->u.s.Flags  = 0;
                 prefix->Next       = NULL;
                 prefix->Address.iSockaddrLength = sizeof(struct sockaddr_in6);
-                prefix->Address.lpSockaddr      = (SOCKADDR *)((char *)prefix + prefix->u.s.Length);
+                prefix->Address.lpSockaddr      = (SOCKADDR *)(prefix + 1);
 
                 sa = (struct WS_sockaddr_in6 *)prefix->Address.lpSockaddr;
                 sa->sin6_family   = WS_AF_INET6;
@@ -1192,10 +1317,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
 
                 TRACE("IPv6 network: %s/%u\n", debugstr_ipv6(sa, addr_buf), prefix->PrefixLength);
 
-                ptr += prefix->u.s.Length + prefix->Address.iSockaddrLength;
                 if (i < num_v6addrs - 1)
                 {
-                    prefix->Next = (IP_ADAPTER_PREFIX *)ptr;
+                    prefix->Next = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN6) );
                     prefix = prefix->Next;
                 }
             }
@@ -1208,7 +1332,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         else if (status == MIB_IF_OPER_STATUS_NON_OPERATIONAL) aa->OperStatus = IfOperStatusDown;
         else aa->OperStatus = IfOperStatusUnknown;
     }
-    *size = total_size;
     HeapFree(GetProcessHeap(), 0, routeTable);
     HeapFree(GetProcessHeap(), 0, v6addrs);
     HeapFree(GetProcessHeap(), 0, v6masks);
@@ -1224,97 +1347,92 @@ static DWORD dns_servers_query_code( ULONG family )
     return DnsConfigDnsServersUnspec;
 }
 
-static ULONG get_dns_server_addresses( ULONG family, IP_ADAPTER_DNS_SERVER_ADDRESS *address, ULONG *len )
+static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags )
 {
     char buf[FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[3])];
-    DNS_ADDR_ARRAY *servers = (DNS_ADDR_ARRAY *)buf;
-    DWORD err, num, i, needed, array_len = sizeof(buf);
+    IP_ADAPTER_DNS_SERVER_ADDRESS *dns, **next;
     DWORD query = dns_servers_query_code( family );
-    SOCKADDR_INET *out_addrs;
+    DWORD err, i, size, attempt, sockaddr_len;
+    WCHAR name[MAX_ADAPTER_NAME_LENGTH + 1];
+    DNS_ADDR_ARRAY *servers;
+    DNS_TXT_DATAW *search;
 
-    for (;;)
+    while (aa)
     {
-        err = DnsQueryConfig( query, 0, NULL, NULL, servers, &array_len );
-        if (err != ERROR_SUCCESS && err != ERROR_MORE_DATA) goto err;
-        num = (array_len - FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[0])) / sizeof(DNS_ADDR);
-        needed = num * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(*out_addrs));
-        if (!address || *len < needed)
+        MultiByteToWideChar( CP_ACP, 0, aa->AdapterName, -1, name, ARRAY_SIZE(name) );
+        if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
         {
-            *len = needed;
-            err = ERROR_BUFFER_OVERFLOW;
-            goto err;
+            servers = (DNS_ADDR_ARRAY *)buf;
+            for (attempt = 0; attempt < 5; attempt++)
+            {
+                err = DnsQueryConfig( query, 0, name, NULL, servers, &size );
+                if (err != ERROR_MORE_DATA) break;
+                if (servers != (DNS_ADDR_ARRAY *)buf) heap_free( servers );
+                servers = heap_alloc( size );
+                if (!servers)
+                {
+                    err = ERROR_NOT_ENOUGH_MEMORY;
+                    break;
+                }
+            }
+            if (!err)
+            {
+                next = &aa->FirstDnsServerAddress;
+                for (i = 0; i < servers->AddrCount; i++)
+                {
+                    sockaddr_len = servers->AddrArray[i].Data.DnsAddrUserDword[0];
+                    if (sockaddr_len > sizeof(servers->AddrArray[i].MaxSa))
+                        sockaddr_len = sizeof(servers->AddrArray[i].MaxSa);
+                    dns = heap_alloc_zero( sizeof(*dns) + sockaddr_len );
+                    if (!dns)
+                    {
+                        err = ERROR_NOT_ENOUGH_MEMORY;
+                        break;
+                    }
+                    dns->u.s.Length = sizeof(*dns);
+                    dns->Address.lpSockaddr = (SOCKADDR *)(dns + 1);
+                    dns->Address.iSockaddrLength = sockaddr_len;
+                    memcpy( dns->Address.lpSockaddr, servers->AddrArray[i].MaxSa, sockaddr_len );
+                    *next = dns;
+                    next = &dns->Next;
+                }
+            }
+            if (servers != (DNS_ADDR_ARRAY *)buf) heap_free( servers );
+            if (err) goto err;
         }
-        if (!err) break;
 
-        if ((char *)servers != buf) heap_free( servers );
-        servers = heap_alloc( array_len );
-        if (!servers)
+        aa->DnsSuffix = heap_alloc( MAX_DNS_SUFFIX_STRING_LENGTH * sizeof(WCHAR) );
+        if (!aa->DnsSuffix)
         {
             err = ERROR_NOT_ENOUGH_MEMORY;
             goto err;
         }
-    }
+        aa->DnsSuffix[0] = '\0';
 
-    *len = needed;
-    out_addrs = (SOCKADDR_INET *)(address + num);
-    for (i = 0; i < num; i++)
-    {
-        address[i].u.s.Length = sizeof(*address);
-        address[i].u.s.Reserved = 0;
-        address[i].Next = NULL;
-        address[i].Address.iSockaddrLength = servers->AddrArray[i].Data.DnsAddrUserDword[0];
-        if (address[i].Address.iSockaddrLength > sizeof(*out_addrs))
-            address[i].Address.iSockaddrLength = 0;
-        address[i].Address.lpSockaddr = (SOCKADDR *)(out_addrs + i);
-        memcpy( out_addrs + i, servers->AddrArray[i].MaxSa, address[i].Address.iSockaddrLength );
-        memset( (BYTE *)(out_addrs + i) + address[i].Address.iSockaddrLength, 0,
-                sizeof(*out_addrs) - address[i].Address.iSockaddrLength );
-        if (i) address[i - 1].Next = address + i;
+        if (!DnsQueryConfig( DnsConfigSearchList, 0, name, NULL, NULL, &size ) &&
+            (search = heap_alloc( size )))
+        {
+            if (!DnsQueryConfig( DnsConfigSearchList, 0, name, NULL, search, &size ) &&
+                search->dwStringCount && strlenW( search->pStringArray[0] ) < MAX_DNS_SUFFIX_STRING_LENGTH)
+            {
+                strcpyW( aa->DnsSuffix, search->pStringArray[0] );
+            }
+            heap_free( search );
+        }
+
+        aa = aa->Next;
     }
-    err = ERROR_SUCCESS;
 
 err:
-    if ((char *)servers != buf) heap_free( servers );
     return err;
 }
 
-static ULONG get_dns_suffix(WCHAR *suffix, ULONG *len)
+static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADDRESSES **info )
 {
-    DWORD err, list_len = 0, needed = 1;
-    DNS_TXT_DATAW *search = NULL;
-
-    if (suffix && *len > 0) *suffix = '\0';
-
-    err = DnsQueryConfig( DnsConfigSearchList, 0, NULL, NULL, NULL, &list_len );
-    if (err) goto err;
-
-    search = heap_alloc( list_len );
-    err = DnsQueryConfig( DnsConfigSearchList, 0, NULL, NULL, search, &list_len );
-    if (err || !search->dwStringCount) goto err;
-
-    needed = (strlenW( search->pStringArray[0] ) + 1) * sizeof(WCHAR);
-    if (!suffix || *len < needed)
-    {
-        err = ERROR_INSUFFICIENT_BUFFER;
-        goto err;
-    }
-    memcpy( suffix, search->pStringArray[0], needed );
-
-err:
-    *len = needed;
-    heap_free( search );
-    return err;
-}
-
-ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
-                                                    PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
-{
+    IP_ADAPTER_ADDRESSES *aa;
+    DWORD err, i, count, needed;
+    char *str_ptr;
     InterfaceIndexTable *table;
-    ULONG i, size, dns_server_size = 0, dns_suffix_size, total_size, ret = ERROR_NO_DATA;
-
-    TRACE("(%d, %08x, %p, %p, %p)\n", family, flags, reserved, aa, buflen);
-
-    if (!buflen) return ERROR_INVALID_PARAMETER;
 
     get_interface_indices( FALSE, &table );
     if (!table || !table->numIndexes)
@@ -1322,82 +1440,62 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
         HeapFree(GetProcessHeap(), 0, table);
         return ERROR_NO_DATA;
     }
-    total_size = 0;
-    for (i = 0; i < table->numIndexes; i++)
+    count = table->numIndexes;
+
+    needed = count * (sizeof(*aa) + ((CHARS_IN_GUID + 1) & ~1) + sizeof(IF_COUNTED_STRING));
+    if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME)) needed += count * sizeof(IF_COUNTED_STRING);
+
+    aa = heap_alloc_zero( needed );
+    if (!aa)
     {
-        size = 0;
-        if ((ret = adapterAddressesFromIndex(family, flags, table->indexes[i], NULL, &size)))
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
+
+    str_ptr = (char *)(aa + count);
+    for (i = 0; i < count; i++)
+    {
+        if ((err = adapterAddressesFromIndex(family, flags, table->indexes[i], aa + i, &str_ptr)))
         {
             HeapFree(GetProcessHeap(), 0, table);
-            return ret;
+            return err;
         }
-        total_size += size;
+        if (i < count - 1) aa[i].Next = aa + i + 1;
     }
-    if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
-    {
-        /* Since DNS servers aren't really per adapter, get enough space for a
-         * single copy of them.
-         */
-        get_dns_server_addresses( family, NULL, &dns_server_size );
-        total_size += dns_server_size;
-    }
-    /* Since DNS suffix also isn't really per adapter, get enough space for a
-     * single copy of it.
-     */
-    get_dns_suffix(NULL, &dns_suffix_size);
-    total_size += dns_suffix_size;
-    if (aa && *buflen >= total_size)
-    {
-        ULONG bytes_left = size = total_size;
-        PIP_ADAPTER_ADDRESSES first_aa = aa;
-        PIP_ADAPTER_DNS_SERVER_ADDRESS firstDns;
-        WCHAR *dnsSuffix;
 
-        for (i = 0; i < table->numIndexes; i++)
-        {
-            if ((ret = adapterAddressesFromIndex(family, flags, table->indexes[i], aa, &size)))
-            {
-                HeapFree(GetProcessHeap(), 0, table);
-                return ret;
-            }
-            if (i < table->numIndexes - 1)
-            {
-                aa->Next = (IP_ADAPTER_ADDRESSES *)((char *)aa + size);
-                aa = aa->Next;
-                size = bytes_left -= size;
-            }
-        }
-        if (dns_server_size)
-        {
-            firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)first_aa + total_size - dns_server_size - dns_suffix_size);
-            get_dns_server_addresses( family, firstDns, &dns_server_size );
-            for (aa = first_aa; aa; aa = aa->Next)
-            {
-                if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
-                    aa->FirstDnsServerAddress = firstDns;
-            }
-        }
-        aa = first_aa;
-        dnsSuffix = (WCHAR *)((BYTE *)aa + total_size - dns_suffix_size);
-        get_dns_suffix(dnsSuffix, &dns_suffix_size);
-        for (; aa; aa = aa->Next)
-        {
-            if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
-                aa->DnsSuffix = dnsSuffix;
-            else
-                aa->DnsSuffix = dnsSuffix + dns_suffix_size / sizeof(WCHAR) - 1;
-        }
-        ret = ERROR_SUCCESS;
+    err = dns_info_alloc( aa, family, flags );
+
+err:
+    HeapFree(GetProcessHeap(), 0, table);
+    if (!err) *info = aa;
+    else adapters_addresses_free( aa );
+    return err;
+}
+
+ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses( ULONG family, ULONG flags, void *reserved,
+                                                     IP_ADAPTER_ADDRESSES *aa, ULONG *size )
+{
+    IP_ADAPTER_ADDRESSES *info;
+    DWORD err, needed;
+
+    TRACE( "(%d, %08x, %p, %p, %p)\n", family, flags, reserved, aa, size );
+
+    if (!size) return ERROR_INVALID_PARAMETER;
+
+    err = adapters_addresses_alloc( family, flags, &info );
+    if (err) return err;
+
+    needed = adapters_addresses_size( info );
+    if (!aa || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_BUFFER_OVERFLOW;
     }
     else
-    {
-        ret = ERROR_BUFFER_OVERFLOW;
-        *buflen = total_size;
-    }
+        adapters_addresses_copy( aa, info );
 
-    TRACE("num adapters %u\n", table->numIndexes);
-    HeapFree(GetProcessHeap(), 0, table);
-    return ret;
+    adapters_addresses_free( info );
+    return err;
 }
 
 /******************************************************************
