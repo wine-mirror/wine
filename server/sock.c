@@ -2420,7 +2420,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         {
             const struct afd_event_select_params_64 *params = get_req_data();
 
-            if (get_req_data_size() < sizeof(params))
+            if (get_req_data_size() < sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
                 return 1;
@@ -2433,7 +2433,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         {
             const struct afd_event_select_params_32 *params = get_req_data();
 
-            if (get_req_data_size() < sizeof(params))
+            if (get_req_data_size() < sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
                 return 1;
