@@ -2630,11 +2630,8 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     ret = WriteFile(file, report, caps.OutputReportByteLength * 2, &value, NULL);
     if (report_id || broken(!ret) /* w7u */)
     {
-        todo_wine
         ok(!ret, "WriteFile succeeded\n");
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_PARAMETER, "WriteFile returned error %u\n", GetLastError());
-        todo_wine
         ok(value == 0, "WriteFile wrote %u\n", value);
         SetLastError(0xdeadbeef);
         report[0] = report_id;
@@ -2649,7 +2646,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     else
     {
         ok(ret, "WriteFile failed, last error %u\n", GetLastError());
-        todo_wine ok(value == 3, "WriteFile wrote %u\n", value);
+        ok(value == 3, "WriteFile wrote %u\n", value);
     }
 
 
