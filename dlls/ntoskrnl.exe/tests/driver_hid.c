@@ -532,7 +532,6 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ok(!in_size, "got input size %u\n", in_size);
             ok(out_size == sizeof(*packet), "got output size %u\n", out_size);
 
-            todo_wine_if(packet->reportId == 0x5a)
             ok(packet->reportId == report_id, "got id %u\n", packet->reportId);
             ok(packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen);
             ok(!!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer);
@@ -552,7 +551,6 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
             ok(!out_size, "got output size %u\n", out_size);
 
-            todo_wine_if(packet->reportId == 0x5a)
             ok(packet->reportId == report_id, "got id %u\n", packet->reportId);
             ok(packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen);
             ok(!!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer);
@@ -569,7 +567,6 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ok(!in_size, "got input size %u\n", in_size);
             ok(out_size == sizeof(*packet), "got output size %u\n", out_size);
 
-            todo_wine_if(packet->reportId == 0x5a)
             ok(packet->reportId == report_id, "got id %u\n", packet->reportId);
             ok(packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen);
             ok(!!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer);
@@ -588,7 +585,6 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
             ok(!out_size, "got output size %u\n", out_size);
 
-            todo_wine_if(packet->reportId == 0x5a)
             ok(packet->reportId == report_id, "got id %u\n", packet->reportId);
             ok(packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen);
             ok(!!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer);

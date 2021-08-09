@@ -2454,9 +2454,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     ret = HidD_GetInputReport(file, buffer, caps.InputReportByteLength);
     if (report_id || broken(!ret) /* w7u */)
     {
-        todo_wine
         ok(!ret, "HidD_GetInputReport succeeded, last error %u\n", GetLastError());
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
            "HidD_GetInputReport returned error %u\n", GetLastError());
     }
@@ -2499,9 +2497,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     ret = HidD_GetFeature(file, buffer, caps.FeatureReportByteLength);
     if (report_id || broken(!ret))
     {
-        todo_wine
         ok(!ret, "HidD_GetFeature succeeded, last error %u\n", GetLastError());
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
            "HidD_GetFeature returned error %u\n", GetLastError());
     }
@@ -2544,9 +2540,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     ret = HidD_SetFeature(file, buffer, caps.FeatureReportByteLength);
     if (report_id || broken(!ret))
     {
-        todo_wine
         ok(!ret, "HidD_SetFeature succeeded, last error %u\n", GetLastError());
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
            "HidD_SetFeature returned error %u\n", GetLastError());
     }
@@ -2593,9 +2587,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     ret = HidD_SetOutputReport(file, buffer, caps.OutputReportByteLength);
     if (report_id || broken(!ret))
     {
-        todo_wine
         ok(!ret, "HidD_SetOutputReport succeeded, last error %u\n", GetLastError());
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
            "HidD_SetOutputReport returned error %u\n", GetLastError());
     }

@@ -303,7 +303,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
 {
     const WINE_HIDP_PREPARSED_DATA *preparsed = ext->u.pdo.preparsed_data;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
-    BYTE report_id = HID_INPUT_VALUE_CAPS( preparsed )->report_id;
+    struct hid_value_caps *caps = NULL, *caps_end = NULL;
     ULONG report_len = 0, buffer_len = 0;
     HID_XFER_PACKET packet;
     BYTE *buffer = NULL;
@@ -326,13 +326,19 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
     {
     case IOCTL_HID_GET_INPUT_REPORT:
         report_len = preparsed->caps.InputReportByteLength;
+        caps = HID_INPUT_VALUE_CAPS( preparsed );
+        caps_end = caps + preparsed->value_caps_count[HidP_Input];
         break;
     case IOCTL_HID_SET_OUTPUT_REPORT:
         report_len = preparsed->caps.OutputReportByteLength;
+        caps = HID_OUTPUT_VALUE_CAPS( preparsed );
+        caps_end = caps + preparsed->value_caps_count[HidP_Output];
         break;
     case IOCTL_HID_GET_FEATURE:
     case IOCTL_HID_SET_FEATURE:
         report_len = preparsed->caps.FeatureReportByteLength;
+        caps = HID_FEATURE_VALUE_CAPS( preparsed );
+        caps_end = caps + preparsed->value_caps_count[HidP_Feature];
         break;
     }
 
@@ -347,11 +353,18 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         return;
     }
 
+    for (; caps != caps_end; ++caps) if (!caps->report_id || caps->report_id == buffer[0]) break;
+    if (caps == caps_end)
+    {
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+
     packet.reportId = buffer[0];
     packet.reportBuffer = buffer;
     packet.reportBufferLen = buffer_len;
 
-    if (!report_id)
+    if (!caps->report_id)
     {
         packet.reportId = 0;
         packet.reportBuffer++;
