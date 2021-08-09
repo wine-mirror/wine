@@ -449,55 +449,68 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct hid_parser_state *
     return data;
 }
 
-static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length,
-                             struct hid_parser_state *state )
+WINE_HIDP_PREPARSED_DATA *parse_descriptor( BYTE *descriptor, unsigned int length )
 {
-    int i;
-    UINT32 value;
+    WINE_HIDP_PREPARSED_DATA *data = NULL;
+    struct hid_parser_state *state;
+    UINT32 size, value;
     INT32 signed_value;
+    BYTE *ptr, *end;
+    int i;
 
-    for (i = index; i < length;)
+    if (TRACE_ON( hid ))
     {
-        BYTE item = descriptor[i++];
-        int size = item & 0x03;
+        TRACE( "descriptor %p, length %u:\n", descriptor, length );
+        for (i = 0; i < length;)
+        {
+            TRACE( "%08x ", i );
+            do { TRACE( " %02x", descriptor[i] ); } while (++i % 16 && i < length);
+            TRACE( "\n" );
+        }
+    }
 
+    if (!(state = calloc( 1, sizeof(*state) ))) return NULL;
+    init_parser_state( state );
+
+    for (ptr = descriptor, end = descriptor + length; ptr != end; ptr += size + 1)
+    {
+        size = (*ptr & 0x03);
         if (size == 3) size = 4;
-        if (length - i < size)
+        if (ptr + size > end)
         {
             ERR("Need %d bytes to read item value\n", size);
-            return -1;
+            goto done;
         }
 
         if (size == 0) signed_value = value = 0;
-        else if (size == 1) signed_value = (INT8)(value = *(UINT8 *)(descriptor + i));
-        else if (size == 2) signed_value = (INT16)(value = *(UINT16 *)(descriptor + i));
-        else if (size == 4) signed_value = (INT32)(value = *(UINT32 *)(descriptor + i));
+        else if (size == 1) signed_value = (INT8)(value = *(UINT8 *)(ptr + 1));
+        else if (size == 2) signed_value = (INT16)(value = *(UINT16 *)(ptr + 1));
+        else if (size == 4) signed_value = (INT32)(value = *(UINT32 *)(ptr + 1));
         else
         {
             ERR("Unexpected item value size %d.\n", size);
-            return -1;
+            goto done;
         }
-        i += size;
 
         state->items.bit_field = value;
 
 #define SHORT_ITEM(tag,type) (((tag)<<4)|((type)<<2))
-        switch (item & SHORT_ITEM(0xf,0x3))
+        switch (*ptr & SHORT_ITEM(0xf,0x3))
         {
         case SHORT_ITEM(TAG_MAIN_INPUT, TAG_TYPE_MAIN):
-            if (!parse_new_value_caps( state, HidP_Input )) return -1;
+            if (!parse_new_value_caps( state, HidP_Input )) goto done;
             break;
         case SHORT_ITEM(TAG_MAIN_OUTPUT, TAG_TYPE_MAIN):
-            if (!parse_new_value_caps( state, HidP_Output )) return -1;
+            if (!parse_new_value_caps( state, HidP_Output )) goto done;
             break;
         case SHORT_ITEM(TAG_MAIN_FEATURE, TAG_TYPE_MAIN):
-            if (!parse_new_value_caps( state, HidP_Feature )) return -1;
+            if (!parse_new_value_caps( state, HidP_Feature )) goto done;
             break;
         case SHORT_ITEM(TAG_MAIN_COLLECTION, TAG_TYPE_MAIN):
-            if (!parse_new_collection( state )) return -1;
+            if (!parse_new_collection( state )) goto done;
             break;
         case SHORT_ITEM(TAG_MAIN_END_COLLECTION, TAG_TYPE_MAIN):
-            if (!parse_end_collection( state )) return -1;
+            if (!parse_end_collection( state )) goto done;
             break;
 
         case SHORT_ITEM(TAG_GLOBAL_USAGE_PAGE, TAG_TYPE_GLOBAL):
@@ -531,14 +544,14 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             state->items.report_count = value;
             break;
         case SHORT_ITEM(TAG_GLOBAL_PUSH, TAG_TYPE_GLOBAL):
-            if (!parse_global_push( state )) return -1;
+            if (!parse_global_push( state )) goto done;
             break;
         case SHORT_ITEM(TAG_GLOBAL_POP, TAG_TYPE_GLOBAL):
-            if (!parse_global_pop( state )) return -1;
+            if (!parse_global_pop( state )) goto done;
             break;
 
         case SHORT_ITEM(TAG_LOCAL_USAGE, TAG_TYPE_LOCAL):
-            if (!parse_local_usage( state, value >> 16, value & 0xffff )) return -1;
+            if (!parse_local_usage( state, value >> 16, value & 0xffff )) goto done;
             break;
         case SHORT_ITEM(TAG_LOCAL_USAGE_MINIMUM, TAG_TYPE_LOCAL):
             parse_local_usage_min( state, value >> 16, value & 0xffff );
@@ -572,40 +585,18 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             break;
         case SHORT_ITEM(TAG_LOCAL_DELIMITER, TAG_TYPE_LOCAL):
             FIXME("delimiter %d not implemented!\n", value);
-            return -1;
+            goto done;
 
         default:
-            FIXME("item type %x not implemented!\n", item);
-            return -1;
+            FIXME( "item type %x not implemented!\n", *ptr );
+            goto done;
         }
 #undef SHORT_ITEM
     }
-    return i;
-}
 
-WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
-{
-    WINE_HIDP_PREPARSED_DATA *data = NULL;
-    struct hid_parser_state *state;
-    int i;
+    if ((data = build_preparsed_data( state ))) debug_print_preparsed( data );
 
-    if (TRACE_ON(hid))
-    {
-        TRACE("descriptor %p, length %u:\n", descriptor, length);
-        for (i = 0; i < length;)
-        {
-            TRACE("%08x ", i);
-            do { TRACE(" %02x", descriptor[i]); } while (++i % 16 && i < length);
-            TRACE("\n");
-        }
-    }
-
-    if (!(state = calloc( 1, sizeof(*state) ))) return NULL;
-    init_parser_state( state );
-
-    if (parse_descriptor( descriptor, 0, length, state ) >= 0 && (data = build_preparsed_data( state )))
-        debug_print_preparsed( data );
-
+done:
     free_parser_state( state );
     return data;
 }

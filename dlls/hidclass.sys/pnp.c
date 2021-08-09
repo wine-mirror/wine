@@ -251,7 +251,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         return;
     }
 
-    pdo_ext->u.pdo.preparsed_data = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[i].wReportLength);
+    pdo_ext->u.pdo.preparsed_data = parse_descriptor( reportDescriptor, descriptor.DescriptorList[i].wReportLength );
     free(reportDescriptor);
     if (!pdo_ext->u.pdo.preparsed_data)
     {
