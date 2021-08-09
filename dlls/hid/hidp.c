@@ -169,7 +169,7 @@ NTSTATUS WINAPI HidP_GetCaps( PHIDP_PREPARSED_DATA preparsed_data, HIDP_CAPS *ca
 
     if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
-    *caps = preparsed->new_caps;
+    *caps = preparsed->caps;
     return HIDP_STATUS_SUCCESS;
 }
 

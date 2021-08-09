@@ -301,7 +301,7 @@ static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, SHOR
 
 static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
 {
-    const WINE_HIDP_PREPARSED_DATA *preparsed = ext->u.pdo.preparsed_data;
+    WINE_HIDP_PREPARSED_DATA *preparsed = ext->u.pdo.preparsed_data;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     struct hid_value_caps *caps = NULL, *caps_end = NULL;
     ULONG report_len = 0, buffer_len = 0;

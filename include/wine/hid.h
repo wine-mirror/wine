@@ -31,13 +31,6 @@
 
 #define HID_MAGIC 0x8491759
 
-typedef struct __WINE_ELEMENT
-{
-    UINT  valueStartBit;
-    UINT  bitCount;
-    HIDP_VALUE_CAPS caps;
-} WINE_HID_ELEMENT;
-
 struct hid_value_caps
 {
     USAGE   usage_page;
@@ -74,36 +67,16 @@ struct hid_value_caps
 #define HID_VALUE_CAPS_IS_ARRAY(c) (((c)->bit_field & 2) == 0)
 #define HID_VALUE_CAPS_IS_BUTTON(c) ((c)->bit_size == 1 || HID_VALUE_CAPS_IS_ARRAY(c))
 
-typedef struct __WINE_HID_REPORT
-{
-    UCHAR reportID;
-    DWORD bitSize;
-    DWORD elementCount;
-    DWORD elementIdx;
-} WINE_HID_REPORT;
-
 typedef struct __WINE_HIDP_PREPARSED_DATA
 {
     DWORD magic;
     DWORD dwSize;
     HIDP_CAPS caps;
-    HIDP_CAPS new_caps;
-
-    DWORD elementOffset;
-    DWORD reportCount[3];
-    BYTE reportIdx[3][256];
-
-    DWORD value_caps_offset;
     USHORT value_caps_count[3];
-    WINE_HID_REPORT reports[1];
+    struct hid_value_caps value_caps[1];
 } WINE_HIDP_PREPARSED_DATA, *PWINE_HIDP_PREPARSED_DATA;
 
-#define HID_INPUT_REPORTS(d) ((d)->reports)
-#define HID_OUTPUT_REPORTS(d) ((d)->reports + (d)->reportCount[0])
-#define HID_FEATURE_REPORTS(d) ((d)->reports + (d)->reportCount[0] + (d)->reportCount[1])
-#define HID_ELEMS(d) ((WINE_HID_ELEMENT*)((BYTE*)(d) + (d)->elementOffset))
-
-#define HID_INPUT_VALUE_CAPS(d) ((struct hid_value_caps*)((char *)(d) + (d)->value_caps_offset))
+#define HID_INPUT_VALUE_CAPS(d) ((d)->value_caps)
 #define HID_OUTPUT_VALUE_CAPS(d) (HID_INPUT_VALUE_CAPS(d) + (d)->value_caps_count[0])
 #define HID_FEATURE_VALUE_CAPS(d) (HID_OUTPUT_VALUE_CAPS(d) + (d)->value_caps_count[1])
 #define HID_COLLECTION_VALUE_CAPS(d) (HID_FEATURE_VALUE_CAPS(d) + (d)->value_caps_count[2])

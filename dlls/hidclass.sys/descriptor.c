@@ -85,132 +85,15 @@ enum {
     TAG_LOCAL_DELIMITER
 };
 
-
-static const char* const feature_string[] =
-    { "Input", "Output", "Feature" };
-
-struct feature {
-    struct list entry;
-    HIDP_VALUE_CAPS caps;
-
-    HIDP_REPORT_TYPE type;
-    BOOLEAN isData;
-};
-
-static const char* const collection_string[] = {
-    "Physical",
-    "Application",
-    "Logical",
-    "Report",
-    "Named Array",
-    "Usage Switch",
-    "Usage Modifier",
-};
-
-struct collection {
-    struct list entry;
-    unsigned int type;
-    struct collection *parent;
-    struct list features;
-    struct list collections;
-};
-
-static inline const char *debugstr_hidp_value_caps( HIDP_VALUE_CAPS *caps )
+static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
 {
     if (!caps) return "(null)";
     return wine_dbg_sprintf( "RId %d, Usg %02x:%02x-%02x Dat %02x-%02x (%d), Str %d-%d (%d), Des %d-%d (%d), "
-                             "Bits %02x, Als %d, Abs %d, Nul %d, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, "
-                             "Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
-                             caps->ReportID, caps->UsagePage, caps->Range.UsageMin, caps->Range.UsageMax, caps->Range.DataIndexMin, caps->Range.DataIndexMax, caps->IsRange,
-                             caps->Range.StringMin, caps->Range.StringMax, caps->IsStringRange, caps->Range.DesignatorMin, caps->Range.DesignatorMax, caps->IsDesignatorRange,
-                             caps->BitField, caps->IsAlias, caps->IsAbsolute, caps->HasNull, caps->LinkCollection, caps->LinkUsagePage, caps->LinkUsage, caps->BitSize, caps->ReportCount,
-                             caps->Units, caps->UnitsExp, caps->LogicalMin, caps->LogicalMax, caps->PhysicalMin, caps->PhysicalMax );
-}
-
-static void copy_hidp_value_caps( HIDP_VALUE_CAPS *out, const struct hid_value_caps *in )
-{
-    out->UsagePage = in->usage_page;
-    out->ReportID = in->report_id;
-    out->LinkCollection = in->link_collection;
-    out->LinkUsagePage = in->link_usage_page;
-    out->LinkUsage = in->link_usage;
-    out->BitField = in->bit_field;
-    out->IsAlias = FALSE;
-    out->IsAbsolute = HID_VALUE_CAPS_IS_ABSOLUTE( in );
-    out->HasNull = HID_VALUE_CAPS_HAS_NULL( in );
-    out->BitSize = in->bit_size;
-    out->ReportCount = in->report_count;
-    out->UnitsExp = in->units_exp;
-    out->Units = in->units;
-    out->LogicalMin = in->logical_min;
-    out->LogicalMax = in->logical_max;
-    out->PhysicalMin = in->physical_min;
-    out->PhysicalMax = in->physical_max;
-    if (!(out->IsRange = in->is_range))
-        out->NotRange.Usage = in->usage_min;
-    else
-    {
-        out->Range.UsageMin = in->usage_min;
-        out->Range.UsageMax = in->usage_max;
-    }
-    if (!(out->IsStringRange = in->is_string_range))
-        out->NotRange.StringIndex = in->string_min;
-    else
-    {
-        out->Range.StringMin = in->string_min;
-        out->Range.StringMax = in->string_max;
-    }
-    if ((out->IsDesignatorRange = in->is_designator_range))
-        out->NotRange.DesignatorIndex = in->designator_min;
-    else
-    {
-        out->Range.DesignatorMin = in->designator_min;
-        out->Range.DesignatorMax = in->designator_max;
-    }
-}
-
-static void debug_feature(struct feature *feature)
-{
-    if (!feature)
-        return;
-    TRACE( "[Feature type %s %s]\n", feature_string[feature->type], (feature->isData) ? "Data" : "Const" );
-
-    TRACE("Feature %s\n", debugstr_hidp_value_caps(&feature->caps));
-}
-
-static void debug_collection(struct collection *collection)
-{
-    struct feature *fentry;
-    struct collection *centry;
-    if (TRACE_ON(hid))
-    {
-        TRACE( "START Collection <<< %s, parent: %p,  %i features,  %i collections\n",
-               collection_string[collection->type], collection->parent,
-               list_count( &collection->features ), list_count( &collection->collections ) );
-        LIST_FOR_EACH_ENTRY(fentry, &collection->features, struct feature, entry)
-            debug_feature(fentry);
-        LIST_FOR_EACH_ENTRY(centry, &collection->collections, struct collection, entry)
-            debug_collection(centry);
-        TRACE( ">>> END Collection\n" );
-    }
-}
-
-static void debug_print_report(const char* type, WINE_HIDP_PREPARSED_DATA *data,
-        WINE_HID_REPORT *report)
-{
-    WINE_HID_ELEMENT *elems = HID_ELEMS(data);
-    unsigned int i;
-    TRACE("START Report %i <<< %s report : bitSize: %i elementCount: %i\n",
-        report->reportID,
-        type,
-        report->bitSize,
-        report->elementCount);
-    for (i = 0; i < report->elementCount; i++)
-    {
-        WINE_HID_ELEMENT *elem = elems + report->elementIdx + i;
-        TRACE("%s: %s, StartBit %d, BitCount %d\n", type, debugstr_hidp_value_caps(&elem->caps), elem->valueStartBit, elem->bitCount);
-    }
-    TRACE(">>> END Report %i\n",report->reportID);
+                             "Bits %02x, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
+                             caps->report_id, caps->usage_page, caps->usage_min, caps->usage_max, caps->data_index_min, caps->data_index_max, caps->is_range,
+                             caps->string_min, caps->string_max, caps->is_string_range, caps->designator_min, caps->designator_max, caps->is_designator_range,
+                             caps->bit_field, caps->link_collection, caps->link_usage_page, caps->link_usage, caps->bit_size, caps->report_count,
+                             caps->units, caps->units_exp, caps->logical_min, caps->logical_max, caps->physical_min, caps->physical_max );
 }
 
 static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
@@ -218,52 +101,29 @@ static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
     unsigned int i, end;
     if (TRACE_ON(hid))
     {
-        TRACE("START PREPARSED Data <<< dwSize: %i Usage: %i, UsagePage: %i, "
-                "InputReportByteLength: %i, tOutputReportByteLength: %i, "
-                "FeatureReportByteLength: %i, NumberLinkCollectionNodes: %i, "
-                "NumberInputButtonCaps: %i, NumberInputValueCaps: %i, "
-                "NumberInputDataIndices: %i, NumberOutputButtonCaps: %i, "
-                "NumberOutputValueCaps: %i, NumberOutputDataIndices: %i, "
-                "NumberFeatureButtonCaps: %i, NumberFeatureValueCaps: %i, "
-                "NumberFeatureDataIndices: %i, reportCount[HidP_Input]: %i, "
-                "reportCount[HidP_Output]: %i, reportCount[HidP_Feature]: %i, "
-                "elementOffset: %i\n",
-        data->dwSize,
-        data->caps.Usage,
-        data->caps.UsagePage,
-        data->caps.InputReportByteLength,
-        data->caps.OutputReportByteLength,
-        data->caps.FeatureReportByteLength,
-        data->caps.NumberLinkCollectionNodes,
-        data->caps.NumberInputButtonCaps,
-        data->caps.NumberInputValueCaps,
-        data->caps.NumberInputDataIndices,
-        data->caps.NumberOutputButtonCaps,
-        data->caps.NumberOutputValueCaps,
-        data->caps.NumberOutputDataIndices,
-        data->caps.NumberFeatureButtonCaps,
-        data->caps.NumberFeatureValueCaps,
-        data->caps.NumberFeatureDataIndices,
-        data->reportCount[HidP_Input],
-        data->reportCount[HidP_Output],
-        data->reportCount[HidP_Feature],
-        data->elementOffset);
-
-        end = data->reportCount[HidP_Input];
-        for (i = 0; i < end; i++)
-        {
-            debug_print_report("INPUT", data, &data->reports[i]);
-        }
-        end += data->reportCount[HidP_Output];
-        for (; i < end; i++)
-        {
-            debug_print_report("OUTPUT", data, &data->reports[i]);
-        }
-        end += data->reportCount[HidP_Feature];
-        for (; i < end; i++)
-        {
-            debug_print_report("FEATURE", data, &data->reports[i]);
-        }
+        TRACE( "START PREPARSED Data <<< Usage: %i, UsagePage: %i, "
+               "InputReportByteLength: %i, tOutputReportByteLength: %i, "
+               "FeatureReportByteLength: %i, NumberLinkCollectionNodes: %i, "
+               "NumberInputButtonCaps: %i, NumberInputValueCaps: %i, "
+               "NumberInputDataIndices: %i, NumberOutputButtonCaps: %i, "
+               "NumberOutputValueCaps: %i, NumberOutputDataIndices: %i, "
+               "NumberFeatureButtonCaps: %i, NumberFeatureValueCaps: %i, "
+               "NumberFeatureDataIndices: %i\n",
+               data->caps.Usage, data->caps.UsagePage, data->caps.InputReportByteLength,
+               data->caps.OutputReportByteLength, data->caps.FeatureReportByteLength,
+               data->caps.NumberLinkCollectionNodes, data->caps.NumberInputButtonCaps,
+               data->caps.NumberInputValueCaps, data->caps.NumberInputDataIndices,
+               data->caps.NumberOutputButtonCaps, data->caps.NumberOutputValueCaps,
+               data->caps.NumberOutputDataIndices, data->caps.NumberFeatureButtonCaps,
+               data->caps.NumberFeatureValueCaps, data->caps.NumberFeatureDataIndices );
+        end = data->value_caps_count[HidP_Input];
+        for (i = 0; i < end; i++) TRACE( "INPUT: %s\n", debugstr_hid_value_caps( HID_INPUT_VALUE_CAPS( data ) + i ) );
+        end = data->value_caps_count[HidP_Output];
+        for (i = 0; i < end; i++) TRACE( "OUTPUT: %s\n", debugstr_hid_value_caps( HID_OUTPUT_VALUE_CAPS( data ) + i ) );
+        end = data->value_caps_count[HidP_Feature];
+        for (i = 0; i < end; i++) TRACE( "FEATURE: %s\n", debugstr_hid_value_caps( HID_FEATURE_VALUE_CAPS( data ) + i ) );
+        end = data->caps.NumberLinkCollectionNodes;
+        for (i = 0; i < end; i++) TRACE( "COLLECTION: %s\n", debugstr_hid_value_caps( HID_COLLECTION_VALUE_CAPS( data ) + i ) );
         TRACE(">>> END Preparsed Data\n");
     }
 }
@@ -450,7 +310,7 @@ static BOOL parse_end_collection( struct hid_parser_state *state )
     return TRUE;
 }
 
-static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type, struct collection *collection )
+static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type )
 {
     struct hid_value_caps *value;
     USAGE usage_page = state->items.usage_page;
@@ -459,25 +319,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     USHORT *value_idx = state->value_idx[type];
     USHORT *data_idx = state->data_idx[type];
     ULONG *bit_size = &state->bit_size[type][state->items.report_id];
-    struct feature *feature;
     BOOL is_array;
-    int j;
-
-    for (j = 0; j < state->items.report_count; j++)
-    {
-        if (!(feature = calloc( 1, sizeof(*feature) ))) return -1;
-        list_add_tail( &collection->features, &feature->entry );
-        feature->type = type;
-        feature->isData = ((state->items.bit_field & INPUT_DATA_CONST) == 0);
-        copy_hidp_value_caps( &feature->caps, &state->items );
-        if (j < state->usages_size) feature->caps.NotRange.Usage = state->usages_min[j];
-        feature->caps.ReportCount = 1;
-        if (j + 1 >= state->usages_size)
-        {
-            feature->caps.ReportCount += state->items.report_count - (j + 1);
-            break;
-        }
-    }
 
     if (!*bit_size) *bit_size = 8;
     *bit_size += state->items.bit_size * state->items.report_count;
@@ -549,24 +391,8 @@ static void free_parser_state( struct hid_parser_state *state )
     free( state );
 }
 
-static void parse_collection(unsigned int bSize, int itemVal,
-                             struct collection *collection)
-{
-    if (bSize)
-    {
-        collection->type = itemVal;
-
-        if (itemVal >= 0x07 && itemVal <= 0x7F) {
-            ERR(" (Reserved 0x%x )\n", itemVal);
-        }
-        else if (itemVal >= 0x80 && itemVal <= 0xFF) {
-            ERR(" (Vendor Defined 0x%x )\n", itemVal);
-        }
-    }
-}
-
 static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length,
-                             struct collection *collection, struct hid_parser_state *state )
+                             struct hid_parser_state *state )
 {
     int i;
     UINT32 value;
@@ -601,33 +427,20 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
         switch (item & SHORT_ITEM(0xf,0x3))
         {
         case SHORT_ITEM(TAG_MAIN_INPUT, TAG_TYPE_MAIN):
-            if (!parse_new_value_caps( state, HidP_Input, collection )) return -1;
+            if (!parse_new_value_caps( state, HidP_Input )) return -1;
             break;
         case SHORT_ITEM(TAG_MAIN_OUTPUT, TAG_TYPE_MAIN):
-            if (!parse_new_value_caps( state, HidP_Output, collection )) return -1;
+            if (!parse_new_value_caps( state, HidP_Output )) return -1;
             break;
         case SHORT_ITEM(TAG_MAIN_FEATURE, TAG_TYPE_MAIN):
-            if (!parse_new_value_caps( state, HidP_Feature, collection )) return -1;
+            if (!parse_new_value_caps( state, HidP_Feature )) return -1;
             break;
         case SHORT_ITEM(TAG_MAIN_COLLECTION, TAG_TYPE_MAIN):
-        {
-            struct collection *subcollection;
-            if (!(subcollection = calloc(1, sizeof(struct collection)))) return -1;
-            list_add_tail(&collection->collections, &subcollection->entry);
-            subcollection->parent = collection;
-            /* Only set our collection once...
-               We do not properly handle composite devices yet. */
-            list_init(&subcollection->features);
-            list_init(&subcollection->collections);
-            parse_collection(size, value, subcollection);
             if (!parse_new_collection( state )) return -1;
-
-            if ((i = parse_descriptor( descriptor, i, length, subcollection, state )) < 0) return i;
-            continue;
-        }
+            break;
         case SHORT_ITEM(TAG_MAIN_END_COLLECTION, TAG_TYPE_MAIN):
             if (!parse_end_collection( state )) return -1;
-            return i;
+            break;
 
         case SHORT_ITEM(TAG_GLOBAL_USAGE_PAGE, TAG_TYPE_GLOBAL):
             state->items.usage_page = value;
@@ -712,234 +525,68 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
     return i;
 }
 
-static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems,
-        struct feature* feature, USHORT *data_index)
-{
-    WINE_HID_ELEMENT *wine_element = elems + wine_report->elementIdx + wine_report->elementCount;
-    ULONG index_count;
-
-    if (!feature->isData)
-    {
-        wine_report->bitSize += feature->caps.BitSize * feature->caps.ReportCount;
-        return;
-    }
-
-    wine_element->valueStartBit = wine_report->bitSize;
-
-    wine_element->bitCount = (feature->caps.BitSize * feature->caps.ReportCount);
-    wine_report->bitSize += wine_element->bitCount;
-
-    wine_element->caps = feature->caps;
-
-    if (wine_element->caps.IsRange)
-    {
-        if (wine_element->caps.BitSize == 1) index_count = wine_element->bitCount - 1;
-        else index_count = wine_element->caps.Range.UsageMax - wine_element->caps.Range.UsageMin;
-        wine_element->caps.Range.DataIndexMin = *data_index;
-        wine_element->caps.Range.DataIndexMax = *data_index + index_count;
-        *data_index = *data_index + index_count + 1;
-    }
-    else
-    {
-        wine_element->caps.NotRange.DataIndex = *data_index;
-        wine_element->caps.NotRange.Reserved4 = *data_index;
-        *data_index = *data_index + 1;
-    }
-
-    wine_report->elementCount++;
-}
-
-static void count_elements(struct feature* feature, USHORT *buttons, USHORT *values)
-{
-    if (!feature->isData)
-        return;
-
-    if (feature->caps.BitSize == 1)
-        (*buttons)++;
-    else
-        (*values)++;
-}
-
-struct preparse_ctx
-{
-    int report_count[3];
-    int elem_count;
-    int report_elem_count[3][256];
-
-    int elem_alloc;
-    BOOL report_created[3][256];
-};
-
-static void create_preparse_ctx(const struct collection *base, struct preparse_ctx *ctx)
-{
-    struct feature *f;
-    struct collection *c;
-
-    LIST_FOR_EACH_ENTRY(f, &base->features, struct feature, entry)
-    {
-        ctx->elem_count++;
-        ctx->report_elem_count[f->type][f->caps.ReportID]++;
-        if (ctx->report_elem_count[f->type][f->caps.ReportID] != 1)
-            continue;
-        ctx->report_count[f->type]++;
-    }
-
-    LIST_FOR_EACH_ENTRY(c, &base->collections, struct collection, entry)
-        create_preparse_ctx(c, ctx);
-}
-
-static void preparse_collection(const struct collection *root, const struct collection *base,
-        WINE_HIDP_PREPARSED_DATA *data, struct preparse_ctx *ctx)
-{
-    WINE_HID_ELEMENT *elem = HID_ELEMS(data);
-    struct feature *f;
-    struct collection *c;
-
-    LIST_FOR_EACH_ENTRY(f, &base->features, struct feature, entry)
-    {
-        WINE_HID_REPORT *report;
-
-        if (!ctx->report_created[f->type][f->caps.ReportID])
-        {
-            ctx->report_created[f->type][f->caps.ReportID] = TRUE;
-            data->reportIdx[f->type][f->caps.ReportID] = data->reportCount[f->type]++;
-            if (f->type > 0) data->reportIdx[f->type][f->caps.ReportID] += ctx->report_count[0];
-            if (f->type > 1) data->reportIdx[f->type][f->caps.ReportID] += ctx->report_count[1];
-
-            report = &data->reports[data->reportIdx[f->type][f->caps.ReportID]];
-            report->reportID = f->caps.ReportID;
-            /* Room for the reportID */
-            report->bitSize = 8;
-            report->elementIdx = ctx->elem_alloc;
-            ctx->elem_alloc += ctx->report_elem_count[f->type][f->caps.ReportID];
-        }
-
-        report = &data->reports[data->reportIdx[f->type][f->caps.ReportID]];
-        switch (f->type)
-        {
-            case HidP_Input:
-                build_elements(report, elem, f, &data->caps.NumberInputDataIndices);
-                count_elements(f, &data->caps.NumberInputButtonCaps, &data->caps.NumberInputValueCaps);
-                break;
-            case HidP_Output:
-                build_elements(report, elem, f, &data->caps.NumberOutputDataIndices);
-                count_elements(f, &data->caps.NumberOutputButtonCaps, &data->caps.NumberOutputValueCaps);
-                break;
-            case HidP_Feature:
-                build_elements(report, elem, f, &data->caps.NumberFeatureDataIndices);
-                count_elements(f, &data->caps.NumberFeatureButtonCaps, &data->caps.NumberFeatureValueCaps);
-                break;
-        }
-    }
-
-    LIST_FOR_EACH_ENTRY(c, &base->collections, struct collection, entry)
-        preparse_collection(root, c, data, ctx);
-}
-
-static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_collection,
-                                                       struct hid_parser_state *state )
+static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct hid_parser_state *state )
 {
     WINE_HIDP_PREPARSED_DATA *data;
     struct hid_value_caps *caps;
-    unsigned int report_count;
-    unsigned int size;
-    DWORD i, button, filler, caps_len, caps_off;
-
-    struct preparse_ctx ctx;
-    unsigned int element_off;
-
-    memset(&ctx, 0, sizeof(ctx));
-    create_preparse_ctx(base_collection, &ctx);
-
-    report_count = ctx.report_count[HidP_Input] + ctx.report_count[HidP_Output]
-        + ctx.report_count[HidP_Feature];
-    element_off = FIELD_OFFSET(WINE_HIDP_PREPARSED_DATA, reports[report_count]);
-    size = element_off + (ctx.elem_count * sizeof(WINE_HID_ELEMENT));
+    DWORD i, button, filler, caps_len, size;
 
     caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps +
                state->caps.NumberFeatureValueCaps + state->caps.NumberLinkCollectionNodes;
-    caps_off = size;
-    size += caps_len * sizeof(*caps);
+    size = FIELD_OFFSET( WINE_HIDP_PREPARSED_DATA, value_caps[caps_len] );
 
     if (!(data = calloc(1, size))) return NULL;
     data->magic = HID_MAGIC;
     data->dwSize = size;
     data->caps = state->caps;
-    data->new_caps = state->caps;
-    data->elementOffset = element_off;
-
-    data->value_caps_offset = caps_off;
     data->value_caps_count[HidP_Input] = state->caps.NumberInputValueCaps;
     data->value_caps_count[HidP_Output] = state->caps.NumberOutputValueCaps;
     data->value_caps_count[HidP_Feature] = state->caps.NumberFeatureValueCaps;
 
-    data->caps.NumberInputValueCaps = data->caps.NumberInputButtonCaps = data->caps.NumberInputDataIndices = 0;
-    data->caps.NumberOutputValueCaps = data->caps.NumberOutputButtonCaps = data->caps.NumberOutputDataIndices = 0;
-    data->caps.NumberFeatureValueCaps = data->caps.NumberFeatureButtonCaps = data->caps.NumberFeatureDataIndices = 0;
-    preparse_collection(base_collection, base_collection, data, &ctx);
-
     /* fixup value vs button vs filler counts */
 
     caps = HID_INPUT_VALUE_CAPS( data );
-    memcpy( caps, state->values[0], data->new_caps.NumberInputValueCaps * sizeof(*caps) );
-    for (i = 0, button = 0, filler = 0; i < data->new_caps.NumberInputValueCaps; ++i)
+    memcpy( caps, state->values[0], data->caps.NumberInputValueCaps * sizeof(*caps) );
+    for (i = 0, button = 0, filler = 0; i < data->caps.NumberInputValueCaps; ++i)
     {
         if (!caps[i].usage_min && !caps[i].usage_max) filler++;
         else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
     }
-    data->new_caps.NumberInputButtonCaps = button;
-    data->new_caps.NumberInputValueCaps -= filler + button;
+    data->caps.NumberInputButtonCaps = button;
+    data->caps.NumberInputValueCaps -= filler + button;
 
     caps = HID_OUTPUT_VALUE_CAPS( data );
-    memcpy( caps, state->values[1], data->new_caps.NumberOutputValueCaps * sizeof(*caps) );
-    for (i = 0, button = 0, filler = 0; i < data->new_caps.NumberOutputValueCaps; ++i)
+    memcpy( caps, state->values[1], data->caps.NumberOutputValueCaps * sizeof(*caps) );
+    for (i = 0, button = 0, filler = 0; i < data->caps.NumberOutputValueCaps; ++i)
     {
         if (!caps[i].usage_min && !caps[i].usage_max) filler++;
         else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
     }
-    caps += data->new_caps.NumberOutputValueCaps;
-    data->new_caps.NumberOutputButtonCaps = button;
-    data->new_caps.NumberOutputValueCaps -= filler + button;
+    caps += data->caps.NumberOutputValueCaps;
+    data->caps.NumberOutputButtonCaps = button;
+    data->caps.NumberOutputValueCaps -= filler + button;
 
     caps = HID_FEATURE_VALUE_CAPS( data );
-    memcpy( caps, state->values[2], data->new_caps.NumberFeatureValueCaps * sizeof(*caps) );
-    for (i = 0, button = 0, filler = 0; i < data->new_caps.NumberFeatureValueCaps; ++i)
+    memcpy( caps, state->values[2], data->caps.NumberFeatureValueCaps * sizeof(*caps) );
+    for (i = 0, button = 0, filler = 0; i < data->caps.NumberFeatureValueCaps; ++i)
     {
         if (!caps[i].usage_min && !caps[i].usage_max) filler++;
         else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
     }
-    caps += data->new_caps.NumberFeatureValueCaps;
-    data->new_caps.NumberFeatureButtonCaps = button;
-    data->new_caps.NumberFeatureValueCaps -= filler + button;
+    caps += data->caps.NumberFeatureValueCaps;
+    data->caps.NumberFeatureButtonCaps = button;
+    data->caps.NumberFeatureValueCaps -= filler + button;
 
     caps = HID_COLLECTION_VALUE_CAPS( data );
-    memcpy( caps, state->collections, data->new_caps.NumberLinkCollectionNodes * sizeof(*caps) );
+    memcpy( caps, state->collections, data->caps.NumberLinkCollectionNodes * sizeof(*caps) );
 
     return data;
-}
-
-static void free_collection(struct collection *collection)
-{
-    struct feature *fentry, *fnext;
-    struct collection *centry, *cnext;
-    LIST_FOR_EACH_ENTRY_SAFE(centry, cnext, &collection->collections, struct collection, entry)
-    {
-        list_remove(&centry->entry);
-        free_collection(centry);
-    }
-    LIST_FOR_EACH_ENTRY_SAFE(fentry, fnext, &collection->features, struct feature, entry)
-    {
-        list_remove(&fentry->entry);
-        free(fentry);
-    }
-    free(collection);
 }
 
 WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
 {
     WINE_HIDP_PREPARSED_DATA *data = NULL;
     struct hid_parser_state *state;
-    struct collection *base;
     int i;
 
     if (TRACE_ON(hid))
@@ -954,27 +601,10 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     }
 
     if (!(state = calloc( 1, sizeof(*state) ))) return NULL;
-    if (!(base = calloc( 1, sizeof(*base) )))
-    {
-        free( state );
-        return NULL;
-    }
-    list_init(&base->features);
-    list_init(&base->collections);
     init_parser_state( state );
 
-    if (parse_descriptor( descriptor, 0, length, base, state ) < 0)
-    {
-        free_collection(base);
-        free_parser_state( state );
-        return NULL;
-    }
-
-    debug_collection(base);
-
-    if ((data = build_preparsed_data( base, state )))
-        debug_print_preparsed(data);
-    free_collection(base);
+    if (parse_descriptor( descriptor, 0, length, state ) >= 0 && (data = build_preparsed_data( state )))
+        debug_print_preparsed( data );
 
     free_parser_state( state );
     return data;
