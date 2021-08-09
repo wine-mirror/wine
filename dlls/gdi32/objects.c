@@ -270,11 +270,14 @@ void GDI_hdc_not_using_object( HGDIOBJ obj, HDC hdc )
  */
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ obj )
 {
+    DC_ATTR *dc_attr;
     HGDIOBJ ret;
 
     TRACE( "(%p,%p)\n", hdc, obj );
 
     if (is_meta_dc( hdc )) return METADC_SelectObject( hdc, obj );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    if (dc_attr->emf && !EMFDC_SelectObject( dc_attr, obj )) return 0;
 
     switch (get_object_type( obj ))
     {

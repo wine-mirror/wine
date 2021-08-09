@@ -194,16 +194,14 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 
 
 /***********************************************************************
- *           EMFDRV_SelectBrush
+ *           EMFDC_SelectBrush
  */
-HBRUSH CDECL EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hBrush, const struct brush_pattern *pattern )
+static BOOL EMFDC_SelectBrush( DC_ATTR *dc_attr, HBRUSH brush )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
-
-    if (physDev->restoring) return hBrush;  /* don't output SelectObject records during RestoreDC */
 
     /* If the object is a stock brush object, do not need to create it.
      * See definitions in  wingdi.h for range of stock brushes.
@@ -212,23 +210,23 @@ HBRUSH CDECL EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hBrush, const struct brush_
      */
     for (i = WHITE_BRUSH; i <= DC_BRUSH; i++)
     {
-        if (hBrush == GetStockObject(i))
+        if (brush == GetStockObject(i))
         {
             index = i | 0x80000000;
             goto found;
         }
     }
-    if((index = EMFDRV_FindObject(dev, hBrush)) != 0)
+    if((index = EMFDRV_FindObject( &emf->dev, brush )) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreateBrushIndirect(dev, hBrush ))) return 0;
-    GDI_hdc_using_object( hBrush, dev->hdc, EMFDC_DeleteObject );
+    if (!(index = EMFDRV_CreateBrushIndirect( &emf->dev, brush ))) return 0;
+    GDI_hdc_using_object( brush, dc_attr->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? hBrush : 0;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 
@@ -277,13 +275,20 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
  */
 HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
+    dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    return dev->funcs->pSelectFont( dev, hFont, aa_flags );
+}
+
+/***********************************************************************
+ *           EMFDC_SelectFont
+ */
+static BOOL EMFDC_SelectFont( DC_ATTR *dc_attr, HFONT font )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
-
-    if (physDev->restoring) goto done;  /* don't output SelectObject records during RestoreDC */
-    if (physDev->modifying_transform) goto done; /* don't output SelectObject records when modifying the world transform */
 
     /* If the object is a stock font object, do not need to create it.
      * See definitions in  wingdi.h for range of stock fonts.
@@ -293,33 +298,25 @@ HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
 
     for (i = OEM_FIXED_FONT; i <= DEFAULT_GUI_FONT; i++)
     {
-        if (i != DEFAULT_PALETTE && hFont == GetStockObject(i))
+        if (i != DEFAULT_PALETTE && font == GetStockObject(i))
         {
             index = i | 0x80000000;
             goto found;
         }
     }
 
-    if((index = EMFDRV_FindObject(dev, hFont)) != 0)
-        goto found;
-
-    if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return 0;
-    GDI_hdc_using_object( hFont, dev->hdc, EMFDC_DeleteObject );
+    if (!(index = EMFDRV_FindObject( &emf->dev, font )))
+    {
+        if (!(index = EMFDRV_CreateFontIndirect( &emf->dev, font ))) return FALSE;
+        GDI_hdc_using_object( font, emf->dev.hdc, EMFDC_DeleteObject );
+    }
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-        return 0;
-done:
-    *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
-    dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
-    dev->funcs->pSelectFont( dev, hFont, aa_flags );
-    return hFont;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
-
-
 
 /******************************************************************
  *         EMFDRV_CreatePenIndirect
@@ -359,17 +356,14 @@ static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
 }
 
 /******************************************************************
- *         EMFDRV_SelectPen
+ *         EMFDC_SelectPen
  */
-HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen, const struct brush_pattern *pattern )
+static BOOL EMFDC_SelectPen( DC_ATTR *dc_attr, HPEN pen )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
-
-    if (physDev->restoring) return hPen;  /* don't output SelectObject records during RestoreDC */
-    if (physDev->modifying_transform) return hPen; /* don't output SelectObject records when modifying the world transform */
 
     /* If the object is a stock pen object, do not need to create it.
      * See definitions in  wingdi.h for range of stock pens.
@@ -379,23 +373,23 @@ HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen, const struct brush_pattern *
 
     for (i = WHITE_PEN; i <= DC_PEN; i++)
     {
-        if (hPen == GetStockObject(i))
+        if (pen == GetStockObject(i))
         {
             index = i | 0x80000000;
             goto found;
         }
     }
-    if((index = EMFDRV_FindObject(dev, hPen)) != 0)
+    if((index = EMFDRV_FindObject( &emf->dev, pen )) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreatePenIndirect(dev, hPen))) return 0;
-    GDI_hdc_using_object( hPen, dev->hdc, EMFDC_DeleteObject );
+    if (!(index = EMFDRV_CreatePenIndirect( &emf->dev, pen ))) return FALSE;
+    GDI_hdc_using_object( pen, dc_attr->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPen : 0;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 
@@ -455,6 +449,22 @@ found:
     emr.emr.nSize = sizeof(emr);
     emr.ihPal = index;
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPal : 0;
+}
+
+BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )
+{
+    switch (gdi_handle_type( obj ))
+    {
+    case NTGDI_OBJ_BRUSH:
+        return EMFDC_SelectBrush( dc_attr, obj );
+    case NTGDI_OBJ_FONT:
+        return EMFDC_SelectFont( dc_attr, obj );
+    case NTGDI_OBJ_PEN:
+    case NTGDI_OBJ_EXTPEN:
+        return EMFDC_SelectPen( dc_attr, obj );
+    default:
+        return TRUE;
+    }
 }
 
 /******************************************************************

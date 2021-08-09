@@ -115,11 +115,11 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_RestoreDC,                /* pRestoreDC */
     EMFDRV_RoundRect,                /* pRoundRect */
     EMFDRV_SelectBitmap,             /* pSelectBitmap */
-    EMFDRV_SelectBrush,              /* pSelectBrush */
+    NULL,                            /* pSelectBrush */
     EMFDRV_SelectClipPath,           /* pSelectClipPath */
     EMFDRV_SelectFont,               /* pSelectFont */
     EMFDRV_SelectPalette,            /* pSelectPalette */
-    EMFDRV_SelectPen,                /* pSelectPen */
+    NULL,                            /* pSelectPen */
     EMFDRV_SetBkColor,               /* pSetBkColor */
     NULL,                            /* pSetBoundsRect */
     EMFDRV_SetDCBrushColor,          /* pSetDCBrushColor*/
