@@ -445,24 +445,11 @@ BOOL METADC_SelectPalette( HDC hdc, HPALETTE palette )
 }
 
 /***********************************************************************
- *           MFDRV_RealizePalette
+ *           METADC_RealizePalette
  */
-UINT CDECL MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL dummy)
+BOOL METADC_RealizePalette( HDC hdc )
 {
-    char buffer[sizeof(METARECORD) - sizeof(WORD)];
-    METARECORD *mr = (METARECORD *)&buffer;
-
-    mr->rdSize = (sizeof(METARECORD) - sizeof(WORD)) / sizeof(WORD);
-    mr->rdFunction = META_REALIZEPALETTE;
-
-    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * sizeof(WORD)))) return 0;
-
-    /* The return value is suppose to be the number of entries
-       in the logical palette mapped to the system palette or 0
-       if the function failed. Since it's not trivial here to
-       get that kind of information and since it's of little
-       use in the case of metafiles, we'll always return 1. */
-    return 1;
+    return metadc_param0( hdc, META_REALIZEPALETTE );
 }
 
 

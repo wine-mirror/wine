@@ -60,10 +60,6 @@ static const struct gdi_obj_funcs palette_funcs =
     PALETTE_DeleteObject      /* pDeleteObject */
 };
 
-/* Pointers to USER implementation of SelectPalette/RealizePalette */
-/* they will be patched by USER on startup */
-UINT (WINAPI *pfnRealizePalette)(HDC hdc) = GDIRealizePalette;
-
 static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
 static HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
@@ -674,22 +670,6 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
     release_dc_ptr( dc );
     TRACE("   realized %i colors.\n", realized );
     return realized;
-}
-
-
-/***********************************************************************
- * RealizePalette [GDI32.@]
- *
- * Maps palette entries to system palette.
- *
- * RETURNS
- *    Success: Number of entries in logical palette
- *    Failure: GDI_ERROR
- */
-UINT WINAPI RealizePalette(
-    HDC hDC) /* [in] Handle of device context */
-{
-    return pfnRealizePalette( hDC );
 }
 
 

@@ -174,7 +174,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pPolylineTo */
     NULL,                            /* pPutImage */
     NULL,                            /* pRealizeDefaultPalette */
-    MFDRV_RealizePalette,            /* pRealizePalette */
+    NULL,                            /* pRealizePalette */
     NULL,                            /* pRectangle */
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */

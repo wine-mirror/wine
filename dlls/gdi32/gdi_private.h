@@ -75,6 +75,7 @@ extern BOOL METADC_PolyPolygon( HDC hdc, const POINT *points, const INT *counts,
                                 UINT polygons ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Polygon( HDC hdc, const POINT *points, INT count ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Polyline( HDC hdc, const POINT *points,INT count) DECLSPEC_HIDDEN;
+extern BOOL METADC_RealizePalette( HDC hdc ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right, INT bottom,
                               INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;

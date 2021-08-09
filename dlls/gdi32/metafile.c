@@ -797,7 +797,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
         break;
 
     case META_REALIZEPALETTE:
-        GDIRealizePalette(hdc);
+        RealizePalette(hdc);
         break;
 
     case META_ESCAPE:
