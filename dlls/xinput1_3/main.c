@@ -262,7 +262,7 @@ static void controller_disable(struct xinput_controller *controller)
     controller->enabled = FALSE;
 }
 
-static BOOL init_controller(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
+static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
     controller->hid.caps = *caps;
@@ -350,7 +350,7 @@ static void HID_find_gamepads(void)
         else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK &&
                  caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
             WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
-        else if (!init_controller(&controllers[i], preparsed, &caps, device, detail->DevicePath))
+        else if (!controller_init(&controllers[i], preparsed, &caps, device, detail->DevicePath))
             WARN("ignoring HID device, failed to initialize\n");
         else
             continue;
@@ -363,7 +363,7 @@ static void HID_find_gamepads(void)
     LeaveCriticalSection(&xinput_crit);
 }
 
-static void remove_gamepad(struct xinput_controller *controller)
+static void controller_destroy(struct xinput_controller *controller)
 {
     EnterCriticalSection(&controller->crit);
 
@@ -386,7 +386,7 @@ static void remove_gamepad(struct xinput_controller *controller)
 static void HID_destroy_gamepads(void)
 {
     int i;
-    for (i = 0; i < XUSER_MAX_COUNT; i++) remove_gamepad(&controllers[i]);
+    for (i = 0; i < XUSER_MAX_COUNT; i++) controller_destroy(&controllers[i]);
 }
 
 static LONG sign_extend(ULONG value, const HIDP_VALUE_CAPS *caps)
@@ -421,7 +421,7 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
         if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE)
         {
             EnterCriticalSection(&xinput_crit);
-            remove_gamepad(controller);
+            controller_destroy(controller);
             LeaveCriticalSection(&xinput_crit);
         }
         else ERR("Failed to get input report, HidD_GetInputReport failed with error %u\n", GetLastError());
@@ -523,7 +523,7 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
     memcpy(state, &controller->state, sizeof(*state));
 }
 
-static BOOL verify_and_lock_device(struct xinput_controller *controller)
+static BOOL controller_lock(struct xinput_controller *controller)
 {
     if (!controller->device) return FALSE;
 
@@ -538,7 +538,7 @@ static BOOL verify_and_lock_device(struct xinput_controller *controller)
     return TRUE;
 }
 
-static void unlock_device(struct xinput_controller *controller)
+static void controller_unlock(struct xinput_controller *controller)
 {
     LeaveCriticalSection(&controller->crit);
 }
@@ -572,10 +572,10 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
 
     for (index = 0; index < XUSER_MAX_COUNT; index++)
     {
-        if (!verify_and_lock_device(&controllers[index])) continue;
+        if (!controller_lock(&controllers[index])) continue;
         if (enable) controller_enable(&controllers[index]);
         else controller_disable(&controllers[index]);
-        unlock_device(&controllers[index]);
+        controller_unlock(&controllers[index]);
     }
 }
 
@@ -588,11 +588,11 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION *vib
     HID_find_gamepads();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!verify_and_lock_device(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
 
     ret = HID_set_state(&controllers[index], vibration);
 
-    unlock_device(&controllers[index]);
+    controller_unlock(&controllers[index]);
 
     return ret;
 }
@@ -606,18 +606,18 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
     HID_find_gamepads();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
-    if (!verify_and_lock_device(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
 
     HID_update_state(&controllers[index], state);
 
     if (!controllers[index].device)
     {
         /* update_state may have disconnected the controller */
-        unlock_device(&controllers[index]);
+        controller_unlock(&controllers[index]);
         return ERROR_DEVICE_NOT_CONNECTED;
     }
 
-    unlock_device(&controllers[index]);
+    controller_unlock(&controllers[index]);
 
     return ERROR_SUCCESS;
 }
@@ -765,7 +765,7 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
         /* note: guide button does not send an event */
     };
 
-    if (!verify_and_lock_device(controller)) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!controller_lock(controller)) return ERROR_DEVICE_NOT_CONNECTED;
 
     cur = &controller->state.Gamepad;
 
@@ -832,7 +832,7 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
         goto done;
 
 done:
-    unlock_device(controller);
+    controller_unlock(controller);
 
     return ret;
 }
@@ -863,17 +863,17 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, X
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
 
-    if (!verify_and_lock_device(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
 
     if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
     {
-        unlock_device(&controllers[index]);
+        controller_unlock(&controllers[index]);
         return ERROR_DEVICE_NOT_CONNECTED;
     }
 
     memcpy(capabilities, &controllers[index].caps, sizeof(*capabilities));
 
-    unlock_device(&controllers[index]);
+    controller_unlock(&controllers[index]);
 
     return ERROR_SUCCESS;
 }
