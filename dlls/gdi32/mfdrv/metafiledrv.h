@@ -38,6 +38,9 @@ typedef struct
     UINT       handles_size, cur_handles;
     HGDIOBJ   *handles;
     HANDLE     hFile;          /* Handle for disk based MetaFile */
+    HPEN       pen;
+    HBRUSH     brush;
+    HFONT      font;
 } METAFILEDRV_PDEVICE;
 
 #define HANDLE_LIST_INC 20
@@ -91,11 +94,7 @@ extern BOOL CDECL MFDRV_PolyBezier( PHYSDEV dev, const POINT* pt, DWORD count ) 
 extern BOOL CDECL MFDRV_PolyBezierTo( PHYSDEV dev, const POINT* pt, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
-extern HBITMAP CDECL MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle ) DECLSPEC_HIDDEN;
-extern HBRUSH  CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_SelectClipPath( PHYSDEV dev, INT iMode ) DECLSPEC_HIDDEN;
-extern HFONT CDECL MFDRV_SelectFont( PHYSDEV dev, HFONT handle, UINT *aa_flags ) DECLSPEC_HIDDEN;
-extern HPEN  CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN handle, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground) DECLSPEC_HIDDEN;
 extern UINT CDECL MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL primary) DECLSPEC_HIDDEN;
 extern COLORREF CDECL MFDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

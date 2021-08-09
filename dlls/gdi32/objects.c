@@ -274,6 +274,8 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ obj )
 
     TRACE( "(%p,%p)\n", hdc, obj );
 
+    if (is_meta_dc( hdc )) return METADC_SelectObject( hdc, obj );
+
     switch (get_object_type( obj ))
     {
     case NTGDI_OBJ_PEN:

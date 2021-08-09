@@ -83,6 +83,7 @@ extern BOOL METADC_ScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom, INT y_nu
                                        INT y_denom ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom, INT y_num,
                                      INT y_denom ) DECLSPEC_HIDDEN;
+extern HGDIOBJ METADC_SelectObject( HDC hdc, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetBkMode( HDC hdc, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetLayout( HDC hdc, DWORD layout ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetTextCharacterExtra( HDC hdc, INT extra ) DECLSPEC_HIDDEN;

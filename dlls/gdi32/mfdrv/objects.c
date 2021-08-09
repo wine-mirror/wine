@@ -102,7 +102,7 @@ void METADC_DeleteObject( HDC hdc, HGDIOBJ obj )
     INT16 index;
 
     if ((index = MFDRV_FindObject( &metadc->dev, obj )) < 0) return;
-    if (obj == GetCurrentObject( hdc, GetObjectType( obj )))
+    if (obj == metadc->pen || obj == metadc->brush || obj == metadc->font)
     {
         WARN( "deleting selected object %p\n", obj );
         return;
@@ -133,14 +133,6 @@ static BOOL MFDRV_SelectObject( PHYSDEV dev, INT16 index)
     return MFDRV_WriteRecord( dev, &mr, mr.rdSize*2 );
 }
 
-
-/***********************************************************************
- *           MFDRV_SelectBitmap
- */
-HBITMAP CDECL MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
-{
-    return 0;
-}
 
 /******************************************************************
  *         MFDRV_CreateBrushIndirect
@@ -227,21 +219,26 @@ done:
 
 
 /***********************************************************************
- *           MFDRV_SelectBrush
+ *           METADC_SelectBrush
  */
-HBRUSH CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
+static HBRUSH METADC_SelectBrush( HDC hdc, HBRUSH hbrush )
 {
+    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
     INT16 index;
+    HBRUSH ret;
 
-    index = MFDRV_FindObject(dev, hbrush);
+    index = MFDRV_FindObject( &metadc->dev, hbrush );
     if( index < 0 )
     {
-        index = MFDRV_CreateBrushIndirect( dev, hbrush );
+        index = MFDRV_CreateBrushIndirect( &metadc->dev, hbrush );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object( hbrush, dev->hdc, METADC_DeleteObject );
+        GDI_hdc_using_object( hbrush, hdc, METADC_DeleteObject );
     }
-    return MFDRV_SelectObject( dev, index ) ? hbrush : 0;
+    if (!MFDRV_SelectObject( &metadc->dev, index )) return 0;
+    ret = metadc->brush;
+    metadc->brush = hbrush;
+    return ret;
 }
 
 /******************************************************************
@@ -283,25 +280,29 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
 
 
 /***********************************************************************
- *           MFDRV_SelectFont
+ *           METADC_SelectFont
  */
-HFONT CDECL MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+static HFONT METADC_SelectFont( HDC hdc, HFONT hfont )
 {
+    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
     LOGFONTW font;
     INT16 index;
+    HFONT ret;
 
-    *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
-    index = MFDRV_FindObject(dev, hfont);
+    index = MFDRV_FindObject( &metadc->dev, hfont );
     if( index < 0 )
     {
         if (!GetObjectW( hfont, sizeof(font), &font ))
             return 0;
-        index = MFDRV_CreateFontIndirect(dev, hfont, &font);
+        index = MFDRV_CreateFontIndirect( &metadc->dev, hfont, &font );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object( hfont, dev->hdc, METADC_DeleteObject );
+        GDI_hdc_using_object( hfont, hdc, METADC_DeleteObject );
     }
-    return MFDRV_SelectObject( dev, index ) ? hfont : 0;
+    if (!MFDRV_SelectObject( &metadc->dev, index )) return 0;
+    ret = metadc->font;
+    metadc->font = hfont;
+    return ret;
 }
 
 /******************************************************************
@@ -322,14 +323,16 @@ static UINT16 MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
 
 
 /***********************************************************************
- *           MFDRV_SelectPen
+ *           METADC_SelectPen
  */
-HPEN CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
+static HPEN METADC_SelectPen( HDC hdc, HPEN hpen )
 {
+    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
     LOGPEN16 logpen;
     INT16 index;
+    HPEN ret;
 
-    index = MFDRV_FindObject(dev, hpen);
+    index = MFDRV_FindObject( &metadc->dev, hpen );
     if( index < 0 )
     {
         /* must be an extended pen */
@@ -361,12 +364,16 @@ HPEN CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *
             HeapFree( GetProcessHeap(), 0, elp );
         }
 
-        index = MFDRV_CreatePenIndirect( dev, hpen, &logpen );
+        index = MFDRV_CreatePenIndirect( &metadc->dev, hpen, &logpen );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object( hpen, dev->hdc, METADC_DeleteObject );
+        GDI_hdc_using_object( hpen, hdc, METADC_DeleteObject );
     }
-    return MFDRV_SelectObject( dev, index ) ? hpen : 0;
+
+    if (!MFDRV_SelectObject( &metadc->dev, index )) return 0;
+    ret = metadc->pen;
+    metadc->pen = hpen;
+    return ret;
 }
 
 
@@ -458,4 +465,22 @@ UINT CDECL MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL dummy)
        get that kind of information and since it's of little
        use in the case of metafiles, we'll always return 1. */
     return 1;
+}
+
+
+HGDIOBJ METADC_SelectObject( HDC hdc, HGDIOBJ obj )
+{
+    switch (gdi_handle_type( obj ))
+    {
+    case NTGDI_OBJ_BRUSH:
+        return METADC_SelectBrush( hdc, obj );
+    case NTGDI_OBJ_FONT:
+        return METADC_SelectFont( hdc, obj );
+    case NTGDI_OBJ_PEN:
+    case NTGDI_OBJ_EXTPEN:
+        return METADC_SelectPen( hdc, obj );
+    default:
+        SetLastError( ERROR_INVALID_FUNCTION );
+        return 0;
+    }
 }

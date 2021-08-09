@@ -147,7 +147,7 @@ DC *alloc_dc_ptr( WORD magic )
         HeapFree( GetProcessHeap(), 0, dc );
         return NULL;
     }
-    dc->nulldrv.hdc = dc->hSelf;
+    dc->attr->hdc = dc->nulldrv.hdc = dc->hSelf;
     set_gdi_client_ptr( dc->hSelf, dc->attr );
 
     if (!font_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))

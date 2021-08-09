@@ -3628,6 +3628,156 @@ static void test_mf_DCBrush(void)
     ok(ret, "DeleteMetaFile(%p) error %d\n", hMetafile, GetLastError());
 }
 
+static void test_mf_select(void)
+{
+    HMETAFILE hmf;
+    HDC hdc, hdc2;
+    HGDIOBJ obj;
+    HPEN pen;
+    int cnt;
+    BOOL ret;
+
+    static const unsigned char select_bits[] =
+    {
+        0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x4d, 0x00,
+        0x00, 0x00, 0x04, 0x00, 0x08, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0xfc, 0x02,
+        0x00, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00,
+        0x04, 0x00, 0x00, 0x00, 0x2d, 0x01, 0x00, 0x00,
+        0x07, 0x00, 0x00, 0x00, 0xfc, 0x02, 0x00, 0x00,
+        0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x04, 0x00,
+        0x00, 0x00, 0x2d, 0x01, 0x01, 0x00, 0x08, 0x00,
+        0x00, 0x00, 0xfa, 0x02, 0x00, 0x00, 0x01, 0x00,
+        0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x04, 0x00,
+        0x00, 0x00, 0x2d, 0x01, 0x02, 0x00, 0x03, 0x00,
+        0x00, 0x00, 0x1e, 0x00, 0x08, 0x00, 0x00, 0x00,
+        0xfa, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
+        0x2d, 0x01, 0x03, 0x00, 0x04, 0x00, 0x00, 0x00,
+        0x27, 0x01, 0xff, 0xff, 0x04, 0x00, 0x00, 0x00,
+        0x2d, 0x01, 0x03, 0x00, 0x04, 0x00, 0x00, 0x00,
+        0xf0, 0x01, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00,
+        0x27, 0x01, 0xfb, 0xff, 0x03, 0x00, 0x00, 0x00,
+        0x00, 0x00
+    };
+
+    static const unsigned char delete_not_selected_bits[] =
+    {
+        0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x28, 0x00,
+        0x00, 0x00, 0x02, 0x00, 0x08, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0xfa, 0x02,
+        0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x01,
+        0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x2d, 0x01,
+        0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0xfa, 0x02,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x2d, 0x01,
+        0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0xf0, 0x01,
+        0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    static const unsigned char delete_selected_bits[] =
+    {
+        0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x18, 0x00,
+        0x00, 0x00, 0x01, 0x00, 0x08, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0xfa, 0x02,
+        0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x01,
+        0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x2d, 0x01,
+        0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    hdc = CreateMetaFileA(NULL);
+    ok(hdc != 0, "CreateMetaFileA failed\n");
+
+    obj = SelectObject(hdc, GetStockObject(DC_BRUSH));
+    ok(obj == GetStockObject(WHITE_BRUSH), "brush is not a stock WHITE_BRUSH: %p\n", obj);
+
+    obj = SelectObject(hdc, GetStockObject(WHITE_BRUSH));
+    ok(obj == GetStockObject(DC_BRUSH), "brush is not a stock DC_BRUSH: %p\n", obj);
+
+    pen = CreatePen(PS_SOLID, 1, RGB(1,1,1));
+    obj = SelectObject(hdc, pen);
+    ok(obj == GetStockObject(BLACK_PEN), "pen is not a stock BLACK_PEN: %p\n", obj);
+
+    cnt = SaveDC(hdc);
+    ok(cnt == 1, "cnt = %d\n", cnt);
+
+    obj = SelectObject(hdc, GetStockObject(BLACK_PEN));
+    ok(obj == pen, "unexpected pen: %p\n", obj);
+
+    ret = RestoreDC(hdc, -1);
+    ok(ret, "RestoreDC failed\n");
+
+    obj = SelectObject(hdc, GetStockObject(BLACK_PEN));
+    /* pen is still black after RestoreDC */
+    ok(obj == GetStockObject(BLACK_PEN), "unexpected pen: %p\n", obj);
+    ret = DeleteObject(pen);
+    ok(ret, "DeleteObject failed: %u\n", GetLastError());
+
+    obj = GetCurrentObject(hdc, OBJ_PEN);
+    todo_wine
+    ok(!obj, "GetCurrentObject succeeded\n");
+
+    SetLastError(0xdeadbeef);
+    obj = SelectObject(hdc, GetStockObject(DEFAULT_PALETTE));
+    ok(!obj && GetLastError() == ERROR_INVALID_FUNCTION,
+       "SelectObject returned %p (%u).\n", obj, GetLastError());
+
+    ret = RestoreDC(hdc, -5);
+    ok(ret, "RestoreDC failed\n");
+
+    hmf = CloseMetaFile(hdc);
+    ok(hmf != 0, "CloseMetaFile failed\n");
+
+    if (compare_mf_bits(hmf, select_bits, sizeof(select_bits), "mf_select"))
+    {
+        dump_mf_bits(hmf, "mf_select");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
+
+    ret = DeleteMetaFile(hmf);
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
+
+    /* create two metafiles, select the same pen to both of them,
+     * unselect it from only one and then delete */
+    hdc = CreateMetaFileA(NULL);
+    ok(hdc != 0, "CreateMetaFileA failed\n");
+    hdc2 = CreateMetaFileA(NULL);
+    ok(hdc2 != 0, "CreateMetaFileA failed\n");
+
+    pen = CreatePen(PS_SOLID, 1, RGB(1,1,1));
+    obj = SelectObject(hdc, pen);
+    ok(obj == GetStockObject(BLACK_PEN), "pen is not a stock BLACK_PEN: %p\n", obj);
+    obj = SelectObject(hdc2, pen);
+    ok(obj == GetStockObject(BLACK_PEN), "pen is not a stock BLACK_PEN: %p\n", obj);
+
+    obj = SelectObject(hdc, GetStockObject(BLACK_PEN));
+    ok(obj == pen, "unexpected pen: %p\n", obj);
+    ret = DeleteObject(pen);
+    ok(ret, "DeleteObject failed: %u\n", GetLastError());
+
+    hmf = CloseMetaFile(hdc);
+    ok(hmf != 0, "CloseMetaFile failed\n");
+    if (compare_mf_bits(hmf, delete_not_selected_bits,
+                        sizeof(delete_not_selected_bits), "mf_delete_not_selected"))
+    {
+        dump_mf_bits(hmf, "mf_delete_not_selected");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
+    ret = DeleteMetaFile(hmf);
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
+
+    hmf = CloseMetaFile(hdc2);
+    ok(hmf != 0, "CloseMetaFile failed\n");
+    if (compare_mf_bits(hmf, delete_selected_bits,
+                        sizeof(delete_selected_bits), "mf_delete_selected"))
+    {
+        dump_mf_bits(hmf, "mf_delete_selected");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
+    ret = DeleteMetaFile(hmf);
+    ok(ret, "DeleteMetaFile(%p) error %d\n", hmf, GetLastError());
+}
+
 static void test_mf_ExtTextOut_on_path(void)
 {
     HDC hdcMetafile;
@@ -6453,6 +6603,7 @@ START_TEST(metafile)
     test_mf_SetPixel();
     test_mf_FloodFill();
     test_mf_attrs();
+    test_mf_select();
 
     /* For metafile conversions */
     test_mf_conversions();

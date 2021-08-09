@@ -179,12 +179,12 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
     NULL,                            /* pRoundRect */
-    MFDRV_SelectBitmap,              /* pSelectBitmap */
-    MFDRV_SelectBrush,               /* pSelectBrush */
+    NULL,                            /* pSelectBitmap */
+    NULL,                            /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
-    MFDRV_SelectFont,                /* pSelectFont */
+    NULL,                            /* pSelectFont */
     MFDRV_SelectPalette,             /* pSelectPalette */
-    MFDRV_SelectPen,                 /* pSelectPen */
+    NULL,                            /* pSelectPen */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
@@ -313,6 +313,9 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
     physDev->mh->mtType = METAFILE_MEMORY;
+    physDev->pen   = GetStockObject( BLACK_PEN );
+    physDev->brush = GetStockObject( WHITE_BRUSH );
+    physDev->font  = GetStockObject( DEVICE_DEFAULT_FONT );
 
     if (filename)  /* disk based metafile */
     {
