@@ -104,22 +104,19 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
     {{ &controller_critsect_debug[3], -1, 0, 0, 0, 0 }},
 };
 
-struct axis_info
-{
-    LONG min;
-    LONG range;
-    USHORT bits;
-};
-
 struct hid_platform_private
 {
     PHIDP_PREPARSED_DATA preparsed;
     HIDP_CAPS caps;
+    HIDP_VALUE_CAPS lx_caps;
+    HIDP_VALUE_CAPS ly_caps;
+    HIDP_VALUE_CAPS lt_caps;
+    HIDP_VALUE_CAPS rx_caps;
+    HIDP_VALUE_CAPS ry_caps;
+    HIDP_VALUE_CAPS rt_caps;
 
     char *input_report_buf[2];
     char *output_report_buf;
-
-    struct axis_info lx, ly, ltrigger, rx, ry, rtrigger;
 };
 
 static DWORD last_check = 0;
@@ -137,18 +134,16 @@ static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *f
     return FALSE;
 }
 
-static void MarkUsage(struct hid_platform_private *private, WORD usage, LONG min, LONG max, USHORT bits)
+static void check_value_caps(struct hid_platform_private *private, USHORT usage, HIDP_VALUE_CAPS *caps)
 {
-    struct axis_info info = {min, max - min, bits};
-
     switch (usage)
     {
-        case HID_USAGE_GENERIC_X: private->lx = info; break;
-        case HID_USAGE_GENERIC_Y: private->ly = info; break;
-        case HID_USAGE_GENERIC_Z: private->ltrigger = info; break;
-        case HID_USAGE_GENERIC_RX: private->rx = info; break;
-        case HID_USAGE_GENERIC_RY: private->ry = info; break;
-        case HID_USAGE_GENERIC_RZ: private->rtrigger = info; break;
+    case HID_USAGE_GENERIC_X: private->lx_caps = *caps; break;
+    case HID_USAGE_GENERIC_Y: private->ly_caps = *caps; break;
+    case HID_USAGE_GENERIC_Z: private->lt_caps = *caps; break;
+    case HID_USAGE_GENERIC_RX: private->rx_caps = *caps; break;
+    case HID_USAGE_GENERIC_RY: private->ry_caps = *caps; break;
+    case HID_USAGE_GENERIC_RZ: private->rt_caps = *caps; break;
     }
 }
 
@@ -158,8 +153,7 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA preparsed, XINPUT_CAPABILITIES *x
     HIDP_BUTTON_CAPS *button_caps;
     HIDP_VALUE_CAPS *value_caps;
     NTSTATUS status;
-
-    int i;
+    int i, u;
     int button_count = 0;
 
     /* Count buttons */
@@ -187,43 +181,25 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA preparsed, XINPUT_CAPABILITIES *x
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#x\n", status);
     else for (i = 0; i < private->caps.NumberInputValueCaps; i++)
     {
-        if (value_caps[i].UsagePage != HID_USAGE_PAGE_GENERIC)
-            continue;
-        if (value_caps[i].IsRange)
-        {
-            int u;
-            for (u = value_caps[i].Range.UsageMin; u <=value_caps[i].Range.UsageMax; u++)
-                MarkUsage(private, u,  value_caps[i].LogicalMin, value_caps[i].LogicalMax, value_caps[i].BitSize);
-        }
-        else
-            MarkUsage(private, value_caps[i].NotRange.Usage, value_caps[i].LogicalMin, value_caps[i].LogicalMax, value_caps[i].BitSize);
+        HIDP_VALUE_CAPS *caps = value_caps + i;
+        if (caps->UsagePage != HID_USAGE_PAGE_GENERIC) continue;
+        if (!caps->IsRange) check_value_caps(private, caps->NotRange.Usage, caps);
+        else for (u = caps->Range.UsageMin; u <=caps->Range.UsageMax; u++) check_value_caps(private, u, value_caps + i);
     }
     free(value_caps);
 
-    if (private->ltrigger.bits)
-        xinput_caps->Gamepad.bLeftTrigger = (1u << (sizeof(xinput_caps->Gamepad.bLeftTrigger) + 1)) - 1;
-    else
-        WARN("Missing axis LeftTrigger\n");
-    if (private->rtrigger.bits)
-        xinput_caps->Gamepad.bRightTrigger = (1u << (sizeof(xinput_caps->Gamepad.bRightTrigger) + 1)) - 1;
-    else
-        WARN("Missing axis RightTrigger\n");
-    if (private->lx.bits)
-        xinput_caps->Gamepad.sThumbLX = (1u << (sizeof(xinput_caps->Gamepad.sThumbLX) + 1)) - 1;
-    else
-        WARN("Missing axis ThumbLX\n");
-    if (private->ly.bits)
-        xinput_caps->Gamepad.sThumbLY = (1u << (sizeof(xinput_caps->Gamepad.sThumbLY) + 1)) - 1;
-    else
-        WARN("Missing axis ThumbLY\n");
-    if (private->rx.bits)
-        xinput_caps->Gamepad.sThumbRX = (1u << (sizeof(xinput_caps->Gamepad.sThumbRX) + 1)) - 1;
-    else
-        WARN("Missing axis ThumbRX\n");
-    if (private->ry.bits)
-        xinput_caps->Gamepad.sThumbRY = (1u << (sizeof(xinput_caps->Gamepad.sThumbRY) + 1)) - 1;
-    else
-        WARN("Missing axis ThumbRY\n");
+    if (!private->lt_caps.UsagePage) WARN("Missing axis LeftTrigger\n");
+    else xinput_caps->Gamepad.bLeftTrigger = (1u << (sizeof(xinput_caps->Gamepad.bLeftTrigger) + 1)) - 1;
+    if (!private->rt_caps.UsagePage) WARN("Missing axis RightTrigger\n");
+    else xinput_caps->Gamepad.bRightTrigger = (1u << (sizeof(xinput_caps->Gamepad.bRightTrigger) + 1)) - 1;
+    if (!private->lx_caps.UsagePage) WARN("Missing axis ThumbLX\n");
+    else xinput_caps->Gamepad.sThumbLX = (1u << (sizeof(xinput_caps->Gamepad.sThumbLX) + 1)) - 1;
+    if (!private->ly_caps.UsagePage) WARN("Missing axis ThumbLY\n");
+    else xinput_caps->Gamepad.sThumbLY = (1u << (sizeof(xinput_caps->Gamepad.sThumbLY) + 1)) - 1;
+    if (!private->rx_caps.UsagePage) WARN("Missing axis ThumbRX\n");
+    else xinput_caps->Gamepad.sThumbRX = (1u << (sizeof(xinput_caps->Gamepad.sThumbRX) + 1)) - 1;
+    if (!private->ry_caps.UsagePage) WARN("Missing axis ThumbRY\n");
+    else xinput_caps->Gamepad.sThumbRY = (1u << (sizeof(xinput_caps->Gamepad.sThumbRY) + 1)) - 1;
 
     xinput_caps->Type = XINPUT_DEVTYPE_GAMEPAD;
     xinput_caps->SubType = XINPUT_DEVSUBTYPE_GAMEPAD;
@@ -422,14 +398,19 @@ static void HID_destroy_gamepads(void)
     for (i = 0; i < XUSER_MAX_COUNT; i++) remove_gamepad(&controllers[i]);
 }
 
-static SHORT scale_short(LONG value, const struct axis_info *axis)
+static LONG sign_extend(ULONG value, const HIDP_VALUE_CAPS *caps)
 {
-    return ((((ULONGLONG)(value - axis->min)) * 0xffff) / axis->range) - 32768;
+    UINT sign = 1 << (caps->BitSize - 1);
+    if (sign <= 1 || caps->LogicalMin >= 0) return value;
+    return value - ((value & sign) << 1);
 }
 
-static BYTE scale_byte(LONG value, const struct axis_info *axis)
+static LONG scale_value(ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG max)
 {
-    return (((ULONGLONG)(value - axis->min)) * 0xff) / axis->range;
+    LONG tmp = sign_extend(value, caps);
+    if (caps->LogicalMin > caps->LogicalMax) return 0;
+    if (caps->LogicalMin > tmp || caps->LogicalMax < tmp) return 0;
+    return min + MulDiv(tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin);
 }
 
 static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE *state)
@@ -441,8 +422,7 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
     NTSTATUS status;
 
     USAGE buttons[11];
-    ULONG button_length, hat_value;
-    LONG value;
+    ULONG button_length, value;
 
     if (!controller->enabled) return;
 
@@ -484,11 +464,12 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
             }
         }
 
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &hat_value, private->preparsed, report_buf[0], report_len);
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#x\n", status);
         else
         {
-            switch(hat_value){
+            switch (value)
+            {
                 /* 8 1 2
                  * 7 0 3
                  * 6 5 4 */
@@ -521,29 +502,29 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
             }
         }
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
-        else controller->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->preparsed, report_buf[0], report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
+        else controller->state.Gamepad.sThumbLX = scale_value(value, &private->lx_caps, -32768, 32767);
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
-        else controller->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->preparsed, report_buf[0], report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
+        else controller->state.Gamepad.sThumbLY = -scale_value(value, &private->ly_caps, -32768, 32767) - 1;
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
-        else controller->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->preparsed, report_buf[0], report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
+        else controller->state.Gamepad.sThumbRX = scale_value(value, &private->rx_caps, -32768, 32767);
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
-        else controller->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->preparsed, report_buf[0], report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
+        else controller->state.Gamepad.sThumbRY = -scale_value(value, &private->ry_caps, -32768, 32767) - 1;
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
-        else controller->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->preparsed, report_buf[0], report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
+        else controller->state.Gamepad.bRightTrigger = scale_value(value, &private->rt_caps, 0, 255);
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
-        else controller->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->preparsed, report_buf[0], report_len);
+        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
+        else controller->state.Gamepad.bLeftTrigger = scale_value(value, &private->lt_caps, 0, 255);
     }
 
     tmp = report_buf[0];
