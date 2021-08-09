@@ -240,18 +240,18 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA preparsed, XINPUT_CAPABILITIES *x
     return TRUE;
 }
 
-static DWORD HID_set_state(struct xinput_controller *device, XINPUT_VIBRATION *state)
+static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATION *state)
 {
-    struct hid_platform_private *private = device->platform_private;
+    struct hid_platform_private *private = controller->platform_private;
     char *output_report_buf = private->output_report_buf;
     ULONG output_report_len = private->caps.OutputReportByteLength;
 
-    if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
+    if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     {
-        device->vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
-        device->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
+        controller->vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
+        controller->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
 
-        if (device->enabled)
+        if (controller->enabled)
         {
             memset(output_report_buf, 0, output_report_len);
             output_report_buf[0] = /* report id */ 0;
@@ -395,16 +395,16 @@ static void HID_find_gamepads(void)
     LeaveCriticalSection(&xinput_crit);
 }
 
-static void remove_gamepad(struct xinput_controller *device)
+static void remove_gamepad(struct xinput_controller *controller)
 {
-    EnterCriticalSection(&device->crit);
+    EnterCriticalSection(&controller->crit);
 
-    if (device->platform_private)
+    if (controller->platform_private)
     {
-        struct hid_platform_private *private = device->platform_private;
+        struct hid_platform_private *private = controller->platform_private;
 
-        controller_disable(device);
-        device->platform_private = NULL;
+        controller_disable(controller);
+        controller->platform_private = NULL;
 
         CloseHandle(private->device);
         free(private->input_report_buf[0]);
@@ -414,7 +414,7 @@ static void remove_gamepad(struct xinput_controller *device)
         free(private);
     }
 
-    LeaveCriticalSection(&device->crit);
+    LeaveCriticalSection(&controller->crit);
 }
 
 static void HID_destroy_gamepads(void)
@@ -433,9 +433,9 @@ static BYTE scale_byte(LONG value, const struct axis_info *axis)
     return (((ULONGLONG)(value - axis->min)) * 0xff) / axis->range;
 }
 
-static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *state)
+static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE *state)
 {
-    struct hid_platform_private *private = device->platform_private;
+    struct hid_platform_private *private = controller->platform_private;
     int i;
     char **report_buf = private->input_report_buf, *tmp;
     ULONG report_len = private->caps.InputReportByteLength;
@@ -445,14 +445,14 @@ static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *sta
     ULONG button_length, hat_value;
     LONG value;
 
-    if (!device->enabled) return;
+    if (!controller->enabled) return;
 
     if (!HidD_GetInputReport(private->device, report_buf[0], report_len))
     {
         if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE)
         {
             EnterCriticalSection(&xinput_crit);
-            remove_gamepad(device);
+            remove_gamepad(controller);
             LeaveCriticalSection(&xinput_crit);
         }
         else ERR("Failed to get input report, HidD_GetInputReport failed with error %u\n", GetLastError());
@@ -461,27 +461,27 @@ static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *sta
 
     if (memcmp(report_buf[0], report_buf[1], report_len) != 0)
     {
-        device->state.dwPacketNumber++;
+        controller->state.dwPacketNumber++;
         button_length = ARRAY_SIZE(buttons);
         status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#x\n", status);
 
-        device->state.Gamepad.wButtons = 0;
+        controller->state.Gamepad.wButtons = 0;
         for (i = 0; i < button_length; i++)
         {
             switch (buttons[i])
             {
-                case 1: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_A; break;
-                case 2: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_B; break;
-                case 3: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_X; break;
-                case 4: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
-                case 5: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
-                case 6: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
-                case 7: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
-                case 8: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
-                case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
-                case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
-                case 11: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
+                case 1: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_A; break;
+                case 2: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_B; break;
+                case 3: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_X; break;
+                case 4: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
+                case 5: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
+                case 6: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
+                case 7: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+                case 8: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
+                case 9: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
+                case 10: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
+                case 11: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
             }
         }
 
@@ -496,81 +496,81 @@ static void HID_update_state(struct xinput_controller *device, XINPUT_STATE *sta
                 case 0:
                     break;
                 case 1:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP;
                     break;
                 case 2:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
                     break;
                 case 3:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT;
                     break;
                 case 4:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
                     break;
                 case 5:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN;
                     break;
                 case 6:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
                     break;
                 case 7:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT;
                     break;
                 case 8:
-                    device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
+                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
                     break;
             }
         }
 
         status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
-        else device->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
+        else controller->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
 
         status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
-        else device->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
+        else controller->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
 
         status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
-        else device->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
+        else controller->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
 
         status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
-        else device->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
+        else controller->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
 
         status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
-        else device->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
+        else controller->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
 
         status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->preparsed, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
-        else device->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
+        else controller->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
     }
 
     tmp = report_buf[0];
     report_buf[0] = report_buf[1];
     report_buf[1] = tmp;
-    memcpy(state, &device->state, sizeof(*state));
+    memcpy(state, &controller->state, sizeof(*state));
 }
 
-static BOOL verify_and_lock_device(struct xinput_controller *device)
+static BOOL verify_and_lock_device(struct xinput_controller *controller)
 {
-    if (!device->platform_private) return FALSE;
+    if (!controller->platform_private) return FALSE;
 
-    EnterCriticalSection(&device->crit);
+    EnterCriticalSection(&controller->crit);
 
-    if (!device->platform_private)
+    if (!controller->platform_private)
     {
-        LeaveCriticalSection(&device->crit);
+        LeaveCriticalSection(&controller->crit);
         return FALSE;
     }
 
     return TRUE;
 }
 
-static void unlock_device(struct xinput_controller *device)
+static void unlock_device(struct xinput_controller *controller)
 {
-    LeaveCriticalSection(&device->crit);
+    LeaveCriticalSection(&controller->crit);
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
@@ -768,7 +768,7 @@ static BOOL trigger_is_on(const BYTE value)
 
 static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
 {
-    struct xinput_controller *device = &controllers[index];
+    struct xinput_controller *controller = &controllers[index];
     const XINPUT_GAMEPAD *cur;
     DWORD ret = ERROR_EMPTY;
     int i;
@@ -795,26 +795,26 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
         /* note: guide button does not send an event */
     };
 
-    if (!verify_and_lock_device(device)) return ERROR_DEVICE_NOT_CONNECTED;
+    if (!verify_and_lock_device(controller)) return ERROR_DEVICE_NOT_CONNECTED;
 
-    cur = &device->state.Gamepad;
+    cur = &controller->state.Gamepad;
 
     /*** buttons ***/
     for (i = 0; i < ARRAY_SIZE(buttons); ++i)
     {
-        if ((cur->wButtons & buttons[i].mask) ^ (device->last_keystroke.wButtons & buttons[i].mask))
+        if ((cur->wButtons & buttons[i].mask) ^ (controller->last_keystroke.wButtons & buttons[i].mask))
         {
             keystroke->VirtualKey = buttons[i].vk;
             keystroke->Unicode = 0; /* unused */
             if (cur->wButtons & buttons[i].mask)
             {
                 keystroke->Flags = XINPUT_KEYSTROKE_KEYDOWN;
-                device->last_keystroke.wButtons |= buttons[i].mask;
+                controller->last_keystroke.wButtons |= buttons[i].mask;
             }
             else
             {
                 keystroke->Flags = XINPUT_KEYSTROKE_KEYUP;
-                device->last_keystroke.wButtons &= ~buttons[i].mask;
+                controller->last_keystroke.wButtons &= ~buttons[i].mask;
             }
             keystroke->UserIndex = index;
             keystroke->HidCode = 0;
@@ -824,45 +824,45 @@ static DWORD check_for_keystroke(const DWORD index, XINPUT_KEYSTROKE *keystroke)
     }
 
     /*** triggers ***/
-    if (trigger_is_on(cur->bLeftTrigger) ^ trigger_is_on(device->last_keystroke.bLeftTrigger))
+    if (trigger_is_on(cur->bLeftTrigger) ^ trigger_is_on(controller->last_keystroke.bLeftTrigger))
     {
         keystroke->VirtualKey = VK_PAD_LTRIGGER;
         keystroke->Unicode = 0; /* unused */
         keystroke->Flags = trigger_is_on(cur->bLeftTrigger) ? XINPUT_KEYSTROKE_KEYDOWN : XINPUT_KEYSTROKE_KEYUP;
         keystroke->UserIndex = index;
         keystroke->HidCode = 0;
-        device->last_keystroke.bLeftTrigger = cur->bLeftTrigger;
+        controller->last_keystroke.bLeftTrigger = cur->bLeftTrigger;
         ret = ERROR_SUCCESS;
         goto done;
     }
 
-    if (trigger_is_on(cur->bRightTrigger) ^ trigger_is_on(device->last_keystroke.bRightTrigger))
+    if (trigger_is_on(cur->bRightTrigger) ^ trigger_is_on(controller->last_keystroke.bRightTrigger))
     {
         keystroke->VirtualKey = VK_PAD_RTRIGGER;
         keystroke->Unicode = 0; /* unused */
         keystroke->Flags = trigger_is_on(cur->bRightTrigger) ? XINPUT_KEYSTROKE_KEYDOWN : XINPUT_KEYSTROKE_KEYUP;
         keystroke->UserIndex = index;
         keystroke->HidCode = 0;
-        device->last_keystroke.bRightTrigger = cur->bRightTrigger;
+        controller->last_keystroke.bRightTrigger = cur->bRightTrigger;
         ret = ERROR_SUCCESS;
         goto done;
     }
 
     /*** joysticks ***/
     ret = check_joystick_keystroke(index, keystroke, &cur->sThumbLX, &cur->sThumbLY,
-            &device->last_keystroke.sThumbLX,
-            &device->last_keystroke.sThumbLY, VK_PAD_LTHUMB_UP);
+            &controller->last_keystroke.sThumbLX,
+            &controller->last_keystroke.sThumbLY, VK_PAD_LTHUMB_UP);
     if (ret == ERROR_SUCCESS)
         goto done;
 
     ret = check_joystick_keystroke(index, keystroke, &cur->sThumbRX, &cur->sThumbRY,
-            &device->last_keystroke.sThumbRX,
-            &device->last_keystroke.sThumbRY, VK_PAD_RTHUMB_UP);
+            &controller->last_keystroke.sThumbRX,
+            &controller->last_keystroke.sThumbRY, VK_PAD_RTHUMB_UP);
     if (ret == ERROR_SUCCESS)
         goto done;
 
 done:
-    unlock_device(device);
+    unlock_device(controller);
 
     return ret;
 }
