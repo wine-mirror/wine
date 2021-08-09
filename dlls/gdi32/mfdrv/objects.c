@@ -411,18 +411,20 @@ static BOOL MFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPalette, LOGPALETTE* logP
 
 
 /***********************************************************************
- *           MFDRV_SelectPalette
+ *           METADC_SelectPalette
  */
-HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground )
+BOOL METADC_SelectPalette( HDC hdc, HPALETTE palette )
 {
 #define PALVERSION 0x0300
 
+    METAFILEDRV_PDEVICE *metadc;
     PLOGPALETTE logPalette;
     WORD        wNumEntries = 0;
-    BOOL        creationSucceed;
+    BOOL        ret;
     int         sizeofPalette;
 
-    GetObjectA(hPalette, sizeof(WORD), &wNumEntries);
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    GetObjectA( palette, sizeof(WORD), &wNumEntries );
 
     if (wNumEntries == 0) return 0;
 
@@ -434,16 +436,12 @@ HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceB
     logPalette->palVersion = PALVERSION;
     logPalette->palNumEntries = wNumEntries;
 
-    GetPaletteEntries(hPalette, 0, wNumEntries, logPalette->palPalEntry);
+    GetPaletteEntries( palette, 0, wNumEntries, logPalette->palPalEntry );
 
-    creationSucceed = MFDRV_CreatePalette( dev, hPalette, logPalette, sizeofPalette );
+    ret = MFDRV_CreatePalette( &metadc->dev, palette, logPalette, sizeofPalette );
 
     HeapFree( GetProcessHeap(), 0, logPalette );
-
-    if (creationSucceed)
-        return hPalette;
-
-    return 0;
+    return ret;
 }
 
 /***********************************************************************

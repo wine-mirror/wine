@@ -62,7 +62,6 @@ static const struct gdi_obj_funcs palette_funcs =
 
 /* Pointers to USER implementation of SelectPalette/RealizePalette */
 /* they will be patched by USER on startup */
-HPALETTE (WINAPI *pfnSelectPalette)(HDC hdc, HPALETTE hpal, WORD bkgnd ) = GDISelectPalette;
 UINT (WINAPI *pfnRealizePalette)(HDC hdc) = GDIRealizePalette;
 
 static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
@@ -632,14 +631,9 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
     }
     if ((dc = get_dc_ptr( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectPalette );
         ret = dc->hPalette;
-        if (physdev->funcs->pSelectPalette( physdev, hpal, FALSE ))
-        {
-            dc->hPalette = hpal;
-            if (!wBkg) hPrimaryPalette = hpal;
-        }
-        else ret = 0;
+        dc->hPalette = hpal;
+        if (!wBkg) hPrimaryPalette = hpal;
         release_dc_ptr( dc );
     }
     return ret;
@@ -680,24 +674,6 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
     release_dc_ptr( dc );
     TRACE("   realized %i colors.\n", realized );
     return realized;
-}
-
-
-/***********************************************************************
- * SelectPalette [GDI32.@]
- *
- * Selects logical palette into DC.
- *
- * RETURNS
- *    Success: Previous logical palette
- *    Failure: NULL
- */
-HPALETTE WINAPI SelectPalette(
-    HDC hDC,               /* [in] Handle of device context */
-    HPALETTE hPal,         /* [in] Handle of logical color palette */
-    BOOL bForceBackground) /* [in] Foreground/background mode */
-{
-    return pfnSelectPalette( hDC, hPal, bForceBackground );
 }
 
 

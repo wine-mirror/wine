@@ -789,7 +789,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
         break;
 
     case META_SELECTPALETTE:
-        GDISelectPalette(hdc, *(ht->objectHandle + mr->rdParm[1]), mr->rdParm[0]);
+        SelectPalette( hdc, *(ht->objectHandle + mr->rdParm[1]), mr->rdParm[0] );
         break;
 
     case META_SETMAPPERFLAGS:

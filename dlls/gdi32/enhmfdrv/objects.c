@@ -422,33 +422,31 @@ static DWORD EMFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPal)
 }
 
 /******************************************************************
- *         EMFDRV_SelectPalette
+ *         EMFDC_SelectPalette
  */
-HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
+BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRSELECTPALETTE emr;
     DWORD index;
 
-    if (physDev->restoring) return hPal;  /* don't output SelectObject records during RestoreDC */
-
-    if (hPal == GetStockObject( DEFAULT_PALETTE ))
+    if (palette == GetStockObject( DEFAULT_PALETTE ))
     {
         index = DEFAULT_PALETTE | 0x80000000;
         goto found;
     }
 
-    if ((index = EMFDRV_FindObject( dev, hPal )) != 0)
+    if ((index = EMFDRV_FindObject( &emf->dev, palette )) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreatePalette( dev, hPal ))) return 0;
-    GDI_hdc_using_object( hPal, dev->hdc, EMFDC_DeleteObject );
+    if (!(index = EMFDRV_CreatePalette( &emf->dev, palette ))) return 0;
+    GDI_hdc_using_object( palette, dc_attr->hdc, EMFDC_DeleteObject );
 
 found:
     emr.emr.iType = EMR_SELECTPALETTE;
     emr.emr.nSize = sizeof(emr);
     emr.ihPal = index;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPal : 0;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )

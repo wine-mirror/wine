@@ -1262,6 +1262,24 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
     return NtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
 }
 
+/* Pointers to USER implementation of SelectPalette/RealizePalette */
+/* they will be patched by USER on startup */
+extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
+HPALETTE (WINAPI *pfnSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkgnd ) = GDISelectPalette;
+
+/***********************************************************************
+ *           SelectPalette    (GDI32.@)
+ */
+HPALETTE WINAPI SelectPalette( HDC hdc, HPALETTE palette, BOOL force_background )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return ULongToHandle( METADC_SelectPalette( hdc, palette ) );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SelectPalette( dc_attr, palette )) return 0;
+    return pfnSelectPalette( hdc, palette, force_background );
+}
+
 /***********************************************************************
  *           GdiSetPixelFormat   (GDI32.@)
  */

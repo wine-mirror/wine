@@ -183,7 +183,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
     NULL,                            /* pSelectFont */
-    MFDRV_SelectPalette,             /* pSelectPalette */
+    NULL,                            /* pSelectPalette */
     NULL,                            /* pSelectPen */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
