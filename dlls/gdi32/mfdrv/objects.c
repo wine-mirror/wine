@@ -93,29 +93,29 @@ static INT16 MFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 
 
 /******************************************************************
- *         MFDRV_DeleteObject
+ *         METADC_DeleteObject
  */
-BOOL CDECL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+void METADC_DeleteObject( HDC hdc, HGDIOBJ obj )
 {
+    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
     METARECORD mr;
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     INT16 index;
-    BOOL ret = TRUE;
 
-    index = MFDRV_FindObject(dev, obj);
-    if( index < 0 )
-        return FALSE;
+    if ((index = MFDRV_FindObject( &metadc->dev, obj )) < 0) return;
+    if (obj == GetCurrentObject( hdc, GetObjectType( obj )))
+    {
+        WARN( "deleting selected object %p\n", obj );
+        return;
+    }
 
     mr.rdSize = sizeof mr / 2;
     mr.rdFunction = META_DELETEOBJECT;
     mr.rdParm[0] = index;
 
-    if(!MFDRV_WriteRecord( dev, &mr, mr.rdSize*2 ))
-        ret = FALSE;
+    MFDRV_WriteRecord( &metadc->dev, &mr, mr.rdSize*2 );
 
-    physDev->handles[index] = 0;
-    physDev->cur_handles--;
-    return ret;
+    metadc->handles[index] = 0;
+    metadc->cur_handles--;
 }
 
 
@@ -239,7 +239,7 @@ HBRUSH CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_p
         index = MFDRV_CreateBrushIndirect( dev, hbrush );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object(hbrush, dev->hdc);
+        GDI_hdc_using_object( hbrush, dev->hdc, METADC_DeleteObject );
     }
     return MFDRV_SelectObject( dev, index ) ? hbrush : 0;
 }
@@ -299,7 +299,7 @@ HFONT CDECL MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         index = MFDRV_CreateFontIndirect(dev, hfont, &font);
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object(hfont, dev->hdc);
+        GDI_hdc_using_object( hfont, dev->hdc, METADC_DeleteObject );
     }
     return MFDRV_SelectObject( dev, index ) ? hfont : 0;
 }
@@ -364,7 +364,7 @@ HPEN CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *
         index = MFDRV_CreatePenIndirect( dev, hpen, &logpen );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object(hpen, dev->hdc);
+        GDI_hdc_using_object( hpen, dev->hdc, METADC_DeleteObject );
     }
     return MFDRV_SelectObject( dev, index ) ? hpen : 0;
 }

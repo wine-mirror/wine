@@ -81,7 +81,6 @@ extern BOOL CDECL MFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bo
                                INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_CloseFigure( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;

@@ -23,10 +23,34 @@
 #include "winnls.h"
 #include "winternl.h"
 
+#include "wine/rbtree.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
+
+struct hdc_list
+{
+    HDC hdc;
+    void (*delete)( HDC hdc, HGDIOBJ handle );
+    struct hdc_list *next;
+};
+
+struct obj_map_entry
+{
+    struct wine_rb_entry entry;
+    struct hdc_list *list;
+    HGDIOBJ obj;
+};
+
+static CRITICAL_SECTION obj_map_cs;
+static CRITICAL_SECTION_DEBUG obj_map_debug =
+{
+    0, 0, &obj_map_cs,
+    { &obj_map_debug.ProcessLocksList, &obj_map_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": obj_map_cs") }
+};
+static CRITICAL_SECTION obj_map_cs = { &obj_map_debug, -1, 0, 0, 0, 0 };
 
 static GDI_SHARED_MEMORY *get_gdi_shared(void)
 {
@@ -39,6 +63,12 @@ static GDI_SHARED_MEMORY *get_gdi_shared(void)
     }
 #endif
     return (GDI_SHARED_MEMORY *)NtCurrentTeb()->Peb->GdiSharedHandleTable;
+}
+
+static BOOL is_stock_object( HGDIOBJ obj )
+{
+    unsigned int handle = HandleToULong( obj );
+    return !!(handle & NTGDI_HANDLE_STOCK_OBJECT);
 }
 
 static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
@@ -105,6 +135,14 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
     }
 }
 
+static int obj_map_cmp( const void *key, const struct wine_rb_entry *entry )
+{
+    struct obj_map_entry *obj_entry = WINE_RB_ENTRY_VALUE( entry, struct obj_map_entry, entry );
+    return HandleToLong( key ) - HandleToLong( obj_entry->obj );
+};
+
+struct wine_rb_tree obj_map = { obj_map_cmp };
+
 /***********************************************************************
  *           DeleteObject    (GDI32.@)
  *
@@ -112,7 +150,117 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
  */
 BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
+    struct hdc_list *hdc_list = NULL;
+    struct wine_rb_entry *entry;
+
+    EnterCriticalSection( &obj_map_cs );
+
+    if ((entry = wine_rb_get( &obj_map, obj )))
+    {
+        struct obj_map_entry *obj_entry = WINE_RB_ENTRY_VALUE( entry, struct obj_map_entry, entry );
+        wine_rb_remove( &obj_map, entry );
+        hdc_list = obj_entry->list;
+        HeapFree( GetProcessHeap(), 0, obj_entry );
+    }
+
+    LeaveCriticalSection( &obj_map_cs );
+
+    while (hdc_list)
+    {
+        struct hdc_list *next = hdc_list->next;
+
+        TRACE( "hdc %p has interest in %p\n", hdc_list->hdc, obj );
+
+        hdc_list->delete( hdc_list->hdc, obj );
+        HeapFree( GetProcessHeap(), 0, hdc_list );
+        hdc_list = next;
+    }
+
     return NtGdiDeleteObjectApp( obj );
+}
+
+/***********************************************************************
+ *           GDI_hdc_using_object
+ *
+ * Call this if the dc requires DeleteObject notification
+ */
+void GDI_hdc_using_object( HGDIOBJ obj, HDC hdc, void (*delete)( HDC hdc, HGDIOBJ handle ))
+{
+    struct hdc_list *hdc_list;
+    GDI_HANDLE_ENTRY *entry;
+
+    TRACE( "obj %p hdc %p\n", obj, hdc );
+
+    EnterCriticalSection( &obj_map_cs );
+    if (!is_stock_object( obj ) && (entry = handle_entry( obj )))
+    {
+        struct obj_map_entry *map_entry;
+        struct wine_rb_entry *entry;
+
+        if (!(entry = wine_rb_get( &obj_map, obj )))
+        {
+            if (!(map_entry = HeapAlloc( GetProcessHeap(), 0, sizeof(*map_entry) )))
+            {
+                LeaveCriticalSection( &obj_map_cs );
+                return;
+            }
+            map_entry->obj  = obj;
+            map_entry->list = NULL;
+            wine_rb_put( &obj_map, obj, &map_entry->entry );
+        }
+        else map_entry = WINE_RB_ENTRY_VALUE( entry, struct obj_map_entry, entry );
+
+        for (hdc_list = map_entry->list; hdc_list; hdc_list = hdc_list->next)
+            if (hdc_list->hdc == hdc) break;
+
+        if (!hdc_list)
+        {
+            if (!(hdc_list = HeapAlloc( GetProcessHeap(), 0, sizeof(*hdc_list) )))
+            {
+                LeaveCriticalSection( &obj_map_cs );
+                return;
+            }
+            hdc_list->hdc    = hdc;
+            hdc_list->delete = delete;
+            hdc_list->next   = map_entry->list;
+            map_entry->list  = hdc_list;
+        }
+    }
+    LeaveCriticalSection( &obj_map_cs );
+}
+
+/***********************************************************************
+ *           GDI_hdc_not_using_object
+ *
+ */
+void GDI_hdc_not_using_object( HGDIOBJ obj, HDC hdc )
+{
+    struct wine_rb_entry *entry;
+
+    TRACE( "obj %p hdc %p\n", obj, hdc );
+
+    EnterCriticalSection( &obj_map_cs );
+    if ((entry = wine_rb_get( &obj_map, obj )))
+    {
+        struct obj_map_entry *map_entry = WINE_RB_ENTRY_VALUE( entry, struct obj_map_entry, entry );
+        struct hdc_list **list_ptr, *hdc_list;
+
+        for (list_ptr = &map_entry->list; *list_ptr; list_ptr = &(*list_ptr)->next)
+        {
+            if ((*list_ptr)->hdc != hdc) continue;
+
+            hdc_list = *list_ptr;
+            *list_ptr = hdc_list->next;
+            HeapFree( GetProcessHeap(), 0, hdc_list );
+            if (list_ptr == &map_entry->list && !*list_ptr)
+            {
+                wine_rb_remove( &obj_map, &map_entry->entry );
+                HeapFree( GetProcessHeap(), 0, map_entry );
+            }
+            break;
+        }
+    }
+    LeaveCriticalSection( &obj_map_cs );
 }
 
 /***********************************************************************

@@ -68,7 +68,6 @@ extern BOOL     CDECL EMFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT wid
                                      PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                     INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str,
                                          UINT count, const INT *lpDx ) DECLSPEC_HIDDEN;

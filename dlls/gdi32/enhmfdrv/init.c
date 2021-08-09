@@ -49,7 +49,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     EMFDRV_DeleteDC,                 /* pDeleteDC */
-    EMFDRV_DeleteObject,             /* pDeleteObject */
+    NULL,                            /* pDeleteObject */
     NULL,                            /* pDeviceCapabilities */
     EMFDRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEndDoc */

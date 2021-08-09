@@ -74,25 +74,23 @@ static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 /******************************************************************
  *         EMFDRV_DeleteObject
  */
-BOOL CDECL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+void EMFDC_DeleteObject( HDC hdc, HGDIOBJ obj )
 {
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRDELETEOBJECT emr;
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
-    BOOL ret = TRUE;
 
-    if(!(index = EMFDRV_FindObject(dev, obj))) return FALSE;
+    if(!(index = EMFDRV_FindObject( &emf->dev, obj ))) return;
 
     emr.emr.iType = EMR_DELETEOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
 
-    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-        ret = FALSE;
+    EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 
-    physDev->handles[index - 1] = 0;
-    physDev->cur_handles--;
-    return ret;
+    emf->handles[index - 1] = 0;
+    emf->cur_handles--;
 }
 
 
@@ -224,7 +222,7 @@ HBRUSH CDECL EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hBrush, const struct brush_
         goto found;
 
     if (!(index = EMFDRV_CreateBrushIndirect(dev, hBrush ))) return 0;
-    GDI_hdc_using_object(hBrush, dev->hdc);
+    GDI_hdc_using_object( hBrush, dev->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -306,7 +304,7 @@ HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
         goto found;
 
     if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return 0;
-    GDI_hdc_using_object(hFont, dev->hdc);
+    GDI_hdc_using_object( hFont, dev->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -391,7 +389,7 @@ HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen, const struct brush_pattern *
         goto found;
 
     if (!(index = EMFDRV_CreatePenIndirect(dev, hPen))) return 0;
-    GDI_hdc_using_object(hPen, dev->hdc);
+    GDI_hdc_using_object( hPen, dev->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -450,7 +448,7 @@ HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
         goto found;
 
     if (!(index = EMFDRV_CreatePalette( dev, hPal ))) return 0;
-    GDI_hdc_using_object( hPal, dev->hdc );
+    GDI_hdc_using_object( hPal, dev->hdc, EMFDC_DeleteObject );
 
 found:
     emr.emr.iType = EMR_SELECTPALETTE;
@@ -474,7 +472,7 @@ COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
     if (!(physDev->dc_brush = CreateSolidBrush( color ))) return CLR_INVALID;
     if (!(index = EMFDRV_CreateBrushIndirect(dev, physDev->dc_brush ))) return CLR_INVALID;
-    GDI_hdc_using_object( physDev->dc_brush, dev->hdc );
+    GDI_hdc_using_object( physDev->dc_brush, dev->hdc, EMFDC_DeleteObject );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
@@ -497,7 +495,7 @@ COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
     if (physDev->dc_pen) DeleteObject( physDev->dc_pen );
     if (!(physDev->dc_pen = CreatePenIndirect( &logpen ))) return CLR_INVALID;
     if (!(index = EMFDRV_CreatePenIndirect(dev, physDev->dc_pen))) return CLR_INVALID;
-    GDI_hdc_using_object( physDev->dc_pen, dev->hdc );
+    GDI_hdc_using_object( physDev->dc_pen, dev->hdc, EMFDC_DeleteObject );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;

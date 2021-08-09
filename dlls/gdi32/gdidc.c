@@ -27,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
-static DC_ATTR *get_dc_attr( HDC hdc )
+DC_ATTR *get_dc_attr( HDC hdc )
 {
     WORD type = gdi_handle_type( hdc );
     DC_ATTR *dc_attr;

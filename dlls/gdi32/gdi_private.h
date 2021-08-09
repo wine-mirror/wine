@@ -30,6 +30,10 @@
 
 void set_gdi_client_ptr( HGDIOBJ handle, void *ptr ) DECLSPEC_HIDDEN;
 void *get_gdi_client_ptr( HGDIOBJ handle, WORD type ) DECLSPEC_HIDDEN;
+DC_ATTR *get_dc_attr( HDC hdc ) DECLSPEC_HIDDEN;
+void GDI_hdc_using_object( HGDIOBJ obj, HDC hdc,
+                           void (*delete)( HDC hdc, HGDIOBJ handle )) DECLSPEC_HIDDEN;
+void GDI_hdc_not_using_object( HGDIOBJ obj, HDC hdc ) DECLSPEC_HIDDEN;
 
 static inline WORD gdi_handle_type( HGDIOBJ obj )
 {

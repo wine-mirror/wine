@@ -55,16 +55,9 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 
-struct hdc_list
-{
-    HDC hdc;
-    struct hdc_list *next;
-};
-
 struct gdi_obj_header
 {
     const struct gdi_obj_funcs *funcs;       /* type-specific functions */
-    struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
     WORD                        selcount;    /* number of times the object is selected in a DC */
     WORD                        system : 1;  /* system object flag */
     WORD                        deleted : 1; /* whether DeleteObject has been called on this object */
@@ -444,8 +437,6 @@ extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
-extern void GDI_hdc_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
-extern void GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc) DECLSPEC_HIDDEN;
 extern DWORD get_dpi(void) DECLSPEC_HIDDEN;
 extern DWORD get_system_dpi(void) DECLSPEC_HIDDEN;
 

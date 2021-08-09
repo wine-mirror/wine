@@ -114,7 +114,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     MFDRV_DeleteDC,                  /* pDeleteDC */
-    MFDRV_DeleteObject,              /* pDeleteObject */
+    NULL,                            /* pDeleteObject */
     NULL,                            /* pDeviceCapabilities */
     NULL,                            /* pEllipse */
     NULL,                            /* pEndDoc */
