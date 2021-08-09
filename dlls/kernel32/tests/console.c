@@ -3579,8 +3579,8 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
     GetClientRect(GetConsoleWindow(), &r);
     GetConsoleScreenBufferInfo(std_output, &csbi);
-    font_width = (r.right - r.left + 1) / csbi.srWindow.Right;
-    font_height = (r.bottom - r.top + 1) / csbi.srWindow.Bottom;
+    font_width = (r.right - r.left) / (csbi.srWindow.Right - csbi.srWindow.Left + 1);
+    font_height = (r.bottom - r.top) / (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
     ok(c.X == font_width, "got %d, expected %d\n", c.X, font_width);
     ok(c.Y == font_height, "got %d, expected %d\n", c.Y, font_height);
 
