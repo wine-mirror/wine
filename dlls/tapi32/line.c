@@ -752,6 +752,15 @@ DWORD WINAPI lineGetStatusMessages(HLINE hLine, LPDWORD lpdwLineStatus, LPDWORD 
 }
 
 /***********************************************************************
+ *		lineGetTranslateCapsW (TAPI32.@)
+ */
+DWORD WINAPI lineGetTranslateCapsW(HLINEAPP line_app, DWORD api_version, LINETRANSLATECAPS *caps)
+{
+    FIXME("(%p, %08x, %p): stub.\n", line_app, api_version, caps);
+    return LINEERR_OPERATIONFAILED;
+}
+
+/***********************************************************************
  *		lineGetTranslateCaps (TAPI32.@)
  *
  *      get address translate capabilities. Returns a LINETRANSLATECAPS
