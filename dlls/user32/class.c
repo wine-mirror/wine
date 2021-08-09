@@ -539,6 +539,19 @@ static void register_builtin( const struct builtin_class_descr *descr )
     release_class_ptr( classPtr );
 }
 
+static void load_uxtheme(void)
+{
+    BOOL (WINAPI * pIsThemeActive)(void);
+    HMODULE uxtheme;
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    if (uxtheme)
+    {
+        pIsThemeActive = (void *)GetProcAddress(uxtheme, "IsThemeActive");
+        if (!pIsThemeActive || !pIsThemeActive())
+            FreeLibrary(uxtheme);
+    }
+}
 
 /***********************************************************************
  *           register_builtins
@@ -557,6 +570,9 @@ static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **conte
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
     register_builtin( &IME_builtin_class );
+
+    /* Load uxtheme.dll so that standard scrollbars and dialogs are hooked for theming support */
+    load_uxtheme();
     return TRUE;
 }
 

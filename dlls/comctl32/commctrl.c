@@ -208,9 +208,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             TRACKBAR_Register ();
             TREEVIEW_Register ();
             UPDOWN_Register ();
-
-            /* Call IsThemeActive() so that delay-loaded uxtheme.dll is loaded for hooking user32 */
-            IsThemeActive();
             break;
 
 	case DLL_PROCESS_DETACH:

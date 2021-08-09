@@ -1511,6 +1511,7 @@ static void test_uxtheme(void)
     dll_loaded = !!GetModuleHandleA("comctl32.dll");
     ok(!dll_loaded, "Expected comctl32.dll not loaded.\n");
     dll_loaded = !!GetModuleHandleA("uxtheme.dll");
+    todo_wine_if(dll_loaded)
     ok(!dll_loaded, "Expected uxtheme.dll not loaded.\n");
 
     /* Creating a window triggers uxtheme load when theming is active */
@@ -1531,7 +1532,6 @@ static void test_uxtheme(void)
     is_theme_active = pIsThemeActive();
     FreeLibrary(uxtheme);
 
-    todo_wine_if(is_theme_active)
     ok(dll_loaded == is_theme_active, "Expected uxtheme %s when theming is %s.\n",
        is_theme_active ? "loaded" : "not loaded", is_theme_active ? "active" : "inactive");
 
