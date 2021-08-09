@@ -109,6 +109,15 @@ DWORD WINAPI ConvertStringToGuidW( const WCHAR *str, GUID *guid )
     return RtlNtStatusToDosError( RtlGUIDFromString( &ustr, guid ) );
 }
 
+static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src )
+{
+    unsigned int copy = src->Length;
+
+    if (copy >= len * sizeof(WCHAR)) copy = 0;
+    memcpy( dst, src->String, copy );
+    memset( (char *)dst + copy, 0, len * sizeof(WCHAR) - copy );
+}
+
 /******************************************************************
  *    AddIPAddress (IPHLPAPI.@)
  *
@@ -913,129 +922,6 @@ void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES *s
     }
 }
 
-static DWORD typeFromMibType(DWORD mib_type)
-{
-    switch (mib_type)
-    {
-    case MIB_IF_TYPE_ETHERNET:  return IF_TYPE_ETHERNET_CSMACD;
-    case MIB_IF_TYPE_TOKENRING: return IF_TYPE_ISO88025_TOKENRING;
-    case MIB_IF_TYPE_PPP:       return IF_TYPE_PPP;
-    case MIB_IF_TYPE_LOOPBACK:  return IF_TYPE_SOFTWARE_LOOPBACK;
-    default:                    return IF_TYPE_OTHER;
-    }
-}
-
-static NET_IF_CONNECTION_TYPE connectionTypeFromMibType(DWORD mib_type)
-{
-    switch (mib_type)
-    {
-    case MIB_IF_TYPE_PPP:       return NET_IF_CONNECTION_DEMAND;
-    case MIB_IF_TYPE_SLIP:      return NET_IF_CONNECTION_DEMAND;
-    default:                    return NET_IF_CONNECTION_DEDICATED;
-    }
-}
-
-static ULONG v4addressesFromIndex(IF_INDEX index, DWORD **addrs, ULONG *num_addrs, DWORD **masks)
-{
-    ULONG ret, i, j;
-    MIB_IPADDRTABLE *at;
-
-    *num_addrs = 0;
-    if ((ret = getIPAddrTable(&at, GetProcessHeap(), 0))) return ret;
-    for (i = 0; i < at->dwNumEntries; i++)
-    {
-        if (at->table[i].dwIndex == index) (*num_addrs)++;
-    }
-    if (!(*addrs = HeapAlloc(GetProcessHeap(), 0, *num_addrs * sizeof(DWORD))))
-    {
-        HeapFree(GetProcessHeap(), 0, at);
-        return ERROR_OUTOFMEMORY;
-    }
-    if (!(*masks = HeapAlloc(GetProcessHeap(), 0, *num_addrs * sizeof(DWORD))))
-    {
-        HeapFree(GetProcessHeap(), 0, *addrs);
-        HeapFree(GetProcessHeap(), 0, at);
-        return ERROR_OUTOFMEMORY;
-    }
-    for (i = 0, j = 0; i < at->dwNumEntries; i++)
-    {
-        if (at->table[i].dwIndex == index)
-        {
-            (*addrs)[j] = at->table[i].dwAddr;
-            (*masks)[j] = at->table[i].dwMask;
-            j++;
-        }
-    }
-    HeapFree(GetProcessHeap(), 0, at);
-    return ERROR_SUCCESS;
-}
-
-static char *debugstr_ipv4(const in_addr_t *in_addr, char *buf)
-{
-    const BYTE *addrp;
-    char *p = buf;
-
-    for (addrp = (const BYTE *)in_addr;
-     addrp - (const BYTE *)in_addr < sizeof(*in_addr);
-     addrp++)
-    {
-        if (addrp == (const BYTE *)in_addr + sizeof(*in_addr) - 1)
-            sprintf(p, "%d", *addrp);
-        else
-            p += sprintf(p, "%d.", *addrp);
-    }
-    return buf;
-}
-
-static ULONG count_v4_gateways(DWORD index, PMIB_IPFORWARDTABLE routeTable)
-{
-    DWORD i, num_gateways = 0;
-
-    for (i = 0; i < routeTable->dwNumEntries; i++)
-    {
-        if (routeTable->table[i].dwForwardIfIndex == index &&
-            routeTable->table[i].u1.ForwardType == MIB_IPROUTE_TYPE_INDIRECT)
-            num_gateways++;
-    }
-    return num_gateways;
-}
-
-static DWORD mask_v4_to_prefix(DWORD m)
-{
-#ifdef HAVE___BUILTIN_POPCOUNT
-    return __builtin_popcount(m);
-#else
-    m -= m >> 1 & 0x55555555;
-    m = (m & 0x33333333) + (m >> 2 & 0x33333333);
-    return ((m + (m >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
-#endif
-}
-
-static DWORD mask_v6_to_prefix(SOCKET_ADDRESS *m)
-{
-    const IN6_ADDR *mask = &((struct WS_sockaddr_in6 *)m->lpSockaddr)->sin6_addr;
-    DWORD ret = 0, i;
-
-    for (i = 0; i < 8; i++)
-        ret += mask_v4_to_prefix(mask->u.Word[i]);
-    return ret;
-}
-
-static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
-                                         PMIB_IPFORWARDTABLE routeTable)
-{
-    DWORD i;
-    PMIB_IPFORWARDROW row = NULL;
-
-    for (i = 0; !row && i < routeTable->dwNumEntries; i++)
-    {
-        if (routeTable->table[i].dwForwardIfIndex == index &&
-            routeTable->table[i].u1.ForwardType == MIB_IPROUTE_TYPE_INDIRECT)
-            row = &routeTable->table[i];
-    }
-    return row;
-}
-
 static BOOL sockaddr_is_loopback( SOCKADDR *sock )
 {
     if (sock->sa_family == WS_AF_INET)
@@ -1067,308 +953,211 @@ static BOOL unicast_is_dns_eligible( IP_ADAPTER_UNICAST_ADDRESS *uni )
         !sockaddr_is_linklocal( uni->Address.lpSockaddr );
 }
 
-static void fill_unicast_addr_data(IP_ADAPTER_ADDRESSES *aa, IP_ADAPTER_UNICAST_ADDRESS *ua)
+static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags )
 {
-    /* Actually this information should be read somewhere from the system
-     * but it doesn't matter much for the bugs found so far.
-     * This information is required for DirectPlay8 games. */
-    if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK)
+    struct nsi_ipv4_unicast_key *key4;
+    struct nsi_ipv6_unicast_key *key6;
+    struct nsi_ip_unicast_rw *rw;
+    struct nsi_ip_unicast_dynamic *dyn;
+    struct nsi_ip_unicast_static *stat;
+    IP_ADAPTER_UNICAST_ADDRESS *addr, **next;
+    DWORD err, count, i, key_size = (family == WS_AF_INET) ? sizeof(*key4) : sizeof(*key6);
+    DWORD sockaddr_size = (family == WS_AF_INET) ? sizeof(SOCKADDR_IN) : sizeof(SOCKADDR_IN6);
+    NET_LUID *luid;
+    void *key;
+
+    err = NsiAllocateAndGetTable( 1, ip_module_id( family ), NSI_IP_UNICAST_TABLE, &key, key_size,
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
+
+
+    while (aa)
     {
-        ua->PrefixOrigin = IpPrefixOriginDhcp;
-        ua->SuffixOrigin = IpSuffixOriginDhcp;
+        for (next = &aa->FirstUnicastAddress; *next; next = &(*next)->Next)
+            ;
+
+        for (i = 0; i < count; i++)
+        {
+            key4 = (struct nsi_ipv4_unicast_key *)key + i;
+            key6 = (struct nsi_ipv6_unicast_key *)key + i;
+            luid = (family == WS_AF_INET) ? &key4->luid : &key6->luid;
+            if (luid->Value != aa->Luid.Value) continue;
+            addr = heap_alloc_zero( sizeof(*addr) + sockaddr_size );
+            if (!addr)
+            {
+                err = ERROR_NOT_ENOUGH_MEMORY;
+                goto err;
+            }
+            addr->u.s.Length = sizeof(*addr);
+            addr->Address.lpSockaddr = (SOCKADDR *)(addr + 1);
+            addr->Address.iSockaddrLength = sockaddr_size;
+            addr->Address.lpSockaddr->sa_family = family;
+            if (family == WS_AF_INET)
+            {
+                SOCKADDR_IN *in = (SOCKADDR_IN *)addr->Address.lpSockaddr;
+                in->sin_addr = key4->addr;
+            }
+            else
+            {
+                SOCKADDR_IN6 *in6 = (SOCKADDR_IN6 *)addr->Address.lpSockaddr;
+                in6->sin6_addr = key6->addr;
+                in6->sin6_scope_id = dyn[i].scope_id;
+            }
+            addr->PrefixOrigin = rw[i].prefix_origin;
+            addr->SuffixOrigin = rw[i].suffix_origin;
+            addr->DadState = dyn[i].dad_state;
+            addr->ValidLifetime = rw[i].valid_lifetime;
+            addr->PreferredLifetime = rw[i].preferred_lifetime;
+            addr->LeaseLifetime = rw[i].valid_lifetime; /* FIXME */
+            addr->OnLinkPrefixLength = rw[i].on_link_prefix;
+            if (unicast_is_dns_eligible( addr )) addr->u.s.Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
+
+            *next = addr;
+            next = &addr->Next;
+        }
+        aa = aa->Next;
     }
-    else
-    {
-        ua->PrefixOrigin = IpPrefixOriginManual;
-        ua->SuffixOrigin = IpSuffixOriginManual;
-    }
 
-    /* The address is not duplicated in the network */
-    ua->DadState = IpDadStatePreferred;
-
-    /* Some address life time values, required even for non-dhcp addresses */
-    ua->ValidLifetime = 60000;
-    ua->PreferredLifetime = 60000;
-    ua->LeaseLifetime = 60000;
-
-    if (unicast_is_dns_eligible( ua )) ua->u.s.Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
+err:
+    NsiFreeTable( key, rw, dyn, stat );
+    return err;
 }
 
-static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index,
-                                       IP_ADAPTER_ADDRESSES *aa, char **ptr)
+static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags )
 {
-    ULONG ret = ERROR_SUCCESS, i, j, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0;
-    DWORD *v4addrs = NULL, *v4masks = NULL;
-    SOCKET_ADDRESS *v6addrs = NULL, *v6masks = NULL;
-    PMIB_IPFORWARDTABLE routeTable = NULL;
-    BOOL output_gateways;
-    char name[IF_NAMESIZE], *src;
-    WCHAR *dst;
-    DWORD buflen, type;
-    INTERNAL_IF_OPER_STATUS status;
-    NET_LUID luid;
-    GUID guid;
+    struct nsi_ipv4_forward_key *key4;
+    struct nsi_ipv6_forward_key *key6;
+    IP_ADAPTER_GATEWAY_ADDRESS *gw, **gw_next;
+    IP_ADAPTER_PREFIX *prefix, **prefix_next;
+    DWORD err, count, i, prefix_len, key_size = (family == WS_AF_INET) ? sizeof(*key4) : sizeof(*key6);
+    DWORD sockaddr_size = (family == WS_AF_INET) ? sizeof(SOCKADDR_IN) : sizeof(SOCKADDR_IN6);
+    SOCKADDR_INET sockaddr;
+    NET_LUID *luid;
+    void *key;
 
-    if ((flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS) || !(flags & GAA_FLAG_SKIP_UNICAST))
-    {
-        ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE, GetProcessHeap(), 0);
-        if (ret) return ret;
-        num_v4_gateways = count_v4_gateways(index, routeTable);
-    }
-    output_gateways = (flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS) && (family == WS_AF_INET || family == WS_AF_UNSPEC);
+    err = NsiAllocateAndGetTable( 1, ip_module_id( family ), NSI_IP_FORWARD_TABLE, &key, key_size,
+                                  NULL, 0, NULL, 0, NULL, 0, &count, 0 );
+    if (err) return err;
 
-    if (family == WS_AF_INET)
+    while (aa)
     {
-        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs, &v4masks);
-    }
-    else if (family == WS_AF_INET6)
-    {
-        ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs, &v6masks);
-    }
-    else if (family == WS_AF_UNSPEC)
-    {
-        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs, &v4masks);
-        if (!ret) ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs, &v6masks);
-    }
-    else
-    {
-        FIXME("address family %u unsupported\n", family);
-        ret = ERROR_NO_DATA;
-    }
-    if (ret)
-    {
-        HeapFree(GetProcessHeap(), 0, v4addrs);
-        HeapFree(GetProcessHeap(), 0, v4masks);
-        HeapFree(GetProcessHeap(), 0, v6addrs);
-        HeapFree(GetProcessHeap(), 0, v6masks);
-        HeapFree(GetProcessHeap(), 0, routeTable);
-        return ret;
-    }
+        for (gw_next = &aa->FirstGatewayAddress; *gw_next; gw_next = &(*gw_next)->Next)
+            ;
+        for (prefix_next = &aa->FirstPrefix; *prefix_next; prefix_next = &(*prefix_next)->Next)
+            ;
 
-    if (1)
-    {
-        memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
-        aa->u.s.Length  = sizeof(IP_ADAPTER_ADDRESSES);
-        aa->u.s.IfIndex = index;
-
-        ConvertInterfaceIndexToLuid(index, &luid);
-        ConvertInterfaceLuidToGuid(&luid, &guid);
-        ConvertGuidToStringA( &guid, *ptr, CHARS_IN_GUID );
-        aa->AdapterName = *ptr;
-        *ptr += (CHARS_IN_GUID + 1) & ~1;
-
-        getInterfaceNameByIndex(index, name);
-        if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
+        for (i = 0; i < count; i++)
         {
-            aa->FriendlyName = (WCHAR *)*ptr;
-            for (src = name, dst = (WCHAR *)*ptr; *src; src++, dst++)
-                *dst = *src;
-            *dst++ = 0;
-            *ptr = (char *)dst;
-        }
-        aa->Description = (WCHAR *)ptr;
-        for (src = name, dst = (WCHAR *)*ptr; *src; src++, dst++)
-            *dst = *src;
-        *dst++ = 0;
-        *ptr = (char *)dst;
+            key4 = (struct nsi_ipv4_forward_key *)key + i;
+            key6 = (struct nsi_ipv6_forward_key *)key + i;
+            luid = (family == WS_AF_INET) ? &key4->luid : &key6->luid;
+            if (luid->Value != aa->Luid.Value) continue;
 
-        TRACE("%s: %d IPv4 addresses, %d IPv6 addresses:\n", name, num_v4addrs,
-              num_v6addrs);
-
-        buflen = MAX_INTERFACE_PHYSADDR;
-        getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
-        aa->PhysicalAddressLength = buflen;
-        aa->IfType = typeFromMibType(type);
-        aa->ConnectionType = connectionTypeFromMibType(type);
-        ConvertInterfaceIndexToLuid( index, &aa->Luid );
-
-        if (output_gateways && num_v4_gateways)
-        {
-            PMIB_IPFORWARDROW adapterRow;
-
-            if ((adapterRow = findIPv4Gateway(index, routeTable)))
+            if (flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
             {
-                PIP_ADAPTER_GATEWAY_ADDRESS gw;
-                PSOCKADDR_IN sin;
-
-                gw = heap_alloc( sizeof(IP_ADAPTER_GATEWAY_ADDRESS) + sizeof(SOCKADDR_IN) );
-                aa->FirstGatewayAddress = gw;
-
-                gw->u.s.Length = sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
-                sin = (PSOCKADDR_IN)(gw + 1);
-                sin->sin_family = WS_AF_INET;
-                sin->sin_port = 0;
-                memcpy(&sin->sin_addr, &adapterRow->dwForwardNextHop,
-                       sizeof(DWORD));
-                gw->Address.lpSockaddr = (LPSOCKADDR)sin;
-                gw->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
-                gw->Next = NULL;
-            }
-        }
-        if (num_v4addrs && !(flags & GAA_FLAG_SKIP_UNICAST))
-        {
-            IP_ADAPTER_UNICAST_ADDRESS *ua;
-            struct WS_sockaddr_in *sa;
-            aa->u1.s1.Ipv4Enabled = TRUE;
-            ua = aa->FirstUnicastAddress = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN) );
-            for (i = 0; i < num_v4addrs; i++)
-            {
-                char addr_buf[16];
-
-                memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
-                ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
-                ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
-                ua->Address.lpSockaddr      = (SOCKADDR *)(ua + 1);
-
-                sa = (struct WS_sockaddr_in *)ua->Address.lpSockaddr;
-                sa->sin_family           = WS_AF_INET;
-                sa->sin_addr.S_un.S_addr = v4addrs[i];
-                sa->sin_port             = 0;
-                TRACE("IPv4 %d/%d: %s\n", i + 1, num_v4addrs,
-                      debugstr_ipv4(&sa->sin_addr.S_un.S_addr, addr_buf));
-                fill_unicast_addr_data(aa, ua);
-
-                ua->OnLinkPrefixLength = mask_v4_to_prefix(v4masks[i]);
-
-                if (i < num_v4addrs - 1)
+                memset( &sockaddr, 0, sizeof(sockaddr) );
+                if (family == WS_AF_INET)
                 {
-                    ua->Next = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN) );
-                    ua = ua->Next;
+                    if (key4->next_hop.WS_s_addr != 0)
+                    {
+                        sockaddr.si_family = family;
+                        sockaddr.Ipv4.sin_addr = key4->next_hop;
+                    }
+                }
+                else
+                {
+                    static const IN6_ADDR zero;
+                    if (memcmp( &key6->next_hop, &zero, sizeof(zero) ))
+                    {
+                        sockaddr.si_family = family;
+                        sockaddr.Ipv6.sin6_addr = key6->next_hop;
+                    }
+                }
+
+                if (sockaddr.si_family)
+                {
+                    gw = heap_alloc_zero( sizeof(*gw) + sockaddr_size );
+                    if (!gw)
+                    {
+                        err = ERROR_NOT_ENOUGH_MEMORY;
+                        goto err;
+                    }
+                    gw->u.s.Length = sizeof(*gw);
+                    gw->Address.lpSockaddr = (SOCKADDR *)(gw + 1);
+                    gw->Address.iSockaddrLength = sockaddr_size;
+                    memcpy( gw->Address.lpSockaddr, &sockaddr, sockaddr_size );
+                    *gw_next = gw;
+                    gw_next = &gw->Next;
+                }
+            }
+
+            if (flags & GAA_FLAG_INCLUDE_PREFIX)
+            {
+                memset( &sockaddr, 0, sizeof(sockaddr) );
+                if (family == WS_AF_INET)
+                {
+                    if (!key4->next_hop.WS_s_addr)
+                    {
+                        sockaddr.si_family = family;
+                        sockaddr.Ipv4.sin_addr = key4->prefix;
+                        prefix_len = key4->prefix_len;
+                    }
+                }
+                else
+                {
+                    static const IN6_ADDR zero;
+                    if (!memcmp( &key6->next_hop, &zero, sizeof(zero) ))
+                    {
+                        sockaddr.si_family = family;
+                        sockaddr.Ipv6.sin6_addr = key6->prefix;
+                        prefix_len = key6->prefix_len;
+                    }
+                }
+
+                if (sockaddr.si_family)
+                {
+                    prefix = heap_alloc_zero( sizeof(*prefix) + sockaddr_size );
+                    if (!prefix)
+                    {
+                        err = ERROR_NOT_ENOUGH_MEMORY;
+                        goto err;
+                    }
+                    prefix->u.s.Length = sizeof(*prefix);
+                    prefix->Address.lpSockaddr = (SOCKADDR *)(prefix + 1);
+                    prefix->Address.iSockaddrLength = sockaddr_size;
+                    memcpy( prefix->Address.lpSockaddr, &sockaddr, sockaddr_size );
+                    prefix->PrefixLength = prefix_len;
+                    *prefix_next = prefix;
+                    prefix_next = &prefix->Next;
                 }
             }
         }
-        if (num_v6addrs && !(flags & GAA_FLAG_SKIP_UNICAST))
-        {
-            IP_ADAPTER_UNICAST_ADDRESS *ua;
-            struct WS_sockaddr_in6 *sa;
-
-            aa->u1.s1.Ipv6Enabled = TRUE;
-            if (aa->FirstUnicastAddress)
-            {
-                for (ua = aa->FirstUnicastAddress; ua->Next; ua = ua->Next)
-                    ;
-                ua->Next = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN6) );
-                ua = ua->Next;
-            }
-            else
-                ua = aa->FirstUnicastAddress = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN6) );
-            for (i = 0; i < num_v6addrs; i++)
-            {
-                char addr_buf[46];
-
-                memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
-                ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
-                ua->Address.iSockaddrLength = v6addrs[i].iSockaddrLength;
-                ua->Address.lpSockaddr      = (SOCKADDR *)(ua + 1);
-
-                sa = (struct WS_sockaddr_in6 *)ua->Address.lpSockaddr;
-                memcpy(sa, v6addrs[i].lpSockaddr, sizeof(*sa));
-                TRACE("IPv6 %d/%d: %s\n", i + 1, num_v6addrs,
-                      debugstr_ipv6(sa, addr_buf));
-                fill_unicast_addr_data(aa, ua);
-
-                ua->OnLinkPrefixLength = mask_v6_to_prefix(&v6masks[i]);
-
-                if (i < num_v6addrs - 1)
-                {
-                    ua->Next = heap_alloc_zero( sizeof(IP_ADAPTER_UNICAST_ADDRESS) + sizeof(SOCKADDR_IN6) );
-                    ua = ua->Next;
-                }
-            }
-        }
-        if (num_v4addrs && (flags & GAA_FLAG_INCLUDE_PREFIX))
-        {
-            IP_ADAPTER_PREFIX *prefix;
-
-            prefix = aa->FirstPrefix = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN) );
-            for (i = 0; i < num_v4addrs; i++)
-            {
-                char addr_buf[16];
-                struct WS_sockaddr_in *sa;
-
-                prefix->u.s.Length = sizeof(*prefix);
-                prefix->u.s.Flags  = 0;
-                prefix->Next       = NULL;
-                prefix->Address.iSockaddrLength = sizeof(struct sockaddr_in);
-                prefix->Address.lpSockaddr      = (SOCKADDR *)(prefix + 1);
-
-                sa = (struct WS_sockaddr_in *)prefix->Address.lpSockaddr;
-                sa->sin_family           = WS_AF_INET;
-                sa->sin_addr.S_un.S_addr = v4addrs[i] & v4masks[i];
-                sa->sin_port             = 0;
-
-                prefix->PrefixLength = mask_v4_to_prefix(v4masks[i]);
-
-                TRACE("IPv4 network: %s/%u\n",
-                      debugstr_ipv4((const in_addr_t *)&sa->sin_addr.S_un.S_addr, addr_buf),
-                      prefix->PrefixLength);
-
-                if (i < num_v4addrs - 1)
-                {
-                    prefix->Next = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN) );
-                    prefix = prefix->Next;
-                }
-            }
-        }
-        if (num_v6addrs && (flags & GAA_FLAG_INCLUDE_PREFIX))
-        {
-            IP_ADAPTER_PREFIX *prefix;
-
-            if (aa->FirstPrefix)
-            {
-                for (prefix = aa->FirstPrefix; prefix->Next; prefix = prefix->Next)
-                    ;
-                prefix->Next = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN6) );
-                prefix = prefix->Next;
-            }
-            else
-                prefix = aa->FirstPrefix = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN6) );
-            for (i = 0; i < num_v6addrs; i++)
-            {
-                char addr_buf[46];
-                struct WS_sockaddr_in6 *sa;
-                const IN6_ADDR *addr, *mask;
-
-                prefix->u.s.Length = sizeof(*prefix);
-                prefix->u.s.Flags  = 0;
-                prefix->Next       = NULL;
-                prefix->Address.iSockaddrLength = sizeof(struct sockaddr_in6);
-                prefix->Address.lpSockaddr      = (SOCKADDR *)(prefix + 1);
-
-                sa = (struct WS_sockaddr_in6 *)prefix->Address.lpSockaddr;
-                sa->sin6_family   = WS_AF_INET6;
-                sa->sin6_port     = 0;
-                sa->sin6_flowinfo = 0;
-                addr = &((struct WS_sockaddr_in6 *)v6addrs[i].lpSockaddr)->sin6_addr;
-                mask = &((struct WS_sockaddr_in6 *)v6masks[i].lpSockaddr)->sin6_addr;
-                for (j = 0; j < 8; j++) sa->sin6_addr.u.Word[j] = addr->u.Word[j] & mask->u.Word[j];
-                sa->sin6_scope_id = 0;
-
-                prefix->PrefixLength = mask_v6_to_prefix(&v6masks[i]);
-
-                TRACE("IPv6 network: %s/%u\n", debugstr_ipv6(sa, addr_buf), prefix->PrefixLength);
-
-                if (i < num_v6addrs - 1)
-                {
-                    prefix->Next = heap_alloc_zero( sizeof(*prefix) + sizeof(SOCKADDR_IN6) );
-                    prefix = prefix->Next;
-                }
-            }
-        }
-
-        getInterfaceMtuByName(name, &aa->Mtu);
-
-        getInterfaceStatusByName(name, &status);
-        if (status == MIB_IF_OPER_STATUS_OPERATIONAL) aa->OperStatus = IfOperStatusUp;
-        else if (status == MIB_IF_OPER_STATUS_NON_OPERATIONAL) aa->OperStatus = IfOperStatusDown;
-        else aa->OperStatus = IfOperStatusUnknown;
+        aa = aa->Next;
     }
-    HeapFree(GetProcessHeap(), 0, routeTable);
-    HeapFree(GetProcessHeap(), 0, v6addrs);
-    HeapFree(GetProcessHeap(), 0, v6masks);
-    HeapFree(GetProcessHeap(), 0, v4addrs);
-    HeapFree(GetProcessHeap(), 0, v4masks);
-    return ERROR_SUCCESS;
+
+err:
+    NsiFreeTable( key, NULL, NULL, NULL );
+    return err;
+}
+
+static DWORD call_families( DWORD (*fn)( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags ),
+                            IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags )
+{
+    DWORD err;
+
+    if (family != WS_AF_INET)
+    {
+        err = fn( aa, WS_AF_INET6, flags );
+        if (err) return err;
+    }
+
+    if (family != WS_AF_INET6)
+    {
+        err = fn( aa, WS_AF_INET, flags );
+        if (err) return err;
+    }
+    return err;
 }
 
 static DWORD dns_servers_query_code( ULONG family )
@@ -1461,20 +1250,21 @@ err:
 static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADDRESSES **info )
 {
     IP_ADAPTER_ADDRESSES *aa;
+    NET_LUID *luids;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
     DWORD err, i, count, needed;
+    GUID guid;
     char *str_ptr;
-    InterfaceIndexTable *table;
 
-    get_interface_indices( FALSE, &table );
-    if (!table || !table->numIndexes)
-    {
-        HeapFree(GetProcessHeap(), 0, table);
-        return ERROR_NO_DATA;
-    }
-    count = table->numIndexes;
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&luids, sizeof(*luids),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    needed = count * (sizeof(*aa) + ((CHARS_IN_GUID + 1) & ~1) + sizeof(IF_COUNTED_STRING));
-    if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME)) needed += count * sizeof(IF_COUNTED_STRING);
+    needed = count * (sizeof(*aa) + ((CHARS_IN_GUID + 1) & ~1) + sizeof(stat->descr.String));
+    if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME)) needed += count * sizeof(rw->alias.String);
 
     aa = heap_alloc_zero( needed );
     if (!aa)
@@ -1486,18 +1276,52 @@ static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADD
     str_ptr = (char *)(aa + count);
     for (i = 0; i < count; i++)
     {
-        if ((err = adapterAddressesFromIndex(family, flags, table->indexes[i], aa + i, &str_ptr)))
-        {
-            HeapFree(GetProcessHeap(), 0, table);
-            return err;
-        }
+        aa[i].u.s.Length = sizeof(*aa);
+        aa[i].u.s.IfIndex = stat[i].if_index;
         if (i < count - 1) aa[i].Next = aa + i + 1;
+        ConvertInterfaceLuidToGuid( luids + i, &guid );
+        ConvertGuidToStringA( &guid, str_ptr, CHARS_IN_GUID );
+        aa[i].AdapterName = str_ptr;
+        str_ptr += (CHARS_IN_GUID + 1) & ~1;
+        if_counted_string_copy( (WCHAR *)str_ptr, ARRAY_SIZE(stat[i].descr.String), &stat[i].descr );
+        aa[i].Description = (WCHAR *)str_ptr;
+        str_ptr += sizeof(stat[i].descr.String);
+        if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
+        {
+            if_counted_string_copy( (WCHAR *)str_ptr, ARRAY_SIZE(rw[i].alias.String), &rw[i].alias );
+            aa[i].FriendlyName = (WCHAR *)str_ptr;
+            str_ptr += sizeof(rw[i].alias.String);
+        }
+        aa[i].PhysicalAddressLength = rw->phys_addr.Length;
+        if (aa[i].PhysicalAddressLength > sizeof(aa[i].PhysicalAddress)) aa[i].PhysicalAddressLength = 0;
+        memcpy( aa[i].PhysicalAddress, rw->phys_addr.Address, aa[i].PhysicalAddressLength );
+        aa[i].Mtu = dyn[i].mtu;
+        aa[i].IfType = stat[i].type;
+        aa[i].OperStatus = dyn[i].oper_status;
+        aa[i].TransmitLinkSpeed = dyn[i].xmit_speed;
+        aa[i].ReceiveLinkSpeed = dyn[i].rcv_speed;
+        aa[i].Luid = luids[i];
+        aa[i].NetworkGuid = rw[i].network_guid;
+        aa[i].ConnectionType = stat[i].conn_type;
+    }
+
+    if (!(flags & GAA_FLAG_SKIP_UNICAST))
+    {
+        err = call_families( unicast_addresses_alloc, aa, family, flags );
+        if (err) goto err;
+    }
+
+    if (flags & (GAA_FLAG_INCLUDE_ALL_GATEWAYS | GAA_FLAG_INCLUDE_PREFIX))
+    {
+        err = call_families( gateway_and_prefix_addresses_alloc, aa, family, flags );
+        if (err) goto err;
     }
 
     err = dns_info_alloc( aa, family, flags );
+    if (err) goto err;
 
 err:
-    HeapFree(GetProcessHeap(), 0, table);
+    NsiFreeTable( luids, rw, dyn, stat );
     if (!err) *info = aa;
     else adapters_addresses_free( aa );
     return err;
@@ -1859,15 +1683,6 @@ DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HAN
 err:
     NsiFreeTable( keys, rw, dyn, stat );
     return err;
-}
-
-static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src )
-{
-    unsigned int copy = src->Length;
-
-    if (copy >= len * sizeof(WCHAR)) copy = 0;
-    memcpy( dst, src->String, copy );
-    memset( (char *)dst + copy, 0, len * sizeof(WCHAR) - copy );
 }
 
 static void if_row2_fill( MIB_IF_ROW2 *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,

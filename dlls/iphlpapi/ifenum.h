@@ -44,8 +44,6 @@
 #define MAX_INTERFACE_PHYSADDR    8
 #define MAX_INTERFACE_DESCRIPTION 256
 
-BOOL isIfIndexLoopback(ULONG idx) DECLSPEC_HIDDEN;
-
 /* A table of interface indexes, see get_interface_indices(). */
 typedef struct _InterfaceIndexTable {
   DWORD numIndexes;
@@ -59,50 +57,10 @@ DWORD get_interface_indices( BOOL skip_loopback, InterfaceIndexTable **table ) D
 
 /* ByName/ByIndex versions of various getter functions. */
 
-/* can be used as quick check to see if you've got a valid index, returns NULL
- * if not.  Overwrites your buffer, which should be at least of size
- * MAX_ADAPTER_NAME.
- */
-char *getInterfaceNameByIndex(IF_INDEX index, char *name) DECLSPEC_HIDDEN;
-
 /* Fills index with the index of name, if found.  Returns
  * ERROR_INVALID_PARAMETER if name or index is NULL, ERROR_INVALID_DATA if name
  * is not found, and NO_ERROR on success.
  */
 DWORD getInterfaceIndexByName(const char *name, IF_INDEX *index) DECLSPEC_HIDDEN;
-
-/* Gets a few physical characteristics of a device:  MAC addr len, MAC addr,
- * and type as one of the MIB_IF_TYPEs.
- * len's in-out: on in, needs to say how many bytes are available in addr,
- * which to be safe should be MAX_INTERFACE_PHYSADDR.  On out, it's how many
- * bytes were set, or how many were required if addr isn't big enough.
- * Returns ERROR_INVALID_PARAMETER if name, len, addr, or type is NULL.
- * Returns ERROR_INVALID_DATA if name/index isn't valid.
- * Returns ERROR_INSUFFICIENT_BUFFER if addr isn't large enough for the
- * physical address; *len will contain the required size.
- * May return other errors, e.g. ERROR_OUTOFMEMORY or ERROR_NO_MORE_FILES,
- * if internal errors occur.
- * Returns NO_ERROR on success.
- */
-DWORD getInterfacePhysicalByIndex(IF_INDEX index, PDWORD len, PBYTE addr,
- PDWORD type) DECLSPEC_HIDDEN;
-
-DWORD getNumIPAddresses(void) DECLSPEC_HIDDEN;
-
-/* Gets the configured IP addresses for the system, and sets *ppIpAddrTable to
- * a table of them allocated from heap, or NULL if out of memory.  Returns
- * NO_ERROR on success, something else on failure.  Note there may be more than
- * one IP address may exist per interface.
- */
-DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
-
-/* Returns the IPv6 addresses for a particular interface index.
- * Returns NO_ERROR on success, something else on failure.
- */
-ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs,
- SOCKET_ADDRESS **masks) DECLSPEC_HIDDEN;
-
-DWORD getInterfaceMtuByName(const char *name, PDWORD mtu) DECLSPEC_HIDDEN;
-DWORD getInterfaceStatusByName(const char *name, INTERNAL_IF_OPER_STATUS *status) DECLSPEC_HIDDEN;
 
 #endif /* ndef WINE_IFENUM_H_ */
