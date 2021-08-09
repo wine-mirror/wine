@@ -523,7 +523,7 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
 }
 
 /***********************************************************************
- *      UXTHEME_DrawImageGlyph
+ *      UXTHEME_DrawGlyph
  *
  * Draw glyph on top of background, if appropriate
  */
