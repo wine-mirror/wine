@@ -364,7 +364,12 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
     }
 
     case MemoryWineImageInitFuncs:
+    case MemoryWineUnixWow64Funcs:
         return STATUS_INVALID_INFO_CLASS;
+
+    case MemoryWineUnixFuncs:
+        status = NtQueryVirtualMemory( handle, addr, MemoryWineUnixWow64Funcs, ptr, len, &res_len );
+        break;
 
     default:
         FIXME( "unsupported class %u\n", class );
