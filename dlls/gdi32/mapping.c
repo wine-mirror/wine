@@ -88,13 +88,6 @@ static void MAPPING_FixIsotropic( DC * dc )
 
 BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (pt) *pt = dc->attr->vport_org;
-
-    dc->attr->vport_org.x += x;
-    dc->attr->vport_org.y += y;
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -340,24 +333,6 @@ BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
     DC_UpdateXforms( dc );
     release_dc_ptr( dc );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           OffsetViewportOrgEx    (GDI32.@)
- */
-BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
-{
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pOffsetViewportOrgEx );
-        ret = physdev->funcs->pOffsetViewportOrgEx( physdev, x, y, pt );
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 

@@ -96,7 +96,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_LineTo,                   /* pLineTo */
     EMFDRV_ModifyWorldTransform,     /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
-    EMFDRV_OffsetViewportOrgEx,      /* pOffsetViewportOrgEx */
+    NULL,                            /* pOffsetViewportOrgEx */
     EMFDRV_OffsetWindowOrgEx,        /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
     EMFDRV_PatBlt,                   /* pPatBlt */
