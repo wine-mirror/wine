@@ -17760,6 +17760,7 @@ for ac_func in \
 	setprogname \
 	sigprocmask \
 	symlink \
+	sysinfo \
 	tcdrain \
 	thr_kill2
 
