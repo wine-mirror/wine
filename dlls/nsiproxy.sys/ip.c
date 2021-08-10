@@ -41,8 +41,28 @@
 #include <netinet/in.h>
 #endif
 
+#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+
+#ifdef HAVE_NETINET_IF_ETHER_H
+#include <netinet/if_ether.h>
+#endif
+
+#ifdef HAVE_NET_IF_ARP_H
+#include <net/if_arp.h>
+#endif
+
+#ifdef HAVE_NET_IF_DL_H
+#include <net/if_dl.h>
+#endif
+
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
 #endif
 
 #include "ntstatus.h"
@@ -232,6 +252,193 @@ static NTSTATUS ip_unicast_get_all_parameters( const void *key, DWORD key_size, 
 
     freeifaddrs( addrs );
     return status;
+}
+
+struct ipv4_neighbour_data
+{
+    NET_LUID luid;
+    DWORD if_index;
+    struct in_addr addr;
+    BYTE phys_addr[IF_MAX_PHYS_ADDRESS_LENGTH];
+    DWORD state;
+    USHORT phys_addr_len;
+    BOOL is_router;
+    BOOL is_unreachable;
+};
+
+static void ipv4_neighbour_fill_entry( struct ipv4_neighbour_data *entry, struct nsi_ipv4_neighbour_key *key, struct nsi_ip_neighbour_rw *rw,
+                                       struct nsi_ip_neighbour_dynamic *dyn, void *stat )
+{
+    USHORT phys_addr_len = entry->phys_addr_len > sizeof(rw->phys_addr) ? 0 : entry->phys_addr_len;
+
+    if (key)
+    {
+        key->luid = entry->luid;
+        key->luid2 = entry->luid;
+        key->addr.WS_s_addr = entry->addr.s_addr;
+        key->pad = 0;
+    }
+
+    if (rw)
+    {
+        memcpy( rw->phys_addr, entry->phys_addr, phys_addr_len );
+        memset( rw->phys_addr + entry->phys_addr_len, 0, sizeof(rw->phys_addr) - phys_addr_len );
+    }
+
+    if (dyn)
+    {
+        memset( dyn, 0, sizeof(*dyn) );
+        dyn->state = entry->state;
+        dyn->flags.is_router = entry->is_router;
+        dyn->flags.is_unreachable = entry->is_unreachable;
+        dyn->phys_addr_len = phys_addr_len;
+    }
+}
+
+static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                              void *dynamic_data, DWORD dynamic_size,
+                                              void *static_data, DWORD static_size, DWORD_PTR *count )
+{
+    DWORD num = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOL want_data = key_size || rw_size || dynamic_size || static_size;
+    struct ipv4_neighbour_data entry;
+
+    TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
+           dynamic_data, dynamic_size, static_data, static_size, count );
+
+#ifdef __linux__
+    {
+        char buf[512], *ptr;
+        DWORD atf_flags;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/arp", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        /* skip header line */
+        ptr = fgets( buf, sizeof(buf), fp );
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            entry.addr.s_addr = inet_addr( ptr );
+            while (*ptr && !isspace( *ptr )) ptr++;
+            strtoul( ptr + 1, &ptr, 16 ); /* hw type (skip) */
+            atf_flags = strtoul( ptr + 1, &ptr, 16 );
+
+            if (atf_flags & ATF_PERM) entry.state = NlnsPermanent;
+            else if (atf_flags & ATF_COM) entry.state = NlnsReachable;
+            else entry.state = NlnsStale;
+
+            entry.is_router = 0;
+            entry.is_unreachable = !(atf_flags & (ATF_PERM | ATF_COM));
+
+            while (*ptr && isspace( *ptr )) ptr++;
+            entry.phys_addr_len = 0;
+            while (*ptr && !isspace( *ptr ))
+            {
+                if (entry.phys_addr_len >= sizeof(entry.phys_addr))
+                {
+                    entry.phys_addr_len = 0;
+                    while (*ptr && !isspace( *ptr )) ptr++;
+                    break;
+                }
+                entry.phys_addr[entry.phys_addr_len++] = strtoul( ptr, &ptr, 16 );
+                if (*ptr) ptr++;
+            }
+            while (*ptr && isspace( *ptr )) ptr++;
+            while (*ptr && !isspace( *ptr )) ptr++;   /* mask (skip) */
+            while (*ptr && isspace( *ptr )) ptr++;
+
+            if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
+            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+
+            if (num < *count)
+            {
+                ipv4_neighbour_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+
+                if (key_data) key_data = (BYTE *)key_data + key_size;
+                if (rw_data) rw_data = (BYTE *)rw_data + rw_size;
+                if (dynamic_data) dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                if (static_data) static_data = (BYTE *)static_data + static_size;
+            }
+            num++;
+        }
+        fclose( fp );
+    }
+#elif defined(HAVE_SYS_SYSCTL_H)
+    {
+        int mib[] = { CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO }, sinarp_len;
+        size_t needed;
+        char *buf = NULL, *lim, *next;
+        struct rt_msghdr *rtm;
+        struct sockaddr_inarp *sinarp;
+        struct sockaddr_dl *sdl;
+
+        if (sysctl( mib, ARRAY_SIZE(mib), NULL, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
+
+        buf = heap_alloc( needed );
+        if (!buf) return STATUS_NO_MEMORY;
+
+        if (sysctl( mib, ARRAY_SIZE(mib), buf, &needed, NULL, 0 ) == -1)
+        {
+            heap_free( buf );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        lim = buf + needed;
+        next = buf;
+        while (next < lim)
+        {
+            rtm = (struct rt_msghdr *)next;
+            sinarp = (struct sockaddr_inarp *)(rtm + 1);
+            if (sinarp->sin_len) sinarp_len = (sinarp->sin_len + sizeof(int)-1) & ~(sizeof(int)-1);
+            else sinarp_len = sizeof(int);
+            sdl = (struct sockaddr_dl *)((char *)sinarp + sinarp_len);
+
+            if (sdl->sdl_alen) /* arp entry */
+            {
+                entry.addr = sinarp->sin_addr;
+                entry.if_index = sdl->sdl_index;
+                if (!convert_index_to_luid( entry.if_index, &entry.luid )) break;
+                entry.phys_addr_len = min( 8, sdl->sdl_alen );
+                if (entry.phys_addr_len > sizeof(entry.phys_addr)) entry.phys_addr_len = 0;
+                memcpy( entry.phys_addr, &sdl->sdl_data[sdl->sdl_nlen], entry.phys_addr_len );
+                if (rtm->rtm_rmx.rmx_expire == 0) entry.state = NlnsPermanent;
+                else entry.state = NlnsReachable;
+                entry.is_router = sinarp->sin_other & SIN_ROUTER;
+                entry.is_unreachable = 0; /* FIXME */
+
+                if (num < *count)
+                {
+                    ipv4_neighbour_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+
+                    if (key_data) key_data = (BYTE *)key_data + key_size;
+                    if (rw_data) rw_data = (BYTE *)rw_data + rw_size;
+                    if (dynamic_data) dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                    if (static_data) static_data = (BYTE *)static_data + static_size;
+                }
+                num++;
+            }
+            next += rtm->rtm_msglen;
+        }
+        heap_free( buf );
+    }
+#else
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+
+    if (!want_data || num <= *count) *count = num;
+    else status = STATUS_MORE_ENTRIES;
+
+    return status;
+}
+
+static NTSTATUS ipv6_neighbour_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                              void *dynamic_data, DWORD dynamic_size,
+                                              void *static_data, DWORD static_size, DWORD_PTR *count )
+{
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 struct ipv4_route_data
@@ -490,6 +697,14 @@ static struct module_table ipv4_tables[] =
         ip_unicast_get_all_parameters,
     },
     {
+        NSI_IP_NEIGHBOUR_TABLE,
+        {
+            sizeof(struct nsi_ipv4_neighbour_key), sizeof(struct nsi_ip_neighbour_rw),
+            sizeof(struct nsi_ip_neighbour_dynamic), 0
+        },
+        ipv4_neighbour_enumerate_all,
+    },
+    {
         NSI_IP_FORWARD_TABLE,
         {
             sizeof(struct nsi_ipv4_forward_key), sizeof(struct nsi_ip_forward_rw),
@@ -518,6 +733,14 @@ static struct module_table ipv6_tables[] =
         },
         ip_unicast_enumerate_all,
         ip_unicast_get_all_parameters,
+    },
+    {
+        NSI_IP_NEIGHBOUR_TABLE,
+        {
+            sizeof(struct nsi_ipv6_neighbour_key), sizeof(struct nsi_ip_neighbour_rw),
+            sizeof(struct nsi_ip_neighbour_dynamic), 0
+        },
+        ipv6_neighbour_enumerate_all,
     },
     {
         NSI_IP_FORWARD_TABLE,

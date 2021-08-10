@@ -485,6 +485,82 @@ static void test_ip_unicast( int family )
     winetest_pop_context();
 }
 
+static void test_ip_neighbour( int family )
+{
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    DWORD err, i, count, count2, attempt;
+    struct nsi_ipv4_neighbour_key *key_tbl, *key_tbl_2, *key4;
+    struct nsi_ipv6_neighbour_key *key6;
+    struct nsi_ip_neighbour_rw *rw_tbl, *rw;
+    struct nsi_ip_neighbour_dynamic *dyn_tbl, *dyn_tbl_2, *dyn;
+    MIB_IPNET_TABLE2 *table;
+    DWORD key_size = (family == AF_INET) ? sizeof(struct nsi_ipv4_neighbour_key) : sizeof(struct nsi_ipv6_neighbour_key);
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        err = NsiAllocateAndGetTable( 1, mod, NSI_IP_NEIGHBOUR_TABLE, (void **)&key_tbl, key_size,
+                                      (void **)&rw_tbl, sizeof(*rw), (void **)&dyn_tbl, sizeof(*dyn),
+                                      NULL, 0, &count, 0 );
+todo_wine_if( family == AF_INET6 )
+        ok( !err, "got %x\n", err );
+        if (err) goto err;
+
+        err = GetIpNetTable2( family, &table );
+todo_wine
+        ok( !err, "got %x\n", err );
+        if (err) goto err;
+
+        err = NsiAllocateAndGetTable( 1, mod, NSI_IP_NEIGHBOUR_TABLE, (void **)&key_tbl_2, key_size,
+                                      NULL, 0, (void **)&dyn_tbl_2, sizeof(*dyn),
+                                      NULL, 0, &count2, 0 );
+        ok( !err, "got %x\n", err );
+        if (count == count2 && !memcmp( dyn_tbl, dyn_tbl_2, count * sizeof(*dyn) )) break;
+        NsiFreeTable( key_tbl_2, NULL, dyn_tbl_2, NULL );
+        NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, NULL );
+    }
+
+    ok( count == table->NumEntries, "%d vs %d\n", count, table->NumEntries );
+
+    for (i = 0; i < count; i++)
+    {
+        MIB_IPNET_ROW2 *row = table->Table + i;
+        rw = rw_tbl + i;
+        dyn = dyn_tbl + i;
+
+        if (family == AF_INET)
+        {
+            key4 = key_tbl + i;
+            ok( key4->addr.s_addr == row->Address.Ipv4.sin_addr.s_addr, "%08x vs %08x\n", key4->addr.s_addr,
+                row->Address.Ipv4.sin_addr.s_addr );
+            ok( key4->luid.Value == row->InterfaceLuid.Value, "%s vs %s\n", wine_dbgstr_longlong( key4->luid.Value ),
+                wine_dbgstr_longlong( row->InterfaceLuid.Value ) );
+            ok( key4->luid2.Value == row->InterfaceLuid.Value, "mismatch\n" );
+        }
+        else if (family == AF_INET6)
+        {
+            key6 = (struct nsi_ipv6_neighbour_key *)key_tbl + i;
+            ok( !memcmp( key6->addr.s6_addr, row->Address.Ipv6.sin6_addr.s6_addr, sizeof(IN6_ADDR) ), "mismatch\n" );
+            ok( key6->luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+            ok( key6->luid2.Value == row->InterfaceLuid.Value, "mismatch\n" );
+        }
+
+        ok( dyn->phys_addr_len == row->PhysicalAddressLength, "mismatch\n" );
+        ok( !memcmp( rw->phys_addr, row->PhysicalAddress, dyn->phys_addr_len ), "mismatch\n" );
+        ok( dyn->state == row->State, "%x vs %x\n", dyn->state, row->State );
+        ok( dyn->flags.is_router == row->IsRouter, "%x vs %x\n", dyn->flags.is_router, row->IsRouter );
+        ok( dyn->flags.is_unreachable == row->IsUnreachable, "%x vs %x\n", dyn->flags.is_unreachable, row->IsUnreachable );
+        ok( dyn->time == row->ReachabilityTime.LastReachable, "%x vs %x\n", dyn->time, row->ReachabilityTime.LastReachable );
+    }
+
+    NsiFreeTable( key_tbl_2, NULL, dyn_tbl_2, NULL );
+    NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, NULL );
+
+err:
+    winetest_pop_context();
+}
+
 static void test_ip_forward( int family )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ip_forward_rw, unk),
@@ -606,6 +682,8 @@ START_TEST( nsi )
 
     test_ip_unicast( AF_INET );
     test_ip_unicast( AF_INET6 );
+    test_ip_neighbour( AF_INET );
+    test_ip_neighbour( AF_INET6 );
     test_ip_forward( AF_INET );
     test_ip_forward( AF_INET6 );
 }

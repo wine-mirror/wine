@@ -98,6 +98,7 @@ struct nsi_ndis_ifinfo_static
 
 /* Undocumented NSI IP tables */
 #define NSI_IP_UNICAST_TABLE              10
+#define NSI_IP_NEIGHBOUR_TABLE            11
 #define NSI_IP_FORWARD_TABLE              16
 
 struct nsi_ipv4_unicast_key
@@ -132,6 +133,39 @@ struct nsi_ip_unicast_dynamic
 struct nsi_ip_unicast_static
 {
     ULONG64 creation_time;
+};
+
+struct nsi_ipv4_neighbour_key
+{
+    NET_LUID luid;
+    NET_LUID luid2;
+    IN_ADDR addr;
+    DWORD pad;
+};
+
+struct nsi_ipv6_neighbour_key
+{
+    NET_LUID luid;
+    NET_LUID luid2;
+    IN6_ADDR addr;
+};
+
+struct nsi_ip_neighbour_rw
+{
+    BYTE phys_addr[IF_MAX_PHYS_ADDRESS_LENGTH];
+};
+
+struct nsi_ip_neighbour_dynamic
+{
+    DWORD state;
+    DWORD time;
+    struct
+    {
+        USHORT is_router : 1;
+        USHORT is_unreachable : 1;
+    } flags;
+    USHORT phys_addr_len;
+    DWORD unk;
 };
 
 struct nsi_ipv4_forward_key
