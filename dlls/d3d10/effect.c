@@ -1330,12 +1330,28 @@ static HRESULT parse_fx10_variable_head(const char *data, size_t data_size,
 static HRESULT parse_fx10_annotation(const char *data, size_t data_size,
         const char **ptr, struct d3d10_effect_variable *a)
 {
+    DWORD offset;
     HRESULT hr;
 
     if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, a)))
         return hr;
 
-    skip_dword_unknown("annotation", ptr, 1);
+    read_dword(ptr, &offset);
+    TRACE("Annotation value is at offset %#x.\n", offset);
+
+    switch (a->type->basetype)
+    {
+        case D3D10_SVT_STRING:
+            if (!fx10_copy_string(data, data_size, offset, (char **)&a->u.buffer.local_buffer))
+            {
+                ERR("Failed to copy name.\n");
+                return E_OUTOFMEMORY;
+            }
+            break;
+
+        default:
+            FIXME("Unhandled object type %#x.\n", a->type->basetype);
+    }
 
     /* mark the variable as annotation */
     a->flag = D3D10_EFFECT_VARIABLE_ANNOTATION;
@@ -2824,6 +2840,10 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
                 }
 
                 heap_free(v->u.resource.srv);
+                break;
+
+            case D3D10_SVT_STRING:
+                heap_free(v->u.buffer.local_buffer);
                 break;
 
             default:
