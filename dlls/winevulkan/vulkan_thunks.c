@@ -8093,6 +8093,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_index_type_uint8",
     "VK_EXT_inline_uniform_block",
     "VK_EXT_line_rasterization",
+    "VK_EXT_load_store_op_none",
     "VK_EXT_memory_budget",
     "VK_EXT_memory_priority",
     "VK_EXT_multi_draw",
