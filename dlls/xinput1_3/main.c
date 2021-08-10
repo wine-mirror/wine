@@ -118,7 +118,6 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
     {{ &controller_critsect_debug[3], -1, 0, 0, 0, 0 }},
 };
 
-static DWORD last_check = 0;
 static HANDLE stop_event;
 static HANDLE done_event;
 
@@ -296,12 +295,8 @@ failed:
     return FALSE;
 }
 
-static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void **context );
-
-static void HID_find_gamepads(void)
+static void update_controller_list(void)
 {
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
@@ -313,20 +308,6 @@ static void HID_find_gamepads(void)
     DWORD idx;
     GUID guid;
     int i;
-
-    InitOnceExecuteOnce(&init_once, start_update_thread_once, NULL, NULL);
-
-    idx = GetTickCount();
-    if ((idx - last_check) < 2000) return;
-
-    EnterCriticalSection(&xinput_crit);
-
-    if ((idx - last_check) < 2000)
-    {
-        LeaveCriticalSection(&xinput_crit);
-        return;
-    }
-    last_check = idx;
 
     HidD_GetHidGuid(&guid);
 
@@ -368,7 +349,6 @@ static void HID_find_gamepads(void)
     }
 
     SetupDiDestroyDeviceInfoList(set);
-    LeaveCriticalSection(&xinput_crit);
 }
 
 static void controller_destroy(struct xinput_controller *controller)
@@ -541,14 +521,18 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
 static DWORD WINAPI hid_update_thread_proc(void *param)
 {
     HANDLE events[1];
-    DWORD count, ret;
+    DWORD count, ret = WAIT_TIMEOUT;
 
     do
     {
+        EnterCriticalSection(&xinput_crit);
+        if (ret == WAIT_TIMEOUT) update_controller_list();
+
         count = 0;
         events[count++] = stop_event;
+        LeaveCriticalSection(&xinput_crit);
     }
-    while ((ret = WaitForMultipleObjectsEx( count, events, FALSE, INFINITE, TRUE )) < count - 1);
+    while ((ret = WaitForMultipleObjectsEx( count, events, FALSE, 2000, TRUE )) < count - 1 || ret == WAIT_TIMEOUT);
 
     if (ret != count - 1) ERR("update thread exited unexpectedly, ret %u\n", ret);
     SetEvent(done_event);
@@ -569,7 +553,18 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
     if (!thread) ERR("failed to create update thread, error %u\n", GetLastError());
     CloseHandle(thread);
 
+    /* do it once now, to resolve delayed imports and populate the initial list */
+    EnterCriticalSection(&xinput_crit);
+    update_controller_list();
+    LeaveCriticalSection(&xinput_crit);
+
     return TRUE;
+}
+
+static void start_update_thread(void)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&init_once, start_update_thread_once, NULL, NULL);
 }
 
 static BOOL controller_lock(struct xinput_controller *controller)
@@ -617,7 +612,7 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
     to the controllers. Setting to true will send the last vibration
     value (sent to XInputSetState) to the controller and allow messages to
     be sent */
-    HID_find_gamepads();
+    start_update_thread();
 
     for (index = 0; index < XUSER_MAX_COUNT; index++)
     {
@@ -634,7 +629,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION *vib
 
     TRACE("(index %u, vibration %p)\n", index, vibration);
 
-    HID_find_gamepads();
+    start_update_thread();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
     if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
@@ -652,7 +647,7 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
 {
     if (!state) return ERROR_BAD_ARGUMENTS;
 
-    HID_find_gamepads();
+    start_update_thread();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
     if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
@@ -908,7 +903,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, X
 {
     TRACE("(index %u, flags 0x%x, capabilities %p)\n", index, flags, capabilities);
 
-    HID_find_gamepads();
+    start_update_thread();
 
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
 
