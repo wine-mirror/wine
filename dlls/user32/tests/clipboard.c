@@ -949,6 +949,48 @@ static void test_synthesized(void)
     r = CloseClipboard();
     ok(r, "gle %d\n", GetLastError());
     DestroyWindow( hwnd );
+
+    /* Check what happens to the delayed rendering clipboard formats when the
+     * owner window is destroyed.
+     */
+    hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)renderer_winproc );
+
+    r = open_clipboard(hwnd);
+    ok(r, "gle %d\n", GetLastError());
+    r = EmptyClipboard();
+    ok(r, "gle %d\n", GetLastError());
+    SetClipboardData( CF_UNICODETEXT, NULL );
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
+    r = open_clipboard(NULL);
+    ok(r, "gle %d\n", GetLastError());
+    count = CountClipboardFormats();
+    ok(count == 4, "count %u\n", count );
+
+    DestroyWindow( hwnd );
+
+    /* CF_UNICODETEXT and derivatives, CF_TEXT + CF_OEMTEXT, should be gone */
+    count = CountClipboardFormats();
+    todo_wine ok(count == 1, "count %u\n", count );
+    cf = EnumClipboardFormats( 0 );
+    ok(cf == CF_LOCALE, "unexpected clipboard format %u\n", cf);
+
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
+    r = open_clipboard(NULL);
+    ok(r, "gle %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    data = (void*)1; if (broken(1)) /* FIXME Crashes in Wine */
+    data = GetClipboardData( CF_TEXT );
+    ok(GetLastError() == 0xdeadbeef, "unexpected last error %d\n", GetLastError());
+    todo_wine ok(!data, "GetClipboardData() should have returned NULL\n");
+
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
 }
 
 static DWORD WINAPI clipboard_render_data_thread(void *param)
