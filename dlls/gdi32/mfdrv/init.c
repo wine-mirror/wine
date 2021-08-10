@@ -196,7 +196,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetTextColor,              /* pSetTextColor */
     NULL,                            /* pSetViewportExtEx */
     NULL,                            /* pSetViewportOrgEx */
-    MFDRV_SetWindowExtEx,            /* pSetWindowExtEx */
+    NULL,                            /* pSetWindowExtEx */
     MFDRV_SetWindowOrgEx,            /* pSetWindowOrgEx */
     NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */

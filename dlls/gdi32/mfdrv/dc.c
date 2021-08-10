@@ -105,9 +105,9 @@ BOOL METADC_SetViewportOrgEx( HDC hdc, INT x, INT y )
     return metadc_param2( hdc, META_SETVIEWPORTORG, x, y );
 }
 
-BOOL CDECL MFDRV_SetWindowExtEx( PHYSDEV dev, INT x, INT y, SIZE *size )
+BOOL METADC_SetWindowExtEx( HDC hdc, INT x, INT y )
 {
-    return MFDRV_MetaParam2( dev, META_SETWINDOWEXT, x, y );
+    return metadc_param2( hdc, META_SETWINDOWEXT, x, y );
 }
 
 BOOL CDECL MFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )

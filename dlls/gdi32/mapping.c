@@ -182,20 +182,6 @@ BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 
 BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (size)
-        *size = dc->attr->wnd_ext;
-
-    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
-    if (!cx || !cy) return FALSE;
-    dc->attr->wnd_ext.cx = cx;
-    dc->attr->wnd_ext.cy = cy;
-    /* The API docs say that you should call SetWindowExtEx before
-       SetViewportExtEx. This advice does not imply that Windows
-       doesn't ensure the isotropic mapping after SetWindowExtEx! */
-    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -362,24 +348,6 @@ BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
     DC_UpdateXforms( dc );
     release_dc_ptr( dc );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SetWindowExtEx    (GDI32.@)
- */
-BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
-{
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetWindowExtEx );
-        ret = physdev->funcs->pSetWindowExtEx( physdev, x, y, size );
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 

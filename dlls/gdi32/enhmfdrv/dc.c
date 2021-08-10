@@ -231,23 +231,15 @@ BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
+BOOL EMFDC_SetWindowExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetWindowExtEx );
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSETWINDOWEXTEX emr;
-    BOOL ret;
 
     emr.emr.iType = EMR_SETWINDOWEXTEX;
     emr.emr.nSize = sizeof(emr);
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    physDev->modifying_transform++;
-    ret = next->funcs->pSetWindowExtEx( next, cx, cy, size );
-    physDev->modifying_transform--;
-    return ret;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y )

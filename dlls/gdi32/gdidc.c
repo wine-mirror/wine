@@ -455,6 +455,25 @@ BOOL WINAPI GetWindowExtEx( HDC hdc, SIZE *size )
 }
 
 /***********************************************************************
+ *           SetWindowExtEx    (GDI32.@)
+ */
+BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, SIZE *size )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SetWindowExtEx( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SetWindowExtEx( dc_attr, x, y )) return FALSE;
+
+    if (size) *size = dc_attr->wnd_ext;
+    if (dc_attr->map_mode != MM_ISOTROPIC && dc_attr->map_mode != MM_ANISOTROPIC) return TRUE;
+    if (!x || !y) return FALSE;
+    dc_attr->wnd_ext.cx = x;
+    dc_attr->wnd_ext.cy = y;
+    return NtGdiComputeXformCoefficients( hdc );
+}
+
+/***********************************************************************
  *		GetWindowOrgEx (GDI32.@)
  */
 BOOL WINAPI GetWindowOrgEx( HDC hdc, POINT *point )
