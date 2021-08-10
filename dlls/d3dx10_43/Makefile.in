@@ -7,6 +7,7 @@ EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	async.c \
+	compiler.c \
 	d3dx10_43_main.c \
 	texture.c
 
