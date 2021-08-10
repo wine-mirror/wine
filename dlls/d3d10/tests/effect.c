@@ -86,6 +86,7 @@ static void test_effect_constant_buffer_type(void)
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectType *type, *type2, *null_type;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_EFFECT_DESC desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -100,6 +101,20 @@ static void test_effect_constant_buffer_type(void)
 
     hr = create_effect(fx_test_ecbt, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n", desc.ConstantBuffers);
+    ok(desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            desc.SharedConstantBuffers);
+    ok(desc.GlobalVariables == 2, "Unexpected global variables count %u.\n", desc.GlobalVariables);
+    ok(desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            desc.SharedGlobalVariables);
+    ok(desc.Techniques == 0, "Unexpected techniques count %u.\n", desc.Techniques);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
@@ -259,6 +274,7 @@ static void test_effect_variable_type(void)
     ID3D10EffectVariable *variable;
     ID3D10EffectType *type, *type2, *type3;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_EFFECT_DESC desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -273,6 +289,17 @@ static void test_effect_variable_type(void)
 
     hr = create_effect(fx_test_evt, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n", desc.ConstantBuffers);
+    ok(desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            desc.SharedConstantBuffers);
+    ok(desc.GlobalVariables == 1, "Unexpected global variables count %u.\n", desc.GlobalVariables);
+    ok(desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            desc.SharedGlobalVariables);
+    ok(desc.Techniques == 0, "Unexpected techniques count %u.\n", desc.Techniques);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
@@ -492,6 +519,7 @@ static void test_effect_variable_member(void)
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectVariable *variable, *variable2, *variable3, *null_variable;
     D3D10_EFFECT_VARIABLE_DESC desc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -504,6 +532,19 @@ static void test_effect_variable_member(void)
 
     hr = create_effect(fx_test_evm, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 1, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &desc);
@@ -693,6 +734,7 @@ static void test_effect_variable_element(void)
     ID3D10EffectType *type, *type2;
     D3D10_EFFECT_VARIABLE_DESC desc;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -705,6 +747,19 @@ static void test_effect_variable_element(void)
 
     hr = create_effect(fx_test_eve, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 1, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
     hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &desc);
@@ -1340,6 +1395,7 @@ static void test_effect_variable_type_class(void)
     ID3D10EffectType *type;
     D3D10_EFFECT_VARIABLE_DESC vd;
     D3D10_EFFECT_TYPE_DESC td;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -1354,6 +1410,19 @@ static void test_effect_variable_type_class(void)
 
     hr = create_effect(fx_test_evtc, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 21, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     /* get the null_constantbuffer, so that we can compare it to variables->GetParentConstantBuffer */
     null_buffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 1);
@@ -2364,6 +2433,7 @@ static void test_effect_constant_buffer_stride(void)
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectType *type;
     D3D10_EFFECT_TYPE_DESC tdesc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -2400,6 +2470,19 @@ static void test_effect_constant_buffer_stride(void)
 
     hr = create_effect(fx_test_ecbs, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 15, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 36, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     for (i=0; i<ARRAY_SIZE(tv_ecbs); i++)
     {
@@ -2691,6 +2774,7 @@ static void test_effect_local_shader(void)
     D3D10_EFFECT_VARIABLE_DESC vdesc = {0};
     ID3D10EffectType *type;
     D3D10_EFFECT_TYPE_DESC typedesc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectShaderVariable *null_shader, *null_anon_vs, *null_anon_ps, *null_anon_gs,
         *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs;
     ID3D10Device *device;
@@ -2704,6 +2788,19 @@ static void test_effect_local_shader(void)
 
     hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed!\n");
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 0, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 6, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 1, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     null_technique = effect->lpVtbl->GetTechniqueByIndex(effect, 0xffffffff);
     null_pass = null_technique->lpVtbl->GetPassByIndex(null_technique, 0xffffffff);
@@ -3562,6 +3659,7 @@ static void test_effect_get_variable_by(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectVariable *variable_by_index, *variable, *null_variable;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -3574,6 +3672,19 @@ static void test_effect_get_variable_by(void)
 
     hr = create_effect(fx_test_egvb, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 2, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 6, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     /* get the null variable */
     null_variable = effect->lpVtbl->GetVariableByIndex(effect, 0xffffffff);
@@ -3868,6 +3979,7 @@ static void test_effect_state_groups(void)
     D3D10_RASTERIZER_DESC rast_desc;
     D3D10_SAMPLER_DESC sampler_desc;
     ID3D10EffectSamplerVariable *s;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10BlendState *blend_state;
     UINT sample_mask, stencil_ref;
     ID3D10EffectBlendVariable *b;
@@ -3889,6 +4001,19 @@ static void test_effect_state_groups(void)
 
     hr = create_effect(fx_test_state_groups, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 4, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 1, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     v = effect->lpVtbl->GetVariableByName(effect, "sampler0");
     s = v->lpVtbl->AsSampler(v);
@@ -4124,6 +4249,7 @@ static void test_effect_state_group_defaults(void)
     D3D10_RASTERIZER_DESC rast_desc;
     D3D10_SAMPLER_DESC sampler_desc;
     ID3D10EffectSamplerVariable *s;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectBlendVariable *b;
     D3D10_BLEND_DESC blend_desc;
     D3D10_PASS_DESC pass_desc;
@@ -4142,6 +4268,19 @@ static void test_effect_state_group_defaults(void)
 
     hr = create_effect(fx_test_state_group_defaults, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 4, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 1, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     v = effect->lpVtbl->GetVariableByName(effect, "sampler0");
     s = v->lpVtbl->AsSampler(v);
@@ -4566,6 +4705,7 @@ static void test_effect_scalar_variable(void)
         {"b_a", D3D10_SVT_BOOL, TRUE},
     };
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectScalarVariable *s_v;
     ID3D10EffectVariable *var;
     ID3D10EffectType *type;
@@ -4583,6 +4723,19 @@ static void test_effect_scalar_variable(void)
 
     hr = create_effect(fx_test_scalar_variable, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 6, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     /* Check each different scalar type, make sure the variable returned is
      * valid, set it to a value, and make sure what we get back is the same
@@ -4966,6 +5119,7 @@ static void test_effect_vector_variable(void)
     };
     ID3D10EffectVectorVariable *v_var;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectVariable *var;
     ID3D10EffectType *type;
     ID3D10Device *device;
@@ -4982,6 +5136,19 @@ static void test_effect_vector_variable(void)
 
     hr = create_effect(fx_test_vector_variable, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 6, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -5298,6 +5465,7 @@ static void test_effect_matrix_variable(void)
     };
     ID3D10EffectMatrixVariable *m_var;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectVariable *var;
     ID3D10EffectType *type;
     ID3D10Device *device;
@@ -5314,6 +5482,19 @@ static void test_effect_matrix_variable(void)
 
     hr = create_effect(fx_test_matrix_variable, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 5, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 0, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -5466,6 +5647,7 @@ static void test_effect_resource_variable(void)
     ID3D10EffectShaderResourceVariable *t0, *t_a, *t_a_0;
     ID3D10EffectTechnique *technique;
     ID3D10Texture2D *tex0, *tex_a[2];
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectVariable *var;
     ID3D10EffectPass *pass;
     ID3D10Device *device;
@@ -5482,6 +5664,19 @@ static void test_effect_resource_variable(void)
 
     hr = create_effect(fx_test_resource_variable, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
+    ok(!effect_desc.IsChildEffect, "Unexpected IsChildEffect.\n");
+    ok(effect_desc.ConstantBuffers == 0, "Unexpected constant buffers count %u.\n",
+            effect_desc.ConstantBuffers);
+    ok(effect_desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
+            effect_desc.SharedConstantBuffers);
+    ok(effect_desc.GlobalVariables == 2, "Unexpected global variables count %u.\n",
+            effect_desc.GlobalVariables);
+    ok(effect_desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
+            effect_desc.SharedGlobalVariables);
+    ok(effect_desc.Techniques == 1, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
     var = effect->lpVtbl->GetVariableByName(effect, "t0");
     t0 = get_effect_shader_resource_variable(var);

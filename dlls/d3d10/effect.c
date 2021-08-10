@@ -3104,9 +3104,29 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDesc(ID3D10Effect *iface, D3D10_EFFECT_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
+    unsigned int i;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    /* FIXME */
+    desc->IsChildEffect = FALSE;
+    desc->SharedConstantBuffers = 0;
+    desc->SharedGlobalVariables = 0;
+
+    desc->ConstantBuffers = effect->local_buffer_count;
+    desc->Techniques = effect->technique_count;
+    desc->GlobalVariables = effect->local_variable_count;
+    for (i = 0; i < effect->local_buffer_count; ++i)
+    {
+        struct d3d10_effect_variable *l = &effect->local_buffers[i];
+        desc->GlobalVariables += l->type->member_count;
+    }
+
+    return S_OK;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByIndex(ID3D10Effect *iface,
