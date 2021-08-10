@@ -1709,7 +1709,7 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       break;
   }
 
-  if (!(pNumprs->dwOutFlags & NUMPRS_DECIMAL))
+  if (!(pNumprs->dwOutFlags & (NUMPRS_CURRENCY|NUMPRS_DECIMAL)))
   {
     if ((*lpszStr == '&' && (*(lpszStr+1) == 'H' || *(lpszStr+1) == 'h')) &&
         pNumprs->dwInFlags & NUMPRS_HEX_OCT)
@@ -1858,7 +1858,7 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
     }
     else if ((*lpszStr == 'e' || *lpszStr == 'E') &&
              pNumprs->dwInFlags & NUMPRS_EXPONENT &&
-             !(pNumprs->dwOutFlags & NUMPRS_EXPONENT))
+             !(pNumprs->dwOutFlags & (NUMPRS_HEX_OCT|NUMPRS_CURRENCY|NUMPRS_EXPONENT)))
     {
       dwState |= B_PROCESSING_EXPONENT;
       pNumprs->dwOutFlags |= NUMPRS_EXPONENT;
@@ -2006,6 +2006,7 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
       pNumprs->dwOutFlags |= NUMPRS_NEG;
     }
     else if (pNumprs->dwInFlags & NUMPRS_CURRENCY &&
+             !(pNumprs->dwOutFlags & NUMPRS_HEX_OCT) &&
              wcsncmp(lpszStr, chars.sCurrency, chars.sCurrencyLen) == 0)
     {
       pNumprs->dwOutFlags |= NUMPRS_CURRENCY;

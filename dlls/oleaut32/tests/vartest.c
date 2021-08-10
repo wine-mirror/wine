@@ -1654,12 +1654,10 @@ static void test_VarParseNumFromStrEn(void)
 
   /* With flag, currency amounts cannot be in hexadecimal */
   CONVERT("$&ha", NUMPRS_HEX_OCT|NUMPRS_CURRENCY);
-  todo_wine EXPECTFAIL;
+  EXPECTFAIL;
 
   CONVERT("&ha$", NUMPRS_HEX_OCT|NUMPRS_CURRENCY);
-  if (broken(1)) /* FIXME Reenable once Wine is less broken */
   EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_CURRENCY,NUMPRS_HEX_OCT,3,4,0);
-  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
   EXPECTRGB(0,10);
   EXPECTRGB(1,FAILDIG);
 
@@ -1797,9 +1795,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* With flag, incompatible with NUMPRS_HEX_OCT */
   CONVERT("&o1e1", NUMPRS_HEX_OCT|NUMPRS_EXPONENT);
-  if (broken(1)) /* FIXME Reenable once Wine is less broken */
   EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_EXPONENT,NUMPRS_HEX_OCT,3,3,0);
-  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
   EXPECT2(1,FAILDIG);
 
   /* With flag, even if it sort of looks like an exponent */
