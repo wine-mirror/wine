@@ -47,7 +47,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
-static UINT64 pulse_handle;
+static unixlib_handle_t pulse_handle;
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -82,10 +82,13 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(dll);
-        if (__wine_init_unix_lib(dll, reason, NULL, &pulse_handle))
+        if (NtQueryVirtualMemory( GetCurrentProcess(), dll, MemoryWineUnixFuncs,
+                                  &pulse_handle, sizeof(pulse_handle), NULL ))
+            return FALSE;
+        if (__wine_unix_call(pulse_handle, process_attach, NULL))
             return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
-        __wine_init_unix_lib(dll, reason, NULL, NULL);
+        __wine_unix_call(pulse_handle, process_detach, NULL);
         if (pulse_thread) {
             WaitForSingleObject(pulse_thread, INFINITE);
             CloseHandle(pulse_thread);

@@ -178,6 +178,32 @@ static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout,
     return r;
 }
 
+static NTSTATUS pulse_process_attach(void *args)
+{
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
+
+    if (pthread_mutex_init(&pulse_mutex, &attr) != 0)
+        pthread_mutex_init(&pulse_mutex, NULL);
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_process_detach(void *args)
+{
+    if (pulse_ctx)
+    {
+        pa_context_disconnect(pulse_ctx);
+        pa_context_unref(pulse_ctx);
+    }
+    if (pulse_ml)
+        pa_mainloop_quit(pulse_ml, 0);
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pulse_main_loop(void *args)
 {
     struct main_loop_params *params = args;
@@ -1929,8 +1955,10 @@ static NTSTATUS pulse_is_started(void *args)
     return STATUS_SUCCESS;
 }
 
-static const unixlib_entry_t unix_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    pulse_process_attach,
+    pulse_process_detach,
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,
@@ -1953,32 +1981,3 @@ static const unixlib_entry_t unix_funcs[] =
     pulse_test_connect,
     pulse_is_started,
 };
-
-NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
-{
-    pthread_mutexattr_t attr;
-
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        pthread_mutexattr_init(&attr);
-        pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
-
-        if (pthread_mutex_init(&pulse_mutex, &attr) != 0)
-            pthread_mutex_init(&pulse_mutex, NULL);
-
-        *(UINT64 *)ptr_out = (UINT_PTR)&unix_funcs;
-        break;
-    case DLL_PROCESS_DETACH:
-        if (pulse_ctx)
-        {
-            pa_context_disconnect(pulse_ctx);
-            pa_context_unref(pulse_ctx);
-        }
-        if (pulse_ml)
-            pa_mainloop_quit(pulse_ml, 0);
-
-    }
-
-    return STATUS_SUCCESS;
-}
