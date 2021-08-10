@@ -172,17 +172,6 @@ BOOL set_map_mode( DC *dc, int mode )
 
 BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (size)
-        *size = dc->attr->vport_ext;
-
-    if (dc->attr->map_mode != MM_ISOTROPIC && dc->attr->map_mode != MM_ANISOTROPIC) return TRUE;
-    if (!cx || !cy) return FALSE;
-    dc->attr->vport_ext.cx = cx;
-    dc->attr->vport_ext.cy = cy;
-    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -370,20 +359,17 @@ void lp_to_dp( DC *dc, POINT *points, INT count )
 
 
 /***********************************************************************
- *           SetViewportExtEx    (GDI32.@)
+ *           NtGdiComputeXformCoefficients    (win32u.@)
  */
-BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
+BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
 {
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetViewportExtEx );
-        ret = physdev->funcs->pSetViewportExtEx( physdev, x, y, size );
-        release_dc_ptr( dc );
-    }
-    return ret;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (dc->attr->map_mode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    DC_UpdateXforms( dc );
+    release_dc_ptr( dc );
+    return TRUE;
 }
 
 

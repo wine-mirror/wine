@@ -95,9 +95,9 @@ BOOL METADC_SetMapMode( HDC hdc, INT mode )
     return metadc_param1( hdc, META_SETMAPMODE, mode );
 }
 
-BOOL CDECL MFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size )
+BOOL METADC_SetViewportExtEx( HDC hdc, INT x, INT y )
 {
-    return MFDRV_MetaParam2( dev, META_SETVIEWPORTEXT, x, y );
+    return metadc_param2( hdc, META_SETVIEWPORTEXT, x, y );
 }
 
 BOOL CDECL MFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )

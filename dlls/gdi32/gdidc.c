@@ -477,6 +477,25 @@ BOOL WINAPI GetViewportExtEx( HDC hdc, SIZE *size )
 }
 
 /***********************************************************************
+ *           SetViewportExtEx    (GDI32.@)
+ */
+BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SetViewportExtEx( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SetViewportExtEx( dc_attr, x, y )) return FALSE;
+
+    if (size) *size = dc_attr->vport_ext;
+    if (dc_attr->map_mode != MM_ISOTROPIC && dc_attr->map_mode != MM_ANISOTROPIC) return TRUE;
+    if (!x || !y) return FALSE;
+    dc_attr->vport_ext.cx = x;
+    dc_attr->vport_ext.cy = y;
+    return NtGdiComputeXformCoefficients( hdc );
+}
+
+/***********************************************************************
  *		GetViewportOrgEx (GDI32.@)
  */
 BOOL WINAPI GetViewportOrgEx( HDC hdc, POINT *point )

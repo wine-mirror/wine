@@ -220,23 +220,15 @@ BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
+BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetViewportExtEx );
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSETVIEWPORTEXTEX emr;
-    BOOL ret;
 
     emr.emr.iType = EMR_SETVIEWPORTEXTEX;
     emr.emr.nSize = sizeof(emr);
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    physDev->modifying_transform++;
-    ret = next->funcs->pSetViewportExtEx( next, cx, cy, size );
-    physDev->modifying_transform--;
-    return ret;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )

@@ -153,6 +153,7 @@ BOOL     WINAPI NtGdiBeginPath( HDC hdc );
 BOOL     WINAPI NtGdiCancelDC( HDC hdc );
 BOOL     WINAPI NtGdiCloseFigure( HDC hdc );
 INT      WINAPI NtGdiCombineRgn( HRGN dest, HRGN src1, HRGN src2, INT mode );
+BOOL     WINAPI NtGdiComputeXformCoefficients( HDC hdc );
 HBITMAP  WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
                                    UINT bpp, const void *bits );
 HBRUSH   WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen );
