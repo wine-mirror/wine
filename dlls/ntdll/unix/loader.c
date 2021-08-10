@@ -1121,21 +1121,17 @@ static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr
 
     if (!entry)
     {
-        if (!name) return STATUS_DLL_NOT_FOUND;
-        if (!(handle = dlopen( name, RTLD_NOW ))) return STATUS_DLL_NOT_FOUND;
+        if (!name || !handle) return STATUS_DLL_NOT_FOUND;
 
         if (!(nt = dlsym( handle, "__wine_spec_nt_header" )) ||
             !(entry = dlsym( handle, "__wine_init_unix_lib" )))
-        {
-            dlclose( handle );
-            set_builtin_unix_info( module, NULL, NULL, NULL );
             return STATUS_INVALID_IMAGE_FORMAT;
-        }
+
         TRACE( "loaded %s for %p\n", debugstr_a(name), module );
         unix_module = (void *)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
         map_so_dll( nt, unix_module );
         fixup_ntdll_imports( name, unix_module );
-        set_builtin_unix_info( module, NULL, handle, entry );
+        set_builtin_unix_entry( module, entry );
     }
     init_func = entry;
     return init_func( module, reason, ptr_in, ptr_out );
@@ -1417,8 +1413,13 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
 done:
     if (status >= 0 && ext)
     {
+        void *handle;
+
         strcpy( ext, ".so" );
-        set_builtin_unix_info( *module, ptr, NULL, NULL );
+        if ((handle = dlopen( ptr, RTLD_NOW )))
+        {
+            if (set_builtin_unix_handle( *module, ptr, handle )) dlclose( handle );
+        }
     }
     free( file );
     return status;
