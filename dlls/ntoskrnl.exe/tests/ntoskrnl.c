@@ -2797,7 +2797,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     SetLastError(0xdeadbeef);
     ret = HidD_GetNumInputBuffers(async_file, &count);
     ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
-    todo_wine ok(count == 32, "HidD_GetNumInputBuffers returned %u\n", count);
+    ok(count == 32, "HidD_GetNumInputBuffers returned %u\n", count);
 
     SetLastError(0xdeadbeef);
     ret = HidD_SetNumInputBuffers(async_file, 2);
@@ -2812,7 +2812,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
     SetLastError(0xdeadbeef);
     ret = HidD_GetNumInputBuffers(file, &count);
     ok(ret, "HidD_GetNumInputBuffers failed last error %u\n", GetLastError());
-    todo_wine ok(count == 16, "HidD_GetNumInputBuffers returned %u\n", count);
+    ok(count == 16, "HidD_GetNumInputBuffers returned %u\n", count);
 
     if (polled)
     {

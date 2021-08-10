@@ -212,6 +212,8 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
 
     pdo_ext = child_pdo->DeviceExtension;
     pdo_ext->u.pdo.parent_fdo = fdo;
+    list_init( &pdo_ext->u.pdo.report_queues );
+    KeInitializeSpinLock( &pdo_ext->u.pdo.report_queues_lock );
     InitializeListHead(&pdo_ext->u.pdo.irp_queue);
     KeInitializeSpinLock(&pdo_ext->u.pdo.irp_queue_lock);
     wcscpy(pdo_ext->device_id, fdo_ext->device_id);
@@ -283,9 +285,6 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     }
 
     pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
-
-    pdo_ext->u.pdo.ring_buffer = RingBuffer_Create(
-            sizeof(HID_XFER_PACKET) + pdo_ext->u.pdo.preparsed_data->caps.InputReportByteLength);
 
     HID_StartDeviceThread(child_pdo);
 
@@ -490,8 +489,6 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             CloseHandle(ext->u.pdo.halt_event);
 
             free(ext->u.pdo.preparsed_data);
-            if (ext->u.pdo.ring_buffer)
-                RingBuffer_Destroy(ext->u.pdo.ring_buffer);
 
             RtlFreeUnicodeString(&ext->u.pdo.link_name);
 

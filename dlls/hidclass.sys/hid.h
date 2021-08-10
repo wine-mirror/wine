@@ -57,10 +57,12 @@ typedef struct _BASE_DEVICE_EXTENSION
             struct hid_preparsed_data *preparsed_data;
 
             ULONG poll_interval;
-            struct ReportRingBuffer *ring_buffer;
             HANDLE halt_event;
             HANDLE thread;
             UINT32 rawinput_handle;
+
+            KSPIN_LOCK report_queues_lock;
+            struct list report_queues;
 
             UNICODE_STRING link_name;
 
@@ -84,6 +86,12 @@ typedef struct _BASE_DEVICE_EXTENSION
 
     BOOL is_fdo;
 } BASE_DEVICE_EXTENSION;
+
+struct hid_report_queue
+{
+    struct list entry;
+    struct ReportRingBuffer *buffer;
+};
 
 void RingBuffer_Write(struct ReportRingBuffer *buffer, void *data) DECLSPEC_HIDDEN;
 UINT RingBuffer_AddPointer(struct ReportRingBuffer *buffer) DECLSPEC_HIDDEN;
