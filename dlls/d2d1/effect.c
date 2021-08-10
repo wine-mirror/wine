@@ -164,10 +164,42 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_GetValueByName(ID2D1Effect *iface, c
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
         BYTE *value, UINT32 value_size)
 {
-    FIXME("iface %p, index %u, type %#x, value %p, value_size %u stub!\n", iface, index, type,
-            value, value_size);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    const void *src;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, type %#x, value %p, value_size %u.\n", iface, index, type, value, value_size);
+
+    switch (index)
+    {
+        case D2D1_PROPERTY_CLSID:
+            if ((type != D2D1_PROPERTY_TYPE_UNKNOWN && type != D2D1_PROPERTY_TYPE_CLSID)
+                    || value_size != sizeof(*effect->info->clsid))
+                return E_INVALIDARG;
+            src = effect->info->clsid;
+            break;
+        case D2D1_PROPERTY_MIN_INPUTS:
+            if ((type != D2D1_PROPERTY_TYPE_UNKNOWN && type != D2D1_PROPERTY_TYPE_UINT32)
+                    || value_size != sizeof(effect->info->min_inputs))
+                return E_INVALIDARG;
+            src = &effect->info->min_inputs;
+            break;
+        case D2D1_PROPERTY_MAX_INPUTS:
+            if ((type != D2D1_PROPERTY_TYPE_UNKNOWN && type != D2D1_PROPERTY_TYPE_UINT32)
+                    || value_size != sizeof(effect->info->max_inputs))
+                return E_INVALIDARG;
+            src = &effect->info->max_inputs;
+            break;
+        default:
+            if (index < D2D1_PROPERTY_CLSID)
+                FIXME("Custom properties are not supported.\n");
+            else if (index <= D2D1_PROPERTY_MAX_INPUTS)
+                FIXME("Standard property %#x is not supported.\n", index);
+            return D2DERR_INVALID_PROPERTY;
+    }
+
+    memcpy(value, src, value_size);
+
+    return S_OK;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetValueSize(ID2D1Effect *iface, UINT32 index)

@@ -9738,8 +9738,6 @@ static void test_effect(BOOL d3d11)
         ID2D1Image_Release(image_b);
         ID2D1Image_Release(image_a);
 
-        todo_wine
-        {
         hr = ID2D1Effect_GetValue(effect, 0xdeadbeef, D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
         ok(hr == D2DERR_INVALID_PROPERTY, "Got unexpected hr %#x.\n", hr);
 
@@ -9751,11 +9749,14 @@ static void test_effect(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME, D2D1_PROPERTY_TYPE_STRING, buffer, sizeof(buffer));
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         str_size = (wcslen((WCHAR *)buffer) + 1) * sizeof(WCHAR);
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME, D2D1_PROPERTY_TYPE_STRING, buffer, str_size);
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME, D2D1_PROPERTY_TYPE_STRING, buffer, str_size - 1);
+        todo_wine
         ok(hr == D2DERR_INSUFFICIENT_BUFFER, "Got unexpected hr %#x.\n", hr);
 
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, 0xdeadbeef, (BYTE *)&clsid, sizeof(clsid));
@@ -9776,12 +9777,14 @@ static void test_effect(BOOL d3d11)
 
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CACHED,
                 D2D1_PROPERTY_TYPE_BOOL, (BYTE *)&cached, sizeof(cached));
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
             ok(cached == FALSE, "Got unexpected cached %d.\n", cached);
 
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_PRECISION,
                 D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&precision, sizeof(precision));
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
             ok(precision == D2D1_BUFFER_PRECISION_UNKNOWN, "Got unexpected precision %u.\n", precision);
@@ -9799,7 +9802,6 @@ static void test_effect(BOOL d3d11)
         if (hr == S_OK)
             ok(max_inputs == test->max_inputs, "Got unexpected max inputs %u, expected %u.\n",
                     max_inputs, test->max_inputs);
-        }
 
         input_count = ID2D1Effect_GetInputCount(effect);
         ok (input_count == test->default_input_count, "Got unexpected input count %u, expected %u.\n",
