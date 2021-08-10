@@ -508,9 +508,7 @@ todo_wine_if( family == AF_INET6 )
         if (err) goto err;
 
         err = GetIpNetTable2( family, &table );
-todo_wine
         ok( !err, "got %x\n", err );
-        if (err) goto err;
 
         err = NsiAllocateAndGetTable( 1, mod, NSI_IP_NEIGHBOUR_TABLE, (void **)&key_tbl_2, key_size,
                                       NULL, 0, (void **)&dyn_tbl_2, sizeof(*dyn),

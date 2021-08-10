@@ -2276,6 +2276,102 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
     return ret;
 }
 
+static void ipnet_row2_fill( MIB_IPNET_ROW2 *row, USHORT fam, void *key, struct nsi_ip_neighbour_rw *rw,
+                             struct nsi_ip_neighbour_dynamic *dyn )
+{
+    struct nsi_ipv4_neighbour_key *key4 = (struct nsi_ipv4_neighbour_key *)key;
+    struct nsi_ipv6_neighbour_key *key6 = (struct nsi_ipv6_neighbour_key *)key;
+
+    if (fam == WS_AF_INET)
+    {
+        row->Address.Ipv4.sin_family = fam;
+        row->Address.Ipv4.sin_port = 0;
+        row->Address.Ipv4.sin_addr = key4->addr;
+        memset( &row->Address.Ipv4.sin_zero, 0, sizeof(row->Address.Ipv4.sin_zero) );
+        row->InterfaceLuid = key4->luid;
+    }
+    else
+    {
+        row->Address.Ipv6.sin6_family = fam;
+        row->Address.Ipv6.sin6_port = 0;
+        row->Address.Ipv6.sin6_flowinfo = 0;
+        row->Address.Ipv6.sin6_addr = key6->addr;
+        row->Address.Ipv6.sin6_scope_id = 0;
+        row->InterfaceLuid = key6->luid;
+    }
+
+    ConvertInterfaceLuidToIndex( &row->InterfaceLuid, &row->InterfaceIndex );
+
+    row->PhysicalAddressLength = dyn->phys_addr_len;
+    if (row->PhysicalAddressLength > sizeof(row->PhysicalAddress))
+        row->PhysicalAddressLength = 0;
+    memcpy( row->PhysicalAddress, rw->phys_addr, row->PhysicalAddressLength );
+    memset( row->PhysicalAddress + row->PhysicalAddressLength, 0,
+            sizeof(row->PhysicalAddress) - row->PhysicalAddressLength );
+    row->State = dyn->state;
+    row->u.Flags = 0;
+    row->u.s.IsRouter = dyn->flags.is_router;
+    row->u.s.IsUnreachable = dyn->flags.is_unreachable;
+    row->ReachabilityTime.LastReachable = dyn->time;
+}
+
+/******************************************************************
+ *    GetIpNetTable2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIpNetTable2( ADDRESS_FAMILY family, MIB_IPNET_TABLE2 **table )
+{
+    void *key[2] = { NULL, NULL };
+    struct nsi_ip_neighbour_rw *rw[2] = { NULL, NULL };
+    struct nsi_ip_neighbour_dynamic *dyn[2] = { NULL, NULL };
+    static const USHORT fam[2] = { WS_AF_INET, WS_AF_INET6 };
+    static const DWORD key_size[2] = { sizeof(struct nsi_ipv4_neighbour_key), sizeof(struct nsi_ipv6_neighbour_key) };
+    DWORD err = ERROR_SUCCESS, i, size, count[2] = { 0, 0 };
+
+    TRACE( "%u, %p\n", family, table );
+
+    if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
+        return ERROR_INVALID_PARAMETER;
+
+    for (i = 0; i < 2; i++)
+    {
+        if (family != WS_AF_UNSPEC && family != fam[i]) continue;
+
+        err = NsiAllocateAndGetTable( 1, ip_module_id( fam[i] ), NSI_IP_NEIGHBOUR_TABLE, key + i, key_size[i],
+                                      (void **)rw + i, sizeof(**rw), (void **)dyn + i, sizeof(**dyn),
+                                      NULL, 0, count + i, 0 );
+        if (err) count[i] = 0;
+    }
+
+    size = FIELD_OFFSET(MIB_IPNET_TABLE2, Table[ count[0] + count[1] ]);
+    *table = heap_alloc( size );
+    if (!*table)
+    {
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
+
+    (*table)->NumEntries = count[0] + count[1];
+    for (i = 0; i < count[0]; i++)
+    {
+        MIB_IPNET_ROW2 *row = (*table)->Table + i;
+        struct nsi_ipv4_neighbour_key *key4 = (struct nsi_ipv4_neighbour_key *)key[0];
+
+        ipnet_row2_fill( row, fam[0], key4 + i, rw[0] + i, dyn[0] + i );
+    }
+
+    for (i = 0; i < count[1]; i++)
+    {
+        MIB_IPNET_ROW2 *row = (*table)->Table + count[0] + i;
+        struct nsi_ipv6_neighbour_key *key6 = (struct nsi_ipv6_neighbour_key *)key[1];
+
+        ipnet_row2_fill( row, fam[1], key6 + i, rw[1] + i, dyn[1] + i );
+    }
+
+err:
+    for (i = 0; i < 2; i++) NsiFreeTable( key[i], rw[i], dyn[i], NULL );
+    return err;
+}
+
 /* Gets the DNS server list into the list beginning at list.  Assumes that
  * a single server address may be placed at list if *len is at least
  * sizeof(IP_ADDR_STRING) long.  Otherwise, list->Next is set to firstDynamic,
@@ -3557,17 +3653,6 @@ char *WINAPI IPHLP_if_indextoname( NET_IFINDEX index, char *name )
     err = ConvertInterfaceLuidToNameA( &luid, name, IF_MAX_STRING_SIZE );
     if (err) return NULL;
     return name;
-}
-
-/******************************************************************
- *    GetIpNetTable2 (IPHLPAPI.@)
- */
-DWORD WINAPI GetIpNetTable2(ADDRESS_FAMILY family, PMIB_IPNET_TABLE2 *table)
-{
-    static int once;
-
-    if (!once++) FIXME("(%u %p): stub\n", family, table);
-    return ERROR_NOT_SUPPORTED;
 }
 
 /******************************************************************
