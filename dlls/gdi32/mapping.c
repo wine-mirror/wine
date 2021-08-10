@@ -82,20 +82,6 @@ static void MAPPING_FixIsotropic( DC * dc )
 }
 
 
-/***********************************************************************
- *           null driver fallback implementations
- */
-
-BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
-{
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
-{
-    return TRUE;
-}
-
 BOOL set_map_mode( DC *dc, int mode )
 {
     SIZE virtual_size, virtual_res;
@@ -152,26 +138,6 @@ BOOL set_map_mode( DC *dc, int mode )
     /* RTL layout is always MM_ANISOTROPIC */
     if (!(dc->attr->layout & LAYOUT_RTL)) dc->attr->map_mode = mode;
     DC_UpdateXforms( dc );
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
-{
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
-{
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
-{
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
-{
     return TRUE;
 }
 

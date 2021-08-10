@@ -127,8 +127,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pLineTo)(PHYSDEV,INT,INT);
     BOOL     (CDECL *pModifyWorldTransform)(PHYSDEV,const XFORM*,DWORD);
     BOOL     (CDECL *pMoveTo)(PHYSDEV,INT,INT);
-    BOOL     (CDECL *pOffsetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
-    BOOL     (CDECL *pOffsetWindowOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pPaintRgn)(PHYSDEV,HRGN);
     BOOL     (CDECL *pPatBlt)(PHYSDEV,struct bitblt_coords*,DWORD);
     BOOL     (CDECL *pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
@@ -149,7 +147,6 @@ struct gdi_dc_funcs
     HBRUSH   (CDECL *pSelectBrush)(PHYSDEV,HBRUSH,const struct brush_pattern*);
     BOOL     (CDECL *pSelectClipPath)(PHYSDEV,INT);
     HFONT    (CDECL *pSelectFont)(PHYSDEV,HFONT,UINT*);
-    HPALETTE (CDECL *pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (CDECL *pSelectPen)(PHYSDEV,HPEN,const struct brush_pattern*);
     COLORREF (CDECL *pSetBkColor)(PHYSDEV,COLORREF);
     UINT     (CDECL *pSetBoundsRect)(PHYSDEV,RECT*,UINT);
@@ -160,10 +157,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
     COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);
     COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
-    BOOL     (CDECL *pSetViewportExtEx)(PHYSDEV,INT,INT,SIZE*);
-    BOOL     (CDECL *pSetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
-    BOOL     (CDECL *pSetWindowExtEx)(PHYSDEV,INT,INT,SIZE*);
-    BOOL     (CDECL *pSetWindowOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pSetWorldTransform)(PHYSDEV,const XFORM*);
     INT      (CDECL *pStartDoc)(PHYSDEV,const DOCINFOW*);
     INT      (CDECL *pStartPage)(PHYSDEV);
@@ -183,7 +176,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 58
+#define WINE_GDI_DRIVER_VERSION 59
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

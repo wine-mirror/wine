@@ -161,8 +161,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pLineTo */
     NULL,                            /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
-    NULL,                            /* pOffsetViewportOrgEx */
-    NULL,                            /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
     NULL,                            /* pPatBlt */
     NULL,                            /* pPie */
@@ -183,7 +181,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
     NULL,                            /* pSelectFont */
-    NULL,                            /* pSelectPalette */
     NULL,                            /* pSelectPen */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
@@ -194,10 +191,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetPixel */
     MFDRV_SetTextColor,              /* pSetTextColor */
-    NULL,                            /* pSetViewportExtEx */
-    NULL,                            /* pSetViewportOrgEx */
-    NULL,                            /* pSetWindowExtEx */
-    NULL,                            /* pSetWindowOrgEx */
     NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */

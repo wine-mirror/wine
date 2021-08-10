@@ -402,8 +402,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
     X11DRV_PaintRgn,                    /* pPaintRgn */
     X11DRV_PatBlt,                      /* pPatBlt */
     X11DRV_Pie,                         /* pPie */
@@ -424,7 +422,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     X11DRV_SelectFont,                  /* pSelectFont */
-    NULL,                               /* pSelectPalette */
     X11DRV_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetBkColor */
     X11DRV_SetBoundsRect,               /* pSetBoundsRect */
@@ -435,10 +432,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */
     X11DRV_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */

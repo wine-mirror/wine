@@ -751,11 +751,6 @@ static HFONT CDECL nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
     return font;
 }
 
-static HPALETTE CDECL nulldrv_SelectPalette( PHYSDEV dev, HPALETTE palette, BOOL bkgnd )
-{
-    return palette;
-}
-
 static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen, const struct brush_pattern *pattern )
 {
     return pen;
@@ -898,8 +893,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_LineTo,                     /* pLineTo */
     nulldrv_ModifyWorldTransform,       /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
-    nulldrv_OffsetViewportOrgEx,        /* pOffsetViewportOrg */
-    nulldrv_OffsetWindowOrgEx,          /* pOffsetWindowOrg */
     nulldrv_PaintRgn,                   /* pPaintRgn */
     nulldrv_PatBlt,                     /* pPatBlt */
     nulldrv_Pie,                        /* pPie */
@@ -920,7 +913,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SelectBrush,                /* pSelectBrush */
     nulldrv_SelectClipPath,             /* pSelectClipPath */
     nulldrv_SelectFont,                 /* pSelectFont */
-    nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
     nulldrv_SetBkColor,                 /* pSetBkColor */
     nulldrv_SetBoundsRect,              /* pSetBoundsRect */
@@ -931,10 +923,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
     nulldrv_SetPixel,                   /* pSetPixel */
     nulldrv_SetTextColor,               /* pSetTextColor */
-    nulldrv_SetViewportExtEx,           /* pSetViewportExt */
-    nulldrv_SetViewportOrgEx,           /* pSetViewportOrg */
-    nulldrv_SetWindowExtEx,             /* pSetWindowExt */
-    nulldrv_SetWindowOrgEx,             /* pSetWindowOrg */
     nulldrv_SetWorldTransform,          /* pSetWorldTransform */
     nulldrv_StartDoc,                   /* pStartDoc */
     nulldrv_StartPage,                  /* pStartPage */

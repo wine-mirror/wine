@@ -3873,8 +3873,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pLineTo */
     NULL,                           /* pModifyWorldTransform */
     NULL,                           /* pMoveTo */
-    NULL,                           /* pOffsetViewportOrg */
-    NULL,                           /* pOffsetWindowOrg */
     NULL,                           /* pPaintRgn */
     NULL,                           /* pPatBlt */
     NULL,                           /* pPie */
@@ -3895,7 +3893,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pSelectBrush */
     NULL,                           /* pSelectClipPath */
     font_SelectFont,                /* pSelectFont */
-    NULL,                           /* pSelectPalette */
     NULL,                           /* pSelectPen */
     NULL,                           /* pSetBkColor */
     NULL,                           /* pSetBoundsRect */
@@ -3906,10 +3903,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pSetDeviceGammaRamp */
     NULL,                           /* pSetPixel */
     NULL,                           /* pSetTextColor */
-    NULL,                           /* pSetViewportExt */
-    NULL,                           /* pSetViewportOrg */
-    NULL,                           /* pSetWindowExt */
-    NULL,                           /* pSetWindowOrg */
     NULL,                           /* pSetWorldTransform */
     NULL,                           /* pStartDoc */
     NULL,                           /* pStartPage */

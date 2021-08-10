@@ -682,8 +682,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
     dibdrv_PaintRgn,                    /* pPaintRgn */
     dibdrv_PatBlt,                      /* pPatBlt */
     dibdrv_Pie,                         /* pPie */
@@ -704,7 +702,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     dibdrv_SelectFont,                  /* pSelectFont */
-    NULL,                               /* pSelectPalette */
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetBkColor */
     dibdrv_SetBoundsRect,               /* pSetBoundsRect */
@@ -715,10 +712,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     dibdrv_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
@@ -1262,8 +1255,6 @@ static const struct gdi_dc_funcs window_driver =
     windrv_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
     windrv_PaintRgn,                    /* pPaintRgn */
     windrv_PatBlt,                      /* pPatBlt */
     windrv_Pie,                         /* pPie */
@@ -1284,7 +1275,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
-    NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetBkColor */
     windrv_SetBoundsRect,               /* pSetBoundsRect */
@@ -1295,10 +1285,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     windrv_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */

@@ -96,8 +96,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_LineTo,                   /* pLineTo */
     EMFDRV_ModifyWorldTransform,     /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
-    NULL,                            /* pOffsetViewportOrgEx */
-    NULL,                            /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
     EMFDRV_PatBlt,                   /* pPatBlt */
     EMFDRV_Pie,                      /* pPie */
@@ -118,7 +116,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSelectBrush */
     EMFDRV_SelectClipPath,           /* pSelectClipPath */
     EMFDRV_SelectFont,               /* pSelectFont */
-    NULL,                            /* pSelectPalette */
     NULL,                            /* pSelectPen */
     EMFDRV_SetBkColor,               /* pSetBkColor */
     NULL,                            /* pSetBoundsRect */
@@ -129,10 +126,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetPixel,                 /* pSetPixel */
     EMFDRV_SetTextColor,             /* pSetTextColor */
-    NULL,                            /* pSetViewportExtEx */
-    NULL,                            /* pSetViewportOrgEx */
-    NULL,                            /* pSetWindowExtEx */
-    NULL,                            /* pSetWindowOrgEx */
     EMFDRV_SetWorldTransform,        /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */

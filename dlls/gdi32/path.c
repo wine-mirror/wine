@@ -2134,8 +2134,6 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_LineTo,                     /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     pathdrv_MoveTo,                     /* pMoveTo */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
     pathdrv_Pie,                        /* pPie */
@@ -2156,7 +2154,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
-    NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBoundsRect */
@@ -2167,10 +2164,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */

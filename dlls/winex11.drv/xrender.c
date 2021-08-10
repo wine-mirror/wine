@@ -2214,8 +2214,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
     NULL,                               /* pPie */
@@ -2236,7 +2234,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_SelectBrush,             /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     xrenderdrv_SelectFont,              /* pSelectFont */
-    NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBoundsRect */
@@ -2247,10 +2244,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */

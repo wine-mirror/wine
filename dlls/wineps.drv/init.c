@@ -837,8 +837,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_LineTo,                       /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
     PSDRV_PaintRgn,                     /* pPaintRgn */
     PSDRV_PatBlt,                       /* pPatBlt */
     PSDRV_Pie,                          /* pPie */
@@ -859,7 +857,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_SelectBrush,                  /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     PSDRV_SelectFont,                   /* pSelectFont */
-    NULL,                               /* pSelectPalette */
     PSDRV_SelectPen,                    /* pSelectPen */
     PSDRV_SetBkColor,                   /* pSetBkColor */
     NULL,                               /* pSetBoundsRect */
@@ -870,10 +867,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetDeviceGammaRamp */
     PSDRV_SetPixel,                     /* pSetPixel */
     PSDRV_SetTextColor,                 /* pSetTextColor */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     PSDRV_StartDoc,                     /* pStartDoc */
     PSDRV_StartPage,                    /* pStartPage */
