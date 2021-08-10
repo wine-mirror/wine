@@ -130,7 +130,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SetPixel,                 /* pSetPixel */
     EMFDRV_SetTextColor,             /* pSetTextColor */
     NULL,                            /* pSetViewportExtEx */
-    EMFDRV_SetViewportOrgEx,         /* pSetViewportOrgEx */
+    NULL,                            /* pSetViewportOrgEx */
     EMFDRV_SetWindowExtEx,           /* pSetWindowExtEx */
     EMFDRV_SetWindowOrgEx,           /* pSetWindowOrgEx */
     EMFDRV_SetWorldTransform,        /* pSetWorldTransform */

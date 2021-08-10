@@ -250,23 +250,15 @@ BOOL CDECL EMFDRV_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     return ret;
 }
 
-BOOL CDECL EMFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
+BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetViewportOrgEx );
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSETVIEWPORTORGEX emr;
-    BOOL ret;
 
     emr.emr.iType = EMR_SETVIEWPORTORGEX;
     emr.emr.nSize = sizeof(emr);
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    physDev->modifying_transform++;
-    ret = next->funcs->pSetViewportOrgEx( next, x, y, pt );
-    physDev->modifying_transform--;
-    return ret;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )

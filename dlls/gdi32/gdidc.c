@@ -507,6 +507,23 @@ BOOL WINAPI GetViewportOrgEx( HDC hdc, POINT *point )
 }
 
 /***********************************************************************
+ *           SetViewportOrgEx    (GDI32.@)
+ */
+BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, POINT *point )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SetViewportOrgEx( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SetViewportOrgEx( dc_attr, x, y )) return FALSE;
+
+    if (point) *point = dc_attr->vport_org;
+    dc_attr->vport_org.x = x;
+    dc_attr->vport_org.y = y;
+    return NtGdiComputeXformCoefficients( hdc );
+}
+
+/***********************************************************************
  *           GetWorldTransform    (GDI32.@)
  */
 BOOL WINAPI GetWorldTransform( HDC hdc, XFORM *xform )
