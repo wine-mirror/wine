@@ -29,6 +29,7 @@ struct d3dx9_line
 
     IDirect3DDevice9 *device;
     IDirect3DStateBlock9 *state;
+    float width;
 };
 
 static inline struct d3dx9_line *impl_from_ID3DXLine(ID3DXLine *iface)
@@ -192,16 +193,25 @@ static float WINAPI d3dx9_line_GetPatternScale(ID3DXLine *iface)
 
 static HRESULT WINAPI d3dx9_line_SetWidth(ID3DXLine *iface, float width)
 {
-    FIXME("iface %p, width %.8e stub!\n", iface, width);
+    struct d3dx9_line *line = impl_from_ID3DXLine(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, width %.8e.\n", iface, width);
+
+    if (width <= 0.0f)
+        return D3DERR_INVALIDCALL;
+
+    line->width = width;
+
+    return D3D_OK;
 }
 
 static float WINAPI d3dx9_line_GetWidth(ID3DXLine *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dx9_line *line = impl_from_ID3DXLine(iface);
 
-    return 1.0f;
+    TRACE("iface %p.\n", iface);
+
+    return line->width;
 }
 
 static HRESULT WINAPI d3dx9_line_SetAntialias(ID3DXLine *iface, BOOL antialias)
@@ -306,6 +316,7 @@ HRESULT WINAPI D3DXCreateLine(struct IDirect3DDevice9 *device, struct ID3DXLine 
     object->ref = 1;
     object->device = device;
     IDirect3DDevice9_AddRef(device);
+    object->width = 1.0f;
 
     *line = &object->ID3DXLine_iface;
 

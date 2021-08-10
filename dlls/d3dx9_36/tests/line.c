@@ -115,6 +115,38 @@ static void test_create_line(IDirect3DDevice9* device)
     ok(ref == 0, "Got %x references to line %p, expected 0\n", ref, line);
 }
 
+static void test_line_width(IDirect3DDevice9* device)
+{
+    ID3DXLine *line = NULL;
+    ULONG refcount;
+    float width;
+    HRESULT hr;
+
+    hr = D3DXCreateLine(device, &line);
+    ok(hr == D3D_OK, "Failed to create a line, hr %#x.\n", hr);
+
+    width = ID3DXLine_GetWidth(line);
+    ok(width == 1.0f, "Unexpected line width %.8e.\n", width);
+
+    hr = ID3DXLine_SetWidth(line, 0.0f);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    width = ID3DXLine_GetWidth(line);
+    ok(width == 1.0f, "Unexpected line width %.8e.\n", width);
+
+    hr = ID3DXLine_SetWidth(line, -1.0f);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    width = ID3DXLine_GetWidth(line);
+    ok(width == 1.0f, "Unexpected line width %.8e.\n", width);
+
+    hr = ID3DXLine_SetWidth(line, 10.0f);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    width = ID3DXLine_GetWidth(line);
+    ok(width == 10.0f, "Unexpected line width %.8e.\n", width);
+
+    refcount = ID3DXLine_Release(line);
+    ok(!refcount, "Got %u references to line.\n", refcount);
+}
+
 START_TEST(line)
 {
     HWND wnd;
@@ -148,6 +180,7 @@ START_TEST(line)
     }
 
     test_create_line(device);
+    test_line_width(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
