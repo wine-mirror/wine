@@ -187,14 +187,6 @@ BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
 
 BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (pt)
-        *pt = dc->attr->wnd_org;
-
-    dc->attr->wnd_org.x = x;
-    dc->attr->wnd_org.y = y;
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -348,24 +340,6 @@ BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
     DC_UpdateXforms( dc );
     release_dc_ptr( dc );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SetWindowOrgEx    (GDI32.@)
- */
-BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
-{
-    BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetWindowOrgEx );
-        ret = physdev->funcs->pSetWindowOrgEx( physdev, x, y, pt );
-        release_dc_ptr( dc );
-    }
-    return ret;
 }
 
 

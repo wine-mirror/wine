@@ -132,7 +132,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSetViewportExtEx */
     NULL,                            /* pSetViewportOrgEx */
     NULL,                            /* pSetWindowExtEx */
-    EMFDRV_SetWindowOrgEx,           /* pSetWindowOrgEx */
+    NULL,                            /* pSetWindowOrgEx */
     EMFDRV_SetWorldTransform,        /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */

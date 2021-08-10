@@ -101,6 +101,7 @@ extern BOOL METADC_SetTextJustification( HDC hdc, INT extra, INT breaks ) DECLSP
 extern BOOL METADC_SetViewportExtEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetViewportOrgEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetWindowExtEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL METADC_SetWindowOrgEx( HDC, INT x, INT y ) DECLSPEC_HIDDEN;
 
 /* enhanced metafiles */
 extern BOOL EMFDC_AbortPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
@@ -170,5 +171,6 @@ extern BOOL EMFDC_SetTextJustification( DC_ATTR *dc_attr, INT extra, INT breaks 
 extern BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetWindowExtEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_SetWindowOrgEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */

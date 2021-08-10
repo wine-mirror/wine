@@ -197,7 +197,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetViewportExtEx */
     NULL,                            /* pSetViewportOrgEx */
     NULL,                            /* pSetWindowExtEx */
-    MFDRV_SetWindowOrgEx,            /* pSetWindowOrgEx */
+    NULL,                            /* pSetWindowOrgEx */
     NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */

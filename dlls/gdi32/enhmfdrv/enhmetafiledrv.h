@@ -110,7 +110,6 @@ extern INT      CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDes
                                                 BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
                                          PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
