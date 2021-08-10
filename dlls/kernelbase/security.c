@@ -667,7 +667,7 @@ BOOL WINAPI CreateRestrictedToken( HANDLE token, DWORD flags,
 
     if (delete_priv_count)
     {
-        if (!(nt_privs = heap_alloc( offsetof( TOKEN_GROUPS, Groups[delete_priv_count] ) ))) goto out;
+        if (!(nt_privs = heap_alloc( offsetof( TOKEN_PRIVILEGES, Privileges[delete_priv_count] ) ))) goto out;
         nt_privs->PrivilegeCount = delete_priv_count;
         memcpy( nt_privs->Privileges, delete_privs, delete_priv_count * sizeof(*delete_privs) );
     }
