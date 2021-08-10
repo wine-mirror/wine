@@ -70,7 +70,10 @@ struct xinput_controller
         HIDP_VALUE_CAPS ry_caps;
         HIDP_VALUE_CAPS rt_caps;
 
-        char *input_report_buf[2];
+        HANDLE read_event;
+        OVERLAPPED read_ovl;
+
+        char *input_report_buf;
         char *output_report_buf;
     } hid;
 };
@@ -120,6 +123,7 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
 
 static HANDLE stop_event;
 static HANDLE done_event;
+static HANDLE update_event;
 
 static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
 {
@@ -252,6 +256,11 @@ static void controller_enable(struct xinput_controller *controller)
     if (controller->enabled) return;
     if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
     controller->enabled = TRUE;
+
+    memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
+    controller->hid.read_ovl.hEvent = controller->hid.read_event;
+    ReadFile(controller->device, controller->hid.input_report_buf, controller->hid.caps.InputReportByteLength, NULL, &controller->hid.read_ovl);
+    SetEvent(update_event);
 }
 
 static void controller_disable(struct xinput_controller *controller)
@@ -261,19 +270,25 @@ static void controller_disable(struct xinput_controller *controller)
     if (!controller->enabled) return;
     if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
     controller->enabled = FALSE;
+
+    CancelIoEx(controller->device, &controller->hid.read_ovl);
+    SetEvent(update_event);
 }
 
 static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSED_DATA preparsed,
                             HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
+    HANDLE event = NULL;
+
     controller->hid.caps = *caps;
     if (!controller_check_caps(controller, preparsed)) goto failed;
+    if (!(event = CreateEventA(NULL, FALSE, FALSE, NULL))) goto failed;
 
     TRACE("Found gamepad %s\n", debugstr_w(device_path));
 
     controller->hid.preparsed = preparsed;
-    if (!(controller->hid.input_report_buf[0] = calloc(1, controller->hid.caps.InputReportByteLength))) goto failed;
-    if (!(controller->hid.input_report_buf[1] = calloc(1, controller->hid.caps.InputReportByteLength))) goto failed;
+    controller->hid.read_event = event;
+    if (!(controller->hid.input_report_buf = calloc(1, controller->hid.caps.InputReportByteLength))) goto failed;
     if (!(controller->hid.output_report_buf = calloc(1, controller->hid.caps.OutputReportByteLength))) goto failed;
 
     memset(&controller->state, 0, sizeof(controller->state));
@@ -288,10 +303,10 @@ static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSE
     return TRUE;
 
 failed:
-    free(controller->hid.input_report_buf[0]);
-    free(controller->hid.input_report_buf[1]);
+    free(controller->hid.input_report_buf);
     free(controller->hid.output_report_buf);
     memset(&controller->hid, 0, sizeof(controller->hid));
+    CloseHandle(event);
     return FALSE;
 }
 
@@ -326,7 +341,8 @@ static void update_controller_list(void)
         if (i == XUSER_MAX_COUNT) break; /* no more slots */
 
         device = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
-                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                             FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL);
         if (device == INVALID_HANDLE_VALUE) continue;
 
         preparsed = NULL;
@@ -361,8 +377,7 @@ static void controller_destroy(struct xinput_controller *controller)
         CloseHandle(controller->device);
         controller->device = NULL;
 
-        free(controller->hid.input_report_buf[0]);
-        free(controller->hid.input_report_buf[1]);
+        free(controller->hid.input_report_buf);
         free(controller->hid.output_report_buf);
         HidD_FreePreparsedData(controller->hid.preparsed);
         memset(&controller->hid, 0, sizeof(controller->hid));
@@ -380,6 +395,7 @@ static void stop_update_thread(void)
 
     CloseHandle(stop_event);
     CloseHandle(done_event);
+    CloseHandle(update_event);
 
     for (i = 0; i < XUSER_MAX_COUNT; i++) controller_destroy(&controllers[i]);
 }
@@ -399,136 +415,126 @@ static LONG scale_value(ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG
     return min + MulDiv(tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin);
 }
 
-static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE *state)
+static void read_controller_state(struct xinput_controller *controller)
 {
-    int i;
-    char **report_buf = controller->hid.input_report_buf, *tmp;
-    ULONG report_len = controller->hid.caps.InputReportByteLength;
+    ULONG read_len, report_len = controller->hid.caps.InputReportByteLength;
+    char *report_buf = controller->hid.input_report_buf;
+    XINPUT_STATE state;
     NTSTATUS status;
-
     USAGE buttons[11];
-    ULONG button_length, value;
+    ULONG i, button_length, value;
 
-    if (!controller->enabled) return;
-
-    if (!HidD_GetInputReport(controller->device, report_buf[0], report_len))
+    if (!GetOverlappedResult(controller->device, &controller->hid.read_ovl, &read_len, TRUE))
     {
-        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE)
-        {
-            EnterCriticalSection(&xinput_crit);
-            controller_destroy(controller);
-            LeaveCriticalSection(&xinput_crit);
-        }
-        else ERR("Failed to get input report, HidD_GetInputReport failed with error %u\n", GetLastError());
+        if (GetLastError() == ERROR_OPERATION_ABORTED) return;
+        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE) controller_destroy(controller);
+        else ERR("Failed to read input report, GetOverlappedResult failed with error %u\n", GetLastError());
         return;
     }
 
-    if (memcmp(report_buf[0], report_buf[1], report_len) != 0)
+    button_length = ARRAY_SIZE(buttons);
+    status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#x\n", status);
+
+    state.Gamepad.wButtons = 0;
+    for (i = 0; i < button_length; i++)
     {
-        controller->state.dwPacketNumber++;
-        button_length = ARRAY_SIZE(buttons);
-        status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#x\n", status);
-
-        controller->state.Gamepad.wButtons = 0;
-        for (i = 0; i < button_length; i++)
+        switch (buttons[i])
         {
-            switch (buttons[i])
-            {
-                case 1: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_A; break;
-                case 2: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_B; break;
-                case 3: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_X; break;
-                case 4: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
-                case 5: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
-                case 6: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
-                case 7: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
-                case 8: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
-                case 9: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
-                case 10: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
-                case 11: controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
-            }
+        case 1: state.Gamepad.wButtons |= XINPUT_GAMEPAD_A; break;
+        case 2: state.Gamepad.wButtons |= XINPUT_GAMEPAD_B; break;
+        case 3: state.Gamepad.wButtons |= XINPUT_GAMEPAD_X; break;
+        case 4: state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
+        case 5: state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
+        case 6: state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
+        case 7: state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+        case 8: state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
+        case 9: state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
+        case 10: state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
+        case 11: state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
         }
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#x\n", status);
-        else
-        {
-            switch (value)
-            {
-                /* 8 1 2
-                 * 7 0 3
-                 * 6 5 4 */
-                case 0:
-                    break;
-                case 1:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP;
-                    break;
-                case 2:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
-                    break;
-                case 3:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT;
-                    break;
-                case 4:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
-                    break;
-                case 5:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN;
-                    break;
-                case 6:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
-                    break;
-                case 7:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT;
-                    break;
-                case 8:
-                    controller->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
-                    break;
-            }
-        }
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
-        else controller->state.Gamepad.sThumbLX = scale_value(value, &controller->hid.lx_caps, -32768, 32767);
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
-        else controller->state.Gamepad.sThumbLY = -scale_value(value, &controller->hid.ly_caps, -32768, 32767) - 1;
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
-        else controller->state.Gamepad.sThumbRX = scale_value(value, &controller->hid.rx_caps, -32768, 32767);
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
-        else controller->state.Gamepad.sThumbRY = -scale_value(value, &controller->hid.ry_caps, -32768, 32767) - 1;
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
-        else controller->state.Gamepad.bRightTrigger = scale_value(value, &controller->hid.rt_caps, 0, 255);
-
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, controller->hid.preparsed, report_buf[0], report_len);
-        if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
-        else controller->state.Gamepad.bLeftTrigger = scale_value(value, &controller->hid.lt_caps, 0, 255);
     }
 
-    tmp = report_buf[0];
-    report_buf[0] = report_buf[1];
-    report_buf[1] = tmp;
-    memcpy(state, &controller->state, sizeof(*state));
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#x\n", status);
+    else switch (value)
+    {
+    /* 8 1 2
+     * 7 0 3
+     * 6 5 4 */
+    case 0: break;
+    case 1: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP; break;
+    case 2: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT; break;
+    case 3: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT; break;
+    case 4: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN; break;
+    case 5: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN; break;
+    case 6: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT; break;
+    case 7: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT; break;
+    case 8: state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP; break;
+    }
+
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
+    else state.Gamepad.sThumbLX = scale_value(value, &controller->hid.lx_caps, -32768, 32767);
+
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
+    else state.Gamepad.sThumbLY = -scale_value(value, &controller->hid.ly_caps, -32768, 32767) - 1;
+
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
+    else state.Gamepad.sThumbRX = scale_value(value, &controller->hid.rx_caps, -32768, 32767);
+
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
+    else state.Gamepad.sThumbRY = -scale_value(value, &controller->hid.ry_caps, -32768, 32767) - 1;
+
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
+    else state.Gamepad.bRightTrigger = scale_value(value, &controller->hid.rt_caps, 0, 255);
+
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, controller->hid.preparsed, report_buf, report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
+    else state.Gamepad.bLeftTrigger = scale_value(value, &controller->hid.lt_caps, 0, 255);
+
+    EnterCriticalSection(&controller->crit);
+    if (controller->enabled)
+    {
+        state.dwPacketNumber = controller->state.dwPacketNumber + 1;
+        controller->state = state;
+        memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
+        controller->hid.read_ovl.hEvent = controller->hid.read_event;
+        ReadFile(controller->device, controller->hid.input_report_buf, controller->hid.caps.InputReportByteLength, NULL, &controller->hid.read_ovl);
+    }
+    LeaveCriticalSection(&controller->crit);
 }
 
 static DWORD WINAPI hid_update_thread_proc(void *param)
 {
-    HANDLE events[1];
-    DWORD count, ret = WAIT_TIMEOUT;
+    struct xinput_controller *devices[XUSER_MAX_COUNT + 2];
+    HANDLE events[XUSER_MAX_COUNT + 2];
+    DWORD i, count = 2, ret = WAIT_TIMEOUT;
 
     do
     {
         EnterCriticalSection(&xinput_crit);
         if (ret == WAIT_TIMEOUT) update_controller_list();
+        if (ret < count - 2) read_controller_state(devices[ret]);
 
         count = 0;
+        for (i = 0; i < XUSER_MAX_COUNT; ++i)
+        {
+            if (!controllers[i].device) continue;
+            EnterCriticalSection(&controllers[i].crit);
+            if (controllers[i].enabled)
+            {
+                devices[count] = controllers + i;
+                events[count] = controllers[i].hid.read_event;
+                count++;
+            }
+            LeaveCriticalSection(&controllers[i].crit);
+        }
+        events[count++] = update_event;
         events[count++] = stop_event;
         LeaveCriticalSection(&xinput_crit);
     }
@@ -548,6 +554,9 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
 
     done_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (!done_event) ERR("failed to create stop event, error %u\n", GetLastError());
+
+    update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    if (!update_event) ERR("failed to create update event, error %u\n", GetLastError());
 
     thread = CreateThread(NULL, 0, hid_update_thread_proc, NULL, 0, NULL);
     if (!thread) ERR("failed to create update thread, error %u\n", GetLastError());
@@ -652,15 +661,7 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
     if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
     if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
 
-    HID_update_state(&controllers[index], state);
-
-    if (!controllers[index].device)
-    {
-        /* update_state may have disconnected the controller */
-        controller_unlock(&controllers[index]);
-        return ERROR_DEVICE_NOT_CONNECTED;
-    }
-
+    *state = controllers[index].state;
     controller_unlock(&controllers[index]);
 
     return ERROR_SUCCESS;
