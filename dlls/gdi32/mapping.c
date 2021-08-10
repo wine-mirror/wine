@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
 static SIZE get_dc_virtual_size( DC *dc )
 {
-    SIZE ret = dc->virtual_size;
+    SIZE ret = dc->attr->virtual_size;
 
     if (!ret.cx)
     {
@@ -43,7 +43,7 @@ static SIZE get_dc_virtual_size( DC *dc )
 
 static SIZE get_dc_virtual_res( DC *dc )
 {
-    SIZE ret = dc->virtual_res;
+    SIZE ret = dc->attr->virtual_res;
 
     if (!ret.cx)
     {
@@ -630,10 +630,10 @@ BOOL WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,
     dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
-    dc->virtual_res.cx  = horz_res;
-    dc->virtual_res.cy  = vert_res;
-    dc->virtual_size.cx = horz_size;
-    dc->virtual_size.cy = vert_size;
+    dc->attr->virtual_res.cx  = horz_res;
+    dc->attr->virtual_res.cy  = vert_res;
+    dc->attr->virtual_size.cx = horz_size;
+    dc->attr->virtual_size.cy = vert_size;
 
     release_dc_ptr( dc );
     return TRUE;

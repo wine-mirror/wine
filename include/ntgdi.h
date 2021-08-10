@@ -136,6 +136,8 @@ typedef struct DC_ATTR
     SIZE      wnd_ext;             /* window extent */
     POINT     vport_org;           /* viewport origin */
     SIZE      vport_ext;           /* viewport extent */
+    SIZE      virtual_res;
+    SIZE      virtual_size;
     void     *emf;
 } DC_ATTR;
 

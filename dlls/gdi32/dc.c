@@ -428,8 +428,8 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->wnd_ext          = dcs->attr->wnd_ext;
     dc->attr->vport_org        = dcs->attr->vport_org;
     dc->attr->vport_ext  = dcs->attr->vport_ext;
-    dc->virtual_res      = dcs->virtual_res;
-    dc->virtual_size     = dcs->virtual_size;
+    dc->attr->virtual_res      = dcs->attr->virtual_res;
+    dc->attr->virtual_size     = dcs->attr->virtual_size;
 
     if (dcs->hClipRgn)
     {
@@ -550,8 +550,6 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
     newdc->xformWorld2Vport = dc->xformWorld2Vport;
     newdc->xformVport2World = dc->xformVport2World;
     newdc->vport2WorldValid = dc->vport2WorldValid;
-    newdc->virtual_res      = dc->virtual_res;
-    newdc->virtual_size     = dc->virtual_size;
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
