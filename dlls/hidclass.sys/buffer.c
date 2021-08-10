@@ -154,40 +154,6 @@ void RingBuffer_ReadNew(struct ReportRingBuffer *ring, UINT index, void *output,
     }
 }
 
-void RingBuffer_Read(struct ReportRingBuffer *ring, UINT index, void *output, UINT *size)
-{
-    int pointer;
-    void *ret = NULL;
-
-    EnterCriticalSection(&ring->lock);
-    if (index >= ring->pointer_alloc || ring->pointers[index] == POINTER_UNUSED
-        || ring->end == ring->start)
-    {
-        LeaveCriticalSection(&ring->lock);
-        *size = 0;
-        return;
-    }
-
-    pointer = ring->pointers[index];
-
-    if (pointer == ring->end)
-        pointer--;
-
-    if (pointer < 0)
-        pointer = ring->size - 1;
-
-    ret = &ring->buffer[pointer * ring->buffer_size];
-    memcpy(output, ret, ring->buffer_size);
-    if (pointer == ring->pointers[index])
-    {
-        ring->pointers[index]++;
-        if (ring->pointers[index] == ring->size)
-            ring->pointers[index] = 0;
-    }
-    LeaveCriticalSection(&ring->lock);
-    *size = ring->buffer_size;
-}
-
 UINT RingBuffer_AddPointer(struct ReportRingBuffer *ring)
 {
     UINT idx;

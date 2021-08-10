@@ -82,10 +82,13 @@ static void WINAPI read_cancel_routine(DEVICE_OBJECT *device, IRP *irp)
 static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *packet )
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct hid_preparsed_data *preparsed = ext->u.pdo.preparsed_data;
+    HID_XFER_PACKET *read_packet, *last_packet = packet;
     struct hid_report_queue *queue;
     RAWINPUT *rawinput;
     ULONG size;
     KIRQL irql;
+    IRP *irp;
 
     size = offsetof( RAWINPUT, data.hid.bRawData[packet->reportBufferLen] );
     if (!(rawinput = malloc( size ))) ERR( "Failed to allocate rawinput data!\n" );
@@ -114,37 +117,27 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     LIST_FOR_EACH_ENTRY( queue, &ext->u.pdo.report_queues, struct hid_report_queue, entry )
     RingBuffer_Write( queue->buffer, packet );
     KeReleaseSpinLock( &ext->u.pdo.report_queues_lock, irql );
-}
 
-static void HID_Device_processQueue(DEVICE_OBJECT *device)
-{
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    struct hid_preparsed_data *preparsed = ext->u.pdo.preparsed_data;
-    struct hid_report_queue *queue;
-    HID_XFER_PACKET *packet;
-    UINT buffer_size;
-    IRP *irp;
+    if (!(read_packet = malloc( sizeof(*packet) + preparsed->caps.InputReportByteLength )))
+    {
+        ERR( "Failed to allocate read_packet!\n" );
+        return;
+    }
 
-    packet = malloc( sizeof(*packet) + preparsed->caps.InputReportByteLength );
-
-    while((irp = pop_irp_from_queue(ext)))
+    while ((irp = pop_irp_from_queue( ext )))
     {
         queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
-        RingBuffer_Read( queue->buffer, 0, packet, &buffer_size );
-        if (buffer_size)
-        {
-            memcpy( irp->AssociatedIrp.SystemBuffer, packet + 1, preparsed->caps.InputReportByteLength );
-            irp->IoStatus.Information = packet->reportBufferLen;
-            irp->IoStatus.Status = STATUS_SUCCESS;
-        }
-        else
-        {
-            irp->IoStatus.Information = 0;
-            irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-        }
+        RingBuffer_ReadNew( queue->buffer, 0, read_packet, &size );
+        if (!size) packet = last_packet;
+        else packet = read_packet;
+
+        memcpy( irp->AssociatedIrp.SystemBuffer, packet + 1, preparsed->caps.InputReportByteLength );
+        irp->IoStatus.Information = packet->reportBufferLen;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
-    free(packet);
+
+    free( read_packet );
 }
 
 static DWORD CALLBACK hid_device_thread(void *args)
@@ -187,7 +180,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 packet->reportBufferLen = io.Information;
 
                 hid_device_queue_input( device, packet );
-                HID_Device_processQueue(device);
             }
 
             rc = WaitForSingleObject(ext->u.pdo.halt_event,
@@ -229,7 +221,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 packet->reportBufferLen = io.Information;
 
                 hid_device_queue_input( device, packet );
-                HID_Device_processQueue(device);
             }
 
             if (exit_now)
