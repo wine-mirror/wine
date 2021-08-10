@@ -51,7 +51,7 @@ static int winetest_debug;
 static int winetest_report_success;
 
 /* silence todos and skips above this threshold */
-static int winetest_mute_threshold = 1;
+static int winetest_mute_threshold = 42;
 
 /* counts how many times a given line printed a message */
 static LONG line_counters[16384];
