@@ -565,11 +565,21 @@ struct d2d_device
 
 void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device) DECLSPEC_HIDDEN;
 
+struct d2d_effect_info
+{
+    const CLSID *clsid;
+    UINT32 default_input_count;
+    UINT32 min_inputs;
+    UINT32 max_inputs;
+};
+
 struct d2d_effect
 {
     ID2D1Effect ID2D1Effect_iface;
     ID2D1Image ID2D1Image_iface;
     LONG refcount;
+
+    const struct d2d_effect_info *info;
 
     ID2D1Factory *factory;
     ID2D1Image **inputs;

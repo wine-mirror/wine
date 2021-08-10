@@ -9811,10 +9811,8 @@ static void test_effect(BOOL d3d11)
             winetest_push_context("Input %u", j);
             hr = ID2D1Effect_SetInputCount(effect, j);
             if (j < test->min_inputs || j > test->max_inputs)
-                todo_wine
                 ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
             else
-                todo_wine
                 ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
             winetest_pop_context();
         }

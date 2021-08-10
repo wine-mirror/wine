@@ -20,17 +20,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
-struct d2d_effect_info
-{
-    const CLSID *clsid;
-    UINT32 default_input_count;
-};
-
 static const struct d2d_effect_info builtin_effects[] =
 {
-    {&CLSID_D2D12DAffineTransform,      1},
-    {&CLSID_D2D13DPerspectiveTransform, 1},
-    {&CLSID_D2D1Composite,              2}
+    {&CLSID_D2D12DAffineTransform,      1, 1, 1},
+    {&CLSID_D2D13DPerspectiveTransform, 1, 1, 1},
+    {&CLSID_D2D1Composite,              2, 1, 0xffffffff}
 };
 
 static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)
@@ -207,9 +201,38 @@ static void STDMETHODCALLTYPE d2d_effect_SetInput(ID2D1Effect *iface, UINT32 ind
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UINT32 count)
 {
-    FIXME("iface %p, count %u stub!\n", iface, count);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    if (count < effect->info->min_inputs || count > effect->info->max_inputs)
+        return E_INVALIDARG;
+    if (count == effect->input_count)
+        return S_OK;
+
+    if (count < effect->input_count)
+    {
+        for (i = count; i < effect->input_count; ++i)
+        {
+            if (effect->inputs[i])
+                ID2D1Image_Release(effect->inputs[i]);
+        }
+        effect->input_count = count;
+        return S_OK;
+    }
+
+    if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
+            count, sizeof(*effect->inputs)))
+    {
+        ERR("Failed to resize inputs array.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    memset(&effect->inputs[effect->input_count], 0, sizeof(*effect->inputs) * (count - effect->input_count));
+    effect->input_count = count;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_effect_GetInput(ID2D1Effect *iface, UINT32 index, ID2D1Image **input)
@@ -326,15 +349,9 @@ HRESULT d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory, const 
     {
         if (IsEqualGUID(effect_id, builtin_effects[i].clsid))
         {
-            effect->input_count = builtin_effects[i].default_input_count;
-
-            if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
-                    effect->input_count, sizeof(*effect->inputs)))
-                return E_OUTOFMEMORY;
-            memset(effect->inputs, 0, sizeof(*effect->inputs) * effect->input_count);
-
+            effect->info = &builtin_effects[i];
+            d2d_effect_SetInputCount(&effect->ID2D1Effect_iface, effect->info->default_input_count);
             ID2D1Factory_AddRef(effect->factory = factory);
-
             return S_OK;
         }
     }
