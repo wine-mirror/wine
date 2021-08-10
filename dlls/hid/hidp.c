@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hidp);
 static NTSTATUS get_value_caps_range( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPORT_TYPE report_type, ULONG report_len,
                                       const struct hid_value_caps **caps, const struct hid_value_caps **caps_end )
 {
-    if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
+    if (!preparsed || preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
     switch (report_type)
     {
@@ -167,7 +167,7 @@ NTSTATUS WINAPI HidP_GetCaps( PHIDP_PREPARSED_DATA preparsed_data, HIDP_CAPS *ca
 
     TRACE( "preparsed_data %p, caps %p.\n", preparsed_data, caps );
 
-    if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
+    if (!preparsed || preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
     *caps = preparsed->caps;
     return HIDP_STATUS_SUCCESS;
@@ -787,7 +787,7 @@ NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, U
 
     TRACE( "nodes %p, nodes_len %p, preparsed_data %p.\n", nodes, nodes_len, preparsed_data );
 
-    if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
+    if (!preparsed || preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
     count = *nodes_len = preparsed->caps.NumberLinkCollectionNodes;
     if (capacity < count) return HIDP_STATUS_BUFFER_TOO_SMALL;
