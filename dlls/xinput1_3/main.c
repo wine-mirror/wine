@@ -119,6 +119,8 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
 };
 
 static DWORD last_check = 0;
+static HANDLE stop_event;
+static HANDLE done_event;
 
 static BOOL find_opened_device(SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail, int *free_slot)
 {
@@ -294,8 +296,12 @@ failed:
     return FALSE;
 }
 
+static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void **context );
+
 static void HID_find_gamepads(void)
 {
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
@@ -307,6 +313,8 @@ static void HID_find_gamepads(void)
     DWORD idx;
     GUID guid;
     int i;
+
+    InitOnceExecuteOnce(&init_once, start_update_thread_once, NULL, NULL);
 
     idx = GetTickCount();
     if ((idx - last_check) < 2000) return;
@@ -383,9 +391,16 @@ static void controller_destroy(struct xinput_controller *controller)
     LeaveCriticalSection(&controller->crit);
 }
 
-static void HID_destroy_gamepads(void)
+static void stop_update_thread(void)
 {
     int i;
+
+    SetEvent(stop_event);
+    WaitForSingleObject(done_event, INFINITE);
+
+    CloseHandle(stop_event);
+    CloseHandle(done_event);
+
     for (i = 0; i < XUSER_MAX_COUNT; i++) controller_destroy(&controllers[i]);
 }
 
@@ -523,6 +538,40 @@ static void HID_update_state(struct xinput_controller *controller, XINPUT_STATE 
     memcpy(state, &controller->state, sizeof(*state));
 }
 
+static DWORD WINAPI hid_update_thread_proc(void *param)
+{
+    HANDLE events[1];
+    DWORD count, ret;
+
+    do
+    {
+        count = 0;
+        events[count++] = stop_event;
+    }
+    while ((ret = WaitForMultipleObjectsEx( count, events, FALSE, INFINITE, TRUE )) < count - 1);
+
+    if (ret != count - 1) ERR("update thread exited unexpectedly, ret %u\n", ret);
+    SetEvent(done_event);
+    return ret;
+}
+
+static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void **context )
+{
+    HANDLE thread;
+
+    stop_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    if (!stop_event) ERR("failed to create stop event, error %u\n", GetLastError());
+
+    done_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    if (!done_event) ERR("failed to create stop event, error %u\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, hid_update_thread_proc, NULL, 0, NULL);
+    if (!thread) ERR("failed to create update thread, error %u\n", GetLastError());
+    CloseHandle(thread);
+
+    return TRUE;
+}
+
 static BOOL controller_lock(struct xinput_controller *controller)
 {
     if (!controller->device) return FALSE;
@@ -552,7 +601,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-        HID_destroy_gamepads();
+        stop_update_thread();
         break;
     }
     return TRUE;
