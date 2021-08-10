@@ -120,9 +120,9 @@ BOOL METADC_OffsetViewportOrgEx( HDC hdc, INT x, INT y )
     return metadc_param2( hdc, META_OFFSETVIEWPORTORG, x, y );
 }
 
-BOOL CDECL MFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
+BOOL METADC_OffsetWindowOrgEx( HDC hdc, INT x, INT y )
 {
-    return MFDRV_MetaParam2( dev, META_OFFSETWINDOWORG, x, y );
+    return metadc_param2( hdc, META_OFFSETWINDOWORG, x, y );
 }
 
 BOOL METADC_ScaleViewportExtEx( HDC hdc, INT x_num, INT x_denom, INT y_num, INT y_denom )

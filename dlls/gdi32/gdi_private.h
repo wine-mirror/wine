@@ -68,6 +68,7 @@ extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_OffsetClipRgn( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_OffsetViewportOrgEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL METADC_OffsetWindowOrgEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL METADC_PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop );
 extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,

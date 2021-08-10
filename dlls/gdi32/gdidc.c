@@ -502,6 +502,23 @@ BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, POINT *point )
 }
 
 /***********************************************************************
+ *           OffsetWindowOrgEx    (GDI32.@)
+ */
+BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, POINT *point )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_OffsetWindowOrgEx( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (point) *point = dc_attr->wnd_org;
+    dc_attr->wnd_org.x += x;
+    dc_attr->wnd_org.y += y;
+    if (dc_attr->emf && !EMFDC_SetWindowOrgEx( dc_attr, dc_attr->wnd_org.x,
+                                               dc_attr->wnd_org.y )) return FALSE;
+    return NtGdiComputeXformCoefficients( hdc );
+}
+
+/***********************************************************************
  *		GetViewportExtEx (GDI32.@)
  */
 BOOL WINAPI GetViewportExtEx( HDC hdc, SIZE *size )

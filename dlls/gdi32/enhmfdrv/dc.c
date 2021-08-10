@@ -349,28 +349,6 @@ BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD m
     return ret;
 }
 
-BOOL CDECL EMFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetWindowOrgEx );
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    EMRSETWINDOWORGEX emr;
-    POINT prev;
-    BOOL ret;
-
-    GetWindowOrgEx( dev->hdc, &prev );
-
-    emr.emr.iType = EMR_SETWINDOWORGEX;
-    emr.emr.nSize = sizeof(emr);
-    emr.ptlOrigin.x = prev.x + x;
-    emr.ptlOrigin.y = prev.y + y;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    physDev->modifying_transform++;
-    ret = next->funcs->pOffsetWindowOrgEx( next, x, y, pt );
-    physDev->modifying_transform--;
-    return ret;
-}
-
 BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags )
 {
     EMRSETMAPPERFLAGS emr;
