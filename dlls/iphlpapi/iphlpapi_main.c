@@ -2230,50 +2230,91 @@ err:
     return err;
 }
 
+static int ipnetrow_cmp( const void *a, const void *b )
+{
+    const MIB_IPNETROW *row_a = a;
+    const MIB_IPNETROW *row_b = b;
+
+    return RtlUlongByteSwap( row_a->dwAddr ) - RtlUlongByteSwap( row_b->dwAddr );
+}
+
 /******************************************************************
  *    GetIpNetTable (IPHLPAPI.@)
  *
  * Get the IP-to-physical address mapping table.
  *
  * PARAMS
- *  pIpNetTable [Out]    buffer for mapping table
- *  pdwSize     [In/Out] length of output buffer
- *  bOrder      [In]     whether to sort the table
+ *  table       [Out]    buffer for mapping table
+ *  size        [In/Out] length of output buffer
+ *  sort        [In]     whether to sort the table
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  *
- * NOTES
- *  If pdwSize is less than required, the function will return
- *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to the required byte
- *  size.
- *  If bOrder is true, the returned table will be sorted by IP address.
  */
-DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOrder)
+DWORD WINAPI GetIpNetTable( MIB_IPNETTABLE *table, ULONG *size, BOOL sort )
 {
-    DWORD ret;
-    PMIB_IPNETTABLE table;
+    DWORD err, count, needed, i;
+    struct nsi_ipv4_neighbour_key *keys;
+    struct nsi_ip_neighbour_rw *rw;
+    struct nsi_ip_neighbour_dynamic *dyn;
 
-    TRACE("pIpNetTable %p, pdwSize %p, bOrder %d\n", pIpNetTable, pdwSize, bOrder);
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
 
-    if (!pdwSize) return ERROR_INVALID_PARAMETER;
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-    ret = AllocateAndGetIpNetTableFromStack( &table, bOrder, GetProcessHeap(), 0 );
-    if (!ret) {
-        DWORD size = FIELD_OFFSET( MIB_IPNETTABLE, table[table->dwNumEntries] );
-        if (!pIpNetTable || *pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          *pdwSize = size;
-          memcpy(pIpNetTable, table, size);
-        }
-        HeapFree(GetProcessHeap(), 0, table);
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_NEIGHBOUR_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  NULL, 0, &count, 0 );
+    if (err) return err;
+
+    needed = FIELD_OFFSET( MIB_IPNETTABLE, table[count] );
+
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto err;
     }
-    TRACE("returning %d\n", ret);
-    return ret;
+
+    table->dwNumEntries = count;
+    for (i = 0; i < count; i++)
+    {
+        MIB_IPNETROW *row = table->table + i;
+
+        ConvertInterfaceLuidToIndex( &keys[i].luid, &row->dwIndex );
+        row->dwPhysAddrLen = dyn[i].phys_addr_len;
+        if (row->dwPhysAddrLen > sizeof(row->bPhysAddr)) row->dwPhysAddrLen = 0;
+        memcpy( row->bPhysAddr, rw[i].phys_addr, row->dwPhysAddrLen );
+        memset( row->bPhysAddr + row->dwPhysAddrLen, 0,
+                sizeof(row->bPhysAddr) - row->dwPhysAddrLen );
+        row->dwAddr = keys[i].addr.WS_s_addr;
+        switch (dyn->state)
+        {
+        case NlnsUnreachable:
+        case NlnsIncomplete:
+            row->u.Type = MIB_IPNET_TYPE_INVALID;
+            break;
+        case NlnsProbe:
+        case NlnsDelay:
+        case NlnsStale:
+        case NlnsReachable:
+            row->u.Type = MIB_IPNET_TYPE_DYNAMIC;
+            break;
+        case NlnsPermanent:
+            row->u.Type = MIB_IPNET_TYPE_STATIC;
+            break;
+        default:
+            row->u.Type = MIB_IPNET_TYPE_OTHER;
+        }
+    }
+
+    if (sort) qsort( table->table, table->dwNumEntries, sizeof(*table->table), ipnetrow_cmp );
+
+err:
+    NsiFreeTable( keys, rw, dyn, NULL );
+    return err;
 }
 
 static void ipnet_row2_fill( MIB_IPNET_ROW2 *row, USHORT fam, void *key, struct nsi_ip_neighbour_rw *rw,
