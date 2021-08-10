@@ -615,7 +615,7 @@ static void add_builtin_module( void *module, void *handle )
 /***********************************************************************
  *           release_builtin_module
  */
-NTSTATUS release_builtin_module( void *module )
+static void release_builtin_module( void *module )
 {
     struct builtin_module *builtin;
 
@@ -630,9 +630,8 @@ NTSTATUS release_builtin_module( void *module )
             free( builtin->unix_name );
             free( builtin );
         }
-        return STATUS_SUCCESS;
+        break;
     }
-    return STATUS_INVALID_PARAMETER;
 }
 
 
