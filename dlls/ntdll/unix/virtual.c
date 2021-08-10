@@ -658,6 +658,29 @@ void *get_builtin_so_handle( void *module )
 
 
 /***********************************************************************
+ *           get_builtin_unix_funcs
+ */
+NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, void **funcs )
+{
+    const char *ptr_name = wow ? "__wine_unix_call_wow64_funcs" : "__wine_unix_call_funcs";
+    sigset_t sigset;
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    struct builtin_module *builtin;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        *funcs = dlsym( builtin->unix_handle, ptr_name );
+        status = STATUS_SUCCESS;
+        break;
+    }
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    return status;
+}
+
+
+/***********************************************************************
  *           get_builtin_unix_info
  */
 NTSTATUS get_builtin_unix_info( void *module, const char **name, void **handle, void **entry )
@@ -4289,6 +4312,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                                       MEMORY_INFORMATION_CLASS info_class,
                                       PVOID buffer, SIZE_T len, SIZE_T *res_len )
 {
+    NTSTATUS status;
+
     TRACE("(%p, %p, info_class=%d, %p, %ld, %p)\n",
           process, addr, info_class, buffer, len, res_len);
 
@@ -4311,10 +4336,24 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
                 if (handle)
                 {
-                    NTSTATUS status = get_builtin_init_funcs( handle, buffer, len, res_len );
+                    status = get_builtin_init_funcs( handle, buffer, len, res_len );
                     release_builtin_module( module );
                     return status;
                 }
+            }
+            return STATUS_INVALID_HANDLE;
+
+        case MemoryWineUnixFuncs:
+        case MemoryWineUnixWow64Funcs:
+            if (len != sizeof(UINT64)) return STATUS_INFO_LENGTH_MISMATCH;
+            if (process == GetCurrentProcess())
+            {
+                void *module = (void *)addr;
+                void *funcs = NULL;
+
+                status = get_builtin_unix_funcs( module, info_class == MemoryWineUnixWow64Funcs, &funcs );
+                if (!status) *(UINT64 *)buffer = (UINT_PTR)funcs;
+                return status;
             }
             return STATUS_INVALID_HANDLE;
 
