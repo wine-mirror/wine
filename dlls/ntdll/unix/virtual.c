@@ -4345,14 +4345,14 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
         case MemoryWineUnixFuncs:
         case MemoryWineUnixWow64Funcs:
-            if (len != sizeof(UINT64)) return STATUS_INFO_LENGTH_MISMATCH;
+            if (len != sizeof(unixlib_handle_t)) return STATUS_INFO_LENGTH_MISMATCH;
             if (process == GetCurrentProcess())
             {
                 void *module = (void *)addr;
                 void *funcs = NULL;
 
                 status = get_builtin_unix_funcs( module, info_class == MemoryWineUnixWow64Funcs, &funcs );
-                if (!status) *(UINT64 *)buffer = (UINT_PTR)funcs;
+                if (!status) *(unixlib_handle_t *)buffer = (UINT_PTR)funcs;
                 return status;
             }
             return STATUS_INVALID_HANDLE;
