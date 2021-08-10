@@ -5,7 +5,6 @@ IMPORTS   = hal ntoskrnl user32
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	buffer.c \
 	descriptor.c \
 	device.c \
 	pnp.c
