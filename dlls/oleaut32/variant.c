@@ -1514,11 +1514,11 @@ typedef struct tagVARIANT_NUMBER_CHARS
 
 #define GET_NUMBER_TEXT(fld,name) \
   buff[0] = 0; \
-  if (!GetLocaleInfoW(lcid, lctype|fld, buff, 2)) \
+  if (!GetLocaleInfoW(lcid, lctype|fld, buff, ARRAY_SIZE(buff))) \
     WARN("buffer too small for " #fld "\n"); \
   else \
     if (buff[0]) lpChars->name = buff[0]; \
-  TRACE("lcid 0x%x, " #name "=%d '%c'\n", lcid, lpChars->name, lpChars->name)
+  TRACE("lcid 0x%x, " #name "=%s\n", lcid, wine_dbgstr_wn(&lpChars->name, 1))
 
 /* Get the valid number characters for an lcid */
 static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)

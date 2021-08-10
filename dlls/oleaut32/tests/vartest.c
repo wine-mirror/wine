@@ -2324,7 +2324,7 @@ static void test_VarParseNumFromStrMisc(void)
       SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHOUSANDSEP, L" \xa0");
 
       hres = wconvert_str(L"1 000", ARRAY_SIZE(rgb), NUMPRS_THOUSANDS|NUMPRS_USE_ALL, &np, rgb, LOCALE_USER_DEFAULT, 0);
-      todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
+      EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
       EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
       EXPECTRGB(4,FAILDIG);
 
