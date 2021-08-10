@@ -60,3 +60,36 @@ HRESULT WINAPI D3DX10CreateEffectFromMemory(const void *data, SIZE_T datasize, c
 
     return hr;
 }
+
+HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *profile, UINT shader_flags, UINT effect_flags,
+        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3DX10ThreadPump *pump,
+        ID3D10Effect **effect, ID3D10Blob **errors, HRESULT *hresult)
+{
+    ID3D10Blob *code;
+    HRESULT hr;
+
+    TRACE("filename %s, defines %p, include %p, profile %s, shader_flags %#x, effect_flags %#x, "
+            "device %p, effect_pool %p, pump %p, effect %p, errors %p, hresult %p.\n",
+            debugstr_w(filename), defines, include, debugstr_a(profile), shader_flags, effect_flags,
+            device, effect_pool, pump, effect, errors, hresult);
+
+    if (pump)
+        FIXME("Asynchronous mode is not supported.\n");
+
+    if (!include)
+        include = D3D_COMPILE_STANDARD_FILE_INCLUDE;
+
+    if (FAILED(hr = D3DCompileFromFile(filename, defines, include, "main", profile, shader_flags,
+            effect_flags, &code, errors)))
+    {
+        WARN("Effect compilation failed, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = D3D10CreateEffectFromMemory(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
+            effect_flags, device, effect_pool, effect);
+    ID3D10Blob_Release(code);
+
+    return hr;
+}
