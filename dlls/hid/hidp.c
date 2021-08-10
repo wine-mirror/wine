@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hidp);
 
-static NTSTATUS get_value_caps_range( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPORT_TYPE report_type, ULONG report_len,
+static NTSTATUS get_value_caps_range( struct hid_preparsed_data *preparsed, HIDP_REPORT_TYPE report_type, ULONG report_len,
                                       const struct hid_value_caps **caps, const struct hid_value_caps **caps_end )
 {
     if (!preparsed || preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
@@ -90,7 +90,7 @@ static BOOL match_value_caps( const struct hid_value_caps *caps, const struct ca
 
 typedef NTSTATUS (*enum_value_caps_callback)( const struct hid_value_caps *caps, void *user );
 
-static NTSTATUS enum_value_caps( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPORT_TYPE report_type,
+static NTSTATUS enum_value_caps( struct hid_preparsed_data *preparsed, HIDP_REPORT_TYPE report_type,
                                  ULONG report_len, const struct caps_filter *filter,
                                  enum_value_caps_callback callback, void *user, USHORT *count )
 {
@@ -163,7 +163,7 @@ NTSTATUS WINAPI HidP_GetButtonCaps( HIDP_REPORT_TYPE report_type, HIDP_BUTTON_CA
 
 NTSTATUS WINAPI HidP_GetCaps( PHIDP_PREPARSED_DATA preparsed_data, HIDP_CAPS *caps )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
 
     TRACE( "preparsed_data %p, caps %p.\n", preparsed_data, caps );
 
@@ -214,7 +214,7 @@ NTSTATUS WINAPI HidP_GetScaledUsageValue( HIDP_REPORT_TYPE report_type, USAGE us
                                           char *report_buf, ULONG report_len )
 {
     struct usage_value_params params = {.value_buf = value, .value_len = sizeof(*value), .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage };
     USHORT count = 1;
 
@@ -242,7 +242,7 @@ NTSTATUS WINAPI HidP_GetUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_pa
                                     ULONG *value, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
     struct usage_value_params params = {.value_buf = value, .value_len = sizeof(*value), .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
@@ -260,7 +260,7 @@ NTSTATUS WINAPI HidP_GetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usa
                                          PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
     struct usage_value_params params = {.value_buf = value_buf, .value_len = value_len, .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.values = TRUE, .array = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
@@ -312,7 +312,7 @@ static NTSTATUS get_usage( const struct hid_value_caps *caps, void *user )
 NTSTATUS WINAPI HidP_GetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection, USAGE *usages,
                                 ULONG *usages_len, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct get_usage_params params = {.usages = usages, .usages_end = usages + *usages_len, .report_buf = report_buf};
     struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
     NTSTATUS status;
@@ -342,7 +342,7 @@ NTSTATUS WINAPI HidP_GetValueCaps( HIDP_REPORT_TYPE report_type, HIDP_VALUE_CAPS
 NTSTATUS WINAPI HidP_InitializeReportForID( HIDP_REPORT_TYPE report_type, UCHAR report_id,
                                             PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     const struct hid_value_caps *caps, *end;
     NTSTATUS status;
 
@@ -370,7 +370,7 @@ static NTSTATUS get_usage_list_length( const struct hid_value_caps *caps, void *
 
 ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_page, PHIDP_PREPARSED_DATA preparsed_data )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page};
     USHORT limit = -1;
     ULONG count = 0;
@@ -394,7 +394,7 @@ NTSTATUS WINAPI HidP_SetUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_pa
                                     ULONG value, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
     struct usage_value_params params = {.value_buf = &value, .value_len = sizeof(value), .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
@@ -412,7 +412,7 @@ NTSTATUS WINAPI HidP_SetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usa
                                          PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
     struct usage_value_params params = {.value_buf = value_buf, .value_len = value_len, .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.values = TRUE, .array = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
     USHORT count = 1;
 
@@ -458,7 +458,7 @@ static NTSTATUS set_usage( const struct hid_value_caps *caps, void *user )
 NTSTATUS WINAPI HidP_SetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection, USAGE *usages,
                                 ULONG *usage_count, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct set_usage_params params = {.report_buf = report_buf};
     struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
     NTSTATUS status;
@@ -539,7 +539,7 @@ NTSTATUS WINAPI HidP_GetSpecificButtonCaps( HIDP_REPORT_TYPE report_type, USAGE 
                                             USAGE usage, HIDP_BUTTON_CAPS *caps, USHORT *caps_count,
                                             PHIDP_PREPARSED_DATA preparsed_data )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     const struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
 
     TRACE( "report_type %d, usage_page %x, collection %d, usage %x, caps %p, caps_count %p, preparsed_data %p.\n",
@@ -602,7 +602,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps( HIDP_REPORT_TYPE report_type, USAGE u
                                            USAGE usage, HIDP_VALUE_CAPS *caps, USHORT *caps_count,
                                            PHIDP_PREPARSED_DATA preparsed_data )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     const struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
 
     TRACE( "report_type %d, usage_page %x, collection %d, usage %x, caps %p, caps_count %p, preparsed_data %p.\n",
@@ -657,7 +657,7 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
                                   ULONG *usages_len, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
     struct get_usage_and_page_params params = {.usages = usages, .usages_end = usages + *usages_len, .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {.buttons = TRUE, .collection = collection};
     NTSTATUS status;
     USHORT limit = -1;
@@ -686,7 +686,7 @@ static NTSTATUS count_data( const struct hid_value_caps *caps, void *user )
 
 ULONG WINAPI HidP_MaxDataListLength( HIDP_REPORT_TYPE report_type, PHIDP_PREPARSED_DATA preparsed_data )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {};
     USHORT limit = -1;
     ULONG count = 0;
@@ -760,7 +760,7 @@ NTSTATUS WINAPI HidP_GetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULO
                               PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
     struct find_all_data_params params = {.data = data, .data_end = data + *data_len, .report_buf = report_buf};
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct caps_filter filter = {};
     NTSTATUS status;
     USHORT limit = -1;
@@ -781,7 +781,7 @@ NTSTATUS WINAPI HidP_GetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULO
 
 NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, ULONG *nodes_len, PHIDP_PREPARSED_DATA preparsed_data )
 {
-    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct hid_value_caps *caps = HID_COLLECTION_VALUE_CAPS( preparsed );
     ULONG i, count, capacity = *nodes_len;
 

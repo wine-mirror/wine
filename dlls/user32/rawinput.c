@@ -751,7 +751,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         break;
 
     case RIDI_PREPARSEDDATA:
-        len = device->data ? ((WINE_HIDP_PREPARSED_DATA*)device->data)->dwSize : 0;
+        len = device->data ? ((struct hid_preparsed_data *)device->data)->size : 0;
         if (device->data && len <= data_len && data)
             memcpy(data, device->data, len);
         *data_size = len;

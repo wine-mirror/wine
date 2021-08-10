@@ -260,7 +260,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         return;
     }
 
-    pdo_ext->u.pdo.information.DescriptorSize = pdo_ext->u.pdo.preparsed_data->dwSize;
+    pdo_ext->u.pdo.information.DescriptorSize = pdo_ext->u.pdo.preparsed_data->size;
 
     page = pdo_ext->u.pdo.preparsed_data->caps.UsagePage;
     usage = pdo_ext->u.pdo.preparsed_data->caps.Usage;

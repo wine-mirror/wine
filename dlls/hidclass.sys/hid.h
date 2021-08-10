@@ -54,7 +54,7 @@ typedef struct _BASE_DEVICE_EXTENSION
             DEVICE_OBJECT *parent_fdo;
 
             HID_COLLECTION_INFORMATION information;
-            WINE_HIDP_PREPARSED_DATA *preparsed_data;
+            struct hid_preparsed_data *preparsed_data;
 
             ULONG poll_interval;
             struct ReportRingBuffer *ring_buffer;
@@ -123,4 +123,4 @@ NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 
 /* Parsing HID Report Descriptors into preparsed data */
-WINE_HIDP_PREPARSED_DATA *parse_descriptor( BYTE *descriptor, unsigned int length ) DECLSPEC_HIDDEN;
+struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int length ) DECLSPEC_HIDDEN;

@@ -96,7 +96,7 @@ static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
                              caps->units, caps->units_exp, caps->logical_min, caps->logical_max, caps->physical_min, caps->physical_max );
 }
 
-static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
+static void debug_print_preparsed( struct hid_preparsed_data *data )
 {
     unsigned int i, end;
     if (TRACE_ON(hid))
@@ -391,19 +391,19 @@ static void free_parser_state( struct hid_parser_state *state )
     free( state );
 }
 
-static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct hid_parser_state *state )
+static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state *state )
 {
-    WINE_HIDP_PREPARSED_DATA *data;
+    struct hid_preparsed_data *data;
     struct hid_value_caps *caps;
     DWORD i, button, filler, caps_len, size;
 
     caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps +
                state->caps.NumberFeatureValueCaps + state->caps.NumberLinkCollectionNodes;
-    size = FIELD_OFFSET( WINE_HIDP_PREPARSED_DATA, value_caps[caps_len] );
+    size = FIELD_OFFSET( struct hid_preparsed_data, value_caps[caps_len] );
 
     if (!(data = calloc( 1, size ))) return NULL;
     data->magic = HID_MAGIC;
-    data->dwSize = size;
+    data->size = size;
     data->caps = state->caps;
     data->value_caps_count[HidP_Input] = state->caps.NumberInputValueCaps;
     data->value_caps_count[HidP_Output] = state->caps.NumberOutputValueCaps;
@@ -449,9 +449,9 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct hid_parser_state *
     return data;
 }
 
-WINE_HIDP_PREPARSED_DATA *parse_descriptor( BYTE *descriptor, unsigned int length )
+struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int length )
 {
-    WINE_HIDP_PREPARSED_DATA *data = NULL;
+    struct hid_preparsed_data *data = NULL;
     struct hid_parser_state *state;
     UINT32 size, value;
     INT32 signed_value;

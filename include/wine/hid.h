@@ -67,14 +67,14 @@ struct hid_value_caps
 #define HID_VALUE_CAPS_IS_ARRAY(c) (((c)->bit_field & 2) == 0)
 #define HID_VALUE_CAPS_IS_BUTTON(c) ((c)->bit_size == 1 || HID_VALUE_CAPS_IS_ARRAY(c))
 
-typedef struct __WINE_HIDP_PREPARSED_DATA
+struct hid_preparsed_data
 {
     DWORD magic;
-    DWORD dwSize;
+    DWORD size;
     HIDP_CAPS caps;
     USHORT value_caps_count[3];
     struct hid_value_caps value_caps[1];
-} WINE_HIDP_PREPARSED_DATA, *PWINE_HIDP_PREPARSED_DATA;
+};
 
 #define HID_INPUT_VALUE_CAPS(d) ((d)->value_caps)
 #define HID_OUTPUT_VALUE_CAPS(d) (HID_INPUT_VALUE_CAPS(d) + (d)->value_caps_count[0])
