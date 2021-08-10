@@ -4205,9 +4205,9 @@ static UINT get_text_charset_info(DC *dc, FONTSIGNATURE *fs, DWORD flags)
 }
 
 /***********************************************************************
- *           GetTextCharsetInfo    (GDI32.@)
+ *           NtGdiGetTextCharsetInfo    (win32u.@)
  */
-UINT WINAPI GetTextCharsetInfo(HDC hdc, FONTSIGNATURE *fs, DWORD flags)
+UINT WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags )
 {
     UINT ret = DEFAULT_CHARSET;
     DC *dc = get_dc_ptr(hdc);
@@ -6977,7 +6977,7 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 
 	DWORD result=0;
 
-	GetTextCharsetInfo( hdc, &fontsig, 0 );
+	NtGdiGetTextCharsetInfo( hdc, &fontsig, 0 );
 	/* We detect each flag we return using a bitmask on the Codepage Bitfields */
 
 	if( (fontsig.fsCsb[0]&GCP_DBCS_MASK)!=0 )
@@ -8083,7 +8083,7 @@ BOOL WINAPI GetFontResourceInfoW( LPCWSTR str, LPDWORD size, PVOID buffer, DWORD
 UINT WINAPI GetTextCharset(HDC hdc)
 {
     /* MSDN docs say this is equivalent */
-    return GetTextCharsetInfo(hdc, NULL, 0);
+    return NtGdiGetTextCharsetInfo( hdc, NULL, 0 );
 }
 
 /***********************************************************************

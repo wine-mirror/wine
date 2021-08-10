@@ -23,7 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
+#include "ntgdi.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "usp10.h"
@@ -594,7 +594,7 @@ static OPENTYPE_TAG get_opentype_script(HDC hdc, const SCRIPT_ANALYSIS *psa,
     /*
      * fall back to the font charset
      */
-    charset = GetTextCharsetInfo(hdc, NULL, 0x0);
+    charset = NtGdiGetTextCharsetInfo(hdc, NULL, 0x0);
     switch (charset)
     {
         case ANSI_CHARSET:

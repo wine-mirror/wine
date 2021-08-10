@@ -345,7 +345,7 @@
 @ stdcall GetTextAlign(long)
 @ stdcall GetTextCharacterExtra(long)
 @ stdcall GetTextCharset(long)
-@ stdcall GetTextCharsetInfo(long ptr long)
+@ stdcall GetTextCharsetInfo(long ptr long) NtGdiGetTextCharsetInfo
 @ stdcall GetTextColor(long)
 @ stdcall GetTextExtentExPointA(long str long long ptr ptr ptr)
 @ stdcall GetTextExtentExPointI(long ptr long long ptr ptr ptr)
