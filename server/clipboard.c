@@ -303,7 +303,11 @@ static user_handle_t release_clipboard( struct clipboard *clipboard )
     /* free the delayed-rendered formats, since we no longer have an owner to render them */
     LIST_FOR_EACH_ENTRY_SAFE( format, next, &clipboard->formats, struct clip_format, entry )
     {
-        if (format->data || format->from) continue;
+        if (format->data) continue;
+        /* format->from is earlier in the list and thus has already been
+         * removed if not available anymore (it is also < CF_MAX)
+         */
+        if (format->from && HAS_FORMAT( clipboard->format_map, format->from )) continue;
         list_remove( &format->entry );
         if (format->id < CF_MAX) clipboard->format_map &= ~(1 << format->id);
         clipboard->format_count--;

@@ -973,7 +973,7 @@ static void test_synthesized(void)
 
     /* CF_UNICODETEXT and derivatives, CF_TEXT + CF_OEMTEXT, should be gone */
     count = CountClipboardFormats();
-    todo_wine ok(count == 1, "count %u\n", count );
+    ok(count == 1, "count %u\n", count );
     cf = EnumClipboardFormats( 0 );
     ok(cf == CF_LOCALE, "unexpected clipboard format %u\n", cf);
 
@@ -984,10 +984,9 @@ static void test_synthesized(void)
     ok(r, "gle %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    data = (void*)1; if (broken(1)) /* FIXME Crashes in Wine */
     data = GetClipboardData( CF_TEXT );
-    ok(GetLastError() == 0xdeadbeef, "unexpected last error %d\n", GetLastError());
-    todo_wine ok(!data, "GetClipboardData() should have returned NULL\n");
+    ok(GetLastError() == 0xdeadbeef, "bad last error %d\n", GetLastError());
+    ok(!data, "GetClipboardData() should have returned NULL\n");
 
     r = CloseClipboard();
     ok(r, "gle %d\n", GetLastError());
