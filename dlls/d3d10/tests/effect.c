@@ -1422,22 +1422,28 @@ static void test_effect_variable_type_class(void)
     ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
 
     string_var = variable->lpVtbl->AsString(variable);
+    hr = string_var->lpVtbl->GetString(string_var, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     hr = string_var->lpVtbl->GetString(string_var, &str1);
-todo_wine
     ok(SUCCEEDED(hr), "GetString failed, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!strcmp(str1, "STRING"), "Unexpected value %s.\n", str1);
+    ok(!strcmp(str1, "STRING"), "Unexpected value %s.\n", str1);
 
     variable = constantbuffer->lpVtbl->GetAnnotationByIndex(constantbuffer, 1);
     string_var = variable->lpVtbl->AsString(variable);
     hr = string_var->lpVtbl->GetString(string_var, &str2);
-todo_wine
     ok(SUCCEEDED(hr), "GetString failed, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(str2 != str1, "Unexpected string pointer.\n");
-        ok(!strcmp(str2, "STRING"), "Unexpected value %s.\n", str1);
-    }
+    ok(str2 != str1, "Unexpected string pointer.\n");
+    ok(!strcmp(str2, "STRING"), "Unexpected value %s.\n", str1);
+
+    /* Only two annotations */
+    variable = constantbuffer->lpVtbl->GetAnnotationByIndex(constantbuffer, 2);
+    string_var = variable->lpVtbl->AsString(variable);
+    hr = string_var->lpVtbl->GetString(string_var, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    str1 = (void *)0xdeadbeef;
+    hr = string_var->lpVtbl->GetString(string_var, &str1);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    ok(str1 == (void *)0xdeadbeef, "Unexpected pointer.\n");
 
     /* check float f */
     variable = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, variable_nr++);

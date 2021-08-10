@@ -5794,6 +5794,11 @@ static const struct ID3D10EffectMatrixVariableVtbl d3d10_effect_matrix_variable_
 
 /* ID3D10EffectVariable methods */
 
+static inline struct d3d10_effect_variable *impl_from_ID3D10EffectStringVariable(ID3D10EffectStringVariable *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
+}
+
 static BOOL STDMETHODCALLTYPE d3d10_effect_string_variable_IsValid(ID3D10EffectStringVariable *iface)
 {
     TRACE("iface %p\n", iface);
@@ -5950,9 +5955,20 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_string_variable_GetRawValue(ID3D10
 static HRESULT STDMETHODCALLTYPE d3d10_effect_string_variable_GetString(ID3D10EffectStringVariable *iface,
         const char **str)
 {
-    FIXME("iface %p, str %p stub!\n", iface, str);
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectStringVariable(iface);
+    char *value = (char *)var->u.buffer.local_buffer;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, str %p.\n", iface, str);
+
+    if (!value)
+        return E_FAIL;
+
+    if (!str)
+        return E_INVALIDARG;
+
+    *str = value;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_string_variable_GetStringArray(ID3D10EffectStringVariable *iface,
