@@ -33,123 +33,246 @@
 #include "sqltypes.h"
 #include "sqlext.h"
 
-struct sql_funcs
+#include "wine/unixlib.h"
+
+enum sql_funcs
 {
-    SQLRETURN (WINAPI *pSQLAllocConnect)(SQLHENV,SQLHDBC*);
-    SQLRETURN (WINAPI *pSQLAllocEnv)(SQLHENV*);
-    SQLRETURN (WINAPI *pSQLAllocHandle)(SQLSMALLINT,SQLHANDLE,SQLHANDLE*);
-    SQLRETURN (WINAPI *pSQLAllocHandleStd)(SQLSMALLINT,SQLHANDLE,SQLHANDLE*);
-    SQLRETURN (WINAPI *pSQLAllocStmt)(SQLHDBC,SQLHSTMT*);
-    SQLRETURN (WINAPI *pSQLBindCol)(SQLHSTMT,SQLUSMALLINT,SQLSMALLINT,SQLPOINTER,SQLLEN,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLBindParam)(SQLHSTMT,SQLUSMALLINT,SQLSMALLINT,SQLSMALLINT,SQLULEN,SQLSMALLINT,SQLPOINTER,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLBindParameter)(SQLHSTMT,SQLUSMALLINT,SQLSMALLINT,SQLSMALLINT,SQLSMALLINT,SQLULEN,SQLSMALLINT,SQLPOINTER,SQLLEN,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLBrowseConnect)(SQLHDBC,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLBrowseConnectW)(SQLHDBC,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLBulkOperations)(SQLHSTMT,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLCancel)(SQLHSTMT);
-    SQLRETURN (WINAPI *pSQLCloseCursor)(SQLHSTMT);
-    SQLRETURN (WINAPI *pSQLColAttribute)(SQLHSTMT,SQLUSMALLINT,SQLUSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLColAttributeW)(SQLHSTMT,SQLUSMALLINT,SQLUSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLColAttributes)(SQLHSTMT,SQLUSMALLINT,SQLUSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLColAttributesW)(SQLHSTMT,SQLUSMALLINT,SQLUSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLColumnPrivileges)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLColumnPrivilegesW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLColumns)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLColumnsW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLConnect)(SQLHDBC,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLConnectW)(SQLHDBC,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLCopyDesc)(SQLHDESC,SQLHDESC);
-    SQLRETURN (WINAPI *pSQLDataSources)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDataSourcesA)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDataSourcesW)(SQLHENV,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDescribeCol)(SQLHSTMT,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLULEN*,SQLSMALLINT*,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDescribeColW)(SQLHSTMT,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLULEN*,SQLSMALLINT*,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDescribeParam)(SQLHSTMT,SQLUSMALLINT,SQLSMALLINT*,SQLULEN*,SQLSMALLINT*,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDisconnect)(SQLHDBC);
-    SQLRETURN (WINAPI *pSQLDriverConnect)(SQLHDBC,SQLHWND,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLDriverConnectW)(SQLHDBC,SQLHWND,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLDrivers)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLDriversW)(SQLHENV,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLEndTran)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLError)(SQLHENV,SQLHDBC,SQLHSTMT,SQLCHAR*,SQLINTEGER*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLErrorW)(SQLHENV,SQLHDBC,SQLHSTMT,SQLWCHAR*,SQLINTEGER*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLExecDirect)(SQLHSTMT,SQLCHAR*,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLExecDirectW)(SQLHSTMT,SQLWCHAR*,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLExecute)(SQLHSTMT);
-    SQLRETURN (WINAPI *pSQLExtendedFetch)(SQLHSTMT,SQLUSMALLINT,SQLLEN,SQLULEN*,SQLUSMALLINT*);
-    SQLRETURN (WINAPI *pSQLFetch)(SQLHSTMT);
-    SQLRETURN (WINAPI *pSQLFetchScroll)(SQLHSTMT,SQLSMALLINT,SQLLEN);
-    SQLRETURN (WINAPI *pSQLForeignKeys)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLForeignKeysW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLFreeConnect)(SQLHDBC);
-    SQLRETURN (WINAPI *pSQLFreeEnv)(SQLHENV);
-    SQLRETURN (WINAPI *pSQLFreeHandle)(SQLSMALLINT,SQLHANDLE);
-    SQLRETURN (WINAPI *pSQLFreeStmt)(SQLHSTMT,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLGetConnectAttr)(SQLHDBC,SQLINTEGER,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetConnectAttrW)(SQLHDBC,SQLINTEGER,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetConnectOption)(SQLHDBC,SQLUSMALLINT,SQLPOINTER);
-    SQLRETURN (WINAPI *pSQLGetConnectOptionW)(SQLHDBC,SQLUSMALLINT,SQLPOINTER);
-    SQLRETURN (WINAPI *pSQLGetCursorName)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetCursorNameW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetData)(SQLHSTMT,SQLUSMALLINT,SQLSMALLINT,SQLPOINTER,SQLLEN,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLGetDescField)(SQLHDESC,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetDescFieldW)(SQLHDESC,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetDescRec)(SQLHDESC,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLSMALLINT*,SQLLEN*,SQLSMALLINT*,SQLSMALLINT*,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetDescRecW)(SQLHDESC,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLSMALLINT*,SQLLEN*,SQLSMALLINT*,SQLSMALLINT*,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetDiagField)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetDiagFieldW)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetDiagRec)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLCHAR*,SQLINTEGER*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetDiagRecA)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLCHAR*,SQLINTEGER*, SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetDiagRecW)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLWCHAR*,SQLINTEGER*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetEnvAttr)(SQLHENV,SQLINTEGER,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetFunctions)(SQLHDBC,SQLUSMALLINT,SQLUSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetInfo)(SQLHDBC,SQLUSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetInfoW)(SQLHDBC,SQLUSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLGetStmtAttr)(SQLHSTMT,SQLINTEGER,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetStmtAttrW)(SQLHSTMT,SQLINTEGER,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLGetStmtOption)(SQLHSTMT,SQLUSMALLINT,SQLPOINTER);
-    SQLRETURN (WINAPI *pSQLGetTypeInfo)(SQLHSTMT,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLGetTypeInfoW)(SQLHSTMT,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLMoreResults)(SQLHSTMT);
-    SQLRETURN (WINAPI *pSQLNativeSql)(SQLHDBC,SQLCHAR*,SQLINTEGER,SQLCHAR*,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLNativeSqlW)(SQLHDBC,SQLWCHAR*,SQLINTEGER,SQLWCHAR*,SQLINTEGER,SQLINTEGER*);
-    SQLRETURN (WINAPI *pSQLNumParams)(SQLHSTMT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLNumResultCols)(SQLHSTMT,SQLSMALLINT*);
-    SQLRETURN (WINAPI *pSQLParamData)(SQLHSTMT,SQLPOINTER*);
-    SQLRETURN (WINAPI *pSQLParamOptions)(SQLHSTMT,SQLULEN,SQLULEN*);
-    SQLRETURN (WINAPI *pSQLPrepare)(SQLHSTMT,SQLCHAR*,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLPrepareW)(SQLHSTMT,SQLWCHAR*,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLPrimaryKeys)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLPrimaryKeysW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLProcedureColumns)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLProcedureColumnsW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLProcedures)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLProceduresW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLPutData)(SQLHSTMT,SQLPOINTER,SQLLEN);
-    SQLRETURN (WINAPI *pSQLRowCount)(SQLHSTMT,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLSetConnectAttr)(SQLHDBC,SQLINTEGER,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetConnectAttrW)(SQLHDBC,SQLINTEGER,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetConnectOption)(SQLHDBC,SQLUSMALLINT,SQLULEN);
-    SQLRETURN (WINAPI *pSQLSetConnectOptionW)(SQLHDBC,SQLUSMALLINT,SQLULEN);
-    SQLRETURN (WINAPI *pSQLSetCursorName)(SQLHSTMT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLSetCursorNameW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLSetDescField)(SQLHDESC,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetDescFieldW)(SQLHDESC,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetDescRec)(SQLHDESC,SQLSMALLINT,SQLSMALLINT,SQLSMALLINT,SQLLEN,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLLEN*,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLSetEnvAttr)(SQLHENV,SQLINTEGER,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetParam)(SQLHSTMT,SQLUSMALLINT,SQLSMALLINT,SQLSMALLINT,SQLULEN,SQLSMALLINT,SQLPOINTER,SQLLEN*);
-    SQLRETURN (WINAPI *pSQLSetPos)(SQLHSTMT,SQLSETPOSIROW,SQLUSMALLINT,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLSetScrollOptions)(SQLHSTMT,SQLUSMALLINT,SQLLEN,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLSetStmtAttr)(SQLHSTMT,SQLINTEGER,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetStmtAttrW)(SQLHSTMT,SQLINTEGER,SQLPOINTER,SQLINTEGER);
-    SQLRETURN (WINAPI *pSQLSetStmtOption)(SQLHSTMT,SQLUSMALLINT,SQLULEN);
-    SQLRETURN (WINAPI *pSQLSpecialColumns)(SQLHSTMT,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLUSMALLINT,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLSpecialColumnsW)(SQLHSTMT,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLUSMALLINT,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLStatistics)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLUSMALLINT,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLStatisticsW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLUSMALLINT,SQLUSMALLINT);
-    SQLRETURN (WINAPI *pSQLTablePrivileges)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLTablePrivilegesW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLTables)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLTablesW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
-    SQLRETURN (WINAPI *pSQLTransact)(SQLHENV,SQLHDBC,SQLUSMALLINT);
+    process_attach,
+    process_detach,
+    unix_SQLAllocConnect,
+    unix_SQLAllocEnv,
+    unix_SQLAllocHandle,
+    unix_SQLAllocHandleStd,
+    unix_SQLAllocStmt,
+    unix_SQLBindCol,
+    unix_SQLBindParam,
+    unix_SQLBindParameter,
+    unix_SQLBrowseConnect,
+    unix_SQLBrowseConnectW,
+    unix_SQLBulkOperations,
+    unix_SQLCancel,
+    unix_SQLCloseCursor,
+    unix_SQLColAttribute,
+    unix_SQLColAttributeW,
+    unix_SQLColAttributes,
+    unix_SQLColAttributesW,
+    unix_SQLColumnPrivileges,
+    unix_SQLColumnPrivilegesW,
+    unix_SQLColumns,
+    unix_SQLColumnsW,
+    unix_SQLConnect,
+    unix_SQLConnectW,
+    unix_SQLCopyDesc,
+    unix_SQLDataSources,
+    unix_SQLDataSourcesA,
+    unix_SQLDataSourcesW,
+    unix_SQLDescribeCol,
+    unix_SQLDescribeColW,
+    unix_SQLDescribeParam,
+    unix_SQLDisconnect,
+    unix_SQLDriverConnect,
+    unix_SQLDriverConnectW,
+    unix_SQLDrivers,
+    unix_SQLDriversW,
+    unix_SQLEndTran,
+    unix_SQLError,
+    unix_SQLErrorW,
+    unix_SQLExecDirect,
+    unix_SQLExecDirectW,
+    unix_SQLExecute,
+    unix_SQLExtendedFetch,
+    unix_SQLFetch,
+    unix_SQLFetchScroll,
+    unix_SQLForeignKeys,
+    unix_SQLForeignKeysW,
+    unix_SQLFreeConnect,
+    unix_SQLFreeEnv,
+    unix_SQLFreeHandle,
+    unix_SQLFreeStmt,
+    unix_SQLGetConnectAttr,
+    unix_SQLGetConnectAttrW,
+    unix_SQLGetConnectOption,
+    unix_SQLGetConnectOptionW,
+    unix_SQLGetCursorName,
+    unix_SQLGetCursorNameW,
+    unix_SQLGetData,
+    unix_SQLGetDescField,
+    unix_SQLGetDescFieldW,
+    unix_SQLGetDescRec,
+    unix_SQLGetDescRecW,
+    unix_SQLGetDiagField,
+    unix_SQLGetDiagFieldW,
+    unix_SQLGetDiagRec,
+    unix_SQLGetDiagRecA,
+    unix_SQLGetDiagRecW,
+    unix_SQLGetEnvAttr,
+    unix_SQLGetFunctions,
+    unix_SQLGetInfo,
+    unix_SQLGetInfoW,
+    unix_SQLGetStmtAttr,
+    unix_SQLGetStmtAttrW,
+    unix_SQLGetStmtOption,
+    unix_SQLGetTypeInfo,
+    unix_SQLGetTypeInfoW,
+    unix_SQLMoreResults,
+    unix_SQLNativeSql,
+    unix_SQLNativeSqlW,
+    unix_SQLNumParams,
+    unix_SQLNumResultCols,
+    unix_SQLParamData,
+    unix_SQLParamOptions,
+    unix_SQLPrepare,
+    unix_SQLPrepareW,
+    unix_SQLPrimaryKeys,
+    unix_SQLPrimaryKeysW,
+    unix_SQLProcedureColumns,
+    unix_SQLProcedureColumnsW,
+    unix_SQLProcedures,
+    unix_SQLProceduresW,
+    unix_SQLPutData,
+    unix_SQLRowCount,
+    unix_SQLSetConnectAttr,
+    unix_SQLSetConnectAttrW,
+    unix_SQLSetConnectOption,
+    unix_SQLSetConnectOptionW,
+    unix_SQLSetCursorName,
+    unix_SQLSetCursorNameW,
+    unix_SQLSetDescField,
+    unix_SQLSetDescFieldW,
+    unix_SQLSetDescRec,
+    unix_SQLSetEnvAttr,
+    unix_SQLSetParam,
+    unix_SQLSetPos,
+    unix_SQLSetScrollOptions,
+    unix_SQLSetStmtAttr,
+    unix_SQLSetStmtAttrW,
+    unix_SQLSetStmtOption,
+    unix_SQLSpecialColumns,
+    unix_SQLSpecialColumnsW,
+    unix_SQLStatistics,
+    unix_SQLStatisticsW,
+    unix_SQLTablePrivileges,
+    unix_SQLTablePrivilegesW,
+    unix_SQLTables,
+    unix_SQLTablesW,
+    unix_SQLTransact,
+    NB_ODBC_FUNCS
 };
+
+struct SQLAllocConnect_params { SQLHENV EnvironmentHandle; SQLHDBC *ConnectionHandle; };
+struct SQLAllocEnv_params { SQLHENV *EnvironmentHandle; };
+struct SQLAllocHandle_params { SQLSMALLINT HandleType; SQLHANDLE InputHandle; SQLHANDLE *OutputHandle; };
+struct SQLAllocHandleStd_params { SQLSMALLINT HandleType; SQLHANDLE InputHandle; SQLHANDLE *OutputHandle; };
+struct SQLAllocStmt_params { SQLHDBC ConnectionHandle; SQLHSTMT *StatementHandle; };
+struct SQLBindCol_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLSMALLINT TargetType; SQLPOINTER TargetValue; SQLLEN BufferLength; SQLLEN *StrLen_or_Ind; };
+struct SQLBindParam_params { SQLHSTMT StatementHandle; SQLUSMALLINT ParameterNumber; SQLSMALLINT ValueType; SQLSMALLINT ParameterType; SQLULEN LengthPrecision; SQLSMALLINT ParameterScale; SQLPOINTER ParameterValue; SQLLEN *StrLen_or_Ind; };
+struct SQLBindParameter_params { SQLHSTMT hstmt; SQLUSMALLINT ipar; SQLSMALLINT fParamType; SQLSMALLINT fCType; SQLSMALLINT fSqlType; SQLULEN cbColDef; SQLSMALLINT ibScale; SQLPOINTER rgbValue; SQLLEN cbValueMax; SQLLEN *pcbValue; };
+struct SQLBrowseConnect_params { SQLHDBC hdbc; SQLCHAR *szConnStrIn; SQLSMALLINT cbConnStrIn; SQLCHAR *szConnStrOut; SQLSMALLINT cbConnStrOutMax; SQLSMALLINT *pcbConnStrOut; };
+struct SQLBrowseConnectW_params { SQLHDBC hdbc; SQLWCHAR *szConnStrIn; SQLSMALLINT cbConnStrIn; SQLWCHAR *szConnStrOut; SQLSMALLINT cbConnStrOutMax; SQLSMALLINT *pcbConnStrOut; };
+struct SQLBulkOperations_params { SQLHSTMT StatementHandle; SQLSMALLINT Operation; };
+struct SQLCancel_params { SQLHSTMT StatementHandle; };
+struct SQLCloseCursor_params { SQLHSTMT StatementHandle; };
+struct SQLColAttribute_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLUSMALLINT FieldIdentifier; SQLPOINTER CharacterAttribute; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLLEN *NumericAttribute; };
+struct SQLColAttributeW_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLUSMALLINT FieldIdentifier; SQLPOINTER CharacterAttribute; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLLEN *NumericAttribute; };
+struct SQLColAttributes_params { SQLHSTMT hstmt; SQLUSMALLINT icol; SQLUSMALLINT fDescType; SQLPOINTER rgbDesc; SQLSMALLINT cbDescMax; SQLSMALLINT *pcbDesc; SQLLEN *pfDesc; };
+struct SQLColAttributesW_params { SQLHSTMT hstmt; SQLUSMALLINT icol; SQLUSMALLINT fDescType; SQLPOINTER rgbDesc; SQLSMALLINT cbDescMax; SQLSMALLINT *pcbDesc; SQLLEN *pfDesc; };
+struct SQLColumnPrivileges_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szTableName; SQLSMALLINT cbTableName; SQLCHAR *szColumnName; SQLSMALLINT cbColumnName; };
+struct SQLColumnPrivilegesW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szTableName; SQLSMALLINT cbTableName; SQLWCHAR *szColumnName; SQLSMALLINT cbColumnName; };
+struct SQLColumns_params { SQLHSTMT StatementHandle; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLCHAR *ColumnName; SQLSMALLINT NameLength4; };
+struct SQLColumnsW_params { SQLHSTMT StatementHandle; WCHAR *CatalogName; SQLSMALLINT NameLength1; WCHAR *SchemaName; SQLSMALLINT NameLength2; WCHAR *TableName; SQLSMALLINT NameLength3; WCHAR *ColumnName; SQLSMALLINT NameLength4; };
+struct SQLConnect_params { SQLHDBC ConnectionHandle; SQLCHAR *ServerName; SQLSMALLINT NameLength1; SQLCHAR *UserName; SQLSMALLINT NameLength2; SQLCHAR *Authentication; SQLSMALLINT NameLength3; };
+struct SQLConnectW_params { SQLHDBC ConnectionHandle; WCHAR *ServerName; SQLSMALLINT NameLength1; WCHAR *UserName; SQLSMALLINT NameLength2; WCHAR *Authentication; SQLSMALLINT NameLength3; };
+struct SQLCopyDesc_params { SQLHDESC SourceDescHandle; SQLHDESC TargetDescHandle; };
+struct SQLDataSources_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; SQLCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; SQLCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
+struct SQLDataSourcesA_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; SQLCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; SQLCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
+struct SQLDataSourcesW_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; WCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; WCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
+struct SQLDescribeCol_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLCHAR *ColumnName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; SQLSMALLINT *DataType; SQLULEN *ColumnSize; SQLSMALLINT *DecimalDigits; SQLSMALLINT *Nullable; };
+struct SQLDescribeColW_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; WCHAR *ColumnName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; SQLSMALLINT *DataType; SQLULEN *ColumnSize; SQLSMALLINT *DecimalDigits; SQLSMALLINT *Nullable; };
+struct SQLDescribeParam_params { SQLHSTMT hstmt; SQLUSMALLINT ipar; SQLSMALLINT *pfSqlType; SQLULEN *pcbParamDef; SQLSMALLINT *pibScale; SQLSMALLINT *pfNullable; };
+struct SQLDisconnect_params { SQLHDBC ConnectionHandle; };
+struct SQLDriverConnect_params { SQLHDBC hdbc; SQLHWND hwnd; SQLCHAR *ConnectionString; SQLSMALLINT Length; SQLCHAR *conn_str_out; SQLSMALLINT conn_str_out_max; SQLSMALLINT *ptr_conn_str_out; SQLUSMALLINT driver_completion; };
+struct SQLDriverConnectW_params { SQLHDBC ConnectionHandle; SQLHWND WindowHandle; WCHAR *InConnectionString; SQLSMALLINT Length; WCHAR *OutConnectionString; SQLSMALLINT BufferLength; SQLSMALLINT *Length2; SQLUSMALLINT DriverCompletion; };
+struct SQLDrivers_params { SQLHENV EnvironmentHandle; SQLUSMALLINT fDirection; SQLCHAR *szDriverDesc; SQLSMALLINT cbDriverDescMax; SQLSMALLINT *pcbDriverDesc; SQLCHAR *szDriverAttributes; SQLSMALLINT cbDriverAttrMax; SQLSMALLINT *pcbDriverAttr; };
+struct SQLDriversW_params { SQLHENV EnvironmentHandle; SQLUSMALLINT fDirection; SQLWCHAR *szDriverDesc; SQLSMALLINT cbDriverDescMax; SQLSMALLINT *pcbDriverDesc; SQLWCHAR *szDriverAttributes; SQLSMALLINT cbDriverAttrMax; SQLSMALLINT *pcbDriverAttr; };
+struct SQLEndTran_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT CompletionType; };
+struct SQLError_params { SQLHENV EnvironmentHandle; SQLHDBC ConnectionHandle; SQLHSTMT StatementHandle; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
+struct SQLErrorW_params { SQLHENV EnvironmentHandle; SQLHDBC ConnectionHandle; SQLHSTMT StatementHandle; WCHAR *Sqlstate; SQLINTEGER *NativeError; WCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
+struct SQLExecDirect_params { SQLHSTMT StatementHandle; SQLCHAR *StatementText; SQLINTEGER TextLength; };
+struct SQLExecDirectW_params { SQLHSTMT StatementHandle; WCHAR *StatementText; SQLINTEGER TextLength; };
+struct SQLExecute_params { SQLHSTMT StatementHandle; };
+struct SQLExtendedFetch_params { SQLHSTMT hstmt; SQLUSMALLINT fFetchType; SQLLEN irow; SQLULEN *pcrow; SQLUSMALLINT *rgfRowStatus; };
+struct SQLFetch_params { SQLHSTMT StatementHandle; };
+struct SQLFetchScroll_params { SQLHSTMT StatementHandle; SQLSMALLINT FetchOrientation; SQLLEN FetchOffset; };
+struct SQLForeignKeys_params { SQLHSTMT hstmt; SQLCHAR *szPkCatalogName; SQLSMALLINT cbPkCatalogName; SQLCHAR *szPkSchemaName; SQLSMALLINT cbPkSchemaName; SQLCHAR *szPkTableName; SQLSMALLINT cbPkTableName; SQLCHAR *szFkCatalogName; SQLSMALLINT cbFkCatalogName; SQLCHAR *szFkSchemaName; SQLSMALLINT cbFkSchemaName; SQLCHAR *szFkTableName; SQLSMALLINT cbFkTableName; };
+struct SQLForeignKeysW_params { SQLHSTMT hstmt; SQLWCHAR *szPkCatalogName; SQLSMALLINT cbPkCatalogName; SQLWCHAR *szPkSchemaName; SQLSMALLINT cbPkSchemaName; SQLWCHAR *szPkTableName; SQLSMALLINT cbPkTableName; SQLWCHAR *szFkCatalogName; SQLSMALLINT cbFkCatalogName; SQLWCHAR *szFkSchemaName; SQLSMALLINT cbFkSchemaName; SQLWCHAR *szFkTableName; SQLSMALLINT cbFkTableName; };
+struct SQLFreeConnect_params { SQLHDBC ConnectionHandle; };
+struct SQLFreeEnv_params { SQLHENV EnvironmentHandle; };
+struct SQLFreeHandle_params { SQLSMALLINT HandleType; SQLHANDLE Handle; };
+struct SQLFreeStmt_params { SQLHSTMT StatementHandle; SQLUSMALLINT Option; };
+struct SQLGetConnectAttr_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetConnectAttrW_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetConnectOption_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLPOINTER Value; };
+struct SQLGetConnectOptionW_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLPOINTER Value; };
+struct SQLGetCursorName_params { SQLHSTMT StatementHandle; SQLCHAR *CursorName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; };
+struct SQLGetCursorNameW_params { SQLHSTMT StatementHandle; WCHAR *CursorName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; };
+struct SQLGetData_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLSMALLINT TargetType; SQLPOINTER TargetValue; SQLLEN BufferLength; SQLLEN *StrLen_or_Ind; };
+struct SQLGetDescField_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetDescFieldW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetDescRec_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLCHAR *Name; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLSMALLINT *Type; SQLSMALLINT *SubType; SQLLEN *Length; SQLSMALLINT *Precision; SQLSMALLINT *Scale; SQLSMALLINT *Nullable; };
+struct SQLGetDescRecW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; WCHAR *Name; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLSMALLINT *Type; SQLSMALLINT *SubType; SQLLEN *Length; SQLSMALLINT *Precision; SQLSMALLINT *Scale; SQLSMALLINT *Nullable; };
+struct SQLGetDiagField_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLSMALLINT DiagIdentifier; SQLPOINTER DiagInfo; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
+struct SQLGetDiagFieldW_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLSMALLINT DiagIdentifier; SQLPOINTER DiagInfo; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
+struct SQLGetDiagRec_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
+struct SQLGetDiagRecA_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
+struct SQLGetDiagRecW_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; WCHAR *Sqlstate; SQLINTEGER *NativeError; WCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
+struct SQLGetEnvAttr_params { SQLHENV EnvironmentHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetFunctions_params { SQLHDBC ConnectionHandle; SQLUSMALLINT FunctionId; SQLUSMALLINT *Supported; };
+struct SQLGetInfo_params { SQLHDBC ConnectionHandle; SQLUSMALLINT InfoType; SQLPOINTER InfoValue; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
+struct SQLGetInfoW_params { SQLHDBC ConnectionHandle; SQLUSMALLINT InfoType; SQLPOINTER InfoValue; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
+struct SQLGetStmtAttr_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetStmtAttrW_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
+struct SQLGetStmtOption_params { SQLHSTMT StatementHandle; SQLUSMALLINT Option; SQLPOINTER Value; };
+struct SQLGetTypeInfo_params { SQLHSTMT StatementHandle; SQLSMALLINT DataType; };
+struct SQLGetTypeInfoW_params { SQLHSTMT StatementHandle; SQLSMALLINT DataType; };
+struct SQLMoreResults_params { SQLHSTMT StatementHandle; };
+struct SQLNativeSql_params { SQLHDBC hdbc; SQLCHAR *szSqlStrIn; SQLINTEGER cbSqlStrIn; SQLCHAR *szSqlStr; SQLINTEGER cbSqlStrMax; SQLINTEGER *pcbSqlStr; };
+struct SQLNativeSqlW_params { SQLHDBC hdbc; SQLWCHAR *szSqlStrIn; SQLINTEGER cbSqlStrIn; SQLWCHAR *szSqlStr; SQLINTEGER cbSqlStrMax; SQLINTEGER *pcbSqlStr; };
+struct SQLNumParams_params { SQLHSTMT hstmt; SQLSMALLINT *pcpar; };
+struct SQLNumResultCols_params { SQLHSTMT StatementHandle; SQLSMALLINT *ColumnCount; };
+struct SQLParamData_params { SQLHSTMT StatementHandle; SQLPOINTER *Value; };
+struct SQLParamOptions_params { SQLHSTMT hstmt; SQLULEN crow; SQLULEN *pirow; };
+struct SQLPrepare_params { SQLHSTMT StatementHandle; SQLCHAR *StatementText; SQLINTEGER TextLength; };
+struct SQLPrepareW_params { SQLHSTMT StatementHandle; WCHAR *StatementText; SQLINTEGER TextLength; };
+struct SQLPrimaryKeys_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szTableName; SQLSMALLINT cbTableName; };
+struct SQLPrimaryKeysW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szTableName; SQLSMALLINT cbTableName; };
+struct SQLProcedureColumns_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szProcName; SQLSMALLINT cbProcName; SQLCHAR *szColumnName; SQLSMALLINT cbColumnName; };
+struct SQLProcedureColumnsW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szProcName; SQLSMALLINT cbProcName; SQLWCHAR *szColumnName; SQLSMALLINT cbColumnName; };
+struct SQLProcedures_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szProcName; SQLSMALLINT cbProcName; };
+struct SQLProceduresW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szProcName; SQLSMALLINT cbProcName; };
+struct SQLPutData_params { SQLHSTMT StatementHandle; SQLPOINTER Data; SQLLEN StrLen_or_Ind; };
+struct SQLRowCount_params { SQLHSTMT StatementHandle; SQLLEN *RowCount; };
+struct SQLSetConnectAttr_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
+struct SQLSetConnectAttrW_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
+struct SQLSetConnectOption_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLULEN Value; };
+struct SQLSetConnectOptionW_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLULEN Value; };
+struct SQLSetCursorName_params { SQLHSTMT StatementHandle; SQLCHAR *CursorName; SQLSMALLINT NameLength; };
+struct SQLSetCursorNameW_params { SQLHSTMT StatementHandle; WCHAR *CursorName; SQLSMALLINT NameLength; };
+struct SQLSetDescField_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; };
+struct SQLSetDescFieldW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; };
+struct SQLSetDescRec_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT Type; SQLSMALLINT SubType; SQLLEN Length; SQLSMALLINT Precision; SQLSMALLINT Scale; SQLPOINTER Data; SQLLEN *StringLength; SQLLEN *Indicator; };
+struct SQLSetEnvAttr_params { SQLHENV EnvironmentHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
+struct SQLSetParam_params { SQLHSTMT StatementHandle; SQLUSMALLINT ParameterNumber; SQLSMALLINT ValueType; SQLSMALLINT ParameterType; SQLULEN LengthPrecision; SQLSMALLINT ParameterScale; SQLPOINTER ParameterValue; SQLLEN *StrLen_or_Ind; };
+struct SQLSetPos_params { SQLHSTMT hstmt; SQLSETPOSIROW irow; SQLUSMALLINT fOption; SQLUSMALLINT fLock; };
+struct SQLSetScrollOptions_params { SQLHSTMT statement_handle; SQLUSMALLINT f_concurrency; SQLLEN crow_keyset; SQLUSMALLINT crow_rowset; };
+struct SQLSetStmtAttr_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
+struct SQLSetStmtAttrW_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
+struct SQLSetStmtOption_params { SQLHSTMT StatementHandle; SQLUSMALLINT Option; SQLULEN Value; };
+struct SQLSpecialColumns_params { SQLHSTMT StatementHandle; SQLUSMALLINT IdentifierType; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Scope; SQLUSMALLINT Nullable; };
+struct SQLSpecialColumnsW_params { SQLHSTMT StatementHandle; SQLUSMALLINT IdentifierType; SQLWCHAR *CatalogName; SQLSMALLINT NameLength1; SQLWCHAR *SchemaName; SQLSMALLINT NameLength2; SQLWCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Scope; SQLUSMALLINT Nullable; };
+struct SQLStatistics_params { SQLHSTMT StatementHandle; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Unique; SQLUSMALLINT Reserved; };
+struct SQLStatisticsW_params { SQLHSTMT StatementHandle; SQLWCHAR *CatalogName; SQLSMALLINT NameLength1; SQLWCHAR *SchemaName; SQLSMALLINT NameLength2; SQLWCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Unique; SQLUSMALLINT Reserved; };
+struct SQLTablePrivileges_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szTableName; SQLSMALLINT cbTableName; };
+struct SQLTablePrivilegesW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szTableName; SQLSMALLINT cbTableName; };
+struct SQLTables_params { SQLHSTMT StatementHandle; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLCHAR *TableType; SQLSMALLINT NameLength4; };
+struct SQLTablesW_params { SQLHSTMT StatementHandle; SQLWCHAR *CatalogName; SQLSMALLINT NameLength1; SQLWCHAR *SchemaName; SQLSMALLINT NameLength2; SQLWCHAR *TableName; SQLSMALLINT NameLength3; SQLWCHAR *TableType; SQLSMALLINT NameLength4; };
+struct SQLTransact_params { SQLHENV EnvironmentHandle; SQLHDBC ConnectionHandle; SQLUSMALLINT CompletionType; };

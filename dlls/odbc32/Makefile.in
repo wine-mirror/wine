@@ -1,6 +1,7 @@
 MODULE    = odbc32.dll
 IMPORTLIB = odbc32
 IMPORTS   = advapi32
+EXTRALIBS = -Wl,--subsystem,unixlib
 
 EXTRADLLFLAGS = -mno-cygwin
 
