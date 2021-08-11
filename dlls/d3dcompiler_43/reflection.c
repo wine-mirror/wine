@@ -124,6 +124,7 @@ struct d3dcompiler_shader_reflection
     UINT gs_max_output_vertex_count;
     D3D_PRIMITIVE input_primitive;
     UINT cut_instruction_count;
+    UINT def_count;
     UINT dcl_count;
     UINT static_flow_control_count;
     UINT float_instruction_count;
@@ -138,6 +139,7 @@ struct d3dcompiler_shader_reflection
     UINT texture_bias_instructions;
     UINT texture_gradient_instructions;
     UINT dynamic_flow_control_count;
+    UINT macro_instruction_count;
     UINT c_control_points;
     D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
     D3D_TESSELLATOR_PARTITIONING hs_partitioning;
@@ -1098,7 +1100,8 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     r->temp_register_count = read_dword(&ptr);
     TRACE("TempRegisterCount: %u\n", r->temp_register_count);
 
-    skip_dword_unknown(&ptr, 1);
+    r->def_count = read_dword(&ptr);
+    TRACE("DefCount: %u\n", r->def_count);
 
     r->dcl_count = read_dword(&ptr);
     TRACE("DclCount: %u\n", r->dcl_count);
@@ -1118,7 +1121,8 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     r->dynamic_flow_control_count = read_dword(&ptr);
     TRACE("DynamicFlowControlCount: %u\n", r->dynamic_flow_control_count);
 
-    skip_dword_unknown(&ptr, 1);
+    r->macro_instruction_count = read_dword(&ptr);
+    TRACE("MacroInstructionCount: %u\n", r->macro_instruction_count);
 
     r->temp_array_count = read_dword(&ptr);
     TRACE("TempArrayCount: %u\n", r->temp_array_count);
@@ -1917,7 +1921,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetDesc(ID3D10ShaderRef
 {
     struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
 
-    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc)
     {
@@ -1935,7 +1939,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetDesc(ID3D10ShaderRef
     desc->InstructionCount = reflection->instruction_count;
     desc->TempRegisterCount = reflection->temp_register_count;
     desc->TempArrayCount = reflection->temp_array_count;
-    desc->DefCount = 0;
+    desc->DefCount = reflection->def_count;
     desc->DclCount = reflection->dcl_count;
     desc->TextureNormalInstructions = reflection->texture_normal_instructions;
     desc->TextureLoadInstructions = reflection->texture_load_instructions;
@@ -1947,7 +1951,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetDesc(ID3D10ShaderRef
     desc->UintInstructionCount = reflection->uint_instruction_count;
     desc->StaticFlowControlCount = reflection->static_flow_control_count;
     desc->DynamicFlowControlCount = reflection->dynamic_flow_control_count;
-    desc->MacroInstructionCount = 0;
+    desc->MacroInstructionCount = reflection->macro_instruction_count;
     desc->ArrayInstructionCount = reflection->array_instruction_count;
     desc->CutInstructionCount = reflection->cut_instruction_count;
     desc->EmitInstructionCount = reflection->emit_instruction_count;
