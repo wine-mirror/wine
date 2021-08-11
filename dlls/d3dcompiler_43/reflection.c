@@ -387,7 +387,7 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_shader_reflection_Release(ID3D11Shade
 
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11ShaderReflection *iface, D3D11_SHADER_DESC *desc)
 {
-    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
     FIXME("iface %p, desc %p partial stub!\n", iface, desc);
 
@@ -397,41 +397,41 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11Sha
         return E_FAIL;
     }
 
-    desc->Version = This->version;
-    desc->Creator = This->creator;
-    desc->Flags = This->flags;
-    desc->ConstantBuffers = This->constant_buffer_count;
-    desc->BoundResources = This->bound_resource_count;
-    desc->InputParameters = This->isgn ? This->isgn->element_count : 0;
-    desc->OutputParameters = This->osgn ? This->osgn->element_count : 0;
-    desc->InstructionCount = This->instruction_count;
-    desc->TempRegisterCount = This->temp_register_count;
-    desc->TempArrayCount = This->temp_array_count;
-    desc->DefCount = 0;
-    desc->DclCount = This->dcl_count;
-    desc->TextureNormalInstructions = This->texture_normal_instructions;
-    desc->TextureLoadInstructions = This->texture_load_instructions;
-    desc->TextureCompInstructions = This->texture_comp_instructions;
-    desc->TextureBiasInstructions = This->texture_bias_instructions;
-    desc->TextureGradientInstructions = This->texture_gradient_instructions;
-    desc->FloatInstructionCount = This->float_instruction_count;
-    desc->IntInstructionCount = This->int_instruction_count;
-    desc->UintInstructionCount = This->uint_instruction_count;
-    desc->StaticFlowControlCount = This->static_flow_control_count;
-    desc->DynamicFlowControlCount = This->dynamic_flow_control_count;
-    desc->MacroInstructionCount = 0;
-    desc->ArrayInstructionCount = This->array_instruction_count;
-    desc->CutInstructionCount = This->cut_instruction_count;
-    desc->EmitInstructionCount = This->emit_instruction_count;
-    desc->GSOutputTopology = This->gs_output_topology;
-    desc->GSMaxOutputVertexCount = This->gs_max_output_vertex_count;
-    desc->InputPrimitive = This->input_primitive;
-    desc->PatchConstantParameters = This->pcsg ? This->pcsg->element_count : 0;
+    desc->Version = reflection->version;
+    desc->Creator = reflection->creator;
+    desc->Flags = reflection->flags;
+    desc->ConstantBuffers = reflection->constant_buffer_count;
+    desc->BoundResources = reflection->bound_resource_count;
+    desc->InputParameters = reflection->isgn ? reflection->isgn->element_count : 0;
+    desc->OutputParameters = reflection->osgn ? reflection->osgn->element_count : 0;
+    desc->InstructionCount = reflection->instruction_count;
+    desc->TempRegisterCount = reflection->temp_register_count;
+    desc->TempArrayCount = reflection->temp_array_count;
+    desc->DefCount = reflection->def_count;
+    desc->DclCount = reflection->dcl_count;
+    desc->TextureNormalInstructions = reflection->texture_normal_instructions;
+    desc->TextureLoadInstructions = reflection->texture_load_instructions;
+    desc->TextureCompInstructions = reflection->texture_comp_instructions;
+    desc->TextureBiasInstructions = reflection->texture_bias_instructions;
+    desc->TextureGradientInstructions = reflection->texture_gradient_instructions;
+    desc->FloatInstructionCount = reflection->float_instruction_count;
+    desc->IntInstructionCount = reflection->int_instruction_count;
+    desc->UintInstructionCount = reflection->uint_instruction_count;
+    desc->StaticFlowControlCount = reflection->static_flow_control_count;
+    desc->DynamicFlowControlCount = reflection->dynamic_flow_control_count;
+    desc->MacroInstructionCount = reflection->macro_instruction_count;
+    desc->ArrayInstructionCount = reflection->array_instruction_count;
+    desc->CutInstructionCount = reflection->cut_instruction_count;
+    desc->EmitInstructionCount = reflection->emit_instruction_count;
+    desc->GSOutputTopology = reflection->gs_output_topology;
+    desc->GSMaxOutputVertexCount = reflection->gs_max_output_vertex_count;
+    desc->InputPrimitive = reflection->input_primitive;
+    desc->PatchConstantParameters = reflection->pcsg ? reflection->pcsg->element_count : 0;
     desc->cGSInstanceCount = 0;
-    desc->cControlPoints = This->c_control_points;
-    desc->HSOutputPrimitive = This->hs_output_primitive;
-    desc->HSPartitioning = This->hs_partitioning;
-    desc->TessellatorDomain = This->tessellator_domain;
+    desc->cControlPoints = reflection->c_control_points;
+    desc->HSOutputPrimitive = reflection->hs_output_primitive;
+    desc->HSPartitioning = reflection->hs_partitioning;
+    desc->TessellatorDomain = reflection->tessellator_domain;
     desc->cBarrierInstructions = 0;
     desc->cInterlockedInstructions = 0;
     desc->cTextureStoreInstructions = 0;
