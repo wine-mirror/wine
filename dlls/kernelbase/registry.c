@@ -1225,6 +1225,27 @@ static DWORD query_perf_names( DWORD *type, void *data, DWORD *ret_size, BOOL un
     return ERROR_SUCCESS;
 }
 
+/* FIXME: we should read data from system32/perf009h.dat (or perf###h depending
+ * on locale) instead */
+static DWORD query_perf_help( DWORD *type, void *data, DWORD *ret_size, BOOL unicode )
+{
+    static const WCHAR names[] = L"1847\0End Marker\0";
+    DWORD size = *ret_size;
+
+    if (type) *type = REG_MULTI_SZ;
+    *ret_size = sizeof(names);
+    if (!unicode) *ret_size /= sizeof(WCHAR);
+
+    if (!data) return ERROR_SUCCESS;
+    if (size < *ret_size) return ERROR_MORE_DATA;
+
+    if (unicode)
+        memcpy( data, names, sizeof(names) );
+    else
+        RtlUnicodeToMultiByteN( data, size, NULL, names, sizeof(names) );
+    return ERROR_SUCCESS;
+}
+
 struct perf_provider
 {
     HMODULE perflib;
@@ -1370,6 +1391,8 @@ static DWORD query_perf_data( const WCHAR *query, DWORD *type, void *data, DWORD
 
     if (!wcsnicmp( query, L"counter", 7 ))
         return query_perf_names( type, data, ret_size, unicode );
+    if (!wcsnicmp( query, L"help", 4 ))
+        return query_perf_help( type, data, ret_size, unicode );
 
     data_size = *ret_size;
     *ret_size = 0;
