@@ -3700,21 +3700,18 @@ static void test_performance_keys(void)
 
             size = 0;
             ret = RegQueryValueExA(keys[i], names[j], NULL, NULL, NULL, &size);
-            todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-                ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
+            ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
             ok(!size, "got size %u\n", size);
 
             size = 10;
             ret = RegQueryValueExA(keys[i], names[j], NULL, NULL, buffer, &size);
-            todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-                ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
-            todo_wine_if (keys[i] == HKEY_PERFORMANCE_DATA)
+            ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
+            todo_wine
                 ok(size == 10, "got size %u\n", size);
 
             size = buffer_size;
             ret = RegQueryValueExA(keys[i], names[j], NULL, NULL, NULL, &size);
-            todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-                ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
+            ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
 
             QueryPerformanceCounter(&perftime1);
             NtQuerySystemTime(&systime1);
@@ -3722,18 +3719,9 @@ static void test_performance_keys(void)
             size = buffer_size;
             type = 0xdeadbeef;
             ret = RegQueryValueExA(keys[i], names[j], NULL, &type, buffer, &size);
-            todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-            {
-                ok(!ret, "got %u\n", ret);
-                ok(type == REG_BINARY, "got type %u\n", type);
-                ok(size >= sizeof(PERF_DATA_BLOCK) && size < buffer_size, "got size %u\n", size);
-            }
-
-            if (ret)
-            {
-                winetest_pop_context();
-                continue;
-            }
+            ok(!ret, "got %u\n", ret);
+            ok(type == REG_BINARY, "got type %u\n", type);
+            ok(size >= sizeof(PERF_DATA_BLOCK) && size < buffer_size, "got size %u\n", size);
 
             QueryPerformanceCounter(&perftime2);
             NtQuerySystemTime(&systime2);
@@ -3785,129 +3773,81 @@ static void test_performance_keys(void)
 
         size = 0xdeadbeef;
         ret = RegQueryValueExA(keys[i], "cOuNtEr", NULL, NULL, NULL, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(size > 0 && size < 0xdeadbeef, "got size %u\n", size);
-        }
+        ok(!ret, "got %u\n", ret);
+        ok(size > 0 && size < 0xdeadbeef, "got size %u\n", size);
 
         type = 0xdeadbeef;
         size = 0;
         ret = RegQueryValueExA(keys[i], "cOuNtEr", NULL, &type, buffer, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
-            ok(size > 0, "got size %u\n", size);
-        }
+        ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
+        ok(size > 0, "got size %u\n", size);
 
         type = 0xdeadbeef;
         size = buffer_size;
         ret = RegQueryValueExA(keys[i], "cOuNtEr", NULL, &type, buffer, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        }
-        if (type == REG_MULTI_SZ)
-            test_counter_values(buffer, keys[i]);
+        ok(!ret, "got %u\n", ret);
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        test_counter_values(buffer, keys[i]);
 
         type = 0xdeadbeef;
         size = buffer_size;
         ret = RegQueryValueExA(keys[i], "cOuNtErwine", NULL, &type, buffer, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        }
-        if (type == REG_MULTI_SZ)
-            test_counter_values(buffer, keys[i]);
+        ok(!ret, "got %u\n", ret);
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        test_counter_values(buffer, keys[i]);
 
         size = 0;
         ret = RegQueryValueExW(keys[i], L"cOuNtEr", NULL, NULL, NULL, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(size > 0, "got size %u\n", size);
-        }
+        ok(!ret, "got %u\n", ret);
+        ok(size > 0, "got size %u\n", size);
 
         bufferW = malloc(size);
 
         type = 0xdeadbeef;
         ret = RegQueryValueExW(keys[i], L"cOuNtEr", NULL, &type, bufferW, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        }
-        if (type == REG_MULTI_SZ)
-        {
-            WideCharToMultiByte(CP_ACP, 0, bufferW, size / sizeof(WCHAR), buffer, buffer_size, NULL, NULL);
-            test_counter_values(buffer, keys[i]);
-        }
+        ok(!ret, "got %u\n", ret);
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        WideCharToMultiByte(CP_ACP, 0, bufferW, size / sizeof(WCHAR), buffer, buffer_size, NULL, NULL);
+        test_counter_values(buffer, keys[i]);
 
         /* test the "Help" value */
 
         size = 0xdeadbeef;
         ret = RegQueryValueExA(keys[i], "hElP", NULL, NULL, NULL, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(size > 0 && size < 0xdeadbeef, "got size %u\n", size);
-        }
+        ok(!ret, "got %u\n", ret);
+        ok(size > 0 && size < 0xdeadbeef, "got size %u\n", size);
 
         type = 0xdeadbeef;
         size = 0;
         ret = RegQueryValueExA(keys[i], "hElP", NULL, &type, buffer, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
-            ok(size > 0, "got size %u\n", size);
-        }
+        ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
+        ok(size > 0, "got size %u\n", size);
 
         type = 0xdeadbeef;
         size = buffer_size;
         ret = RegQueryValueExA(keys[i], "hElP", NULL, &type, buffer, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        }
-        if (type == REG_MULTI_SZ)
-            test_help_values(buffer, keys[i]);
+        test_help_values(buffer, keys[i]);
 
         type = 0xdeadbeef;
         size = buffer_size;
         ret = RegQueryValueExA(keys[i], "hElPwine", NULL, &type, buffer, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        }
-        if (type == REG_MULTI_SZ)
-            test_help_values(buffer, keys[i]);
+        ok(!ret, "got %u\n", ret);
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        test_help_values(buffer, keys[i]);
 
         size = 0;
         ret = RegQueryValueExW(keys[i], L"hElP", NULL, NULL, NULL, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(size > 0, "got size %u\n", size);
-        }
+        ok(!ret, "got %u\n", ret);
+        ok(size > 0, "got size %u\n", size);
 
         bufferW = malloc(size);
 
         type = 0xdeadbeef;
         ret = RegQueryValueExW(keys[i], L"hElP", NULL, &type, bufferW, &size);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-        {
-            ok(!ret, "got %u\n", ret);
-            ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        }
-        if (type == REG_MULTI_SZ)
-        {
-            WideCharToMultiByte(CP_ACP, 0, bufferW, size / sizeof(WCHAR), buffer, buffer_size, NULL, NULL);
-            test_help_values(buffer, keys[i]);
-        }
+        ok(!ret, "got %u\n", ret);
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        WideCharToMultiByte(CP_ACP, 0, bufferW, size / sizeof(WCHAR), buffer, buffer_size, NULL, NULL);
+        test_help_values(buffer, keys[i]);
 
         /* test other registry APIs */
 

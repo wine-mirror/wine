@@ -354,6 +354,13 @@ static inline HKEY get_special_root_hkey( HKEY hkey, REGSAM access )
     }
 }
 
+static BOOL is_perf_key( HKEY key )
+{
+    return HandleToUlong(key) == HandleToUlong(HKEY_PERFORMANCE_DATA)
+            || HandleToUlong(key) == HandleToUlong(HKEY_PERFORMANCE_TEXT)
+            || HandleToUlong(key) == HandleToUlong(HKEY_PERFORMANCE_NLSTEXT);
+}
+
 
 /******************************************************************************
  * RemapPredefinedHandleInternal   (kernelbase.@)
@@ -1526,7 +1533,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDW
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
-    if (hkey == HKEY_PERFORMANCE_DATA)
+    if (is_perf_key( hkey ))
         return query_perf_data( name, type, data, count, TRUE );
 
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
@@ -1632,7 +1639,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWO
     if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
         return RtlNtStatusToDosError(status);
 
-    if (hkey == HKEY_PERFORMANCE_DATA)
+    if (is_perf_key( hkey ))
     {
         DWORD ret = query_perf_data( nameW.Buffer, type, data, count, FALSE );
         RtlFreeUnicodeString( &nameW );
