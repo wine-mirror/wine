@@ -478,7 +478,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
     switch (opts->target_platform)
     {
     case PLATFORM_APPLE:
-        strarray_add( flags, "-bundle" );
+        strarray_add( flags, opts->unix_lib ? "-dynamiclib" : "-bundle" );
         strarray_add( flags, "-multiply_defined" );
         strarray_add( flags, "suppress" );
         if (opts->target_cpu == CPU_POWERPC)
