@@ -3353,37 +3353,53 @@ static void output_module( struct makefile *make )
 
     if (make->unixobj_files.count)
     {
-        struct strarray unix_imports = empty_strarray;
         struct strarray unix_libs = empty_strarray;
         struct strarray unix_deps = empty_strarray;
+        struct strarray extra_libs = get_expanded_make_var_array( make, "EXTRALIBS" );
+        int native_unix_lib = strarray_exists( &extra_libs, "-Wl,--subsystem,unixlib" );
         char *ext, *unix_lib = xmalloc( strlen( make->module ) + strlen( dll_ext ) + 1 );
+
         strcpy( unix_lib, make->module );
         if ((ext = get_extension( unix_lib ))) *ext = 0;
         strcat( unix_lib, dll_ext );
 
-        if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+        if (native_unix_lib)
         {
-            strarray_add( &unix_imports, "ntdll" );
-            strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
+            if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+            {
+                strarray_add( &unix_libs, "-lntdll" );
+                strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
+            }
         }
-        strarray_add( &unix_imports, "winecrt0" );
+        else
+        {
+            struct strarray unix_imports = empty_strarray;
 
-        strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 1 ));
+            if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+            {
+                strarray_add( &unix_imports, "ntdll" );
+                strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
+            }
+            strarray_add( &unix_imports, "winecrt0" );
+            if (spec_file) strarray_add( &unix_deps, spec_file );
+
+            strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 1 ));
+        }
+
         strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
 
         strarray_add( &make->all_targets, unix_lib );
         add_install_rule( make, make->module, unix_lib, strmake( "p%s/%s", so_dir, unix_lib ));
         output( "%s:", obj_dir_path( make, unix_lib ));
-        if (spec_file) output_filename( spec_file );
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_deps );
-        output_filename( tools_path( make, "winebuild" ));
+        if (!native_unix_lib) output_filename( tools_path( make, "winebuild" ));
         output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
         output_winegcc_command( make, 0 );
         output_filename( "-munix" );
         output_filename( "-shared" );
-        if (spec_file) output_filename( spec_file );
+        if (spec_file && !native_unix_lib) output_filename( spec_file );
         if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) output_filename( "-nodefaultlibs" );
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_libs );
