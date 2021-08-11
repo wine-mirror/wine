@@ -48,19 +48,6 @@ BOOL WINAPI D3DX10CheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers)
     return FALSE;
 }
 
-HRESULT WINAPI D3DX10CreateEffectFromFileA(const char *filename, const D3D10_SHADER_MACRO *defines,
-        ID3D10Include *include, const char *profile, UINT hlslflags, UINT fxflags, ID3D10Device *device,
-        ID3D10EffectPool *effectpool, ID3DX10ThreadPump *pump, ID3D10Effect **effect, ID3D10Blob **errors,
-        HRESULT *hresult)
-{
-    FIXME("filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, "
-            "device %p, effectpool %p, pump %p, effect %p, errors %p, hresult %p\n",
-            debugstr_a(filename), defines, include, debugstr_a(profile), hlslflags, fxflags,
-            device, effectpool, pump, effect, errors, hresult);
-
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI D3DX10CreateEffectPoolFromMemory(const void *data, SIZE_T datasize, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *profile, UINT hlslflags,
         UINT fxflags, ID3D10Device *device, ID3DX10ThreadPump *pump, ID3D10EffectPool **effectpool,

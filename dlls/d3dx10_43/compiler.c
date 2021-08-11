@@ -18,6 +18,7 @@
  */
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #define COBJMACROS
 
@@ -90,6 +91,35 @@ HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SH
     hr = D3D10CreateEffectFromMemory(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             effect_flags, device, effect_pool, effect);
     ID3D10Blob_Release(code);
+
+    return hr;
+}
+
+HRESULT WINAPI D3DX10CreateEffectFromFileA(const char *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *profile, UINT shader_flags, UINT effect_flags,
+        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3DX10ThreadPump *pump,
+        ID3D10Effect **effect, ID3D10Blob **errors, HRESULT *hresult)
+{
+    WCHAR *filenameW;
+    HRESULT hr;
+    int len;
+
+    TRACE("filename %s, defines %p, include %p, profile %s, shader_flags %#x, effect_flags %#x, "
+            "device %p, effect_pool %p, pump %p, effect %p, errors %p, hresult %p.\n",
+            debugstr_a(filename), defines, include, debugstr_a(profile), shader_flags, effect_flags,
+            device, effect_pool, pump, effect, errors, hresult);
+
+    if (!filename)
+        return E_INVALIDARG;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    if (!(filenameW = heap_alloc(len * sizeof(*filenameW))))
+        return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
+
+    hr = D3DX10CreateEffectFromFileW(filenameW, defines, include, profile, shader_flags,
+            effect_flags, device, effect_pool, pump, effect, errors, hresult);
+    heap_free(filenameW);
 
     return hr;
 }
