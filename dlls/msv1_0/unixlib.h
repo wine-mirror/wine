@@ -19,6 +19,8 @@
 
 #include <sys/types.h>
 
+#include "wine/unixlib.h"
+
 enum sign_direction
 {
     SIGN_SEND,
@@ -88,11 +90,30 @@ struct ntlm_ctx
     } crypt;
 };
 
-struct ntlm_funcs
+
+struct chat_params
 {
-    SECURITY_STATUS (CDECL *chat)( struct ntlm_ctx *, char *, unsigned int, unsigned int * );
-    void (CDECL *cleanup)( struct ntlm_ctx * );
-    SECURITY_STATUS (CDECL *fork)( struct ntlm_ctx *, char ** );
+    struct ntlm_ctx *ctx;
+    char *buf;
+    unsigned int buflen;
+    unsigned int *retlen;
 };
 
-extern const struct ntlm_funcs *ntlm_funcs;
+struct cleanup_params
+{
+    struct ntlm_ctx *ctx;
+};
+
+struct fork_params
+{
+    struct ntlm_ctx *ctx;
+    char **argv;
+};
+
+enum ntlm_funcs
+{
+    unix_chat,
+    unix_cleanup,
+    unix_fork,
+    unix_check_version,
+};

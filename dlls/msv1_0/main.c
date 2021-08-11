@@ -39,11 +39,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
-static HINSTANCE instance;
 static ULONG ntlm_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
-const struct ntlm_funcs *ntlm_funcs = NULL;
+static unixlib_handle_t ntlm_handle;
+
+static NTSTATUS ntlm_check_version(void)
+{
+    return __wine_unix_call( ntlm_handle, unix_check_version, NULL );
+}
+
+static void ntlm_cleanup( struct ntlm_ctx *ctx )
+{
+    struct cleanup_params params = { ctx };
+
+    __wine_unix_call( ntlm_handle, unix_cleanup, &params );
+}
+
+static NTSTATUS ntlm_chat( struct ntlm_ctx *ctx, char *buf, unsigned int buflen, unsigned int *retlen )
+{
+    struct chat_params params = { ctx, buf, buflen, retlen };
+
+    return __wine_unix_call( ntlm_handle, unix_chat, &params );
+}
+
+static NTSTATUS ntlm_fork( struct ntlm_ctx *ctx, char **argv )
+{
+    struct fork_params params = { ctx, argv };
+
+    return __wine_unix_call( ntlm_handle, unix_fork, &params );
+}
 
 #define NTLM_CAPS \
     ( SECPKG_FLAG_INTEGRITY \
@@ -91,7 +116,7 @@ static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATC
     TRACE( "%08x, %p, %s, %s, %p\n", package_id, dispatch, debugstr_as(database), debugstr_as(confidentiality),
            package_name );
 
-    if (!ntlm_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &ntlm_funcs ))
+    if (ntlm_check_version())
     {
         ERR( "no NTLM support, expect problems\n" );
         return STATUS_UNSUCCESSFUL;
@@ -114,7 +139,7 @@ static NTSTATUS NTAPI ntlm_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS
 {
     TRACE( "%lu, %p, %p\n", package_id, params, lsa_function_table );
 
-    if (!ntlm_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &ntlm_funcs ))
+    if (ntlm_check_version())
     {
         ERR( "no NTLM support, expect problems\n" );
         return STATUS_UNSUCCESSFUL;
@@ -657,7 +682,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
 
         if (!(ctx = calloc( 1, sizeof(*ctx) ))) goto done;
 
-        if ((status = ntlm_funcs->fork( ctx, argv )) != SEC_E_OK) goto done;
+        if ((status = ntlm_fork( ctx, argv )) != SEC_E_OK) goto done;
         status = SEC_E_INSUFFICIENT_MEMORY;
 
         ctx->mode = MODE_CLIENT;
@@ -697,7 +722,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
         if (!password && !cred->password)
         {
             strcpy( buf, "OK" );
-            if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+            if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
 
             /* if the helper replied with "PW" using cached credentials failed */
             if (!strncmp( buf, "PW", 2 ))
@@ -714,19 +739,19 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
         }
 
         TRACE( "sending to ntlm_auth: %s\n", debugstr_a(buf) );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         TRACE( "ntlm_auth returned %s\n", debugstr_a(buf) );
 
         if (strlen( want_flags ) > 2)
         {
             TRACE( "want flags are %s\n", debugstr_a(want_flags) );
             strcpy( buf, want_flags );
-            if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+            if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
             if (!strncmp( buf, "BH", 2 )) ERR( "ntlm_auth doesn't understand new command set\n" );
         }
 
         strcpy( buf, "YR" );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         TRACE( "ntlm_auth returned %s\n", buf );
         if (strncmp( buf, "YR ", 3 ))
         {
@@ -765,7 +790,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
         encode_base64( bin, bin_len, buf + 3 );
         TRACE( "server sent: %s\n", debugstr_a(buf) );
 
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len ))) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len ))) goto done;
         TRACE( "ntlm_auth returned: %s\n", debugstr_a(buf) );
 
         if (strncmp( buf, "KK ", 3 ) && strncmp( buf, "AF ", 3 ))
@@ -815,12 +840,12 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
     if (status == SEC_E_OK)
     {
         strcpy( buf, "GF" );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         if (len < 3) ctx->flags = 0;
         else sscanf( buf + 3, "%x", &ctx->flags );
 
         strcpy( buf, "GK" );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
 
         if (!strncmp( buf, "BH", 2 )) TRACE( "no key negotiated\n" );
         else if (!strncmp( buf, "GK ", 3 ))
@@ -842,7 +867,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
 done:
     if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED)
     {
-        ntlm_funcs->cleanup( ctx );
+        ntlm_cleanup( ctx );
         free( ctx );
     }
     free( username );
@@ -903,7 +928,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         argv[0] = (char *)"ntlm_auth";
         argv[1] = (char *)"--helper-protocol=squid-2.5-ntlmssp";
         argv[2] = NULL;
-        if ((status = ntlm_funcs->fork( ctx, argv )) != SEC_E_OK) goto done;
+        if ((status = ntlm_fork( ctx, argv )) != SEC_E_OK) goto done;
         ctx->mode = MODE_SERVER;
 
         if (!(want_flags = malloc( 73 )))
@@ -930,7 +955,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         {
             TRACE( "want flags are %s\n", debugstr_a(want_flags) );
             strcpy( buf, want_flags );
-            if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+            if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
             if (!strncmp( buf, "BH", 2 )) ERR( "ntlm_auth doesn't understand new command set\n" );
         }
 
@@ -938,7 +963,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         strcpy( buf, "YR " );
         encode_base64( bin, bin_len, buf + 3 );
 
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         TRACE( "ntlm_auth returned %s\n", buf );
         if (strncmp( buf, "TT ", 3))
         {
@@ -986,7 +1011,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         encode_base64( bin, bin_len, buf + 3 );
 
         TRACE( "client sent %s\n", debugstr_a(buf) );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         TRACE( "ntlm_auth returned %s\n", debugstr_a(buf) );
 
         /* At this point, we get a NA if the user didn't authenticate, but a BH if ntlm_auth could not
@@ -1017,12 +1042,12 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         output->pBuffers[0].cbBuffer = 0;
 
         strcpy( buf, "GF" );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
         if (len < 3) ctx->flags = 0;
         else sscanf( buf + 3, "%x", &ctx->flags );
 
         strcpy( buf, "GK" );
-        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if ((status = ntlm_chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
 
         if (!strncmp( buf, "BH", 2 )) TRACE( "no key negotiated\n" );
         else if (!strncmp( buf, "GK ", 3 ))
@@ -1058,7 +1083,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
 done:
     if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED)
     {
-        ntlm_funcs->cleanup( ctx );
+        ntlm_cleanup( ctx );
         free( ctx );
     }
     free( buf );
@@ -1076,7 +1101,7 @@ static NTSTATUS NTAPI ntlm_SpDeleteContext( LSA_SEC_HANDLE handle )
     TRACE( "%lx\n", handle );
 
     if (!ctx) return SEC_E_INVALID_HANDLE;
-    ntlm_funcs->cleanup( ctx );
+    ntlm_cleanup( ctx );
     free( ctx );
     return SEC_E_OK;
 }
@@ -1549,10 +1574,10 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        instance = hinst;
+        if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
+                                  &ntlm_handle, sizeof(ntlm_handle), NULL ))
+            return FALSE;
         DisableThreadLibraryCalls( hinst );
-        break;
-    case DLL_PROCESS_DETACH:
         break;
     }
     return TRUE;
