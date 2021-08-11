@@ -411,6 +411,46 @@ static void test_ndis_index_luid( void )
     ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
 }
 
+static void test_ip_cmpt( int family )
+{
+    DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ip_cmpt_rw, unk2), sizeof(struct nsi_ip_cmpt_rw) };
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    struct nsi_ip_cmpt_dynamic dyn;
+    struct nsi_ip_cmpt_rw rw;
+    MIB_IPSTATS table;
+    DWORD err, key, i;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    /* key = 0 also seems to work, but NsiAllocateAndGetTable returns
+       a single table with key == 1.  Presumably this is the compartment id */
+    key = 1;
+    for (i = 0; i < ARRAY_SIZE(rw_sizes); i++)
+    {
+        err = NsiGetAllParameters( 1, mod, 2, &key, sizeof(key), &rw, rw_sizes[i], &dyn, sizeof(dyn), NULL, 0 );
+        if (!err) break;
+    }
+    ok( !err, "got %x\n", err );
+
+    err = GetIpStatisticsEx( &table, family );
+    ok( !err, "got %d\n", err );
+    if (err) goto err;
+
+todo_wine_if(family == AF_INET6 && table.dwForwarding - 1 != rw.not_forwarding)
+    ok( table.dwForwarding - 1 == rw.not_forwarding, "%x vs %x\n", table.dwForwarding, rw.not_forwarding );
+todo_wine_if(family == AF_INET6 && table.dwDefaultTTL != rw.default_ttl)
+    ok( table.dwDefaultTTL == rw.default_ttl, "%x vs %x\n", table.dwDefaultTTL, rw.default_ttl );
+    ok( table.dwNumIf == dyn.num_ifs, "%x vs %x\n", table.dwNumIf, dyn.num_ifs );
+todo_wine_if(table.dwNumAddr != dyn.num_addrs)
+    ok( table.dwNumAddr == dyn.num_addrs, "%x vs %x\n", table.dwNumAddr, dyn.num_addrs );
+todo_wine_if(family == AF_INET6 && table.dwNumRoutes != dyn.num_routes)
+    ok( table.dwNumRoutes == dyn.num_routes, "%x vs %x\n", table.dwNumRoutes, dyn.num_routes );
+
+err:
+    winetest_pop_context();
+}
+
+
 static void test_ip_ipstats( int family )
 {
     const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
@@ -725,6 +765,8 @@ START_TEST( nsi )
     test_ndis_ifinfo();
     test_ndis_index_luid();
 
+    test_ip_cmpt( AF_INET );
+    test_ip_cmpt( AF_INET6 );
     test_ip_ipstats( AF_INET );
     test_ip_ipstats( AF_INET6 );
     test_ip_unicast( AF_INET );

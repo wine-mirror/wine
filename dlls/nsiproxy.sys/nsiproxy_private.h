@@ -22,6 +22,35 @@ NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params ) DECLSPEC_HI
 NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params ) DECLSPEC_HIDDEN;
 NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params ) DECLSPEC_HIDDEN;
 
+static inline NTSTATUS nsi_enumerate_all( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
+                                          void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                          void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size,
+                                          DWORD *count )
+{
+    struct nsi_enumerate_all_ex params;
+    NTSTATUS status;
+
+    params.unknown[0] = 0;
+    params.unknown[1] = 0;
+    params.module = module;
+    params.table = table;
+    params.first_arg = unk;
+    params.second_arg = unk2;
+    params.key_data = key_data;
+    params.key_size = key_size;
+    params.rw_data = rw_data;
+    params.rw_size = rw_size;
+    params.dynamic_data = dynamic_data;
+    params.dynamic_size = dynamic_size;
+    params.static_data = static_data;
+    params.static_size = static_size;
+    params.count = *count;
+
+    status = nsi_enumerate_all_ex( &params );
+    *count = params.count;
+    return status;
+}
+
 BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name ) DECLSPEC_HIDDEN;
 BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid ) DECLSPEC_HIDDEN;
 

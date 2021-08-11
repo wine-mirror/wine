@@ -120,6 +120,109 @@ static ULONG64 get_boot_time( void )
     return ti.BootTime.QuadPart;
 }
 
+#if __linux__
+static NTSTATUS read_sysctl_int( const char *file, int *val )
+{
+    FILE *fp;
+    char buf[128], *endptr = buf;
+
+    fp = fopen( file, "r" );
+    if (!fp) return STATUS_NOT_SUPPORTED;
+
+    if (fgets( buf, sizeof(buf), fp ))
+        *val = strtol( buf, &endptr, 10 );
+
+    fclose( fp );
+    return (endptr == buf) ? STATUS_NOT_SUPPORTED : STATUS_SUCCESS;
+}
+#endif
+
+static NTSTATUS ip_cmpt_get_all_parameters( DWORD fam, const DWORD *key, DWORD key_size,
+                                            struct nsi_ip_cmpt_rw *rw_data, DWORD rw_size,
+                                            struct nsi_ip_cmpt_dynamic *dynamic_data, DWORD dynamic_size,
+                                            void *static_data, DWORD static_size )
+{
+    const NPI_MODULEID *ip_mod = (fam == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    struct nsi_ip_cmpt_rw rw;
+    struct nsi_ip_cmpt_dynamic dyn;
+    DWORD count;
+
+    memset( &rw, 0, sizeof(rw) );
+    memset( &dyn, 0, sizeof(dyn) );
+
+    if (*key != 1) return STATUS_NOT_SUPPORTED;
+
+#if __linux__
+    {
+        const char *fwd = (fam == AF_INET) ? "/proc/sys/net/ipv4/conf/default/forwarding" :
+            "/proc/sys/net/ipv6/conf/default/forwarding";
+        const char *ttl = (fam == AF_INET) ? "/proc/sys/net/ipv4/ip_default_ttl" :
+            "/proc/sys/net/ipv6/conf/default/hop_limit";
+        int value;
+
+        if (!read_sysctl_int( fwd, &value )) rw.not_forwarding = !value;
+        if (!read_sysctl_int( ttl, &value )) rw.default_ttl = value;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H)
+    {
+        int fwd_4[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_FORWARDING };
+        int fwd_6[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_FORWARDING };
+        int ttl_4[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+        int ttl_6[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
+        int value;
+        size_t needed;
+
+        needed = sizeof(value);
+        if (!sysctl( (fam == AF_INET) ? fwd_4 : fwd_6, ARRAY_SIZE(fwd_4), &value, &needed, NULL, 0 ))
+            rw.not_forwarding = value;
+
+        needed = sizeof(value);
+        if (!sysctl( (fam == AF_INET) ? ttl_4 : ttl_6, ARRAY_SIZE(ttl_4), &value, &needed, NULL, 0 ))
+            rw.default_ttl = value;
+    }
+#else
+    FIXME( "forwarding and default ttl not implemented\n" );
+#endif
+
+    count = 0;
+    if (!nsi_enumerate_all( 1, 0, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, NULL, 0, NULL, 0,
+                            NULL, 0, NULL, 0, &count ))
+        dyn.num_ifs = count;
+
+    count = 0;
+    if (!nsi_enumerate_all( 1, 0, ip_mod, NSI_IP_FORWARD_TABLE, NULL, 0, NULL, 0,
+                            NULL, 0, NULL, 0, &count ))
+        dyn.num_routes = count;
+
+    count = 0;
+    if (!nsi_enumerate_all( 1, 0, ip_mod, NSI_IP_UNICAST_TABLE, NULL, 0, NULL, 0,
+                            NULL, 0, NULL, 0, &count ))
+        dyn.num_addrs = count;
+
+    if (rw_data) *rw_data = rw;
+    if (dynamic_data) *dynamic_data = dyn;
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ipv4_cmpt_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+    return ip_cmpt_get_all_parameters( AF_INET, key, key_size, rw_data, rw_size,
+                                       dynamic_data, dynamic_size, static_data, static_size );
+}
+
+static NTSTATUS ipv6_cmpt_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+    return ip_cmpt_get_all_parameters( AF_INET6, key, key_size, rw_data, rw_size,
+                                       dynamic_data, dynamic_size, static_data, static_size );
+}
+
 static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
                                                  void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
 {
@@ -870,6 +973,15 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, DWORD key_size, void
 static struct module_table ipv4_tables[] =
 {
     {
+        NSI_IP_COMPARTMENT_TABLE,
+        {
+            sizeof(DWORD), sizeof(struct nsi_ip_cmpt_rw),
+            sizeof(struct nsi_ip_cmpt_dynamic), 0
+        },
+        NULL,
+        ipv4_cmpt_get_all_parameters,
+    },
+    {
         NSI_IP_IPSTATS_TABLE,
         {
             0, 0,
@@ -916,6 +1028,15 @@ const struct module ipv4_module =
 
 static struct module_table ipv6_tables[] =
 {
+    {
+        NSI_IP_COMPARTMENT_TABLE,
+        {
+            sizeof(DWORD), sizeof(struct nsi_ip_cmpt_rw),
+            sizeof(struct nsi_ip_cmpt_dynamic), 0
+        },
+        NULL,
+        ipv6_cmpt_get_all_parameters,
+    },
     {
         NSI_IP_IPSTATS_TABLE,
         {

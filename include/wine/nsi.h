@@ -97,10 +97,27 @@ struct nsi_ndis_ifinfo_static
 };
 
 /* Undocumented NSI IP tables */
+#define NSI_IP_COMPARTMENT_TABLE           2
 #define NSI_IP_IPSTATS_TABLE               6
 #define NSI_IP_UNICAST_TABLE              10
 #define NSI_IP_NEIGHBOUR_TABLE            11
 #define NSI_IP_FORWARD_TABLE              16
+
+struct nsi_ip_cmpt_rw
+{
+    DWORD not_forwarding;
+    DWORD unk;
+    DWORD default_ttl;
+    DWORD unk2;
+};
+
+struct nsi_ip_cmpt_dynamic
+{
+    DWORD num_ifs;
+    DWORD num_routes;
+    DWORD unk;
+    DWORD num_addrs;
+};
 
 struct nsi_ip_ipstats_dynamic
 {
