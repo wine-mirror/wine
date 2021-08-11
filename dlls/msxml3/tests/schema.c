@@ -1115,7 +1115,9 @@ static void test_regex(void)
         { L"\\~", L"~", TRUE },
         { L"\\uCAFE", L"\xCAFE", TRUE },
         /* non-BMP character in surrogate pairs: */
-        { L"\\uD83D\\uDE00", L"\xD83D\xDE00", TRUE }
+        { L"\\uD83D\\uDE00", L"\xD83D\xDE00", TRUE },
+        /* "x{,2}" is non-standard and only works on libxml2 <= v2.9.10 */
+        { L"x{0,2}", L"x", FALSE }
     };
 
     int i;
