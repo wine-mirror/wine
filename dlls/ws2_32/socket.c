@@ -33,6 +33,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#define TIMEOUT_INFINITE _I64_MAX
+
 const struct unix_funcs *unix_funcs = NULL;
 
 static const WSAPROTOCOL_INFOW supported_protocols[] =
@@ -718,7 +720,7 @@ SOCKET WINAPI accept( SOCKET s, struct sockaddr *addr, int *len )
 {
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    obj_handle_t accept_handle;
+    ULONG accept_handle;
     HANDLE sync_event;
     SOCKET ret;
 
@@ -740,7 +742,7 @@ SOCKET WINAPI accept( SOCKET s, struct sockaddr *addr, int *len )
         return INVALID_SOCKET;
     }
 
-    ret = HANDLE2SOCKET(wine_server_ptr_handle( accept_handle ));
+    ret = accept_handle;
     if (!socket_list_add( ret ))
     {
         CloseHandle( SOCKET2HANDLE(ret) );
@@ -3138,8 +3140,8 @@ int WINAPI WSAAsyncSelect( SOCKET s, HWND window, UINT message, LONG mask )
 
     TRACE( "socket %#lx, window %p, message %#x, mask %#x\n", s, window, message, mask );
 
-    params.handle = wine_server_obj_handle( (HANDLE)s );
-    params.window = wine_server_user_handle( window );
+    params.handle = s;
+    params.window = HandleToULong( window );
     params.message = message;
     params.mask = afd_poll_flag_from_win32( mask );
 
@@ -3500,7 +3502,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct sockaddr *addr, int *addrlen,
 
     case CF_DEFER:
     {
-        obj_handle_t server_handle = cs;
+        ULONG server_handle = cs;
         IO_STATUS_BLOCK io;
         NTSTATUS status;
 

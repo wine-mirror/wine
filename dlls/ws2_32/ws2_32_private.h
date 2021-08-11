@@ -48,7 +48,6 @@
 #include "iphlpapi.h"
 #include "ip2string.h"
 #include "wine/afd.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "wine/heap.h"

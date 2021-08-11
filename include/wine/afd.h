@@ -24,7 +24,6 @@
 #include <winternl.h>
 #include <winioctl.h>
 #include <mswsock.h>
-#include "wine/server_protocol.h"
 
 #ifdef USE_WS_PREFIX
 # define WS(x)    WS_##x
@@ -241,7 +240,7 @@ struct afd_create_params
 
 struct afd_accept_into_params
 {
-    obj_handle_t accept_handle;
+    ULONG accept_handle;
     unsigned int recv_len, local_len;
 };
 
@@ -286,8 +285,8 @@ struct afd_transmit_params
 
 struct afd_message_select_params
 {
-    obj_handle_t handle;
-    user_handle_t window;
+    ULONG handle;
+    ULONG window;
     unsigned int message;
     int mask;
 };
