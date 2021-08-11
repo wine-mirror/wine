@@ -1141,7 +1141,7 @@ static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr
 /***********************************************************************
  *           __wine_unix_call
  */
-NTSTATUS CDECL __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
+NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
 {
     return ((unixlib_entry_t*)(UINT_PTR)handle)[code]( args );
 }
