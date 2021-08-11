@@ -1,7 +1,7 @@
 MODULE    = ws2_32.dll
 IMPORTLIB = ws2_32
 DELAYIMPORTS = advapi32 iphlpapi user32
-EXTRALIBS = $(POLL_LIBS)
+EXTRALIBS = $(POLL_LIBS) -Wl,--subsystem,unixlib
 
 EXTRADLLFLAGS = -mno-cygwin
 

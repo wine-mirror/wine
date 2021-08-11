@@ -35,8 +35,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define TIMEOUT_INFINITE _I64_MAX
 
-const struct unix_funcs *unix_funcs = NULL;
-
 static const WSAPROTOCOL_INFOW supported_protocols[] =
 {
     {
@@ -552,7 +550,8 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        return !__wine_init_unix_lib( instance, reason, NULL, &unix_funcs );
+        return !NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                                      &ws_unix_handle, sizeof(ws_unix_handle), NULL );
 
     case DLL_THREAD_DETACH:
         free_per_thread_data();

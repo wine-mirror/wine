@@ -27,6 +27,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+unixlib_handle_t ws_unix_handle = 0;
+
+#define WS_CALL(func, params) __wine_unix_call( ws_unix_handle, ws_unix_ ## func, params )
+
 static char *get_fqdn(void)
 {
     char *ret;
@@ -47,28 +51,22 @@ static char *get_fqdn(void)
 static int do_getaddrinfo( const char *node, const char *service,
                            const struct addrinfo *hints, struct addrinfo **info )
 {
-    struct addrinfo *buffer, *new_buffer;
     unsigned int size = 1024;
+    struct getaddrinfo_params params = { node, service, hints, NULL, &size };
     int ret;
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
-        return WSA_NOT_ENOUGH_MEMORY;
-
-    while ((ret = unix_funcs->getaddrinfo( node, service, hints, buffer, &size )) == ERROR_INSUFFICIENT_BUFFER)
+    for (;;)
     {
-        if (!(new_buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, size )))
-        {
-            HeapFree( GetProcessHeap(), 0, buffer );
+        if (!(params.info = HeapAlloc( GetProcessHeap(), 0, size )))
             return WSA_NOT_ENOUGH_MEMORY;
+        if (!(ret = WS_CALL( getaddrinfo, &params )))
+        {
+            *info = params.info;
+            return ret;
         }
-        buffer = new_buffer;
+        HeapFree( GetProcessHeap(), 0, params.info );
+        if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
     }
-
-    if (!ret)
-        *info = buffer;
-    else
-        HeapFree( GetProcessHeap(), 0, buffer );
-    return ret;
 }
 
 
@@ -551,10 +549,12 @@ void WINAPI FreeAddrInfoExW( ADDRINFOEXW *ai )
 int WINAPI getnameinfo( const SOCKADDR *addr, socklen_t addr_len, char *host,
                            DWORD host_len, char *serv, DWORD serv_len, int flags )
 {
+    struct getnameinfo_params params = { addr, addr_len, host, host_len, serv, serv_len, flags };
+
     TRACE( "addr %s, addr_len %d, host %p, host_len %u, serv %p, serv_len %d, flags %#x\n",
            debugstr_sockaddr(addr), addr_len, host, host_len, serv, serv_len, flags );
 
-    return unix_funcs->getnameinfo( addr, addr_len, host, host_len, serv, serv_len, flags );
+    return WS_CALL( getnameinfo, &params );
 }
 
 
@@ -662,20 +662,20 @@ static struct hostent *create_hostent( char *name, int alias_count, int aliases_
 struct hostent * WINAPI gethostbyaddr( const char *addr, int len, int family )
 {
     unsigned int size = 1024;
-    struct hostent *host;
+    struct gethostbyaddr_params params = { addr, len, family, NULL, &size };
     int ret;
 
-    if (!(host = get_hostent_buffer( size )))
-        return NULL;
-
-    while ((ret = unix_funcs->gethostbyaddr( addr, len, family, host, &size )) == ERROR_INSUFFICIENT_BUFFER)
+    for (;;)
     {
-        if (!(host = get_hostent_buffer( size )))
+        if (!(params.host = get_hostent_buffer( size )))
             return NULL;
+
+        if ((ret = WS_CALL( gethostbyaddr, &params )) != ERROR_INSUFFICIENT_BUFFER)
+            break;
     }
 
     SetLastError( ret );
-    return ret ? NULL : host;
+    return ret ? NULL : params.host;
 }
 
 
@@ -822,6 +822,7 @@ struct hostent * WINAPI gethostbyname( const char *name )
 {
     struct hostent *host = NULL;
     char hostname[100];
+    struct gethostname_params params = { hostname, sizeof(hostname) };
     int ret;
 
     TRACE( "%s\n", debugstr_a(name) );
@@ -832,7 +833,7 @@ struct hostent * WINAPI gethostbyname( const char *name )
         return NULL;
     }
 
-    if ((ret = unix_funcs->gethostname( hostname, 100 )))
+    if ((ret = WS_CALL( gethostname, &params )))
     {
         SetLastError( ret );
         return NULL;
@@ -851,19 +852,20 @@ struct hostent * WINAPI gethostbyname( const char *name )
     if (!host)
     {
         unsigned int size = 1024;
+        struct gethostbyname_params params = { name, NULL, &size };
         int ret;
 
-        if (!(host = get_hostent_buffer( size )))
-            return NULL;
-
-        while ((ret = unix_funcs->gethostbyname( name, host, &size )) == ERROR_INSUFFICIENT_BUFFER)
+        for (;;)
         {
-            if (!(host = get_hostent_buffer( size )))
+            if (!(params.host = get_hostent_buffer( size )))
                 return NULL;
+
+            if ((ret = WS_CALL( gethostbyname, &params )) != ERROR_INSUFFICIENT_BUFFER)
+                break;
         }
 
         SetLastError( ret );
-        return ret ? NULL : host;
+        return ret ? NULL : params.host;
     }
 
     if (host && host->h_addr_list[0][0] == 127 && strcmp( name, "localhost" ))
@@ -883,6 +885,7 @@ struct hostent * WINAPI gethostbyname( const char *name )
 int WINAPI gethostname( char *name, int namelen )
 {
     char buf[256];
+    struct gethostname_params params = { buf, sizeof(buf) };
     int len, ret;
 
     TRACE( "name %p, len %d\n", name, namelen );
@@ -893,7 +896,7 @@ int WINAPI gethostname( char *name, int namelen )
         return -1;
     }
 
-    if ((ret = unix_funcs->gethostname( buf, sizeof(buf) )))
+    if ((ret = WS_CALL( gethostname, &params )))
     {
         SetLastError( ret );
         return -1;
@@ -919,6 +922,7 @@ int WINAPI gethostname( char *name, int namelen )
 int WINAPI GetHostNameW( WCHAR *name, int namelen )
 {
     char buf[256];
+    struct gethostname_params params = { buf, sizeof(buf) };
     int ret;
 
     TRACE( "name %p, len %d\n", name, namelen );
@@ -929,7 +933,7 @@ int WINAPI GetHostNameW( WCHAR *name, int namelen )
         return -1;
     }
 
-    if ((ret = unix_funcs->gethostname( buf, sizeof(buf) )))
+    if ((ret = WS_CALL( gethostname, &params )))
     {
         SetLastError( ret );
         return -1;

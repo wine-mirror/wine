@@ -652,10 +652,12 @@ static BOOL addrinfo_in_list( const struct WS_addrinfo *list, const struct WS_ad
     return FALSE;
 }
 
-static int CDECL unix_getaddrinfo( const char *node, const char *service, const struct WS_addrinfo *hints,
-                                   struct WS_addrinfo *info, unsigned int *size )
+static NTSTATUS unix_getaddrinfo( void *args )
 {
 #ifdef HAVE_GETADDRINFO
+    struct getaddrinfo_params *params = args;
+    const char *service = params->service;
+    const struct WS_addrinfo *hints = params->hints;
     struct addrinfo unix_hints = {0};
     struct addrinfo *unix_info, *src;
     struct WS_addrinfo *dst, *prev = NULL;
@@ -707,7 +709,7 @@ static int CDECL unix_getaddrinfo( const char *node, const char *service, const 
         }
     }
 
-    ret = getaddrinfo( node, service, hints ? &unix_hints : NULL, &unix_info );
+    ret = getaddrinfo( params->node, service, hints ? &unix_hints : NULL, &unix_info );
     if (ret)
         return addrinfo_err_from_unix( ret );
 
@@ -719,16 +721,16 @@ static int CDECL unix_getaddrinfo( const char *node, const char *service, const 
         needed_size += sockaddr_from_unix( (const union unix_sockaddr *)src->ai_addr, NULL, 0 );
     }
 
-    if (*size < needed_size)
+    if (*params->size < needed_size)
     {
-        *size = needed_size;
+        *params->size = needed_size;
         freeaddrinfo( unix_info );
         return ERROR_INSUFFICIENT_BUFFER;
     }
 
-    dst = info;
+    dst = params->info;
 
-    memset( info, 0, needed_size );
+    memset( params->info, 0, needed_size );
 
     for (src = unix_info; src != NULL; src = src->ai_next)
     {
@@ -760,7 +762,7 @@ static int CDECL unix_getaddrinfo( const char *node, const char *service, const 
         sockaddr_from_unix( (const union unix_sockaddr *)src->ai_addr, dst->ai_addr, dst->ai_addrlen );
         next = (char *)dst->ai_addr + dst->ai_addrlen;
 
-        if (dst == info || !addrinfo_in_list( info, dst ))
+        if (dst == params->info || !addrinfo_in_list( params->info, dst ))
         {
             if (prev)
                 prev->ai_next = dst;
@@ -837,15 +839,16 @@ static int hostent_from_unix( const struct hostent *unix_host, struct WS_hostent
 }
 
 
-static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
-                                     struct WS_hostent *const host, unsigned int *size )
+static NTSTATUS unix_gethostbyaddr( void *args )
 {
+    struct gethostbyaddr_params *params = args;
+    const void *addr = params->addr;
     const struct in_addr loopback = { htonl( INADDR_LOOPBACK ) };
-    int unix_family = family_to_unix( family );
+    int unix_family = family_to_unix( params->family );
     struct hostent *unix_host;
     int ret;
 
-    if (family == WS_AF_INET && len == 4 && !memcmp( addr, magic_loopback_addr, 4 ))
+    if (params->family == WS_AF_INET && params->len == 4 && !memcmp( addr, magic_loopback_addr, 4 ))
         addr = &loopback;
 
 #ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
@@ -858,7 +861,7 @@ static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
         if (!(unix_buffer = malloc( unix_size )))
             return WSAENOBUFS;
 
-        while (gethostbyaddr_r( addr, len, unix_family, &stack_host, unix_buffer,
+        while (gethostbyaddr_r( addr, params->len, unix_family, &stack_host, unix_buffer,
                                 unix_size, &unix_host, &locerr ) == ERANGE)
         {
             unix_size *= 2;
@@ -873,7 +876,7 @@ static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
         if (!unix_host)
             return (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
 
-        ret = hostent_from_unix( unix_host, host, size );
+        ret = hostent_from_unix( unix_host, params->host, params->size );
 
         free( unix_buffer );
         return ret;
@@ -881,14 +884,14 @@ static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
 #else
     pthread_mutex_lock( &host_mutex );
 
-    if (!(unix_host = gethostbyaddr( addr, len, unix_family )))
+    if (!(unix_host = gethostbyaddr( addr, params->len, unix_family )))
     {
         ret = (h_errno < 0 ? errno_from_unix( errno ) : host_errno_from_unix( h_errno ));
         pthread_mutex_unlock( &host_mutex );
         return ret;
     }
 
-    ret = hostent_from_unix( unix_host, host, size );
+    ret = hostent_from_unix( unix_host, params->host, params->size );
 
     pthread_mutex_unlock( &host_mutex );
     return ret;
@@ -897,8 +900,9 @@ static int CDECL unix_gethostbyaddr( const void *addr, int len, int family,
 
 
 #ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
-static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const host, unsigned int *size )
+static NTSTATUS unix_gethostbyname( void *args )
 {
+    struct gethostbyname_params *params = args;
     struct hostent stack_host, *unix_host;
     char *unix_buffer, *new_buffer;
     int unix_size = 1024;
@@ -908,7 +912,7 @@ static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const 
     if (!(unix_buffer = malloc( unix_size )))
         return WSAENOBUFS;
 
-    while (gethostbyname_r( name, &stack_host, unix_buffer, unix_size, &unix_host, &locerr ) == ERANGE)
+    while (gethostbyname_r( params->name, &stack_host, unix_buffer, unix_size, &unix_host, &locerr ) == ERANGE)
     {
         unix_size *= 2;
         if (!(new_buffer = realloc( unix_buffer, unix_size )))
@@ -922,27 +926,28 @@ static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const 
     if (!unix_host)
         return (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
 
-    ret = hostent_from_unix( unix_host, host, size );
+    ret = hostent_from_unix( unix_host, params->host, params->size );
 
     free( unix_buffer );
     return ret;
 }
 #else
-static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const host, unsigned int *size )
+static NTSTATUS unix_gethostbyname( void *args )
 {
+    struct gethostbyname_params *params = args;
     struct hostent *unix_host;
     int ret;
 
     pthread_mutex_lock( &host_mutex );
 
-    if (!(unix_host = gethostbyname( name )))
+    if (!(unix_host = gethostbyname( params->name )))
     {
         ret = (h_errno < 0 ? errno_from_unix( errno ) : host_errno_from_unix( h_errno ));
         pthread_mutex_unlock( &host_mutex );
         return ret;
     }
 
-    ret = hostent_from_unix( unix_host, host, size );
+    ret = hostent_from_unix( unix_host, params->host, params->size );
 
     pthread_mutex_unlock( &host_mutex );
     return ret;
@@ -950,28 +955,31 @@ static int CDECL unix_gethostbyname( const char *name, struct WS_hostent *const 
 #endif
 
 
-static int CDECL unix_gethostname( char *name, int len )
+static NTSTATUS unix_gethostname( void *args )
 {
-    if (!gethostname( name, len ))
+    struct gethostname_params *params = args;
+
+    if (!gethostname( params->name, params->size ))
         return 0;
     return errno_from_unix( errno );
 }
 
 
-static int CDECL unix_getnameinfo( const struct WS(sockaddr) *addr, int addr_len, char *host,
-                                   DWORD host_len, char *serv, DWORD serv_len, int flags )
+static NTSTATUS unix_getnameinfo( void *args )
 {
+    struct getnameinfo_params *params = args;
     union unix_sockaddr unix_addr;
     socklen_t unix_addr_len;
 
-    unix_addr_len = sockaddr_to_unix( addr, addr_len, &unix_addr );
+    unix_addr_len = sockaddr_to_unix( params->addr, params->addr_len, &unix_addr );
 
-    return addrinfo_err_from_unix( getnameinfo( &unix_addr.addr, unix_addr_len, host, host_len,
-                                                serv, serv_len, nameinfo_flags_to_unix( flags ) ) );
+    return addrinfo_err_from_unix( getnameinfo( &unix_addr.addr, unix_addr_len, params->host, params->host_len,
+                                                params->serv, params->serv_len,
+                                                nameinfo_flags_to_unix( params->flags ) ) );
 }
 
 
-static const struct unix_funcs funcs =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     unix_getaddrinfo,
     unix_gethostbyaddr,
@@ -979,11 +987,3 @@ static const struct unix_funcs funcs =
     unix_gethostname,
     unix_getnameinfo,
 };
-
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-
-    *(const struct unix_funcs **)ptr_out = &funcs;
-    return STATUS_SUCCESS;
-}

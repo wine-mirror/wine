@@ -51,6 +51,7 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "wine/heap.h"
+#include "wine/unixlib.h"
 
 #define DECLARE_CRITICAL_SECTION(cs) \
     static CRITICAL_SECTION cs; \
@@ -80,18 +81,57 @@ extern int num_startup;
 
 struct per_thread_data *get_per_thread_data(void) DECLSPEC_HIDDEN;
 
-struct unix_funcs
+struct getaddrinfo_params
 {
-    int (CDECL *getaddrinfo)( const char *node, const char *service, const struct WS(addrinfo) *hints,
-                              struct WS(addrinfo) *info, unsigned int *size );
-    int (CDECL *gethostbyaddr)( const void *addr, int len, int family,
-                                struct WS(hostent) *host, unsigned int *size );
-    int (CDECL *gethostbyname)( const char *name, struct WS(hostent) *host, unsigned int *size );
-    int (CDECL *gethostname)( char *name, int len );
-    int (CDECL *getnameinfo)( const struct WS(sockaddr) *addr, int addr_len, char *host,
-                              DWORD host_len, char *serv, DWORD serv_len, int flags );
+    const char *node;
+    const char *service;
+    const struct WS(addrinfo) *hints;
+    struct WS(addrinfo) *info;
+    unsigned int *size;
 };
 
-extern const struct unix_funcs *unix_funcs;
+struct gethostbyaddr_params
+{
+    const void *addr;
+    int len;
+    int family;
+    struct WS(hostent) *host;
+    unsigned int *size;
+};
+
+struct gethostbyname_params
+{
+    const char *name;
+    struct WS(hostent) *host;
+    unsigned int *size;
+};
+
+struct gethostname_params
+{
+    char *name;
+    unsigned int size;
+};
+
+struct getnameinfo_params
+{
+    const struct WS(sockaddr) *addr;
+    int addr_len;
+    char *host;
+    DWORD host_len;
+    char *serv;
+    DWORD serv_len;
+    int flags;
+};
+
+enum ws_unix_funcs
+{
+    ws_unix_getaddrinfo,
+    ws_unix_gethostbyaddr,
+    ws_unix_gethostbyname,
+    ws_unix_gethostname,
+    ws_unix_getnameinfo,
+};
+
+extern unixlib_handle_t ws_unix_handle DECLSPEC_HIDDEN;
 
 #endif
