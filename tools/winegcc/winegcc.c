@@ -1220,7 +1220,7 @@ static void build(struct options* opts)
     strarray *lib_dirs, *files;
     strarray *link_args, *implib_args, *tool;
     char *output_file, *output_path;
-    const char *spec_o_name, *libgcc = NULL;
+    const char *spec_o_name = NULL, *libgcc = NULL;
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
     const char *crt_lib = NULL, *entry_point = NULL;
@@ -1382,7 +1382,8 @@ static void build(struct options* opts)
     else entry_point = opts->entry_point;
 
     /* run winebuild to generate the .spec.o file */
-    spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
+    if (!(opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "native")))
+        spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
 
     if (fake_module) return;  /* nothing else to do */
 
@@ -1414,7 +1415,7 @@ static void build(struct options* opts)
                                             entry_point));
     }
 
-    strarray_add(link_args, spec_o_name);
+    if (spec_o_name) strarray_add(link_args, spec_o_name);
 
     if (is_pe)
     {
