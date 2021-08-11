@@ -92,7 +92,7 @@ struct ntlm_funcs
 {
     SECURITY_STATUS (CDECL *chat)( struct ntlm_ctx *, char *, unsigned int, unsigned int * );
     void (CDECL *cleanup)( struct ntlm_ctx * );
-    SECURITY_STATUS (CDECL *fork)( char **, struct ntlm_ctx ** );
+    SECURITY_STATUS (CDECL *fork)( struct ntlm_ctx *, char ** );
 };
 
 extern const struct ntlm_funcs *ntlm_funcs;

@@ -24,6 +24,7 @@
 #endif
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -49,7 +50,7 @@ static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
 
     if (!ctx->com_buf)
     {
-        if (!(ctx->com_buf = RtlAllocateHeap( GetProcessHeap(), 0, INITIAL_BUFFER_SIZE )))
+        if (!(ctx->com_buf = malloc( INITIAL_BUFFER_SIZE )))
             return SEC_E_INSUFFICIENT_MEMORY;
         ctx->com_buf_size = INITIAL_BUFFER_SIZE;
         ctx->com_buf_offset = 0;
@@ -60,7 +61,7 @@ static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
         ssize_t size;
         if (ctx->com_buf_offset + INITIAL_BUFFER_SIZE > ctx->com_buf_size)
         {
-            char *buf = RtlReAllocateHeap( GetProcessHeap(), 0, ctx->com_buf, ctx->com_buf_size + INITIAL_BUFFER_SIZE );
+            char *buf = realloc( ctx->com_buf, ctx->com_buf_size + INITIAL_BUFFER_SIZE );
             if (!buf) return SEC_E_INSUFFICIENT_MEMORY;
             ctx->com_buf_size += INITIAL_BUFFER_SIZE;
             ctx->com_buf = buf;
@@ -125,14 +126,12 @@ static void CDECL ntlm_cleanup( struct ntlm_ctx *ctx )
         } while (ret < 0 && errno == EINTR);
     }
 
-    RtlFreeHeap( GetProcessHeap(), 0, ctx->com_buf );
-    RtlFreeHeap( GetProcessHeap(), 0, ctx );
+    free( ctx->com_buf );
 }
 
-static SECURITY_STATUS CDECL ntlm_fork( char **argv, struct ntlm_ctx **ret_ctx )
+static SECURITY_STATUS CDECL ntlm_fork( struct ntlm_ctx *ctx, char **argv )
 {
     int pipe_in[2], pipe_out[2];
-    struct ntlm_ctx *ctx;
 
 #ifdef HAVE_PIPE2
     if (pipe2( pipe_in, O_CLOEXEC ) < 0)
@@ -156,15 +155,6 @@ static SECURITY_STATUS CDECL ntlm_fork( char **argv, struct ntlm_ctx **ret_ctx )
         fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
     }
 
-    if (!(ctx = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx) )))
-    {
-        close( pipe_in[0] );
-        close( pipe_in[1] );
-        close( pipe_out[0] );
-        close( pipe_out[1] );
-        return SEC_E_INSUFFICIENT_MEMORY;
-    }
-
     if (!(ctx->pid = fork())) /* child */
     {
         dup2( pipe_out[0], 0 );
@@ -186,7 +176,6 @@ static SECURITY_STATUS CDECL ntlm_fork( char **argv, struct ntlm_ctx **ret_ctx )
         close( pipe_in[1] );
         ctx->pipe_out = pipe_out[1];
         close( pipe_out[0] );
-        *ret_ctx = ctx;
     }
 
     return SEC_E_OK;
@@ -198,7 +187,7 @@ static SECURITY_STATUS CDECL ntlm_fork( char **argv, struct ntlm_ctx **ret_ctx )
 
 static BOOL check_version( void )
 {
-    struct ntlm_ctx *ctx;
+    struct ntlm_ctx ctx = { 0 };
     char *argv[3], buf[80];
     BOOL ret = FALSE;
     int len;
@@ -206,9 +195,9 @@ static BOOL check_version( void )
     argv[0] = (char *)"ntlm_auth";
     argv[1] = (char *)"--version";
     argv[2] = NULL;
-    if (ntlm_fork( argv, &ctx ) != SEC_E_OK) return FALSE;
+    if (ntlm_fork( &ctx, argv ) != SEC_E_OK) return FALSE;
 
-    if ((len = read( ctx->pipe_in, buf, sizeof(buf) - 1 )) > 8)
+    if ((len = read( ctx.pipe_in, buf, sizeof(buf) - 1 )) > 8)
     {
         char *newline;
         int major = 0, minor = 0, micro = 0;
@@ -233,7 +222,7 @@ static BOOL check_version( void )
                               "Make sure that ntlm_auth >= %d.%d.%d is in your path. "
                               "Usually, you can find it in the winbind package of your distribution.\n",
                               NTLM_AUTH_MAJOR_VERSION, NTLM_AUTH_MINOR_VERSION, NTLM_AUTH_MICRO_VERSION );
-    ntlm_cleanup( ctx );
+    ntlm_cleanup( &ctx );
     return ret;
 }
 

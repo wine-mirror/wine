@@ -655,7 +655,9 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
             argv[4] = NULL;
         }
 
-        if ((status = ntlm_funcs->fork( argv, &ctx )) != SEC_E_OK) goto done;
+        if (!(ctx = calloc( 1, sizeof(*ctx) ))) goto done;
+
+        if ((status = ntlm_funcs->fork( ctx, argv )) != SEC_E_OK) goto done;
         status = SEC_E_INSUFFICIENT_MEMORY;
 
         ctx->mode = MODE_CLIENT;
@@ -838,7 +840,11 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
     }
 
 done:
-    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED) ntlm_funcs->cleanup( ctx );
+    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED)
+    {
+        ntlm_funcs->cleanup( ctx );
+        free( ctx );
+    }
     free( username );
     free( domain );
     free( password );
@@ -892,10 +898,12 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
         }
         else bin_len = input->pBuffers[0].cbBuffer;
 
+        if (!(ctx = calloc( 1, sizeof(*ctx) ))) goto done;
+
         argv[0] = (char *)"ntlm_auth";
         argv[1] = (char *)"--helper-protocol=squid-2.5-ntlmssp";
         argv[2] = NULL;
-        if ((status = ntlm_funcs->fork( argv, &ctx )) != SEC_E_OK) goto done;
+        if ((status = ntlm_funcs->fork( ctx, argv )) != SEC_E_OK) goto done;
         ctx->mode = MODE_SERVER;
 
         if (!(want_flags = malloc( 73 )))
@@ -1048,7 +1056,11 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
     }
 
 done:
-    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED) ntlm_funcs->cleanup( ctx );
+    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED)
+    {
+        ntlm_funcs->cleanup( ctx );
+        free( ctx );
+    }
     free( buf );
     free( bin );
     free( want_flags );
@@ -1065,6 +1077,7 @@ static NTSTATUS NTAPI ntlm_SpDeleteContext( LSA_SEC_HANDLE handle )
 
     if (!ctx) return SEC_E_INVALID_HANDLE;
     ntlm_funcs->cleanup( ctx );
+    free( ctx );
     return SEC_E_OK;
 }
 
