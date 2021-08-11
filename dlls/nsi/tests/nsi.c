@@ -424,7 +424,6 @@ static void test_ip_ipstats( int family )
     /* The table appears to consist of a single object without a key.  The rw data does exist but
        isn't part of GetIpStatisticsEx() and isn't yet tested */
     err = NsiGetAllParameters( 1, mod, NSI_IP_IPSTATS_TABLE, NULL, 0, NULL, 0, &dyn, sizeof(dyn), &stat, sizeof(stat) );
-todo_wine_if( family == AF_INET6 )
     ok( !err, "got %x\n", err );
     if (err) goto err;
 

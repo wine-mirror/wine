@@ -226,6 +226,82 @@ static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size
 #endif
 }
 
+static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                                 void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    struct nsi_ip_ipstats_dynamic dyn;
+    struct nsi_ip_ipstats_static stat;
+
+    memset( &dyn, 0, sizeof(dyn) );
+    memset( &stat, 0, sizeof(stat) );
+
+#ifdef __linux__
+    {
+        struct
+        {
+            const char *name;
+            void *elem;
+            int size;
+        } ipstatlist[] =
+        {
+#define X(x) &x, sizeof(x)
+            { "Ip6InReceives",       X( dyn.in_recv ) },
+            { "Ip6InHdrErrors",      X( dyn.in_hdr_errs ) },
+            { "Ip6InAddrErrors",     X( dyn.in_addr_errs ) },
+            { "Ip6OutForwDatagrams", X( dyn.fwd_dgrams ) },
+            { "Ip6InUnknownProtos",  X( dyn.in_unk_protos ) },
+            { "Ip6InDiscards",       X( dyn.in_discards ) },
+            { "Ip6InDelivers",       X( dyn.in_delivers ) },
+            { "Ip6OutRequests",      X( dyn.out_reqs ) },
+            { "Ip6OutDiscards",      X( dyn.out_discards ) },
+            { "Ip6OutNoRoutes",      X( dyn.out_no_routes ) },
+            { "Ip6ReasmTimeout",     X( stat.reasm_timeout ) },
+            { "Ip6ReasmReqds",       X( dyn.reasm_reqds ) },
+            { "Ip6ReasmOKs",         X( dyn.reasm_oks ) },
+            { "Ip6ReasmFails",       X( dyn.reasm_fails ) },
+            { "Ip6FragOKs",          X( dyn.frag_oks ) },
+            { "Ip6FragFails",        X( dyn.frag_fails ) },
+            { "Ip6FragCreates",      X( dyn.frag_creates ) },
+            /* no routingDiscards */
+#undef X
+        };
+        NTSTATUS status = STATUS_NOT_SUPPORTED;
+        char buf[512], *ptr, *value;
+        DWORD i;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/snmp6", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            if (!(value = strchr( buf, ' ' ))) continue;
+            /* terminate the valuename */
+            *value++ = '\0';
+            /* and strip leading spaces from value */
+            while (*value == ' ') value++;
+            if ((ptr = strchr( value, '\n' ))) *ptr = '\0';
+
+            for (i = 0; i < ARRAY_SIZE(ipstatlist); i++)
+                if (!_strnicmp( buf, ipstatlist[i].name, -1 ))
+                {
+                    if (ipstatlist[i].size == sizeof(long))
+                        *(long *)ipstatlist[i].elem = strtoul( value, NULL, 10 );
+                    else
+                        *(long long *)ipstatlist[i].elem = strtoull( value, NULL, 10 );
+                    status = STATUS_SUCCESS;
+                }
+        }
+        fclose( fp );
+        if (dynamic_data) *(struct nsi_ip_ipstats_dynamic *)dynamic_data = dyn;
+        if (static_data) *(struct nsi_ip_ipstats_static *)static_data = stat;
+        return status;
+    }
+#else
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
 static void unicast_fill_entry( struct ifaddrs *entry, void *key, struct nsi_ip_unicast_rw *rw,
                                 struct nsi_ip_unicast_dynamic *dyn, struct nsi_ip_unicast_static *stat )
 {
@@ -840,6 +916,15 @@ const struct module ipv4_module =
 
 static struct module_table ipv6_tables[] =
 {
+    {
+        NSI_IP_IPSTATS_TABLE,
+        {
+            0, 0,
+            sizeof(struct nsi_ip_ipstats_dynamic), sizeof(struct nsi_ip_ipstats_static)
+        },
+        NULL,
+        ipv6_ipstats_get_all_parameters,
+    },
     {
         NSI_IP_UNICAST_TABLE,
         {
