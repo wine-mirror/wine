@@ -381,7 +381,7 @@ static int mmap_is_in_reserved_area( void *addr, SIZE_T size )
     return 0;
 }
 
-static int mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
+static int mmap_enum_reserved_areas( int (*enum_func)(void *base, SIZE_T size, void *arg),
                                      void *arg, int top_down )
 {
     int ret = 0;
@@ -1451,7 +1451,7 @@ struct area_boundary
  * in the specified region. If no boundaries are found, result is NULL.
  * virtual_mutex must be held by caller.
  */
-static int CDECL get_area_boundary_callback( void *start, SIZE_T size, void *arg )
+static int get_area_boundary_callback( void *start, SIZE_T size, void *arg )
 {
     struct area_boundary *area = arg;
     void *end = (char *)start + size;
@@ -1818,7 +1818,7 @@ struct alloc_area
  *
  * Try to map some space inside a reserved area. Callback for mmap_enum_reserved_areas.
  */
-static int CDECL alloc_reserved_area_callback( void *start, SIZE_T size, void *arg )
+static int alloc_reserved_area_callback( void *start, SIZE_T size, void *arg )
 {
     struct alloc_area *alloc = arg;
     void *end = (char *)start + size;
@@ -2633,7 +2633,7 @@ struct alloc_virtual_heap
 };
 
 /* callback for mmap_enum_reserved_areas to allocate space for the virtual heap */
-static int CDECL alloc_virtual_heap( void *base, SIZE_T size, void *arg )
+static int alloc_virtual_heap( void *base, SIZE_T size, void *arg )
 {
     struct alloc_virtual_heap *alloc = arg;
     void *end = (char *)base + size;
@@ -3668,7 +3668,7 @@ struct free_range
 };
 
 /* free reserved areas above the limit; callback for mmap_enum_reserved_areas */
-static int CDECL free_reserved_memory( void *base, SIZE_T size, void *arg )
+static int free_reserved_memory( void *base, SIZE_T size, void *arg )
 {
     struct free_range *range = arg;
 
@@ -4048,7 +4048,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 
 
 /* retrieve state for a free memory area; callback for mmap_enum_reserved_areas */
-static int CDECL get_free_mem_state_callback( void *start, SIZE_T size, void *arg )
+static int get_free_mem_state_callback( void *start, SIZE_T size, void *arg )
 {
     MEMORY_BASIC_INFORMATION *info = arg;
     void *end = (char *)start + size;
