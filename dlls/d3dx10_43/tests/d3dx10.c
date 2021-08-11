@@ -1943,13 +1943,15 @@ static void test_get_image_info(void)
         resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
 
         hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, NULL);
-        ok(hr == S_OK || (hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+        ok(hr == S_OK || (hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
+                || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
                 "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
 
         hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, NULL);
-        ok(hr == S_OK || (hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+        ok(hr == S_OK || (hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
+                || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
                 "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
