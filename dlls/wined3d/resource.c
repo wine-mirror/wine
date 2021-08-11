@@ -121,26 +121,26 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         if (base_type == WINED3D_GL_RES_TYPE_COUNT)
             base_type = gl_type;
 
-        if (type != WINED3D_RTYPE_BUFFER)
+        if (type == WINED3D_RTYPE_BUFFER)
+            break;
+
+        if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
+                && !(format->flags[gl_type] & WINED3DFMT_FLAG_RENDERTARGET))
         {
-            if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
-                    && !(format->flags[gl_type] & WINED3DFMT_FLAG_RENDERTARGET))
-            {
-                WARN("Format %s cannot be used for render targets.\n", debug_d3dformat(format->id));
-                continue;
-            }
-            if ((bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-                    && !(format->flags[gl_type] & WINED3DFMT_FLAG_DEPTH_STENCIL))
-            {
-                WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
-                continue;
-            }
-            if ((bind_flags & WINED3D_BIND_SHADER_RESOURCE)
-                    && !(format->flags[gl_type] & WINED3DFMT_FLAG_TEXTURE))
-            {
-                WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
-                continue;
-            }
+            WARN("Format %s cannot be used for render targets.\n", debug_d3dformat(format->id));
+            continue;
+        }
+        if ((bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+                && !(format->flags[gl_type] & WINED3DFMT_FLAG_DEPTH_STENCIL))
+        {
+            WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
+            continue;
+        }
+        if ((bind_flags & WINED3D_BIND_SHADER_RESOURCE)
+                && !(format->flags[gl_type] & WINED3DFMT_FLAG_TEXTURE))
+        {
+            WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
+            continue;
         }
         if (((width & (width - 1)) || (height & (height - 1)))
                 && !d3d_info->texture_npot
