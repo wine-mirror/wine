@@ -3903,26 +3903,21 @@ static void test_performance_keys(void)
         todo_wine ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
         ret = RegOpenKeyA(keys[i], "Global", &key);
-        todo_wine_if (keys[i] == HKEY_PERFORMANCE_DATA)
-            ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
         ret = RegOpenKeyExA(keys[i], "Global", 0, KEY_READ, &key);
-        todo_wine_if (keys[i] == HKEY_PERFORMANCE_DATA)
-            ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
         size = 0;
         ret = RegQueryValueA(keys[i], "Global", NULL, (LONG *)&size);
-        todo_wine_if (keys[i] == HKEY_PERFORMANCE_DATA)
-            ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
         ret = RegSetValueA(keys[i], "Global", REG_SZ, "dummy", 5);
-        todo_wine_if (keys[i] == HKEY_PERFORMANCE_DATA)
-            ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
         ret = RegQueryInfoKeyA(keys[i], NULL, NULL, NULL, &key_count, NULL,
                 NULL, &value_count, NULL, NULL, NULL, NULL);
-        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
-            ok(!ret, "got %u\n", ret);
+        todo_wine ok(!ret, "got %u\n", ret);
         todo_wine ok(!key_count, "got %u subkeys\n", key_count);
         todo_wine ok(value_count == 2, "got %u values\n", value_count);
 
@@ -3941,7 +3936,7 @@ static void test_performance_keys(void)
     }
 
     ret = RegSetValueExA(HKEY_PERFORMANCE_DATA, "Global", 0, REG_SZ, (const BYTE *)"dummy", 5);
-    todo_wine ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
     ret = RegSetValueExA(HKEY_PERFORMANCE_TEXT, "Global", 0, REG_SZ, (const BYTE *)"dummy", 5);
     todo_wine ok(ret == ERROR_BADKEY, "got %u\n", ret);
@@ -3952,7 +3947,7 @@ static void test_performance_keys(void)
     if (pRegSetKeyValueW)
     {
         ret = pRegSetKeyValueW(HKEY_PERFORMANCE_DATA, NULL, L"Global", REG_SZ, L"dummy", 10);
-        todo_wine ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+        ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
         ret = pRegSetKeyValueW(HKEY_PERFORMANCE_TEXT, NULL, L"Global", REG_SZ, L"dummy", 10);
         todo_wine ok(ret == ERROR_BADKEY, "got %u\n", ret);
@@ -3962,7 +3957,7 @@ static void test_performance_keys(void)
     }
 
     ret = RegEnumKeyA(HKEY_PERFORMANCE_DATA, 0, buffer, buffer_size);
-    todo_wine ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
+    ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
     ret = RegEnumKeyA(HKEY_PERFORMANCE_TEXT, 0, buffer, buffer_size);
     todo_wine ok(ret == ERROR_NO_MORE_ITEMS, "got %u\n", ret);
@@ -4101,7 +4096,7 @@ static void test_perflib_key(void)
     RtlInitUnicodeString(&string, L"\\Registry\\PerfData");
     InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
     ret = NtOpenKey((HANDLE *)&key, KEY_READ, &attr);
-    todo_wine ok(ret == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", ret);
+    ok(ret == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", ret);
 
     free(buffer);
 }

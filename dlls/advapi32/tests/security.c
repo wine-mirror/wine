@@ -7948,7 +7948,7 @@ static void test_pseudo_handle_security(void)
         ret = GetSecurityInfo(keys[i], SE_REGISTRY_KEY,
                 DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &sd_ptr);
         if (keys[i] == HKEY_PERFORMANCE_DATA)
-            todo_wine ok(ret == ERROR_INVALID_HANDLE, "key %p: got error %u\n", keys[i], ret);
+            ok(ret == ERROR_INVALID_HANDLE, "key %p: got error %u\n", keys[i], ret);
         else if (keys[i] == HKEY_DYN_DATA)
             todo_wine ok(ret == ERROR_CALL_NOT_IMPLEMENTED || broken(ret == ERROR_INVALID_HANDLE) /* <7 */,
                     "key %p: got error %u\n", keys[i], ret);

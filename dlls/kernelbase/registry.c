@@ -56,7 +56,7 @@ static const WCHAR * const root_key_names[] =
     NULL,         /* HKEY_CURRENT_USER is determined dynamically */
     L"\\Registry\\Machine",
     L"\\Registry\\User",
-    L"\\Registry\\PerfData",
+    NULL,         /* HKEY_PERFORMANCE_DATA is not a real key */
     L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current",
     L"\\Registry\\DynData"
 };
@@ -330,21 +330,28 @@ static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
 /* map the hkey from special root to normal key if necessary */
 static inline HKEY get_special_root_hkey( HKEY hkey, REGSAM access )
 {
-    HKEY ret = hkey;
+    unsigned int index = HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST);
+    DWORD wow64_flags = access & (KEY_WOW64_32KEY | KEY_WOW64_64KEY);
 
-    if ((HandleToUlong(hkey) >= HandleToUlong(HKEY_SPECIAL_ROOT_FIRST))
-            && (HandleToUlong(hkey) <= HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
+    switch (HandleToUlong(hkey))
     {
-        REGSAM mask = 0;
+        case (LONG)(LONG_PTR)HKEY_CLASSES_ROOT:
+            if (wow64_flags)
+                return create_special_root_hkey( hkey, MAXIMUM_ALLOWED | wow64_flags );
+            /* fall through */
 
-        if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT))
-            mask = KEY_WOW64_32KEY | KEY_WOW64_64KEY;
+        case (LONG)(LONG_PTR)HKEY_CURRENT_USER:
+        case (LONG)(LONG_PTR)HKEY_LOCAL_MACHINE:
+        case (LONG)(LONG_PTR)HKEY_USERS:
+        case (LONG)(LONG_PTR)HKEY_CURRENT_CONFIG:
+        case (LONG)(LONG_PTR)HKEY_DYN_DATA:
+            if (special_root_keys[index])
+                return special_root_keys[index];
+            return create_special_root_hkey( hkey, MAXIMUM_ALLOWED );
 
-        if ((access & mask) ||
-                !(ret = special_root_keys[HandleToUlong(hkey) - HandleToUlong(HKEY_SPECIAL_ROOT_FIRST)]))
-            ret = create_special_root_hkey( hkey, MAXIMUM_ALLOWED | (access & mask) );
+        default:
+            return hkey;
     }
-    return ret;
 }
 
 
@@ -1565,7 +1572,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWO
           hkey, debugstr_a(name), reserved, type, data, count, count ? *count : 0 );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
-    if (hkey != HKEY_PERFORMANCE_DATA && !(hkey = get_special_root_hkey( hkey, 0 )))
+    if (!(hkey = get_special_root_hkey( hkey, 0 )))
         return ERROR_INVALID_HANDLE;
 
     if (count) datalen = *count;
