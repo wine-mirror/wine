@@ -2436,6 +2436,88 @@ err:
     return err;
 }
 
+/******************************************************************
+ *    GetIpStatistics (IPHLPAPI.@)
+ *
+ * Get the IP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for IP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIpStatistics( MIB_IPSTATS *stats )
+{
+    return GetIpStatisticsEx( stats, WS_AF_INET );
+}
+
+/******************************************************************
+ *    GetIpStatisticsEx (IPHLPAPI.@)
+ *
+ * Get the IPv4 and IPv6 statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for IP statistics
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIpStatisticsEx( MIB_IPSTATS *stats, DWORD family )
+{
+    struct nsi_ip_ipstats_dynamic dyn;
+    struct nsi_ip_ipstats_static stat;
+    struct nsi_ip_cmpt_rw cmpt_rw;
+    struct nsi_ip_cmpt_dynamic cmpt_dyn;
+    const NPI_MODULEID *mod;
+    DWORD err, cmpt = 1;
+
+    TRACE( "%p %d\n", stats, family );
+
+    if (!stats) return ERROR_INVALID_PARAMETER;
+    mod = ip_module_id( family );
+    if (!mod) return ERROR_INVALID_PARAMETER;
+
+    memset( stats, 0, sizeof(*stats) );
+
+    err = NsiGetAllParameters( 1, mod, NSI_IP_IPSTATS_TABLE, NULL, 0, NULL, 0,
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (err) return err;
+
+    err = NsiGetAllParameters( 1, mod, NSI_IP_COMPARTMENT_TABLE, &cmpt, sizeof(cmpt), &cmpt_rw, sizeof(cmpt_rw),
+                               &cmpt_dyn, sizeof(cmpt_dyn), NULL, 0 );
+    if (err) return err;
+
+    stats->u.Forwarding = cmpt_rw.not_forwarding + 1;
+    stats->dwDefaultTTL = cmpt_rw.default_ttl;
+    stats->dwInReceives = dyn.in_recv;
+    stats->dwInHdrErrors = dyn.in_hdr_errs;
+    stats->dwInAddrErrors = dyn.in_addr_errs;
+    stats->dwForwDatagrams = dyn.fwd_dgrams;
+    stats->dwInUnknownProtos = dyn.in_unk_protos;
+    stats->dwInDiscards = dyn.in_discards;
+    stats->dwInDelivers = dyn.in_delivers;
+    stats->dwOutRequests = dyn.out_reqs;
+    stats->dwRoutingDiscards = dyn.routing_discards;
+    stats->dwOutDiscards = dyn.out_discards;
+    stats->dwOutNoRoutes = dyn.out_no_routes;
+    stats->dwReasmTimeout = stat.reasm_timeout;
+    stats->dwReasmReqds = dyn.reasm_reqds;
+    stats->dwReasmOks = dyn.reasm_oks;
+    stats->dwReasmFails = dyn.reasm_fails;
+    stats->dwFragOks = dyn.frag_oks;
+    stats->dwFragFails = dyn.frag_fails;
+    stats->dwFragCreates = dyn.frag_creates;
+    stats->dwNumIf = cmpt_dyn.num_ifs;
+    stats->dwNumAddr = cmpt_dyn.num_addrs;
+    stats->dwNumRoutes = cmpt_dyn.num_routes;
+
+    return err;
+}
+
 /* Gets the DNS server list into the list beginning at list.  Assumes that
  * a single server address may be placed at list if *len is at least
  * sizeof(IP_ADDR_STRING) long.  Otherwise, list->Next is set to firstDynamic,

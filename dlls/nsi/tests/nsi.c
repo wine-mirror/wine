@@ -436,14 +436,10 @@ static void test_ip_cmpt( int family )
     ok( !err, "got %d\n", err );
     if (err) goto err;
 
-todo_wine_if(family == AF_INET6 && table.dwForwarding - 1 != rw.not_forwarding)
     ok( table.dwForwarding - 1 == rw.not_forwarding, "%x vs %x\n", table.dwForwarding, rw.not_forwarding );
-todo_wine_if(family == AF_INET6 && table.dwDefaultTTL != rw.default_ttl)
     ok( table.dwDefaultTTL == rw.default_ttl, "%x vs %x\n", table.dwDefaultTTL, rw.default_ttl );
     ok( table.dwNumIf == dyn.num_ifs, "%x vs %x\n", table.dwNumIf, dyn.num_ifs );
-todo_wine_if(table.dwNumAddr != dyn.num_addrs)
     ok( table.dwNumAddr == dyn.num_addrs, "%x vs %x\n", table.dwNumAddr, dyn.num_addrs );
-todo_wine_if(family == AF_INET6 && table.dwNumRoutes != dyn.num_routes)
     ok( table.dwNumRoutes == dyn.num_routes, "%x vs %x\n", table.dwNumRoutes, dyn.num_routes );
 
 err:
