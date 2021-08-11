@@ -1204,6 +1204,27 @@ LONG WINAPI RegSetKeyValueA( HKEY hkey, LPCSTR subkey, LPCSTR name, DWORD type, 
     return ret;
 }
 
+/* FIXME: we should read data from system32/perf009c.dat (or perf###c depending
+ * on locale) instead */
+static DWORD query_perf_names( DWORD *type, void *data, DWORD *ret_size, BOOL unicode )
+{
+    static const WCHAR names[] = L"1\0" "1847\0" "1846\0End Marker\0";
+    DWORD size = *ret_size;
+
+    if (type) *type = REG_MULTI_SZ;
+    *ret_size = sizeof(names);
+    if (!unicode) *ret_size /= sizeof(WCHAR);
+
+    if (!data) return ERROR_SUCCESS;
+    if (size < *ret_size) return ERROR_MORE_DATA;
+
+    if (unicode)
+        memcpy( data, names, sizeof(names) );
+    else
+        RtlUnicodeToMultiByteN( data, size, NULL, names, sizeof(names) );
+    return ERROR_SUCCESS;
+}
+
 struct perf_provider
 {
     HMODULE perflib;
@@ -1338,7 +1359,7 @@ static DWORD collect_data(struct perf_provider *provider, const WCHAR *query, vo
 
 #define MAX_SERVICE_NAME 260
 
-static DWORD query_perf_data(const WCHAR *query, DWORD *type, void *data, DWORD *ret_size)
+static DWORD query_perf_data( const WCHAR *query, DWORD *type, void *data, DWORD *ret_size, BOOL unicode )
 {
     DWORD err, i, data_size;
     HKEY root;
@@ -1346,6 +1367,9 @@ static DWORD query_perf_data(const WCHAR *query, DWORD *type, void *data, DWORD 
 
     if (!ret_size)
         return ERROR_INVALID_PARAMETER;
+
+    if (!wcsnicmp( query, L"counter", 7 ))
+        return query_perf_names( type, data, ret_size, unicode );
 
     data_size = *ret_size;
     *ret_size = 0;
@@ -1480,7 +1504,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDW
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     if (hkey == HKEY_PERFORMANCE_DATA)
-        return query_perf_data(name, type, data, count);
+        return query_perf_data( name, type, data, count, TRUE );
 
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
@@ -1587,7 +1611,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWO
 
     if (hkey == HKEY_PERFORMANCE_DATA)
     {
-        DWORD ret = query_perf_data( nameW.Buffer, type, data, count );
+        DWORD ret = query_perf_data( nameW.Buffer, type, data, count, FALSE );
         RtlFreeUnicodeString( &nameW );
         return ret;
     }

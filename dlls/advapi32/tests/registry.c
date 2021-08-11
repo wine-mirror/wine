@@ -3785,7 +3785,7 @@ static void test_performance_keys(void)
 
         size = 0xdeadbeef;
         ret = RegQueryValueExA(keys[i], "cOuNtEr", NULL, NULL, NULL, &size);
-        todo_wine
+        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
         {
             ok(!ret, "got %u\n", ret);
             ok(size > 0 && size < 0xdeadbeef, "got size %u\n", size);
@@ -3795,15 +3795,19 @@ static void test_performance_keys(void)
         size = 0;
         ret = RegQueryValueExA(keys[i], "cOuNtEr", NULL, &type, buffer, &size);
         todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
+        {
             ok(ret == ERROR_MORE_DATA, "got %u\n", ret);
-        todo_wine ok(size > 0, "got size %u\n", size);
+            ok(size > 0, "got size %u\n", size);
+        }
 
         type = 0xdeadbeef;
         size = buffer_size;
         ret = RegQueryValueExA(keys[i], "cOuNtEr", NULL, &type, buffer, &size);
         todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
+        {
             ok(!ret, "got %u\n", ret);
-        todo_wine ok(type == REG_MULTI_SZ, "got type %u\n", type);
+            ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        }
         if (type == REG_MULTI_SZ)
             test_counter_values(buffer, keys[i]);
 
@@ -3811,14 +3815,16 @@ static void test_performance_keys(void)
         size = buffer_size;
         ret = RegQueryValueExA(keys[i], "cOuNtErwine", NULL, &type, buffer, &size);
         todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
+        {
             ok(!ret, "got %u\n", ret);
-        todo_wine ok(type == REG_MULTI_SZ, "got type %u\n", type);
+            ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        }
         if (type == REG_MULTI_SZ)
             test_counter_values(buffer, keys[i]);
 
         size = 0;
         ret = RegQueryValueExW(keys[i], L"cOuNtEr", NULL, NULL, NULL, &size);
-        todo_wine
+        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
         {
             ok(!ret, "got %u\n", ret);
             ok(size > 0, "got size %u\n", size);
@@ -3828,7 +3834,7 @@ static void test_performance_keys(void)
 
         type = 0xdeadbeef;
         ret = RegQueryValueExW(keys[i], L"cOuNtEr", NULL, &type, bufferW, &size);
-        todo_wine
+        todo_wine_if (keys[i] != HKEY_PERFORMANCE_DATA)
         {
             ok(!ret, "got %u\n", ret);
             ok(type == REG_MULTI_SZ, "got type %u\n", type);
