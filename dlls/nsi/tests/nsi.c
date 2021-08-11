@@ -411,6 +411,54 @@ static void test_ndis_index_luid( void )
     ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
 }
 
+static void test_ip_ipstats( int family )
+{
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    struct nsi_ip_ipstats_dynamic dyn, dyn2;
+    struct nsi_ip_ipstats_static stat;
+    MIB_IPSTATS table;
+    DWORD err;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    /* The table appears to consist of a single object without a key.  The rw data does exist but
+       isn't part of GetIpStatisticsEx() and isn't yet tested */
+    err = NsiGetAllParameters( 1, mod, NSI_IP_IPSTATS_TABLE, NULL, 0, NULL, 0, &dyn, sizeof(dyn), &stat, sizeof(stat) );
+todo_wine_if( family == AF_INET6 )
+    ok( !err, "got %x\n", err );
+    if (err) goto err;
+
+    err = GetIpStatisticsEx( &table, family );
+    ok( !err, "got %d\n", err );
+
+    err = NsiGetAllParameters( 1, mod, NSI_IP_IPSTATS_TABLE, NULL, 0, NULL, 0, &dyn2, sizeof(dyn2), NULL, 0 );
+    ok( !err, "got %x\n", err );
+
+    /* dwForwarding and dwDefaultTTL come from the compartment table */
+    ok( bounded( table.dwInReceives, dyn.in_recv, dyn2.in_recv ), "mismatch\n" );
+    ok( bounded( table.dwInHdrErrors, dyn.in_hdr_errs, dyn2.in_hdr_errs ), "mismatch\n" );
+    ok( bounded( table.dwInAddrErrors, dyn.in_addr_errs, dyn2.in_addr_errs ), "mismatch\n" );
+    ok( bounded( table.dwForwDatagrams, dyn.fwd_dgrams, dyn2.fwd_dgrams ), "mismatch\n" );
+    ok( bounded( table.dwInUnknownProtos, dyn.in_unk_protos, dyn2.in_unk_protos ), "mismatch\n" );
+    ok( bounded( table.dwInDiscards, dyn.in_discards, dyn2.in_discards ), "mismatch\n" );
+    ok( bounded( table.dwInDelivers, dyn.in_delivers, dyn2.in_delivers ), "mismatch\n" );
+    ok( bounded( table.dwOutRequests, dyn.out_reqs, dyn2.out_reqs ), "mismatch\n" );
+    ok( bounded( table.dwRoutingDiscards, dyn.routing_discards, dyn2.routing_discards ), "mismatch\n" );
+    ok( bounded( table.dwOutDiscards, dyn.out_discards, dyn2.out_discards ), "mismatch\n" );
+    ok( bounded( table.dwOutNoRoutes, dyn.out_no_routes, dyn2.out_no_routes ), "mismatch\n" );
+    ok( table.dwReasmTimeout == stat.reasm_timeout, "mismatch\n" );
+    ok( bounded( table.dwReasmReqds, dyn.reasm_reqds, dyn2.reasm_reqds ), "mismatch\n" );
+    ok( bounded( table.dwReasmOks, dyn.reasm_oks, dyn2.reasm_oks ), "mismatch\n" );
+    ok( bounded( table.dwReasmFails, dyn.reasm_fails, dyn2.reasm_fails ), "mismatch\n" );
+    ok( bounded( table.dwFragOks, dyn.frag_oks, dyn2.frag_oks ), "mismatch\n" );
+    ok( bounded( table.dwFragFails, dyn.frag_fails, dyn2.frag_fails ), "mismatch\n" );
+    ok( bounded( table.dwFragCreates, dyn.frag_creates, dyn2.frag_creates ), "mismatch\n" );
+    /* dwNumIf, dwNumAddr and dwNumRoutes come from the compartment table */
+
+err:
+    winetest_pop_context();
+}
+
 static void test_ip_unicast( int family )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ip_unicast_rw, unk[0]), FIELD_OFFSET(struct nsi_ip_unicast_rw, unk[1]),
@@ -678,6 +726,8 @@ START_TEST( nsi )
     test_ndis_ifinfo();
     test_ndis_index_luid();
 
+    test_ip_ipstats( AF_INET );
+    test_ip_ipstats( AF_INET6 );
     test_ip_unicast( AF_INET );
     test_ip_unicast( AF_INET6 );
     test_ip_neighbour( AF_INET );

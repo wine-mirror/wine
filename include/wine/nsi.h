@@ -97,9 +97,44 @@ struct nsi_ndis_ifinfo_static
 };
 
 /* Undocumented NSI IP tables */
+#define NSI_IP_IPSTATS_TABLE               6
 #define NSI_IP_UNICAST_TABLE              10
 #define NSI_IP_NEIGHBOUR_TABLE            11
 #define NSI_IP_FORWARD_TABLE              16
+
+struct nsi_ip_ipstats_dynamic
+{
+    DWORD unk[4];
+    ULONGLONG in_recv;
+    ULONGLONG in_octets;
+    ULONGLONG fwd_dgrams;
+    ULONGLONG in_delivers;
+    ULONGLONG out_reqs;
+    ULONGLONG unk2;
+    ULONGLONG unk3;
+    ULONGLONG out_octets;
+    ULONGLONG unk4[6];
+    ULONGLONG in_hdr_errs;
+    DWORD in_addr_errs;
+    DWORD in_unk_protos;
+    DWORD unk5;
+    DWORD reasm_reqds;
+    DWORD reasm_oks;
+    DWORD reasm_fails;
+    DWORD in_discards;
+    DWORD out_no_routes;
+    DWORD out_discards;
+    DWORD routing_discards;
+    DWORD frag_oks;
+    DWORD frag_fails;
+    DWORD frag_creates;
+    DWORD unk6[7];
+};
+
+struct nsi_ip_ipstats_static
+{
+    DWORD reasm_timeout;
+};
 
 struct nsi_ipv4_unicast_key
 {

@@ -120,6 +120,112 @@ static ULONG64 get_boot_time( void )
     return ti.BootTime.QuadPart;
 }
 
+static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                                 void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    struct nsi_ip_ipstats_dynamic dyn;
+    struct nsi_ip_ipstats_static stat;
+
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+
+    memset( &dyn, 0, sizeof(dyn) );
+    memset( &stat, 0, sizeof(stat) );
+
+#ifdef __linux__
+    {
+        NTSTATUS status = STATUS_NOT_SUPPORTED;
+        static const char hdr[] = "Ip:";
+        char buf[512], *ptr;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/snmp", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            if (_strnicmp( buf, hdr, sizeof(hdr) - 1 )) continue;
+            /* last line was a header, get another */
+            if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
+            if (!_strnicmp( buf, hdr, sizeof(hdr) - 1 ))
+            {
+                DWORD in_recv, in_hdr_errs, fwd_dgrams, in_delivers, out_reqs;
+                ptr += sizeof(hdr);
+                sscanf( ptr, "%*u %*u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+                        &in_recv,
+                        &in_hdr_errs,
+                        &dyn.in_addr_errs,
+                        &fwd_dgrams,
+                        &dyn.in_unk_protos,
+                        &dyn.in_discards,
+                        &in_delivers,
+                        &out_reqs,
+                        &dyn.out_discards,
+                        &dyn.out_no_routes,
+                        &stat.reasm_timeout,
+                        &dyn.reasm_reqds,
+                        &dyn.reasm_oks,
+                        &dyn.reasm_fails,
+                        &dyn.frag_oks,
+                        &dyn.frag_fails,
+                        &dyn.frag_creates );
+                /* no routingDiscards */
+                dyn.in_recv = in_recv;
+                dyn.in_hdr_errs = in_hdr_errs;
+                dyn.fwd_dgrams = fwd_dgrams;
+                dyn.in_delivers = in_delivers;
+                dyn.out_reqs = out_reqs;
+                if (dynamic_data) *(struct nsi_ip_ipstats_dynamic *)dynamic_data = dyn;
+                if (static_data) *(struct nsi_ip_ipstats_static *)static_data = stat;
+                status = STATUS_SUCCESS;
+                break;
+            }
+        }
+        fclose( fp );
+        return status;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPCTL_STATS) && (defined(HAVE_STRUCT_IPSTAT_IPS_TOTAL) || defined(HAVE_STRUCT_IP_STATS_IPS_TOTAL))
+    {
+        int mib[] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS };
+#if defined(HAVE_STRUCT_IPSTAT_IPS_TOTAL)
+        struct ipstat ip_stat;
+#elif defined(HAVE_STRUCT_IP_STATS_IPS_TOTAL)
+        struct ip_stats ip_stat;
+#endif
+        size_t needed;
+
+        needed = sizeof(ip_stat);
+        if (sysctl( mib, ARRAY_SIZE(mib), &ip_stat, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
+
+        dyn.in_recv = ip_stat.ips_total;
+        dyn.in_hdr_errs = ip_stat.ips_badhlen + ip_stat.ips_badsum + ip_stat.ips_tooshort + ip_stat.ips_badlen +
+            ip_stat.ips_badvers + ip_stat.ips_badoptions;
+        /* ips_badaddr also includes outgoing packets with a bad address, but we can't account for that right now */
+        dyn.in_addr_errs = ip_stat.ips_cantforward + ip_stat.ips_badaddr + ip_stat.ips_notmember;
+        dyn.fwd_dgrams = ip_stat.ips_forward;
+        dyn.in_unk_protos = ip_stat.ips_noproto;
+        dyn.in_discards = ip_stat.ips_fragdropped;
+        dyn.in_delivers = ip_stat.ips_delivered;
+        dyn.out_reqs = ip_stat.ips_localout;
+        dyn.out_discards = ip_stat.ips_odropped;
+        dyn.out_no_routes = ip_stat.ips_noroute;
+        stat.reasm_timeout = ip_stat.ips_fragtimeout;
+        dyn.reasm_reqds = ip_stat.ips_fragments;
+        dyn.reasm_oks = ip_stat.ips_reassembled;
+        dyn.reasm_fails = ip_stat.ips_fragments - ip_stat.ips_reassembled;
+        dyn.frag_oks = ip_stat.ips_fragmented;
+        dyn.frag_fails = ip_stat.ips_cantfrag;
+        dyn.frag_creates = ip_stat.ips_ofragments;
+
+        if (dynamic_data) *(struct nsi_ip_ipstats_dynamic *)dynamic_data = dyn;
+        if (static_data) *(struct nsi_ip_ipstats_static *)static_data = stat;
+        return STATUS_SUCCESS;
+    }
+#else
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
 static void unicast_fill_entry( struct ifaddrs *entry, void *key, struct nsi_ip_unicast_rw *rw,
                                 struct nsi_ip_unicast_dynamic *dyn, struct nsi_ip_unicast_static *stat )
 {
@@ -687,6 +793,15 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, DWORD key_size, void
 
 static struct module_table ipv4_tables[] =
 {
+    {
+        NSI_IP_IPSTATS_TABLE,
+        {
+            0, 0,
+            sizeof(struct nsi_ip_ipstats_dynamic), sizeof(struct nsi_ip_ipstats_static)
+        },
+        NULL,
+        ipv4_ipstats_get_all_parameters,
+    },
     {
         NSI_IP_UNICAST_TABLE,
         {
