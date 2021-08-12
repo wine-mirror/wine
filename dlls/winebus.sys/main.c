@@ -94,7 +94,9 @@ static const struct product_desc XBOX_CONTROLLERS[] = {
 static DRIVER_OBJECT *driver_obj;
 
 static DEVICE_OBJECT *mouse_obj;
+static struct hid_descriptor mouse_desc;
 static DEVICE_OBJECT *keyboard_obj;
+static struct hid_descriptor keyboard_desc;
 
 /* The root-enumerated device stack. */
 DEVICE_OBJECT *bus_pdo;
@@ -483,16 +485,10 @@ static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, 
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
 
-    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS) + sizeof(REPORT_TAIL);
-    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS) + sizeof(REPORT_TAIL))
-        return STATUS_BUFFER_TOO_SMALL;
+    *ret_length = mouse_desc.size;
+    if (length < mouse_desc.size) return STATUS_BUFFER_TOO_SMALL;
 
-    memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
-    add_button_block(buffer + sizeof(REPORT_HEADER), 1, 3);
-    memcpy(buffer + sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS), REPORT_TAIL, sizeof(REPORT_TAIL));
-    buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
-    buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_MOUSE;
-
+    memcpy(buffer, mouse_desc.data, mouse_desc.size);
     return STATUS_SUCCESS;
 }
 
@@ -545,6 +541,13 @@ static void mouse_device_create(void)
 {
     static const WCHAR busidW[] = {'W','I','N','E','M','O','U','S','E',0};
 
+    if (!hid_descriptor_begin(&mouse_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
+        return;
+    if (!hid_descriptor_add_buttons(&mouse_desc, HID_USAGE_PAGE_BUTTON, 1, 3))
+        return;
+    if (!hid_descriptor_end(&mouse_desc))
+        return;
+
     mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE, &mouse_vtbl, 0);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
@@ -557,17 +560,10 @@ static NTSTATUS keyboard_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffe
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
 
-    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS) + sizeof(REPORT_TAIL);
-    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS) + sizeof(REPORT_TAIL))
-        return STATUS_BUFFER_TOO_SMALL;
+    *ret_length = keyboard_desc.size;
+    if (length < keyboard_desc.size) return STATUS_BUFFER_TOO_SMALL;
 
-    memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
-    add_button_block(buffer + sizeof(REPORT_HEADER), 0, 101);
-    buffer[sizeof(REPORT_HEADER) + IDX_BUTTON_USAGE_PAGE] = HID_USAGE_PAGE_KEYBOARD;
-    memcpy(buffer + sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS), REPORT_TAIL, sizeof(REPORT_TAIL));
-    buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
-    buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_KEYBOARD;
-
+    memcpy(buffer, keyboard_desc.data, keyboard_desc.size);
     return STATUS_SUCCESS;
 }
 
@@ -619,6 +615,13 @@ static const platform_vtbl keyboard_vtbl =
 static void keyboard_device_create(void)
 {
     static const WCHAR busidW[] = {'W','I','N','E','K','E','Y','B','O','A','R','D',0};
+
+    if (!hid_descriptor_begin(&keyboard_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
+        return;
+    if (!hid_descriptor_add_buttons(&keyboard_desc, HID_USAGE_PAGE_KEYBOARD, 0, 101))
+        return;
+    if (!hid_descriptor_end(&keyboard_desc))
+        return;
 
     keyboard_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE, &keyboard_vtbl, 0);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);

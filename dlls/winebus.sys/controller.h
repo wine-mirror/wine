@@ -18,6 +18,26 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <hidusage.h>
+
+struct hid_descriptor
+{
+    BYTE  *data;
+    SIZE_T size;
+    SIZE_T max_size;
+};
+
+extern BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffer, SIZE_T size) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_end(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+
+extern BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
+                                       USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
+
 /* Blocks of data for building HID device descriptions */
 
 #include "psh_hid_macros.h"

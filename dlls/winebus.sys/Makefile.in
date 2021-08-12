@@ -8,6 +8,7 @@ C_SRCS = \
 	bus_iohid.c \
 	bus_sdl.c \
 	bus_udev.c \
+	hid.c \
 	main.c
 
 RC_SRCS = winebus.rc
