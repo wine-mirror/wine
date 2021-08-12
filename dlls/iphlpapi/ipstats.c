@@ -312,7 +312,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
                 if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
                 {
                     ptr += sizeof(hdr);
-                    sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+                    sscanf( ptr, "%u %u %*u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
                             &stats->stats.icmpInStats.dwMsgs,
                             &stats->stats.icmpInStats.dwErrors,
                             &stats->stats.icmpInStats.dwDestUnreachs,
@@ -320,6 +320,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
                             &stats->stats.icmpInStats.dwParmProbs,
                             &stats->stats.icmpInStats.dwSrcQuenchs,
                             &stats->stats.icmpInStats.dwRedirects,
+                            &stats->stats.icmpInStats.dwEchos,
                             &stats->stats.icmpInStats.dwEchoReps,
                             &stats->stats.icmpInStats.dwTimestamps,
                             &stats->stats.icmpInStats.dwTimestampReps,
@@ -332,6 +333,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
                             &stats->stats.icmpOutStats.dwParmProbs,
                             &stats->stats.icmpOutStats.dwSrcQuenchs,
                             &stats->stats.icmpOutStats.dwRedirects,
+                            &stats->stats.icmpOutStats.dwEchos,
                             &stats->stats.icmpOutStats.dwEchoReps,
                             &stats->stats.icmpOutStats.dwTimestamps,
                             &stats->stats.icmpOutStats.dwTimestampReps,
@@ -594,6 +596,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
         stats->icmpInStats.rgdwTypeCount[ICMP4_SOURCE_QUENCH] = ipv4stats.stats.icmpInStats.dwSrcQuenchs;
         stats->icmpInStats.rgdwTypeCount[ICMP4_REDIRECT] = ipv4stats.stats.icmpInStats.dwRedirects;
         stats->icmpInStats.rgdwTypeCount[ICMP4_ECHO_REQUEST] = ipv4stats.stats.icmpInStats.dwEchos;
+        stats->icmpInStats.rgdwTypeCount[ICMP4_ECHO_REPLY] = ipv4stats.stats.icmpInStats.dwEchoReps;
         stats->icmpInStats.rgdwTypeCount[ICMP4_TIME_EXCEEDED] = ipv4stats.stats.icmpInStats.dwTimeExcds;
         stats->icmpInStats.rgdwTypeCount[ICMP4_PARAM_PROB] = ipv4stats.stats.icmpInStats.dwParmProbs;
         stats->icmpInStats.rgdwTypeCount[ICMP4_TIMESTAMP_REQUEST] = ipv4stats.stats.icmpInStats.dwTimestamps;
@@ -607,6 +610,7 @@ DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX stats, DWORD family)
         stats->icmpOutStats.rgdwTypeCount[ICMP4_SOURCE_QUENCH] = ipv4stats.stats.icmpOutStats.dwSrcQuenchs;
         stats->icmpOutStats.rgdwTypeCount[ICMP4_REDIRECT] = ipv4stats.stats.icmpOutStats.dwRedirects;
         stats->icmpOutStats.rgdwTypeCount[ICMP4_ECHO_REQUEST] = ipv4stats.stats.icmpOutStats.dwEchos;
+        stats->icmpOutStats.rgdwTypeCount[ICMP4_ECHO_REPLY] = ipv4stats.stats.icmpOutStats.dwEchoReps;
         stats->icmpOutStats.rgdwTypeCount[ICMP4_TIME_EXCEEDED] = ipv4stats.stats.icmpOutStats.dwTimeExcds;
         stats->icmpOutStats.rgdwTypeCount[ICMP4_PARAM_PROB] = ipv4stats.stats.icmpOutStats.dwParmProbs;
         stats->icmpOutStats.rgdwTypeCount[ICMP4_TIMESTAMP_REQUEST] = ipv4stats.stats.icmpOutStats.dwTimestamps;
