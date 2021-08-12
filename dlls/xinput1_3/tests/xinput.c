@@ -678,7 +678,6 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
         length = ARRAY_SIZE(usages);
         status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &length, preparsed, buffer, hid_caps->InputReportByteLength);
-        todo_wine
         ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
         ok(length == 0, "got length %u\n", length);
 

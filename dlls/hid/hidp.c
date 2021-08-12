@@ -328,7 +328,6 @@ NTSTATUS WINAPI HidP_GetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, 
     *usages_len = params.usages - usages;
     if (status != HIDP_STATUS_SUCCESS) return status;
 
-    if (*usages_len == 0) return HIDP_STATUS_USAGE_NOT_FOUND;
     if (params.usages > params.usages_end) return HIDP_STATUS_BUFFER_TOO_SMALL;
     return status;
 }
@@ -672,7 +671,6 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
     *usages_len = params.usages - usages;
     if (status != HIDP_STATUS_SUCCESS) return status;
 
-    if (*usages_len == 0) return HIDP_STATUS_USAGE_NOT_FOUND;
     if (params.usages > params.usages_end) return HIDP_STATUS_BUFFER_TOO_SMALL;
     return status;
 }

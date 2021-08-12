@@ -2220,6 +2220,12 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
                             report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
 
+    value = ARRAY_SIZE(usages);
+    status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
+                            report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
+    ok(value == 0, "got usage count %d, expected %d\n", value, 2);
+
     usages[0] = 0x9;
     usages[1] = 0xb;
     usages[2] = 0xa;
