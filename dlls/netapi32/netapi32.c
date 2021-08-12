@@ -183,7 +183,18 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
 
     if (!local)
     {
-        if (samba_init()) return samba_funcs->server_getinfo( servername, level, bufptr );
+        if (samba_init())
+        {
+            ULONG size = 1024;
+
+            for (;;)
+            {
+                if (!(*bufptr = malloc( size ))) return ERROR_OUTOFMEMORY;
+                ret = samba_funcs->server_getinfo( servername, level, *bufptr, &size );
+                if (ret) free( *bufptr );
+                if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
+            }
+        }
         FIXME( "remote computers not supported\n" );
         return ERROR_INVALID_LEVEL;
     }
@@ -964,7 +975,18 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
 
     if (!local)
     {
-        if (samba_init()) return samba_funcs->wksta_getinfo( servername, level, bufptr );
+        if (samba_init())
+        {
+            ULONG size = 1024;
+
+            for (;;)
+            {
+                if (!(*bufptr = malloc( size ))) return ERROR_OUTOFMEMORY;
+                ret = samba_funcs->wksta_getinfo( servername, level, *bufptr, &size );
+                if (ret) free( *bufptr );
+                if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
+            }
+        }
         FIXME( "remote computers not supported\n" );
         return ERROR_INVALID_LEVEL;
     }

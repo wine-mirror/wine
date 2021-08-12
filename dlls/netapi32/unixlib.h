@@ -20,10 +20,10 @@
 
 struct samba_funcs
 {
-    NET_API_STATUS (WINAPI *server_getinfo)( const WCHAR *server, DWORD level, BYTE **buffer );
+    NET_API_STATUS (WINAPI *server_getinfo)( const WCHAR *server, DWORD level, void *buffer, ULONG *size );
     NET_API_STATUS (WINAPI *share_add)( const WCHAR *server, DWORD level, const BYTE *buffer, DWORD *err );
     NET_API_STATUS (WINAPI *share_del)( const WCHAR *server, const WCHAR *share, DWORD reserved );
-    NET_API_STATUS (WINAPI *wksta_getinfo)( const WCHAR *server, DWORD level, BYTE **buffer );
+    NET_API_STATUS (WINAPI *wksta_getinfo)( const WCHAR *server, DWORD level, void *buffer, ULONG *size );
     NET_API_STATUS (WINAPI *change_password)( const WCHAR *domain, const WCHAR *user,
                                               const WCHAR *old, const WCHAR *new );
 };
