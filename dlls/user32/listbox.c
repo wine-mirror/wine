@@ -1839,6 +1839,8 @@ static LRESULT LISTBOX_SetCount( LB_DESCR *descr, UINT count )
     if (!resize_storage(descr, count))
         return LB_ERRSPACE;
     descr->nb_items = count;
+    if (descr->style & LBS_NOREDRAW)
+        descr->style |= LBS_DISPLAYCHANGED;
 
     if (count)
     {

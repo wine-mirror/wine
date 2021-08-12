@@ -447,7 +447,6 @@ static void test_ownerdraw(void)
         got_drawitem = 0;
         ret = RedrawWindow(hLB, NULL, 0, RDW_UPDATENOW);
         ok(ret, "RedrawWindow failed\n");
-        todo_wine_if(testcase[i].message == LB_SETCOUNT)
         ok(got_drawitem == testcase[i].drawitem, "expected %u, got %u\n", testcase[i].drawitem, got_drawitem);
 
         DestroyWindow(hLB);
