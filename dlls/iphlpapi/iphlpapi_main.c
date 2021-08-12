@@ -1495,6 +1495,47 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   return IfIndex;
 }
 
+static void icmp_stats_ex_to_icmp_stats( MIBICMPSTATS_EX *stats_ex, MIBICMPSTATS *stats )
+{
+    stats->dwMsgs = stats_ex->dwMsgs;
+    stats->dwErrors = stats_ex->dwErrors;
+    stats->dwDestUnreachs = stats_ex->rgdwTypeCount[ICMP4_DST_UNREACH];
+    stats->dwTimeExcds = stats_ex->rgdwTypeCount[ICMP4_TIME_EXCEEDED];
+    stats->dwParmProbs = stats_ex->rgdwTypeCount[ICMP4_PARAM_PROB];
+    stats->dwSrcQuenchs = stats_ex->rgdwTypeCount[ICMP4_SOURCE_QUENCH];
+    stats->dwRedirects = stats_ex->rgdwTypeCount[ICMP4_REDIRECT];
+    stats->dwEchos = stats_ex->rgdwTypeCount[ICMP4_ECHO_REQUEST];
+    stats->dwEchoReps = stats_ex->rgdwTypeCount[ICMP4_ECHO_REPLY];
+    stats->dwTimestamps = stats_ex->rgdwTypeCount[ICMP4_TIMESTAMP_REQUEST];
+    stats->dwTimestampReps = stats_ex->rgdwTypeCount[ICMP4_TIMESTAMP_REPLY];
+    stats->dwAddrMasks = stats_ex->rgdwTypeCount[ICMP4_MASK_REQUEST];
+    stats->dwAddrMaskReps = stats_ex->rgdwTypeCount[ICMP4_MASK_REPLY];
+}
+
+/******************************************************************
+ *    GetIcmpStatistics (IPHLPAPI.@)
+ *
+ * Get the ICMP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for ICMP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIcmpStatistics( MIB_ICMP *stats )
+{
+    MIB_ICMP_EX stats_ex;
+    DWORD err = GetIcmpStatisticsEx( &stats_ex, WS_AF_INET );
+
+    if (err) return err;
+
+    icmp_stats_ex_to_icmp_stats( &stats_ex.icmpInStats, &stats->stats.icmpInStats );
+    icmp_stats_ex_to_icmp_stats( &stats_ex.icmpOutStats, &stats->stats.icmpOutStats );
+    return err;
+}
+
 /******************************************************************
  *    GetIcmpStatisticsEx (IPHLPAPI.@)
  *
