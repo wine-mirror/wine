@@ -618,7 +618,7 @@ static BOOL set_report_from_event(struct wine_input_private *ext, struct input_e
             return FALSE;
 #endif
         case EV_KEY:
-            set_button_value(ext->button_start + ext->button_map[ie->code], ie->value, ext->current_report_buffer);
+            set_button_value(ext->button_start * 8 + ext->button_map[ie->code], ie->value, ext->current_report_buffer);
             return FALSE;
         case EV_ABS:
             set_abs_axis_value(ext, ie->code, ie->value);
