@@ -112,25 +112,6 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
 
 #ifdef HAS_PROPER_INPUT_HEADER
 
-#include "psh_hid_macros.h"
-
-static const BYTE REPORT_ABS_AXIS_TAIL[] = {
-    LOGICAL_MINIMUM(4, /* placeholder */ 0x00000000),
-    LOGICAL_MAXIMUM(4, /* placeholder */ 0x000000ff),
-    PHYSICAL_MINIMUM(4, /* placeholder */ 0x00000000),
-    PHYSICAL_MAXIMUM(4, /* placeholder */ 0x000000ff),
-    REPORT_SIZE(1, 32),
-    REPORT_COUNT(1, /* placeholder */ 0),
-    INPUT(1, Data|Var|Abs),
-};
-#define IDX_ABS_LOG_MINIMUM 1
-#define IDX_ABS_LOG_MAXIMUM 6
-#define IDX_ABS_PHY_MINIMUM 11
-#define IDX_ABS_PHY_MAXIMUM 16
-#define IDX_ABS_AXIS_COUNT 23
-
-#include "pop_hid_macros.h"
-
 static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},              /*ABS_X*/
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Y},              /*ABS_Y*/
@@ -199,8 +180,7 @@ struct wine_input_private {
     BYTE *current_report_buffer;
     enum { FIRST, NORMAL, DROPPED } report_state;
 
-    int report_descriptor_size;
-    BYTE *report_descriptor;
+    struct hid_descriptor desc;
 
     int button_start;
     BYTE button_map[KEY_MAX];
@@ -211,40 +191,6 @@ struct wine_input_private {
 };
 
 #define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
-
-static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, BYTE *usages, BOOL absolute, const struct wine_input_absinfo *absinfo)
-{
-    int i;
-    memcpy(report_ptr, REPORT_AXIS_HEADER, sizeof(REPORT_AXIS_HEADER));
-    report_ptr[IDX_AXIS_PAGE] = page;
-    report_ptr += sizeof(REPORT_AXIS_HEADER);
-    for (i = 0; i < count; i++)
-    {
-        memcpy(report_ptr, REPORT_AXIS_USAGE, sizeof(REPORT_AXIS_USAGE));
-        report_ptr[IDX_AXIS_USAGE] = usages[i];
-        report_ptr += sizeof(REPORT_AXIS_USAGE);
-    }
-    if (absolute)
-    {
-        memcpy(report_ptr, REPORT_ABS_AXIS_TAIL, sizeof(REPORT_ABS_AXIS_TAIL));
-        if (absinfo)
-        {
-            *((int*)&report_ptr[IDX_ABS_LOG_MINIMUM]) = LE_DWORD(absinfo->info.minimum);
-            *((int*)&report_ptr[IDX_ABS_LOG_MAXIMUM]) = LE_DWORD(absinfo->info.maximum);
-            *((int*)&report_ptr[IDX_ABS_PHY_MINIMUM]) = LE_DWORD(absinfo->info.minimum);
-            *((int*)&report_ptr[IDX_ABS_PHY_MAXIMUM]) = LE_DWORD(absinfo->info.maximum);
-        }
-        report_ptr[IDX_ABS_AXIS_COUNT] = count;
-        report_ptr += sizeof(REPORT_ABS_AXIS_TAIL);
-    }
-    else
-    {
-        memcpy(report_ptr, REPORT_REL_AXIS_TAIL, sizeof(REPORT_REL_AXIS_TAIL));
-        report_ptr[IDX_REL_AXIS_COUNT] = count;
-        report_ptr += sizeof(REPORT_REL_AXIS_TAIL);
-    }
-    return report_ptr;
-}
 
 static const BYTE* what_am_I(struct udev_device *dev)
 {
@@ -408,8 +354,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     int rel_pages[TOP_REL_PAGE][HID_REL_MAX+1];
     BYTE absbits[(ABS_MAX+7)/8];
     BYTE relbits[(REL_MAX+7)/8];
-    BYTE *report_ptr;
-    INT i, descript_size;
+    INT i;
     INT report_size;
     INT button_count, abs_count, rel_count, hat_count;
     const BYTE *device_usage = what_am_I(dev);
@@ -425,7 +370,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         return FALSE;
     }
 
-    descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
     report_size = 0;
 
     abs_count = 0;
@@ -443,7 +387,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         if (abs_pages[i][0] > 0)
         {
             int j;
-            descript_size += sizeof(REPORT_AXIS_USAGE) * abs_pages[i][0];
             for (j = 1; j <= abs_pages[i][0]; j++)
             {
                 ext->abs_map[abs_pages[i][j]].report_index = report_size;
@@ -451,8 +394,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             }
             abs_count++;
         }
-    descript_size += sizeof(REPORT_AXIS_HEADER) * abs_count;
-    descript_size += sizeof(REPORT_ABS_AXIS_TAIL) * abs_count;
 
     rel_count = 0;
     memset(rel_pages, 0, sizeof(rel_pages));
@@ -467,7 +408,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         if (rel_pages[i][0] > 0)
         {
             int j;
-            descript_size += sizeof(REPORT_AXIS_USAGE) * rel_pages[i][0];
             for (j = 1; j <= rel_pages[i][0]; j++)
             {
                 ext->rel_map[rel_pages[i][j]] = report_size;
@@ -475,17 +415,12 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             }
             rel_count++;
         }
-    descript_size += sizeof(REPORT_AXIS_HEADER) * rel_count;
-    descript_size += sizeof(REPORT_REL_AXIS_TAIL) * rel_count;
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
     ext->button_start = report_size;
     button_count = count_buttons(ext->base.device_fd, ext->button_map);
     if (button_count)
     {
-        descript_size += sizeof(REPORT_BUTTONS);
-        if (button_count % 8)
-            descript_size += sizeof(REPORT_PADDING);
         report_size += (button_count + 7) / 8;
     }
 
@@ -499,35 +434,26 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             report_size++;
             hat_count++;
         }
-    if (hat_count > 0)
-        descript_size += sizeof(REPORT_HATSWITCH);
 
-    TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", report_size);
 
-    ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
-    if (!ext->report_descriptor)
-    {
-        ERR("Failed to alloc report descriptor\n");
+    if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
         return FALSE;
-    }
-    report_ptr = ext->report_descriptor;
 
-    memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
-    report_ptr[IDX_HEADER_PAGE] = device_usage[0];
-    report_ptr[IDX_HEADER_USAGE] = device_usage[1];
-    report_ptr += sizeof(REPORT_HEADER);
     if (abs_count)
     {
         for (i = 1; i < TOP_ABS_PAGE; i++)
         {
             if (abs_pages[i][0])
             {
-                BYTE usages[HID_ABS_MAX];
+                USAGE usages[HID_ABS_MAX];
                 int j;
                 for (j = 0; j < abs_pages[i][0]; j++)
                     usages[j] = ABS_TO_HID_MAP[abs_pages[i][j+1]][1];
-                report_ptr = add_axis_block(report_ptr, abs_pages[i][0], i, usages, TRUE, &ext->abs_map[abs_pages[i][1]]);
+                if (!hid_descriptor_add_axes(&ext->desc, abs_pages[i][0], i, usages, FALSE, 32,
+                                             LE_DWORD(ext->abs_map[abs_pages[i][1]].info.minimum),
+                                             LE_DWORD(ext->abs_map[abs_pages[i][1]].info.maximum)))
+                    return FALSE;
             }
         }
     }
@@ -537,45 +463,41 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         {
             if (rel_pages[i][0])
             {
-                BYTE usages[HID_REL_MAX];
+                USAGE usages[HID_REL_MAX];
                 int j;
                 for (j = 0; j < rel_pages[i][0]; j++)
                     usages[j] = REL_TO_HID_MAP[rel_pages[i][j+1]][1];
-                report_ptr = add_axis_block(report_ptr, rel_pages[i][0], i, usages, FALSE, NULL);
+                if (!hid_descriptor_add_axes(&ext->desc, rel_pages[i][0], i, usages, TRUE, 8, 0x81, 0x7f))
+                    return FALSE;
             }
         }
     }
     if (button_count)
     {
-        report_ptr = add_button_block(report_ptr, 1, button_count);
+        if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
+            return FALSE;
+
         if (button_count % 8)
         {
             BYTE padding = 8 - (button_count % 8);
-            report_ptr = add_padding_block(report_ptr, padding);
+            if (!hid_descriptor_add_padding(&ext->desc, padding))
+                return FALSE;
         }
     }
     if (hat_count)
-        report_ptr = add_hatswitch(report_ptr, hat_count);
+    {
+        if (!hid_descriptor_add_hatswitch(&ext->desc, hat_count))
+            return FALSE;
+    }
 
-    memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
+    if (!hid_descriptor_end(&ext->desc))
+        return FALSE;
 
-    ext->report_descriptor_size = descript_size;
     ext->buffer_length = report_size;
-    ext->current_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size);
-    if (ext->current_report_buffer == NULL)
-    {
-        ERR("Failed to alloc report buffer\n");
-        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
-        return FALSE;
-    }
-    ext->last_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size);
-    if (ext->last_report_buffer == NULL)
-    {
-        ERR("Failed to alloc report buffer\n");
-        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
-        HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
-        return FALSE;
-    }
+    if (!(ext->current_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size)))
+        goto failed;
+    if (!(ext->last_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size)))
+        goto failed;
     ext->report_state = FIRST;
 
     /* Initialize axis in the report */
@@ -584,6 +506,12 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             set_abs_axis_value(ext, i, ext->abs_map[i].info.value);
 
     return TRUE;
+
+failed:
+    HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
+    HeapFree(GetProcessHeap(), 0, ext->last_report_buffer);
+    hid_descriptor_free(&ext->desc);
+    return FALSE;
 }
 
 static BOOL set_report_from_event(struct wine_input_private *ext, struct input_event *ie)
@@ -972,7 +900,7 @@ static void lnxev_free_device(DEVICE_OBJECT *device)
 
     HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
     HeapFree(GetProcessHeap(), 0, ext->last_report_buffer);
-    HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+    hid_descriptor_free(&ext->desc);
 
     close(ext->base.device_fd);
     udev_device_unref(ext->base.udev_device);
@@ -982,13 +910,10 @@ static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, 
 {
     struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
 
-    *out_length = ext->report_descriptor_size;
+    *out_length = ext->desc.size;
+    if (length < ext->desc.size) return STATUS_BUFFER_TOO_SMALL;
 
-    if (length < ext->report_descriptor_size)
-        return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, ext->report_descriptor, ext->report_descriptor_size);
-
+    memcpy(buffer, ext->desc.data, ext->desc.size);
     return STATUS_SUCCESS;
 }
 

@@ -34,9 +34,14 @@ struct hid_descriptor
 extern BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffer, SIZE_T size) DECLSPEC_HIDDEN;
 extern BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
 extern BOOL hid_descriptor_end(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+extern void hid_descriptor_free(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
 
 extern BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
                                        USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_padding(struct hid_descriptor *desc, BYTE bitcount) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
+                                    const USAGE *usages, BOOL rel, INT size, LONG min, LONG max) DECLSPEC_HIDDEN;
 
 /* Blocks of data for building HID device descriptions */
 
