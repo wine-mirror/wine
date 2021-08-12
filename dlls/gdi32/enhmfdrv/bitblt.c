@@ -28,8 +28,9 @@
 #include "enhmetafiledrv.h"
 
 /* Generate an EMRBITBLT, EMRSTRETCHBLT or EMRALPHABLEND record depending on the type parameter */
-static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, HDC hdc_src,
-                               struct bitblt_coords *src, DWORD rop, DWORD type )
+static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                               HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                               DWORD rop, DWORD type )
 {
     BITMAPINFO src_info = {{ sizeof( src_info.bmiHeader ) }};
     UINT bmi_size, emr_size, size, bpp;
@@ -115,21 +116,21 @@ static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, HDC h
 
     emr->emr.iType = type;
     emr->emr.nSize = size;
-    emr->rclBounds.left = dst->log_x;
-    emr->rclBounds.top = dst->log_y;
-    emr->rclBounds.right = dst->log_x + dst->log_width - 1;
-    emr->rclBounds.bottom = dst->log_y + dst->log_height - 1;
-    emr->xDest = dst->log_x;
-    emr->yDest = dst->log_y;
-    emr->cxDest = dst->log_width;
-    emr->cyDest = dst->log_height;
-    emr->xSrc = src->log_x;
-    emr->ySrc = src->log_y;
+    emr->rclBounds.left = x_dst;
+    emr->rclBounds.top = y_dst;
+    emr->rclBounds.right = x_dst + width_dst - 1;
+    emr->rclBounds.bottom = y_dst + height_dst - 1;
+    emr->xDest = x_dst;
+    emr->yDest = y_dst;
+    emr->cxDest = width_dst;
+    emr->cyDest = height_dst;
+    emr->xSrc = x_src;
+    emr->ySrc = y_src;
     if (type == EMR_STRETCHBLT || type == EMR_ALPHABLEND)
     {
         EMRSTRETCHBLT *emr_stretchblt = (EMRSTRETCHBLT *)emr;
-        emr_stretchblt->cxSrc = src->log_width;
-        emr_stretchblt->cySrc = src->log_height;
+        emr_stretchblt->cxSrc = width_src;
+        emr_stretchblt->cySrc = height_src;
     }
     emr->dwRop = rop;
     NtGdiGetTransform( hdc_src, 0x204, &emr->xformSrc );
@@ -160,7 +161,9 @@ err:
 BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
                               PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
 {
-    return emfdrv_stretchblt( dev_dst, dst, dev_src->hdc, src, *(DWORD *)&func, EMR_ALPHABLEND );
+    return emfdrv_stretchblt( dev_dst, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
+                              dev_src->hdc, src->log_x, src->log_y, src->log_width, src->log_height,
+                              *(DWORD *)&func, EMR_ALPHABLEND );
 }
 
 BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
@@ -207,13 +210,16 @@ BOOL EMFDC_PatBlt( DC_ATTR *dc_attr, INT left, INT top, INT width, INT height, D
     return ret;
 }
 
-BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
-                              PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
+BOOL CDECL EMFDRV_StretchBlt( PHYSDEV dev_dst, struct bitblt_coords *dst,
+                              PHYSDEV dev_src, struct bitblt_coords *src, DWORD rop )
 {
     if (src->log_width == dst->log_width && src->log_height == dst->log_height)
-        return emfdrv_stretchblt( devDst, dst, devSrc->hdc, src, rop, EMR_BITBLT );
-    else
-        return emfdrv_stretchblt( devDst, dst, devSrc->hdc, src, rop, EMR_STRETCHBLT );
+        return emfdrv_stretchblt( dev_dst, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
+                                  dev_src->hdc, src->log_x, src->log_y, src->log_width, src->log_height,
+                                  rop, EMR_BITBLT );
+    return emfdrv_stretchblt( dev_dst, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
+                              dev_src->hdc, src->log_x, src->log_y, src->log_width, src->log_height,
+                              rop, EMR_STRETCHBLT );
 }
 
 INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
