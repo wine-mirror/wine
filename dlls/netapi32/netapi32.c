@@ -55,21 +55,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
-static HINSTANCE netapi32_instance;
+static unixlib_handle_t samba_handle;
+
+#define SAMBA_CALL(func, args) __wine_unix_call( samba_handle, unix_ ## func, args )
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
-static const struct samba_funcs *samba_funcs;
-
 static BOOL WINAPI load_samba( INIT_ONCE *once, void *param, void **context )
 {
-    __wine_init_unix_lib( netapi32_instance, DLL_PROCESS_ATTACH, NULL, &samba_funcs );
+    SAMBA_CALL( netapi_init, NULL );
     return TRUE;
 }
 
 static BOOL samba_init(void)
 {
-    return InitOnceExecuteOnce( &init_once, load_samba, NULL, NULL ) && samba_funcs;
+    return samba_handle && InitOnceExecuteOnce( &init_once, load_samba, NULL, NULL );
 }
 
 /************************************************************
@@ -96,7 +96,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
-            netapi32_instance = hinstDLL;
+            NtQueryVirtualMemory( GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
+                                  &samba_handle, sizeof(samba_handle), NULL );
             DisableThreadLibraryCalls(hinstDLL);
             NetBIOSInit();
             NetBTInit();
@@ -186,12 +187,14 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
         if (samba_init())
         {
             ULONG size = 1024;
+            struct server_getinfo_params params = { servername, level, NULL, &size };
 
             for (;;)
             {
-                if (!(*bufptr = malloc( size ))) return ERROR_OUTOFMEMORY;
-                ret = samba_funcs->server_getinfo( servername, level, *bufptr, &size );
-                if (ret) free( *bufptr );
+                if (!(params.buffer = malloc( size ))) return ERROR_OUTOFMEMORY;
+                ret = SAMBA_CALL( server_getinfo, &params );
+                if (!ret) *bufptr = params.buffer;
+                else free( params.buffer );
                 if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
             }
         }
@@ -488,7 +491,11 @@ NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserve
 
     if (!local)
     {
-        if (samba_init()) return samba_funcs->share_del( servername, netname, reserved );
+        if (samba_init())
+        {
+            struct share_del_params params = { servername, netname, reserved };
+            return SAMBA_CALL( share_del, &params );
+        }
         FIXME( "remote computers not supported\n" );
     }
 
@@ -519,7 +526,11 @@ NET_API_STATUS WINAPI NetShareAdd(LMSTR servername,
 
     if (!local)
     {
-        if (samba_init()) return samba_funcs->share_add( servername, level, buf, parm_err );
+        if (samba_init())
+        {
+            struct share_add_params params = { servername, level, buf, parm_err };
+            return SAMBA_CALL( share_add, &params );
+        }
         FIXME( "remote computers not supported\n" );
     }
 
@@ -978,12 +989,14 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
         if (samba_init())
         {
             ULONG size = 1024;
+            struct wksta_getinfo_params params = { servername, level, NULL, &size };
 
             for (;;)
             {
-                if (!(*bufptr = malloc( size ))) return ERROR_OUTOFMEMORY;
-                ret = samba_funcs->wksta_getinfo( servername, level, *bufptr, &size );
-                if (ret) free( *bufptr );
+                if (!(params.buffer = malloc( size ))) return ERROR_OUTOFMEMORY;
+                ret = SAMBA_CALL( wksta_getinfo, &params );
+                if (!ret) *bufptr = params.buffer;
+                else free( params.buffer );
                 if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
             }
         }
@@ -2054,12 +2067,11 @@ NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username
     LPCWSTR oldpassword, LPCWSTR newpassword)
 {
     struct sam_user *user;
+    struct change_password_params params = { domainname, username, oldpassword, newpassword };
 
     TRACE("(%s, %s, ..., ...)\n", debugstr_w(domainname), debugstr_w(username));
 
-    if (!samba_init()) return ERROR_DLL_INIT_FAILED;
-
-    if (!samba_funcs->change_password( domainname, username, oldpassword, newpassword ))
+    if (samba_init() && !SAMBA_CALL( change_password, &params ))
         return NERR_Success;
 
     if(domainname)
