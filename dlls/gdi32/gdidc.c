@@ -1235,6 +1235,25 @@ BOOL WINAPI StretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height
                             height_src, rop, 0 /* FIXME */ );
 }
 
+/******************************************************************************
+ *           GdiAlphaBlend   (GDI32.@)
+ */
+BOOL WINAPI GdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
+                           HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
+                           BLENDFUNCTION blend_function)
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc_dst ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_AlphaBlend( dc_attr, x_dst, y_dst, width_dst, height_dst,
+                                           hdc_src, x_src, y_src, width_src,
+                                           height_src, blend_function ))
+        return FALSE;
+    return NtGdiAlphaBlend( hdc_dst, x_dst, y_dst, width_dst, height_dst,
+                            hdc_src, x_src, y_src, width_src, height_src,
+                            blend_function, 0 /* FIXME */ );
+}
+
 /***********************************************************************
  *           BeginPath    (GDI32.@)
  */

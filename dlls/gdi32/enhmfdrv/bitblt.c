@@ -158,12 +158,19 @@ err:
     return ret;
 }
 
+BOOL EMFDC_AlphaBlend( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                       HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                       BLENDFUNCTION blend_function )
+{
+    return emfdrv_stretchblt( dc_attr->emf, x_dst, y_dst, width_dst, height_dst, hdc_src, x_src, y_src,
+                              width_src, height_src, *(DWORD *)&blend_function, EMR_ALPHABLEND );
+}
+
 BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
                               PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
 {
-    return emfdrv_stretchblt( dev_dst, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
-                              dev_src->hdc, src->log_x, src->log_y, src->log_width, src->log_height,
-                              *(DWORD *)&func, EMR_ALPHABLEND );
+    /* FIXME: update bound rect */
+    return TRUE;
 }
 
 BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )

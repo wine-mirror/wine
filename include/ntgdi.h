@@ -145,6 +145,9 @@ typedef struct DC_ATTR
 
 INT      WINAPI NtGdiAbortDoc( HDC hdc );
 BOOL     WINAPI NtGdiAbortPath( HDC hdc );
+BOOL     WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
+                                 HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
+                                 BLENDFUNCTION blend_function, HANDLE xform );
 BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle,
                                FLOAT sweep_angle );
 BOOL     WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,

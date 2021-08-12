@@ -935,11 +935,11 @@ error:
 }
 
 /******************************************************************************
- *           GdiAlphaBlend [GDI32.@]
+ *           NtGdiAlphaBlend   (win32u.@)
  */
-BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heightDst,
-                          HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
-                          BLENDFUNCTION blendFunction)
+BOOL WINAPI NtGdiAlphaBlend( HDC hdcDst, int xDst, int yDst, int widthDst, int heightDst,
+                             HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
+                             BLENDFUNCTION blendFunction, HANDLE xform )
 {
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
