@@ -104,6 +104,9 @@ extern BOOL METADC_SetViewportExtEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetViewportOrgEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetWindowExtEx( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetWindowOrgEx( HDC, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL METADC_StretchBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                               HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                               DWORD rop );
 
 /* enhanced metafiles */
 extern BOOL EMFDC_AbortPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
@@ -174,5 +177,8 @@ extern BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HI
 extern BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetWindowExtEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetWindowOrgEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                              HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                              DWORD rop );
 
 #endif /* __WINE_GDI_PRIVATE_H */

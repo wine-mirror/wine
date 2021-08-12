@@ -129,7 +129,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SetWorldTransform,        /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
-    EMFDRV_StretchBlt,               /* pStretchBlt */
+    NULL,                            /* pStretchBlt */
     EMFDRV_StretchDIBits,            /* pStretchDIBits */
     EMFDRV_StrokeAndFillPath,        /* pStrokeAndFillPath */
     EMFDRV_StrokePath,               /* pStrokePath */

@@ -89,14 +89,14 @@ static BOOL metadc_stretchblt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT
 
 
 /***********************************************************************
- *           MFDRV_StretchBlt
+ *           METADC_StretchBlt
  */
-BOOL CDECL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
-                             PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
+BOOL METADC_StretchBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                        HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                        DWORD rop )
 {
-    return metadc_stretchblt( devDst->hdc, dst->log_x, dst->log_y, dst->log_width, dst->log_height,
-                              devSrc->hdc, src->log_x, src->log_y, src->log_width, src->log_height,
-                              rop );
+    return metadc_stretchblt( hdc_dst, x_dst, y_dst, width_dst, height_dst,
+                              hdc_src, x_src, y_src, width_src, height_src, rop );
 }
 
 /***********************************************************************

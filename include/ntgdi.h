@@ -267,6 +267,9 @@ BOOL     WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_r
                                            DWORD horz_size, DWORD vert_size );
 INT      WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc );
 INT      WINAPI NtGdiStartPage( HDC hdc );
+BOOL     WINAPI NtGdiStretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                                 HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                                 DWORD rop, COLORREF bk_color );
 BOOL     WINAPI NtGdiStrokePath( HDC hdc );
 BOOL     WINAPI NtGdiStrokeAndFillPath( HDC hdc );
 BOOL     WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points_out,

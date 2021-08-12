@@ -1196,6 +1196,28 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
 }
 
 /***********************************************************************
+ *           StretchBlt    (GDI32.@)
+ */
+BOOL WINAPI StretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                        HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
+                        DWORD rop )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_StretchBlt( hdc, x_dst, y_dst, width_dst, height_dst,
+                                                     hdc_src, x_src, y_src, width_src,
+                                                     height_src, rop );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_StretchBlt( dc_attr, x_dst, y_dst, width_dst, height_dst,
+                                           hdc_src, x_src, y_src, width_src,
+                                           height_src, rop ))
+        return FALSE;
+    return NtGdiStretchBlt( hdc, x_dst, y_dst, width_dst, height_dst,
+                            hdc_src, x_src, y_src, width_src,
+                            height_src, rop, 0 /* FIXME */ );
+}
+
+/***********************************************************************
  *           BeginPath    (GDI32.@)
  */
 BOOL WINAPI BeginPath(HDC hdc)

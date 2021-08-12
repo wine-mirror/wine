@@ -579,15 +579,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
 
 
 /***********************************************************************
- *           StretchBlt    (GDI32.@)
+ *           NtGdiStretchBlt    (win32u.@)
  */
-BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                        HDC hdcSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
+BOOL WINAPI NtGdiStretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                             HDC hdcSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                             DWORD rop, COLORREF bk_color )
 {
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
-    if (!rop_uses_src( rop )) return PatBlt( hdcDst, xDst, yDst, widthDst, heightDst, rop );
+    if (!rop_uses_src( rop )) return NtGdiPatBlt( hdcDst, xDst, yDst, widthDst, heightDst, rop );
 
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
 
