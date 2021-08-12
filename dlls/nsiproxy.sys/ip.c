@@ -355,6 +355,132 @@ static NTSTATUS ipv4_icmpstats_get_all_parameters( const void *key, DWORD key_si
 #endif
 }
 
+static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                                   void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    struct nsi_ip_icmpstats_dynamic dyn;
+
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+
+    memset( &dyn, 0, sizeof(dyn) );
+
+#ifdef __linux__
+    {
+        struct data
+        {
+            const char *name;
+            DWORD pos;
+        };
+        static const struct data in_list[] =
+        {
+            { "Icmp6InDestUnreachs",           ICMP6_DST_UNREACH },
+            { "Icmp6InPktTooBigs",             ICMP6_PACKET_TOO_BIG },
+            { "Icmp6InTimeExcds",              ICMP6_TIME_EXCEEDED },
+            { "Icmp6InParmProblems",           ICMP6_PARAM_PROB },
+            { "Icmp6InEchos",                  ICMP6_ECHO_REQUEST },
+            { "Icmp6InEchoReplies",            ICMP6_ECHO_REPLY },
+            { "Icmp6InGroupMembQueries",       ICMP6_MEMBERSHIP_QUERY },
+            { "Icmp6InGroupMembResponses",     ICMP6_MEMBERSHIP_REPORT },
+            { "Icmp6InGroupMembReductions",    ICMP6_MEMBERSHIP_REDUCTION },
+            { "Icmp6InRouterSolicits",         ND_ROUTER_SOLICIT },
+            { "Icmp6InRouterAdvertisements",   ND_ROUTER_ADVERT },
+            { "Icmp6InNeighborSolicits",       ND_NEIGHBOR_SOLICIT },
+            { "Icmp6InNeighborAdvertisements", ND_NEIGHBOR_ADVERT },
+            { "Icmp6InRedirects",              ND_REDIRECT },
+            { "Icmp6InMLDv2Reports",           ICMP6_V2_MEMBERSHIP_REPORT },
+        };
+        static const struct data out_list[] =
+        {
+            { "Icmp6OutDestUnreachs",           ICMP6_DST_UNREACH },
+            { "Icmp6OutPktTooBigs",             ICMP6_PACKET_TOO_BIG },
+            { "Icmp6OutTimeExcds",              ICMP6_TIME_EXCEEDED },
+            { "Icmp6OutParmProblems",           ICMP6_PARAM_PROB },
+            { "Icmp6OutEchos",                  ICMP6_ECHO_REQUEST },
+            { "Icmp6OutEchoReplies",            ICMP6_ECHO_REPLY },
+            { "Icmp6OutGroupMembQueries",       ICMP6_MEMBERSHIP_QUERY },
+            { "Icmp6OutGroupMembResponses",     ICMP6_MEMBERSHIP_REPORT },
+            { "Icmp6OutGroupMembReductions",    ICMP6_MEMBERSHIP_REDUCTION },
+            { "Icmp6OutRouterSolicits",         ND_ROUTER_SOLICIT },
+            { "Icmp6OutRouterAdvertisements",   ND_ROUTER_ADVERT },
+            { "Icmp6OutNeighborSolicits",       ND_NEIGHBOR_SOLICIT },
+            { "Icmp6OutNeighborAdvertisements", ND_NEIGHBOR_ADVERT },
+            { "Icmp6OutRedirects",              ND_REDIRECT },
+            { "Icmp6OutMLDv2Reports",           ICMP6_V2_MEMBERSHIP_REPORT },
+        };
+        char buf[512], *ptr, *value;
+        DWORD res, i;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/snmp6", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            if (!(value = strchr( buf, ' ' ))) continue;
+
+            /* terminate the valuename */
+            ptr = value - 1;
+            *(ptr + 1) = '\0';
+
+            /* and strip leading spaces from value */
+            value += 1;
+            while (*value == ' ') value++;
+            if ((ptr = strchr( value, '\n' ))) *ptr='\0';
+
+            if (!_strnicmp( buf, "Icmp6InMsgs", -1 ))
+            {
+                if (sscanf( value, "%d", &res )) dyn.in_msgs = res;
+                continue;
+            }
+
+            if (!_strnicmp( buf, "Icmp6InErrors", -1 ))
+            {
+                if (sscanf( value, "%d", &res )) dyn.in_errors = res;
+                continue;
+            }
+
+            for (i = 0; i < ARRAY_SIZE(in_list); i++)
+            {
+                if (!_strnicmp( buf, in_list[i].name, -1 ))
+                {
+                    if (sscanf( value, "%d", &res ))
+                        dyn.in_type_counts[in_list[i].pos] = res;
+                    break;
+                }
+            }
+
+            if (!_strnicmp( buf, "Icmp6OutMsgs", -1 ))
+            {
+                if (sscanf( value, "%d", &res )) dyn.out_msgs = res;
+                continue;
+            }
+
+            if (!_strnicmp( buf, "Icmp6OutErrors", -1 ))
+            {
+                if (sscanf( value, "%d", &res )) dyn.out_errors = res;
+                continue;
+            }
+
+            for (i = 0; i < ARRAY_SIZE(out_list); i++)
+            {
+                if (!_strnicmp( buf, out_list[i].name, -1 ))
+                {
+                    if (sscanf( value, "%d", &res ))
+                        dyn.out_type_counts[out_list[i].pos] = res;
+                    break;
+                }
+            }
+        }
+        fclose( fp );
+        if (dynamic_data) *(struct nsi_ip_icmpstats_dynamic *)dynamic_data = dyn;
+        return STATUS_SUCCESS;
+    }
+#else
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
 static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
                                                  void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
 {
@@ -1177,6 +1303,15 @@ static struct module_table ipv6_tables[] =
         },
         NULL,
         ipv6_cmpt_get_all_parameters,
+    },
+    {
+        NSI_IP_ICMPSTATS_TABLE,
+        {
+            0, 0,
+            sizeof(struct nsi_ip_icmpstats_dynamic), 0
+        },
+        NULL,
+        ipv6_icmpstats_get_all_parameters,
     },
     {
         NSI_IP_IPSTATS_TABLE,

@@ -456,7 +456,6 @@ static void test_ip_icmpstats( int family )
     winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
 
     err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0, &nsi_stats, sizeof(nsi_stats), NULL, 0 );
-todo_wine_if( family == AF_INET6)
     ok( !err, "got %d\n", err );
     if (err) goto err;
 
