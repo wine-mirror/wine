@@ -704,6 +704,7 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             remove_pending_irps(device);
             ext->removed = TRUE;
             LeaveCriticalSection(&ext->cs);
+            status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
