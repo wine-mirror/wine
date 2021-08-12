@@ -927,7 +927,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             if (status != STATUS_SUCCESS)
             {
                 irp->IoStatus.u.Status = status;
-                LeaveCriticalSection(&ext->cs);
                 break;
             }
 
@@ -946,7 +945,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             if (status != STATUS_SUCCESS)
             {
                 irp->IoStatus.u.Status = status;
-                LeaveCriticalSection(&ext->cs);
                 break;
             }
             if (!ext->last_report_read)
