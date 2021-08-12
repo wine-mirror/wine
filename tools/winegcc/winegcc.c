@@ -523,7 +523,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->unicode_app) strarray_add( flags, "-municode" );
         if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( flags, "-nodefaultlibs" );
         if (opts->nostartfiles || opts->use_msvcrt) strarray_add( flags, "-nostartfiles" );
-        if (opts->subsystem) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
+        if (opts->subsystem && strcmp(opts->subsystem, "unixlib")) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
 
         strarray_add( flags, "-Wl,--nxcompat" );
 
@@ -563,7 +563,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( flags, "-nodefaultlibs" );
         if (opts->nostartfiles || opts->use_msvcrt) strarray_add( flags, "-nostartfiles" );
         if (opts->image_base) strarray_add( flags, strmake("-Wl,-base:%s", opts->image_base ));
-        if (opts->subsystem)
+        if (opts->subsystem && strcmp(opts->subsystem, "unixlib"))
             strarray_add( flags, strmake("-Wl,-subsystem:%s", opts->subsystem ));
         else
             strarray_add( flags, strmake("-Wl,-subsystem:%s", opts->gui_app ? "windows" : "console" ));
@@ -1091,7 +1091,7 @@ static void add_library( struct options *opts, strarray *lib_dirs, strarray *fil
         strarray_add(files, strmake("-a%s", fullname));
         break;
     case file_dll:
-        if (opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "native"))
+        if (opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "unixlib"))
         {
             if (get_lib_type(opts->target_platform, lib_dirs, library, "", ".so", &unixlib) == file_so)
             {
@@ -1177,7 +1177,7 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
         strarray_add(spec_args, entry_point);
     }
 
-    if (opts->subsystem)
+    if (opts->subsystem && strcmp( opts->subsystem, "unixlib" ))
     {
         strarray_add(spec_args, "--subsystem");
         strarray_add(spec_args, opts->subsystem);

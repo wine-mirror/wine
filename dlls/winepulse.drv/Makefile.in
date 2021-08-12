@@ -1,6 +1,6 @@
 MODULE    = winepulse.drv
 IMPORTS   = dxguid uuid winmm user32 advapi32 ole32
-EXTRALIBS = $(PULSE_LIBS) $(PTHREAD_LIBS) -Wl,--subsystem,native
+EXTRALIBS = $(PULSE_LIBS) $(PTHREAD_LIBS) -Wl,--subsystem,unixlib
 EXTRAINCL = $(PULSE_CFLAGS)
 
 EXTRADLLFLAGS = -mno-cygwin
