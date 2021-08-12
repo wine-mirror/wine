@@ -48,6 +48,8 @@ static inline BOOL is_meta_dc( HDC hdc )
 
 extern BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL METADC_BitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height,
+                           HDC hdc_src, INT x_src, INT y_src, DWORD rop );
 extern BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom, INT xstart,
                           INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
@@ -116,6 +118,8 @@ extern BOOL EMFDC_ArcChordPie( DC_ATTR *dc_attr, INT left, INT top, INT right,
                                INT bottom, INT xstart, INT ystart, INT xend,
                                INT yend, DWORD type ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_BeginPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_BitBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width, INT height,
+                          HDC hdc_src, INT x_src, INT y_src, DWORD rop );
 extern BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
                            INT bottom ) DECLSPEC_HIDDEN;

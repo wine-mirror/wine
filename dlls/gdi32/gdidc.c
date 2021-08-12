@@ -1196,6 +1196,24 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
 }
 
 /***********************************************************************
+ *           BitBlt    (GDI32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH BitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height,
+                                      HDC hdc_src, INT x_src, INT y_src, DWORD rop )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc_dst )) return METADC_BitBlt( hdc_dst, x_dst, y_dst, width, height,
+                                                 hdc_src, x_src, y_src, rop );
+    if (!(dc_attr = get_dc_attr( hdc_dst ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_BitBlt( dc_attr, x_dst, y_dst, width, height,
+                                       hdc_src, x_src, y_src, rop ))
+        return FALSE;
+    return NtGdiBitBlt( hdc_dst, x_dst, y_dst, width, height,
+                        hdc_src, x_src, y_src, rop, 0 /* FIXME */, 0 /* FIXME */ );
+}
+
+/***********************************************************************
  *           StretchBlt    (GDI32.@)
  */
 BOOL WINAPI StretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,

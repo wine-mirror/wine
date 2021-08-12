@@ -215,15 +215,19 @@ static inline BOOL rop_uses_src( DWORD rop )
     return ((rop >> 2) & 0x330000) != (rop & 0x330000);
 }
 
+BOOL EMFDC_BitBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width, INT height,
+                   HDC hdc_src, INT x_src, INT y_src, DWORD rop )
+{
+    if (!rop_uses_src( rop )) return EMFDC_PatBlt( dc_attr, x_dst, y_dst, width, height, rop );
+    return emfdrv_stretchblt( dc_attr->emf, x_dst, y_dst, width, height,
+                              hdc_src, x_src, y_src, width, height, rop, EMR_BITBLT );
+}
+
 BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                        HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                        DWORD rop )
 {
     if (!rop_uses_src( rop )) return EMFDC_PatBlt( dc_attr, x_dst, y_dst, width_dst, height_dst, rop );
-    if (width_src == width_dst && height_src == height_dst)
-        return emfdrv_stretchblt( dc_attr->emf, x_dst, y_dst, width_dst, height_dst,
-                                  hdc_src, x_src, y_src, width_src,
-                                  height_src, rop, EMR_BITBLT );
     return emfdrv_stretchblt( dc_attr->emf, x_dst, y_dst, width_dst, height_dst,
                               hdc_src, x_src, y_src, width_src,
                               height_src, rop, EMR_STRETCHBLT );

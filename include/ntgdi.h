@@ -150,6 +150,8 @@ BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_
 BOOL     WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right, INT bottom,
                                   INT xstart, INT ystart, INT xend, INT yend );
 BOOL     WINAPI NtGdiBeginPath( HDC hdc );
+BOOL     WINAPI NtGdiBitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height, HDC hdc_src,
+                             INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl );
 BOOL     WINAPI NtGdiCancelDC( HDC hdc );
 BOOL     WINAPI NtGdiCloseFigure( HDC hdc );
 INT      WINAPI NtGdiCombineRgn( HRGN dest, HRGN src1, HRGN src2, INT mode );

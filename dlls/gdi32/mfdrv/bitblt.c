@@ -37,10 +37,11 @@ BOOL METADC_PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
 
 static BOOL metadc_stretchblt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
-                               DWORD rop )
+                               DWORD rop, WORD type )
 {
     BITMAPINFO src_info = {{ sizeof( src_info.bmiHeader ) }};
     UINT bmi_size, size, bpp;
+    int i = 0, bitmap_offset;
     BITMAPINFO *bmi;
     METARECORD *mr;
     HBITMAP bitmap;
@@ -57,11 +58,12 @@ static BOOL metadc_stretchblt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT
     else
         bmi_size = sizeof(BITMAPINFOHEADER);
 
-    size = FIELD_OFFSET( METARECORD, rdParm[10] ) + bmi_size +
+    bitmap_offset = type == META_DIBBITBLT ? 8 : 10;
+    size = FIELD_OFFSET( METARECORD, rdParm[bitmap_offset] ) + bmi_size +
         src_info.bmiHeader.biSizeImage;
     if (!(mr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    mr->rdFunction = META_DIBSTRETCHBLT;
-    bmi = (BITMAPINFO *)&mr->rdParm[10];
+    mr->rdFunction = type;
+    bmi = (BITMAPINFO *)&mr->rdParm[bitmap_offset];
     bmi->bmiHeader = src_info.bmiHeader;
     TRACE( "size = %u  rop=%x\n", size, rop );
 
@@ -70,16 +72,19 @@ static BOOL metadc_stretchblt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT
     if (ret)
     {
         mr->rdSize = size / sizeof(WORD);
-        mr->rdParm[0] = LOWORD(rop);
-        mr->rdParm[1] = HIWORD(rop);
-        mr->rdParm[2] = height_src;
-        mr->rdParm[3] = width_src;
-        mr->rdParm[4] = y_src;
-        mr->rdParm[5] = x_src;
-        mr->rdParm[6] = height_dst;
-        mr->rdParm[7] = width_dst;
-        mr->rdParm[8] = y_dst;
-        mr->rdParm[9] = x_dst;
+        mr->rdParm[i++] = LOWORD(rop);
+        mr->rdParm[i++] = HIWORD(rop);
+        if (bitmap_offset > 8)
+        {
+            mr->rdParm[i++] = height_src;
+            mr->rdParm[i++] = width_src;
+        }
+        mr->rdParm[i++] = y_src;
+        mr->rdParm[i++] = x_src;
+        mr->rdParm[i++] = height_dst;
+        mr->rdParm[i++] = width_dst;
+        mr->rdParm[i++] = y_dst;
+        mr->rdParm[i++] = x_dst;
         ret = metadc_record( hdc, mr, size );
     }
 
@@ -87,6 +92,13 @@ static BOOL metadc_stretchblt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT
     return ret;
 }
 
+
+BOOL METADC_BitBlt( HDC hdc, INT x_dst, INT y_dst, INT width, INT height,
+                    HDC hdc_src, INT x_src, INT y_src, DWORD rop )
+{
+    return metadc_stretchblt( hdc, x_dst, y_dst, width, height,
+                              hdc_src, x_src, y_src, width, height, rop, META_DIBBITBLT );
+}
 
 /***********************************************************************
  *           METADC_StretchBlt
@@ -96,7 +108,7 @@ BOOL METADC_StretchBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width_dst, INT he
                         DWORD rop )
 {
     return metadc_stretchblt( hdc_dst, x_dst, y_dst, width_dst, height_dst,
-                              hdc_src, x_src, y_src, width_src, height_src, rop );
+                              hdc_src, x_src, y_src, width_src, height_src, rop, META_DIBSTRETCHBLT );
 }
 
 /***********************************************************************
