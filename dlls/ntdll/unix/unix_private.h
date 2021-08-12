@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "unixlib.h"
+#include "wine/unixlib.h"
 #include "wine/server.h"
 #include "wine/list.h"
 
@@ -151,8 +152,6 @@ extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HI
 extern void init_startup_info(void) DECLSPEC_HIDDEN;
 extern void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
                                   DWORD *info_size ) DECLSPEC_HIDDEN;
-extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen ) DECLSPEC_HIDDEN;
-extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict ) DECLSPEC_HIDDEN;
 extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,

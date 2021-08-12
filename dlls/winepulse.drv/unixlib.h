@@ -17,6 +17,7 @@
  */
 
 #include "wine/list.h"
+#include "wine/unixlib.h"
 
 struct pulse_stream;
 
