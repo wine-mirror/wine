@@ -822,6 +822,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
     NTSTATUS status = irp->IoStatus.u.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+    ULONG code, buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
 
     TRACE("(%p, %p)\n", device, irp);
 
@@ -841,14 +842,14 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         return STATUS_DELETE_PENDING;
     }
 
-    switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
+    switch ((code = irpsp->Parameters.DeviceIoControl.IoControlCode))
     {
         case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
         {
             HID_DEVICE_ATTRIBUTES *attr = (HID_DEVICE_ATTRIBUTES *)irp->UserBuffer;
             TRACE("IOCTL_HID_GET_DEVICE_ATTRIBUTES\n");
 
-            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(*attr))
+            if (buffer_len < sizeof(*attr))
             {
                 irp->IoStatus.u.Status = status = STATUS_BUFFER_TOO_SMALL;
                 break;
@@ -870,7 +871,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             DWORD length;
             TRACE("IOCTL_HID_GET_DEVICE_DESCRIPTOR\n");
 
-            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(*descriptor))
+            if (buffer_len < sizeof(*descriptor))
             {
                 irp->IoStatus.u.Status = status = STATUS_BUFFER_TOO_SMALL;
                 break;
@@ -898,23 +899,18 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
         case IOCTL_HID_GET_REPORT_DESCRIPTOR:
-        {
-            DWORD length = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
             TRACE("IOCTL_HID_GET_REPORT_DESCRIPTOR\n");
-
-            irp->IoStatus.u.Status = status = ext->vtbl->get_reportdescriptor(device, irp->UserBuffer, length, &length);
-            irp->IoStatus.Information = length;
+            irp->IoStatus.u.Status = status = ext->vtbl->get_reportdescriptor(device, irp->UserBuffer, buffer_len, &buffer_len);
+            irp->IoStatus.Information = buffer_len;
             break;
-        }
         case IOCTL_HID_GET_STRING:
         {
-            DWORD length = irpsp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(WCHAR);
             DWORD index = (ULONG_PTR)irpsp->Parameters.DeviceIoControl.Type3InputBuffer;
             TRACE("IOCTL_HID_GET_STRING[%08x]\n", index);
 
-            irp->IoStatus.u.Status = status = hid_get_native_string(device, index, (WCHAR *)irp->UserBuffer, length);
+            irp->IoStatus.u.Status = status = hid_get_native_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len / sizeof(WCHAR));
             if (status != STATUS_SUCCESS)
-                irp->IoStatus.u.Status = status = ext->vtbl->get_string(device, index, (WCHAR *)irp->UserBuffer, length);
+                irp->IoStatus.u.Status = status = ext->vtbl->get_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len / sizeof(WCHAR));
             if (status == STATUS_SUCCESS)
                 irp->IoStatus.Information = (strlenW((WCHAR *)irp->UserBuffer) + 1) * sizeof(WCHAR);
             break;
@@ -950,8 +946,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             if (!ext->last_report_read)
             {
                 irp->IoStatus.u.Status = status = deliver_last_report(ext,
-                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                    irp->UserBuffer, &irp->IoStatus.Information);
+                    buffer_len, irp->UserBuffer, &irp->IoStatus.Information);
                 ext->last_report_read = TRUE;
             }
             else
@@ -991,12 +986,9 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
         default:
-        {
-            ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
             FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
                   code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
             break;
-        }
     }
 
     LeaveCriticalSection(&ext->cs);
