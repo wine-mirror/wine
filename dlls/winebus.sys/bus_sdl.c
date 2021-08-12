@@ -43,7 +43,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "hidusage.h"
-#include "controller.h"
 
 #ifdef WORDS_BIGENDIAN
 # define LE_WORD(x) RtlUshortByteSwap(x)
@@ -121,8 +120,7 @@ struct platform_private
     int ball_start;
     int hat_bit_offs; /* hatswitches are reported in the same bytes as buttons */
 
-    int report_descriptor_size;
-    BYTE *report_descriptor;
+    struct hid_descriptor desc;
 
     int buffer_length;
     BYTE *report_buffer;
@@ -136,115 +134,9 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
     return (struct platform_private *)get_platform_private(device);
 }
 
-#include "psh_hid_macros.h"
-
-static const BYTE REPORT_AXIS_TAIL[] = {
-    LOGICAL_MINIMUM(4, 0x00000000),
-    LOGICAL_MAXIMUM(4, 0x0000ffff),
-    PHYSICAL_MINIMUM(4, 0x00000000),
-    PHYSICAL_MAXIMUM(4, 0x0000ffff),
-    REPORT_SIZE(1, 16),
-    REPORT_COUNT(1, /* placeholder */ 0),
-    INPUT(1, Data|Var|Abs),
-};
-#define IDX_ABS_AXIS_COUNT 23
-
 #define CONTROLLER_NUM_BUTTONS 11
-
-static const BYTE CONTROLLER_BUTTONS[] = {
-    USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
-    USAGE_MINIMUM(1, 1),
-    USAGE_MAXIMUM(1, CONTROLLER_NUM_BUTTONS),
-    LOGICAL_MINIMUM(1, 0),
-    LOGICAL_MAXIMUM(1, 1),
-    PHYSICAL_MINIMUM(1, 0),
-    PHYSICAL_MAXIMUM(1, 1),
-    REPORT_COUNT(1, CONTROLLER_NUM_BUTTONS),
-    REPORT_SIZE(1, 1),
-    INPUT(1, Data|Var|Abs),
-};
-
-static const BYTE CONTROLLER_AXIS [] = {
-    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
-    USAGE(1, HID_USAGE_GENERIC_X),
-    USAGE(1, HID_USAGE_GENERIC_Y),
-    USAGE(1, HID_USAGE_GENERIC_RX),
-    USAGE(1, HID_USAGE_GENERIC_RY),
-    LOGICAL_MINIMUM(4, 0x00000000),
-    LOGICAL_MAXIMUM(4, 0x0000ffff),
-    PHYSICAL_MINIMUM(4, 0x00000000),
-    PHYSICAL_MAXIMUM(4, 0x0000ffff),
-    REPORT_SIZE(1, 16),
-    REPORT_COUNT(1, 4),
-    INPUT(1, Data|Var|Abs),
-};
-
-static const BYTE CONTROLLER_TRIGGERS [] = {
-    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
-    USAGE(1, HID_USAGE_GENERIC_Z),
-    USAGE(1, HID_USAGE_GENERIC_RZ),
-    LOGICAL_MINIMUM(2, 0x0000),
-    LOGICAL_MAXIMUM(2, 0x7fff),
-    PHYSICAL_MINIMUM(2, 0x0000),
-    PHYSICAL_MAXIMUM(2, 0x7fff),
-    REPORT_SIZE(1, 16),
-    REPORT_COUNT(1, 2),
-    INPUT(1, Data|Var|Abs),
-};
-
 #define CONTROLLER_NUM_AXES 6
-
 #define CONTROLLER_NUM_HATSWITCHES 1
-
-static const BYTE HAPTIC_RUMBLE[] = {
-    USAGE_PAGE(2, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN),
-    USAGE(1, 0x01),
-    /* padding */
-    REPORT_COUNT(1, 0x02),
-    REPORT_SIZE(1, 0x08),
-    OUTPUT(1, Data|Var|Abs),
-    /* actuators */
-    LOGICAL_MINIMUM(1, 0x00),
-    LOGICAL_MAXIMUM(1, 0xff),
-    PHYSICAL_MINIMUM(1, 0x00),
-    PHYSICAL_MAXIMUM(1, 0xff),
-    REPORT_SIZE(1, 0x08),
-    REPORT_COUNT(1, 0x02),
-    OUTPUT(1, Data|Var|Abs),
-    /* padding */
-    REPORT_COUNT(1, 0x02),
-    REPORT_SIZE(1, 0x08),
-    OUTPUT(1, Data|Var|Abs),
-};
-
-#include "pop_hid_macros.h"
-
-static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE *usages, BOOL absolute)
-{
-    int i;
-    memcpy(report_ptr, REPORT_AXIS_HEADER, sizeof(REPORT_AXIS_HEADER));
-    report_ptr[IDX_AXIS_PAGE] = page;
-    report_ptr += sizeof(REPORT_AXIS_HEADER);
-    for (i = 0; i < count; i++)
-    {
-        memcpy(report_ptr, REPORT_AXIS_USAGE, sizeof(REPORT_AXIS_USAGE));
-        report_ptr[IDX_AXIS_USAGE] = usages[i];
-        report_ptr += sizeof(REPORT_AXIS_USAGE);
-    }
-    if (absolute)
-    {
-        memcpy(report_ptr, REPORT_AXIS_TAIL, sizeof(REPORT_AXIS_TAIL));
-        report_ptr[IDX_ABS_AXIS_COUNT] = count;
-        report_ptr += sizeof(REPORT_AXIS_TAIL);
-    }
-    else
-    {
-        memcpy(report_ptr, REPORT_REL_AXIS_TAIL, sizeof(REPORT_REL_AXIS_TAIL));
-        report_ptr[IDX_REL_AXIS_COUNT] = count;
-        report_ptr += sizeof(REPORT_REL_AXIS_TAIL);
-    }
-    return report_ptr;
-}
 
 static void set_button_value(struct platform_private *ext, int index, int value)
 {
@@ -334,9 +226,8 @@ static void set_hat_value(struct platform_private *ext, int index, int value)
     }
 }
 
-static int test_haptic(struct platform_private *ext)
+static BOOL descriptor_add_haptic(struct platform_private *ext)
 {
-    int rc = 0;
     if (pSDL_JoystickIsHaptic(ext->sdl_joystick))
     {
         ext->sdl_haptic = pSDL_HapticOpenFromJoystick(ext->sdl_joystick);
@@ -346,7 +237,8 @@ static int test_haptic(struct platform_private *ext)
         {
             pSDL_HapticStopAll(ext->sdl_haptic);
             pSDL_HapticRumbleInit(ext->sdl_haptic);
-            rc = sizeof(HAPTIC_RUMBLE);
+            if (!hid_descriptor_add_haptics(&ext->desc))
+                return FALSE;
             ext->haptic_effect_id = -1;
         }
         else
@@ -355,27 +247,17 @@ static int test_haptic(struct platform_private *ext)
             ext->sdl_haptic = NULL;
         }
     }
-    return rc;
-}
 
-static int build_haptic(struct platform_private *ext, BYTE *report_ptr)
-{
-    if (ext->sdl_haptic)
-    {
-        memcpy(report_ptr, HAPTIC_RUMBLE, sizeof(HAPTIC_RUMBLE));
-        return (sizeof(HAPTIC_RUMBLE));
-    }
-    return 0;
+    return TRUE;
 }
 
 static BOOL build_report_descriptor(struct platform_private *ext)
 {
-    BYTE *report_ptr;
-    INT i, descript_size;
+    INT i;
     INT report_size;
     INT button_count, axis_count, ball_count, hat_count;
-    static const BYTE device_usage[2] = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD};
-    static const BYTE controller_usages[] = {
+    static const USAGE device_usage[2] = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD};
+    static const USAGE controller_usages[] = {
         HID_USAGE_GENERIC_X,
         HID_USAGE_GENERIC_Y,
         HID_USAGE_GENERIC_Z,
@@ -385,7 +267,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         HID_USAGE_GENERIC_SLIDER,
         HID_USAGE_GENERIC_DIAL,
         HID_USAGE_GENERIC_WHEEL};
-    static const BYTE joystick_usages[] = {
+    static const USAGE joystick_usages[] = {
         HID_USAGE_GENERIC_X,
         HID_USAGE_GENERIC_Y,
         HID_USAGE_GENERIC_Z,
@@ -396,7 +278,6 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         HID_USAGE_GENERIC_DIAL,
         HID_USAGE_GENERIC_WHEEL};
 
-    descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
     report_size = 0;
 
     axis_count = pSDL_JoystickNumAxes(ext->sdl_joystick);
@@ -409,9 +290,6 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     ext->axis_start = report_size;
     if (axis_count)
     {
-        descript_size += sizeof(REPORT_AXIS_HEADER);
-        descript_size += (sizeof(REPORT_AXIS_USAGE) * axis_count);
-        descript_size += sizeof(REPORT_AXIS_TAIL);
         report_size += (sizeof(WORD) * axis_count);
     }
 
@@ -424,77 +302,55 @@ static BOOL build_report_descriptor(struct platform_private *ext)
             FIXME("Capping ball + axis at 9\n");
             ball_count = (9-axis_count)/2;
         }
-        descript_size += sizeof(REPORT_AXIS_HEADER);
-        descript_size += (sizeof(REPORT_AXIS_USAGE) * ball_count * 2);
-        descript_size += sizeof(REPORT_REL_AXIS_TAIL);
         report_size += (sizeof(WORD) * 2 * ball_count);
     }
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
     button_count = pSDL_JoystickNumButtons(ext->sdl_joystick);
     ext->button_start = report_size;
-    if (button_count)
-    {
-        descript_size += sizeof(REPORT_BUTTONS);
-    }
 
     hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
     ext->hat_bit_offs = button_count;
-    if (hat_count)
-    {
-        descript_size += sizeof(REPORT_HATSWITCH);
-    }
 
     report_size += (button_count + hat_count * 4 + 7) / 8;
 
-    descript_size += test_haptic(ext);
-
-    TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", report_size);
 
-    ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
-    if (!ext->report_descriptor)
-    {
-        ERR("Failed to alloc report descriptor\n");
+    if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
         return FALSE;
-    }
-    report_ptr = ext->report_descriptor;
 
-    memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
-    report_ptr[IDX_HEADER_PAGE] = device_usage[0];
-    report_ptr[IDX_HEADER_USAGE] = device_usage[1];
-    report_ptr += sizeof(REPORT_HEADER);
-    if (axis_count)
+    if (axis_count == 6 && button_count >= 14)
     {
-        if (axis_count == 6 && button_count >= 14)
-            report_ptr = add_axis_block(report_ptr, axis_count, HID_USAGE_PAGE_GENERIC, controller_usages, TRUE);
-        else
-            report_ptr = add_axis_block(report_ptr, axis_count, HID_USAGE_PAGE_GENERIC, joystick_usages, TRUE);
-
+        if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
+                                     controller_usages, FALSE, 16, 0, 0xffff))
+            return FALSE;
     }
-    if (ball_count)
+    else if (axis_count)
     {
-        report_ptr = add_axis_block(report_ptr, ball_count * 2, HID_USAGE_PAGE_GENERIC, &joystick_usages[axis_count], FALSE);
+        if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
+                                     joystick_usages, FALSE, 16, 0, 0xffff))
+            return FALSE;
     }
-    if (button_count)
-    {
-        report_ptr = add_button_block(report_ptr, 1, button_count);
-    }
-    if (hat_count)
-        report_ptr = add_hatswitch(report_ptr, hat_count);
 
-    report_ptr += build_haptic(ext, report_ptr);
-    memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
+    if (ball_count && !hid_descriptor_add_axes(&ext->desc, ball_count * 2, HID_USAGE_PAGE_GENERIC,
+                                               &joystick_usages[axis_count], TRUE, 8, 0x81, 0x7f))
+        return FALSE;
 
-    ext->report_descriptor_size = descript_size;
+    if (button_count && !hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
+        return FALSE;
+
+    if (hat_count && !hid_descriptor_add_hatswitch(&ext->desc, hat_count))
+        return FALSE;
+
+    if (!descriptor_add_haptic(ext))
+        return FALSE;
+
+    if (!hid_descriptor_end(&ext->desc))
+        return FALSE;
+
     ext->buffer_length = report_size;
-    ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size);
-    if (ext->report_buffer == NULL)
-    {
-        ERR("Failed to alloc report buffer\n");
-        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
-        return FALSE;
-    }
+    if (!(ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size)))
+        goto failed;
 
     /* Initialize axis in the report */
     for (i = 0; i < axis_count; i++)
@@ -503,6 +359,11 @@ static BOOL build_report_descriptor(struct platform_private *ext)
         set_hat_value(ext, i, pSDL_JoystickGetHat(ext->sdl_joystick, i));
 
     return TRUE;
+
+failed:
+    HeapFree(GetProcessHeap(), 0, ext->report_buffer);
+    hid_descriptor_free(&ext->desc);
+    return FALSE;
 }
 
 static SHORT compose_dpad_value(SDL_GameController *joystick)
@@ -534,20 +395,12 @@ static SHORT compose_dpad_value(SDL_GameController *joystick)
 
 static BOOL build_mapped_report_descriptor(struct platform_private *ext)
 {
-    BYTE *report_ptr;
-    INT i, descript_size;
+    static const USAGE left_axis_usages[] = {HID_USAGE_GENERIC_X, HID_USAGE_GENERIC_Y};
+    static const USAGE right_axis_usages[] = {HID_USAGE_GENERIC_RX, HID_USAGE_GENERIC_RY};
+    static const USAGE trigger_axis_usages[] = {HID_USAGE_GENERIC_Z, HID_USAGE_GENERIC_RZ};
+    INT i;
 
     static const int BUTTON_BIT_COUNT = CONTROLLER_NUM_BUTTONS + CONTROLLER_NUM_HATSWITCHES * 4;
-
-    descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
-    descript_size += sizeof(CONTROLLER_AXIS);
-    descript_size += sizeof(CONTROLLER_TRIGGERS);
-    descript_size += sizeof(CONTROLLER_BUTTONS);
-    descript_size += sizeof(REPORT_HATSWITCH);
-    descript_size += sizeof(REPORT_PADDING);
-    if (BUTTON_BIT_COUNT % 8 != 0)
-        descript_size += sizeof(REPORT_PADDING);
-    descript_size += test_haptic(ext);
 
     ext->axis_start = 0;
     ext->button_start = CONTROLLER_NUM_AXES * sizeof(WORD);
@@ -557,42 +410,48 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
         + CONTROLLER_NUM_AXES * sizeof(WORD)
         + 2/* unknown constant*/;
 
-    TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", ext->buffer_length);
 
-    ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
-    if (!ext->report_descriptor)
-    {
-        ERR("Failed to alloc report descriptor\n");
+    if (!hid_descriptor_begin(&ext->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD))
         return FALSE;
-    }
-    report_ptr = ext->report_descriptor;
 
-    memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
-    report_ptr[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
-    report_ptr[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_GAMEPAD;
-    report_ptr += sizeof(REPORT_HEADER);
-    memcpy(report_ptr, CONTROLLER_AXIS, sizeof(CONTROLLER_AXIS));
-    report_ptr += sizeof(CONTROLLER_AXIS);
-    memcpy(report_ptr, CONTROLLER_TRIGGERS, sizeof(CONTROLLER_TRIGGERS));
-    report_ptr += sizeof(CONTROLLER_TRIGGERS);
-    memcpy(report_ptr, CONTROLLER_BUTTONS, sizeof(CONTROLLER_BUTTONS));
-    report_ptr += sizeof(CONTROLLER_BUTTONS);
-    report_ptr = add_hatswitch(report_ptr, 1);
+    if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, left_axis_usages,
+                                 FALSE, 16, 0, 0xffff))
+        return FALSE;
+
+    if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, right_axis_usages,
+                                 FALSE, 16, 0, 0xffff))
+        return FALSE;
+
+    if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, trigger_axis_usages,
+                                 FALSE, 16, 0, 0x7fff))
+        return FALSE;
+
+    if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, CONTROLLER_NUM_BUTTONS))
+        return FALSE;
+
+    if (!hid_descriptor_add_hatswitch(&ext->desc, 1))
+        return FALSE;
+
     if (BUTTON_BIT_COUNT % 8 != 0)
-        report_ptr = add_padding_block(report_ptr, 8 - (BUTTON_BIT_COUNT % 8));/* unused bits between hatswitch and following constant */
-    report_ptr = add_padding_block(report_ptr, 16);/* unknown constant */
-    report_ptr += build_haptic(ext, report_ptr);
-    memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
-
-    ext->report_descriptor_size = descript_size;
-    ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ext->buffer_length);
-    if (ext->report_buffer == NULL)
     {
-        ERR("Failed to alloc report buffer\n");
-        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
-        return FALSE;
+        /* unused bits between hatswitch and following constant */
+        if (!hid_descriptor_add_padding(&ext->desc, 8 - (BUTTON_BIT_COUNT % 8)))
+            return FALSE;
     }
+
+    /* unknown constant */
+    if (!hid_descriptor_add_padding(&ext->desc, 16))
+        return FALSE;
+
+    if (!descriptor_add_haptic(ext))
+        return FALSE;
+
+    if (!hid_descriptor_end(&ext->desc))
+        return FALSE;
+
+    if (!(ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ext->buffer_length)))
+        goto failed;
 
     /* Initialize axis in the report */
     for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
@@ -605,6 +464,11 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     ext->report_buffer[15] = 0xc5;
 
     return TRUE;
+
+failed:
+    HeapFree(GetProcessHeap(), 0, ext->report_buffer);
+    hid_descriptor_free(&ext->desc);
+    return FALSE;
 }
 
 static void free_device(DEVICE_OBJECT *device)
@@ -629,13 +493,10 @@ static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD 
 {
     struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
 
-    *out_length = ext->report_descriptor_size;
+    *out_length = ext->desc.size;
+    if (length < ext->desc.size) return STATUS_BUFFER_TOO_SMALL;
 
-    if (length < ext->report_descriptor_size)
-        return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, ext->report_descriptor, ext->report_descriptor_size);
-
+    memcpy(buffer, ext->desc.data, ext->desc.size);
     return STATUS_SUCCESS;
 }
 

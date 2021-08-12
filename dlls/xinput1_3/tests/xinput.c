@@ -460,7 +460,6 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     todo_wine_if(xi_caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     check_member(*hid_caps, expect_hid_caps, "%d", OutputReportByteLength);
     check_member(*hid_caps, expect_hid_caps, "%d", FeatureReportByteLength);
-    todo_wine
     check_member(*hid_caps, expect_hid_caps, "%d", NumberLinkCollectionNodes);
     check_member(*hid_caps, expect_hid_caps, "%d", NumberInputButtonCaps);
     todo_wine
@@ -479,20 +478,16 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     length = hid_caps->NumberLinkCollectionNodes;
     status = HidP_GetLinkCollectionNodes(collections, &length, preparsed);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes returned %#x\n", status);
-    todo_wine
     ok(length == ARRAY_SIZE(expect_collections), "got %d collections\n", length);
 
     for (i = 0; i < min(length, ARRAY_SIZE(expect_collections)); ++i)
     {
         winetest_push_context("collections[%d]", i);
-        todo_wine_if(i == 1)
         check_member(collections[i], expect_collections[i], "%04x", LinkUsage);
         check_member(collections[i], expect_collections[i], "%04x", LinkUsagePage);
         check_member(collections[i], expect_collections[i], "%d", Parent);
-        todo_wine_if(i == 0)
         check_member(collections[i], expect_collections[i], "%d", NumberOfChildren);
         check_member(collections[i], expect_collections[i], "%d", NextSibling);
-        todo_wine_if(i == 0)
         check_member(collections[i], expect_collections[i], "%d", FirstChild);
         check_member(collections[i], expect_collections[i], "%d", CollectionType);
         check_member(collections[i], expect_collections[i], "%d", IsAlias);
@@ -511,9 +506,7 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
         check_member(button_caps[i], expect_button_caps[i], "%d", ReportID);
         check_member(button_caps[i], expect_button_caps[i], "%d", IsAlias);
         check_member(button_caps[i], expect_button_caps[i], "%d", BitField);
-        todo_wine
         check_member(button_caps[i], expect_button_caps[i], "%d", LinkCollection);
-        todo_wine
         check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsage);
         check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsagePage);
         check_member(button_caps[i], expect_button_caps[i], "%d", IsRange);
@@ -569,9 +562,9 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
         check_member(value_caps[i], expect_value_caps[i], "%d", IsAlias);
         todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", BitField);
-        todo_wine_if(i >= 2)
+        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkCollection);
-        todo_wine
+        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkUsage);
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkUsagePage);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsRange);
@@ -597,7 +590,7 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
         if (!value_caps[i].IsRange && !expect_value_caps[i].IsRange)
         {
-            todo_wine
+            todo_wine_if(i >= 4)
             check_member(value_caps[i], expect_value_caps[i], "%04x", NotRange.Usage);
             todo_wine_if(i == 5)
             check_member(value_caps[i], expect_value_caps[i], "%d", NotRange.DataIndex);

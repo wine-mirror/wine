@@ -34,7 +34,6 @@
 #include "wine/list.h"
 
 #include "bus.h"
-#include "controller.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);

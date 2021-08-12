@@ -16,6 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <winternl.h>
+#include <ddk/wdm.h>
+#include <hidusage.h>
+
 typedef int(*enum_func)(DEVICE_OBJECT *device, void *context);
 
 /* Buses */
@@ -57,3 +65,24 @@ BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 
 extern HANDLE driver_key DECLSPEC_HIDDEN;
 extern DEVICE_OBJECT *bus_pdo DECLSPEC_HIDDEN;
+
+struct hid_descriptor
+{
+    BYTE  *data;
+    SIZE_T size;
+    SIZE_T max_size;
+};
+
+extern BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffer, SIZE_T size) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_end(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+extern void hid_descriptor_free(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+
+extern BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
+                                       USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_padding(struct hid_descriptor *desc, BYTE bitcount) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
+                                    const USAGE *usages, BOOL rel, INT size, LONG min, LONG max) DECLSPEC_HIDDEN;
+
+extern BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc) DECLSPEC_HIDDEN;

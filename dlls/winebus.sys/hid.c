@@ -18,7 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "controller.h"
+#include <stdarg.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "winternl.h"
+#include "winioctl.h"
+#include "hidusage.h"
+#include "ddk/wdm.h"
+
+#include "bus.h"
 
 BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffer, SIZE_T size)
 {
@@ -207,6 +216,33 @@ BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usag
         return FALSE;
 
     return TRUE;
+}
+
+BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc)
+{
+    static const BYTE template[] =
+    {
+        USAGE_PAGE(2, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN),
+        USAGE(1, 0x01),
+        /* padding */
+        REPORT_COUNT(1, 0x02),
+        REPORT_SIZE(1, 0x08),
+        OUTPUT(1, Data|Var|Abs),
+        /* actuators */
+        LOGICAL_MINIMUM(1, 0x00),
+        LOGICAL_MAXIMUM(1, 0xff),
+        PHYSICAL_MINIMUM(1, 0x00),
+        PHYSICAL_MAXIMUM(1, 0xff),
+        REPORT_SIZE(1, 0x08),
+        REPORT_COUNT(1, 0x02),
+        OUTPUT(1, Data|Var|Abs),
+        /* padding */
+        REPORT_COUNT(1, 0x02),
+        REPORT_SIZE(1, 0x08),
+        OUTPUT(1, Data|Var|Abs),
+    };
+
+    return hid_descriptor_append(desc, template, sizeof(template));
 }
 
 #include "pop_hid_macros.h"
