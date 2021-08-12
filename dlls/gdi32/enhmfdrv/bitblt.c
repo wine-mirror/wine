@@ -20,51 +20,98 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "enhmetafiledrv.h"
-#include "wine/debug.h"
 
 /* Generate an EMRBITBLT, EMRSTRETCHBLT or EMRALPHABLEND record depending on the type parameter */
-static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, PHYSDEV dev_src,
+static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, HDC hdc_src,
                                struct bitblt_coords *src, DWORD rop, DWORD type )
 {
-    unsigned char src_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
-    BITMAPINFO *src_info = (BITMAPINFO *)src_buffer;
-    UINT bits_size, bmi_size, emr_size, size, bpp;
-    EMRSTRETCHBLT *emr_stretchblt;
-    struct gdi_image_bits bits;
+    BITMAPINFO src_info = {{ sizeof( src_info.bmiHeader ) }};
+    UINT bmi_size, emr_size, size, bpp;
+    HBITMAP bitmap, blit_bitmap = NULL;
+    EMRBITBLT *emr = NULL;
     BITMAPINFO *bmi;
-    EMRBITBLT *emr;
-    DC *dc_src;
-    DWORD err;
+    DIBSECTION dib;
+    HDC blit_dc;
+    int info_size;
     BOOL ret = FALSE;
 
-    dc_src = get_physdev_dc(dev_src);
-    dev_src = GET_DC_PHYSDEV(dc_src, pGetImage);
-    err = dev_src->funcs->pGetImage(dev_src, src_info, &bits, src);
-    if (err)
-    {
-        SetLastError(err);
-        return FALSE;
-    }
+    if (!(bitmap = GetCurrentObject( hdc_src, OBJ_BITMAP ))) return FALSE;
+    if (!(info_size = GetObjectW( bitmap, sizeof(dib), &dib ))) return FALSE;
 
-    bpp = src_info->bmiHeader.biBitCount;
+    if (info_size == sizeof(DIBSECTION))
+    {
+        blit_dc = hdc_src;
+        blit_bitmap = bitmap;
+    }
+    else
+    {
+        unsigned char dib_info_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+        BITMAPINFO *dib_info = (BITMAPINFO *)dib_info_buffer;
+        BITMAP bmp = dib.dsBm;
+        HPALETTE palette;
+        void *bits;
+
+        assert( info_size == sizeof(BITMAP) );
+
+        dib_info->bmiHeader.biSize = sizeof(dib_info->bmiHeader);
+        dib_info->bmiHeader.biWidth = bmp.bmWidth;
+        dib_info->bmiHeader.biHeight = bmp.bmHeight;
+        dib_info->bmiHeader.biPlanes = 1;
+        dib_info->bmiHeader.biBitCount = bmp.bmBitsPixel;
+        dib_info->bmiHeader.biCompression = BI_RGB;
+        dib_info->bmiHeader.biSizeImage = 0;
+        dib_info->bmiHeader.biXPelsPerMeter = 0;
+        dib_info->bmiHeader.biYPelsPerMeter = 0;
+        dib_info->bmiHeader.biClrUsed = 0;
+        dib_info->bmiHeader.biClrImportant = 0;
+        switch (dib_info->bmiHeader.biBitCount)
+        {
+        case 16:
+            ((DWORD *)dib_info->bmiColors)[0] = 0xf800;
+            ((DWORD *)dib_info->bmiColors)[1] = 0x07e0;
+            ((DWORD *)dib_info->bmiColors)[2] = 0x001f;
+            break;
+        case 32:
+            ((DWORD *)dib_info->bmiColors)[0] = 0xff0000;
+            ((DWORD *)dib_info->bmiColors)[1] = 0x00ff00;
+            ((DWORD *)dib_info->bmiColors)[2] = 0x0000ff;
+            break;
+        default:
+            if (dib_info->bmiHeader.biBitCount > 8) break;
+            if (!(palette = GetCurrentObject( hdc_src, OBJ_PAL ))) return FALSE;
+            if (!GetPaletteEntries( palette, 0, 256, (PALETTEENTRY *)dib_info->bmiColors ))
+                return FALSE;
+        }
+
+        if (!(blit_dc = NtGdiCreateCompatibleDC( hdc_src ))) return FALSE;
+        if (!(blit_bitmap = CreateDIBSection( blit_dc, dib_info, DIB_RGB_COLORS, &bits, NULL, 0 )))
+            goto err;
+        if (!SelectObject( blit_dc, blit_bitmap )) goto err;
+        if (!BitBlt( blit_dc, 0, 0, bmp.bmWidth, bmp.bmHeight, hdc_src, 0, 0, SRCCOPY ))
+            goto err;
+    }
+    if (!GetDIBits( blit_dc, blit_bitmap, 0, INT_MAX, NULL, &src_info, DIB_RGB_COLORS ))
+        goto err;
+
+    bpp = src_info.bmiHeader.biBitCount;
     if (bpp <= 8)
         bmi_size = sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD);
     else if (bpp == 16 || bpp == 32)
         bmi_size = sizeof(BITMAPINFOHEADER) + 3 * sizeof(RGBQUAD);
     else
         bmi_size = sizeof(BITMAPINFOHEADER);
+
     /* EMRSTRETCHBLT and EMRALPHABLEND have the same structure */
     emr_size = type == EMR_BITBLT ? sizeof(EMRBITBLT) : sizeof(EMRSTRETCHBLT);
-    bits_size = src_info->bmiHeader.biSizeImage;
-    size = emr_size + bmi_size + bits_size;
+    size = emr_size + bmi_size + src_info.bmiHeader.biSizeImage;
 
-    emr = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!emr) goto err;
+    if (!(emr = HeapAlloc(GetProcessHeap(), 0, size))) goto err;
 
     emr->emr.iType = type;
     emr->emr.nSize = size;
@@ -80,52 +127,40 @@ static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, PHYSD
     emr->ySrc = src->log_y;
     if (type == EMR_STRETCHBLT || type == EMR_ALPHABLEND)
     {
-        emr_stretchblt = (EMRSTRETCHBLT *)emr;
+        EMRSTRETCHBLT *emr_stretchblt = (EMRSTRETCHBLT *)emr;
         emr_stretchblt->cxSrc = src->log_width;
         emr_stretchblt->cySrc = src->log_height;
     }
     emr->dwRop = rop;
-    NtGdiGetTransform( dev_src->hdc, 0x204, &emr->xformSrc );
-    emr->crBkColorSrc = GetBkColor(dev_src->hdc);
+    NtGdiGetTransform( hdc_src, 0x204, &emr->xformSrc );
+    emr->crBkColorSrc = GetBkColor( hdc_src );
     emr->iUsageSrc = DIB_RGB_COLORS;
     emr->offBmiSrc = emr_size;
     emr->cbBmiSrc = bmi_size;
     emr->offBitsSrc = emr_size + bmi_size;
-    emr->cbBitsSrc = bits_size;
+    emr->cbBitsSrc = src_info.bmiHeader.biSizeImage;
 
     bmi = (BITMAPINFO *)((BYTE *)emr + emr->offBmiSrc);
-    memcpy(bmi, src_info, bmi_size);
-    memcpy((BYTE *)emr + emr->offBitsSrc, bits.ptr, bits_size);
-
-    bmi->bmiHeader.biClrUsed = 0;
-    if (bmi->bmiHeader.biCompression == BI_RGB && bmi->bmiHeader.biBitCount == 16)
+    bmi->bmiHeader = src_info.bmiHeader;
+    ret = GetDIBits( blit_dc, blit_bitmap, 0, src_info.bmiHeader.biHeight, (BYTE *)emr + emr->offBitsSrc,
+                     bmi, DIB_RGB_COLORS );
+    if (ret)
     {
-        bmi->bmiHeader.biCompression = BI_BITFIELDS;
-        ((DWORD *)bmi->bmiColors)[0] = 0xf800;
-        ((DWORD *)bmi->bmiColors)[1] = 0x07e0;
-        ((DWORD *)bmi->bmiColors)[2] = 0x001f;
+        ret = EMFDRV_WriteRecord( dev_dst, (EMR *)emr );
+        if (ret) EMFDRV_UpdateBBox( dev_dst, &emr->rclBounds );
     }
-    else if (bmi->bmiHeader.biCompression == BI_RGB && bmi->bmiHeader.biBitCount == 32)
-    {
-        bmi->bmiHeader.biCompression = BI_BITFIELDS;
-        ((DWORD *)bmi->bmiColors)[0] = 0xff0000;
-        ((DWORD *)bmi->bmiColors)[1] = 0x00ff00;
-        ((DWORD *)bmi->bmiColors)[2] = 0x0000ff;
-    }
-
-    ret = EMFDRV_WriteRecord(dev_dst, (EMR *)emr);
-    if (ret) EMFDRV_UpdateBBox(dev_dst, &emr->rclBounds);
 
 err:
-    HeapFree(GetProcessHeap(), 0, emr);
-    if (bits.free) bits.free(&bits);
+    HeapFree( GetProcessHeap(), 0, emr );
+    if (blit_bitmap && blit_bitmap != bitmap) DeleteObject( blit_bitmap );
+    if (blit_dc && blit_dc != hdc_src) DeleteDC( blit_dc );
     return ret;
 }
 
 BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
                               PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
 {
-    return emfdrv_stretchblt(dev_dst, dst, dev_src, src, *(DWORD *)&func, EMR_ALPHABLEND);
+    return emfdrv_stretchblt( dev_dst, dst, dev_src->hdc, src, *(DWORD *)&func, EMR_ALPHABLEND );
 }
 
 BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
@@ -176,9 +211,9 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
                               PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
 {
     if (src->log_width == dst->log_width && src->log_height == dst->log_height)
-        return emfdrv_stretchblt(devDst, dst, devSrc, src, rop, EMR_BITBLT);
+        return emfdrv_stretchblt( devDst, dst, devSrc->hdc, src, rop, EMR_BITBLT );
     else
-        return emfdrv_stretchblt(devDst, dst, devSrc, src, rop, EMR_STRETCHBLT);
+        return emfdrv_stretchblt( devDst, dst, devSrc->hdc, src, rop, EMR_STRETCHBLT );
 }
 
 INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
