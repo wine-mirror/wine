@@ -1495,6 +1495,42 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   return IfIndex;
 }
 
+/******************************************************************
+ *    GetIcmpStatisticsEx (IPHLPAPI.@)
+ *
+ * Get the IPv4 and IPv6 ICMP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for ICMP statistics
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetIcmpStatisticsEx( MIB_ICMP_EX *stats, DWORD family )
+{
+    const NPI_MODULEID *mod = ip_module_id( family );
+    struct nsi_ip_icmpstats_dynamic dyn;
+    DWORD err;
+
+    if (!stats || !mod) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(*stats) );
+
+    err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0,
+                               &dyn, sizeof(dyn), NULL, 0 );
+    if (err) return err;
+
+    stats->icmpInStats.dwMsgs = dyn.in_msgs;
+    stats->icmpInStats.dwErrors = dyn.in_errors;
+    memcpy( stats->icmpInStats.rgdwTypeCount, dyn.in_type_counts, sizeof( dyn.in_type_counts ) );
+    stats->icmpOutStats.dwMsgs = dyn.out_msgs;
+    stats->icmpOutStats.dwErrors = dyn.out_errors;
+    memcpy( stats->icmpOutStats.rgdwTypeCount, dyn.out_type_counts, sizeof( dyn.out_type_counts ) );
+
+    return ERROR_SUCCESS;
+}
+
 static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
                          struct nsi_ndis_ifinfo_static *stat )
 {
