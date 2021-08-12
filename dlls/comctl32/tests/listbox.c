@@ -326,7 +326,7 @@ static void test_item_height(void)
     DestroyWindow (hLB);
 }
 
-static int got_selchange;
+static unsigned int got_selchange, got_drawitem;
 
 static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -418,6 +418,7 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         SendMessageA(dis->hwndItem, LB_GETITEMRECT, dis->itemID, (LPARAM)&rc_item);
         ok(EqualRect(&dis->rcItem, &rc_item), "item rects are not equal\n");
 
+        got_drawitem++;
         break;
     }
 
@@ -466,6 +467,19 @@ static void test_ownerdraw(void)
     {
         0,
         LBS_NODATA
+    };
+    static const struct {
+        UINT message;
+        WPARAM wparam;
+        LPARAM lparam;
+        UINT drawitem;
+    } testcase[] = {
+        { WM_NULL, 0, 0, 0 },
+        { WM_PAINT, 0, 0, 0 },
+        { LB_GETCOUNT, 0, 0, 0 },
+        { LB_SETCOUNT, ARRAY_SIZE(strings), 0, ARRAY_SIZE(strings) },
+        { LB_ADDSTRING, 0, (LPARAM)"foo", ARRAY_SIZE(strings)+1 },
+        { LB_DELETESTRING, 0, 0, ARRAY_SIZE(strings)-1 },
     };
     HWND parent, hLB;
     INT ret;
@@ -526,6 +540,40 @@ static void test_ownerdraw(void)
         ok(ret == 42, "Unexpected item height %d.\n", ret);
 
         DestroyWindow (hLB);
+    }
+
+    /* test pending redraw state */
+    for (i = 0; i < ARRAY_SIZE(testcase); i++)
+    {
+        winetest_push_context("%d", i);
+        hLB = create_listbox(LBS_OWNERDRAWFIXED | LBS_NODATA | WS_CHILD | WS_VISIBLE, parent);
+        assert(hLB);
+
+        ret = SendMessageA(hLB, WM_SETREDRAW, FALSE, 0);
+        ok(!ret, "got %d\n", ret);
+        ret = SendMessageA(hLB, testcase[i].message, testcase[i].wparam, testcase[i].lparam);
+        if (testcase[i].message >= LB_ADDSTRING && testcase[i].message < LB_MSGMAX &&
+            testcase[i].message != LB_SETCOUNT)
+            ok(ret > 0, "expected > 0, got %d\n", ret);
+        else
+            ok(!ret, "expected 0, got %d\n", ret);
+
+        got_drawitem = 0;
+        ret = RedrawWindow(hLB, NULL, 0, RDW_UPDATENOW);
+        ok(ret, "RedrawWindow failed\n");
+        ok(!got_drawitem, "got %u\n", got_drawitem);
+
+        ret = SendMessageA(hLB, WM_SETREDRAW, TRUE, 0);
+        ok(!ret, "got %d\n", ret);
+
+        got_drawitem = 0;
+        ret = RedrawWindow(hLB, NULL, 0, RDW_UPDATENOW);
+        ok(ret, "RedrawWindow failed\n");
+        todo_wine_if(testcase[i].message == LB_SETCOUNT)
+        ok(got_drawitem == testcase[i].drawitem, "expected %u, got %u\n", testcase[i].drawitem, got_drawitem);
+
+        DestroyWindow(hLB);
+        winetest_pop_context();
     }
 
     DestroyWindow(parent);
