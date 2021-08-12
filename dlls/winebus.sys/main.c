@@ -20,9 +20,6 @@
 #include "config.h"
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
@@ -242,8 +239,8 @@ static void remove_pending_irps(DEVICE_OBJECT *device)
 
     while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
     {
-        IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
-        queued_irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
+        IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        queued_irp->IoStatus.Status = STATUS_DELETE_PENDING;
         queued_irp->IoStatus.Information = 0;
         IoCompleteRequest(queued_irp, IO_NO_INCREMENT);
     }
@@ -420,7 +417,7 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
 
 static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
 {
-    NTSTATUS status = irp->IoStatus.u.Status;
+    NTSTATUS status = irp->IoStatus.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
 
     TRACE("IRP_MN_QUERY_DEVICE_RELATIONS\n");
@@ -445,7 +442,7 @@ static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
 
 static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
 {
-    NTSTATUS status = irp->IoStatus.u.Status;
+    NTSTATUS status = irp->IoStatus.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     BUS_QUERY_ID_TYPE type = irpsp->Parameters.QueryId.IdType;
 
@@ -637,7 +634,7 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     switch (irpsp->MinorFunction)
     {
     case IRP_MN_QUERY_DEVICE_RELATIONS:
-        irp->IoStatus.u.Status = handle_IRP_MN_QUERY_DEVICE_RELATIONS(irp);
+        irp->IoStatus.Status = handle_IRP_MN_QUERY_DEVICE_RELATIONS(irp);
         break;
     case IRP_MN_START_DEVICE:
         mouse_device_create();
@@ -647,23 +644,23 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             if (sdl_driver_init() == STATUS_SUCCESS)
             {
-                irp->IoStatus.u.Status = STATUS_SUCCESS;
+                irp->IoStatus.Status = STATUS_SUCCESS;
                 break;
             }
         }
         udev_driver_init();
         iohid_driver_init();
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_SURPRISE_REMOVAL:
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_REMOVE_DEVICE:
         udev_driver_unload();
         iohid_driver_unload();
         sdl_driver_unload();
 
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        irp->IoStatus.Status = STATUS_SUCCESS;
         IoSkipCurrentIrpStackLocation(irp);
         ret = IoCallDriver(bus_pdo, irp);
         IoDetachDevice(bus_pdo);
@@ -680,7 +677,7 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     struct device_extension *ext = device->DeviceExtension;
-    NTSTATUS status = irp->IoStatus.u.Status;
+    NTSTATUS status = irp->IoStatus.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
 
     TRACE("device %p, irp %p, minor function %#x.\n", device, irp, irpsp->MinorFunction);
@@ -721,7 +718,7 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             HeapFree(GetProcessHeap(), 0, ext->serial);
             HeapFree(GetProcessHeap(), 0, ext->last_report);
 
-            irp->IoStatus.u.Status = STATUS_SUCCESS;
+            irp->IoStatus.Status = STATUS_SUCCESS;
             IoCompleteRequest(irp, IO_NO_INCREMENT);
 
             IoDeleteDevice(device);
@@ -740,7 +737,7 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
     }
 
-    irp->IoStatus.u.Status = status;
+    irp->IoStatus.Status = status;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
 }
@@ -819,7 +816,7 @@ static NTSTATUS hid_get_native_string(DEVICE_OBJECT *device, DWORD index, WCHAR 
 
 static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
-    NTSTATUS status = irp->IoStatus.u.Status;
+    NTSTATUS status = irp->IoStatus.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     ULONG code, buffer_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
@@ -837,7 +834,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
     if (ext->removed)
     {
         LeaveCriticalSection(&ext->cs);
-        irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_DELETE_PENDING;
     }
@@ -851,7 +848,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
             if (buffer_len < sizeof(*attr))
             {
-                irp->IoStatus.u.Status = status = STATUS_BUFFER_TOO_SMALL;
+                irp->IoStatus.Status = status = STATUS_BUFFER_TOO_SMALL;
                 break;
             }
 
@@ -861,7 +858,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             attr->ProductID = ext->pid;
             attr->VersionNumber = ext->version;
 
-            irp->IoStatus.u.Status = status = STATUS_SUCCESS;
+            irp->IoStatus.Status = status = STATUS_SUCCESS;
             irp->IoStatus.Information = sizeof(*attr);
             break;
         }
@@ -873,7 +870,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
             if (buffer_len < sizeof(*descriptor))
             {
-                irp->IoStatus.u.Status = status = STATUS_BUFFER_TOO_SMALL;
+                irp->IoStatus.Status = status = STATUS_BUFFER_TOO_SMALL;
                 break;
             }
 
@@ -881,7 +878,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             if (status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
             {
                 WARN("Failed to get platform report descriptor length\n");
-                irp->IoStatus.u.Status = status;
+                irp->IoStatus.Status = status;
                 break;
             }
 
@@ -894,13 +891,13 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             descriptor->DescriptorList[0].bReportType = HID_REPORT_DESCRIPTOR_TYPE;
             descriptor->DescriptorList[0].wReportLength = length;
 
-            irp->IoStatus.u.Status = status = STATUS_SUCCESS;
+            irp->IoStatus.Status = status = STATUS_SUCCESS;
             irp->IoStatus.Information = sizeof(*descriptor);
             break;
         }
         case IOCTL_HID_GET_REPORT_DESCRIPTOR:
             TRACE("IOCTL_HID_GET_REPORT_DESCRIPTOR\n");
-            irp->IoStatus.u.Status = status = ext->vtbl->get_reportdescriptor(device, irp->UserBuffer, buffer_len, &buffer_len);
+            irp->IoStatus.Status = status = ext->vtbl->get_reportdescriptor(device, irp->UserBuffer, buffer_len, &buffer_len);
             irp->IoStatus.Information = buffer_len;
             break;
         case IOCTL_HID_GET_STRING:
@@ -908,9 +905,9 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             DWORD index = (ULONG_PTR)irpsp->Parameters.DeviceIoControl.Type3InputBuffer;
             TRACE("IOCTL_HID_GET_STRING[%08x]\n", index);
 
-            irp->IoStatus.u.Status = status = hid_get_native_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len / sizeof(WCHAR));
+            irp->IoStatus.Status = status = hid_get_native_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len / sizeof(WCHAR));
             if (status != STATUS_SUCCESS)
-                irp->IoStatus.u.Status = status = ext->vtbl->get_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len / sizeof(WCHAR));
+                irp->IoStatus.Status = status = ext->vtbl->get_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len / sizeof(WCHAR));
             if (status == STATUS_SUCCESS)
                 irp->IoStatus.Information = (strlenW((WCHAR *)irp->UserBuffer) + 1) * sizeof(WCHAR);
             break;
@@ -922,11 +919,11 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             status = ext->vtbl->begin_report_processing(device);
             if (status != STATUS_SUCCESS)
             {
-                irp->IoStatus.u.Status = status;
+                irp->IoStatus.Status = status;
                 break;
             }
 
-            irp->IoStatus.u.Status = status = deliver_last_report(ext,
+            irp->IoStatus.Status = status = deliver_last_report(ext,
                 packet->reportBufferLen, packet->reportBuffer,
                 &irp->IoStatus.Information);
 
@@ -940,18 +937,18 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             status = ext->vtbl->begin_report_processing(device);
             if (status != STATUS_SUCCESS)
             {
-                irp->IoStatus.u.Status = status;
+                irp->IoStatus.Status = status;
                 break;
             }
             if (!ext->last_report_read)
             {
-                irp->IoStatus.u.Status = status = deliver_last_report(ext,
+                irp->IoStatus.Status = status = deliver_last_report(ext,
                     buffer_len, irp->UserBuffer, &irp->IoStatus.Information);
                 ext->last_report_read = TRUE;
             }
             else
             {
-                InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
+                InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.ListEntry);
                 status = STATUS_PENDING;
             }
             break;
@@ -961,7 +958,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_WRITE_REPORT / IOCTL_HID_SET_OUTPUT_REPORT\n");
-            irp->IoStatus.u.Status = status = ext->vtbl->set_output_report(
+            irp->IoStatus.Status = status = ext->vtbl->set_output_report(
                 device, packet->reportId, packet->reportBuffer,
                 packet->reportBufferLen, &irp->IoStatus.Information);
             break;
@@ -970,7 +967,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_GET_FEATURE\n");
-            irp->IoStatus.u.Status = status = ext->vtbl->get_feature_report(
+            irp->IoStatus.Status = status = ext->vtbl->get_feature_report(
                 device, packet->reportId, packet->reportBuffer,
                 packet->reportBufferLen, &irp->IoStatus.Information);
             packet->reportBufferLen = irp->IoStatus.Information;
@@ -980,7 +977,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_SET_FEATURE\n");
-            irp->IoStatus.u.Status = status = ext->vtbl->set_feature_report(
+            irp->IoStatus.Status = status = ext->vtbl->set_feature_report(
                 device, packet->reportId, packet->reportBuffer,
                 packet->reportBufferLen, &irp->IoStatus.Information);
             break;
@@ -1034,9 +1031,9 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
     {
         IO_STACK_LOCATION *irpsp;
         TRACE_(hid_report)("Processing Request\n");
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
         irpsp = IoGetCurrentIrpStackLocation(irp);
-        irp->IoStatus.u.Status = deliver_last_report(ext,
+        irp->IoStatus.Status = deliver_last_report(ext,
             irpsp->Parameters.DeviceIoControl.OutputBufferLength,
             irp->UserBuffer, &irp->IoStatus.Information);
         ext->last_report_read = TRUE;

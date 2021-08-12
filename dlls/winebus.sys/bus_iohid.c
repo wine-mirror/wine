@@ -79,8 +79,6 @@
 #undef PAGE_SHIFT
 #endif /* HAVE_IOKIT_HID_IOHIDLIB_H */
 
-#define NONAMELESSUNION
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
