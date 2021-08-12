@@ -41,8 +41,24 @@
 #include <netinet/in.h>
 #endif
 
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+
+#ifdef HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+
 #ifdef HAVE_NETINET_IP_VAR_H
 #include <netinet/ip_var.h>
+#endif
+
+#ifdef HAVE_NETINET_ICMP_VAR_H
+#include <netinet/icmp_var.h>
 #endif
 
 #ifdef HAVE_NETINET_IF_ETHER_H
@@ -76,6 +92,7 @@
 #include "ws2ipdef.h"
 #include "nldef.h"
 #include "ifdef.h"
+#include "ipmib.h"
 #include "netiodef.h"
 #include "wine/heap.h"
 #include "wine/nsi.h"
@@ -221,6 +238,121 @@ static NTSTATUS ipv6_cmpt_get_all_parameters( const void *key, DWORD key_size, v
            static_data, static_size );
     return ip_cmpt_get_all_parameters( AF_INET6, key, key_size, rw_data, rw_size,
                                        dynamic_data, dynamic_size, static_data, static_size );
+}
+
+static NTSTATUS ipv4_icmpstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                                   void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    struct nsi_ip_icmpstats_dynamic dyn;
+
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+
+    memset( &dyn, 0, sizeof(dyn) );
+
+#ifdef __linux__
+    {
+        NTSTATUS status = STATUS_NOT_SUPPORTED;
+        static const char hdr[] = "Icmp:";
+        char buf[512], *ptr;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/snmp", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            if (_strnicmp( buf, hdr, sizeof(hdr) - 1 )) continue;
+            /* last line was a header, get another */
+            if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
+            if (!_strnicmp( buf, hdr, sizeof(hdr) - 1 ))
+            {
+                ptr += sizeof(hdr);
+                sscanf( ptr, "%u %u %*u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+                        &dyn.in_msgs,
+                        &dyn.in_errors,
+                        &dyn.in_type_counts[ICMP4_DST_UNREACH],
+                        &dyn.in_type_counts[ICMP4_TIME_EXCEEDED],
+                        &dyn.in_type_counts[ICMP4_PARAM_PROB],
+                        &dyn.in_type_counts[ICMP4_SOURCE_QUENCH],
+                        &dyn.in_type_counts[ICMP4_REDIRECT],
+                        &dyn.in_type_counts[ICMP4_ECHO_REQUEST],
+                        &dyn.in_type_counts[ICMP4_ECHO_REPLY],
+                        &dyn.in_type_counts[ICMP4_TIMESTAMP_REQUEST],
+                        &dyn.in_type_counts[ICMP4_TIMESTAMP_REPLY],
+                        &dyn.in_type_counts[ICMP4_MASK_REQUEST],
+                        &dyn.in_type_counts[ICMP4_MASK_REPLY],
+                        &dyn.out_msgs,
+                        &dyn.out_errors,
+                        &dyn.out_type_counts[ICMP4_DST_UNREACH],
+                        &dyn.out_type_counts[ICMP4_TIME_EXCEEDED],
+                        &dyn.out_type_counts[ICMP4_PARAM_PROB],
+                        &dyn.out_type_counts[ICMP4_SOURCE_QUENCH],
+                        &dyn.out_type_counts[ICMP4_REDIRECT],
+                        &dyn.out_type_counts[ICMP4_ECHO_REQUEST],
+                        &dyn.out_type_counts[ICMP4_ECHO_REPLY],
+                        &dyn.out_type_counts[ICMP4_TIMESTAMP_REQUEST],
+                        &dyn.out_type_counts[ICMP4_TIMESTAMP_REPLY],
+                        &dyn.out_type_counts[ICMP4_MASK_REQUEST],
+                        &dyn.out_type_counts[ICMP4_MASK_REPLY] );
+                status = STATUS_SUCCESS;
+                if (dynamic_data) *(struct nsi_ip_icmpstats_dynamic *)dynamic_data = dyn;
+                break;
+            }
+        }
+        fclose( fp );
+        return status;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
+    {
+        int mib[] = { CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS };
+        struct icmpstat icmp_stat;
+        size_t needed = sizeof(icmp_stat);
+        int i;
+
+        if (sysctl( mib, ARRAY_SIZE(mib), &icmp_stat, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
+
+        dyn.in_msgs = icmp_stat.icps_badcode + icmp_stat.icps_checksum + icmp_stat.icps_tooshort + icmp_stat.icps_badlen;
+        for (i = 0; i <= ICMP_MAXTYPE; i++)
+            dyn.in_msgs += icmp_stat.icps_inhist[i];
+
+        dyn.in_errors = icmp_stat.icps_badcode + icmp_stat.icps_tooshort + icmp_stat.icps_checksum + icmp_stat.icps_badlen;
+
+        dyn.in_type_counts[ICMP4_DST_UNREACH] = icmp_stat.icps_inhist[ICMP_UNREACH];
+        dyn.in_type_counts[ICMP4_TIME_EXCEEDED] = icmp_stat.icps_inhist[ICMP_TIMXCEED];
+        dyn.in_type_counts[ICMP4_PARAM_PROB] = icmp_stat.icps_inhist[ICMP_PARAMPROB];
+        dyn.in_type_counts[ICMP4_SOURCE_QUENCH] = icmp_stat.icps_inhist[ICMP_SOURCEQUENCH];
+        dyn.in_type_counts[ICMP4_REDIRECT] = icmp_stat.icps_inhist[ICMP_REDIRECT];
+        dyn.in_type_counts[ICMP4_ECHO_REQUEST] = icmp_stat.icps_inhist[ICMP_ECHO];
+        dyn.in_type_counts[ICMP4_ECHO_REPLY] = icmp_stat.icps_inhist[ICMP_ECHOREPLY];
+        dyn.in_type_counts[ICMP4_TIMESTAMP_REQUEST] = icmp_stat.icps_inhist[ICMP_TSTAMP];
+        dyn.in_type_counts[ICMP4_TIMESTAMP_REPLY] = icmp_stat.icps_inhist[ICMP_TSTAMPREPLY];
+        dyn.in_type_counts[ICMP4_MASK_REQUEST] = icmp_stat.icps_inhist[ICMP_MASKREQ];
+        dyn.in_type_counts[ICMP4_MASK_REPLY] = icmp_stat.icps_inhist[ICMP_MASKREPLY];
+
+        dyn.out_msgs = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
+        for (i = 0; i <= ICMP_MAXTYPE; i++)
+            dyn.out_msgs += icmp_stat.icps_outhist[i];
+
+        dyn.out_errors = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
+
+        dyn.out_type_counts[ICMP4_DST_UNREACH] = icmp_stat.icps_outhist[ICMP_UNREACH];
+        dyn.out_type_counts[ICMP4_TIME_EXCEEDED] = icmp_stat.icps_outhist[ICMP_TIMXCEED];
+        dyn.out_type_counts[ICMP4_PARAM_PROB] = icmp_stat.icps_outhist[ICMP_PARAMPROB];
+        dyn.out_type_counts[ICMP4_SOURCE_QUENCH] = icmp_stat.icps_outhist[ICMP_SOURCEQUENCH];
+        dyn.out_type_counts[ICMP4_REDIRECT] = icmp_stat.icps_outhist[ICMP_REDIRECT];
+        dyn.out_type_counts[ICMP4_ECHO_REQUEST] = icmp_stat.icps_outhist[ICMP_ECHO];
+        dyn.out_type_counts[ICMP4_ECHO_REPLY] = icmp_stat.icps_outhist[ICMP_ECHOREPLY];
+        dyn.out_type_counts[ICMP4_TIMESTAMP_REQUEST] = icmp_stat.icps_outhist[ICMP_TSTAMP];
+        dyn.out_type_counts[ICMP4_TIMESTAMP_REPLY] = icmp_stat.icps_outhist[ICMP_TSTAMPREPLY];
+        dyn.out_type_counts[ICMP4_MASK_REQUEST] = icmp_stat.icps_outhist[ICMP_MASKREQ];
+        dyn.out_type_counts[ICMP4_MASK_REPLY] = icmp_stat.icps_outhist[ICMP_MASKREPLY];
+        if (dynamic_data) *(struct nsi_ip_icmpstats_dynamic *)dynamic_data = dyn;
+        return STATUS_SUCCESS;
+    }
+#else
+    FIXME( "not implemented\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
 }
 
 static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
@@ -980,6 +1112,15 @@ static struct module_table ipv4_tables[] =
         },
         NULL,
         ipv4_cmpt_get_all_parameters,
+    },
+    {
+        NSI_IP_ICMPSTATS_TABLE,
+        {
+            0, 0,
+            sizeof(struct nsi_ip_icmpstats_dynamic), 0
+        },
+        NULL,
+        ipv4_icmpstats_get_all_parameters,
     },
     {
         NSI_IP_IPSTATS_TABLE,

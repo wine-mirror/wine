@@ -98,6 +98,7 @@ struct nsi_ndis_ifinfo_static
 
 /* Undocumented NSI IP tables */
 #define NSI_IP_COMPARTMENT_TABLE           2
+#define NSI_IP_ICMPSTATS_TABLE             3
 #define NSI_IP_IPSTATS_TABLE               6
 #define NSI_IP_UNICAST_TABLE              10
 #define NSI_IP_NEIGHBOUR_TABLE            11
@@ -117,6 +118,16 @@ struct nsi_ip_cmpt_dynamic
     DWORD num_routes;
     DWORD unk;
     DWORD num_addrs;
+};
+
+struct nsi_ip_icmpstats_dynamic
+{
+    DWORD in_msgs;
+    DWORD in_errors;
+    DWORD in_type_counts[256];
+    DWORD out_msgs;
+    DWORD out_errors;
+    DWORD out_type_counts[256];
 };
 
 struct nsi_ip_ipstats_dynamic

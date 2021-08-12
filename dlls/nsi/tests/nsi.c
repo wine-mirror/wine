@@ -446,6 +446,48 @@ err:
     winetest_pop_context();
 }
 
+static void test_ip_icmpstats( int family )
+{
+    const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
+    struct nsi_ip_icmpstats_dynamic nsi_stats, nsi_stats2;
+    MIB_ICMP_EX table;
+    DWORD err, i;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0, &nsi_stats, sizeof(nsi_stats), NULL, 0 );
+todo_wine_if( family == AF_INET6)
+    ok( !err, "got %d\n", err );
+    if (err) goto err;
+
+    err = GetIcmpStatisticsEx( &table, family );
+    ok( !err, "got %d\n", err );
+    if (err) goto err;
+
+    err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0, &nsi_stats2, sizeof(nsi_stats2), NULL, 0 );
+    ok( !err, "got %d\n", err );
+
+    ok( bounded( table.icmpInStats.dwMsgs, nsi_stats.in_msgs, nsi_stats2.in_msgs ),
+        "%d vs [%d %d]\n", table.icmpInStats.dwMsgs, nsi_stats.in_msgs, nsi_stats2.in_msgs );
+    ok( bounded( table.icmpInStats.dwErrors, nsi_stats.in_errors, nsi_stats2.in_errors ),
+        "%d vs [%d %d]\n", table.icmpInStats.dwErrors, nsi_stats.in_errors, nsi_stats2.in_errors );
+    ok( bounded( table.icmpOutStats.dwMsgs, nsi_stats.out_msgs, nsi_stats2.out_msgs ),
+        "%d vs [%d %d]\n", table.icmpOutStats.dwMsgs, nsi_stats.out_msgs, nsi_stats2.out_msgs );
+    ok( bounded( table.icmpOutStats.dwErrors, nsi_stats.out_errors, nsi_stats2.out_errors ),
+        "%d vs [%d %d]\n", table.icmpOutStats.dwErrors, nsi_stats.out_errors, nsi_stats2.out_errors );
+    for (i = 0; i < ARRAY_SIZE(nsi_stats.in_type_counts); i++)
+    {
+        winetest_push_context( "%d", i );
+        ok( bounded( table.icmpInStats.rgdwTypeCount[i], nsi_stats.in_type_counts[i], nsi_stats2.in_type_counts[i] ),
+            "%d vs [%d %d]\n", table.icmpInStats.rgdwTypeCount[i], nsi_stats.in_type_counts[i], nsi_stats2.in_type_counts[i] );
+        ok( bounded( table.icmpOutStats.rgdwTypeCount[i], nsi_stats.out_type_counts[i], nsi_stats2.out_type_counts[i] ),
+            "%d vs [%d %d]\n", table.icmpOutStats.rgdwTypeCount[i], nsi_stats.out_type_counts[i], nsi_stats2.out_type_counts[i] );
+        winetest_pop_context();
+    }
+err:
+    winetest_pop_context();
+}
+
 
 static void test_ip_ipstats( int family )
 {
@@ -763,6 +805,8 @@ START_TEST( nsi )
 
     test_ip_cmpt( AF_INET );
     test_ip_cmpt( AF_INET6 );
+    test_ip_icmpstats( AF_INET );
+    test_ip_icmpstats( AF_INET6 );
     test_ip_ipstats( AF_INET );
     test_ip_ipstats( AF_INET6 );
     test_ip_unicast( AF_INET );
