@@ -722,7 +722,7 @@ static void unicast_fill_entry( struct ifaddrs *entry, void *key, struct nsi_ip_
     if (stat) stat->creation_time = get_boot_time();
 }
 
-static NTSTATUS ip_unicast_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+static NTSTATUS ip_unicast_enumerate_all( int family, void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
                                           void *dynamic_data, DWORD dynamic_size,
                                           void *static_data, DWORD static_size, DWORD_PTR *count )
 {
@@ -730,7 +730,6 @@ static NTSTATUS ip_unicast_enumerate_all( void *key_data, DWORD key_size, void *
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct ifaddrs *addrs, *entry;
-    int family = (key_size == sizeof(struct nsi_ipv4_unicast_key)) ? AF_INET : AF_INET6;
 
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
@@ -758,6 +757,22 @@ static NTSTATUS ip_unicast_enumerate_all( void *key_data, DWORD key_size, void *
     else status = STATUS_MORE_ENTRIES;
 
     return status;
+}
+
+static NTSTATUS ipv4_unicast_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                            void *dynamic_data, DWORD dynamic_size,
+                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+{
+    return ip_unicast_enumerate_all( AF_INET, key_data, key_size, rw_data, rw_size,
+                                     dynamic_data, dynamic_size, static_data, static_size, count );
+}
+
+static NTSTATUS ipv6_unicast_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                            void *dynamic_data, DWORD dynamic_size,
+                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+{
+    return ip_unicast_enumerate_all( AF_INET6, key_data, key_size, rw_data, rw_size,
+                                     dynamic_data, dynamic_size, static_data, static_size, count );
 }
 
 static NTSTATUS ip_unicast_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
@@ -1263,7 +1278,7 @@ static struct module_table ipv4_tables[] =
             sizeof(struct nsi_ipv4_unicast_key), sizeof(struct nsi_ip_unicast_rw),
             sizeof(struct nsi_ip_unicast_dynamic), sizeof(struct nsi_ip_unicast_static)
         },
-        ip_unicast_enumerate_all,
+        ipv4_unicast_enumerate_all,
         ip_unicast_get_all_parameters,
     },
     {
@@ -1328,7 +1343,7 @@ static struct module_table ipv6_tables[] =
             sizeof(struct nsi_ipv6_unicast_key), sizeof(struct nsi_ip_unicast_rw),
             sizeof(struct nsi_ip_unicast_dynamic), sizeof(struct nsi_ip_unicast_static)
         },
-        ip_unicast_enumerate_all,
+        ipv6_unicast_enumerate_all,
         ip_unicast_get_all_parameters,
     },
     {
