@@ -3562,7 +3562,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
     struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
     struct d3d10_effect_shader_variable *s;
 
-    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (pass == &null_pass)
     {
@@ -3578,9 +3578,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
 
     s = &impl_from_ID3D10EffectShaderVariable(pass->vs.pShaderVariable)->u.shader;
 
-    memset(desc, 0, sizeof(*desc));
-
     desc->Name = pass->name;
+    desc->Annotations = pass->annotation_count;
     desc->pIAInputSignature = (BYTE *)s->input_signature.signature;
     desc->IAInputSignatureSize = s->input_signature.signature_size;
     desc->StencilRef = pass->stencil_ref;
