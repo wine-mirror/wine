@@ -3559,33 +3559,33 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_pass_IsValid(ID3D10EffectPass *iface)
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *iface,
         D3D10_PASS_DESC *desc)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
     struct d3d10_effect_shader_variable *s;
 
     FIXME("iface %p, desc %p partial stub!\n", iface, desc);
 
-    if(This == &null_pass)
+    if (pass == &null_pass)
     {
         WARN("Null pass specified\n");
         return E_FAIL;
     }
 
-    if(!desc)
+    if (!desc)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
-    memset(desc, 0, sizeof(*desc));
-    desc->Name = This->name;
+    s = &impl_from_ID3D10EffectShaderVariable(pass->vs.pShaderVariable)->u.shader;
 
-    s = &impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)This->vs.pShaderVariable)->u.shader;
+    memset(desc, 0, sizeof(*desc));
+
+    desc->Name = pass->name;
     desc->pIAInputSignature = (BYTE *)s->input_signature.signature;
     desc->IAInputSignatureSize = s->input_signature.signature_size;
-
-    desc->StencilRef = This->stencil_ref;
-    desc->SampleMask = This->sample_mask;
-    memcpy(desc->BlendFactor, This->blend_factor, 4 * sizeof(float));
+    desc->StencilRef = pass->stencil_ref;
+    desc->SampleMask = pass->sample_mask;
+    memcpy(desc->BlendFactor, pass->blend_factor, 4 * sizeof(float));
 
     return S_OK;
 }
