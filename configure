@@ -1017,6 +1017,7 @@ enable_api_ms_win_core_profile_l1_1_0
 enable_api_ms_win_core_psapi_ansi_l1_1_0
 enable_api_ms_win_core_psapi_l1_1_0
 enable_api_ms_win_core_psapi_obsolete_l1_1_0
+enable_api_ms_win_core_psm_appnotify_l1_1_0
 enable_api_ms_win_core_quirks_l1_1_0
 enable_api_ms_win_core_realtime_l1_1_0
 enable_api_ms_win_core_registry_l1_1_0
@@ -20136,6 +20137,7 @@ wine_fn_config_makefile dlls/api-ms-win-core-profile-l1-1-0 enable_api_ms_win_co
 wine_fn_config_makefile dlls/api-ms-win-core-psapi-ansi-l1-1-0 enable_api_ms_win_core_psapi_ansi_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-psapi-l1-1-0 enable_api_ms_win_core_psapi_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-psapi-obsolete-l1-1-0 enable_api_ms_win_core_psapi_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-psm-appnotify-l1-1-0 enable_api_ms_win_core_psm_appnotify_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-quirks-l1-1-0 enable_api_ms_win_core_quirks_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-realtime-l1-1-0 enable_api_ms_win_core_realtime_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-registry-l1-1-0 enable_api_ms_win_core_registry_l1_1_0
