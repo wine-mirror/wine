@@ -2807,6 +2807,68 @@ BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHo
   return FALSE;
 }
 
+/******************************************************************
+ *    GetTcpStatistics (IPHLPAPI.@)
+ *
+ * Get the TCP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for TCP statistics
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetTcpStatistics( MIB_TCPSTATS *stats )
+{
+    return GetTcpStatisticsEx( stats, WS_AF_INET );
+}
+
+/******************************************************************
+ *    GetTcpStatisticsEx (IPHLPAPI.@)
+ *
+ * Get the IPv4 and IPv6 TCP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for TCP statistics
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetTcpStatisticsEx( MIB_TCPSTATS *stats, DWORD family )
+{
+    struct nsi_tcp_stats_dynamic dyn;
+    struct nsi_tcp_stats_static stat;
+    USHORT key = (USHORT)family;
+    DWORD err;
+
+    if (!stats || !ip_module_id( family )) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(*stats) );
+
+    err = NsiGetAllParameters( 1, &NPI_MS_TCP_MODULEID, NSI_TCP_STATS_TABLE, &key, sizeof(key), NULL, 0,
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (err) return err;
+
+    stats->u.RtoAlgorithm = stat.rto_algo;
+    stats->dwRtoMin = stat.rto_min;
+    stats->dwRtoMax = stat.rto_max;
+    stats->dwMaxConn = stat.max_conns;
+    stats->dwActiveOpens = dyn.active_opens;
+    stats->dwPassiveOpens = dyn.passive_opens;
+    stats->dwAttemptFails = dyn.attempt_fails;
+    stats->dwEstabResets = dyn.est_rsts;
+    stats->dwCurrEstab = dyn.cur_est;
+    stats->dwInSegs = (DWORD)dyn.in_segs;
+    stats->dwOutSegs = (DWORD)dyn.out_segs;
+    stats->dwRetransSegs = dyn.retrans_segs;
+    stats->dwInErrs = dyn.in_errs;
+    stats->dwOutRsts = dyn.out_rsts;
+    stats->dwNumConns = dyn.num_conns;
+
+    return err;
+}
 
 /******************************************************************
  *    GetTcpTable (IPHLPAPI.@)

@@ -815,9 +815,7 @@ static void test_tcp_stats( int family )
     ok( !err, "got %x\n", err );
 
     err = GetTcpStatisticsEx( &table, family );
-todo_wine_if(family == AF_INET6)
     ok( !err, "got %d\n", err );
-    if (err) goto err;
 
     err = NsiGetAllParameters( 1, &NPI_MS_TCP_MODULEID, NSI_TCP_STATS_TABLE, &key, sizeof(key), NULL, 0,
                                &dyn2, sizeof(dyn), NULL, 0 );
@@ -847,7 +845,6 @@ todo_wine_if(family == AF_INET6)
         table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts );
     ok( unstable( table.dwNumConns == dyn.num_conns ), "%d vs %d\n", table.dwNumConns, dyn.num_conns );
 
-err:
     winetest_pop_context();
 }
 

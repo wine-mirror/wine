@@ -715,8 +715,8 @@ static void testGetTcpStatisticsEx(void)
     }
 
     apiReturn = GetTcpStatisticsEx(&stats, AF_INET6);
-    todo_wine ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
-                 "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
+    ok(apiReturn == NO_ERROR || broken(apiReturn == ERROR_NOT_SUPPORTED),
+       "GetTcpStatisticsEx returned %d, expected NO_ERROR\n", apiReturn);
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP IPv6 Ex stats:\n" );
