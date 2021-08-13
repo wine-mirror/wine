@@ -143,28 +143,6 @@ BOOL set_map_mode( DC *dc, int mode )
 
 BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    switch (mode)
-    {
-    case MWT_IDENTITY:
-        dc->xformWorld2Wnd.eM11 = 1.0f;
-        dc->xformWorld2Wnd.eM12 = 0.0f;
-        dc->xformWorld2Wnd.eM21 = 0.0f;
-        dc->xformWorld2Wnd.eM22 = 1.0f;
-        dc->xformWorld2Wnd.eDx  = 0.0f;
-        dc->xformWorld2Wnd.eDy  = 0.0f;
-        break;
-    case MWT_LEFTMULTIPLY:
-        CombineTransform( &dc->xformWorld2Wnd, xform, &dc->xformWorld2Wnd );
-        break;
-    case MWT_RIGHTMULTIPLY:
-        CombineTransform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd, xform );
-        break;
-    default:
-        return FALSE;
-    }
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -361,9 +339,9 @@ BOOL WINAPI NtGdiScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
 
 
 /****************************************************************************
- *           ModifyWorldTransform   (GDI32.@)
+ *           NtGdiModifyWorldTransform   (win32u.@)
  */
-BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
+BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
 {
     BOOL ret = FALSE;
     DC *dc;
@@ -371,9 +349,25 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
     if (!xform && mode != MWT_IDENTITY) return FALSE;
     if ((dc = get_dc_ptr( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pModifyWorldTransform );
-        if (dc->attr->graphics_mode == GM_ADVANCED)
-            ret = physdev->funcs->pModifyWorldTransform( physdev, xform, mode );
+        switch (mode)
+        {
+        case MWT_IDENTITY:
+            dc->xformWorld2Wnd.eM11 = 1.0f;
+            dc->xformWorld2Wnd.eM12 = 0.0f;
+            dc->xformWorld2Wnd.eM21 = 0.0f;
+            dc->xformWorld2Wnd.eM22 = 1.0f;
+            dc->xformWorld2Wnd.eDx  = 0.0f;
+            dc->xformWorld2Wnd.eDy  = 0.0f;
+            ret = TRUE;
+            break;
+        case MWT_LEFTMULTIPLY:
+            ret = CombineTransform( &dc->xformWorld2Wnd, xform, &dc->xformWorld2Wnd );
+            break;
+        case MWT_RIGHTMULTIPLY:
+            ret = CombineTransform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd, xform );
+            break;
+        }
+        if (ret) DC_UpdateXforms( dc );
         release_dc_ptr( dc );
     }
     return ret;

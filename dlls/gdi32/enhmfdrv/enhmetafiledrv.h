@@ -81,7 +81,6 @@ extern BOOL     CDECL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, U
                                            void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                   INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;

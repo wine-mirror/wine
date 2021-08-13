@@ -601,6 +601,18 @@ BOOL WINAPI GetWorldTransform( HDC hdc, XFORM *xform )
     return NtGdiGetTransform( hdc, 0x203, xform );
 }
 
+/****************************************************************************
+ *           ModifyWorldTransform   (GDI32.@)
+ */
+BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ModifyWorldTransform( dc_attr, xform, mode )) return FALSE;
+    return NtGdiModifyWorldTransform( hdc, xform, mode );
+}
+
 /***********************************************************************
  *		SetStretchBltMode (GDI32.@)
  */
