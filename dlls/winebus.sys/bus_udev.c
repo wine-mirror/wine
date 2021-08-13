@@ -976,9 +976,23 @@ static const platform_vtbl lnxev_vtbl = {
 };
 #endif
 
-static int check_same_device(DEVICE_OBJECT *device, void* context)
+static const char *get_device_syspath(struct udev_device *dev)
 {
-    return !compare_platform_device(device, context);
+    struct udev_device *parent;
+
+    if ((parent = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL)))
+        return udev_device_get_syspath(parent);
+
+    if ((parent = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device")))
+        return udev_device_get_syspath(parent);
+
+    return "";
+}
+
+static int check_device_syspath(DEVICE_OBJECT *device, void* context)
+{
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    return strcmp(get_device_syspath(private->udev_device), context);
 }
 
 static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
@@ -1078,28 +1092,24 @@ static void try_add_device(struct udev_device *dev)
         return;
     }
 
+    TRACE("udev %s syspath %s\n", debugstr_a(devnode), udev_device_get_syspath(dev));
+
+#ifdef HAS_PROPER_INPUT_HEADER
+    device = bus_enumerate_hid_devices(&lnxev_vtbl, check_device_syspath, (void *)get_device_syspath(dev));
+    if (!device) device = bus_enumerate_hid_devices(&hidraw_vtbl, check_device_syspath, (void *)get_device_syspath(dev));
+    if (device)
+    {
+        TRACE("duplicate device found, not adding the new one\n");
+        close(fd);
+        return;
+    }
+#endif
+
     subsystem = udev_device_get_subsystem(dev);
     hiddev = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
     if (hiddev)
     {
         const char *bcdDevice = NULL;
-#ifdef HAS_PROPER_INPUT_HEADER
-        const platform_vtbl *other_vtbl = NULL;
-        DEVICE_OBJECT *dup = NULL;
-        if (strcmp(subsystem, "hidraw") == 0)
-            other_vtbl = &lnxev_vtbl;
-        else if (strcmp(subsystem, "input") == 0)
-            other_vtbl = &hidraw_vtbl;
-
-        if (other_vtbl)
-            dup = bus_enumerate_hid_devices(other_vtbl, check_same_device, dev);
-        if (dup)
-        {
-            TRACE("Duplicate cross bus device (%p) found, not adding the new one\n", dup);
-            close(fd);
-            return;
-        }
-#endif
         parse_uevent_info(udev_device_get_sysattr_value(hiddev, "uevent"),
                           &vid, &pid, &input, &serial);
         if (serial == NULL)
