@@ -55,6 +55,8 @@ extern BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom, INT
 extern BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ExcludeClipRect( HDC hdc, INT left, INT top, INT right,
                                     INT bottom ) DECLSPEC_HIDDEN;
+extern BOOL METADC_ExtEscape( HDC hdc, INT escape, INT input_size, const void *input,
+                              INT output_size, void *output ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
                                  UINT fill_type ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode ) DECLSPEC_HIDDEN;

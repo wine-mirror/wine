@@ -136,6 +136,17 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 }
 
 /***********************************************************************
+ *		ExtEscape	[GDI32.@]
+ */
+INT WINAPI ExtEscape( HDC hdc, INT escape, INT input_size, const char *input,
+                      INT output_size, char *output )
+{
+    if (is_meta_dc( hdc ))
+        return METADC_ExtEscape( hdc, escape, input_size, input, output_size, output );
+    return NtGdiExtEscape( hdc, NULL, 0, escape, input_size, input, output_size, output );
+}
+
+/***********************************************************************
  *		GetTextAlign (GDI32.@)
  */
 UINT WINAPI GetTextAlign( HDC hdc )

@@ -1253,25 +1253,12 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, LPCSTR in_data, LPVOID out
 
 
 /******************************************************************************
- *		ExtEscape	[GDI32.@]
+ *		NtGdiExtEscape   (win32u.@)
  *
  * Access capabilities of a particular device that are not available through GDI.
- *
- * PARAMS
- *    hdc         [I] Handle to device context
- *    nEscape     [I] Escape function
- *    cbInput     [I] Number of bytes in input structure
- *    lpszInData  [I] Pointer to input structure
- *    cbOutput    [I] Number of bytes in output structure
- *    lpszOutData [O] Pointer to output structure
- *
- * RETURNS
- *    Success: >0
- *    Not implemented: 0
- *    Failure: <0
  */
-INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData,
-                      INT cbOutput, LPSTR lpszOutData )
+INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, int driver_id, INT escape, INT input_size,
+                           const char *input, INT output_size, char *output )
 {
     PHYSDEV physdev;
     INT ret;
@@ -1280,7 +1267,7 @@ INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData,
     if (!dc) return 0;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pExtEscape );
-    ret = physdev->funcs->pExtEscape( physdev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
+    ret = physdev->funcs->pExtEscape( physdev, escape, input_size, input, output_size, output );
     release_dc_ptr( dc );
     return ret;
 }
