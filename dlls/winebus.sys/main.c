@@ -982,9 +982,9 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
     }
 
+    status = irp->IoStatus.Status;
     LeaveCriticalSection(&ext->cs);
 
-    status = irp->IoStatus.Status;
     if (status != STATUS_PENDING) IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
 }
