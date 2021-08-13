@@ -962,7 +962,11 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, vo
                 memcpy( entry.phys_addr, &sdl->sdl_data[sdl->sdl_nlen], entry.phys_addr_len );
                 if (rtm->rtm_rmx.rmx_expire == 0) entry.state = NlnsPermanent;
                 else entry.state = NlnsReachable;
+#ifdef SIN_ROUTER
                 entry.is_router = sinarp->sin_other & SIN_ROUTER;
+#else
+                entry.is_router = 0;
+#endif
                 entry.is_unreachable = 0; /* FIXME */
 
                 if (num < *count)
