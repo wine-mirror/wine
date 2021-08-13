@@ -968,6 +968,69 @@ void sdl_driver_unload( void )
     dlclose(sdl_handle);
 }
 
+static BOOL sdl_initialize(void)
+{
+    if (!(sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW)))
+    {
+        WARN("could not load %s\n", SONAME_LIBSDL2);
+        return FALSE;
+    }
+#define LOAD_FUNCPTR(f)                          \
+    if ((p##f = dlsym(sdl_handle, #f)) == NULL)  \
+    {                                            \
+        WARN("could not find symbol %s\n", #f);  \
+        goto failed;                             \
+    }
+    LOAD_FUNCPTR(SDL_GetError);
+    LOAD_FUNCPTR(SDL_Init);
+    LOAD_FUNCPTR(SDL_JoystickClose);
+    LOAD_FUNCPTR(SDL_JoystickEventState);
+    LOAD_FUNCPTR(SDL_JoystickGetGUID);
+    LOAD_FUNCPTR(SDL_JoystickGetGUIDString);
+    LOAD_FUNCPTR(SDL_JoystickInstanceID);
+    LOAD_FUNCPTR(SDL_JoystickName);
+    LOAD_FUNCPTR(SDL_JoystickNumAxes);
+    LOAD_FUNCPTR(SDL_JoystickOpen);
+    LOAD_FUNCPTR(SDL_WaitEvent);
+    LOAD_FUNCPTR(SDL_JoystickNumButtons);
+    LOAD_FUNCPTR(SDL_JoystickNumBalls);
+    LOAD_FUNCPTR(SDL_JoystickNumHats);
+    LOAD_FUNCPTR(SDL_JoystickGetAxis);
+    LOAD_FUNCPTR(SDL_JoystickGetHat);
+    LOAD_FUNCPTR(SDL_IsGameController);
+    LOAD_FUNCPTR(SDL_GameControllerClose);
+    LOAD_FUNCPTR(SDL_GameControllerGetAxis);
+    LOAD_FUNCPTR(SDL_GameControllerGetButton);
+    LOAD_FUNCPTR(SDL_GameControllerName);
+    LOAD_FUNCPTR(SDL_GameControllerOpen);
+    LOAD_FUNCPTR(SDL_GameControllerEventState);
+    LOAD_FUNCPTR(SDL_HapticClose);
+    LOAD_FUNCPTR(SDL_HapticDestroyEffect);
+    LOAD_FUNCPTR(SDL_HapticNewEffect);
+    LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
+    LOAD_FUNCPTR(SDL_HapticQuery);
+    LOAD_FUNCPTR(SDL_HapticRumbleInit);
+    LOAD_FUNCPTR(SDL_HapticRumblePlay);
+    LOAD_FUNCPTR(SDL_HapticRumbleSupported);
+    LOAD_FUNCPTR(SDL_HapticRunEffect);
+    LOAD_FUNCPTR(SDL_HapticStopAll);
+    LOAD_FUNCPTR(SDL_JoystickIsHaptic);
+    LOAD_FUNCPTR(SDL_memset);
+    LOAD_FUNCPTR(SDL_GameControllerAddMapping);
+    LOAD_FUNCPTR(SDL_RegisterEvents);
+    LOAD_FUNCPTR(SDL_PushEvent);
+#undef LOAD_FUNCPTR
+    pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
+    pSDL_JoystickGetProductVersion = dlsym(sdl_handle, "SDL_JoystickGetProductVersion");
+    pSDL_JoystickGetVendor = dlsym(sdl_handle, "SDL_JoystickGetVendor");
+    return TRUE;
+
+failed:
+    dlclose(sdl_handle);
+    sdl_handle = NULL;
+    return FALSE;
+}
+
 NTSTATUS sdl_driver_init(void)
 {
     static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
@@ -976,57 +1039,7 @@ NTSTATUS sdl_driver_init(void)
     HANDLE events[2];
     DWORD result;
 
-    if (sdl_handle == NULL)
-    {
-        sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW);
-        if (!sdl_handle) {
-            WARN("could not load %s\n", SONAME_LIBSDL2);
-            return STATUS_UNSUCCESSFUL;
-        }
-#define LOAD_FUNCPTR(f) if((p##f = dlsym(sdl_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
-        LOAD_FUNCPTR(SDL_GetError);
-        LOAD_FUNCPTR(SDL_Init);
-        LOAD_FUNCPTR(SDL_JoystickClose);
-        LOAD_FUNCPTR(SDL_JoystickEventState);
-        LOAD_FUNCPTR(SDL_JoystickGetGUID);
-        LOAD_FUNCPTR(SDL_JoystickGetGUIDString);
-        LOAD_FUNCPTR(SDL_JoystickInstanceID);
-        LOAD_FUNCPTR(SDL_JoystickName);
-        LOAD_FUNCPTR(SDL_JoystickNumAxes);
-        LOAD_FUNCPTR(SDL_JoystickOpen);
-        LOAD_FUNCPTR(SDL_WaitEvent);
-        LOAD_FUNCPTR(SDL_JoystickNumButtons);
-        LOAD_FUNCPTR(SDL_JoystickNumBalls);
-        LOAD_FUNCPTR(SDL_JoystickNumHats);
-        LOAD_FUNCPTR(SDL_JoystickGetAxis);
-        LOAD_FUNCPTR(SDL_JoystickGetHat);
-        LOAD_FUNCPTR(SDL_IsGameController);
-        LOAD_FUNCPTR(SDL_GameControllerClose);
-        LOAD_FUNCPTR(SDL_GameControllerGetAxis);
-        LOAD_FUNCPTR(SDL_GameControllerGetButton);
-        LOAD_FUNCPTR(SDL_GameControllerName);
-        LOAD_FUNCPTR(SDL_GameControllerOpen);
-        LOAD_FUNCPTR(SDL_GameControllerEventState);
-        LOAD_FUNCPTR(SDL_HapticClose);
-        LOAD_FUNCPTR(SDL_HapticDestroyEffect);
-        LOAD_FUNCPTR(SDL_HapticNewEffect);
-        LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
-        LOAD_FUNCPTR(SDL_HapticQuery);
-        LOAD_FUNCPTR(SDL_HapticRumbleInit);
-        LOAD_FUNCPTR(SDL_HapticRumblePlay);
-        LOAD_FUNCPTR(SDL_HapticRumbleSupported);
-        LOAD_FUNCPTR(SDL_HapticRunEffect);
-        LOAD_FUNCPTR(SDL_HapticStopAll);
-        LOAD_FUNCPTR(SDL_JoystickIsHaptic);
-        LOAD_FUNCPTR(SDL_memset);
-        LOAD_FUNCPTR(SDL_GameControllerAddMapping);
-        LOAD_FUNCPTR(SDL_RegisterEvents);
-        LOAD_FUNCPTR(SDL_PushEvent);
-#undef LOAD_FUNCPTR
-        pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
-        pSDL_JoystickGetProductVersion = dlsym(sdl_handle, "SDL_JoystickGetProductVersion");
-        pSDL_JoystickGetVendor = dlsym(sdl_handle, "SDL_JoystickGetVendor");
-    }
+    if (!sdl_handle && !sdl_initialize()) return STATUS_UNSUCCESSFUL;
 
     map_controllers = check_bus_option(&controller_mode, 1);
 
@@ -1052,7 +1065,6 @@ NTSTATUS sdl_driver_init(void)
     }
     CloseHandle(events[1]);
 
-sym_not_found:
     dlclose(sdl_handle);
     sdl_handle = NULL;
     return STATUS_UNSUCCESSFUL;
