@@ -28,6 +28,7 @@
 #include "wownt32.h"
 #include "excpt.h"
 #include "winternl.h"
+#include "ntgdi.h"
 #include "kernel16_private.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -309,6 +310,24 @@ VOID WINAPI K32WOWDirectedYield16( WORD htask16 )
     DirectedYield16( (HTASK16)htask16 );
 }
 
+static HANDLE gdi_handle32( WORD handle )
+{
+    static GDI_SHARED_MEMORY *gdi_shared;
+
+    if (!gdi_shared)
+    {
+        if (NtCurrentTeb()->GdiBatchCount)
+        {
+            TEB64 *teb64 = (TEB64 *)(UINT_PTR)NtCurrentTeb()->GdiBatchCount;
+            PEB64 *peb64 = (PEB64 *)(UINT_PTR)teb64->Peb;
+            gdi_shared = (GDI_SHARED_MEMORY *)(UINT_PTR)peb64->GdiSharedHandleTable;
+        }
+        else gdi_shared = (GDI_SHARED_MEMORY *)NtCurrentTeb()->Peb->GdiSharedHandleTable;
+        if (!gdi_shared) return ULongToHandle( handle );
+    }
+
+    return ULongToHandle( (gdi_shared->Handles[handle].Unique << 16) | handle );
+}
 
 /***********************************************************************
  *           K32WOWHandle32              (KERNEL32.57)
@@ -321,6 +340,9 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HMENU:
     case WOW_TYPE_HDWP:
     case WOW_TYPE_HDROP:
+    case WOW_TYPE_HACCEL:
+        return (HANDLE)(ULONG_PTR)handle;
+
     case WOW_TYPE_HDC:
     case WOW_TYPE_HFONT:
     case WOW_TYPE_HRGN:
@@ -328,12 +350,8 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HBRUSH:
     case WOW_TYPE_HPALETTE:
     case WOW_TYPE_HPEN:
-    case WOW_TYPE_HACCEL:
-        return (HANDLE)(ULONG_PTR)handle;
-
     case WOW_TYPE_HMETAFILE:
-        FIXME( "conversion of metafile handles not supported yet\n" );
-        return (HANDLE)(ULONG_PTR)handle;
+        return gdi_handle32( handle );
 
     case WOW_TYPE_HTASK:
         return ((TDB *)GlobalLock16(handle))->teb->ClientId.UniqueThread;
