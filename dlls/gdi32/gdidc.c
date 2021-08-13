@@ -136,6 +136,102 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 }
 
 /***********************************************************************
+ *             Escape  (GDI32.@)
+ */
+INT WINAPI Escape( HDC hdc, INT escape, INT in_count, const char *in_data, void *out_data )
+{
+    INT ret;
+    POINT *pt;
+
+    switch (escape)
+    {
+    case ABORTDOC:
+        return AbortDoc( hdc );
+
+    case ENDDOC:
+        return EndDoc( hdc );
+
+    case GETPHYSPAGESIZE:
+        pt = out_data;
+        pt->x = GetDeviceCaps( hdc, PHYSICALWIDTH );
+        pt->y = GetDeviceCaps( hdc, PHYSICALHEIGHT );
+        return 1;
+
+    case GETPRINTINGOFFSET:
+        pt = out_data;
+        pt->x = GetDeviceCaps( hdc, PHYSICALOFFSETX );
+        pt->y = GetDeviceCaps( hdc, PHYSICALOFFSETY );
+        return 1;
+
+    case GETSCALINGFACTOR:
+        pt = out_data;
+        pt->x = GetDeviceCaps( hdc, SCALINGFACTORX );
+        pt->y = GetDeviceCaps( hdc, SCALINGFACTORY );
+        return 1;
+
+    case NEWFRAME:
+        return EndPage( hdc );
+
+    case SETABORTPROC:
+        return SetAbortProc( hdc, (ABORTPROC)in_data );
+
+    case STARTDOC:
+        {
+            DOCINFOA doc;
+            char *name = NULL;
+
+            /* in_data may not be 0 terminated so we must copy it */
+            if (in_data)
+            {
+                name = HeapAlloc( GetProcessHeap(), 0, in_count+1 );
+                memcpy( name, in_data, in_count );
+                name[in_count] = 0;
+            }
+            /* out_data is actually a pointer to the DocInfo structure and used as
+             * a second input parameter */
+            if (out_data) doc = *(DOCINFOA *)out_data;
+            else
+            {
+                doc.cbSize = sizeof(doc);
+                doc.lpszOutput = NULL;
+                doc.lpszDatatype = NULL;
+                doc.fwType = 0;
+            }
+            doc.lpszDocName = name;
+            ret = StartDocA( hdc, &doc );
+            HeapFree( GetProcessHeap(), 0, name );
+            if (ret > 0) ret = StartPage( hdc );
+            return ret;
+        }
+
+    case QUERYESCSUPPORT:
+        {
+            DWORD code;
+
+            if (in_count < sizeof(SHORT)) return 0;
+            code = (in_count < sizeof(DWORD)) ? *(const USHORT *)in_data : *(const DWORD *)in_data;
+            switch (code)
+            {
+            case ABORTDOC:
+            case ENDDOC:
+            case GETPHYSPAGESIZE:
+            case GETPRINTINGOFFSET:
+            case GETSCALINGFACTOR:
+            case NEWFRAME:
+            case QUERYESCSUPPORT:
+            case SETABORTPROC:
+            case STARTDOC:
+                return TRUE;
+            }
+            break;
+        }
+    }
+
+    /* if not handled internally, pass it to the driver */
+    return ExtEscape( hdc, escape, in_count, in_data, 0, out_data );
+}
+
+/***********************************************************************
  *		ExtEscape	[GDI32.@]
  */
 INT WINAPI ExtEscape( HDC hdc, INT escape, INT input_size, const char *input,
