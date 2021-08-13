@@ -91,6 +91,10 @@ extern BOOL METADC_ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom, INT y_num,
 extern HGDIOBJ METADC_SelectObject( HDC hdc, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SelectPalette( HDC hdc, HPALETTE palette ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetBkMode( HDC hdc, INT mode ) DECLSPEC_HIDDEN;
+extern INT  METADC_SetDIBitsToDevice( HDC hdc, INT x_dest, INT y_dest, DWORD width, DWORD height,
+                                      INT x_src, INT y_src, UINT startscan, UINT lines,
+                                      const void *bits, const BITMAPINFO *info,
+                                      UINT coloruse ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetLayout( HDC hdc, DWORD layout ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetTextCharacterExtra( HDC hdc, INT extra ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SetMapMode( HDC hdc, INT mode ) DECLSPEC_HIDDEN;
@@ -173,6 +177,10 @@ extern BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode ) DECLSPEC_HIDDEN;
+extern INT  EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dest, INT y_dest, DWORD width,
+                                     DWORD height, INT x_src, INT y_src, UINT startscan,
+                                     UINT lines, const void *bits, const BITMAPINFO *info,
+                                     UINT coloruse ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags ) DECLSPEC_HIDDEN;

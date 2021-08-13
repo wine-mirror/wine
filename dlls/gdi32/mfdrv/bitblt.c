@@ -146,11 +146,11 @@ INT CDECL MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
 
 
 /***********************************************************************
- *           MFDRV_SetDIBitsToDevice
+ *           METADC_SetDIBitsToDevice
  */
-INT CDECL MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
-                                   DWORD cy, INT xSrc, INT ySrc, UINT startscan,
-                                   UINT lines, LPCVOID bits, BITMAPINFO *info, UINT coloruse )
+INT METADC_SetDIBitsToDevice( HDC hdc, INT x_dst, INT y_dst, DWORD width, DWORD height,
+                              INT x_src, INT y_src, UINT startscan, UINT lines,
+                              const void *bits, const BITMAPINFO *info, UINT coloruse )
 
 {
     DWORD infosize = get_dib_info_size(info, coloruse);
@@ -163,15 +163,15 @@ INT CDECL MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
     mr->rdParm[0] = coloruse;
     mr->rdParm[1] = lines;
     mr->rdParm[2] = startscan;
-    mr->rdParm[3] = (INT16)ySrc;
-    mr->rdParm[4] = (INT16)xSrc;
-    mr->rdParm[5] = (INT16)cy;
-    mr->rdParm[6] = (INT16)cx;
-    mr->rdParm[7] = (INT16)yDst;
-    mr->rdParm[8] = (INT16)xDst;
+    mr->rdParm[3] = y_src;
+    mr->rdParm[4] = x_src;
+    mr->rdParm[5] = height;
+    mr->rdParm[6] = width;
+    mr->rdParm[7] = y_dst;
+    mr->rdParm[8] = x_dst;
     memcpy(mr->rdParm + 9, info, infosize);
     memcpy(mr->rdParm + 9 + infosize / 2, bits, info->bmiHeader.biSizeImage);
-    MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
+    metadc_record( hdc, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     return lines;
 }

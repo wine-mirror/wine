@@ -185,7 +185,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
     MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
-    MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
+    NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetPixel */

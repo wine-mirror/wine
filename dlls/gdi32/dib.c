@@ -878,12 +878,13 @@ done:
 }
 
 /***********************************************************************
- *           SetDIBitsToDevice   (GDI32.@)
+ *           NtGdiSetDIBitsToDeviceInternal   (win32u.@)
  */
-INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
-                           DWORD cy, INT xSrc, INT ySrc, UINT startscan,
-                           UINT lines, LPCVOID bits, const BITMAPINFO *bmi,
-                           UINT coloruse )
+INT WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT xDest, INT yDest, DWORD cx,
+                                           DWORD cy, INT xSrc, INT ySrc, UINT startscan,
+                                           UINT lines, const void *bits, const BITMAPINFO *bmi,
+                                           UINT coloruse, UINT max_bits, UINT max_info,
+                                           BOOL xform_coords, HANDLE xform )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;

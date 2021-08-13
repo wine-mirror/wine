@@ -1279,6 +1279,28 @@ BOOL WINAPI GdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int
 }
 
 /***********************************************************************
+ *           SetDIBitsToDevice   (GDI32.@)
+ */
+INT WINAPI SetDIBitsToDevice( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
+                              DWORD cy, INT x_src, INT y_src, UINT startscan,
+                              UINT lines, const void *bits, const BITMAPINFO *bmi,
+                              UINT coloruse )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc ))
+        return METADC_SetDIBitsToDevice( hdc, x_dst, y_dst, cx, cy, x_src, y_src, startscan,
+                                         lines, bits, bmi, coloruse );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SetDIBitsToDevice( dc_attr, x_dst, y_dst, cx, cy, x_src, y_src,
+                                                  startscan, lines, bits, bmi, coloruse ))
+        return 0;
+    return NtGdiSetDIBitsToDeviceInternal( hdc, x_dst, y_dst, cx, cy, x_src, y_src,
+                                           startscan, lines, bits, bmi, coloruse,
+                                           0, 0, FALSE, NULL );
+}
+
+/***********************************************************************
  *           BeginPath    (GDI32.@)
  */
 BOOL WINAPI BeginPath(HDC hdc)

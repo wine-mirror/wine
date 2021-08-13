@@ -301,38 +301,47 @@ INT CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width
                                     INT xSrc, INT ySrc, UINT startscan, UINT lines,
                                     LPCVOID bits, BITMAPINFO *info, UINT wUsage )
 {
+    /* FIXME: Update bound rect */
+    return lines;
+}
+
+BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD width, DWORD height,
+                              INT x_src, INT y_src, UINT startscan, UINT lines,
+                              const void *bits, const BITMAPINFO *info, UINT usage )
+{
     EMRSETDIBITSTODEVICE* pEMR;
-    DWORD bmiSize = get_dib_info_size(info, wUsage);
+    DWORD bmiSize = get_dib_info_size( info, usage );
     DWORD size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + info->bmiHeader.biSizeImage;
+    BOOL ret;
 
     pEMR = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!pEMR) return 0;
+    if (!pEMR) return FALSE;
 
     pEMR->emr.iType = EMR_SETDIBITSTODEVICE;
     pEMR->emr.nSize = size;
-    pEMR->rclBounds.left = xDst;
-    pEMR->rclBounds.top = yDst;
-    pEMR->rclBounds.right = xDst + width - 1;
-    pEMR->rclBounds.bottom = yDst + height - 1;
-    pEMR->xDest = xDst;
-    pEMR->yDest = yDst;
-    pEMR->xSrc = xSrc;
-    pEMR->ySrc = ySrc;
+    pEMR->rclBounds.left = x_dst;
+    pEMR->rclBounds.top = y_dst;
+    pEMR->rclBounds.right = x_dst + width - 1;
+    pEMR->rclBounds.bottom = y_dst + height - 1;
+    pEMR->xDest = x_dst;
+    pEMR->yDest = y_dst;
+    pEMR->xSrc = x_src;
+    pEMR->ySrc = y_src;
     pEMR->cxSrc = width;
     pEMR->cySrc = height;
     pEMR->offBmiSrc = sizeof(EMRSETDIBITSTODEVICE);
     pEMR->cbBmiSrc = bmiSize;
     pEMR->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + bmiSize;
     pEMR->cbBitsSrc = info->bmiHeader.biSizeImage;
-    pEMR->iUsageSrc = wUsage;
+    pEMR->iUsageSrc = usage;
     pEMR->iStartScan = startscan;
     pEMR->cScans = lines;
     memcpy((BYTE*)pEMR + pEMR->offBmiSrc, info, bmiSize);
     memcpy((BYTE*)pEMR + pEMR->offBitsSrc, bits, info->bmiHeader.biSizeImage);
 
-    if (EMFDRV_WriteRecord(dev, (EMR*)pEMR))
-        EMFDRV_UpdateBBox(dev, &(pEMR->rclBounds));
+    if ((ret = EMFDRV_WriteRecord( dc_attr->emf, (EMR*)pEMR )))
+        EMFDRV_UpdateBBox( dc_attr->emf, &pEMR->rclBounds );
 
     HeapFree( GetProcessHeap(), 0, pEMR);
-    return lines;
+    return ret;
 }

@@ -263,6 +263,11 @@ LONG     WINAPI NtGdiSetBitmapBits( HBITMAP hbitmap, LONG count, const void *bit
 BOOL     WINAPI NtGdiSetBitmapDimension( HBITMAP hbitmap, INT x, INT y, SIZE *prev_size );
 BOOL     WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *prev_org );
 UINT     WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags );
+INT      WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
+                                                DWORD cy, INT x_src, INT y_src, UINT startscan,
+                                                UINT lines, const void *bits, const BITMAPINFO *bmi,
+                                                UINT coloruse, UINT max_bits, UINT max_info,
+                                                BOOL xform_coords, HANDLE xform );
 BOOL     WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr );
 DWORD    WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout );
 INT      WINAPI NtGdiSetMetaRgn( HDC hdc );
