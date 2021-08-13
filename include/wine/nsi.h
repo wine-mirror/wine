@@ -292,6 +292,35 @@ struct nsi_ip_forward_static
     DWORD if_index;
 };
 
+/* Undocumented NSI TCP tables */
+#define NSI_TCP_STATS_TABLE                0
+
+struct nsi_tcp_stats_dynamic
+{
+    DWORD active_opens;
+    DWORD passive_opens;
+    DWORD attempt_fails;
+    DWORD est_rsts;
+    DWORD cur_est;
+    DWORD pad; /* ? */
+    ULONGLONG in_segs;
+    ULONGLONG out_segs;
+    DWORD retrans_segs;
+    DWORD out_rsts;
+    DWORD in_errs;
+    DWORD num_conns;
+    DWORD unk[12];
+};
+
+struct nsi_tcp_stats_static
+{
+    DWORD rto_algo;
+    DWORD rto_min;
+    DWORD rto_max;
+    DWORD max_conns;
+    DWORD unk;
+};
+
 /* Wine specific ioctl interface */
 
 #define IOCTL_NSIPROXY_WINE_ENUMERATE_ALL         CTL_CODE(FILE_DEVICE_NETWORK, 0x400, METHOD_BUFFERED, 0)

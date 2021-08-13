@@ -6,4 +6,5 @@ C_SRCS = \
 	device.c \
 	ip.c \
 	ndis.c \
-	nsi.c
+	nsi.c \
+	tcp.c

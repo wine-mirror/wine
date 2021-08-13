@@ -33,6 +33,11 @@ static int bounded( ULONG64 val, ULONG64 lo, ULONG64 hi )
     return lo <= val && val <= hi;
 }
 
+static int unstable( int val )
+{
+    return !winetest_interactive || val;
+}
+
 static void test_nsi_api( void )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, name2), FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, unk),
@@ -795,6 +800,57 @@ static void test_ip_forward( int family )
     winetest_pop_context();
 }
 
+static void test_tcp_stats( int family )
+{
+    DWORD err;
+    USHORT key = family;
+    struct nsi_tcp_stats_dynamic dyn, dyn2;
+    struct nsi_tcp_stats_static stat;
+    MIB_TCPSTATS table;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    err = NsiGetAllParameters( 1, &NPI_MS_TCP_MODULEID, NSI_TCP_STATS_TABLE, &key, sizeof(key), NULL, 0,
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    ok( !err, "got %x\n", err );
+
+    err = GetTcpStatisticsEx( &table, family );
+todo_wine_if(family == AF_INET6)
+    ok( !err, "got %d\n", err );
+    if (err) goto err;
+
+    err = NsiGetAllParameters( 1, &NPI_MS_TCP_MODULEID, NSI_TCP_STATS_TABLE, &key, sizeof(key), NULL, 0,
+                               &dyn2, sizeof(dyn), NULL, 0 );
+    ok( !err, "got %x\n", err );
+
+    ok( table.dwRtoAlgorithm == stat.rto_algo, "%d vs %d\n", table.dwRtoAlgorithm, stat.rto_algo );
+    ok( table.dwRtoMin == stat.rto_min, "%d vs %d\n", table.dwRtoMin, stat.rto_min );
+    ok( table.dwRtoMax == stat.rto_max,  "%d vs %d\n", table.dwRtoMax, stat.rto_max );
+    ok( table.dwMaxConn == stat.max_conns, "%d vs %d\n", table.dwMaxConn, stat.max_conns );
+
+    ok( unstable( table.dwActiveOpens == dyn.active_opens ), "%d vs %d\n", table.dwActiveOpens, dyn.active_opens );
+    ok( unstable( table.dwPassiveOpens == dyn.passive_opens ), "%d vs %d\n", table.dwPassiveOpens, dyn.passive_opens );
+    ok( bounded( table.dwAttemptFails, dyn.attempt_fails, dyn2.attempt_fails ), "%d vs [%d %d]\n",
+        table.dwAttemptFails, dyn.attempt_fails, dyn2.attempt_fails );
+    ok( bounded( table.dwEstabResets, dyn.est_rsts, dyn2.est_rsts ), "%d vs [%d %d]\n",
+        table.dwEstabResets, dyn.est_rsts, dyn2.est_rsts );
+    ok( unstable( table.dwCurrEstab == dyn.cur_est ), "%d vs %d\n", table.dwCurrEstab, dyn.cur_est );
+    ok( bounded( table.dwInSegs, dyn.in_segs, dyn2.in_segs ), "%d vs [%I64d %I64d]\n",
+        table.dwInSegs, dyn.in_segs, dyn2.in_segs );
+    ok( bounded( table.dwOutSegs, dyn.out_segs, dyn2.out_segs ), "%d vs [%I64d %I64d]\n",
+        table.dwOutSegs, dyn.out_segs, dyn2.out_segs );
+    ok( bounded( table.dwRetransSegs, dyn.retrans_segs, dyn2.retrans_segs ), "%d vs [%d %d]\n",
+        table.dwRetransSegs, dyn.retrans_segs, dyn2.retrans_segs );
+    ok( bounded( table.dwInErrs, dyn.in_errs, dyn2.in_errs ), "%d vs [%d %d]\n",
+        table.dwInErrs, dyn.in_errs, dyn2.in_errs );
+    ok( bounded( table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts ), "%d vs [%d %d]\n",
+        table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts );
+    ok( unstable( table.dwNumConns == dyn.num_conns ), "%d vs %d\n", table.dwNumConns, dyn.num_conns );
+
+err:
+    winetest_pop_context();
+}
+
 START_TEST( nsi )
 {
     test_nsi_api();
@@ -814,4 +870,7 @@ START_TEST( nsi )
     test_ip_neighbour( AF_INET6 );
     test_ip_forward( AF_INET );
     test_ip_forward( AF_INET6 );
+
+    test_tcp_stats( AF_INET );
+    test_tcp_stats( AF_INET6 );
 }

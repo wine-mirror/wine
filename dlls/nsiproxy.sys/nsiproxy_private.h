@@ -115,3 +115,4 @@ struct module
 extern const struct module ndis_module DECLSPEC_HIDDEN;
 extern const struct module ipv4_module DECLSPEC_HIDDEN;
 extern const struct module ipv6_module DECLSPEC_HIDDEN;
+extern const struct module tcp_module DECLSPEC_HIDDEN;
