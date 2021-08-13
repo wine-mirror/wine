@@ -105,6 +105,8 @@ enum
     NtGdiSetMapMode = 8,
 };
 
+#define MWT_SET  4
+
 /* structs not compatible with native Windows */
 #ifdef __WINESRC__
 

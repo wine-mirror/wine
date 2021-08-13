@@ -366,6 +366,11 @@ BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
         case MWT_RIGHTMULTIPLY:
             ret = CombineTransform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd, xform );
             break;
+        case MWT_SET:
+            ret = dc->attr->graphics_mode == GM_ADVANCED &&
+                xform->eM11 * xform->eM22 != xform->eM12 * xform->eM21;
+            if (ret) dc->xformWorld2Wnd = *xform;
+            break;
         }
         if (ret) DC_UpdateXforms( dc );
         release_dc_ptr( dc );
