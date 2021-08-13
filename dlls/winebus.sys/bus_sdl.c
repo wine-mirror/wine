@@ -862,6 +862,57 @@ static void process_device_event(SDL_Event *event)
         set_mapped_report_from_event(event);
 }
 
+static void sdl_load_mappings(void)
+{
+    HKEY key;
+    static const WCHAR szPath[] = {'m','a','p',0};
+    const char *mapping;
+
+    if ((mapping = getenv("SDL_GAMECONTROLLERCONFIG")))
+    {
+        TRACE("Setting environment mapping %s\n", debugstr_a(mapping));
+        if (pSDL_GameControllerAddMapping(mapping) < 0)
+            WARN("Failed to add environment mapping %s\n", pSDL_GetError());
+    }
+    else if (!RegOpenKeyExW(driver_key, szPath, 0, KEY_QUERY_VALUE, &key))
+    {
+        DWORD index = 0;
+        CHAR *buffer = NULL;
+        DWORD buffer_len = 0;
+        LSTATUS rc;
+
+        do
+        {
+            CHAR name[255];
+            DWORD name_len;
+            DWORD type;
+            DWORD data_len = buffer_len;
+
+            name_len = sizeof(name);
+            rc = RegEnumValueA(key, index, name, &name_len, NULL, &type, (LPBYTE)buffer, &data_len);
+            if (rc == ERROR_MORE_DATA || buffer == NULL)
+            {
+                if (buffer) buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, data_len);
+                else buffer = HeapAlloc(GetProcessHeap(), 0, data_len);
+                buffer_len = data_len;
+
+                name_len = sizeof(name);
+                rc = RegEnumValueA(key, index, name, &name_len, NULL, &type, (LPBYTE)buffer, &data_len);
+            }
+
+            if (rc == STATUS_SUCCESS)
+            {
+                TRACE("Setting registry mapping %s\n", debugstr_a(buffer));
+                if (pSDL_GameControllerAddMapping(buffer) < 0)
+                    WARN("Failed to add registry mapping %s\n", pSDL_GetError());
+                index++;
+            }
+        } while (rc == STATUS_SUCCESS);
+        HeapFree(GetProcessHeap(), 0, buffer);
+        NtClose(key);
+    }
+}
+
 static DWORD CALLBACK deviceloop_thread(void *args)
 {
     HANDLE init_done = args;
@@ -877,57 +928,7 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     pSDL_GameControllerEventState(SDL_ENABLE);
 
     /* Process mappings */
-    if (pSDL_GameControllerAddMapping != NULL)
-    {
-        HKEY key;
-        static const WCHAR szPath[] = {'m','a','p',0};
-        const char *mapping;
-
-        if ((mapping = getenv("SDL_GAMECONTROLLERCONFIG")))
-        {
-            TRACE("Setting environment mapping %s\n", debugstr_a(mapping));
-            if (pSDL_GameControllerAddMapping(mapping) < 0)
-                WARN("Failed to add environment mapping %s\n", pSDL_GetError());
-        }
-        else if (!RegOpenKeyExW(driver_key, szPath, 0, KEY_QUERY_VALUE, &key))
-        {
-            DWORD index = 0;
-            CHAR *buffer = NULL;
-            DWORD buffer_len = 0;
-            LSTATUS rc;
-
-            do {
-                CHAR name[255];
-                DWORD name_len;
-                DWORD type;
-                DWORD data_len = buffer_len;
-
-                name_len = sizeof(name);
-                rc = RegEnumValueA(key, index, name, &name_len, NULL, &type, (LPBYTE)buffer, &data_len);
-                if (rc == ERROR_MORE_DATA || buffer == NULL)
-                {
-                    if (buffer)
-                        buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, data_len);
-                    else
-                        buffer = HeapAlloc(GetProcessHeap(), 0, data_len);
-                    buffer_len = data_len;
-
-                    name_len = sizeof(name);
-                    rc = RegEnumValueA(key, index, name, &name_len, NULL, &type, (LPBYTE)buffer, &data_len);
-                }
-
-                if (rc == STATUS_SUCCESS)
-                {
-                    TRACE("Setting registry mapping %s\n", debugstr_a(buffer));
-                    if (pSDL_GameControllerAddMapping(buffer) < 0)
-                        WARN("Failed to add registry mapping %s\n", pSDL_GetError());
-                    index ++;
-                }
-            } while (rc == STATUS_SUCCESS);
-            HeapFree(GetProcessHeap(), 0, buffer);
-            NtClose(key);
-        }
-    }
+    if (pSDL_GameControllerAddMapping != NULL) sdl_load_mappings();
 
     SetEvent(init_done);
 
