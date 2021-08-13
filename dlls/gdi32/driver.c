@@ -891,7 +891,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GradientFill,               /* pGradientFill */
     nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */
-    nulldrv_ModifyWorldTransform,       /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
     nulldrv_PaintRgn,                   /* pPaintRgn */
     nulldrv_PatBlt,                     /* pPatBlt */
@@ -923,7 +922,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
     nulldrv_SetPixel,                   /* pSetPixel */
     nulldrv_SetTextColor,               /* pSetTextColor */
-    nulldrv_SetWorldTransform,          /* pSetWorldTransform */
     nulldrv_StartDoc,                   /* pStartDoc */
     nulldrv_StartPage,                  /* pStartPage */
     nulldrv_StretchBlt,                 /* pStretchBlt */

@@ -94,7 +94,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_GradientFill,             /* pGradientFill */
     EMFDRV_InvertRgn,                /* pInvertRgn */
     EMFDRV_LineTo,                   /* pLineTo */
-    NULL,                            /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
     NULL,                            /* pPaintRgn */
     EMFDRV_PatBlt,                   /* pPatBlt */
@@ -126,7 +125,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetPixel,                 /* pSetPixel */
     EMFDRV_SetTextColor,             /* pSetTextColor */
-    NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */

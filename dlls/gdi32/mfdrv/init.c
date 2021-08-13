@@ -159,7 +159,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pGradientFill */
     NULL,                            /* pInvertRgn */
     NULL,                            /* pLineTo */
-    NULL,                            /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
     NULL,                            /* pPaintRgn */
     NULL,                            /* pPatBlt */
@@ -191,7 +190,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetPixel */
     MFDRV_SetTextColor,              /* pSetTextColor */
-    NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */

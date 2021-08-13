@@ -3871,7 +3871,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pGradientFill */
     NULL,                           /* pInvertRgn */
     NULL,                           /* pLineTo */
-    NULL,                           /* pModifyWorldTransform */
     NULL,                           /* pMoveTo */
     NULL,                           /* pPaintRgn */
     NULL,                           /* pPatBlt */
@@ -3903,7 +3902,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pSetDeviceGammaRamp */
     NULL,                           /* pSetPixel */
     NULL,                           /* pSetTextColor */
-    NULL,                           /* pSetWorldTransform */
     NULL,                           /* pStartDoc */
     NULL,                           /* pStartPage */
     NULL,                           /* pStretchBlt */

@@ -141,16 +141,6 @@ BOOL set_map_mode( DC *dc, int mode )
     return TRUE;
 }
 
-BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode )
-{
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform )
-{
-    return TRUE;
-}
-
 /***********************************************************************
  *           dp_to_lp
  *

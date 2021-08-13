@@ -321,7 +321,6 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pGradientFill */
     NULL,                                   /* pInvertRgn */
     NULL,                                   /* pLineTo */
-    NULL,                                   /* pModifyWorldTransform */
     NULL,                                   /* pMoveTo */
     NULL,                                   /* pPaintRgn */
     NULL,                                   /* pPatBlt */
@@ -353,7 +352,6 @@ static const struct gdi_dc_funcs macdrv_funcs =
     macdrv_SetDeviceGammaRamp,              /* pSetDeviceGammaRamp */
     NULL,                                   /* pSetPixel */
     NULL,                                   /* pSetTextColor */
-    NULL,                                   /* pSetWorldTransform */
     NULL,                                   /* pStartDoc */
     NULL,                                   /* pStartPage */
     NULL,                                   /* pStretchBlt */

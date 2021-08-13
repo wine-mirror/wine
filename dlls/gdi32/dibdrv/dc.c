@@ -680,7 +680,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_GradientFill,                /* pGradientFill */
     NULL,                               /* pInvertRgn */
     dibdrv_LineTo,                      /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     dibdrv_PaintRgn,                    /* pPaintRgn */
     dibdrv_PatBlt,                      /* pPatBlt */
@@ -712,7 +711,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     dibdrv_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
     dibdrv_StretchBlt,                  /* pStretchBlt */
@@ -1253,7 +1251,6 @@ static const struct gdi_dc_funcs window_driver =
     windrv_GradientFill,                /* pGradientFill */
     NULL,                               /* pInvertRgn */
     windrv_LineTo,                      /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     windrv_PaintRgn,                    /* pPaintRgn */
     windrv_PatBlt,                      /* pPatBlt */
@@ -1285,7 +1282,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     windrv_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
     windrv_StretchBlt,                  /* pStretchBlt */

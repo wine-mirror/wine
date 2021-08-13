@@ -400,7 +400,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_GradientFill,                /* pGradientFill */
     NULL,                               /* pInvertRgn */
     X11DRV_LineTo,                      /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     X11DRV_PaintRgn,                    /* pPaintRgn */
     X11DRV_PatBlt,                      /* pPatBlt */
@@ -432,7 +431,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */
     X11DRV_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
     X11DRV_StretchBlt,                  /* pStretchBlt */

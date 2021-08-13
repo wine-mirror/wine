@@ -2132,7 +2132,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pGradientFill */
     NULL,                               /* pInvertRgn */
     pathdrv_LineTo,                     /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     pathdrv_MoveTo,                     /* pMoveTo */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
@@ -2164,7 +2163,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
     NULL,                               /* pStretchBlt */

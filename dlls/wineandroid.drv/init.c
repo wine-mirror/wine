@@ -341,7 +341,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pGradientFill */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
@@ -373,7 +372,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
     NULL,                               /* pStretchBlt */

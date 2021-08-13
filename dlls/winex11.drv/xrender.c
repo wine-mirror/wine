@@ -2212,7 +2212,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_GradientFill,            /* pGradientFill */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
@@ -2244,7 +2243,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetPixel */
     NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
     xrenderdrv_StretchBlt,              /* pStretchBlt */

@@ -835,7 +835,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pGradientFill */
     NULL,                               /* pInvertRgn */
     PSDRV_LineTo,                       /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     PSDRV_PaintRgn,                     /* pPaintRgn */
     PSDRV_PatBlt,                       /* pPatBlt */
@@ -867,7 +866,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetDeviceGammaRamp */
     PSDRV_SetPixel,                     /* pSetPixel */
     PSDRV_SetTextColor,                 /* pSetTextColor */
-    NULL,                               /* pSetWorldTransform */
     PSDRV_StartDoc,                     /* pStartDoc */
     PSDRV_StartPage,                    /* pStartPage */
     NULL,                               /* pStretchBlt */

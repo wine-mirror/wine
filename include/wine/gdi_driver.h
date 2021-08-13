@@ -125,7 +125,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pGradientFill)(PHYSDEV,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
     BOOL     (CDECL *pInvertRgn)(PHYSDEV,HRGN);
     BOOL     (CDECL *pLineTo)(PHYSDEV,INT,INT);
-    BOOL     (CDECL *pModifyWorldTransform)(PHYSDEV,const XFORM*,DWORD);
     BOOL     (CDECL *pMoveTo)(PHYSDEV,INT,INT);
     BOOL     (CDECL *pPaintRgn)(PHYSDEV,HRGN);
     BOOL     (CDECL *pPatBlt)(PHYSDEV,struct bitblt_coords*,DWORD);
@@ -157,7 +156,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
     COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);
     COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
-    BOOL     (CDECL *pSetWorldTransform)(PHYSDEV,const XFORM*);
     INT      (CDECL *pStartDoc)(PHYSDEV,const DOCINFOW*);
     INT      (CDECL *pStartPage)(PHYSDEV);
     BOOL     (CDECL *pStretchBlt)(PHYSDEV,struct bitblt_coords*,PHYSDEV,struct bitblt_coords*,DWORD);
@@ -176,7 +174,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 59
+#define WINE_GDI_DRIVER_VERSION 60
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
