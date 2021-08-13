@@ -193,7 +193,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
-    MFDRV_StretchDIBits,             /* pStretchDIBits */
+    NULL,                            /* pStretchDIBits */
     MFDRV_StrokeAndFillPath,         /* pStrokeAndFillPath */
     MFDRV_StrokePath,                /* pStrokePath */
     NULL,                            /* pUnrealizePalette */

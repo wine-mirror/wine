@@ -112,36 +112,36 @@ BOOL METADC_StretchBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width_dst, INT he
 }
 
 /***********************************************************************
- *           MFDRV_StretchDIBits
+ *           METADC_StretchDIBits
  */
-INT CDECL MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
-                               INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
-                               INT heightSrc, const void *bits,
-                               BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+INT METADC_StretchDIBits( HDC hdc, INT x_dst, INT y_dst, INT width_dst,
+                          INT height_dst, INT x_src, INT y_src, INT width_src,
+                          INT height_src, const void *bits,
+                          const BITMAPINFO *info, UINT usage, DWORD rop )
 {
-    DWORD infosize = get_dib_info_size(info, wUsage);
+    DWORD infosize = get_dib_info_size( info, usage );
     DWORD len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + info->bmiHeader.biSizeImage;
     METARECORD *mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;
     mr->rdFunction = META_STRETCHDIB;
-    mr->rdParm[0] = LOWORD(dwRop);
-    mr->rdParm[1] = HIWORD(dwRop);
-    mr->rdParm[2] = wUsage;
-    mr->rdParm[3] = (INT16)heightSrc;
-    mr->rdParm[4] = (INT16)widthSrc;
-    mr->rdParm[5] = (INT16)ySrc;
-    mr->rdParm[6] = (INT16)xSrc;
-    mr->rdParm[7] = (INT16)heightDst;
-    mr->rdParm[8] = (INT16)widthDst;
-    mr->rdParm[9] = (INT16)yDst;
-    mr->rdParm[10] = (INT16)xDst;
+    mr->rdParm[0] = LOWORD(rop);
+    mr->rdParm[1] = HIWORD(rop);
+    mr->rdParm[2] = usage;
+    mr->rdParm[3] = height_src;
+    mr->rdParm[4] = width_src;
+    mr->rdParm[5] = y_src;
+    mr->rdParm[6] = x_src;
+    mr->rdParm[7] = height_dst;
+    mr->rdParm[8] = width_dst;
+    mr->rdParm[9] = y_dst;
+    mr->rdParm[10] = x_dst;
     memcpy(mr->rdParm + 11, info, infosize);
     memcpy(mr->rdParm + 11 + infosize / 2, bits, info->bmiHeader.biSizeImage);
-    MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
+    metadc_record( hdc, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
-    return heightSrc;
+    return height_src;
 }
 
 

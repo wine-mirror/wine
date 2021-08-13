@@ -604,12 +604,12 @@ done:
 }
 
 /***********************************************************************
- *           StretchDIBits   (GDI32.@)
+ *           NtGdiStretchDIBitsInternal   (win32u.@)
  */
-INT WINAPI DECLSPEC_HOTPATCH StretchDIBits( HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                                            INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                                            const void *bits, const BITMAPINFO *bmi, UINT coloruse,
-                                            DWORD rop )
+INT WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                       INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                                       const void *bits, const BITMAPINFO *bmi, UINT coloruse,
+                                       DWORD rop, UINT max_info, UINT max_bits, HANDLE xform )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;

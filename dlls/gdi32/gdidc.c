@@ -1301,6 +1301,29 @@ INT WINAPI SetDIBitsToDevice( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
 }
 
 /***********************************************************************
+ *           StretchDIBits   (GDI32.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH StretchDIBits( HDC hdc, INT x_dst, INT y_dst, INT width_dst,
+                                            INT height_dst, INT x_src, INT y_src, INT width_src,
+                                            INT height_src, const void *bits, const BITMAPINFO *bmi,
+                                            UINT coloruse, DWORD rop )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc ))
+        return METADC_StretchDIBits( hdc, x_dst, y_dst, width_dst, height_dst, x_src, y_src,
+                                     width_src, height_src, bits, bmi, coloruse, rop );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_StretchDIBits( dc_attr, x_dst, y_dst, width_dst, height_dst,
+                                              x_src, y_src, width_src, height_src, bits,
+                                              bmi, coloruse, rop ))
+        return FALSE;
+    return NtGdiStretchDIBitsInternal( hdc, x_dst, y_dst, width_dst, height_dst, x_src, y_src,
+                                       width_src, height_src, bits, bmi, coloruse, rop,
+                                       0, 0, NULL );
+}
+
+/***********************************************************************
  *           BeginPath    (GDI32.@)
  */
 BOOL WINAPI BeginPath(HDC hdc)

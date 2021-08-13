@@ -283,6 +283,11 @@ INT      WINAPI NtGdiStartPage( HDC hdc );
 BOOL     WINAPI NtGdiStretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                  HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                                  DWORD rop, COLORREF bk_color );
+INT      WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT width_dst,
+                                            INT height_dst, INT x_src, INT y_src, INT width_src,
+                                            INT height_src, const void *bits, const BITMAPINFO *bmi,
+                                            UINT coloruse, DWORD rop, UINT max_info, UINT max_bits,
+                                            HANDLE xform );
 BOOL     WINAPI NtGdiStrokePath( HDC hdc );
 BOOL     WINAPI NtGdiStrokeAndFillPath( HDC hdc );
 BOOL     WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points_out,

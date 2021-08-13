@@ -113,7 +113,10 @@ extern BOOL METADC_SetWindowOrgEx( HDC, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_StretchBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                                DWORD rop );
-
+extern INT  METADC_StretchDIBits( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                                  INT x_src, INT y_src, INT width_src, INT height_src,
+                                  const void *bits, const BITMAPINFO *info, UINT coloruse,
+                                  DWORD rop ) DECLSPEC_HIDDEN;
 /* enhanced metafiles */
 extern BOOL EMFDC_AbortPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_AlphaBlend( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
@@ -198,5 +201,9 @@ extern BOOL EMFDC_SetWorldTransform( DC_ATTR *dc_attr, const XFORM *xform ) DECL
 extern BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                               HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                               DWORD rop );
+extern BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
+                                 INT height_dst, INT x_src, INT y_src, INT width_src,
+                                 INT height_src, const void *bits, const BITMAPINFO *info,
+                                 UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */
