@@ -2002,7 +2002,7 @@ static void test_ipv6_cmsg(void)
     WSAMSG msg = {NULL, 0, &payload_buf, 1, {sizeof(control), control}, 0};
     WSACMSGHDR *header = (WSACMSGHDR *)control;
     LPFN_WSARECVMSG pWSARecvMsg;
-    INT *hop_limit = (INT *)WSA_CMSG_DATA(header);
+    INT *int_data = (INT *)WSA_CMSG_DATA(header);
     IN6_PKTINFO *pkt_info = (IN6_PKTINFO *)WSA_CMSG_DATA(header);
     DWORD count, state;
     int rc;
@@ -2043,7 +2043,7 @@ static void test_ipv6_cmsg(void)
     ok(header->cmsg_type == IPV6_HOPLIMIT, "expected IPV6_HOPLIMIT, got %i\n", header->cmsg_type);
     ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
        "expected length %i, got %i\n", (INT)(sizeof(*header) + sizeof(INT)), (INT)header->cmsg_len);
-    ok(*hop_limit >= 32, "expected at least 32, got %i\n", *hop_limit);
+    ok(*int_data >= 32, "expected at least 32, got %i\n", *int_data);
     setsockopt(server, IPPROTO_IPV6, IPV6_HOPLIMIT, (const char *)&off, sizeof(off));
     ok(!rc, "failed to clear IPV6_HOPLIMIT, error %u\n", WSAGetLastError());
 
@@ -2068,6 +2068,28 @@ static void test_ipv6_cmsg(void)
     ok(!memcmp(&pkt_info->ipi6_addr, &localhost.sin6_addr, sizeof(IN6_ADDR)), "expected ::1\n");
     rc = setsockopt(server, IPPROTO_IPV6, IPV6_PKTINFO, (const char *)&off, sizeof(off));
     ok(!rc, "failed to clear IPV6_PKTINFO, error %u\n", WSAGetLastError());
+
+    memset(control, 0, sizeof(control));
+    msg.Control.len = sizeof(control);
+    rc = setsockopt(server, IPPROTO_IPV6, IPV6_RECVTCLASS, (const char *)&on, sizeof(on));
+    ok(!rc, "failed to set IPV6_RECVTCLASS, error %u\n", WSAGetLastError());
+    state = 0;
+    count = sizeof(state);
+    rc = getsockopt(server, IPPROTO_IPV6, IPV6_RECVTCLASS, (char *)&state, (INT *)&count);
+    ok(!rc, "failed to get IPV6_RECVTCLASS, error %u\n", WSAGetLastError());
+    ok(state == 1, "expected 1, got %u\n", state);
+    rc = send(client, payload, sizeof(payload), 0);
+    ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
+    rc = pWSARecvMsg(server, &msg, &count, NULL, NULL);
+    ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
+    ok(count == sizeof(payload), "expected length %i, got %i\n", (INT)sizeof(payload), count);
+    ok(header->cmsg_level == IPPROTO_IPV6, "expected IPPROTO_IPV6, got %i\n", header->cmsg_level);
+    ok(header->cmsg_type == IPV6_TCLASS, "expected IPV6_TCLASS, got %i\n", header->cmsg_type);
+    ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
+       "expected length %i, got %i\n", (INT)(sizeof(*header) + sizeof(INT)), (INT)header->cmsg_len);
+    ok(*int_data == 0, "expected 0, got %i\n", *int_data);
+    rc = setsockopt(server, IPPROTO_IPV6, IPV6_RECVTCLASS, (const char *)&off, sizeof(off));
+    ok(!rc, "failed to clear IPV6_RECVTCLASS, error %u\n", WSAGetLastError());
 
     closesocket(server);
     closesocket(client);
