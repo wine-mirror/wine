@@ -62,6 +62,7 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
+#include "ddk/hidsdi.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/unicode.h"
@@ -345,10 +346,9 @@ static INT count_abs_axis(int device_fd)
 static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
 {
     struct input_absinfo abs_info[HID_ABS_MAX];
-    int abs_pages[TOP_ABS_PAGE][HID_ABS_MAX+1];
-    int rel_pages[TOP_REL_PAGE][HID_REL_MAX+1];
     BYTE absbits[(ABS_MAX+7)/8];
     BYTE relbits[(REL_MAX+7)/8];
+    USAGE_AND_PAGE usage;
     INT i;
     INT report_size;
     INT button_count, abs_count, rel_count, hat_count;
@@ -367,106 +367,46 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
 
     report_size = 0;
 
-    abs_count = 0;
-    memset(abs_pages, 0, sizeof(abs_pages));
-    for (i = 0; i < HID_ABS_MAX; i++)
-        if (test_bit(absbits, i))
-        {
-            abs_pages[ABS_TO_HID_MAP[i][0]][0]++;
-            abs_pages[ABS_TO_HID_MAP[i][0]][abs_pages[ABS_TO_HID_MAP[i][0]][0]] = i;
+    if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
+        return FALSE;
 
-            ioctl(ext->base.device_fd, EVIOCGABS(i), abs_info + i);
-        }
-    /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
-    for (i = 1; i < TOP_ABS_PAGE; i++)
-        if (abs_pages[i][0] > 0)
-        {
-            int j;
-            for (j = 1; j <= abs_pages[i][0]; j++)
-            {
-                ext->abs_map[abs_pages[i][j]] = report_size;
-                report_size+=4;
-            }
-            abs_count++;
-        }
+    abs_count = 0;
+    for (i = 0; i < HID_ABS_MAX; i++)
+    {
+        if (!test_bit(absbits, i)) continue;
+        ioctl(ext->base.device_fd, EVIOCGABS(i), abs_info + i);
+
+        if (!(usage.UsagePage = ABS_TO_HID_MAP[i][0])) continue;
+        if (!(usage.Usage = ABS_TO_HID_MAP[i][1])) continue;
+
+        if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, FALSE, 32,
+                                     LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
+            return FALSE;
+
+        ext->abs_map[i] = report_size;
+        report_size += 4;
+        abs_count++;
+    }
 
     rel_count = 0;
-    memset(rel_pages, 0, sizeof(rel_pages));
     for (i = 0; i < HID_REL_MAX; i++)
-        if (test_bit(relbits, i))
-        {
-            rel_pages[REL_TO_HID_MAP[i][0]][0]++;
-            rel_pages[REL_TO_HID_MAP[i][0]][rel_pages[REL_TO_HID_MAP[i][0]][0]] = i;
-        }
-    /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
-    for (i = 1; i < TOP_REL_PAGE; i++)
-        if (rel_pages[i][0] > 0)
-        {
-            int j;
-            for (j = 1; j <= rel_pages[i][0]; j++)
-            {
-                ext->rel_map[rel_pages[i][j]] = report_size;
-                report_size++;
-            }
-            rel_count++;
-        }
+    {
+        if (!test_bit(relbits, i)) continue;
+        if (!(usage.UsagePage = REL_TO_HID_MAP[i][0])) continue;
+        if (!(usage.Usage = REL_TO_HID_MAP[i][1])) continue;
+
+        if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, TRUE, 8,
+                                     0x81, 0x7f))
+            return FALSE;
+
+        ext->rel_map[i] = report_size;
+        report_size++;
+        rel_count++;
+    }
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
     ext->button_start = report_size;
     button_count = count_buttons(ext->base.device_fd, ext->button_map);
-    if (button_count)
-    {
-        report_size += (button_count + 7) / 8;
-    }
-
-    hat_count = 0;
-    for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
-        if (test_bit(absbits, i))
-        {
-            ext->hat_map[i - ABS_HAT0X] = report_size;
-            ext->hat_values[i - ABS_HAT0X] = 0;
-            ext->hat_values[i - ABS_HAT0X + 1] = 0;
-            report_size++;
-            hat_count++;
-        }
-
-    TRACE("Report will be %i bytes\n", report_size);
-
-    if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
-        return FALSE;
-
-    if (abs_count)
-    {
-        for (i = 1; i < TOP_ABS_PAGE; i++)
-        {
-            if (abs_pages[i][0])
-            {
-                USAGE usages[HID_ABS_MAX];
-                int j;
-                for (j = 0; j < abs_pages[i][0]; j++)
-                    usages[j] = ABS_TO_HID_MAP[abs_pages[i][j+1]][1];
-                if (!hid_descriptor_add_axes(&ext->desc, abs_pages[i][0], i, usages, FALSE, 32,
-                                             LE_DWORD(abs_info[abs_pages[i][1]].minimum),
-                                             LE_DWORD(abs_info[abs_pages[i][1]].maximum)))
-                    return FALSE;
-            }
-        }
-    }
-    if (rel_count)
-    {
-        for (i = 1; i < TOP_REL_PAGE; i++)
-        {
-            if (rel_pages[i][0])
-            {
-                USAGE usages[HID_REL_MAX];
-                int j;
-                for (j = 0; j < rel_pages[i][0]; j++)
-                    usages[j] = REL_TO_HID_MAP[rel_pages[i][j+1]][1];
-                if (!hid_descriptor_add_axes(&ext->desc, rel_pages[i][0], i, usages, TRUE, 8, 0x81, 0x7f))
-                    return FALSE;
-            }
-        }
-    }
     if (button_count)
     {
         if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
@@ -478,7 +418,21 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             if (!hid_descriptor_add_padding(&ext->desc, padding))
                 return FALSE;
         }
+
+        report_size += (button_count + 7) / 8;
     }
+
+    hat_count = 0;
+    for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
+    {
+        if (!test_bit(absbits, i)) continue;
+        ext->hat_map[i - ABS_HAT0X] = report_size;
+        ext->hat_values[i - ABS_HAT0X] = 0;
+        ext->hat_values[i - ABS_HAT0X + 1] = 0;
+        report_size++;
+        hat_count++;
+    }
+
     if (hat_count)
     {
         if (!hid_descriptor_add_hatswitch(&ext->desc, hat_count))
@@ -487,6 +441,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
 
     if (!hid_descriptor_end(&ext->desc))
         return FALSE;
+
+    TRACE("Report will be %i bytes\n", report_size);
 
     ext->buffer_length = report_size;
     if (!(ext->current_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size)))
