@@ -92,7 +92,7 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 #include <asm/prctl.h>
 static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
 
-extern int CDECL alloc_fs_sel( int sel, void *base );
+extern int CDECL alloc_fs_sel( int sel, void *base ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    /* switch to 32-bit stack */
                    "pushq %rbx\n\t"
