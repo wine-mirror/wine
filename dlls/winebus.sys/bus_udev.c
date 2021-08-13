@@ -720,32 +720,27 @@ static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
 static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
-    int rc;
+    BYTE buffer[8192];
+    int count = 0;
 
-    if (id != 0)
-        rc = write(ext->device_fd, report, length);
+    if ((buffer[0] = id))
+        count = write(ext->device_fd, report, length);
+    else if (length > sizeof(buffer) - 1)
+        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", id, length);
     else
     {
-        BYTE report_buffer[1024];
-
-        if (length + 1 > sizeof(report_buffer))
-        {
-            ERR("Output report buffer too small\n");
-            return STATUS_UNSUCCESSFUL;
-        }
-
-        report_buffer[0] = 0;
-        memcpy(&report_buffer[1], report, length);
-        rc = write(ext->device_fd, report_buffer, length + 1);
+        memcpy(buffer + 1, report, length);
+        count = write(ext->device_fd, buffer, length + 1);
     }
-    if (rc > 0)
+
+    if (count > 0)
     {
-        *written = rc;
+        *written = count;
         return STATUS_SUCCESS;
     }
     else
     {
-        TRACE("write failed: %d %d %s\n", rc, errno, strerror(errno));
+        ERR_(hid_report)("id %d write failed error: %d %s\n", id, errno, strerror(errno));
         *written = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -754,19 +749,28 @@ static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
-    int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
-    report[0] = id;
-    length = min(length, 0x1fff);
-    rc = ioctl(ext->device_fd, HIDIOCGFEATURE(length), report);
-    if (rc >= 0)
+    BYTE buffer[8192];
+    int count = 0;
+
+    if ((buffer[0] = id) && length <= 0x1fff)
+        count = ioctl(ext->device_fd, HIDIOCGFEATURE(length), report);
+    else if (length > sizeof(buffer) - 1)
+        ERR_(hid_report)("id %d length %u >= 8192, cannot read\n", id, length);
+    else
     {
-        *read = rc;
+        count = ioctl(ext->device_fd, HIDIOCGFEATURE(length + 1), buffer);
+        memcpy(report, buffer + 1, length);
+    }
+
+    if (count > 0)
+    {
+        *read = count;
         return STATUS_SUCCESS;
     }
     else
     {
-        TRACE_(hid_report)("ioctl(HIDIOCGFEATURE(%d)) failed: %d %s\n", length, errno, strerror(errno));
+        ERR_(hid_report)("id %d read failed, error: %d %s\n", id, errno, strerror(errno));
         *read = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -779,35 +783,28 @@ static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
 static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
-    int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
-    BYTE *feature_buffer;
     BYTE buffer[8192];
+    int count = 0;
 
-    if (id == 0)
-    {
-        if (length + 1 > sizeof(buffer))
-        {
-            ERR("Output feature buffer too small\n");
-            return STATUS_UNSUCCESSFUL;
-        }
-        buffer[0] = 0;
-        memcpy(&buffer[1], report, length);
-        feature_buffer = buffer;
-        length = length + 1;
-    }
+    if ((buffer[0] = id) && length <= 0x1fff)
+        count = ioctl(ext->device_fd, HIDIOCSFEATURE(length), report);
+    else if (length > sizeof(buffer) - 1)
+        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", id, length);
     else
-        feature_buffer = report;
-    length = min(length, 0x1fff);
-    rc = ioctl(ext->device_fd, HIDIOCSFEATURE(length), feature_buffer);
-    if (rc >= 0)
     {
-        *written = rc;
+        memcpy(buffer + 1, report, length);
+        count = ioctl(ext->device_fd, HIDIOCSFEATURE(length + 1), buffer);
+    }
+
+    if (count > 0)
+    {
+        *written = count;
         return STATUS_SUCCESS;
     }
     else
     {
-        TRACE_(hid_report)("ioctl(HIDIOCSFEATURE(%d)) failed: %d %s\n", length, errno, strerror(errno));
+        ERR_(hid_report)("id %d write failed, error: %d %s\n", id, errno, strerror(errno));
         *written = 0;
         return STATUS_UNSUCCESSFUL;
     }
