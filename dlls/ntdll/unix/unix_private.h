@@ -116,6 +116,8 @@ extern NTSTATUS CDECL fast_wait_cv( RTL_CONDITION_VARIABLE *variable, const void
 extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                           CONTEXT *context ) DECLSPEC_HIDDEN;
 
+extern const char wine_build[] DECLSPEC_HIDDEN;
+
 extern const char *home_dir DECLSPEC_HIDDEN;
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;

@@ -2886,7 +2886,6 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     case SystemWineVersionInformation:  /* 1000 */
     {
         static const char version[] = PACKAGE_VERSION;
-        extern const char wine_build[];
         struct utsname buf;
 
         uname( &buf );

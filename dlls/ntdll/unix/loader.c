@@ -2220,7 +2220,6 @@ static void check_command_line( int argc, char *argv[] )
     }
     if (!strcmp( argv[1], "--version" ))
     {
-        extern const char wine_build[];
         printf( "%s\n", wine_build );
         exit(0);
     }
