@@ -85,7 +85,6 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define HMENU_32(h16)     ((HMENU)     (ULONG_PTR)(h16))
 #define HDWP_32(h16)      ((HDWP)      (ULONG_PTR)(h16))
 #define HDROP_32(h16)     ((HDROP)     (ULONG_PTR)(h16))
-#define HDC_32(h16)       ((HDC)       (ULONG_PTR)(h16))
 #define HFONT_32(h16)     ((HFONT)     (ULONG_PTR)(h16))
 #define HRGN_32(h16)      ((HRGN)      (ULONG_PTR)(h16))
 #define HBITMAP_32(h16)   ((HBITMAP)   (ULONG_PTR)(h16))
@@ -113,7 +112,6 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define HMENU_32(h16)     ((HMENU)     (WOWHandle32(h16, WOW_TYPE_HMENU)))
 #define HDWP_32(h16)      ((HDWP)      (WOWHandle32(h16, WOW_TYPE_HDWP)))
 #define HDROP_32(h16)     ((HDROP)     (WOWHandle32(h16, WOW_TYPE_HDROP)))
-#define HDC_32(h16)       ((HDC)       (WOWHandle32(h16, WOW_TYPE_HDC)))
 #define HFONT_32(h16)     ((HFONT)     (WOWHandle32(h16, WOW_TYPE_HFONT)))
 #define HRGN_32(h16)      ((HRGN)      (WOWHandle32(h16, WOW_TYPE_HRGN)))
 #define HBITMAP_32(h16)   ((HBITMAP)   (WOWHandle32(h16, WOW_TYPE_HBITMAP)))
@@ -137,9 +135,10 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
 #endif  /* __WINESRC__ */
 
-#define HMETAFILE_32(h16) ((HMETAFILE)(WOWHandle32(h16, WOW_TYPE_HMETAFILE)))
-#define HTASK_32(h16)     ((DWORD)(WOWHandle32(h16, WOW_TYPE_HTASK)))
-#define FULLHWND_32(h16)  ((HWND)(WOWHandle32(h16, WOW_TYPE_FULLHWND)))
+#define HDC_32(h16)       ((HDC)       (WOWHandle32(h16, WOW_TYPE_HDC)))
+#define HMETAFILE_32(h16) ((HMETAFILE) (WOWHandle32(h16, WOW_TYPE_HMETAFILE)))
+#define HTASK_32(h16)     ((DWORD)     (WOWHandle32(h16, WOW_TYPE_HTASK)))
+#define FULLHWND_32(h16)  ((HWND)      (WOWHandle32(h16, WOW_TYPE_FULLHWND)))
 
 #define HMETAFILE_16(h32) (WOWHandle16(h32, WOW_TYPE_HMETAFILE))
 #define HTASK_16(h32)     (WOWHandle16((HANDLE)(h32), WOW_TYPE_HTASK))
