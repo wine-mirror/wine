@@ -186,6 +186,7 @@ extern BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HI
 extern BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetWindowExtEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetWindowOrgEx( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_SetWorldTransform( DC_ATTR *dc_attr, const XFORM *xform ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                               HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                               DWORD rop );

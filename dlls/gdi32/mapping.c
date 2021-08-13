@@ -148,10 +148,6 @@ BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD 
 
 BOOL CDECL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    dc->xformWorld2Wnd = *xform;
-    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -373,32 +369,6 @@ BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
             break;
         }
         if (ret) DC_UpdateXforms( dc );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           SetWorldTransform    (GDI32.@)
- */
-BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
-{
-    BOOL ret = FALSE;
-    DC *dc;
-
-    if (!xform) return FALSE;
-    /* The transform must conform to (eM11 * eM22 != eM12 * eM21) requirement */
-    if (xform->eM11 * xform->eM22 == xform->eM12 * xform->eM21) return FALSE;
-
-    TRACE("eM11 %f eM12 %f eM21 %f eM22 %f eDx %f eDy %f\n",
-        xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy);
-
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetWorldTransform );
-        if (dc->attr->graphics_mode == GM_ADVANCED)
-            ret = physdev->funcs->pSetWorldTransform( physdev, xform );
         release_dc_ptr( dc );
     }
     return ret;

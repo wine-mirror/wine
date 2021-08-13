@@ -41,7 +41,6 @@ typedef struct
     HBRUSH     dc_brush;
     HPEN       dc_pen;
     INT        restoring;          /* RestoreDC counter */
-    INT        modifying_transform;/* Counter for functions that can change world transform */
     BOOL       path;
     INT        dev_caps[COLORMGMTCAPS + 1];
 } EMFDRV_PDEVICE;
@@ -107,7 +106,6 @@ extern INT      CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDes
                                                 BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                                             INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                                             const void *bits, BITMAPINFO *info, UINT wUsage, DWORD dwRop ) DECLSPEC_HIDDEN;

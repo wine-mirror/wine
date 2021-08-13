@@ -126,7 +126,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetPixel,                 /* pSetPixel */
     EMFDRV_SetTextColor,             /* pSetTextColor */
-    EMFDRV_SetWorldTransform,        /* pSetWorldTransform */
+    NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
@@ -338,7 +338,6 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->dc_brush = 0;
     physDev->dc_pen = 0;
     physDev->restoring = 0;
-    physDev->modifying_transform = 0;
     physDev->path = FALSE;
 
     if (hdc)  /* if no ref, use current display */
