@@ -166,11 +166,6 @@ static const BYTE REL_TO_HID_MAP[][2] = {
 #define HID_REL_MAX (REL_MISC+1)
 #define TOP_REL_PAGE (HID_USAGE_PAGE_CONSUMER+1)
 
-struct wine_input_absinfo {
-    struct input_absinfo info;
-    BYTE report_index;
-};
-
 struct wine_input_private {
     struct platform_private base;
 
@@ -186,7 +181,7 @@ struct wine_input_private {
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
     int hat_values[8];
-    struct wine_input_absinfo abs_map[HID_ABS_MAX];
+    int abs_map[HID_ABS_MAX];
 };
 
 #define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
@@ -287,7 +282,7 @@ static void set_abs_axis_value(struct wine_input_private *ext, int code, int val
     }
     else if (code < HID_ABS_MAX && ABS_TO_HID_MAP[code][0] != 0)
     {
-        index = ext->abs_map[code].report_index;
+        index = ext->abs_map[code];
         *((DWORD*)&ext->current_report_buffer[index]) = LE_DWORD(value);
     }
 }
@@ -349,6 +344,7 @@ static INT count_abs_axis(int device_fd)
 
 static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
 {
+    struct input_absinfo abs_info[HID_ABS_MAX];
     int abs_pages[TOP_ABS_PAGE][HID_ABS_MAX+1];
     int rel_pages[TOP_REL_PAGE][HID_REL_MAX+1];
     BYTE absbits[(ABS_MAX+7)/8];
@@ -379,7 +375,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             abs_pages[ABS_TO_HID_MAP[i][0]][0]++;
             abs_pages[ABS_TO_HID_MAP[i][0]][abs_pages[ABS_TO_HID_MAP[i][0]][0]] = i;
 
-            ioctl(ext->base.device_fd, EVIOCGABS(i), &(ext->abs_map[i]));
+            ioctl(ext->base.device_fd, EVIOCGABS(i), abs_info + i);
         }
     /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
     for (i = 1; i < TOP_ABS_PAGE; i++)
@@ -388,7 +384,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             int j;
             for (j = 1; j <= abs_pages[i][0]; j++)
             {
-                ext->abs_map[abs_pages[i][j]].report_index = report_size;
+                ext->abs_map[abs_pages[i][j]] = report_size;
                 report_size+=4;
             }
             abs_count++;
@@ -450,8 +446,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
                 for (j = 0; j < abs_pages[i][0]; j++)
                     usages[j] = ABS_TO_HID_MAP[abs_pages[i][j+1]][1];
                 if (!hid_descriptor_add_axes(&ext->desc, abs_pages[i][0], i, usages, FALSE, 32,
-                                             LE_DWORD(ext->abs_map[abs_pages[i][1]].info.minimum),
-                                             LE_DWORD(ext->abs_map[abs_pages[i][1]].info.maximum)))
+                                             LE_DWORD(abs_info[abs_pages[i][1]].minimum),
+                                             LE_DWORD(abs_info[abs_pages[i][1]].maximum)))
                     return FALSE;
             }
         }
@@ -502,7 +498,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     /* Initialize axis in the report */
     for (i = 0; i < HID_ABS_MAX; i++)
         if (test_bit(absbits, i))
-            set_abs_axis_value(ext, i, ext->abs_map[i].info.value);
+            set_abs_axis_value(ext, i, abs_info[i].value);
 
     return TRUE;
 
