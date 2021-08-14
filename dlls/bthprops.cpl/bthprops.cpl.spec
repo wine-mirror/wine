@@ -35,7 +35,7 @@
 @ stdcall BluetoothFindRadioClose(ptr)
 @ stub BluetoothFindServiceClose
 @ stub BluetoothGetDeviceInfo
-@ stub BluetoothGetRadioInfo
+@ stdcall BluetoothGetRadioInfo(ptr ptr)
 @ stub BluetoothIsConnectable
 @ stub BluetoothIsDiscoverable
 @ stub BluetoothIsVersionAvailable

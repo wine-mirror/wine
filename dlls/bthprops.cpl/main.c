@@ -80,3 +80,12 @@ BOOL WINAPI BluetoothFindNextRadio(HBLUETOOTH_RADIO_FIND find, HANDLE *radio)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*********************************************************************
+ *  BluetoothGetRadioInfo
+ */
+DWORD WINAPI BluetoothGetRadioInfo(HANDLE radio, PBLUETOOTH_RADIO_INFO info)
+{
+    FIXME("(%p, %p): stub!\n", radio, info);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

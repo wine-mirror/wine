@@ -31,7 +31,7 @@
 @ stdcall BluetoothFindRadioClose(ptr) bthprops.cpl.BluetoothFindRadioClose
 @ stub BluetoothFindServiceClose
 @ stub BluetoothGetDeviceInfo
-@ stub BluetoothGetRadioInfo
+@ stdcall BluetoothGetRadioInfo(ptr ptr) bthprops.cpl.BluetoothGetRadioInfo
 @ stub BluetoothIsConnectable
 @ stub BluetoothIsDiscoverable
 @ stub BluetoothMapClassOfDeviceToImageIndex
