@@ -364,6 +364,9 @@ static	LRESULT	GSM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 {
     int used = 1;
     gsm r;
+    if (adsi->pwfxSrc->wFormatTag != WAVE_FORMAT_GSM610 && adsi->pwfxDst->wFormatTag != WAVE_FORMAT_GSM610)
+        return MMSYSERR_NOTSUPPORTED;
+
     if (!GSM_FormatValidate(adsi->pwfxSrc) || !GSM_FormatValidate(adsi->pwfxDst))
         return MMSYSERR_NOTSUPPORTED;
 
