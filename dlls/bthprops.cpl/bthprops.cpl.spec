@@ -23,7 +23,7 @@
 @ stub BluetoothFindFirstServiceEx
 @ stub BluetoothFindNextBrowseGroup
 @ stub BluetoothFindNextClassId
-@ stub BluetoothFindNextDevice
+@ stdcall BluetoothFindNextDevice(ptr ptr)
 @ stub BluetoothFindNextProfileDescriptor
 @ stub BluetoothFindNextProtocolDescriptorStack
 @ stub BluetoothFindNextProtocolEntry

@@ -89,3 +89,13 @@ DWORD WINAPI BluetoothGetRadioInfo(HANDLE radio, PBLUETOOTH_RADIO_INFO info)
     FIXME("(%p, %p): stub!\n", radio, info);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/*********************************************************************
+ *  BluetoothFindNextDevice
+ */
+BOOL WINAPI BluetoothFindNextDevice(HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVICE_INFO *info)
+{
+    FIXME("(%p, %p): stub!\n", find, info);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

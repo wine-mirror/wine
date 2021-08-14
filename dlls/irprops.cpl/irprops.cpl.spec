@@ -19,7 +19,7 @@
 @ stub BluetoothFindFirstService
 @ stub BluetoothFindNextBrowseGroup
 @ stub BluetoothFindNextClassId
-@ stub BluetoothFindNextDevice
+@ stdcall BluetoothFindNextDevice(ptr ptr) bthprops.cpl.BluetoothFindNextDevice
 @ stub BluetoothFindNextProfileDescriptor
 @ stub BluetoothFindNextProtocolDescriptorStack
 @ stub BluetoothFindNextProtocolEntry
