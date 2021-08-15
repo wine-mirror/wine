@@ -38,6 +38,10 @@
 #include <netinet/in.h>
 #endif
 
+#ifdef HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+
 #ifdef HAVE_NETINET_TCP_VAR_H
 #include <netinet/tcp_var.h>
 #endif
