@@ -19,6 +19,8 @@
 #ifndef __HIDPI_H__
 #define __HIDPI_H__
 
+typedef UCHAR *PHIDP_REPORT_DESCRIPTOR;
+
 typedef enum _HIDP_REPORT_TYPE
 {
     HidP_Input,

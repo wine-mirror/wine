@@ -1,0 +1,8 @@
+MODULE = hidparse.sys
+IMPORTLIB = hidparse
+EXTRADLLFLAGS = -mno-cygwin
+PARENTSRC = ../hid
+
+C_SRCS = \
+	hidp.c \
+	main.c
