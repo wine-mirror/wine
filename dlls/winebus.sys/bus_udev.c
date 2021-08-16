@@ -343,7 +343,7 @@ static INT count_abs_axis(int device_fd)
     return abs_count;
 }
 
-static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
+static NTSTATUS build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
 {
     struct input_absinfo abs_info[HID_ABS_MAX];
     BYTE absbits[(ABS_MAX+7)/8];
@@ -368,7 +368,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     report_size = 0;
 
     if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     abs_count = 0;
     for (i = 0; i < HID_ABS_MAX; i++)
@@ -381,7 +381,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
 
         if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, FALSE, 32,
                                      LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
-            return FALSE;
+            return STATUS_NO_MEMORY;
 
         ext->abs_map[i] = report_size;
         report_size += 4;
@@ -397,7 +397,7 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
 
         if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, TRUE, 8,
                                      0x81, 0x7f))
-            return FALSE;
+            return STATUS_NO_MEMORY;
 
         ext->rel_map[i] = report_size;
         report_size++;
@@ -410,13 +410,13 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     if (button_count)
     {
         if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
-            return FALSE;
+            return STATUS_NO_MEMORY;
 
         if (button_count % 8)
         {
             BYTE padding = 8 - (button_count % 8);
             if (!hid_descriptor_add_padding(&ext->desc, padding))
-                return FALSE;
+                return STATUS_NO_MEMORY;
         }
 
         report_size += (button_count + 7) / 8;
@@ -436,11 +436,11 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     if (hat_count)
     {
         if (!hid_descriptor_add_hatswitch(&ext->desc, hat_count))
-            return FALSE;
+            return STATUS_NO_MEMORY;
     }
 
     if (!hid_descriptor_end(&ext->desc))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     TRACE("Report will be %i bytes\n", report_size);
 
@@ -456,13 +456,13 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         if (test_bit(absbits, i))
             set_abs_axis_value(ext, i, abs_info[i].value);
 
-    return TRUE;
+    return STATUS_SUCCESS;
 
 failed:
     HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
     HeapFree(GetProcessHeap(), 0, ext->last_report_buffer);
     hid_descriptor_free(&ext->desc);
-    return FALSE;
+    return STATUS_NO_MEMORY;
 }
 
 static BOOL set_report_from_event(struct wine_input_private *ext, struct input_event *ie)
@@ -1139,7 +1139,7 @@ static void try_add_device(struct udev_device *dev)
 #ifdef HAS_PROPER_INPUT_HEADER
         if (strcmp(subsystem, "input") == 0)
             /* FIXME: We should probably move this to IRP_MN_START_DEVICE. */
-            if (!build_report_descriptor((struct wine_input_private*)private, dev))
+            if (build_report_descriptor((struct wine_input_private *)private, dev))
             {
                 ERR("Building report descriptor failed, removing device\n");
                 close(fd);

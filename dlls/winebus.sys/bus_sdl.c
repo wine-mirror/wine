@@ -251,7 +251,7 @@ static BOOL descriptor_add_haptic(struct platform_private *ext)
     return TRUE;
 }
 
-static BOOL build_report_descriptor(struct platform_private *ext)
+static NTSTATUS build_report_descriptor(struct platform_private *ext)
 {
     INT i;
     INT report_size;
@@ -317,36 +317,36 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     TRACE("Report will be %i bytes\n", report_size);
 
     if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (axis_count == 6 && button_count >= 14)
     {
         if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
                                      controller_usages, FALSE, 16, 0, 0xffff))
-            return FALSE;
+            return STATUS_NO_MEMORY;
     }
     else if (axis_count)
     {
         if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
                                      joystick_usages, FALSE, 16, 0, 0xffff))
-            return FALSE;
+            return STATUS_NO_MEMORY;
     }
 
     if (ball_count && !hid_descriptor_add_axes(&ext->desc, ball_count * 2, HID_USAGE_PAGE_GENERIC,
                                                &joystick_usages[axis_count], TRUE, 8, 0x81, 0x7f))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (button_count && !hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (hat_count && !hid_descriptor_add_hatswitch(&ext->desc, hat_count))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(ext))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_end(&ext->desc))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     ext->buffer_length = report_size;
     if (!(ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size)))
@@ -358,12 +358,12 @@ static BOOL build_report_descriptor(struct platform_private *ext)
     for (i = 0; i < hat_count; i++)
         set_hat_value(ext, i, pSDL_JoystickGetHat(ext->sdl_joystick, i));
 
-    return TRUE;
+    return STATUS_SUCCESS;
 
 failed:
     HeapFree(GetProcessHeap(), 0, ext->report_buffer);
     hid_descriptor_free(&ext->desc);
-    return FALSE;
+    return STATUS_NO_MEMORY;
 }
 
 static SHORT compose_dpad_value(SDL_GameController *joystick)
@@ -393,7 +393,7 @@ static SHORT compose_dpad_value(SDL_GameController *joystick)
     return SDL_HAT_CENTERED;
 }
 
-static BOOL build_mapped_report_descriptor(struct platform_private *ext)
+static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
 {
     static const USAGE left_axis_usages[] = {HID_USAGE_GENERIC_X, HID_USAGE_GENERIC_Y};
     static const USAGE right_axis_usages[] = {HID_USAGE_GENERIC_RX, HID_USAGE_GENERIC_RY};
@@ -413,42 +413,42 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     TRACE("Report will be %i bytes\n", ext->buffer_length);
 
     if (!hid_descriptor_begin(&ext->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, left_axis_usages,
                                  FALSE, 16, 0, 0xffff))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, right_axis_usages,
                                  FALSE, 16, 0, 0xffff))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, trigger_axis_usages,
                                  FALSE, 16, 0, 0x7fff))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, CONTROLLER_NUM_BUTTONS))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_hatswitch(&ext->desc, 1))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (BUTTON_BIT_COUNT % 8 != 0)
     {
         /* unused bits between hatswitch and following constant */
         if (!hid_descriptor_add_padding(&ext->desc, 8 - (BUTTON_BIT_COUNT % 8)))
-            return FALSE;
+            return STATUS_NO_MEMORY;
     }
 
     /* unknown constant */
     if (!hid_descriptor_add_padding(&ext->desc, 16))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(ext))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_end(&ext->desc))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
     if (!(ext->report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ext->buffer_length)))
         goto failed;
@@ -463,12 +463,12 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     ext->report_buffer[14] = 0x89;
     ext->report_buffer[15] = 0xc5;
 
-    return TRUE;
+    return STATUS_SUCCESS;
 
 failed:
     HeapFree(GetProcessHeap(), 0, ext->report_buffer);
     hid_descriptor_free(&ext->desc);
-    return FALSE;
+    return STATUS_NO_MEMORY;
 }
 
 static void free_device(DEVICE_OBJECT *device)
@@ -791,7 +791,7 @@ static void try_add_device(unsigned int index)
 
     if (device)
     {
-        BOOL rc;
+        NTSTATUS status;
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->sdl_joystick = joystick;
         private->sdl_controller = controller;
@@ -799,10 +799,10 @@ static void try_add_device(unsigned int index)
 
         /* FIXME: We should probably move this to IRP_MN_START_DEVICE. */
         if (controller)
-            rc = build_mapped_report_descriptor(private);
+            status = build_mapped_report_descriptor(private);
         else
-            rc = build_report_descriptor(private);
-        if (!rc)
+            status = build_report_descriptor(private);
+        if (status)
         {
             ERR("Building report descriptor failed, removing device\n");
             bus_unlink_hid_device(device);
