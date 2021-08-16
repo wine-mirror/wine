@@ -1303,6 +1303,7 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
             if (layout & LAYOUT_RTL) dc->attr->map_mode = MM_ANISOTROPIC;
             DC_UpdateXforms( dc );
         }
+        release_dc_ptr( dc );
     }
 
     TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, old_layout, layout);
