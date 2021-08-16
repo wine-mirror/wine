@@ -62,7 +62,7 @@
 @ stdcall CreateFontIndirectExW(ptr)
 @ stdcall CreateFontIndirectW(ptr)
 @ stdcall CreateFontW(long long long long long long long long long long long long long wstr)
-@ stdcall CreateHalftonePalette(long)
+@ stdcall CreateHalftonePalette(long) NtGdiCreateHalftonePalette
 @ stdcall CreateHatchBrush(long long)
 @ stdcall CreateICA(str str str ptr)
 @ stdcall CreateICW(wstr wstr wstr ptr)
@@ -318,8 +318,8 @@
 @ stdcall GetMetaFileW(wstr)
 @ stdcall GetMetaRgn(long long)
 @ stdcall GetMiterLimit(long ptr)
-@ stdcall GetNearestColor(long long)
-@ stdcall GetNearestPaletteIndex(long long)
+@ stdcall GetNearestColor(long long) NtGdiGetNearestColor
+@ stdcall GetNearestPaletteIndex(long long) NtGdiGetNearestPaletteIndex
 @ stdcall GetObjectA(long long ptr)
 @ stdcall GetObjectType(long)
 @ stdcall GetObjectW(long long ptr)
@@ -341,7 +341,7 @@
 # @ stub GetStringBitmapA
 # @ stub GetStringBitmapW
 @ stdcall GetSystemPaletteEntries(long long long ptr)
-@ stdcall GetSystemPaletteUse(long)
+@ stdcall GetSystemPaletteUse(long) NtGdiGetSystemPaletteUse
 @ stdcall GetTextAlign(long)
 @ stdcall GetTextCharacterExtra(long)
 @ stdcall GetTextCharset(long)
@@ -421,7 +421,7 @@
 @ stdcall RemoveFontResourceW(wstr)
 @ stdcall ResetDCA(long ptr)
 @ stdcall ResetDCW(long ptr)
-@ stdcall ResizePalette(long long)
+@ stdcall ResizePalette(long long) NtGdiResizePalette
 @ stdcall RestoreDC(long long)
 @ stdcall RoundRect(long long long long long long long)
 @ stdcall SaveDC(long)
@@ -497,7 +497,7 @@
 @ stdcall SetICMProfileW(long wstr)
 @ stdcall SetLayout(long long)
 # @ stub SetLayoutWidth
-@ stdcall SetMagicColors(ptr long long)
+@ stdcall SetMagicColors(ptr long long) NtGdiSetMagicColors
 @ stdcall SetMapMode(long long)
 @ stdcall SetMapperFlags(long long)
 @ stdcall SetMetaFileBitsEx(long ptr)
@@ -513,7 +513,7 @@
 @ stdcall SetRectRgn(long long long long long) NtGdiSetRectRgn
 @ stdcall SetRelAbs(long long)
 @ stdcall SetStretchBltMode(long long)
-@ stdcall SetSystemPaletteUse(long long)
+@ stdcall SetSystemPaletteUse(long long) NtGdiSetSystemPaletteUse
 @ stdcall SetTextAlign(long long)
 @ stdcall SetTextCharacterExtra(long long)
 @ stdcall SetTextColor(long long)
@@ -539,7 +539,7 @@
 @ stdcall TranslateCharsetInfo(ptr ptr long)
 @ stub UnloadNetworkFonts
 @ stdcall UnrealizeObject(long)
-@ stdcall UpdateColors(long)
+@ stdcall UpdateColors(long) NtGdiUpdateColors
 @ stdcall UpdateICMRegKey(long str str long) UpdateICMRegKeyA
 @ stdcall UpdateICMRegKeyA(long str str long)
 @ stdcall UpdateICMRegKeyW(long wstr wstr long)

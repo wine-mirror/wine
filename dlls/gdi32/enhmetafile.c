@@ -1814,8 +1814,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         const EMRRESIZEPALETTE *lpResizePalette = (const EMRRESIZEPALETTE *)mr;
 
-        ResizePalette( (handletable->objectHandle)[lpResizePalette->ihPal],
-                       (UINT)lpResizePalette->cEntries );
+        NtGdiResizePalette( handletable->objectHandle[lpResizePalette->ihPal],
+                            lpResizePalette->cEntries );
 
         break;
       }

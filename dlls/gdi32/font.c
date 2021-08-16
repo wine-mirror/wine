@@ -5626,7 +5626,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     if (flags & ETO_OPAQUE)
     {
         RECT rc = *rect;
-        HBRUSH brush = CreateSolidBrush( GetNearestColor( dev->hdc, dc->attr->background_color ) );
+        HBRUSH brush = CreateSolidBrush( NtGdiGetNearestColor( dev->hdc, dc->attr->background_color ));
 
         if (brush)
         {

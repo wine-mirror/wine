@@ -129,7 +129,7 @@ HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT coun
 
 
 /***********************************************************************
- * CreateHalftonePalette [GDI32.@]
+ *           NtGdiCreateHalftonePalette    (win32u.@)
  *
  * Creates a halftone palette.
  *
@@ -142,8 +142,7 @@ HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT coun
  *        of greater that 256 color. On a 256 color device the halftone
  *        palette will be different and this function will be incorrect
  */
-HPALETTE WINAPI CreateHalftonePalette(
-    HDC hdc) /* [in] Handle to device context */
+HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc )
 {
     const RGBQUAD *entries = get_default_color_table( 8 );
     char buffer[FIELD_OFFSET( LOGPALETTE, palPalEntry[256] )];
@@ -247,17 +246,11 @@ UINT WINAPI SetPaletteEntries(
 
 
 /***********************************************************************
- * ResizePalette [GDI32.@]
+ *           NtGdiResizePalette    (win32u.@)
  *
  * Resizes logical palette.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
  */
-BOOL WINAPI ResizePalette(
-    HPALETTE hPal, /* [in] Handle of logical palette */
-    UINT cEntries) /* [in] Number of entries in logical palette */
+BOOL WINAPI NtGdiResizePalette( HPALETTE hPal, UINT cEntries )
 {
     PALETTEOBJ * palPtr = GDI_GetObjPtr( hPal, NTGDI_OBJ_PAL );
     PALETTEENTRY *entries;
@@ -339,7 +332,7 @@ BOOL WINAPI AnimatePalette(
 
 
 /***********************************************************************
- * SetSystemPaletteUse [GDI32.@]
+ *           SetSystemPaletteUse    (win32u.@)
  *
  * Specify whether the system palette contains 2 or 20 static colors.
  *
@@ -347,9 +340,7 @@ BOOL WINAPI AnimatePalette(
  *    Success: Previous system palette
  *    Failure: SYSPAL_ERROR
  */
-UINT WINAPI SetSystemPaletteUse(
-    HDC hdc,  /* [in] Handle of device context */
-    UINT use) /* [in] Palette-usage flag */
+UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
 {
     UINT old = SystemPaletteUse;
 
@@ -371,15 +362,11 @@ UINT WINAPI SetSystemPaletteUse(
 
 
 /***********************************************************************
- * GetSystemPaletteUse [GDI32.@]
+ *           NtGdiGetSystemPaletteUse    (win32u.@)
  *
  * Gets state of system palette.
- *
- * RETURNS
- *    Current state of system palette
  */
-UINT WINAPI GetSystemPaletteUse(
-    HDC hdc) /* [in] Handle of device context */
+UINT WINAPI NtGdiGetSystemPaletteUse( HDC hdc )
 {
     return SystemPaletteUse;
 }
@@ -447,7 +434,7 @@ UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count,
 }
 
 /***********************************************************************
- * GetNearestPaletteIndex [GDI32.@]
+ *           NtGdiGetNearestPaletteIndex    (win32u.@)
  *
  * Gets palette index for color.
  *
@@ -458,9 +445,7 @@ UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count,
  *    Success: Index of entry in logical palette
  *    Failure: CLR_INVALID
  */
-UINT WINAPI GetNearestPaletteIndex(
-    HPALETTE hpalette, /* [in] Handle of logical color palette */
-    COLORREF color)      /* [in] Color to be matched */
+UINT WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 {
     PALETTEOBJ* palObj = GDI_GetObjPtr( hpalette, NTGDI_OBJ_PAL );
     UINT index  = 0;
@@ -506,7 +491,7 @@ COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 
         if (!hpal) hpal = GetStockObject( DEFAULT_PALETTE );
         if (spec_type == 2) /* PALETTERGB */
-            index = GetNearestPaletteIndex( hpal, color );
+            index = NtGdiGetNearestPaletteIndex( hpal, color );
         else  /* PALETTEINDEX */
             index = LOWORD(color);
 
@@ -522,7 +507,7 @@ COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 
 
 /***********************************************************************
- * GetNearestColor [GDI32.@]
+ *           NtGdiGetNearestColor    (win32u.@)
  *
  * Gets a system color to match.
  *
@@ -530,9 +515,7 @@ COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
  *    Success: Color from system palette that corresponds to given color
  *    Failure: CLR_INVALID
  */
-COLORREF WINAPI GetNearestColor(
-    HDC hdc,      /* [in] Handle of device context */
-    COLORREF color) /* [in] Color to be matched */
+COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color )
 {
     COLORREF nearest = CLR_INVALID;
     DC *dc;
@@ -672,16 +655,11 @@ typedef HWND (WINAPI *WindowFromDC_funcptr)( HDC );
 typedef BOOL (WINAPI *RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
 
 /**********************************************************************
- * UpdateColors [GDI32.@]
+ *           NtGdiUpdateColors    (win32u.@)
  *
  * Remaps current colors to logical palette.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
  */
-BOOL WINAPI UpdateColors(
-    HDC hDC) /* [in] Handle of device context */
+BOOL WINAPI NtGdiUpdateColors( HDC hDC )
 {
     HMODULE mod;
     int size = GetDeviceCaps( hDC, SIZEPALETTE );
@@ -710,10 +688,10 @@ BOOL WINAPI UpdateColors(
 }
 
 /*********************************************************************
- *           SetMagicColors   (GDI32.@)
+ *           NtGdiSetMagicColors   (win32u.@)
  */
-BOOL WINAPI SetMagicColors(HDC hdc, ULONG u1, ULONG u2)
+BOOL WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index )
 {
-    FIXME("(%p 0x%08x 0x%08x): stub\n", hdc, u1, u2);
+    FIXME( "(%p 0x%08x 0x%08x): stub\n", hdc, magic, index );
     return TRUE;
 }
