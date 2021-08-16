@@ -248,23 +248,9 @@ BOOL WINAPI NtGdiResizePalette( HPALETTE hPal, UINT cEntries )
 }
 
 
-/***********************************************************************
- * AnimatePalette [GDI32.@]
- *
- * Replaces entries in logical palette.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- *
- * FIXME
- *    Should use existing mapping when animating a primary palette
- */
-BOOL WINAPI AnimatePalette(
-    HPALETTE hPal,              /* [in] Handle to logical palette */
-    UINT StartIndex,            /* [in] First entry in palette */
-    UINT NumEntries,            /* [in] Count of entries in palette */
-    const PALETTEENTRY* PaletteColors) /* [in] Pointer to first replacement */
+/* Replaces entries in logical palette. */
+static BOOL animate_palette( HPALETTE hPal, UINT StartIndex, UINT NumEntries,
+                             const PALETTEENTRY *PaletteColors )
 {
     TRACE("%p (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
 
@@ -679,6 +665,8 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
 {
     switch (func)
     {
+    case NtGdiAnimatePalette:
+        return animate_palette( handle, start, count, entries );
     case NtGdiSetPaletteEntries:
         return set_palette_entries( handle, start, count, entries );
     case NtGdiGetPaletteEntries:
