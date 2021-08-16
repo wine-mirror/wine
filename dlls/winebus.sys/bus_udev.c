@@ -995,66 +995,38 @@ static int check_device_syspath(DEVICE_OBJECT *device, void* context)
     return strcmp(get_device_syspath(private->udev_device), context);
 }
 
-static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
-                             DWORD *product_id, WORD *input, WCHAR **serial_number)
+static void parse_uevent_info(struct udev_device *dev, DWORD *vendor_id, DWORD *product_id,
+                              DWORD *input, WCHAR **serial_number)
 {
-    DWORD bus_type;
-    char *tmp;
-    char *saveptr = NULL;
-    char *line;
-    char *key;
-    char *value;
+    const char *ptr, *next, *tmp;
+    char buffer[256];
+    DWORD bus = 0;
 
-    int found_id = 0;
-    int found_serial = 0;
-
-    tmp = heap_alloc(strlen(uevent) + 1);
-    strcpy(tmp, uevent);
-    line = strtok_r(tmp, "\n", &saveptr);
-    while (line != NULL)
+    if ((next = udev_device_get_sysattr_value(dev, "uevent")))
     {
-        /* line: "KEY=value" */
-        key = line;
-        value = strchr(line, '=');
-        if (!value)
+        while ((ptr = next) && *ptr)
         {
-            goto next_line;
-        }
-        *value = '\0';
-        value++;
+            if ((next = strchr(next, '\n'))) next += 1;
+            else next = ptr + strlen(ptr);
+            TRACE("uevent %s\n", debugstr_an(ptr, next - ptr - 1));
 
-        if (strcmp(key, "HID_ID") == 0)
-        {
-            /**
-             *        type vendor   product
-             * HID_ID=0003:000005AC:00008242
-             **/
-            int ret = sscanf(value, "%x:%x:%x", &bus_type, vendor_id, product_id);
-            if (ret == 3)
-                found_id = 1;
-        }
-        else if (strcmp(key, "HID_UNIQ") == 0)
-        {
-            /* The caller has to free the serial number */
-            if (*value)
+            if (!strncmp(ptr, "HID_UNIQ=", 9))
             {
-                *serial_number = strdupAtoW(value);
-                found_serial = 1;
+                if (sscanf(ptr, "HID_UNIQ=%256s\n", buffer) != 1 || !*buffer) continue;
+                if (!*serial_number) *serial_number = strdupAtoW(buffer);
+            }
+            if (!strncmp(ptr, "HID_PHYS=", 9))
+            {
+                if (!(tmp = strstr(ptr, "/input")) || tmp >= next) continue;
+                if (*input == -1) sscanf(tmp, "/input%d\n", input);
+            }
+            if (!strncmp(ptr, "HID_ID=", 7))
+            {
+                if (bus || *vendor_id || *product_id) continue;
+                sscanf(ptr, "HID_ID=%x:%x:%x\n", &bus, vendor_id, product_id);
             }
         }
-        else if (strcmp(key, "HID_PHYS") == 0)
-        {
-            const char *input_no = strstr(value, "input");
-            if (input_no)
-                *input = atoi(input_no+5 );
-        }
-
-next_line:
-        line = strtok_r(NULL, "\n", &saveptr);
     }
-
-    heap_free(tmp);
-    return (found_id && found_serial);
 }
 
 static DWORD a_to_bcd(const char *s)
@@ -1072,14 +1044,13 @@ static DWORD a_to_bcd(const char *s)
 
 static void try_add_device(struct udev_device *dev)
 {
-    DWORD vid = 0, pid = 0, version = 0;
+    DWORD vid = 0, pid = 0, version = 0, input = -1;
     struct udev_device *hiddev = NULL, *walk_device;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
     WCHAR *serial = NULL;
     BOOL is_gamepad = FALSE;
-    WORD input = -1;
     int fd;
     static const CHAR *base_serial = "0000";
 
@@ -1109,8 +1080,7 @@ static void try_add_device(struct udev_device *dev)
     if (hiddev)
     {
         const char *bcdDevice = NULL;
-        parse_uevent_info(udev_device_get_sysattr_value(hiddev, "uevent"),
-                          &vid, &pid, &input, &serial);
+        parse_uevent_info(hiddev, &vid, &pid, &input, &serial);
         if (serial == NULL)
             serial = strdupAtoW(base_serial);
 
