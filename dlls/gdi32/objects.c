@@ -516,3 +516,12 @@ HCOLORSPACE WINAPI SetColorSpace( HDC hdc, HCOLORSPACE cs )
     FIXME( "stub\n" );
     return cs;
 }
+
+/***********************************************************************
+ *           CreatePalette     (GDI32.@)
+ */
+HPALETTE WINAPI CreatePalette( const LOGPALETTE *palette )
+{
+    if (!palette) return 0;
+    return NtGdiCreatePaletteInternal( palette, palette->palNumEntries );
+}

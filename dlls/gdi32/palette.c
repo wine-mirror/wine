@@ -94,28 +94,23 @@ HPALETTE PALETTE_Init(void)
 
 
 /***********************************************************************
- * CreatePalette [GDI32.@]
+ *           NtGdiCreatePaletteInternal    (win32u.@)
  *
  * Creates a logical color palette.
- *
- * RETURNS
- *    Success: Handle to logical palette
- *    Failure: NULL
  */
-HPALETTE WINAPI CreatePalette(
-    const LOGPALETTE* palette) /* [in] Pointer to logical color palette */
+HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT count )
 {
     PALETTEOBJ * palettePtr;
     HPALETTE hpalette;
     int size;
 
     if (!palette) return 0;
-    TRACE("entries=%i\n", palette->palNumEntries);
+    TRACE( "entries=%u\n", count );
 
     if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*palettePtr) ))) return 0;
     palettePtr->unrealize = NULL;
     palettePtr->version = palette->palVersion;
-    palettePtr->count   = palette->palNumEntries;
+    palettePtr->count   = count;
     size = palettePtr->count * sizeof(*palettePtr->entries);
     if (!(palettePtr->entries = HeapAlloc( GetProcessHeap(), 0, size )))
     {
