@@ -1135,13 +1135,16 @@ static void try_add_device(struct udev_device *dev)
 
         if (ioctl(fd, EVIOCGID, &device_id) < 0)
             WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
+        else
+        {
+            vid = device_id.vendor;
+            pid = device_id.product;
+            version = device_id.version;
+        }
+
         device_uid[0] = 0;
         if (ioctl(fd, EVIOCGUNIQ(254), device_uid) >= 0 && device_uid[0])
             serial = strdupAtoW(device_uid);
-
-        vid = device_id.vendor;
-        pid = device_id.product;
-        version = device_id.version;
     }
 #endif
 
