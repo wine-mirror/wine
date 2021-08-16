@@ -113,4 +113,35 @@ void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
 const IID *get_riid_from_tid(enum tid_t tid) DECLSPEC_HIDDEN;
 
+static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
+{
+    if (!p)
+        return E_INVALIDARG;
+
+    if (value)
+    {
+        *p = SysAllocString(value);
+        if (!*p)
+            return E_OUTOFMEMORY;
+    }
+    else
+        *p = NULL;
+
+    return S_OK;
+}
+
+static inline HRESULT return_bstrn(const WCHAR *value, int len, BSTR *p)
+{
+    if (value)
+    {
+        *p = SysAllocStringLen(value, len);
+        if (!*p)
+            return E_OUTOFMEMORY;
+    }
+    else
+        *p = NULL;
+
+    return S_OK;
+}
+
 #endif /* __MSXML_DISPEX__ */
