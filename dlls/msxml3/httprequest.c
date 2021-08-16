@@ -1127,6 +1127,58 @@ static HRESULT httprequest_get_statusText(httprequest *This, BSTR *status)
     return S_OK;
 }
 
+enum response_encoding
+{
+    RESPONSE_ENCODING_NONE,
+    RESPONSE_ENCODING_UCS4BE,
+    RESPONSE_ENCODING_UCS4LE,
+    RESPONSE_ENCODING_UCS4_2143,
+    RESPONSE_ENCODING_UCS4_3412,
+    RESPONSE_ENCODING_EBCDIC,
+    RESPONSE_ENCODING_UTF8,
+    RESPONSE_ENCODING_UTF16LE,
+    RESPONSE_ENCODING_UTF16BE,
+};
+
+static unsigned int detect_response_encoding(const BYTE *in, unsigned int len)
+{
+    if (len >= 4)
+    {
+        if (in[0] == 0 && in[1] == 0 && in[2] == 0 && in[3] == 0x3c)
+            return RESPONSE_ENCODING_UCS4BE;
+        if (in[0] == 0x3c && in[1] == 0 && in[2] == 0 && in[3] == 0)
+            return RESPONSE_ENCODING_UCS4LE;
+        if (in[0] == 0 && in[1] == 0 && in[2] == 0x3c && in[3] == 0)
+            return RESPONSE_ENCODING_UCS4_2143;
+        if (in[0] == 0 && in[1] == 0x3c && in[2] == 0 && in[3] == 0)
+            return RESPONSE_ENCODING_UCS4_3412;
+        if (in[0] == 0x4c && in[1] == 0x6f && in[2] == 0xa7 && in[3] == 0x94)
+            return RESPONSE_ENCODING_EBCDIC;
+        if (in[0] == 0x3c && in[1] == 0x3f && in[2] == 0x78 && in[3] == 0x6d)
+            return RESPONSE_ENCODING_UTF8;
+        if (in[0] == 0x3c && in[1] == 0 && in[2] == 0x3f && in[3] == 0)
+            return RESPONSE_ENCODING_UTF16LE;
+        if (in[0] == 0 && in[1] == 0x3c && in[2] == 0 && in[3] == 0x3f)
+            return RESPONSE_ENCODING_UTF16BE;
+    }
+
+    if (len >= 3)
+    {
+        if (in[0] == 0xef && in[1] == 0xbb && in[2] == 0xbf)
+            return RESPONSE_ENCODING_UTF8;
+    }
+
+    if (len >= 2)
+    {
+        if (in[0] == 0xfe && in[1] == 0xff)
+            return RESPONSE_ENCODING_UTF16BE;
+        if (in[0] == 0xff && in[1] == 0xfe)
+            return RESPONSE_ENCODING_UTF16LE;
+    }
+
+    return RESPONSE_ENCODING_NONE;
+}
+
 static HRESULT httprequest_get_responseText(httprequest *This, BSTR *body)
 {
     HGLOBAL hglobal;
@@ -1138,34 +1190,34 @@ static HRESULT httprequest_get_responseText(httprequest *This, BSTR *body)
     hr = GetHGlobalFromStream(This->bsc->stream, &hglobal);
     if (hr == S_OK)
     {
-        xmlChar *ptr = GlobalLock(hglobal);
+        const char *ptr = GlobalLock(hglobal);
         DWORD size = GlobalSize(hglobal);
-        xmlCharEncoding encoding = XML_CHAR_ENCODING_UTF8;
+        unsigned int encoding = RESPONSE_ENCODING_NONE;
 
         /* try to determine data encoding */
         if (size >= 4)
         {
-            encoding = xmlDetectCharEncoding(ptr, 4);
-            TRACE("detected encoding: %s\n", debugstr_a(xmlGetCharEncodingName(encoding)));
-            if ( encoding != XML_CHAR_ENCODING_UTF8 &&
-                 encoding != XML_CHAR_ENCODING_UTF16LE &&
-                 encoding != XML_CHAR_ENCODING_NONE )
+            encoding = detect_response_encoding((const BYTE *)ptr, 4);
+            TRACE("detected encoding: %u.\n", encoding);
+
+            if (encoding != RESPONSE_ENCODING_UTF8 &&
+                    encoding != RESPONSE_ENCODING_UTF16LE &&
+                    encoding != RESPONSE_ENCODING_NONE )
             {
-                FIXME("unsupported encoding: %s\n", debugstr_a(xmlGetCharEncodingName(encoding)));
+                FIXME("unsupported response encoding: %u.\n", encoding);
                 GlobalUnlock(hglobal);
                 return E_FAIL;
             }
         }
 
         /* without BOM assume UTF-8 */
-        if (encoding == XML_CHAR_ENCODING_UTF8 ||
-            encoding == XML_CHAR_ENCODING_NONE )
+        if (encoding == RESPONSE_ENCODING_UTF8 || encoding == RESPONSE_ENCODING_NONE)
         {
-            DWORD length = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)ptr, size, NULL, 0);
+            DWORD length = MultiByteToWideChar(CP_UTF8, 0, ptr, size, NULL, 0);
 
             *body = SysAllocStringLen(NULL, length);
             if (*body)
-                MultiByteToWideChar( CP_UTF8, 0, (LPCSTR)ptr, size, *body, length);
+                MultiByteToWideChar( CP_UTF8, 0, ptr, size, *body, length);
         }
         else
             *body = SysAllocStringByteLen((LPCSTR)ptr, size);
