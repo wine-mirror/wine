@@ -37,6 +37,21 @@
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static const CHAR xdr_schema1_uri[] = "x-schema:test1.xdr";
 static const CHAR xdr_schema1_xml[] =
 "<?xml version='1.0'?>"
@@ -1808,8 +1823,13 @@ static void test_ifaces(void)
     hr = IXMLDOMSchemaCollection2_QueryInterface(cache, &CLSID_XMLSchemaCache60, (void**)&unk);
     ok (hr == S_OK, "Could not get CLSID_XMLSchemaCache60 iface: %08x\n", hr);
     ok (unk == (IUnknown*)cache, "unk != cache\n");
-
     IUnknown_Release(unk);
+
+    check_interface(cache, &IID_IXMLDOMSchemaCollection, TRUE);
+    check_interface(cache, &IID_IXMLDOMSchemaCollection2, TRUE);
+    check_interface(cache, &IID_IDispatch, TRUE);
+    check_interface(cache, &IID_IDispatchEx, TRUE);
+
     IXMLDOMSchemaCollection2_Release(cache);
 }
 

@@ -50,6 +50,21 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__, line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static const char xmltestA[] = "http://test.winehq.org/tests/xmltest.xml";
 static const CHAR xmltestbodyA[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
 
@@ -1456,6 +1471,10 @@ static void test_XMLHTTP(void)
     HGLOBAL g;
 
     xhr = create_xhr();
+
+    check_interface(xhr, &IID_IXMLHttpRequest, TRUE);
+    check_interface(xhr, &IID_IDispatch, TRUE);
+    check_interface(xhr, &IID_IDispatchEx, FALSE);
 
     VariantInit(&dummy);
     V_VT(&dummy) = VT_ERROR;

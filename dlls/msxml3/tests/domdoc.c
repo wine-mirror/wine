@@ -54,6 +54,21 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_transformdest_unknown,0xf5078f3a,0xc551,0x11d3,0x89,0xb9,0x00,0x00,0xf8,0x1f,0xe2,0x21);
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static int g_unexpectedcall, g_expectedcall;
 
 struct msxmlsupported_data_t
@@ -1480,6 +1495,14 @@ static void test_domdoc( void )
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
+    check_interface(doc, &IID_IXMLDOMDocument, TRUE);
+    check_interface(doc, &IID_IPersistStreamInit, TRUE);
+    check_interface(doc, &IID_IObjectWithSite, TRUE);
+    check_interface(doc, &IID_IObjectSafety, TRUE);
+    check_interface(doc, &IID_IConnectionPointContainer, TRUE);
+    check_interface(doc, &IID_IDispatch, TRUE);
+    check_interface(doc, &IID_IDispatchEx, TRUE);
+
 if (0)
 {
     /* crashes on native */
@@ -2110,7 +2133,6 @@ static void test_persiststream(void)
     IPersistStream *stream;
     IXMLDOMDocument *doc;
     ULARGE_INTEGER size;
-    IPersist *persist;
     IStream *istream;
     HRESULT hr;
     CLSID clsid;
@@ -2130,11 +2152,8 @@ static void test_persiststream(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok((IUnknown *)stream == (IUnknown *)streaminit, "got %p, %p\n", stream, streaminit);
 
-    hr = IPersistStream_QueryInterface(stream, &IID_IPersist, (void **)&persist);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
-
-    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersist, (void **)&persist);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    check_interface(stream, &IID_IPersist, FALSE);
+    check_interface(doc, &IID_IPersist, FALSE);
 
     hr = IPersistStreamInit_GetClassID(streaminit, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
@@ -9039,6 +9058,10 @@ static void test_xsltemplate(void)
     if (!is_clsid_supported(&CLSID_XSLTemplate, &IID_IXSLTemplate)) return;
     template = create_xsltemplate(&IID_IXSLTemplate);
 
+    check_interface(template, &IID_IXSLTemplate, TRUE);
+    check_interface(template, &IID_IDispatch, TRUE);
+    check_interface(template, &IID_IDispatchEx, TRUE);
+
     /* works as reset */
     hr = IXSLTemplate_putref_stylesheet(template, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -10790,7 +10813,6 @@ static void test_mxnamespacemanager(void)
     IMXNamespaceManager *nsmgr;
     IUnknown *unk1, *unk2;
     WCHAR buffW[250];
-    IDispatch *disp;
     IUnknown *unk;
     HRESULT hr;
     INT len;
@@ -10799,10 +10821,10 @@ static void test_mxnamespacemanager(void)
         &IID_IMXNamespaceManager, (void**)&nsmgr);
     EXPECT_HR(hr, S_OK);
 
-    /* IMXNamespaceManager inherits from IUnknown */
-    hr = IMXNamespaceManager_QueryInterface(nsmgr, &IID_IDispatch, (void**)&disp);
-    EXPECT_HR(hr, S_OK);
-    IDispatch_Release(disp);
+    check_interface(nsmgr, &IID_IDispatch, TRUE);
+    check_interface(nsmgr, &IID_IDispatchEx, TRUE);
+    check_interface(nsmgr, &IID_IMXNamespaceManager, TRUE);
+    check_interface(nsmgr, &IID_IVBMXNamespaceManager, TRUE);
 
     hr = IMXNamespaceManager_QueryInterface(nsmgr, &IID_IVBMXNamespaceManager, (void**)&mgr2);
     EXPECT_HR(hr, S_OK);

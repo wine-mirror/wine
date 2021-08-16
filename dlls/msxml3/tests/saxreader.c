@@ -48,6 +48,21 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__, line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static LONG get_refcount(void *iface)
 {
     IUnknown *unk = iface;
@@ -4861,6 +4876,11 @@ static void test_saxreader_dispex(void)
                 &IID_ISAXXMLReader, (void**)&reader);
     EXPECT_HR(hr, S_OK);
 
+    check_interface(reader, &IID_ISAXXMLReader, TRUE);
+    check_interface(reader, &IID_IVBSAXXMLReader, TRUE);
+    check_interface(reader, &IID_IDispatch, TRUE);
+    check_interface(reader, &IID_IDispatchEx, TRUE);
+
     hr = ISAXXMLReader_QueryInterface(reader, &IID_IUnknown, (void**)&unk);
     EXPECT_HR(hr, S_OK);
     test_obj_dispex(unk);
@@ -5811,40 +5831,20 @@ static void test_mxattr_dispex(void)
 
 static void test_mxattr_qi(void)
 {
-    IVBSAXAttributes *vbsaxattr, *vbsaxattr2;
-    ISAXAttributes *saxattr;
     IMXAttributes *mxattr;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_SAXAttributes, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMXAttributes, (void**)&mxattr);
+            &IID_IMXAttributes, (void **)&mxattr);
     EXPECT_HR(hr, S_OK);
 
-    EXPECT_REF(mxattr, 1);
-    hr = IMXAttributes_QueryInterface(mxattr, &IID_ISAXAttributes, (void**)&saxattr);
-    EXPECT_HR(hr, S_OK);
-
-    EXPECT_REF(mxattr, 2);
-    EXPECT_REF(saxattr, 2);
-
-    hr = IMXAttributes_QueryInterface(mxattr, &IID_IVBSAXAttributes, (void**)&vbsaxattr);
-    EXPECT_HR(hr, S_OK);
-
-    EXPECT_REF(vbsaxattr, 3);
-    EXPECT_REF(mxattr, 3);
-    EXPECT_REF(saxattr, 3);
-
-    hr = ISAXAttributes_QueryInterface(saxattr, &IID_IVBSAXAttributes, (void**)&vbsaxattr2);
-    EXPECT_HR(hr, S_OK);
-
-    EXPECT_REF(vbsaxattr, 4);
-    EXPECT_REF(mxattr, 4);
-    EXPECT_REF(saxattr, 4);
+    check_interface(mxattr, &IID_IMXAttributes, TRUE);
+    check_interface(mxattr, &IID_ISAXAttributes, TRUE);
+    check_interface(mxattr, &IID_IVBSAXAttributes, TRUE);
+    check_interface(mxattr, &IID_IDispatch, TRUE);
+    check_interface(mxattr, &IID_IDispatchEx, TRUE);
 
     IMXAttributes_Release(mxattr);
-    ISAXAttributes_Release(saxattr);
-    IVBSAXAttributes_Release(vbsaxattr);
-    IVBSAXAttributes_Release(vbsaxattr2);
 }
 
 static struct msxmlsupported_data_t saxattr_support_data[] =
