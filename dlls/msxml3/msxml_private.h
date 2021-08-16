@@ -27,67 +27,15 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 
+#include "msxml_dispex.h"
+
 #ifndef __WINE_CONFIG_H
 # error You must include config.h to use this header
 #endif
 
-typedef enum {
-    MSXML_DEFAULT = 0,
-    MSXML2        = 20,
-    MSXML26       = 26,
-    MSXML3        = 30,
-    MSXML4        = 40,
-    MSXML6        = 60
-} MSXML_VERSION;
-
 extern const CLSID * DOMDocument_version(MSXML_VERSION v) DECLSPEC_HIDDEN;
 extern const CLSID * SchemaCache_version(MSXML_VERSION v) DECLSPEC_HIDDEN;
 
-/* typelibs */
-typedef enum tid_t {
-    NULL_tid,
-    IXMLDOMAttribute_tid,
-    IXMLDOMCDATASection_tid,
-    IXMLDOMComment_tid,
-    IXMLDOMDocument_tid,
-    IXMLDOMDocument2_tid,
-    IXMLDOMDocument3_tid,
-    IXMLDOMDocumentFragment_tid,
-    IXMLDOMDocumentType_tid,
-    IXMLDOMElement_tid,
-    IXMLDOMEntityReference_tid,
-    IXMLDOMImplementation_tid,
-    IXMLDOMNamedNodeMap_tid,
-    IXMLDOMNode_tid,
-    IXMLDOMNodeList_tid,
-    IXMLDOMParseError2_tid,
-    IXMLDOMProcessingInstruction_tid,
-    IXMLDOMSchemaCollection_tid,
-    IXMLDOMSchemaCollection2_tid,
-    IXMLDOMSelection_tid,
-    IXMLDOMText_tid,
-    IXMLElement_tid,
-    IXMLDocument_tid,
-    IXMLHTTPRequest_tid,
-    IXSLProcessor_tid,
-    IXSLTemplate_tid,
-    IVBSAXAttributes_tid,
-    IVBSAXContentHandler_tid,
-    IVBSAXDeclHandler_tid,
-    IVBSAXDTDHandler_tid,
-    IVBSAXEntityResolver_tid,
-    IVBSAXErrorHandler_tid,
-    IVBSAXLexicalHandler_tid,
-    IVBSAXLocator_tid,
-    IVBSAXXMLFilter_tid,
-    IVBSAXXMLReader_tid,
-    IMXAttributes_tid,
-    IMXReaderControl_tid,
-    IMXWriter_tid,
-    IVBMXNamespaceManager_tid,
-    IServerXMLHTTPRequest_tid,
-    LAST_tid
-} tid_t;
 
 /* The XDR datatypes (urn:schemas-microsoft-com:datatypes)
  * These are actually valid for XSD schemas as well
@@ -134,37 +82,7 @@ typedef enum _XDR_DT {
     LAST_DT
 } XDR_DT;
 
-extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
-extern void release_typelib(void) DECLSPEC_HIDDEN;
-
-typedef struct dispex_data_t dispex_data_t;
-
-typedef struct {
-    HRESULT (*get_dispid)(IUnknown*,BSTR,DWORD,DISPID*);
-    HRESULT (*invoke)(IUnknown*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*);
-} dispex_static_data_vtbl_t;
-
-typedef struct {
-    const dispex_static_data_vtbl_t *vtbl;
-    const tid_t disp_tid;
-    dispex_data_t *data;
-    const tid_t* const iface_tids;
-} dispex_static_data_t;
-
-typedef struct {
-    IDispatchEx IDispatchEx_iface;
-
-    IUnknown *outer;
-
-    dispex_static_data_t *data;
-} DispatchEx;
-
 extern HINSTANCE MSXML_hInstance DECLSPEC_HIDDEN;
-
-void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
-void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
-BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
-const IID *get_riid_from_tid(enum tid_t tid) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 

@@ -18,30 +18,16 @@
 
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-#endif
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "ole2.h"
-#include "msxml6.h"
-#include "msxml6did.h"
-#include "wininet.h"
-#include "urlmon.h"
-#include "winreg.h"
-#include "shlwapi.h"
+#include "msxml2.h"
+#include "msxml2did.h"
+#include "dispex.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
+#include "wine/heap.h"
 
-#include "msxml_private.h"
+#include "msxml_dispex.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -53,7 +39,6 @@ static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
       0, 0, { (DWORD_PTR)(__FILE__ ": dispex_static_data") }
 };
 static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
-
 
 enum lib_version_t
 {
@@ -258,7 +243,7 @@ static int dispid_cmp(const void *p1, const void *p2)
 
 static int func_name_cmp(const void *p1, const void *p2)
 {
-    return strcmpiW((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
+    return lstrcmpiW((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
 }
 
 static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
@@ -439,9 +424,9 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     while(min <= max) {
         n = (min+max)/2;
 
-        c = strcmpiW(data->name_table[n]->name, bstrName);
+        c = lstrcmpiW(data->name_table[n]->name, bstrName);
         if(!c) {
-            if((grfdex & fdexNameCaseSensitive) && strcmpW(data->name_table[n]->name, bstrName))
+            if((grfdex & fdexNameCaseSensitive) && lstrcmpW(data->name_table[n]->name, bstrName))
                 break;
 
             *pid = data->name_table[n]->id;
