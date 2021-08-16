@@ -1,10 +1,9 @@
 MODULE    = hidclass.sys
 IMPORTLIB = hidclass
-IMPORTS   = hal ntoskrnl user32
+IMPORTS   = hal ntoskrnl user32 hidparse
 
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	descriptor.c \
 	device.c \
 	pnp.c

@@ -27,6 +27,7 @@
 #include "ddk/hidport.h"
 #include "ddk/hidclass.h"
 #include "ddk/hidpi.h"
+#include "ddk/hidpddi.h"
 #include "cfgmgr32.h"
 #include "wine/list.h"
 #include "wine/hid.h"
@@ -54,7 +55,7 @@ typedef struct _BASE_DEVICE_EXTENSION
             DEVICE_OBJECT *parent_fdo;
 
             HID_COLLECTION_INFORMATION information;
-            struct hid_preparsed_data *preparsed_data;
+            HIDP_DEVICE_DESC device_desc;
 
             ULONG poll_interval;
             HANDLE halt_event;
@@ -129,6 +130,3 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-
-/* Parsing HID Report Descriptors into preparsed data */
-struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int length ) DECLSPEC_HIDDEN;

@@ -109,6 +109,7 @@ C_ASSERT(offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]) < sizeof(RAWIN
 
 static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param)
 {
+    HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     RAWINPUT rawinput;
     INPUT input;
 
@@ -118,8 +119,8 @@ static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param
     rawinput.header.wParam = param;
     rawinput.data.hid.dwCount = 0;
     rawinput.data.hid.dwSizeHid = 0;
-    ((USAGE *)rawinput.data.hid.bRawData)[0] = ext->u.pdo.preparsed_data->caps.UsagePage;
-    ((USAGE *)rawinput.data.hid.bRawData)[1] = ext->u.pdo.preparsed_data->caps.Usage;
+    ((USAGE *)rawinput.data.hid.bRawData)[0] = desc->UsagePage;
+    ((USAGE *)rawinput.data.hid.bRawData)[1] = desc->Usage;
 
     input.type = INPUT_HARDWARE;
     input.hi.uMsg = WM_INPUT_DEVICE_CHANGE;
@@ -183,6 +184,7 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
 {
     BASE_DEVICE_EXTENSION *fdo_ext = fdo->DeviceExtension, *pdo_ext;
     HID_DEVICE_ATTRIBUTES attr = {0};
+    HIDP_COLLECTION_DESC *desc;
     HID_DESCRIPTOR descriptor;
     DEVICE_OBJECT *child_pdo;
     BYTE *reportDescriptor;
@@ -253,19 +255,21 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         return;
     }
 
-    pdo_ext->u.pdo.preparsed_data = parse_descriptor( reportDescriptor, descriptor.DescriptorList[i].wReportLength );
+    io.Status = HidP_GetCollectionDescription( reportDescriptor, descriptor.DescriptorList[i].wReportLength,
+                                               PagedPool, &pdo_ext->u.pdo.device_desc );
     free(reportDescriptor);
-    if (!pdo_ext->u.pdo.preparsed_data)
+    if (io.Status != HIDP_STATUS_SUCCESS)
     {
         ERR("Cannot parse Report Descriptor\n");
         IoDeleteDevice(child_pdo);
         return;
     }
 
-    pdo_ext->u.pdo.information.DescriptorSize = pdo_ext->u.pdo.preparsed_data->size;
+    desc = pdo_ext->u.pdo.device_desc.CollectionDesc;
+    pdo_ext->u.pdo.information.DescriptorSize = desc->PreparsedDataLength;
 
-    page = pdo_ext->u.pdo.preparsed_data->caps.UsagePage;
-    usage = pdo_ext->u.pdo.preparsed_data->caps.Usage;
+    page = desc->UsagePage;
+    usage = desc->Usage;
     if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_MOUSE)
         pdo_ext->u.pdo.rawinput_handle = WINE_MOUSE_HANDLE;
     else if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_KEYBOARD)
@@ -374,6 +378,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     NTSTATUS status = irp->IoStatus.Status;
     KIRQL irql;
 
@@ -447,14 +452,12 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
 
             /* FIXME: This should probably be done in mouhid.sys. */
-            if (ext->u.pdo.preparsed_data->caps.UsagePage == HID_USAGE_PAGE_GENERIC
-                    && ext->u.pdo.preparsed_data->caps.Usage == HID_USAGE_GENERIC_MOUSE)
+            if (desc->UsagePage == HID_USAGE_PAGE_GENERIC && desc->Usage == HID_USAGE_GENERIC_MOUSE)
             {
                 if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_MOUSE, NULL, &ext->u.pdo.mouse_link_name))
                     ext->u.pdo.is_mouse = TRUE;
             }
-            if (ext->u.pdo.preparsed_data->caps.UsagePage == HID_USAGE_PAGE_GENERIC
-                    && ext->u.pdo.preparsed_data->caps.Usage == HID_USAGE_GENERIC_KEYBOARD)
+            if (desc->UsagePage == HID_USAGE_PAGE_GENERIC && desc->Usage == HID_USAGE_GENERIC_KEYBOARD)
             {
                 if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_KEYBOARD, NULL, &ext->u.pdo.keyboard_link_name))
                     ext->u.pdo.is_keyboard = TRUE;
@@ -488,7 +491,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
             CloseHandle(ext->u.pdo.halt_event);
 
-            free(ext->u.pdo.preparsed_data);
+            HidP_FreeCollectionDescription(&ext->u.pdo.device_desc);
 
             RtlFreeUnicodeString(&ext->u.pdo.link_name);
 
