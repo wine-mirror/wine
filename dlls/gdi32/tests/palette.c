@@ -323,6 +323,8 @@ static void test_system_palette_entries(void)
 
     metafile = CloseMetaFile(metafile_dc);
     DeleteMetaFile(metafile);
+
+    check_system_palette_entries(ULongToHandle(0xdeadbeef));
 }
 
 START_TEST(palette)

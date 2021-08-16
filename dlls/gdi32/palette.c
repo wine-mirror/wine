@@ -333,25 +333,12 @@ UINT WINAPI NtGdiGetSystemPaletteUse( HDC hdc )
 }
 
 
-/***********************************************************************
- * GetSystemPaletteEntries [GDI32.@]
- *
- * Gets range of palette entries.
- *
- * RETURNS
- *    Success: Number of entries retrieved from palette
- *    Failure: 0
- */
-UINT WINAPI GetSystemPaletteEntries(
-    HDC hdc,              /* [in]  Handle of device context */
-    UINT start,           /* [in]  Index of first entry to be retrieved */
-    UINT count,           /* [in]  Number of entries to be retrieved */
-    LPPALETTEENTRY entries) /* [out] Array receiving system-palette entries */
+static UINT get_system_palette_entries( HDC hdc, UINT start, UINT count, PALETTEENTRY *entries )
 {
     UINT ret = 0;
     DC *dc;
 
-    TRACE("hdc=%p,start=%i,count=%i\n", hdc,start,count);
+    TRACE( "hdc=%p,start=%i,count=%i\n", hdc, start, count );
 
     if ((dc = get_dc_ptr( hdc )))
     {
@@ -366,31 +353,6 @@ UINT WINAPI GetSystemPaletteEntries(
 /* null driver fallback implementation for GetSystemPaletteEntries */
 UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, PALETTEENTRY *entries )
 {
-    if (entries && start < 256)
-    {
-        UINT i;
-        const RGBQUAD *default_entries;
-
-        if (start + count > 256) count = 256 - start;
-
-        default_entries = get_default_color_table( 8 );
-        for (i = 0; i < count; ++i)
-        {
-            if (start + i < 10 || start + i >= 246)
-            {
-                entries[i].peRed = default_entries[start + i].rgbRed;
-                entries[i].peGreen = default_entries[start + i].rgbGreen;
-                entries[i].peBlue = default_entries[start + i].rgbBlue;
-            }
-            else
-            {
-                entries[i].peRed = 0;
-                entries[i].peGreen = 0;
-                entries[i].peBlue = 0;
-            }
-            entries[i].peFlags = 0;
-        }
-    }
     return 0;
 }
 
@@ -671,6 +633,8 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
         return set_palette_entries( handle, start, count, entries );
     case NtGdiGetPaletteEntries:
         return get_palette_entries( handle, start, count, entries );
+    case NtGdiGetSystemPaletteEntries:
+        return get_system_palette_entries( handle, start, count, entries );
     default:
         WARN( "invalid func %u\n", func );
         return 0;
