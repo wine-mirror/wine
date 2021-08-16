@@ -236,8 +236,8 @@ static RGBQUAD get_dc_rgb_color( DC *dc, int color_table_size, COLORREF color )
     {
         PALETTEENTRY pal;
 
-        if (!GetPaletteEntries( dc->hPalette, LOWORD(color), 1, &pal ))
-            GetPaletteEntries( dc->hPalette, 0, 1, &pal );
+        if (!get_palette_entries( dc->hPalette, LOWORD(color), 1, &pal ))
+            get_palette_entries( dc->hPalette, 0, 1, &pal );
         ret.rgbRed   = pal.peRed;
         ret.rgbGreen = pal.peGreen;
         ret.rgbBlue  = pal.peBlue;

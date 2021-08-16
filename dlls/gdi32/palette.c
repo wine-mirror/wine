@@ -162,20 +162,7 @@ HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc )
 }
 
 
-/***********************************************************************
- * GetPaletteEntries [GDI32.@]
- *
- * Retrieves palette entries.
- *
- * RETURNS
- *    Success: Number of entries from logical palette
- *    Failure: 0
- */
-UINT WINAPI GetPaletteEntries(
-    HPALETTE hpalette,    /* [in]  Handle of logical palette */
-    UINT start,           /* [in]  First entry to receive */
-    UINT count,           /* [in]  Number of entries to receive */
-    LPPALETTEENTRY entries) /* [out] Address of array receiving entries */
+UINT get_palette_entries( HPALETTE hpalette, UINT start, UINT count, PALETTEENTRY *entries )
 {
     PALETTEOBJ * palPtr;
     UINT numEntries;
@@ -495,10 +482,10 @@ COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
         else  /* PALETTEINDEX */
             index = LOWORD(color);
 
-        if (!GetPaletteEntries( hpal, index, 1, &entry ))
+        if (!get_palette_entries( hpal, index, 1, &entry ))
         {
             WARN("RGB(%x) : idx %d is out of bounds, assuming NULL\n", color, index );
-            if (!GetPaletteEntries( hpal, 0, 1, &entry )) return CLR_INVALID;
+            if (!get_palette_entries( hpal, 0, 1, &entry )) return CLR_INVALID;
         }
         color = RGB( entry.peRed, entry.peGreen, entry.peBlue );
     }
@@ -694,4 +681,20 @@ BOOL WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index )
 {
     FIXME( "(%p 0x%08x 0x%08x): stub\n", hdc, magic, index );
     return TRUE;
+}
+
+/*********************************************************************
+ *           NtGdiDoPalette   (win32u.@)
+ */
+LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entries,
+                            DWORD func, BOOL inbound )
+{
+    switch (func)
+    {
+    case NtGdiGetPaletteEntries:
+        return get_palette_entries( handle, start, count, entries );
+    default:
+        WARN( "invalid func %u\n", func );
+        return 0;
+    }
 }

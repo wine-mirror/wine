@@ -145,8 +145,8 @@ static COLORREF make_rgb_colorref( DC *dc, const dib_info *dib, COLORREF color,
     {
         PALETTEENTRY pal_ent;
 
-        if (!GetPaletteEntries( dc->hPalette, LOWORD(color), 1, &pal_ent ))
-            GetPaletteEntries( dc->hPalette, 0, 1, &pal_ent );
+        if (!get_palette_entries( dc->hPalette, LOWORD(color), 1, &pal_ent ))
+            get_palette_entries( dc->hPalette, 0, 1, &pal_ent );
         return RGB( pal_ent.peRed, pal_ent.peGreen, pal_ent.peBlue );
     }
 

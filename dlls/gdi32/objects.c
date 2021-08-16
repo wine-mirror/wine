@@ -525,3 +525,11 @@ HPALETTE WINAPI CreatePalette( const LOGPALETTE *palette )
     if (!palette) return 0;
     return NtGdiCreatePaletteInternal( palette, palette->palNumEntries );
 }
+
+/***********************************************************************
+ *           GetPaletteEntries    (GDI32.@)
+ */
+UINT WINAPI GetPaletteEntries( HPALETTE palette, UINT start, UINT count, PALETTEENTRY *entries )
+{
+    return NtGdiDoPalette( palette, start, count, entries, NtGdiGetPaletteEntries, TRUE );
+}

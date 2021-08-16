@@ -105,6 +105,16 @@ enum
     NtGdiSetMapMode = 8,
 };
 
+enum
+{
+    NtGdiAnimatePalette,
+    NtGdiSetPaletteEntries,
+    NtGdiGetPaletteEntries,
+    NtGdiGetSystemPaletteEntries,
+    NtGdiGetDIBColorTable,
+    NtGdiSetDIBColorTable,
+};
+
 #define MWT_SET  4
 
 /* structs not compatible with native Windows */

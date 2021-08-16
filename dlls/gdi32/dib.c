@@ -261,7 +261,7 @@ static int fill_color_table_from_palette( BITMAPINFO *info, HDC hdc )
     if (!palette) return 0;
 
     memset( palEntry, 0, sizeof(palEntry) );
-    if (!GetPaletteEntries( palette, 0, colors, palEntry ))
+    if (!get_palette_entries( palette, 0, colors, palEntry ))
         return 0;
 
     for (i = 0; i < colors; i++)
@@ -285,7 +285,7 @@ BOOL fill_color_table_from_pal_colors( BITMAPINFO *info, HDC hdc )
 
     if (!colors) return TRUE;
     if (!(palette = GetCurrentObject( hdc, OBJ_PAL ))) return FALSE;
-    if (!(count = GetPaletteEntries( palette, 0, colors, entries ))) return FALSE;
+    if (!(count = get_palette_entries( palette, 0, colors, entries ))) return FALSE;
 
     for (i = 0; i < colors; i++, index++)
     {
