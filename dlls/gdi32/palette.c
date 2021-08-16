@@ -193,20 +193,8 @@ UINT get_palette_entries( HPALETTE hpalette, UINT start, UINT count, PALETTEENTR
 }
 
 
-/***********************************************************************
- * SetPaletteEntries [GDI32.@]
- *
- * Sets color values for range in palette.
- *
- * RETURNS
- *    Success: Number of entries that were set
- *    Failure: 0
- */
-UINT WINAPI SetPaletteEntries(
-    HPALETTE hpalette,    /* [in] Handle of logical palette */
-    UINT start,           /* [in] Index of first entry to set */
-    UINT count,           /* [in] Number of entries to set */
-    const PALETTEENTRY *entries) /* [in] Address of array of structures */
+static UINT set_palette_entries( HPALETTE hpalette, UINT start, UINT count,
+                                 const PALETTEENTRY *entries )
 {
     PALETTEOBJ * palPtr;
     UINT numEntries;
@@ -691,6 +679,8 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
 {
     switch (func)
     {
+    case NtGdiSetPaletteEntries:
+        return set_palette_entries( handle, start, count, entries );
     case NtGdiGetPaletteEntries:
         return get_palette_entries( handle, start, count, entries );
     default:

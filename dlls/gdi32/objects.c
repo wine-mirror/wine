@@ -533,3 +533,12 @@ UINT WINAPI GetPaletteEntries( HPALETTE palette, UINT start, UINT count, PALETTE
 {
     return NtGdiDoPalette( palette, start, count, entries, NtGdiGetPaletteEntries, TRUE );
 }
+
+/***********************************************************************
+ *           SetPaletteEntries    (GDI32.@)
+ */
+UINT WINAPI SetPaletteEntries( HPALETTE palette, UINT start, UINT count,
+                               const PALETTEENTRY *entries )
+{
+    return NtGdiDoPalette( palette, start, count, (void *)entries, NtGdiSetPaletteEntries, FALSE );
+}
