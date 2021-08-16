@@ -712,6 +712,7 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
             remove_pending_irps(device);
 
+            bus_unlink_hid_device(device);
             ext->vtbl->free_device(device);
 
             ext->cs.DebugInfo->Spare[0] = 0;
