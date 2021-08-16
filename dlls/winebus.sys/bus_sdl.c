@@ -482,11 +482,9 @@ static void free_device(DEVICE_OBJECT *device)
         pSDL_HapticClose(ext->sdl_haptic);
 }
 
-static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
+static int compare_platform_device(DEVICE_OBJECT *device, void *context)
 {
-    SDL_JoystickID id1 = impl_from_DEVICE_OBJECT(device)->id;
-    SDL_JoystickID id2 = PtrToUlong(platform_dev);
-    return (id1 != id2);
+    return impl_from_DEVICE_OBJECT(device)->id - PtrToUlong(context);
 }
 
 static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
@@ -606,23 +604,9 @@ static const platform_vtbl sdl_vtbl =
     set_feature_report,
 };
 
-static int compare_joystick_id(DEVICE_OBJECT *device, void* context)
+static BOOL set_report_from_event(DEVICE_OBJECT *device, SDL_Event *event)
 {
-    return impl_from_DEVICE_OBJECT(device)->id - PtrToUlong(context);
-}
-
-static BOOL set_report_from_event(SDL_Event *event)
-{
-    DEVICE_OBJECT *device;
     struct platform_private *private;
-    /* All the events coming in will have 'which' as a 3rd field */
-    SDL_JoystickID id = ((SDL_JoyButtonEvent*)event)->which;
-    device = bus_enumerate_hid_devices(sdl_busidW, compare_joystick_id, ULongToPtr(id));
-    if (!device)
-    {
-        ERR("Failed to find device at index %i\n",id);
-        return FALSE;
-    }
     private = impl_from_DEVICE_OBJECT(device);
     if (private->sdl_controller)
     {
@@ -675,18 +659,9 @@ static BOOL set_report_from_event(SDL_Event *event)
     return FALSE;
 }
 
-static BOOL set_mapped_report_from_event(SDL_Event *event)
+static BOOL set_mapped_report_from_event(DEVICE_OBJECT *device, SDL_Event *event)
 {
-    DEVICE_OBJECT *device;
     struct platform_private *private;
-    /* All the events coming in will have 'which' as a 3rd field */
-    SDL_JoystickID id = ((SDL_ControllerButtonEvent*)event)->which;
-    device = bus_enumerate_hid_devices(sdl_busidW, compare_joystick_id, ULongToPtr(id));
-    if (!device)
-    {
-        ERR("Failed to find device at index %i\n",id);
-        return FALSE;
-    }
     private = impl_from_DEVICE_OBJECT(device);
 
     switch(event->type)
@@ -744,13 +719,8 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
     return FALSE;
 }
 
-static void try_remove_device(SDL_JoystickID id)
+static void try_remove_device(DEVICE_OBJECT *device)
 {
-    DEVICE_OBJECT *device = NULL;
-
-    device = bus_enumerate_hid_devices(sdl_busidW, compare_joystick_id, ULongToPtr(id));
-    if (!device) return;
-
     bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
@@ -850,16 +820,34 @@ static void try_add_device(unsigned int index)
 
 static void process_device_event(SDL_Event *event)
 {
+    DEVICE_OBJECT *device;
+    SDL_JoystickID id;
+
     TRACE_(hid_report)("Received action %x\n", event->type);
 
     if (event->type == SDL_JOYDEVICEADDED)
         try_add_device(((SDL_JoyDeviceEvent*)event)->which);
     else if (event->type == SDL_JOYDEVICEREMOVED)
-        try_remove_device(((SDL_JoyDeviceEvent*)event)->which);
+    {
+        id = ((SDL_JoyDeviceEvent *)event)->which;
+        device = bus_find_hid_device(sdl_busidW, ULongToPtr(id));
+        if (device) try_remove_device(device);
+        else WARN("failed to find device with id %d\n", id);
+    }
     else if (event->type >= SDL_JOYAXISMOTION && event->type <= SDL_JOYBUTTONUP)
-        set_report_from_event(event);
+    {
+        id = ((SDL_JoyButtonEvent *)event)->which;
+        device = bus_find_hid_device(sdl_busidW, ULongToPtr(id));
+        if (device) set_report_from_event(device, event);
+        else WARN("failed to find device with id %d\n", id);
+    }
     else if (event->type >= SDL_CONTROLLERAXISMOTION && event->type <= SDL_CONTROLLERBUTTONUP)
-        set_mapped_report_from_event(event);
+    {
+        id = ((SDL_ControllerButtonEvent *)event)->which;
+        device = bus_find_hid_device(sdl_busidW, ULongToPtr(id));
+        if (device) set_mapped_report_from_event(device, event);
+        else WARN("failed to find device with id %d\n", id);
+    }
 }
 
 static void sdl_load_mappings(void)
