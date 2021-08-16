@@ -45,9 +45,9 @@ BOOL METADC_SetBkColor( HDC hdc, COLORREF color )
     return metadc_param2( hdc, META_SETBKCOLOR, HIWORD(color), LOWORD(color) );
 }
 
-COLORREF CDECL MFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
+BOOL METADC_SetTextColor( HDC hdc, COLORREF color )
 {
-    return MFDRV_MetaParam2(dev, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color)) ? color : CLR_INVALID;
+    return metadc_param2( hdc, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color) );
 }
 
 BOOL METADC_SetROP2( HDC hdc, INT rop )

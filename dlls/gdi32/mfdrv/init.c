@@ -189,7 +189,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetPixel */
-    MFDRV_SetTextColor,              /* pSetTextColor */
+    NULL,                            /* pSetTextColor */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */

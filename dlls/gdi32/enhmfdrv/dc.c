@@ -93,17 +93,14 @@ BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color )
 }
 
 
-COLORREF CDECL EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
+BOOL EMFDC_SetTextColor( DC_ATTR *dc_attr, COLORREF color )
 {
     EMRSETTEXTCOLOR emr;
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-
-    if (physDev->restoring) return color;  /* don't output records during RestoreDC */
 
     emr.emr.iType = EMR_SETTEXTCOLOR;
     emr.emr.nSize = sizeof(emr);
     emr.crColor = color;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )

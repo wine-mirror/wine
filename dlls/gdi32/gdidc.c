@@ -321,6 +321,20 @@ COLORREF WINAPI GetTextColor( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetTextColor    (GDI32.@)
+ */
+COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
+{
+    DC_ATTR *dc_attr;
+    COLORREF ret;
+
+    if (is_meta_dc( hdc )) return METADC_SetTextColor( hdc, color );
+    if (!(dc_attr = get_dc_attr( hdc ))) return CLR_INVALID;
+    if (dc_attr->emf && !EMFDC_SetTextColor( dc_attr, color )) return CLR_INVALID;
+    return NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, color, &ret ) ? ret : CLR_INVALID;
+}
+
+/***********************************************************************
  *		GetBkMode (GDI32.@)
  */
 INT WINAPI GetBkMode( HDC hdc )
