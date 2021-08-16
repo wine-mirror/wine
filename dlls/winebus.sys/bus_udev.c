@@ -1095,8 +1095,8 @@ static void try_add_device(struct udev_device *dev)
     TRACE("udev %s syspath %s\n", debugstr_a(devnode), udev_device_get_syspath(dev));
 
 #ifdef HAS_PROPER_INPUT_HEADER
-    device = bus_enumerate_hid_devices(&lnxev_vtbl, check_device_syspath, (void *)get_device_syspath(dev));
-    if (!device) device = bus_enumerate_hid_devices(&hidraw_vtbl, check_device_syspath, (void *)get_device_syspath(dev));
+    device = bus_enumerate_hid_devices(lnxev_busidW, check_device_syspath, (void *)get_device_syspath(dev));
+    if (!device) device = bus_enumerate_hid_devices(hidraw_busidW, check_device_syspath, (void *)get_device_syspath(dev));
     if (device)
     {
         TRACE("duplicate device found, not adding the new one\n");
@@ -1212,10 +1212,9 @@ static void try_remove_device(struct udev_device *dev)
 {
     DEVICE_OBJECT *device = NULL;
 
-    device = bus_find_hid_device(&hidraw_vtbl, dev);
+    device = bus_find_hid_device(hidraw_busidW, dev);
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (device == NULL)
-        device = bus_find_hid_device(&lnxev_vtbl, dev);
+    if (device == NULL) device = bus_find_hid_device(lnxev_busidW, dev);
 #endif
     if (!device) return;
 

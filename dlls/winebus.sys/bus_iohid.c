@@ -377,7 +377,7 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
              safe way to deallocate that buffer. */
     IOHIDDeviceUnscheduleFromRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     IOHIDDeviceClose(IOHIDDevice, 0);
-    device = bus_find_hid_device(&iohid_vtbl, IOHIDDevice);
+    device = bus_find_hid_device(busidW, IOHIDDevice);
     if (device)
     {
         bus_unlink_hid_device(device);

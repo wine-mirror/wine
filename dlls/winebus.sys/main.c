@@ -312,18 +312,18 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
     return device;
 }
 
-DEVICE_OBJECT *bus_find_hid_device(const platform_vtbl *vtbl, void *platform_dev)
+DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev)
 {
     struct pnp_device *dev;
     DEVICE_OBJECT *ret = NULL;
 
-    TRACE("(%p, %p)\n", vtbl, platform_dev);
+    TRACE("bus_id %s, platform_dev %p\n", debugstr_w(bus_id), platform_dev);
 
     EnterCriticalSection(&device_list_cs);
     LIST_FOR_EACH_ENTRY(dev, &pnp_devset, struct pnp_device, entry)
     {
         struct device_extension *ext = (struct device_extension *)dev->device->DeviceExtension;
-        if (ext->vtbl != vtbl) continue;
+        if (strcmpW(ext->busid, bus_id)) continue;
         if (ext->vtbl->compare_platform_device(dev->device, platform_dev) == 0)
         {
             ret = dev->device;
@@ -336,19 +336,19 @@ DEVICE_OBJECT *bus_find_hid_device(const platform_vtbl *vtbl, void *platform_dev
     return ret;
 }
 
-DEVICE_OBJECT* bus_enumerate_hid_devices(const platform_vtbl *vtbl, enum_func function, void* context)
+DEVICE_OBJECT *bus_enumerate_hid_devices(const WCHAR *bus_id, enum_func function, void *context)
 {
     struct pnp_device *dev, *dev_next;
     DEVICE_OBJECT *ret = NULL;
     int cont;
 
-    TRACE("(%p)\n", vtbl);
+    TRACE("bus_id %p\n", debugstr_w(bus_id));
 
     EnterCriticalSection(&device_list_cs);
     LIST_FOR_EACH_ENTRY_SAFE(dev, dev_next, &pnp_devset, struct pnp_device, entry)
     {
         struct device_extension *ext = (struct device_extension *)dev->device->DeviceExtension;
-        if (ext->vtbl != vtbl) continue;
+        if (strcmpW(ext->busid, bus_id)) continue;
         LeaveCriticalSection(&device_list_cs);
         cont = function(dev->device, context);
         EnterCriticalSection(&device_list_cs);

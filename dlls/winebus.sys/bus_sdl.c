@@ -617,7 +617,7 @@ static BOOL set_report_from_event(SDL_Event *event)
     struct platform_private *private;
     /* All the events coming in will have 'which' as a 3rd field */
     SDL_JoystickID id = ((SDL_JoyButtonEvent*)event)->which;
-    device = bus_enumerate_hid_devices(&sdl_vtbl, compare_joystick_id, ULongToPtr(id));
+    device = bus_enumerate_hid_devices(sdl_busidW, compare_joystick_id, ULongToPtr(id));
     if (!device)
     {
         ERR("Failed to find device at index %i\n",id);
@@ -681,7 +681,7 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
     struct platform_private *private;
     /* All the events coming in will have 'which' as a 3rd field */
     SDL_JoystickID id = ((SDL_ControllerButtonEvent*)event)->which;
-    device = bus_enumerate_hid_devices(&sdl_vtbl, compare_joystick_id, ULongToPtr(id));
+    device = bus_enumerate_hid_devices(sdl_busidW, compare_joystick_id, ULongToPtr(id));
     if (!device)
     {
         ERR("Failed to find device at index %i\n",id);
@@ -748,7 +748,7 @@ static void try_remove_device(SDL_JoystickID id)
 {
     DEVICE_OBJECT *device = NULL;
 
-    device = bus_enumerate_hid_devices(&sdl_vtbl, compare_joystick_id, ULongToPtr(id));
+    device = bus_enumerate_hid_devices(sdl_busidW, compare_joystick_id, ULongToPtr(id));
     if (!device) return;
 
     bus_unlink_hid_device(device);
