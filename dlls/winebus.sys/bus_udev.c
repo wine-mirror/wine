@@ -1105,7 +1105,6 @@ static void try_add_device(struct udev_device *dev)
     }
 #endif
 
-    subsystem = udev_device_get_subsystem(dev);
     hiddev = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
     if (hiddev)
     {
@@ -1126,8 +1125,10 @@ static void try_add_device(struct udev_device *dev)
             version = a_to_bcd(bcdDevice);
         }
     }
+
+    subsystem = udev_device_get_subsystem(dev);
 #ifdef HAS_PROPER_INPUT_HEADER
-    else
+    if (!strcmp(subsystem, "input"))
     {
         struct input_id device_id = {0};
         char device_uid[255];
@@ -1142,9 +1143,6 @@ static void try_add_device(struct udev_device *dev)
         pid = device_id.product;
         version = device_id.version;
     }
-#else
-    else
-        WARN("Could not get device to query VID, PID, Version and Serial\n");
 #endif
 
     if (is_xbox_gamepad(vid, pid))
