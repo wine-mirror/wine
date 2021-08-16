@@ -9690,7 +9690,7 @@ static void test_effect(BOOL d3d11)
     ID2D1Bitmap *bitmap;
     ID2D1Effect *effect;
     D2D1_SIZE_U size;
-    BYTE buffer[64];
+    BYTE buffer[256];
     BOOL cached;
     CLSID clsid;
     HRESULT hr;
