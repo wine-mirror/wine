@@ -20,14 +20,7 @@
 
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# include <libxml/encoding.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -35,7 +28,7 @@
 #include "ole2.h"
 #include "msxml6.h"
 
-#include "msxml_private.h"
+#include "msxml_dispex.h"
 
 #include "wine/debug.h"
 
@@ -101,7 +94,7 @@ static HRESULT declare_prefix(namespacemanager *This, const WCHAR *prefix, const
 
     ns = NULL;
     for (i = 0; i < ctxt->count; i++)
-        if (!strcmpW(ctxt->ns[i].prefix, prefix))
+        if (!lstrcmpW(ctxt->ns[i].prefix, prefix))
         {
             ns = &ctxt->ns[i];
             break;
@@ -150,7 +143,7 @@ static HRESULT get_declared_prefix_uri(const struct list *ctxts, const WCHAR *ur
     {
         int i;
         for (i = 0; i < ctxt->count; i++)
-            if (!strcmpW(ctxt->ns[i].uri, uri))
+            if (!lstrcmpW(ctxt->ns[i].uri, uri))
             {
                 *prefix = ctxt->ns[i].prefix;
                 return S_OK;
@@ -166,7 +159,7 @@ static HRESULT get_uri_from_prefix(const struct nscontext *ctxt, const WCHAR *pr
     int i;
 
     for (i = 0; i < ctxt->count; i++)
-        if (!strcmpW(ctxt->ns[i].prefix, prefix))
+        if (!lstrcmpW(ctxt->ns[i].prefix, prefix))
         {
             *uri = ctxt->ns[i].uri;
             return S_OK;
@@ -286,7 +279,7 @@ static HRESULT WINAPI namespacemanager_declarePrefix(IMXNamespaceManager *iface,
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
 
-    if (prefix && (!strcmpW(prefix, xmlW) || !strcmpW(prefix, xmlnsW) || !namespaceURI))
+    if (prefix && (!lstrcmpW(prefix, xmlW) || !lstrcmpW(prefix, xmlnsW) || !namespaceURI))
         return E_INVALIDARG;
 
     return declare_prefix(This, prefix, namespaceURI);
@@ -311,7 +304,7 @@ static HRESULT WINAPI namespacemanager_getDeclaredPrefix(IMXNamespaceManager *if
     if (prefix)
     {
         if (*prefix_len < (INT)SysStringLen(prfx)) return E_XML_BUFFERTOOSMALL;
-        strcpyW(prefix, prfx);
+        lstrcpyW(prefix, prfx);
     }
 
     *prefix_len = SysStringLen(prfx);
@@ -339,7 +332,7 @@ static HRESULT WINAPI namespacemanager_getPrefix(IMXNamespaceManager *iface,
         if (prefix)
         {
             if (*prefix_len < (INT)SysStringLen(prfx)) return E_XML_BUFFERTOOSMALL;
-            strcpyW(prefix, prfx);
+            lstrcpyW(prefix, prfx);
         }
 
         *prefix_len = SysStringLen(prfx);
@@ -375,7 +368,7 @@ static HRESULT WINAPI namespacemanager_getURI(IMXNamespaceManager *iface,
         if (uri)
         {
            if (*uri_len < (INT)SysStringLen(urib)) return E_XML_BUFFERTOOSMALL;
-           strcpyW(uri, urib);
+           lstrcpyW(uri, urib);
         }
     }
     else
