@@ -116,7 +116,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SelectClipPath,           /* pSelectClipPath */
     EMFDRV_SelectFont,               /* pSelectFont */
     NULL,                            /* pSelectPen */
-    EMFDRV_SetBkColor,               /* pSetBkColor */
+    NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBoundsRect */
     EMFDRV_SetDCBrushColor,          /* pSetDCBrushColor*/
     EMFDRV_SetDCPenColor,            /* pSetDCPenColor*/

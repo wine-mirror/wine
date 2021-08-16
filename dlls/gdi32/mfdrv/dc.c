@@ -40,9 +40,9 @@ BOOL METADC_SetBkMode( HDC hdc, INT mode )
     return metadc_param1( hdc, META_SETBKMODE, (WORD)mode );
 }
 
-COLORREF CDECL MFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
+BOOL METADC_SetBkColor( HDC hdc, COLORREF color )
 {
-    return MFDRV_MetaParam2(dev, META_SETBKCOLOR, HIWORD(color), LOWORD(color)) ? color : CLR_INVALID;
+    return metadc_param2( hdc, META_SETBKCOLOR, HIWORD(color), LOWORD(color) );
 }
 
 COLORREF CDECL MFDRV_SetTextColor( PHYSDEV dev, COLORREF color )

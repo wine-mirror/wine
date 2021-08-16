@@ -280,6 +280,20 @@ COLORREF WINAPI GetBkColor( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetBkColor    (GDI32.@)
+ */
+COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
+{
+    DC_ATTR *dc_attr;
+    COLORREF ret;
+
+    if (is_meta_dc( hdc )) return METADC_SetBkColor( hdc, color );
+    if (!(dc_attr = get_dc_attr( hdc ))) return CLR_INVALID;
+    if (dc_attr->emf && !EMFDC_SetBkColor( dc_attr, color )) return CLR_INVALID;
+    return NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, color, &ret ) ? ret : CLR_INVALID;
+}
+
+/***********************************************************************
  *           GetDCBrushColor  (GDI32.@)
  */
 COLORREF WINAPI GetDCBrushColor( HDC hdc )

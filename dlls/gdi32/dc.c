@@ -266,6 +266,13 @@ static BOOL DC_DeleteObject( HGDIOBJ handle )
 }
 
 
+static void set_bk_color( DC *dc, COLORREF color )
+{
+    PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
+    dc->attr->background_color = physdev->funcs->pSetBkColor( physdev, color );
+}
+
+
 /***********************************************************************
  *           DC_InitDC
  *
@@ -276,7 +283,7 @@ void DC_InitDC( DC* dc )
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRealizeDefaultPalette );
     physdev->funcs->pRealizeDefaultPalette( physdev );
     SetTextColor( dc->hSelf, dc->attr->text_color );
-    SetBkColor( dc->hSelf, dc->attr->background_color );
+    set_bk_color( dc, dc->attr->background_color );
     NtGdiSelectPen( dc->hSelf, dc->hPen );
     NtGdiSelectBrush( dc->hSelf, dc->hBrush );
     NtGdiSelectFont( dc->hSelf, dc->hFont );
@@ -458,7 +465,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     NtGdiSelectBrush( dev->hdc, dcs->hBrush );
     NtGdiSelectFont( dev->hdc, dcs->hFont );
     NtGdiSelectPen( dev->hdc, dcs->hPen );
-    SetBkColor( dev->hdc, dcs->attr->background_color);
+    set_bk_color( dc, dcs->attr->background_color);
     SetTextColor( dev->hdc, dcs->attr->text_color);
     GDISelectPalette( dev->hdc, dcs->hPalette, FALSE );
 
@@ -488,7 +495,7 @@ static BOOL reset_dc_state( HDC hdc )
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
     set_initial_dc_state( dc );
-    SetBkColor( hdc, RGB( 255, 255, 255 ));
+    set_bk_color( dc, RGB( 255, 255, 255 ));
     SetTextColor( hdc, RGB( 0, 0, 0 ));
     NtGdiSelectBrush( hdc, GetStockObject( WHITE_BRUSH ));
     NtGdiSelectFont( hdc, GetStockObject( SYSTEM_FONT ));
@@ -809,27 +816,6 @@ INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
 
 
 /***********************************************************************
- *           SetBkColor    (GDI32.@)
- */
-COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
-{
-    COLORREF ret = CLR_INVALID;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE("hdc=%p color=0x%08x\n", hdc, color);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
-        ret = dc->attr->background_color;
-        dc->attr->background_color = physdev->funcs->pSetBkColor( physdev, color );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           SetTextColor    (GDI32.@)
  */
 COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
@@ -855,7 +841,7 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
  */
 BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *prev_value )
 {
-    BOOL ret;
+    BOOL ret = TRUE;
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
@@ -865,6 +851,11 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
     case NtGdiSetMapMode:
         *prev_value = dc->attr->map_mode;
         ret = set_map_mode( dc, value );
+        break;
+
+    case NtGdiSetBkColor:
+        *prev_value = dc->attr->background_color;
+        set_bk_color( dc, value );
         break;
 
     default:

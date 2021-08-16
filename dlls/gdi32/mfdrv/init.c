@@ -181,7 +181,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SelectClipPath,            /* pSelectClipPath */
     NULL,                            /* pSelectFont */
     NULL,                            /* pSelectPen */
-    MFDRV_SetBkColor,                /* pSetBkColor */
+    NULL,                            /* pSetBkColor */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
     MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
