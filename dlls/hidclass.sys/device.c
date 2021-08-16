@@ -246,87 +246,50 @@ static DWORD CALLBACK hid_device_thread(void *args)
     struct hid_preparsed_data *preparsed = ext->u.pdo.preparsed_data;
     BYTE report_id = HID_INPUT_VALUE_CAPS( preparsed )->report_id;
     ULONG buffer_len = preparsed->caps.InputReportByteLength;
-    IO_STATUS_BLOCK io;
     HID_XFER_PACKET *packet;
+    ULONG poll_interval = 0;
+    IO_STATUS_BLOCK io;
     BYTE *buffer;
-    DWORD rc;
+    DWORD res;
 
     packet = malloc( sizeof(*packet) + buffer_len );
     buffer = (BYTE *)(packet + 1);
     packet->reportBuffer = buffer;
 
-    if (ext->u.pdo.information.Polled)
+    if (ext->u.pdo.information.Polled) poll_interval = ext->u.pdo.poll_interval;
+
+    do
     {
-        while(1)
+        packet->reportId = buffer[0] = report_id;
+        packet->reportBufferLen = buffer_len;
+
+        if (!report_id)
         {
-            packet->reportId = buffer[0] = report_id;
-            packet->reportBufferLen = buffer_len;
-
-            if (!report_id)
-            {
-                packet->reportBuffer++;
-                packet->reportBufferLen--;
-            }
-
-            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, packet,
-                             sizeof(*packet), &io );
-
-            if (io.Status == STATUS_SUCCESS)
-            {
-                if (!report_id) io.Information++;
-                packet->reportId = buffer[0];
-                packet->reportBuffer = buffer;
-                packet->reportBufferLen = io.Information;
-
-                hid_device_queue_input( device, packet );
-            }
-
-            rc = WaitForSingleObject(ext->u.pdo.halt_event, ext->u.pdo.poll_interval);
-
-            if (rc == WAIT_OBJECT_0)
-                break;
-            else if (rc != WAIT_TIMEOUT)
-                ERR("Wait returned unexpected value %x\n",rc);
+            packet->reportBuffer++;
+            packet->reportBufferLen--;
         }
-    }
-    else
-    {
-        INT exit_now = FALSE;
 
-        while(1)
-        {
-            packet->reportId = buffer[0] = report_id;
-            packet->reportBufferLen = buffer_len;
-
-            if (!report_id)
-            {
-                packet->reportBuffer++;
-                packet->reportBufferLen--;
-            }
-
+        if (!poll_interval)
             call_minidriver( IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
                              packet->reportBuffer, packet->reportBufferLen, &io );
+        else
+            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
+                             packet, sizeof(*packet), &io );
 
-            rc = WaitForSingleObject(ext->u.pdo.halt_event, 0);
-            if (rc == WAIT_OBJECT_0)
-                exit_now = TRUE;
+        if (io.Status == STATUS_SUCCESS)
+        {
+            if (!report_id) io.Information++;
+            packet->reportId = buffer[0];
+            packet->reportBuffer = buffer;
+            packet->reportBufferLen = io.Information;
 
-            if (!exit_now && io.Status == STATUS_SUCCESS)
-            {
-                if (!report_id) io.Information++;
-                packet->reportId = buffer[0];
-                packet->reportBuffer = buffer;
-                packet->reportBufferLen = io.Information;
-
-                hid_device_queue_input( device, packet );
-            }
-
-            if (exit_now)
-                break;
+            hid_device_queue_input( device, packet );
         }
-    }
 
-    TRACE("Device thread exiting\n");
+        res = WaitForSingleObject(ext->u.pdo.halt_event, poll_interval);
+    } while (res == WAIT_TIMEOUT);
+
+    TRACE("device thread exiting, res %#x\n", res);
     return 1;
 }
 
