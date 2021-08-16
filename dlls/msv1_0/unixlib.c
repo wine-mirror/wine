@@ -199,6 +199,7 @@ static NTSTATUS ntlm_check_version( void *args )
     char *argv[3], buf[80];
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     struct fork_params params = { &ctx, argv };
+    struct cleanup_params cleanup_params = { &ctx };
     int len;
 
     argv[0] = (char *)"ntlm_auth";
@@ -231,7 +232,7 @@ static NTSTATUS ntlm_check_version( void *args )
                               "Make sure that ntlm_auth >= %d.%d.%d is in your path. "
                               "Usually, you can find it in the winbind package of your distribution.\n",
                               NTLM_AUTH_MAJOR_VERSION, NTLM_AUTH_MINOR_VERSION, NTLM_AUTH_MICRO_VERSION );
-    ntlm_cleanup( &ctx );
+    ntlm_cleanup( &cleanup_params );
     return status;
 }
 
