@@ -491,9 +491,9 @@ static void test_enum_value(void)
     else
         ok( !res, "RegSetValueExA returned %d\n", res );
     res = RegSetValueExA( test_key, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
-    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %d\n", res );
+    ok( ERROR_SUCCESS == res, "RegSetValueExA returned %d\n", res );
     res = RegSetValueExA( test_key, "Test", 0, REG_BINARY, NULL, 0 );
-    ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %d\n", res );
+    ok( ERROR_SUCCESS == res, "RegSetValueExA returned %d\n", res );
 
     /* test reading the value and data without setting them */
     val_count = 20;
