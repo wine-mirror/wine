@@ -1910,7 +1910,9 @@ static void test_GetAddrInfoExW(void)
     ResetEvent(event);
     ret = pGetAddrInfoExW(localhost, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, NULL, NULL);
     ok(ret == ERROR_IO_PENDING, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
-    ok(!result, "result != NULL\n");
+    /* result pointer is cleared by GetAddrInfoExW(), but may be set to the
+     * actual addrinfo before we can verify that */
+    ok(result != (void *)0xdeadbeef, "result was not changed\n");
     ok(WaitForSingleObject(event, 1000) == WAIT_OBJECT_0, "wait failed\n");
     ret = pGetAddrInfoExOverlappedResult(&overlapped);
     ok(!ret, "overlapped result is %d\n", ret);
