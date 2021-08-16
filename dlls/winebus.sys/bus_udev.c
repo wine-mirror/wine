@@ -995,27 +995,30 @@ static int check_device_syspath(DEVICE_OBJECT *device, void* context)
     return strcmp(get_device_syspath(private->udev_device), context);
 }
 
-static void parse_uevent_info(struct udev_device *dev, DWORD *vendor_id, DWORD *product_id,
-                              DWORD *input, WCHAR **serial_number)
+static void get_device_subsystem_info(struct udev_device *dev, char const *subsystem, DWORD *vendor_id,
+                                      DWORD *product_id, DWORD *input, DWORD *version, WCHAR **serial_number)
 {
+    struct udev_device *parent = NULL;
     const char *ptr, *next, *tmp;
     char buffer[256];
     DWORD bus = 0;
 
-    if ((next = udev_device_get_sysattr_value(dev, "uevent")))
+    if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, subsystem, NULL))) return;
+
+    if ((next = udev_device_get_sysattr_value(parent, "uevent")))
     {
         while ((ptr = next) && *ptr)
         {
             if ((next = strchr(next, '\n'))) next += 1;
             else next = ptr + strlen(ptr);
-            TRACE("uevent %s\n", debugstr_an(ptr, next - ptr - 1));
+            TRACE("%s uevent %s\n", subsystem, debugstr_an(ptr, next - ptr - 1));
 
             if (!strncmp(ptr, "HID_UNIQ=", 9))
             {
                 if (sscanf(ptr, "HID_UNIQ=%256s\n", buffer) != 1 || !*buffer) continue;
                 if (!*serial_number) *serial_number = strdupAtoW(buffer);
             }
-            if (!strncmp(ptr, "HID_PHYS=", 9))
+            if (!strncmp(ptr, "HID_PHYS=", 9) || !strncmp(ptr, "PHYS=\"", 6))
             {
                 if (!(tmp = strstr(ptr, "/input")) || tmp >= next) continue;
                 if (*input == -1) sscanf(tmp, "/input%d\n", input);
@@ -1025,27 +1028,21 @@ static void parse_uevent_info(struct udev_device *dev, DWORD *vendor_id, DWORD *
                 if (bus || *vendor_id || *product_id) continue;
                 sscanf(ptr, "HID_ID=%x:%x:%x\n", &bus, vendor_id, product_id);
             }
+            if (!strncmp(ptr, "PRODUCT=", 8))
+            {
+                if (*version) continue;
+                if (!strcmp(subsystem, "usb"))
+                    sscanf(ptr, "PRODUCT=%x/%x/%x\n", vendor_id, product_id, version);
+                else
+                    sscanf(ptr, "PRODUCT=%x/%x/%x/%x\n", &bus, vendor_id, product_id, version);
+            }
         }
     }
-}
-
-static DWORD a_to_bcd(const char *s)
-{
-    DWORD r = 0;
-    const char *c;
-    int shift = strlen(s) - 1;
-    for (c = s; *c; ++c)
-    {
-        r |= (*c - '0') << (shift * 4);
-        --shift;
-    }
-    return r;
 }
 
 static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0, input = -1;
-    struct udev_device *hiddev = NULL, *walk_device;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
@@ -1076,25 +1073,9 @@ static void try_add_device(struct udev_device *dev)
     }
 #endif
 
-    hiddev = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
-    if (hiddev)
-    {
-        const char *bcdDevice = NULL;
-        parse_uevent_info(hiddev, &vid, &pid, &input, &serial);
-        if (serial == NULL)
-            serial = strdupAtoW(base_serial);
-
-        walk_device = dev;
-        while (walk_device && !bcdDevice)
-        {
-            bcdDevice = udev_device_get_sysattr_value(walk_device, "bcdDevice");
-            walk_device = udev_device_get_parent(walk_device);
-        }
-        if (bcdDevice)
-        {
-            version = a_to_bcd(bcdDevice);
-        }
-    }
+    get_device_subsystem_info(dev, "hid", &vid, &pid, &input, &version, &serial);
+    get_device_subsystem_info(dev, "input", &vid, &pid, &input, &version, &serial);
+    get_device_subsystem_info(dev, "usb", &vid, &pid, &input, &version, &serial);
 
     subsystem = udev_device_get_subsystem(dev);
 #ifdef HAS_PROPER_INPUT_HEADER
@@ -1118,6 +1099,8 @@ static void try_add_device(struct udev_device *dev)
     }
 #endif
 
+    if (serial == NULL) serial = strdupAtoW(base_serial);
+
     if (is_xbox_gamepad(vid, pid))
         is_gamepad = TRUE;
 #ifdef HAS_PROPER_INPUT_HEADER
@@ -1132,9 +1115,8 @@ static void try_add_device(struct udev_device *dev)
     if (input == (WORD)-1 && is_gamepad)
         input = 0;
 
-
-    TRACE("Found udev device %s (vid %04x, pid %04x, version %u, serial %s)\n",
-          debugstr_a(devnode), vid, pid, version, debugstr_w(serial));
+    TRACE("Found udev device %s (vid %04x, pid %04x, version %04x, input %d, serial %s)\n",
+          debugstr_a(devnode), vid, pid, version, input, debugstr_w(serial));
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
