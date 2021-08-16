@@ -3867,6 +3867,7 @@ static void test_performance_keys(void)
         ret = RegSetValueA(keys[i], "Global", REG_SZ, "dummy", 5);
         ok(ret == ERROR_INVALID_HANDLE, "got %u\n", ret);
 
+        key_count = 0x900ddeed;
         ret = RegQueryInfoKeyA(keys[i], NULL, NULL, NULL, &key_count, NULL,
                 NULL, &value_count, NULL, NULL, NULL, NULL);
         todo_wine ok(!ret, "got %u\n", ret);
