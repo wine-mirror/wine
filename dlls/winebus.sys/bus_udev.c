@@ -357,12 +357,12 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_REL, sizeof(relbits)), relbits) == -1)
     {
         WARN("ioctl(EVIOCGBIT, EV_REL) failed: %d %s\n", errno, strerror(errno));
-        return FALSE;
+        memset(relbits, 0, sizeof(relbits));
     }
     if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_ABS, sizeof(absbits)), absbits) == -1)
     {
         WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
-        return FALSE;
+        memset(absbits, 0, sizeof(absbits));
     }
 
     report_size = 0;
