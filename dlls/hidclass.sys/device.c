@@ -32,7 +32,6 @@
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
-WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext)
 {
@@ -282,8 +281,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 hid_device_queue_input( device, packet );
             }
 
-            rc = WaitForSingleObject(ext->u.pdo.halt_event,
-                    ext->u.pdo.poll_interval ? ext->u.pdo.poll_interval : DEFAULT_POLL_INTERVAL);
+            rc = WaitForSingleObject(ext->u.pdo.halt_event, ext->u.pdo.poll_interval);
 
             if (rc == WAIT_OBJECT_0)
                 break;
@@ -616,7 +614,6 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     struct hid_preparsed_data *preparsed = ext->u.pdo.preparsed_data;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
-    BYTE report_id = HID_INPUT_VALUE_CAPS( preparsed )->report_id;
     struct hid_report *report;
     NTSTATUS status;
     BOOL removed;
@@ -650,50 +647,22 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
     }
     else
     {
-        if (ext->u.pdo.poll_interval)
+        KeAcquireSpinLock(&ext->u.pdo.irp_queue_lock, &irql);
+
+        IoSetCancelRoutine(irp, read_cancel_routine);
+        if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
         {
-            KIRQL old_irql;
-            TRACE_(hid_report)("Queue irp\n");
-
-            KeAcquireSpinLock(&ext->u.pdo.irp_queue_lock, &old_irql);
-
-            IoSetCancelRoutine(irp, read_cancel_routine);
-            if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
-            {
-                /* IRP was canceled before we set cancel routine */
-                InitializeListHead(&irp->Tail.Overlay.ListEntry);
-                KeReleaseSpinLock(&ext->u.pdo.irp_queue_lock, old_irql);
-                return STATUS_CANCELLED;
-            }
-
-            InsertTailList(&ext->u.pdo.irp_queue, &irp->Tail.Overlay.ListEntry);
-            irp->IoStatus.Status = STATUS_PENDING;
-            IoMarkIrpPending(irp);
-
-            KeReleaseSpinLock(&ext->u.pdo.irp_queue_lock, old_irql);
+            /* IRP was canceled before we set cancel routine */
+            InitializeListHead(&irp->Tail.Overlay.ListEntry);
+            KeReleaseSpinLock(&ext->u.pdo.irp_queue_lock, irql);
+            return STATUS_CANCELLED;
         }
-        else
-        {
-            HID_XFER_PACKET packet;
-            BYTE *buffer = irp->AssociatedIrp.SystemBuffer;
-            ULONG buffer_len = irpsp->Parameters.Read.Length;
 
-            TRACE("No packet, but opportunistic reads enabled\n");
+        InsertTailList(&ext->u.pdo.irp_queue, &irp->Tail.Overlay.ListEntry);
+        irp->IoStatus.Status = STATUS_PENDING;
+        IoMarkIrpPending(irp);
 
-            packet.reportId = buffer[0];
-            packet.reportBuffer = buffer;
-            packet.reportBufferLen = buffer_len;
-
-            if (!report_id)
-            {
-                packet.reportId = 0;
-                packet.reportBuffer++;
-                packet.reportBufferLen--;
-            }
-
-            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0, &packet,
-                             sizeof(packet), &irp->IoStatus );
-        }
+        KeReleaseSpinLock(&ext->u.pdo.irp_queue_lock, irql);
     }
 
     status = irp->IoStatus.Status;
