@@ -2833,7 +2833,21 @@ static void test_hid_device(DWORD report_id, DWORD polled)
         poll_freq = 500;
         SetLastError(0xdeadbeef);
         ret = sync_ioctl(file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len);
-        ok(ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
+        ok(ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
+        ok(out_len == 0, "got out_len %u, expected 0\n", out_len);
+
+        out_len = 0;
+        poll_freq = 10001;
+        SetLastError(0xdeadbeef);
+        ret = sync_ioctl(file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len);
+        ok(ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
+        ok(out_len == 0, "got out_len %u, expected 0\n", out_len);
+
+        out_len = 0;
+        poll_freq = 0;
+        SetLastError(0xdeadbeef);
+        ret = sync_ioctl(file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len);
+        ok(ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
         ok(out_len == 0, "got out_len %u, expected 0\n", out_len);
 
         out_len = sizeof(ULONG);
@@ -2841,14 +2855,21 @@ static void test_hid_device(DWORD report_id, DWORD polled)
         ret = sync_ioctl(file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len);
         ok(ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
         ok(out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len);
-        ok(poll_freq == 500, "got poll_freq %u, expected 100\n", poll_freq);
+        ok(poll_freq == 10000, "got poll_freq %u, expected 10000\n", poll_freq);
+
+        out_len = 0;
+        poll_freq = 500;
+        SetLastError(0xdeadbeef);
+        ret = sync_ioctl(file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len);
+        ok(ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
+        ok(out_len == 0, "got out_len %u, expected 0\n", out_len);
 
         out_len = sizeof(ULONG);
         SetLastError(0xdeadbeef);
         ret = sync_ioctl(async_file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len);
         ok(ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError());
         ok(out_len == sizeof(ULONG), "got out_len %u, expected sizeof(ULONG)\n", out_len);
-        ok(poll_freq == 500, "got poll_freq %u, expected 100\n", poll_freq);
+        ok(poll_freq == 500, "got poll_freq %u, expected 500\n", poll_freq);
     }
 
     test_hidp(file, async_file, report_id, polled);

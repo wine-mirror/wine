@@ -535,13 +535,8 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 break;
             }
             poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
-            if (poll_interval <= MAX_POLL_INTERVAL_MSEC)
-            {
-                ext->u.pdo.poll_interval = poll_interval;
-                irp->IoStatus.Status = STATUS_SUCCESS;
-            }
-            else
-                irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+            if (poll_interval) ext->u.pdo.poll_interval = min(poll_interval, MAX_POLL_INTERVAL_MSEC);
+            irp->IoStatus.Status = STATUS_SUCCESS;
             break;
         }
         case IOCTL_HID_GET_PRODUCT_STRING:
