@@ -241,6 +241,10 @@ extern DWORD get_image_from_bitmap( BITMAPOBJ *bmp, BITMAPINFO *info,
 extern DWORD put_image_into_bitmap( BITMAPOBJ *bmp, HRGN clip, BITMAPINFO *info,
                                     const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                     struct bitblt_coords *dst ) DECLSPEC_HIDDEN;
+extern UINT get_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries,
+                                    RGBQUAD *colors ) DECLSPEC_HIDDEN;
+extern UINT set_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries,
+                                    const RGBQUAD *colors ) DECLSPEC_HIDDEN;
 extern void dibdrv_set_window_surface( DC *dc, struct window_surface *surface ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out ) DECLSPEC_HIDDEN;

@@ -910,10 +910,7 @@ INT WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT xDest, INT yDest, DWORD 
     return ret;
 }
 
-/***********************************************************************
- *           SetDIBColorTable    (GDI32.@)
- */
-UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUAD *colors )
+UINT set_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries, const RGBQUAD *colors )
 {
     DC * dc;
     UINT i, result = 0;
@@ -949,10 +946,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUA
 }
 
 
-/***********************************************************************
- *           GetDIBColorTable    (GDI32.@)
- */
-UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
+UINT get_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
 {
     DC * dc;
     BITMAPOBJ *bitmap;

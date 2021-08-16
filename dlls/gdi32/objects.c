@@ -594,3 +594,19 @@ UINT WINAPI GetSystemPaletteEntries( HDC hdc, UINT start, UINT count, PALETTEENT
 
     return 0;
 }
+
+/***********************************************************************
+ *           GetDIBColorTable    (GDI32.@)
+ */
+UINT WINAPI GetDIBColorTable( HDC hdc, UINT start, UINT count, RGBQUAD *colors )
+{
+    return NtGdiDoPalette( hdc, start, count, colors, NtGdiGetDIBColorTable, TRUE );
+}
+
+/***********************************************************************
+ *           SetDIBColorTable    (GDI32.@)
+ */
+UINT WINAPI SetDIBColorTable( HDC hdc, UINT start, UINT count, const RGBQUAD *colors )
+{
+    return NtGdiDoPalette( hdc, start, count, (void *)colors, NtGdiSetDIBColorTable, FALSE );
+}

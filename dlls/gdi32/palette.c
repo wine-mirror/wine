@@ -635,6 +635,10 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
         return get_palette_entries( handle, start, count, entries );
     case NtGdiGetSystemPaletteEntries:
         return get_system_palette_entries( handle, start, count, entries );
+    case NtGdiSetDIBColorTable:
+        return set_dib_dc_color_table( handle, start, count, entries );
+    case NtGdiGetDIBColorTable:
+        return get_dib_dc_color_table( handle, start, count, entries );
     default:
         WARN( "invalid func %u\n", func );
         return 0;
