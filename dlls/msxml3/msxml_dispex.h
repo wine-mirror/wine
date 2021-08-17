@@ -145,6 +145,13 @@ static inline HRESULT return_bstrn(const WCHAR *value, int len, BSTR *p)
 }
 
 extern HRESULT dom_document_create(MSXML_VERSION class_version, void **document) DECLSPEC_HIDDEN;
+
+typedef struct bsc_t bsc_t;
+
+HRESULT create_moniker_from_url(LPCWSTR, IMoniker**) DECLSPEC_HIDDEN;
+HRESULT create_uri(IUri *base, const WCHAR *, IUri **) DECLSPEC_HIDDEN;
+HRESULT bind_url(IMoniker*, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**) DECLSPEC_HIDDEN;
+HRESULT detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
 IUri *get_base_uri(IUnknown *site) DECLSPEC_HIDDEN;
 
 #endif /* __MSXML_DISPEX__ */
