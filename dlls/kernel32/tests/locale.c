@@ -3093,6 +3093,13 @@ static void test_sorting(void)
 
     assert(sizeof(buf) >= sizeof(strings));
 
+    /* this requires the collation table patch to make it MS compatible */
+    if (strcmp(winetest_platform, "wine") == 0)
+    {
+        skip("in Wine due to the lack of a compatible collation table\n");
+        return;
+    }
+
     /* 1. sort using lstrcmpA */
     memcpy(buf, strings, sizeof(strings));
     qsort(buf, ARRAY_SIZE(strings), sizeof(strings[0]), compare_string1);
@@ -7183,6 +7190,5 @@ START_TEST(locale)
   test_SpecialCasing();
   test_NLSVersion();
   test_geo_name();
-  /* this requires collation table patch to make it MS compatible */
-  if (0) test_sorting();
+  test_sorting();
 }
