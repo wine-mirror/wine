@@ -916,14 +916,12 @@ todo_wine_if( !unstable(0) && row->dwOwningPid )
         {
             ok( unstable( !memcmp( row6->ucLocalAddr, keys[i].local.Ipv6.sin6_addr.s6_addr, sizeof(IN6_ADDR) ) ),
                 "mismatch\n" );
-todo_wine_if( !unstable(0) && row6->dwLocalScopeId )
             ok( unstable( row6->dwLocalScopeId == keys[i].local.Ipv6.sin6_scope_id ), "%x vs %x\n",
                 row6->dwLocalScopeId, keys[i].local.Ipv6.sin6_scope_id );
             ok( unstable( row6->dwLocalPort == keys[i].local.Ipv6.sin6_port ), "%d vs %d\n",
                 row6->dwLocalPort, keys[i].local.Ipv6.sin6_port );
             ok( unstable( !memcmp( row6->ucRemoteAddr, keys[i].remote.Ipv6.sin6_addr.s6_addr, sizeof(IN6_ADDR) ) ),
                 "mismatch\n" );
-todo_wine_if( !unstable(0) && row6->dwRemoteScopeId )
             ok( unstable( row6->dwRemoteScopeId == keys[i].remote.Ipv6.sin6_scope_id ), "%x vs %x\n",
                 row6->dwRemoteScopeId, keys[i].remote.Ipv6.sin6_scope_id );
             ok( unstable( row6->dwRemotePort == keys[i].remote.Ipv6.sin6_port ), "%d vs %d\n",
