@@ -289,4 +289,12 @@ HRESULT WINAPI D3DX10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVE
         ID3D10Device **device);
 typedef interface ID3D10Device1 ID3D10Device1;
 HRESULT WINAPI D3DX10GetFeatureLevel1(ID3D10Device *device, ID3D10Device1 **device1);
+HRESULT WINAPI D3DX10CreateFontIndirectA(ID3D10Device *device, const D3DX10_FONT_DESCA *desc, ID3DX10Font **font);
+HRESULT WINAPI D3DX10CreateFontIndirectW(ID3D10Device *device, const D3DX10_FONT_DESCW *desc, ID3DX10Font **font);
+HRESULT WINAPI D3DX10CreateFontA(ID3D10Device *device, INT height, UINT width, UINT weight,
+        UINT miplevels, BOOL italic, UINT charset, UINT precision, UINT quality,
+        UINT pitchandfamily, const char *facename, ID3DX10Font **font);
+HRESULT WINAPI D3DX10CreateFontW(ID3D10Device *device, INT height, UINT width, UINT weight,
+        UINT miplevels, BOOL italic, UINT charset, UINT precision, UINT quality,
+        UINT pitchandfamily, const WCHAR *facename, ID3DX10Font **font);
 HRESULT WINAPI D3DX10CreateSprite(ID3D10Device *device, UINT size, ID3DX10Sprite **sprite);

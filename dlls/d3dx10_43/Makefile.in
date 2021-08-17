@@ -9,6 +9,7 @@ C_SRCS = \
 	async.c \
 	compiler.c \
 	d3dx10_43_main.c \
+	font.c \
 	sprite.c \
 	texture.c
 
