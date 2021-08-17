@@ -126,6 +126,19 @@ INT WINAPI SaveDC( HDC hdc )
 }
 
 /***********************************************************************
+ *           RestoreDC    (GDI32.@)
+ */
+BOOL WINAPI RestoreDC( HDC hdc, INT level )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_RestoreDC( hdc, level );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_RestoreDC( dc_attr, level )) return FALSE;
+    return NtGdiRestoreDC( hdc, level );
+}
+
+/***********************************************************************
  *           GetDeviceCaps    (GDI32.@)
  */
 INT WINAPI GetDeviceCaps( HDC hdc, INT cap )

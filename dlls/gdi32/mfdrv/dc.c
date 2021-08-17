@@ -25,9 +25,9 @@ BOOL METADC_SaveDC( HDC hdc )
     return metadc_param0( hdc, META_SAVEDC );
 }
 
-BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
+BOOL METADC_RestoreDC( HDC hdc, INT level )
 {
-    return MFDRV_MetaParam1( dev, META_RESTOREDC, level );
+    return metadc_param1( hdc, META_RESTOREDC, level );
 }
 
 BOOL METADC_SetTextAlign( HDC hdc, UINT align )

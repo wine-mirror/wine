@@ -83,6 +83,7 @@ extern BOOL METADC_Polygon( HDC hdc, const POINT *points, INT count ) DECLSPEC_H
 extern BOOL METADC_Polyline( HDC hdc, const POINT *points,INT count) DECLSPEC_HIDDEN;
 extern BOOL METADC_RealizePalette( HDC hdc ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
+extern BOOL METADC_RestoreDC( HDC hdc, INT level ) DECLSPEC_HIDDEN;
 extern BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right, INT bottom,
                               INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 extern BOOL METADC_SaveDC( HDC hdc ) DECLSPEC_HIDDEN;
@@ -173,6 +174,7 @@ extern BOOL EMFDC_Polyline( DC_ATTR *dc_attr, const POINT *points, INT count) DE
 extern BOOL EMFDC_PolylineTo( DC_ATTR *dc_attr, const POINT *points, INT count ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right,
                              INT bottom) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_RestoreDC( DC_ATTR *dc_attr, INT level ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom,
                              INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SaveDC( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;

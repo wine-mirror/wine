@@ -109,7 +109,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pRealizePalette */
     EMFDRV_Rectangle,                /* pRectangle */
     NULL,                            /* pResetDC */
-    EMFDRV_RestoreDC,                /* pRestoreDC */
+    NULL,                            /* pRestoreDC */
     EMFDRV_RoundRect,                /* pRoundRect */
     EMFDRV_SelectBitmap,             /* pSelectBitmap */
     NULL,                            /* pSelectBrush */
@@ -335,7 +335,6 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->hFile = 0;
     physDev->dc_brush = 0;
     physDev->dc_pen = 0;
-    physDev->restoring = 0;
     physDev->path = FALSE;
 
     if (hdc)  /* if no ref, use current display */

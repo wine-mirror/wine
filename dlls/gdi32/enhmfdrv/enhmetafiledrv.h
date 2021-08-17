@@ -40,7 +40,6 @@ typedef struct
     HANDLE     hFile;              /* Handle for disk based MetaFile */
     HBRUSH     dc_brush;
     HPEN       dc_pen;
-    INT        restoring;          /* RestoreDC counter */
     BOOL       path;
     INT        dev_caps[COLORMGMTCAPS + 1];
 } EMFDRV_PDEVICE;
@@ -90,7 +89,6 @@ extern BOOL     CDECL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const IN
 extern BOOL     CDECL EMFDRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_PolylineTo( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                         INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom,
