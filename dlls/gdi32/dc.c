@@ -55,7 +55,6 @@ static inline DC *get_dc_obj( HDC hdc )
     {
     case NTGDI_OBJ_DC:
     case NTGDI_OBJ_MEMDC:
-    case NTGDI_OBJ_METADC:
     case NTGDI_OBJ_ENHMETADC:
         return dc;
     default:
@@ -754,6 +753,8 @@ BOOL WINAPI DeleteDC( HDC hdc )
     DC * dc;
 
     TRACE("%p\n", hdc );
+
+    if (is_meta_dc( hdc )) return METADC_DeleteDC( hdc );
 
     GDI_CheckNotLock();
 

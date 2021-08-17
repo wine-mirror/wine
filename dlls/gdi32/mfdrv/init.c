@@ -30,9 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
-static BOOL CDECL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev );
-static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev );
-
 
 /**********************************************************************
  *           METADC_ExtEscape
@@ -60,24 +57,6 @@ BOOL METADC_ExtEscape( HDC hdc, INT escape, INT input_size, const void *input,
 
 
 /******************************************************************
- *         MFDRV_GetBoundsRect
- */
-static UINT CDECL MFDRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
-{
-    return 0;
-}
-
-
-/******************************************************************
- *         MFDRV_SetBoundsRect
- */
-static UINT CDECL MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
-{
-    return 0;
-}
-
-
-/******************************************************************
  *         METADC_GetDeviceCaps
  *
  *A very simple implementation that returns DT_METAFILE
@@ -98,184 +77,29 @@ INT METADC_GetDeviceCaps( HDC hdc, INT cap )
     return 0;
 }
 
-
-static const struct gdi_dc_funcs MFDRV_Funcs =
+static void metadc_free( struct metadc *metadc )
 {
-    NULL,                            /* pAbortDoc */
-    MFDRV_AbortPath,                 /* pAbortPath */
-    NULL,                            /* pAlphaBlend */
-    NULL,                            /* pAngleArc */
-    NULL,                            /* pArc */
-    MFDRV_ArcTo,                     /* pArcTo */
-    MFDRV_BeginPath,                 /* pBeginPath */
-    NULL,                            /* pBlendImage */
-    NULL,                            /* pChord */
-    MFDRV_CloseFigure,               /* pCloseFigure */
-    MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
-    NULL,                            /* pCreateDC */
-    MFDRV_DeleteDC,                  /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
-    NULL,                            /* pDeviceCapabilities */
-    NULL,                            /* pEllipse */
-    NULL,                            /* pEndDoc */
-    NULL,                            /* pEndPage */
-    MFDRV_EndPath,                   /* pEndPath */
-    NULL,                            /* pEnumFonts */
-    NULL,                            /* pEnumICMProfiles */
-    NULL,                            /* pExtDeviceMode */
-    NULL,                            /* pExtEscape */
-    NULL,                            /* pExtFloodFill */
-    NULL,                            /* pExtTextOut */
-    MFDRV_FillPath,                  /* pFillPath */
-    MFDRV_FillRgn,                   /* pFillRgn */
-    MFDRV_FlattenPath,               /* pFlattenPath */
-    NULL,                            /* pFontIsLinked */
-    NULL,                            /* pFrameRgn */
-    NULL,                            /* pGdiComment */
-    MFDRV_GetBoundsRect,             /* pGetBoundsRect */
-    NULL,                            /* pGetCharABCWidths */
-    NULL,                            /* pGetCharABCWidthsI */
-    NULL,                            /* pGetCharWidth */
-    NULL,                            /* pGetCharWidthInfo */
-    NULL,                            /* pGetDeviceCaps */
-    NULL,                            /* pGetDeviceGammaRamp */
-    NULL,                            /* pGetFontData */
-    NULL,                            /* pGetFontRealizationInfo */
-    NULL,                            /* pGetFontUnicodeRanges */
-    NULL,                            /* pGetGlyphIndices */
-    NULL,                            /* pGetGlyphOutline */
-    NULL,                            /* pGetICMProfile */
-    NULL,                            /* pGetImage */
-    NULL,                            /* pGetKerningPairs */
-    NULL,                            /* pGetNearestColor */
-    NULL,                            /* pGetOutlineTextMetrics */
-    NULL,                            /* pGetPixel */
-    NULL,                            /* pGetSystemPaletteEntries */
-    NULL,                            /* pGetTextCharsetInfo */
-    NULL,                            /* pGetTextExtentExPoint */
-    NULL,                            /* pGetTextExtentExPointI */
-    NULL,                            /* pGetTextFace */
-    NULL,                            /* pGetTextMetrics */
-    NULL,                            /* pGradientFill */
-    NULL,                            /* pInvertRgn */
-    NULL,                            /* pLineTo */
-    NULL,                            /* pMoveTo */
-    NULL,                            /* pPaintRgn */
-    NULL,                            /* pPatBlt */
-    NULL,                            /* pPie */
-    MFDRV_PolyBezier,                /* pPolyBezier */
-    MFDRV_PolyBezierTo,              /* pPolyBezierTo */
-    NULL,                            /* pPolyDraw */
-    NULL,                            /* pPolyPolygon */
-    NULL,                            /* pPolyPolyline */
-    NULL,                            /* pPolylineTo */
-    NULL,                            /* pPutImage */
-    NULL,                            /* pRealizeDefaultPalette */
-    NULL,                            /* pRealizePalette */
-    NULL,                            /* pRectangle */
-    NULL,                            /* pResetDC */
-    NULL,                            /* pRestoreDC */
-    NULL,                            /* pRoundRect */
-    NULL,                            /* pSelectBitmap */
-    NULL,                            /* pSelectBrush */
-    MFDRV_SelectClipPath,            /* pSelectClipPath */
-    NULL,                            /* pSelectFont */
-    NULL,                            /* pSelectPen */
-    NULL,                            /* pSetBkColor */
-    MFDRV_SetBoundsRect,             /* pSetBoundsRect */
-    MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
-    MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
-    NULL,                            /* pSetDIBitsToDevice */
-    NULL,                            /* pSetDeviceClipping */
-    NULL,                            /* pSetDeviceGammaRamp */
-    NULL,                            /* pSetPixel */
-    NULL,                            /* pSetTextColor */
-    NULL,                            /* pStartDoc */
-    NULL,                            /* pStartPage */
-    NULL,                            /* pStretchBlt */
-    NULL,                            /* pStretchDIBits */
-    MFDRV_StrokeAndFillPath,         /* pStrokeAndFillPath */
-    MFDRV_StrokePath,                /* pStrokePath */
-    NULL,                            /* pUnrealizePalette */
-    MFDRV_WidenPath,                 /* pWidenPath */
-    NULL,                            /* pD3DKMTCheckVidPnExclusiveOwnership */
-    NULL,                            /* pD3DKMTSetVidPnSourceOwner */
-    NULL,                            /* wine_get_wgl_driver */
-    NULL,                            /* wine_get_vulkan_driver */
-    GDI_PRIORITY_GRAPHICS_DRV        /* priority */
-};
-
-
-
-/**********************************************************************
- *	     MFDRV_AllocMetaFile
- */
-static DC *MFDRV_AllocMetaFile(void)
-{
-    DC *dc;
-    struct metadc *physDev;
-
-    if (!(dc = alloc_dc_ptr( NTGDI_OBJ_METADC ))) return NULL;
-
-    physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
-    if (!physDev)
-    {
-        free_dc_ptr( dc );
-        return NULL;
-    }
-    if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
-    {
-        HeapFree( GetProcessHeap(), 0, physDev );
-        free_dc_ptr( dc );
-        return NULL;
-    }
-
-    push_dc_driver( &dc->physDev, &physDev->dev, &MFDRV_Funcs );
-    set_gdi_client_ptr( dc->hSelf, physDev );
-
-    physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
-    physDev->handles_size = HANDLE_LIST_INC;
-    physDev->cur_handles = 0;
-
-    physDev->hFile = 0;
-
-    physDev->mh->mtHeaderSize   = sizeof(METAHEADER) / sizeof(WORD);
-    physDev->mh->mtVersion      = 0x0300;
-    physDev->mh->mtSize         = physDev->mh->mtHeaderSize;
-    physDev->mh->mtNoObjects    = 0;
-    physDev->mh->mtMaxRecord    = 0;
-    physDev->mh->mtNoParameters = 0;
-
-    NtGdiSetVirtualResolution( physDev->dev.hdc, 0, 0, 0, 0);
-
-    return dc;
-}
-
-
-/**********************************************************************
- *	     MFDRV_CreateCompatibleDC
- */
-static BOOL CDECL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
-{
-    /* not supported on metafile DCs */
-    return FALSE;
-}
-
-
-/**********************************************************************
- *	     MFDRV_DeleteDC
- */
-static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
-{
-    struct metadc *physDev = (struct metadc *)dev;
     DWORD index;
 
-    HeapFree( GetProcessHeap(), 0, physDev->mh );
-    for(index = 0; index < physDev->handles_size; index++)
-        if(physDev->handles[index])
-            GDI_hdc_not_using_object(physDev->handles[index], dev->hdc);
-    HeapFree( GetProcessHeap(), 0, physDev->handles );
-    HeapFree( GetProcessHeap(), 0, physDev );
+    CloseHandle( metadc->hFile );
+    HeapFree( GetProcessHeap(), 0, metadc->mh );
+    for(index = 0; index < metadc->handles_size; index++)
+        if(metadc->handles[index])
+            GDI_hdc_not_using_object( metadc->handles[index], metadc->hdc );
+    HeapFree( GetProcessHeap(), 0, metadc->handles );
+    HeapFree( GetProcessHeap(), 0, metadc );
+}
+
+/**********************************************************************
+ *	     METADC_DeleteObject
+ */
+BOOL METADC_DeleteDC( HDC hdc )
+{
+    struct metadc *metadc;
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    if (!NtGdiDeleteClientObj( hdc )) return FALSE;
+    metadc_free( metadc );
     return TRUE;
 }
 
@@ -294,34 +118,62 @@ static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
  */
 HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 {
-    HDC ret;
-    DC *dc;
-    struct metadc *physDev;
-    HANDLE hFile;
+    struct metadc *metadc;
+    HANDLE hdc;
 
     TRACE("%s\n", debugstr_w(filename) );
 
-    if (!(dc = MFDRV_AllocMetaFile())) return 0;
-    physDev = (struct metadc *)dc->physDev;
-    physDev->mh->mtType = METAFILE_MEMORY;
-    physDev->pen   = GetStockObject( BLACK_PEN );
-    physDev->brush = GetStockObject( WHITE_BRUSH );
-    physDev->font  = GetStockObject( DEVICE_DEFAULT_FONT );
+    if (!(hdc = NtGdiCreateClientObj( NTGDI_OBJ_METADC ))) return NULL;
+
+    metadc = HeapAlloc( GetProcessHeap(), 0, sizeof(*metadc) );
+    if (!metadc)
+    {
+        NtGdiDeleteClientObj( hdc );
+        return NULL;
+    }
+    if (!(metadc->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*metadc->mh) )))
+    {
+        HeapFree( GetProcessHeap(), 0, metadc );
+        NtGdiDeleteClientObj( hdc );
+        return NULL;
+    }
+
+    metadc->hdc = hdc;
+    set_gdi_client_ptr( hdc, metadc );
+
+    metadc->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 HANDLE_LIST_INC * sizeof(metadc->handles[0]) );
+    metadc->handles_size = HANDLE_LIST_INC;
+    metadc->cur_handles = 0;
+
+    metadc->hFile = 0;
+
+    metadc->mh->mtHeaderSize   = sizeof(METAHEADER) / sizeof(WORD);
+    metadc->mh->mtVersion      = 0x0300;
+    metadc->mh->mtSize         = metadc->mh->mtHeaderSize;
+    metadc->mh->mtNoObjects    = 0;
+    metadc->mh->mtMaxRecord    = 0;
+    metadc->mh->mtNoParameters = 0;
+    metadc->mh->mtType         = METAFILE_MEMORY;
+
+    metadc->pen   = GetStockObject( BLACK_PEN );
+    metadc->brush = GetStockObject( WHITE_BRUSH );
+    metadc->font  = GetStockObject( DEVICE_DEFAULT_FONT );
 
     if (filename)  /* disk based metafile */
     {
-        if ((hFile = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
-				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-            free_dc_ptr( dc );
+        HANDLE file = CreateFileW( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            HeapFree( GetProcessHeap(), 0, metadc );
+            NtGdiDeleteClientObj( hdc );
             return 0;
         }
-	physDev->hFile = hFile;
+        metadc->hFile = file;
     }
 
-    TRACE("returning %p\n", physDev->dev.hdc);
-    ret = physDev->dev.hdc;
-    release_dc_ptr( dc );
-    return ret;
+    TRACE("returning %p\n", hdc);
+    return hdc;
 }
 
 /**********************************************************************
@@ -349,54 +201,6 @@ HDC WINAPI CreateMetaFileA(LPCSTR filename)
 }
 
 
-/**********************************************************************
- *          MFDRV_CloseMetaFile
- */
-static DC *MFDRV_CloseMetaFile( HDC hdc )
-{
-    DC *dc;
-    struct metadc *physDev;
-    DWORD bytes_written;
-
-    TRACE("(%p)\n", hdc );
-
-    if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (GetObjectType( hdc ) != OBJ_METADC)
-    {
-        release_dc_ptr( dc );
-        return NULL;
-    }
-    if (dc->refcount != 1)
-    {
-        FIXME( "not deleting busy DC %p refcount %u\n", hdc, dc->refcount );
-        release_dc_ptr( dc );
-        return NULL;
-    }
-    physDev = (struct metadc *)dc->physDev;
-
-    /* Construct the end of metafile record - this is documented
-     * in SDK Knowledgebase Q99334.
-     */
-
-    if (!metadc_param0( hdc, META_EOF ))
-    {
-        free_dc_ptr( dc );
-	return 0;
-    }
-
-    if (physDev->hFile)  /* disk based metafile */
-    {
-        if (!WriteFile(physDev->hFile, physDev->mh, physDev->mh->mtSize * 2,
-                       &bytes_written, NULL)) {
-            free_dc_ptr( dc );
-            return 0;
-        }
-        CloseHandle(physDev->hFile);
-    }
-
-    return dc;
-}
-
 /******************************************************************
  *	     CloseMetaFile   (GDI32.@)
  *
@@ -411,18 +215,31 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
  */
 HMETAFILE WINAPI CloseMetaFile(HDC hdc)
 {
+    struct metadc *metadc;
+    DWORD bytes_written;
     HMETAFILE hmf;
-    struct metadc *physDev;
-    DC *dc = MFDRV_CloseMetaFile(hdc);
-    if (!dc) return 0;
-    physDev = (struct metadc *)dc->physDev;
+
+    TRACE("(%p)\n", hdc );
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+
+    /* Construct the end of metafile record - this is documented
+     * in SDK Knowledgebase Q99334.
+     */
+    if (!metadc_param0( hdc, META_EOF )) return FALSE;
+    if (!NtGdiDeleteClientObj( hdc )) return FALSE;
+
+    if (metadc->hFile && !WriteFile( metadc->hFile, metadc->mh, metadc->mh->mtSize * sizeof(WORD),
+                                     &bytes_written, NULL ))
+    {
+        metadc_free( metadc );
+        return FALSE;
+    }
 
     /* Now allocate a global handle for the metafile */
-
-    hmf = MF_Create_HMETAFILE( physDev->mh );
-
-    physDev->mh = NULL;  /* So it won't be deleted */
-    free_dc_ptr( dc );
+    hmf = MF_Create_HMETAFILE( metadc->mh );
+    if (hmf) metadc->mh = NULL;  /* So it won't be deleted */
+    metadc_free( metadc );
     return hmf;
 }
 

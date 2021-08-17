@@ -52,6 +52,7 @@ extern BOOL METADC_BitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT hei
                            HDC hdc_src, INT x_src, INT y_src, DWORD rop );
 extern BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom, INT xstart,
                           INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL METADC_DeleteDC( HDC hdc );
 extern BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL METADC_ExcludeClipRect( HDC hdc, INT left, INT top, INT right,
                                     INT bottom ) DECLSPEC_HIDDEN;

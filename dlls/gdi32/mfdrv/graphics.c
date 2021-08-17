@@ -59,16 +59,6 @@ BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
 
 
 /***********************************************************************
- *           MFDRV_ArcTo
- */
-BOOL CDECL MFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                        INT xstart, INT ystart, INT xend, INT yend )
-{
-    return FALSE;
-}
-
-
-/***********************************************************************
  *           METADC_Pie
  */
 BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
@@ -401,14 +391,6 @@ BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 }
 
 /**********************************************************************
- *          MFDRV_FillRgn
- */
-BOOL CDECL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
-{
-    return TRUE;
-}
-
-/**********************************************************************
  *          METADC_FrameRgn
  */
 BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
@@ -445,25 +427,4 @@ BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
     metadc_param1( hdc, META_DELETEOBJECT, iRgn );
     metadc_remove_handle( metadc, iRgn );
     return ret;
-}
-
-
-/**********************************************************************
- *          MFDRV_PolyBezier
- * Since MetaFiles don't record Beziers and they don't even record
- * approximations to them using lines, we need this stub function.
- */
-BOOL CDECL MFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
-{
-    return FALSE;
-}
-
-/**********************************************************************
- *          MFDRV_PolyBezierTo
- * Since MetaFiles don't record Beziers and they don't even record
- * approximations to them using lines, we need this stub function.
- */
-BOOL CDECL MFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
-{
-    return FALSE;
 }

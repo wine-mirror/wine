@@ -3059,7 +3059,6 @@ static void test_metafile_file(void)
 
     SetLastError(0xdeadbeef);
     metafile = CloseMetaFile(dc);
-    todo_wine
     ok(!metafile && GetLastError() == ERROR_INVALID_HANDLE, "CloseMetaFile returned %p (%u)\n",
        metafile, GetLastError());
 
@@ -3714,7 +3713,6 @@ static void test_mf_select(void)
     ok(ret, "DeleteObject failed: %u\n", GetLastError());
 
     obj = GetCurrentObject(hdc, OBJ_PEN);
-    todo_wine
     ok(!obj, "GetCurrentObject succeeded\n");
 
     SetLastError(0xdeadbeef);
