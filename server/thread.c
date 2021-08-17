@@ -126,6 +126,11 @@ struct context
 #define CTX_WOW     1  /* context if thread is inside WoW */
 #define CTX_PENDING 2  /* pending native context when we don't know whether thread is inside WoW */
 
+/* flags for registers that always need to be set from the server side */
+static const unsigned int system_flags = SERVER_CTX_DEBUG_REGISTERS;
+/* flags for registers that are set from the native context even in WoW mode */
+static const unsigned int always_native_flags = SERVER_CTX_DEBUG_REGISTERS | SERVER_CTX_YMM_REGISTERS;
+
 static void dump_context( struct object *obj, int verbose );
 static int context_signaled( struct object *obj, struct wait_queue_entry *entry );
 
@@ -1304,20 +1309,6 @@ static void copy_context( context_t *to, const context_t *from, unsigned int fla
     if (flags & SERVER_CTX_YMM_REGISTERS) to->ymm = from->ymm;
 }
 
-/* return the context flags that correspond to system regs */
-/* (system regs are the ones we can't access on the client side) */
-static unsigned int get_context_system_regs( unsigned short machine )
-{
-    switch (machine)
-    {
-    case IMAGE_FILE_MACHINE_I386:  return SERVER_CTX_DEBUG_REGISTERS;
-    case IMAGE_FILE_MACHINE_AMD64: return SERVER_CTX_DEBUG_REGISTERS;
-    case IMAGE_FILE_MACHINE_ARMNT: return SERVER_CTX_DEBUG_REGISTERS;
-    case IMAGE_FILE_MACHINE_ARM64: return SERVER_CTX_DEBUG_REGISTERS;
-    }
-    return 0;
-}
-
 /* gets the current impersonation token */
 struct token *thread_get_impersonation_token( struct thread *thread )
 {
@@ -1597,7 +1588,6 @@ DECL_HANDLER(select)
     {
         const context_t *native_context = (const context_t *)((const char *)(result + 1) + req->size);
         const context_t *wow_context = (ctx_count > 1) ? native_context + 1 : NULL;
-        unsigned int system_flags = get_context_system_regs( native_machine );
 
         if (current->context && current->context->status != STATUS_PENDING) goto invalid_param;
 
@@ -1691,8 +1681,8 @@ DECL_HANDLER(select)
         if (ctx->regs[CTX_NATIVE].flags || ctx->regs[CTX_WOW].flags)
         {
             data_size_t size = (ctx->regs[CTX_WOW].flags ? 2 : 1) * sizeof(context_t);
-            unsigned int system_flags = get_context_system_regs( native_machine ) & ctx->regs[CTX_NATIVE].flags;
-            if (system_flags) set_thread_context( current, &ctx->regs[CTX_NATIVE], system_flags );
+            unsigned int flags = system_flags & ctx->regs[CTX_NATIVE].flags;
+            if (flags) set_thread_context( current, &ctx->regs[CTX_NATIVE], flags );
             set_reply_data( ctx->regs, min( size, get_reply_max_size() ));
         }
         release_object( ctx );
@@ -1846,7 +1836,6 @@ DECL_HANDLER(get_thread_context)
             set_error( STATUS_UNSUCCESSFUL );
         else
         {
-            unsigned int system_flags = get_context_system_regs( native_machine );
             reply->self = (thread == current);
             if (thread != current) stop_thread( thread );
             if (thread->context)
@@ -1870,13 +1859,12 @@ DECL_HANDLER(get_thread_context)
 
     if (!thread_context->status)
     {
-        unsigned int system_flags = get_context_system_regs( native_machine );
         unsigned int native_flags = req->flags, wow_flags = 0;
 
         if (req->machine == thread_context->regs[CTX_WOW].machine)
         {
-            native_flags = req->flags & system_flags;
-            wow_flags = req->flags & ~system_flags;
+            native_flags = req->flags & always_native_flags;
+            wow_flags = req->flags & ~always_native_flags;
         }
         if ((context = set_reply_data_size( (!!native_flags + !!wow_flags) * sizeof(context_t) )))
         {
@@ -1928,12 +1916,13 @@ DECL_HANDLER(set_thread_context)
         set_error( STATUS_INVALID_PARAMETER );
     else if (thread->state != TERMINATED)
     {
-        unsigned int flags, ctx = CTX_NATIVE;
+        unsigned int ctx = CTX_NATIVE;
         const context_t *context = &contexts[CTX_NATIVE];
-        unsigned int system_flags = get_context_system_regs( native_machine ) & context->flags;
+        unsigned int flags = system_flags & context->flags;
+        unsigned int native_flags = always_native_flags & context->flags;
 
         if (thread != current) stop_thread( thread );
-        else if (system_flags) set_thread_context( thread, context, system_flags );
+        else if (flags) set_thread_context( thread, context, flags );
         if (thread->context && !get_error())
         {
             if (ctx_count == 2)
@@ -1949,11 +1938,11 @@ DECL_HANDLER(set_thread_context)
                 else ctx = CTX_PENDING;
             }
             flags = context->flags;
-            if (system_flags && ctx != CTX_NATIVE) /* system regs are always set from the native context */
+            if (native_flags && ctx != CTX_NATIVE) /* some regs are always set from the native context */
             {
-                copy_context( &thread->context->regs[CTX_NATIVE], &contexts[CTX_NATIVE], system_flags );
-                thread->context->regs[CTX_NATIVE].flags |= system_flags;
-                flags &= ~system_flags;
+                copy_context( &thread->context->regs[CTX_NATIVE], &contexts[CTX_NATIVE], native_flags );
+                thread->context->regs[CTX_NATIVE].flags |= native_flags;
+                flags &= ~native_flags;
             }
             copy_context( &thread->context->regs[ctx], context, flags );
             thread->context->regs[ctx].flags |= flags;
