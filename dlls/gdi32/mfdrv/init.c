@@ -427,153 +427,6 @@ HMETAFILE WINAPI CloseMetaFile(HDC hdc)
 }
 
 
-/******************************************************************
- *         MFDRV_WriteRecord
- *
- * Warning: this function can change the pointer to the metafile header.
- */
-BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
-{
-    DWORD len, size;
-    METAHEADER *mh;
-    struct metadc *physDev = (struct metadc *)dev;
-
-    len = physDev->mh->mtSize * 2 + rlen;
-    /* reallocate memory if needed */
-    size = HeapSize( GetProcessHeap(), 0, physDev->mh );
-    if (len > size)
-    {
-        /*expand size*/
-        size += size / 2 + rlen;
-        mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, size);
-        if (!mh) return FALSE;
-        physDev->mh = mh;
-        TRACE("Reallocated metafile: new size is %d\n",size);
-    }
-    memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
-
-    physDev->mh->mtSize += rlen / 2;
-    physDev->mh->mtMaxRecord = max(physDev->mh->mtMaxRecord, rlen / 2);
-    return TRUE;
-}
-
-
-/******************************************************************
- *         MFDRV_MetaParam0
- */
-
-BOOL MFDRV_MetaParam0(PHYSDEV dev, short func)
-{
-    char buffer[8];
-    METARECORD *mr = (METARECORD *)&buffer;
-
-    mr->rdSize = 3;
-    mr->rdFunction = func;
-    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MFDRV_MetaParam1
- */
-BOOL MFDRV_MetaParam1(PHYSDEV dev, short func, short param1)
-{
-    char buffer[8];
-    METARECORD *mr = (METARECORD *)&buffer;
-    WORD *params = mr->rdParm;
-
-    mr->rdSize = 4;
-    mr->rdFunction = func;
-    params[0] = param1;
-    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MFDRV_MetaParam2
- */
-BOOL MFDRV_MetaParam2(PHYSDEV dev, short func, short param1, short param2)
-{
-    char buffer[10];
-    METARECORD *mr = (METARECORD *)&buffer;
-    WORD *params = mr->rdParm;
-
-    mr->rdSize = 5;
-    mr->rdFunction = func;
-    params[0] = param2;
-    params[1] = param1;
-    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MFDRV_MetaParam4
- */
-
-BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2,
-		      short param3, short param4)
-{
-    char buffer[14];
-    METARECORD *mr = (METARECORD *)&buffer;
-    WORD *params = mr->rdParm;
-
-    mr->rdSize = 7;
-    mr->rdFunction = func;
-    params[0] = param4;
-    params[1] = param3;
-    params[2] = param2;
-    params[3] = param1;
-    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MFDRV_MetaParam6
- */
-
-BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2,
-		      short param3, short param4, short param5, short param6)
-{
-    char buffer[18];
-    METARECORD *mr = (METARECORD *)&buffer;
-    WORD *params = mr->rdParm;
-
-    mr->rdSize = 9;
-    mr->rdFunction = func;
-    params[0] = param6;
-    params[1] = param5;
-    params[2] = param4;
-    params[3] = param3;
-    params[4] = param2;
-    params[5] = param1;
-    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MFDRV_MetaParam8
- */
-BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
-		      short param3, short param4, short param5,
-		      short param6, short param7, short param8)
-{
-    char buffer[22];
-    METARECORD *mr = (METARECORD *)&buffer;
-    WORD *params = mr->rdParm;
-
-    mr->rdSize = 11;
-    mr->rdFunction = func;
-    params[0] = param8;
-    params[1] = param7;
-    params[2] = param6;
-    params[3] = param5;
-    params[4] = param4;
-    params[5] = param3;
-    params[6] = param2;
-    params[7] = param1;
-    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
-}
-
 struct metadc *get_metadc_ptr( HDC hdc )
 {
     struct metadc *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
@@ -583,7 +436,23 @@ struct metadc *get_metadc_ptr( HDC hdc )
 
 BOOL metadc_write_record( struct metadc *metadc, METARECORD *mr, unsigned int rlen )
 {
-    return MFDRV_WriteRecord( &metadc->dev, mr, rlen );
+    DWORD len, size;
+    METAHEADER *mh;
+
+    len = metadc->mh->mtSize * sizeof(WORD) + rlen;
+    size = HeapSize( GetProcessHeap(), 0, metadc->mh );
+    if (len > size)
+    {
+        size += size / sizeof(WORD) + rlen;
+        mh = HeapReAlloc( GetProcessHeap(), 0, metadc->mh, size );
+        if (!mh) return FALSE;
+        metadc->mh = mh;
+    }
+    memcpy( (WORD *)metadc->mh + metadc->mh->mtSize, mr, rlen );
+
+    metadc->mh->mtSize += rlen / sizeof(WORD);
+    metadc->mh->mtMaxRecord = max( metadc->mh->mtMaxRecord, rlen / sizeof(WORD) );
+    return TRUE;
 }
 
 BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
@@ -594,37 +463,50 @@ BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
     return metadc_write_record( metadc, mr, rlen );
 }
 
-BOOL metadc_param1( HDC hdc, short func, short param )
-{
-    struct metadc *dev;
-
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_MetaParam1( &dev->dev, func, param );
-}
-
 BOOL metadc_param0( HDC hdc, short func )
 {
-    struct metadc *dev;
+    METARECORD mr;
 
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_MetaParam0( &dev->dev, func );
+    mr.rdSize = FIELD_OFFSET(METARECORD, rdParm[0]) / sizeof(WORD);
+    mr.rdFunction = func;
+    return metadc_record( hdc, &mr, mr.rdSize * sizeof(WORD) );
+}
+
+BOOL metadc_param1( HDC hdc, short func, short param )
+{
+    METARECORD mr;
+
+    mr.rdSize = sizeof(mr) / sizeof(WORD);
+    mr.rdFunction = func;
+    mr.rdParm[0] = param;
+    return metadc_record( hdc, &mr, mr.rdSize * sizeof(WORD) );
 }
 
 BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
 {
-    struct metadc *dev;
+    char buffer[FIELD_OFFSET(METARECORD, rdParm[2])];
+    METARECORD *mr = (METARECORD *)&buffer;
 
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_MetaParam2( &dev->dev, func, param1, param2 );
+    mr->rdSize = sizeof(buffer) / sizeof(WORD);
+    mr->rdFunction = func;
+    mr->rdParm[0] = param2;
+    mr->rdParm[1] = param1;
+    return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
 BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
                     short param3, short param4 )
 {
-    struct metadc *dev;
+    char buffer[FIELD_OFFSET(METARECORD, rdParm[4])];
+    METARECORD *mr = (METARECORD *)&buffer;
 
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_MetaParam4( &dev->dev, func, param1, param2, param3, param4 );
+    mr->rdSize = sizeof(buffer) / sizeof(WORD);
+    mr->rdFunction = func;
+    mr->rdParm[0] = param4;
+    mr->rdParm[1] = param3;
+    mr->rdParm[2] = param2;
+    mr->rdParm[3] = param1;
+    return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
 BOOL metadc_param5( HDC hdc, short func, short param1, short param2,
@@ -647,20 +529,36 @@ BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
                     short param3, short param4, short param5,
                     short param6 )
 {
-    struct metadc *dev;
+    char buffer[FIELD_OFFSET(METARECORD, rdParm[6])];
+    METARECORD *mr = (METARECORD *)&buffer;
 
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_MetaParam6( &dev->dev, func, param1, param2, param3,
-                             param4, param5, param6 );
+    mr->rdSize = sizeof(buffer) / sizeof(WORD);
+    mr->rdFunction = func;
+    mr->rdParm[0] = param6;
+    mr->rdParm[1] = param5;
+    mr->rdParm[2] = param4;
+    mr->rdParm[3] = param3;
+    mr->rdParm[4] = param2;
+    mr->rdParm[5] = param1;
+    return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
 BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
                     short param3, short param4, short param5,
                     short param6, short param7, short param8)
 {
-    struct metadc *dev;
+    char buffer[FIELD_OFFSET(METARECORD, rdParm[8])];
+    METARECORD *mr = (METARECORD *)&buffer;
 
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_MetaParam8( &dev->dev, func, param1, param2, param3,
-                             param4, param5, param6, param7, param8 );
+    mr->rdSize = sizeof(buffer) / sizeof(WORD);
+    mr->rdFunction = func;
+    mr->rdParm[0] = param8;
+    mr->rdParm[1] = param7;
+    mr->rdParm[2] = param6;
+    mr->rdParm[3] = param5;
+    mr->rdParm[4] = param4;
+    mr->rdParm[5] = param3;
+    mr->rdParm[6] = param2;
+    mr->rdParm[7] = param1;
+    return metadc_record( hdc, mr, sizeof(buffer) );
 }
