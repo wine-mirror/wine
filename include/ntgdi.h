@@ -127,6 +127,7 @@ typedef struct DC_ATTR
 {
     HDC       hdc;                 /* handle to self */
     LONG      disabled;            /* disabled flag, controled by DCHF_(DISABLE|ENABLE)DC */
+    int       save_level;
     COLORREF  background_color;
     COLORREF  brush_color;
     COLORREF  pen_color;

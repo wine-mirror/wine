@@ -44,7 +44,7 @@ BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
     if (level < 0)
         emr.iRelative = level;
     else
-        emr.iRelative = level - dc->saveLevel - 1;
+        emr.iRelative = level - dc->attr->save_level - 1;
 
     physDev->restoring++;
     ret = next->funcs->pRestoreDC( next, level );

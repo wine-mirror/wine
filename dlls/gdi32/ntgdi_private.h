@@ -72,7 +72,6 @@ typedef struct tagDC
     DWORD        thread;           /* thread owning the DC */
     LONG         refcount;         /* thread refcount */
     LONG         dirty;            /* dirty flag */
-    INT          saveLevel;
     DC_ATTR     *attr;             /* DC attributes accessible by client */
     struct tagDC *saved_dc;
     DWORD_PTR    dwHookData;

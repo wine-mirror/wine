@@ -439,8 +439,8 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     }
     physDev = get_emf_physdev( find_dc_driver( dc, &emfdrv_driver ));
 
-    if(dc->saveLevel)
-        RestoreDC(hdc, 1);
+    if (dc->attr->save_level)
+        RestoreDC( hdc, 1 );
 
     if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
     if (physDev->dc_pen) DeleteObject( physDev->dc_pen );

@@ -404,10 +404,10 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     /* find the state level to restore */
 
-    if (abs(level) > dc->saveLevel || level == 0) return FALSE;
-    if (level < 0) level = dc->saveLevel + level + 1;
+    if (abs(level) > dc->attr->save_level || level == 0) return FALSE;
+    if (level < 0) level = dc->attr->save_level + level + 1;
     first_dcs = dc->saved_dc;
-    for (dcs = first_dcs, save_level = dc->saveLevel; save_level > level; save_level--)
+    for (dcs = first_dcs, save_level = dc->attr->save_level; save_level > level; save_level--)
         dcs = dcs->saved_dc;
 
     /* restore the state */
@@ -478,7 +478,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     dc->saved_dc  = dcs->saved_dc;
     dcs->saved_dc = 0;
-    dc->saveLevel = save_level - 1;
+    dc->attr->save_level = save_level - 1;
 
     /* now destroy all the saved DCs */
 
@@ -524,7 +524,7 @@ static BOOL reset_dc_state( HDC hdc )
         free_dc_state( dcs );
     }
     dc->saved_dc = NULL;
-    dc->saveLevel = 0;
+    dc->attr->save_level = 0;
     release_dc_ptr( dc );
     return TRUE;
 }
@@ -587,7 +587,7 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
 
     newdc->saved_dc = dc->saved_dc;
     dc->saved_dc = newdc;
-    ret = ++dc->saveLevel;
+    ret = ++dc->attr->save_level;
     release_dc_ptr( dc );
     return ret;
 }
