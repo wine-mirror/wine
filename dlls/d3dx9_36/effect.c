@@ -3816,7 +3816,7 @@ static HRESULT WINAPI d3dx_effect_FindNextValidTechnique(ID3DXEffect *iface, D3D
         }
     }
 
-    *next_technique = get_technique_handle(&effect->techniques[0]);
+    *next_technique = NULL;
     return S_FALSE;
 }
 
