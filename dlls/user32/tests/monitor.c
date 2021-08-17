@@ -1563,6 +1563,7 @@ static void test_EnumDisplayMonitors(void)
     static const DWORD DESKTOP_ALL_ACCESS = 0x01ff;
     HWINSTA winstation, old_winstation;
     HDESK desktop, old_desktop;
+    USEROBJECTFLAGS flags;
     INT count, old_count;
     DWORD error;
     BOOL ret;
@@ -1601,6 +1602,12 @@ static void test_EnumDisplayMonitors(void)
     ret = SetProcessWindowStation(winstation);
     ok(ret, "SetProcessWindowStation failed, error %#x.\n", GetLastError());
     ok(winstation == GetProcessWindowStation(), "Expected %p, got %p.\n", GetProcessWindowStation(), winstation);
+
+    flags.fInherit = FALSE;
+    flags.fReserved = FALSE;
+    flags.dwFlags = WSF_VISIBLE;
+    ret = SetUserObjectInformationW(winstation, UOI_FLAGS, &flags, sizeof(flags));
+    ok(ret, "SetUserObjectInformationW failed, error %#x.\n", GetLastError());
 
     desktop = CreateDesktopW(L"test_desktop", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
     ok(!!desktop && desktop != old_desktop, "CreateDesktopW failed, error %#x.\n", GetLastError());

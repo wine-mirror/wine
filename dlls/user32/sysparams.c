@@ -4111,12 +4111,20 @@ static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, 
 
 BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
 {
+    BOOL is_winstation_visible = FALSE;
+    USEROBJECTFLAGS flags;
+    HWINSTA winstation;
     RECT monitor_rect;
     DWORD i = 0;
 
     TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
 
-    if (update_monitor_cache())
+    /* Report physical monitor information only if window station has visible display surfaces */
+    winstation = GetProcessWindowStation();
+    if (GetUserObjectInformationW( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ))
+        is_winstation_visible = flags.dwFlags & WSF_VISIBLE;
+
+    if (is_winstation_visible && update_monitor_cache())
     {
         while (TRUE)
         {
