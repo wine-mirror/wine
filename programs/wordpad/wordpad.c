@@ -1881,7 +1881,7 @@ static LRESULT OnCreate( HWND hWnd )
     HFONT font;
     HDC hdc;
     SIZE name_sz, size_sz;
-    int height;
+    int height, dpi;
     static const WCHAR wszRichEditDll[] = {'R','I','C','H','E','D','2','0','.','D','L','L','\0'};
     static const WCHAR wszRichEditText[] = {'R','i','c','h','E','d','i','t',' ','t','e','x','t','\0'};
     static const WCHAR font_text[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0}; /* a long font name */
@@ -1905,8 +1905,12 @@ static LRESULT OnCreate( HWND hWnd )
       NULL, 0,
       24, 24, 16, 16, sizeof(TBBUTTON));
 
+    hdc = GetDC(hWnd);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(hWnd, hdc);
+
     ab.hInst = HINST_COMMCTRL;
-    ab.nID = IDB_STD_SMALL_COLOR;
+    ab.nID = dpi >= 120 ? IDB_STD_LARGE_COLOR : IDB_STD_SMALL_COLOR;
     nStdBitmaps = SendMessageW(hToolBarWnd, TB_ADDBITMAP, 0, (LPARAM)&ab);
 
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILENEW, ID_FILE_NEW);
