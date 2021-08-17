@@ -73,7 +73,6 @@ extern BOOL     CDECL EMFDRV_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT height ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_GdiComment( PHYSDEV dev, UINT bytes, const BYTE *buffer ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                                            void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;

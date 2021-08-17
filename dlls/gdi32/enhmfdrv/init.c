@@ -66,7 +66,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_FlattenPath,              /* pFlattenPath */
     NULL,                            /* pFontIsLinked */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
-    EMFDRV_GdiComment,               /* pGdiComment */
+    NULL,                            /* pGdiComment */
     NULL,                            /* pGetBoundsRect */
     NULL,                            /* pGetCharABCWidths */
     NULL,                            /* pGetCharABCWidthsI */

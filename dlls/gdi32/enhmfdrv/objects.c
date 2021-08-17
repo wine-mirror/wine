@@ -510,14 +510,17 @@ COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
 }
 
-/******************************************************************
- *         EMFDRV_GdiComment
+/*******************************************************************
+ *      GdiComment   (GDI32.@)
  */
-BOOL CDECL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, const BYTE *buffer)
+BOOL WINAPI GdiComment( HDC hdc, UINT bytes, const BYTE *buffer )
 {
+    DC_ATTR *dc_attr;
     EMRGDICOMMENT *emr;
     UINT total, rounded_size;
     BOOL ret;
+
+    if (!(dc_attr = get_dc_attr( hdc )) || !dc_attr->emf) return FALSE;
 
     rounded_size = (bytes+3) & ~3;
     total = offsetof(EMRGDICOMMENT,Data) + rounded_size;
@@ -529,7 +532,7 @@ BOOL CDECL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, const BYTE *buffer)
     memset(&emr->Data[bytes], 0, rounded_size - bytes);
     memcpy(&emr->Data[0], buffer, bytes);
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
 
     HeapFree(GetProcessHeap(), 0, emr);
 

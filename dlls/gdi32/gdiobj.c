@@ -1218,25 +1218,6 @@ BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 }
 
 /*******************************************************************
- *      GdiComment [GDI32.@]
- *
- *
- */
-BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
-{
-    DC *dc = get_dc_ptr(hdc);
-    BOOL ret = FALSE;
-
-    if(dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGdiComment );
-        ret = physdev->funcs->pGdiComment( physdev, cbSize, lpData );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/*******************************************************************
  *      SetColorAdjustment [GDI32.@]
  *
  *
