@@ -1,5 +1,5 @@
 TESTDLL = d3dx10_43.dll
-IMPORTS = d3dx10 ole32
+IMPORTS = d3dx10 ole32 gdi32
 
 C_SRCS = \
 	d3dx10.c

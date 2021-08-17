@@ -22,6 +22,8 @@
 #include "d3dx10.h"
 #include "wine/test.h"
 
+#define D3DERR_INVALIDCALL 0x8876086c
+
 /* 1x1 1bpp bmp image */
 static const BYTE test_bmp_1bpp[] =
 {
@@ -818,6 +820,13 @@ static unsigned int get_bpp_from_format(DXGI_FORMAT format)
         default:
             return 0;
     }
+}
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
 static BOOL compare_float(float f, float g, unsigned int ulps)
@@ -2024,6 +2033,939 @@ static void test_create_texture(void)
     ID3D10Device_Release(device);
 }
 
+#define check_rect(rect, left, top, right, bottom) _check_rect(__LINE__, rect, left, top, right, bottom)
+static inline void _check_rect(unsigned int line, const RECT *rect, int left, int top, int right, int bottom)
+{
+    ok_(__FILE__, line)(rect->left == left, "Unexpected rect.left %d\n", rect->left);
+    ok_(__FILE__, line)(rect->top == top, "Unexpected rect.top %d\n", rect->top);
+    ok_(__FILE__, line)(rect->right == right, "Unexpected rect.right %d\n", rect->right);
+    ok_(__FILE__, line)(rect->bottom == bottom, "Unexpected rect.bottom %d\n", rect->bottom);
+}
+
+static void test_font(void)
+{
+    static const WCHAR testW[] = L"test";
+    static const char long_text[] = "Example text to test clipping and other related things";
+    static const WCHAR long_textW[] = L"Example text to test clipping and other related things";
+    static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
+    static const D3DXCOLOR color = { 1.0f, 0.0f, 1.0f, 0.0f };
+    static const D3DXCOLOR white = { 1.0f, 1.0f, 1.0f, 0.0f };
+    static const struct
+    {
+        int font_height;
+        unsigned int expected_size;
+        unsigned int expected_levels;
+    }
+    tests[] =
+    {
+        {   2,  32,  2 },
+        {   6, 128,  4 },
+        {  10, 256,  5 },
+        {  12, 256,  5 },
+        {  72, 256,  8 },
+        { 250, 256,  9 },
+        { 258, 512, 10 },
+        { 512, 512, 10 },
+    };
+    const unsigned int size = ARRAY_SIZE(testW);
+    TEXTMETRICA metrics, expmetrics;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10Device *device, *device2;
+    ID3D10ShaderResourceView *srv;
+    GLYPHMETRICS glyph_metrics;
+    int ref, i, height, count;
+    ID3D10Texture2D *texture;
+    ID3D10Resource *resource;
+    D3DX10_FONT_DESCA desc;
+    ID3DX10Sprite *sprite;
+    RECT rect, blackbox;
+    ID3DX10Font *font;
+    TEXTMETRICW tm;
+    POINT cellinc;
+    HRESULT hr;
+    WORD glyph;
+    BOOL ret;
+    HDC hdc;
+    char c;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    ref = get_refcount(device);
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Failed to create a font, hr %#x.\n", hr);
+    ok(ref < get_refcount(device), "Unexpected device refcount.\n");
+    ID3DX10Font_Release(font);
+    ok(ref == get_refcount(device), "Unexpected device refcount.\n");
+
+    /* Zero size */
+    hr = D3DX10CreateFontA(device, 0, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Failed to create a font, hr %#x.\n", hr);
+    ID3DX10Font_Release(font);
+
+    /* Unspecified font name */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, NULL, &font);
+    ok(hr == S_OK, "Failed to create a font, hr %#x.\n", hr);
+    ID3DX10Font_Release(font);
+
+    /* Empty font name */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "", &font);
+    ok(hr == S_OK, "Failed to create a font, hr %#x.\n", hr);
+    ID3DX10Font_Release(font);
+
+    hr = D3DX10CreateFontA(NULL, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateFontA(NULL, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    /* D3DX10CreateFontIndirect */
+    desc.Height = 12;
+    desc.Width = 0;
+    desc.Weight = FW_DONTCARE;
+    desc.MipLevels = 0;
+    desc.Italic = FALSE;
+    desc.CharSet = DEFAULT_CHARSET;
+    desc.OutputPrecision = OUT_DEFAULT_PRECIS;
+    desc.Quality = DEFAULT_QUALITY;
+    desc.PitchAndFamily = DEFAULT_PITCH;
+    strcpy(desc.FaceName, "Tahoma");
+    hr = D3DX10CreateFontIndirectA(device, &desc, &font);
+    ok(hr == S_OK, "Failed to create a font, hr %#x.\n", hr);
+    ID3DX10Font_Release(font);
+
+    hr = D3DX10CreateFontIndirectA(NULL, &desc, &font);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateFontIndirectA(device, NULL, &font);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateFontIndirectA(device, &desc, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    /* GetDevice */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_GetDevice(font, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_GetDevice(font, &device2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_Release(device2);
+
+    ID3DX10Font_Release(font);
+
+    /* GetDesc */
+    hr = D3DX10CreateFontA(device, 12, 8, FW_BOLD, 2, TRUE, ANSI_CHARSET, OUT_RASTER_PRECIS,
+            ANTIALIASED_QUALITY, VARIABLE_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_GetDescA(font, NULL);
+todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_GetDescA(font, &desc);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+if (SUCCEEDED(hr))
+{
+    ok(desc.Height == 12, "Unexpected height %d.\n", desc.Height);
+    ok(desc.Width == 8, "Unexpected width %u.\n", desc.Width);
+    ok(desc.Weight == FW_BOLD, "Unexpected weight %u.\n", desc.Weight);
+    ok(desc.MipLevels == 2, "Unexpected miplevels %u.\n", desc.MipLevels);
+    ok(desc.Italic == TRUE, "Unexpected italic %#x.\n", desc.Italic);
+    ok(desc.CharSet == ANSI_CHARSET, "Unexpected charset %u.\n", desc.CharSet);
+    ok(desc.OutputPrecision == OUT_RASTER_PRECIS, "Unexpected output precision %u.\n", desc.OutputPrecision);
+    ok(desc.Quality == ANTIALIASED_QUALITY, "Unexpected quality %u.\n", desc.Quality);
+    ok(desc.PitchAndFamily == VARIABLE_PITCH, "Unexpected pitch and family %#x.\n", desc.PitchAndFamily);
+    ok(!strcmp(desc.FaceName, "Tahoma"), "Unexpected facename %s.\n", debugstr_a(desc.FaceName));
+}
+    ID3DX10Font_Release(font);
+
+    /* GetDC + GetTextMetrics */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hdc = ID3DX10Font_GetDC(font);
+todo_wine
+    ok(!!hdc, "Unexpected hdc %p.\n", hdc);
+
+    ret = ID3DX10Font_GetTextMetricsA(font, &metrics);
+todo_wine
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    ret = GetTextMetricsA(hdc, &expmetrics);
+todo_wine
+    ok(ret, "Unexpected ret %#x.\n", ret);
+
+if (ret)
+{
+    ok(metrics.tmHeight == expmetrics.tmHeight, "Unexpected height %d, expected %d.\n",
+            metrics.tmHeight, expmetrics.tmHeight);
+    ok(metrics.tmAscent == expmetrics.tmAscent, "Unexpected ascent %d, expected %d.\n",
+            metrics.tmAscent, expmetrics.tmAscent);
+    ok(metrics.tmDescent == expmetrics.tmDescent, "Unexpected descent %d, expected %d.\n",
+            metrics.tmDescent, expmetrics.tmDescent);
+    ok(metrics.tmInternalLeading == expmetrics.tmInternalLeading, "Unexpected internal leading %d, expected %d.\n",
+            metrics.tmInternalLeading, expmetrics.tmInternalLeading);
+    ok(metrics.tmExternalLeading == expmetrics.tmExternalLeading, "Unexpected external leading %d, expected %d.\n",
+            metrics.tmExternalLeading, expmetrics.tmExternalLeading);
+    ok(metrics.tmAveCharWidth == expmetrics.tmAveCharWidth, "Unexpected average char width %d, expected %d.\n",
+            metrics.tmAveCharWidth, expmetrics.tmAveCharWidth);
+    ok(metrics.tmMaxCharWidth == expmetrics.tmMaxCharWidth, "Unexpected maximum char width %d, expected %d.\n",
+            metrics.tmMaxCharWidth, expmetrics.tmMaxCharWidth);
+    ok(metrics.tmWeight == expmetrics.tmWeight, "Unexpected weight %d, expected %d.\n",
+            metrics.tmWeight, expmetrics.tmWeight);
+    ok(metrics.tmOverhang == expmetrics.tmOverhang, "Unexpected overhang %d, expected %d.\n",
+            metrics.tmOverhang, expmetrics.tmOverhang);
+    ok(metrics.tmDigitizedAspectX == expmetrics.tmDigitizedAspectX, "Unexpected digitized x aspect %d, expected %d.\n",
+            metrics.tmDigitizedAspectX, expmetrics.tmDigitizedAspectX);
+    ok(metrics.tmDigitizedAspectY == expmetrics.tmDigitizedAspectY, "Unexpected digitized y aspect %d, expected %d.\n",
+            metrics.tmDigitizedAspectY, expmetrics.tmDigitizedAspectY);
+    ok(metrics.tmFirstChar == expmetrics.tmFirstChar, "Unexpected first char %u, expected %u.\n",
+            metrics.tmFirstChar, expmetrics.tmFirstChar);
+    ok(metrics.tmLastChar == expmetrics.tmLastChar, "Unexpected last char %u, expected %u.\n",
+            metrics.tmLastChar, expmetrics.tmLastChar);
+    ok(metrics.tmDefaultChar == expmetrics.tmDefaultChar, "Unexpected default char %u, expected %u.\n",
+            metrics.tmDefaultChar, expmetrics.tmDefaultChar);
+    ok(metrics.tmBreakChar == expmetrics.tmBreakChar, "Unexpected break char %u, expected %u.\n",
+            metrics.tmBreakChar, expmetrics.tmBreakChar);
+    ok(metrics.tmItalic == expmetrics.tmItalic, "Unexpected italic %u, expected %u.\n",
+            metrics.tmItalic, expmetrics.tmItalic);
+    ok(metrics.tmUnderlined == expmetrics.tmUnderlined, "Unexpected underlined %u, expected %u.\n",
+            metrics.tmUnderlined, expmetrics.tmUnderlined);
+    ok(metrics.tmStruckOut == expmetrics.tmStruckOut, "Unexpected struck out %u, expected %u.\n",
+            metrics.tmStruckOut, expmetrics.tmStruckOut);
+    ok(metrics.tmPitchAndFamily == expmetrics.tmPitchAndFamily, "Unexpected pitch and family %u, expected %u.\n",
+            metrics.tmPitchAndFamily, expmetrics.tmPitchAndFamily);
+    ok(metrics.tmCharSet == expmetrics.tmCharSet, "Unexpected charset %u, expected %u.\n",
+            metrics.tmCharSet, expmetrics.tmCharSet);
+}
+    ID3DX10Font_Release(font);
+
+    /* PreloadText */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_PreloadTextA(font, NULL, -1);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextA(font, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextA(font, NULL, 1);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextA(font, "test", -1);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextA(font, "", 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextA(font, "", -1);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_PreloadTextW(font, NULL, -1);
+todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextW(font, NULL, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextW(font, NULL, 1);
+todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextW(font, testW, -1);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextW(font, L"", 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadTextW(font, L"", -1);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ID3DX10Font_Release(font);
+
+    /* GetGlyphData, PreloadGlyphs, PreloadCharacters */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hdc = ID3DX10Font_GetDC(font);
+todo_wine
+    ok(!!hdc, "Unexpected hdc %p.\n", hdc);
+
+    hr = ID3DX10Font_GetGlyphData(font, 0, NULL, &blackbox, &cellinc);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_GetGlyphData(font, 0, &srv, NULL, &cellinc);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10ShaderResourceView_Release(srv);
+    hr = ID3DX10Font_GetGlyphData(font, 0, &srv, &blackbox, NULL);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10ShaderResourceView_Release(srv);
+
+    hr = ID3DX10Font_PreloadCharacters(font, 'b', 'a');
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Font_PreloadGlyphs(font, 1, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Font_PreloadCharacters(font, 'a', 'a');
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    for (c = 'b'; c <= 'z'; ++c)
+    {
+        if (!hdc) break;
+
+        winetest_push_context("Character %c", c);
+        count = GetGlyphIndicesA(hdc, &c, 1, &glyph, 0);
+        ok(count != GDI_ERROR, "Unexpected count %u.\n", count);
+
+        hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, &blackbox, &cellinc);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        ID3D10ShaderResourceView_GetResource(srv, &resource);
+        hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ID3D10Resource_Release(resource);
+
+        ID3D10Texture2D_GetDesc(texture, &texture_desc);
+        ok(texture_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n",
+                texture_desc.Format);
+        ok(texture_desc.Usage == 0, "Unexpected usage %#x.\n", texture_desc.Usage);
+        ok(texture_desc.Width == 256, "Unexpected width %u.\n", texture_desc.Width);
+        ok(texture_desc.Height == 256, "Unexpected height %u.\n", texture_desc.Height);
+        ok(texture_desc.CPUAccessFlags == 0, "Unexpected access flags %#x.\n",
+                texture_desc.CPUAccessFlags);
+        ok(texture_desc.BindFlags == D3D10_BIND_SHADER_RESOURCE, "Unexpected bind flags %#x.\n",
+                texture_desc.BindFlags);
+
+        count = GetGlyphOutlineW(hdc, glyph, GGO_GLYPH_INDEX | GGO_METRICS, &glyph_metrics, 0, NULL, &mat);
+        ok(count != GDI_ERROR, "Unexpected count %#x.\n", count);
+
+        ret = ID3DX10Font_GetTextMetricsW(font, &tm);
+        ok(ret, "Unexpected ret %#x.\n", ret);
+
+        todo_wine ok(blackbox.right - blackbox.left == glyph_metrics.gmBlackBoxX + 2, "Got %d, expected %d.\n",
+                blackbox.right - blackbox.left, glyph_metrics.gmBlackBoxX + 2);
+        todo_wine ok(blackbox.bottom - blackbox.top == glyph_metrics.gmBlackBoxY + 2, "Got %d, expected %d.\n",
+                blackbox.bottom - blackbox.top, glyph_metrics.gmBlackBoxY + 2);
+        ok(cellinc.x == glyph_metrics.gmptGlyphOrigin.x - 1, "Got %d, expected %d.\n",
+                cellinc.x, glyph_metrics.gmptGlyphOrigin.x - 1);
+        ok(cellinc.y == tm.tmAscent - glyph_metrics.gmptGlyphOrigin.y - 1, "Got %d, expected %d.\n",
+                cellinc.y, tm.tmAscent - glyph_metrics.gmptGlyphOrigin.y - 1);
+
+        ID3D10Texture2D_Release(texture);
+        winetest_pop_context();
+    }
+
+    hr = ID3DX10Font_PreloadCharacters(font, 'a', 'z');
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Test multiple textures */
+    hr = ID3DX10Font_PreloadGlyphs(font, 0, 1000);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Test glyphs that are not rendered */
+    for (glyph = 1; glyph < 4; ++glyph)
+    {
+        srv = (void *)0xdeadbeef;
+        hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, &blackbox, &cellinc);
+    todo_wine {
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(!srv, "Unexpected resource view %p.\n", srv);
+    }
+    }
+
+    ID3DX10Font_Release(font);
+
+    c = 'a';
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Test %u", i);
+        hr = D3DX10CreateFontA(device, tests[i].font_height, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
+                OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hdc = ID3DX10Font_GetDC(font);
+    todo_wine
+        ok(!!hdc, "Unexpected hdc %p.\n", hdc);
+
+        if (!hdc)
+        {
+            ID3DX10Font_Release(font);
+            winetest_pop_context();
+            break;
+        }
+
+        count = GetGlyphIndicesA(hdc, &c, 1, &glyph, 0);
+        ok(count != GDI_ERROR, "Unexpected count %u.\n", count);
+
+        hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, NULL, NULL);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        ID3D10ShaderResourceView_GetResource(srv, &resource);
+        hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ID3D10Resource_Release(resource);
+
+        ID3D10Texture2D_GetDesc(texture, &texture_desc);
+
+        ok(texture_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n",
+                texture_desc.Format);
+        ok(texture_desc.Usage == 0, "Unexpected usage %#x.\n", texture_desc.Usage);
+        ok(texture_desc.Width == tests[i].expected_size, "Unexpected width %u.\n", texture_desc.Width);
+        ok(texture_desc.Height == tests[i].expected_size, "Unexpected height %u.\n", texture_desc.Height);
+        ok(texture_desc.CPUAccessFlags == 0, "Unexpected access flags %#x.\n",
+                texture_desc.CPUAccessFlags);
+        ok(texture_desc.BindFlags == D3D10_BIND_SHADER_RESOURCE, "Unexpected bind flags %#x.\n",
+                texture_desc.BindFlags);
+
+        ID3D10Texture2D_Release(texture);
+
+        /* DrawText */
+        hr = D3DX10CreateSprite(device, 0, &sprite);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        SetRect(&rect, 0, 0, 640, 480);
+
+        hr = ID3DX10Sprite_Begin(sprite, 0);
+        ok (hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        height = ID3DX10Font_DrawTextW(font, sprite, testW, -1, &rect, DT_TOP, white);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
+        height = ID3DX10Font_DrawTextW(font, sprite, testW, size, &rect, DT_TOP, white);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
+        height = ID3DX10Font_DrawTextW(font, sprite, testW, size, &rect, DT_RIGHT, white);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
+        height = ID3DX10Font_DrawTextW(font, sprite, testW, size, &rect, DT_LEFT | DT_NOCLIP, white);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
+
+        SetRectEmpty(&rect);
+        height = ID3DX10Font_DrawTextW(font, sprite, testW, size, &rect,
+                DT_LEFT | DT_CALCRECT, white);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
+        ok(!rect.left, "Unexpected rect left %d.\n", rect.left);
+        ok(!rect.top, "Unexpected rect top %d.\n", rect.top);
+        ok(rect.right, "Unexpected rect right %d.\n", rect.right);
+        ok(rect.bottom == tests[i].font_height, "Unexpected rect bottom %d.\n", rect.bottom);
+
+        hr = ID3DX10Sprite_End(sprite);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ID3DX10Sprite_Release(sprite);
+
+        ID3DX10Font_Release(font);
+        winetest_pop_context();
+    }
+
+    if (!strcmp(winetest_platform, "wine"))
+        return;
+
+    /* DrawText */
+    hr = D3DX10CreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&rect, 10, 10, 200, 200);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", -2, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", -1, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", 0, &rect, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", 1, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", 2, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "", 0, &rect, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "", -1, &rect, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", -1, NULL, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, "test", -1, NULL, DT_CALCRECT, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, NULL, -1, NULL, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    SetRect(&rect, 10, 10, 50, 50);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, long_text, -1, &rect, DT_WORDBREAK, color);
+    ok(height == 60, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextA(font, NULL, long_text, -1, &rect, DT_WORDBREAK | DT_NOCLIP, color);
+    ok(height == 96, "Unexpected height %d.\n", height);
+
+    SetRect(&rect, 10, 10, 200, 200);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, testW, -1, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, testW, 0, &rect, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, testW, 1, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, testW, 2, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"", 0, &rect, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"", -1, &rect, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, testW, -1, NULL, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, testW, -1, NULL, DT_CALCRECT, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, NULL, -1, NULL, 0, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    SetRect(&rect, 10, 10, 50, 50);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, long_textW, -1, &rect, DT_WORDBREAK, color);
+    ok(height == 60, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, long_textW, -1, &rect, DT_WORDBREAK | DT_NOCLIP, color);
+    ok(height == 96, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\na", -1, NULL, 0, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\na", -1, &rect, 0, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\r\na", -1, &rect, 0, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\ra", -1, &rect, 0, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\na", -1, &rect, DT_SINGLELINE, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\naaaaa aaaa", -1, &rect, DT_SINGLELINE, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\naaaaa aaaa", -1, &rect, 0, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\naaaaa aaaa", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\naaaaa aaaa", -1, &rect, DT_WORDBREAK | DT_SINGLELINE, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"1\n2\n3\n4\n5\n6", -1, &rect, 0, color);
+    ok(height == 48, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"1\n2\n3\n4\n5\n6", -1, &rect, DT_NOCLIP, color);
+    ok(height == 72, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\t\t\t\t\t\t\t\t\t\t", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 0, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\t\t\t\t\t\t\t\t\t\ta", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\taaaaaaaaaa", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\taaaaaaaaaa", -1, &rect, DT_EXPANDTABS | DT_WORDBREAK, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\taaa\taaa\taaa", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\taaa\taaa\taaa", -1, &rect, DT_EXPANDTABS | DT_WORDBREAK, color);
+    ok(height == 48, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"\t\t\t\t\t\t\t\t\t\t", -1, &rect, DT_EXPANDTABS | DT_WORDBREAK, color);
+    ok(height == 60, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\ta", -1, &rect, DT_EXPANDTABS | DT_WORDBREAK, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a\ta\ta", -1, &rect, DT_EXPANDTABS | DT_WORDBREAK, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaaaaaaaaaaaaaaaaaa", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"a                        a", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa              aaaa", -1, &rect, DT_WORDBREAK, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa              aaaa", -1, &rect, DT_WORDBREAK | DT_RIGHT, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa              aaaa", -1, &rect, DT_WORDBREAK | DT_CENTER, color);
+    ok(height == 36, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_BOTTOM, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_VCENTER, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_RIGHT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, -10, 10, 10, 34);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -10, 30, 14);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, -10, 10, 10, 34);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -10, 30, 14);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 53, 22);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_BOTTOM | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 26, 30, 50);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_BOTTOM | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, -10, 26, 10, 50);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_BOTTOM | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 6, 30, 30);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_BOTTOM | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 26, 30, 50);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_BOTTOM | DT_CALCRECT, color);
+    ok(height == -40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -54, 30, -30);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_BOTTOM | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 26, 30, 50);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_BOTTOM | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, -10, 26, 10, 50);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_BOTTOM | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 6, 30, 30);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_BOTTOM | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 38, 53, 50);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_BOTTOM | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == -40, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -54, 30, -30);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 18, 30, 42);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, -10, 18, 10, 42);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -2, 30, 22);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 18, 30, 42);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_VCENTER | DT_CALCRECT, color);
+    ok(height == -8, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -22, 30, 2);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 18, 30, 42);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, -10, 18, 10, 42);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -2, 30, 22);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 26, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 24, 53, 36);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == -8, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, -22, 30, 2);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_RIGHT | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 30, 10, 50, 34);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_RIGHT | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_RIGHT | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 30, -10, 50, 14);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_RIGHT | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, -50, 10, -30, 34);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_RIGHT | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 30, 10, 50, 34);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_RIGHT | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 30, 10, 50, 34);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_RIGHT | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 10, 10, 30, 34);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_RIGHT | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 30, -10, 50, 14);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_RIGHT | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+    check_rect(&rect, -73, 10, -30, 22);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_RIGHT | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 30, 10, 50, 34);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 10, 40, 34);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 0, 10, 20, 34);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, -10, 40, 14);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, -20, 10, 0, 34);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 10, 40, 34);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 10, 40, 34);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 0, 10, 20, 34);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, -10, 40, 14);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 12, "Unexpected height %d.\n", height);
+    check_rect(&rect, -31, 10, 12, 22);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 24, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 10, 40, 34);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 18, 40, 42);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 18, 40, 42);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 0, 18, 20, 42);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, -2, 40, 22);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, -20, 18, 0, 42);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa\naaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_CALCRECT, color);
+    ok(height == -8, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, -22, 40, 2);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 18, 40, 42);
+
+    SetRect(&rect, 10, 10, 50, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, 18, 40, 42);
+
+    SetRect(&rect, -10, 10, 30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 0, 18, 20, 42);
+
+    SetRect(&rect, 10, -10, 50, 30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 32, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, -2, 40, 22);
+
+    SetRect(&rect, 10, 10, -30, 50);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == 26, "Unexpected height %d.\n", height);
+    check_rect(&rect, -31, 24, 12, 36);
+
+    SetRect(&rect, 10, 10, 50, -30);
+    height = ID3DX10Font_DrawTextW(font, NULL, L"aaaa aaaa", -1, &rect, DT_CENTER | DT_VCENTER | DT_WORDBREAK | DT_CALCRECT, color);
+    ok(height == -8, "Unexpected height %d.\n", height);
+    check_rect(&rect, 20, -22, 40, 2);
+
+    ID3DX10Font_Release(font);
+}
+
 START_TEST(d3dx10)
 {
     test_D3DX10UnsetAllDeviceObjects();
@@ -2032,4 +2974,5 @@ START_TEST(d3dx10)
     test_D3DX10CreateAsyncResourceLoader();
     test_get_image_info();
     test_create_texture();
+    test_font();
 }
