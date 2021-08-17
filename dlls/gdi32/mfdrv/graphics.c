@@ -257,12 +257,11 @@ BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_type 
 
 
 /******************************************************************
- *         MFDRV_CreateRegion
+ *         metadc_create_region
  *
- * For explanation of the format of the record see MF_Play_MetaCreateRegion in
- * objects/metafile.c
+ * For explanation of the format of the record see MF_Play_MetaCreateRegion
  */
-static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
+static INT16 metadc_create_region( struct metadc *metadc, HRGN hrgn )
 {
     DWORD len;
     METARECORD *mr;
@@ -340,7 +339,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     mr->rdParm[10] = rgndata->rdh.rcBound.bottom;
     mr->rdFunction = META_CREATEREGION;
     mr->rdSize = Param - (WORD *)mr;
-    ret = metadc_record( dev->hdc, mr, mr->rdSize * 2 );
+    ret = metadc_write_record( metadc, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     HeapFree( GetProcessHeap(), 0, rgndata );
     if(!ret)
@@ -348,7 +347,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
         WARN("MFDRV_WriteRecord failed\n");
 	return -1;
     }
-    return MFDRV_AddHandle( dev, hrgn );
+    return metadc_add_handle( metadc, hrgn );
 }
 
 
@@ -360,7 +359,7 @@ BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
     struct metadc *mf;
     INT16 index;
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
-    index = MFDRV_CreateRegion( &mf->dev, hrgn );
+    index = metadc_create_region( mf, hrgn );
     if(index == -1)
         return FALSE;
     return metadc_param1( hdc, META_PAINTREGION, index );
@@ -375,7 +374,7 @@ BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn )
     struct metadc *mf;
     INT16 index;
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
-    index = MFDRV_CreateRegion( &mf->dev, hrgn );
+    index = metadc_create_region( mf, hrgn );
     if(index == -1)
         return FALSE;
     return metadc_param1( hdc, META_INVERTREGION, index );
@@ -392,10 +391,10 @@ BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
 
-    iRgn = MFDRV_CreateRegion( &mf->dev, hrgn );
+    iRgn = metadc_create_region( mf, hrgn );
     if(iRgn == -1)
         return FALSE;
-    iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
+    iBrush = metadc_create_brush( mf, hbrush );
     if(!iBrush)
         return FALSE;
     return metadc_param2( hdc, META_FILLREGION, iRgn, iBrush );
@@ -418,10 +417,10 @@ BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
     INT16 iRgn, iBrush;
 
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
-    iRgn = MFDRV_CreateRegion( &mf->dev, hrgn );
+    iRgn = metadc_create_region( mf, hrgn );
     if(iRgn == -1)
         return FALSE;
-    iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
+    iBrush = metadc_create_brush( mf, hbrush );
     if(!iBrush)
         return FALSE;
     return metadc_param4( hdc, META_FRAMEREGION, iRgn, iBrush, x, y );
@@ -440,11 +439,11 @@ BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
     if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
     if (mode != RGN_COPY) return ERROR;
     if (!hrgn) return NULLREGION;
-    iRgn = MFDRV_CreateRegion( &metadc->dev, hrgn );
+    iRgn = metadc_create_region( metadc, hrgn );
     if(iRgn == -1) return ERROR;
     ret = metadc_param1( hdc, META_SELECTOBJECT, iRgn ) ? NULLREGION : ERROR;
     metadc_param1( hdc, META_DELETEOBJECT, iRgn );
-    MFDRV_RemoveHandle( &metadc->dev, iRgn );
+    metadc_remove_handle( metadc, iRgn );
     return ret;
 }
 
