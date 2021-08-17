@@ -26,6 +26,14 @@
 #include <sys/types.h>
 #endif
 
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -58,6 +66,14 @@
 #include <ifaddrs.h>
 #endif
 
+#ifdef HAVE_LIBPROCSTAT_H
+#include <libprocstat.h>
+#endif
+
+#ifdef HAVE_LIBPROC_H
+#include <libproc.h>
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -72,6 +88,7 @@
 #include "wine/heap.h"
 #include "wine/nsi.h"
 #include "wine/debug.h"
+#include "wine/server.h"
 
 #include "nsiproxy_private.h"
 
@@ -326,6 +343,184 @@ static DWORD find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_
     return -1;
 }
 
+struct pid_map
+{
+    unsigned int pid;
+    unsigned int unix_pid;
+};
+
+static struct pid_map *get_pid_map( unsigned int *num_entries )
+{
+    struct pid_map *map;
+    unsigned int i = 0, buffer_len = 4096, process_count, pos = 0;
+    NTSTATUS ret;
+    char *buffer = NULL, *new_buffer;
+
+    if (!(buffer = heap_alloc( buffer_len ))) return NULL;
+
+    for (;;)
+    {
+        SERVER_START_REQ( list_processes )
+        {
+            wine_server_set_reply( req, buffer, buffer_len );
+            ret = wine_server_call( req );
+            buffer_len = reply->info_size;
+            process_count = reply->process_count;
+        }
+        SERVER_END_REQ;
+
+        if (ret != STATUS_INFO_LENGTH_MISMATCH) break;
+
+        if (!(new_buffer = heap_realloc( buffer, buffer_len )))
+        {
+            heap_free( buffer );
+            return NULL;
+        }
+        buffer = new_buffer;
+    }
+
+    if (!(map = heap_alloc( process_count * sizeof(*map) )))
+    {
+        heap_free( buffer );
+        return NULL;
+    }
+
+    for (i = 0; i < process_count; ++i)
+    {
+        const struct process_info *process;
+
+        pos = (pos + 7) & ~7;
+        process = (const struct process_info *)(buffer + pos);
+
+        map[i].pid = process->pid;
+        map[i].unix_pid = process->unix_pid;
+
+        pos += sizeof(struct process_info) + process->name_len;
+        pos = (pos + 7) & ~7;
+        pos += process->thread_count * sizeof(struct thread_info);
+    }
+
+    heap_free( buffer );
+    *num_entries = process_count;
+    return map;
+}
+
+static unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UINT_PTR inode )
+{
+#ifdef __linux__
+    unsigned int i, len_socket;
+    char socket[32];
+
+    sprintf( socket, "socket:[%lu]", inode );
+    len_socket = strlen( socket );
+    for (i = 0; i < num_entries; i++)
+    {
+        char dir[32];
+        struct dirent *dirent;
+        DIR *dirfd;
+
+        sprintf( dir, "/proc/%u/fd", map[i].unix_pid );
+        if ((dirfd = opendir( dir )))
+        {
+            while ((dirent = readdir( dirfd )))
+            {
+                char link[sizeof(dirent->d_name) + 32], name[32];
+                int len;
+
+                sprintf( link, "/proc/%u/fd/%s", map[i].unix_pid, dirent->d_name );
+                if ((len = readlink( link, name, sizeof(name) - 1 )) > 0) name[len] = 0;
+                if (len == len_socket && !strcmp( socket, name ))
+                {
+                    closedir( dirfd );
+                    return map[i].pid;
+                }
+            }
+            closedir( dirfd );
+        }
+    }
+    return 0;
+#elif defined(HAVE_LIBPROCSTAT)
+    struct procstat *pstat;
+    struct kinfo_proc *proc;
+    struct filestat_list *fds;
+    struct filestat *fd;
+    struct sockstat sock;
+    unsigned int i, proc_count;
+
+    pstat = procstat_open_sysctl();
+    if (!pstat) return 0;
+
+    for (i = 0; i < num_entries; i++)
+    {
+        proc = procstat_getprocs( pstat, KERN_PROC_PID, map[i].unix_pid, &proc_count );
+        if (!proc || proc_count < 1) continue;
+
+        fds = procstat_getfiles( pstat, proc, 0 );
+        if (!fds)
+        {
+            procstat_freeprocs( pstat, proc );
+            continue;
+        }
+
+        STAILQ_FOREACH( fd, fds, next )
+        {
+            char errbuf[_POSIX2_LINE_MAX];
+
+            if (fd->fs_type != PS_FST_TYPE_SOCKET) continue;
+
+            procstat_get_socket_info( pstat, fd, &sock, errbuf );
+
+            if (sock.so_pcb == inode)
+            {
+                procstat_freefiles( pstat, fds );
+                procstat_freeprocs( pstat, proc );
+                procstat_close( pstat );
+                return map[i].pid;
+            }
+        }
+
+        procstat_freefiles( pstat, fds );
+        procstat_freeprocs( pstat, proc );
+    }
+
+    procstat_close( pstat );
+    return 0;
+#elif defined(HAVE_PROC_PIDINFO)
+    struct proc_fdinfo *fds;
+    struct socket_fdinfo sock;
+    unsigned int i, j, n;
+
+    for (i = 0; i < num_entries; i++)
+    {
+        int fd_len = proc_pidinfo( map[i].unix_pid, PROC_PIDLISTFDS, 0, NULL, 0 );
+        if (fd_len <= 0) continue;
+
+        fds = heap_alloc( fd_len );
+        if (!fds) continue;
+
+        proc_pidinfo( map[i].unix_pid, PROC_PIDLISTFDS, 0, fds, fd_len );
+        n = fd_len / sizeof(struct proc_fdinfo);
+        for (j = 0; j < n; j++)
+        {
+            if (fds[j].proc_fdtype != PROX_FDTYPE_SOCKET) continue;
+
+            proc_pidfdinfo( map[i].unix_pid, fds[j].proc_fd, PROC_PIDFDSOCKETINFO, &sock, sizeof(sock) );
+            if (sock.psi.soi_pcb == inode)
+            {
+                heap_free( fds );
+                return map[i].pid;
+            }
+        }
+
+        heap_free( fds );
+    }
+    return 0;
+#else
+    FIXME( "not implemented\n" );
+    return 0;
+#endif
+}
+
 static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *key_data, DWORD key_size,
                                          void *rw, DWORD rw_size,
                                          struct nsi_tcp_conn_dynamic *dynamic_data, DWORD dynamic_size,
@@ -338,7 +533,8 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
     struct nsi_tcp_conn_dynamic dyn;
     struct nsi_tcp_conn_static stat;
     struct ipv6_addr_scope *addr_scopes = NULL;
-    unsigned int addr_scopes_size = 0;
+    unsigned int addr_scopes_size = 0, pid_map_size = 0;
+    struct pid_map *pid_map = NULL;
 
 #ifdef __linux__
     {
@@ -351,6 +547,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
         memset( &key, 0, sizeof(key) );
         memset( &dyn, 0, sizeof(dyn) );
         memset( &stat, 0, sizeof(stat) );
+        pid_map = get_pid_map( &pid_map_size );
 
         /* skip header line */
         ptr = fgets( buf, sizeof(buf), fp );
@@ -368,7 +565,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
             key.local.Ipv4.sin_port = htons( key.local.Ipv4.sin_port );
             key.remote.Ipv4.sin_port = htons( key.remote.Ipv4.sin_port );
 
-            stat.pid = 0; /* FIXME */
+            stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
             stat.create_time = 0; /* FIXME */
             stat.mod_info = 0; /* FIXME */
 
@@ -412,7 +609,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
                 key.remote.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.remote.Ipv6.sin6_addr, addr_scopes,
                                                                       addr_scopes_size );
 
-                stat.pid = 0; /* FIXME */
+                stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
                 stat.create_time = 0; /* FIXME */
                 stat.mod_info = 0; /* FIXME */
 
@@ -459,6 +656,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
         if (len <= sizeof(struct xinpgen)) goto err;
 
         addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
+        pid_map = get_pid_map( &pid_map_size );
 
         orig_xig = (struct xinpgen *)buf;
         xig = orig_xig;
@@ -517,7 +715,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
                                                                       addr_scopes_size );
             }
 
-            stat.pid = 0; /* FIXME */
+            stat.pid = find_owning_pid( pid_map, pid_map_size, (UINT_PTR)sock->so_pcb );
             stat.create_time = 0; /* FIXME */
             stat.mod_info = 0; /* FIXME */
 
@@ -540,6 +738,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
     if (!want_data || num <= *count) *count = num;
     else status = STATUS_MORE_ENTRIES;
 
+    heap_free( pid_map );
     heap_free( addr_scopes );
     return status;
 }

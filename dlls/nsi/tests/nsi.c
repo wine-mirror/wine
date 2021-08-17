@@ -906,7 +906,6 @@ static void test_tcp_tables( int family, int table_type )
             ok( unstable( row->dwRemotePort == keys[i].remote.Ipv4.sin_port ), "%d vs %d\n",
                 row->dwRemotePort, keys[i].remote.Ipv4.sin_port );
             ok( unstable( row->dwState == dyn->state ), "%x vs %x\n", row->dwState, dyn->state );
-todo_wine_if( !unstable(0) && row->dwOwningPid )
             ok( unstable( row->dwOwningPid == stat[i].pid ), "%x vs %x\n", row->dwOwningPid, stat[i].pid );
             ok( unstable( row->liCreateTimestamp.QuadPart == stat[i].create_time ), "mismatch\n" );
             ok( unstable( row->OwningModuleInfo[0] == stat[i].mod_info ), "mismatch\n");
@@ -927,7 +926,6 @@ todo_wine_if( !unstable(0) && row->dwOwningPid )
             ok( unstable( row6->dwRemotePort == keys[i].remote.Ipv6.sin6_port ), "%d vs %d\n",
                 row6->dwRemotePort, keys[i].remote.Ipv6.sin6_port );
             ok( unstable( row6->dwState == dyn->state ), "%x vs %x\n", row6->dwState, dyn->state );
-todo_wine_if( !unstable(0) && row6->dwOwningPid )
             ok( unstable( row6->dwOwningPid == stat[i].pid ), "%x vs %x\n", row6->dwOwningPid, stat[i].pid );
             ok( unstable( row6->liCreateTimestamp.QuadPart == stat[i].create_time ), "mismatch\n" );
             ok( unstable( row6->OwningModuleInfo[0] == stat[i].mod_info ), "mismatch\n");
