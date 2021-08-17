@@ -378,7 +378,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
      * in SDK Knowledgebase Q99334.
      */
 
-    if (!MFDRV_MetaParam0(dc->physDev, META_EOF))
+    if (!metadc_param0( hdc, META_EOF ))
     {
         free_dc_ptr( dc );
 	return 0;
@@ -581,12 +581,17 @@ struct metadc *get_metadc_ptr( HDC hdc )
     return metafile;
 }
 
+BOOL metadc_write_record( struct metadc *metadc, METARECORD *mr, unsigned int rlen )
+{
+    return MFDRV_WriteRecord( &metadc->dev, mr, rlen );
+}
+
 BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
 {
-    struct metadc *dev;
+    struct metadc *metadc;
 
-    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
-    return MFDRV_WriteRecord( &dev->dev, mr, rlen );
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    return metadc_write_record( metadc, mr, rlen );
 }
 
 BOOL metadc_param1( HDC hdc, short func, short param )

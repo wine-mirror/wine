@@ -112,7 +112,7 @@ void METADC_DeleteObject( HDC hdc, HGDIOBJ obj )
     mr.rdFunction = META_DELETEOBJECT;
     mr.rdParm[0] = index;
 
-    MFDRV_WriteRecord( &metadc->dev, &mr, mr.rdSize*2 );
+    metadc_write_record( metadc, &mr, mr.rdSize * 2 );
 
     metadc->handles[index] = 0;
     metadc->cur_handles--;
@@ -122,15 +122,14 @@ void METADC_DeleteObject( HDC hdc, HGDIOBJ obj )
 /***********************************************************************
  *           MFDRV_SelectObject
  */
-static BOOL MFDRV_SelectObject( PHYSDEV dev, INT16 index)
+static BOOL metadc_select_object( HDC hdc, INT16 index)
 {
     METARECORD mr;
 
     mr.rdSize = sizeof mr / 2;
     mr.rdFunction = META_SELECTOBJECT;
     mr.rdParm[0] = index;
-
-    return MFDRV_WriteRecord( dev, &mr, mr.rdSize*2 );
+    return metadc_record( hdc, &mr, mr.rdSize*2 );
 }
 
 
@@ -209,7 +208,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	    FIXME("Unknown brush style %x\n", logbrush.lbStyle);
 	    return 0;
     }
-    r = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+    r = metadc_record( dev->hdc, mr, mr->rdSize * 2 );
     HeapFree(GetProcessHeap(), 0, mr);
     if( !r )
         return -1;
@@ -235,7 +234,7 @@ static HBRUSH METADC_SelectBrush( HDC hdc, HBRUSH hbrush )
             return 0;
         GDI_hdc_using_object( hbrush, hdc, METADC_DeleteObject );
     }
-    if (!MFDRV_SelectObject( &metadc->dev, index )) return 0;
+    if (!metadc_select_object( hdc, index )) return 0;
     ret = metadc->brush;
     metadc->brush = hbrush;
     return ret;
@@ -273,7 +272,7 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
     /* Zero pad the facename buffer, so that we don't write uninitialized data to disk */
     memset(font16->lfFaceName + written, 0, LF_FACESIZE - written);
 
-    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * 2)))
+    if (!metadc_record( dev->hdc, mr, mr->rdSize * 2))
         return 0;
     return MFDRV_AddHandle( dev, hFont );
 }
@@ -299,7 +298,7 @@ static HFONT METADC_SelectFont( HDC hdc, HFONT hfont )
             return 0;
         GDI_hdc_using_object( hfont, hdc, METADC_DeleteObject );
     }
-    if (!MFDRV_SelectObject( &metadc->dev, index )) return 0;
+    if (!metadc_select_object( hdc, index )) return 0;
     ret = metadc->font;
     metadc->font = hfont;
     return ret;
@@ -316,7 +315,7 @@ static UINT16 MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
     mr->rdSize = (sizeof(METARECORD) + sizeof(*logpen) - 2) / 2;
     mr->rdFunction = META_CREATEPENINDIRECT;
     memcpy(&(mr->rdParm), logpen, sizeof(*logpen));
-    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * 2)))
+    if (!metadc_record( dev->hdc, mr, mr->rdSize * 2 ))
         return 0;
     return MFDRV_AddHandle( dev, hPen );
 }
@@ -370,7 +369,8 @@ static HPEN METADC_SelectPen( HDC hdc, HPEN hpen )
         GDI_hdc_using_object( hpen, hdc, METADC_DeleteObject );
     }
 
-    if (!MFDRV_SelectObject( &metadc->dev, index )) return 0;
+
+    if (!metadc_select_object( hdc, index )) return 0;
     ret = metadc->pen;
     metadc->pen = hpen;
     return ret;
@@ -390,7 +390,7 @@ static BOOL MFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPalette, LOGPALETTE* logP
     mr->rdSize = (sizeof(METARECORD) + sizeofPalette - sizeof(WORD)) / sizeof(WORD);
     mr->rdFunction = META_CREATEPALETTE;
     memcpy(&(mr->rdParm), logPalette, sizeofPalette);
-    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * sizeof(WORD))))
+    if (!metadc_record( dev->hdc, mr, mr->rdSize * sizeof(WORD) ))
     {
         HeapFree(GetProcessHeap(), 0, mr);
         return FALSE;
@@ -403,7 +403,7 @@ static BOOL MFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPalette, LOGPALETTE* logP
     else
     {
         *(mr->rdParm) = index;
-        ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * sizeof(WORD));
+        ret = metadc_record( dev->hdc, mr, mr->rdSize * sizeof(WORD) );
     }
     HeapFree(GetProcessHeap(), 0, mr);
     return ret;

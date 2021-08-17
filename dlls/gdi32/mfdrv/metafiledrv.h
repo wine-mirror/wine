@@ -46,18 +46,6 @@ struct metadc
 #define HANDLE_LIST_INC 20
 
 
-extern BOOL MFDRV_MetaParam0(PHYSDEV dev, short func) DECLSPEC_HIDDEN;
-extern BOOL MFDRV_MetaParam1(PHYSDEV dev, short func, short param1) DECLSPEC_HIDDEN;
-extern BOOL MFDRV_MetaParam2(PHYSDEV dev, short func, short param1, short param2) DECLSPEC_HIDDEN;
-extern BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2,
-                             short param3, short param4) DECLSPEC_HIDDEN;
-extern BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2,
-                             short param3, short param4, short param5,
-                             short param6) DECLSPEC_HIDDEN;
-extern BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
-                             short param3, short param4, short param5,
-                             short param6, short param7, short param8) DECLSPEC_HIDDEN;
-extern BOOL MFDRV_WriteRecord(PHYSDEV dev, METARECORD *mr, DWORD rlen) DECLSPEC_HIDDEN;
 extern UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index ) DECLSPEC_HIDDEN;
 extern INT16 MFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_HIDDEN;
@@ -76,6 +64,7 @@ extern BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
                            short param3, short param4, short param5, short param6,
                            short param7, short param8 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen ) DECLSPEC_HIDDEN;
+extern BOOL metadc_write_record( struct metadc *metadc, METARECORD *mr, DWORD rlen ) DECLSPEC_HIDDEN;
 
 /* Metafile driver functions */
 

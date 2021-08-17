@@ -340,7 +340,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     mr->rdParm[10] = rgndata->rdh.rcBound.bottom;
     mr->rdFunction = META_CREATEREGION;
     mr->rdSize = Param - (WORD *)mr;
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
+    ret = metadc_record( dev->hdc, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     HeapFree( GetProcessHeap(), 0, rgndata );
     if(!ret)
@@ -363,7 +363,7 @@ BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
     index = MFDRV_CreateRegion( &mf->dev, hrgn );
     if(index == -1)
         return FALSE;
-    return MFDRV_MetaParam1( &mf->dev, META_PAINTREGION, index );
+    return metadc_param1( hdc, META_PAINTREGION, index );
 }
 
 
@@ -378,7 +378,7 @@ BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn )
     index = MFDRV_CreateRegion( &mf->dev, hrgn );
     if(index == -1)
         return FALSE;
-    return MFDRV_MetaParam1( &mf->dev, META_INVERTREGION, index );
+    return metadc_param1( hdc, META_INVERTREGION, index );
 }
 
 
@@ -398,7 +398,7 @@ BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
     if(!iBrush)
         return FALSE;
-    return MFDRV_MetaParam2( &mf->dev, META_FILLREGION, iRgn, iBrush );
+    return metadc_param2( hdc, META_FILLREGION, iRgn, iBrush );
 }
 
 /**********************************************************************
@@ -424,7 +424,7 @@ BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
     iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
     if(!iBrush)
         return FALSE;
-    return MFDRV_MetaParam4( &mf->dev, META_FRAMEREGION, iRgn, iBrush, x, y );
+    return metadc_param4( hdc, META_FRAMEREGION, iRgn, iBrush, x, y );
 }
 
 
@@ -442,8 +442,8 @@ BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
     if (!hrgn) return NULLREGION;
     iRgn = MFDRV_CreateRegion( &metadc->dev, hrgn );
     if(iRgn == -1) return ERROR;
-    ret = MFDRV_MetaParam1( &metadc->dev, META_SELECTOBJECT, iRgn ) ? NULLREGION : ERROR;
-    MFDRV_MetaParam1( &metadc->dev, META_DELETEOBJECT, iRgn );
+    ret = metadc_param1( hdc, META_SELECTOBJECT, iRgn ) ? NULLREGION : ERROR;
+    metadc_param1( hdc, META_DELETEOBJECT, iRgn );
     MFDRV_RemoveHandle( &metadc->dev, iRgn );
     return ret;
 }
