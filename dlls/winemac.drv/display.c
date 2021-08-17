@@ -1630,6 +1630,7 @@ static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *m
     SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
     WCHAR nameW[MAX_PATH];
     WCHAR bufferW[MAX_PATH];
+    DWORD length;
     HKEY hkey;
     RECT rect;
     BOOL ret = FALSE;
@@ -1677,9 +1678,9 @@ static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *m
                                    (const BYTE *)&rect, sizeof(rect), 0))
         goto done;
     /* Adapter name */
-    sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
+    length = sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, DEVPROP_TYPE_STRING,
-                                   (const BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR), 0))
+                                   (const BYTE *)bufferW, (length + 1) * sizeof(WCHAR), 0))
         goto done;
 
     ret = TRUE;
