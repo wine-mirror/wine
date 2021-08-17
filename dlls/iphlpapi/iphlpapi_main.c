@@ -2870,81 +2870,316 @@ DWORD WINAPI GetTcpStatisticsEx( MIB_TCPSTATS *stats, DWORD family )
     return err;
 }
 
+static DWORD tcp_table_id( ULONG table_class )
+{
+    switch (table_class)
+    {
+    case TCP_TABLE_BASIC_LISTENER:
+    case TCP_TABLE_OWNER_PID_LISTENER:
+    case TCP_TABLE_OWNER_MODULE_LISTENER:
+        return NSI_TCP_LISTEN_TABLE;
+
+    case TCP_TABLE_BASIC_CONNECTIONS:
+    case TCP_TABLE_OWNER_PID_CONNECTIONS:
+    case TCP_TABLE_OWNER_MODULE_CONNECTIONS:
+        return NSI_TCP_ESTAB_TABLE;
+
+    case TCP_TABLE_BASIC_ALL:
+    case TCP_TABLE_OWNER_PID_ALL:
+    case TCP_TABLE_OWNER_MODULE_ALL:
+        return NSI_TCP_ALL_TABLE;
+
+    default:
+        ERR( "unhandled class %u\n", table_class );
+        return ~0u;
+    }
+}
+
+static DWORD tcp_table_size( ULONG family, ULONG table_class, DWORD row_count, DWORD *row_size )
+{
+    switch (table_class)
+    {
+    case TCP_TABLE_BASIC_LISTENER:
+    case TCP_TABLE_BASIC_CONNECTIONS:
+    case TCP_TABLE_BASIC_ALL:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW) : sizeof(MIB_TCP6ROW);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE, table[row_count]) :
+            FIELD_OFFSET(MIB_TCP6TABLE, table[row_count]);
+
+    case TCP_TABLE_OWNER_PID_LISTENER:
+    case TCP_TABLE_OWNER_PID_CONNECTIONS:
+    case TCP_TABLE_OWNER_PID_ALL:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW_OWNER_PID) : sizeof(MIB_TCP6ROW_OWNER_PID);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_PID, table[row_count]) :
+            FIELD_OFFSET(MIB_TCP6TABLE_OWNER_PID, table[row_count]);
+
+    case TCP_TABLE_OWNER_MODULE_LISTENER:
+    case TCP_TABLE_OWNER_MODULE_CONNECTIONS:
+    case TCP_TABLE_OWNER_MODULE_ALL:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW_OWNER_MODULE) : sizeof(MIB_TCP6ROW_OWNER_MODULE);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_MODULE, table[row_count]) :
+            FIELD_OFFSET(MIB_TCP6TABLE_OWNER_MODULE, table[row_count]);
+
+    default:
+        ERR( "unhandled class %u\n", table_class );
+        return 0;
+    }
+}
+
+static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_class,
+                          struct nsi_tcp_conn_key *key, struct nsi_tcp_conn_dynamic *dyn,
+                          struct nsi_tcp_conn_static *stat )
+{
+    if (family == WS_AF_INET)
+    {
+        switch (table_class)
+        {
+        case TCP_TABLE_BASIC_LISTENER:
+        case TCP_TABLE_BASIC_CONNECTIONS:
+        case TCP_TABLE_BASIC_ALL:
+        {
+            MIB_TCPROW *row = ((MIB_TCPTABLE *)table)->table + num;
+            row->u.dwState = dyn->state;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemotePort = key->remote.Ipv4.sin_port;
+            return;
+        }
+        case TCP_TABLE_OWNER_PID_LISTENER:
+        case TCP_TABLE_OWNER_PID_CONNECTIONS:
+        case TCP_TABLE_OWNER_PID_ALL:
+        {
+            MIB_TCPROW_OWNER_PID *row = ((MIB_TCPTABLE_OWNER_PID *)table)->table + num;
+            row->dwState = dyn->state;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemotePort = key->remote.Ipv4.sin_port;
+            row->dwOwningPid = stat->pid;
+            return;
+        }
+        case TCP_TABLE_OWNER_MODULE_LISTENER:
+        case TCP_TABLE_OWNER_MODULE_CONNECTIONS:
+        case TCP_TABLE_OWNER_MODULE_ALL:
+        {
+            MIB_TCPROW_OWNER_MODULE *row = ((MIB_TCPTABLE_OWNER_MODULE *)table)->table + num;
+            row->dwState = dyn->state;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemotePort = key->remote.Ipv4.sin_port;
+            row->dwOwningPid = stat->pid;
+            row->liCreateTimestamp.QuadPart = stat->create_time;
+            row->OwningModuleInfo[0] = stat->mod_info;
+            memset( row->OwningModuleInfo + 1, 0, sizeof(row->OwningModuleInfo) - sizeof(row->OwningModuleInfo[0]) );
+            return;
+        }
+        default:
+            ERR( "Unknown class %d\n", table_class );
+            return;
+        }
+    }
+    else
+    {
+        switch (table_class)
+        {
+        case TCP_TABLE_BASIC_LISTENER:
+        case TCP_TABLE_BASIC_CONNECTIONS:
+        case TCP_TABLE_BASIC_ALL:
+        {
+            MIB_TCP6ROW *row = ((MIB_TCP6TABLE *)table)->table + num;
+            row->State = dyn->state;
+            memcpy( &row->LocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->LocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            memcpy( &row->RemoteAddr, &key->remote.Ipv6.sin6_addr, sizeof(row->RemoteAddr) );
+            row->dwRemoteScopeId = key->remote.Ipv6.sin6_scope_id;
+            row->dwRemotePort = key->remote.Ipv6.sin6_port;
+            return;
+        }
+        case TCP_TABLE_OWNER_PID_LISTENER:
+        case TCP_TABLE_OWNER_PID_CONNECTIONS:
+        case TCP_TABLE_OWNER_PID_ALL:
+        {
+            MIB_TCP6ROW_OWNER_PID *row = ((MIB_TCP6TABLE_OWNER_PID *)table)->table + num;
+            memcpy( &row->ucLocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->ucLocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            memcpy( &row->ucRemoteAddr, &key->remote.Ipv6.sin6_addr, sizeof(row->ucRemoteAddr) );
+            row->dwRemoteScopeId = key->remote.Ipv6.sin6_scope_id;
+            row->dwRemotePort = key->remote.Ipv6.sin6_port;
+            row->dwState = dyn->state;
+            row->dwOwningPid = stat->pid;
+            return;
+        }
+        case TCP_TABLE_OWNER_MODULE_LISTENER:
+        case TCP_TABLE_OWNER_MODULE_CONNECTIONS:
+        case TCP_TABLE_OWNER_MODULE_ALL:
+        {
+            MIB_TCP6ROW_OWNER_MODULE *row = ((MIB_TCP6TABLE_OWNER_MODULE *)table)->table + num;
+            memcpy( &row->ucLocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->ucLocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            memcpy( &row->ucRemoteAddr, &key->remote.Ipv6.sin6_addr, sizeof(row->ucRemoteAddr) );
+            row->dwRemoteScopeId = key->remote.Ipv6.sin6_scope_id;
+            row->dwRemotePort = key->remote.Ipv6.sin6_port;
+            row->dwState = dyn->state;
+            row->dwOwningPid = stat->pid;
+            row->liCreateTimestamp.QuadPart = stat->create_time;
+            row->OwningModuleInfo[0] = stat->mod_info;
+            memset( row->OwningModuleInfo + 1, 0, sizeof(row->OwningModuleInfo) - sizeof(row->OwningModuleInfo[0]) );
+            return;
+        }
+        default:
+            ERR( "Unknown class %d\n", table_class );
+            return;
+        }
+    }
+    ERR( "Unknown family %d\n", family );
+}
+
+static int tcp_row_cmp( const void *a, const void *b )
+{
+    const MIB_TCPROW *rowA = a;
+    const MIB_TCPROW *rowB = b;
+    int ret;
+
+    if ((ret = RtlUlongByteSwap( rowA->dwLocalAddr ) - RtlUlongByteSwap( rowB->dwLocalAddr )) != 0) return ret;
+    if ((ret = RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort )) != 0) return ret;
+    if ((ret = RtlUlongByteSwap( rowA->dwRemoteAddr ) - RtlUlongByteSwap( rowB->dwRemoteAddr )) != 0) return ret;
+    return RtlUshortByteSwap( rowA->dwRemotePort ) - RtlUshortByteSwap( rowB->dwRemotePort );
+}
+
+static int tcp6_row_basic_cmp( const void *a, const void *b )
+{
+    const MIB_TCP6ROW *rowA = a;
+    const MIB_TCP6ROW *rowB = b;
+    int ret;
+
+    if ((ret = memcmp( &rowA->LocalAddr, &rowB->LocalAddr, sizeof(rowA->LocalAddr) )) != 0) return ret;
+    if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
+    if ((ret = RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort )) != 0) return ret;
+    if ((ret = memcmp( &rowA->RemoteAddr, &rowB->RemoteAddr, sizeof(rowA->RemoteAddr) )) != 0) return ret;
+    if ((ret = rowA->dwRemoteScopeId - rowB->dwRemoteScopeId) != 0) return ret;
+    return RtlUshortByteSwap( rowA->dwRemotePort ) - RtlUshortByteSwap( rowB->dwRemotePort );
+}
+
+static int tcp6_row_owner_cmp( const void *a, const void *b )
+{
+    const MIB_TCP6ROW_OWNER_PID *rowA = a;
+    const MIB_TCP6ROW_OWNER_PID *rowB = b;
+    int ret;
+
+    if ((ret = memcmp( &rowA->ucLocalAddr, &rowB->ucLocalAddr, sizeof(rowA->ucLocalAddr) )) != 0) return ret;
+    if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
+    if ((ret = RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort )) != 0) return ret;
+    if ((ret = memcmp( &rowA->ucRemoteAddr, &rowB->ucRemoteAddr, sizeof(rowA->ucRemoteAddr) )) != 0) return ret;
+    if ((ret = rowA->dwRemoteScopeId - rowB->dwRemoteScopeId) != 0) return ret;
+    return RtlUshortByteSwap( rowA->dwRemotePort ) - RtlUshortByteSwap( rowB->dwRemotePort );
+}
+
+DWORD get_extended_tcp_table( void *table, DWORD *size, BOOL sort, ULONG family, ULONG table_class )
+{
+    DWORD err, count, needed, i, num = 0, row_size = 0;
+    struct nsi_tcp_conn_key *key;
+    struct nsi_tcp_conn_dynamic *dyn;
+    struct nsi_tcp_conn_static *stat;
+
+    if (!size) return ERROR_INVALID_PARAMETER;
+
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_TCP_MODULEID, tcp_table_id( table_class ), (void **)&key, sizeof(*key),
+                                  NULL, 0, (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
+
+    for (i = 0; i < count; i++)
+        if (key[i].local.si_family == family)
+            num++;
+
+    needed = tcp_table_size( family, table_class, num, &row_size );
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
+    }
+    else
+    {
+        *size = needed;
+        *(DWORD *)table = num;
+        num = 0;
+        for (i = 0; i < count; i++)
+        {
+            if (key[i].local.si_family != family) continue;
+            tcp_row_fill( table, num++, family, table_class, key + i, dyn + i, stat + i );
+        }
+    }
+
+    if (!err && sort)
+    {
+        int (*fn)(const void *, const void *);
+        DWORD offset;
+
+        if (family == WS_AF_INET) fn = tcp_row_cmp;
+        else if (row_size == sizeof(MIB_TCP6ROW)) fn = tcp6_row_basic_cmp;
+        else fn = tcp6_row_owner_cmp;
+
+        offset = tcp_table_size( family, table_class, 0, &row_size );
+        qsort( (BYTE *)table + offset, num, row_size, fn );
+    }
+
+    NsiFreeTable( key, NULL, dyn, stat );
+    return err;
+}
+
+/******************************************************************
+ *    GetExtendedTcpTable (IPHLPAPI.@)
+ */
+DWORD WINAPI GetExtendedTcpTable( void *table, DWORD *size, BOOL sort, ULONG family,
+                                  TCP_TABLE_CLASS table_class, ULONG reserved )
+{
+    TRACE( "table %p, size %p, sort %d, family %u, class %u, reserved %u\n",
+           table, size, sort, family, table_class, reserved );
+
+    if (!ip_module_id( family )) return ERROR_INVALID_PARAMETER;
+    return get_extended_tcp_table( table, size, sort, family, table_class );
+}
+
 /******************************************************************
  *    GetTcpTable (IPHLPAPI.@)
  *
  * Get the table of active TCP connections.
  *
  * PARAMS
- *  pTcpTable [Out]    buffer for TCP connections table
- *  pdwSize   [In/Out] length of output buffer
- *  bOrder    [In]     whether to order the table
+ *  table  [Out]    buffer for TCP connections table
+ *  size   [In/Out] length of output buffer
+ *  sort   [In]     whether to order the table
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  *
  * NOTES
- *  If pdwSize is less than required, the function will return 
- *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to 
+ *  If size is less than required, the function will return
+ *  ERROR_INSUFFICIENT_BUFFER, and *size will be set to
  *  the required byte size.
- *  If bOrder is true, the returned table will be sorted, first by
+ *  If sort is true, the returned table will be sorted, first by
  *  local address and port number, then by remote address and port
  *  number.
  */
-DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
+DWORD WINAPI GetTcpTable( MIB_TCPTABLE *table, DWORD *size, BOOL sort )
 {
-    TRACE("pTcpTable %p, pdwSize %p, bOrder %d\n", pTcpTable, pdwSize, bOrder);
-    return GetExtendedTcpTable(pTcpTable, pdwSize, bOrder, WS_AF_INET, TCP_TABLE_BASIC_ALL, 0);
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
+    return get_extended_tcp_table( table, size, sort, WS_AF_INET, TCP_TABLE_BASIC_ALL );
 }
 
 /******************************************************************
- *    GetExtendedTcpTable (IPHLPAPI.@)
+ *    GetTcp6Table (IPHLPAPI.@)
  */
-DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
-                                 ULONG ulAf, TCP_TABLE_CLASS TableClass, ULONG Reserved)
+ULONG WINAPI GetTcp6Table( MIB_TCP6TABLE *table, ULONG *size, BOOL sort )
 {
-    DWORD ret, size;
-    void *table;
-
-    TRACE("pTcpTable %p, pdwSize %p, bOrder %d, ulAf %u, TableClass %u, Reserved %u\n",
-           pTcpTable, pdwSize, bOrder, ulAf, TableClass, Reserved);
-
-    if (!pdwSize) return ERROR_INVALID_PARAMETER;
-
-    if (TableClass >= TCP_TABLE_OWNER_MODULE_LISTENER)
-        FIXME("module classes not fully supported\n");
-
-    switch (ulAf)
-    {
-        case WS_AF_INET:
-            ret = build_tcp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
-            break;
-
-        case WS_AF_INET6:
-            ret = build_tcp6_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
-            break;
-
-        default:
-            FIXME("ulAf = %u not supported\n", ulAf);
-            ret = ERROR_NOT_SUPPORTED;
-    }
-
-    if (ret)
-        return ret;
-
-    if (!pTcpTable || *pdwSize < size)
-    {
-        *pdwSize = size;
-        ret = ERROR_INSUFFICIENT_BUFFER;
-    }
-    else
-    {
-        *pdwSize = size;
-        memcpy(pTcpTable, table, size);
-    }
-    HeapFree(GetProcessHeap(), 0, table);
-    return ret;
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
+    return get_extended_tcp_table( table, size, sort, WS_AF_INET6, TCP_TABLE_BASIC_ALL );
 }
 
 /******************************************************************
@@ -3584,15 +3819,6 @@ ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
 {
     FIXME("pTcpTable2 %p, pdwSize %p, bOrder %d: stub\n", table, size, order);
     return ERROR_NOT_SUPPORTED;
-}
-
-/******************************************************************
- *    GetTcp6Table (IPHLPAPI.@)
- */
-ULONG WINAPI GetTcp6Table(PMIB_TCP6TABLE table, PULONG size, BOOL order)
-{
-    TRACE("(table %p, size %p, order %d)\n", table, size, order);
-    return GetExtendedTcpTable(table, size, order, WS_AF_INET6, TCP_TABLE_BASIC_ALL, 0);
 }
 
 /******************************************************************
