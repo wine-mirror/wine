@@ -2842,6 +2842,7 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
 
         default:
             FIXME("opt_name:%x\n", optname);
+            SetLastError(WSAENOPROTOOPT);
             return SOCKET_ERROR;
         }
         break; /* case NSPROTO_IPX */
@@ -2854,6 +2855,7 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
 
         default:
             FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);
+            SetLastError(WSAENOPROTOOPT);
             return SOCKET_ERROR;
         }
         break;
@@ -2911,6 +2913,7 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
 
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
+            SetLastError(WSAENOPROTOOPT);
             return SOCKET_ERROR;
         }
         break;
@@ -2960,6 +2963,7 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
 
         default:
             FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
+            SetLastError(WSAENOPROTOOPT);
             return SOCKET_ERROR;
         }
         break;
