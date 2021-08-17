@@ -4355,6 +4355,7 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
     CONSOLE_SCREEN_BUFFER_INFO sb_info;
     CONSOLE_CURSOR_INFO cursor_info;
     DWORD mode;
+    HWND hwnd;
     BOOL ret;
 
     ret = GetConsoleMode(input, &mode);
@@ -4407,6 +4408,9 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
     ok(ret, "GetConsoleCursorInfo failed: %u\n", GetLastError());
     ok(cursor_info.dwSize == 25, "dwSize = %u\n", cursor_info.dwSize);
     ok(cursor_info.bVisible == TRUE, "bVisible = %x\n", cursor_info.bVisible);
+
+    hwnd = GetConsoleWindow();
+    ok(IsWindow(hwnd), "no console window\n");
 
     test_console_title();
     test_WriteConsoleInputW(input);

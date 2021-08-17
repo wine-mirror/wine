@@ -429,7 +429,7 @@ static void fill_mem_dc( struct console *console, const RECT *update )
 /* set a new position for the cursor */
 static void update_window_cursor( struct console *console )
 {
-    if (console->win != GetFocus() || !console->active->cursor_visible) return;
+    if (!console->active->cursor_visible || console->win != GetFocus()) return;
 
     SetCaretPos( (get_bounded_cursor_x( console->active ) - console->active->win.left) * console->active->font.width,
                  (console->active->cursor_y - console->active->win.top)  * console->active->font.height );
@@ -2143,15 +2143,18 @@ static LRESULT window_create( HWND hwnd, const CREATESTRUCTW *create )
     SetWindowLongPtrW( hwnd, 0, (DWORD_PTR)console );
     console->win = hwnd;
 
-    sys_menu = GetSystemMenu( hwnd, FALSE );
-    if (!sys_menu) return 0;
-    console->window->popup_menu = CreatePopupMenu();
-    if (!console->window->popup_menu) return 0;
+    if (console->window)
+    {
+        sys_menu = GetSystemMenu( hwnd, FALSE );
+        if (!sys_menu) return 0;
+        console->window->popup_menu = CreatePopupMenu();
+        if (!console->window->popup_menu) return 0;
 
-    fill_menu( sys_menu, TRUE );
-    fill_menu( console->window->popup_menu, FALSE );
+        fill_menu( sys_menu, TRUE );
+        fill_menu( console->window->popup_menu, FALSE );
 
-    console->window->mem_dc = CreateCompatibleDC( 0 );
+        console->window->mem_dc = CreateCompatibleDC( 0 );
+    }
     return 0;
 }
 
@@ -2171,13 +2174,15 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 
     case WM_TIMER:
     case WM_UPDATE_CONFIG:
-        if (console->window->update_state == UPDATE_PENDING)
+        if (console->window && console->window->update_state == UPDATE_PENDING)
             update_window( console );
         break;
 
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
+
+            if (!console->window) break;
 
             BeginPaint( console->win, &ps );
             BitBlt( ps.hdc, 0, 0,
@@ -2193,6 +2198,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         }
 
     case WM_SHOWWINDOW:
+        if (!console->window) break;
         if (wparam)
             update_window( console );
         else
@@ -2204,7 +2210,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
 
     case WM_KEYDOWN:
     case WM_KEYUP:
-        if (console->window->in_selection)
+        if (console->window && console->window->in_selection)
             handle_selection_key( console, msg == WM_KEYDOWN, wparam, lparam );
         else
             record_key_input( console, msg == WM_KEYDOWN, wparam, lparam );
@@ -2216,7 +2222,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_LBUTTONDOWN:
-        if (console->window->quick_edit || console->window->in_selection)
+        if (console->window && (console->window->quick_edit || console->window->in_selection))
         {
             if (console->window->in_selection)
                 update_selection( console, 0 );
@@ -2241,7 +2247,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_MOUSEMOVE:
-        if (console->window->quick_edit || console->window->in_selection)
+        if (console->window && (console->window->quick_edit || console->window->in_selection))
         {
             if (GetCapture() == console->win && console->window->in_selection &&
                 (wparam & MK_LBUTTON))
@@ -2257,7 +2263,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_LBUTTONUP:
-        if (console->window->quick_edit || console->window->in_selection)
+        if (console->window && (console->window->quick_edit || console->window->in_selection))
         {
             if (GetCapture() == console->win && console->window->in_selection)
             {
@@ -2273,7 +2279,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_RBUTTONDOWN:
-        if ((wparam & (MK_CONTROL|MK_SHIFT)) == console->window->menu_mask)
+        if (console->window && (wparam & (MK_CONTROL|MK_SHIFT)) == console->window->menu_mask)
         {
             POINT       pt;
             pt.x = (short)LOWORD(lparam);
@@ -2304,7 +2310,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_SETFOCUS:
-        if (console->active->cursor_visible)
+        if (console->window && console->active->cursor_visible)
         {
             CreateCaret( console->win, console->window->cursor_bitmap,
                          console->active->font.width, console->active->font.height );
@@ -2313,12 +2319,12 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_KILLFOCUS:
-        if (console->active->cursor_visible)
+        if (console->window && console->active->cursor_visible)
             DestroyCaret();
         break;
 
     case WM_SIZE:
-        if (console->window->update_state != UPDATE_BUSY)
+        if (console->window && console->window->update_state != UPDATE_BUSY)
             resize_window( console,
                            max( LOWORD(lparam) / console->active->font.width, 20 ),
                            max( HIWORD(lparam) / console->active->font.height, 20 ));
@@ -2329,6 +2335,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
             int win_width = console->active->win.right - console->active->win.left + 1;
             int x = console->active->win.left;
 
+            if (!console->window) break;
             switch (LOWORD(wparam))
             {
             case SB_PAGEUP:     x -= 8;              break;
@@ -2359,6 +2366,8 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         {
             int win_height = console->active->win.bottom - console->active->win.top + 1;
             int y = console->active->win.top;
+
+            if (!console->window) break;
 
             if (msg == WM_MOUSEWHEEL)
             {
@@ -2391,6 +2400,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         }
 
     case WM_SYSCOMMAND:
+        if (!console->window) break;
         switch (wparam)
         {
         case IDS_DEFAULT:
@@ -2405,6 +2415,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_COMMAND:
+        if (!console->window) break;
         switch (wparam)
         {
         case IDS_DEFAULT:
@@ -2447,7 +2458,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         break;
 
     case WM_INITMENUPOPUP:
-        if (!HIWORD(lparam)) return DefWindowProcW( hwnd, msg, wparam, lparam );
+        if (!console->window || !HIWORD(lparam)) return DefWindowProcW( hwnd, msg, wparam, lparam );
         set_menu_details( console, GetSystemMenu(console->win, FALSE) );
         break;
 
@@ -2462,7 +2473,7 @@ void update_window_config( struct console *console, BOOL delay )
 {
     const int delay_timeout = 50;
 
-    if (!console->win || console->window->update_state != UPDATE_NONE) return;
+    if (!console->window || console->window->update_state != UPDATE_NONE) return;
     console->window->update_state = UPDATE_PENDING;
     if (delay)
         SetTimer( console->win, 1, delay_timeout, NULL );
@@ -2535,4 +2546,26 @@ BOOL init_window( struct console *console )
 
     apply_config( console, &config );
     return TRUE;
+}
+
+void init_message_window( struct console *console )
+{
+    WNDCLASSW wndclass;
+
+    wndclass.style         = CS_DBLCLKS;
+    wndclass.lpfnWndProc   = window_proc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = sizeof(DWORD_PTR);
+    wndclass.hInstance     = GetModuleHandleW( NULL );
+    wndclass.hIcon         = 0;
+    wndclass.hCursor       = 0;
+    wndclass.hbrBackground = GetStockObject( BLACK_BRUSH );
+    wndclass.lpszMenuName  = NULL;
+    wndclass.lpszClassName = L"WineConsoleClass";
+    RegisterClassW(&wndclass);
+
+    CreateWindowW( wndclass.lpszClassName, NULL,
+                   WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|
+                   WS_MAXIMIZEBOX|WS_HSCROLL|WS_VSCROLL, CW_USEDEFAULT, CW_USEDEFAULT,
+                   0, 0, HWND_MESSAGE, 0, wndclass.hInstance, console );
 }
