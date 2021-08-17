@@ -546,7 +546,7 @@ struct pid_map
 static struct pid_map *get_pid_map( unsigned int *num_entries )
 {
     struct pid_map *map;
-    unsigned int i = 0, map_count = 16, buffer_len = 4096, process_count, pos = 0;
+    unsigned int i = 0, buffer_len = 4096, process_count, pos = 0;
     NTSTATUS ret;
     char *buffer = NULL, *new_buffer;
 
@@ -573,7 +573,7 @@ static struct pid_map *get_pid_map( unsigned int *num_entries )
         buffer = new_buffer;
     }
 
-    if (!(map = HeapAlloc( GetProcessHeap(), 0, map_count * sizeof(*map) )))
+    if (!(map = HeapAlloc( GetProcessHeap(), 0, process_count * sizeof(*map) )))
     {
         HeapFree( GetProcessHeap(), 0, buffer );
         return NULL;
@@ -585,19 +585,6 @@ static struct pid_map *get_pid_map( unsigned int *num_entries )
 
         pos = (pos + 7) & ~7;
         process = (const struct process_info *)(buffer + pos);
-
-        if (i >= map_count)
-        {
-            struct pid_map *new_map;
-            map_count *= 2;
-            if (!(new_map = HeapReAlloc( GetProcessHeap(), 0, map, map_count * sizeof(*map))))
-            {
-                HeapFree( GetProcessHeap(), 0, map );
-                HeapFree( GetProcessHeap(), 0, buffer );
-                return NULL;
-            }
-            map = new_map;
-        }
 
         map[i].pid = process->pid;
         map[i].unix_pid = process->unix_pid;
