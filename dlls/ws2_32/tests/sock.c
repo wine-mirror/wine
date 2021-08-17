@@ -1437,12 +1437,9 @@ todo_wine
             k = 99;
             SetLastError(0xdeadbeef);
             err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
-            todo_wine
-            {
-                ok(err == -1, "Expected -1, got %d\n", err);
-                ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
-                ok(k == 99, "Expected 99, got %d\n", k);
-            }
+            ok(err == -1, "Expected -1, got %d\n", err);
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(k == 99, "Expected 99, got %d\n", k);
 
             size = sizeof(k);
             k = 0;
@@ -1453,12 +1450,9 @@ todo_wine
             k = 99;
             SetLastError(0xdeadbeef);
             err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
-            todo_wine
-            {
-                ok(err == -1, "Expected -1, got %d\n", err);
-                ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
-                ok(k == 99, "Expected 99, got %d\n", k);
-            }
+            ok(err == -1, "Expected -1, got %d\n", err);
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(k == 99, "Expected 99, got %d\n", k);
         }
         else /* <= 2003 the tests differ between TCP and UDP, UDP silently accepts */
         {
