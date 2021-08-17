@@ -2519,8 +2519,17 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             if (!(info = alloc_ioctl_buffer( sizeof(*info )))) return STATUS_NO_MEMORY;
             info->input_cp    = console->input_cp;
             info->output_cp   = console->output_cp;
-            info->win         = condrv_handle( console->win );
             info->input_count = console->record_count;
+            return STATUS_SUCCESS;
+        }
+
+    case IOCTL_CONDRV_GET_WINDOW:
+        {
+            condrv_handle_t *result;
+            TRACE( "get window\n" );
+            if (in_size || *out_size != sizeof(*result)) return STATUS_INVALID_PARAMETER;
+            if (!(result = alloc_ioctl_buffer( sizeof(*result )))) return STATUS_NO_MEMORY;
+            *result = condrv_handle( console->win );
             return STATUS_SUCCESS;
         }
 

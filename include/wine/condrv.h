@@ -42,6 +42,7 @@
 #define IOCTL_CONDRV_CTRL_EVENT            CTL_CODE(FILE_DEVICE_CONSOLE, 19, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_CONDRV_BEEP                  CTL_CODE(FILE_DEVICE_CONSOLE, 20, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_CONDRV_FLUSH                 CTL_CODE(FILE_DEVICE_CONSOLE, 21, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_CONDRV_GET_WINDOW            CTL_CODE(FILE_DEVICE_CONSOLE, 22, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 /* console output ioctls */
 #define IOCTL_CONDRV_WRITE_CONSOLE         CTL_CODE(FILE_DEVICE_CONSOLE, 30, METHOD_BUFFERED, FILE_WRITE_ACCESS)
@@ -87,7 +88,6 @@ struct condrv_input_info
     unsigned int  input_cp;       /* console input codepage */
     unsigned int  output_cp;      /* console output codepage */
     unsigned int  input_count;    /* number of available input records */
-    condrv_handle_t win;          /* renderer window handle */
 };
 
 /* IOCTL_CONDRV_SET_INPUT_INFO params */

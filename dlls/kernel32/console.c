@@ -54,12 +54,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(console);
  */
 HWND WINAPI GetConsoleWindow(void)
 {
-    struct condrv_input_info info;
+    condrv_handle_t win;
     BOOL ret;
 
     ret = DeviceIoControl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
-                           IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL );
-    return ret ? LongToHandle( info.win ) : NULL;
+                           IOCTL_CONDRV_GET_WINDOW, NULL, 0, &win, sizeof(win), NULL, NULL );
+    return ret ? LongToHandle( win ) : NULL;
 }
 
 
