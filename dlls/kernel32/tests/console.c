@@ -3536,6 +3536,122 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     ok(cfix.dwFontSize.Y == cfi.dwFontSize.Y, "expected values to match\n");
 }
 
+static void test_SetCurrentConsoleFontEx(HANDLE std_output)
+{
+    CONSOLE_FONT_INFOEX orig_cfix, cfix;
+    BOOL ret;
+    HANDLE pipe1, pipe2;
+    HANDLE std_input = GetStdHandle(STD_INPUT_HANDLE);
+
+    orig_cfix.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+
+    ret = GetCurrentConsoleFontEx(std_output, FALSE, &orig_cfix);
+    ok(ret, "got %d, expected non-zero\n", ret);
+
+    cfix = orig_cfix;
+    cfix.cbSize = 0;
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(NULL, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(NULL, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(pipe1, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(pipe1, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_input, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_input, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_output, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_output, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    cfix = orig_cfix;
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(NULL, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(NULL, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(pipe1, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(pipe1, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_input, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_input, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_output, FALSE, &cfix);
+    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_output, TRUE, &cfix);
+    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    /* Restore original console font parameters */
+    SetLastError(0xdeadbeef);
+    ret = SetCurrentConsoleFontEx(std_output, FALSE, &orig_cfix);
+    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+}
+
 static void test_GetConsoleFontSize(HANDLE std_output)
 {
     COORD c;
@@ -4692,6 +4808,7 @@ START_TEST(console)
     {
         test_GetCurrentConsoleFont(hConOut);
         test_GetCurrentConsoleFontEx(hConOut);
+        test_SetCurrentConsoleFontEx(hConOut);
         test_GetConsoleFontSize(hConOut);
         test_GetLargestConsoleWindowSize(hConOut);
         test_GetConsoleFontInfo(hConOut);
