@@ -313,7 +313,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
@@ -356,7 +355,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pRealizePalette */
     NULL,                               /* pRectangle */
     NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
     NULL,                               /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */

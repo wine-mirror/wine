@@ -394,15 +394,6 @@ void DC_UpdateXforms( DC *dc )
 
 
 /***********************************************************************
- *           nulldrv_RestoreDC
- */
-BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
-{
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           reset_dc_state
  */
 static BOOL reset_dc_state( HDC hdc )

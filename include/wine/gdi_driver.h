@@ -97,7 +97,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pFlattenPath)(PHYSDEV);
     BOOL     (CDECL *pFontIsLinked)(PHYSDEV);
     BOOL     (CDECL *pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
-    BOOL     (CDECL *pGdiComment)(PHYSDEV,UINT,const BYTE*);
     UINT     (CDECL *pGetBoundsRect)(PHYSDEV,RECT*,UINT);
     BOOL     (CDECL *pGetCharABCWidths)(PHYSDEV,UINT,UINT,LPABC);
     BOOL     (CDECL *pGetCharABCWidthsI)(PHYSDEV,UINT,UINT,WORD*,LPABC);
@@ -140,7 +139,6 @@ struct gdi_dc_funcs
     UINT     (CDECL *pRealizePalette)(PHYSDEV,HPALETTE,BOOL);
     BOOL     (CDECL *pRectangle)(PHYSDEV,INT,INT,INT,INT);
     HDC      (CDECL *pResetDC)(PHYSDEV,const DEVMODEW*);
-    BOOL     (CDECL *pRestoreDC)(PHYSDEV,INT);
     BOOL     (CDECL *pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
     HBITMAP  (CDECL *pSelectBitmap)(PHYSDEV,HBITMAP);
     HBRUSH   (CDECL *pSelectBrush)(PHYSDEV,HBRUSH,const struct brush_pattern*);
@@ -174,7 +172,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 60
+#define WINE_GDI_DRIVER_VERSION 61
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

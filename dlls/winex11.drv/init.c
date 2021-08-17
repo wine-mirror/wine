@@ -372,7 +372,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
@@ -415,7 +414,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_RealizePalette,              /* pRealizePalette */
     X11DRV_Rectangle,                   /* pRectangle */
     NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
     X11DRV_RoundRect,                   /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     X11DRV_SelectBrush,                 /* pSelectBrush */

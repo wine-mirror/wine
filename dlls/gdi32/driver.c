@@ -386,11 +386,6 @@ static BOOL CDECL nulldrv_FontIsLinked( PHYSDEV dev )
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
-{
-    return FALSE;
-}
-
 static UINT CDECL nulldrv_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     return DCB_RESET;
@@ -863,7 +858,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_FlattenPath,                /* pFlattenPath */
     nulldrv_FontIsLinked,               /* pFontIsLinked */
     nulldrv_FrameRgn,                   /* pFrameRgn */
-    nulldrv_GdiComment,                 /* pGdiComment */
     nulldrv_GetBoundsRect,              /* pGetBoundsRect */
     nulldrv_GetCharABCWidths,           /* pGetCharABCWidths */
     nulldrv_GetCharABCWidthsI,          /* pGetCharABCWidthsI */
@@ -906,7 +900,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_RealizePalette,             /* pRealizePalette */
     nulldrv_Rectangle,                  /* pRectangle */
     nulldrv_ResetDC,                    /* pResetDC */
-    nulldrv_RestoreDC,                  /* pRestoreDC */
     nulldrv_RoundRect,                  /* pRoundRect */
     nulldrv_SelectBitmap,               /* pSelectBitmap */
     nulldrv_SelectBrush,                /* pSelectBrush */

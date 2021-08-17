@@ -807,7 +807,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
@@ -850,7 +849,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pRealizePalette */
     PSDRV_Rectangle,                    /* pRectangle */
     PSDRV_ResetDC,                      /* pResetDC */
-    NULL,                               /* pRestoreDC */
     PSDRV_RoundRect,                    /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     PSDRV_SelectBrush,                  /* pSelectBrush */

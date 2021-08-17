@@ -652,7 +652,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
@@ -695,7 +694,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pRealizePalette */
     dibdrv_Rectangle,                   /* pRectangle */
     NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
     dibdrv_RoundRect,                   /* pRoundRect */
     dibdrv_SelectBitmap,                /* pSelectBitmap */
     dibdrv_SelectBrush,                 /* pSelectBrush */
@@ -1223,7 +1221,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
@@ -1266,7 +1263,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pRealizePalette */
     windrv_Rectangle,                   /* pRectangle */
     NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
     windrv_RoundRect,                   /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */

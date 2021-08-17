@@ -66,7 +66,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_FlattenPath,              /* pFlattenPath */
     NULL,                            /* pFontIsLinked */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
-    NULL,                            /* pGdiComment */
     NULL,                            /* pGetBoundsRect */
     NULL,                            /* pGetCharABCWidths */
     NULL,                            /* pGetCharABCWidthsI */
@@ -109,7 +108,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pRealizePalette */
     EMFDRV_Rectangle,                /* pRectangle */
     NULL,                            /* pResetDC */
-    NULL,                            /* pRestoreDC */
     EMFDRV_RoundRect,                /* pRoundRect */
     EMFDRV_SelectBitmap,             /* pSelectBitmap */
     NULL,                            /* pSelectBrush */

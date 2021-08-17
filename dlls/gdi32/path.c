@@ -2104,7 +2104,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
-    NULL,                               /* pGdiComment */
     NULL,                               /* pGetBoundsRect */
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
@@ -2147,7 +2146,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pRealizePalette */
     pathdrv_Rectangle,                  /* pRectangle */
     NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
     pathdrv_RoundRect,                  /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
