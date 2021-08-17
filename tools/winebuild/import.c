@@ -1793,7 +1793,6 @@ static void output_syscall_dispatcher(void)
         output( "\tstp x9, x19, [x10, #0xf0]\n" );
         output( "\tmrs x9, NZCV\n" );
         output( "\tstp x30, x9, [x10, #0x100]\n" );
-        output( "\tstr xzr, [x10, #0x110]\n" );  /* frame->restore_flags */
         output( "\tmrs x9, FPCR\n" );
         output( "\tstr w9, [x10, #0x118]\n" );
         output( "\tmrs x9, FPSR\n" );
@@ -1845,7 +1844,7 @@ static void output_syscall_dispatcher(void)
         output( "\tldp x24, x25, [sp, #0xc0]\n" );
         output( "\tldp x26, x27, [sp, #0xd0]\n" );
         output( "\tldp x28, x29, [sp, #0xe0]\n" );
-        output( "\tldr x16, [sp, #0x110]\n" );  /* frame->restore_flags */
+        output( "\tldr w16, [sp, #0x10c]\n" );  /* frame->restore_flags */
         output( "\ttbz x16, #2, 1f\n" );  /* CONTEXT_FLOATING_POINT */
         output( "\tldp q0,  q1,  [sp, #0x120]\n" );
         output( "\tldp q2,  q3,  [sp, #0x140]\n" );

@@ -172,27 +172,27 @@ enum arm_trap_code
 
 struct syscall_frame
 {
-    DWORD r0;             /* 000 */
-    DWORD r1;             /* 004 */
-    DWORD r2;             /* 008 */
-    DWORD r3;             /* 00c */
-    DWORD r4;             /* 010 */
-    DWORD r5;             /* 014 */
-    DWORD r6;             /* 018 */
-    DWORD r7;             /* 01c */
-    DWORD r8;             /* 020 */
-    DWORD r9;             /* 024 */
-    DWORD r10;            /* 028 */
-    DWORD r11;            /* 02c */
-    DWORD r12;            /* 030 */
-    DWORD pc;             /* 034 */
-    DWORD sp;             /* 038 */
-    DWORD lr;             /* 03c */
-    DWORD cpsr;           /* 040 */
-    DWORD restore_flags;  /* 044 */
-    DWORD fpscr;          /* 048 */
-    DWORD align;          /* 04c */
-    ULONGLONG d[32];      /* 050 */
+    DWORD                 r0;             /* 000 */
+    DWORD                 r1;             /* 004 */
+    DWORD                 r2;             /* 008 */
+    DWORD                 r3;             /* 00c */
+    DWORD                 r4;             /* 010 */
+    DWORD                 r5;             /* 014 */
+    DWORD                 r6;             /* 018 */
+    DWORD                 r7;             /* 01c */
+    DWORD                 r8;             /* 020 */
+    DWORD                 r9;             /* 024 */
+    DWORD                 r10;            /* 028 */
+    DWORD                 r11;            /* 02c */
+    DWORD                 r12;            /* 030 */
+    DWORD                 pc;             /* 034 */
+    DWORD                 sp;             /* 038 */
+    DWORD                 lr;             /* 03c */
+    DWORD                 cpsr;           /* 040 */
+    DWORD                 restore_flags;  /* 044 */
+    DWORD                 fpscr;          /* 048 */
+    struct syscall_frame *prev_frame;     /* 04c */
+    ULONGLONG             d[32];          /* 050 */
 };
 
 C_ASSERT( sizeof( struct syscall_frame ) == 0x150);
@@ -575,12 +575,61 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 }
 
 
+struct user_callback_frame
+{
+    struct syscall_frame frame;
+    void               **ret_ptr;
+    ULONG               *ret_len;
+    __wine_jmp_buf       jmpbuf;
+    NTSTATUS             status;
+};
+
+/***********************************************************************
+ *           KeUserModeCallback
+ */
+NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
+{
+    struct user_callback_frame callback_frame = { { 0 }, ret_ptr, ret_len };
+
+    if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&callback_frame)
+        return STATUS_STACK_OVERFLOW;
+
+    if (!__wine_setjmpex( &callback_frame.jmpbuf, NULL ))
+    {
+        struct syscall_frame *frame = arm_thread_data()->syscall_frame;
+        void *args_data = (void *)((frame->sp - len) & ~15);
+
+        memcpy( args_data, args, len );
+
+        callback_frame.frame.r0            = id;
+        callback_frame.frame.r1            = (ULONG_PTR)args;
+        callback_frame.frame.r2            = len;
+        callback_frame.frame.sp            = (ULONG_PTR)args_data;
+        callback_frame.frame.pc            = (ULONG_PTR)pKiUserCallbackDispatcher;
+        callback_frame.frame.restore_flags = CONTEXT_INTEGER;
+        callback_frame.frame.prev_frame    = frame;
+        arm_thread_data()->syscall_frame = &callback_frame.frame;
+
+        __wine_syscall_dispatcher_return( &callback_frame.frame, 0 );
+    }
+    return callback_frame.status;
+}
+
+
 /***********************************************************************
  *           NtCallbackReturn  (NTDLL.@)
  */
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
 {
-    return STATUS_NO_CALLBACK_ACTIVE;
+    struct user_callback_frame *frame = (struct user_callback_frame *)arm_thread_data()->syscall_frame;
+
+    if (!frame->frame.prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
+
+    *frame->ret_ptr = ret_ptr;
+    *frame->ret_len = ret_len;
+    frame->status = status;
+    arm_thread_data()->syscall_frame = frame->frame.prev_frame;
+    __wine_longjmp( &frame->jmpbuf, 1 );
 }
 
 
@@ -942,6 +991,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->sp = (DWORD)ctx;
     frame->pc = (DWORD)pLdrInitializeThunk;
     frame->r0 = (DWORD)ctx;
+    frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );

@@ -481,7 +481,7 @@ struct syscall_frame
     DWORD              esi;            /* 030 */
     DWORD              ebp;            /* 034 */
     DWORD              syscall_flags;  /* 038 */
-    DWORD              align;          /* 03c */
+    struct syscall_frame *prev_frame;  /* 03c */
     union                              /* 040 */
     {
         XSAVE_FORMAT       xsave;
@@ -490,7 +490,7 @@ struct syscall_frame
     /* Leave space for the whole set of YMM registers. They're not used in
      * 32-bit mode, but some processors fault if they're not in writable memory.
      */
-    XSTATE             xstate;         /* 240 */
+    DECLSPEC_ALIGN(64) XSTATE xstate;  /* 240 */
 };
 
 C_ASSERT( sizeof(struct syscall_frame) == 0x380 );
@@ -1579,12 +1579,65 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 }
 
 
+struct user_callback_frame
+{
+    struct syscall_frame frame;
+    void               **ret_ptr;
+    ULONG               *ret_len;
+    __wine_jmp_buf       jmpbuf;
+    NTSTATUS             status;
+};
+
+/***********************************************************************
+ *           KeUserModeCallback
+ */
+NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
+{
+    struct user_callback_frame callback_frame = { { 0 }, ret_ptr, ret_len };
+
+    if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&callback_frame)
+        return STATUS_STACK_OVERFLOW;
+
+    if (!__wine_setjmpex( &callback_frame.jmpbuf, NULL ))
+    {
+        struct syscall_frame *frame = x86_thread_data()->syscall_frame;
+        void *args_data = (void *)((frame->esp - len) & ~15);
+        ULONG_PTR *stack = args_data;
+
+        memcpy( args_data, args, len );
+        *(--stack) = 0;
+        *(--stack) = len;
+        *(--stack) = (ULONG_PTR)args_data;
+        *(--stack) = id;
+        *(--stack) = 0xdeadbabe;
+
+        callback_frame.frame.esp           = (ULONG_PTR)stack;
+        callback_frame.frame.eip           = (ULONG_PTR)pKiUserCallbackDispatcher;
+        callback_frame.frame.eflags        = 0x202;
+        callback_frame.frame.syscall_flags = __wine_syscall_flags;
+        callback_frame.frame.prev_frame    = frame;
+        x86_thread_data()->syscall_frame = &callback_frame.frame;
+
+        __wine_syscall_dispatcher_return( &callback_frame.frame, 0 );
+    }
+    return callback_frame.status;
+}
+
+
 /***********************************************************************
  *           NtCallbackReturn  (NTDLL.@)
  */
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
 {
-    return STATUS_NO_CALLBACK_ACTIVE;
+    struct user_callback_frame *frame = (struct user_callback_frame *)x86_thread_data()->syscall_frame;
+
+    if (!frame->frame.prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
+
+    *frame->ret_ptr = ret_ptr;
+    *frame->ret_len = ret_len;
+    frame->status = status;
+    x86_thread_data()->syscall_frame = frame->frame.prev_frame;
+    __wine_longjmp( &frame->jmpbuf, 1 );
 }
 
 
@@ -2364,6 +2417,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     *(--stack) = 0xdeadbabe;
     frame->esp = (DWORD)stack;
     frame->eip = (DWORD)pLdrInitializeThunk;
+    frame->prev_frame    = NULL;
     frame->syscall_flags = __wine_syscall_flags;
     frame->restore_flags |= CONTEXT_INTEGER;
 
