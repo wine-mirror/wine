@@ -1579,6 +1579,15 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 }
 
 
+/***********************************************************************
+ *           NtCallbackReturn  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
+{
+    return STATUS_NO_CALLBACK_ACTIVE;
+}
+
+
 /**********************************************************************
  *		get_fpu_code
  *

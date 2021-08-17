@@ -39,6 +39,7 @@ static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtQueueApcThread)(HANDLE handle, PNTAPCFUNC func,
         ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3);
+static NTSTATUS  (WINAPI *pNtCallbackReturn)( void *ret_ptr, ULONG ret_len, NTSTATUS status );
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static PVOID     (WINAPI *pRtlUnwind)(PVOID, PVOID, PEXCEPTION_RECORD, PVOID);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
@@ -7252,6 +7253,12 @@ static void test_user_apc(void)
     ok(test_apc_called, "Test user APC was not called.\n");
 }
 
+static void test_user_callback(void)
+{
+    NTSTATUS status = pNtCallbackReturn( NULL, 0, STATUS_SUCCESS );
+    ok( status == STATUS_NO_CALLBACK_ACTIVE, "failed %x\n", status );
+}
+
 static DWORD WINAPI suspend_thread_test( void *arg )
 {
     HANDLE event = arg;
@@ -9135,6 +9142,7 @@ START_TEST(exception)
     X(NtGetContextThread);
     X(NtSetContextThread);
     X(NtQueueApcThread);
+    X(NtCallbackReturn);
     X(NtReadVirtualMemory);
     X(NtClose);
     X(RtlUnwind);
@@ -9329,6 +9337,7 @@ START_TEST(exception)
     NtCurrentTeb()->Peb->BeingDebugged = 0;
 
     test_user_apc();
+    test_user_callback();
     test_vectored_continue_handler();
     test_suspend_thread();
     test_suspend_process();
