@@ -586,6 +586,7 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
 {
     SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
     WCHAR bufferW[MAX_PATH];
+    DWORD length;
     HKEY hkey;
     BOOL ret = FALSE;
 
@@ -629,9 +630,9 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
                                    (const BYTE *)&monitor->rc_work, sizeof(monitor->rc_work), 0))
         goto done;
     /* Adapter name */
-    sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
+    length = sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, DEVPROP_TYPE_STRING,
-                                   (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR), 0))
+                                   (const BYTE *)bufferW, (length + 1) * sizeof(WCHAR), 0))
         goto done;
 
     ret = TRUE;
