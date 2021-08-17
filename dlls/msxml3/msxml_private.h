@@ -385,7 +385,6 @@ static inline HRESULT return_var_false(VARIANT_BOOL *p)
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos ) DECLSPEC_HIDDEN;
-extern HRESULT DOMDocument_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
 extern HRESULT SchemaCache_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLDocument_create(void**) DECLSPEC_HIDDEN;
 extern HRESULT SAXXMLReader_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
@@ -404,7 +403,6 @@ HRESULT create_moniker_from_url(LPCWSTR, IMoniker**) DECLSPEC_HIDDEN;
 HRESULT create_uri(IUri *base, const WCHAR *, IUri **) DECLSPEC_HIDDEN;
 HRESULT bind_url(IMoniker*, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**) DECLSPEC_HIDDEN;
 HRESULT detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
-IUri *get_base_uri(IUnknown *) DECLSPEC_HIDDEN;
 
 /* Error Codes - not defined anywhere in the public headers */
 #define E_XML_ELEMENT_UNDECLARED            0xC00CE00D

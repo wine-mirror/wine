@@ -3801,7 +3801,7 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     return S_OK;
 }
 
-HRESULT DOMDocument_create(MSXML_VERSION version, void **ppObj)
+HRESULT dom_document_create(MSXML_VERSION version, void **ppObj)
 {
     xmlDocPtr xmldoc;
     HRESULT hr;
@@ -3842,7 +3842,7 @@ IUnknown* create_domdoc( xmlNodePtr document )
 
 #else
 
-HRESULT DOMDocument_create(MSXML_VERSION version, void **ppObj)
+HRESULT dom_document_create(MSXML_VERSION version, void **ppObj)
 {
     MESSAGE("This program tried to use a DOMDocument object, but\n"
             "libxml2 support was not present at compile time.\n");

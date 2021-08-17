@@ -399,7 +399,7 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
     if(FAILED(hres))
         return display_error_page(This);
 
-    hres = DOMDocument_create(MSXML_DEFAULT, (void**)&xml);
+    hres = dom_document_create(MSXML_DEFAULT, (void **)&xml);
     if(FAILED(hres))
         return display_error_page(This);
 
@@ -475,7 +475,7 @@ static inline HRESULT handle_xml_load(BindStatusCallback *This)
         return display_error_page(This);
     }
 
-    hres = DOMDocument_create(MSXML_DEFAULT, (void**)&xsl);
+    hres = dom_document_create(MSXML_DEFAULT, (void **)&xsl);
     if(FAILED(hres)) {
         VariantClear(&var);
         IXMLDOMDocument3_Release(xml);

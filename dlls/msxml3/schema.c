@@ -942,7 +942,7 @@ static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXM
     cache_entry* entry;
     IXMLDOMDocument3* domdoc = NULL;
     xmlDocPtr doc = NULL;
-    HRESULT hr = DOMDocument_create(version, (void**)&domdoc);
+    HRESULT hr = dom_document_create(version, (void **)&domdoc);
     VARIANT_BOOL b = VARIANT_FALSE;
     CacheEntryType type = CacheEntryType_Invalid;
 
@@ -1266,7 +1266,7 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
                         BSTR xml;
 
                         IXMLDOMNode_get_xml(domnode, &xml);
-                        DOMDocument_create(This->version, (void**)&domdoc);
+                        dom_document_create(This->version, (void **)&domdoc);
                         IXMLDOMDocument_loadXML(domdoc, xml, &b);
                         SysFreeString(xml);
                         doc = xmlNodePtr_from_domnode((IXMLDOMNode*)domdoc, XML_DOCUMENT_NODE)->doc;

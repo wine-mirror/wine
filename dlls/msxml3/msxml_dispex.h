@@ -144,4 +144,7 @@ static inline HRESULT return_bstrn(const WCHAR *value, int len, BSTR *p)
     return S_OK;
 }
 
+extern HRESULT dom_document_create(MSXML_VERSION class_version, void **document) DECLSPEC_HIDDEN;
+IUri *get_base_uri(IUnknown *site) DECLSPEC_HIDDEN;
+
 #endif /* __MSXML_DISPEX__ */

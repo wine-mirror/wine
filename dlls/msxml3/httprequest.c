@@ -22,14 +22,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# include <libxml/encoding.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -44,11 +37,10 @@
 #include "docobj.h"
 #include "shlwapi.h"
 
-#include "msxml_private.h"
+#include "msxml_dispex.h"
 
 #include "wine/debug.h"
-
-#ifdef HAVE_LIBXML2
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -1238,7 +1230,7 @@ static HRESULT httprequest_get_responseXML(httprequest *This, IDispatch **body)
     if (!body) return E_INVALIDARG;
     if (This->state != READYSTATE_COMPLETE) return E_FAIL;
 
-    hr = DOMDocument_create(MSXML_DEFAULT, (void**)&doc);
+    hr = dom_document_create(MSXML_DEFAULT, (void**)&doc);
     if (hr != S_OK) return hr;
 
     hr = httprequest_get_responseText(This, &str);
@@ -2151,21 +2143,3 @@ HRESULT ServerXMLHTTP_create(void **obj)
 
     return S_OK;
 }
-
-#else
-
-HRESULT XMLHTTPRequest_create(void **ppObj)
-{
-    MESSAGE("This program tried to use a XMLHTTPRequest object, but\n"
-            "libxml2 support was not present at compile time.\n");
-    return E_NOTIMPL;
-}
-
-HRESULT ServerXMLHTTP_create(void **obj)
-{
-    MESSAGE("This program tried to use a ServerXMLHTTP object, but\n"
-            "libxml2 support was not present at compile time.\n");
-    return E_NOTIMPL;
-}
-
-#endif

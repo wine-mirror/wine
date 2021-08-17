@@ -404,7 +404,7 @@ static HRESULT WINAPI xslprocessor_put_input( IXSLProcessor *iface, VARIANT inpu
     {
         IXMLDOMDocument *doc;
 
-        hr = DOMDocument_create(MSXML_DEFAULT, (void**)&doc);
+        hr = dom_document_create(MSXML_DEFAULT, (void **)&doc);
         if (hr == S_OK)
         {
             VARIANT_BOOL b;
