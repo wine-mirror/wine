@@ -357,7 +357,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
  */
 BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
 {
-    METAFILEDRV_PDEVICE *mf;
+    struct metadc *mf;
     INT16 index;
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
     index = MFDRV_CreateRegion( &mf->dev, hrgn );
@@ -372,7 +372,7 @@ BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
  */
 BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn )
 {
-    METAFILEDRV_PDEVICE *mf;
+    struct metadc *mf;
     INT16 index;
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
     index = MFDRV_CreateRegion( &mf->dev, hrgn );
@@ -387,7 +387,7 @@ BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn )
  */
 BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 {
-    METAFILEDRV_PDEVICE *mf;
+    struct metadc *mf;
     INT16 iRgn, iBrush;
 
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
@@ -414,7 +414,7 @@ BOOL CDECL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
  */
 BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
 {
-    METAFILEDRV_PDEVICE *mf;
+    struct metadc *mf;
     INT16 iRgn, iBrush;
 
     if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
@@ -433,7 +433,7 @@ BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
  */
 BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
 {
-    METAFILEDRV_PDEVICE *metadc;
+    struct metadc *metadc;
     INT16 iRgn;
     INT ret;
 

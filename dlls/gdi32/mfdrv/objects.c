@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
  */
 UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    struct metadc *physDev = (struct metadc *)dev;
     UINT16 index;
 
     for(index = 0; index < physDev->handles_size; index++)
@@ -63,7 +63,7 @@ UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
  */
 BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    struct metadc *physDev = (struct metadc *)dev;
     BOOL ret = FALSE;
 
     if (index < physDev->handles_size && physDev->handles[index])
@@ -80,7 +80,7 @@ BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index )
  */
 static INT16 MFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    struct metadc *physDev = (struct metadc *)dev;
     INT16 index;
 
     for(index = 0; index < physDev->handles_size; index++)
@@ -97,7 +97,7 @@ static INT16 MFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
  */
 void METADC_DeleteObject( HDC hdc, HGDIOBJ obj )
 {
-    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
+    struct metadc *metadc = get_metadc_ptr( hdc );
     METARECORD mr;
     INT16 index;
 
@@ -223,7 +223,7 @@ done:
  */
 static HBRUSH METADC_SelectBrush( HDC hdc, HBRUSH hbrush )
 {
-    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
+    struct metadc *metadc = get_metadc_ptr( hdc );
     INT16 index;
     HBRUSH ret;
 
@@ -284,7 +284,7 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
  */
 static HFONT METADC_SelectFont( HDC hdc, HFONT hfont )
 {
-    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
+    struct metadc *metadc = get_metadc_ptr( hdc );
     LOGFONTW font;
     INT16 index;
     HFONT ret;
@@ -327,7 +327,7 @@ static UINT16 MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
  */
 static HPEN METADC_SelectPen( HDC hdc, HPEN hpen )
 {
-    METAFILEDRV_PDEVICE *metadc = get_metadc_ptr( hdc );
+    struct metadc *metadc = get_metadc_ptr( hdc );
     LOGPEN16 logpen;
     INT16 index;
     HPEN ret;
@@ -417,7 +417,7 @@ BOOL METADC_SelectPalette( HDC hdc, HPALETTE palette )
 {
 #define PALVERSION 0x0300
 
-    METAFILEDRV_PDEVICE *metadc;
+    struct metadc *metadc;
     PLOGPALETTE logPalette;
     WORD        wNumEntries = 0;
     BOOL        ret;

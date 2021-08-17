@@ -213,7 +213,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
 static DC *MFDRV_AllocMetaFile(void)
 {
     DC *dc;
-    METAFILEDRV_PDEVICE *physDev;
+    struct metadc *physDev;
 
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_METADC ))) return NULL;
 
@@ -267,7 +267,7 @@ static BOOL CDECL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
  */
 static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    struct metadc *physDev = (struct metadc *)dev;
     DWORD index;
 
     HeapFree( GetProcessHeap(), 0, physDev->mh );
@@ -296,13 +296,13 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 {
     HDC ret;
     DC *dc;
-    METAFILEDRV_PDEVICE *physDev;
+    struct metadc *physDev;
     HANDLE hFile;
 
     TRACE("%s\n", debugstr_w(filename) );
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
-    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    physDev = (struct metadc *)dc->physDev;
     physDev->mh->mtType = METAFILE_MEMORY;
     physDev->pen   = GetStockObject( BLACK_PEN );
     physDev->brush = GetStockObject( WHITE_BRUSH );
@@ -355,7 +355,7 @@ HDC WINAPI CreateMetaFileA(LPCSTR filename)
 static DC *MFDRV_CloseMetaFile( HDC hdc )
 {
     DC *dc;
-    METAFILEDRV_PDEVICE *physDev;
+    struct metadc *physDev;
     DWORD bytes_written;
 
     TRACE("(%p)\n", hdc );
@@ -372,7 +372,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
         release_dc_ptr( dc );
         return NULL;
     }
-    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    physDev = (struct metadc *)dc->physDev;
 
     /* Construct the end of metafile record - this is documented
      * in SDK Knowledgebase Q99334.
@@ -412,10 +412,10 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 HMETAFILE WINAPI CloseMetaFile(HDC hdc)
 {
     HMETAFILE hmf;
-    METAFILEDRV_PDEVICE *physDev;
+    struct metadc *physDev;
     DC *dc = MFDRV_CloseMetaFile(hdc);
     if (!dc) return 0;
-    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    physDev = (struct metadc *)dc->physDev;
 
     /* Now allocate a global handle for the metafile */
 
@@ -436,7 +436,7 @@ BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
 {
     DWORD len, size;
     METAHEADER *mh;
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    struct metadc *physDev = (struct metadc *)dev;
 
     len = physDev->mh->mtSize * 2 + rlen;
     /* reallocate memory if needed */
@@ -574,16 +574,16 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
-METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc )
+struct metadc *get_metadc_ptr( HDC hdc )
 {
-    METAFILEDRV_PDEVICE *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
+    struct metadc *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
     if (!metafile) SetLastError( ERROR_INVALID_HANDLE );
     return metafile;
 }
 
 BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_WriteRecord( &dev->dev, mr, rlen );
@@ -591,7 +591,7 @@ BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
 
 BOOL metadc_param1( HDC hdc, short func, short param )
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam1( &dev->dev, func, param );
@@ -599,7 +599,7 @@ BOOL metadc_param1( HDC hdc, short func, short param )
 
 BOOL metadc_param0( HDC hdc, short func )
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam0( &dev->dev, func );
@@ -607,7 +607,7 @@ BOOL metadc_param0( HDC hdc, short func )
 
 BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam2( &dev->dev, func, param1, param2 );
@@ -616,7 +616,7 @@ BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
 BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
                     short param3, short param4 )
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam4( &dev->dev, func, param1, param2, param3, param4 );
@@ -642,7 +642,7 @@ BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
                     short param3, short param4, short param5,
                     short param6 )
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam6( &dev->dev, func, param1, param2, param3,
@@ -653,7 +653,7 @@ BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
                     short param3, short param4, short param5,
                     short param6, short param7, short param8)
 {
-    METAFILEDRV_PDEVICE *dev;
+    struct metadc *dev;
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam8( &dev->dev, func, param1, param2, param3,
