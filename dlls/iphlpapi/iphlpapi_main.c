@@ -2870,6 +2870,8 @@ DWORD WINAPI GetTcpStatisticsEx( MIB_TCPSTATS *stats, DWORD family )
     return err;
 }
 
+#define TCP_TABLE2 ~0u /* Internal tcp table for GetTcp(6)Table2() */
+
 static DWORD tcp_table_id( ULONG table_class )
 {
     switch (table_class)
@@ -2887,6 +2889,7 @@ static DWORD tcp_table_id( ULONG table_class )
     case TCP_TABLE_BASIC_ALL:
     case TCP_TABLE_OWNER_PID_ALL:
     case TCP_TABLE_OWNER_MODULE_ALL:
+    case TCP_TABLE2:
         return NSI_TCP_ALL_TABLE;
 
     default:
@@ -2919,6 +2922,11 @@ static DWORD tcp_table_size( ULONG family, ULONG table_class, DWORD row_count, D
         *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW_OWNER_MODULE) : sizeof(MIB_TCP6ROW_OWNER_MODULE);
         return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_MODULE, table[row_count]) :
             FIELD_OFFSET(MIB_TCP6TABLE_OWNER_MODULE, table[row_count]);
+
+    case TCP_TABLE2:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW2) : sizeof(MIB_TCP6ROW2);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE2, table[row_count]) :
+            FIELD_OFFSET(MIB_TCP6TABLE2, table[row_count]);
 
     default:
         ERR( "unhandled class %u\n", table_class );
@@ -2973,6 +2981,18 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
             row->liCreateTimestamp.QuadPart = stat->create_time;
             row->OwningModuleInfo[0] = stat->mod_info;
             memset( row->OwningModuleInfo + 1, 0, sizeof(row->OwningModuleInfo) - sizeof(row->OwningModuleInfo[0]) );
+            return;
+        }
+        case TCP_TABLE2:
+        {
+            MIB_TCPROW2 *row = ((MIB_TCPTABLE2 *)table)->table + num;
+            row->dwState = dyn->state;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemotePort = key->remote.Ipv4.sin_port;
+            row->dwOwningPid = stat->pid;
+            row->dwOffloadState = 0; /* FIXME */
             return;
         }
         default:
@@ -3031,6 +3051,20 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
             memset( row->OwningModuleInfo + 1, 0, sizeof(row->OwningModuleInfo) - sizeof(row->OwningModuleInfo[0]) );
             return;
         }
+        case TCP_TABLE2:
+        {
+            MIB_TCP6ROW2 *row = ((MIB_TCP6TABLE2 *)table)->table + num;
+            memcpy( &row->LocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->LocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            memcpy( &row->RemoteAddr, &key->remote.Ipv6.sin6_addr, sizeof(row->RemoteAddr) );
+            row->dwRemoteScopeId = key->remote.Ipv6.sin6_scope_id;
+            row->dwRemotePort = key->remote.Ipv6.sin6_port;
+            row->State = dyn->state;
+            row->dwOwningPid = stat->pid;
+            row->dwOffloadState = 0; /* FIXME */
+            return;
+        }
         default:
             ERR( "Unknown class %d\n", table_class );
             return;
@@ -3079,6 +3113,12 @@ static int tcp6_row_owner_cmp( const void *a, const void *b )
     return RtlUshortByteSwap( rowA->dwRemotePort ) - RtlUshortByteSwap( rowB->dwRemotePort );
 }
 
+/*************************************************************************************
+ *          get_extended_tcp_table
+ *
+ * Implementation of GetExtendedTcpTable() which additionally handles TCP_TABLE2
+ * corresponding to GetTcp(6)Table2()
+ */
 DWORD get_extended_tcp_table( void *table, DWORD *size, BOOL sort, ULONG family, ULONG table_class )
 {
     DWORD err, count, needed, i, num = 0, row_size = 0;
@@ -3180,6 +3220,24 @@ ULONG WINAPI GetTcp6Table( MIB_TCP6TABLE *table, ULONG *size, BOOL sort )
 {
     TRACE( "table %p, size %p, sort %d\n", table, size, sort );
     return get_extended_tcp_table( table, size, sort, WS_AF_INET6, TCP_TABLE_BASIC_ALL );
+}
+
+/******************************************************************
+ *    GetTcpTable2 (IPHLPAPI.@)
+ */
+ULONG WINAPI GetTcpTable2( MIB_TCPTABLE2 *table, ULONG *size, BOOL sort )
+{
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
+    return get_extended_tcp_table( table, size, sort, WS_AF_INET, TCP_TABLE2 );
+}
+
+/******************************************************************
+ *    GetTcp6Table2 (IPHLPAPI.@)
+ */
+ULONG WINAPI GetTcp6Table2( MIB_TCP6TABLE2 *table, ULONG *size, BOOL sort )
+{
+    TRACE( "table %p, size %p, sort %d\n", table, size, sort );
+    return get_extended_tcp_table( table, size, sort, WS_AF_INET6, TCP_TABLE2 );
 }
 
 /******************************************************************
@@ -3810,24 +3868,6 @@ DWORD WINAPI PfBindInterfaceToIPAddress(INTERFACE_HANDLE interface, PFADDRESSTYP
 {
     FIXME("(%p %d %p) stub\n", interface, type, ip);
     return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-/******************************************************************
- *    GetTcpTable2 (IPHLPAPI.@)
- */
-ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
-{
-    FIXME("pTcpTable2 %p, pdwSize %p, bOrder %d: stub\n", table, size, order);
-    return ERROR_NOT_SUPPORTED;
-}
-
-/******************************************************************
- *    GetTcp6Table2 (IPHLPAPI.@)
- */
-ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
-{
-    FIXME("pTcp6Table2 %p, size %p, order %d: stub\n", table, size, order);
-    return ERROR_NOT_SUPPORTED;
 }
 
 /******************************************************************
