@@ -3240,6 +3240,49 @@ ULONG WINAPI GetTcp6Table2( MIB_TCP6TABLE2 *table, ULONG *size, BOOL sort )
     return get_extended_tcp_table( table, size, sort, WS_AF_INET6, TCP_TABLE2 );
 }
 
+static DWORD allocate_tcp_table( void **table, BOOL sort, HANDLE heap, DWORD flags,
+                                 ULONG family, ULONG table_class )
+{
+    DWORD err, size = 0x100, attempt;
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        *table = HeapAlloc( heap, flags, size );
+        if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
+        err = get_extended_tcp_table( *table, &size, sort, family, table_class );
+        if (!err) break;
+        HeapFree( heap, flags, *table );
+        *table = NULL;
+        if (err != ERROR_INSUFFICIENT_BUFFER) break;
+    }
+    return err;
+}
+
+/******************************************************************
+ *    AllocateAndGetTcpTableFromStack (IPHLPAPI.@)
+ */
+DWORD WINAPI AllocateAndGetTcpTableFromStack( MIB_TCPTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    TRACE( "table %p, sort %d, heap %p, flags 0x%08x\n", table, sort, heap, flags );
+
+    if (!table) return ERROR_INVALID_PARAMETER;
+
+    return allocate_tcp_table( (void **)table, sort, heap, flags, WS_AF_INET, TCP_TABLE_BASIC_ALL );
+}
+
+/******************************************************************
+ *    AllocateAndGetTcpExTableFromStack (IPHLPAPI.@)
+ */
+DWORD WINAPI AllocateAndGetTcpExTableFromStack( void **table, BOOL sort, HANDLE heap, DWORD flags, DWORD family )
+{
+    TRACE( "table %p, sort %d, heap %p, flags 0x%08x, family %u\n", table, sort, heap, flags, family );
+
+    if (!table || !ip_module_id( family )) return ERROR_INVALID_PARAMETER;
+    if (family == WS_AF_INET6) return ERROR_NOT_SUPPORTED;
+
+    return allocate_tcp_table( table, sort, heap, flags, family, TCP_TABLE_OWNER_PID_ALL );
+}
+
 /******************************************************************
  *    GetUdpTable (IPHLPAPI.@)
  *
