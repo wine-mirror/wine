@@ -565,6 +565,17 @@ void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg
 }
 
 
+/*******************************************************************
+ *		KiUserCallbackDispatcher (NTDLL.@)
+ */
+void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
+{
+    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+
+    RtlRaiseStatus( NtCallbackReturn( NULL, 0, func( args, len )));
+}
+
+
 /***********************************************************************
  * Definitions for Win32 unwind tables
  */

@@ -1043,7 +1043,7 @@ static void test_init_block(void)
             CHECK_FUNC( block64[3], "LdrInitializeThunk" );
             CHECK_FUNC( block64[4], "KiUserExceptionDispatcher" );
             CHECK_FUNC( block64[5], "KiUserApcDispatcher" );
-            todo_wine CHECK_FUNC( block64[6], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( block64[6], "KiUserCallbackDispatcher" );
             CHECK_FUNC( block64[7], "RtlUserThreadStart" );
             CHECK_FUNC( block64[8], "RtlpQueryProcessDebugInformationRemote" );
             todo_wine ok( block64[9] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",

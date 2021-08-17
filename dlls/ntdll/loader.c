@@ -3767,7 +3767,7 @@ static void init_wow64( CONTEXT *context )
     SET_INIT_BLOCK( LdrInitializeThunk );
     SET_INIT_BLOCK( LdrSystemDllInitBlock );
     SET_INIT_BLOCK( RtlUserThreadStart );
-    /* SET_INIT_BLOCK( KiUserCallbackDispatcher ); */
+    SET_INIT_BLOCK( KiUserCallbackDispatcher );
     /* SET_INIT_BLOCK( RtlpQueryProcessDebugInformationRemote ); */
     /* SET_INIT_BLOCK( RtlpFreezeTimeBias ); */
     /* LdrSystemDllInitBlock.ntdll_handle */
