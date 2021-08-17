@@ -21,6 +21,8 @@
 
 #include "inaddr.h"
 #include "in6addr.h"
+#include "ws2def.h"
+#include "ws2ipdef.h"
 #include "winioctl.h"
 
 /* Undocumented NSI NDIS tables */
@@ -294,6 +296,9 @@ struct nsi_ip_forward_static
 
 /* Undocumented NSI TCP tables */
 #define NSI_TCP_STATS_TABLE                0
+#define NSI_TCP_ALL_TABLE                  3
+#define NSI_TCP_ESTAB_TABLE                4
+#define NSI_TCP_LISTEN_TABLE               5
 
 struct nsi_tcp_stats_dynamic
 {
@@ -319,6 +324,26 @@ struct nsi_tcp_stats_static
     DWORD rto_max;
     DWORD max_conns;
     DWORD unk;
+};
+
+struct nsi_tcp_conn_key
+{
+    SOCKADDR_INET local;
+    SOCKADDR_INET remote;
+};
+
+struct nsi_tcp_conn_dynamic
+{
+    DWORD state;
+    DWORD unk[3];
+};
+
+struct nsi_tcp_conn_static
+{
+    DWORD unk[3];
+    DWORD pid;
+    ULONGLONG create_time;
+    ULONGLONG mod_info;
 };
 
 /* Wine specific ioctl interface */
