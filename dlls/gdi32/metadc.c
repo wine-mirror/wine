@@ -297,6 +297,328 @@ BOOL METADC_SetMapperFlags( HDC hdc, DWORD flags )
     return metadc_param2( hdc, META_SETMAPPERFLAGS, HIWORD(flags), LOWORD(flags) );
 }
 
+BOOL METADC_MoveTo( HDC hdc, INT x, INT y )
+{
+    return metadc_param2( hdc, META_MOVETO, x, y );
+}
+
+BOOL METADC_LineTo( HDC hdc, INT x, INT y )
+{
+    return metadc_param2( hdc, META_LINETO, x, y );
+}
+
+BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
+{
+     return metadc_param8( hdc, META_ARC, left, top, right, bottom,
+                           xstart, ystart, xend, yend );
+}
+
+BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
+{
+    return metadc_param8( hdc, META_PIE, left, top, right, bottom,
+                          xstart, ystart, xend, yend );
+}
+
+BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
+{
+    return metadc_param8( hdc, META_CHORD, left, top, right, bottom,
+                          xstart, ystart, xend, yend );
+}
+
+BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
+{
+    return metadc_param4( hdc, META_ELLIPSE, left, top, right, bottom );
+}
+
+BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
+{
+    return metadc_param4( hdc, META_RECTANGLE, left, top, right, bottom );
+}
+
+BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right,
+                       INT bottom, INT ell_width, INT ell_height )
+{
+    return metadc_param6( hdc, META_ROUNDRECT, left, top, right, bottom,
+                          ell_width, ell_height );
+}
+
+BOOL METADC_SetPixel( HDC hdc, INT x, INT y, COLORREF color )
+{
+    return metadc_param4( hdc, META_SETPIXEL, x, y, HIWORD(color), LOWORD(color) );
+}
+
+static BOOL metadc_poly( HDC hdc, short func, POINTS *pt, short count )
+{
+    BOOL ret;
+    DWORD len;
+    METARECORD *mr;
+
+    len = sizeof(METARECORD) + count * 4;
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len )))
+        return FALSE;
+
+    mr->rdSize = len / 2;
+    mr->rdFunction = func;
+    *(mr->rdParm) = count;
+    memcpy(mr->rdParm + 1, pt, count * 4);
+    ret = metadc_record( hdc, mr, mr->rdSize * 2);
+    HeapFree( GetProcessHeap(), 0, mr);
+    return ret;
+}
+
+BOOL METADC_Polyline( HDC hdc, const POINT *pt, INT count )
+{
+    int i;
+    POINTS *pts;
+    BOOL ret;
+
+    pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINTS) * count );
+    if(!pts) return FALSE;
+    for (i=count;i--;)
+    {
+        pts[i].x = pt[i].x;
+        pts[i].y = pt[i].y;
+    }
+    ret = metadc_poly( hdc, META_POLYLINE, pts, count );
+
+    HeapFree( GetProcessHeap(), 0, pts );
+    return ret;
+}
+
+BOOL METADC_Polygon( HDC hdc, const POINT *pt, INT count )
+{
+    int i;
+    POINTS *pts;
+    BOOL ret;
+
+    pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINTS) * count );
+    if(!pts) return FALSE;
+    for (i = count; i--;)
+    {
+        pts[i].x = pt[i].x;
+        pts[i].y = pt[i].y;
+    }
+    ret = metadc_poly( hdc, META_POLYGON, pts, count );
+
+    HeapFree( GetProcessHeap(), 0, pts );
+    return ret;
+}
+
+BOOL METADC_PolyPolygon( HDC hdc, const POINT *pt, const INT *counts, UINT polygons )
+{
+    BOOL ret;
+    DWORD len;
+    METARECORD *mr;
+    unsigned int i,j;
+    POINTS *pts;
+    INT16 totalpoint16 = 0;
+    INT16 * pointcounts;
+
+    for (i = 0; i < polygons; i++)
+         totalpoint16 += counts[i];
+
+    /* allocate space for all points */
+    pts=HeapAlloc( GetProcessHeap(), 0, sizeof(POINTS) * totalpoint16 );
+    pointcounts = HeapAlloc( GetProcessHeap(), 0, sizeof(INT16) * totalpoint16 );
+
+    /* copy point counts */
+    for (i = 0; i < polygons; i++)
+          pointcounts[i] = counts[i];
+
+    /* convert all points */
+    for (j = totalpoint16; j--;)
+    {
+        pts[j].x = pt[j].x;
+        pts[j].y = pt[j].y;
+    }
+
+    len = sizeof(METARECORD) + sizeof(WORD) + polygons * sizeof(INT16) +
+        totalpoint16 * sizeof(*pts);
+
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len )))
+    {
+         HeapFree( GetProcessHeap(), 0, pts );
+         HeapFree( GetProcessHeap(), 0, pointcounts );
+         return FALSE;
+    }
+
+    mr->rdSize = len / sizeof(WORD);
+    mr->rdFunction = META_POLYPOLYGON;
+    *mr->rdParm = polygons;
+    memcpy( mr->rdParm + 1, pointcounts, polygons * sizeof(INT16) );
+    memcpy( mr->rdParm + 1+polygons, pts , totalpoint16 * sizeof(*pts) );
+    ret = metadc_record( hdc, mr, mr->rdSize * sizeof(WORD) );
+
+    HeapFree( GetProcessHeap(), 0, pts );
+    HeapFree( GetProcessHeap(), 0, pointcounts );
+    HeapFree( GetProcessHeap(), 0, mr);
+    return ret;
+}
+
+BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_type )
+{
+    return metadc_param5( hdc, META_EXTFLOODFILL, x, y, HIWORD(color), LOWORD(color), fill_type );
+}
+
+static INT16 metadc_create_region( struct metadc *metadc, HRGN hrgn )
+{
+    DWORD len;
+    METARECORD *mr;
+    RGNDATA *rgndata;
+    RECT *cur_rect, *end_rect;
+    WORD bands = 0, max_bounds = 0;
+    WORD *param, *start_band;
+    BOOL ret;
+
+    if (!(len = NtGdiGetRegionData( hrgn, 0, NULL ))) return -1;
+    if (!(rgndata = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        WARN( "Can't alloc rgndata buffer\n" );
+        return -1;
+    }
+    NtGdiGetRegionData( hrgn, len, rgndata );
+
+    /* Overestimate of length:
+     * Assume every rect is a separate band -> 6 WORDs per rect,
+     * see MF_Play_MetaCreateRegion for format details.
+     */
+    len = sizeof(METARECORD) + 20 + rgndata->rdh.nCount * 12;
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len )))
+    {
+        WARN( "Can't alloc METARECORD buffer\n" );
+        HeapFree( GetProcessHeap(), 0, rgndata );
+        return -1;
+    }
+
+    param = mr->rdParm + 11;
+    start_band = NULL;
+
+    end_rect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
+    for (cur_rect = (RECT *)rgndata->Buffer; cur_rect < end_rect; cur_rect++)
+    {
+        if (start_band && cur_rect->top == start_band[1])
+        {
+            *param++ = cur_rect->left;
+            *param++ = cur_rect->right;
+        }
+        else
+        {
+            if (start_band)
+            {
+                *start_band = param - start_band - 3;
+                *param++ = *start_band;
+                if (*start_band > max_bounds)
+                    max_bounds = *start_band;
+                bands++;
+            }
+            start_band = param++;
+            *param++ = cur_rect->top;
+            *param++ = cur_rect->bottom;
+            *param++ = cur_rect->left;
+            *param++ = cur_rect->right;
+        }
+    }
+
+    if (start_band)
+    {
+        *start_band = param - start_band - 3;
+        *param++ = *start_band;
+        if (*start_band > max_bounds)
+            max_bounds = *start_band;
+        bands++;
+    }
+
+    mr->rdParm[0] = 0;
+    mr->rdParm[1] = 6;
+    mr->rdParm[2] = 0x2f6;
+    mr->rdParm[3] = 0;
+    mr->rdParm[4] = (param - &mr->rdFunction) * sizeof(WORD);
+    mr->rdParm[5] = bands;
+    mr->rdParm[6] = max_bounds;
+    mr->rdParm[7] = rgndata->rdh.rcBound.left;
+    mr->rdParm[8] = rgndata->rdh.rcBound.top;
+    mr->rdParm[9] = rgndata->rdh.rcBound.right;
+    mr->rdParm[10] = rgndata->rdh.rcBound.bottom;
+    mr->rdFunction = META_CREATEREGION;
+    mr->rdSize = param - (WORD *)mr;
+    ret = metadc_write_record( metadc, mr, mr->rdSize * 2 );
+    HeapFree( GetProcessHeap(), 0, mr );
+    HeapFree( GetProcessHeap(), 0, rgndata );
+    if (!ret)
+    {
+        WARN("MFDRV_WriteRecord failed\n");
+        return -1;
+    }
+    return metadc_add_handle( metadc, hrgn );
+}
+
+BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
+{
+    struct metadc *metadc;
+    INT16 index;
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    index = metadc_create_region( metadc, hrgn );
+    if(index == -1) return FALSE;
+    return metadc_param1( hdc, META_PAINTREGION, index );
+}
+
+BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn )
+{
+    struct metadc *metadc;
+    INT16 index;
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    index = metadc_create_region( metadc, hrgn );
+    if (index == -1) return FALSE;
+    return metadc_param1( hdc, META_INVERTREGION, index );
+}
+
+BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
+{
+    struct metadc *metadc;
+    INT16 rgn, brush;
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+
+    rgn = metadc_create_region( metadc, hrgn );
+    if (rgn == -1) return FALSE;
+    brush = metadc_create_brush( metadc, hbrush );
+    if (!brush) return FALSE;
+    return metadc_param2( hdc, META_FILLREGION, rgn, brush );
+}
+
+BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
+{
+    struct metadc *metadc;
+    INT16 rgn, brush;
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    rgn = metadc_create_region( metadc, hrgn );
+    if (rgn == -1) return FALSE;
+    brush = metadc_create_brush( metadc, hbrush );
+    if (!brush) return FALSE;
+    return metadc_param4( hdc, META_FRAMEREGION, rgn, brush, x, y );
+}
+
+BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
+{
+    struct metadc *metadc;
+    INT16 rgn;
+    INT ret;
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    if (mode != RGN_COPY) return ERROR;
+    if (!hrgn) return NULLREGION;
+    rgn = metadc_create_region( metadc, hrgn );
+    if(rgn == -1) return ERROR;
+    ret = metadc_param1( hdc, META_SELECTOBJECT, rgn ) ? NULLREGION : ERROR;
+    metadc_param1( hdc, META_DELETEOBJECT, rgn );
+    metadc_remove_handle( metadc, rgn );
+    return ret;
+}
+
 BOOL METADC_ExtEscape( HDC hdc, INT escape, INT input_size, const void *input,
                        INT output_size, void *output )
 {

@@ -38,7 +38,6 @@ C_SRCS = \
 	metadc.c \
 	metafile.c \
 	mfdrv/bitblt.c \
-	mfdrv/graphics.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
 	objects.c \
