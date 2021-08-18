@@ -2374,6 +2374,14 @@ void __cdecl Concurrency_wait(unsigned int time)
     Sleep(time);
 }
 
+#if _MSVCR_VER>=110
+/* ?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ */
+void WINAPIV _Trace_agents(/*enum Concurrency::Agents_EventType*/int type, __int64 id, ...)
+{
+    FIXME("(%d %s)\n", type, wine_dbgstr_longlong(id));
+}
+#endif
+
 #ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define DEFINE_VTBL_WRAPPER(off)            \

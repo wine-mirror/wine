@@ -562,12 +562,6 @@ LONG CDECL __crtUnhandledException(EXCEPTION_POINTERS *ep)
     SetUnhandledExceptionFilter(NULL);
     return UnhandledExceptionFilter(ep);
 }
-
-/* ?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ */
-void WINAPIV _Trace_agents(/*enum Concurrency::Agents_EventType*/int type, __int64 id, ...)
-{
-    FIXME("(%d %s)\n", type, wine_dbgstr_longlong(id));
-}
 #endif
 
 #if _MSVCR_VER>=120
