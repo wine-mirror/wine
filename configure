@@ -14015,7 +14015,7 @@ else
 int
 main ()
 {
-if (!(_res.options & RES_INIT)) res_init(); res_query("foo",ns_c_in,0,0,0)
+if (!(_res.options & RES_INIT)) res_init(); res_query("foo",ns_c_in,0,0,0); ns_initparse(0,0,0)
   ;
   return 0;
 }
