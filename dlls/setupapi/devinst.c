@@ -109,6 +109,7 @@ static const WCHAR emptyW[] = {0};
 
 struct driver
 {
+    DWORD rank;
     WCHAR inf_path[MAX_PATH];
     WCHAR manufacturer[LINE_LEN];
     WCHAR mfg_key[LINE_LEN];
@@ -4588,21 +4589,23 @@ BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA 
 
 /* Check whether the given hardware or compatible ID matches any of the device's
  * own hardware or compatible IDs. */
-static BOOL device_matches_id(const struct device *device, const WCHAR *id_type, const WCHAR *id)
+static BOOL device_matches_id(const struct device *device, const WCHAR *id_type, const WCHAR *id,
+                              DWORD *driver_rank)
 {
     WCHAR *device_ids;
     const WCHAR *p;
-    DWORD size;
+    DWORD i, size;
 
     if (!RegGetValueW(device->key, NULL, id_type, RRF_RT_REG_MULTI_SZ, NULL, NULL, &size))
     {
         device_ids = heap_alloc(size);
         if (!RegGetValueW(device->key, NULL, id_type, RRF_RT_REG_MULTI_SZ, NULL, device_ids, &size))
         {
-            for (p = device_ids; *p; p += lstrlenW(p) + 1)
+            for (p = device_ids, i = 0; *p; p += lstrlenW(p) + 1, i++)
             {
                 if (!wcsicmp(p, id))
                 {
+                    *driver_rank += min(i, 0xff);
                     heap_free(device_ids);
                     return TRUE;
                 }
@@ -4688,10 +4691,13 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
 
         for (j = 0; SetupGetLineByIndexW(hinf, driver.mfg_key, j, &ctx); ++j)
         {
+            driver.rank = 0;
             for (k = 2, found = FALSE; SetupGetStringFieldW(&ctx, k, id, ARRAY_SIZE(id), NULL); ++k)
             {
-                if ((found = device_matches_id(device, HardwareId, id))) break;
-                if ((found = device_matches_id(device, CompatibleIDs, id))) break;
+                if ((found = device_matches_id(device, HardwareId, id, &driver.rank))) break;
+                driver.rank += 0x2000;
+                if ((found = device_matches_id(device, CompatibleIDs, id, &driver.rank))) break;
+                driver.rank = 0x1000 + min(0x0100 * (k - 2), 0xf00);
             }
 
             if (found)
@@ -4699,8 +4705,8 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
                 SetupGetStringFieldW(&ctx, 0, driver.description, ARRAY_SIZE(driver.description), NULL);
                 SetupGetStringFieldW(&ctx, 1, driver.section, ARRAY_SIZE(driver.section), NULL);
 
-                TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
-                        debugstr_w(driver.manufacturer), debugstr_w(driver.description));
+                TRACE("Found compatible driver: rank %#x manufacturer %s, desc %s.\n",
+                        driver.rank, debugstr_w(driver.manufacturer), debugstr_w(driver.description));
 
                 driver_count++;
                 drivers = heap_realloc(drivers, driver_count * sizeof(*drivers));
@@ -4867,6 +4873,8 @@ BOOL WINAPI SetupDiEnumDriverInfoA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
 BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
     struct device *device;
+    struct driver *best;
+    DWORD i;
 
     TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
 
@@ -4880,10 +4888,17 @@ BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device
         return FALSE;
     }
 
-    WARN("Semi-stub, selecting the first available driver.\n");
+    best = device->drivers;
+    for (i = 1; i < device->driver_count; ++i)
+    {
+        if (device->drivers[i].rank >= best->rank) continue;
+        best = device->drivers + i;
+    }
 
-    device->selected_driver = &device->drivers[0];
+    TRACE("selected driver: rank %#x manufacturer %s, desc %s.\n",
+            best->rank, debugstr_w(best->manufacturer), debugstr_w(best->description));
 
+    device->selected_driver = best;
     return TRUE;
 }
 
