@@ -2133,56 +2133,61 @@ static void check_font_metrics(const WCHAR *nameW, IDWriteFontFace *fontface, co
     else
         IDWriteFontFace_GetMetrics(fontface, (DWRITE_FONT_METRICS *)&metrics);
 
-    ok(metrics.designUnitsPerEm == expected->designUnitsPerEm, "font %s: designUnitsPerEm %u, expected %u\n",
-        wine_dbgstr_w(nameW), metrics.designUnitsPerEm, expected->designUnitsPerEm);
-    ok(metrics.ascent == expected->ascent, "font %s: ascent %u, expected %u\n", wine_dbgstr_w(nameW), metrics.ascent,
-        expected->ascent);
-    ok(metrics.descent == expected->descent, "font %s: descent %u, expected %u\n", wine_dbgstr_w(nameW),
-        metrics.descent, expected->descent);
-    ok(metrics.lineGap == expected->lineGap, "font %s: lineGap %d, expected %d\n", wine_dbgstr_w(nameW),
-        metrics.lineGap, expected->lineGap);
-    ok(metrics.underlinePosition == expected->underlinePosition, "font %s: underlinePosition %d, expected %d\n",
-        wine_dbgstr_w(nameW), metrics.underlinePosition, expected->underlinePosition);
-    ok(metrics.underlineThickness == expected->underlineThickness, "font %s: underlineThickness %u, "
-        "expected %u\n", wine_dbgstr_w(nameW), metrics.underlineThickness, expected->underlineThickness);
-    ok(metrics.strikethroughPosition == expected->strikethroughPosition, "font %s: strikethroughPosition %d, expected %d\n",
-        wine_dbgstr_w(nameW), metrics.strikethroughPosition, expected->strikethroughPosition);
-    ok(metrics.strikethroughThickness == expected->strikethroughThickness, "font %s: strikethroughThickness %u, "
-        "expected %u\n", wine_dbgstr_w(nameW), metrics.strikethroughThickness, expected->strikethroughThickness);
+    winetest_push_context("Font %s", wine_dbgstr_w(nameW));
 
-    if (has_metrics1) {
+    ok(metrics.designUnitsPerEm == expected->designUnitsPerEm, "designUnitsPerEm %u, expected %u.\n",
+            metrics.designUnitsPerEm, expected->designUnitsPerEm);
+    ok(metrics.ascent == expected->ascent, "ascent %u, expected %u.\n", metrics.ascent, expected->ascent);
+    ok(metrics.descent == expected->descent, "descent %u, expected %u.\n", metrics.descent, expected->descent);
+    ok(metrics.lineGap == expected->lineGap, "lineGap %d, expected %d.\n", metrics.lineGap, expected->lineGap);
+    ok(metrics.underlinePosition == expected->underlinePosition, "underlinePosition %d, expected %d.\n",
+            metrics.underlinePosition, expected->underlinePosition);
+    ok(metrics.underlineThickness == expected->underlineThickness, "underlineThickness %u, expected %u.\n",
+            metrics.underlineThickness, expected->underlineThickness);
+    ok(metrics.strikethroughPosition == expected->strikethroughPosition, "strikethroughPosition %d, expected %d.\n",
+            metrics.strikethroughPosition, expected->strikethroughPosition);
+    ok(metrics.strikethroughThickness == expected->strikethroughThickness, "strikethroughThickness %u, "
+            "expected %u.\n", metrics.strikethroughThickness, expected->strikethroughThickness);
+
+    if (has_metrics1)
+    {
         /* For simulated faces metrics are adjusted. Enable tests when exact pattern is understood. */
         if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE)
+        {
+            winetest_pop_context();
             return;
+        }
 
-        ok(metrics.hasTypographicMetrics == expected->hasTypographicMetrics, "font %s: hasTypographicMetrics %d, "
-            "expected %d\n", wine_dbgstr_w(nameW), metrics.hasTypographicMetrics, expected->hasTypographicMetrics);
-        ok(metrics.glyphBoxLeft == expected->glyphBoxLeft, "font %s: glyphBoxLeft %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.glyphBoxLeft, expected->glyphBoxLeft);
-        ok(metrics.glyphBoxTop == expected->glyphBoxTop, "font %s: glyphBoxTop %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.glyphBoxTop, expected->glyphBoxTop);
-        ok(metrics.glyphBoxRight == expected->glyphBoxRight, "font %s: glyphBoxRight %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.glyphBoxRight, expected->glyphBoxRight);
-        ok(metrics.glyphBoxBottom == expected->glyphBoxBottom, "font %s: glyphBoxBottom %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.glyphBoxBottom, expected->glyphBoxBottom);
+        ok(metrics.hasTypographicMetrics == expected->hasTypographicMetrics, "hasTypographicMetrics %d, "
+                "expected %d.\n", metrics.hasTypographicMetrics, expected->hasTypographicMetrics);
+        ok(metrics.glyphBoxLeft == expected->glyphBoxLeft, "glyphBoxLeft %d, expected %d.\n",
+                metrics.glyphBoxLeft, expected->glyphBoxLeft);
+        ok(metrics.glyphBoxTop == expected->glyphBoxTop, "glyphBoxTop %d, expected %d.\n",
+                metrics.glyphBoxTop, expected->glyphBoxTop);
+        ok(metrics.glyphBoxRight == expected->glyphBoxRight, "glyphBoxRight %d, expected %d.\n",
+                metrics.glyphBoxRight, expected->glyphBoxRight);
+        ok(metrics.glyphBoxBottom == expected->glyphBoxBottom, "glyphBoxBottom %d, expected %d.\n",
+                metrics.glyphBoxBottom, expected->glyphBoxBottom);
 
-        ok(metrics.subscriptPositionX == expected->subscriptPositionX, "font %s: subscriptPositionX %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.subscriptPositionX, expected->subscriptPositionX);
-        ok(metrics.subscriptPositionY == expected->subscriptPositionY, "font %s: subscriptPositionY %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.subscriptPositionY, expected->subscriptPositionY);
-        ok(metrics.subscriptSizeX == expected->subscriptSizeX, "font %s: subscriptSizeX %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.subscriptSizeX, expected->subscriptSizeX);
-        ok(metrics.subscriptSizeY == expected->subscriptSizeY, "font %s: subscriptSizeY %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.subscriptSizeY, expected->subscriptSizeY);
-        ok(metrics.superscriptPositionX == expected->superscriptPositionX, "font %s: superscriptPositionX %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.superscriptPositionX, expected->superscriptPositionX);
-        ok(metrics.superscriptPositionY == expected->superscriptPositionY, "font %s: superscriptPositionY %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.superscriptPositionY, expected->superscriptPositionY);
-        ok(metrics.superscriptSizeX == expected->superscriptSizeX, "font %s: superscriptSizeX %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.superscriptSizeX, expected->superscriptSizeX);
-        ok(metrics.superscriptSizeY == expected->superscriptSizeY, "font %s: superscriptSizeY %d, expected %d\n",
-            wine_dbgstr_w(nameW), metrics.superscriptSizeY, expected->superscriptSizeY);
+        ok(metrics.subscriptPositionX == expected->subscriptPositionX, "subscriptPositionX %d, expected %d.\n",
+                metrics.subscriptPositionX, expected->subscriptPositionX);
+        ok(metrics.subscriptPositionY == expected->subscriptPositionY, "subscriptPositionY %d, expected %d.\n",
+                metrics.subscriptPositionY, expected->subscriptPositionY);
+        ok(metrics.subscriptSizeX == expected->subscriptSizeX, "subscriptSizeX %d, expected %d.\n",
+                metrics.subscriptSizeX, expected->subscriptSizeX);
+        ok(metrics.subscriptSizeY == expected->subscriptSizeY, "subscriptSizeY %d, expected %d.\n",
+                metrics.subscriptSizeY, expected->subscriptSizeY);
+        ok(metrics.superscriptPositionX == expected->superscriptPositionX, "superscriptPositionX %d, expected %d.\n",
+                metrics.superscriptPositionX, expected->superscriptPositionX);
+        ok(metrics.superscriptPositionY == expected->superscriptPositionY, "superscriptPositionY %d, expected %d.\n",
+                metrics.superscriptPositionY, expected->superscriptPositionY);
+        ok(metrics.superscriptSizeX == expected->superscriptSizeX, "superscriptSizeX %d, expected %d.\n",
+                metrics.superscriptSizeX, expected->superscriptSizeX);
+        ok(metrics.superscriptSizeY == expected->superscriptSizeY, "superscriptSizeY %d, expected %d.\n",
+                metrics.superscriptSizeY, expected->superscriptSizeY);
     }
+
+    winetest_pop_context();
 }
 
 static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
@@ -2873,21 +2878,22 @@ if (0) /* crashes on native */
             sim = IDWriteFontFace_GetSimulations(fontface);
             get_logfont_from_font(font, &lf);
 
-            ok(logfont.lfWeight == lf.lfWeight, "%s: unexpected lfWeight %d, expected lfWeight %d, font weight %d, "
-                "bold simulation %s\n", wine_dbgstr_w(nameW), logfont.lfWeight, lf.lfWeight, IDWriteFont_GetWeight(font),
-                sim & DWRITE_FONT_SIMULATIONS_BOLD ? "yes" : "no");
-            ok(logfont.lfItalic == lf.lfItalic, "%s: unexpected italic flag %d, oblique simulation %s\n",
-                wine_dbgstr_w(nameW), logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
-            ok(!lstrcmpW(logfont.lfFaceName, lf.lfFaceName), "%s: unexpected facename %s, expected %s\n",
-                wine_dbgstr_w(nameW), wine_dbgstr_w(logfont.lfFaceName), wine_dbgstr_w(lf.lfFaceName));
+            winetest_push_context("Font %s", wine_dbgstr_w(nameW));
 
-            ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "%s: unexpected output precision %d\n", wine_dbgstr_w(nameW),
-                logfont.lfOutPrecision);
-            ok(logfont.lfClipPrecision == CLIP_DEFAULT_PRECIS, "%s: unexpected clipping precision %d\n", wine_dbgstr_w(nameW),
-                logfont.lfClipPrecision);
-            ok(logfont.lfQuality == DEFAULT_QUALITY, "%s: unexpected quality %d\n", wine_dbgstr_w(nameW), logfont.lfQuality);
-            ok(logfont.lfPitchAndFamily == DEFAULT_PITCH, "%s: unexpected pitch %d\n", wine_dbgstr_w(nameW),
-                logfont.lfPitchAndFamily);
+            ok(logfont.lfWeight == lf.lfWeight, "Unexpected lfWeight %d, expected lfWeight %d, font weight %d, "
+                    "bold simulation %s.\n", logfont.lfWeight, lf.lfWeight, IDWriteFont_GetWeight(font),
+                    sim & DWRITE_FONT_SIMULATIONS_BOLD ? "yes" : "no");
+            ok(logfont.lfItalic == lf.lfItalic, "Unexpected italic flag %d, oblique simulation %s.\n",
+                    logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
+            ok(!lstrcmpW(logfont.lfFaceName, lf.lfFaceName), "Unexpected facename %s, expected %s\n",
+                    wine_dbgstr_w(logfont.lfFaceName), wine_dbgstr_w(lf.lfFaceName));
+
+            ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "Unexpected output precision %d.\n", logfont.lfOutPrecision);
+            ok(logfont.lfClipPrecision == CLIP_DEFAULT_PRECIS, "Unexpected clipping precision %d.\n", logfont.lfClipPrecision);
+            ok(logfont.lfQuality == DEFAULT_QUALITY, "Unexpected quality %d.\n", logfont.lfQuality);
+            ok(logfont.lfPitchAndFamily == DEFAULT_PITCH, "Unexpected pitch %d.\n", logfont.lfPitchAndFamily);
+
+            winetest_pop_context();
 
             IDWriteFontFace_Release(fontface);
             IDWriteFont_Release(font);
@@ -4840,22 +4846,23 @@ if (0) { /* crashes on native */
 
             sim = IDWriteFont_GetSimulations(font);
 
-            get_logfont_from_font(font, &lf);
-            ok(logfont.lfWeight == lf.lfWeight, "%s: unexpected lfWeight %d, expected lfWeight %d, font weight %d, "
-                "bold simulation %s\n", wine_dbgstr_w(nameW), logfont.lfWeight, lf.lfWeight, IDWriteFont_GetWeight(font),
-                sim & DWRITE_FONT_SIMULATIONS_BOLD ? "yes" : "no");
-            ok(logfont.lfItalic == lf.lfItalic, "%s: unexpected italic flag %d, oblique simulation %s\n",
-                wine_dbgstr_w(nameW), logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
-            ok(!lstrcmpW(logfont.lfFaceName, lf.lfFaceName), "%s: unexpected facename %s, expected %s\n",
-                wine_dbgstr_w(nameW), wine_dbgstr_w(logfont.lfFaceName), wine_dbgstr_w(lf.lfFaceName));
+            winetest_push_context("Font %s", wine_dbgstr_w(nameW));
 
-            ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "%s: unexpected output precision %d\n", wine_dbgstr_w(nameW),
-                logfont.lfOutPrecision);
-            ok(logfont.lfClipPrecision == CLIP_DEFAULT_PRECIS, "%s: unexpected clipping precision %d\n", wine_dbgstr_w(nameW),
-                logfont.lfClipPrecision);
-            ok(logfont.lfQuality == DEFAULT_QUALITY, "%s: unexpected quality %d\n", wine_dbgstr_w(nameW), logfont.lfQuality);
-            ok(logfont.lfPitchAndFamily == DEFAULT_PITCH, "%s: unexpected pitch %d\n", wine_dbgstr_w(nameW),
-                logfont.lfPitchAndFamily);
+            get_logfont_from_font(font, &lf);
+            ok(logfont.lfWeight == lf.lfWeight, "Unexpected lfWeight %d, expected lfWeight %d, font weight %d, "
+                    "bold simulation %s.\n", logfont.lfWeight, lf.lfWeight, IDWriteFont_GetWeight(font),
+                    sim & DWRITE_FONT_SIMULATIONS_BOLD ? "yes" : "no");
+            ok(logfont.lfItalic == lf.lfItalic, "Unexpected italic flag %d, oblique simulation %s.\n",
+                    logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
+            ok(!lstrcmpW(logfont.lfFaceName, lf.lfFaceName), "Unexpected facename %s, expected %s.\n",
+                    wine_dbgstr_w(logfont.lfFaceName), wine_dbgstr_w(lf.lfFaceName));
+
+            ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "Unexpected output precision %d.\n", logfont.lfOutPrecision);
+            ok(logfont.lfClipPrecision == CLIP_DEFAULT_PRECIS, "Unexpected clipping precision %d.\n", logfont.lfClipPrecision);
+            ok(logfont.lfQuality == DEFAULT_QUALITY, "Unexpected quality %d.\n", logfont.lfQuality);
+            ok(logfont.lfPitchAndFamily == DEFAULT_PITCH, "Unexpected pitch %d.\n", logfont.lfPitchAndFamily);
+
+            winetest_pop_context();
 
             IDWriteFont_Release(font);
         }
@@ -6206,79 +6213,77 @@ static BOOL get_vdmx_size(const struct VDMX_group *group, int emsize, int *a, in
 
 static void test_metrics_cmp(FLOAT emsize, const DWRITE_FONT_METRICS *metrics, const DWRITE_FONT_METRICS1 *expected)
 {
-    ok(metrics->designUnitsPerEm == expected->designUnitsPerEm, "%.2f: emsize: got %u expect %u\n",
-           emsize, metrics->designUnitsPerEm, expected->designUnitsPerEm);
-    ok(metrics->ascent == expected->ascent, "%.2f a: got %u expect %u\n",
-           emsize, metrics->ascent, expected->ascent);
-    ok(metrics->descent == expected->descent, "%.2f d: got %u expect %u\n",
-           emsize, metrics->descent, expected->descent);
-    ok(metrics->lineGap == expected->lineGap, "%.2f lg: got %d expect %d\n",
-           emsize, metrics->lineGap, expected->lineGap);
-    ok(metrics->capHeight == expected->capHeight, "%.2f capH: got %u expect %u\n",
-           emsize, metrics->capHeight, expected->capHeight);
-    ok(metrics->xHeight == expected->xHeight, "%.2f xH: got %u expect %u\n",
-           emsize, metrics->xHeight, expected->xHeight);
-    ok(metrics->underlinePosition == expected->underlinePosition, "%.2f ulP: got %d expect %d\n",
-            emsize, metrics->underlinePosition, expected->underlinePosition);
-    ok(metrics->underlineThickness == expected->underlineThickness, "%.2f ulTh: got %u expect %u\n",
-           emsize, metrics->underlineThickness, expected->underlineThickness);
-    ok(metrics->strikethroughPosition == expected->strikethroughPosition, "%.2f stP: got %d expect %d\n",
-           emsize, metrics->strikethroughPosition, expected->strikethroughPosition);
-    ok(metrics->strikethroughThickness == expected->strikethroughThickness, "%.2f stTh: got %u expect %u\n",
-           emsize, metrics->strikethroughThickness, expected->strikethroughThickness);
+    winetest_push_context("Size %.2f", emsize);
+
+    ok(metrics->designUnitsPerEm == expected->designUnitsPerEm, "got %u expect %u.\n",
+            metrics->designUnitsPerEm, expected->designUnitsPerEm);
+    ok(metrics->ascent == expected->ascent, "a: got %u expect %u.\n", metrics->ascent, expected->ascent);
+    ok(metrics->descent == expected->descent, "d: got %u expect %u.\n", metrics->descent, expected->descent);
+    ok(metrics->lineGap == expected->lineGap, "lg: got %d expect %d.\n", metrics->lineGap, expected->lineGap);
+    ok(metrics->capHeight == expected->capHeight, "capH: got %u expect %u.\n", metrics->capHeight, expected->capHeight);
+    ok(metrics->xHeight == expected->xHeight, "xH: got %u expect %u.\n", metrics->xHeight, expected->xHeight);
+    ok(metrics->underlinePosition == expected->underlinePosition, "ulP: got %d expect %d.\n",
+            metrics->underlinePosition, expected->underlinePosition);
+    ok(metrics->underlineThickness == expected->underlineThickness, "ulTh: got %u expect %u.\n",
+            metrics->underlineThickness, expected->underlineThickness);
+    ok(metrics->strikethroughPosition == expected->strikethroughPosition, "stP: got %d expect %d.\n",
+            metrics->strikethroughPosition, expected->strikethroughPosition);
+    ok(metrics->strikethroughThickness == expected->strikethroughThickness, "stTh: got %u expect %u.\n",
+            metrics->strikethroughThickness, expected->strikethroughThickness);
+
+    winetest_pop_context();
 }
 
 static void test_metrics1_cmp(FLOAT emsize, const DWRITE_FONT_METRICS1 *metrics, const DWRITE_FONT_METRICS1 *expected)
 {
-    ok(metrics->designUnitsPerEm == expected->designUnitsPerEm, "%.2f: emsize: got %u expect %u\n",
-           emsize, metrics->designUnitsPerEm, expected->designUnitsPerEm);
-    ok(metrics->ascent == expected->ascent, "%.2f a: got %u expect %u\n",
-           emsize, metrics->ascent, expected->ascent);
-    ok(metrics->descent == expected->descent, "%.2f d: got %u expect %u\n",
-           emsize, metrics->descent, expected->descent);
-    ok(metrics->lineGap == expected->lineGap, "%.2f lg: got %d expect %d\n",
-           emsize, metrics->lineGap, expected->lineGap);
-    ok(metrics->capHeight == expected->capHeight, "%.2f capH: got %u expect %u\n",
-           emsize, metrics->capHeight, expected->capHeight);
-    ok(metrics->xHeight == expected->xHeight, "%.2f xH: got %u expect %u\n",
-           emsize, metrics->xHeight, expected->xHeight);
-    ok(metrics->underlinePosition == expected->underlinePosition, "%.2f ulP: got %d expect %d\n",
-            emsize, metrics->underlinePosition, expected->underlinePosition);
-    ok(metrics->underlineThickness == expected->underlineThickness, "%.2f ulTh: got %u expect %u\n",
-           emsize, metrics->underlineThickness, expected->underlineThickness);
-    ok(metrics->strikethroughPosition == expected->strikethroughPosition, "%.2f stP: got %d expect %d\n",
-           emsize, metrics->strikethroughPosition, expected->strikethroughPosition);
-    ok(metrics->strikethroughThickness == expected->strikethroughThickness, "%.2f stTh: got %u expect %u\n",
-           emsize, metrics->strikethroughThickness, expected->strikethroughThickness);
-    ok(metrics->glyphBoxLeft == expected->glyphBoxLeft, "%.2f box left: got %d expect %d\n",
-           emsize, metrics->glyphBoxLeft, expected->glyphBoxLeft);
+    winetest_push_context("Size %.2f", emsize);
+
+    ok(metrics->designUnitsPerEm == expected->designUnitsPerEm, "got %u expect %u.\n",
+            metrics->designUnitsPerEm, expected->designUnitsPerEm);
+    ok(metrics->ascent == expected->ascent, "a: got %u expect %u.\n", metrics->ascent, expected->ascent);
+    ok(metrics->descent == expected->descent, "d: got %u expect %u.\n", metrics->descent, expected->descent);
+    ok(metrics->lineGap == expected->lineGap, "lg: got %d expect %d.\n", metrics->lineGap, expected->lineGap);
+    ok(metrics->capHeight == expected->capHeight, "capH: got %u expect %u.\n", metrics->capHeight, expected->capHeight);
+    ok(metrics->xHeight == expected->xHeight, "xH: got %u expect %u.\n", metrics->xHeight, expected->xHeight);
+    ok(metrics->underlinePosition == expected->underlinePosition, "ulP: got %d expect %d.\n",
+            metrics->underlinePosition, expected->underlinePosition);
+    ok(metrics->underlineThickness == expected->underlineThickness, "ulTh: got %u expect %u.\n",
+            metrics->underlineThickness, expected->underlineThickness);
+    ok(metrics->strikethroughPosition == expected->strikethroughPosition, "stP: got %d expect %d.\n",
+            metrics->strikethroughPosition, expected->strikethroughPosition);
+    ok(metrics->strikethroughThickness == expected->strikethroughThickness, "stTh: got %u expect %u.\n",
+            metrics->strikethroughThickness, expected->strikethroughThickness);
+    ok(metrics->glyphBoxLeft == expected->glyphBoxLeft, "box left: got %d expect %d.\n",
+            metrics->glyphBoxLeft, expected->glyphBoxLeft);
 if (0) { /* this is not consistent */
-    ok(metrics->glyphBoxTop == expected->glyphBoxTop, "%.2f box top: got %d expect %d\n",
-           emsize, metrics->glyphBoxTop, expected->glyphBoxTop);
-    ok(metrics->glyphBoxRight == expected->glyphBoxRight, "%.2f box right: got %d expect %d\n",
-           emsize, metrics->glyphBoxRight, expected->glyphBoxRight);
+    ok(metrics->glyphBoxTop == expected->glyphBoxTop, "box top: got %d expect %d.\n",
+            metrics->glyphBoxTop, expected->glyphBoxTop);
+    ok(metrics->glyphBoxRight == expected->glyphBoxRight, "box right: got %d expect %d.\n",
+            metrics->glyphBoxRight, expected->glyphBoxRight);
 }
-    ok(metrics->glyphBoxBottom == expected->glyphBoxBottom, "%.2f box bottom: got %d expect %d\n",
-           emsize, metrics->glyphBoxBottom, expected->glyphBoxBottom);
-    ok(metrics->subscriptPositionX == expected->subscriptPositionX, "%.2f subX: got %d expect %d\n",
-           emsize, metrics->subscriptPositionX, expected->subscriptPositionX);
-    ok(metrics->subscriptPositionY == expected->subscriptPositionY, "%.2f subY: got %d expect %d\n",
-           emsize, metrics->subscriptPositionY, expected->subscriptPositionY);
-    ok(metrics->subscriptSizeX == expected->subscriptSizeX, "%.2f subsizeX: got %d expect %d\n",
-           emsize, metrics->subscriptSizeX, expected->subscriptSizeX);
-    ok(metrics->subscriptPositionY == expected->subscriptPositionY, "%.2f subsizeY: got %d expect %d\n",
-           emsize, metrics->subscriptSizeY, expected->subscriptSizeY);
-    ok(metrics->superscriptPositionX == expected->superscriptPositionX, "%.2f supX: got %d expect %d\n",
-           emsize, metrics->superscriptPositionX, expected->superscriptPositionX);
+    ok(metrics->glyphBoxBottom == expected->glyphBoxBottom, "box bottom: got %d expect %d.\n",
+            metrics->glyphBoxBottom, expected->glyphBoxBottom);
+    ok(metrics->subscriptPositionX == expected->subscriptPositionX, "subX: got %d expect %d.\n",
+            metrics->subscriptPositionX, expected->subscriptPositionX);
+    ok(metrics->subscriptPositionY == expected->subscriptPositionY, "subY: got %d expect %d.\n",
+            metrics->subscriptPositionY, expected->subscriptPositionY);
+    ok(metrics->subscriptSizeX == expected->subscriptSizeX, "subsizeX: got %d expect %d.\n",
+            metrics->subscriptSizeX, expected->subscriptSizeX);
+    ok(metrics->subscriptPositionY == expected->subscriptPositionY, "subsizeY: got %d expect %d.\n",
+            metrics->subscriptSizeY, expected->subscriptSizeY);
+    ok(metrics->superscriptPositionX == expected->superscriptPositionX, "supX: got %d expect %d.\n",
+            metrics->superscriptPositionX, expected->superscriptPositionX);
 if (0)
-    ok(metrics->superscriptPositionY == expected->superscriptPositionY, "%.2f supY: got %d expect %d\n",
-           emsize, metrics->superscriptPositionY, expected->superscriptPositionY);
-    ok(metrics->superscriptSizeX == expected->superscriptSizeX, "%.2f supsizeX: got %d expect %d\n",
-           emsize, metrics->superscriptSizeX, expected->superscriptSizeX);
-    ok(metrics->superscriptSizeY == expected->superscriptSizeY, "%.2f supsizeY: got %d expect %d\n",
-           emsize, metrics->superscriptSizeY, expected->superscriptSizeY);
-    ok(metrics->hasTypographicMetrics == expected->hasTypographicMetrics, "%.2f hastypo: got %d expect %d\n",
-           emsize, metrics->hasTypographicMetrics, expected->hasTypographicMetrics);
+    ok(metrics->superscriptPositionY == expected->superscriptPositionY, "supY: got %d expect %d.\n",
+            metrics->superscriptPositionY, expected->superscriptPositionY);
+    ok(metrics->superscriptSizeX == expected->superscriptSizeX, "supsizeX: got %d expect %d.\n",
+            metrics->superscriptSizeX, expected->superscriptSizeX);
+    ok(metrics->superscriptSizeY == expected->superscriptSizeY, "supsizeY: got %d expect %d.\n",
+            metrics->superscriptSizeY, expected->superscriptSizeY);
+    ok(metrics->hasTypographicMetrics == expected->hasTypographicMetrics, "hastypo: got %d expect %d.\n",
+            metrics->hasTypographicMetrics, expected->hasTypographicMetrics);
+
+    winetest_pop_context();
 }
 
 struct compatmetrics_test {
@@ -6557,26 +6562,30 @@ static void test_GetPanose(void)
         IDWriteFont1_GetPanose(font1, &panose);
         get_expected_panose(font1, &expected_panose);
 
-        ok(panose.values[0] == expected_panose.values[0], "%s: values[0] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        winetest_push_context("Font %s", wine_dbgstr_w(nameW));
+
+        ok(panose.values[0] == expected_panose.values[0], "values[0] %#x, expected %#x.\n",
             panose.values[0], expected_panose.values[0]);
-        ok(panose.values[1] == expected_panose.values[1], "%s: values[1] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[1] == expected_panose.values[1], "values[1] %#x, expected %#x.\n",
             panose.values[1], expected_panose.values[1]);
-        ok(panose.values[2] == expected_panose.values[2], "%s: values[2] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[2] == expected_panose.values[2], "values[2] %#x, expected %#x.\n",
             panose.values[2], expected_panose.values[2]);
-        ok(panose.values[3] == expected_panose.values[3], "%s: values[3] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[3] == expected_panose.values[3], "values[3] %#x, expected %#x.\n",
             panose.values[3], expected_panose.values[3]);
-        ok(panose.values[4] == expected_panose.values[4], "%s: values[4] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[4] == expected_panose.values[4], "values[4] %#x, expected %#x.\n",
             panose.values[4], expected_panose.values[4]);
-        ok(panose.values[5] == expected_panose.values[5], "%s: values[5] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[5] == expected_panose.values[5], "values[5] %#x, expected %#x.\n",
             panose.values[5], expected_panose.values[5]);
-        ok(panose.values[6] == expected_panose.values[6], "%s: values[6] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[6] == expected_panose.values[6], "values[6] %#x, expected %#x.\n",
             panose.values[6], expected_panose.values[6]);
-        ok(panose.values[7] == expected_panose.values[7], "%s: values[7] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[7] == expected_panose.values[7], "values[7] %#x, expected %#x.\n",
             panose.values[7], expected_panose.values[7]);
-        ok(panose.values[8] == expected_panose.values[8], "%s: values[8] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[8] == expected_panose.values[8], "values[8] %#x, expected %#x.\n",
             panose.values[8], expected_panose.values[8]);
-        ok(panose.values[9] == expected_panose.values[9], "%s: values[9] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+        ok(panose.values[9] == expected_panose.values[9], "values[9] %#x, expected %#x.\n",
             panose.values[9], expected_panose.values[9]);
+
+        winetest_pop_context();
 
         hr = IDWriteFont1_CreateFontFace(font1, &fontface);
         ok(hr == S_OK, "Failed to create a font face, %#x.\n", hr);
@@ -6876,20 +6885,26 @@ static void test_GetRecommendedRenderingMode(void)
     /* detect old dwrite version, that is using higher threshold value */
     g_is_vista = fontface1 == NULL;
 
-    for (emsize = 1.0; emsize < 500.0; emsize += 1.0) {
+    for (emsize = 1.0; emsize < 500.0; emsize += 1.0)
+    {
         DWRITE_RENDERING_MODE expected;
+        unsigned int i;
         FLOAT ppdip;
         WORD gasp;
-        int i;
 
-        for (i = 0; i < ARRAY_SIZE(recmode_tests); i++) {
+        winetest_push_context("Size %.2f", emsize);
+
+        for (i = 0; i < ARRAY_SIZE(recmode_tests); ++i)
+        {
+            winetest_push_context("%u", i);
+
             ppdip = 1.0f;
             mode = 10;
             gasp = get_gasp_flags(fontface, emsize, ppdip);
             expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
             hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+            ok(mode == expected, "got %d, ppdip %f, flags 0x%04x, expected %d.\n", mode, ppdip, gasp, expected);
 
             /* some ppdip variants */
             ppdip = 0.5f;
@@ -6898,18 +6913,19 @@ static void test_GetRecommendedRenderingMode(void)
             expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
             hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+            ok(mode == expected, "got %d, ppdip %f, flags 0x%04x, expected %d.\n", mode, ppdip, gasp, expected);
 
             /* Only test larger sizes to workaround Win7 differences, where unscaled natural emsize threshold is used;
                Win8 and Win10 handle this as expected. */
-            if (emsize > 20.0f) {
+            if (emsize > 20.0f)
+            {
                 ppdip = 1.5f;
                 mode = 10;
                 gasp = get_gasp_flags(fontface, emsize, ppdip);
                 expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
                 hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
-                ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+                ok(mode == expected, "got %d, ppdip %f, flags 0x%04x, expected %d.\n", mode, ppdip, gasp, expected);
 
                 ppdip = 2.0f;
                 mode = 10;
@@ -6917,14 +6933,20 @@ static void test_GetRecommendedRenderingMode(void)
                 expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
                 hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
-                ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+                ok(mode == expected, "got %d, ppdip %f, flags 0x%04x, expected %d.\n", mode, ppdip, gasp, expected);
             }
+
+            winetest_pop_context();
         }
 
         /* IDWriteFontFace1 offers another variant of this method */
-        if (fontface1) {
-            for (i = 0; i < ARRAY_SIZE(recmode_tests1); i++) {
+        if (fontface1)
+        {
+            for (i = 0; i < ARRAY_SIZE(recmode_tests1); ++i)
+            {
                 FLOAT dpi;
+
+                winetest_push_context("%u", i);
 
                 ppdip = 1.0f;
                 dpi = 96.0f * ppdip;
@@ -6934,11 +6956,12 @@ static void test_GetRecommendedRenderingMode(void)
                 hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi,
                     NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
-                ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
 
                 /* Only test larger sizes to workaround Win7 differences, where unscaled natural emsize threshold is used;
                    Win8 and Win10 handle this as expected. */
-                if (emsize > 20.0f) {
+                if (emsize > 20.0f)
+                {
                     ppdip = 2.0f;
                     dpi = 96.0f * ppdip;
                     mode = 10;
@@ -6947,7 +6970,7 @@ static void test_GetRecommendedRenderingMode(void)
                     hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi,
                         NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                     ok(hr == S_OK, "got 0x%08x\n", hr);
-                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                    ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
 
                     ppdip = 0.5f;
                     dpi = 96.0f * ppdip;
@@ -6957,7 +6980,7 @@ static void test_GetRecommendedRenderingMode(void)
                     hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi,
                         NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                     ok(hr == S_OK, "got 0x%08x\n", hr);
-                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                    ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
 
                     /* try different dpis for X and Y direction */
                     ppdip = 1.0f;
@@ -6968,7 +6991,7 @@ static void test_GetRecommendedRenderingMode(void)
                     hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi * 0.5f, dpi,
                         NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                     ok(hr == S_OK, "got 0x%08x\n", hr);
-                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                    ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
 
                     ppdip = 1.0f;
                     dpi = 96.0f * ppdip;
@@ -6978,7 +7001,7 @@ static void test_GetRecommendedRenderingMode(void)
                     hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi * 0.5f,
                         NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                     ok(hr == S_OK, "got 0x%08x\n", hr);
-                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                    ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
 
                     ppdip = 2.0f;
                     dpi = 96.0f * ppdip;
@@ -6988,7 +7011,7 @@ static void test_GetRecommendedRenderingMode(void)
                     hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi * 0.5f, dpi,
                         NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                     ok(hr == S_OK, "got 0x%08x\n", hr);
-                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                    ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
 
                     ppdip = 2.0f;
                     dpi = 96.0f * ppdip;
@@ -6998,8 +7021,10 @@ static void test_GetRecommendedRenderingMode(void)
                     hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi * 0.5f,
                         NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                     ok(hr == S_OK, "got 0x%08x\n", hr);
-                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                    ok(mode == expected, "got %d, dpi %f, flags 0x%04x, expected %d.\n", mode, dpi, gasp, expected);
                 }
+
+                winetest_pop_context();
             }
         }
 
@@ -7008,16 +7033,20 @@ static void test_GetRecommendedRenderingMode(void)
             DWRITE_GRID_FIT_MODE gridfit, expected_gridfit;
 
             gasp = get_gasp_flags(fontface, emsize, 1.0f);
-            for (i = 0; i < ARRAY_SIZE(recmode_tests1); i++) {
+            for (i = 0; i < ARRAY_SIZE(recmode_tests1); ++i)
+            {
+                winetest_push_context("%u", i);
+
                 mode = 10;
                 expected = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
                 expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
                 hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, emsize, 96.0f, 96.0f,
                     NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, params, &mode, &gridfit);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
-                ok(mode == expected, "%.2f: got %d, flags 0x%04x, expected %d\n", emsize, mode, gasp, expected);
-                ok(gridfit == expected_gridfit, "%.2f/%d: gridfit: got %d, flags 0x%04x, expected %d\n", emsize, i, gridfit,
-                    gasp, expected_gridfit);
+                ok(mode == expected, "got %d, flags 0x%04x, expected %d.\n", mode, gasp, expected);
+                ok(gridfit == expected_gridfit, "gridfit: got %d, flags 0x%04x, expected %d.\n", gridfit, gasp, expected_gridfit);
+
+                winetest_pop_context();
             }
         }
 
@@ -7027,18 +7056,24 @@ static void test_GetRecommendedRenderingMode(void)
             DWRITE_RENDERING_MODE1 mode1, expected1;
 
             gasp = get_gasp_flags(fontface, emsize, 1.0f);
-            for (i = 0; i < ARRAY_SIZE(recmode_tests1); i++) {
+            for (i = 0; i < ARRAY_SIZE(recmode_tests1); ++i)
+            {
+                winetest_push_context("%u", i);
+
                 mode1 = 10;
                 expected1 = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
                 expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
                 hr = IDWriteFontFace3_GetRecommendedRenderingMode(fontface3, emsize, 96.0f, 96.0f,
                     NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, params, &mode1, &gridfit);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
-                ok(mode1 == expected1, "%.2f: got %d, flags 0x%04x, expected %d\n", emsize, mode1, gasp, expected1);
-                ok(gridfit == expected_gridfit, "%.2f/%d: gridfit: got %d, flags 0x%04x, expected %d\n", emsize, i, gridfit,
-                    gasp, expected_gridfit);
+                ok(mode1 == expected1, "got %d, flags 0x%04x, expected %d.\n", mode1, gasp, expected1);
+                ok(gridfit == expected_gridfit, "gridfit: got %d, flags 0x%04x, expected %d.\n", gridfit, gasp, expected_gridfit);
+
+                winetest_pop_context();
             }
         }
+
+        winetest_pop_context();
     }
 
     IDWriteRenderingParams_Release(params);
@@ -8161,19 +8196,23 @@ static void test_GetFontSignature(void)
 
         get_expected_fontsig(font, &expected_signature);
 
-        ok(fontsig.fsUsb[0] == expected_signature.fsUsb[0], "%s: fsUsb[0] %#x, expected %#x\n", wine_dbgstr_w(nameW),
-            fontsig.fsUsb[0], expected_signature.fsUsb[0]);
-        ok(fontsig.fsUsb[1] == expected_signature.fsUsb[1], "%s: fsUsb[1] %#x, expected %#x\n", wine_dbgstr_w(nameW),
-            fontsig.fsUsb[1], expected_signature.fsUsb[1]);
-        ok(fontsig.fsUsb[2] == expected_signature.fsUsb[2], "%s: fsUsb[2] %#x, expected %#x\n", wine_dbgstr_w(nameW),
-            fontsig.fsUsb[2], expected_signature.fsUsb[2]);
-        ok(fontsig.fsUsb[3] == expected_signature.fsUsb[3], "%s: fsUsb[3] %#x, expected %#x\n", wine_dbgstr_w(nameW),
-            fontsig.fsUsb[3], expected_signature.fsUsb[3]);
+        winetest_push_context("Font %s\n", wine_dbgstr_w(nameW));
 
-        ok(fontsig.fsCsb[0] == expected_signature.fsCsb[0], "%s: fsCsb[0] %#x, expected %#x\n", wine_dbgstr_w(nameW),
-            fontsig.fsCsb[0], expected_signature.fsCsb[0]);
-        ok(fontsig.fsCsb[1] == expected_signature.fsCsb[1], "%s: fsCsb[1] %#x, expected %#x\n", wine_dbgstr_w(nameW),
-            fontsig.fsCsb[1], expected_signature.fsCsb[1]);
+        ok(fontsig.fsUsb[0] == expected_signature.fsUsb[0], "fsUsb[0] %#x, expected %#x.\n",
+                fontsig.fsUsb[0], expected_signature.fsUsb[0]);
+        ok(fontsig.fsUsb[1] == expected_signature.fsUsb[1], "fsUsb[1] %#x, expected %#x.\n",
+                fontsig.fsUsb[1], expected_signature.fsUsb[1]);
+        ok(fontsig.fsUsb[2] == expected_signature.fsUsb[2], "fsUsb[2] %#x, expected %#x.\n",
+                fontsig.fsUsb[2], expected_signature.fsUsb[2]);
+        ok(fontsig.fsUsb[3] == expected_signature.fsUsb[3], "fsUsb[3] %#x, expected %#x.\n",
+                fontsig.fsUsb[3], expected_signature.fsUsb[3]);
+
+        ok(fontsig.fsCsb[0] == expected_signature.fsCsb[0], "fsCsb[0] %#x, expected %#x.\n",
+                fontsig.fsCsb[0], expected_signature.fsCsb[0]);
+        ok(fontsig.fsCsb[1] == expected_signature.fsCsb[1], "fsCsb[1] %#x, expected %#x.\n",
+                fontsig.fsCsb[1], expected_signature.fsCsb[1]);
+
+        winetest_pop_context();
 
         IDWriteFont_Release(font);
         IDWriteFontFamily_Release(family);
@@ -9340,30 +9379,34 @@ static void test_CreateCustomRenderingParams(void)
     for (i = 0; i < ARRAY_SIZE(params_tests); i++) {
         IDWriteRenderingParams *params;
 
+        winetest_push_context("%u", i);
+
         params = (void *)0xdeadbeef;
         hr = IDWriteFactory_CreateCustomRenderingParams(factory, params_tests[i].gamma, params_tests[i].contrast,
                 params_tests[i].cleartype_level, params_tests[i].geometry, params_tests[i].rendering_mode, &params);
-        ok(hr == params_tests[i].hr, "%u: unexpected hr %#x, expected %#x.\n", i, hr, params_tests[i].hr);
+        ok(hr == params_tests[i].hr, "unexpected hr %#x, expected %#x.\n", hr, params_tests[i].hr);
 
         if (hr == S_OK) {
-            ok(params_tests[i].gamma == IDWriteRenderingParams_GetGamma(params), "%u: unexpected gamma %f, expected %f.\n",
-                    i, IDWriteRenderingParams_GetGamma(params), params_tests[i].gamma);
+            ok(params_tests[i].gamma == IDWriteRenderingParams_GetGamma(params), "unexpected gamma %f, expected %f.\n",
+                    IDWriteRenderingParams_GetGamma(params), params_tests[i].gamma);
             ok(params_tests[i].contrast == IDWriteRenderingParams_GetEnhancedContrast(params),
-                    "%u: unexpected contrast %f, expected %f.\n",
-                    i, IDWriteRenderingParams_GetEnhancedContrast(params), params_tests[i].contrast);
+                    "unexpected contrast %f, expected %f.\n",
+                    IDWriteRenderingParams_GetEnhancedContrast(params), params_tests[i].contrast);
             ok(params_tests[i].cleartype_level == IDWriteRenderingParams_GetClearTypeLevel(params),
-                    "%u: unexpected ClearType level %f, expected %f.\n",
-                    i, IDWriteRenderingParams_GetClearTypeLevel(params), params_tests[i].cleartype_level);
+                    "unexpected ClearType level %f, expected %f.\n",
+                    IDWriteRenderingParams_GetClearTypeLevel(params), params_tests[i].cleartype_level);
             ok(params_tests[i].geometry == IDWriteRenderingParams_GetPixelGeometry(params),
-                    "%u: unexpected pixel geometry %u, expected %u.\n", i, IDWriteRenderingParams_GetPixelGeometry(params),
+                    "unexpected pixel geometry %u, expected %u.\n", IDWriteRenderingParams_GetPixelGeometry(params),
                     params_tests[i].geometry);
             ok(params_tests[i].rendering_mode == IDWriteRenderingParams_GetRenderingMode(params),
-                    "%u: unexpected rendering mode %u, expected %u.\n", i, IDWriteRenderingParams_GetRenderingMode(params),
+                    "unexpected rendering mode %u, expected %u.\n", IDWriteRenderingParams_GetRenderingMode(params),
                     params_tests[i].rendering_mode);
             IDWriteRenderingParams_Release(params);
         }
         else
             ok(params == NULL, "%u: expected NULL interface pointer on failure.\n", i);
+
+        winetest_pop_context();
     }
 
     ref = IDWriteFactory_Release(factory);

@@ -2164,7 +2164,8 @@ static void test_ApplyCharacterSpacing(void)
         return;
     }
 
-    for (i = 0; i < ARRAY_SIZE(spacing_tests); i++) {
+    for (i = 0; i < ARRAY_SIZE(spacing_tests); ++i)
+    {
         const struct spacing_test *ptr = spacing_tests + i;
         DWRITE_GLYPH_OFFSET offsets[3];
         UINT32 glyph_count;
@@ -2196,6 +2197,8 @@ static void test_ApplyCharacterSpacing(void)
             props[0].isClusterStart = props[1].isClusterStart = 1;
         }
 
+        winetest_push_context("Test %u", i);
+
         hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer1,
             ptr->leading,
             ptr->trailing,
@@ -2208,35 +2211,35 @@ static void test_ApplyCharacterSpacing(void)
             props,
             advances,
             offsets);
-        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "%d: got 0x%08x\n", i, hr);
+        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "Unexpected hr %#x.\n", hr);
 
         if (hr == S_OK) {
-            ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
-            ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
+            ok(ptr->modified_advances[0] == advances[0], "Got advance[0] %.2f, expected %.2f.\n", advances[0], ptr->modified_advances[0]);
+            ok(ptr->modified_advances[1] == advances[1], "Got advance[1] %.2f, expected %.2f.\n", advances[1], ptr->modified_advances[1]);
             if (glyph_count > 2)
-                ok(ptr->modified_advances[2] == advances[2], "%d: got advance[2] %.2f, expected %.2f\n", i, advances[2], ptr->modified_advances[2]);
+                ok(ptr->modified_advances[2] == advances[2], "Got advance[2] %.2f, expected %.2f.\n", advances[2], ptr->modified_advances[2]);
 
-            ok(ptr->modified_offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+            ok(ptr->modified_offsets[0] == offsets[0].advanceOffset, "Got offset[0] %.2f, expected %.2f.\n",
                 offsets[0].advanceOffset, ptr->modified_offsets[0]);
-            ok(ptr->modified_offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+            ok(ptr->modified_offsets[1] == offsets[1].advanceOffset, "Got offset[1] %.2f, expected %.2f.\n",
                 offsets[1].advanceOffset, ptr->modified_offsets[1]);
             if (glyph_count > 2)
-                ok(ptr->modified_offsets[2] == offsets[2].advanceOffset, "%d: got offset[2] %.2f, expected %.2f\n", i,
+                ok(ptr->modified_offsets[2] == offsets[2].advanceOffset, "Got offset[2] %.2f, expected %.2f.\n",
                     offsets[2].advanceOffset, ptr->modified_offsets[2]);
 
-            ok(offsets[0].ascenderOffset == 23.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
-            ok(offsets[1].ascenderOffset == 32.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
-            ok(offsets[2].ascenderOffset == 31.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[2].ascenderOffset);
+            ok(offsets[0].ascenderOffset == 23.0, "Unexpected ascenderOffset %.2f.\n", offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0, "Unexpected ascenderOffset %.2f.\n", offsets[1].ascenderOffset);
+            ok(offsets[2].ascenderOffset == 31.0, "Unexpected ascenderOffset %.2f.\n", offsets[2].ascenderOffset);
         }
         else {
-            ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
-            ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
-            ok(ptr->offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+            ok(ptr->modified_advances[0] == advances[0], "Got advance[0] %.2f, expected %.2f.\n", advances[0], ptr->modified_advances[0]);
+            ok(ptr->modified_advances[1] == advances[1], "Got advance[1] %.2f, expected %.2f.\n", advances[1], ptr->modified_advances[1]);
+            ok(ptr->offsets[0] == offsets[0].advanceOffset, "Got offset[0] %.2f, expected %.2f.\n",
                 offsets[0].advanceOffset, ptr->modified_offsets[0]);
-            ok(ptr->offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+            ok(ptr->offsets[1] == offsets[1].advanceOffset, "Got offset[1] %.2f, expected %.2f.\n",
                 offsets[1].advanceOffset, ptr->modified_offsets[1]);
-            ok(offsets[0].ascenderOffset == 23.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
-            ok(offsets[1].ascenderOffset == 32.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
+            ok(offsets[0].ascenderOffset == 23.0, "Unexpected ascenderOffset %.2f.\n", offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0, "Unexpected ascenderOffset %.2f.\n", offsets[1].ascenderOffset);
         }
 
         /* same, with argument aliasing */
@@ -2262,37 +2265,41 @@ static void test_ApplyCharacterSpacing(void)
             props,
             advances,
             offsets);
-        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "%d: got 0x%08x\n", i, hr);
+        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "Unexpected hr %#x.\n", hr);
 
-        if (hr == S_OK) {
-            ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
-            ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
+        if (hr == S_OK)
+        {
+            ok(ptr->modified_advances[0] == advances[0], "Got advance[0] %.2f, expected %.2f.\n", advances[0], ptr->modified_advances[0]);
+            ok(ptr->modified_advances[1] == advances[1], "Got advance[1] %.2f, expected %.2f.\n", advances[1], ptr->modified_advances[1]);
             if (glyph_count > 2)
-                ok(ptr->modified_advances[2] == advances[2], "%d: got advance[2] %.2f, expected %.2f\n", i, advances[2], ptr->modified_advances[2]);
+                ok(ptr->modified_advances[2] == advances[2], "Got advance[2] %.2f, expected %.2f.\n", advances[2], ptr->modified_advances[2]);
 
-            ok(ptr->modified_offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+            ok(ptr->modified_offsets[0] == offsets[0].advanceOffset, "Got offset[0] %.2f, expected %.2f.\n",
                 offsets[0].advanceOffset, ptr->modified_offsets[0]);
-            ok(ptr->modified_offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+            ok(ptr->modified_offsets[1] == offsets[1].advanceOffset, "Got offset[1] %.2f, expected %.2f.\n",
                 offsets[1].advanceOffset, ptr->modified_offsets[1]);
             if (glyph_count > 2)
-                ok(ptr->modified_offsets[2] == offsets[2].advanceOffset, "%d: got offset[2] %.2f, expected %.2f\n", i,
+                ok(ptr->modified_offsets[2] == offsets[2].advanceOffset, "Got offset[2] %.2f, expected %.2f.\n",
                     offsets[2].advanceOffset, ptr->modified_offsets[2]);
 
-            ok(offsets[0].ascenderOffset == 23.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
-            ok(offsets[1].ascenderOffset == 32.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
-            ok(offsets[2].ascenderOffset == 31.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[2].ascenderOffset);
+            ok(offsets[0].ascenderOffset == 23.0f, "Unexpected ascenderOffset %.2f.\n", offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0f, "Unexpected ascenderOffset %.2f.\n", offsets[1].ascenderOffset);
+            ok(offsets[2].ascenderOffset == 31.0f, "Unexpected ascenderOffset %.2f.\n", offsets[2].ascenderOffset);
         }
-        else {
+        else
+        {
             /* with aliased advances original values are retained */
-            ok(ptr->advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->advances[0]);
-            ok(ptr->advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->advances[1]);
-            ok(ptr->offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+            ok(ptr->advances[0] == advances[0], "Got advance[0] %.2f, expected %.2f.\n", advances[0], ptr->advances[0]);
+            ok(ptr->advances[1] == advances[1], "Got advance[1] %.2f, expected %.2f.\n", advances[1], ptr->advances[1]);
+            ok(ptr->offsets[0] == offsets[0].advanceOffset, "Got offset[0] %.2f, expected %.2f.\n",
                 offsets[0].advanceOffset, ptr->modified_offsets[0]);
-            ok(ptr->offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+            ok(ptr->offsets[1] == offsets[1].advanceOffset, "Got offset[1] %.2f, expected %.2f.\n",
                 offsets[1].advanceOffset, ptr->modified_offsets[1]);
-            ok(offsets[0].ascenderOffset == 23.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
-            ok(offsets[1].ascenderOffset == 32.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
+            ok(offsets[0].ascenderOffset == 23.0f, "Unexpected ascenderOffset %.2f.\n", offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0f, "Unexpected ascenderOffset %.2f.\n", offsets[1].ascenderOffset);
         }
+
+        winetest_pop_context();
     }
 
     IDWriteTextAnalyzer1_Release(analyzer1);
