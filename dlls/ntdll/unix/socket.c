@@ -1771,7 +1771,12 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return do_setsockopt( handle, io, IPPROTO_IP, IP_DROP_SOURCE_MEMBERSHIP, in_buffer, in_size );
 
 #ifdef IP_HDRINCL
+        case IOCTL_AFD_WINE_GET_IP_HDRINCL:
+            if (get_sock_type( handle ) != SOCK_RAW) return STATUS_INVALID_PARAMETER;
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_HDRINCL, out_buffer, out_size );
+
         case IOCTL_AFD_WINE_SET_IP_HDRINCL:
+            if (get_sock_type( handle ) != SOCK_RAW) return STATUS_INVALID_PARAMETER;
             return do_setsockopt( handle, io, IPPROTO_IP, IP_HDRINCL, in_buffer, in_size );
 #endif
 

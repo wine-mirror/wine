@@ -1677,6 +1677,9 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
         case IP_DONTFRAGMENT:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_DONTFRAGMENT, optval, optlen );
 
+        case IP_HDRINCL:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_HDRINCL, optval, optlen );
+
         case IP_MULTICAST_IF:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_MULTICAST_IF, optval, optlen );
 
@@ -1700,10 +1703,6 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
 
         case IP_UNICAST_IF:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_UNICAST_IF, optval, optlen );
-
-        case IP_HDRINCL:
-            SetLastError( WSAEINVAL );
-            return -1;
 
         default:
             FIXME( "unrecognized IP option %u\n", optname );
