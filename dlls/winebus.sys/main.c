@@ -488,6 +488,13 @@ static void mouse_free_device(DEVICE_OBJECT *device)
 
 static NTSTATUS mouse_start_device(DEVICE_OBJECT *device)
 {
+    if (!hid_descriptor_begin(&mouse_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
+        return STATUS_NO_MEMORY;
+    if (!hid_descriptor_add_buttons(&mouse_desc, HID_USAGE_PAGE_BUTTON, 1, 3))
+        return STATUS_NO_MEMORY;
+    if (!hid_descriptor_end(&mouse_desc))
+        return STATUS_NO_MEMORY;
+
     return STATUS_SUCCESS;
 }
 
@@ -551,14 +558,6 @@ static const platform_vtbl mouse_vtbl =
 static void mouse_device_create(void)
 {
     static const WCHAR busidW[] = {'W','I','N','E','M','O','U','S','E',0};
-
-    if (!hid_descriptor_begin(&mouse_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
-        return;
-    if (!hid_descriptor_add_buttons(&mouse_desc, HID_USAGE_PAGE_BUTTON, 1, 3))
-        return;
-    if (!hid_descriptor_end(&mouse_desc))
-        return;
-
     mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE, &mouse_vtbl, 0);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
@@ -569,6 +568,13 @@ static void keyboard_free_device(DEVICE_OBJECT *device)
 
 static NTSTATUS keyboard_start_device(DEVICE_OBJECT *device)
 {
+    if (!hid_descriptor_begin(&keyboard_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
+        return STATUS_NO_MEMORY;
+    if (!hid_descriptor_add_buttons(&keyboard_desc, HID_USAGE_PAGE_KEYBOARD, 0, 101))
+        return STATUS_NO_MEMORY;
+    if (!hid_descriptor_end(&keyboard_desc))
+        return STATUS_NO_MEMORY;
+
     return STATUS_SUCCESS;
 }
 
@@ -632,14 +638,6 @@ static const platform_vtbl keyboard_vtbl =
 static void keyboard_device_create(void)
 {
     static const WCHAR busidW[] = {'W','I','N','E','K','E','Y','B','O','A','R','D',0};
-
-    if (!hid_descriptor_begin(&keyboard_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
-        return;
-    if (!hid_descriptor_add_buttons(&keyboard_desc, HID_USAGE_PAGE_KEYBOARD, 0, 101))
-        return;
-    if (!hid_descriptor_end(&keyboard_desc))
-        return;
-
     keyboard_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE, &keyboard_vtbl, 0);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }

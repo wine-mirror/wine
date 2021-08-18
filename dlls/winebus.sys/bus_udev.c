@@ -862,7 +862,8 @@ static void lnxev_free_device(DEVICE_OBJECT *device)
 
 static NTSTATUS lnxev_start_device(DEVICE_OBJECT *device)
 {
-    return STATUS_SUCCESS;
+    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+    return build_report_descriptor(ext, ext->base.udev_device);
 }
 
 static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
@@ -1148,20 +1149,6 @@ static void try_add_device(struct udev_device *dev)
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->udev_device = udev_device_ref(dev);
         private->device_fd = fd;
-#ifdef HAS_PROPER_INPUT_HEADER
-        if (strcmp(subsystem, "input") == 0)
-            /* FIXME: We should probably move this to IRP_MN_START_DEVICE. */
-            if (build_report_descriptor((struct wine_input_private *)private, dev))
-            {
-                ERR("Building report descriptor failed, removing device\n");
-                close(fd);
-                udev_device_unref(dev);
-                bus_unlink_hid_device(device);
-                bus_remove_hid_device(device);
-                HeapFree(GetProcessHeap(), 0, serial);
-                return;
-            }
-#endif
         IoInvalidateDeviceRelations(bus_pdo, BusRelations);
     }
     else
