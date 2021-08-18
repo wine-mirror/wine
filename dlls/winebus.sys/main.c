@@ -378,24 +378,6 @@ void bus_unlink_hid_device(DEVICE_OBJECT *device)
     LeaveCriticalSection(&device_list_cs);
 }
 
-void bus_remove_hid_device(DEVICE_OBJECT *device)
-{
-    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    struct pnp_device *pnp_device = ext->pnp_device;
-
-    TRACE("(%p)\n", device);
-
-    ext->cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&ext->cs);
-
-    HeapFree(GetProcessHeap(), 0, ext->serial);
-    HeapFree(GetProcessHeap(), 0, ext->last_report);
-    IoDeleteDevice(device);
-
-    /* pnp_device must be released after the device is gone */
-    HeapFree(GetProcessHeap(), 0, pnp_device);
-}
-
 static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
 {
     int i;
