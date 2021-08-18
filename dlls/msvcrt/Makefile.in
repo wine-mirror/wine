@@ -6,6 +6,7 @@ DELAYIMPORTS = advapi32 user32
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	concurrency.c \
 	console.c \
 	cpp.c \
 	crt_gccmain.c \
@@ -37,7 +38,6 @@ C_SRCS = \
 	onexit.c \
 	process.c \
 	scanf.c \
-	scheduler.c \
 	sincos.c \
 	string.c \
 	thread.c \

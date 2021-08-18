@@ -1,5 +1,5 @@
 /*
- * msvcrt.dll C++ objects
+ * Concurrency namespace implementation
  *
  * Copyright 2017 Piotr Caban
  *
@@ -1136,7 +1136,7 @@ __ASM_BLOCK_BEGIN(scheduler_vtables)
             );
 __ASM_BLOCK_END
 
-void msvcrt_init_scheduler(void *base)
+void msvcrt_init_concurrency(void *base)
 {
 #ifdef __x86_64__
     init_Context_rtti(base);
@@ -1148,7 +1148,7 @@ void msvcrt_init_scheduler(void *base)
 #endif
 }
 
-void msvcrt_free_scheduler(void)
+void msvcrt_free_concurrency(void)
 {
     if (context_tls_index != TLS_OUT_OF_INDEXES)
         TlsFree(context_tls_index);
