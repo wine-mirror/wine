@@ -4644,9 +4644,10 @@ static BOOL version_is_compatible(const WCHAR *version)
 static void enum_compat_drivers_from_file(struct device *device, const WCHAR *path)
 {
     static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
-    WCHAR mfg_name[LINE_LEN], mfg_key[LINE_LEN], mfg_key_ext[LINE_LEN], id[MAX_DEVICE_ID_LEN], version[MAX_DEVICE_ID_LEN];
+    WCHAR mfg_key[LINE_LEN], id[MAX_DEVICE_ID_LEN], version[MAX_DEVICE_ID_LEN];
+    DWORD i, j, k, driver_count = device->driver_count;
+    struct driver driver, *drivers = device->drivers;
     INFCONTEXT ctx;
-    DWORD i, j, k;
     HINF hinf;
 
     TRACE("Enumerating drivers from %s.\n", debugstr_w(path));
@@ -4654,11 +4655,13 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
     if ((hinf = SetupOpenInfFileW(path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return;
 
+    lstrcpyW(driver.inf_path, path);
+
     for (i = 0; SetupGetLineByIndexW(hinf, manufacturerW, i, &ctx); ++i)
     {
-        SetupGetStringFieldW(&ctx, 0, mfg_name, ARRAY_SIZE(mfg_name), NULL);
+        SetupGetStringFieldW(&ctx, 0, driver.manufacturer, ARRAY_SIZE(driver.manufacturer), NULL);
         if (!SetupGetStringFieldW(&ctx, 1, mfg_key, ARRAY_SIZE(mfg_key), NULL))
-            lstrcpyW(mfg_key, mfg_name);
+            lstrcpyW(mfg_key, driver.manufacturer);
 
         if (SetupGetFieldCount(&ctx) >= 2)
         {
@@ -4675,37 +4678,37 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
                 continue;
         }
 
-        if (!SetupDiGetActualSectionToInstallW(hinf, mfg_key, mfg_key_ext, ARRAY_SIZE(mfg_key_ext), NULL, NULL))
+        if (!SetupDiGetActualSectionToInstallW(hinf, mfg_key, driver.mfg_key,
+                ARRAY_SIZE(driver.mfg_key), NULL, NULL))
         {
             WARN("Failed to find section for %s, skipping.\n", debugstr_w(mfg_key));
             continue;
         }
 
-        for (j = 0; SetupGetLineByIndexW(hinf, mfg_key_ext, j, &ctx); ++j)
+        for (j = 0; SetupGetLineByIndexW(hinf, driver.mfg_key, j, &ctx); ++j)
         {
             for (k = 2; SetupGetStringFieldW(&ctx, k, id, ARRAY_SIZE(id), NULL); ++k)
             {
                 if (device_matches_id(device, HardwareId, id) || device_matches_id(device, CompatibleIDs, id))
                 {
-                    unsigned int count = ++device->driver_count;
-
-                    device->drivers = heap_realloc(device->drivers, count * sizeof(*device->drivers));
-                    lstrcpyW(device->drivers[count - 1].inf_path, path);
-                    lstrcpyW(device->drivers[count - 1].manufacturer, mfg_name);
-                    lstrcpyW(device->drivers[count - 1].mfg_key, mfg_key_ext);
-                    SetupGetStringFieldW(&ctx, 0, device->drivers[count - 1].description,
-                            ARRAY_SIZE(device->drivers[count - 1].description), NULL);
-                    SetupGetStringFieldW(&ctx, 1, device->drivers[count - 1].section,
-                            ARRAY_SIZE(device->drivers[count - 1].section), NULL);
+                    SetupGetStringFieldW(&ctx, 0, driver.description, ARRAY_SIZE(driver.description), NULL);
+                    SetupGetStringFieldW(&ctx, 1, driver.section, ARRAY_SIZE(driver.section), NULL);
 
                     TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
-                            debugstr_w(mfg_name), debugstr_w(device->drivers[count - 1].description));
+                            debugstr_w(driver.manufacturer), debugstr_w(driver.description));
+
+                    driver_count++;
+                    drivers = heap_realloc(drivers, driver_count * sizeof(*drivers));
+                    drivers[driver_count - 1] = driver;
                 }
             }
         }
     }
 
     SetupCloseInfFile(hinf);
+
+    device->drivers = drivers;
+    device->driver_count = driver_count;
 }
 
 /***********************************************************************
