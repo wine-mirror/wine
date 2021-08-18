@@ -73,6 +73,125 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
+static DWORD udp_num_addrs( USHORT family )
+{
+    DWORD endpoint_count = 0;
+
+    nsi_enumerate_all( 1, 0, &NPI_MS_UDP_MODULEID, NSI_UDP_ENDPOINT_TABLE,
+                       NULL, 0, NULL, 0, NULL, 0, NULL, 0, &endpoint_count );
+    /* FIXME: actually retrieve the keys and only count endpoints which match family */
+    return endpoint_count;
+}
+
+static NTSTATUS udp_stats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+{
+    struct nsi_udp_stats_dynamic dyn;
+    const USHORT *family = key;
+
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+
+    if (*family != WS_AF_INET && *family != WS_AF_INET6) return STATUS_NOT_SUPPORTED;
+
+    memset( &dyn, 0, sizeof(dyn) );
+
+    dyn.num_addrs = udp_num_addrs( *family );
+
+#ifdef __linux__
+    if (*family == WS_AF_INET)
+    {
+        NTSTATUS status = STATUS_NOT_SUPPORTED;
+        static const char hdr[] = "Udp:";
+        char buf[512], *ptr;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/snmp", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            if (_strnicmp( buf, hdr, sizeof(hdr) - 1) ) continue;
+            /* last line was a header, get another */
+            if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
+            if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
+            {
+                unsigned int in_dgrams, out_dgrams;
+                ptr += sizeof(hdr);
+                sscanf( ptr, "%u %u %u %u %u",
+                        &in_dgrams, &dyn.no_ports, &dyn.in_errs, &out_dgrams, &dyn.num_addrs );
+                dyn.in_dgrams = in_dgrams;
+                dyn.out_dgrams = out_dgrams;
+                if (dynamic_data) *(struct nsi_udp_stats_dynamic *)dynamic_data = dyn;
+                status = STATUS_SUCCESS;
+                break;
+            }
+        }
+        fclose( fp );
+        return status;
+    }
+    else
+    {
+        unsigned int in_dgrams = 0, out_dgrams = 0;
+        struct
+        {
+            const char *name;
+            DWORD *elem;
+        } udp_stat_list[] =
+        {
+            { "Udp6InDatagrams",  &in_dgrams },
+            { "Udp6NoPorts",      &dyn.no_ports },
+            { "Udp6InErrors",     &dyn.in_errs },
+            { "Udp6OutDatagrams", &out_dgrams },
+        };
+        char buf[512], *ptr, *value;
+        DWORD res, i;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/snmp6", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            if (!(value = strchr( buf, ' ' ))) continue;
+
+            /* terminate the valuename */
+            ptr = value - 1;
+            *(ptr + 1) = '\0';
+
+            /* and strip leading spaces from value */
+            value += 1;
+            while (*value==' ') value++;
+            if ((ptr = strchr( value, '\n' ))) *ptr='\0';
+
+            for (i = 0; i < ARRAY_SIZE(udp_stat_list); i++)
+                if (!_strnicmp( buf, udp_stat_list[i].name, -1 ) && sscanf( value, "%d", &res ))
+                    *udp_stat_list[i].elem = res;
+        }
+        dyn.in_dgrams = in_dgrams;
+        dyn.out_dgrams = out_dgrams;
+        if (dynamic_data) *(struct nsi_udp_stats_dynamic *)dynamic_data = dyn;
+        fclose( fp );
+        return STATUS_SUCCESS;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS) && defined(HAVE_STRUCT_UDPSTAT_UDPS_IPACKETS)
+    {
+        int mib[] = { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS };
+        struct udpstat udp_stat;
+        size_t needed = sizeof(udp_stat);
+
+        if (sysctl( mib, ARRAY_SIZE(mib), &udp_stat, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
+
+        dyn.in_dgrams = udp_stat.udps_ipackets;
+        dyn.out_dgrams = udp_stat.udps_opackets;
+        dyn.no_ports = udp_stat.udps_noport;
+        dyn.in_errs = udp_stat.udps_hdrops + udp_stat.udps_badsum + udp_stat.udps_fullsock + udp_stat.udps_badlen;
+        if (dynamic_data) *(struct nsi_udp_stats_dynamic *)dynamic_data = dyn;
+        return STATUS_SUCCESS;
+    }
+#endif
+    FIXME( "Not implemented\n" );
+    return STATUS_NOT_SUPPORTED;
+}
+
 static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
                                             void *dynamic_data, DWORD dynamic_size,
                                             void *static_data, DWORD static_size, DWORD_PTR *count )
@@ -271,6 +390,15 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void
 
 static struct module_table udp_tables[] =
 {
+    {
+        NSI_UDP_STATS_TABLE,
+        {
+            sizeof(USHORT), 0,
+            sizeof(struct nsi_udp_stats_dynamic), 0
+        },
+        NULL,
+        udp_stats_get_all_parameters,
+    },
     {
         NSI_UDP_ENDPOINT_TABLE,
         {

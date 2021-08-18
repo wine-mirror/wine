@@ -347,7 +347,18 @@ struct nsi_tcp_conn_static
 };
 
 /* Undocumented NSI UDP tables */
+#define NSI_UDP_STATS_TABLE                0
 #define NSI_UDP_ENDPOINT_TABLE             1
+
+struct nsi_udp_stats_dynamic
+{
+    ULONGLONG in_dgrams;
+    DWORD no_ports;
+    DWORD in_errs;
+    ULONGLONG out_dgrams;
+    DWORD num_addrs;
+    DWORD unk[5];
+};
 
 struct nsi_udp_endpoint_key
 {

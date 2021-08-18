@@ -938,6 +938,40 @@ static void test_tcp_tables( int family, int table_type )
     winetest_pop_context();
 }
 
+static void test_udp_stats( int family )
+{
+    DWORD err;
+    USHORT key = family;
+    struct nsi_udp_stats_dynamic dyn, dyn2;
+    MIB_UDPSTATS table;
+
+    winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    err = NsiGetAllParameters( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_STATS_TABLE, &key, sizeof(key), NULL, 0,
+                               &dyn, sizeof(dyn), NULL, 0 );
+    ok( !err, "got %x\n", err );
+
+    err = GetUdpStatisticsEx( &table, family );
+    ok( !err, "got %d\n", err );
+
+    err = NsiGetAllParameters( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_STATS_TABLE, &key, sizeof(key), NULL, 0,
+                               &dyn2, sizeof(dyn2), NULL, 0 );
+    ok( !err, "got %x\n", err );
+
+    ok( bounded( table.dwInDatagrams, dyn.in_dgrams, dyn2.in_dgrams ), "%d vs [%I64d %I64d]\n",
+        table.dwInDatagrams, dyn.in_dgrams, dyn2.in_dgrams );
+    ok( bounded( table.dwNoPorts, dyn.no_ports, dyn2.no_ports ), "%d vs [%d %d]\n",
+        table.dwNoPorts, dyn.no_ports, dyn2.no_ports);
+    ok( bounded( table.dwInErrors, dyn.in_errs, dyn2.in_errs ), "%d vs [%d %d]\n",
+        table.dwInErrors, dyn.in_errs, dyn2.in_errs );
+    ok( bounded( table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams ), "%d vs [%I64d %I64d]\n",
+        table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams );
+todo_wine_if(!unstable(0) && table.dwNumAddrs != dyn.num_addrs)
+    ok( unstable( table.dwNumAddrs == dyn.num_addrs ), "%d %d\n", table.dwNumAddrs, dyn.num_addrs );
+
+    winetest_pop_context();
+}
+
 static void test_udp_tables( int family )
 {
     DWORD i, err, count, size;
@@ -1030,6 +1064,8 @@ START_TEST( nsi )
     test_tcp_tables( AF_INET6, TCP_TABLE_OWNER_MODULE_CONNECTIONS );
     test_tcp_tables( AF_INET6, TCP_TABLE_OWNER_MODULE_LISTENER );
 
+    test_udp_stats( AF_INET );
+    test_udp_stats( AF_INET6 );
     test_udp_tables( AF_INET );
     test_udp_tables( AF_INET6 );
 }
