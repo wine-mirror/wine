@@ -109,11 +109,17 @@ struct pnp_device
     DEVICE_OBJECT *device;
 };
 
+enum device_state
+{
+    DEVICE_STATE_STOPPED,
+    DEVICE_STATE_STARTED,
+    DEVICE_STATE_REMOVED,
+};
+
 struct device_extension
 {
     CRITICAL_SECTION cs;
-
-    BOOL removed;
+    enum device_state state;
 
     struct pnp_device *pnp_device;
 
@@ -480,6 +486,11 @@ static void mouse_free_device(DEVICE_OBJECT *device)
 {
 }
 
+static NTSTATUS mouse_start_device(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
@@ -528,6 +539,7 @@ static NTSTATUS mouse_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 static const platform_vtbl mouse_vtbl =
 {
     .free_device = mouse_free_device,
+    .start_device = mouse_start_device,
     .get_reportdescriptor = mouse_get_reportdescriptor,
     .get_string = mouse_get_string,
     .begin_report_processing = mouse_begin_report_processing,
@@ -553,6 +565,11 @@ static void mouse_device_create(void)
 
 static void keyboard_free_device(DEVICE_OBJECT *device)
 {
+}
+
+static NTSTATUS keyboard_start_device(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS keyboard_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
@@ -603,6 +620,7 @@ static NTSTATUS keyboard_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYT
 static const platform_vtbl keyboard_vtbl =
 {
     .free_device = keyboard_free_device,
+    .start_device = keyboard_start_device,
     .get_reportdescriptor = keyboard_get_reportdescriptor,
     .get_string = keyboard_get_string,
     .begin_report_processing = keyboard_begin_report_processing,
@@ -695,13 +713,18 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
 
         case IRP_MN_START_DEVICE:
-            status = STATUS_SUCCESS;
+            EnterCriticalSection(&ext->cs);
+            if (ext->state != DEVICE_STATE_STOPPED) status = STATUS_SUCCESS;
+            else if (ext->state == DEVICE_STATE_REMOVED) status = STATUS_DELETE_PENDING;
+            else if (!(status = ext->vtbl->start_device(device))) ext->state = DEVICE_STATE_STARTED;
+            else ERR("failed to start device %p, status %#x\n", device, status);
+            LeaveCriticalSection(&ext->cs);
             break;
 
         case IRP_MN_SURPRISE_REMOVAL:
             EnterCriticalSection(&ext->cs);
             remove_pending_irps(device);
-            ext->removed = TRUE;
+            ext->state = DEVICE_STATE_REMOVED;
             LeaveCriticalSection(&ext->cs);
             status = STATUS_SUCCESS;
             break;
@@ -834,7 +857,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
     EnterCriticalSection(&ext->cs);
 
-    if (ext->removed)
+    if (ext->state == DEVICE_STATE_REMOVED)
     {
         LeaveCriticalSection(&ext->cs);
         irp->IoStatus.Status = STATUS_DELETE_PENDING;

@@ -148,6 +148,11 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
         return 0;
 }
 
+static NTSTATUS start_device(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
 {
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
@@ -274,6 +279,7 @@ static const platform_vtbl iohid_vtbl =
 {
     free_device,
     compare_platform_device,
+    start_device,
     get_reportdescriptor,
     get_string,
     begin_report_processing,

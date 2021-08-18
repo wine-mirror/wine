@@ -558,6 +558,11 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
     return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
 }
 
+static NTSTATUS hidraw_start_device(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
 {
 #ifdef HAVE_LINUX_HIDRAW_H
@@ -818,6 +823,7 @@ static const platform_vtbl hidraw_vtbl =
 {
     hidraw_free_device,
     compare_platform_device,
+    hidraw_start_device,
     hidraw_get_reportdescriptor,
     hidraw_get_string,
     begin_report_processing,
@@ -852,6 +858,11 @@ static void lnxev_free_device(DEVICE_OBJECT *device)
 
     close(ext->base.device_fd);
     udev_device_unref(ext->base.udev_device);
+}
+
+static NTSTATUS lnxev_start_device(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
@@ -967,6 +978,7 @@ static NTSTATUS lnxev_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 static const platform_vtbl lnxev_vtbl = {
     lnxev_free_device,
     compare_platform_device,
+    lnxev_start_device,
     lnxev_get_reportdescriptor,
     lnxev_get_string,
     lnxev_begin_report_processing,
