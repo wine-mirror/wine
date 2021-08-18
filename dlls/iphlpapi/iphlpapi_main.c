@@ -3491,6 +3491,27 @@ DWORD WINAPI GetExtendedUdpTable( void *table, DWORD *size, BOOL sort, ULONG fam
     return err;
 }
 
+DWORD WINAPI AllocateAndGetUdpTableFromStack( MIB_UDPTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    DWORD err, size = 0x100, attempt;
+
+    TRACE("table %p, sort %d, heap %p, flags 0x%08x\n", table, sort, heap, flags );
+
+    if (!table) return ERROR_INVALID_PARAMETER;
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        *table = HeapAlloc( heap, flags, size );
+        if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
+        err = GetExtendedUdpTable( *table, &size, sort, WS_AF_INET, UDP_TABLE_BASIC, 0 );
+        if (!err) break;
+        HeapFree( heap, flags, *table );
+        *table = NULL;
+        if (err != ERROR_INSUFFICIENT_BUFFER) break;
+    }
+    return err;
+}
+
 static void unicast_row_fill( MIB_UNICASTIPADDRESS_ROW *row, USHORT fam, void *key, struct nsi_ip_unicast_rw *rw,
                               struct nsi_ip_unicast_dynamic *dyn, struct nsi_ip_unicast_static *stat )
 {
