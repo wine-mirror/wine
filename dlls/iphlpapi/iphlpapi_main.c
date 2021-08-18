@@ -43,7 +43,6 @@
 #include "windns.h"
 #include "iphlpapi.h"
 #include "ifenum.h"
-#include "ipstats.h"
 #include "ipifcons.h"
 #include "fltdefs.h"
 #include "ifdef.h"
@@ -3289,81 +3288,207 @@ DWORD WINAPI AllocateAndGetTcpExTableFromStack( void **table, BOOL sort, HANDLE 
  * Get a table of active UDP connections.
  *
  * PARAMS
- *  pUdpTable [Out]    buffer for UDP connections table
- *  pdwSize   [In/Out] length of output buffer
- *  bOrder    [In]     whether to order the table
+ *  table  [Out]    buffer for UDP connections table
+ *  size   [In/Out] length of output buffer
+ *  sort   [In]     whether to order the table
  *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
- *
- * NOTES
- *  If pdwSize is less than required, the function will return 
- *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to the
- *  required byte size.
- *  If bOrder is true, the returned table will be sorted, first by
- *  local address, then by local port number.
  */
-DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
+DWORD WINAPI GetUdpTable( MIB_UDPTABLE *table, DWORD *size, BOOL sort )
 {
-    return GetExtendedUdpTable(pUdpTable, pdwSize, bOrder, WS_AF_INET, UDP_TABLE_BASIC, 0);
+    return GetExtendedUdpTable( table, size, sort, WS_AF_INET, UDP_TABLE_BASIC, 0 );
 }
 
 /******************************************************************
  *    GetUdp6Table (IPHLPAPI.@)
  */
-DWORD WINAPI GetUdp6Table(PMIB_UDP6TABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
+DWORD WINAPI GetUdp6Table( MIB_UDP6TABLE *table, DWORD *size, BOOL sort )
 {
-    return GetExtendedUdpTable(pUdpTable, pdwSize, bOrder, WS_AF_INET6, UDP_TABLE_BASIC, 0);
+    return GetExtendedUdpTable( table, size, sort, WS_AF_INET6, UDP_TABLE_BASIC, 0 );
+}
+
+static DWORD udp_table_size( ULONG family, ULONG table_class, DWORD row_count, DWORD *row_size )
+{
+    switch (table_class)
+    {
+    case UDP_TABLE_BASIC:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_UDPROW) : sizeof(MIB_UDP6ROW);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE, table[row_count]) :
+            FIELD_OFFSET(MIB_UDP6TABLE, table[row_count]);
+
+    case UDP_TABLE_OWNER_PID:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_UDPROW_OWNER_PID) : sizeof(MIB_UDP6ROW_OWNER_PID);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE_OWNER_PID, table[row_count]) :
+            FIELD_OFFSET(MIB_UDP6TABLE_OWNER_PID, table[row_count]);
+
+    case UDP_TABLE_OWNER_MODULE:
+        *row_size = (family == WS_AF_INET) ? sizeof(MIB_UDPROW_OWNER_MODULE) : sizeof(MIB_UDP6ROW_OWNER_MODULE);
+        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE_OWNER_MODULE, table[row_count]) :
+            FIELD_OFFSET(MIB_UDP6TABLE_OWNER_MODULE, table[row_count]);
+
+    default:
+        ERR( "unhandled class %u\n", table_class );
+        return 0;
+    }
+}
+
+static void udp_row_fill( void *table, DWORD num, ULONG family, ULONG table_class,
+                          struct nsi_udp_endpoint_key *key,
+                          struct nsi_udp_endpoint_static *stat )
+{
+    if (family == WS_AF_INET)
+    {
+        switch (table_class)
+        {
+        case UDP_TABLE_BASIC:
+        {
+            MIB_UDPROW *row = ((MIB_UDPTABLE *)table)->table + num;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            return;
+        }
+        case UDP_TABLE_OWNER_PID:
+        {
+            MIB_UDPROW_OWNER_PID *row = ((MIB_UDPTABLE_OWNER_PID *)table)->table + num;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            row->dwOwningPid = stat->pid;
+            return;
+        }
+        case UDP_TABLE_OWNER_MODULE:
+        {
+            MIB_UDPROW_OWNER_MODULE *row = ((MIB_UDPTABLE_OWNER_MODULE *)table)->table + num;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalPort = key->local.Ipv4.sin_port;
+            row->dwOwningPid = stat->pid;
+            row->liCreateTimestamp.QuadPart = stat->create_time;
+            row->dwFlags = stat->flags;
+            row->OwningModuleInfo[0] = stat->mod_info;
+            memset( row->OwningModuleInfo + 1, 0, sizeof(row->OwningModuleInfo) - sizeof(row->OwningModuleInfo[0]) );
+            return;
+        }
+        default:
+            ERR( "Unknown class %d\n", table_class );
+            return;
+        }
+    }
+    else
+    {
+        switch (table_class)
+        {
+        case UDP_TABLE_BASIC:
+        {
+            MIB_UDP6ROW *row = ((MIB_UDP6TABLE *)table)->table + num;
+            memcpy( &row->dwLocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->dwLocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            return;
+        }
+        case UDP_TABLE_OWNER_PID:
+        {
+            MIB_UDP6ROW_OWNER_PID *row = ((MIB_UDP6TABLE_OWNER_PID *)table)->table + num;
+            memcpy( &row->ucLocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->ucLocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            row->dwOwningPid = stat->pid;
+            return;
+        }
+        case UDP_TABLE_OWNER_MODULE:
+        {
+            MIB_UDP6ROW_OWNER_MODULE *row = ((MIB_UDP6TABLE_OWNER_MODULE *)table)->table + num;
+            memcpy( &row->ucLocalAddr, &key->local.Ipv6.sin6_addr, sizeof(row->ucLocalAddr) );
+            row->dwLocalScopeId = key->local.Ipv6.sin6_scope_id;
+            row->dwLocalPort = key->local.Ipv6.sin6_port;
+            row->dwOwningPid = stat->pid;
+            row->liCreateTimestamp.QuadPart = stat->create_time;
+            row->dwFlags = stat->flags;
+            row->OwningModuleInfo[0] = stat->mod_info;
+            memset( row->OwningModuleInfo + 1, 0, sizeof(row->OwningModuleInfo) - sizeof(row->OwningModuleInfo[0]) );
+            return;
+        }
+        default:
+            ERR( "Unknown class %d\n", table_class );
+            return;
+        }
+    }
+    ERR( "Unknown family %d\n", family );
+    return;
+}
+
+static int udp_row_cmp( const void *a, const void *b )
+{
+    const MIB_UDPROW *rowA = a;
+    const MIB_UDPROW *rowB = b;
+    int ret;
+
+    if ((ret = RtlUlongByteSwap( rowA->dwLocalAddr ) - RtlUlongByteSwap( rowB->dwLocalAddr )) != 0) return ret;
+    return RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort );
+}
+
+static int udp6_row_cmp( const void *a, const void *b )
+{
+    const MIB_UDP6ROW *rowA = a;
+    const MIB_UDP6ROW *rowB = b;
+    int ret;
+
+    if ((ret = memcmp( &rowA->dwLocalAddr, &rowB->dwLocalAddr, sizeof(rowA->dwLocalAddr) )) != 0) return ret;
+    if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
+    return RtlUshortByteSwap( rowA->dwLocalPort ) - RtlUshortByteSwap( rowB->dwLocalPort );
 }
 
 /******************************************************************
  *    GetExtendedUdpTable (IPHLPAPI.@)
  */
-DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
-                                 ULONG ulAf, UDP_TABLE_CLASS TableClass, ULONG Reserved)
+DWORD WINAPI GetExtendedUdpTable( void *table, DWORD *size, BOOL sort, ULONG family,
+                                  UDP_TABLE_CLASS table_class, ULONG reserved )
 {
-    DWORD ret, size;
-    void *table;
+    DWORD err, count, needed, i, num = 0, row_size = 0;
+    struct nsi_udp_endpoint_key *key;
+    struct nsi_udp_endpoint_static *stat;
 
-    TRACE("pUdpTable %p, pdwSize %p, bOrder %d, ulAf %u, TableClass %u, Reserved %u\n",
-           pUdpTable, pdwSize, bOrder, ulAf, TableClass, Reserved);
+    TRACE( "table %p, size %p, sort %d, family %u, table_class %u, reserved %u\n",
+           table, size, sort, family, table_class, reserved );
 
-    if (!pdwSize) return ERROR_INVALID_PARAMETER;
+    if (!size || !ip_module_id( family )) return ERROR_INVALID_PARAMETER;
 
-    if (TableClass == UDP_TABLE_OWNER_MODULE)
-        FIXME("UDP_TABLE_OWNER_MODULE not fully supported\n");
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_ENDPOINT_TABLE, (void **)&key, sizeof(*key),
+                                  NULL, 0, NULL, 0, (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    switch (ulAf)
+    for (i = 0; i < count; i++)
+        if (key[i].local.si_family == family)
+            num++;
+
+    needed = udp_table_size( family, table_class, num, &row_size );
+    if (!table || *size < needed)
     {
-        case WS_AF_INET:
-            ret = build_udp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
-            break;
-
-        case WS_AF_INET6:
-            ret = build_udp6_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
-            break;
-
-        default:
-            FIXME("ulAf = %u not supported\n", ulAf);
-            ret = ERROR_NOT_SUPPORTED;
-    }
-
-    if (ret)
-        return ret;
-
-    if (!pUdpTable || *pdwSize < size)
-    {
-        *pdwSize = size;
-        ret = ERROR_INSUFFICIENT_BUFFER;
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
     }
     else
     {
-        *pdwSize = size;
-        memcpy(pUdpTable, table, size);
+        *size = needed;
+        *(DWORD *)table = num;
+        num = 0;
+        for (i = 0; i < count; i++)
+        {
+            if (key[i].local.si_family != family) continue;
+            udp_row_fill( table, num++, family, table_class, key + i, stat + i );
+        }
     }
-    HeapFree(GetProcessHeap(), 0, table);
-    return ret;
+
+    if (!err && sort)
+    {
+        int (*fn)(const void *, const void *);
+        DWORD offset = udp_table_size( family, table_class, 0, &row_size );
+
+        if (family == WS_AF_INET) fn = udp_row_cmp;
+        else fn = udp6_row_cmp;
+
+        qsort( (BYTE *)table + offset, num, row_size, fn );
+    }
+
+    NsiFreeTable( key, NULL, NULL, stat );
+    return err;
 }
 
 static void unicast_row_fill( MIB_UNICASTIPADDRESS_ROW *row, USHORT fam, void *key, struct nsi_ip_unicast_rw *rw,
