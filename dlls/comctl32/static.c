@@ -133,7 +133,6 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
     SIZE size;
     struct static_extra_info *extra;
 
-    if ((style & SS_TYPEMASK) != SS_ICON) return 0;
     if (hicon && !get_icon_size( hicon, &size ))
     {
         WARN("hicon != 0, but invalid\n");
@@ -220,7 +219,6 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
     HBITMAP hOldBitmap, alpha;
     struct static_extra_info *extra;
 
-    if ((style & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hBitmap && GetObjectType(hBitmap) != OBJ_BITMAP)
     {
         WARN("hBitmap != 0, but it's not a bitmap\n");
@@ -277,7 +275,6 @@ static HENHMETAFILE STATIC_SetEnhMetaFile( HWND hwnd, HENHMETAFILE hEnhMetaFile,
     HENHMETAFILE old_hemf;
     struct static_extra_info *extra;
 
-    if ((style & SS_TYPEMASK) != SS_ENHMETAFILE) return 0;
     if (hEnhMetaFile && GetObjectType(hEnhMetaFile) != OBJ_ENHMETAFILE)
     {
         WARN("hEnhMetaFile != 0, but it's not an enhanced metafile\n");
@@ -594,13 +591,16 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
         switch (wParam)
         {
         case IMAGE_BITMAP:
+            if (style != SS_BITMAP) return 0;
             lResult = (LRESULT)STATIC_SetBitmap( hwnd, (HBITMAP)lParam, full_style );
             break;
         case IMAGE_ENHMETAFILE:
+            if (style != SS_ENHMETAFILE) return 0;
             lResult = (LRESULT)STATIC_SetEnhMetaFile( hwnd, (HENHMETAFILE)lParam, full_style );
             break;
         case IMAGE_ICON:
         case IMAGE_CURSOR:
+            if (style != SS_ICON) return 0;
             lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
             break;
         default:
@@ -611,6 +611,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
         break;
 
     case STM_SETICON:
+        if (style != SS_ICON) return 0;
         lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)wParam, full_style );
         STATIC_TryPaintFcn( hwnd, full_style );
         break;
