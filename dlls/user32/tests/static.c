@@ -20,9 +20,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define STRICT
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#define OEMRESOURCE
+#include "winuser.h"
 
 #include "wine/test.h"
 
@@ -189,6 +191,118 @@ static void test_set_image(void)
     DeleteObject(image);
 }
 
+static void test_STM_SETIMAGE(void)
+{
+    DWORD type;
+    HWND hwnd;
+    HICON icon, old_image;
+    HBITMAP bmp;
+    HENHMETAFILE emf;
+    HDC dc;
+
+    icon = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
+    bmp = LoadBitmapW(0, (LPCWSTR)OBM_CLOSE);
+    dc = CreateEnhMetaFileW(0, NULL, NULL, NULL);
+    LineTo(dc, 1, 1);
+    emf = CloseEnhMetaFile(dc);
+    DeleteDC(dc);
+
+    for (type = SS_LEFT; type < SS_ETCHEDFRAME; type++)
+    {
+        winetest_push_context("%u", type);
+
+        hwnd = build_static(type);
+        ok(hwnd != 0, "failed to create static type %#x\n", type);
+
+        /* set icon */
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_ICON, (LPARAM)icon);
+        ok(!old_image, "got %p\n", old_image);
+        if (type == SS_ICON)
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        else
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_ICON, (LPARAM)icon);
+        if (type == SS_ICON)
+        {
+            ok(old_image != 0, "got %p\n", old_image);
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+        else
+        {
+            ok(!old_image, "got %p\n", old_image);
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETICON, (WPARAM)icon, 0);
+        if (type == SS_ICON)
+        {
+            ok(old_image != 0, "got %p\n", old_image);
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+        else
+        {
+            ok(!old_image, "got %p\n", old_image);
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+
+        /* set bitmap */
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bmp);
+        ok(!old_image, "got %p\n", old_image);
+        if (type == SS_BITMAP)
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        else
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bmp);
+        if (type == SS_BITMAP)
+        {
+            ok(old_image != 0, "got %p\n", old_image);
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+        else
+        {
+            ok(!old_image, "got %p\n", old_image);
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+
+        /* set EMF */
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_ENHMETAFILE, (LPARAM)emf);
+        ok(!old_image, "got %p\n", old_image);
+        if (type == SS_ENHMETAFILE)
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        else
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+
+        g_nReceivedColorStatic = 0;
+        old_image = (HICON)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_ENHMETAFILE, (LPARAM)emf);
+        if (type == SS_ENHMETAFILE)
+        {
+            ok(old_image != 0, "got %p\n", old_image);
+            ok(g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+        else
+        {
+            ok(!old_image, "got %p\n", old_image);
+            ok(!g_nReceivedColorStatic, "Unexpected WM_CTLCOLORSTATIC value %d\n", g_nReceivedColorStatic);
+        }
+
+        DestroyWindow(hwnd);
+
+        winetest_pop_context();
+    }
+
+    DestroyIcon(icon);
+    DeleteObject(bmp);
+    DeleteEnhMetaFile(emf);
+}
+
 START_TEST(static)
 {
     static const char szClassName[] = "testclass";
@@ -222,6 +336,7 @@ START_TEST(static)
     test_updates(SS_ETCHEDVERT, TODO_COUNT);
     test_set_text();
     test_set_image();
+    test_STM_SETIMAGE();
 
     DestroyWindow(hMainWnd);
 }
