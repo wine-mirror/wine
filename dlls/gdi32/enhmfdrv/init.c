@@ -63,7 +63,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_ExtTextOut,               /* pExtTextOut */
     EMFDRV_FillPath,                 /* pFillPath */
     EMFDRV_FillRgn,                  /* pFillRgn */
-    EMFDRV_FlattenPath,              /* pFlattenPath */
+    NULL,                            /* pFlattenPath */
     NULL,                            /* pFontIsLinked */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     NULL,                            /* pGetBoundsRect */

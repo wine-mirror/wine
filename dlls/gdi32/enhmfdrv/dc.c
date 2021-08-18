@@ -376,14 +376,13 @@ BOOL EMFDC_EndPath( DC_ATTR *dc_attr )
     return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_FlattenPath( PHYSDEV dev )
+BOOL EMFDC_FlattenPath( DC_ATTR *dc_attr )
 {
     EMRFLATTENPATH emr;
 
     emr.emr.iType = EMR_FLATTENPATH;
     emr.emr.nSize = sizeof(emr);
-
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SelectClipPath( DC_ATTR *dc_attr, INT mode )

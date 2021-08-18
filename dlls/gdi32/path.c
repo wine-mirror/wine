@@ -1588,21 +1588,25 @@ static BOOL CDECL pathdrv_CloseFigure( PHYSDEV dev )
 
 
 /*******************************************************************
- *      FlattenPath [GDI32.@]
- *
- *
+ *           NtGdiFlattenPath   (win32u.@)
  */
-BOOL WINAPI FlattenPath(HDC hdc)
+BOOL WINAPI NtGdiFlattenPath( HDC hdc )
 {
+    struct gdi_path *path;
     BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (dc)
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+
+    if (!dc->path) SetLastError( ERROR_CAN_NOT_COMPLETE );
+    else if ((path = PATH_FlattenPath( dc->path )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFlattenPath );
-        ret = physdev->funcs->pFlattenPath( physdev );
-        release_dc_ptr( dc );
+        free_gdi_path( dc->path );
+        dc->path = path;
+        ret = TRUE;
     }
+
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -2030,17 +2034,6 @@ BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
 
 BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev )
 {
-    DC *dc = get_nulldrv_dc( dev );
-    struct gdi_path *path;
-
-    if (!dc->path)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    if (!(path = PATH_FlattenPath( dc->path ))) return FALSE;
-    free_gdi_path( dc->path );
-    dc->path = path;
     return TRUE;
 }
 
