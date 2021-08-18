@@ -11429,44 +11429,312 @@ static void test_so_debug(void)
     closesocket(s);
 }
 
-static void test_set_only_options(void)
+struct sockopt_validity_test
 {
-    unsigned int i;
-    int ret, len;
-    int value;
-    SOCKET s;
+    int opt;
+    int get_error;
+    int set_error;
+    BOOL todo;
+};
 
-    static const struct
+static void do_sockopt_validity_tests(const char *type, SOCKET sock, int level,
+                                      const struct sockopt_validity_test *tests)
+{
+    char value[256];
+    int count, rc, expected_rc, i;
+
+    for (i = 0; tests[i].opt; i++)
     {
-        int level;
-        int option;
+        winetest_push_context("%s option %i", type, tests[i].opt);
+        memset(value, 0, sizeof(value));
+        count = sizeof(value);
+
+        WSASetLastError(0);
+        rc = getsockopt(sock, level, tests[i].opt, value, &count);
+        expected_rc = tests[i].get_error ? SOCKET_ERROR : 0;
+todo_wine_if(!tests[i].get_error && tests[i].todo)
+        ok(rc == expected_rc || broken(rc == SOCKET_ERROR && WSAGetLastError() == WSAENOPROTOOPT),
+           "expected getsockopt to return %i, got %i\n", expected_rc, rc);
+todo_wine_if(tests[i].todo)
+        ok(WSAGetLastError() == tests[i].get_error || broken(rc == SOCKET_ERROR && WSAGetLastError() == WSAENOPROTOOPT),
+           "expected getsockopt to set error %i, got %i\n", tests[i].get_error, WSAGetLastError());
+
+        if (tests[i].get_error)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        WSASetLastError(0);
+        rc = setsockopt(sock, level, tests[i].opt, value, count);
+        expected_rc = tests[i].set_error ? SOCKET_ERROR : 0;
+todo_wine_if(!tests[i].set_error && tests[i].todo)
+        ok(rc == expected_rc || broken(rc == SOCKET_ERROR && WSAGetLastError() == WSAENOPROTOOPT),
+           "expected setsockopt to return %i, got %i\n", expected_rc, rc);
+todo_wine_if(tests[i].todo)
+        ok(WSAGetLastError() == tests[i].set_error || broken(rc == SOCKET_ERROR && WSAGetLastError() == WSAENOPROTOOPT),
+           "expected setsockopt to set error %i, got %i\n", tests[i].set_error, WSAGetLastError());
+
+        winetest_pop_context();
     }
-    tests[] =
+}
+
+static void test_sockopt_validity(void)
+{
+    static const struct sockopt_validity_test ipv4_tcp_tests[] =
     {
-        {IPPROTO_IP, IP_ADD_MEMBERSHIP},
-        {IPPROTO_IP, IP_DROP_MEMBERSHIP},
-        {IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP},
-        {IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP},
+        { -1,                         WSAENOPROTOOPT                    },
+        { IP_OPTIONS                                                    },
+        { IP_HDRINCL,                 WSAEINVAL                         },
+        { IP_TOS                                                        },
+        { IP_TTL                                                        },
+        { IP_MULTICAST_IF,            WSAEINVAL                         },
+        { IP_MULTICAST_TTL,           WSAEINVAL                         },
+        { IP_MULTICAST_LOOP,          WSAEINVAL                         },
+        { IP_ADD_MEMBERSHIP,          WSAENOPROTOOPT                    },
+        { IP_DROP_MEMBERSHIP,         WSAENOPROTOOPT                    },
+        { IP_DONTFRAGMENT                                               },
+        { IP_PKTINFO,                 WSAEINVAL                         },
+        { IP_RECVTTL,                 WSAEINVAL,       0,          TRUE },
+        { IP_RECEIVE_BROADCAST,       WSAEINVAL,       0,          TRUE },
+        { IP_RECVIF,                  WSAEINVAL,       0,          TRUE },
+        { IP_RECVDSTADDR,             WSAEINVAL,       0,          TRUE },
+        { IP_IFLIST,                  0,               0,          TRUE },
+        { IP_UNICAST_IF                                                 },
+        { IP_RTHDR,                   0,               0,          TRUE },
+        { IP_GET_IFLIST,              WSAEINVAL,       0,          TRUE },
+        { IP_RECVRTHDR,               WSAEINVAL,       0,          TRUE },
+        { IP_RECVTCLASS,              WSAEINVAL,       0,          TRUE },
+        { IP_ORIGINAL_ARRIVAL_IF,     WSAEINVAL,       0,          TRUE },
+        { IP_ECN,                     WSAEINVAL,       0,          TRUE },
+        { IP_PKTINFO_EX,              WSAEINVAL,       0,          TRUE },
+        { IP_WFP_REDIRECT_RECORDS,    WSAEINVAL,       0,          TRUE },
+        { IP_WFP_REDIRECT_CONTEXT,    WSAEINVAL,       0,          TRUE },
+        { IP_MTU_DISCOVER,            0,               WSAEINVAL,  TRUE },
+        { IP_MTU,                     WSAENOTCONN,     0,          TRUE },
+        { IP_RECVERR,                 WSAEINVAL,       0,          TRUE },
+        { IP_USER_MTU,                0,               0,          TRUE },
+        {}
     };
-
-    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    static const struct sockopt_validity_test ipv4_udp_tests[] =
     {
-        if (tests[i].level == IPPROTO_IPV6)
-        {
-            s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-            if (s == INVALID_SOCKET) continue;
-        }
-        else
-        {
-            s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        }
+        { -1,                         WSAENOPROTOOPT                    },
+        { IP_OPTIONS                                                    },
+        { IP_HDRINCL,                 WSAEINVAL                         },
+        { IP_TOS                                                        },
+        { IP_TTL                                                        },
+        { IP_MULTICAST_IF                                               },
+        { IP_MULTICAST_TTL                                              },
+        { IP_MULTICAST_LOOP                                             },
+        { IP_ADD_MEMBERSHIP,          WSAENOPROTOOPT                    },
+        { IP_DROP_MEMBERSHIP,         WSAENOPROTOOPT                    },
+        { IP_DONTFRAGMENT                                               },
+        { IP_PKTINFO                                                    },
+        { IP_RECVTTL,                 0,               0,          TRUE },
+        { IP_RECEIVE_BROADCAST,       0,               0,          TRUE },
+        { IP_RECVIF,                  0,               0,          TRUE },
+        { IP_RECVDSTADDR,             0,               0,          TRUE },
+        { IP_IFLIST,                  0,               0,          TRUE },
+        { IP_UNICAST_IF                                                 },
+        { IP_RTHDR,                   0,               0,          TRUE },
+        { IP_GET_IFLIST,              WSAEINVAL,       0,          TRUE },
+        { IP_RECVRTHDR,               0,               0,          TRUE },
+        { IP_RECVTCLASS,              0,               0,          TRUE },
+        { IP_ORIGINAL_ARRIVAL_IF,     0,               0,          TRUE },
+        { IP_ECN,                     0,               0,          TRUE },
+        { IP_PKTINFO_EX,              0,               0,          TRUE },
+        { IP_WFP_REDIRECT_RECORDS,    0,               0,          TRUE },
+        { IP_WFP_REDIRECT_CONTEXT,    0,               0,          TRUE },
+        { IP_MTU_DISCOVER,            0,               WSAEINVAL,  TRUE },
+        { IP_MTU,                     WSAENOTCONN,     0,          TRUE },
+        { IP_RECVERR,                 0,               0,          TRUE },
+        { IP_USER_MTU,                0,               0,          TRUE },
+        {}
+    };
+    static const struct sockopt_validity_test ipv4_raw_tests[] =
+    {
+        { -1,                         WSAENOPROTOOPT                    },
+        { IP_OPTIONS                                                    },
+        { IP_HDRINCL,                                                   },
+        { IP_TOS                                                        },
+        { IP_TTL                                                        },
+        { IP_MULTICAST_IF                                               },
+        { IP_MULTICAST_TTL                                              },
+        { IP_MULTICAST_LOOP                                             },
+        { IP_ADD_MEMBERSHIP,          WSAENOPROTOOPT                    },
+        { IP_DROP_MEMBERSHIP,         WSAENOPROTOOPT                    },
+        { IP_DONTFRAGMENT                                               },
+        { IP_PKTINFO                                                    },
+        { IP_RECVTTL,                 0,               0,          TRUE },
+        { IP_RECEIVE_BROADCAST,       0,               0,          TRUE },
+        { IP_RECVIF,                  0,               0,          TRUE },
+        { IP_RECVDSTADDR,             0,               0,          TRUE },
+        { IP_IFLIST,                  0,               0,          TRUE },
+        { IP_UNICAST_IF                                                 },
+        { IP_RTHDR,                   0,               0,          TRUE },
+        { IP_GET_IFLIST,              WSAEINVAL,       0,          TRUE },
+        { IP_RECVRTHDR,               0,               0,          TRUE },
+        { IP_RECVTCLASS,              0,               0,          TRUE },
+        { IP_ORIGINAL_ARRIVAL_IF,     0,               0,          TRUE },
+        { IP_ECN,                     0,               0,          TRUE },
+        { IP_PKTINFO_EX,              0,               0,          TRUE },
+        { IP_WFP_REDIRECT_RECORDS,    0,               0,          TRUE },
+        { IP_WFP_REDIRECT_CONTEXT,    0,               0,          TRUE },
+        { IP_MTU_DISCOVER,            0,               WSAEINVAL,  TRUE },
+        { IP_MTU,                     WSAENOTCONN,     0,          TRUE },
+        { IP_RECVERR,                 WSAEINVAL,       0,          TRUE },
+        { IP_USER_MTU,                0,               0,          TRUE },
+        {}
+    };
+    static const struct sockopt_validity_test ipv6_tcp_tests[] =
+    {
+        { -1,                         WSAENOPROTOOPT                    },
+        { IPV6_HOPOPTS,               0,               0,          TRUE },
+        { IPV6_HDRINCL,               WSAEINVAL,       0,          TRUE },
+        { IPV6_UNICAST_HOPS                                             },
+        { IPV6_MULTICAST_IF,          WSAEINVAL                         },
+        { IPV6_MULTICAST_HOPS,        WSAEINVAL                         },
+        { IPV6_MULTICAST_LOOP,        WSAEINVAL                         },
+        { IPV6_ADD_MEMBERSHIP,        WSAENOPROTOOPT                    },
+        { IPV6_DROP_MEMBERSHIP,       WSAENOPROTOOPT                    },
+        { IPV6_DONTFRAG                                                 },
+        { IPV6_PKTINFO,               WSAEINVAL                         },
+        { IPV6_HOPLIMIT,              WSAEINVAL                         },
+        { IPV6_PROTECTION_LEVEL                                         },
+        { IPV6_RECVIF,                WSAEINVAL,       0,          TRUE },
+        { IPV6_RECVDSTADDR,           WSAEINVAL,       0,          TRUE },
+        { IPV6_V6ONLY                                                   },
+        { IPV6_IFLIST,                0,               0,          TRUE },
+        { IPV6_UNICAST_IF                                               },
+        { IPV6_RTHDR,                 0,               0,          TRUE },
+        { IPV6_GET_IFLIST,            WSAEINVAL,       0,          TRUE },
+        { IPV6_RECVRTHDR,             WSAEINVAL,       0,          TRUE },
+        { IPV6_RECVTCLASS,            WSAEINVAL                         },
+        { IP_ORIGINAL_ARRIVAL_IF,     WSAEINVAL,       0,          TRUE },
+        { IPV6_ECN,                   WSAEINVAL,       0,          TRUE },
+        { IPV6_PKTINFO_EX,            WSAEINVAL,       0,          TRUE },
+        { IPV6_WFP_REDIRECT_RECORDS,  WSAEINVAL,       0,          TRUE },
+        { IPV6_WFP_REDIRECT_CONTEXT,  WSAEINVAL,       0,          TRUE },
+        { IPV6_MTU_DISCOVER,          0,               WSAEINVAL,  TRUE },
+        { IPV6_MTU,                   WSAENOTCONN,     0,          TRUE },
+        { IPV6_RECVERR,               WSAEINVAL,       0,          TRUE },
+        { IPV6_USER_MTU,              0,               0,          TRUE },
+        {}
+    };
+    static const struct sockopt_validity_test ipv6_udp_tests[] =
+    {
+        { -1,                         WSAENOPROTOOPT                    },
+        { IPV6_HOPOPTS,               0,               0,          TRUE },
+        { IPV6_HDRINCL,               WSAEINVAL,       0,          TRUE },
+        { IPV6_UNICAST_HOPS                                             },
+        { IPV6_MULTICAST_IF                                             },
+        { IPV6_MULTICAST_HOPS                                           },
+        { IPV6_MULTICAST_LOOP                                           },
+        { IPV6_ADD_MEMBERSHIP,        WSAENOPROTOOPT                    },
+        { IPV6_DROP_MEMBERSHIP,       WSAENOPROTOOPT                    },
+        { IPV6_DONTFRAG                                                 },
+        { IPV6_PKTINFO                                                  },
+        { IPV6_HOPLIMIT                                                 },
+        { IPV6_PROTECTION_LEVEL                                         },
+        { IPV6_RECVIF,                0,               0,          TRUE },
+        { IPV6_RECVDSTADDR,           0,               0,          TRUE },
+        { IPV6_V6ONLY                                                   },
+        { IPV6_IFLIST,                0,               0,          TRUE },
+        { IPV6_UNICAST_IF                                               },
+        { IPV6_RTHDR,                 0,               0,          TRUE },
+        { IPV6_GET_IFLIST,            WSAEINVAL,       0,          TRUE },
+        { IPV6_RECVRTHDR,             0,               0,          TRUE },
+        { IPV6_RECVTCLASS                                               },
+        { IP_ORIGINAL_ARRIVAL_IF,     0,               0,          TRUE },
+        { IPV6_ECN,                   0,               0,          TRUE },
+        { IPV6_PKTINFO_EX,            0,               0,          TRUE },
+        { IPV6_WFP_REDIRECT_RECORDS,  0,               0,          TRUE },
+        { IPV6_WFP_REDIRECT_CONTEXT,  0,               0,          TRUE },
+        { IPV6_MTU_DISCOVER,          0,               WSAEINVAL,  TRUE },
+        { IPV6_MTU,                   WSAENOTCONN,     0,          TRUE },
+        { IPV6_RECVERR,               0,               0,          TRUE },
+        { IPV6_USER_MTU,              0,               0,          TRUE },
+        {}
+    };
+    static const struct sockopt_validity_test ipv6_raw_tests[] =
+    {
+        { -1,                         WSAENOPROTOOPT                    },
+        { IPV6_HOPOPTS,               0,               0,          TRUE },
+        { IPV6_HDRINCL,               0,               0,          TRUE },
+        { IPV6_UNICAST_HOPS                                             },
+        { IPV6_MULTICAST_IF                                             },
+        { IPV6_MULTICAST_HOPS                                           },
+        { IPV6_MULTICAST_LOOP                                           },
+        { IPV6_ADD_MEMBERSHIP,        WSAENOPROTOOPT                    },
+        { IPV6_DROP_MEMBERSHIP,       WSAENOPROTOOPT                    },
+        { IPV6_DONTFRAG                                                 },
+        { IPV6_PKTINFO                                                  },
+        { IPV6_HOPLIMIT                                                 },
+        { IPV6_PROTECTION_LEVEL                                         },
+        { IPV6_RECVIF,                0,               0,          TRUE },
+        { IPV6_RECVDSTADDR,           0,               0,          TRUE },
+        { IPV6_V6ONLY                                                   },
+        { IPV6_IFLIST,                0,               0,          TRUE },
+        { IPV6_UNICAST_IF                                               },
+        { IPV6_RTHDR,                 0,               0,          TRUE },
+        { IPV6_GET_IFLIST,            WSAEINVAL,       0,          TRUE },
+        { IPV6_RECVRTHDR,             0,               0,          TRUE },
+        { IPV6_RECVTCLASS                                               },
+        { IP_ORIGINAL_ARRIVAL_IF,     0,               0,          TRUE },
+        { IPV6_ECN,                   0,               0,          TRUE },
+        { IPV6_PKTINFO_EX,            0,               0,          TRUE },
+        { IPV6_WFP_REDIRECT_RECORDS,  0,               0,          TRUE },
+        { IPV6_WFP_REDIRECT_CONTEXT,  0,               0,          TRUE },
+        { IPV6_MTU_DISCOVER,          0,               WSAEINVAL,  TRUE },
+        { IPV6_MTU,                   WSAENOTCONN,     0,          TRUE },
+        { IPV6_RECVERR,               WSAEINVAL,       0,          TRUE },
+        { IPV6_USER_MTU,              0,               0,          TRUE },
+        {}
+    };
+    SOCKET sock;
 
-        len = sizeof(value);
-        ret = getsockopt(s, tests[i].level, tests[i].option, (char *)&value, &len);
-        ok(ret == -1, "expected failure\n");
-        ok(WSAGetLastError() == WSAENOPROTOOPT, "got error %u\n", WSAGetLastError());
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+    do_sockopt_validity_tests("IPv4 TCP", sock, IPPROTO_IP, ipv4_tcp_tests);
+    closesocket(sock);
 
-        closesocket(s);
+    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+    do_sockopt_validity_tests("IPv4 UDP", sock, IPPROTO_IP, ipv4_udp_tests);
+    closesocket(sock);
+
+    sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    if (sock == INVALID_SOCKET && WSAGetLastError() == WSAEACCES)
+    {
+        skip("Raw IPv4 sockets are not available\n");
+    }
+    else
+    {
+        ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+        do_sockopt_validity_tests("IPv4 raw", sock, IPPROTO_IP, ipv4_raw_tests);
+        closesocket(sock);
+    }
+
+    sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+    do_sockopt_validity_tests("IPv6 TCP", sock, IPPROTO_IPV6, ipv6_tcp_tests);
+    closesocket(sock);
+
+    sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+    do_sockopt_validity_tests("IPv6 UDP", sock, IPPROTO_IPV6, ipv6_udp_tests);
+    closesocket(sock);
+
+    sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+    if (sock == INVALID_SOCKET && WSAGetLastError() == WSAEACCES)
+    {
+        skip("Raw IPv6 sockets are not available\n");
+    }
+    else
+    {
+        ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+        do_sockopt_validity_tests("IPv6 raw", sock, IPPROTO_IPV6, ipv6_raw_tests);
+        closesocket(sock);
     }
 }
 
@@ -11487,7 +11755,7 @@ START_TEST( sock )
     test_ipv6_cmsg();
     test_extendedSocketOptions();
     test_so_debug();
-    test_set_only_options();
+    test_sockopt_validity();
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
         do_test(&tests[i]);
