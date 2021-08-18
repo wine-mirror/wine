@@ -329,6 +329,11 @@ typedef struct WS(in6_pktinfo) {
 #define WS_TCP_DELAY_FIN_ACK            13
 #endif /* USE_WS_PREFIX */
 
+#define PROTECTION_LEVEL_UNRESTRICTED   10
+#define PROTECTION_LEVEL_EDGERESTRICTED 20
+#define PROTECTION_LEVEL_RESTRICTED     30
+#define PROTECTION_LEVEL_DEFAULT        ((UINT)-1)
+
 #ifndef USE_WS_PREFIX
 #define INET_ADDRSTRLEN         22
 #define INET6_ADDRSTRLEN        65
