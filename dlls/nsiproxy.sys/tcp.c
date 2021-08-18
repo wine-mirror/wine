@@ -50,6 +50,10 @@
 #include <netinet/in.h>
 #endif
 
+#ifdef HAVE_NETINET_IN_PCB_H
+#include <netinet/in_pcb.h>
+#endif
+
 #ifdef HAVE_NETINET_IP_VAR_H
 #include <netinet/ip_var.h>
 #endif
