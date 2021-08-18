@@ -696,12 +696,9 @@ HRGN WINAPI PathToRegion(HDC hdc)
 
 
 /***********************************************************************
- *           FillPath    (GDI32.@)
- *
- * FIXME
- *    Check that SetLastError is being called correctly
+ *           NtGdiFillPath    (win32u.@)
  */
-BOOL WINAPI FillPath(HDC hdc)
+BOOL WINAPI NtGdiFillPath( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );

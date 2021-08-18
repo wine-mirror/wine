@@ -1520,6 +1520,18 @@ BOOL WINAPI CloseFigure( HDC hdc )
 }
 
 /***********************************************************************
+ *           FillPath    (GDI32.@)
+ */
+BOOL WINAPI FillPath( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_FillPath( dc_attr )) return FALSE;
+    return NtGdiFillPath( hdc );
+}
+
+/***********************************************************************
  *           IntersectClipRect    (GDI32.@)
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
