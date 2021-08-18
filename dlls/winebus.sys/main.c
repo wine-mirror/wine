@@ -502,22 +502,25 @@ static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buff
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS mouse_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+static void mouse_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME("id %u, stub!\n", packet->reportId);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS mouse_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+static void mouse_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME("id %u, stub!\n", packet->reportId);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS mouse_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+static void mouse_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME("id %u, stub!\n", packet->reportId);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
 static const platform_vtbl mouse_vtbl =
@@ -576,22 +579,25 @@ static NTSTATUS keyboard_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *b
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS keyboard_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+static void keyboard_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME("id %u, stub!\n", packet->reportId);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS keyboard_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+static void keyboard_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME("id %u, stub!\n", packet->reportId);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS keyboard_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+static void keyboard_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
+    FIXME("id %u, stub!\n", packet->reportId);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
 static const platform_vtbl keyboard_vtbl =
@@ -939,28 +945,21 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_WRITE_REPORT / IOCTL_HID_SET_OUTPUT_REPORT\n");
-            irp->IoStatus.Status = ext->vtbl->set_output_report(
-                device, packet->reportId, packet->reportBuffer,
-                packet->reportBufferLen, &irp->IoStatus.Information);
+            ext->vtbl->set_output_report(device, packet, &irp->IoStatus);
             break;
         }
         case IOCTL_HID_GET_FEATURE:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_GET_FEATURE\n");
-            irp->IoStatus.Status = ext->vtbl->get_feature_report(
-                device, packet->reportId, packet->reportBuffer,
-                packet->reportBufferLen, &irp->IoStatus.Information);
-            packet->reportBufferLen = irp->IoStatus.Information;
+            ext->vtbl->get_feature_report(device, packet, &irp->IoStatus);
             break;
         }
         case IOCTL_HID_SET_FEATURE:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_SET_FEATURE\n");
-            irp->IoStatus.Status = ext->vtbl->set_feature_report(
-                device, packet->reportId, packet->reportBuffer,
-                packet->reportBufferLen, &irp->IoStatus.Information);
+            ext->vtbl->set_feature_report(device, packet, &irp->IoStatus);
             break;
         }
         default:

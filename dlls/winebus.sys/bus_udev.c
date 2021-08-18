@@ -716,100 +716,103 @@ static DWORD CALLBACK device_report_thread(void *args)
     return 0;
 }
 
-static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void hidraw_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    ULONG length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
 
-    if ((buffer[0] = id))
-        count = write(ext->device_fd, report, length);
+    if ((buffer[0] = packet->reportId))
+        count = write(ext->device_fd, packet->reportBuffer, length);
     else if (length > sizeof(buffer) - 1)
-        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", id, length);
+        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", packet->reportId, length);
     else
     {
-        memcpy(buffer + 1, report, length);
+        memcpy(buffer + 1, packet->reportBuffer, length);
         count = write(ext->device_fd, buffer, length + 1);
     }
 
     if (count > 0)
     {
-        *written = count;
-        return STATUS_SUCCESS;
+        io->Information = count;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        ERR_(hid_report)("id %d write failed error: %d %s\n", id, errno, strerror(errno));
-        *written = 0;
-        return STATUS_UNSUCCESSFUL;
+        ERR_(hid_report)("id %d write failed error: %d %s\n", packet->reportId, errno, strerror(errno));
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
     }
 }
 
-static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
+static void hidraw_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    ULONG length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
 
-    if ((buffer[0] = id) && length <= 0x1fff)
-        count = ioctl(ext->device_fd, HIDIOCGFEATURE(length), report);
+    if ((buffer[0] = packet->reportId) && length <= 0x1fff)
+        count = ioctl(ext->device_fd, HIDIOCGFEATURE(length), packet->reportBuffer);
     else if (length > sizeof(buffer) - 1)
-        ERR_(hid_report)("id %d length %u >= 8192, cannot read\n", id, length);
+        ERR_(hid_report)("id %d length %u >= 8192, cannot read\n", packet->reportId, length);
     else
     {
         count = ioctl(ext->device_fd, HIDIOCGFEATURE(length + 1), buffer);
-        memcpy(report, buffer + 1, length);
+        memcpy(packet->reportBuffer, buffer + 1, length);
     }
 
     if (count > 0)
     {
-        *read = count;
-        return STATUS_SUCCESS;
+        io->Information = count;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        ERR_(hid_report)("id %d read failed, error: %d %s\n", id, errno, strerror(errno));
-        *read = 0;
-        return STATUS_UNSUCCESSFUL;
+        ERR_(hid_report)("id %d read failed, error: %d %s\n", packet->reportId, errno, strerror(errno));
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
     }
 #else
-    *read = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 #endif
 }
 
-static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void hidraw_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    ULONG length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
 
-    if ((buffer[0] = id) && length <= 0x1fff)
-        count = ioctl(ext->device_fd, HIDIOCSFEATURE(length), report);
+    if ((buffer[0] = packet->reportId) && length <= 0x1fff)
+        count = ioctl(ext->device_fd, HIDIOCSFEATURE(length), packet->reportBuffer);
     else if (length > sizeof(buffer) - 1)
-        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", id, length);
+        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", packet->reportId, length);
     else
     {
-        memcpy(buffer + 1, report, length);
+        memcpy(buffer + 1, packet->reportBuffer, length);
         count = ioctl(ext->device_fd, HIDIOCSFEATURE(length + 1), buffer);
     }
 
     if (count > 0)
     {
-        *written = count;
-        return STATUS_SUCCESS;
+        io->Information = count;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        ERR_(hid_report)("id %d write failed, error: %d %s\n", id, errno, strerror(errno));
-        *written = 0;
-        return STATUS_UNSUCCESSFUL;
+        ERR_(hid_report)("id %d write failed, error: %d %s\n", packet->reportId, errno, strerror(errno));
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
     }
 #else
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 #endif
 }
 
@@ -949,22 +952,22 @@ static DWORD CALLBACK lnxev_device_report_thread(void *args)
     return 0;
 }
 
-static NTSTATUS lnxev_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void lnxev_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS lnxev_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
+static void lnxev_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    *read = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS lnxev_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void lnxev_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
 static const platform_vtbl lnxev_vtbl = {

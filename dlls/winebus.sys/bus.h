@@ -22,6 +22,7 @@
 #include <winbase.h>
 #include <winternl.h>
 #include <ddk/wdm.h>
+#include <ddk/hidclass.h>
 #include <hidusage.h>
 
 typedef int(*enum_func)(DEVICE_OBJECT *device, void *context);
@@ -42,9 +43,9 @@ typedef struct
     NTSTATUS (*start_device)(DEVICE_OBJECT *device);
     NTSTATUS (*get_reportdescriptor)(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length);
     NTSTATUS (*get_string)(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length);
-    NTSTATUS (*set_output_report)(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written);
-    NTSTATUS (*get_feature_report)(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read);
-    NTSTATUS (*set_feature_report)(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written);
+    void (*set_output_report)(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
+    void (*get_feature_report)(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
+    void (*set_feature_report)(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
 } platform_vtbl;
 
 void *get_platform_private(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;

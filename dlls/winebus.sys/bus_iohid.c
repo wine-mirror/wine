@@ -213,57 +213,60 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn result;
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
-    result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeOutput, id, report, length);
+    result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeOutput, packet->reportId,
+                                  packet->reportBuffer, packet->reportBufferLen);
     if (result == kIOReturnSuccess)
     {
-        *written = length;
-        return STATUS_SUCCESS;
+        io->Information = packet->reportBufferLen;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        *written = 0;
-        return STATUS_UNSUCCESSFUL;
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
     }
 }
 
-static NTSTATUS get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
+static void get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn ret;
-    CFIndex report_length = length;
+    CFIndex report_length = packet->reportBufferLen;
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
 
-    ret = IOHIDDeviceGetReport(private->device, kIOHIDReportTypeFeature, id, report, &report_length);
+    ret = IOHIDDeviceGetReport(private->device, kIOHIDReportTypeFeature, packet->reportId,
+                               packet->reportBuffer, &report_length);
     if (ret == kIOReturnSuccess)
     {
-        *read = report_length;
-        return STATUS_SUCCESS;
+        io->Information = report_length;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        *read = 0;
-        return STATUS_UNSUCCESSFUL;
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
     }
 }
 
-static NTSTATUS set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn result;
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
 
-    result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeFeature, id, report, length);
+    result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeFeature, packet->reportId,
+                                  packet->reportBuffer, packet->reportBufferLen);
     if (result == kIOReturnSuccess)
     {
-        *written = length;
-        return STATUS_SUCCESS;
+        io->Information = packet->reportBufferLen;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        *written = 0;
-        return STATUS_UNSUCCESSFUL;
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
     }
 }
 

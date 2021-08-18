@@ -536,14 +536,14 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
 
-    if (ext->sdl_haptic && id == 0)
+    if (ext->sdl_haptic && packet->reportId == 0)
     {
-        WORD left = report[2] * 128;
-        WORD right = report[3] * 128;
+        WORD left = packet->reportBuffer[2] * 128;
+        WORD right = packet->reportBuffer[3] * 128;
 
         if (ext->haptic_effect_id >= 0)
         {
@@ -572,26 +572,27 @@ static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report,
                 pSDL_HapticRumblePlay(ext->sdl_haptic, i, -1);
             }
         }
-        *written = length;
-        return STATUS_SUCCESS;
+
+        io->Information = packet->reportBufferLen;
+        io->Status = STATUS_SUCCESS;
     }
     else
     {
-        *written = 0;
-        return STATUS_NOT_IMPLEMENTED;
+        io->Information = 0;
+        io->Status = STATUS_NOT_IMPLEMENTED;
     }
 }
 
-static NTSTATUS get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
+static void get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    *read = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+static void set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
 static const platform_vtbl sdl_vtbl =
