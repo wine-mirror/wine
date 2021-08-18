@@ -296,6 +296,18 @@ typedef struct {
     CRITICAL_SECTION cs;
 } _ReentrantBlockingLock;
 
+enum ConcRT_EventType
+{
+    CONCRT_EVENT_GENERIC,
+    CONCRT_EVENT_START,
+    CONCRT_EVENT_END,
+    CONCRT_EVENT_BLOCK,
+    CONCRT_EVENT_UNBLOCK,
+    CONCRT_EVENT_YIELD,
+    CONCRT_EVENT_ATTACH,
+    CONCRT_EVENT_DETACH
+};
+
 static int context_tls_index = TLS_OUT_OF_INDEXES;
 
 static CRITICAL_SECTION default_scheduler_cs;
@@ -2381,6 +2393,13 @@ void WINAPIV _Trace_agents(/*enum Concurrency::Agents_EventType*/int type, __int
     FIXME("(%d %s)\n", type, wine_dbgstr_longlong(id));
 }
 #endif
+
+/* ?_Trace_ppl_function@Concurrency@@YAXABU_GUID@@EW4ConcRT_EventType@1@@Z */
+/* ?_Trace_ppl_function@Concurrency@@YAXAEBU_GUID@@EW4ConcRT_EventType@1@@Z */
+void __cdecl _Trace_ppl_function(const GUID *guid, unsigned char level, enum ConcRT_EventType type)
+{
+    FIXME("(%s %u %i) stub\n", debugstr_guid(guid), level, type);
+}
 
 #ifdef __ASM_USE_THISCALL_WRAPPER
 
