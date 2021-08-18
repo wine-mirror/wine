@@ -35,6 +35,7 @@
 #include <process.h>
 #include <errno.h>
 #include <locale.h>
+#include <winternl.h>
 
 #define MSVCRT_FD_BLOCK_SIZE 32
 typedef struct {
@@ -2731,6 +2732,81 @@ static void test_lseek(void)
     DeleteFileA("_creat.tst");
 }
 
+static BOOL has_sequential_hint(int fd)
+{
+    HANDLE handle;
+    FILE_MODE_INFORMATION mode_info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    handle = (HANDLE)_get_osfhandle(fd);
+    status = NtQueryInformationFile(handle, &io, &mode_info, sizeof(mode_info),
+            FileModeInformation);
+    ok(!status, "NtQueryInformationFile failed\n");
+    return (mode_info.Mode & FILE_SEQUENTIAL_ONLY) != 0;
+}
+
+static void test_fopen_hints(void)
+{
+    static const struct {
+        const char *mode;
+        BOOL seq;
+    } tests[] = {
+        { "rb", FALSE },
+        { "rbS", TRUE },
+        { "rbR", FALSE },
+        { "rbSR", TRUE },
+        { "rbRS", FALSE }
+    };
+
+    char temppath[MAX_PATH], tempfile[MAX_PATH];
+    FILE *fp;
+    int i;
+
+    GetTempPathA(MAX_PATH, temppath);
+    GetTempFileNameA(temppath, "", 0, tempfile);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        fp = fopen(tempfile, tests[i].mode);
+        ok(fp != NULL, "unable to fopen test file with mode \"%s\"\n", tests[i].mode);
+        ok(has_sequential_hint(_fileno(fp)) == tests[i].seq,
+                "unexpected sequential hint for fopen mode \"%s\"\n", tests[i].mode);
+        fclose(fp);
+    }
+    unlink(tempfile);
+}
+
+static void test_open_hints(void)
+{
+    static const struct {
+        int mode;
+        BOOL seq;
+    } tests[] = {
+        { _O_RDONLY | _O_BINARY, FALSE },
+        { _O_RDONLY | _O_BINARY | _O_SEQUENTIAL, TRUE },
+        { _O_RDONLY | _O_BINARY | _O_RANDOM, FALSE },
+        { _O_RDONLY | _O_BINARY | _O_RANDOM | _O_SEQUENTIAL, TRUE }
+    };
+
+    char temppath[MAX_PATH], tempfile[MAX_PATH];
+    int fd;
+    int i;
+
+    GetTempPathA(MAX_PATH, temppath);
+    GetTempFileNameA(temppath, "", 0, tempfile);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        fd = open(tempfile, tests[i].mode);
+        ok(fd != -1, "unable to _open test file with flags %x\n", tests[i].mode);
+        ok(has_sequential_hint(fd) == tests[i].seq,
+                "unexpected sequential hint for _open flags %x\n", tests[i].mode);
+        close(fd);
+    }
+    unlink(tempfile);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2803,6 +2879,8 @@ START_TEST(file)
     test_close();
     test__creat();
     test_lseek();
+    test_fopen_hints();
+    test_open_hints();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order
