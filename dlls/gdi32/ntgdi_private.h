@@ -564,7 +564,6 @@ extern BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, con
                                       LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT height ) DECLSPEC_HIDDEN;
 extern LONG CDECL nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
@@ -577,7 +576,6 @@ extern BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD co
 extern BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
                                             INT x_src, INT y_src, UINT start, UINT lines,
                                             const void *bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;

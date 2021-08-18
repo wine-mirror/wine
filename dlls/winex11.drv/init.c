@@ -369,7 +369,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pExtTextOut */
     X11DRV_FillPath,                    /* pFillPath */
     NULL,                               /* pFillRgn */
-    NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGetBoundsRect */
@@ -417,7 +416,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_RoundRect,                   /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     X11DRV_SelectBrush,                 /* pSelectBrush */
-    NULL,                               /* pSelectClipPath */
     X11DRV_SelectFont,                  /* pSelectFont */
     X11DRV_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetBkColor */

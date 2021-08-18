@@ -649,7 +649,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_ExtTextOut,                  /* pExtTextOut */
     dibdrv_FillPath,                    /* pFillPath */
     NULL,                               /* pFillRgn */
-    NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGetBoundsRect */
@@ -697,7 +696,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_RoundRect,                   /* pRoundRect */
     dibdrv_SelectBitmap,                /* pSelectBitmap */
     dibdrv_SelectBrush,                 /* pSelectBrush */
-    NULL,                               /* pSelectClipPath */
     dibdrv_SelectFont,                  /* pSelectFont */
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetBkColor */
@@ -1218,7 +1216,6 @@ static const struct gdi_dc_funcs window_driver =
     windrv_ExtTextOut,                  /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
-    NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGetBoundsRect */
@@ -1266,7 +1263,6 @@ static const struct gdi_dc_funcs window_driver =
     windrv_RoundRect,                   /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
-    NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetBkColor */

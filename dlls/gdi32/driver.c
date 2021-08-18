@@ -855,7 +855,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_ExtTextOut,                 /* pExtTextOut */
     nulldrv_FillPath,                   /* pFillPath */
     nulldrv_FillRgn,                    /* pFillRgn */
-    nulldrv_FlattenPath,                /* pFlattenPath */
     nulldrv_FontIsLinked,               /* pFontIsLinked */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GetBoundsRect,              /* pGetBoundsRect */
@@ -903,7 +902,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_RoundRect,                  /* pRoundRect */
     nulldrv_SelectBitmap,               /* pSelectBitmap */
     nulldrv_SelectBrush,                /* pSelectBrush */
-    nulldrv_SelectClipPath,             /* pSelectClipPath */
     nulldrv_SelectFont,                 /* pSelectFont */
     nulldrv_SelectPen,                  /* pSelectPen */
     nulldrv_SetBkColor,                 /* pSetBkColor */

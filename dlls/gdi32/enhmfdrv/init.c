@@ -63,7 +63,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_ExtTextOut,               /* pExtTextOut */
     EMFDRV_FillPath,                 /* pFillPath */
     EMFDRV_FillRgn,                  /* pFillRgn */
-    NULL,                            /* pFlattenPath */
     NULL,                            /* pFontIsLinked */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     NULL,                            /* pGetBoundsRect */
@@ -111,7 +110,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_RoundRect,                /* pRoundRect */
     EMFDRV_SelectBitmap,             /* pSelectBitmap */
     NULL,                            /* pSelectBrush */
-    NULL,                            /* pSelectClipPath */
     EMFDRV_SelectFont,               /* pSelectFont */
     NULL,                            /* pSelectPen */
     NULL,                            /* pSetBkColor */

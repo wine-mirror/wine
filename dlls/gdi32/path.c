@@ -2006,11 +2006,6 @@ BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
     return FALSE;
 }
 
-BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
-{
-    return TRUE;
-}
-
 BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
 {
     if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
@@ -2029,11 +2024,6 @@ BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
 {
     if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev )
-{
     return TRUE;
 }
 
@@ -2082,7 +2072,6 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_ExtTextOut,                 /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
-    NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGetBoundsRect */
@@ -2130,7 +2119,6 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_RoundRect,                  /* pRoundRect */
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
-    NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetBkColor */

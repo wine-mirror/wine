@@ -3840,7 +3840,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pExtTextOut */
     NULL,                           /* pFillPath */
     NULL,                           /* pFillRgn */
-    NULL,                           /* pFlattenPath */
     font_FontIsLinked,              /* pFontIsLinked */
     NULL,                           /* pFrameRgn */
     NULL,                           /* pGetBoundsRect */
@@ -3888,7 +3887,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pRoundRect */
     NULL,                           /* pSelectBitmap */
     NULL,                           /* pSelectBrush */
-    NULL,                           /* pSelectClipPath */
     font_SelectFont,                /* pSelectFont */
     NULL,                           /* pSelectPen */
     NULL,                           /* pSetBkColor */
