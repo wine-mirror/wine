@@ -23,14 +23,28 @@
 #include <stdarg.h>
 
 #include "ntgdi_private.h"
+#include "gdi_private.h"
 #include "winnls.h"
-#include "mfdrv/metafiledrv.h"
 #include "wine/wingdi16.h"
 
 #include "wine/debug.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
+
+struct metadc
+{
+    HDC         hdc;
+    METAHEADER *mh;           /* Pointer to metafile header */
+    UINT        handles_size, cur_handles;
+    HGDIOBJ    *handles;
+    HANDLE      hFile;          /* Handle for disk based MetaFile */
+    HPEN        pen;
+    HBRUSH      brush;
+    HFONT       font;
+};
+
+#define HANDLE_LIST_INC 20
 
 struct metadc *get_metadc_ptr( HDC hdc )
 {
@@ -39,7 +53,7 @@ struct metadc *get_metadc_ptr( HDC hdc )
     return metafile;
 }
 
-BOOL metadc_write_record( struct metadc *metadc, METARECORD *mr, unsigned int rlen )
+static BOOL metadc_write_record( struct metadc *metadc, METARECORD *mr, unsigned int rlen )
 {
     DWORD len, size;
     METAHEADER *mh;
@@ -60,7 +74,7 @@ BOOL metadc_write_record( struct metadc *metadc, METARECORD *mr, unsigned int rl
     return TRUE;
 }
 
-BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
+static BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
 {
     struct metadc *metadc;
 
@@ -68,7 +82,7 @@ BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
     return metadc_write_record( metadc, mr, rlen );
 }
 
-BOOL metadc_param0( HDC hdc, short func )
+static BOOL metadc_param0( HDC hdc, short func )
 {
     METARECORD mr;
 
@@ -77,7 +91,7 @@ BOOL metadc_param0( HDC hdc, short func )
     return metadc_record( hdc, &mr, mr.rdSize * sizeof(WORD) );
 }
 
-BOOL metadc_param1( HDC hdc, short func, short param )
+static BOOL metadc_param1( HDC hdc, short func, short param )
 {
     METARECORD mr;
 
@@ -87,7 +101,7 @@ BOOL metadc_param1( HDC hdc, short func, short param )
     return metadc_record( hdc, &mr, mr.rdSize * sizeof(WORD) );
 }
 
-BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
+static BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
 {
     char buffer[FIELD_OFFSET(METARECORD, rdParm[2])];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -99,8 +113,8 @@ BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
     return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
-BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
-                    short param3, short param4 )
+static BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
+                           short param3, short param4 )
 {
     char buffer[FIELD_OFFSET(METARECORD, rdParm[4])];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -114,8 +128,8 @@ BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
     return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
-BOOL metadc_param5( HDC hdc, short func, short param1, short param2,
-                    short param3, short param4, short param5 )
+static BOOL metadc_param5( HDC hdc, short func, short param1, short param2,
+                           short param3, short param4, short param5 )
 {
     char buffer[FIELD_OFFSET(METARECORD, rdParm[5])];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -130,9 +144,9 @@ BOOL metadc_param5( HDC hdc, short func, short param1, short param2,
     return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
-BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
-                    short param3, short param4, short param5,
-                    short param6 )
+static BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
+                           short param3, short param4, short param5,
+                           short param6 )
 {
     char buffer[FIELD_OFFSET(METARECORD, rdParm[6])];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -148,9 +162,9 @@ BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
     return metadc_record( hdc, mr, sizeof(buffer) );
 }
 
-BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
-                    short param3, short param4, short param5,
-                    short param6, short param7, short param8)
+static BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
+                           short param3, short param4, short param5,
+                           short param6, short param7, short param8)
 {
     char buffer[FIELD_OFFSET(METARECORD, rdParm[8])];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -854,6 +868,119 @@ INT METADC_SetDIBitsToDevice( HDC hdc, INT x_dst, INT y_dst, DWORD width, DWORD 
     metadc_record( hdc, mr, mr->rdSize * sizeof(WORD) );
     HeapFree( GetProcessHeap(), 0, mr );
     return lines;
+}
+
+static BOOL metadc_text( HDC hdc, short x, short y, UINT16 flags, const RECT16 *rect,
+                         const char *str, short count, const INT16 *dx )
+{
+    BOOL ret;
+    DWORD len;
+    METARECORD *mr;
+    BOOL isrect = flags & (ETO_CLIPPED | ETO_OPAQUE);
+
+    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
+            + sizeof(UINT16);
+    if (isrect) len += sizeof(RECT16);
+    if (dx) len += count * sizeof(INT16);
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len ))) return FALSE;
+
+    mr->rdSize = len / sizeof(WORD);
+    mr->rdFunction = META_EXTTEXTOUT;
+    mr->rdParm[0] = y;
+    mr->rdParm[1] = x;
+    mr->rdParm[2] = count;
+    mr->rdParm[3] = flags;
+    if (isrect) memcpy( mr->rdParm + 4, rect, sizeof(RECT16) );
+    memcpy( mr->rdParm + (isrect ? 8 : 4), str, count );
+    if (dx)
+        memcpy( mr->rdParm + (isrect ? 8 : 4) + ((count + 1) >> 1), dx, count * sizeof(INT16) );
+    ret = metadc_record( hdc, mr, mr->rdSize * sizeof(WORD) );
+    HeapFree( GetProcessHeap(), 0, mr );
+    return ret;
+}
+
+BOOL METADC_ExtTextOut( HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
+                        const WCHAR *str, UINT count, const INT *dx )
+{
+    RECT16 rect16;
+    LPINT16 lpdx16 = NULL;
+    BOOL ret;
+    unsigned int i, j;
+    char *ascii;
+    DWORD len;
+    CHARSETINFO csi;
+    int charset = GetTextCharset( hdc );
+    UINT cp = CP_ACP;
+
+    if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET ))
+        cp = csi.ciACP;
+    else
+    {
+        switch(charset)
+        {
+        case OEM_CHARSET:
+            cp = GetOEMCP();
+            break;
+        case DEFAULT_CHARSET:
+            cp = GetACP();
+            break;
+
+        case VISCII_CHARSET:
+        case TCVN_CHARSET:
+        case KOI8_CHARSET:
+        case ISO3_CHARSET:
+        case ISO4_CHARSET:
+        case ISO10_CHARSET:
+        case CELTIC_CHARSET:
+            /* FIXME: These have no place here, but because x11drv
+               enumerates fonts with these (made up) charsets some apps
+               might use them and then the FIXME below would become
+               annoying.  Now we could pick the intended codepage for
+               each of these, but since it's broken anyway we'll just
+               use CP_ACP and hope it'll go away...
+            */
+            cp = CP_ACP;
+            break;
+
+        default:
+            FIXME("Can't find codepage for charset %d\n", charset);
+            break;
+        }
+    }
+
+
+    TRACE( "cp = %d\n", cp );
+    len = WideCharToMultiByte( cp, 0, str, count, NULL, 0, NULL, NULL );
+    ascii = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( cp, 0, str, count, ascii, len, NULL, NULL );
+    TRACE( "mapped %s -> %s\n", debugstr_wn(str, count), debugstr_an(ascii, len) );
+
+
+    if (lprect)
+    {
+        rect16.left   = lprect->left;
+        rect16.top    = lprect->top;
+        rect16.right  = lprect->right;
+        rect16.bottom = lprect->bottom;
+    }
+
+    if (dx)
+    {
+        lpdx16 = HeapAlloc( GetProcessHeap(), 0, sizeof(INT16) * len );
+        for (i = j = 0; i < len; )
+            if (IsDBCSLeadByteEx( cp, ascii[i] ))
+            {
+                lpdx16[i++] = dx[j++];
+                lpdx16[i++] = 0;
+            }
+            else
+                lpdx16[i++] = dx[j++];
+    }
+
+    ret = metadc_text( hdc, x, y, flags, lprect ? &rect16 : NULL, ascii, len, lpdx16 );
+    HeapFree( GetProcessHeap(), 0, ascii );
+    HeapFree( GetProcessHeap(), 0, lpdx16 );
+    return ret;
 }
 
 BOOL METADC_ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT mode )
