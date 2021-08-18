@@ -346,6 +346,24 @@ struct nsi_tcp_conn_static
     ULONGLONG mod_info;
 };
 
+/* Undocumented NSI UDP tables */
+#define NSI_UDP_ENDPOINT_TABLE             1
+
+struct nsi_udp_endpoint_key
+{
+    SOCKADDR_INET local;
+};
+
+struct nsi_udp_endpoint_static
+{
+    DWORD pid;
+    DWORD unk;
+    ULONGLONG create_time;
+    DWORD flags;
+    DWORD unk2;
+    ULONGLONG mod_info;
+};
+
 /* Wine specific ioctl interface */
 
 #define IOCTL_NSIPROXY_WINE_ENUMERATE_ALL         CTL_CODE(FILE_DEVICE_NETWORK, 0x400, METHOD_BUFFERED, 0)

@@ -41,6 +41,7 @@ static const struct module *modules[] =
     &ipv4_module,
     &ipv6_module,
     &tcp_module,
+    &udp_module,
 };
 
 static const struct module_table *get_module_table( const NPI_MODULEID *id, DWORD table )

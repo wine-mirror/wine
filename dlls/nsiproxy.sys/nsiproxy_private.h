@@ -92,6 +92,24 @@ static inline BOOL convert_index_to_luid( DWORD index, NET_LUID *luid )
     return !nsi_get_parameter_ex( &params );
 }
 
+struct ipv6_addr_scope
+{
+    IN6_ADDR addr;
+    DWORD scope;
+};
+
+struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size ) DECLSPEC_HIDDEN;
+DWORD find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size ) DECLSPEC_HIDDEN;
+
+struct pid_map
+{
+    unsigned int pid;
+    unsigned int unix_pid;
+};
+
+struct pid_map *get_pid_map( unsigned int *num_entries ) DECLSPEC_HIDDEN;
+unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UINT_PTR inode ) DECLSPEC_HIDDEN;
+
 struct module_table
 {
     DWORD table;
@@ -116,3 +134,4 @@ extern const struct module ndis_module DECLSPEC_HIDDEN;
 extern const struct module ipv4_module DECLSPEC_HIDDEN;
 extern const struct module ipv6_module DECLSPEC_HIDDEN;
 extern const struct module tcp_module DECLSPEC_HIDDEN;
+extern const struct module udp_module DECLSPEC_HIDDEN;
