@@ -23,7 +23,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "wine/heap.h"
 #include "msvcrt.h"
 #include "cppexcept.h"
 #include "mtdll.h"
@@ -921,11 +920,9 @@ int __cdecl event_wait_for_multiple(event **events, size_t count, bool wait_all,
     if(count == 0)
         return 0;
 
-    wait = heap_alloc(FIELD_OFFSET(thread_wait, entries[count]));
-    if(!wait)
-        throw_exception(EXCEPTION_BAD_ALLOC, 0, "bad allocation");
+    wait = operator_new(FIELD_OFFSET(thread_wait, entries[count]));
     ret = evt_wait(wait, events, count, wait_all, timeout);
-    heap_free(wait);
+    operator_delete(wait);
 
     return ret;
 }
@@ -1005,10 +1002,7 @@ bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
 
     TRACE("(%p %p %d)\n", this, cs, timeout);
 
-    if(!(q = HeapAlloc(GetProcessHeap(), 0, sizeof(cv_queue)))) {
-        throw_exception(EXCEPTION_BAD_ALLOC, 0, "bad allocation");
-    }
-
+    q = operator_new(sizeof(cv_queue));
     critical_section_lock(&this->lock);
     q->next = this->queue;
     q->expired = FALSE;
@@ -1030,7 +1024,7 @@ bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
             NtWaitForKeyedEvent(keyed_event, q, 0, 0);
     }
 
-    HeapFree(GetProcessHeap(), 0, q);
+    operator_delete(q);
     critical_section_lock(cs);
     return TRUE;
 }
