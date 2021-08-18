@@ -1532,6 +1532,18 @@ BOOL WINAPI FillPath( HDC hdc )
 }
 
 /***********************************************************************
+ *           SelectClipPath    (GDI32.@)
+ */
+BOOL WINAPI SelectClipPath( HDC hdc, INT mode )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SelectClipPath( dc_attr, mode )) return FALSE;
+    return NtGdiSelectClipPath( hdc, mode );
+}
+
+/***********************************************************************
  *           IntersectClipRect    (GDI32.@)
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )

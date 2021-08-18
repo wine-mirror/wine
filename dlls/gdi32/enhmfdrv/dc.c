@@ -386,24 +386,14 @@ BOOL CDECL EMFDRV_FlattenPath( PHYSDEV dev )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
+BOOL EMFDC_SelectClipPath( DC_ATTR *dc_attr, INT mode )
 {
     EMRSELECTCLIPPATH emr;
-    BOOL ret = FALSE;
-    HRGN hrgn;
 
     emr.emr.iType = EMR_SELECTCLIPPATH;
     emr.emr.nSize = sizeof(emr);
-    emr.iMode = iMode;
-
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    hrgn = PathToRegion( dev->hdc );
-    if (hrgn)
-    {
-        ret = NtGdiExtSelectClipRgn( dev->hdc, hrgn, iMode );
-        DeleteObject( hrgn );
-    }
-    return ret;
+    emr.iMode = mode;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_WidenPath( PHYSDEV dev )

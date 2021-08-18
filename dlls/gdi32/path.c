@@ -714,18 +714,17 @@ BOOL WINAPI NtGdiFillPath( HDC hdc )
 
 
 /***********************************************************************
- *           SelectClipPath    (GDI32.@)
+ *           NtGdiSelectClipPath    (win32u.@)
  */
-BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
+BOOL WINAPI NtGdiSelectClipPath( HDC hdc, INT mode )
 {
     BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hdc );
+    HRGN rgn;
 
-    if (dc)
+    if ((rgn = PathToRegion( hdc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectClipPath );
-        ret = physdev->funcs->pSelectClipPath( physdev, iMode );
-        release_dc_ptr( dc );
+        ret = NtGdiExtSelectClipRgn( hdc, rgn, mode ) != ERROR;
+        DeleteObject( rgn );
     }
     return ret;
 }
@@ -2005,15 +2004,7 @@ BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
 
 BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
 {
-    BOOL ret = FALSE;
-    HRGN hrgn = PathToRegion( dev->hdc );
-
-    if (hrgn)
-    {
-        ret = ExtSelectClipRgn( dev->hdc, hrgn, mode ) != ERROR;
-        DeleteObject( hrgn );
-    }
-    return ret;
+    return TRUE;
 }
 
 BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
