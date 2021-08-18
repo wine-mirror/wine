@@ -42,7 +42,6 @@
 #include "ws2ipdef.h"
 #include "windns.h"
 #include "iphlpapi.h"
-#include "ifenum.h"
 #include "ipifcons.h"
 #include "fltdefs.h"
 #include "ifdef.h"
@@ -3280,6 +3279,53 @@ DWORD WINAPI AllocateAndGetTcpExTableFromStack( void **table, BOOL sort, HANDLE 
     if (family == WS_AF_INET6) return ERROR_NOT_SUPPORTED;
 
     return allocate_tcp_table( table, sort, heap, flags, family, TCP_TABLE_OWNER_PID_ALL );
+}
+
+/******************************************************************
+ *    GetUdpStatistics (IPHLPAPI.@)
+ *
+ * Get the UDP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for UDP statistics
+ */
+DWORD WINAPI GetUdpStatistics( MIB_UDPSTATS *stats )
+{
+    return GetUdpStatisticsEx( stats, WS_AF_INET );
+}
+
+/******************************************************************
+ *    GetUdpStatisticsEx (IPHLPAPI.@)
+ *
+ * Get the IPv4 and IPv6 UDP statistics for the local computer.
+ *
+ * PARAMS
+ *  stats [Out] buffer for UDP statistics
+ *  family [In] specifies whether IPv4 or IPv6 statistics are returned
+ *
+ * RETURNS
+ *  Success: NO_ERROR
+ *  Failure: error code from winerror.h
+ */
+DWORD WINAPI GetUdpStatisticsEx( MIB_UDPSTATS *stats, DWORD family )
+{
+    struct nsi_udp_stats_dynamic dyn;
+    USHORT key = (USHORT)family;
+    DWORD err;
+
+    if (!stats || !ip_module_id( family )) return ERROR_INVALID_PARAMETER;
+    memset( stats, 0, sizeof(*stats) );
+
+    err = NsiGetAllParameters( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_STATS_TABLE, &key, sizeof(key), NULL, 0,
+                               &dyn, sizeof(dyn), NULL, 0 );
+    if (err) return err;
+
+    stats->dwInDatagrams = dyn.in_dgrams;
+    stats->dwNoPorts = dyn.no_ports;
+    stats->dwInErrors = dyn.in_errs;
+    stats->dwOutDatagrams = dyn.out_dgrams;
+    stats->dwNumAddrs = dyn.num_addrs;
+    return err;
 }
 
 /******************************************************************

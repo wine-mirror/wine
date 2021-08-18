@@ -5,8 +5,6 @@ EXTRALIBS = $(KSTAT_LIBS) $(PROCSTAT_LIBS)
 
 C_SRCS = \
 	icmp.c \
-	ifenum.c \
-	iphlpapi_main.c \
-	ipstats.c
+	iphlpapi_main.c
 
 RC_SRCS = version.rc

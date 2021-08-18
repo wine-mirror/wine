@@ -966,7 +966,6 @@ static void test_udp_stats( int family )
         table.dwInErrors, dyn.in_errs, dyn2.in_errs );
     ok( bounded( table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams ), "%d vs [%I64d %I64d]\n",
         table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams );
-todo_wine_if(!unstable(0) && table.dwNumAddrs != dyn.num_addrs)
     ok( unstable( table.dwNumAddrs == dyn.num_addrs ), "%d %d\n", table.dwNumAddrs, dyn.num_addrs );
 
     winetest_pop_context();
