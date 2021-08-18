@@ -150,6 +150,15 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 
 static NTSTATUS start_device(DEVICE_OBJECT *device)
 {
+    DWORD length;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    CFNumberRef num;
+
+    num = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDMaxInputReportSizeKey));
+    length = CFNumberToDWORD(num);
+    private->buffer = HeapAlloc(GetProcessHeap(), 0, length);
+
+    IOHIDDeviceRegisterInputReportCallback(private->device, private->buffer, length, handle_IOHIDDeviceIOHIDReportCallback, device);
     return STATUS_SUCCESS;
 }
 
@@ -201,23 +210,6 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
         buffer[0] = 0;
     }
 
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
-{
-    DWORD length;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
-    CFNumberRef num;
-
-    if (private->buffer)
-        return STATUS_SUCCESS;
-
-    num = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDMaxInputReportSizeKey));
-    length = CFNumberToDWORD(num);
-    private->buffer = HeapAlloc(GetProcessHeap(), 0, length);
-
-    IOHIDDeviceRegisterInputReportCallback(private->device, private->buffer, length, handle_IOHIDDeviceIOHIDReportCallback, device);
     return STATUS_SUCCESS;
 }
 
@@ -282,7 +274,6 @@ static const platform_vtbl iohid_vtbl =
     start_device,
     get_reportdescriptor,
     get_string,
-    begin_report_processing,
     set_output_report,
     get_feature_report,
     set_feature_report,

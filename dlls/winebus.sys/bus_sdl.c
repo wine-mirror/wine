@@ -536,11 +536,6 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
-{
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
     struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
@@ -606,7 +601,6 @@ static const platform_vtbl sdl_vtbl =
     start_device,
     get_reportdescriptor,
     get_string,
-    begin_report_processing,
     set_output_report,
     get_feature_report,
     set_feature_report,

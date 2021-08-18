@@ -502,11 +502,6 @@ static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buff
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS mouse_begin_report_processing(DEVICE_OBJECT *device)
-{
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS mouse_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
 {
     FIXME("id %u, stub!\n", id);
@@ -531,7 +526,6 @@ static const platform_vtbl mouse_vtbl =
     .start_device = mouse_start_device,
     .get_reportdescriptor = mouse_get_reportdescriptor,
     .get_string = mouse_get_string,
-    .begin_report_processing = mouse_begin_report_processing,
     .set_output_report = mouse_set_output_report,
     .get_feature_report = mouse_get_feature_report,
     .set_feature_report = mouse_set_feature_report,
@@ -582,11 +576,6 @@ static NTSTATUS keyboard_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *b
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS keyboard_begin_report_processing(DEVICE_OBJECT *device)
-{
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS keyboard_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
 {
     FIXME("id %u, stub!\n", id);
@@ -611,7 +600,6 @@ static const platform_vtbl keyboard_vtbl =
     .start_device = keyboard_start_device,
     .get_reportdescriptor = keyboard_get_reportdescriptor,
     .get_string = keyboard_get_string,
-    .begin_report_processing = keyboard_begin_report_processing,
     .set_output_report = keyboard_set_output_report,
     .get_feature_report = keyboard_get_feature_report,
     .set_feature_report = keyboard_set_feature_report,
@@ -922,9 +910,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_GET_INPUT_REPORT\n");
-            irp->IoStatus.Status = ext->vtbl->begin_report_processing(device);
-            if (irp->IoStatus.Status != STATUS_SUCCESS) break;
-
             irp->IoStatus.Status = deliver_last_report(ext,
                 packet->reportBufferLen, packet->reportBuffer,
                 &irp->IoStatus.Information);
@@ -936,8 +921,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_READ_REPORT:
         {
             TRACE_(hid_report)("IOCTL_HID_READ_REPORT\n");
-            irp->IoStatus.Status = ext->vtbl->begin_report_processing(device);
-            if (irp->IoStatus.Status != STATUS_SUCCESS) break;
             if (!ext->last_report_read)
             {
                 irp->IoStatus.Status = deliver_last_report(ext,

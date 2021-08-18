@@ -558,8 +558,27 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
     return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
 }
 
+static DWORD CALLBACK device_report_thread(void *args);
+
 static NTSTATUS hidraw_start_device(DEVICE_OBJECT *device)
 {
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+
+    if (pipe(private->control_pipe) != 0)
+    {
+        ERR("Control pipe creation failed\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    private->report_thread = CreateThread(NULL, 0, device_report_thread, device, 0, NULL);
+    if (!private->report_thread)
+    {
+        ERR("Unable to create device report thread\n");
+        close(private->control_pipe[0]);
+        close(private->control_pipe[1]);
+        return STATUS_UNSUCCESSFUL;
+    }
+
     return STATUS_SUCCESS;
 }
 
@@ -697,31 +716,6 @@ static DWORD CALLBACK device_report_thread(void *args)
     return 0;
 }
 
-static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
-{
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
-
-    if (private->report_thread)
-        return STATUS_SUCCESS;
-
-    if (pipe(private->control_pipe) != 0)
-    {
-        ERR("Control pipe creation failed\n");
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    private->report_thread = CreateThread(NULL, 0, device_report_thread, device, 0, NULL);
-    if (!private->report_thread)
-    {
-        ERR("Unable to create device report thread\n");
-        close(private->control_pipe[0]);
-        close(private->control_pipe[1]);
-        return STATUS_UNSUCCESSFUL;
-    }
-    else
-        return STATUS_SUCCESS;
-}
-
 static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
@@ -826,7 +820,6 @@ static const platform_vtbl hidraw_vtbl =
     hidraw_start_device,
     hidraw_get_reportdescriptor,
     hidraw_get_string,
-    begin_report_processing,
     hidraw_set_output_report,
     hidraw_get_feature_report,
     hidraw_set_feature_report,
@@ -860,10 +853,32 @@ static void lnxev_free_device(DEVICE_OBJECT *device)
     udev_device_unref(ext->base.udev_device);
 }
 
+static DWORD CALLBACK lnxev_device_report_thread(void *args);
+
 static NTSTATUS lnxev_start_device(DEVICE_OBJECT *device)
 {
     struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
-    return build_report_descriptor(ext, ext->base.udev_device);
+    NTSTATUS status;
+
+    if ((status = build_report_descriptor(ext, ext->base.udev_device)))
+        return status;
+
+    if (pipe(ext->base.control_pipe) != 0)
+    {
+        ERR("Control pipe creation failed\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    ext->base.report_thread = CreateThread(NULL, 0, lnxev_device_report_thread, device, 0, NULL);
+    if (!ext->base.report_thread)
+    {
+        ERR("Unable to create device report thread\n");
+        close(ext->base.control_pipe[0]);
+        close(ext->base.control_pipe[1]);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
@@ -934,30 +949,6 @@ static DWORD CALLBACK lnxev_device_report_thread(void *args)
     return 0;
 }
 
-static NTSTATUS lnxev_begin_report_processing(DEVICE_OBJECT *device)
-{
-    struct wine_input_private *private = input_impl_from_DEVICE_OBJECT(device);
-
-    if (private->base.report_thread)
-        return STATUS_SUCCESS;
-
-    if (pipe(private->base.control_pipe) != 0)
-    {
-        ERR("Control pipe creation failed\n");
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    private->base.report_thread = CreateThread(NULL, 0, lnxev_device_report_thread, device, 0, NULL);
-    if (!private->base.report_thread)
-    {
-        ERR("Unable to create device report thread\n");
-        close(private->base.control_pipe[0]);
-        close(private->base.control_pipe[1]);
-        return STATUS_UNSUCCESSFUL;
-    }
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS lnxev_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
     *written = 0;
@@ -982,7 +973,6 @@ static const platform_vtbl lnxev_vtbl = {
     lnxev_start_device,
     lnxev_get_reportdescriptor,
     lnxev_get_string,
-    lnxev_begin_report_processing,
     lnxev_set_output_report,
     lnxev_get_feature_report,
     lnxev_set_feature_report,
