@@ -46,10 +46,6 @@ struct metadc
 #define HANDLE_LIST_INC 20
 
 
-extern UINT metadc_add_handle( struct metadc *metadc, HGDIOBJ obj ) DECLSPEC_HIDDEN;
-extern BOOL metadc_remove_handle( struct metadc *metadc, UINT index ) DECLSPEC_HIDDEN;
-extern INT16 metadc_create_brush( struct metadc *metadc, HBRUSH brush ) DECLSPEC_HIDDEN;
-
 extern struct metadc *get_metadc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param0( HDC hdc, short func ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param1( HDC hdc, short func, short param ) DECLSPEC_HIDDEN;
