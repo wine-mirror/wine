@@ -1729,7 +1729,8 @@ NTSTATUS get_builtin_init_funcs( void *handle, void **funcs, SIZE_T len, SIZE_T 
 #ifdef __FreeBSD__
         /* On older FreeBSD versions, l_addr was the absolute load address, now it's the relocation offset. */
         if (offsetof(struct link_map, l_addr) == 0)
-            if (!get_relocbase(map->l_addr, &relocbase)) return;
+            if (!get_relocbase(map->l_addr, &relocbase))
+                return STATUS_NOT_SUPPORTED;
 #endif
         switch (dyn->d_tag)
         {
