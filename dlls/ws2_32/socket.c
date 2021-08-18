@@ -1732,6 +1732,17 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
         case IPV6_MULTICAST_LOOP:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_LOOP, optval, optlen );
 
+        case IPV6_PROTECTION_LEVEL:
+            if (!optlen || *optlen < sizeof(UINT) || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            *optlen = sizeof(UINT);
+            *optval = PROTECTION_LEVEL_UNRESTRICTED;
+            FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
+            return 0;
+
         case IPV6_PKTINFO:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_RECVPKTINFO, optval, optlen );
 
