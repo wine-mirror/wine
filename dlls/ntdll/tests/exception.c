@@ -470,7 +470,7 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         ok(context->Eip == (DWORD)code_mem + 0xa ||
-           broken(context->Eip == (DWORD)code_mem + 0xb) /* win2k3 */ ||
+           (is_wow64 && context->Eip == (DWORD)code_mem + 0xb) ||
            broken(context->Eip == (DWORD)code_mem + 0xd) /* w2008 */,
            "Eip at %x instead of %x or %x\n", context->Eip,
            (DWORD)code_mem + 0xa, (DWORD)code_mem + 0xb);
@@ -507,7 +507,7 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         ok(context->Eip == (DWORD)code_mem + 0xa ||
-           broken(context->Eip == (DWORD)code_mem + 0xb) /* win2k3 */ ||
+           (is_wow64 && context->Eip == (DWORD)code_mem + 0xb) ||
            broken(context->Eip == (DWORD)code_mem + 0xd) /* w2008 */,
            "Eip at %x instead of %x or %x\n", context->Eip,
            (DWORD)code_mem + 0xa, (DWORD)code_mem + 0xb);
@@ -1177,7 +1177,7 @@ static void test_debugger(DWORD cont_status)
                         if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
                         {
                             ok((char *)ctx.Eip == (char *)code_mem_address + 0xa ||
-                               broken(is_wow64 && (char *)ctx.Eip == (char *)code_mem_address + 0xb) ||
+                               (is_wow64 && (char *)ctx.Eip == (char *)code_mem_address + 0xb) ||
                                broken((char *)ctx.Eip == (char *)code_mem_address + 0xd) /* w2008 */,
                                "Eip at 0x%x instead of %p\n",
                                 ctx.Eip, (char *)code_mem_address + 0xa);
