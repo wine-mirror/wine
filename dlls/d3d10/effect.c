@@ -6237,6 +6237,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_resource_variable_SetResour
 
     TRACE("iface %p, resource %p.\n", iface, resource);
 
+    if (!d3d10_effect_shader_resource_variable_IsValid(iface))
+        return E_FAIL;
+
     set_shader_resource_variable(&resource, v->u.resource.srv);
 
     return S_OK;

@@ -5698,9 +5698,16 @@ static void test_effect_resource_variable(void)
             effect_desc.SharedGlobalVariables);
     ok(effect_desc.Techniques == 1, "Unexpected techniques count %u.\n", effect_desc.Techniques);
 
+    create_effect_texture_resource(device, &srv0, &tex0);
+
+    /* SetResource() on null resource variable. */
+    var = effect->lpVtbl->GetVariableByName(effect, "dummy name");
+    t0 = var->lpVtbl->AsShaderResource(var);
+    hr = t0->lpVtbl->SetResource(t0, srv0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
     var = effect->lpVtbl->GetVariableByName(effect, "t0");
     t0 = get_effect_shader_resource_variable(var);
-    create_effect_texture_resource(device, &srv0, &tex0);
     hr = t0->lpVtbl->SetResource(t0, srv0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
