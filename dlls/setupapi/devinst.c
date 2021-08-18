@@ -4648,6 +4648,7 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
     DWORD i, j, k, driver_count = device->driver_count;
     struct driver driver, *drivers = device->drivers;
     INFCONTEXT ctx;
+    BOOL found;
     HINF hinf;
 
     TRACE("Enumerating drivers from %s.\n", debugstr_w(path));
@@ -4687,20 +4688,23 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
 
         for (j = 0; SetupGetLineByIndexW(hinf, driver.mfg_key, j, &ctx); ++j)
         {
-            for (k = 2; SetupGetStringFieldW(&ctx, k, id, ARRAY_SIZE(id), NULL); ++k)
+            for (k = 2, found = FALSE; SetupGetStringFieldW(&ctx, k, id, ARRAY_SIZE(id), NULL); ++k)
             {
-                if (device_matches_id(device, HardwareId, id) || device_matches_id(device, CompatibleIDs, id))
-                {
-                    SetupGetStringFieldW(&ctx, 0, driver.description, ARRAY_SIZE(driver.description), NULL);
-                    SetupGetStringFieldW(&ctx, 1, driver.section, ARRAY_SIZE(driver.section), NULL);
+                if ((found = device_matches_id(device, HardwareId, id))) break;
+                if ((found = device_matches_id(device, CompatibleIDs, id))) break;
+            }
 
-                    TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
-                            debugstr_w(driver.manufacturer), debugstr_w(driver.description));
+            if (found)
+            {
+                SetupGetStringFieldW(&ctx, 0, driver.description, ARRAY_SIZE(driver.description), NULL);
+                SetupGetStringFieldW(&ctx, 1, driver.section, ARRAY_SIZE(driver.section), NULL);
 
-                    driver_count++;
-                    drivers = heap_realloc(drivers, driver_count * sizeof(*drivers));
-                    drivers[driver_count - 1] = driver;
-                }
+                TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
+                        debugstr_w(driver.manufacturer), debugstr_w(driver.description));
+
+                driver_count++;
+                drivers = heap_realloc(drivers, driver_count * sizeof(*drivers));
+                drivers[driver_count - 1] = driver;
             }
         }
     }
