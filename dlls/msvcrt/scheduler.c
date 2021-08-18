@@ -25,7 +25,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "msvcrt.h"
-#include "cppexcept.h"
 #include "cxx.h"
 
 #if _MSVCR_VER >= 100
@@ -1097,7 +1096,6 @@ DEFINE_VTBL_WRAPPER(48);
 
 #endif
 
-extern const vtable_ptr type_info_vtable;
 DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
 DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")
 DEFINE_RTTI_DATA2(ExternalContextBase, 0, &ContextBase_rtti_base_descriptor,

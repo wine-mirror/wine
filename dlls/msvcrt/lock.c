@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "msvcrt.h"
-#include "cppexcept.h"
 #include "mtdll.h"
 #include "cxx.h"
 
