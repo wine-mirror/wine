@@ -1,7 +1,9 @@
 /*
- * Metafile driver initialisation functions
+ * Metafile DC functions
  *
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1999 Huw D M Davies
+ * Copyright 1993, 1994, 1996 Alexandre Julliard
+ * Copyright 2021 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,230 +21,15 @@
  */
 
 #include <stdarg.h>
-#include <string.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
 #include "ntgdi_private.h"
+#include "winnls.h"
 #include "mfdrv/metafiledrv.h"
+
 #include "wine/debug.h"
 
+
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
-
-
-/**********************************************************************
- *           METADC_ExtEscape
- */
-BOOL METADC_ExtEscape( HDC hdc, INT escape, INT input_size, const void *input,
-                       INT output_size, void *output )
-{
-    METARECORD *mr;
-    DWORD len;
-    BOOL ret;
-
-    if (output_size) return FALSE;  /* escapes that require output cannot work in metafiles */
-
-    len = sizeof(*mr) + sizeof(WORD) + ((input_size + 1) & ~1);
-    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-    mr->rdSize = len / 2;
-    mr->rdFunction = META_ESCAPE;
-    mr->rdParm[0] = escape;
-    mr->rdParm[1] = input_size;
-    memcpy( &mr->rdParm[2], input, input_size );
-    ret = metadc_record( hdc, mr, len );
-    HeapFree(GetProcessHeap(), 0, mr);
-    return ret;
-}
-
-
-/******************************************************************
- *         METADC_GetDeviceCaps
- *
- *A very simple implementation that returns DT_METAFILE
- */
-INT METADC_GetDeviceCaps( HDC hdc, INT cap )
-{
-    if (!get_metadc_ptr( hdc )) return 0;
-
-    switch(cap)
-    {
-    case TECHNOLOGY:
-        return DT_METAFILE;
-    case TEXTCAPS:
-        return 0;
-    default:
-        TRACE(" unsupported capability %d, will return 0\n", cap );
-    }
-    return 0;
-}
-
-static void metadc_free( struct metadc *metadc )
-{
-    DWORD index;
-
-    CloseHandle( metadc->hFile );
-    HeapFree( GetProcessHeap(), 0, metadc->mh );
-    for(index = 0; index < metadc->handles_size; index++)
-        if(metadc->handles[index])
-            GDI_hdc_not_using_object( metadc->handles[index], metadc->hdc );
-    HeapFree( GetProcessHeap(), 0, metadc->handles );
-    HeapFree( GetProcessHeap(), 0, metadc );
-}
-
-/**********************************************************************
- *	     METADC_DeleteObject
- */
-BOOL METADC_DeleteDC( HDC hdc )
-{
-    struct metadc *metadc;
-
-    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
-    if (!NtGdiDeleteClientObj( hdc )) return FALSE;
-    metadc_free( metadc );
-    return TRUE;
-}
-
-
-/**********************************************************************
- *	     CreateMetaFileW   (GDI32.@)
- *
- *  Create a new DC and associate it with a metafile. Pass a filename
- *  to create a disk-based metafile, NULL to create a memory metafile.
- *
- * PARAMS
- *  filename [I] Filename of disk metafile
- *
- * RETURNS
- *  A handle to the metafile DC if successful, NULL on failure.
- */
-HDC WINAPI CreateMetaFileW( LPCWSTR filename )
-{
-    struct metadc *metadc;
-    HANDLE hdc;
-
-    TRACE("%s\n", debugstr_w(filename) );
-
-    if (!(hdc = NtGdiCreateClientObj( NTGDI_OBJ_METADC ))) return NULL;
-
-    metadc = HeapAlloc( GetProcessHeap(), 0, sizeof(*metadc) );
-    if (!metadc)
-    {
-        NtGdiDeleteClientObj( hdc );
-        return NULL;
-    }
-    if (!(metadc->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*metadc->mh) )))
-    {
-        HeapFree( GetProcessHeap(), 0, metadc );
-        NtGdiDeleteClientObj( hdc );
-        return NULL;
-    }
-
-    metadc->hdc = hdc;
-    set_gdi_client_ptr( hdc, metadc );
-
-    metadc->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                 HANDLE_LIST_INC * sizeof(metadc->handles[0]) );
-    metadc->handles_size = HANDLE_LIST_INC;
-    metadc->cur_handles = 0;
-
-    metadc->hFile = 0;
-
-    metadc->mh->mtHeaderSize   = sizeof(METAHEADER) / sizeof(WORD);
-    metadc->mh->mtVersion      = 0x0300;
-    metadc->mh->mtSize         = metadc->mh->mtHeaderSize;
-    metadc->mh->mtNoObjects    = 0;
-    metadc->mh->mtMaxRecord    = 0;
-    metadc->mh->mtNoParameters = 0;
-    metadc->mh->mtType         = METAFILE_MEMORY;
-
-    metadc->pen   = GetStockObject( BLACK_PEN );
-    metadc->brush = GetStockObject( WHITE_BRUSH );
-    metadc->font  = GetStockObject( DEVICE_DEFAULT_FONT );
-
-    if (filename)  /* disk based metafile */
-    {
-        HANDLE file = CreateFileW( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
-        if (file == INVALID_HANDLE_VALUE)
-        {
-            HeapFree( GetProcessHeap(), 0, metadc );
-            NtGdiDeleteClientObj( hdc );
-            return 0;
-        }
-        metadc->hFile = file;
-    }
-
-    TRACE("returning %p\n", hdc);
-    return hdc;
-}
-
-/**********************************************************************
- *          CreateMetaFileA   (GDI32.@)
- *
- * See CreateMetaFileW.
- */
-HDC WINAPI CreateMetaFileA(LPCSTR filename)
-{
-    LPWSTR filenameW;
-    DWORD len;
-    HDC hReturnDC;
-
-    if (!filename) return CreateMetaFileW(NULL);
-
-    len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
-    filenameW = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, filename, -1, filenameW, len );
-
-    hReturnDC = CreateMetaFileW(filenameW);
-
-    HeapFree( GetProcessHeap(), 0, filenameW );
-
-    return hReturnDC;
-}
-
-
-/******************************************************************
- *	     CloseMetaFile   (GDI32.@)
- *
- *  Stop recording graphics operations in metafile associated with
- *  hdc and retrieve metafile.
- *
- * PARAMS
- *  hdc [I] Metafile DC to close 
- *
- * RETURNS
- *  Handle of newly created metafile on success, NULL on failure.
- */
-HMETAFILE WINAPI CloseMetaFile(HDC hdc)
-{
-    struct metadc *metadc;
-    DWORD bytes_written;
-    HMETAFILE hmf;
-
-    TRACE("(%p)\n", hdc );
-
-    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
-
-    /* Construct the end of metafile record - this is documented
-     * in SDK Knowledgebase Q99334.
-     */
-    if (!metadc_param0( hdc, META_EOF )) return FALSE;
-    if (!NtGdiDeleteClientObj( hdc )) return FALSE;
-
-    if (metadc->hFile && !WriteFile( metadc->hFile, metadc->mh, metadc->mh->mtSize * sizeof(WORD),
-                                     &bytes_written, NULL ))
-    {
-        metadc_free( metadc );
-        return FALSE;
-    }
-
-    /* Now allocate a global handle for the metafile */
-    hmf = MF_Create_HMETAFILE( metadc->mh );
-    if (hmf) metadc->mh = NULL;  /* So it won't be deleted */
-    metadc_free( metadc );
-    return hmf;
-}
-
 
 struct metadc *get_metadc_ptr( HDC hdc )
 {
@@ -378,4 +165,187 @@ BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
     mr->rdParm[6] = param2;
     mr->rdParm[7] = param1;
     return metadc_record( hdc, mr, sizeof(buffer) );
+}
+
+BOOL METADC_ExtEscape( HDC hdc, INT escape, INT input_size, const void *input,
+                       INT output_size, void *output )
+{
+    METARECORD *mr;
+    DWORD len;
+    BOOL ret;
+
+    if (output_size) return FALSE;  /* escapes that require output cannot work in metafiles */
+
+    len = sizeof(*mr) + sizeof(WORD) + ((input_size + 1) & ~1);
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len ))) return FALSE;
+    mr->rdSize = len / sizeof(WORD);
+    mr->rdFunction = META_ESCAPE;
+    mr->rdParm[0] = escape;
+    mr->rdParm[1] = input_size;
+    memcpy( &mr->rdParm[2], input, input_size );
+    ret = metadc_record( hdc, mr, len );
+    HeapFree(GetProcessHeap(), 0, mr);
+    return ret;
+}
+
+INT METADC_GetDeviceCaps( HDC hdc, INT cap )
+{
+    if (!get_metadc_ptr( hdc )) return 0;
+
+    switch(cap)
+    {
+    case TECHNOLOGY:
+        return DT_METAFILE;
+    case TEXTCAPS:
+        return 0;
+    default:
+        TRACE(" unsupported capability %d, will return 0\n", cap );
+    }
+    return 0;
+}
+
+static void metadc_free( struct metadc *metadc )
+{
+    DWORD index;
+
+    CloseHandle( metadc->hFile );
+    HeapFree( GetProcessHeap(), 0, metadc->mh );
+    for(index = 0; index < metadc->handles_size; index++)
+        if(metadc->handles[index])
+            GDI_hdc_not_using_object( metadc->handles[index], metadc->hdc );
+    HeapFree( GetProcessHeap(), 0, metadc->handles );
+    HeapFree( GetProcessHeap(), 0, metadc );
+}
+
+BOOL METADC_DeleteDC( HDC hdc )
+{
+    struct metadc *metadc;
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+    if (!NtGdiDeleteClientObj( hdc )) return FALSE;
+    metadc_free( metadc );
+    return TRUE;
+}
+
+/**********************************************************************
+ *           CreateMetaFileW   (GDI32.@)
+ *
+ *  Create a new DC and associate it with a metafile. Pass a filename
+ *  to create a disk-based metafile, NULL to create a memory metafile.
+ */
+HDC WINAPI CreateMetaFileW( const WCHAR *filename )
+{
+    struct metadc *metadc;
+    HANDLE hdc;
+
+    TRACE( "%s\n", debugstr_w(filename) );
+
+    if (!(hdc = NtGdiCreateClientObj( NTGDI_OBJ_METADC ))) return NULL;
+
+    metadc = HeapAlloc( GetProcessHeap(), 0, sizeof(*metadc) );
+    if (!metadc)
+    {
+        NtGdiDeleteClientObj( hdc );
+        return NULL;
+    }
+    if (!(metadc->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*metadc->mh) )))
+    {
+        HeapFree( GetProcessHeap(), 0, metadc );
+        NtGdiDeleteClientObj( hdc );
+        return NULL;
+    }
+
+    metadc->hdc = hdc;
+    set_gdi_client_ptr( hdc, metadc );
+
+    metadc->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 HANDLE_LIST_INC * sizeof(metadc->handles[0]) );
+    metadc->handles_size = HANDLE_LIST_INC;
+    metadc->cur_handles = 0;
+
+    metadc->hFile = 0;
+
+    metadc->mh->mtHeaderSize   = sizeof(METAHEADER) / sizeof(WORD);
+    metadc->mh->mtVersion      = 0x0300;
+    metadc->mh->mtSize         = metadc->mh->mtHeaderSize;
+    metadc->mh->mtNoObjects    = 0;
+    metadc->mh->mtMaxRecord    = 0;
+    metadc->mh->mtNoParameters = 0;
+    metadc->mh->mtType         = METAFILE_MEMORY;
+
+    metadc->pen   = GetStockObject( BLACK_PEN );
+    metadc->brush = GetStockObject( WHITE_BRUSH );
+    metadc->font  = GetStockObject( DEVICE_DEFAULT_FONT );
+
+    if (filename)  /* disk based metafile */
+    {
+        HANDLE file = CreateFileW( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            HeapFree( GetProcessHeap(), 0, metadc );
+            NtGdiDeleteClientObj( hdc );
+            return 0;
+        }
+        metadc->hFile = file;
+    }
+
+    TRACE( "returning %p\n", hdc );
+    return hdc;
+}
+
+/**********************************************************************
+ *           CreateMetaFileA   (GDI32.@)
+ */
+HDC WINAPI CreateMetaFileA( const char *filename )
+{
+    LPWSTR filenameW;
+    DWORD len;
+    HDC hdc;
+
+    if (!filename) return CreateMetaFileW( NULL );
+
+    len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
+    filenameW = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, filename, -1, filenameW, len );
+
+    hdc = CreateMetaFileW( filenameW );
+
+    HeapFree( GetProcessHeap(), 0, filenameW );
+    return hdc;
+}
+
+/******************************************************************
+ *           CloseMetaFile   (GDI32.@)
+ *
+ *  Stop recording graphics operations in metafile associated with
+ *  hdc and retrieve metafile.
+ */
+HMETAFILE WINAPI CloseMetaFile( HDC hdc )
+{
+    struct metadc *metadc;
+    DWORD bytes_written;
+    HMETAFILE hmf;
+
+    TRACE( "(%p)\n", hdc );
+
+    if (!(metadc = get_metadc_ptr( hdc ))) return FALSE;
+
+    /* Construct the end of metafile record - this is documented
+     * in SDK Knowledgebase Q99334.
+     */
+    if (!metadc_param0( hdc, META_EOF )) return FALSE;
+    if (!NtGdiDeleteClientObj( hdc )) return FALSE;
+
+    if (metadc->hFile && !WriteFile( metadc->hFile, metadc->mh, metadc->mh->mtSize * sizeof(WORD),
+                                     &bytes_written, NULL ))
+    {
+        metadc_free( metadc );
+        return FALSE;
+    }
+
+    /* Now allocate a global handle for the metafile */
+    hmf = MF_Create_HMETAFILE( metadc->mh );
+    if (hmf) metadc->mh = NULL;  /* So it won't be deleted */
+    metadc_free( metadc );
+    return hmf;
 }

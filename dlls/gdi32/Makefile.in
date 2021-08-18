@@ -35,11 +35,11 @@ C_SRCS = \
 	gdiobj.c \
 	icm.c \
 	mapping.c \
+	metadc.c \
 	metafile.c \
 	mfdrv/bitblt.c \
 	mfdrv/dc.c \
 	mfdrv/graphics.c \
-	mfdrv/init.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
 	objects.c \
