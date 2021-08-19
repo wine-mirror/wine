@@ -591,13 +591,18 @@ int WINAPI GetNameInfoW( const SOCKADDR *addr, socklen_t addr_len, WCHAR *host,
 static struct hostent *get_hostent_buffer( unsigned int size )
 {
     struct per_thread_data *data = get_per_thread_data();
-    if (data->he_buffer)
+    struct hostent *new_buffer;
+
+    if (data->he_len < size)
     {
-        if (data->he_len >= size) return data->he_buffer;
-        free( data->he_buffer );
+        if (!(new_buffer = realloc( data->he_buffer, size )))
+        {
+            SetLastError( WSAENOBUFS );
+            return NULL;
+        }
+        data->he_buffer = new_buffer;
+        data->he_len = size;
     }
-    data->he_buffer = malloc( (data->he_len = size) );
-    if (!data->he_buffer) SetLastError(WSAENOBUFS);
     return data->he_buffer;
 }
 
@@ -1004,15 +1009,18 @@ static char *next_non_space( const char *p, const char *end )
 static struct protoent *get_protoent_buffer( unsigned int size )
 {
     struct per_thread_data *data = get_per_thread_data();
+    struct protoent *new_buffer;
 
-    if (data->pe_buffer)
+    if (data->pe_len < size)
     {
-        if (data->pe_len >= size) return data->pe_buffer;
-        free( data->pe_buffer );
+        if (!(new_buffer = realloc( data->pe_buffer, size )))
+        {
+            SetLastError( WSAENOBUFS );
+            return NULL;
+        }
+        data->pe_buffer = new_buffer;
+        data->pe_len = size;
     }
-    data->pe_len = size;
-    data->pe_buffer = malloc( size );
-    if (!data->pe_buffer) SetLastError( WSAENOBUFS );
     return data->pe_buffer;
 }
 
@@ -1187,14 +1195,18 @@ struct protoent * WINAPI getprotobynumber( int number )
 static struct servent *get_servent_buffer( int size )
 {
     struct per_thread_data *data = get_per_thread_data();
-    if (data->se_buffer)
+    struct servent *new_buffer;
+
+    if (data->se_len < size)
     {
-        if (data->se_len >= size) return data->se_buffer;
-        free( data->se_buffer );
+        if (!(new_buffer = realloc( data->se_buffer, size )))
+        {
+            SetLastError( WSAENOBUFS );
+            return NULL;
+        }
+        data->se_buffer = new_buffer;
+        data->se_len = size;
     }
-    data->se_len = size;
-    data->se_buffer = malloc( size );
-    if (!data->se_buffer) SetLastError( WSAENOBUFS );
     return data->se_buffer;
 }
 
