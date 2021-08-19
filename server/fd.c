@@ -627,16 +627,6 @@ static int kqueue_fd = -1;
 
 static inline void init_epoll(void)
 {
-#ifdef __APPLE__ /* kqueue support is broken in Mac OS < 10.5 */
-    int mib[2];
-    char release[32];
-    size_t len = sizeof(release);
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_OSRELEASE;
-    if (sysctl( mib, 2, release, &len, NULL, 0 ) == -1) return;
-    if (atoi(release) < 9) return;
-#endif
     kqueue_fd = kqueue();
 }
 
