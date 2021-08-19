@@ -1919,11 +1919,9 @@ BOOL WINAPI NtGdiStrokeAndFillPath( HDC hdc )
 
 
 /*******************************************************************
- *      StrokePath [GDI32.@]
- *
- *
+ *           NtGdiStrokePath   (win32u.@)
  */
-BOOL WINAPI StrokePath(HDC hdc)
+BOOL WINAPI NtGdiStrokePath( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );

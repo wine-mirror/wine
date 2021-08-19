@@ -1214,5 +1214,14 @@ BOOL EMFDC_StrokeAndFillPath( DC_ATTR *dc_attr )
  */
 BOOL CDECL EMFDRV_StrokePath( PHYSDEV dev )
 {
-    return emfdrv_stroke_and_fill_path( dev, EMR_STROKEPATH );
+    /* FIXME: update bound rect */
+    return TRUE;
+}
+
+/**********************************************************************
+ *           EMFDC_StrokePath
+ */
+BOOL EMFDC_StrokePath( DC_ATTR *dc_attr )
+{
+    return emfdrv_stroke_and_fill_path( dc_attr->emf, EMR_STROKEPATH );
 }

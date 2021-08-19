@@ -1543,6 +1543,18 @@ BOOL WINAPI StrokeAndFillPath( HDC hdc )
     return NtGdiStrokeAndFillPath( hdc );
 }
 
+/*******************************************************************
+ *           StrokePath   (GDI32.@)
+ */
+BOOL WINAPI StrokePath( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_StrokePath( dc_attr )) return FALSE;
+    return NtGdiStrokePath( hdc );
+}
+
 /***********************************************************************
  *           FlattenPath   (GDI32.@)
  */
