@@ -2807,6 +2807,23 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_CONNECT_TIME:
+    {
+        DWORD time = ~0u;
+
+        if (get_reply_max_size() < sizeof(time))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        if (sock->state == SOCK_CONNECTED)
+            time = (current_time - sock->connect_time) / 10000000;
+
+        set_reply_data( &time, sizeof(time) );
+        return 1;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;

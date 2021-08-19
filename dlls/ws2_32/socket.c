@@ -1424,6 +1424,14 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
             return 0;
         }
 
+        case SO_CONNECT_TIME:
+            if (!optlen || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_CONNECT_TIME, optval, optlen );
+
         case SO_DEBUG:
             WARN( "returning 0 for SO_DEBUG\n" );
             *(DWORD *)optval = 0;
@@ -1450,27 +1458,6 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
             return ret;
         }
 
-        case SO_CONNECT_TIME:
-        {
-            static int pretendtime = 0;
-            struct sockaddr addr;
-            int len = sizeof(addr);
-
-            if (!optlen || *optlen < sizeof(DWORD) || !optval)
-            {
-                SetLastError(WSAEFAULT);
-                return SOCKET_ERROR;
-            }
-            if (getpeername(s, &addr, &len) == SOCKET_ERROR)
-                *(DWORD *)optval = ~0u;
-            else
-            {
-                if (!pretendtime) FIXME("SO_CONNECT_TIME - faking results\n");
-                *(DWORD *)optval = pretendtime++;
-            }
-            *optlen = sizeof(DWORD);
-            return ret;
-        }
         /* As mentioned in setsockopt, Windows ignores this, so we
          * always return true here */
         case SO_DONTROUTE:
