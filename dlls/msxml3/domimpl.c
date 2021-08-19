@@ -20,13 +20,7 @@
 
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -34,11 +28,9 @@
 #include "ole2.h"
 #include "msxml6.h"
 
-#include "msxml_private.h"
+#include "msxml_dispex.h"
 
 #include "wine/debug.h"
-
-#ifdef HAVE_LIBXML2
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -211,5 +203,3 @@ IUnknown* create_doc_Implementation(void)
 
     return (IUnknown*)&This->IXMLDOMImplementation_iface;
 }
-
-#endif
