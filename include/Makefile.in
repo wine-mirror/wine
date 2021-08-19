@@ -144,6 +144,7 @@ SOURCES = \
 	d3dx10async.h \
 	d3dx10core.h \
 	d3dx10math.h \
+	d3dx10mesh.h \
 	d3dx10tex.h \
 	d3dx11.h \
 	d3dx11async.h \
@@ -181,6 +182,7 @@ SOURCES = \
 	ddk/d3dkmthk.h \
 	ddk/fltkernel.h \
 	ddk/hidclass.h \
+	ddk/hidpddi.h \
 	ddk/hidpi.h \
 	ddk/hidport.h \
 	ddk/hidsdi.h \
