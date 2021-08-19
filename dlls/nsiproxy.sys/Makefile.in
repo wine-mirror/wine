@@ -1,5 +1,6 @@
 MODULE    = nsiproxy.sys
 IMPORTS   = ntoskrnl uuid
+EXTRALIBS = $(PROCSTAT_LIBS)
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
