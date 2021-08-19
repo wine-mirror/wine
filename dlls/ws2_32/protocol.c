@@ -38,10 +38,10 @@ static char *get_fqdn(void)
 
     GetComputerNameExA( ComputerNamePhysicalDnsFullyQualified, NULL, &size );
     if (GetLastError() != ERROR_MORE_DATA) return NULL;
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!(ret = malloc( size ))) return NULL;
     if (!GetComputerNameExA( ComputerNamePhysicalDnsFullyQualified, ret, &size ))
     {
-        HeapFree( GetProcessHeap(), 0, ret );
+        free( ret );
         return NULL;
     }
     return ret;
@@ -57,14 +57,14 @@ static int do_getaddrinfo( const char *node, const char *service,
 
     for (;;)
     {
-        if (!(params.info = HeapAlloc( GetProcessHeap(), 0, size )))
+        if (!(params.info = malloc( size )))
             return WSA_NOT_ENOUGH_MEMORY;
         if (!(ret = WS_CALL( getaddrinfo, &params )))
         {
             *info = params.info;
             return ret;
         }
-        HeapFree( GetProcessHeap(), 0, params.info );
+        free( params.info );
         if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
     }
 }
@@ -103,8 +103,8 @@ int WINAPI getaddrinfo( const char *node, const char *service,
 
             if (node[0] == '[' && (close_bracket = strchr(node + 1, ']')))
             {
-                nodev6 = HeapAlloc( GetProcessHeap(), 0, close_bracket - node );
-                if (!nodev6) return WSA_NOT_ENOUGH_MEMORY;
+                if (!(nodev6 = malloc( close_bracket - node )))
+                    return WSA_NOT_ENOUGH_MEMORY;
                 lstrcpynA( nodev6, node + 1, close_bracket - node );
                 node = nodev6;
             }
@@ -117,7 +117,7 @@ int WINAPI getaddrinfo( const char *node, const char *service,
     {
         if (!fqdn && !(fqdn = get_fqdn()))
         {
-            HeapFree( GetProcessHeap(), 0, nodev6 );
+            free( nodev6 );
             return WSA_NOT_ENOUGH_MEMORY;
         }
         if (!strcmp( fqdn, node ) || (!strncmp( fqdn, node, strlen( node ) ) && fqdn[strlen( node )] == '.'))
@@ -136,8 +136,8 @@ int WINAPI getaddrinfo( const char *node, const char *service,
         }
     }
 
-    HeapFree( GetProcessHeap(), 0, fqdn );
-    HeapFree( GetProcessHeap(), 0, nodev6 );
+    free( fqdn );
+    free( nodev6 );
 
     if (!ret && TRACE_ON(winsock))
     {
@@ -160,7 +160,7 @@ static ADDRINFOEXW *addrinfo_AtoW( const struct addrinfo *ai )
 {
     ADDRINFOEXW *ret;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(ADDRINFOEXW) ))) return NULL;
+    if (!(ret = malloc( sizeof(ADDRINFOEXW) ))) return NULL;
     ret->ai_flags     = ai->ai_flags;
     ret->ai_family    = ai->ai_family;
     ret->ai_socktype  = ai->ai_socktype;
@@ -175,19 +175,19 @@ static ADDRINFOEXW *addrinfo_AtoW( const struct addrinfo *ai )
     if (ai->ai_canonname)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, ai->ai_canonname, -1, NULL, 0 );
-        if (!(ret->ai_canonname = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        if (!(ret->ai_canonname = malloc( len * sizeof(WCHAR) )))
         {
-            HeapFree( GetProcessHeap(), 0, ret );
+            free( ret );
             return NULL;
         }
         MultiByteToWideChar( CP_ACP, 0, ai->ai_canonname, -1, ret->ai_canonname, len );
     }
     if (ai->ai_addr)
     {
-        if (!(ret->ai_addr = HeapAlloc( GetProcessHeap(), 0, ai->ai_addrlen )))
+        if (!(ret->ai_addr = malloc( ai->ai_addrlen )))
         {
-            HeapFree( GetProcessHeap(), 0, ret->ai_canonname );
-            HeapFree( GetProcessHeap(), 0, ret );
+            free( ret->ai_canonname );
+            free( ret );
             return NULL;
         }
         memcpy( ret->ai_addr, ai->ai_addr, ai->ai_addrlen );
@@ -217,7 +217,7 @@ static struct addrinfo *addrinfo_WtoA( const struct addrinfoW *ai )
 {
     struct addrinfo *ret;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(struct addrinfo) ))) return NULL;
+    if (!(ret = malloc( sizeof(struct addrinfo) ))) return NULL;
     ret->ai_flags     = ai->ai_flags;
     ret->ai_family    = ai->ai_family;
     ret->ai_socktype  = ai->ai_socktype;
@@ -229,19 +229,19 @@ static struct addrinfo *addrinfo_WtoA( const struct addrinfoW *ai )
     if (ai->ai_canonname)
     {
         int len = WideCharToMultiByte( CP_ACP, 0, ai->ai_canonname, -1, NULL, 0, NULL, NULL );
-        if (!(ret->ai_canonname = HeapAlloc( GetProcessHeap(), 0, len )))
+        if (!(ret->ai_canonname = malloc( len )))
         {
-            HeapFree( GetProcessHeap(), 0, ret );
+            free( ret );
             return NULL;
         }
         WideCharToMultiByte( CP_ACP, 0, ai->ai_canonname, -1, ret->ai_canonname, len, NULL, NULL );
     }
     if (ai->ai_addr)
     {
-        if (!(ret->ai_addr = HeapAlloc( GetProcessHeap(), 0, sizeof(struct sockaddr) )))
+        if (!(ret->ai_addr = malloc( sizeof(struct sockaddr) )))
         {
-            HeapFree( GetProcessHeap(), 0, ret->ai_canonname );
-            HeapFree( GetProcessHeap(), 0, ret );
+            free( ret->ai_canonname );
+            free( ret );
             return NULL;
         }
         memcpy( ret->ai_addr, ai->ai_addr, sizeof(struct sockaddr) );
@@ -276,9 +276,9 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
         freeaddrinfo(res);
     }
 
-    HeapFree( GetProcessHeap(), 0, args->nodename );
-    HeapFree( GetProcessHeap(), 0, args->servname );
-    HeapFree( GetProcessHeap(), 0, args );
+    free( args->nodename );
+    free( args->servname );
+    free( args );
 
     overlapped->Internal = ret;
     if (completion_routine) completion_routine( ret, 0, overlapped );
@@ -322,20 +322,20 @@ static int getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
                 ret = EAI_FAIL;
                 goto end;
             }
-            if (!(local_nodenameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto end;
+            if (!(local_nodenameW = malloc( len * sizeof(WCHAR) ))) goto end;
             IdnToAscii( 0, nodename, -1, local_nodenameW, len );
         }
     }
     if (local_nodenameW)
     {
         len = WideCharToMultiByte( CP_ACP, 0, local_nodenameW, -1, NULL, 0, NULL, NULL );
-        if (!(nodenameA = HeapAlloc( GetProcessHeap(), 0, len ))) goto end;
+        if (!(nodenameA = malloc( len ))) goto end;
         WideCharToMultiByte( CP_ACP, 0, local_nodenameW, -1, nodenameA, len, NULL, NULL );
     }
     if (servname)
     {
         len = WideCharToMultiByte( CP_ACP, 0, servname, -1, NULL, 0, NULL, NULL );
-        if (!(servnameA = HeapAlloc( GetProcessHeap(), 0, len ))) goto end;
+        if (!(servnameA = malloc( len ))) goto end;
         WideCharToMultiByte( CP_ACP, 0, servname, -1, servnameA, len, NULL, NULL );
     }
 
@@ -349,7 +349,7 @@ static int getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
             goto end;
         }
 
-        if (!(args = HeapAlloc( GetProcessHeap(), 0, sizeof(*args) + sizeof(*args->hints) ))) goto end;
+        if (!(args = malloc( sizeof(*args) + sizeof(*args->hints) ))) goto end;
         args->overlapped = overlapped;
         args->completion_routine = completion_routine;
         args->result = res;
@@ -368,13 +368,13 @@ static int getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
         overlapped->Internal = WSAEINPROGRESS;
         if (!TrySubmitThreadpoolCallback( getaddrinfo_callback, args, NULL ))
         {
-            HeapFree( GetProcessHeap(), 0, args );
+            free( args );
             ret = GetLastError();
             goto end;
         }
 
         if (local_nodenameW != nodename)
-            HeapFree( GetProcessHeap(), 0, local_nodenameW );
+            free( local_nodenameW );
         SetLastError( ERROR_IO_PENDING );
         return ERROR_IO_PENDING;
     }
@@ -388,9 +388,9 @@ static int getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
 
 end:
     if (local_nodenameW != nodename)
-        HeapFree( GetProcessHeap(), 0, local_nodenameW );
-    HeapFree( GetProcessHeap(), 0, nodenameA );
-    HeapFree( GetProcessHeap(), 0, servnameA );
+        free( local_nodenameW );
+    free( nodenameA );
+    free( servnameA );
     return ret;
 }
 
@@ -484,7 +484,7 @@ void WINAPI freeaddrinfo( struct addrinfo *info )
 {
     TRACE( "%p\n", info );
 
-    HeapFree( GetProcessHeap(), 0, info );
+    free( info );
 }
 
 
@@ -496,10 +496,10 @@ void WINAPI FreeAddrInfoW( ADDRINFOW *ai )
     while (ai)
     {
         ADDRINFOW *next;
-        HeapFree( GetProcessHeap(), 0, ai->ai_canonname );
-        HeapFree( GetProcessHeap(), 0, ai->ai_addr );
+        free( ai->ai_canonname );
+        free( ai->ai_addr );
         next = ai->ai_next;
-        HeapFree( GetProcessHeap(), 0, ai );
+        free( ai );
         ai = next;
     }
 }
@@ -515,10 +515,10 @@ void WINAPI FreeAddrInfoEx( ADDRINFOEXA *ai )
     while (ai)
     {
         ADDRINFOEXA *next;
-        HeapFree( GetProcessHeap(), 0, ai->ai_canonname );
-        HeapFree( GetProcessHeap(), 0, ai->ai_addr );
+        free( ai->ai_canonname );
+        free( ai->ai_addr );
         next = ai->ai_next;
-        HeapFree( GetProcessHeap(), 0, ai );
+        free( ai );
         ai = next;
     }
 }
@@ -534,10 +534,10 @@ void WINAPI FreeAddrInfoExW( ADDRINFOEXW *ai )
     while (ai)
     {
         ADDRINFOEXW *next;
-        HeapFree( GetProcessHeap(), 0, ai->ai_canonname );
-        HeapFree( GetProcessHeap(), 0, ai->ai_addr );
+        free( ai->ai_canonname );
+        free( ai->ai_addr );
         next = ai->ai_next;
-        HeapFree( GetProcessHeap(), 0, ai );
+        free( ai );
         ai = next;
     }
 }
@@ -567,11 +567,11 @@ int WINAPI GetNameInfoW( const SOCKADDR *addr, socklen_t addr_len, WCHAR *host,
     int ret;
     char *hostA = NULL, *servA = NULL;
 
-    if (host && (!(hostA = HeapAlloc( GetProcessHeap(), 0, host_len ))))
+    if (host && !(hostA = malloc( host_len )))
         return EAI_MEMORY;
-    if (serv && (!(servA = HeapAlloc( GetProcessHeap(), 0, serv_len ))))
+    if (serv && !(servA = malloc( serv_len )))
     {
-        HeapFree( GetProcessHeap(), 0, hostA );
+        free( hostA );
         return EAI_MEMORY;
     }
 
@@ -582,8 +582,8 @@ int WINAPI GetNameInfoW( const SOCKADDR *addr, socklen_t addr_len, WCHAR *host,
         if (serv) MultiByteToWideChar( CP_ACP, 0, servA, -1, serv, serv_len );
     }
 
-    HeapFree( GetProcessHeap(), 0, hostA );
-    HeapFree( GetProcessHeap(), 0, servA );
+    free( hostA );
+    free( servA );
     return ret;
 }
 
@@ -594,9 +594,9 @@ static struct hostent *get_hostent_buffer( unsigned int size )
     if (data->he_buffer)
     {
         if (data->he_len >= size) return data->he_buffer;
-        HeapFree( GetProcessHeap(), 0, data->he_buffer );
+        free( data->he_buffer );
     }
-    data->he_buffer = HeapAlloc( GetProcessHeap(), 0, (data->he_len = size) );
+    data->he_buffer = malloc( (data->he_len = size) );
     if (!data->he_buffer) SetLastError(WSAENOBUFS);
     return data->he_buffer;
 }
@@ -722,8 +722,8 @@ static struct hostent *get_local_ips( char *hostname )
     if (GetIpForwardTable( NULL, &route_size, FALSE ) != ERROR_INSUFFICIENT_BUFFER)
         return NULL;
 
-    adapters = HeapAlloc( GetProcessHeap(), 0, adap_size );
-    routes = HeapAlloc( GetProcessHeap(), 0, route_size );
+    adapters = malloc( adap_size );
+    routes = malloc( route_size );
     if (!adapters || !routes)
         goto cleanup;
 
@@ -759,7 +759,7 @@ static struct hostent *get_local_ips( char *hostname )
         }
         if (exists)
             continue;
-        route_addrs = heap_realloc( route_addrs, (numroutes + 1) * sizeof(struct route) );
+        route_addrs = realloc( route_addrs, (numroutes + 1) * sizeof(struct route) );
         if (!route_addrs)
             goto cleanup;
         route_addrs[numroutes].interface = ifindex;
@@ -808,9 +808,9 @@ static struct hostent *get_local_ips( char *hostname )
         *(struct in_addr *)hostlist->h_addr_list[i] = route_addrs[i].addr;
 
 cleanup:
-    HeapFree( GetProcessHeap(), 0, route_addrs );
-    HeapFree( GetProcessHeap(), 0, adapters );
-    HeapFree( GetProcessHeap(), 0, routes );
+    free( route_addrs );
+    free( adapters );
+    free( routes );
     return hostlist;
 }
 
@@ -974,11 +974,10 @@ static char *read_etc_file( const WCHAR *filename, DWORD *ret_size )
     }
 
     size = GetFileSize( file, NULL );
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, size )) ||
-        !ReadFile( file, data, size, ret_size, NULL ))
+    if (!(data = malloc( size )) || !ReadFile( file, data, size, ret_size, NULL ))
     {
         WARN( "failed to read file, error %u\n", GetLastError() );
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
         data = NULL;
     }
     CloseHandle( file );
@@ -1009,10 +1008,10 @@ static struct protoent *get_protoent_buffer( unsigned int size )
     if (data->pe_buffer)
     {
         if (data->pe_len >= size) return data->pe_buffer;
-        HeapFree( GetProcessHeap(), 0, data->pe_buffer );
+        free( data->pe_buffer );
     }
     data->pe_len = size;
-    data->pe_buffer = HeapAlloc( GetProcessHeap(), 0, size );
+    data->pe_buffer = malloc( size );
     if (!data->pe_buffer) SetLastError( WSAENOBUFS );
     return data->pe_buffer;
 }
@@ -1150,7 +1149,7 @@ struct protoent * WINAPI getprotobyname( const char *name )
             break;
     }
 
-    HeapFree( GetProcessHeap(), 0, file );
+    free( file );
     return proto;
 }
 
@@ -1180,7 +1179,7 @@ struct protoent * WINAPI getprotobynumber( int number )
             break;
     }
 
-    HeapFree( GetProcessHeap(), 0, file );
+    free( file );
     return proto;
 }
 
@@ -1191,10 +1190,10 @@ static struct servent *get_servent_buffer( int size )
     if (data->se_buffer)
     {
         if (data->se_len >= size) return data->se_buffer;
-        HeapFree( GetProcessHeap(), 0, data->se_buffer );
+        free( data->se_buffer );
     }
     data->se_len = size;
-    data->se_buffer = HeapAlloc( GetProcessHeap(), 0, size );
+    data->se_buffer = malloc( size );
     if (!data->se_buffer) SetLastError( WSAENOBUFS );
     return data->se_buffer;
 }
@@ -1341,7 +1340,7 @@ struct servent * WINAPI getservbyname( const char *name, const char *proto )
             break;
     }
 
-    HeapFree( GetProcessHeap(), 0, file );
+    free( file );
     return serv;
 }
 
@@ -1371,7 +1370,7 @@ struct servent * WINAPI getservbyport( int port, const char *proto )
             break;
     }
 
-    HeapFree( GetProcessHeap(), 0, file );
+    free( file );
     return serv;
 }
 
@@ -1481,7 +1480,7 @@ int WINAPI InetPtonW( int family, const WCHAR *addr, void *buffer )
     }
 
     len = WideCharToMultiByte( CP_ACP, 0, addr, -1, NULL, 0, NULL, NULL );
-    if (!(addrA = HeapAlloc( GetProcessHeap(), 0, len )))
+    if (!(addrA = malloc( len )))
     {
         SetLastError( WSA_NOT_ENOUGH_MEMORY );
         return -1;
@@ -1491,7 +1490,7 @@ int WINAPI InetPtonW( int family, const WCHAR *addr, void *buffer )
     ret = inet_pton( family, addrA, buffer );
     if (!ret) SetLastError( WSAEINVAL );
 
-    HeapFree( GetProcessHeap(), 0, addrA );
+    free( addrA );
     return ret;
 }
 
@@ -1627,14 +1626,14 @@ int WINAPI WSAStringToAddressW( WCHAR *string, int family, WSAPROTOCOL_INFOW *pr
     }
 
     sizeA = WideCharToMultiByte( CP_ACP, 0, string, -1, NULL, 0, NULL, NULL );
-    if (!(stringA = HeapAlloc( GetProcessHeap(), 0, sizeA )))
+    if (!(stringA = malloc( sizeA )))
     {
         SetLastError( WSA_NOT_ENOUGH_MEMORY );
         return -1;
     }
     WideCharToMultiByte( CP_ACP, 0, string, -1, stringA, sizeA, NULL, NULL );
     ret = WSAStringToAddressA( stringA, family, protocol_infoA, addr, addr_len );
-    HeapFree( GetProcessHeap(), 0, stringA );
+    free( stringA );
     return ret;
 }
 

@@ -361,7 +361,7 @@ static BOOL socket_list_add(SOCKET socket)
         }
     }
     new_size = max(socket_list_size * 2, 8);
-    if (!(new_array = heap_realloc(socket_list, new_size * sizeof(*socket_list))))
+    if (!(new_array = realloc( socket_list, new_size * sizeof(*socket_list) )))
     {
         LeaveCriticalSection(&cs_socket_list);
         return FALSE;
@@ -508,30 +508,30 @@ static DWORD NtStatusToWSAError( NTSTATUS status )
 
 struct per_thread_data *get_per_thread_data(void)
 {
-    struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
-    /* lazy initialization */
-    if (!ptb)
+    struct per_thread_data *data = NtCurrentTeb()->WinSockData;
+
+    if (!data)
     {
-        ptb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptb) );
-        NtCurrentTeb()->WinSockData = ptb;
+        data = calloc( 1, sizeof(*data) );
+        NtCurrentTeb()->WinSockData = data;
     }
-    return ptb;
+    return data;
 }
 
 static void free_per_thread_data(void)
 {
-    struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
+    struct per_thread_data *data = NtCurrentTeb()->WinSockData;
 
-    if (!ptb) return;
+    if (!data) return;
 
-    CloseHandle( ptb->sync_event );
+    CloseHandle( data->sync_event );
 
     /* delete scratch buffers */
-    HeapFree( GetProcessHeap(), 0, ptb->he_buffer );
-    HeapFree( GetProcessHeap(), 0, ptb->se_buffer );
-    HeapFree( GetProcessHeap(), 0, ptb->pe_buffer );
+    free( data->he_buffer );
+    free( data->se_buffer );
+    free( data->pe_buffer );
 
-    HeapFree( GetProcessHeap(), 0, ptb );
+    free( data );
     NtCurrentTeb()->WinSockData = NULL;
 }
 
@@ -1108,12 +1108,12 @@ int WINAPI bind( SOCKET s, const struct sockaddr *addr, int len )
 
     if (!(sync_event = get_sync_event())) return -1;
 
-    params = HeapAlloc( GetProcessHeap(), 0, sizeof(int) + len );
-    ret_addr = HeapAlloc( GetProcessHeap(), 0, len );
+    params = malloc( sizeof(int) + len );
+    ret_addr = malloc( len );
     if (!params || !ret_addr)
     {
-        HeapFree( GetProcessHeap(), 0, params );
-        HeapFree( GetProcessHeap(), 0, ret_addr );
+        free( params );
+        free( ret_addr );
         SetLastError( WSAENOBUFS );
         return -1;
     }
@@ -1129,8 +1129,8 @@ int WINAPI bind( SOCKET s, const struct sockaddr *addr, int len )
         status = io.u.Status;
     }
 
-    HeapFree( GetProcessHeap(), 0, params );
-    HeapFree( GetProcessHeap(), 0, ret_addr );
+    free( params );
+    free( ret_addr );
 
     SetLastError( NtStatusToWSAError( status ) );
     return status ? -1 : 0;
@@ -1175,7 +1175,7 @@ int WINAPI connect( SOCKET s, const struct sockaddr *addr, int len )
 
     if (!(sync_event = get_sync_event())) return -1;
 
-    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + len )))
+    if (!(params = malloc( sizeof(*params) + len )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return -1;
@@ -1186,7 +1186,7 @@ int WINAPI connect( SOCKET s, const struct sockaddr *addr, int len )
 
     status = NtDeviceIoControlFile( (HANDLE)s, sync_event, NULL, NULL, &io, IOCTL_AFD_WINE_CONNECT,
                                     params, sizeof(*params) + len, NULL, 0 );
-    HeapFree( GetProcessHeap(), 0, params );
+    free( params );
     if (status == STATUS_PENDING)
     {
         if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED) return -1;
@@ -1235,7 +1235,7 @@ static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct sockaddr *name, int nam
     overlapped->Internal = STATUS_PENDING;
     overlapped->InternalHigh = 0;
 
-    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + namelen + send_len )))
+    if (!(params = malloc( sizeof(*params) + namelen + send_len )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return SOCKET_ERROR;
@@ -1248,7 +1248,7 @@ static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct sockaddr *name, int nam
     status = NtDeviceIoControlFile( SOCKET2HANDLE(s), overlapped->hEvent, NULL, cvalue,
                                     (IO_STATUS_BLOCK *)overlapped, IOCTL_AFD_WINE_CONNECT,
                                     params, sizeof(*params) + namelen + send_len, NULL, 0 );
-    HeapFree( GetProcessHeap(), 0, params );
+    free( params );
     if (ret_len) *ret_len = overlapped->InternalHigh;
     SetLastError( NtStatusToWSAError( status ) );
     return !status;
@@ -2028,7 +2028,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
         if (GetAdaptersInfo(NULL, &size) == ERROR_BUFFER_OVERFLOW)
         {
-            IP_ADAPTER_INFO *p, *table = HeapAlloc(GetProcessHeap(), 0, size);
+            IP_ADAPTER_INFO *p, *table = malloc( size );
             NTSTATUS status = STATUS_SUCCESS;
             SOCKET_ADDRESS_LIST *sa_list;
             SOCKADDR_IN *sockaddr;
@@ -2039,7 +2039,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
             if (!table || GetAdaptersInfo(table, &size))
             {
-                HeapFree(GetProcessHeap(), 0, table);
+                free( table );
                 SetLastError( WSAEINVAL );
                 return -1;
             }
@@ -2051,7 +2051,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             if (total > out_size || !out_buff)
             {
                 *ret_size = total;
-                HeapFree(GetProcessHeap(), 0, table);
+                free( table );
                 SetLastError( WSAEFAULT );
                 return -1;
             }
@@ -2074,7 +2074,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                 i++;
             }
 
-            HeapFree(GetProcessHeap(), 0, table);
+            free( table );
 
             ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
                                      NULL, 0, ret_size, overlapped, completion );
@@ -2173,10 +2173,10 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             SetLastError( WSAEFAULT );
             return -1;
         }
-        ipAddrTable = HeapAlloc( GetProcessHeap(), 0, size );
+        ipAddrTable = malloc( size );
         if (GetIpAddrTable( ipAddrTable, &size, FALSE ))
         {
-            HeapFree( GetProcessHeap(), 0, ipAddrTable );
+            free( ipAddrTable );
             SetLastError( WSAEFAULT );
             return -1;
         }
@@ -2190,14 +2190,14 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         {
             ERR("no matching IP address for interface %d\n",
                 row.dwForwardIfIndex);
-            HeapFree( GetProcessHeap(), 0, ipAddrTable );
+            free( ipAddrTable );
             SetLastError( WSAEFAULT );
             return -1;
         }
         saddr_in->sin_family = AF_INET;
         saddr_in->sin_addr.S_un.S_addr = ipAddrTable->table[found_index].dwAddr;
         saddr_in->sin_port = 0;
-        HeapFree( GetProcessHeap(), 0, ipAddrTable );
+        free( ipAddrTable );
 
         ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
                                  NULL, 0, ret_size, overlapped, completion );
@@ -2530,7 +2530,7 @@ int WINAPI WSAPoll( WSAPOLLFD *fds, ULONG count, int timeout )
     if (!(sync_event = get_sync_event())) return -1;
 
     params_size = offsetof( struct afd_poll_params, sockets[count] );
-    if (!(params = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, params_size )))
+    if (!(params = calloc( params_size, 1 )))
     {
         SetLastError(WSAENOBUFS);
         return SOCKET_ERROR;
@@ -2566,7 +2566,7 @@ int WINAPI WSAPoll( WSAPOLLFD *fds, ULONG count, int timeout )
     if (!poll_socket)
     {
         SetLastError( WSAENOTSOCK );
-        HeapFree( GetProcessHeap(), 0, params );
+        free( params );
         return -1;
     }
 
@@ -2576,7 +2576,7 @@ int WINAPI WSAPoll( WSAPOLLFD *fds, ULONG count, int timeout )
     {
         if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
         {
-            HeapFree( GetProcessHeap(), 0, params );
+            free( params );
             return -1;
         }
         status = io.u.Status;
@@ -2614,7 +2614,7 @@ int WINAPI WSAPoll( WSAPOLLFD *fds, ULONG count, int timeout )
     }
     if (status == STATUS_TIMEOUT) status = STATUS_SUCCESS;
 
-    HeapFree( GetProcessHeap(), 0, params );
+    free( params );
 
     SetLastError( NtStatusToWSAError( status ) );
     return status ? -1 : ret_count;
