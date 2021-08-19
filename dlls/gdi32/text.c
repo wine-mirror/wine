@@ -1,5 +1,5 @@
 /*
- * GDI BiDirectional handling
+ * GDI text handling
  *
  * Copyright 2003 Shachar Shemesh
  * Copyright 2007 Maarten Lankhorst

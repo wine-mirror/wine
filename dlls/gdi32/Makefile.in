@@ -9,7 +9,6 @@ DELAYIMPORTS = setupapi
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	bidi.c \
 	bitblt.c \
 	bitmap.c \
 	brush.c \
@@ -46,6 +45,7 @@ C_SRCS = \
 	pen.c \
 	printdrv.c \
 	region.c \
+	text.c \
 	uniscribe/bidi.c \
 	uniscribe/bracket.c \
 	uniscribe/breaking.c \
