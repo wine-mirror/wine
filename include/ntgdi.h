@@ -107,6 +107,7 @@ enum
     NtGdiSetBkColor = 100,
     NtGdiSetTextColor,
     NtGdiSetDCBrushColor,
+    NtGdiSetDCPenColor,
 };
 
 enum

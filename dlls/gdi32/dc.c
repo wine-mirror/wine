@@ -851,6 +851,13 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
         if (value != CLR_INVALID) dc->attr->brush_color = value;
         break;
 
+    case NtGdiSetDCPenColor:
+        physdev = GET_DC_PHYSDEV( dc, pSetDCPenColor );
+        *prev_value = dc->attr->pen_color;
+        value = physdev->funcs->pSetDCPenColor( physdev, value );
+        if (value != CLR_INVALID) dc->attr->pen_color = value;
+        break;
+
     default:
         WARN( "unknown method %u\n", method );
         ret = FALSE;
@@ -1293,30 +1300,4 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
     TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, old_layout, layout);
 
     return old_layout;
-}
-
-/***********************************************************************
- *           SetDCPenColor    (GDI32.@)
- */
-COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
-{
-    DC *dc;
-    COLORREF oldClr = CLR_INVALID;
-
-    TRACE("hdc(%p) crColor(%08x)\n", hdc, crColor);
-
-    dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDCPenColor );
-        crColor = physdev->funcs->pSetDCPenColor( physdev, crColor );
-        if (crColor != CLR_INVALID)
-        {
-            oldClr = dc->attr->pen_color;
-            dc->attr->pen_color = crColor;
-        }
-        release_dc_ptr( dc );
-    }
-
-    return oldClr;
 }

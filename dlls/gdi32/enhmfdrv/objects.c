@@ -487,26 +487,25 @@ BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color )
 }
 
 /******************************************************************
- *         EMFDRV_SetDCPenColor
+ *         EMFDC_SetDCPenColor
  */
-COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
+BOOL EMFDC_SetDCPenColor( DC_ATTR *dc_attr, COLORREF color )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    DC *dc = get_physdev_dc( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     LOGPEN logpen = { PS_SOLID, { 0, 0 }, color };
 
-    if (dc->hPen != GetStockObject( DC_PEN )) return color;
+    if (GetCurrentObject( dc_attr->hdc, OBJ_PEN ) != GetStockObject( DC_PEN )) return TRUE;
 
-    if (physDev->dc_pen) DeleteObject( physDev->dc_pen );
-    if (!(physDev->dc_pen = CreatePenIndirect( &logpen ))) return CLR_INVALID;
-    if (!(index = EMFDRV_CreatePenIndirect(dev, physDev->dc_pen))) return CLR_INVALID;
-    GDI_hdc_using_object( physDev->dc_pen, dev->hdc, EMFDC_DeleteObject );
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
+    if (!(emf->dc_pen = CreatePenIndirect( &logpen ))) return FALSE;
+    if (!(index = EMFDRV_CreatePenIndirect( &emf->dev, emf->dc_pen ))) return FALSE;
+    GDI_hdc_using_object( emf->dc_pen, dc_attr->hdc, EMFDC_DeleteObject );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 /*******************************************************************
