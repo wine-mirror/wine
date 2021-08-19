@@ -326,7 +326,7 @@
 @ stdcall GetOutlineTextMetricsA(long long ptr)
 @ stdcall GetOutlineTextMetricsW(long long ptr)
 @ stdcall GetPaletteEntries(long long long ptr)
-@ stdcall GetPath(long ptr ptr long)
+@ stdcall GetPath(long ptr ptr long) NtGdiGetPath
 @ stdcall GetPixel(long long long) NtGdiGetPixel
 @ stdcall GetPixelFormat(long)
 @ stdcall GetPolyFillMode(long)
@@ -388,7 +388,7 @@
 @ stdcall OffsetWindowOrgEx(long long long ptr)
 @ stdcall PaintRgn(long long)
 @ stdcall PatBlt(long long long long long long)
-@ stdcall PathToRegion(long)
+@ stdcall PathToRegion(long) NtGdiPathToRegion
 @ stdcall Pie(long long long long long long long long long)
 @ stdcall PlayEnhMetaFile(long long ptr)
 @ stdcall PlayEnhMetaFileRecord(long ptr ptr long)

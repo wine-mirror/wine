@@ -624,52 +624,49 @@ BOOL WINAPI NtGdiCloseFigure( HDC hdc )
 
 
 /***********************************************************************
- *           GetPath    (GDI32.@)
+ *           NtGdiGetPath    (win32u.@)
  */
-INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes, INT nSize)
+INT WINAPI NtGdiGetPath( HDC hdc, POINT *points, BYTE *types, INT size )
 {
-   INT ret = -1;
-   DC *dc = get_dc_ptr( hdc );
+    INT ret = -1;
+    DC *dc = get_dc_ptr( hdc );
 
-   if(!dc) return -1;
+    if (!dc) return -1;
 
-   if (!dc->path)
-   {
-      SetLastError(ERROR_CAN_NOT_COMPLETE);
-      goto done;
-   }
+    if (!dc->path)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+    }
+    else if (size == 0)
+    {
+        ret = dc->path->count;
+    }
+    else if (size < dc->path->count)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+    }
+    else
+    {
+        memcpy( points, dc->path->points, sizeof(POINT) * dc->path->count );
+        memcpy( types, dc->path->flags, sizeof(BYTE) * dc->path->count );
 
-   if(nSize==0)
-      ret = dc->path->count;
-   else if(nSize<dc->path->count)
-   {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      goto done;
-   }
-   else
-   {
-      memcpy(pPoints, dc->path->points, sizeof(POINT)*dc->path->count);
-      memcpy(pTypes, dc->path->flags, sizeof(BYTE)*dc->path->count);
+        /* Convert the points to logical coordinates */
+        if (dp_to_lp( dc, points, dc->path->count ))
+            ret = dc->path->count;
+        else
+            /* FIXME: Is this the correct value? */
+            SetLastError( ERROR_CAN_NOT_COMPLETE );
+    }
 
-      /* Convert the points to logical coordinates */
-      if(!dp_to_lp(dc, pPoints, dc->path->count))
-      {
-	 /* FIXME: Is this the correct value? */
-         SetLastError(ERROR_CAN_NOT_COMPLETE);
-	goto done;
-      }
-     else ret = dc->path->count;
-   }
- done:
-   release_dc_ptr( dc );
-   return ret;
+    release_dc_ptr( dc );
+    return ret;
 }
 
 
 /***********************************************************************
- *           PathToRegion    (GDI32.@)
+ *           NtGdiPathToRegion    (win32u.@)
  */
-HRGN WINAPI PathToRegion(HDC hdc)
+HRGN WINAPI NtGdiPathToRegion( HDC hdc )
 {
     HRGN ret = 0;
     DC *dc = get_dc_ptr( hdc );
@@ -721,7 +718,7 @@ BOOL WINAPI NtGdiSelectClipPath( HDC hdc, INT mode )
     BOOL ret = FALSE;
     HRGN rgn;
 
-    if ((rgn = PathToRegion( hdc )))
+    if ((rgn = NtGdiPathToRegion( hdc )))
     {
         ret = NtGdiExtSelectClipRgn( hdc, rgn, mode ) != ERROR;
         DeleteObject( rgn );
@@ -2008,21 +2005,21 @@ BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
 
 BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
 {
-    if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
+    if (NtGdiGetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 
 BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev )
 {
-    if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
+    if (NtGdiGetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 
 BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
 {
-    if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
+    if (NtGdiGetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
