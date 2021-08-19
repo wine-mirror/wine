@@ -67,6 +67,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 #define CHARS_IN_GUID 39
 
+static const WCHAR device_tcpip[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
+
 DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
 DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
 
@@ -1573,10 +1575,8 @@ DWORD WINAPI GetIcmpStatisticsEx( MIB_ICMP_EX *stats, DWORD family )
 static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
                          struct nsi_ndis_ifinfo_static *stat )
 {
-    static const WCHAR name_prefix[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
-
-    memcpy( row->wszName, name_prefix, sizeof(name_prefix) );
-    ConvertGuidToStringW( &stat->if_guid, row->wszName + ARRAY_SIZE(name_prefix) - 1, CHARS_IN_GUID );
+    memcpy( row->wszName, device_tcpip, sizeof(device_tcpip) );
+    ConvertGuidToStringW( &stat->if_guid, row->wszName + ARRAY_SIZE(device_tcpip) - 1, CHARS_IN_GUID );
     row->dwIndex = stat->if_index;
     row->dwType = stat->type;
     row->dwMtu = dyn->mtu;
@@ -1922,31 +1922,44 @@ DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
  */
 DWORD WINAPI GetInterfaceInfo( IP_INTERFACE_INFO *table, ULONG *size )
 {
-    MIB_IFTABLE *if_table;
-    DWORD err, needed, i;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_static *stat;
+    DWORD err, count, num = 0, needed, i;
 
-    TRACE("table %p, size %p\n", table, size );
+    TRACE( "table %p, size %p\n", table, size );
     if (!size) return ERROR_INVALID_PARAMETER;
 
-    err = AllocateAndGetIfTableFromStack( &if_table, 0, GetProcessHeap(), 0 );
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                                  (void **)&keys, sizeof(*keys), NULL, 0, NULL, 0,
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
     if (err) return err;
 
-    needed = FIELD_OFFSET(IP_INTERFACE_INFO, Adapter[if_table->dwNumEntries]);
+    for (i = 0; i < count; i++)
+    {
+        num++;
+    }
+
+    needed = FIELD_OFFSET(IP_INTERFACE_INFO, Adapter[num]);
     if (!table || *size < needed)
     {
         *size = needed;
-        heap_free( if_table );
-        return ERROR_INSUFFICIENT_BUFFER;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto done;
     }
 
-    table->NumAdapters = if_table->dwNumEntries;
-    for (i = 0; i < if_table->dwNumEntries; i++)
+    table->NumAdapters = num;
+    for (i = 0, num = 0; i < count; i++)
     {
-        table->Adapter[i].Index = if_table->table[i].dwIndex;
-        strcpyW( table->Adapter[i].Name, if_table->table[i].wszName );
+        IP_ADAPTER_INDEX_MAP *row;
+
+        row = table->Adapter + num++;
+        row->Index = stat[i].if_index;
+        memcpy( row->Name, device_tcpip, sizeof(device_tcpip) );
+        ConvertGuidToStringW( &stat[i].if_guid, row->Name + ARRAY_SIZE(device_tcpip) - 1, CHARS_IN_GUID );
     }
-    heap_free( if_table );
-    return ERROR_SUCCESS;
+done:
+    NsiFreeTable( keys, NULL, NULL, stat );
+    return err;
 }
 
 static int ipaddrrow_cmp( const void *a, const void *b )
@@ -1957,7 +1970,7 @@ static int ipaddrrow_cmp( const void *a, const void *b )
 /******************************************************************
  *    GetIpAddrTable (IPHLPAPI.@)
  *
- * Get interface-to-IP address mapping table. 
+ * Get interface-to-IP address mapping table.
  *
  * PARAMS
  *  table        [Out]    buffer for mapping table
