@@ -4265,7 +4265,7 @@ DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_
     err = ConvertInterfaceLuidToNameW( luid, nameW, ARRAY_SIZE(nameW) );
     if (err) return err;
 
-    if (!WideCharToMultiByte( CP_UNIXCP, 0, nameW, -1, name, len, NULL, NULL ))
+    if (!WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, len, NULL, NULL ))
         err = GetLastError();
     return err;
 }
@@ -4340,7 +4340,7 @@ DWORD WINAPI ConvertInterfaceNameToLuidA(const char *name, NET_LUID *luid)
     TRACE( "(%s %p)\n", debugstr_a(name), luid );
 
     if (!name) return ERROR_INVALID_NAME;
-    if (!MultiByteToWideChar( CP_UNIXCP, 0, name, -1, nameW, ARRAY_SIZE(nameW) ))
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, ARRAY_SIZE(nameW) ))
         return GetLastError();
 
     return ConvertInterfaceNameToLuidW( nameW, luid );
