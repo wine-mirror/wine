@@ -1936,6 +1936,7 @@ DWORD WINAPI GetInterfaceInfo( IP_INTERFACE_INFO *table, ULONG *size )
 
     for (i = 0; i < count; i++)
     {
+        if (stat[i].type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
         num++;
     }
 
@@ -1952,6 +1953,7 @@ DWORD WINAPI GetInterfaceInfo( IP_INTERFACE_INFO *table, ULONG *size )
     {
         IP_ADAPTER_INDEX_MAP *row;
 
+        if (stat[i].type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
         row = table->Adapter + num++;
         row->Index = stat[i].if_index;
         memcpy( row->Name, device_tcpip, sizeof(device_tcpip) );

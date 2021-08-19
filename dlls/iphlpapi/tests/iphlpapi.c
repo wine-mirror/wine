@@ -1109,7 +1109,6 @@ static void testGetInterfaceInfo(void)
             GetIfEntry( &row );
             ok( !wcscmp( buf->Adapter[i].Name, row.wszName ), "got %s vs %s\n",
                 debugstr_w( buf->Adapter[i].Name ), debugstr_w( row.wszName ) );
-todo_wine_if( row.dwType == IF_TYPE_SOFTWARE_LOOPBACK)
             ok( row.dwType != IF_TYPE_SOFTWARE_LOOPBACK, "got loopback\n" );
         }
         HeapFree(GetProcessHeap(), 0, buf);
