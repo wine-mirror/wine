@@ -234,9 +234,6 @@
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #undef HAVE_KRB5_KRB5_H
 
-/* Define to 1 if you have the <kstat.h> header file. */
-#undef HAVE_KSTAT_H
-
 /* Define to 1 if you have the <lber.h> header file. */
 #undef HAVE_LBER_H
 
@@ -278,9 +275,6 @@
 
 /* Define to 1 if you have the `gettextpo' library (-lgettextpo). */
 #undef HAVE_LIBGETTEXTPO
-
-/* Define to 1 if you have the `kstat' library (-lkstat). */
-#undef HAVE_LIBKSTAT
 
 /* Define to 1 if you have the `procstat' library (-lprocstat). */
 #undef HAVE_LIBPROCSTAT

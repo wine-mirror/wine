@@ -639,7 +639,6 @@ VKD3D_CFLAGS
 NETAPI_LIBS
 NETAPI_CFLAGS
 PROCSTAT_LIBS
-KSTAT_LIBS
 MPG123_LIBS
 MPG123_CFLAGS
 TIFF_LIBS
@@ -7501,7 +7500,6 @@ for ac_header in \
 	gsm/gsm.h \
 	ieeefp.h \
 	inet/mib2.h \
-	kstat.h \
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
@@ -16480,54 +16478,6 @@ then
     enable_xaudio2_9=${enable_xaudio2_9:-no}
 fi
 
-if test "$ac_cv_header_kstat_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for kstat_open in -lkstat" >&5
-$as_echo_n "checking for kstat_open in -lkstat... " >&6; }
-if ${ac_cv_lib_kstat_kstat_open+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lkstat  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char kstat_open ();
-int
-main ()
-{
-return kstat_open ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_kstat_kstat_open=yes
-else
-  ac_cv_lib_kstat_kstat_open=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_kstat_kstat_open" >&5
-$as_echo "$ac_cv_lib_kstat_kstat_open" >&6; }
-if test "x$ac_cv_lib_kstat_kstat_open" = xyes; then :
-
-$as_echo "#define HAVE_LIBKSTAT 1" >>confdefs.h
-
-                  KSTAT_LIBS="-lkstat"
-
-fi
-
-fi
-
 if test "$ac_cv_header_libprocstat_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for procstat_open_sysctl in -lprocstat" >&5
@@ -20034,7 +19984,6 @@ TIFF_CFLAGS = $TIFF_CFLAGS
 TIFF_LIBS = $TIFF_LIBS
 MPG123_CFLAGS = $MPG123_CFLAGS
 MPG123_LIBS = $MPG123_LIBS
-KSTAT_LIBS = $KSTAT_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
 NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
