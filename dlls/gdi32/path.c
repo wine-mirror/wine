@@ -1901,11 +1901,9 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
 
 
 /*******************************************************************
- *      StrokeAndFillPath [GDI32.@]
- *
- *
+ *           NtGdiStrokeAndFillPath   (win32u.@)
  */
-BOOL WINAPI StrokeAndFillPath(HDC hdc)
+BOOL WINAPI NtGdiStrokeAndFillPath( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
