@@ -1568,6 +1568,18 @@ BOOL WINAPI FlattenPath( HDC hdc )
 }
 
 /***********************************************************************
+ *           WidenPath   (GDI32.@)
+ */
+BOOL WINAPI WidenPath( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_WidenPath( dc_attr )) return FALSE;
+    return NtGdiWidenPath( hdc );
+}
+
+/***********************************************************************
  *           SelectClipPath    (GDI32.@)
  */
 BOOL WINAPI SelectClipPath( HDC hdc, INT mode )

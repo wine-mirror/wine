@@ -355,7 +355,6 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pStrokeAndFillPath */
     NULL,                                   /* pStrokePath */
     NULL,                                   /* pUnrealizePalette */
-    NULL,                                   /* pWidenPath */
     NULL,                                   /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                                   /* pD3DKMTSetVidPnSourceOwner */
     macdrv_wine_get_wgl_driver,             /* wine_get_wgl_driver */

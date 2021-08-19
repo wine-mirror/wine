@@ -395,14 +395,13 @@ BOOL EMFDC_SelectClipPath( DC_ATTR *dc_attr, INT mode )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_WidenPath( PHYSDEV dev )
+BOOL EMFDC_WidenPath( DC_ATTR *dc_attr )
 {
     EMRWIDENPATH emr;
 
     emr.emr.iType = EMR_WIDENPATH;
     emr.emr.nSize = sizeof(emr);
-
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 INT CDECL EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)

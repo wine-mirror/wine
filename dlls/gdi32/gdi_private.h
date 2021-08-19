@@ -219,5 +219,6 @@ extern BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT wid
                                  UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StrokeAndFillPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StrokePath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_WidenPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */

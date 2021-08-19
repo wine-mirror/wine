@@ -159,7 +159,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pStrokeAndFillPath)(PHYSDEV);
     BOOL     (CDECL *pStrokePath)(PHYSDEV);
     BOOL     (CDECL *pUnrealizePalette)(HPALETTE);
-    BOOL     (CDECL *pWidenPath)(PHYSDEV);
     NTSTATUS (CDECL *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
     NTSTATUS (CDECL *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
     struct opengl_funcs * (CDECL *wine_get_wgl_driver)(PHYSDEV,UINT);
@@ -170,7 +169,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 62
+#define WINE_GDI_DRIVER_VERSION 63
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

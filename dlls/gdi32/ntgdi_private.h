@@ -586,7 +586,6 @@ extern INT  CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT wi
                                          BITMAPINFO *info, UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL CDECL nulldrv_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 static inline DC *get_nulldrv_dc( PHYSDEV dev )
 {

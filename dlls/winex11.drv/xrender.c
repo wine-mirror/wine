@@ -2246,7 +2246,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pWidenPath */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     NULL,                               /* wine_get_wgl_driver */

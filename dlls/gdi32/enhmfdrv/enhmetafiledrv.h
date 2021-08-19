@@ -104,7 +104,6 @@ extern INT      CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT
                                             const void *bits, BITMAPINFO *info, UINT wUsage, DWORD dwRop ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_WidenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 
 #endif  /* __WINE_METAFILEDRV_H */

@@ -1937,21 +1937,25 @@ BOOL WINAPI NtGdiStrokePath( HDC hdc )
 
 
 /*******************************************************************
- *      WidenPath [GDI32.@]
- *
- *
+ *           NtGdiWidenPath   (win32u.@)
  */
-BOOL WINAPI WidenPath(HDC hdc)
+BOOL WINAPI NtGdiWidenPath( HDC hdc )
 {
+    struct gdi_path *path;
     BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (dc)
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+
+    if (!dc->path) SetLastError( ERROR_CAN_NOT_COMPLETE );
+    else if ((path = PATH_WidenPath( dc )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pWidenPath );
-        ret = physdev->funcs->pWidenPath( physdev );
-        release_dc_ptr( dc );
+        free_gdi_path( dc->path );
+        dc->path = path;
+        ret = TRUE;
     }
+
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -2020,22 +2024,6 @@ BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
 {
     if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
     NtGdiAbortPath( dev->hdc );
-    return TRUE;
-}
-
-BOOL CDECL nulldrv_WidenPath( PHYSDEV dev )
-{
-    DC *dc = get_nulldrv_dc( dev );
-    struct gdi_path *path;
-
-    if (!dc->path)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    if (!(path = PATH_WidenPath( dc ))) return FALSE;
-    free_gdi_path( dc->path );
-    dc->path = path;
     return TRUE;
 }
 
@@ -2133,7 +2121,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pWidenPath */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     NULL,                               /* wine_get_wgl_driver */

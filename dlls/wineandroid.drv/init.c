@@ -375,7 +375,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pWidenPath */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     ANDROID_wine_get_wgl_driver,        /* wine_get_wgl_driver */
