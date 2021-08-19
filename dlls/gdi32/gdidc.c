@@ -316,6 +316,19 @@ COLORREF WINAPI GetDCBrushColor( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetDCBrushColor    (GDI32.@)
+ */
+COLORREF WINAPI SetDCBrushColor( HDC hdc, COLORREF color )
+{
+    DC_ATTR *dc_attr;
+    COLORREF ret;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return CLR_INVALID;
+    if (dc_attr->emf && !EMFDC_SetDCBrushColor( dc_attr, color )) return CLR_INVALID;
+    return NtGdiGetAndSetDCDword( hdc, NtGdiSetDCBrushColor, color, &ret ) ? ret : CLR_INVALID;
+}
+
+/***********************************************************************
  *           GetDCPenColor    (GDI32.@)
  */
 COLORREF WINAPI GetDCPenColor(HDC hdc)

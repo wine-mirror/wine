@@ -821,6 +821,7 @@ INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
  */
 BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *prev_value )
 {
+    PHYSDEV physdev;
     BOOL ret = TRUE;
     DC *dc;
 
@@ -841,6 +842,13 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
     case NtGdiSetTextColor:
         *prev_value = dc->attr->text_color;
         set_text_color( dc, value );
+        break;
+
+    case NtGdiSetDCBrushColor:
+        physdev = GET_DC_PHYSDEV( dc, pSetDCBrushColor );
+        *prev_value = dc->attr->brush_color;
+        value = physdev->funcs->pSetDCBrushColor( physdev, value );
+        if (value != CLR_INVALID) dc->attr->brush_color = value;
         break;
 
     default:
@@ -1285,32 +1293,6 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
     TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, old_layout, layout);
 
     return old_layout;
-}
-
-/***********************************************************************
- *           SetDCBrushColor    (GDI32.@)
- */
-COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
-{
-    DC *dc;
-    COLORREF oldClr = CLR_INVALID;
-
-    TRACE("hdc(%p) crColor(%08x)\n", hdc, crColor);
-
-    dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDCBrushColor );
-        crColor = physdev->funcs->pSetDCBrushColor( physdev, crColor );
-        if (crColor != CLR_INVALID)
-        {
-            oldClr = dc->attr->brush_color;
-            dc->attr->brush_color = crColor;
-        }
-        release_dc_ptr( dc );
-    }
-
-    return oldClr;
 }
 
 /***********************************************************************

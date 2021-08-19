@@ -114,7 +114,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pSelectPen */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBoundsRect */
-    EMFDRV_SetDCBrushColor,          /* pSetDCBrushColor*/
+    NULL,                            /* pSetDCBrushColor*/
     EMFDRV_SetDCPenColor,            /* pSetDCPenColor*/
     EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */

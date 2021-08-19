@@ -106,6 +106,7 @@ enum
     /* not compatible with Windows */
     NtGdiSetBkColor = 100,
     NtGdiSetTextColor,
+    NtGdiSetDCBrushColor,
 };
 
 enum

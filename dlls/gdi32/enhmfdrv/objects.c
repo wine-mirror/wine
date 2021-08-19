@@ -466,25 +466,24 @@ BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )
 }
 
 /******************************************************************
- *         EMFDRV_SetDCBrushColor
+ *         EMFDC_SetDCBrushColor
  */
-COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    DC *dc = get_physdev_dc( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
 
-    if (dc->hBrush != GetStockObject( DC_BRUSH )) return color;
+    if (GetCurrentObject( dc_attr->hdc, OBJ_BRUSH ) != GetStockObject( DC_BRUSH )) return TRUE;
 
-    if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
-    if (!(physDev->dc_brush = CreateSolidBrush( color ))) return CLR_INVALID;
-    if (!(index = EMFDRV_CreateBrushIndirect(dev, physDev->dc_brush ))) return CLR_INVALID;
-    GDI_hdc_using_object( physDev->dc_brush, dev->hdc, EMFDC_DeleteObject );
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    if (!(emf->dc_brush = CreateSolidBrush( color ))) return FALSE;
+    if (!(index = EMFDRV_CreateBrushIndirect( &emf->dev, emf->dc_brush ))) return FALSE;
+    GDI_hdc_using_object( emf->dc_brush, dc_attr->hdc, EMFDC_DeleteObject );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 /******************************************************************

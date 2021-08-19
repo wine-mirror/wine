@@ -191,6 +191,7 @@ extern BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette ) DECLSPEC_H
 extern BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT  EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dest, INT y_dest, DWORD width,
                                      DWORD height, INT x_src, INT y_src, UINT startscan,
                                      UINT lines, const void *bits, const BITMAPINFO *info,
