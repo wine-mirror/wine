@@ -19,27 +19,15 @@
  */
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_LIBXML2
-# include <libxml/parser.h>
-# include <libxml/xmlerror.h>
-# include <libxml/HTMLtree.h>
-#endif
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
 #include "ole2.h"
-#include "msxml6.h"
-
-#include "msxml_private.h"
 
 #include "initguid.h"
 #include "xmlparser.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
