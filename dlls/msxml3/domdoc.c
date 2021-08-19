@@ -1642,9 +1642,7 @@ static HRESULT WINAPI domdoc_get_implementation(
     if(!impl)
         return E_INVALIDARG;
 
-    *impl = (IXMLDOMImplementation*)create_doc_Implementation();
-
-    return S_OK;
+    return create_dom_implementation(impl);
 }
 
 static HRESULT WINAPI domdoc_get_documentElement(

@@ -189,17 +189,18 @@ static dispex_static_data_t dimimpl_dispex = {
     dimimpl_iface_tids
 };
 
-IUnknown* create_doc_Implementation(void)
+HRESULT create_dom_implementation(IXMLDOMImplementation **ret)
 {
-    domimpl *This;
+    domimpl *object;
 
-    This = heap_alloc( sizeof *This );
-    if ( !This )
-        return NULL;
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IXMLDOMImplementation_iface.lpVtbl = &dimimpl_vtbl;
-    This->ref = 1;
-    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMImplementation_iface, &dimimpl_dispex);
+    object->IXMLDOMImplementation_iface.lpVtbl = &dimimpl_vtbl;
+    object->ref = 1;
+    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMImplementation_iface, &dimimpl_dispex);
 
-    return (IUnknown*)&This->IXMLDOMImplementation_iface;
+    *ret = &object->IXMLDOMImplementation_iface;
+
+    return S_OK;
 }

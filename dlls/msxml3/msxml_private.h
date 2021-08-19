@@ -180,12 +180,12 @@ extern IUnknown         *create_comment( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_cdata( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IXMLDOMNamedNodeMap *create_nodemap( xmlNodePtr, const struct nodemap_funcs* ) DECLSPEC_HIDDEN;
-extern IUnknown         *create_doc_Implementation(void) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_fragment( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_type( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern HRESULT           create_selection( xmlNodePtr, xmlChar*, IXMLDOMNodeList** ) DECLSPEC_HIDDEN;
 extern HRESULT           create_enumvariant( IUnknown*, BOOL, const struct enumvariant_funcs*, IEnumVARIANT**) DECLSPEC_HIDDEN;
+extern HRESULT           create_dom_implementation(IXMLDOMImplementation **obj) DECLSPEC_HIDDEN;
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type ) DECLSPEC_HIDDEN;
