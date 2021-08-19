@@ -1476,8 +1476,7 @@ static void test_fpu_exceptions(void)
     run_exception_test(fpu_exception_handler, &info, fpu_exception_test_ie, sizeof(fpu_exception_test_ie), 0);
     ok(info.exception_code == EXCEPTION_FLT_STACK_CHECK,
             "Got exception code %#x, expected EXCEPTION_FLT_STACK_CHECK\n", info.exception_code);
-    ok(info.exception_offset == 0x19 ||
-       broken( info.exception_offset == info.eip_offset ),
+    ok(info.exception_offset == 0x19 || info.exception_offset == info.eip_offset,
        "Got exception offset %#x, expected 0x19\n", info.exception_offset);
     ok(info.eip_offset == 0x1b, "Got EIP offset %#x, expected 0x1b\n", info.eip_offset);
 
@@ -1485,8 +1484,7 @@ static void test_fpu_exceptions(void)
     run_exception_test(fpu_exception_handler, &info, fpu_exception_test_de, sizeof(fpu_exception_test_de), 0);
     ok(info.exception_code == EXCEPTION_FLT_DIVIDE_BY_ZERO,
             "Got exception code %#x, expected EXCEPTION_FLT_DIVIDE_BY_ZERO\n", info.exception_code);
-    ok(info.exception_offset == 0x17 ||
-       broken( info.exception_offset == info.eip_offset ),
+    ok(info.exception_offset == 0x17 || info.exception_offset == info.eip_offset,
        "Got exception offset %#x, expected 0x17\n", info.exception_offset);
     ok(info.eip_offset == 0x19, "Got EIP offset %#x, expected 0x19\n", info.eip_offset);
 }
@@ -3379,7 +3377,7 @@ static void test_exceptions(void)
     __asm__ volatile( "movw %%ss,%0" : "=g" (ss) );
     res = pNtGetContextThread( GetCurrentThread(), &ctx );
     ok( res == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", res );
-    ok( ctx.SegDs == ds, "wrong ds %08x / %08x\n", ctx.SegDs, ds );
+    ok( ctx.SegDs == ds, "wrong ds %04x / %04x\n", ctx.SegDs, ds );
     ok( ctx.SegEs == es, "wrong es %04x / %04x\n", ctx.SegEs, es );
     ok( ctx.SegFs == fs, "wrong fs %04x / %04x\n", ctx.SegFs, fs );
     ok( ctx.SegGs == gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
