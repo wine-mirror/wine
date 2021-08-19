@@ -1351,21 +1351,6 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
 }
 
 /***********************************************************************
- *           ExtTextOutW    (GDI32.@)
- */
-BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
-                         const WCHAR *str, UINT count, const INT *dx )
-{
-    DC_ATTR *dc_attr;
-
-    if (is_meta_dc( hdc )) return METADC_ExtTextOut( hdc, x, y, flags, rect, str, count, dx );
-    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    if (dc_attr->emf && !EMFDC_ExtTextOut( dc_attr, x, y, flags, rect, str, count, dx ))
-        return FALSE;
-    return NtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, 0 );
-}
-
-/***********************************************************************
  *           SetTextJustification    (GDI32.@)
  */
 BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )

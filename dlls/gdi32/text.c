@@ -48,6 +48,7 @@
 #include "winnls.h"
 #include "usp10.h"
 #include "wine/debug.h"
+#include "gdi_private.h"
 #include "ntgdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
@@ -652,5 +653,47 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, pwLogClust);
     HeapFree(GetProcessHeap(), 0, psva);
     ScriptFreeCache(&psc);
+    return ret;
+}
+
+/***********************************************************************
+ *           ExtTextOutW    (GDI32.@)
+ */
+BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
+                         const WCHAR *str, UINT count, const INT *dx )
+{
+    WORD *glyphs = NULL;
+    DC_ATTR *dc_attr;
+    BOOL ret;
+
+    if (count > INT_MAX) return FALSE;
+    if (is_meta_dc( hdc )) return METADC_ExtTextOut( hdc, x, y, flags, rect, str, count, dx );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ExtTextOut( dc_attr, x, y, flags, rect, str, count, dx ))
+        return FALSE;
+
+    if (!(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && count > 0)
+    {
+        UINT bidi_flags;
+        int glyphs_count;
+
+        bidi_flags = (dc_attr->text_align & TA_RTLREADING) || (flags & ETO_RTLREADING)
+            ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR;
+
+        BIDI_Reorder( hdc, str, count, GCP_REORDER, bidi_flags, NULL, 0, NULL,
+                      &glyphs, &glyphs_count );
+
+        flags |= ETO_IGNORELANGUAGE;
+        if (glyphs)
+        {
+            flags |= ETO_GLYPH_INDEX;
+            count = glyphs_count;
+            str = glyphs;
+        }
+    }
+
+    ret = NtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, 0 );
+
+    HeapFree( GetProcessHeap(), 0, glyphs );
     return ret;
 }

@@ -5855,8 +5855,6 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
                               const WCHAR *str, UINT count, const INT *lpDx, DWORD cp )
 {
     BOOL ret = FALSE;
-    LPWSTR reordered_str = (LPWSTR)str;
-    WORD *glyphs = NULL;
     UINT align;
     DWORD layout;
     POINT pt;
@@ -5902,26 +5900,6 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         if ((align & TA_CENTER) != TA_CENTER) align ^= TA_RIGHT;
         align ^= TA_RTLREADING;
     }
-
-    if( !(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && count > 0 )
-    {
-        INT cGlyphs;
-        reordered_str = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
-
-        BIDI_Reorder( hdc, str, count, GCP_REORDER,
-                      (align & TA_RTLREADING) ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR,
-                      reordered_str, count, NULL, &glyphs, &cGlyphs);
-
-        flags |= ETO_IGNORELANGUAGE;
-        if (glyphs)
-        {
-            flags |= ETO_GLYPH_INDEX;
-            if (cGlyphs != count)
-                count = cGlyphs;
-        }
-    }
-    else if(flags & ETO_GLYPH_INDEX)
-        glyphs = reordered_str;
 
     TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
           wine_dbgstr_rect(lprect), debugstr_wn(str, count), count, lpDx);
@@ -6014,9 +5992,9 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
             INT *dx = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dx) );
 
             if (flags & ETO_GLYPH_INDEX)
-                GetTextExtentExPointI( hdc, glyphs, count, -1, NULL, dx, &sz );
+                GetTextExtentExPointI( hdc, str, count, -1, NULL, dx, &sz );
             else
-                GetTextExtentExPointW( hdc, reordered_str, count, -1, NULL, dx, &sz );
+                GetTextExtentExPointW( hdc, str, count, -1, NULL, dx, &sz );
 
             deltas[0].x = dx[0];
             deltas[0].y = 0;
@@ -6062,9 +6040,9 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         POINT desired[2];
 
         if(flags & ETO_GLYPH_INDEX)
-            GetTextExtentPointI(hdc, glyphs, count, &sz);
+            GetTextExtentPointI(hdc, str, count, &sz);
         else
-            GetTextExtentPointW(hdc, reordered_str, count, &sz);
+            GetTextExtentPointW(hdc, str, count, &sz);
         desired[0].x = desired[0].y = 0;
         desired[1].x = sz.cx;
         desired[1].y = 0;
@@ -6152,14 +6130,10 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
     }
 
     ret = physdev->funcs->pExtTextOut( physdev, x, y, (flags & ~ETO_OPAQUE), &rc,
-                                       glyphs ? glyphs : reordered_str, count, (INT*)deltas );
+                                       str, count, (INT*)deltas );
 
 done:
     HeapFree(GetProcessHeap(), 0, deltas);
-    if(glyphs != reordered_str)
-        HeapFree(GetProcessHeap(), 0, glyphs);
-    if(reordered_str != str)
-        HeapFree(GetProcessHeap(), 0, reordered_str);
 
     if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {
