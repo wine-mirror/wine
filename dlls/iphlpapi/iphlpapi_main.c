@@ -69,7 +69,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 static const WCHAR device_tcpip[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
 
-DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
 DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
 
 static const NPI_MODULEID *ip_module_id( USHORT family )
@@ -533,10 +532,10 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
  *  ptr     [In] pointer to the buffer to free
  *
  */
-void WINAPI FreeMibTable(void *ptr)
+void WINAPI FreeMibTable( void *ptr )
 {
-  TRACE("(%p)\n", ptr);
-  HeapFree(GetProcessHeap(), 0, ptr);
+    TRACE( "(%p)\n", ptr );
+    heap_free( ptr );
 }
 
 /******************************************************************
@@ -547,33 +546,21 @@ void WINAPI FreeMibTable(void *ptr)
  * PARAMS
  *  adapter_name [In]  unicode string with the adapter name
  *  index        [Out] returns found interface index
- *
- * RETURNS
- *  Success: NO_ERROR
- *  Failure: error code from winerror.h
  */
 DWORD WINAPI GetAdapterIndex( WCHAR *adapter_name, ULONG *index )
 {
-    MIB_IFTABLE *if_table;
-    DWORD err, i;
+    NET_LUID luid;
+    GUID guid;
+    DWORD err;
 
     TRACE( "name %s, index %p\n", debugstr_w( adapter_name ), index );
 
-    err = AllocateAndGetIfTableFromStack( &if_table, 0, GetProcessHeap(), 0 );
+    if (strlenW( adapter_name ) < strlenW( device_tcpip )) return ERROR_INVALID_PARAMETER;
+    err = ConvertStringToGuidW( adapter_name + strlenW( device_tcpip ), &guid );
     if (err) return err;
-
-    err = ERROR_INVALID_PARAMETER;
-    for (i = 0; i < if_table->dwNumEntries; i++)
-    {
-        if (!strcmpW( adapter_name, if_table->table[i].wszName ))
-        {
-            *index = if_table->table[i].dwIndex;
-            err = ERROR_SUCCESS;
-            break;
-        }
-    }
-    heap_free( if_table );
-    return err;
+    err = ConvertInterfaceGuidToLuid( &guid, &luid );
+    if (err) return err;
+    return ConvertInterfaceLuidToIndex( &luid, index );
 }
 
 static DWORD get_wins_servers( SOCKADDR_INET **servers )
