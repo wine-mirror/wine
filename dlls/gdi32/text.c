@@ -1,7 +1,9 @@
 /*
  * GDI text handling
  *
- * Copyright 2003 Shachar Shemesh
+ * Copyright 1993 Alexandre Julliard
+ * Copyright 1997 Alex Korobka
+ * Copyright 2002,2003 Shachar Shemesh
  * Copyright 2007 Maarten Lankhorst
  * Copyright 2010 CodeWeavers, Aric Stewart
  *
@@ -42,6 +44,8 @@
  */
 
 #include <stdarg.h>
+#include <limits.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -49,11 +53,22 @@
 #include "usp10.h"
 #include "wine/debug.h"
 #include "gdi_private.h"
-#include "ntgdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
 /* HELPER FUNCTIONS AND DECLARATIONS */
+
+/* Wine_GCPW Flags */
+/* Directionality -
+ * LOOSE means taking the directionality of the first strong character, if there is found one.
+ * FORCE means the paragraph direction is forced. (RLE/LRE)
+ */
+#define WINE_GCPW_FORCE_LTR 0
+#define WINE_GCPW_FORCE_RTL 1
+#define WINE_GCPW_LOOSE_LTR 2
+#define WINE_GCPW_LOOSE_RTL 3
+#define WINE_GCPW_DIR_MASK 3
+#define WINE_GCPW_LOOSE_MASK 2
 
 #define odd(x) ((x) & 1)
 
@@ -324,18 +339,16 @@ static void BidiLines(int baselevel, LPWSTR pszOutLine, LPCWSTR pszLine, const W
  *
  *     Returns TRUE if reordering was required and done.
  */
-BOOL BIDI_Reorder(
-                HDC hDC,        /*[in] Display DC */
-                LPCWSTR lpString,       /* [in] The string for which information is to be returned */
-                INT uCount,     /* [in] Number of WCHARs in string. */
-                DWORD dwFlags,  /* [in] GetCharacterPlacement compatible flags specifying how to process the string */
-                DWORD dwWineGCP_Flags,       /* [in] Wine internal flags - Force paragraph direction */
-                LPWSTR lpOutString, /* [out] Reordered string */
-                INT uCountOut,  /* [in] Size of output buffer */
-                UINT *lpOrder, /* [out] Logical -> Visual order map */
-                WORD **lpGlyphs, /* [out] reordered, mirrored, shaped glyphs to display */
-                INT *cGlyphs /* [out] number of glyphs generated */
-    )
+static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
+                          LPCWSTR lpString,      /* [in] The string for which information is to be returned */
+                          INT uCount,            /* [in] Number of WCHARs in string. */
+                          DWORD dwFlags,         /* [in] GetCharacterPlacement compatible flags */
+                          DWORD dwWineGCP_Flags, /* [in] Wine internal flags - Force paragraph direction */
+                          LPWSTR lpOutString,    /* [out] Reordered string */
+                          INT uCountOut,         /* [in] Size of output buffer */
+                          UINT *lpOrder,         /* [out] Logical -> Visual order map */
+                          WORD **lpGlyphs,       /* [out] reordered, mirrored, shaped glyphs to display */
+                          INT *cGlyphs )         /* [out] number of glyphs generated */
 {
     WORD *chartype = NULL;
     BYTE *levels = NULL;
@@ -695,5 +708,176 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
     ret = NtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, 0 );
 
     HeapFree( GetProcessHeap(), 0, glyphs );
+    return ret;
+}
+
+static int kern_pair( const KERNINGPAIR *kern, int count, WCHAR c1, WCHAR c2 )
+{
+    int i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (kern[i].wFirst == c1 && kern[i].wSecond == c2)
+            return kern[i].iKernAmount;
+    }
+
+    return 0;
+}
+
+static int *kern_string( HDC hdc, const WCHAR *str, int len, int *kern_total )
+{
+    unsigned int i, count;
+    KERNINGPAIR *kern = NULL;
+    int *ret;
+
+    *kern_total = 0;
+
+    ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(*ret) );
+    if (!ret) return NULL;
+
+    count = GetKerningPairsW( hdc, 0, NULL );
+    if (count)
+    {
+        kern = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*kern) );
+        if (!kern)
+        {
+            HeapFree( GetProcessHeap(), 0, ret );
+            return NULL;
+        }
+
+        GetKerningPairsW( hdc, count, kern );
+    }
+
+    for (i = 0; i < len - 1; i++)
+    {
+        ret[i] = kern_pair( kern, count, str[i], str[i + 1] );
+        *kern_total += ret[i];
+    }
+
+    ret[len - 1] = 0; /* no kerning for last element */
+
+    HeapFree( GetProcessHeap(), 0, kern );
+    return ret;
+}
+
+/*************************************************************************
+ *           GetCharacterPlacementW    (GDI32.@)
+ *
+ *   Retrieve information about a string. This includes the width, reordering,
+ *   Glyphing and so on.
+ *
+ * RETURNS
+ *
+ *   The width and height of the string if successful, 0 if failed.
+ *
+ * BUGS
+ *
+ *   All flags except GCP_REORDER are not yet implemented.
+ *   Reordering is not 100% compliant to the Windows BiDi method.
+ *   Caret positioning is not yet implemented for BiDi.
+ *   Classes are not yet implemented.
+ *
+ */
+DWORD WINAPI GetCharacterPlacementW( HDC hdc, const WCHAR *str, INT count, INT max_extent,
+                                     GCP_RESULTSW *result, DWORD flags )
+{
+    int *kern = NULL, kern_total = 0;
+    UINT i, set_cnt;
+    SIZE size;
+    DWORD ret = 0;
+
+    TRACE("%s, %d, %d, 0x%08x\n", debugstr_wn(str, count), count, max_extent, flags);
+
+    if (!count)
+        return 0;
+
+    if (!result)
+        return GetTextExtentPoint32W( hdc, str, count, &size ) ? MAKELONG(size.cx, size.cy) : 0;
+
+    TRACE( "lStructSize=%d, lpOutString=%p, lpOrder=%p, lpDx=%p, lpCaretPos=%p\n"
+           "lpClass=%p, lpGlyphs=%p, nGlyphs=%u, nMaxFit=%d\n",
+           result->lStructSize, result->lpOutString, result->lpOrder,
+           result->lpDx, result->lpCaretPos, result->lpClass,
+           result->lpGlyphs, result->nGlyphs, result->nMaxFit );
+
+    if (flags & ~(GCP_REORDER | GCP_USEKERNING))
+        FIXME( "flags 0x%08x ignored\n", flags );
+    if (result->lpClass)
+        FIXME( "classes not implemented\n" );
+    if (result->lpCaretPos && (flags & GCP_REORDER))
+        FIXME( "Caret positions for complex scripts not implemented\n" );
+
+    set_cnt = (UINT)count;
+    if (set_cnt > result->nGlyphs) set_cnt = result->nGlyphs;
+
+    /* return number of initialized fields */
+    result->nGlyphs = set_cnt;
+
+    if (!(flags & GCP_REORDER))
+    {
+        /* Treat the case where no special handling was requested in a fastpath way */
+        /* copy will do if the GCP_REORDER flag is not set */
+        if (result->lpOutString)
+            memcpy( result->lpOutString, str, set_cnt * sizeof(WCHAR) );
+
+        if (result->lpOrder)
+        {
+            for (i = 0; i < set_cnt; i++)
+                result->lpOrder[i] = i;
+        }
+    }
+    else
+    {
+        BIDI_Reorder( NULL, str, count, flags, WINE_GCPW_FORCE_LTR, result->lpOutString,
+                      set_cnt, result->lpOrder, NULL, NULL );
+    }
+
+    if (flags & GCP_USEKERNING)
+    {
+        kern = kern_string( hdc, str, set_cnt, &kern_total );
+        if (!kern)
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return 0;
+        }
+    }
+
+    /* FIXME: Will use the placement chars */
+    if (result->lpDx)
+    {
+        int c;
+        for (i = 0; i < set_cnt; i++)
+        {
+            if (GetCharWidth32W( hdc, str[i], str[i], &c ))
+            {
+                result->lpDx[i] = c;
+                if (flags & GCP_USEKERNING)
+                    result->lpDx[i] += kern[i];
+            }
+        }
+    }
+
+    if (result->lpCaretPos && !(flags & GCP_REORDER))
+    {
+        unsigned int pos = 0;
+
+        result->lpCaretPos[0] = 0;
+        for (i = 0; i < set_cnt - 1; i++)
+        {
+            if (flags & GCP_USEKERNING)
+                pos += kern[i];
+
+            if (GetTextExtentPoint32W( hdc, &str[i], 1, &size ))
+                result->lpCaretPos[i + 1] = (pos += size.cx);
+        }
+    }
+
+    if (result->lpGlyphs)
+        GetGlyphIndicesW( hdc, str, set_cnt, result->lpGlyphs, 0 );
+
+    if (GetTextExtentPoint32W( hdc, str, count, &size ))
+        ret = MAKELONG( size.cx + kern_total, size.cy );
+
+    HeapFree( GetProcessHeap(), 0, kern );
     return ret;
 }

@@ -159,23 +159,6 @@ static inline BOOL is_bitmapobj_dib( const BITMAPOBJ *bmp )
     return bmp->dib.dsBmih.biSize != 0;
 }
 
-/* bidi.c */
-
-/* Wine_GCPW Flags */
-/* Directionality -
- * LOOSE means taking the directionality of the first strong character, if there is found one.
- * FORCE means the paragraph direction is forced. (RLE/LRE)
- */
-#define WINE_GCPW_FORCE_LTR 0
-#define WINE_GCPW_FORCE_RTL 1
-#define WINE_GCPW_LOOSE_LTR 2
-#define WINE_GCPW_LOOSE_RTL 3
-#define WINE_GCPW_DIR_MASK 3
-#define WINE_GCPW_LOOSE_MASK 2
-
-extern BOOL BIDI_Reorder( HDC hDC, LPCWSTR lpString, INT uCount, DWORD dwFlags, DWORD dwWineGCP_Flags,
-                          LPWSTR lpOutString, INT uCountOut, UINT *lpOrder, WORD **lpGlyphs, INT* cGlyphs ) DECLSPEC_HIDDEN;
-
 /* bitblt.c */
 extern DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
                            BITMAPINFO *dst_info, struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
