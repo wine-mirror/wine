@@ -302,6 +302,9 @@ typedef struct {
 typedef exception improper_lock;
 extern const vtable_ptr improper_lock_vtable;
 
+typedef exception improper_scheduler_attach;
+extern const vtable_ptr improper_scheduler_attach_vtable;
+
 typedef exception invalid_scheduler_policy_key;
 extern const vtable_ptr invalid_scheduler_policy_key_vtable;
 
@@ -368,6 +371,33 @@ improper_lock * __thiscall improper_lock_copy_ctor(improper_lock *this, const im
 {
     TRACE("(%p %p)\n", this, rhs);
     return __exception_copy_ctor(this, rhs, &improper_lock_vtable);
+}
+
+/* ??0improper_scheduler_attach@Concurrency@@QAE@PBD@Z */
+/* ??0improper_scheduler_attach@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(improper_scheduler_attach_ctor_str, 8)
+improper_scheduler_attach* __thiscall improper_scheduler_attach_ctor_str(
+        improper_scheduler_attach *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &improper_scheduler_attach_vtable);
+}
+
+/* ??0improper_scheduler_attach@Concurrency@@QAE@XZ */
+/* ??0improper_scheduler_attach@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(improper_scheduler_attach_ctor, 4)
+improper_scheduler_attach* __thiscall improper_scheduler_attach_ctor(
+        improper_scheduler_attach *this)
+{
+    return improper_scheduler_attach_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(improper_scheduler_attach_copy_ctor,8)
+improper_scheduler_attach * __thiscall improper_scheduler_attach_copy_ctor(
+        improper_scheduler_attach * _this, const improper_scheduler_attach * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    return __exception_copy_ctor(_this, rhs, &improper_scheduler_attach_vtable);
 }
 
 /* ??0invalid_scheduler_policy_key@Concurrency@@QAE@PBD@Z */
@@ -498,6 +528,8 @@ HRESULT __thiscall scheduler_resource_allocation_error_get_error_code(
 
 DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_lock@Concurrency@@")
+DEFINE_RTTI_DATA1(improper_scheduler_attach, 0, &cexception_rtti_base_descriptor,
+        ".?AVimproper_scheduler_attach@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &cexception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_key@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &cexception_rtti_base_descriptor,
@@ -508,6 +540,7 @@ DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
 
 DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_DATA1(improper_scheduler_attach, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_thread_specification, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
@@ -515,6 +548,9 @@ DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info,
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
     __ASM_VTABLE(improper_lock,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(improper_scheduler_attach,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(invalid_scheduler_policy_key,
@@ -1105,8 +1141,11 @@ void __thiscall ThreadScheduler_Attach(ThreadScheduler *this)
         return;
     }
 
-    if(context->scheduler.scheduler == &this->scheduler)
-        throw_exception(EXCEPTION_IMPROPER_SCHEDULER_ATTACH, 0, NULL);
+    if(context->scheduler.scheduler == &this->scheduler) {
+        improper_scheduler_attach e;
+        improper_scheduler_attach_ctor_str(&e, NULL);
+        _CxxThrowException(&e, &improper_scheduler_attach_exception_type);
+    }
 
     if(context->scheduler.scheduler) {
         struct scheduler_list *l = operator_new(sizeof(*l));
@@ -2720,6 +2759,7 @@ void msvcrt_init_concurrency(void *base)
 #ifdef __x86_64__
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
+    init_improper_scheduler_attach_rtti(base);
     init_invalid_scheduler_policy_key_rtti(base);
     init_invalid_scheduler_policy_thread_specification_rtti(base);
     init_invalid_scheduler_policy_value_rtti(base);
@@ -2733,6 +2773,7 @@ void msvcrt_init_concurrency(void *base)
 
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
+    init_improper_scheduler_attach_cxx(base);
     init_invalid_scheduler_policy_key_cxx(base);
     init_invalid_scheduler_policy_thread_specification_cxx(base);
     init_invalid_scheduler_policy_value_cxx(base);
