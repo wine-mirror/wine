@@ -99,7 +99,6 @@ typedef struct tagDC
 
     const struct font_gamma_ramp *font_gamma_ramp;
 
-    UINT          font_code_page;
     INT           breakExtra;        /* breakTotalExtra / breakCount */
     INT           breakRem;          /* breakTotalExtra % breakCount */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */

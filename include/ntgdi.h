@@ -156,6 +156,7 @@ typedef struct DC_ATTR
     SIZE      vport_ext;           /* viewport extent */
     SIZE      virtual_res;
     SIZE      virtual_size;
+    UINT      font_code_page;
     void     *emf;
 } DC_ATTR;
 

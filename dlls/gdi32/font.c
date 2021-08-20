@@ -4164,22 +4164,6 @@ static BOOL get_char_positions_indices( DC *dc, const WORD *indices, INT count, 
 }
 
 /***********************************************************************
- *           GdiGetCodePage   (GDI32.@)
- */
-DWORD WINAPI GdiGetCodePage( HDC hdc )
-{
-    UINT cp = CP_ACP;
-    DC *dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        cp = dc->font_code_page;
-        release_dc_ptr( dc );
-    }
-    return cp;
-}
-
-/***********************************************************************
  *           get_text_charset_info
  *
  * Internal version of GetTextCharsetInfo() that takes a DC pointer.
@@ -4457,14 +4441,14 @@ static void update_font_code_page( DC *dc, HANDLE font )
 
     /* Hmm, nicely designed api this one! */
     if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )
-        dc->font_code_page = csi.ciACP;
+        dc->attr->font_code_page = csi.ciACP;
     else {
         switch(charset) {
         case OEM_CHARSET:
-            dc->font_code_page = GetOEMCP();
+            dc->attr->font_code_page = GetOEMCP();
             break;
         case DEFAULT_CHARSET:
-            dc->font_code_page = GetACP();
+            dc->attr->font_code_page = GetACP();
             break;
 
         case VISCII_CHARSET:
@@ -4481,17 +4465,17 @@ static void update_font_code_page( DC *dc, HANDLE font )
                each of these, but since it's broken anyway we'll just
                use CP_ACP and hope it'll go away...
             */
-            dc->font_code_page = CP_ACP;
+            dc->attr->font_code_page = CP_ACP;
             break;
 
         default:
             FIXME("Can't find codepage for charset %d\n", charset);
-            dc->font_code_page = CP_ACP;
+            dc->attr->font_code_page = CP_ACP;
             break;
         }
     }
 
-    TRACE("charset %d => cp %d\n", charset, dc->font_code_page);
+    TRACE( "charset %d => cp %d\n", charset, dc->attr->font_code_page );
 }
 
 /***********************************************************************

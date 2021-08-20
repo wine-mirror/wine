@@ -80,8 +80,8 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->vport_ext.cy  = 1;
     dc->attr->miter_limit   = 10.0f; /* 10.0 is the default, from MSDN */
     dc->attr->layout        = 0;
-    dc->font_code_page      = CP_ACP;
     dc->attr->rop_mode      = R2_COPYPEN;
+    dc->attr->font_code_page   = CP_ACP;
     dc->attr->poly_fill_mode   = ALTERNATE;
     dc->attr->stretch_blt_mode = BLACKONWHITE;
     dc->attr->rel_abs_mode     = ABSOLUTE;

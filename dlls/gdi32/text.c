@@ -738,6 +738,15 @@ static void text_metric_WtoA( const TEXTMETRICW *tmW, TEXTMETRICA *tmA )
 }
 
 /***********************************************************************
+ *           GdiGetCodePage   (GDI32.@)
+ */
+DWORD WINAPI GdiGetCodePage( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->font_code_page : CP_ACP;
+}
+
+/***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
