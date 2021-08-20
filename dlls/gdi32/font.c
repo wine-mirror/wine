@@ -4737,188 +4737,10 @@ BOOL WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics, ULONG flags )
 
 
 /***********************************************************************
- *		GetOutlineTextMetricsA (GDI32.@)
- * Gets metrics for TrueType fonts.
- *
- * NOTES
- *    If the supplied buffer isn't big enough Windows partially fills it up to
- *    its given length and returns that length.
- *
- * RETURNS
- *    Success: Non-zero or size of required buffer
- *    Failure: 0
+ *           NtGdiGetOutlineTextMetricsInternalW    (win32u.@)
  */
-UINT WINAPI GetOutlineTextMetricsA(
-    HDC hdc,    /* [in]  Handle of device context */
-    UINT cbData, /* [in]  Size of metric data array */
-    LPOUTLINETEXTMETRICA lpOTM)  /* [out] Address of metric data array */
-{
-    char buf[512], *ptr;
-    UINT ret, needed;
-    OUTLINETEXTMETRICW *lpOTMW = (OUTLINETEXTMETRICW *)buf;
-    OUTLINETEXTMETRICA *output = lpOTM;
-    INT left, len;
-
-    if((ret = GetOutlineTextMetricsW(hdc, 0, NULL)) == 0)
-        return 0;
-    if(ret > sizeof(buf))
-	lpOTMW = HeapAlloc(GetProcessHeap(), 0, ret);
-    GetOutlineTextMetricsW(hdc, ret, lpOTMW);
-
-    needed = sizeof(OUTLINETEXTMETRICA);
-    if(lpOTMW->otmpFamilyName)
-        needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1,
-				      NULL, 0, NULL, NULL);
-    if(lpOTMW->otmpFaceName)
-        needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1,
-				      NULL, 0, NULL, NULL);
-    if(lpOTMW->otmpStyleName)
-        needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1,
-				      NULL, 0, NULL, NULL);
-    if(lpOTMW->otmpFullName)
-        needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1,
-				      NULL, 0, NULL, NULL);
-
-    if(!lpOTM) {
-        ret = needed;
-	goto end;
-    }
-
-    TRACE("needed = %d\n", needed);
-    if(needed > cbData)
-        /* Since the supplied buffer isn't big enough, we'll alloc one
-           that is and memcpy the first cbData bytes into the lpOTM at
-           the end. */
-        output = HeapAlloc(GetProcessHeap(), 0, needed);
-
-    ret = output->otmSize = min(needed, cbData);
-    FONT_TextMetricWToA( &lpOTMW->otmTextMetrics, &output->otmTextMetrics );
-    output->otmFiller = 0;
-    output->otmPanoseNumber = lpOTMW->otmPanoseNumber;
-    output->otmfsSelection = lpOTMW->otmfsSelection;
-    output->otmfsType = lpOTMW->otmfsType;
-    output->otmsCharSlopeRise = lpOTMW->otmsCharSlopeRise;
-    output->otmsCharSlopeRun = lpOTMW->otmsCharSlopeRun;
-    output->otmItalicAngle = lpOTMW->otmItalicAngle;
-    output->otmEMSquare = lpOTMW->otmEMSquare;
-    output->otmAscent = lpOTMW->otmAscent;
-    output->otmDescent = lpOTMW->otmDescent;
-    output->otmLineGap = lpOTMW->otmLineGap;
-    output->otmsCapEmHeight = lpOTMW->otmsCapEmHeight;
-    output->otmsXHeight = lpOTMW->otmsXHeight;
-    output->otmrcFontBox = lpOTMW->otmrcFontBox;
-    output->otmMacAscent = lpOTMW->otmMacAscent;
-    output->otmMacDescent = lpOTMW->otmMacDescent;
-    output->otmMacLineGap = lpOTMW->otmMacLineGap;
-    output->otmusMinimumPPEM = lpOTMW->otmusMinimumPPEM;
-    output->otmptSubscriptSize = lpOTMW->otmptSubscriptSize;
-    output->otmptSubscriptOffset = lpOTMW->otmptSubscriptOffset;
-    output->otmptSuperscriptSize = lpOTMW->otmptSuperscriptSize;
-    output->otmptSuperscriptOffset = lpOTMW->otmptSuperscriptOffset;
-    output->otmsStrikeoutSize = lpOTMW->otmsStrikeoutSize;
-    output->otmsStrikeoutPosition = lpOTMW->otmsStrikeoutPosition;
-    output->otmsUnderscoreSize = lpOTMW->otmsUnderscoreSize;
-    output->otmsUnderscorePosition = lpOTMW->otmsUnderscorePosition;
-
-
-    ptr = (char*)(output + 1);
-    left = needed - sizeof(*output);
-
-    if(lpOTMW->otmpFamilyName) {
-        output->otmpFamilyName = (LPSTR)(ptr - (char*)output);
-	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1,
-				  ptr, left, NULL, NULL);
-	left -= len;
-	ptr += len;
-    } else
-        output->otmpFamilyName = 0;
-
-    if(lpOTMW->otmpFaceName) {
-        output->otmpFaceName = (LPSTR)(ptr - (char*)output);
-	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1,
-				  ptr, left, NULL, NULL);
-	left -= len;
-	ptr += len;
-    } else
-        output->otmpFaceName = 0;
-
-    if(lpOTMW->otmpStyleName) {
-        output->otmpStyleName = (LPSTR)(ptr - (char*)output);
-	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1,
-				  ptr, left, NULL, NULL);
-	left -= len;
-	ptr += len;
-    } else
-        output->otmpStyleName = 0;
-
-    if(lpOTMW->otmpFullName) {
-        output->otmpFullName = (LPSTR)(ptr - (char*)output);
-	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1,
-				  ptr, left, NULL, NULL);
-	left -= len;
-    } else
-        output->otmpFullName = 0;
-
-    assert(left == 0);
-
-    if(output != lpOTM) {
-        memcpy(lpOTM, output, cbData);
-        HeapFree(GetProcessHeap(), 0, output);
-
-        /* check if the string offsets really fit into the provided size */
-        /* FIXME: should we check string length as well? */
-        /* make sure that we don't read/write beyond the provided buffer */
-        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpFamilyName) + sizeof(LPSTR))
-        {
-            if ((UINT_PTR)lpOTM->otmpFamilyName >= lpOTM->otmSize)
-                lpOTM->otmpFamilyName = 0; /* doesn't fit */
-        }
-
-        /* make sure that we don't read/write beyond the provided buffer */
-        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpFaceName) + sizeof(LPSTR))
-        {
-            if ((UINT_PTR)lpOTM->otmpFaceName >= lpOTM->otmSize)
-                lpOTM->otmpFaceName = 0; /* doesn't fit */
-        }
-
-            /* make sure that we don't read/write beyond the provided buffer */
-        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpStyleName) + sizeof(LPSTR))
-        {
-            if ((UINT_PTR)lpOTM->otmpStyleName >= lpOTM->otmSize)
-                lpOTM->otmpStyleName = 0; /* doesn't fit */
-        }
-
-        /* make sure that we don't read/write beyond the provided buffer */
-        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpFullName) + sizeof(LPSTR))
-        {
-            if ((UINT_PTR)lpOTM->otmpFullName >= lpOTM->otmSize)
-                lpOTM->otmpFullName = 0; /* doesn't fit */
-        }
-    }
-
-end:
-    if(lpOTMW != (OUTLINETEXTMETRICW *)buf)
-        HeapFree(GetProcessHeap(), 0, lpOTMW);
-
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetOutlineTextMetricsW [GDI32.@]
- */
-UINT WINAPI GetOutlineTextMetricsW(
-    HDC hdc,    /* [in]  Handle of device context */
-    UINT cbData, /* [in]  Size of metric data array */
-    LPOUTLINETEXTMETRICW lpOTM)  /* [out] Address of metric data array */
+UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
+                                                 OUTLINETEXTMETRICW *lpOTM, ULONG opts )
 {
     DC *dc = get_dc_ptr( hdc );
     OUTLINETEXTMETRICW *output = lpOTM;
@@ -5702,7 +5524,7 @@ done:
     {
         int underlinePos, strikeoutPos;
         int underlineWidth, strikeoutWidth;
-        UINT size = GetOutlineTextMetricsW(hdc, 0, NULL);
+        UINT size = NtGdiGetOutlineTextMetricsInternalW( hdc, 0, NULL, 0 );
         OUTLINETEXTMETRICW* otm = NULL;
         POINT pts[5];
         HPEN hpen = NtGdiSelectPen(hdc, GetStockObject(NULL_PEN));
@@ -5720,7 +5542,7 @@ done:
         else
         {
             otm = HeapAlloc(GetProcessHeap(), 0, size);
-            GetOutlineTextMetricsW(hdc, size, otm);
+            NtGdiGetOutlineTextMetricsInternalW( hdc, size, otm, 0 );
             underlinePos = abs( INTERNAL_YWSTODS( dc, otm->otmsUnderscorePosition ));
             if (otm->otmsUnderscorePosition < 0) underlinePos = -underlinePos;
             underlineWidth = get_line_width( dc, otm->otmsUnderscoreSize );
