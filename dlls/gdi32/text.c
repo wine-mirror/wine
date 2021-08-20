@@ -699,6 +699,44 @@ static WCHAR *text_mbtowc( HDC hdc, const char *str, INT count, INT *plenW, UINT
     return strW;
 }
 
+static void text_metric_WtoA( const TEXTMETRICW *tmW, TEXTMETRICA *tmA )
+{
+    tmA->tmHeight = tmW->tmHeight;
+    tmA->tmAscent = tmW->tmAscent;
+    tmA->tmDescent = tmW->tmDescent;
+    tmA->tmInternalLeading = tmW->tmInternalLeading;
+    tmA->tmExternalLeading = tmW->tmExternalLeading;
+    tmA->tmAveCharWidth = tmW->tmAveCharWidth;
+    tmA->tmMaxCharWidth = tmW->tmMaxCharWidth;
+    tmA->tmWeight = tmW->tmWeight;
+    tmA->tmOverhang = tmW->tmOverhang;
+    tmA->tmDigitizedAspectX = tmW->tmDigitizedAspectX;
+    tmA->tmDigitizedAspectY = tmW->tmDigitizedAspectY;
+    tmA->tmFirstChar = min( tmW->tmFirstChar, 255 );
+    if (tmW->tmCharSet == SYMBOL_CHARSET)
+    {
+        tmA->tmFirstChar = 0x1e;
+        tmA->tmLastChar = 0xff;  /* win9x behaviour - we need the OS2 table data to calculate correctly */
+    }
+    else if (tmW->tmPitchAndFamily & TMPF_TRUETYPE)
+    {
+        tmA->tmFirstChar = tmW->tmDefaultChar - 1;
+        tmA->tmLastChar = min( tmW->tmLastChar, 0xff );
+    }
+    else
+    {
+        tmA->tmFirstChar = min( tmW->tmFirstChar, 0xff );
+        tmA->tmLastChar  = min( tmW->tmLastChar,  0xff );
+    }
+    tmA->tmDefaultChar = tmW->tmDefaultChar;
+    tmA->tmBreakChar = tmW->tmBreakChar;
+    tmA->tmItalic = tmW->tmItalic;
+    tmA->tmUnderlined = tmW->tmUnderlined;
+    tmA->tmStruckOut = tmW->tmStruckOut;
+    tmA->tmPitchAndFamily = tmW->tmPitchAndFamily;
+    tmA->tmCharSet = tmW->tmCharSet;
+}
+
 /***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
@@ -1182,4 +1220,24 @@ BOOL WINAPI GetTextExtentPointA( HDC hdc, const char *str, INT count, SIZE *size
 BOOL WINAPI GetTextExtentPointW( HDC hdc, const WCHAR *str, INT count, SIZE *size )
 {
     return GetTextExtentPoint32W( hdc, str, count, size );
+}
+
+/***********************************************************************
+ *           GetTextMetricsW    (GDI32.@)
+ */
+BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
+{
+    return NtGdiGetTextMetricsW( hdc, metrics, 0 );
+}
+
+/***********************************************************************
+ *           GetTextMetricsA    (GDI32.@)
+ */
+BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
+{
+    TEXTMETRICW tm32;
+
+    if (!GetTextMetricsW( hdc, &tm32 )) return FALSE;
+    text_metric_WtoA( &tm32, metrics );
+    return TRUE;
 }

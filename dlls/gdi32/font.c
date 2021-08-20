@@ -4820,21 +4820,9 @@ BOOL WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max
 }
 
 /***********************************************************************
- *           GetTextMetricsA    (GDI32.@)
+ *           NtGdiGetTextMetricsW    (win32u.@)
  */
-BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
-{
-    TEXTMETRICW tm32;
-
-    if (!GetTextMetricsW( hdc, &tm32 )) return FALSE;
-    FONT_TextMetricWToA( &tm32, metrics );
-    return TRUE;
-}
-
-/***********************************************************************
- *           GetTextMetricsW    (GDI32.@)
- */
-BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
+BOOL WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics, ULONG flags )
 {
     PHYSDEV physdev;
     BOOL ret = FALSE;
