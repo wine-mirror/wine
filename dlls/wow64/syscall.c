@@ -535,7 +535,7 @@ static LONG CALLBACK syscall_filter( EXCEPTION_POINTERS *ptrs )
 
 
 /**********************************************************************
- *           Wow64SystemServiceEx  (NTDLL.@)
+ *           Wow64SystemServiceEx  (wow64.@)
  */
 NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 {
@@ -562,7 +562,7 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 
 
 /**********************************************************************
- *           Wow64AllocateTemp
+ *           Wow64AllocateTemp  (wow64.@)
  *
  * FIXME: probably not 100% compatible.
  */
@@ -579,7 +579,7 @@ void * WINAPI Wow64AllocateTemp( SIZE_T size )
 
 
 /**********************************************************************
- *           Wow64ApcRoutine  (NTDLL.@)
+ *           Wow64ApcRoutine  (wow64.@)
  */
 void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CONTEXT *context )
 {
@@ -652,7 +652,7 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
 
 
 /**********************************************************************
- *           Wow64LdrpInitialize  (NTDLL.@)
+ *           Wow64LdrpInitialize  (wow64.@)
  */
 void WINAPI Wow64LdrpInitialize( CONTEXT *context )
 {
