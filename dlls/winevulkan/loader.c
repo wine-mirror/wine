@@ -116,6 +116,9 @@ PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char 
         return NULL;
     }
 
+    if (!unix_funcs->p_is_available_instance_function(instance, name))
+        return NULL;
+
     func = wine_vk_get_instance_proc_addr(name);
     if (func) return func;
 
@@ -174,6 +177,9 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
 void * WINAPI vk_icdGetPhysicalDeviceProcAddr(VkInstance instance, const char *name)
 {
     TRACE("%p, %s\n", instance, debugstr_a(name));
+
+    if (!unix_funcs->p_is_available_instance_function(instance, name))
+        return NULL;
 
     return wine_vk_get_phys_dev_proc_addr(name);
 }

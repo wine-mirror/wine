@@ -419,6 +419,9 @@ struct unix_funcs
     VkResult (WINAPI *p_vkWaitSemaphores)(VkDevice, const VkSemaphoreWaitInfo *, uint64_t);
     VkResult (WINAPI *p_vkWaitSemaphoresKHR)(VkDevice, const VkSemaphoreWaitInfo *, uint64_t);
     VkResult (WINAPI *p_vkWriteAccelerationStructuresPropertiesKHR)(VkDevice, uint32_t, const VkAccelerationStructureKHR *, VkQueryType, size_t, void *, size_t);
+
+    /* winevulkan specific functions */
+    BOOL (WINAPI *p_is_available_instance_function)(VkInstance, const char *);
 };
 
 #endif /* __WINE_VULKAN_LOADER_THUNKS_H */

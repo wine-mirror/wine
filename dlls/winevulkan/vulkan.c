@@ -1605,3 +1605,8 @@ void WINAPI wine_vkDestroyDebugReportCallbackEXT(
 
     free(object);
 }
+
+BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name)
+{
+    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->instance, name);
+}

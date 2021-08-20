@@ -212,4 +212,6 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle) DECLSPEC_HIDD
 
 extern const struct unix_funcs loader_funcs;
 
+BOOL WINAPI wine_vk_is_available_instance_function(VkInstance instance, const char *name) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_VULKAN_PRIVATE_H */
