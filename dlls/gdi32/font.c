@@ -5748,66 +5748,6 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     return TRUE;
 }
 
-
-/***********************************************************************
- *           ExtTextOutA    (GDI32.@)
- *
- * See ExtTextOutW.
- */
-BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
-                         const RECT *lprect, LPCSTR str, UINT count, const INT *lpDx )
-{
-    INT wlen;
-    UINT codepage;
-    LPWSTR p;
-    BOOL ret;
-    LPINT lpDxW = NULL;
-
-    if (count > INT_MAX) return FALSE;
-
-    if (flags & ETO_GLYPH_INDEX)
-        return ExtTextOutW( hdc, x, y, flags, lprect, (LPCWSTR)str, count, lpDx );
-
-    p = FONT_mbtowc(hdc, str, count, &wlen, &codepage);
-
-    if (lpDx) {
-        unsigned int i = 0, j = 0;
-
-        /* allocate enough for a ETO_PDY */
-        lpDxW = HeapAlloc( GetProcessHeap(), 0, 2*wlen*sizeof(INT));
-        while(i < count) {
-            if(IsDBCSLeadByteEx(codepage, str[i]))
-            {
-                if(flags & ETO_PDY)
-                {
-                    lpDxW[j++] = lpDx[i * 2]     + lpDx[(i + 1) * 2];
-                    lpDxW[j++] = lpDx[i * 2 + 1] + lpDx[(i + 1) * 2 + 1];
-                }
-                else
-                    lpDxW[j++] = lpDx[i] + lpDx[i + 1];
-                i = i + 2;
-            }
-            else
-            {
-                if(flags & ETO_PDY)
-                {
-                    lpDxW[j++] = lpDx[i * 2];
-                    lpDxW[j++] = lpDx[i * 2 + 1];
-                }
-                else
-                    lpDxW[j++] = lpDx[i];
-                i = i + 1;
-            }
-        }
-    }
-
-    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDxW );
-
-    HeapFree( GetProcessHeap(), 0, p );
-    HeapFree( GetProcessHeap(), 0, lpDxW );
-    return ret;
-}
-
 /***********************************************************************
  *           get_line_width
  *
@@ -6210,57 +6150,6 @@ done:
     release_dc_ptr( dc );
 
     return ret;
-}
-
-
-/***********************************************************************
- *           TextOutA    (GDI32.@)
- */
-BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, LPCSTR str, INT count )
-{
-    return ExtTextOutA( hdc, x, y, 0, NULL, str, count, NULL );
-}
-
-
-/***********************************************************************
- *           TextOutW    (GDI32.@)
- */
-BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
-{
-    return ExtTextOutW( hdc, x, y, 0, NULL, str, count, NULL );
-}
-
-
-/***********************************************************************
- *		PolyTextOutA (GDI32.@)
- *
- * See PolyTextOutW.
- */
-BOOL WINAPI PolyTextOutA( HDC hdc, const POLYTEXTA *pptxt, INT cStrings )
-{
-    for (; cStrings>0; cStrings--, pptxt++)
-        if (!ExtTextOutA( hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
-            return FALSE;
-    return TRUE;
-}
-
-
-
-/***********************************************************************
- *		PolyTextOutW (GDI32.@)
- *
- * Draw several Strings
- *
- * RETURNS
- *  TRUE:  Success.
- *  FALSE: Failure.
- */
-BOOL WINAPI PolyTextOutW( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
-{
-    for (; cStrings>0; cStrings--, pptxt++)
-        if (!ExtTextOutW( hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
-            return FALSE;
-    return TRUE;
 }
 
 

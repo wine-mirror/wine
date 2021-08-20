@@ -670,6 +670,36 @@ cleanup:
 }
 
 /***********************************************************************
+ *           text_mbtowc
+ *
+ * Returns a Unicode translation of str using the charset of the
+ * currently selected font in hdc.  If count is -1 then str is assumed
+ * to be '\0' terminated, otherwise it contains the number of bytes to
+ * convert.  If plenW is non-NULL, on return it will point to the
+ * number of WCHARs that have been written.  If ret_cp is non-NULL, on
+ * return it will point to the codepage used in the conversion.  The
+ * caller should free the returned string from the process heap
+ * itself.
+ */
+static WCHAR *text_mbtowc( HDC hdc, const char *str, INT count, INT *plenW, UINT *ret_cp )
+{
+    UINT cp;
+    INT lenW;
+    LPWSTR strW;
+
+    cp = GdiGetCodePage( hdc );
+
+    if (count == -1) count = strlen( str );
+    lenW = MultiByteToWideChar( cp, 0, str, count, NULL, 0 );
+    strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) );
+    MultiByteToWideChar( cp, 0, str, count, strW, lenW );
+    TRACE( "mapped %s -> %s\n", debugstr_an(str, count), debugstr_wn(strW, lenW) );
+    if (plenW) *plenW = lenW;
+    if (ret_cp) *ret_cp = cp;
+    return strW;
+}
+
+/***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
@@ -709,6 +739,104 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
 
     HeapFree( GetProcessHeap(), 0, glyphs );
     return ret;
+}
+
+/***********************************************************************
+ *           ExtTextOutA    (GDI32.@)
+ */
+BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
+                         const char *str, UINT count, const INT *dx )
+{
+    INT wlen;
+    UINT codepage;
+    WCHAR *p;
+    BOOL ret;
+    INT *dxW = NULL;
+
+    if (count > INT_MAX) return FALSE;
+
+    if (flags & ETO_GLYPH_INDEX)
+        return ExtTextOutW( hdc, x, y, flags, rect, (const WCHAR *)str, count, dx );
+
+    p = text_mbtowc( hdc, str, count, &wlen, &codepage );
+
+    if (dx)
+    {
+        unsigned int i = 0, j = 0;
+
+        /* allocate enough for a ETO_PDY */
+        dxW = HeapAlloc( GetProcessHeap(), 0, 2 * wlen * sizeof(INT) );
+        while (i < count)
+        {
+            if (IsDBCSLeadByteEx( codepage, str[i] ))
+            {
+                if (flags & ETO_PDY)
+                {
+                    dxW[j++] = dx[i * 2]     + dx[(i + 1) * 2];
+                    dxW[j++] = dx[i * 2 + 1] + dx[(i + 1) * 2 + 1];
+                }
+                else
+                    dxW[j++] = dx[i] + dx[i + 1];
+                i = i + 2;
+            }
+            else
+            {
+                if (flags & ETO_PDY)
+                {
+                    dxW[j++] = dx[i * 2];
+                    dxW[j++] = dx[i * 2 + 1];
+                }
+                else
+                    dxW[j++] = dx[i];
+                i = i + 1;
+            }
+        }
+    }
+
+    ret = ExtTextOutW( hdc, x, y, flags, rect, p, wlen, dxW );
+
+    HeapFree( GetProcessHeap(), 0, p );
+    HeapFree( GetProcessHeap(), 0, dxW );
+    return ret;
+}
+
+/***********************************************************************
+ *           TextOutA    (GDI32.@)
+ */
+BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, const char *str, INT count )
+{
+    return ExtTextOutA( hdc, x, y, 0, NULL, str, count, NULL );
+}
+
+/***********************************************************************
+ *           TextOutW    (GDI32.@)
+ */
+BOOL WINAPI TextOutW( HDC hdc, INT x, INT y, const WCHAR *str, INT count )
+{
+    return ExtTextOutW( hdc, x, y, 0, NULL, str, count, NULL );
+}
+
+
+/***********************************************************************
+ *           PolyTextOutA    (GDI32.@)
+ */
+BOOL WINAPI PolyTextOutA( HDC hdc, const POLYTEXTA *pt, INT count )
+{
+    for (; count>0; count--, pt++)
+        if (!ExtTextOutA( hdc, pt->x, pt->y, pt->uiFlags, &pt->rcl, pt->lpstr, pt->n, pt->pdx ))
+            return FALSE;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           PolyTextOutW    (GDI32.@)
+ */
+BOOL WINAPI PolyTextOutW( HDC hdc, const POLYTEXTW *pt, INT count )
+{
+    for (; count>0; count--, pt++)
+        if (!ExtTextOutW( hdc, pt->x, pt->y, pt->uiFlags, &pt->rcl, pt->lpstr, pt->n, pt->pdx ))
+            return FALSE;
+    return TRUE;
 }
 
 static int kern_pair( const KERNINGPAIR *kern, int count, WCHAR c1, WCHAR c2 )
