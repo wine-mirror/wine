@@ -2026,6 +2026,19 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
         free( closed_fd );
         fd->cacheable = 1;
     }
+
+#ifdef HAVE_POSIX_FADVISE
+    switch (options & (FILE_SEQUENTIAL_ONLY | FILE_RANDOM_ACCESS))
+    {
+    case FILE_SEQUENTIAL_ONLY:
+        posix_fadvise( fd->unix_fd, 0, 0, POSIX_FADV_SEQUENTIAL );
+        break;
+    case FILE_RANDOM_ACCESS:
+        posix_fadvise( fd->unix_fd, 0, 0, POSIX_FADV_RANDOM );
+        break;
+    }
+#endif
+
     if (root_fd != -1) fchdir( server_dir_fd ); /* go back to the server dir */
     return fd;
 

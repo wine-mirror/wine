@@ -513,6 +513,9 @@
 /* Define to 1 if you have the <port.h> header file. */
 #undef HAVE_PORT_H
 
+/* Define to 1 if you have the `posix_fadvise' function. */
+#undef HAVE_POSIX_FADVISE
+
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 

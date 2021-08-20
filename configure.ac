@@ -2186,6 +2186,7 @@ AC_CHECK_FUNCS(\
 	pipe2 \
 	poll \
 	port_create \
+	posix_fadvise \
 	prctl \
 	pread \
 	proc_pidinfo \
