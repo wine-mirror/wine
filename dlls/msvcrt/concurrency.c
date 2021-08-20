@@ -305,6 +305,9 @@ extern const vtable_ptr improper_lock_vtable;
 typedef exception invalid_scheduler_policy_key;
 extern const vtable_ptr invalid_scheduler_policy_key_vtable;
 
+typedef exception invalid_scheduler_policy_value;
+extern const vtable_ptr invalid_scheduler_policy_value_vtable;
+
 typedef struct {
     exception e;
     HRESULT hr;
@@ -391,6 +394,33 @@ invalid_scheduler_policy_key * __thiscall invalid_scheduler_policy_key_copy_ctor
     return __exception_copy_ctor(_this, rhs, &invalid_scheduler_policy_key_vtable);
 }
 
+/* ??0invalid_scheduler_policy_value@Concurrency@@QAE@PBD@Z */
+/* ??0invalid_scheduler_policy_value@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_value_ctor_str, 8)
+invalid_scheduler_policy_value* __thiscall invalid_scheduler_policy_value_ctor_str(
+        invalid_scheduler_policy_value *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &invalid_scheduler_policy_value_vtable);
+}
+
+/* ??0invalid_scheduler_policy_value@Concurrency@@QAE@XZ */
+/* ??0invalid_scheduler_policy_value@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_value_ctor, 4)
+invalid_scheduler_policy_value* __thiscall invalid_scheduler_policy_value_ctor(
+        invalid_scheduler_policy_value *this)
+{
+    return invalid_scheduler_policy_value_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_value_copy_ctor,8)
+invalid_scheduler_policy_value * __thiscall invalid_scheduler_policy_value_copy_ctor(
+        invalid_scheduler_policy_value * _this, const invalid_scheduler_policy_value * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    return __exception_copy_ctor(_this, rhs, &invalid_scheduler_policy_value_vtable);
+}
+
 /* ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z */
 /* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z */
 DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor_name, 12)
@@ -440,11 +470,14 @@ DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_lock@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &cexception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_key@Concurrency@@")
+DEFINE_RTTI_DATA1(invalid_scheduler_policy_value, 0, &cexception_rtti_base_descriptor,
+        ".?AVinvalid_scheduler_policy_value@Concurrency@@")
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
 
 DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
@@ -452,6 +485,9 @@ __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(invalid_scheduler_policy_key,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(invalid_scheduler_policy_value,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(scheduler_resource_allocation_error,
@@ -774,26 +810,37 @@ unsigned int __thiscall SchedulerPolicy_SetPolicyValue(SchedulerPolicy *this,
 
     switch(policy) {
     case SchedulerKind:
-        if (val)
-            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "SchedulerKind");
+        if (val) {
+            invalid_scheduler_policy_value e;
+            invalid_scheduler_policy_value_ctor_str(&e, "SchedulerKind");
+            _CxxThrowException(&e, &invalid_scheduler_policy_value_exception_type);
+        }
         break;
     case TargetOversubscriptionFactor:
-        if (!val)
-            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE,
-                    0, "TargetOversubscriptionFactor");
+        if (!val) {
+            invalid_scheduler_policy_value e;
+            invalid_scheduler_policy_value_ctor_str(&e, "TargetOversubscriptionFactor");
+            _CxxThrowException(&e, &invalid_scheduler_policy_value_exception_type);
+        }
         break;
     case ContextPriority:
         if (((int)val < -7 /* THREAD_PRIORITY_REALTIME_LOWEST */
                     || val > 6 /* THREAD_PRIORITY_REALTIME_HIGHEST */)
-            && val != THREAD_PRIORITY_IDLE && val != THREAD_PRIORITY_TIME_CRITICAL
-            && val != INHERIT_THREAD_PRIORITY)
-            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "ContextPriority");
+                && val != THREAD_PRIORITY_IDLE && val != THREAD_PRIORITY_TIME_CRITICAL
+                && val != INHERIT_THREAD_PRIORITY) {
+            invalid_scheduler_policy_value e;
+            invalid_scheduler_policy_value_ctor_str(&e, "ContextPriority");
+            _CxxThrowException(&e, &invalid_scheduler_policy_value_exception_type);
+        }
         break;
     case SchedulingProtocol:
     case DynamicProgressFeedback:
     case WinRTInitialization:
-        if (val != 0 && val != 1)
-            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "SchedulingProtocol");
+        if (val != 0 && val != 1) {
+            invalid_scheduler_policy_value e;
+            invalid_scheduler_policy_value_ctor_str(&e, "SchedulingProtocol");
+            _CxxThrowException(&e, &invalid_scheduler_policy_value_exception_type);
+        }
         break;
     default:
         break;
@@ -814,8 +861,11 @@ void __thiscall SchedulerPolicy_SetConcurrencyLimits(SchedulerPolicy *this,
 
     if (min_concurrency > max_concurrency)
         throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_THREAD_SPECIFICATION, 0, NULL);
-    if (!max_concurrency)
-        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "MaxConcurrency");
+    if (!max_concurrency) {
+        invalid_scheduler_policy_value e;
+        invalid_scheduler_policy_value_ctor_str(&e, "MaxConcurrency");
+        _CxxThrowException(&e, &invalid_scheduler_policy_value_exception_type);
+    }
 
     this->policy_container->policies[MinConcurrency] = min_concurrency;
     this->policy_container->policies[MaxConcurrency] = max_concurrency;
@@ -2632,6 +2682,7 @@ void msvcrt_init_concurrency(void *base)
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
     init_invalid_scheduler_policy_key_rtti(base);
+    init_invalid_scheduler_policy_value_rtti(base);
     init_scheduler_resource_allocation_error_rtti(base);
     init_Context_rtti(base);
     init_ContextBase_rtti(base);
@@ -2643,6 +2694,7 @@ void msvcrt_init_concurrency(void *base)
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
     init_invalid_scheduler_policy_key_cxx(base);
+    init_invalid_scheduler_policy_value_cxx(base);
     init_scheduler_resource_allocation_error_cxx(base);
 #endif
 }
