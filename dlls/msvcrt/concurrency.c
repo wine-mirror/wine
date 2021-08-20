@@ -302,6 +302,9 @@ typedef struct {
 typedef exception improper_lock;
 extern const vtable_ptr improper_lock_vtable;
 
+typedef exception invalid_scheduler_policy_key;
+extern const vtable_ptr invalid_scheduler_policy_key_vtable;
+
 typedef struct {
     exception e;
     HRESULT hr;
@@ -361,6 +364,33 @@ improper_lock * __thiscall improper_lock_copy_ctor(improper_lock *this, const im
     return __exception_copy_ctor(this, rhs, &improper_lock_vtable);
 }
 
+/* ??0invalid_scheduler_policy_key@Concurrency@@QAE@PBD@Z */
+/* ??0invalid_scheduler_policy_key@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_key_ctor_str, 8)
+invalid_scheduler_policy_key* __thiscall invalid_scheduler_policy_key_ctor_str(
+        invalid_scheduler_policy_key *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &invalid_scheduler_policy_key_vtable);
+}
+
+/* ??0invalid_scheduler_policy_key@Concurrency@@QAE@XZ */
+/* ??0invalid_scheduler_policy_key@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_key_ctor, 4)
+invalid_scheduler_policy_key* __thiscall invalid_scheduler_policy_key_ctor(
+        invalid_scheduler_policy_key *this)
+{
+    return invalid_scheduler_policy_key_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_key_copy_ctor,8)
+invalid_scheduler_policy_key * __thiscall invalid_scheduler_policy_key_copy_ctor(
+        invalid_scheduler_policy_key * _this, const invalid_scheduler_policy_key * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    return __exception_copy_ctor(_this, rhs, &invalid_scheduler_policy_key_vtable);
+}
+
 /* ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z */
 /* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z */
 DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor_name, 12)
@@ -408,14 +438,20 @@ HRESULT __thiscall scheduler_resource_allocation_error_get_error_code(
 
 DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_lock@Concurrency@@")
+DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &cexception_rtti_base_descriptor,
+        ".?AVinvalid_scheduler_policy_key@Concurrency@@")
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
 
 DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
     __ASM_VTABLE(improper_lock,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(invalid_scheduler_policy_key,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(scheduler_resource_allocation_error,
@@ -720,12 +756,21 @@ unsigned int __thiscall SchedulerPolicy_SetPolicyValue(SchedulerPolicy *this,
 
     TRACE("(%p %d %d)\n", this, policy, val);
 
-    if (policy == MinConcurrency)
-        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "MinConcurrency");
-    if (policy == MaxConcurrency)
-        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "MaxConcurrency");
-    if (policy >= last_policy_id)
-        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "Invalid policy");
+    if (policy == MinConcurrency) {
+        invalid_scheduler_policy_key e;
+        invalid_scheduler_policy_key_ctor_str(&e, "MinConcurrency");
+        _CxxThrowException(&e, &invalid_scheduler_policy_key_exception_type);
+    }
+    if (policy == MaxConcurrency) {
+        invalid_scheduler_policy_key e;
+        invalid_scheduler_policy_key_ctor_str(&e, "MaxConcurrency");
+        _CxxThrowException(&e, &invalid_scheduler_policy_key_exception_type);
+    }
+    if (policy >= last_policy_id) {
+        invalid_scheduler_policy_key e;
+        invalid_scheduler_policy_key_ctor_str(&e, "Invalid policy");
+        _CxxThrowException(&e, &invalid_scheduler_policy_key_exception_type);
+    }
 
     switch(policy) {
     case SchedulerKind:
@@ -784,8 +829,11 @@ unsigned int __thiscall SchedulerPolicy_GetPolicyValue(
 {
     TRACE("(%p %d)\n", this, policy);
 
-    if (policy >= last_policy_id)
-        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "Invalid policy");
+    if (policy >= last_policy_id) {
+        invalid_scheduler_policy_key e;
+        invalid_scheduler_policy_key_ctor_str(&e, "Invalid policy");
+        _CxxThrowException(&e, &invalid_scheduler_policy_key_exception_type);
+    }
     return this->policy_container->policies[policy];
 }
 
@@ -2583,6 +2631,7 @@ void msvcrt_init_concurrency(void *base)
 #ifdef __x86_64__
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
+    init_invalid_scheduler_policy_key_rtti(base);
     init_scheduler_resource_allocation_error_rtti(base);
     init_Context_rtti(base);
     init_ContextBase_rtti(base);
@@ -2593,6 +2642,7 @@ void msvcrt_init_concurrency(void *base)
 
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
+    init_invalid_scheduler_policy_key_cxx(base);
     init_scheduler_resource_allocation_error_cxx(base);
 #endif
 }
