@@ -1332,8 +1332,11 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
                 "exception code: %#x, should be %#x\n",
                 rec->ExceptionCode,  STATUS_FLOAT_MULTIPLE_TRAPS);
             ok( rec->NumberParameters == is_wow64 ? 2 : 1, "# of params: %i\n", rec->NumberParameters);
-            if (rec->NumberParameters >= 1)
-                ok( rec->ExceptionInformation[0] == 0, "param #1: %lx, should be 0\n", rec->ExceptionInformation[0]);
+            ok( rec->ExceptionInformation[0] == 0, "param #1: %lx, should be 0\n", rec->ExceptionInformation[0]);
+            if (rec->NumberParameters == 2)
+                ok( rec->ExceptionInformation[1] == ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr,
+                    "param #1: %lx / %x\n", rec->ExceptionInformation[1],
+                    ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr);
         }
         context->Eip += 3; /* skip divps */
     }
@@ -3413,14 +3416,10 @@ static DWORD WINAPI simd_fault_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
             ULONG expect = *stage == 2 ? EXCEPTION_FLT_DIVIDE_BY_ZERO : EXCEPTION_FLT_INVALID_OPERATION;
             ok( rec->ExceptionCode == expect, "exception code: %#x, should be %#x\n",
                 rec->ExceptionCode, expect );
-            todo_wine
             ok( rec->NumberParameters == 2, "# of params: %i, should be 2\n", rec->NumberParameters);
-            if (rec->NumberParameters == 2)
-            {
-                /* no idea what these mean */
-                ok( rec->ExceptionInformation[0] == 0, "param #0: %lx\n", rec->ExceptionInformation[0]);
-                ok( rec->ExceptionInformation[1] != 0, "param #1: %lx\n", rec->ExceptionInformation[1]);
-            }
+            ok( rec->ExceptionInformation[0] == 0, "param #0: %lx\n", rec->ExceptionInformation[0]);
+            ok( rec->ExceptionInformation[1] == context->MxCsr, "param #1: %lx / %lx\n",
+                rec->ExceptionInformation[1], context->MxCsr);
         }
         context->Rip += 3; /* skip divps */
     }

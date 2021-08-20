@@ -2664,6 +2664,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
+    ucontext_t *ucontext = sigcontext;
 
     switch (siginfo->si_code)
     {
@@ -2692,6 +2693,13 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     default:
         rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
+    }
+
+    if (TRAP_sig(ucontext) == TRAP_x86_CACHEFLT)
+    {
+        rec.NumberParameters = 2;
+        rec.ExceptionInformation[0] = 0;
+        rec.ExceptionInformation[1] = FPU_sig(ucontext) ? FPU_sig(ucontext)->MxCsr : 0;
     }
     setup_exception( sigcontext, &rec );
 }

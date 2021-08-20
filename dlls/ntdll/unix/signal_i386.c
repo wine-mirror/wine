@@ -1956,9 +1956,8 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
                   siginfo->si_code);
 
         rec.ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
-        rec.NumberParameters = 1;
-        /* no idea what meaning is actually behind this but that's what native does */
-        rec.ExceptionInformation[0] = 0;
+        rec.ExceptionInformation[rec.NumberParameters++] = 0;
+        if (is_wow64) rec.ExceptionInformation[rec.NumberParameters++] = ((XSAVE_FORMAT *)xcontext.c.ExtendedRegisters)->MxCsr;
         break;
     default:
         WINE_ERR( "Got unexpected trap %d\n", TRAP_sig(ucontext) );
