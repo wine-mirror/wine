@@ -2436,8 +2436,10 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
         rec->ExceptionCode = STATUS_ASSERTION_FAILURE;
         break;
     case 0x2d:
-        switch (context->Rax)
+        if (CS_sig(sigcontext) == cs64_sel)
         {
+            switch (context->Rax)
+            {
             case 1: /* BREAKPOINT_PRINT */
             case 3: /* BREAKPOINT_LOAD_SYMBOLS */
             case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
@@ -2445,6 +2447,7 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
                 RIP_sig(sigcontext) += 3;
                 leave_handler( sigcontext );
                 return TRUE;
+            }
         }
         context->Rip += 3;
         rec->ExceptionCode = EXCEPTION_BREAKPOINT;
