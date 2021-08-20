@@ -238,7 +238,7 @@ DWORD    WINAPI NtGdiGetRegionData( HRGN hrgn, DWORD count, RGNDATA *data );
 INT      WINAPI NtGdiGetRgnBox( HRGN hrgn, RECT *rect );
 UINT     WINAPI NtGdiGetSystemPaletteUse( HDC hdc );
 UINT     WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags );
-INT      WINAPI NtGdiGetTextFaceW( HDC hdc, INT count, WCHAR *name );
+INT      WINAPI NtGdiGetTextFaceW( HDC hdc, INT count, WCHAR *name, BOOL alias_name );
 BOOL     WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics );
 BOOL     WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform );
 BOOL     WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,

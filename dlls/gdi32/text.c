@@ -1052,3 +1052,39 @@ DWORD WINAPI GetCharacterPlacementA( HDC hdc, const char *str, INT count, INT ma
     HeapFree( GetProcessHeap(), 0, resultsW.lpOutString );
     return ret;
 }
+
+/***********************************************************************
+ *           GetTextFaceA    (GDI32.@)
+ */
+INT WINAPI GetTextFaceA( HDC hdc, INT count, char *name )
+{
+    INT res = GetTextFaceW( hdc, 0, NULL );
+    WCHAR *nameW = HeapAlloc( GetProcessHeap(), 0, res * sizeof(WCHAR) );
+
+    GetTextFaceW( hdc, res, nameW );
+    if (name)
+    {
+        if (count)
+        {
+            res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, count, NULL, NULL );
+            if (res == 0) res = count;
+            name[count - 1] = 0;
+            /* GetTextFaceA does NOT include the nul byte in the return count.  */
+            res--;
+        }
+        else
+            res = 0;
+    }
+    else
+        res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, nameW );
+    return res;
+}
+
+/***********************************************************************
+ *           GetTextFaceW    (GDI32.@)
+ */
+INT WINAPI GetTextFaceW( HDC hdc, INT count, WCHAR *name )
+{
+    return NtGdiGetTextFaceW( hdc, count, name, FALSE );
+}

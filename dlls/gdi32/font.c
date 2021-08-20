@@ -4743,38 +4743,9 @@ BOOL WINAPI NtGdiSetTextJustification( HDC hdc, INT extra, INT breaks )
 
 
 /***********************************************************************
- *           GetTextFaceA    (GDI32.@)
+ *           NtGdiGetTextFaceW    (win32u.@)
  */
-INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
-{
-    INT res = GetTextFaceW(hdc, 0, NULL);
-    LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, res * 2 );
-    GetTextFaceW( hdc, res, nameW );
-
-    if (name)
-    {
-        if (count)
-        {
-            res = WideCharToMultiByte(CP_ACP, 0, nameW, -1, name, count, NULL, NULL);
-            if (res == 0)
-                res = count;
-            name[count-1] = 0;
-            /* GetTextFaceA does NOT include the nul byte in the return count.  */
-            res--;
-        }
-        else
-            res = 0;
-    }
-    else
-        res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL);
-    HeapFree( GetProcessHeap(), 0, nameW );
-    return res;
-}
-
-/***********************************************************************
- *           GetTextFaceW    (GDI32.@)
- */
-INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
+INT WINAPI NtGdiGetTextFaceW( HDC hdc, INT count, WCHAR *name, BOOL alias_name )
 {
     PHYSDEV dev;
     INT ret;
