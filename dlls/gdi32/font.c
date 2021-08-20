@@ -4761,211 +4761,13 @@ INT WINAPI NtGdiGetTextFaceW( HDC hdc, INT count, WCHAR *name, BOOL alias_name )
 
 
 /***********************************************************************
- *           GetTextExtentPoint32A    (GDI32.@)
- *
- * See GetTextExtentPoint32W.
- */
-BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
-                                     LPSIZE size )
-{
-    BOOL ret = FALSE;
-    INT wlen;
-    LPWSTR p;
-
-    if (count < 0) return FALSE;
-
-    p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
-
-    if (p)
-    {
-	ret = GetTextExtentPoint32W( hdc, p, wlen, size );
-	HeapFree( GetProcessHeap(), 0, p );
-    }
-
-    TRACE("(%p %s %d %p): returning %d x %d\n",
-          hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
-    return ret;
-}
-
-
-/***********************************************************************
- * GetTextExtentPoint32W [GDI32.@]
- *
- * Computes width/height for a string.
- *
- * Computes width and height of the specified string.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI GetTextExtentPoint32W(
-    HDC hdc,     /* [in]  Handle of device context */
-    LPCWSTR str,   /* [in]  Address of text string */
-    INT count,   /* [in]  Number of characters in string */
-    LPSIZE size) /* [out] Address of structure for string size */
-{
-    return GetTextExtentExPointW(hdc, str, count, 0, NULL, NULL, size);
-}
-
-/***********************************************************************
- * GetTextExtentExPointI [GDI32.@]
- *
- * Computes width and height of the array of glyph indices.
- *
- * PARAMS
- *    hdc     [I] Handle of device context.
- *    indices [I] Glyph index array.
- *    count   [I] Number of glyphs in array.
- *    max_ext [I] Maximum width in glyphs.
- *    nfit    [O] Maximum number of characters.
- *    dxs     [O] Partial string widths.
- *    size    [O] Returned string size.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT max_ext,
-                                   LPINT nfit, LPINT dxs, LPSIZE size )
-{
-    DC *dc;
-    int i;
-    BOOL ret;
-    INT buffer[256], *pos = dxs;
-
-    if (count < 0) return FALSE;
-
-    dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-
-    if (!dxs)
-    {
-        pos = buffer;
-        if (count > 256 && !(pos = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pos) )))
-        {
-            release_dc_ptr( dc );
-            return FALSE;
-        }
-    }
-
-    ret = get_char_positions_indices( dc, indices, count, pos, size );
-    if (ret)
-    {
-        if (dxs || nfit)
-        {
-            for (i = 0; i < count; i++)
-            {
-                unsigned int dx = abs( INTERNAL_XDSTOWS( dc, pos[i] )) +
-                    (i + 1) * dc->attr->char_extra;
-                if (nfit && dx > (unsigned int)max_ext) break;
-                if (dxs) dxs[i] = dx;
-            }
-            if (nfit) *nfit = i;
-        }
-
-        size->cx = abs( INTERNAL_XDSTOWS( dc, size->cx )) + count * dc->attr->char_extra;
-        size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
-    }
-
-    if (pos != buffer && pos != dxs) HeapFree( GetProcessHeap(), 0, pos );
-    release_dc_ptr( dc );
-
-    TRACE("(%p %p %d %p): returning %d x %d\n",
-          hdc, indices, count, size, size->cx, size->cy );
-    return ret;
-}
-
-/***********************************************************************
- * GetTextExtentPointI [GDI32.@]
- *
- * Computes width and height of the array of glyph indices.
- *
- * PARAMS
- *    hdc     [I] Handle of device context.
- *    indices [I] Glyph index array.
- *    count   [I] Number of glyphs in array.
- *    size    [O] Returned string size.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI GetTextExtentPointI( HDC hdc, const WORD *indices, INT count, LPSIZE size )
-{
-    return GetTextExtentExPointI( hdc, indices, count, 0, NULL, NULL, size );
-}
-
-
-/***********************************************************************
- *           GetTextExtentPointA    (GDI32.@)
- */
-BOOL WINAPI GetTextExtentPointA( HDC hdc, LPCSTR str, INT count,
-                                          LPSIZE size )
-{
-    TRACE("not bug compatible.\n");
-    return GetTextExtentPoint32A( hdc, str, count, size );
-}
-
-/***********************************************************************
- *           GetTextExtentPointW   (GDI32.@)
- */
-BOOL WINAPI GetTextExtentPointW( HDC hdc, LPCWSTR str, INT count,
-                                          LPSIZE size )
-{
-    TRACE("not bug compatible.\n");
-    return GetTextExtentPoint32W( hdc, str, count, size );
-}
-
-
-/***********************************************************************
- *           GetTextExtentExPointA    (GDI32.@)
- */
-BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
-				   INT maxExt, LPINT lpnFit,
-				   LPINT alpDx, LPSIZE size )
-{
-    BOOL ret;
-    INT wlen;
-    INT *walpDx = NULL;
-    LPWSTR p = NULL;
-
-    if (count < 0) return FALSE;
-    if (maxExt < -1) return FALSE;
-
-    if (alpDx)
-    {
-        walpDx = HeapAlloc( GetProcessHeap(), 0, count * sizeof(INT) );
-        if (!walpDx) return FALSE;
-    }
-
-    p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
-    ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, walpDx, size);
-    if (walpDx)
-    {
-        INT n = lpnFit ? *lpnFit : wlen;
-        INT i, j;
-        for(i = 0, j = 0; i < n; i++, j++)
-        {
-            alpDx[j] = walpDx[i];
-            if (IsDBCSLeadByte(str[j])) alpDx[++j] = walpDx[i];
-        }
-    }
-    if (lpnFit) *lpnFit = WideCharToMultiByte(CP_ACP,0,p,*lpnFit,NULL,0,NULL,NULL);
-    HeapFree( GetProcessHeap(), 0, p );
-    HeapFree( GetProcessHeap(), 0, walpDx );
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetTextExtentExPointW    (GDI32.@)
+ *           NtGdiGetTextExtentExW    (win32u.@)
  *
  * Return the size of the string as it would be if it was output properly by
  * e.g. TextOut.
  */
-BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count, INT max_ext,
-                                   LPINT nfit, LPINT dxs, LPSIZE size )
+BOOL WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max_ext,
+                                   INT *nfit, INT *dxs, SIZE *size, UINT flags )
 {
     DC *dc;
     int i;
@@ -4987,7 +4789,11 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count, INT max_ext,
         }
     }
 
-    ret = get_char_positions( dc, str, count, pos, size );
+
+    if (flags)
+        ret = get_char_positions_indices( dc, str, count, pos, size );
+    else
+        ret = get_char_positions( dc, str, count, pos, size );
     if (ret)
     {
         if (dxs || nfit)
@@ -5902,10 +5708,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         {
             INT *dx = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dx) );
 
-            if (flags & ETO_GLYPH_INDEX)
-                GetTextExtentExPointI( hdc, str, count, -1, NULL, dx, &sz );
-            else
-                GetTextExtentExPointW( hdc, str, count, -1, NULL, dx, &sz );
+            NtGdiGetTextExtentExW( hdc, str, count, -1, NULL, dx, &sz, !!(flags & ETO_GLYPH_INDEX) );
 
             deltas[0].x = dx[0];
             deltas[0].y = 0;

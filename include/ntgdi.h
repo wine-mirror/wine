@@ -238,8 +238,10 @@ DWORD    WINAPI NtGdiGetRegionData( HRGN hrgn, DWORD count, RGNDATA *data );
 INT      WINAPI NtGdiGetRgnBox( HRGN hrgn, RECT *rect );
 UINT     WINAPI NtGdiGetSystemPaletteUse( HDC hdc );
 UINT     WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags );
+BOOL     WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max_ext,
+                                       INT *nfit, INT *dxs, SIZE *size, UINT flags );
 INT      WINAPI NtGdiGetTextFaceW( HDC hdc, INT count, WCHAR *name, BOOL alias_name );
-BOOL     WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics );
+BOOL     WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics, ULONG flags );
 BOOL     WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform );
 BOOL     WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                                    void *grad_array, ULONG ngrad, ULONG mode );

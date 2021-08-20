@@ -1088,3 +1088,98 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, WCHAR *name )
 {
     return NtGdiGetTextFaceW( hdc, count, name, FALSE );
 }
+
+/***********************************************************************
+ *           GetTextExtentExPointW    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentExPointW( HDC hdc, const WCHAR *str, INT count, INT max_ext,
+                                   INT *nfit, INT *dxs, SIZE *size )
+{
+    return NtGdiGetTextExtentExW( hdc, str, count, max_ext, nfit, dxs, size, 0 );
+}
+
+/***********************************************************************
+ *           GetTextExtentExPointI    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT max_ext,
+                                   INT *nfit, INT *dxs, SIZE *size )
+{
+    return NtGdiGetTextExtentExW( hdc, indices, count, max_ext, nfit, dxs, size, 1 );
+}
+
+/***********************************************************************
+ *           GetTextExtentExPointA    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentExPointA( HDC hdc, const char *str, INT count, INT max_ext,
+                                   INT *nfit, INT *dxs, SIZE *size )
+{
+    BOOL ret;
+    INT wlen;
+    INT *wdxs = NULL;
+    WCHAR *p = NULL;
+
+    if (count < 0 || max_ext < -1) return FALSE;
+
+    if (dxs)
+    {
+        wdxs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(INT) );
+        if (!wdxs) return FALSE;
+    }
+
+    p = text_mbtowc( hdc, str, count, &wlen, NULL );
+    ret = GetTextExtentExPointW( hdc, p, wlen, max_ext, nfit, wdxs, size );
+    if (wdxs)
+    {
+        INT n = nfit ? *nfit : wlen;
+        INT i, j;
+        for (i = 0, j = 0; i < n; i++, j++)
+        {
+            dxs[j] = wdxs[i];
+            if (IsDBCSLeadByte( str[j] )) dxs[++j] = wdxs[i];
+        }
+    }
+    if (nfit) *nfit = WideCharToMultiByte( CP_ACP, 0, p, *nfit, NULL, 0, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, p );
+    HeapFree( GetProcessHeap(), 0, wdxs );
+    return ret;
+}
+
+/***********************************************************************
+ *           GetTextExtentPoint32W    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentPoint32W( HDC hdc, const WCHAR *str, INT count, SIZE *size )
+{
+    return GetTextExtentExPointW( hdc, str, count, 0, NULL, NULL, size );
+}
+
+/***********************************************************************
+ *           GetTextExtentPoint32A    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentPoint32A( HDC hdc, const char *str, INT count, SIZE *size )
+{
+    return GetTextExtentExPointA( hdc, str, count, 0, NULL, NULL, size );
+}
+
+/***********************************************************************
+ *           GetTextExtentPointI    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentPointI( HDC hdc, const WORD *indices, INT count, SIZE *size )
+{
+    return GetTextExtentExPointI( hdc, indices, count, 0, NULL, NULL, size );
+}
+
+/***********************************************************************
+ *           GetTextExtentPointA    (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentPointA( HDC hdc, const char *str, INT count, SIZE *size )
+{
+    return GetTextExtentPoint32A( hdc, str, count, size );
+}
+
+/***********************************************************************
+ *           GetTextExtentPointW   (GDI32.@)
+ */
+BOOL WINAPI GetTextExtentPointW( HDC hdc, const WCHAR *str, INT count, SIZE *size )
+{
+    return GetTextExtentPoint32W( hdc, str, count, size );
+}
