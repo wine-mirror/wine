@@ -51,6 +51,21 @@ static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
@@ -183,41 +198,27 @@ static void test_ifont_sizes(void)
     test_ifont_size(300000, 2, 2, -1058, "2:2 ratio 3");
 }
 
-static void test_QueryInterface(void)
+static void test_interfaces(void)
 {
-    LPVOID pvObj = NULL;
     HRESULT hr;
-    IFont*  font = NULL;
-    IPersistStreamInit *persistStreamInit = NULL;
-    LONG ref;
+    IFont *font = NULL;
 
     hr = pOleCreateFontIndirect(NULL, &IID_IFont, NULL);
     EXPECT_HR(hr, E_POINTER);
 
-    hr = pOleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
-    font = pvObj;
-
+    hr = pOleCreateFontIndirect(NULL, &IID_IFont, (void **)&font);
     EXPECT_HR(hr, S_OK);
     ok(font != NULL,"OCFI (NULL,..) returns NULL, instead of !NULL\n");
 
-    pvObj = NULL;
-    hr = IFont_QueryInterface( font, &IID_IFont, &pvObj);
-    EXPECT_HR(hr, S_OK);
+    check_interface(font, &IID_IFont, TRUE);
+    check_interface(font, &IID_IFontDisp, TRUE);
+    check_interface(font, &IID_IDispatch, TRUE);
+    check_interface(font, &IID_IPersist, TRUE);
+    check_interface(font, &IID_IPersistStream, TRUE);
+    check_interface(font, &IID_IConnectionPointContainer, TRUE);
+    check_interface(font, &IID_IPersistPropertyBag, TRUE);
+    check_interface(font, &IID_IPersistStreamInit, FALSE);
 
-    /* Test if QueryInterface increments ref counter for IFONTs */
-    ref = IFont_AddRef(font);
-    ok(ref == 3 ||
-       broken(ref == 1), /* win95 */
-           "IFont_QI expected ref value 3 but instead got %d\n", ref);
-    IFont_Release(font);
-
-    ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr\n");
-
-    /* IFont never had IPersistStreamInit */
-    hr = IFont_QueryInterface(font, &IID_IPersistStreamInit, (void**)&persistStreamInit);
-    EXPECT_HR(hr, E_NOINTERFACE);
-
-    IFont_Release(font);
     IFont_Release(font);
 }
 
@@ -1278,7 +1279,7 @@ START_TEST(olefont)
         return;
     }
 
-    test_QueryInterface();
+    test_interfaces();
     test_type_info();
     test_ifont_sizes();
     test_font_events_disp();
