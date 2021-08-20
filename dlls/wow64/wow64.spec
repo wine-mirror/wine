@@ -13,7 +13,7 @@
 @ stdcall Wow64LdrpInitialize(ptr)
 @ stub Wow64LogPrint
 @ stub Wow64NotifyUnsimulateComplete
-@ stub Wow64PassExceptionToGuest
+@ stdcall Wow64PassExceptionToGuest(ptr)
 @ stub Wow64PrepareForDebuggerAttach
 @ stub Wow64PrepareForException
 @ stub Wow64RaiseException

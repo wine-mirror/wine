@@ -520,6 +520,21 @@ static void free_temp_data(void)
 
 
 /**********************************************************************
+ *           syscall_filter
+ */
+static LONG CALLBACK syscall_filter( EXCEPTION_POINTERS *ptrs )
+{
+    switch (ptrs->ExceptionRecord->ExceptionCode)
+    {
+    case STATUS_INVALID_HANDLE:
+        Wow64PassExceptionToGuest( ptrs );
+        break;
+    }
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
+/**********************************************************************
  *           Wow64SystemServiceEx  (NTDLL.@)
  */
 NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
@@ -536,7 +551,7 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
         syscall_thunk thunk = syscall_thunks[syscall_map[num]];
         status = thunk( args );
     }
-    __EXCEPT_ALL
+    __EXCEPT( syscall_filter )
     {
         status = GetExceptionCode();
     }

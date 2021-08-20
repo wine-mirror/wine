@@ -1251,3 +1251,24 @@ NTSTATUS WINAPI wow64_NtTerminateThread( UINT *args )
 
     return NtTerminateThread( handle, exit_code );
 }
+
+
+/**********************************************************************
+ *           Wow64PassExceptionToGuest  (wow64.@)
+ */
+void WINAPI Wow64PassExceptionToGuest( EXCEPTION_POINTERS *ptrs )
+{
+    EXCEPTION_RECORD *rec = ptrs->ExceptionRecord;
+    EXCEPTION_RECORD32 rec32;
+    ULONG i;
+
+    rec32.ExceptionCode    = rec->ExceptionCode;
+    rec32.ExceptionFlags   = rec->ExceptionFlags;
+    rec32.ExceptionRecord  = PtrToUlong( rec->ExceptionRecord );
+    rec32.ExceptionAddress = PtrToUlong( rec->ExceptionAddress );
+    rec32.NumberParameters = rec->NumberParameters;
+    for (i = 0; i < rec->NumberParameters; i++)
+        rec32.ExceptionInformation[i] = rec->ExceptionInformation[i];
+
+    call_user_exception_dispatcher( &rec32, NULL, ptrs->ContextRecord );
+}
