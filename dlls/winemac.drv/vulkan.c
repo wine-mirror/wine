@@ -420,11 +420,31 @@ static VkResult macdrv_vkEnumerateInstanceExtensionProperties(const char *layer_
     return res;
 }
 
+static const char *wine_vk_native_fn_name(const char *name)
+{
+    const char *create_surface_name =
+        pvkCreateMetalSurfaceEXT ? "vkCreateMetalSurfaceEXT" : "vkCreateMacOSSurfaceMVK";
+
+    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
+        return create_surface_name;
+    /* We just need something where non-NULL is returned if the correct extension is enabled.
+     * So since there is no native equivalent of this function check for the create
+     * surface function.
+     */
+    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+        return create_surface_name;
+
+    return name;
+}
+
 static void *macdrv_vkGetDeviceProcAddr(VkDevice device, const char *name)
 {
     void *proc_addr;
 
     TRACE("%p, %s\n", device, debugstr_a(name));
+
+    if (!pvkGetDeviceProcAddr(device, wine_vk_native_fn_name(name)))
+        return NULL;
 
     if ((proc_addr = macdrv_get_vk_device_proc_addr(name)))
         return proc_addr;
@@ -437,6 +457,9 @@ static void *macdrv_vkGetInstanceProcAddr(VkInstance instance, const char *name)
     void *proc_addr;
 
     TRACE("%p, %s\n", instance, debugstr_a(name));
+
+    if (!pvkGetInstanceProcAddr(instance, wine_vk_native_fn_name(name)))
+        return NULL;
 
     if ((proc_addr = macdrv_get_vk_instance_proc_addr(instance, name)))
         return proc_addr;
