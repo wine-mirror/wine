@@ -1025,6 +1025,9 @@ static void contexts_to_server( context_t server_contexts[2], CONTEXT *context )
         context_to_server( &server_contexts[count++], native_machine, native_context, native_machine );
         if (wow_context) context_to_server( &server_contexts[count++], main_image_info.Machine,
                                             wow_context, main_image_info.Machine );
+        else if (native_machine != main_image_info.Machine)
+            context_to_server( &server_contexts[count++], main_image_info.Machine,
+                               native_context, native_machine );
     }
     else
         context_to_server( &server_contexts[count++], native_machine,
