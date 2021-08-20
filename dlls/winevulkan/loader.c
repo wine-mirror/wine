@@ -147,9 +147,12 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
      * vkCommandBuffer or vkQueue.
      * Loader takes care of filtering of extensions which are enabled or not.
      */
-    func = wine_vk_get_device_proc_addr(name);
-    if (func)
-        return func;
+    if (unix_funcs->p_is_available_device_function(device, name))
+    {
+        func = wine_vk_get_device_proc_addr(name);
+        if (func)
+            return func;
+    }
 
     /* vkGetDeviceProcAddr was intended for loading device and subdevice functions.
      * idTech 6 titles such as Doom and Wolfenstein II, however use it also for

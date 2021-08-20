@@ -422,6 +422,7 @@ struct unix_funcs
 
     /* winevulkan specific functions */
     BOOL (WINAPI *p_is_available_instance_function)(VkInstance, const char *);
+    BOOL (WINAPI *p_is_available_device_function)(VkDevice, const char *);
 };
 
 #endif /* __WINE_VULKAN_LOADER_THUNKS_H */
