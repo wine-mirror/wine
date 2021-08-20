@@ -2694,7 +2694,10 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     case FPE_FLTINV:
     default:
-        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        if (FPU_sig(ucontext) && FPU_sig(ucontext)->StatusWord & 0x40)
+            rec.ExceptionCode = EXCEPTION_FLT_STACK_CHECK;
+        else
+            rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
 
@@ -2703,6 +2706,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = 0;
         rec.ExceptionInformation[1] = FPU_sig(ucontext) ? FPU_sig(ucontext)->MxCsr : 0;
+        if (CS_sig(ucontext) != cs64_sel) rec.ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
     }
     setup_exception( sigcontext, &rec );
 }
