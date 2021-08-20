@@ -790,6 +790,8 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
             break;
 
         case D3D10_SVT_GEOMETRYSHADER:
+            if (v->type->flags & D3D10_EOT_FLAG_GS_SO)
+                FIXME("Create geometry shader with stream output.\n");
             hr = ID3D10Device_CreateGeometryShader(device, ptr, dxbc_size, &v->u.shader.shader.gs);
             if (FAILED(hr)) return hr;
             break;
@@ -816,8 +818,10 @@ static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c, BOOL is_column_
     }
 }
 
-static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
+static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object, DWORD *flags)
 {
+    *flags = 0;
+
     if(is_object)
     {
         switch (t)
@@ -829,6 +833,9 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
             case 5: return D3D10_SVT_PIXELSHADER;
             case 6: return D3D10_SVT_VERTEXSHADER;
             case 7: return D3D10_SVT_GEOMETRYSHADER;
+            case 8:
+                *flags = D3D10_EOT_FLAG_GS_SO;
+                return D3D10_SVT_GEOMETRYSHADER;
 
             case 10: return D3D10_SVT_TEXTURE1D;
             case 11: return D3D10_SVT_TEXTURE1DARRAY;
@@ -865,9 +872,9 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
 
 static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset, struct d3d10_effect_type *t)
 {
+    DWORD typeinfo, type_flags;
     const char *ptr;
     DWORD unknown0;
-    DWORD typeinfo;
     unsigned int i;
 
     if (offset >= data_size || !require_space(offset, 6, sizeof(DWORD), data_size))
@@ -915,7 +922,7 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
             t->member_count = 0;
             t->column_count = (typeinfo & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT;
             t->row_count = (typeinfo & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT;
-            t->basetype = d3d10_variable_type((typeinfo & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT, FALSE);
+            t->basetype = d3d10_variable_type((typeinfo & D3D10_FX10_TYPE_BASETYPE_MASK) >> D3D10_FX10_TYPE_BASETYPE_SHIFT, FALSE, &type_flags);
             t->type_class = d3d10_variable_class((typeinfo & D3D10_FX10_TYPE_CLASS_MASK) >> D3D10_FX10_TYPE_CLASS_SHIFT, typeinfo & D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK);
 
             TRACE("Type description: %#x.\n", typeinfo);
@@ -940,12 +947,14 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
             t->member_count = 0;
             t->column_count = 0;
             t->row_count = 0;
-            t->basetype = d3d10_variable_type(typeinfo, TRUE);
+            t->basetype = d3d10_variable_type(typeinfo, TRUE, &type_flags);
             t->type_class = D3D10_SVC_OBJECT;
+            t->flags = type_flags;
 
             TRACE("Type description: %#x.\n", typeinfo);
             TRACE("\tbasetype: %s.\n", debug_d3d10_shader_variable_type(t->basetype));
             TRACE("\tclass: %s.\n", debug_d3d10_shader_variable_class(t->type_class));
+            TRACE("\tflags: %#x.\n", t->flags);
             break;
 
          case 3:
@@ -1503,8 +1512,8 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
         D3D_SHADER_VARIABLE_TYPE out_type, UINT out_base, UINT out_size, void *out_data)
 {
     D3D_SHADER_VARIABLE_TYPE in_type;
+    DWORD t, value, type_flags;
     const char *ptr;
-    DWORD t, value;
     DWORD count, i;
 
     if (offset >= data_size || !require_space(offset, 1, sizeof(count), data_size))
@@ -1532,7 +1541,7 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
         read_dword(&ptr, &t);
         read_dword(&ptr, &value);
 
-        in_type = d3d10_variable_type(t, FALSE);
+        in_type = d3d10_variable_type(t, FALSE, &type_flags);
         TRACE("\t%s: %#x.\n", debug_d3d10_shader_variable_type(in_type), value);
 
         switch (out_type)
@@ -2129,7 +2138,7 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
             TRACE("Shader type is %s\n", debug_d3d10_shader_variable_type(v->type->basetype));
             for (i = 0; i < max(v->type->element_count, 1); ++i)
             {
-                DWORD shader_offset;
+                DWORD shader_offset, sodecl_offset;
                 struct d3d10_effect_variable *var;
 
                 if (!v->type->element_count)
@@ -2146,6 +2155,21 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
 
                 if (FAILED(hr = parse_fx10_shader(data, data_size, shader_offset, var)))
                     return hr;
+
+                if (v->type->flags & D3D10_EOT_FLAG_GS_SO)
+                {
+                    read_dword(ptr, &sodecl_offset);
+                    TRACE("Stream output declaration at offset %#x.\n", sodecl_offset);
+
+                    if (!fx10_copy_string(data, data_size, sodecl_offset,
+                            &var->u.shader.stream_output_declaration))
+                    {
+                        ERR("Failed to copy stream output declaration.\n");
+                        return E_OUTOFMEMORY;
+                    }
+
+                    TRACE("Stream output declaration: %s.\n", debugstr_a(var->u.shader.stream_output_declaration));
+                }
             }
             break;
 
