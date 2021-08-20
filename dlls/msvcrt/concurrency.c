@@ -305,6 +305,9 @@ extern const vtable_ptr improper_lock_vtable;
 typedef exception improper_scheduler_attach;
 extern const vtable_ptr improper_scheduler_attach_vtable;
 
+typedef exception improper_scheduler_detach;
+extern const vtable_ptr improper_scheduler_detach_vtable;
+
 typedef exception invalid_scheduler_policy_key;
 extern const vtable_ptr invalid_scheduler_policy_key_vtable;
 
@@ -398,6 +401,33 @@ improper_scheduler_attach * __thiscall improper_scheduler_attach_copy_ctor(
 {
     TRACE("(%p %p)\n", _this, rhs);
     return __exception_copy_ctor(_this, rhs, &improper_scheduler_attach_vtable);
+}
+
+/* ??0improper_scheduler_detach@Concurrency@@QAE@PBD@Z */
+/* ??0improper_scheduler_detach@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(improper_scheduler_detach_ctor_str, 8)
+improper_scheduler_detach* __thiscall improper_scheduler_detach_ctor_str(
+        improper_scheduler_detach *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &improper_scheduler_detach_vtable);
+}
+
+/* ??0improper_scheduler_detach@Concurrency@@QAE@XZ */
+/* ??0improper_scheduler_detach@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(improper_scheduler_detach_ctor, 4)
+improper_scheduler_detach* __thiscall improper_scheduler_detach_ctor(
+        improper_scheduler_detach *this)
+{
+    return improper_scheduler_detach_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(improper_scheduler_detach_copy_ctor,8)
+improper_scheduler_detach * __thiscall improper_scheduler_detach_copy_ctor(
+        improper_scheduler_detach * _this, const improper_scheduler_detach * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    return __exception_copy_ctor(_this, rhs, &improper_scheduler_detach_vtable);
 }
 
 /* ??0invalid_scheduler_policy_key@Concurrency@@QAE@PBD@Z */
@@ -530,6 +560,8 @@ DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_lock@Concurrency@@")
 DEFINE_RTTI_DATA1(improper_scheduler_attach, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_scheduler_attach@Concurrency@@")
+DEFINE_RTTI_DATA1(improper_scheduler_detach, 0, &cexception_rtti_base_descriptor,
+        ".?AVimproper_scheduler_detach@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &cexception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_key@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &cexception_rtti_base_descriptor,
@@ -541,6 +573,7 @@ DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_
 
 DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(improper_scheduler_attach, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_DATA1(improper_scheduler_detach, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_thread_specification, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
@@ -551,6 +584,9 @@ __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(improper_scheduler_attach,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(improper_scheduler_detach,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(invalid_scheduler_policy_key,
@@ -1295,16 +1331,22 @@ void __cdecl CurrentScheduler_Detach(void)
 
     TRACE("()\n");
 
-    if(!context)
-        throw_exception(EXCEPTION_IMPROPER_SCHEDULER_DETACH, 0, NULL);
+    if(!context) {
+        improper_scheduler_detach e;
+        improper_scheduler_detach_ctor_str(&e, NULL);
+        _CxxThrowException(&e, &improper_scheduler_detach_exception_type);
+    }
 
     if(context->context.vtable != &ExternalContextBase_vtable) {
         ERR("unknown context set\n");
         return;
     }
 
-    if(!context->scheduler.next)
-        throw_exception(EXCEPTION_IMPROPER_SCHEDULER_DETACH, 0, NULL);
+    if(!context->scheduler.next) {
+        improper_scheduler_detach e;
+        improper_scheduler_detach_ctor_str(&e, NULL);
+        _CxxThrowException(&e, &improper_scheduler_detach_exception_type);
+    }
 
     call_Scheduler_Release(context->scheduler.scheduler);
     if(!context->scheduler.next) {
@@ -2760,6 +2802,7 @@ void msvcrt_init_concurrency(void *base)
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
     init_improper_scheduler_attach_rtti(base);
+    init_improper_scheduler_detach_rtti(base);
     init_invalid_scheduler_policy_key_rtti(base);
     init_invalid_scheduler_policy_thread_specification_rtti(base);
     init_invalid_scheduler_policy_value_rtti(base);
@@ -2774,6 +2817,7 @@ void msvcrt_init_concurrency(void *base)
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
     init_improper_scheduler_attach_cxx(base);
+    init_improper_scheduler_detach_cxx(base);
     init_invalid_scheduler_policy_key_cxx(base);
     init_invalid_scheduler_policy_thread_specification_cxx(base);
     init_invalid_scheduler_policy_value_cxx(base);
