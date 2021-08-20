@@ -802,9 +802,9 @@
 @ cdecl -arch=win64 ?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
 @ cdecl -arch=win32 ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z(ptr long long long) event_wait_for_multiple
 @ cdecl -arch=win64 ?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z(ptr long long long) event_wait_for_multiple
-@ cdecl -arch=arm ?what@exception@std@@UBAPBDXZ(ptr) what_exception
-@ thiscall -arch=i386 ?what@exception@std@@UBEPBDXZ(ptr) what_exception
-@ cdecl -arch=win64 ?what@exception@std@@UEBAPEBDXZ(ptr) what_exception
+@ cdecl -arch=arm ?what@exception@std@@UBAPBDXZ(ptr) exception_what
+@ thiscall -arch=i386 ?what@exception@std@@UBEPBDXZ(ptr) exception_what
+@ cdecl -arch=win64 ?what@exception@std@@UEBAPEBDXZ(ptr) exception_what
 @ cdecl -norelay $I10_OUTPUT(double long long long ptr) I10_OUTPUT
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()

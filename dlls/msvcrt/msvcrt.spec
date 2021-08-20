@@ -120,9 +120,9 @@
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) set_unexpected
 @ cdecl ?terminate@@YAXXZ() terminate
 @ cdecl ?unexpected@@YAXXZ() unexpected
-@ cdecl -arch=arm ?what@exception@std@@UBAPBDXZ(ptr) what_exception
-@ thiscall -arch=i386 ?what@exception@@UBEPBDXZ(ptr) what_exception
-@ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) what_exception
+@ cdecl -arch=arm ?what@exception@std@@UBAPBDXZ(ptr) exception_what
+@ thiscall -arch=i386 ?what@exception@@UBEPBDXZ(ptr) exception_what
+@ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) exception_what
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()
 @ cdecl -arch=i386 _CIatan()

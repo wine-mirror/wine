@@ -82,8 +82,8 @@
 @ cdecl ?unexpected@@YAXXZ() unexpected
 @ cdecl ?vswprintf@@YAHPAGIPBGPAD@Z(ptr long wstr ptr) _vsnwprintf
 @ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) _vsnwprintf
-@ thiscall -arch=i386 ?what@exception@@UBEPBDXZ(ptr) what_exception
-@ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) what_exception
+@ thiscall -arch=i386 ?what@exception@@UBEPBDXZ(ptr) exception_what
+@ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) exception_what
 @ cdecl -norelay $I10_OUTPUT(double long long long ptr) I10_OUTPUT
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()
