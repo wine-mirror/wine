@@ -410,6 +410,7 @@ static int addrinfo_err_from_unix( int err )
 {
     switch (err)
     {
+        case 0:             return 0;
         case EAI_AGAIN:     return WS_EAI_AGAIN;
         case EAI_BADFLAGS:  return WS_EAI_BADFLAGS;
         case EAI_FAIL:      return WS_EAI_FAIL;
