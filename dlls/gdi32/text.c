@@ -737,6 +737,29 @@ static void text_metric_WtoA( const TEXTMETRICW *tmW, TEXTMETRICA *tmA )
     tmA->tmCharSet = tmW->tmCharSet;
 }
 
+static void logfont_AtoW( const LOGFONTA *fontA, LPLOGFONTW fontW )
+{
+    memcpy( fontW, fontA, sizeof(LOGFONTA) - LF_FACESIZE );
+    MultiByteToWideChar( CP_ACP, 0, fontA->lfFaceName, -1, fontW->lfFaceName,
+                         LF_FACESIZE );
+    fontW->lfFaceName[LF_FACESIZE - 1] = 0;
+}
+
+static void logfontex_AtoW( const ENUMLOGFONTEXA *fontA, LPENUMLOGFONTEXW fontW )
+{
+    logfont_AtoW( &fontA->elfLogFont, &fontW->elfLogFont );
+
+    MultiByteToWideChar( CP_ACP, 0, (LPCSTR)fontA->elfFullName, -1,
+                         fontW->elfFullName, LF_FULLFACESIZE );
+    fontW->elfFullName[LF_FULLFACESIZE - 1] = '\0';
+    MultiByteToWideChar( CP_ACP, 0, (LPCSTR)fontA->elfStyle, -1,
+                         fontW->elfStyle, LF_FACESIZE );
+    fontW->elfStyle[LF_FACESIZE - 1] = '\0';
+    MultiByteToWideChar( CP_ACP, 0, (LPCSTR)fontA->elfScript, -1,
+                         fontW->elfScript, LF_FACESIZE );
+    fontW->elfScript[LF_FACESIZE - 1] = '\0';
+}
+
 /***********************************************************************
  *           GdiGetCodePage   (GDI32.@)
  */
@@ -744,6 +767,121 @@ DWORD WINAPI GdiGetCodePage( HDC hdc )
 {
     DC_ATTR *dc_attr = get_dc_attr( hdc );
     return dc_attr ? dc_attr->font_code_page : CP_ACP;
+}
+
+/***********************************************************************
+ *           CreateFontIndirectExA   (GDI32.@)
+ */
+HFONT WINAPI CreateFontIndirectExA( const ENUMLOGFONTEXDVA *enumexA )
+{
+    ENUMLOGFONTEXDVW enumexW;
+
+    if (!enumexA) return 0;
+
+    logfontex_AtoW( &enumexA->elfEnumLogfontEx, &enumexW.elfEnumLogfontEx );
+    enumexW.elfDesignVector = enumexA->elfDesignVector;
+    return CreateFontIndirectExW( &enumexW );
+}
+
+/***********************************************************************
+ *           CreateFontIndirectExW   (GDI32.@)
+ */
+HFONT WINAPI CreateFontIndirectExW( const ENUMLOGFONTEXDVW *enumex )
+{
+    return NtGdiHfontCreate( enumex, sizeof(*enumex), 0, 0, NULL );
+}
+
+/***********************************************************************
+ *           CreateFontIndirectA   (GDI32.@)
+ */
+HFONT WINAPI CreateFontIndirectA( const LOGFONTA *lfA )
+{
+    LOGFONTW lfW;
+
+    if (!lfA) return 0;
+
+    logfont_AtoW( lfA, &lfW );
+    return CreateFontIndirectW( &lfW );
+}
+
+/***********************************************************************
+ *           CreateFontIndirectW   (GDI32.@)
+ */
+HFONT WINAPI CreateFontIndirectW( const LOGFONTW *lf )
+{
+    ENUMLOGFONTEXDVW exdv;
+
+    if (!lf) return 0;
+
+    exdv.elfEnumLogfontEx.elfLogFont = *lf;
+    exdv.elfEnumLogfontEx.elfFullName[0] = 0;
+    exdv.elfEnumLogfontEx.elfStyle[0] = 0;
+    exdv.elfEnumLogfontEx.elfScript[0] = 0;
+    return CreateFontIndirectExW( &exdv );
+}
+
+/*************************************************************************
+ *           CreateFontA    (GDI32.@)
+ */
+HFONT WINAPI CreateFontA( INT height, INT width, INT esc, INT orient, INT weight,
+                          DWORD italic, DWORD underline, DWORD strikeout,
+                          DWORD charset, DWORD outpres, DWORD clippres,
+                          DWORD quality, DWORD pitch, const char *name )
+{
+    LOGFONTA logfont;
+
+    logfont.lfHeight = height;
+    logfont.lfWidth = width;
+    logfont.lfEscapement = esc;
+    logfont.lfOrientation = orient;
+    logfont.lfWeight = weight;
+    logfont.lfItalic = italic;
+    logfont.lfUnderline = underline;
+    logfont.lfStrikeOut = strikeout;
+    logfont.lfCharSet = charset;
+    logfont.lfOutPrecision = outpres;
+    logfont.lfClipPrecision = clippres;
+    logfont.lfQuality = quality;
+    logfont.lfPitchAndFamily = pitch;
+
+    if (name)
+        lstrcpynA( logfont.lfFaceName, name, sizeof(logfont.lfFaceName) );
+    else
+        logfont.lfFaceName[0] = '\0';
+
+    return CreateFontIndirectA( &logfont );
+}
+
+/*************************************************************************
+ *           CreateFontW    (GDI32.@)
+ */
+HFONT WINAPI CreateFontW( INT height, INT width, INT esc, INT orient, INT weight,
+                          DWORD italic, DWORD underline, DWORD strikeout,
+                          DWORD charset, DWORD outpres, DWORD clippres,
+                          DWORD quality, DWORD pitch, const WCHAR *name )
+{
+    LOGFONTW logfont;
+
+    logfont.lfHeight = height;
+    logfont.lfWidth = width;
+    logfont.lfEscapement = esc;
+    logfont.lfOrientation = orient;
+    logfont.lfWeight = weight;
+    logfont.lfItalic = italic;
+    logfont.lfUnderline = underline;
+    logfont.lfStrikeOut = strikeout;
+    logfont.lfCharSet = charset;
+    logfont.lfOutPrecision = outpres;
+    logfont.lfClipPrecision = clippres;
+    logfont.lfQuality = quality;
+    logfont.lfPitchAndFamily = pitch;
+
+    if (name)
+        lstrcpynW( logfont.lfFaceName, name, ARRAY_SIZE(logfont.lfFaceName) );
+    else
+        logfont.lfFaceName[0] = '\0';
+
+    return CreateFontIndirectW( &logfont );
 }
 
 /***********************************************************************
