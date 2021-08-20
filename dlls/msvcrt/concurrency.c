@@ -302,6 +302,12 @@ typedef struct {
 typedef exception improper_lock;
 extern const vtable_ptr improper_lock_vtable;
 
+typedef struct {
+    exception e;
+    HRESULT hr;
+} scheduler_resource_allocation_error;
+extern const vtable_ptr scheduler_resource_allocation_error_vtable;
+
 enum ConcRT_EventType
 {
     CONCRT_EVENT_GENERIC,
@@ -355,13 +361,64 @@ improper_lock * __thiscall improper_lock_copy_ctor(improper_lock *this, const im
     return __exception_copy_ctor(this, rhs, &improper_lock_vtable);
 }
 
+/* ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z */
+/* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z */
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor_name, 12)
+scheduler_resource_allocation_error* __thiscall scheduler_resource_allocation_error_ctor_name(
+        scheduler_resource_allocation_error *this, const char *name, HRESULT hr)
+{
+    TRACE("(%p %s %x)\n", this, wine_dbgstr_a(name), hr);
+    __exception_ctor(&this->e, name, &scheduler_resource_allocation_error_vtable);
+    this->hr = hr;
+    return this;
+}
+
+/* ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z */
+/* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z */
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor, 8)
+scheduler_resource_allocation_error* __thiscall scheduler_resource_allocation_error_ctor(
+        scheduler_resource_allocation_error *this, HRESULT hr)
+{
+    return scheduler_resource_allocation_error_ctor_name(this, NULL, hr);
+}
+
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_copy_ctor,8)
+scheduler_resource_allocation_error* __thiscall scheduler_resource_allocation_error_copy_ctor(
+        scheduler_resource_allocation_error *this,
+        const scheduler_resource_allocation_error *rhs)
+{
+    TRACE("(%p,%p)\n", this, rhs);
+
+    if (!rhs->e.do_free)
+        memcpy(this, rhs, sizeof(*this));
+    else
+        scheduler_resource_allocation_error_ctor_name(this, rhs->e.name, rhs->hr);
+    return this;
+}
+
+/* ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ */
+/* ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ */
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_get_error_code, 4)
+HRESULT __thiscall scheduler_resource_allocation_error_get_error_code(
+        const scheduler_resource_allocation_error *this)
+{
+    TRACE("(%p)\n", this);
+    return this->hr;
+}
+
 DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_lock@Concurrency@@")
+DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
+        ".?AVscheduler_resource_allocation_error@Concurrency@@")
 
 DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
 
 __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
     __ASM_VTABLE(improper_lock,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(scheduler_resource_allocation_error,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
 __ASM_BLOCK_END
@@ -380,9 +437,10 @@ static Context* get_current_context(void)
     if (context_tls_index == TLS_OUT_OF_INDEXES) {
         int tls_index = TlsAlloc();
         if (tls_index == TLS_OUT_OF_INDEXES) {
-            throw_exception(EXCEPTION_SCHEDULER_RESOURCE_ALLOCATION_ERROR,
-                    HRESULT_FROM_WIN32(GetLastError()), NULL);
-            return NULL;
+            scheduler_resource_allocation_error e;
+            scheduler_resource_allocation_error_ctor_name(&e, NULL,
+                    HRESULT_FROM_WIN32(GetLastError()));
+            _CxxThrowException(&e.e, &scheduler_resource_allocation_error_exception_type);
         }
 
         if(InterlockedCompareExchange(&context_tls_index, tls_index, TLS_OUT_OF_INDEXES) != TLS_OUT_OF_INDEXES)
@@ -2525,6 +2583,7 @@ void msvcrt_init_concurrency(void *base)
 #ifdef __x86_64__
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
+    init_scheduler_resource_allocation_error_rtti(base);
     init_Context_rtti(base);
     init_ContextBase_rtti(base);
     init_ExternalContextBase_rtti(base);
@@ -2534,6 +2593,7 @@ void msvcrt_init_concurrency(void *base)
 
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
+    init_scheduler_resource_allocation_error_cxx(base);
 #endif
 }
 
