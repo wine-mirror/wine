@@ -2352,15 +2352,22 @@ todo_wine
         ID3D10Resource_Release(resource);
 
         ID3D10Texture2D_GetDesc(texture, &texture_desc);
-        ok(texture_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n",
-                texture_desc.Format);
-        ok(texture_desc.Usage == 0, "Unexpected usage %#x.\n", texture_desc.Usage);
         ok(texture_desc.Width == 256, "Unexpected width %u.\n", texture_desc.Width);
         ok(texture_desc.Height == 256, "Unexpected height %u.\n", texture_desc.Height);
-        ok(texture_desc.CPUAccessFlags == 0, "Unexpected access flags %#x.\n",
-                texture_desc.CPUAccessFlags);
+        ok(texture_desc.MipLevels == 5, "Unexpected miplevels %u.\n", texture_desc.MipLevels);
+        ok(texture_desc.ArraySize == 1, "Unexpected array size %u.\n", texture_desc.ArraySize);
+        ok(texture_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n",
+                texture_desc.Format);
+        ok(texture_desc.SampleDesc.Count == 1, "Unexpected samples count %u.\n",
+                texture_desc.SampleDesc.Count);
+        ok(texture_desc.SampleDesc.Quality == 0, "Unexpected quality level %u.\n",
+                texture_desc.SampleDesc.Quality);
+        ok(texture_desc.Usage == 0, "Unexpected usage %#x.\n", texture_desc.Usage);
         ok(texture_desc.BindFlags == D3D10_BIND_SHADER_RESOURCE, "Unexpected bind flags %#x.\n",
                 texture_desc.BindFlags);
+        ok(texture_desc.CPUAccessFlags == 0, "Unexpected access flags %#x.\n",
+                texture_desc.CPUAccessFlags);
+        ok(texture_desc.MiscFlags == 0, "Unexpected misc flags %#x.\n", texture_desc.MiscFlags);
 
         count = GetGlyphOutlineW(hdc, glyph, GGO_GLYPH_INDEX | GGO_METRICS, &glyph_metrics, 0, NULL, &mat);
         ok(count != GDI_ERROR, "Unexpected count %#x.\n", count);
