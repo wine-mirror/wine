@@ -435,11 +435,24 @@ static VkResult X11DRV_vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device,
     return pvkGetDeviceGroupSurfacePresentModesKHR(device, x11_surface->surface, flags);
 }
 
+static const char *wine_vk_native_fn_name(const char *name)
+{
+    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
+        return "vkCreateXlibSurfaceKHR";
+    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+        return "vkGetPhysicalDeviceXlibPresentationSupportKHR";
+
+    return name;
+}
+
 static void *X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
 {
     void *proc_addr;
 
     TRACE("%p, %s\n", device, debugstr_a(name));
+
+    if (!pvkGetDeviceProcAddr(device, wine_vk_native_fn_name(name)))
+        return NULL;
 
     if ((proc_addr = X11DRV_get_vk_device_proc_addr(name)))
         return proc_addr;
@@ -452,6 +465,9 @@ static void *X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
     void *proc_addr;
 
     TRACE("%p, %s\n", instance, debugstr_a(name));
+
+    if (!pvkGetInstanceProcAddr(instance, wine_vk_native_fn_name(name)))
+        return NULL;
 
     if ((proc_addr = X11DRV_get_vk_instance_proc_addr(instance, name)))
         return proc_addr;
