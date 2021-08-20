@@ -31,6 +31,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+typedef exception cexception;
+CREATE_EXCEPTION_OBJECT(cexception)
+
 static int context_id = -1;
 static int scheduler_id = -1;
 
@@ -296,6 +299,9 @@ typedef struct {
     CRITICAL_SECTION cs;
 } _ReentrantBlockingLock;
 
+typedef exception improper_lock;
+extern const vtable_ptr improper_lock_vtable;
+
 enum ConcRT_EventType
 {
     CONCRT_EVENT_GENERIC,
@@ -324,6 +330,41 @@ static ThreadScheduler *default_scheduler;
 static HANDLE keyed_event;
 
 static void create_default_scheduler(void);
+
+/* ??0improper_lock@Concurrency@@QAE@PBD@Z */
+/* ??0improper_lock@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(improper_lock_ctor_str, 8)
+improper_lock* __thiscall improper_lock_ctor_str(improper_lock *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &improper_lock_vtable);
+}
+
+/* ??0improper_lock@Concurrency@@QAE@XZ */
+/* ??0improper_lock@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(improper_lock_ctor, 4)
+improper_lock* __thiscall improper_lock_ctor(improper_lock *this)
+{
+    return improper_lock_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(improper_lock_copy_ctor,8)
+improper_lock * __thiscall improper_lock_copy_ctor(improper_lock *this, const improper_lock *rhs)
+{
+    TRACE("(%p %p)\n", this, rhs);
+    return __exception_copy_ctor(this, rhs, &improper_lock_vtable);
+}
+
+DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
+        ".?AVimproper_lock@Concurrency@@")
+
+DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
+
+__ASM_BLOCK_BEGIN(concurrency_exception_vtables)
+    __ASM_VTABLE(improper_lock,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+__ASM_BLOCK_END
 
 static Context* try_get_current_context(void)
 {
@@ -1433,8 +1474,11 @@ static inline void cs_lock(critical_section *cs, cs_queue *q)
 {
     cs_queue *last;
 
-    if(cs->unk_thread_id == GetCurrentThreadId())
-        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
+    if(cs->unk_thread_id == GetCurrentThreadId()) {
+        improper_lock e;
+        improper_lock_ctor_str(&e, "Already locked");
+        _CxxThrowException(&e, &improper_lock_exception_type);
+    }
 
     memset(q, 0, sizeof(*q));
     last = InterlockedExchangePointer(&cs->tail, q);
@@ -1540,8 +1584,11 @@ bool __thiscall critical_section_try_lock_for(
 
     TRACE("(%p %d)\n", this, timeout);
 
-    if(this->unk_thread_id == GetCurrentThreadId())
-        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
+    if(this->unk_thread_id == GetCurrentThreadId()) {
+        improper_lock e;
+        improper_lock_ctor_str(&e, "Already locked");
+        _CxxThrowException(&e, &improper_lock_exception_type);
+    }
 
     if(!(q = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*q))))
         return critical_section_try_lock(this);
@@ -2131,8 +2178,11 @@ void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
 
     TRACE("(%p)\n", this);
 
-    if (this->thread_id == GetCurrentThreadId())
-        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
+    if (this->thread_id == GetCurrentThreadId()) {
+        improper_lock e;
+        improper_lock_ctor_str(&e, "Already locked");
+        _CxxThrowException(&e, &improper_lock_exception_type);
+    }
 
     last = InterlockedExchangePointer((void**)&this->writer_tail, &q);
     if (last) {
@@ -2162,8 +2212,11 @@ void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
 
     TRACE("(%p)\n", this);
 
-    if (this->thread_id == GetCurrentThreadId())
-        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked as writer");
+    if (this->thread_id == GetCurrentThreadId()) {
+        improper_lock e;
+        improper_lock_ctor_str(&e, "Already locked as writer");
+        _CxxThrowException(&e, &improper_lock_exception_type);
+    }
 
     do {
         q.next = this->reader_head;
@@ -2436,7 +2489,7 @@ DEFINE_RTTI_DATA1(SchedulerBase, 0, &Scheduler_rtti_base_descriptor, ".?AVSchedu
 DEFINE_RTTI_DATA2(ThreadScheduler, 0, &SchedulerBase_rtti_base_descriptor,
         &Scheduler_rtti_base_descriptor, ".?AVThreadScheduler@details@Concurrency@@")
 
-__ASM_BLOCK_BEGIN(scheduler_vtables)
+__ASM_BLOCK_BEGIN(concurrency_vtables)
     __ASM_VTABLE(ExternalContextBase,
             VTABLE_ADD_FUNC(ExternalContextBase_GetId)
             VTABLE_ADD_FUNC(ExternalContextBase_GetVirtualProcessorId)
@@ -2470,12 +2523,17 @@ __ASM_BLOCK_END
 void msvcrt_init_concurrency(void *base)
 {
 #ifdef __x86_64__
+    init_cexception_rtti(base);
+    init_improper_lock_rtti(base);
     init_Context_rtti(base);
     init_ContextBase_rtti(base);
     init_ExternalContextBase_rtti(base);
     init_Scheduler_rtti(base);
     init_SchedulerBase_rtti(base);
     init_ThreadScheduler_rtti(base);
+
+    init_cexception_cxx_type_info(base);
+    init_improper_lock_cxx(base);
 #endif
 }
 
