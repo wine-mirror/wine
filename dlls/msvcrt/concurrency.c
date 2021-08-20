@@ -305,6 +305,9 @@ extern const vtable_ptr improper_lock_vtable;
 typedef exception invalid_scheduler_policy_key;
 extern const vtable_ptr invalid_scheduler_policy_key_vtable;
 
+typedef exception invalid_scheduler_policy_thread_specification;
+extern const vtable_ptr invalid_scheduler_policy_thread_specification_vtable;
+
 typedef exception invalid_scheduler_policy_value;
 extern const vtable_ptr invalid_scheduler_policy_value_vtable;
 
@@ -394,6 +397,33 @@ invalid_scheduler_policy_key * __thiscall invalid_scheduler_policy_key_copy_ctor
     return __exception_copy_ctor(_this, rhs, &invalid_scheduler_policy_key_vtable);
 }
 
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@PBD@Z */
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_thread_specification_ctor_str, 8)
+invalid_scheduler_policy_thread_specification* __thiscall invalid_scheduler_policy_thread_specification_ctor_str(
+        invalid_scheduler_policy_thread_specification *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    return __exception_ctor(this, str, &invalid_scheduler_policy_thread_specification_vtable);
+}
+
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@XZ */
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_thread_specification_ctor, 4)
+invalid_scheduler_policy_thread_specification* __thiscall invalid_scheduler_policy_thread_specification_ctor(
+        invalid_scheduler_policy_thread_specification *this)
+{
+    return invalid_scheduler_policy_thread_specification_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_thread_specification_copy_ctor,8)
+invalid_scheduler_policy_thread_specification * __thiscall invalid_scheduler_policy_thread_specification_copy_ctor(
+        invalid_scheduler_policy_thread_specification * _this, const invalid_scheduler_policy_thread_specification * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    return __exception_copy_ctor(_this, rhs, &invalid_scheduler_policy_thread_specification_vtable);
+}
+
 /* ??0invalid_scheduler_policy_value@Concurrency@@QAE@PBD@Z */
 /* ??0invalid_scheduler_policy_value@Concurrency@@QEAA@PEBD@Z */
 DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_value_ctor_str, 8)
@@ -470,6 +500,8 @@ DEFINE_RTTI_DATA1(improper_lock, 0, &cexception_rtti_base_descriptor,
         ".?AVimproper_lock@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &cexception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_key@Concurrency@@")
+DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &cexception_rtti_base_descriptor,
+        ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@")
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_value, 0, &cexception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_value@Concurrency@@")
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_descriptor,
@@ -477,6 +509,7 @@ DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &cexception_rtti_base_
 
 DEFINE_CXX_DATA1(improper_lock, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_key, &cexception_cxx_type_info, cexception_dtor)
+DEFINE_CXX_DATA1(invalid_scheduler_policy_thread_specification, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(invalid_scheduler_policy_value, &cexception_cxx_type_info, cexception_dtor)
 DEFINE_CXX_DATA1(scheduler_resource_allocation_error, &cexception_cxx_type_info, cexception_dtor)
 
@@ -485,6 +518,9 @@ __ASM_BLOCK_BEGIN(concurrency_exception_vtables)
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(invalid_scheduler_policy_key,
+            VTABLE_ADD_FUNC(cexception_vector_dtor)
+            VTABLE_ADD_FUNC(cexception_what));
+    __ASM_VTABLE(invalid_scheduler_policy_thread_specification,
             VTABLE_ADD_FUNC(cexception_vector_dtor)
             VTABLE_ADD_FUNC(cexception_what));
     __ASM_VTABLE(invalid_scheduler_policy_value,
@@ -859,8 +895,11 @@ void __thiscall SchedulerPolicy_SetConcurrencyLimits(SchedulerPolicy *this,
 {
     TRACE("(%p %d %d)\n", this, min_concurrency, max_concurrency);
 
-    if (min_concurrency > max_concurrency)
-        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_THREAD_SPECIFICATION, 0, NULL);
+    if (min_concurrency > max_concurrency) {
+        invalid_scheduler_policy_thread_specification e;
+        invalid_scheduler_policy_thread_specification_ctor_str(&e, NULL);
+        _CxxThrowException(&e, &invalid_scheduler_policy_thread_specification_exception_type);
+    }
     if (!max_concurrency) {
         invalid_scheduler_policy_value e;
         invalid_scheduler_policy_value_ctor_str(&e, "MaxConcurrency");
@@ -2682,6 +2721,7 @@ void msvcrt_init_concurrency(void *base)
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
     init_invalid_scheduler_policy_key_rtti(base);
+    init_invalid_scheduler_policy_thread_specification_rtti(base);
     init_invalid_scheduler_policy_value_rtti(base);
     init_scheduler_resource_allocation_error_rtti(base);
     init_Context_rtti(base);
@@ -2694,6 +2734,7 @@ void msvcrt_init_concurrency(void *base)
     init_cexception_cxx_type_info(base);
     init_improper_lock_cxx(base);
     init_invalid_scheduler_policy_key_cxx(base);
+    init_invalid_scheduler_policy_thread_specification_cxx(base);
     init_invalid_scheduler_policy_value_cxx(base);
     init_scheduler_resource_allocation_error_cxx(base);
 #endif
