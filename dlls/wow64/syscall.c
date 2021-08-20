@@ -63,9 +63,7 @@ struct mem_header
     BYTE               data[1];
 };
 
-static void **pWow64Transition;
-static void **p__wine_syscall_dispatcher;
-static SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
+SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 /* cpu backend dll functions */
 static void *   (WINAPI *pBTCpuGetBopCode)(void);
@@ -421,6 +419,7 @@ static HMODULE load_cpu_dll(void)
  */
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
+    void **pWow64Transition, **p__wine_syscall_dispatcher;
     HMODULE module;
     UNICODE_STRING str;
 

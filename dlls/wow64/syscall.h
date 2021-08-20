@@ -171,6 +171,7 @@
     SYSCALL_ENTRY( NtQueryVirtualMemory ) \
     SYSCALL_ENTRY( NtQueryVolumeInformationFile ) \
     SYSCALL_ENTRY( NtQueueApcThread ) \
+    SYSCALL_ENTRY( NtRaiseException ) \
     SYSCALL_ENTRY( NtRaiseHardError ) \
     SYSCALL_ENTRY( NtReadFile ) \
     SYSCALL_ENTRY( NtReadFileScatter ) \
