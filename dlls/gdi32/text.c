@@ -1009,3 +1009,46 @@ DWORD WINAPI GetCharacterPlacementW( HDC hdc, const WCHAR *str, INT count, INT m
     HeapFree( GetProcessHeap(), 0, kern );
     return ret;
 }
+
+/*************************************************************************
+ *           GetCharacterPlacementA    (GDI32.@)
+ */
+DWORD WINAPI GetCharacterPlacementA( HDC hdc, const char *str, INT count, INT max_extent,
+                                     GCP_RESULTSA *result, DWORD flags )
+{
+    GCP_RESULTSW resultsW;
+    WCHAR *strW;
+    INT countW;
+    DWORD ret;
+    UINT font_cp;
+
+    TRACE( "%s, %d, %d, 0x%08x\n", debugstr_an(str, count), count, max_extent, flags );
+
+    strW = text_mbtowc( hdc, str, count, &countW, &font_cp );
+
+    if (!result)
+    {
+        ret = GetCharacterPlacementW( hdc, strW, countW, max_extent, NULL, flags );
+        HeapFree( GetProcessHeap(), 0, strW );
+        return ret;
+    }
+
+    /* both structs are equal in size */
+    memcpy( &resultsW, result, sizeof(resultsW) );
+
+    if (result->lpOutString)
+        resultsW.lpOutString = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * countW );
+
+    ret = GetCharacterPlacementW( hdc, strW, countW, max_extent, &resultsW, flags );
+
+    result->nGlyphs = resultsW.nGlyphs;
+    result->nMaxFit = resultsW.nMaxFit;
+
+    if (result->lpOutString)
+        WideCharToMultiByte( font_cp, 0, resultsW.lpOutString, countW,
+                             result->lpOutString, count, NULL, NULL );
+
+    HeapFree( GetProcessHeap(), 0, strW );
+    HeapFree( GetProcessHeap(), 0, resultsW.lpOutString );
+    return ret;
+}

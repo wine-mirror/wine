@@ -6938,59 +6938,6 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
 }
 
 /*************************************************************************
- * GetCharacterPlacementA [GDI32.@]
- *
- * See GetCharacterPlacementW.
- *
- * NOTES:
- *  the web browser control of ie4 calls this with dwFlags=0
- */
-DWORD WINAPI
-GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
-			 INT nMaxExtent, GCP_RESULTSA *lpResults,
-			 DWORD dwFlags)
-{
-    WCHAR *lpStringW;
-    INT uCountW;
-    GCP_RESULTSW resultsW;
-    DWORD ret;
-    UINT font_cp;
-
-    TRACE("%s, %d, %d, 0x%08x\n",
-          debugstr_an(lpString, uCount), uCount, nMaxExtent, dwFlags);
-
-    lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
-
-    if (!lpResults)
-    {
-        ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, NULL, dwFlags);
-        HeapFree(GetProcessHeap(), 0, lpStringW);
-        return ret;
-    }
-
-    /* both structs are equal in size */
-    memcpy(&resultsW, lpResults, sizeof(resultsW));
-
-    if(lpResults->lpOutString)
-        resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*uCountW);
-
-    ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
-
-    lpResults->nGlyphs = resultsW.nGlyphs;
-    lpResults->nMaxFit = resultsW.nMaxFit;
-
-    if(lpResults->lpOutString) {
-        WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
-                            lpResults->lpOutString, uCount, NULL, NULL );
-    }
-
-    HeapFree(GetProcessHeap(), 0, lpStringW);
-    HeapFree(GetProcessHeap(), 0, resultsW.lpOutString);
-
-    return ret;
-}
-
-/*************************************************************************
  *      GetCharABCWidthsFloatA [GDI32.@]
  *
  * See GetCharABCWidthsFloatW.
