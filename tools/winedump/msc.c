@@ -1330,23 +1330,71 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_COMPILE:
-            printf("\tS-Compiland V1 '%s' %s %s unk:%x\n",
-                   p_string(&sym->compiland_v1.p_name),
-                   get_machine(sym->compiland_v1.unknown & 0xFF),
-                   get_language((sym->compiland_v1.unknown >> 8) & 0xFF),
-                   sym->compiland_v1.unknown >> 16);
+            printf("\tS-Compile V1 machine:%s lang:%s _unk:%x '%s'\n",
+                   get_machine(sym->compile_v1.machine),
+                   get_language(sym->compile_v1.flags.language),
+                   sym->compile_v1.flags._dome,
+                   p_string(&sym->compile_v1.p_name));
             break;
 
         case S_COMPILE2_ST:
-            printf("\tS-Compiland V2 '%s'\n",
-                   p_string(&sym->compiland_v2.p_name));
-            dump_data((const void*)sym, sym->generic.len + 2, "  ");
+            printf("\tS-Compile2-V2 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
+                   get_language(sym->compile2_v2.flags.iLanguage),
+                   get_machine(sym->compile2_v2.machine),
+                   sym->compile2_v2.flags._dome,
+                   sym->compile2_v2.fe_major, sym->compile2_v2.fe_minor, sym->compile2_v2.fe_build,
+                   sym->compile2_v2.be_major, sym->compile2_v2.be_minor, sym->compile2_v2.be_build,
+                   p_string(&sym->compile2_v2.p_name));
             {
-                const char* ptr = sym->compiland_v2.p_name.name + sym->compiland_v2.p_name.namelen;
+                const char* ptr = sym->compile2_v2.p_name.name + sym->compile2_v2.p_name.namelen;
                 while (*ptr)
                 {
                     printf("\t\t%s => ", ptr); ptr += strlen(ptr) + 1;
                     printf("%s\n", ptr); ptr += strlen(ptr) + 1;
+                }
+            }
+            break;
+
+        case S_COMPILE2:
+            printf("\tS-Compile2-V3 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
+                   get_language(sym->compile2_v3.flags.iLanguage),
+                   get_machine(sym->compile2_v3.machine),
+                   sym->compile2_v3.flags._dome,
+                   sym->compile2_v3.fe_major, sym->compile2_v3.fe_minor, sym->compile2_v3.fe_build,
+                   sym->compile2_v3.be_major, sym->compile2_v3.be_minor, sym->compile2_v3.be_build,
+                   sym->compile2_v3.name);
+            {
+                const char* ptr = sym->compile2_v3.name + strlen(sym->compile2_v3.name) + 1;
+                while (*ptr)
+                {
+                    printf("\t\t%s => ", ptr); ptr += strlen(ptr) + 1;
+                    printf("%s\n", ptr); ptr += strlen(ptr) + 1;
+                }
+            }
+            break;
+
+        case S_COMPILE3:
+            printf("\tS-Compile3-V3 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
+                   get_language(sym->compile3_v3.flags.iLanguage),
+                   get_machine(sym->compile3_v3.machine),
+                   sym->compile3_v3.flags._dome,
+                   sym->compile3_v3.fe_major, sym->compile3_v3.fe_minor, sym->compile3_v3.fe_build,
+                   sym->compile3_v3.be_major, sym->compile3_v3.be_minor, sym->compile3_v3.be_build,
+                   sym->compile3_v3.name);
+            break;
+
+        case S_ENVBLOCK:
+            {
+                const char*             x1 = (const char*)sym + 4 + 1;
+                const char*             x2;
+
+                printf("\tTool conf V3\n");
+                while (*x1)
+                {
+                    x2 = x1 + strlen(x1) + 1;
+                    if (!*x2) break;
+                    printf("\t\t%s: %s\n", x1, x2);
+                    x1 = x2 + strlen(x2) + 1;
                 }
             }
             break;
@@ -1431,51 +1479,6 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                 printf("\t%08x %08x %08x '%s'\n",
                        *(((const DWORD*)sym) + 1), *(((const DWORD*)sym) + 2), *(((const DWORD*)sym) + 3),
                        p_string(pname));
-            }
-            break;
-        case S_COMPILE2:    /* info about tool used to create CU */
-            {
-                const unsigned short*   ptr = ((const unsigned short*)sym) + 2;
-                const char*             x1;
-                const char*             x2 = (const char*)&ptr[9];
-                /* FIXME: what are all those values for ? */
-                printf("\tTool V3 unk=%04x%04x%04x front=%d.%d.%d.0 back=%d.%d.%d.0 %s\n",
-                       ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7],
-                       ptr[8], x2);
-                while (*(x1 = x2 + strlen(x2) + 1))
-                {
-                    x2 = x1 + strlen(x1) + 1;
-                    if (!*x2) break;
-                    printf("\t\t%s: %s\n", x1, x2);
-                }
-            }
-            break;
-
-        case S_COMPILE3:
-            {
-                const unsigned short*   ptr = ((const unsigned short*)sym) + 2;
-
-                printf("\tTool info V3: unk=%04x%04x%04x front=%d.%d.%d.%d back=%d.%d.%d.%d %s\n",
-                       ptr[0], ptr[1], ptr[2],
-                       ptr[3], ptr[4], ptr[5], ptr[6],
-                       ptr[7], ptr[8], ptr[9], ptr[10],
-                       (const char*)(ptr + 11));
-            }
-            break;
-
-        case S_ENVBLOCK:
-            {
-                const char*             x1 = (const char*)sym + 4 + 1;
-                const char*             x2;
-
-                printf("\tTool conf V3\n");
-                while (*x1)
-                {
-                    x2 = x1 + strlen(x1) + 1;
-                    if (!*x2) break;
-                    printf("\t\t%s: %s\n", x1, x2);
-                    x1 = x2 + strlen(x2) + 1;
-                }
             }
             break;
 

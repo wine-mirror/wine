@@ -1573,26 +1573,74 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
-        unsigned int            unknown;
+        unsigned char           machine;
+        struct
+        {
+        unsigned char           language : 8;
+        unsigned char           _dome : 8; /* other missing fields */
+        unsigned char           pad : 8;
+        } flags;
         struct p_string         p_name;
-    } compiland_v1;
+    } compile_v1;
 
     struct
     {
         unsigned short int      len;
         unsigned short int      id;
-        unsigned                unknown1[4];
-        unsigned short          unknown2;
+        struct {
+        unsigned int            iLanguage :  8;
+        unsigned int            _dome     :  9; /* other missing fields */
+        unsigned int            pad       : 15;
+        } flags;
+        unsigned short          machine;
+        unsigned short          fe_major;
+        unsigned short          fe_minor;
+        unsigned short          fe_build;
+        unsigned short          be_major;
+        unsigned short          be_minor;
+        unsigned short          be_build;
         struct p_string         p_name;
-    } compiland_v2;
+    } compile2_v2;
 
     struct
     {
         unsigned short int      len;
         unsigned short int      id;
-        unsigned int            unknown;
+        struct {
+        unsigned int            iLanguage :  8;
+        unsigned int            _dome     :  9; /* other missing fields */
+        unsigned int            pad       : 15;
+        } flags;
+        unsigned short          machine;
+        unsigned short          fe_major;
+        unsigned short          fe_minor;
+        unsigned short          fe_build;
+        unsigned short          be_major;
+        unsigned short          be_minor;
+        unsigned short          be_build;
         char                    name[1];
-    } compiland_v3;
+    } compile2_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        struct {
+        unsigned int            iLanguage :  8;
+        unsigned int            _dome     : 12; /* other missing fields */
+        unsigned int            pad       : 12;
+        } flags;
+        unsigned short          machine;
+        unsigned short          fe_major;
+        unsigned short          fe_minor;
+        unsigned short          fe_build;
+        unsigned short          fe_qfe;
+        unsigned short          be_major;
+        unsigned short          be_minor;
+        unsigned short          be_build;
+        unsigned short          be_qfe;
+        char                    name[1];
+    } compile3_v3;
 
     struct
     {

@@ -1826,23 +1826,24 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
             break;
 
         case S_COMPILE:
-            TRACE("S-Compiland-V1 %x %s\n",
-                  sym->compiland_v1.unknown, terminate_string(&sym->compiland_v1.p_name));
+            TRACE("S-Compile-V1 machine:%x language:%x %s\n",
+                  sym->compile_v1.machine, sym->compile_v1.flags.language, terminate_string(&sym->compile_v1.p_name));
             break;
 
         case S_COMPILE2_ST:
-            TRACE("S-Compiland-V2 %s\n", terminate_string(&sym->compiland_v2.p_name));
-            if (TRACE_ON(dbghelp_msc))
-            {
-                const char* ptr1 = sym->compiland_v2.p_name.name + sym->compiland_v2.p_name.namelen;
-                const char* ptr2;
-                while (*ptr1)
-                {
-                    ptr2 = ptr1 + strlen(ptr1) + 1;
-                    TRACE("\t%s => %s\n", ptr1, debugstr_a(ptr2));
-                    ptr1 = ptr2 + strlen(ptr2) + 1;
-                }
-            }
+            TRACE("S-Compile-V2 machine:%x language:%x %s\n",
+                  sym->compile2_v2.machine, sym->compile2_v2.flags.iLanguage, terminate_string(&sym->compile2_v2.p_name));
+            break;
+
+        case S_COMPILE2:
+            TRACE("S-Compile-V3 machine:%x language:%x %s\n", sym->compile2_v3.machine, sym->compile2_v3.flags.iLanguage, sym->compile2_v3.name);
+            break;
+
+        case S_COMPILE3:
+            TRACE("S-Compile3-V3 machine:%x language:%x %s\n", sym->compile3_v3.machine, sym->compile3_v3.flags.iLanguage, sym->compile3_v3.name);
+            break;
+
+        case S_ENVBLOCK:
             break;
 
         case S_OBJNAME:
@@ -1982,11 +1983,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
                 length += (*name + 1 + 3) & ~3;
                 break;
             }
-
-        case S_COMPILE2: /* just to silence a few warnings */
-        case S_COMPILE3:
-        case S_ENVBLOCK:
-            break;
 
         case S_SSEARCH:
             TRACE("Start search: seg=0x%x at offset 0x%08x\n",
