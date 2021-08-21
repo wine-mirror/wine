@@ -722,3 +722,24 @@ typedef enum CV_call_e
     CV_CALL_M32RCALL,
     CV_CALL_RESERVED,
 } CV_call_e;
+
+typedef enum CV_CFL_LANG
+{
+    CV_CFL_C,
+    CV_CFL_CXX,
+    CV_CFL_FORTRAN,
+    CV_CFL_MASM,
+    CV_CFL_PASCAL,
+    CV_CFL_BASIC,
+    CV_CFL_COBOL,
+    CV_CFL_LINK,
+    CV_CFL_CVTRES,
+    CV_CFL_CVTPGD,
+    CV_CFL_CSHARP,
+    CV_CFL_VB,
+    CV_CFL_ILASM,
+    CV_CFL_JAVA,
+    CV_CFL_JSCRIPT,
+    CV_CFL_MSIL,
+    CV_CFL_HLSL,
+} CV_CFL_LANG;

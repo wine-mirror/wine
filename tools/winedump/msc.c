@@ -42,6 +42,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
+#include "cvconst.h"
 #include "wine/mscvpdb.h"
 
 #define PSTRING(adr, ofs) \
@@ -294,13 +295,23 @@ static const char* get_language(unsigned l)
 
     switch (l)
     {
-    case 0x00:      lang = "C"; break;
-    case 0x01:      lang = "C++"; break;
-    case 0x02:      lang = "Fortran"; break;
-    case 0x03:      lang = "Masm"; break;
-    case 0x04:      lang = "Pascal"; break;
-    case 0x05:      lang = "Basic"; break;
-    case 0x06:      lang = "Cobol"; break;
+    case CV_CFL_C:       lang = "C"; break;
+    case CV_CFL_CXX:     lang = "C++"; break;
+    case CV_CFL_FORTRAN: lang = "Fortran"; break;
+    case CV_CFL_MASM:    lang = "Masm"; break;
+    case CV_CFL_PASCAL:  lang = "Pascal"; break;
+    case CV_CFL_BASIC:   lang = "Basic"; break;
+    case CV_CFL_COBOL:   lang = "Cobol"; break;
+    case CV_CFL_LINK:    lang = "Link"; break;
+    case CV_CFL_CVTRES:  lang = "Resource"; break;
+    case CV_CFL_CVTPGD:  lang = "PoGo"; break;
+    case CV_CFL_CSHARP:  lang = "C#"; break;
+    case CV_CFL_VB:      lang = "VisualBasic"; break;
+    case CV_CFL_ILASM:   lang = "IL ASM"; break;
+    case CV_CFL_JAVA:    lang = "Java"; break;
+    case CV_CFL_JSCRIPT: lang = "JavaScript"; break;
+    case CV_CFL_MSIL:    lang = "MSIL"; break;
+    case CV_CFL_HLSL:    lang = "HLSL"; break;
     default:
         {
             static char tmp[16];
