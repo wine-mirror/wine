@@ -256,10 +256,14 @@ static const char* get_property(unsigned prop)
     if (prop & 0x0040) X("w/casting-methods");
     if (prop & 0x0080) X("forward");
     if (prop & 0x0100) X("scoped");
+    if (prop & 0x0200) X("decorated-name");
+    if (prop & 0x0400) X("sealed-name");
+    if (prop & 0x1800) pos += sprintf(tmp, "hfa%x", (prop >> 11) & 3);
+    if (prop & 0x2000) X("intrinsic");
+    if (prop & 0xC000) pos += sprintf(tmp, "mocom%x", prop >> 14);
 #undef X
 
-    if (prop & ~0x01FF) pos += sprintf(tmp, "unk%x", prop & ~0x01FF);
-    else tmp[pos] = '\0';
+    tmp[pos] = '\0';
     assert(pos < sizeof(tmp));
 
     return tmp;
@@ -853,6 +857,8 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
                str, type->struct_v3.n_element, get_property(type->struct_v3.property),
                type->struct_v3.fieldlist, type->struct_v3.derived,
                type->struct_v3.vshape, value);
+        if (type->union_v3.property & 0x200)
+            printf("\t\tDecorated name:%s\n", str + strlen(str) + 1);
         break;
 
     case LF_UNION_V1:
@@ -878,6 +884,8 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
                curr_type, str, type->union_v3.count,
                get_property(type->union_v3.property),
                type->union_v3.fieldlist, value);
+        if (type->union_v3.property & 0x200)
+            printf("\t\tDecorated name:%s\n", str + strlen(str) + 1);
         break;
 
     case LF_ENUM_V1:
@@ -905,6 +913,8 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
                type->enumeration_v3.fieldlist,
                type->enumeration_v3.count,
                get_property(type->enumeration_v3.property));
+        if (type->union_v3.property & 0x200)
+            printf("\t\tDecorated name:%s\n", type->enumeration_v3.name + strlen(type->enumeration_v3.name) + 1);
         break;
 
     case LF_ARGLIST_V1:
