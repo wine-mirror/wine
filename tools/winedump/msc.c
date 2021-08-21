@@ -1142,15 +1142,23 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 	    break;
 
 	case S_PUB32:
-        /* not completely sure of those two anyway */
+            printf("\tS-Public V3 '%s' %04x:%08x flags%s%s%s%s\n",
+                   get_symbol_str(sym->public_v3.name),
+                   sym->public_v3.segment, sym->public_v3.offset,
+                   (sym->public_v3.pubsymflags & 1) ? "-code" : "",
+                   (sym->public_v3.pubsymflags & 2) ? "-func" : "",
+                   (sym->public_v3.pubsymflags & 4) ? "-manage" : "",
+                   (sym->public_v3.pubsymflags & 8) ? "-msil" : "");
+	    break;
+
+	case S_DATAREF:
 	case S_PROCREF:
 	case S_LPROCREF:
-            printf("\tS-Public%s V3 '%s' %04x:%08x type:%08x\n",
-                   sym->generic.id == S_PUB32 ? "" :
-                                      (sym->generic.id == S_PROCREF ? "<subkind1" : "<subkind2"),
-                   get_symbol_str(sym->public_v3.name),
-                   sym->public_v3.segment,
-                   sym->public_v3.offset, sym->public_v3.symtype);
+            printf("\tS-%sref V3 '%s' mod:%04x sym:%08x name:%08x\n",
+                   sym->generic.id == S_DATAREF ? "Data" :
+                                      (sym->generic.id == S_PROCREF ? "Proc" : "Lproc"),
+                   get_symbol_str(sym->refsym2_v3.name),
+                   sym->refsym2_v3.imod, sym->refsym2_v3.ibSym, sym->refsym2_v3.sumName);
 	    break;
 
         /*

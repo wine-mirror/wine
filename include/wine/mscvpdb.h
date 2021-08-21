@@ -1386,7 +1386,7 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
-        cv_typ_t                symtype;
+        unsigned int            pubsymflags;
         unsigned int            offset;
         unsigned short          segment;
         char                    name[1];
@@ -1678,6 +1678,16 @@ union codeview_symbol
         unsigned short          segment;
         char                    name[1];
     } thread_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            sumName;
+        unsigned int            ibSym;
+        unsigned short          imod;
+        char                    name[1];
+    } refsym2_v3;
 
     struct
     {

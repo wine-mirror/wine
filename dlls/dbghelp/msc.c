@@ -2077,7 +2077,7 @@ static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BY
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 sym->public_v3.name,
-                                sym->public_v3.symtype == SYMTYPE_FUNCTION,
+                                sym->public_v3.pubsymflags == SYMTYPE_FUNCTION,
                                 codeview_get_address(msc_dbg, sym->public_v3.segment, sym->public_v3.offset), 1);
             }
             break;
