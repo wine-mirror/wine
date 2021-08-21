@@ -144,6 +144,7 @@ static void remove_usb_device(libusb_device *libusb_device)
     {
         if (device->libusb_device == libusb_device)
         {
+            device->removed = TRUE;
             list_remove(&device->entry);
             break;
         }
