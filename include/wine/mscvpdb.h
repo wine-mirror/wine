@@ -1557,9 +1557,17 @@ union codeview_symbol
     {
         short int               len;
         short int               id;
-        char                    signature[4];
+        unsigned                signature;
         struct p_string         p_name;
     } objname_v1;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned                signature;
+        char                    name[1];
+    } objname_v3;
 
     struct
     {

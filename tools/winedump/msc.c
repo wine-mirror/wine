@@ -1352,12 +1352,12 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_OBJNAME:
-            printf("\tS-Compiland V3 '%s' unknown:%x\n",
-                   sym->compiland_v3.name, sym->compiland_v3.unknown);
+            printf("\tS-ObjName V3 sig:%x '%s'\n",
+                   sym->objname_v3.signature, sym->objname_v3.name);
             break;
 
         case S_OBJNAME_ST:
-            printf("\tS-ObjName V1 sig:%.4s '%s'\n",
+            printf("\tS-ObjName V1 sig:%x '%s'\n",
                    sym->objname_v1.signature, p_string(&sym->objname_v1.p_name));
             break;
 

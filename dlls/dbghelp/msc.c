@@ -1844,23 +1844,15 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
                 }
             }
             break;
+
         case S_OBJNAME:
-            TRACE("S-Compiland-V3 %s\n", sym->compiland_v3.name);
-            if (TRACE_ON(dbghelp_msc))
-            {
-                const char* ptr1 = sym->compiland_v3.name + strlen(sym->compiland_v3.name);
-                const char* ptr2;
-                while (*ptr1)
-                {
-                    ptr2 = ptr1 + strlen(ptr1) + 1;
-                    TRACE("\t%s => %s\n", ptr1, debugstr_a(ptr2));
-                    ptr1 = ptr2 + strlen(ptr2) + 1;
-                }
-            }
-            break;
+            TRACE("S-ObjName-V3 %s\n", sym->objname_v3.name);
+            compiland = symt_new_compiland(msc_dbg->module, 0 /* FIXME */,
+                                           source_new(msc_dbg->module, NULL,
+                                                      sym->objname_v3.name));
 
         case S_OBJNAME_ST:
-            TRACE("S-ObjName %s\n", terminate_string(&sym->objname_v1.p_name));
+            TRACE("S-ObjName-V1 %s\n", terminate_string(&sym->objname_v1.p_name));
             compiland = symt_new_compiland(msc_dbg->module, 0 /* FIXME */,
                                            source_new(msc_dbg->module, NULL,
                                                       terminate_string(&sym->objname_v1.p_name)));
