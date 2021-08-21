@@ -57,7 +57,6 @@ struct irp_call
 };
 
 static void irp_call_dump( struct object *obj, int verbose );
-static int irp_call_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void irp_call_destroy( struct object *obj );
 
 static const struct object_ops irp_call_ops =
@@ -65,10 +64,10 @@ static const struct object_ops irp_call_ops =
     sizeof(struct irp_call),          /* size */
     &no_type,                         /* type */
     irp_call_dump,                    /* dump */
-    add_queue,                        /* add_queue */
-    remove_queue,                     /* remove_queue */
-    irp_call_signaled,                /* signaled */
-    no_satisfied,                     /* satisfied */
+    no_add_queue,                     /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
     default_map_access,               /* map_access */
@@ -335,13 +334,6 @@ static void irp_call_dump( struct object *obj, int verbose )
     fprintf( stderr, "IRP call file=%p\n", irp->file );
 }
 
-static int irp_call_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct irp_call *irp = (struct irp_call *)obj;
-
-    return !irp->file;  /* file is cleared once the irp has completed */
-}
-
 static void irp_call_destroy( struct object *obj )
 {
     struct irp_call *irp = (struct irp_call *)obj;
@@ -411,7 +403,6 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
         release_object( irp->async );
         irp->async = NULL;
     }
-    wake_up( &irp->obj, 0 );
 
     release_object( irp );  /* no longer on the device queue */
     release_object( file );
