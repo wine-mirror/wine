@@ -366,6 +366,12 @@ static void send_remove_device_irp( DEVICE_OBJECT *device, UCHAR code )
     send_pnp_irp( device, code );
 }
 
+static void remove_device( DEVICE_OBJECT *device )
+{
+    send_remove_device_irp( device, IRP_MN_SURPRISE_REMOVAL );
+    send_remove_device_irp( device, IRP_MN_REMOVE_DEVICE );
+}
+
 static BOOL device_in_list( const DEVICE_RELATIONS *list, const DEVICE_OBJECT *device )
 {
     ULONG i;
@@ -440,8 +446,7 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
             if (!device_in_list( relations, child ))
             {
                 TRACE("Removing device %p.\n", child);
-                send_remove_device_irp( child, IRP_MN_SURPRISE_REMOVAL );
-                send_remove_device_irp( child, IRP_MN_REMOVE_DEVICE );
+                remove_device( child );
             }
             ObDereferenceObject( child );
         }
@@ -1105,10 +1110,7 @@ void pnp_manager_stop_driver( struct wine_driver *driver )
     struct root_pnp_device *device, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( device, next, &driver->root_pnp_devices, struct root_pnp_device, entry )
-    {
-        send_remove_device_irp( device->device, IRP_MN_SURPRISE_REMOVAL );
-        send_remove_device_irp( device->device, IRP_MN_REMOVE_DEVICE );
-    }
+        remove_device( device->device );
 }
 
 void pnp_manager_stop(void)
@@ -1181,9 +1183,7 @@ void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
     LIST_FOR_EACH_ENTRY_SAFE( pnp_device, next, &driver->root_pnp_devices, struct root_pnp_device, entry )
     {
         TRACE("Removing device %s.\n", debugstr_w(pnp_device->id));
-
-        send_remove_device_irp( pnp_device->device, IRP_MN_SURPRISE_REMOVAL );
-        send_remove_device_irp( pnp_device->device, IRP_MN_REMOVE_DEVICE );
+        remove_device( pnp_device->device );
     }
 
     list_move_head( &driver->root_pnp_devices, &new_list );
