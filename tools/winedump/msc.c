@@ -271,13 +271,81 @@ static const char* get_machine(unsigned m)
 
     switch (m)
     {
-    case 0x00:      machine = "Intel 8080"; break;
-    case 0x01:      machine = "Intel 8086"; break;
-    case 0x02:      machine = "Intel 80286"; break;
-    case 0x03:      machine = "Intel 80386"; break;
-    case 0x04:      machine = "Intel 80486"; break;
-    case 0x05:      machine = "Intel Pentium"; break;
-    case 0x10:      machine = "MIPS R4000"; break;
+    case CV_CFL_8080:           machine = "Intel 8080"; break;
+    case CV_CFL_8086:           machine = "Intel 8086"; break;
+    case CV_CFL_80286:          machine = "Intel 80286"; break;
+    case CV_CFL_80386:          machine = "Intel 80386"; break;
+    case CV_CFL_80486:          machine = "Intel 80486"; break;
+    case CV_CFL_PENTIUM:        machine = "Intel Pentium"; break;
+    case CV_CFL_PENTIUMII:      machine = "Intel Pentium II"; break;
+    case CV_CFL_PENTIUMIII:     machine = "Intel Pentium III"; break;
+
+    case CV_CFL_MIPS:           machine = "MIPS R4000"; break;
+    case CV_CFL_MIPS16:         machine = "MIPS16"; break;
+    case CV_CFL_MIPS32:         machine = "MIPS32"; break;
+    case CV_CFL_MIPS64:         machine = "MIPS64"; break;
+    case CV_CFL_MIPSI:          machine = "MIPS I"; break;
+    case CV_CFL_MIPSII:         machine = "MIPS II"; break;
+    case CV_CFL_MIPSIII:        machine = "MIPS III"; break;
+    case CV_CFL_MIPSIV:         machine = "MIPS IV"; break;
+    case CV_CFL_MIPSV:          machine = "MIPS V"; break;
+
+    case CV_CFL_M68000:         machine = "M68000"; break;
+    case CV_CFL_M68010:         machine = "M68010"; break;
+    case CV_CFL_M68020:         machine = "M68020"; break;
+    case CV_CFL_M68030:         machine = "M68030"; break;
+    case CV_CFL_M68040:         machine = "M68040"; break;
+
+    case CV_CFL_ALPHA_21064:    machine = "Alpha 21064"; break;
+    case CV_CFL_ALPHA_21164:    machine = "Alpha 21164"; break;
+    case CV_CFL_ALPHA_21164A:   machine = "Alpha 21164A"; break;
+    case CV_CFL_ALPHA_21264:    machine = "Alpha 21264"; break;
+    case CV_CFL_ALPHA_21364:    machine = "Alpha 21364"; break;
+
+    case CV_CFL_PPC601:         machine = "PowerPC 601"; break;
+    case CV_CFL_PPC603:         machine = "PowerPC 603"; break;
+    case CV_CFL_PPC604:         machine = "PowerPC 604"; break;
+    case CV_CFL_PPC620:         machine = "PowerPC 620"; break;
+    case CV_CFL_PPCFP:          machine = "PowerPC FP"; break;
+
+    case CV_CFL_SH3:            machine = "SH3"; break;
+    case CV_CFL_SH3E:           machine = "SH3E"; break;
+    case CV_CFL_SH3DSP:         machine = "SH3DSP"; break;
+    case CV_CFL_SH4:            machine = "SH4"; break;
+    case CV_CFL_SHMEDIA:        machine = "SHMEDIA"; break;
+
+    case CV_CFL_ARM3:           machine = "ARM 3"; break;
+    case CV_CFL_ARM4:           machine = "ARM 4"; break;
+    case CV_CFL_ARM4T:          machine = "ARM 4T"; break;
+    case CV_CFL_ARM5:           machine = "ARM 5"; break;
+    case CV_CFL_ARM5T:          machine = "ARM 5T"; break;
+    case CV_CFL_ARM6:           machine = "ARM 6"; break;
+    case CV_CFL_ARM_XMAC:       machine = "ARM XMAC"; break;
+    case CV_CFL_ARM_WMMX:       machine = "ARM WMMX"; break;
+    case CV_CFL_ARM7:           machine = "ARM 7"; break;
+
+    case CV_CFL_OMNI:           machine = "OMNI"; break;
+
+    case CV_CFL_IA64_1:         machine = "Itanium"; break;
+    case CV_CFL_IA64_2:         machine = "Itanium 2"; break;
+
+    case CV_CFL_CEE:            machine = "CEE"; break;
+
+    case CV_CFL_AM33:           machine = "AM33"; break;
+
+    case CV_CFL_M32R:           machine = "M32R"; break;
+
+    case CV_CFL_TRICORE:        machine = "TRICORE"; break;
+
+    case CV_CFL_X64:            machine = "x86_64"; break;
+
+    case CV_CFL_EBC:            machine = "EBC"; break;
+
+    case CV_CFL_THUMB:          machine = "Thumb"; break;
+    case CV_CFL_ARMNT:          machine = "ARM NT"; break;
+    case CV_CFL_ARM64:          machine = "ARM 64"; break;
+
+    case CV_CFL_D3D11_SHADER:   machine = "D3D11 shader"; break;
     default:
         {
             static char tmp[16];
