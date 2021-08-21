@@ -448,7 +448,7 @@ restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
         if (async->status != STATUS_PENDING) continue;
-        if ((!obj || (async->fd && get_fd_user( async->fd ) == obj)) &&
+        if ((!obj || (get_fd_user( async->fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
         {
