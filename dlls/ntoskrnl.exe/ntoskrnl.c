@@ -1628,9 +1628,17 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
     {
         struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
         DEVICE_OBJECT **prev = &device->DriverObject->DeviceObject;
+        DEVICE_RELATIONS *children;
+        unsigned int i;
+
         while (*prev && *prev != device) prev = &(*prev)->NextDevice;
         if (*prev) *prev = (*prev)->NextDevice;
-        ExFreePool( wine_device->children );
+        if ((children = wine_device->children))
+        {
+            for (i = 0; i < children->Count; ++i)
+                ObDereferenceObject( children->Objects[i] );
+            ExFreePool( children );
+        }
         ObDereferenceObject( device );
     }
 }
