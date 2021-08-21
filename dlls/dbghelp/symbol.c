@@ -893,11 +893,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
     high = module->num_sorttab;
 
     symt_get_address(&module->addr_sorttab[0]->symt, &ref_addr);
-    if (addr <= ref_addr)
-    {
-        low = symt_get_best_at(module, 0);
-        return module->addr_sorttab[low];
-    }
+    if (addr < ref_addr) return NULL;
 
     if (high)
     {
