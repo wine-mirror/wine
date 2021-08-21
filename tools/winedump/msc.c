@@ -264,6 +264,54 @@ static const char* get_property(unsigned prop)
     return tmp;
 }
 
+static const char* get_machine(unsigned m)
+{
+    const char*     machine;
+
+    switch (m)
+    {
+    case 0x00:      machine = "Intel 8080"; break;
+    case 0x01:      machine = "Intel 8086"; break;
+    case 0x02:      machine = "Intel 80286"; break;
+    case 0x03:      machine = "Intel 80386"; break;
+    case 0x04:      machine = "Intel 80486"; break;
+    case 0x05:      machine = "Intel Pentium"; break;
+    case 0x10:      machine = "MIPS R4000"; break;
+    default:
+        {
+            static char tmp[16];
+            sprintf(tmp, "machine=%x", m);
+            machine = tmp;
+        }
+        break;
+    }
+    return machine;
+}
+
+static const char* get_language(unsigned l)
+{
+    const char* lang;
+
+    switch (l)
+    {
+    case 0x00:      lang = "C"; break;
+    case 0x01:      lang = "C++"; break;
+    case 0x02:      lang = "Fortran"; break;
+    case 0x03:      lang = "Masm"; break;
+    case 0x04:      lang = "Pascal"; break;
+    case 0x05:      lang = "Basic"; break;
+    case 0x06:      lang = "Cobol"; break;
+    default:
+        {
+            static char tmp[16];
+            sprintf(tmp, "lang=%x", l);
+            lang = tmp;
+        }
+        break;
+    }
+    return lang;
+}
+
 static void do_field(const unsigned char* start, const unsigned char* end)
 {
     /*
@@ -1131,49 +1179,11 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_COMPILE:
-            {
-                const char*     machine;
-                const char*     lang;
-
-                switch (sym->compiland_v1.unknown & 0xFF)
-                {
-                case 0x00:      machine = "Intel 8080"; break;
-                case 0x01:      machine = "Intel 8086"; break;
-                case 0x02:      machine = "Intel 80286"; break;
-                case 0x03:      machine = "Intel 80386"; break;
-                case 0x04:      machine = "Intel 80486"; break;
-                case 0x05:      machine = "Intel Pentium"; break;
-                case 0x10:      machine = "MIPS R4000"; break;
-                default:
-                    {
-                        static char tmp[16];
-                        sprintf(tmp, "machine=%x", sym->compiland_v1.unknown & 0xFF);
-                        machine = tmp;
-                    }
-                    break;
-                }
-                switch ((sym->compiland_v1.unknown >> 8) & 0xFF)
-                {
-                case 0x00:      lang = "C"; break;
-                case 0x01:      lang = "C++"; break;
-                case 0x02:      lang = "Fortran"; break;
-                case 0x03:      lang = "Masm"; break;
-                case 0x04:      lang = "Pascal"; break;
-                case 0x05:      lang = "Basic"; break;
-                case 0x06:      lang = "Cobol"; break;
-                default:
-                    {
-                        static char tmp[16];
-                        sprintf(tmp, "language=%x", (sym->compiland_v1.unknown >> 8) & 0xFF);
-                        lang = tmp;
-                    }
-                    break;
-                }
-
-                printf("\tS-Compiland V1 '%s' %s %s unk:%x\n",
-                       p_string(&sym->compiland_v1.p_name), machine, lang,
-                       sym->compiland_v1.unknown >> 16);
-            }
+            printf("\tS-Compiland V1 '%s' %s %s unk:%x\n",
+                   p_string(&sym->compiland_v1.p_name),
+                   get_machine(sym->compiland_v1.unknown & 0xFF),
+                   get_language((sym->compiland_v1.unknown >> 8) & 0xFF),
+                   sym->compiland_v1.unknown >> 16);
             break;
 
         case S_COMPILE2_ST:
