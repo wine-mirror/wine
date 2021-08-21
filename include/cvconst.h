@@ -720,6 +720,9 @@ typedef enum CV_call_e
     CV_CALL_TRICALL,
     CV_CALL_SH5CALL,
     CV_CALL_M32RCALL,
+    CV_CALL_CLRCALL,
+    CV_CALL_INLINE,
+    CV_CALL_NEAR_VECTOR,
     CV_CALL_RESERVED,
 } CV_call_e;
 

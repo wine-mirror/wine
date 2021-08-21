@@ -410,6 +410,49 @@ static const char* get_language(unsigned l)
     return lang;
 }
 
+static const char* get_callconv(unsigned cc)
+{
+    const char* callconv;
+
+    switch (cc)
+    {
+    case CV_CALL_NEAR_C:        callconv = "near C"; break;
+    case CV_CALL_FAR_C:         callconv = "far C"; break;
+    case CV_CALL_NEAR_PASCAL:   callconv = "near pascal"; break;
+    case CV_CALL_FAR_PASCAL:    callconv = "far pascal"; break;
+    case CV_CALL_NEAR_FAST:     callconv = "near fast"; break;
+    case CV_CALL_FAR_FAST:      callconv = "far fast"; break;
+    case CV_CALL_SKIPPED:       callconv = "skipped"; break;
+    case CV_CALL_NEAR_STD:      callconv = "near std"; break;
+    case CV_CALL_FAR_STD:       callconv = "far std"; break;
+    case CV_CALL_NEAR_SYS:      callconv = "near sys"; break;
+    case CV_CALL_FAR_SYS:       callconv = "far sys"; break;
+    case CV_CALL_THISCALL:      callconv = "this call"; break;
+    case CV_CALL_MIPSCALL:      callconv = "mips call"; break;
+    case CV_CALL_GENERIC:       callconv = "generic"; break;
+    case CV_CALL_ALPHACALL:     callconv = "alpha call"; break;
+    case CV_CALL_PPCCALL:       callconv = "ppc call"; break;
+    case CV_CALL_SHCALL:        callconv = "sh call"; break;
+    case CV_CALL_ARMCALL:       callconv = "arm call"; break;
+    case CV_CALL_AM33CALL:      callconv = "am33 call"; break;
+    case CV_CALL_TRICALL:       callconv = "tri call"; break;
+    case CV_CALL_SH5CALL:       callconv = "sh5 call"; break;
+    case CV_CALL_M32RCALL:      callconv = "m32r call"; break;
+    case CV_CALL_CLRCALL:       callconv = "clr call"; break;
+    case CV_CALL_INLINE:        callconv = "inline"; break;
+    case CV_CALL_NEAR_VECTOR:   callconv = "near vector"; break;
+    case CV_CALL_RESERVED:      callconv = "reserved"; break;
+    default:
+        {
+            static char tmp[16];
+            sprintf(tmp, "callconv=%x", cc);
+            callconv = tmp;
+        }
+        break;
+    }
+    return callconv;
+}
+
 static void do_field(const unsigned char* start, const unsigned char* end)
 {
     /*
@@ -883,26 +926,25 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
         break;
 
     case LF_PROCEDURE_V1:
-        /* FIXME: unknown could be the calling convention for the proc */
-        printf("\t%x => Procedure V1 ret_type:%x call:%x attr:%s (#%u args_type:%x)\n",
+        printf("\t%x => Procedure V1 ret_type:%x callconv:%s attr:%s (#%u args_type:%x)\n",
                curr_type, type->procedure_v1.rvtype,
-               type->procedure_v1.call, get_funcattr(type->procedure_v1.funcattr),
+               get_callconv(type->procedure_v1.callconv), get_funcattr(type->procedure_v1.funcattr),
                type->procedure_v1.params, type->procedure_v1.arglist);
         break;
 
     case LF_PROCEDURE_V2:
-        printf("\t%x => Procedure V2 ret_type:%x unk:%x attr:%s (#%u args_type:%x)\n",
+        printf("\t%x => Procedure V2 ret_type:%x callconv:%s attr:%s (#%u args_type:%x)\n",
                curr_type, type->procedure_v2.rvtype,
-               type->procedure_v2.call, get_funcattr(type->procedure_v2.funcattr),
+               get_callconv(type->procedure_v2.callconv), get_funcattr(type->procedure_v1.funcattr),
                type->procedure_v2.params, type->procedure_v2.arglist);
         break;
 
     case LF_MFUNCTION_V2:
-        printf("\t%x => MFunction V2 ret-type:%x call:%x class-type:%x this-type:%x attr:%s\n"
+        printf("\t%x => MFunction V2 ret-type:%x callconv:%s class-type:%x this-type:%x attr:%s\n"
                "\t\t#args:%x args-type:%x this_adjust:%x\n",
                curr_type,
                type->mfunction_v2.rvtype,
-               type->mfunction_v2.call,
+               get_callconv(type->mfunction_v2.callconv),
                type->mfunction_v2.class_type,
                type->mfunction_v2.this_type,
                get_funcattr(type->mfunction_v2.funcattr),

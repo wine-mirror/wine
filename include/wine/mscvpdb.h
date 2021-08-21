@@ -308,7 +308,7 @@ union codeview_type
         unsigned short int      len;
         short int               id;
         unsigned short int      rvtype;
-        unsigned char           call;
+        unsigned char           callconv;
         unsigned char           funcattr;
         unsigned short int      params;
         unsigned short int      arglist;
@@ -319,7 +319,7 @@ union codeview_type
         unsigned short int      len;
         short int               id;
         unsigned int            rvtype;
-        unsigned char           call;
+        unsigned char           callconv;
         unsigned char           funcattr;
         unsigned short int      params;
         unsigned int            arglist;
@@ -332,7 +332,7 @@ union codeview_type
         unsigned short int      rvtype;
         unsigned short int      class_type;
         unsigned short int      this_type;
-        unsigned char           call;
+        unsigned char           callconv;
         unsigned char           funcattr;
         unsigned short int      params;
         unsigned short int      arglist;
@@ -346,7 +346,7 @@ union codeview_type
         unsigned int            rvtype;
         unsigned int            class_type;
         unsigned                this_type;
-        unsigned char           call;
+        unsigned char           callconv;
         unsigned char           funcattr;
         unsigned short          params;
         unsigned int            arglist;

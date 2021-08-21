@@ -1288,7 +1288,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         break;
 
     case LF_PROCEDURE_V1:
-        symt = codeview_new_func_signature(ctp, existing, type->procedure_v1.call);
+        symt = codeview_new_func_signature(ctp, existing, type->procedure_v1.callconv);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1299,7 +1299,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         }
         break;
     case LF_PROCEDURE_V2:
-        symt = codeview_new_func_signature(ctp, existing,type->procedure_v2.call);
+        symt = codeview_new_func_signature(ctp, existing,type->procedure_v2.callconv);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1314,7 +1314,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         /* FIXME: for C++, this is plain wrong, but as we don't use arg types
          * nor class information, this would just do for now
          */
-        symt = codeview_new_func_signature(ctp, existing, type->mfunction_v1.call);
+        symt = codeview_new_func_signature(ctp, existing, type->mfunction_v1.callconv);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1328,7 +1328,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         /* FIXME: for C++, this is plain wrong, but as we don't use arg types
          * nor class information, this would just do for now
          */
-        symt = codeview_new_func_signature(ctp, existing, type->mfunction_v2.call);
+        symt = codeview_new_func_signature(ctp, existing, type->mfunction_v2.callconv);
         if (details)
         {
             codeview_add_type(curr_type, symt);
