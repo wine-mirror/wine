@@ -265,6 +265,25 @@ static const char* get_property(unsigned prop)
     return tmp;
 }
 
+static const char* get_funcattr(unsigned attr)
+{
+    static char tmp[1024];
+    unsigned    pos = 0;
+
+    if (!attr) return "none";
+#define X(s) {if (pos) tmp[pos++] = ';'; strcpy(tmp + pos, s); pos += strlen(s);}
+    if (attr & 0x0001) X("C++ReturnUDT");
+    if (attr & 0x0002) X("Ctor");
+    if (attr & 0x0004) X("Ctor-w/virtualbase");
+    if (attr & 0xfff8) pos += sprintf(tmp, "unk:%x", attr & 0xfff8);
+#undef X
+
+    tmp[pos] = '\0';
+    assert(pos < sizeof(tmp));
+
+    return tmp;
+}
+
 static const char* get_machine(unsigned m)
 {
     const char*     machine;
@@ -865,27 +884,28 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     case LF_PROCEDURE_V1:
         /* FIXME: unknown could be the calling convention for the proc */
-        printf("\t%x => Procedure V1 ret_type:%x call:%x (#%u args_type:%x)\n",
+        printf("\t%x => Procedure V1 ret_type:%x call:%x attr:%s (#%u args_type:%x)\n",
                curr_type, type->procedure_v1.rvtype,
-               type->procedure_v1.call, type->procedure_v1.params,
-               type->procedure_v1.arglist);
+               type->procedure_v1.call, get_funcattr(type->procedure_v1.funcattr),
+               type->procedure_v1.params, type->procedure_v1.arglist);
         break;
 
     case LF_PROCEDURE_V2:
-        printf("\t%x => Procedure V2 ret_type:%x unk:%x (#%u args_type:%x)\n",
+        printf("\t%x => Procedure V2 ret_type:%x unk:%x attr:%s (#%u args_type:%x)\n",
                curr_type, type->procedure_v2.rvtype,
-               type->procedure_v2.call, type->procedure_v2.params,
-               type->procedure_v2.arglist);
+               type->procedure_v2.call, get_funcattr(type->procedure_v2.funcattr),
+               type->procedure_v2.params, type->procedure_v2.arglist);
         break;
 
     case LF_MFUNCTION_V2:
-        printf("\t%x => MFunction V2 ret-type:%x call:%x class-type:%x this-type:%x\n"
+        printf("\t%x => MFunction V2 ret-type:%x call:%x class-type:%x this-type:%x attr:%s\n"
                "\t\t#args:%x args-type:%x this_adjust:%x\n",
                curr_type,
                type->mfunction_v2.rvtype,
                type->mfunction_v2.call,
                type->mfunction_v2.class_type,
                type->mfunction_v2.this_type,
+               get_funcattr(type->mfunction_v2.funcattr),
                type->mfunction_v2.params,
                type->mfunction_v2.arglist,
                type->mfunction_v2.this_adjust);

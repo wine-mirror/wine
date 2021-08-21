@@ -309,7 +309,7 @@ union codeview_type
         short int               id;
         unsigned short int      rvtype;
         unsigned char           call;
-        unsigned char           reserved;
+        unsigned char           funcattr;
         unsigned short int      params;
         unsigned short int      arglist;
     } procedure_v1;
@@ -320,7 +320,7 @@ union codeview_type
         short int               id;
         unsigned int            rvtype;
         unsigned char           call;
-        unsigned char           reserved;
+        unsigned char           funcattr;
         unsigned short int      params;
         unsigned int            arglist;
     } procedure_v2;
@@ -333,7 +333,7 @@ union codeview_type
         unsigned short int      class_type;
         unsigned short int      this_type;
         unsigned char           call;
-        unsigned char           reserved;
+        unsigned char           funcattr;
         unsigned short int      params;
         unsigned short int      arglist;
         unsigned int            this_adjust;
@@ -347,7 +347,7 @@ union codeview_type
         unsigned int            class_type;
         unsigned                this_type;
         unsigned char           call;
-        unsigned char           reserved;
+        unsigned char           funcattr;
         unsigned short          params;
         unsigned int            arglist;
         unsigned int            this_adjust;
