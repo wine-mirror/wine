@@ -144,8 +144,11 @@ static void remove_usb_device(libusb_device *libusb_device)
     {
         if (device->libusb_device == libusb_device)
         {
-            device->removed = TRUE;
-            list_remove(&device->entry);
+            if (!device->removed)
+            {
+                device->removed = TRUE;
+                list_remove(&device->entry);
+            }
             break;
         }
     }
@@ -257,8 +260,24 @@ static NTSTATUS fdo_pnp(IRP *irp)
             CloseHandle(event_thread);
 
             EnterCriticalSection(&wineusb_cs);
+            /* Normally we unlink all devices either:
+             *
+             * - as a result of hot-unplug, which unlinks the device, and causes
+             *   a subsequent IRP_MN_REMOVE_DEVICE which will free it;
+             *
+             * - if the parent is deleted (at shutdown time), in which case
+             *   ntoskrnl will send us IRP_MN_SURPRISE_REMOVAL and
+             *   IRP_MN_REMOVE_DEVICE unprompted.
+             *
+             * But we can get devices hotplugged between when shutdown starts
+             * and now, in which case they'll be stuck in this list and never
+             * freed.
+             *
+             * FIXME: This is still broken, though. If a device is hotplugged
+             * and then removed, it'll be unlinked and never freed. */
             LIST_FOR_EACH_ENTRY_SAFE(device, cursor, &device_list, struct usb_device, entry)
             {
+                assert(!device->removed);
                 libusb_unref_device(device->libusb_device);
                 libusb_close(device->handle);
                 list_remove(&device->entry);
@@ -408,12 +427,17 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
         case IRP_MN_SURPRISE_REMOVAL:
             EnterCriticalSection(&wineusb_cs);
             remove_pending_irps(device);
-            device->removed = TRUE;
+            if (!device->removed)
+            {
+                device->removed = TRUE;
+                list_remove(&device->entry);
+            }
             LeaveCriticalSection(&wineusb_cs);
             ret = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
+            assert(device->removed);
             remove_pending_irps(device);
 
             libusb_unref_device(device->libusb_device);
