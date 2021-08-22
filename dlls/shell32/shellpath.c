@@ -1180,6 +1180,118 @@ HRESULT WINAPI ApplicationDestinations_Constructor(IUnknown *outer, REFIID riid,
 
 typedef struct
 {
+    IApplicationDocumentLists IApplicationDocumentLists_iface;
+    LONG ref;
+} IApplicationDocumentListsImpl;
+
+static inline IApplicationDocumentListsImpl *impl_from_IApplicationDocumentLists( IApplicationDocumentLists *iface )
+{
+    return CONTAINING_RECORD(iface, IApplicationDocumentListsImpl, IApplicationDocumentLists_iface);
+}
+
+static HRESULT WINAPI ApplicationDocumentLists_QueryInterface(IApplicationDocumentLists *iface,
+                                                              REFIID riid, LPVOID *ppv)
+{
+    IApplicationDocumentListsImpl *This = impl_from_IApplicationDocumentLists(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (ppv == NULL)
+        return E_POINTER;
+
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IApplicationDocumentLists, riid))
+    {
+        *ppv = &This->IApplicationDocumentLists_iface;
+        IUnknown_AddRef((IUnknown*)*ppv);
+
+        TRACE("Returning IApplicationDocumentLists: %p\n", *ppv);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    FIXME("(%p)->(%s, %p) interface not supported.\n", This, debugstr_guid(riid), ppv);
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ApplicationDocumentLists_AddRef(IApplicationDocumentLists *iface)
+{
+    IApplicationDocumentListsImpl *This = impl_from_IApplicationDocumentLists(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ApplicationDocumentLists_Release(IApplicationDocumentLists *iface)
+{
+    IApplicationDocumentListsImpl *This = impl_from_IApplicationDocumentLists(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", This, ref);
+
+    if (ref == 0)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI ApplicationDocumentLists_SetAppID(IApplicationDocumentLists *iface,
+                                                        const WCHAR *appid)
+{
+    IApplicationDocumentListsImpl *This = impl_from_IApplicationDocumentLists(iface);
+
+    FIXME("(%p, %s) stub!\n", This, debugstr_w(appid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationDocumentLists_GetList(IApplicationDocumentLists *iface,
+                                                       APPDOCLISTTYPE list_type, UINT item_count,
+                                                       REFIID riid, void **obj)
+{
+    IApplicationDocumentListsImpl *This = impl_from_IApplicationDocumentLists(iface);
+
+    FIXME("(%p, %u, %u, %s, %p): stub\n", This, list_type, item_count, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IApplicationDocumentListsVtbl ApplicationDocumentListsVtbl =
+{
+    ApplicationDocumentLists_QueryInterface,
+    ApplicationDocumentLists_AddRef,
+    ApplicationDocumentLists_Release,
+    ApplicationDocumentLists_SetAppID,
+    ApplicationDocumentLists_GetList
+};
+
+HRESULT WINAPI ApplicationDocumentLists_Constructor(IUnknown *outer, REFIID riid, LPVOID *ppv)
+{
+    IApplicationDocumentListsImpl *This;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(riid), ppv);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if (!(This = SHAlloc(sizeof(*This))))
+        return E_OUTOFMEMORY;
+
+    This->IApplicationDocumentLists_iface.lpVtbl = &ApplicationDocumentListsVtbl;
+    This->ref = 0;
+
+    hr = IUnknown_QueryInterface(&This->IApplicationDocumentLists_iface, riid, ppv);
+    if (FAILED(hr))
+        SHFree(This);
+
+    return hr;
+}
+
+typedef struct
+{
     const KNOWNFOLDERID *id;
     CSIDL_Type type;
     LPCWSTR    szValueName;

@@ -75,6 +75,12 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
 ] coclass ApplicationDestinations { interface IApplicationDestinations; }
 
 [
+    helpstring("Application Document List"),
+    threading(apartment),
+    uuid(86bec222-30f2-47e0-9f25-60d11cd75c28)
+] coclass ApplicationDocumentLists { interface IApplicationDocumentLists; }
+
+[
     helpstring("Shell Drag and Drop Helper"),
     threading(apartment),
     uuid(4657278a-411b-11d2-839a-00c04fd918d0)
