@@ -203,7 +203,7 @@ HRESULT WINAPI AVIFileOpenA(PAVIFILE *ppfile, LPCSTR szFile, UINT uMode,
   if (ppfile == NULL || szFile == NULL)
     return AVIERR_BADPARAM;
 
-  /* convert ASCII string to Unicode and call unicode function */
+  /* convert the ANSI string to Unicode and call the Unicode function */
   len = MultiByteToWideChar(CP_ACP, 0, szFile, -1, NULL, 0);
   if (len <= 0)
     return AVIERR_BADPARAM;
@@ -1515,7 +1515,7 @@ HRESULT WINAPI AVISaveVA(LPCSTR szFile, CLSID *pclsidHandler,
   if (szFile == NULL || ppavi == NULL || plpOptions == NULL)
     return AVIERR_BADPARAM;
 
-  /* convert ASCII string to Unicode and call Unicode function */
+  /* convert the ANSI string to Unicode and call the Unicode function */
   len = MultiByteToWideChar(CP_ACP, 0, szFile, -1, NULL, 0);
   if (len <= 0)
     return AVIERR_BADPARAM;
