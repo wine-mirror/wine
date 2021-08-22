@@ -94,7 +94,7 @@ static void add_usb_device(libusb_device *libusb_device)
     DEVICE_OBJECT *device_obj;
     UNICODE_STRING string;
     NTSTATUS status;
-    WCHAR name[20];
+    WCHAR name[26];
     int ret;
 
     libusb_get_device_descriptor(libusb_device, &device_desc);
