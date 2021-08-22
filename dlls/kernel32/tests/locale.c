@@ -165,6 +165,29 @@ static void InitFunctionPointers(void)
 #define EXPECT_EQA ok(strncmp(buffer, Expected, strlen(Expected)) == 0, \
   "Expected '%s', got '%s'\n", Expected, buffer)
 
+#define expect_str(r,s,e) expect_str_(__LINE__, r, s, e)
+static void expect_str_(int line, int ret, const char *str, const char *expected)
+{
+  if (ret)
+  {
+    ok_(__FILE__, line)(GetLastError() == 0xdeadbeef, "unexpected gle %u\n", GetLastError());
+    ok_(__FILE__, line)(ret == strlen(expected) + 1, "Expected ret %d, got %d\n", strlen(expected) + 1, ret);
+    if (str)
+      ok_(__FILE__, line)(strcmp(str, expected) == 0, "Expected '%s', got '%s'\n", expected, str);
+  }
+  else
+    ok_(__FILE__, line)(0, "expected success, got error %d\n", GetLastError());
+}
+
+#define expect_err(r,s,e) expect_err_(__LINE__, r, s, e, #e)
+static void expect_err_(int line, int ret, const char *str, DWORD err, const char* err_name)
+{
+  ok_(__FILE__, line)(!ret && GetLastError() == err,
+      "Expected %s, got %d and ret=%d\n", err_name, GetLastError(), ret);
+  if (str)
+    ok_(__FILE__, line)(strcmp(str, "pristine") == 0, "Expected a pristine buffer, got '%s'\n", str);
+}
+
 #define STRINGSW(x,y) MultiByteToWideChar(CP_ACP,0,x,-1,input,ARRAY_SIZE(input)); \
    MultiByteToWideChar(CP_ACP,0,y,-1,Expected,ARRAY_SIZE(Expected)); \
    SetLastError(0xdeadbeef); buffer[0] = '\0'
@@ -436,117 +459,104 @@ static void test_GetTimeFormatA(void)
   int ret;
   SYSTEMTIME  curtime;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
-  char buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  char buffer[BUFFER_SIZE];
 
-  memset(&curtime, 2, sizeof(SYSTEMTIME));
-  STRINGSA("tt HH':'mm'@'ss", ""); /* Invalid time */
   SetLastError(0xdeadbeef);
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
+  /* Invalid time */
+  memset(&curtime, 2, sizeof(SYSTEMTIME));
+  strcpy(buffer, "pristine");
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "tt HH':'mm'@'ss", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Valid time */
   curtime.wHour = 8;
   curtime.wMinute = 56;
   curtime.wSecond = 13;
   curtime.wMilliseconds = 22;
-  STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Valid time */
-  SetLastError(0xdeadbeef);
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "tt HH':'mm'@'ss", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "AM 08:56@13");
 
   /* MSDN: LOCALE_NOUSEROVERRIDE can't be specified with a format string */
+  strcpy(buffer, "pristine");
+  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, "HH", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
-  STRINGSA("tt HH':'mm'@'ss", "A"); /* Insufficient buffer */
+  /* Insufficient buffer */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, " HH", buffer, 2);
+  /* The content of the buffer depends on implementation details:
+   * it may be " ristine" or " 0ristine" or unchanged and cannot be relied on.
+   */
+  expect_err(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
   SetLastError(0xdeadbeef);
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
-  ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-      "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
-  STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Calculate length only */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, NULL, 0);
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA;
+  /* Calculate length only */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "tt HH':'mm'@'ss", NULL, 0);
+  expect_str(ret, NULL, "AM 08:56@13");
 
-  STRINGSA("", "8 AM"); /* TIME_NOMINUTESORSECONDS, default format */
+  /* TIME_NOMINUTESORSECONDS, default format */
   ret = GetTimeFormatA(lcid, NUO|TIME_NOMINUTESORSECONDS, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  expect_str(ret, buffer, "8 AM");
 
-  STRINGSA("m1s2m3s4", ""); /* TIME_NOMINUTESORSECONDS/complex format */
-  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* TIME_NOMINUTESORSECONDS/complex format */
+  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, "m1s2m3s4", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "");
 
-  STRINGSA("", "8:56 AM"); /* TIME_NOSECONDS/Default format */
+  /* TIME_NOSECONDS/Default format */
   ret = GetTimeFormatA(lcid, NUO|TIME_NOSECONDS, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  expect_str(ret, buffer, "8:56 AM");
 
-  STRINGSA("h:m:s tt", "8:56 AM"); /* TIME_NOSECONDS */
-  strcpy(Expected, "8:56 AM");
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* TIME_NOSECONDS */
+  strcpy(buffer, "pristine"); /* clear previous identical result */
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "h:m:s tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "8:56 AM");
 
-  STRINGSA("h.@:m.@:s.@:tt", "8.@:56AM"); /* Multiple delimiters */
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* Multiple delimiters */
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "h.@:m.@:s.@:tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "8.@:56AM");
 
-  STRINGSA("s1s2s3", ""); /* Duplicate tokens */
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* Duplicate tokens */
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "s1s2s3", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "");
 
-  STRINGSA("t/tt", "A/AM"); /* AM time marker */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* AM time marker */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "t/tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "A/AM");
 
+  /* PM time marker */
   curtime.wHour = 13;
-  STRINGSA("t/tt", "P/PM"); /* PM time marker */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetTimeFormatA(lcid, 0, &curtime, "t/tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "P/PM");
 
-  STRINGSA("h1t2tt3m", "156"); /* TIME_NOTIMEMARKER: removes text around time marker token */
-  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* TIME_NOTIMEMARKER: removes text around time marker token */
+  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, "h1t2tt3m", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "156");
 
-  STRINGSA("h:m:s tt", "13:56:13 PM"); /* TIME_FORCE24HOURFORMAT */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* TIME_FORCE24HOURFORMAT */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "13:56:13 PM");
 
-  STRINGSA("h:m:s", "13:56:13"); /* TIME_FORCE24HOURFORMAT doesn't add time marker */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* TIME_FORCE24HOURFORMAT doesn't add time marker */
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "13:56:13");
 
+  /* 24 hrs, leading 0 */
   curtime.wHour = 14; /* change this to 14 or 2pm */
   curtime.wMinute = 5;
   curtime.wSecond = 3;
-  STRINGSA("h hh H HH m mm s ss t tt", "2 02 14 14 5 05 3 03 P PM"); /* 24 hrs, leading 0 */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h hh H HH m mm s ss t tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2 02 14 14 5 05 3 03 P PM");
 
+  /* "hh" and "HH" */
   curtime.wHour = 0;
-  STRINGSA("h/H/hh/HH", "12/0/12/00"); /* "hh" and "HH" */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h/H/hh/HH", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "12/0/12/00");
 
-  STRINGSA("h:m:s tt", "12:5:3 AM"); /* non-zero flags should fail with format, doesn't */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* non-zero flags should fail with format, doesn't */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h:m:s tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "12:5:3 AM");
 
   /* try to convert formatting strings with more than two letters
    * "h:hh:hhh:H:HH:HHH:m:mm:mmm:M:MM:MMM:s:ss:sss:S:SS:SSS"
@@ -558,69 +568,57 @@ static void test_GetTimeFormatA(void)
   curtime.wMinute = 56;
   curtime.wSecond = 13;
   curtime.wMilliseconds = 22;
-  STRINGSA("h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS",
-           "8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
 
-  STRINGSA("h", "text"); /* Don't write to buffer if len is 0 */
-  strcpy(buffer, "text");
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, 0);
-  ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  /* Don't write to buffer if len is 0 */
+  strcpy(buffer, "pristine");
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h:mm", buffer, 0);
+  expect_str(ret, NULL, "8:56");
+  ok(strcmp(buffer, "pristine") == 0, "Expected a pristine buffer, got '%s'\n", buffer);
 
-  STRINGSA("h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'",
-           "8 h 8 H 08 HH 56 m 13 s A t AM tt"); /* "'" preserves tokens */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* "'" preserves tokens */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "8 h 8 H 08 HH 56 m 13 s A t AM tt");
 
-  STRINGSA("'''", "'"); /* invalid quoted string */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* invalid quoted string */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'''", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "'");
 
-  /* test that msdn suggested single quotation usage works as expected */
-  STRINGSA("''''", "'"); /* single quote mark */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* check that MSDN's suggested single quotation usage works as expected */
+  strcpy(buffer, "pristine"); /* clear previous identical result */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "''''", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "'");
 
-  STRINGSA("''HHHHHH", "08"); /* Normal use */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* Normal use */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "''HHHHHH", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "08");
 
   /* and test for normal use of the single quotation mark */
-  STRINGSA("'''HHHHHH'", "'HHHHHH"); /* Normal use */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'''HHHHHH'", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "'HHHHHH");
 
-  STRINGSA("'''HHHHHH", "'HHHHHH"); /* Odd use */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* Odd use */
+  strcpy(buffer, "pristine"); /* clear previous identical result */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'''HHHHHH", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "'HHHHHH");
 
-  STRINGSA("'123'tt", ""); /* TIME_NOTIMEMARKER drops literals too */
-  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* TIME_NOTIMEMARKER drops literals too */
+  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, "'123'tt", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "");
 
+  /* Invalid time */
   curtime.wHour = 25;
-  STRINGSA("'123'tt", ""); /* Invalid time */
+  strcpy(buffer, "pristine");
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'123'tt", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
   SetLastError(0xdeadbeef);
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
+  /* Invalid date */
   curtime.wHour = 12;
-  curtime.wMonth = 60; /* Invalid */
-  STRINGSA("h:m:s", "12:56:13"); /* Invalid date */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  curtime.wMonth = 60;
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h:m:s", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "12:56:13");
 }
 
 static void test_GetTimeFormatEx(void)
