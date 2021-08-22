@@ -1903,9 +1903,13 @@ static void test_CompareStringA(void)
 
     ret = lstrcmpA(NULL, "");
     ok (ret == -1 || broken(ret == -2) /* win9x */, "lstrcmpA(NULL, \"\") should return -1, got %d\n", ret);
- 
 
-    if (0) { /* this requires collation table patch to make it MS compatible */
+
+    /* this requires collation table patch to make it MS compatible */
+    if (strcmp(winetest_platform, "wine") == 0)
+        skip("in Wine due to the lack of a compatible collation table\n");
+    else
+    {
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "-o", -1 );
     ok(ret == CSTR_LESS_THAN, "'o vs -o expected CSTR_LESS_THAN, got %d\n", ret);
 
