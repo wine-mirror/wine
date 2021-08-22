@@ -479,9 +479,8 @@ static void test_GetTimeFormatA(void)
 
   STRINGSA("m1s2m3s4", ""); /* TIME_NOMINUTESORSECONDS/complex format */
   ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == strlen(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok( !strcmp( buffer, "" ) || broken( !strcmp( buffer, "4" )), /* win9x */
-      "Expected '', got '%s'\n", buffer );
+  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("", "8:56 AM"); /* TIME_NOSECONDS/Default format */
   ret = GetTimeFormatA(lcid, NUO|TIME_NOSECONDS, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
@@ -497,14 +496,12 @@ static void test_GetTimeFormatA(void)
   STRINGSA("h.@:m.@:s.@:tt", "8.@:56AM"); /* Multiple delimiters */
   ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok( !strcmp( buffer, "8.@:56AM" ) || broken( !strcmp( buffer, "8.@:56.@:AM" )) /* win9x */,
-      "Expected '8.@:56AM', got '%s'\n", buffer );
+  EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("s1s2s3", ""); /* Duplicate tokens */
   ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == strlen(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok( !strcmp( buffer, "" ) || broken( !strcmp( buffer, "3" )), /* win9x */
-      "Expected '', got '%s'\n", buffer );
+  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("t/tt", "A/AM"); /* AM time marker */
   ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
@@ -829,7 +826,6 @@ static void test_GetDateFormatA(void)
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
   char buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
-  char Broken[BUFFER_SIZE];
   char short_day[10], month[10], genitive_month[10];
 
   memset(&curtime, 2, sizeof(SYSTEMTIME)); /* Invalid time */
@@ -947,21 +943,15 @@ static void test_GetDateFormatA(void)
 
   STRINGSA("MMMMdd", "");
   sprintf(Expected, "%s04", genitive_month);
-  sprintf(Broken, "%s04", month);
   ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
-     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
-     "Expected '%s', got '%s'\n", Expected, buffer);
+  EXPECT_EQA;
 
   STRINGSA("MMMMdd ddd", "");
   sprintf(Expected, "%s04 %s", genitive_month, short_day);
-  sprintf(Broken, "%s04 %s", month, short_day);
   ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
-     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
-     "Expected '%s', got '%s'\n", Expected, buffer);
+  EXPECT_EQA;
 
   STRINGSA("dd dddMMMM", "");
   sprintf(Expected, "04 %s%s", short_day, month);
@@ -971,22 +961,16 @@ static void test_GetDateFormatA(void)
 
   STRINGSA("dd dddMMMM ddd MMMMdd", "");
   sprintf(Expected, "04 %s%s %s %s04", short_day, month, short_day, genitive_month);
-  sprintf(Broken, "04 %s%s %s %s04", short_day, month, short_day, month);
   ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
-     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
-     "Expected '%s', got '%s'\n", Expected, buffer);
+  EXPECT_EQA;
 
   /* with literal part */
   STRINGSA("ddd',' MMMM dd", "");
   sprintf(Expected, "%s, %s 04", short_day, genitive_month);
-  sprintf(Broken, "%s, %s 04", short_day, month);
   ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  ok(strncmp(buffer, Expected, strlen(Expected)) == 0 ||
-     broken(strncmp(buffer, Broken, strlen(Broken)) == 0) /* nt4 */,
-     "Expected '%s', got '%s'\n", Expected, buffer);
+  EXPECT_EQA;
 }
 
 static void test_GetDateFormatEx(void)
@@ -1221,7 +1205,7 @@ static void test_GetCurrencyFormatA(void)
   SetLastError(0xdeadbeef);
   ret = GetCurrencyFormatA(lcid, NUO, input, &format, buffer, ARRAY_SIZE(buffer));
   ok( !ret, "Expected ret == 0, got %d\n", ret);
-  ok( GetLastError() == ERROR_INVALID_FLAGS || GetLastError() == ERROR_INVALID_PARAMETER,
+  ok( GetLastError() == ERROR_INVALID_FLAGS,
       "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
   STRINGSA("2353",""); /* Invalid format --> Error */
@@ -1477,7 +1461,7 @@ static void test_GetNumberFormatA(void)
   SetLastError(0xdeadbeef);
   ret = GetNumberFormatA(lcid, NUO, input, &format, buffer, ARRAY_SIZE(buffer));
   ok( !ret, "Expected ret == 0, got %d\n", ret);
-  ok( GetLastError() == ERROR_INVALID_FLAGS || GetLastError() == ERROR_INVALID_PARAMETER,
+  ok( GetLastError() == ERROR_INVALID_FLAGS,
       "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
   STRINGSA("2353",""); /* Invalid format --> Error */
@@ -1662,7 +1646,7 @@ static void test_GetNumberFormatEx(void)
   STRINGSW("2353",""); /* Format and flags given --> Error */
   ret = pGetNumberFormatEx(enW, NUO, input, &format, buffer, ARRAY_SIZE(buffer));
   ok( !ret, "Expected ret == 0, got %d\n", ret);
-  ok( GetLastError() == ERROR_INVALID_FLAGS || GetLastError() == ERROR_INVALID_PARAMETER,
+  ok( GetLastError() == ERROR_INVALID_FLAGS,
       "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
   STRINGSW("2353",""); /* Invalid format --> Error */
