@@ -40,12 +40,12 @@ typedef struct
     void (*set_feature_report)(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
 } platform_vtbl;
 
-void *get_platform_private(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
+struct unix_device *get_unix_device(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 
 /* HID Plug and Play Bus */
-DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
-                                     WORD input, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
-                                     const platform_vtbl *vtbl, DWORD platform_data_size) DECLSPEC_HIDDEN;
+DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WORD input,
+                                     DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
+                                     const platform_vtbl *vtbl, struct unix_device *unix_device) DECLSPEC_HIDDEN;
 DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev) DECLSPEC_HIDDEN;
 void bus_unlink_hid_device(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length) DECLSPEC_HIDDEN;

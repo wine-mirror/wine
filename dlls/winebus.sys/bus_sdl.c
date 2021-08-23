@@ -110,6 +110,8 @@ static Uint16 (*pSDL_JoystickGetVendor)(SDL_Joystick * joystick);
 
 struct platform_private
 {
+    struct unix_device unix_device;
+
     SDL_Joystick *sdl_joystick;
     SDL_GameController *sdl_controller;
     SDL_JoystickID id;
@@ -128,9 +130,14 @@ struct platform_private
     int haptic_effect_id;
 };
 
+static inline struct platform_private *impl_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(iface, struct platform_private, unix_device);
+}
+
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
-    return (struct platform_private *)get_platform_private(device);
+    return impl_from_unix_device(get_unix_device(device));
 }
 
 #define CONTROLLER_NUM_BUTTONS 11
@@ -479,6 +486,8 @@ static void free_device(DEVICE_OBJECT *device)
         pSDL_GameControllerClose(ext->sdl_controller);
     if (ext->sdl_haptic)
         pSDL_HapticClose(ext->sdl_haptic);
+
+    HeapFree(GetProcessHeap(), 0, ext);
 }
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *context)
@@ -730,6 +739,7 @@ static void try_remove_device(DEVICE_OBJECT *device)
 static void try_add_device(unsigned int index)
 {
     DWORD vid = 0, pid = 0, version = 0;
+    struct platform_private *private;
     DEVICE_OBJECT *device = NULL;
     WCHAR serial[34] = {0};
     char guid_str[34];
@@ -788,20 +798,17 @@ static void try_add_device(unsigned int index)
     if (is_xbox_gamepad)
         input = 0;
 
-    device = bus_create_hid_device(sdl_busidW, vid, pid, input, version, index,
-            serial, is_xbox_gamepad, &sdl_vtbl, sizeof(struct platform_private));
+    if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private)))) return;
 
-    if (device)
+    device = bus_create_hid_device(sdl_busidW, vid, pid, input, version, index, serial, is_xbox_gamepad,
+                                   &sdl_vtbl, &private->unix_device);
+    if (!device) HeapFree(GetProcessHeap(), 0, private);
+    else
     {
-        struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->sdl_joystick = joystick;
         private->sdl_controller = controller;
         private->id = id;
         IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-    }
-    else
-    {
-        WARN("Ignoring device %i\n", id);
     }
 }
 

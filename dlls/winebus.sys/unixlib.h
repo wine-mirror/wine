@@ -44,6 +44,8 @@ struct iohid_bus_options
 {
 };
 
+struct unix_device;
+
 enum unix_funcs
 {
     sdl_init,

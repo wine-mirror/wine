@@ -99,6 +99,8 @@ static struct udev_bus_options options;
 
 struct platform_private
 {
+    struct unix_device unix_device;
+
     struct udev_device *udev_device;
     int device_fd;
 
@@ -106,9 +108,14 @@ struct platform_private
     int control_pipe[2];
 };
 
+static inline struct platform_private *impl_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(iface, struct platform_private, unix_device);
+}
+
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
-    return (struct platform_private *)get_platform_private(device);
+    return impl_from_unix_device(get_unix_device(device));
 }
 
 #ifdef HAS_PROPER_INPUT_HEADER
@@ -550,6 +557,8 @@ static void hidraw_free_device(DEVICE_OBJECT *device)
 
     close(private->device_fd);
     udev_device_unref(private->udev_device);
+
+    HeapFree(GetProcessHeap(), 0, private);
 }
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
@@ -833,7 +842,7 @@ static const platform_vtbl hidraw_vtbl =
 
 static inline struct wine_input_private *input_impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
-    return (struct wine_input_private*)get_platform_private(device);
+    return CONTAINING_RECORD(impl_from_DEVICE_OBJECT(device), struct wine_input_private, base);
 }
 
 static void lnxev_free_device(DEVICE_OBJECT *device)
@@ -855,6 +864,8 @@ static void lnxev_free_device(DEVICE_OBJECT *device)
 
     close(ext->base.device_fd);
     udev_device_unref(ext->base.udev_device);
+
+    HeapFree(GetProcessHeap(), 0, ext);
 }
 
 static DWORD CALLBACK lnxev_device_report_thread(void *args);
@@ -1050,6 +1061,7 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0, input = -1;
+    struct platform_private *private;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
@@ -1127,20 +1139,25 @@ static void try_add_device(struct udev_device *dev)
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        device = bus_create_hid_device(hidraw_busidW, vid, pid, input, version, 0, serial, is_gamepad,
-                                       &hidraw_vtbl, sizeof(struct platform_private));
+        if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
+            return;
+        device = bus_create_hid_device(hidraw_busidW, vid, pid, input, version, 0, serial,
+                                       is_gamepad, &hidraw_vtbl, &private->unix_device);
+        if (!device) HeapFree(GetProcessHeap(), 0, private);
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
-        device = bus_create_hid_device(lnxev_busidW, vid, pid, input, version, 0, serial, is_gamepad,
-                                       &lnxev_vtbl, sizeof(struct wine_input_private));
+        if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct wine_input_private))))
+            return;
+        device = bus_create_hid_device(lnxev_busidW, vid, pid, input, version, 0, serial,
+                                       is_gamepad, &lnxev_vtbl, &private->unix_device);
+        if (!device) HeapFree(GetProcessHeap(), 0, private);
     }
 #endif
 
     if (device)
     {
-        struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->udev_device = udev_device_ref(dev);
         private->device_fd = fd;
         IoInvalidateDeviceRelations(bus_pdo, BusRelations);

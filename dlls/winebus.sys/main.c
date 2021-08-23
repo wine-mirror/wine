@@ -139,7 +139,7 @@ struct device_extension
     DWORD buffer_size;
     LIST_ENTRY irp_queue;
 
-    BYTE platform_private[1];
+    struct unix_device *unix_device;
 };
 
 static CRITICAL_SECTION device_list_cs;
@@ -171,10 +171,10 @@ static inline WCHAR *strdupW(const WCHAR *src)
     return dst;
 }
 
-void *get_platform_private(DEVICE_OBJECT *device)
+struct unix_device *get_unix_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    return ext->platform_private;
+    return ext->unix_device;
 }
 
 static DWORD get_device_index(WORD vid, WORD pid, WORD input)
@@ -260,9 +260,9 @@ static void remove_pending_irps(DEVICE_OBJECT *device)
     }
 }
 
-DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
-                                     WORD input, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
-                                     const platform_vtbl *vtbl, DWORD platform_data_size)
+DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WORD input,
+                                     DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
+                                     const platform_vtbl *vtbl, struct unix_device *unix_device)
 {
     static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e','\\','%','s','#','%','p',0};
     struct device_extension *ext;
@@ -271,19 +271,17 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
     UNICODE_STRING nameW;
     WCHAR dev_name[256];
     NTSTATUS status;
-    DWORD length;
 
-    TRACE("(%s, %04x, %04x, %04x, %u, %u, %s, %u, %p, %u)\n",
-            debugstr_w(busidW), vid, pid, input, version, uid, debugstr_w(serialW),
-            is_gamepad, vtbl, platform_data_size);
+    TRACE("bus_id %s, vid %04x, pid %04x, input %04x, version %u, uid %u, serial %s, "
+          "is_gamepad %u, vtbl %p, unix_device %p\n", debugstr_w(busidW), vid, pid, input,
+           version, uid, debugstr_w(serialW), is_gamepad, vtbl, unix_device);
 
     if (!(pnp_dev = HeapAlloc(GetProcessHeap(), 0, sizeof(*pnp_dev))))
         return NULL;
 
     sprintfW(dev_name, device_name_fmtW, busidW, pnp_dev);
     RtlInitUnicodeString(&nameW, dev_name);
-    length = FIELD_OFFSET(struct device_extension, platform_private[platform_data_size]);
-    status = IoCreateDevice(driver_obj, length, &nameW, 0, 0, FALSE, &device);
+    status = IoCreateDevice(driver_obj, sizeof(struct device_extension), &nameW, 0, 0, FALSE, &device);
     if (status)
     {
         FIXME("failed to create device error %x\n", status);
@@ -310,8 +308,7 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
     ext->last_report_size   = 0;
     ext->last_report_read   = TRUE;
     ext->buffer_size        = 0;
-
-    memset(ext->platform_private, 0, platform_data_size);
+    ext->unix_device        = unix_device;
 
     InitializeListHead(&ext->irp_queue);
     InitializeCriticalSection(&ext->cs);

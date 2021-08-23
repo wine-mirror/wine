@@ -103,13 +103,19 @@ static struct iohid_bus_options options;
 
 struct platform_private
 {
+    struct unix_device unix_device;
     IOHIDDeviceRef device;
     uint8_t *buffer;
 };
 
+static inline struct platform_private *impl_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(iface, struct platform_private, unix_device);
+}
+
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
-    return (struct platform_private *)get_platform_private(device);
+    return impl_from_unix_device(get_unix_device(device));
 }
 
 static void CFStringToWSTR(CFStringRef cstr, LPWSTR wstr, int length)
@@ -137,6 +143,8 @@ static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
 
 static void free_device(DEVICE_OBJECT *device)
 {
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    HeapFree(GetProcessHeap(), 0, private);
 }
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
@@ -285,6 +293,7 @@ static const platform_vtbl iohid_vtbl =
 
 static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
 {
+    struct platform_private *private;
     DEVICE_OBJECT *device;
     DWORD vid, pid, version, uid;
     CFStringRef str = NULL;
@@ -355,14 +364,14 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     if (is_gamepad)
         input = 0;
 
-    device = bus_create_hid_device(busidW, vid, pid, input,
-            version, uid, str ? serial_string : NULL, is_gamepad,
-            &iohid_vtbl, sizeof(struct platform_private));
-    if (!device)
-        ERR("Failed to create device\n");
+    if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
+        return;
+
+    device = bus_create_hid_device(busidW, vid, pid, input, version, uid, str ? serial_string : NULL,
+                                   is_gamepad, &iohid_vtbl, &private->unix_device);
+    if (!device) HeapFree(GetProcessHeap(), 0, private);
     else
     {
-        struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->device = IOHIDDevice;
         private->buffer = NULL;
         IoInvalidateDeviceRelations(bus_pdo, BusRelations);

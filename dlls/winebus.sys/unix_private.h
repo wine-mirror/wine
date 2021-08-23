@@ -27,6 +27,10 @@
 
 #include "unixlib.h"
 
+struct unix_device
+{
+};
+
 extern NTSTATUS sdl_bus_init(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS sdl_bus_wait(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS sdl_bus_stop(void *) DECLSPEC_HIDDEN;
