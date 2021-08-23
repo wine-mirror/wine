@@ -166,19 +166,6 @@ BOOL EMFDC_AlphaBlend( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, IN
                               width_src, height_src, *(DWORD *)&blend_function, EMR_ALPHABLEND );
 }
 
-BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
-                              PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
-{
-    /* FIXME: update bound rect */
-    return TRUE;
-}
-
-BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
-{
-    /* FIXME: update bound rect */
-    return TRUE;
-}
-
 BOOL EMFDC_PatBlt( DC_ATTR *dc_attr, INT left, INT top, INT width, INT height, DWORD rop )
 {
     EMFDRV_PDEVICE *emf = dc_attr->emf;
@@ -240,14 +227,6 @@ BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, IN
                               height_src, rop, EMR_STRETCHBLT );
 }
 
-INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                                INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                                BITMAPINFO *info, UINT wUsage, DWORD dwRop )
-{
-    /* FIXME: Update bound rect */
-    return heightSrc;
-}
-
 BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                           INT x_src, INT y_src, INT width_src, INT height_src, const void *bits,
                           const BITMAPINFO *info, UINT usage, DWORD rop )
@@ -303,14 +282,6 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
     HeapFree(GetProcessHeap(), 0, emr);
 
     return ret;
-}
-
-INT CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
-                                    INT xSrc, INT ySrc, UINT startscan, UINT lines,
-                                    LPCVOID bits, BITMAPINFO *info, UINT wUsage )
-{
-    /* FIXME: Update bound rect */
-    return lines;
 }
 
 BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD width, DWORD height,

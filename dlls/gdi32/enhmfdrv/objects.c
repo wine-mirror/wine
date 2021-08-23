@@ -95,15 +95,6 @@ void EMFDC_DeleteObject( HDC hdc, HGDIOBJ obj )
 
 
 /***********************************************************************
- *           EMFDRV_SelectBitmap
- */
-HBITMAP CDECL EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
-{
-    return 0;
-}
-
-
-/***********************************************************************
  *           EMFDRV_CreateBrushIndirect
  */
 DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
@@ -269,16 +260,6 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
     return index;
 }
 
-
-/***********************************************************************
- *           EMFDRV_SelectFont
- */
-HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
-{
-    *aa_flags = GGO_BITMAP;  /* no point in anti-aliasing on metafiles */
-    dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
-    return dev->funcs->pSelectFont( dev, hFont, aa_flags );
-}
 
 /***********************************************************************
  *           EMFDC_SelectFont

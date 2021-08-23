@@ -403,12 +403,3 @@ BOOL EMFDC_WidenPath( DC_ATTR *dc_attr )
     emr.emr.nSize = sizeof(emr);
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
-
-INT CDECL EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
-{
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-
-    if (cap >= 0 && cap < ARRAY_SIZE( physDev->dev_caps ))
-        return physDev->dev_caps[cap];
-    return 0;
-}
