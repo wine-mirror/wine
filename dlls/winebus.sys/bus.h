@@ -28,14 +28,16 @@
 typedef int(*enum_func)(DEVICE_OBJECT *device, void *context);
 
 /* Buses */
-NTSTATUS udev_driver_init(void) DECLSPEC_HIDDEN;
 NTSTATUS iohid_driver_init(void) DECLSPEC_HIDDEN;
-void udev_driver_unload( void ) DECLSPEC_HIDDEN;
 void iohid_driver_unload( void ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS sdl_bus_init(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS sdl_bus_wait(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS sdl_bus_stop(void *) DECLSPEC_HIDDEN;
+
+extern NTSTATUS udev_bus_init(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS udev_bus_wait(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS udev_bus_stop(void *) DECLSPEC_HIDDEN;
 
 /* Native device function table */
 typedef struct

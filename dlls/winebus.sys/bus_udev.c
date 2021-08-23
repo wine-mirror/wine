@@ -88,10 +88,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static struct udev *udev_context = NULL;
+static struct udev_monitor *udev_monitor;
 static DWORD disable_hidraw = 0;
 static DWORD disable_input = 0;
-static HANDLE deviceloop_handle;
 static int deviceloop_control[2];
+static int udev_monitor_fd;
 
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
@@ -1210,7 +1211,7 @@ static void build_initial_deviceset(void)
     udev_enumerate_unref(enumerate);
 }
 
-static struct udev_monitor *create_monitor(struct pollfd *pfd)
+static struct udev_monitor *create_monitor(int *fd)
 {
     struct udev_monitor *monitor;
     int systems = 0;
@@ -1247,11 +1248,8 @@ static struct udev_monitor *create_monitor(struct pollfd *pfd)
     if (udev_monitor_enable_receiving(monitor) < 0)
         goto error;
 
-    if ((pfd->fd = udev_monitor_get_fd(monitor)) >= 0)
-    {
-        pfd->events = POLLIN;
+    if ((*fd = udev_monitor_get_fd(monitor)) >= 0)
         return monitor;
-    }
 
 error:
     WARN("Failed to start monitoring\n");
@@ -1287,51 +1285,8 @@ static void process_monitor_event(struct udev_monitor *monitor)
     udev_device_unref(dev);
 }
 
-static DWORD CALLBACK deviceloop_thread(void *args)
+NTSTATUS udev_bus_init(void *args)
 {
-    struct udev_monitor *monitor;
-    HANDLE init_done = args;
-    struct pollfd pfd[2];
-
-    pfd[1].fd = deviceloop_control[0];
-    pfd[1].events = POLLIN;
-    pfd[1].revents = 0;
-
-    monitor = create_monitor(&pfd[0]);
-    build_initial_deviceset();
-    SetEvent(init_done);
-
-    while (monitor)
-    {
-        if (poll(pfd, 2, -1) <= 0) continue;
-        if (pfd[1].revents) break;
-        process_monitor_event(monitor);
-    }
-
-    TRACE("Monitor thread exiting\n");
-    if (monitor)
-        udev_monitor_unref(monitor);
-    return 0;
-}
-
-void udev_driver_unload( void )
-{
-    TRACE("Unload Driver\n");
-
-    if (!deviceloop_handle)
-        return;
-
-    write(deviceloop_control[1], "q", 1);
-    WaitForSingleObject(deviceloop_handle, INFINITE);
-    close(deviceloop_control[0]);
-    close(deviceloop_control[1]);
-    CloseHandle(deviceloop_handle);
-}
-
-NTSTATUS udev_driver_init(void)
-{
-    HANDLE events[2];
-    DWORD result;
     static const WCHAR hidraw_disabledW[] = {'D','i','s','a','b','l','e','H','i','d','r','a','w',0};
     static const UNICODE_STRING hidraw_disabled = {sizeof(hidraw_disabledW) - sizeof(WCHAR), sizeof(hidraw_disabledW), (WCHAR*)hidraw_disabledW};
     static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
@@ -1339,13 +1294,13 @@ NTSTATUS udev_driver_init(void)
 
     if (pipe(deviceloop_control) != 0)
     {
-        ERR("Control pipe creation failed\n");
+        ERR("UDEV control pipe creation failed\n");
         return STATUS_UNSUCCESSFUL;
     }
 
     if (!(udev_context = udev_new()))
     {
-        ERR("Can't create udev object\n");
+        ERR("UDEV object creation failed\n");
         goto error;
     }
 
@@ -1359,46 +1314,75 @@ NTSTATUS udev_driver_init(void)
         TRACE("UDEV input devices disabled in registry\n");
 #endif
 
-    if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
-        goto error;
-    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, events[0], 0, NULL)))
+    if (!(udev_monitor = create_monitor(&udev_monitor_fd)))
     {
-        CloseHandle(events[0]);
+        ERR("UDEV monitor creation failed\n");
         goto error;
     }
 
-    result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
-    CloseHandle(events[0]);
-    if (result == WAIT_OBJECT_0)
-    {
-        deviceloop_handle = events[1];
-        TRACE("Initialization successful\n");
-        return STATUS_SUCCESS;
-    }
-    CloseHandle(events[1]);
+    build_initial_deviceset();
+    return STATUS_SUCCESS;
 
 error:
-    ERR("Failed to initialize udev device thread\n");
+    if (udev_context) udev_unref(udev_context);
+    udev_context = NULL;
     close(deviceloop_control[0]);
     close(deviceloop_control[1]);
-    if (udev_context)
-    {
-        udev_unref(udev_context);
-        udev_context = NULL;
-    }
     return STATUS_UNSUCCESSFUL;
+}
+
+NTSTATUS udev_bus_wait(void *args)
+{
+    struct pollfd pfd[2];
+
+    pfd[0].fd = udev_monitor_fd;
+    pfd[0].events = POLLIN;
+    pfd[0].revents = 0;
+    pfd[1].fd = deviceloop_control[0];
+    pfd[1].events = POLLIN;
+    pfd[1].revents = 0;
+
+    while (1)
+    {
+        if (poll(pfd, 2, -1) <= 0) continue;
+        if (pfd[1].revents) break;
+        process_monitor_event(udev_monitor);
+    }
+
+    TRACE("UDEV main loop exiting\n");
+    udev_monitor_unref(udev_monitor);
+    udev_unref(udev_context);
+    udev_context = NULL;
+    close(deviceloop_control[0]);
+    close(deviceloop_control[1]);
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS udev_bus_stop(void *args)
+{
+    if (!udev_context) return STATUS_SUCCESS;
+    write(deviceloop_control[1], "q", 1);
+    return STATUS_SUCCESS;
 }
 
 #else
 
-NTSTATUS udev_driver_init(void)
+NTSTATUS udev_bus_init(void *args)
 {
+    WARN("UDEV support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-void udev_driver_unload( void )
+NTSTATUS udev_bus_wait(void *args)
 {
-    TRACE("Stub: Unload Driver\n");
+    WARN("UDEV support not compiled in!\n");
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS udev_bus_stop(void *args)
+{
+    WARN("UDEV support not compiled in!\n");
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 #endif /* HAVE_UDEV */

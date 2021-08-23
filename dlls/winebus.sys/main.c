@@ -686,6 +686,19 @@ static NTSTATUS sdl_driver_init(void)
     return bus_main_thread_start(&bus);
 }
 
+static NTSTATUS udev_driver_init(void)
+{
+    static const WCHAR bus_name[] = {'U','D','E','V',0};
+    struct bus_main_params bus =
+    {
+        .name = bus_name,
+        .init_func = udev_bus_init,
+        .wait_func = udev_bus_wait,
+    };
+
+    return bus_main_thread_start(&bus);
+}
+
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
@@ -714,9 +727,9 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_REMOVE_DEVICE:
-        udev_driver_unload();
         iohid_driver_unload();
         sdl_bus_stop(NULL);
+        udev_bus_stop(NULL);
 
         WaitForMultipleObjects(bus_count, bus_thread, TRUE, INFINITE);
         while (bus_count--) CloseHandle(bus_thread[bus_count]);
