@@ -51,44 +51,41 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
  *
  * Warning: this function can change the pointer to the metafile header.
  */
-BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
+BOOL emfdc_record( struct emf *emf, EMR *emr )
 {
     DWORD len, size;
     ENHMETAHEADER *emh;
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
-    TRACE("record %d, size %d %s\n",
-          emr->iType, emr->nSize, physDev->hFile ? "(to disk)" : "");
+    TRACE( "record %d, size %d\n", emr->iType, emr->nSize );
 
     assert( !(emr->nSize & 3) );
 
-    physDev->emh->nBytes += emr->nSize;
-    physDev->emh->nRecords++;
+    emf->emh->nBytes += emr->nSize;
+    emf->emh->nRecords++;
 
-    size = HeapSize(GetProcessHeap(), 0, physDev->emh);
-    len = physDev->emh->nBytes;
-    if (len > size) {
+    size = HeapSize( GetProcessHeap(), 0, emf->emh );
+    len = emf->emh->nBytes;
+    if (len > size)
+    {
         size += (size / 2) + emr->nSize;
-        emh = HeapReAlloc(GetProcessHeap(), 0, physDev->emh, size);
+        emh = HeapReAlloc( GetProcessHeap(), 0, emf->emh, size );
         if (!emh) return FALSE;
-        physDev->emh = emh;
+        emf->emh = emh;
     }
-    memcpy((CHAR *)physDev->emh + physDev->emh->nBytes - emr->nSize, emr,
-           emr->nSize);
+    memcpy( (char *)emf->emh + emf->emh->nBytes - emr->nSize, emr, emr->nSize );
     return TRUE;
 }
 
 
 /******************************************************************
- *         EMFDRV_UpdateBBox
+ *         emfdc_update_bounds
  */
-void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
+void emfdc_update_bounds( struct emf *emf, RECTL *rect )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    RECTL *bounds = &physDev->dc_attr->emf_bounds;
+    RECTL *bounds = &emf->dc_attr->emf_bounds;
     RECTL vportRect = *rect;
 
-    LPtoDP( dev->hdc, (LPPOINT)&vportRect, 2 );
+    LPtoDP( emf->dev.hdc, (POINT *)&vportRect, 2 );
 
     /* The coordinate systems may be mirrored
        (LPtoDP handles points, not rectangles) */
@@ -274,7 +271,7 @@ HDC WINAPI CreateEnhMetaFileW(
 HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 {
     HENHMETAFILE hmf;
-    EMFDRV_PDEVICE *emf;
+    struct emf *emf;
     DC_ATTR *dc_attr;
     EMREOF emr;
     HANDLE hMapping = 0;
@@ -295,7 +292,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     emr.nPalEntries = 0;
     emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
     emr.nSizeLast = emr.emr.nSize;
-    EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    emfdc_record( emf, &emr.emr );
 
     emf->emh->rclBounds = dc_attr->emf_bounds;
 

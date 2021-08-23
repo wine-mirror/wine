@@ -31,7 +31,7 @@
 
 /* Enhanced Metafile driver physical DC */
 
-typedef struct
+typedef struct emf
 {
     struct gdi_physdev dev;
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
@@ -50,9 +50,9 @@ static inline EMFDRV_PDEVICE *get_emf_physdev( PHYSDEV dev )
     return CONTAINING_RECORD( dev, EMFDRV_PDEVICE, dev );
 }
 
-extern BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr ) DECLSPEC_HIDDEN;
-extern void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect ) DECLSPEC_HIDDEN;
-extern DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_HIDDEN;
+extern BOOL emfdc_record( struct emf *emf, EMR *emr ) DECLSPEC_HIDDEN;
+extern void emfdc_update_bounds( struct emf *emf, RECTL *rect ) DECLSPEC_HIDDEN;
+extern DWORD emfdc_create_brush( struct emf *emf, HBRUSH hBrush ) DECLSPEC_HIDDEN;
 
 #define HANDLE_LIST_INC 20
 

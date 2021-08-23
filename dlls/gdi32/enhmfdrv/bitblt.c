@@ -28,7 +28,7 @@
 #include "enhmetafiledrv.h"
 
 /* Generate an EMRBITBLT, EMRSTRETCHBLT or EMRALPHABLEND record depending on the type parameter */
-static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+static BOOL emfdrv_stretchblt( struct emf *emf, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
                                DWORD rop, DWORD type )
 {
@@ -147,8 +147,8 @@ static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, INT x_dst, INT y_dst, INT width_
                      bmi, DIB_RGB_COLORS );
     if (ret)
     {
-        ret = EMFDRV_WriteRecord( dev_dst, (EMR *)emr );
-        if (ret) EMFDRV_UpdateBBox( dev_dst, &emr->rclBounds );
+        ret = emfdc_record( emf, (EMR *)emr );
+        if (ret) emfdc_update_bounds( emf, &emr->rclBounds );
     }
 
 err:
@@ -198,9 +198,9 @@ BOOL EMFDC_PatBlt( DC_ATTR *dc_attr, INT left, INT top, INT width, INT height, D
     emr.offBitsSrc = 0;
     emr.cbBitsSrc = 0;
 
-    ret = EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    ret = emfdc_record( emf, &emr.emr );
     if(ret)
-        EMFDRV_UpdateBBox( &emf->dev, &emr.rclBounds );
+        emfdc_update_bounds( emf, &emr.rclBounds );
     return ret;
 }
 
@@ -275,9 +275,9 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
     emr->rclBounds.bottom = y_dst + height_dst;
 
     /* save the record we just created */
-    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
+    ret = emfdc_record( dc_attr->emf, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dc_attr->emf, &emr->rclBounds );
+        emfdc_update_bounds( dc_attr->emf, &emr->rclBounds );
 
     HeapFree(GetProcessHeap(), 0, emr);
 
@@ -318,8 +318,8 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
     memcpy((BYTE*)pEMR + pEMR->offBmiSrc, info, bmiSize);
     memcpy((BYTE*)pEMR + pEMR->offBitsSrc, bits, info->bmiHeader.biSizeImage);
 
-    if ((ret = EMFDRV_WriteRecord( dc_attr->emf, (EMR*)pEMR )))
-        EMFDRV_UpdateBBox( dc_attr->emf, &pEMR->rclBounds );
+    if ((ret = emfdc_record( dc_attr->emf, (EMR*)pEMR )))
+        emfdc_update_bounds( dc_attr->emf, &pEMR->rclBounds );
 
     HeapFree( GetProcessHeap(), 0, pEMR);
     return ret;

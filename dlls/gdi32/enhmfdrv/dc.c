@@ -27,7 +27,7 @@ BOOL EMFDC_SaveDC( DC_ATTR *dc_attr )
     EMRSAVEDC emr;
     emr.emr.iType = EMR_SAVEDC;
     emr.emr.nSize = sizeof(emr);
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_RestoreDC( DC_ATTR *dc_attr, INT level )
@@ -42,7 +42,7 @@ BOOL EMFDC_RestoreDC( DC_ATTR *dc_attr, INT level )
         emr.iRelative = level;
     else
         emr.iRelative = level - dc_attr->save_level - 1;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetTextAlign( DC_ATTR *dc_attr, UINT align )
@@ -51,7 +51,7 @@ BOOL EMFDC_SetTextAlign( DC_ATTR *dc_attr, UINT align )
     emr.emr.iType = EMR_SETTEXTALIGN;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = align;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetTextJustification( DC_ATTR *dc_attr, INT extra, INT breaks )
@@ -61,7 +61,7 @@ BOOL EMFDC_SetTextJustification( DC_ATTR *dc_attr, INT extra, INT breaks )
     emr.emr.nSize = sizeof(emr);
     emr.nBreakExtra = extra;
     emr.nBreakCount = breaks;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode )
@@ -70,7 +70,7 @@ BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode )
     emr.emr.iType = EMR_SETBKMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color )
@@ -80,7 +80,7 @@ BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color )
     emr.emr.iType = EMR_SETBKCOLOR;
     emr.emr.nSize = sizeof(emr);
     emr.crColor = color;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 
@@ -91,7 +91,7 @@ BOOL EMFDC_SetTextColor( DC_ATTR *dc_attr, COLORREF color )
     emr.emr.iType = EMR_SETTEXTCOLOR;
     emr.emr.nSize = sizeof(emr);
     emr.crColor = color;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )
@@ -100,7 +100,7 @@ BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )
     emr.emr.iType = EMR_SETROP2;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = rop;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode )
@@ -109,7 +109,7 @@ BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode )
     emr.emr.iType = EMR_SETPOLYFILLMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetStretchBltMode( DC_ATTR *dc_attr, INT mode )
@@ -118,7 +118,7 @@ BOOL EMFDC_SetStretchBltMode( DC_ATTR *dc_attr, INT mode )
     emr.emr.iType = EMR_SETSTRETCHBLTMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir )
@@ -128,7 +128,7 @@ BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir )
     emr.emr.iType = EMR_SETARCDIRECTION;
     emr.emr.nSize = sizeof(emr);
     emr.iArcDirection = dir;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 INT EMFDC_ExcludeClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
@@ -141,7 +141,7 @@ INT EMFDC_ExcludeClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT b
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom)
@@ -154,7 +154,7 @@ BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT right, IN
     emr.rclClip.top    = top;
     emr.rclClip.right  = right;
     emr.rclClip.bottom = bottom;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_OffsetClipRgn( DC_ATTR *dc_attr, INT x, INT y )
@@ -165,7 +165,7 @@ BOOL EMFDC_OffsetClipRgn( DC_ATTR *dc_attr, INT x, INT y )
     emr.emr.nSize   = sizeof(emr);
     emr.ptlOffset.x = x;
     emr.ptlOffset.y = y;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_ExtSelectClipRgn( DC_ATTR *dc_attr, HRGN hrgn, INT mode )
@@ -190,7 +190,7 @@ BOOL EMFDC_ExtSelectClipRgn( DC_ATTR *dc_attr, HRGN hrgn, INT mode )
     emr->cbRgnData = rgnsize;
     emr->iMode     = mode;
 
-    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
+    ret = emfdc_record( dc_attr->emf, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -202,7 +202,7 @@ BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode )
     emr.emr.iType = EMR_SETMAPMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
@@ -213,7 +213,7 @@ BOOL EMFDC_SetViewportExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
     emr.emr.nSize = sizeof(emr);
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetWindowExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
@@ -224,7 +224,7 @@ BOOL EMFDC_SetWindowExtEx( DC_ATTR *dc_attr, INT cx, INT cy )
     emr.emr.nSize = sizeof(emr);
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y )
@@ -235,7 +235,7 @@ BOOL EMFDC_SetViewportOrgEx( DC_ATTR *dc_attr, INT x, INT y )
     emr.emr.nSize = sizeof(emr);
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetWindowOrgEx( DC_ATTR *dc_attr, INT x, INT y )
@@ -246,7 +246,7 @@ BOOL EMFDC_SetWindowOrgEx( DC_ATTR *dc_attr, INT x, INT y )
     emr.emr.nSize = sizeof(emr);
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_ScaleViewportExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_num, INT y_denom )
@@ -259,7 +259,7 @@ BOOL EMFDC_ScaleViewportExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_n
     emr.xDenom    = x_denom;
     emr.yNum      = y_num;
     emr.yDenom    = y_denom;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_ScaleWindowExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_num, INT y_denom )
@@ -272,7 +272,7 @@ BOOL EMFDC_ScaleWindowExtEx( DC_ATTR *dc_attr, INT x_num, INT x_denom, INT y_num
     emr.xDenom    = x_denom;
     emr.yNum      = y_num;
     emr.yDenom    = y_denom;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout )
@@ -282,7 +282,7 @@ BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout )
     emr.emr.iType = EMR_SETLAYOUT;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = layout;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetWorldTransform( DC_ATTR *dc_attr, const XFORM *xform )
@@ -292,7 +292,7 @@ BOOL EMFDC_SetWorldTransform( DC_ATTR *dc_attr, const XFORM *xform )
     emr.emr.iType = EMR_SETWORLDTRANSFORM;
     emr.emr.nSize = sizeof(emr);
     emr.xform = *xform;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_ModifyWorldTransform( DC_ATTR *dc_attr, const XFORM *xform, DWORD mode )
@@ -315,7 +315,7 @@ BOOL EMFDC_ModifyWorldTransform( DC_ATTR *dc_attr, const XFORM *xform, DWORD mod
         emr.xform = *xform;
     }
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags )
@@ -326,30 +326,30 @@ BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags )
     emr.emr.nSize = sizeof(emr);
     emr.dwFlags   = flags;
 
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_AbortPath( DC_ATTR *dc_attr )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRABORTPATH emr;
 
     emr.emr.iType = EMR_ABORTPATH;
     emr.emr.nSize = sizeof(emr);
 
     emf->path = FALSE;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_BeginPath( DC_ATTR *dc_attr )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRBEGINPATH emr;
 
     emr.emr.iType = EMR_BEGINPATH;
     emr.emr.nSize = sizeof(emr);
 
-    if (!EMFDRV_WriteRecord( &emf->dev, &emr.emr )) return FALSE;
+    if (!emfdc_record( emf, &emr.emr )) return FALSE;
     emf->path = TRUE;
     return TRUE;
 }
@@ -361,19 +361,19 @@ BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr )
     emr.emr.iType = EMR_CLOSEFIGURE;
     emr.emr.nSize = sizeof(emr);
 
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_EndPath( DC_ATTR *dc_attr )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRENDPATH emr;
 
     emr.emr.iType = EMR_ENDPATH;
     emr.emr.nSize = sizeof(emr);
 
     emf->path = FALSE;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 BOOL EMFDC_FlattenPath( DC_ATTR *dc_attr )
@@ -382,7 +382,7 @@ BOOL EMFDC_FlattenPath( DC_ATTR *dc_attr )
 
     emr.emr.iType = EMR_FLATTENPATH;
     emr.emr.nSize = sizeof(emr);
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SelectClipPath( DC_ATTR *dc_attr, INT mode )
@@ -392,7 +392,7 @@ BOOL EMFDC_SelectClipPath( DC_ATTR *dc_attr, INT mode )
     emr.emr.iType = EMR_SELECTCLIPPATH;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_WidenPath( DC_ATTR *dc_attr )
@@ -401,5 +401,5 @@ BOOL EMFDC_WidenPath( DC_ATTR *dc_attr )
 
     emr.emr.iType = EMR_WIDENPATH;
     emr.emr.nSize = sizeof(emr);
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }

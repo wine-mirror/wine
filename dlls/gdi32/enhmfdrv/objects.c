@@ -32,24 +32,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 /******************************************************************
  *         EMFDRV_AddHandle
  */
-static UINT EMFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
+static UINT EMFDRV_AddHandle( struct emf *emf, HGDIOBJ obj )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
 
-    for(index = 0; index < physDev->handles_size; index++)
-        if(physDev->handles[index] == 0) break;
-    if(index == physDev->handles_size) {
-        physDev->handles_size += HANDLE_LIST_INC;
-	physDev->handles = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				       physDev->handles,
-				       physDev->handles_size * sizeof(physDev->handles[0]));
+    for (index = 0; index < emf->handles_size; index++)
+        if (emf->handles[index] == 0) break;
+    if (index == emf->handles_size)
+    {
+        emf->handles_size += HANDLE_LIST_INC;
+	emf->handles = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                    emf->handles,
+                                    emf->handles_size * sizeof(emf->handles[0]) );
     }
-    physDev->handles[index] = get_full_gdi_handle( obj );
+    emf->handles[index] = get_full_gdi_handle( obj );
 
-    physDev->cur_handles++;
-    if(physDev->cur_handles > physDev->emh->nHandles)
-        physDev->emh->nHandles++;
+    emf->cur_handles++;
+    if(emf->cur_handles > emf->emh->nHandles)
+        emf->emh->nHandles++;
 
     return index + 1; /* index 0 is reserved for the hmf, so we increment everything by 1 */
 }
@@ -87,7 +87,7 @@ void EMFDC_DeleteObject( HDC hdc, HGDIOBJ obj )
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
 
-    EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    emfdc_record( emf, &emr.emr );
 
     emf->handles[index - 1] = 0;
     emf->cur_handles--;
@@ -95,9 +95,9 @@ void EMFDC_DeleteObject( HDC hdc, HGDIOBJ obj )
 
 
 /***********************************************************************
- *           EMFDRV_CreateBrushIndirect
+ *           emfdc_create_brush
  */
-DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
+DWORD emfdc_create_brush( struct emf *emf, HBRUSH hBrush )
 {
     DWORD index = 0;
     LOGBRUSH logbrush;
@@ -112,12 +112,12 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	EMRCREATEBRUSHINDIRECT emr;
 	emr.emr.iType = EMR_CREATEBRUSHINDIRECT;
 	emr.emr.nSize = sizeof(emr);
-	emr.ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
+	emr.ihBrush = index = EMFDRV_AddHandle( emf, hBrush );
 	emr.lb.lbStyle = logbrush.lbStyle;
 	emr.lb.lbColor = logbrush.lbColor;
 	emr.lb.lbHatch = logbrush.lbHatch;
 
-	if(!EMFDRV_WriteRecord( dev, &emr.emr ))
+	if(!emfdc_record( emf, &emr.emr ))
 	    index = 0;
       }
       break;
@@ -161,7 +161,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
             emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT );
             emr->cbBmi = info_size;
         }
-        emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
+        emr->ihBrush = index = EMFDRV_AddHandle( emf, hBrush );
         emr->iUsage = usage;
         emr->offBits = emr->offBmi + emr->cbBmi;
         emr->cbBits = info->bmiHeader.biSizeImage;
@@ -170,7 +170,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
         memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
         memcpy( (BYTE *)emr + emr->offBits, bits, emr->cbBits );
 
-        if(!EMFDRV_WriteRecord( dev, &emr->emr ))
+        if(!emfdc_record( emf, &emr->emr ))
             index = 0;
         HeapFree( GetProcessHeap(), 0, emr );
       }
@@ -210,21 +210,21 @@ static BOOL EMFDC_SelectBrush( DC_ATTR *dc_attr, HBRUSH brush )
     if((index = EMFDRV_FindObject( &emf->dev, brush )) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreateBrushIndirect( &emf->dev, brush ))) return 0;
+    if (!(index = emfdc_create_brush( emf, brush ))) return 0;
     GDI_hdc_using_object( brush, dc_attr->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 
 /******************************************************************
  *         EMFDRV_CreateFontIndirect
  */
-static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
+static BOOL EMFDRV_CreateFontIndirect( struct emf *emf, HFONT hFont )
 {
     DWORD index = 0;
     EMREXTCREATEFONTINDIRECTW emr;
@@ -234,7 +234,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
 
     emr.emr.iType = EMR_EXTCREATEFONTINDIRECTW;
     emr.emr.nSize = (sizeof(emr) + 3) / 4 * 4;
-    emr.ihFont = index = EMFDRV_AddHandle( dev, hFont );
+    emr.ihFont = index = EMFDRV_AddHandle( emf, hFont );
     emr.elfw.elfFullName[0] = '\0';
     emr.elfw.elfStyle[0]    = '\0';
     emr.elfw.elfVersion     = 0;
@@ -255,9 +255,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
     emr.elfw.elfPanose.bMidline         = PAN_NO_FIT;
     emr.elfw.elfPanose.bXHeight         = PAN_NO_FIT;
 
-    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-        index = 0;
-    return index;
+    return emfdc_record( emf, &emr.emr ) ? index : 0;
 }
 
 
@@ -288,7 +286,7 @@ static BOOL EMFDC_SelectFont( DC_ATTR *dc_attr, HFONT font )
 
     if (!(index = EMFDRV_FindObject( &emf->dev, font )))
     {
-        if (!(index = EMFDRV_CreateFontIndirect( &emf->dev, font ))) return FALSE;
+        if (!(index = EMFDRV_CreateFontIndirect( emf, font ))) return FALSE;
         GDI_hdc_using_object( font, emf->dev.hdc, EMFDC_DeleteObject );
     }
 
@@ -296,13 +294,13 @@ static BOOL EMFDC_SelectFont( DC_ATTR *dc_attr, HFONT font )
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /******************************************************************
  *         EMFDRV_CreatePenIndirect
  */
-static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
+static DWORD EMFDRV_CreatePenIndirect( struct emf *emf, HPEN hPen )
 {
     EMRCREATEPEN emr;
     DWORD index = 0;
@@ -329,9 +327,9 @@ static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
 
     emr.emr.iType = EMR_CREATEPEN;
     emr.emr.nSize = sizeof(emr);
-    emr.ihPen = index = EMFDRV_AddHandle( dev, hPen );
+    emr.ihPen = index = EMFDRV_AddHandle( emf, hPen );
 
-    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
+    if(!emfdc_record( emf, &emr.emr ))
         index = 0;
     return index;
 }
@@ -363,21 +361,21 @@ static BOOL EMFDC_SelectPen( DC_ATTR *dc_attr, HPEN pen )
     if((index = EMFDRV_FindObject( &emf->dev, pen )) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreatePenIndirect( &emf->dev, pen ))) return FALSE;
+    if (!(index = EMFDRV_CreatePenIndirect( emf, pen ))) return FALSE;
     GDI_hdc_using_object( pen, dc_attr->hdc, EMFDC_DeleteObject );
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 
 /******************************************************************
  *         EMFDRV_CreatePalette
  */
-static DWORD EMFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPal)
+static DWORD EMFDRV_CreatePalette( struct emf *emf, HPALETTE hPal )
 {
     WORD i;
     struct {
@@ -395,9 +393,9 @@ static DWORD EMFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPal)
 
     pal.hdr.emr.iType = EMR_CREATEPALETTE;
     pal.hdr.emr.nSize = sizeof(pal.hdr) + pal.hdr.lgpl.palNumEntries * sizeof(PALETTEENTRY);
-    pal.hdr.ihPal = EMFDRV_AddHandle( dev, hPal );
+    pal.hdr.ihPal = EMFDRV_AddHandle( emf, hPal );
 
-    if (!EMFDRV_WriteRecord( dev, &pal.hdr.emr ))
+    if (!emfdc_record( emf, &pal.hdr.emr ))
         pal.hdr.ihPal = 0;
     return pal.hdr.ihPal;
 }
@@ -420,14 +418,14 @@ BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
     if ((index = EMFDRV_FindObject( &emf->dev, palette )) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreatePalette( &emf->dev, palette ))) return 0;
+    if (!(index = EMFDRV_CreatePalette( emf, palette ))) return 0;
     GDI_hdc_using_object( palette, dc_attr->hdc, EMFDC_DeleteObject );
 
 found:
     emr.emr.iType = EMR_SELECTPALETTE;
     emr.emr.nSize = sizeof(emr);
     emr.ihPal = index;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )
@@ -459,12 +457,12 @@ BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color )
 
     if (emf->dc_brush) DeleteObject( emf->dc_brush );
     if (!(emf->dc_brush = CreateSolidBrush( color ))) return FALSE;
-    if (!(index = EMFDRV_CreateBrushIndirect( &emf->dev, emf->dc_brush ))) return FALSE;
+    if (!(index = emfdc_create_brush( emf, emf->dc_brush ))) return FALSE;
     GDI_hdc_using_object( emf->dc_brush, dc_attr->hdc, EMFDC_DeleteObject );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /******************************************************************
@@ -481,12 +479,12 @@ BOOL EMFDC_SetDCPenColor( DC_ATTR *dc_attr, COLORREF color )
 
     if (emf->dc_pen) DeleteObject( emf->dc_pen );
     if (!(emf->dc_pen = CreatePenIndirect( &logpen ))) return FALSE;
-    if (!(index = EMFDRV_CreatePenIndirect( &emf->dev, emf->dc_pen ))) return FALSE;
+    if (!(index = EMFDRV_CreatePenIndirect( emf, emf->dc_pen ))) return FALSE;
     GDI_hdc_using_object( emf->dc_pen, dc_attr->hdc, EMFDC_DeleteObject );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /*******************************************************************
@@ -511,7 +509,7 @@ BOOL WINAPI GdiComment( HDC hdc, UINT bytes, const BYTE *buffer )
     memset(&emr->Data[bytes], 0, rounded_size - bytes);
     memcpy(&emr->Data[0], buffer, bytes);
 
-    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
+    ret = emfdc_record( dc_attr->emf, &emr->emr );
 
     HeapFree(GetProcessHeap(), 0, emr);
 

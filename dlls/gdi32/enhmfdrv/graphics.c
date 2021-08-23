@@ -92,9 +92,9 @@ static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, DC_A
 }
 
 /* helper for path stroke and fill functions */
-static BOOL emfdrv_stroke_and_fill_path( PHYSDEV dev, INT type )
+static BOOL emfdrv_stroke_and_fill_path( struct emf *emf, INT type )
 {
-    DC *dc = get_physdev_dc( dev );
+    DC *dc = get_physdev_dc( &emf->dev );
     EMRSTROKEANDFILLPATH emr;
     struct gdi_path *path;
     POINT *points;
@@ -111,9 +111,9 @@ static BOOL emfdrv_stroke_and_fill_path( PHYSDEV dev, INT type )
     }
     else emr.rclBounds = empty_bounds;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
+    if (!emfdc_record( emf, &emr.emr )) return FALSE;
     if (!path) return FALSE;
-    EMFDRV_UpdateBBox( dev, &emr.rclBounds );
+    emfdc_update_bounds( emf, &emr.rclBounds );
     return TRUE;
 }
 
@@ -130,7 +130,7 @@ BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y )
     emr.ptl.x = x;
     emr.ptl.y = y;
 
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /***********************************************************************
@@ -144,7 +144,7 @@ BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y )
     emr.emr.nSize = sizeof(emr);
     emr.ptl.x = x;
     emr.ptl.y = y;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 
@@ -179,7 +179,7 @@ BOOL EMFDC_ArcChordPie( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bott
     emr.ptlStart.y    = ystart;
     emr.ptlEnd.x      = xend;
     emr.ptlEnd.y      = yend;
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /***********************************************************************
@@ -197,7 +197,7 @@ BOOL EMFDC_AngleArc( DC_ATTR *dc_attr, INT x, INT y, DWORD radius, FLOAT start, 
     emr.eStartAngle = start;
     emr.eSweepAngle = sweep;
 
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 /***********************************************************************
@@ -222,7 +222,7 @@ BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
         emr.rclBox.bottom--;
     }
 
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /***********************************************************************
@@ -247,7 +247,7 @@ BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom
         emr.rclBox.bottom--;
     }
 
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /***********************************************************************
@@ -275,7 +275,7 @@ BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right,
         emr.rclBox.bottom--;
     }
 
-    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+    return emfdc_record( emf, &emr.emr );
 }
 
 /***********************************************************************
@@ -290,7 +290,7 @@ BOOL EMFDC_SetPixel( DC_ATTR *dc_attr, INT x, INT y, COLORREF color )
     emr.ptlPixel.x = x;
     emr.ptlPixel.y = y;
     emr.crColor = color;
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 /**********************************************************************
@@ -320,9 +320,9 @@ static BOOL EMFDC_Polylinegon( DC_ATTR *dc_attr, const POINT *points, INT count,
     else
         emr->rclBounds = empty_bounds;
 
-    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
+    ret = emfdc_record( emf, &emr->emr );
     if (ret && !emf->path)
-        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
+        emfdc_update_bounds( emf, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -413,14 +413,14 @@ static BOOL EMFDC_PolyPolylinegon( EMFDRV_PDEVICE *emf, const POINT *pt, const I
         store_points( (POINTL *)(emr->aPolyCounts + polys), pt, cptl, use_small_emr );
     }
 
-    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
+    ret = emfdc_record( emf, &emr->emr );
     if(ret && !bounds_valid)
     {
         ret = FALSE;
         SetLastError( ERROR_INVALID_PARAMETER );
     }
     if(ret && !emf->path)
-        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
+        emfdc_update_bounds( emf, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -471,8 +471,8 @@ BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWOR
     else
         emr->rclBounds = empty_bounds;
 
-    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
-    if (ret && !emf->path) EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
+    ret = emfdc_record( emf, &emr->emr );
+    if (ret && !emf->path) emfdc_update_bounds( emf, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -492,7 +492,7 @@ BOOL EMFDC_ExtFloodFill( DC_ATTR *dc_attr, INT x, INT y, COLORREF color, UINT fi
     emr.crColor = color;
     emr.iMode = fill_type;
 
-    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+    return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
 
@@ -506,7 +506,7 @@ BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush )
     DWORD size, rgnsize, index;
     BOOL ret;
 
-    index = EMFDRV_CreateBrushIndirect( &emf->dev, hbrush );
+    index = emfdc_create_brush( emf, hbrush );
     if(!index) return FALSE;
 
     rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
@@ -524,9 +524,9 @@ BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush )
     emr->cbRgnData = rgnsize;
     emr->ihBrush = index;
 
-    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
+    ret = emfdc_record( emf, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
+        emfdc_update_bounds( emf, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -542,7 +542,7 @@ BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT width, INT 
     DWORD size, rgnsize, index;
     BOOL ret;
 
-    index = EMFDRV_CreateBrushIndirect( &emf->dev, hbrush );
+    index = emfdc_create_brush( emf, hbrush );
     if(!index) return FALSE;
 
     rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
@@ -562,9 +562,9 @@ BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT width, INT 
     emr->szlStroke.cx = width;
     emr->szlStroke.cy = height;
 
-    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
+    ret = emfdc_record( emf, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
+        emfdc_update_bounds( emf, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -574,12 +574,11 @@ BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT width, INT 
  *
  * Helper for EMFDRV_{Paint|Invert}Rgn
  */
-static BOOL EMF_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
+static BOOL EMF_PaintInvertRgn( struct emf *emf, HRGN hrgn, DWORD iType )
 {
     EMRINVERTRGN *emr;
     DWORD size, rgnsize;
     BOOL ret;
-
 
     rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
     size = rgnsize + offsetof(EMRINVERTRGN,RgnData);
@@ -595,9 +594,9 @@ static BOOL EMF_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
     emr->rclBounds.bottom = ((RGNDATA *)&emr->RgnData)->rdh.rcBound.bottom - 1;
     emr->cbRgnData = rgnsize;
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    ret = emfdc_record( emf, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+        emfdc_update_bounds( emf, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -752,10 +751,10 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *l
         pemr->rclBounds.bottom = y + textHeight + 1;
     }
     }
-    EMFDRV_UpdateBBox( &emf->dev, &pemr->rclBounds );
+    emfdc_update_bounds( emf, &pemr->rclBounds );
 
 no_bounds:
-    ret = EMFDRV_WriteRecord( &emf->dev, &pemr->emr );
+    ret = emfdc_record( emf, &pemr->emr );
     HeapFree( GetProcessHeap(), 0, pemr );
     return ret;
 }
@@ -808,8 +807,8 @@ BOOL EMFDC_GradientFill( DC_ATTR *dc_attr, TRIVERTEX *vert_array, ULONG nvert,
     memcpy( emr->Ver, vert_array, nvert * sizeof(vert_array[0]) );
     memcpy( emr->Ver + nvert, pts, num_pts * sizeof(pts[0]) );
 
-    EMFDRV_UpdateBBox( dc_attr->emf, &emr->rclBounds );
-    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
+    emfdc_update_bounds( dc_attr->emf, &emr->rclBounds );
+    ret = emfdc_record( dc_attr->emf, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
