@@ -864,7 +864,8 @@ ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
 void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES *src )
 {
     char *ptr;
-    DWORD len, align = sizeof(ULONGLONG) - 1;
+    DWORD len;
+    UINT_PTR align = sizeof(ULONGLONG) - 1;
     struct address_entry_copy_params params;
 
     while (src)
