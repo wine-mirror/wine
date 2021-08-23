@@ -23,6 +23,8 @@
 
 #include <float.h>
 
+#define D3DERR_INVALIDCALL 0x8876086c
+
 static ID3D10Device *create_device(void)
 {
     ID3D10Device *device;
@@ -2796,8 +2798,9 @@ static void test_effect_local_shader(void)
     D3D10_EFFECT_TYPE_DESC typedesc;
     D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectShaderVariable *null_shader, *null_anon_vs, *null_anon_ps, *null_anon_gs,
-        *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs, *gs;
+        *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs, *gs, *ps, *vs;
     D3D10_EFFECT_SHADER_DESC shaderdesc;
+    D3D10_SIGNATURE_PARAMETER_DESC sign;
     ID3D10Device *device;
     ULONG refcount;
 
@@ -3647,6 +3650,38 @@ todo_wine
         ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected stream output declaration %s.\n",
                 shaderdesc.SODecl);
     }
+
+    /* Output signature description */
+    v = effect->lpVtbl->GetVariableByName(effect, "p");
+    ps = v->lpVtbl->AsShader(v);
+
+    hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 0, 0, &sign);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!strcmp(sign.SemanticName, "SV_Target"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "v");
+    vs = v->lpVtbl->AsShader(v);
+
+    hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 0, 0, &sign);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 1, 0, &sign);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    /* NULL shader variable */
+    v = effect->lpVtbl->GetVariableByName(effect, "v0");
+    vs = v->lpVtbl->AsShader(v);
+
+    hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 0, 0, &sign);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
 
     effect->lpVtbl->Release(effect);
 

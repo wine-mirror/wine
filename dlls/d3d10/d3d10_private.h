@@ -106,7 +106,7 @@ struct d3d10_effect_shader_signature
 struct d3d10_effect_shader_variable
 {
     struct d3d10_effect_shader_signature input_signature;
-    struct d3d10_effect_shader_signature output_signature;
+    ID3D10ShaderReflection *reflection;
     union
     {
         ID3D10VertexShader *vs;

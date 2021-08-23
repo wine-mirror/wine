@@ -599,15 +599,11 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
     switch(tag)
     {
         case TAG_ISGN:
-        case TAG_OSGN:
         {
             /* 32 (DXBC header) + 1 * 4 (chunk index) + 2 * 4 (chunk header) + data_size (chunk data) */
             UINT size = 44 + data_size;
-            struct d3d10_effect_shader_signature *sig;
+            struct d3d10_effect_shader_signature *sig = &s->input_signature;
             char *ptr;
-
-            if (tag == TAG_ISGN) sig = &s->input_signature;
-            else sig = &s->output_signature;
 
             if (!(sig->signature = heap_alloc_zero(size)))
             {
@@ -666,28 +662,22 @@ static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const 
     struct d3d10_effect_shader_variable *sv = &v->u.shader;
     struct d3d10_effect_shader_resource *sr;
     D3D10_SHADER_INPUT_BIND_DESC bind_desc;
-    ID3D10ShaderReflection *reflection;
     struct d3d10_effect_variable *var;
     D3D10_SHADER_DESC desc;
     unsigned int i, y;
-    HRESULT hr;
 
-    if (FAILED(hr = D3D10ReflectShader(data, data_size, &reflection)))
-        return hr;
-
-    reflection->lpVtbl->GetDesc(reflection, &desc);
+    sv->reflection->lpVtbl->GetDesc(sv->reflection, &desc);
     sv->resource_count = desc.BoundResources;
 
     if (!(sv->resources = heap_calloc(sv->resource_count, sizeof(*sv->resources))))
     {
         ERR("Failed to allocate shader resource binding information memory.\n");
-        reflection->lpVtbl->Release(reflection);
         return E_OUTOFMEMORY;
     }
 
     for (i = 0; i < desc.BoundResources; ++i)
     {
-        reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &bind_desc);
+        sv->reflection->lpVtbl->GetResourceBindingDesc(sv->reflection, i, &bind_desc);
         sr = &sv->resources[i];
 
         sr->in_type = bind_desc.Type;
@@ -731,7 +721,6 @@ static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const 
         if (!sr->variable)
         {
             WARN("Failed to find shader resource.\n");
-            reflection->lpVtbl->Release(reflection);
             return E_FAIL;
         }
     }
@@ -773,6 +762,9 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
 
     /* We got a shader VertexShader vs = NULL, so it is fine to skip this. */
     if (!dxbc_size) return S_OK;
+
+    if (FAILED(hr = D3D10ReflectShader(ptr, dxbc_size, &v->u.shader.reflection)))
+        return hr;
 
     if (FAILED(hr = get_fx10_shader_resources(v, ptr, dxbc_size)))
         return hr;
@@ -2747,8 +2739,9 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
 static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_variable *s,
         D3D10_SHADER_VARIABLE_TYPE type)
 {
+    if (s->reflection)
+        s->reflection->lpVtbl->Release(s->reflection);
     shader_free_signature(&s->input_signature);
-    shader_free_signature(&s->output_signature);
 
     switch (type)
     {
@@ -7068,7 +7061,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
     struct d3d10_effect_shader_variable *s;
-    D3D10_SIGNATURE_PARAMETER_DESC *d;
 
     TRACE("iface %p, shader_index %u, element_index %u, desc %p\n",
             iface, shader_index, element_index, desc);
@@ -7087,35 +7079,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
     }
 
     s = &v->effect->used_shaders[shader_index]->u.shader;
-    if (!s->output_signature.signature)
-    {
-        WARN("No shader signature\n");
+
+    if (!s->reflection)
         return D3DERR_INVALIDCALL;
-    }
 
-    /* Check desc for NULL, this crashes on W7/DX10 */
-    if (!desc)
-    {
-        WARN("This should crash on W7/DX10!\n");
-        return E_FAIL;
-    }
-
-    if (element_index >= s->output_signature.element_count)
-    {
-        WARN("Invalid element index specified\n");
-        return E_INVALIDARG;
-    }
-
-    d = &s->output_signature.elements[element_index];
-    desc->SemanticName = d->SemanticName;
-    desc->SemanticIndex  =  d->SemanticIndex;
-    desc->SystemValueType =  d->SystemValueType;
-    desc->ComponentType =  d->ComponentType;
-    desc->Register =  d->Register;
-    desc->ReadWriteMask  =  d->ReadWriteMask;
-    desc->Mask =  d->Mask;
-
-    return S_OK;
+    return s->reflection->lpVtbl->GetOutputParameterDesc(s->reflection, element_index, desc);
 }
 
 
