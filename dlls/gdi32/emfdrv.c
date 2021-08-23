@@ -19,8 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "enhmfdrv/enhmetafiledrv.h"
+#include "ntgdi_private.h"
 
+
+typedef struct
+{
+    struct gdi_physdev dev;
+    INT dev_caps[COLORMGMTCAPS + 1];
+} EMFDRV_PDEVICE;
 
 static inline EMFDRV_PDEVICE *get_emf_physdev( PHYSDEV dev )
 {
@@ -576,7 +582,6 @@ HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
         free_dc_ptr( dc );
         return 0;
     }
-    dc->attr->emf = physDev;
 
     push_dc_driver( &dc->physDev, &physDev->dev, &emfdrv_driver );
 

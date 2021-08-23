@@ -637,14 +637,14 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *l
 
     if (graphicsMode == GM_COMPATIBLE)
     {
-        const INT horzSize = GetDeviceCaps( emf->dev.hdc, HORZSIZE );
-        const INT horzRes  = GetDeviceCaps( emf->dev.hdc, HORZRES );
-        const INT vertSize = GetDeviceCaps( emf->dev.hdc, VERTSIZE );
-        const INT vertRes  = GetDeviceCaps( emf->dev.hdc, VERTRES );
+        const INT horzSize = GetDeviceCaps( dc_attr->hdc, HORZSIZE );
+        const INT horzRes  = GetDeviceCaps( dc_attr->hdc, HORZRES );
+        const INT vertSize = GetDeviceCaps( dc_attr->hdc, VERTSIZE );
+        const INT vertRes  = GetDeviceCaps( dc_attr->hdc, VERTRES );
         SIZE wndext, vportext;
 
-        GetViewportExtEx( emf->dev.hdc, &vportext );
-        GetWindowExtEx( emf->dev.hdc, &wndext );
+        GetViewportExtEx( dc_attr->hdc, &vportext );
+        GetWindowExtEx( dc_attr->hdc, &wndext );
         exScale = 100.0 * ((FLOAT)horzSize  / (FLOAT)horzRes) /
                           ((FLOAT)wndext.cx / (FLOAT)vportext.cx);
         eyScale = 100.0 * ((FLOAT)vertSize  / (FLOAT)vertRes) /
@@ -685,7 +685,7 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *l
         for (i = 0; i < count; i++) {
             textWidth += lpDx[i];
         }
-        if (GetTextExtentPoint32W( emf->dev.hdc, str, count, &strSize ))
+        if (GetTextExtentPoint32W( dc_attr->hdc, str, count, &strSize ))
             textHeight = strSize.cy;
     }
     else {
@@ -693,7 +693,7 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *l
         INT *dx = (INT *)((char*)pemr + pemr->emrtext.offDx);
         SIZE charSize;
         for (i = 0; i < count; i++) {
-            if (GetTextExtentPoint32W( emf->dev.hdc, str + i, 1, &charSize )) {
+            if (GetTextExtentPoint32W( dc_attr->hdc, str + i, 1, &charSize )) {
                 dx[i] = charSize.cx;
                 textWidth += charSize.cx;
                 textHeight = max(textHeight, charSize.cy);
@@ -729,7 +729,7 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *l
     switch (textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE)) {
     case TA_BASELINE: {
         TEXTMETRICW tm;
-        if (!GetTextMetricsW( emf->dev.hdc, &tm ))
+        if (!GetTextMetricsW( dc_attr->hdc, &tm ))
             tm.tmDescent = 0;
         /* Play safe here... it's better to have a bounding box */
         /* that is too big than too small. */

@@ -31,9 +31,8 @@
 
 /* Enhanced Metafile driver physical DC */
 
-typedef struct emf
+struct emf
 {
-    struct gdi_physdev dev;
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
     DC_ATTR   *dc_attr;
     UINT       handles_size, cur_handles;
@@ -42,8 +41,7 @@ typedef struct emf
     HBRUSH     dc_brush;
     HPEN       dc_pen;
     BOOL       path;
-    INT        dev_caps[COLORMGMTCAPS + 1];
-} EMFDRV_PDEVICE;
+};
 
 extern BOOL emfdc_record( struct emf *emf, EMR *emr ) DECLSPEC_HIDDEN;
 extern void emfdc_update_bounds( struct emf *emf, RECTL *rect ) DECLSPEC_HIDDEN;

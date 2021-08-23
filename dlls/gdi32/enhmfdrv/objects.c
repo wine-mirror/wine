@@ -284,7 +284,7 @@ static BOOL EMFDC_SelectFont( DC_ATTR *dc_attr, HFONT font )
     if (!(index = emfdc_find_object( emf, font )))
     {
         if (!(index = EMFDRV_CreateFontIndirect( emf, font ))) return FALSE;
-        GDI_hdc_using_object( font, emf->dev.hdc, EMFDC_DeleteObject );
+        GDI_hdc_using_object( font, dc_attr->hdc, EMFDC_DeleteObject );
     }
 
  found:

@@ -41,7 +41,7 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
     HeapFree( GetProcessHeap(), 0, emf->emh );
     for (index = 0; index < emf->handles_size; index++)
         if (emf->handles[index])
-	    GDI_hdc_not_using_object( emf->handles[index], emf->dev.hdc );
+	    GDI_hdc_not_using_object( emf->handles[index], dc_attr->hdc );
     HeapFree( GetProcessHeap(), 0, emf->handles );
 }
 
@@ -85,7 +85,7 @@ void emfdc_update_bounds( struct emf *emf, RECTL *rect )
     RECTL *bounds = &emf->dc_attr->emf_bounds;
     RECTL vportRect = *rect;
 
-    LPtoDP( emf->dev.hdc, (POINT *)&vportRect, 2 );
+    LPtoDP( emf->dc_attr->hdc, (POINT *)&vportRect, 2 );
 
     /* The coordinate systems may be mirrored
        (LPtoDP handles points, not rectangles) */
@@ -173,12 +173,13 @@ HDC WINAPI CreateEnhMetaFileW(
 
     if (!(ret = NtGdiCreateMetafileDC( hdc ))) return 0;
 
-    if (!(dc_attr = get_dc_attr( ret )))
+    if (!(dc_attr = get_dc_attr( ret )) || !(emf = HeapAlloc( GetProcessHeap(), 0, sizeof(*emf) )))
     {
         DeleteDC( ret );
         return 0;
     }
-    emf = dc_attr->emf;
+
+    dc_attr->emf = emf;
 
     if(description) { /* App name\0Title\0\0 */
         length = lstrlenW(description);
