@@ -211,10 +211,18 @@ BLUE_INI TEXTFILE
 "Transparent = True\r\n"
 "ImageFile1 = blue_checkbox_13px.bmp\r\n"
 "ImageFile2 = blue_checkbox_16px.bmp\r\n"
-"ImageFile3 = blue_checkbox_25px.bmp\r\n"
+"ImageFile3 = blue_checkbox_19px.bmp\r\n"
+"ImageFile4 = blue_checkbox_22px.bmp\r\n"
+"ImageFile5 = blue_checkbox_25px.bmp\r\n"
+"ImageFile6 = blue_checkbox_28px.bmp\r\n"
+"ImageFile7 = blue_checkbox_31px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 118\r\n"
-"MinDpi3 = 185\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
 
 "[Button.Checkbox(Checkeddisabled)]\r\n"
 "TextColor = 189 189 189\r\n"
@@ -237,10 +245,18 @@ BLUE_INI TEXTFILE
 "UniformSizing = True\r\n"
 "ImageFile1 = blue_radiobutton_13px.bmp\r\n"
 "ImageFile2 = blue_radiobutton_16px.bmp\r\n"
-"ImageFile3 = blue_radiobutton_25px.bmp\r\n"
+"ImageFile3 = blue_radiobutton_19px.bmp\r\n"
+"ImageFile4 = blue_radiobutton_22px.bmp\r\n"
+"ImageFile5 = blue_radiobutton_25px.bmp\r\n"
+"ImageFile6 = blue_radiobutton_28px.bmp\r\n"
+"ImageFile7 = blue_radiobutton_31px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 118\r\n"
-"MinDpi3 = 185\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
 
 "[Button.Radiobutton(Checkeddisabled)]\r\n"
 "TextColor = 189 189 189\r\n"
@@ -291,9 +307,19 @@ BLUE_INI TEXTFILE
 "Transparent = True\r\n"
 "UniformSizing = True\r\n"
 "ImageFile1 = blue_commandlink_glyph_30px.bmp\r\n"
-"ImageFile2 = blue_commandlink_glyph_45px.bmp\r\n"
+"ImageFile2 = blue_commandlink_glyph_37px.bmp\r\n"
+"ImageFile3 = blue_commandlink_glyph_45px.bmp\r\n"
+"ImageFile4 = blue_commandlink_glyph_52px.bmp\r\n"
+"ImageFile5 = blue_commandlink_glyph_60px.bmp\r\n"
+"ImageFile6 = blue_commandlink_glyph_67px.bmp\r\n"
+"ImageFile7 = blue_commandlink_glyph_75px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 144\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
 
 "\r\n; ComboBox\r\n"
 "[ComboBox]\r\n"
@@ -919,8 +945,20 @@ BLUE_CHECKBOX_13PX_BMP BITMAP "blue_checkbox_13px.bmp"
 /* @makedep: blue_checkbox_16px.bmp */
 BLUE_CHECKBOX_16PX_BMP BITMAP "blue_checkbox_16px.bmp"
 
+/* @makedep: blue_checkbox_19px.bmp */
+BLUE_CHECKBOX_19PX_BMP BITMAP "blue_checkbox_19px.bmp"
+
+/* @makedep: blue_checkbox_22px.bmp */
+BLUE_CHECKBOX_22PX_BMP BITMAP "blue_checkbox_22px.bmp"
+
 /* @makedep: blue_checkbox_25px.bmp */
 BLUE_CHECKBOX_25PX_BMP BITMAP "blue_checkbox_25px.bmp"
+
+/* @makedep: blue_checkbox_28px.bmp */
+BLUE_CHECKBOX_28PX_BMP BITMAP "blue_checkbox_28px.bmp"
+
+/* @makedep: blue_checkbox_31px.bmp */
+BLUE_CHECKBOX_31PX_BMP BITMAP "blue_checkbox_31px.bmp"
 
 /* @makedep: blue_radiobutton_13px.bmp */
 BLUE_RADIOBUTTON_13PX_BMP BITMAP "blue_radiobutton_13px.bmp"
@@ -928,8 +966,20 @@ BLUE_RADIOBUTTON_13PX_BMP BITMAP "blue_radiobutton_13px.bmp"
 /* @makedep: blue_radiobutton_16px.bmp */
 BLUE_RADIOBUTTON_16PX_BMP BITMAP "blue_radiobutton_16px.bmp"
 
+/* @makedep: blue_radiobutton_19px.bmp */
+BLUE_RADIOBUTTON_19PX_BMP BITMAP "blue_radiobutton_19px.bmp"
+
+/* @makedep: blue_radiobutton_22px.bmp */
+BLUE_RADIOBUTTON_22PX_BMP BITMAP "blue_radiobutton_22px.bmp"
+
 /* @makedep: blue_radiobutton_25px.bmp */
 BLUE_RADIOBUTTON_25PX_BMP BITMAP "blue_radiobutton_25px.bmp"
+
+/* @makedep: blue_radiobutton_28px.bmp */
+BLUE_RADIOBUTTON_28PX_BMP BITMAP "blue_radiobutton_28px.bmp"
+
+/* @makedep: blue_radiobutton_31px.bmp */
+BLUE_RADIOBUTTON_31PX_BMP BITMAP "blue_radiobutton_31px.bmp"
 
 /* @makedep: blue_groupbox.bmp */
 BLUE_GROUPBOX_BMP BITMAP "blue_groupbox.bmp"
@@ -940,8 +990,23 @@ BLUE_COMMANDLINK_BMP BITMAP "blue_commandlink.bmp"
 /* @makedep: blue_commandlink_glyph_30px.bmp */
 BLUE_COMMANDLINK_GLYPH_30PX_BMP BITMAP "blue_commandlink_glyph_30px.bmp"
 
+/* @makedep: blue_commandlink_glyph_37px.bmp */
+BLUE_COMMANDLINK_GLYPH_37PX_BMP BITMAP "blue_commandlink_glyph_37px.bmp"
+
 /* @makedep: blue_commandlink_glyph_45px.bmp */
 BLUE_COMMANDLINK_GLYPH_45PX_BMP BITMAP "blue_commandlink_glyph_45px.bmp"
+
+/* @makedep: blue_commandlink_glyph_52px.bmp */
+BLUE_COMMANDLINK_GLYPH_52PX_BMP BITMAP "blue_commandlink_glyph_52px.bmp"
+
+/* @makedep: blue_commandlink_glyph_60px.bmp */
+BLUE_COMMANDLINK_GLYPH_60PX_BMP BITMAP "blue_commandlink_glyph_60px.bmp"
+
+/* @makedep: blue_commandlink_glyph_67px.bmp */
+BLUE_COMMANDLINK_GLYPH_67PX_BMP BITMAP "blue_commandlink_glyph_67px.bmp"
+
+/* @makedep: blue_commandlink_glyph_75px.bmp */
+BLUE_COMMANDLINK_GLYPH_75PX_BMP BITMAP "blue_commandlink_glyph_75px.bmp"
 
 /* ComboBox */
 /* @makedep: blue_combobutton.bmp */
