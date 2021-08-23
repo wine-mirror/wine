@@ -618,6 +618,74 @@ static void keyboard_device_create(void)
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
+static DWORD bus_count;
+static HANDLE bus_thread[16];
+
+struct bus_main_params
+{
+    const WCHAR *name;
+
+    HANDLE init_done;
+    NTSTATUS (*init_func)(void *args);
+
+    NTSTATUS (*wait_func)(void *args);
+};
+
+static DWORD CALLBACK bus_main_thread(void *args)
+{
+    struct bus_main_params bus = *(struct bus_main_params *)args;
+    NTSTATUS status;
+
+    TRACE("%s main loop starting\n", debugstr_w(bus.name));
+    status = bus.init_func(NULL);
+    SetEvent(bus.init_done);
+    TRACE("%s main loop started\n", debugstr_w(bus.name));
+
+    if (status) WARN("%s bus init returned status %#x\n", debugstr_w(bus.name), status);
+    else status = bus.wait_func(NULL);
+
+    if (status) WARN("%s bus wait returned status %#x\n", debugstr_w(bus.name), status);
+    else TRACE("%s main loop exited\n", debugstr_w(bus.name));
+    return status;
+}
+
+static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
+{
+    DWORD i = bus_count++;
+
+    if (!(bus->init_done = CreateEventW(NULL, FALSE, FALSE, NULL)))
+    {
+        ERR("failed to create %s bus init done event.\n", debugstr_w(bus->name));
+        bus_count--;
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (!(bus_thread[i] = CreateThread(NULL, 0, bus_main_thread, bus, 0, NULL)))
+    {
+        ERR("failed to create %s bus thread.\n", debugstr_w(bus->name));
+        CloseHandle(bus->init_done);
+        bus_count--;
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    WaitForSingleObject(bus->init_done, INFINITE);
+    CloseHandle(bus->init_done);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS sdl_driver_init(void)
+{
+    static const WCHAR bus_name[] = {'S','D','L',0};
+    struct bus_main_params bus =
+    {
+        .name = bus_name,
+        .init_func = sdl_bus_init,
+        .wait_func = sdl_bus_wait,
+    };
+
+    return bus_main_thread_start(&bus);
+}
+
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
@@ -634,16 +702,12 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         mouse_device_create();
         keyboard_device_create();
 
-        if (check_bus_option(&SDL_enabled, 1))
+        if (!check_bus_option(&SDL_enabled, 1) || sdl_driver_init())
         {
-            if (sdl_driver_init() == STATUS_SUCCESS)
-            {
-                irp->IoStatus.Status = STATUS_SUCCESS;
-                break;
-            }
+            udev_driver_init();
+            iohid_driver_init();
         }
-        udev_driver_init();
-        iohid_driver_init();
+
         irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_SURPRISE_REMOVAL:
@@ -652,7 +716,10 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     case IRP_MN_REMOVE_DEVICE:
         udev_driver_unload();
         iohid_driver_unload();
-        sdl_driver_unload();
+        sdl_bus_stop(NULL);
+
+        WaitForMultipleObjects(bus_count, bus_thread, TRUE, INFINITE);
+        while (bus_count--) CloseHandle(bus_thread[bus_count]);
 
         irp->IoStatus.Status = STATUS_SUCCESS;
         IoSkipCurrentIrpStackLocation(irp);

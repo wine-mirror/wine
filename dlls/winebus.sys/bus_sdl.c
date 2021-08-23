@@ -63,7 +63,6 @@ static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
 static DWORD map_controllers = 0;
 
 static void *sdl_handle = NULL;
-static HANDLE deviceloop_handle;
 static UINT quit_event = -1;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
@@ -889,68 +888,15 @@ static void sdl_load_mappings(void)
     }
 }
 
-static DWORD CALLBACK deviceloop_thread(void *args)
+NTSTATUS sdl_bus_init(void *args)
 {
-    HANDLE init_done = args;
-    SDL_Event event;
+    static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
+    static const UNICODE_STRING controller_mode = {sizeof(controller_modeW) - sizeof(WCHAR), sizeof(controller_modeW), (WCHAR*)controller_modeW};
 
-    if (pSDL_Init(SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC) < 0)
-    {
-        ERR("Can't init SDL: %s\n", pSDL_GetError());
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    pSDL_JoystickEventState(SDL_ENABLE);
-    pSDL_GameControllerEventState(SDL_ENABLE);
-
-    /* Process mappings */
-    if (pSDL_GameControllerAddMapping != NULL) sdl_load_mappings();
-
-    SetEvent(init_done);
-
-    while (1) {
-        while (pSDL_WaitEvent(&event) != 0) {
-            if (event.type == quit_event) {
-                TRACE("Device thread exiting\n");
-                return 0;
-            }
-            process_device_event(&event);
-        }
-    }
-}
-
-void sdl_driver_unload( void )
-{
-    SDL_Event event;
-
-    TRACE("Unload Driver\n");
-
-    if (!deviceloop_handle)
-        return;
-
-    quit_event = pSDL_RegisterEvents(1);
-    if (quit_event == -1) {
-        ERR("error registering quit event\n");
-        return;
-    }
-
-    event.type = quit_event;
-    if (pSDL_PushEvent(&event) != 1) {
-        ERR("error pushing quit event\n");
-        return;
-    }
-
-    WaitForSingleObject(deviceloop_handle, INFINITE);
-    CloseHandle(deviceloop_handle);
-    dlclose(sdl_handle);
-}
-
-static BOOL sdl_initialize(void)
-{
     if (!(sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW)))
     {
         WARN("could not load %s\n", SONAME_LIBSDL2);
-        return FALSE;
+        return STATUS_UNSUCCESSFUL;
     }
 #define LOAD_FUNCPTR(f)                          \
     if ((p##f = dlsym(sdl_handle, #f)) == NULL)  \
@@ -1000,63 +946,85 @@ static BOOL sdl_initialize(void)
     pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
     pSDL_JoystickGetProductVersion = dlsym(sdl_handle, "SDL_JoystickGetProductVersion");
     pSDL_JoystickGetVendor = dlsym(sdl_handle, "SDL_JoystickGetVendor");
-    return TRUE;
 
-failed:
-    dlclose(sdl_handle);
-    sdl_handle = NULL;
-    return FALSE;
-}
+    if (pSDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) < 0)
+    {
+        ERR("could not init SDL: %s\n", pSDL_GetError());
+        goto failed;
+    }
 
-NTSTATUS sdl_driver_init(void)
-{
-    static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
-    static const UNICODE_STRING controller_mode = {sizeof(controller_modeW) - sizeof(WCHAR), sizeof(controller_modeW), (WCHAR*)controller_modeW};
+    if ((quit_event = pSDL_RegisterEvents(1)) == -1)
+    {
+        ERR("error registering quit event\n");
+        goto failed;
+    }
 
-    HANDLE events[2];
-    DWORD result;
-
-    if (!sdl_handle && !sdl_initialize()) return STATUS_UNSUCCESSFUL;
+    pSDL_JoystickEventState(SDL_ENABLE);
+    pSDL_GameControllerEventState(SDL_ENABLE);
 
     map_controllers = check_bus_option(&controller_mode, 1);
 
-    if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
-    {
-        WARN("CreateEvent failed\n");
-        return STATUS_UNSUCCESSFUL;
-    }
-    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, events[0], 0, NULL)))
-    {
-        WARN("CreateThread failed\n");
-        CloseHandle(events[0]);
-        return STATUS_UNSUCCESSFUL;
-    }
+    /* Process mappings */
+    if (pSDL_GameControllerAddMapping != NULL) sdl_load_mappings();
 
-    result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
-    CloseHandle(events[0]);
-    if (result == WAIT_OBJECT_0)
-    {
-        TRACE("Initialization successful\n");
-        deviceloop_handle = events[1];
-        return STATUS_SUCCESS;
-    }
-    CloseHandle(events[1]);
+    return STATUS_SUCCESS;
 
+failed:
     dlclose(sdl_handle);
     sdl_handle = NULL;
     return STATUS_UNSUCCESSFUL;
 }
 
+NTSTATUS sdl_bus_wait(void *args)
+{
+    SDL_Event event;
+
+    do
+    {
+        if (pSDL_WaitEvent(&event) != 0) process_device_event(&event);
+        else WARN("SDL_WaitEvent failed: %s\n", pSDL_GetError());
+    } while (event.type != quit_event);
+
+    TRACE("SDL main loop exiting\n");
+    dlclose(sdl_handle);
+    sdl_handle = NULL;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS sdl_bus_stop(void *args)
+{
+    SDL_Event event;
+
+    if (!sdl_handle) return STATUS_SUCCESS;
+
+    event.type = quit_event;
+    if (pSDL_PushEvent(&event) != 1)
+    {
+        ERR("error pushing quit event\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 #else
 
-NTSTATUS sdl_driver_init(void)
+NTSTATUS sdl_bus_init(void *args)
 {
+    WARN("SDL support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-void sdl_driver_unload( void )
+NTSTATUS sdl_bus_wait(void *args)
 {
-    TRACE("Stub: Unload Driver\n");
+    WARN("SDL support not compiled in!\n");
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS sdl_bus_stop(void *args)
+{
+    WARN("SDL support not compiled in!\n");
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 #endif /* SONAME_LIBSDL2 */
