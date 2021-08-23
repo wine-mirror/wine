@@ -42,7 +42,13 @@ SVG_SRCS = \
 	blue_scrollbar_arrow_glyphs_7px.svg \
 	blue_scrollbar_arrow_glyphs_9px.svg \
 	blue_scrollbar_arrows.svg \
-	blue_scrollbar_resizebox_grip.svg \
+	blue_scrollbar_resizebox_grip_16px.svg \
+	blue_scrollbar_resizebox_grip_20px.svg \
+	blue_scrollbar_resizebox_grip_24px.svg \
+	blue_scrollbar_resizebox_grip_28px.svg \
+	blue_scrollbar_resizebox_grip_32px.svg \
+	blue_scrollbar_resizebox_grip_36px.svg \
+	blue_scrollbar_resizebox_grip_40px.svg \
 	blue_scrollbar_shaft_horizontal.svg \
 	blue_scrollbar_shaft_vertical.svg \
 	blue_scrollbar_thumb_horizontal.svg \
