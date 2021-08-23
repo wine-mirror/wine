@@ -3651,7 +3651,7 @@ todo_wine
                 shaderdesc.SODecl);
     }
 
-    /* Output signature description */
+    /* Signature description */
     v = effect->lpVtbl->GetVariableByName(effect, "p");
     ps = v->lpVtbl->AsShader(v);
 
@@ -3663,6 +3663,14 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
+    hr = ps->lpVtbl->GetInputSignatureElementDesc(ps, 0, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    hr = ps->lpVtbl->GetInputSignatureElementDesc(ps, 4, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
     v = effect->lpVtbl->GetVariableByName(effect, "v");
     vs = v->lpVtbl->AsShader(v);
 
@@ -3673,6 +3681,14 @@ todo_wine
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 1, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 0, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 1, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
     /* NULL shader variable */
     v = effect->lpVtbl->GetVariableByName(effect, "v0");
@@ -3690,6 +3706,19 @@ todo_wine
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 3, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 0, 0, &sign);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 1, 0, &sign);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 2, 0, &sign);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 3, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
     effect->lpVtbl->Release(effect);
 

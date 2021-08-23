@@ -7033,7 +7033,10 @@ static HRESULT d3d10_get_shader_variable_signature(struct d3d10_effect_variable 
     if (!s->reflection)
         return D3DERR_INVALIDCALL;
 
-    return s->reflection->lpVtbl->GetOutputParameterDesc(s->reflection, element_index, desc);
+    if (output)
+        return s->reflection->lpVtbl->GetOutputParameterDesc(s->reflection, element_index, desc);
+    else
+        return s->reflection->lpVtbl->GetInputParameterDesc(s->reflection, element_index, desc);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureElementDesc(
@@ -7041,8 +7044,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureE
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
-    struct d3d10_effect_shader_variable *s;
-    D3D10_SIGNATURE_PARAMETER_DESC *d;
 
     TRACE("iface %p, shader_index %u, element_index %u, desc %p\n",
             iface, shader_index, element_index, desc);
@@ -7053,43 +7054,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureE
         return E_FAIL;
     }
 
-    /* Check shader_index, this crashes on W7/DX10 */
-    if (shader_index >= v->effect->used_shader_count)
-    {
-        WARN("This should crash on W7/DX10!\n");
-        return E_FAIL;
-    }
-
-    s = &v->effect->used_shaders[shader_index]->u.shader;
-    if (!s->input_signature.signature)
-    {
-        WARN("No shader signature\n");
-        return D3DERR_INVALIDCALL;
-    }
-
-    /* Check desc for NULL, this crashes on W7/DX10 */
-    if (!desc)
-    {
-        WARN("This should crash on W7/DX10!\n");
-        return E_FAIL;
-    }
-
-    if (element_index >= s->input_signature.element_count)
-    {
-        WARN("Invalid element index specified\n");
-        return E_INVALIDARG;
-    }
-
-    d = &s->input_signature.elements[element_index];
-    desc->SemanticName = d->SemanticName;
-    desc->SemanticIndex  =  d->SemanticIndex;
-    desc->SystemValueType =  d->SystemValueType;
-    desc->ComponentType =  d->ComponentType;
-    desc->Register =  d->Register;
-    desc->ReadWriteMask  =  d->ReadWriteMask;
-    desc->Mask =  d->Mask;
-
-    return S_OK;
+    return d3d10_get_shader_variable_signature(v, shader_index, element_index, FALSE, desc);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignatureElementDesc(
