@@ -90,13 +90,12 @@ WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static struct udev *udev_context = NULL;
 static struct udev_monitor *udev_monitor;
-static DWORD disable_hidraw = 0;
-static DWORD disable_input = 0;
 static int deviceloop_control[2];
 static int udev_monitor_fd;
 
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
+static struct udev_bus_options options;
 
 struct platform_private
 {
@@ -1181,11 +1180,11 @@ static void build_initial_deviceset(void)
         return;
     }
 
-    if (!disable_hidraw)
+    if (!options.disable_hidraw)
         if (udev_enumerate_add_match_subsystem(enumerate, "hidraw") < 0)
             WARN("Failed to add subsystem 'hidraw' to enumeration\n");
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (!disable_input)
+    if (!options.disable_input)
     {
         if (udev_enumerate_add_match_subsystem(enumerate, "input") < 0)
             WARN("Failed to add subsystem 'input' to enumeration\n");
@@ -1224,7 +1223,7 @@ static struct udev_monitor *create_monitor(int *fd)
         return NULL;
     }
 
-    if (!disable_hidraw)
+    if (!options.disable_hidraw)
     {
         if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "hidraw", NULL) < 0)
             WARN("Failed to add 'hidraw' subsystem to monitor\n");
@@ -1232,7 +1231,7 @@ static struct udev_monitor *create_monitor(int *fd)
             systems++;
     }
 #ifdef HAS_PROPER_INPUT_HEADER
-    if (!disable_input)
+    if (!options.disable_input)
     {
         if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "input", NULL) < 0)
             WARN("Failed to add 'input' subsystem to monitor\n");
@@ -1288,10 +1287,9 @@ static void process_monitor_event(struct udev_monitor *monitor)
 
 NTSTATUS udev_bus_init(void *args)
 {
-    static const WCHAR hidraw_disabledW[] = {'D','i','s','a','b','l','e','H','i','d','r','a','w',0};
-    static const UNICODE_STRING hidraw_disabled = {sizeof(hidraw_disabledW) - sizeof(WCHAR), sizeof(hidraw_disabledW), (WCHAR*)hidraw_disabledW};
-    static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
-    static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
+    TRACE("args %p\n", args);
+
+    options = *(struct udev_bus_options *)args;
 
     if (pipe(deviceloop_control) != 0)
     {
@@ -1304,16 +1302,6 @@ NTSTATUS udev_bus_init(void *args)
         ERR("UDEV object creation failed\n");
         goto error;
     }
-
-    disable_hidraw = check_bus_option(&hidraw_disabled, 0);
-    if (disable_hidraw)
-        TRACE("UDEV hidraw devices disabled in registry\n");
-
-#ifdef HAS_PROPER_INPUT_HEADER
-    disable_input = check_bus_option(&input_disabled, 0);
-    if (disable_input)
-        TRACE("UDEV input devices disabled in registry\n");
-#endif
 
     if (!(udev_monitor = create_monitor(&udev_monitor_fd)))
     {

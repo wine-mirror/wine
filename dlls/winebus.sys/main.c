@@ -411,6 +411,20 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
     return STATUS_SUCCESS;
 }
 
+static DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value)
+{
+    char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    DWORD size;
+
+    if (NtQueryValueKey(driver_key, option, KeyValuePartialInformation, info, sizeof(buffer), &size) == STATUS_SUCCESS)
+    {
+        if (info->Type == REG_DWORD) return *(DWORD *)info->Data;
+    }
+
+    return default_value;
+}
+
 static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.Status;
@@ -632,6 +646,7 @@ struct bus_main_params
 {
     const WCHAR *name;
 
+    void *init_args;
     HANDLE init_done;
     unsigned int init_code;
     unsigned int wait_code;
@@ -643,7 +658,7 @@ static DWORD CALLBACK bus_main_thread(void *args)
     NTSTATUS status;
 
     TRACE("%s main loop starting\n", debugstr_w(bus.name));
-    status = winebus_call(bus.init_code, NULL);
+    status = winebus_call(bus.init_code, bus.init_args);
     SetEvent(bus.init_done);
     TRACE("%s main loop started\n", debugstr_w(bus.name));
 
@@ -682,12 +697,19 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
 static NTSTATUS sdl_driver_init(void)
 {
     static const WCHAR bus_name[] = {'S','D','L',0};
+    static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
+    static const UNICODE_STRING controller_mode = {sizeof(controller_modeW) - sizeof(WCHAR), sizeof(controller_modeW), (WCHAR*)controller_modeW};
+    struct sdl_bus_options bus_options;
     struct bus_main_params bus =
     {
         .name = bus_name,
+        .init_args = &bus_options,
         .init_code = sdl_init,
         .wait_code = sdl_wait,
     };
+
+    bus_options.map_controllers = check_bus_option(&controller_mode, 1);
+    if (!bus_options.map_controllers) TRACE("SDL controller to XInput HID gamepad mapping disabled\n");
 
     return bus_main_thread_start(&bus);
 }
@@ -695,12 +717,23 @@ static NTSTATUS sdl_driver_init(void)
 static NTSTATUS udev_driver_init(void)
 {
     static const WCHAR bus_name[] = {'U','D','E','V',0};
+    static const WCHAR hidraw_disabledW[] = {'D','i','s','a','b','l','e','H','i','d','r','a','w',0};
+    static const UNICODE_STRING hidraw_disabled = {sizeof(hidraw_disabledW) - sizeof(WCHAR), sizeof(hidraw_disabledW), (WCHAR*)hidraw_disabledW};
+    static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
+    static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
+    struct udev_bus_options bus_options;
     struct bus_main_params bus =
     {
         .name = bus_name,
+        .init_args = &bus_options,
         .init_code = udev_init,
         .wait_code = udev_wait,
     };
+
+    bus_options.disable_hidraw = check_bus_option(&hidraw_disabled, 0);
+    if (bus_options.disable_hidraw) TRACE("UDEV hidraw devices disabled in registry\n");
+    bus_options.disable_input = check_bus_option(&input_disabled, 0);
+    if (bus_options.disable_input) TRACE("UDEV input devices disabled in registry\n");
 
     return bus_main_thread_start(&bus);
 }
@@ -708,9 +741,11 @@ static NTSTATUS udev_driver_init(void)
 static NTSTATUS iohid_driver_init(void)
 {
     static const WCHAR bus_name[] = {'I','O','H','I','D'};
+    struct iohid_bus_options bus_options;
     struct bus_main_params bus =
     {
         .name = bus_name,
+        .init_args = &bus_options,
         .init_code = iohid_init,
         .wait_code = iohid_wait,
     };
@@ -1118,21 +1153,6 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
     LeaveCriticalSection(&ext->cs);
-}
-
-DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value)
-{
-    char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
-    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION*)buffer;
-    DWORD size;
-
-    if (NtQueryValueKey(driver_key, option, KeyValuePartialInformation, info, sizeof(buffer), &size) == STATUS_SUCCESS)
-    {
-        if (info->Type == REG_DWORD)
-            return *(DWORD*)info->Data;
-    }
-
-    return default_value;
 }
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid)

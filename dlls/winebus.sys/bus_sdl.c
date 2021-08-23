@@ -60,8 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
-
-static DWORD map_controllers = 0;
+static struct sdl_bus_options options;
 
 static void *sdl_handle = NULL;
 static UINT quit_event = -1;
@@ -748,7 +747,7 @@ static void try_add_device(unsigned int index)
         return;
     }
 
-    if (map_controllers && pSDL_IsGameController(index))
+    if (options.map_controllers && pSDL_IsGameController(index))
         controller = pSDL_GameControllerOpen(index);
 
     id = pSDL_JoystickInstanceID(joystick);
@@ -891,8 +890,9 @@ static void sdl_load_mappings(void)
 
 NTSTATUS sdl_bus_init(void *args)
 {
-    static const WCHAR controller_modeW[] = {'M','a','p',' ','C','o','n','t','r','o','l','l','e','r','s',0};
-    static const UNICODE_STRING controller_mode = {sizeof(controller_modeW) - sizeof(WCHAR), sizeof(controller_modeW), (WCHAR*)controller_modeW};
+    TRACE("args %p\n", args);
+
+    options = *(struct sdl_bus_options *)args;
 
     if (!(sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW)))
     {
@@ -962,8 +962,6 @@ NTSTATUS sdl_bus_init(void *args)
 
     pSDL_JoystickEventState(SDL_ENABLE);
     pSDL_GameControllerEventState(SDL_ENABLE);
-
-    map_controllers = check_bus_option(&controller_mode, 1);
 
     /* Process mappings */
     if (pSDL_GameControllerAddMapping != NULL) sdl_load_mappings();

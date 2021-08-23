@@ -99,6 +99,7 @@ static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 
 static const WCHAR busidW[] = {'I','O','H','I','D',0};
+static struct iohid_bus_options options;
 
 struct platform_private
 {
@@ -387,6 +388,10 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
 
 NTSTATUS iohid_bus_init(void *args)
 {
+    TRACE("args %p\n", args);
+
+    options = *(struct iohid_bus_options *)args;
+
     if (!(hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, 0L)))
     {
         ERR("IOHID manager creation failed\n");

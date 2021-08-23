@@ -29,6 +29,21 @@
 
 #include "wine/unixlib.h"
 
+struct sdl_bus_options
+{
+    BOOL map_controllers;
+};
+
+struct udev_bus_options
+{
+    BOOL disable_hidraw;
+    BOOL disable_input;
+};
+
+struct iohid_bus_options
+{
+};
+
 enum unix_funcs
 {
     sdl_init,
