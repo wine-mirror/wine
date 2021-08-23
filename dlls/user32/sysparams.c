@@ -3980,12 +3980,12 @@ BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
     /* Fallback to report one monitor */
     if (handle == NULLDRV_DEFAULT_HMONITOR)
     {
-        RECT default_rect = {0, 0, 640, 480};
+        RECT default_rect = {0, 0, 1024, 768};
         info->rcMonitor = default_rect;
         info->rcWork = default_rect;
         info->dwFlags = MONITORINFOF_PRIMARY;
         if (info->cbSize >= sizeof(MONITORINFOEXW))
-            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, L"\\\\.\\DISPLAY1" );
+            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, L"WinDisc" );
         return TRUE;
     }
 
@@ -4145,7 +4145,7 @@ BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC pro
     }
 
     /* Fallback to report one monitor if using SetupAPI failed */
-    SetRect( &monitor_rect, 0, 0, 640, 480 );
+    SetRect( &monitor_rect, 0, 0, 1024, 768 );
     if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &monitor_rect, lp ))
         return FALSE;
     return TRUE;

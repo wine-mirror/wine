@@ -131,6 +131,7 @@ static void test_create_window(void)
 
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPARAM lparam)
 {
+    static const RECT expected_rect = {0, 0, 1024, 768};
     BOOL r;
     MONITORINFOEXA mi;
 
@@ -148,16 +149,12 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPAR
     r = GetMonitorInfoA(hmon, (MONITORINFO*)&mi);
     service_ok(r, "GetMonitorInfo failed.\n");
 
-    service_ok(mi.rcMonitor.left == 0 && mi.rcMonitor.top == 0 && mi.rcMonitor.right >= 640 && mi.rcMonitor.bottom >= 480,
-               "Unexpected monitor rcMonitor values: {%d,%d,%d,%d}\n",
-               mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
-
-    service_ok(mi.rcWork.left == 0 && mi.rcWork.top == 0 && mi.rcWork.right >= 640 && mi.rcWork.bottom >= 480,
-               "Unexpected monitor rcWork values: {%d,%d,%d,%d}\n",
-               mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
-
-    service_ok(!strcmp(mi.szDevice, "WinDisc") || !strcmp(mi.szDevice, "\\\\.\\DISPLAY1"),
-               "Unexpected szDevice received: %s\n", mi.szDevice);
+    service_ok(EqualRect(lprc, &expected_rect), "Unexpected rect: %s\n", wine_dbgstr_rect(lprc));
+    service_ok(EqualRect(&mi.rcMonitor, &expected_rect), "Unexpected rcMonitor: %s\n",
+               wine_dbgstr_rect(&mi.rcMonitor));
+    service_ok(EqualRect(&mi.rcWork, &expected_rect), "Unexpected rcWork: %s\n",
+               wine_dbgstr_rect(&mi.rcWork));
+    service_ok(!strcmp(mi.szDevice, "WinDisc"), "Unexpected szDevice received: %s\n", mi.szDevice);
 
     service_ok(mi.dwFlags == MONITORINFOF_PRIMARY, "Unexpected secondary monitor info.\n");
 
