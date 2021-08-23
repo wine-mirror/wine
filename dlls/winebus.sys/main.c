@@ -32,8 +32,10 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
+#include "wine/unixlib.h"
 
 #include "bus.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
@@ -154,6 +156,11 @@ static struct list pnp_devset = LIST_INIT(pnp_devset);
 static const WCHAR zero_serialW[]= {'0','0','0','0',0};
 static const WCHAR miW[] = {'M','I',0};
 static const WCHAR igW[] = {'I','G',0};
+
+static NTSTATUS winebus_call(unsigned int code, void *args)
+{
+    return __wine_unix_call_funcs[code]( args );
+}
 
 static inline WCHAR *strdupW(const WCHAR *src)
 {
@@ -626,9 +633,8 @@ struct bus_main_params
     const WCHAR *name;
 
     HANDLE init_done;
-    NTSTATUS (*init_func)(void *args);
-
-    NTSTATUS (*wait_func)(void *args);
+    unsigned int init_code;
+    unsigned int wait_code;
 };
 
 static DWORD CALLBACK bus_main_thread(void *args)
@@ -637,12 +643,12 @@ static DWORD CALLBACK bus_main_thread(void *args)
     NTSTATUS status;
 
     TRACE("%s main loop starting\n", debugstr_w(bus.name));
-    status = bus.init_func(NULL);
+    status = winebus_call(bus.init_code, NULL);
     SetEvent(bus.init_done);
     TRACE("%s main loop started\n", debugstr_w(bus.name));
 
     if (status) WARN("%s bus init returned status %#x\n", debugstr_w(bus.name), status);
-    else status = bus.wait_func(NULL);
+    else status = winebus_call(bus.wait_code, NULL);
 
     if (status) WARN("%s bus wait returned status %#x\n", debugstr_w(bus.name), status);
     else TRACE("%s main loop exited\n", debugstr_w(bus.name));
@@ -679,8 +685,8 @@ static NTSTATUS sdl_driver_init(void)
     struct bus_main_params bus =
     {
         .name = bus_name,
-        .init_func = sdl_bus_init,
-        .wait_func = sdl_bus_wait,
+        .init_code = sdl_init,
+        .wait_code = sdl_wait,
     };
 
     return bus_main_thread_start(&bus);
@@ -692,8 +698,8 @@ static NTSTATUS udev_driver_init(void)
     struct bus_main_params bus =
     {
         .name = bus_name,
-        .init_func = udev_bus_init,
-        .wait_func = udev_bus_wait,
+        .init_code = udev_init,
+        .wait_code = udev_wait,
     };
 
     return bus_main_thread_start(&bus);
@@ -705,8 +711,8 @@ static NTSTATUS iohid_driver_init(void)
     struct bus_main_params bus =
     {
         .name = bus_name,
-        .init_func = iohid_bus_init,
-        .wait_func = iohid_bus_wait,
+        .init_code = iohid_init,
+        .wait_code = iohid_wait,
     };
 
     return bus_main_thread_start(&bus);
@@ -740,9 +746,9 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_REMOVE_DEVICE:
-        sdl_bus_stop(NULL);
-        udev_bus_stop(NULL);
-        iohid_bus_stop(NULL);
+        winebus_call(sdl_stop, NULL);
+        winebus_call(udev_stop, NULL);
+        winebus_call(iohid_stop, NULL);
 
         WaitForMultipleObjects(bus_count, bus_thread, TRUE, INFINITE);
         while (bus_count--) CloseHandle(bus_thread[bus_count]);

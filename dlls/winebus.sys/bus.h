@@ -27,19 +27,6 @@
 
 typedef int(*enum_func)(DEVICE_OBJECT *device, void *context);
 
-/* Buses */
-extern NTSTATUS sdl_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS sdl_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS sdl_bus_stop(void *) DECLSPEC_HIDDEN;
-
-extern NTSTATUS udev_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS udev_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS udev_bus_stop(void *) DECLSPEC_HIDDEN;
-
-extern NTSTATUS iohid_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS iohid_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS iohid_bus_stop(void *) DECLSPEC_HIDDEN;
-
 /* Native device function table */
 typedef struct
 {
