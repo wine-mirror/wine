@@ -105,12 +105,6 @@ static DEVICE_OBJECT *bus_fdo;
 
 HANDLE driver_key;
 
-struct pnp_device
-{
-    struct list entry;
-    DEVICE_OBJECT *device;
-};
-
 enum device_state
 {
     DEVICE_STATE_STOPPED,
@@ -120,10 +114,11 @@ enum device_state
 
 struct device_extension
 {
+    struct list entry;
+    DEVICE_OBJECT *device;
+
     CRITICAL_SECTION cs;
     enum device_state state;
-
-    struct pnp_device *pnp_device;
 
     WORD vid, pid, input;
     DWORD uid, version, index;
@@ -151,7 +146,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION device_list_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static struct list pnp_devset = LIST_INIT(pnp_devset);
+static struct list device_list = LIST_INIT(device_list);
 
 static const WCHAR zero_serialW[]= {'0','0','0','0',0};
 static const WCHAR miW[] = {'M','I',0};
@@ -179,12 +174,11 @@ struct unix_device *get_unix_device(DEVICE_OBJECT *device)
 
 static DWORD get_device_index(WORD vid, WORD pid, WORD input)
 {
-    struct pnp_device *ptr;
+    struct device_extension *ext;
     DWORD index = 0;
 
-    LIST_FOR_EACH_ENTRY(ptr, &pnp_devset, struct pnp_device, entry)
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
     {
-        struct device_extension *ext = (struct device_extension *)ptr->device->DeviceExtension;
         if (ext->vid == vid && ext->pid == pid && ext->input == input)
             index = max(ext->index + 1, index);
     }
@@ -266,7 +260,6 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WO
 {
     static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e','\\','%','s','#','%','p',0};
     struct device_extension *ext;
-    struct pnp_device *pnp_dev;
     DEVICE_OBJECT *device;
     UNICODE_STRING nameW;
     WCHAR dev_name[256];
@@ -276,16 +269,12 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WO
           "is_gamepad %u, vtbl %p, unix_device %p\n", debugstr_w(busidW), vid, pid, input,
            version, uid, debugstr_w(serialW), is_gamepad, vtbl, unix_device);
 
-    if (!(pnp_dev = HeapAlloc(GetProcessHeap(), 0, sizeof(*pnp_dev))))
-        return NULL;
-
-    sprintfW(dev_name, device_name_fmtW, busidW, pnp_dev);
+    sprintfW(dev_name, device_name_fmtW, busidW, unix_device);
     RtlInitUnicodeString(&nameW, dev_name);
     status = IoCreateDevice(driver_obj, sizeof(struct device_extension), &nameW, 0, 0, FALSE, &device);
     if (status)
     {
         FIXME("failed to create device error %x\n", status);
-        HeapFree(GetProcessHeap(), 0, pnp_dev);
         return NULL;
     }
 
@@ -293,7 +282,7 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WO
 
     /* fill out device_extension struct */
     ext = (struct device_extension *)device->DeviceExtension;
-    ext->pnp_device         = pnp_dev;
+    ext->device             = device;
     ext->vid                = vid;
     ext->pid                = pid;
     ext->input              = input;
@@ -315,8 +304,7 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WO
     ext->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
     /* add to list of pnp devices */
-    pnp_dev->device = device;
-    list_add_tail(&pnp_devset, &pnp_dev->entry);
+    list_add_tail(&device_list, &ext->entry);
 
     LeaveCriticalSection(&device_list_cs);
     return device;
@@ -324,19 +312,18 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid, WO
 
 DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev)
 {
-    struct pnp_device *dev;
+    struct device_extension *ext;
     DEVICE_OBJECT *ret = NULL;
 
     TRACE("bus_id %s, platform_dev %p\n", debugstr_w(bus_id), platform_dev);
 
     EnterCriticalSection(&device_list_cs);
-    LIST_FOR_EACH_ENTRY(dev, &pnp_devset, struct pnp_device, entry)
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
     {
-        struct device_extension *ext = (struct device_extension *)dev->device->DeviceExtension;
         if (strcmpW(ext->busid, bus_id)) continue;
-        if (ext->vtbl->compare_platform_device(dev->device, platform_dev) == 0)
+        if (ext->vtbl->compare_platform_device(ext->device, platform_dev) == 0)
         {
-            ret = dev->device;
+            ret = ext->device;
             break;
         }
     }
@@ -348,23 +335,22 @@ DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev)
 
 DEVICE_OBJECT *bus_enumerate_hid_devices(const WCHAR *bus_id, enum_func function, void *context)
 {
-    struct pnp_device *dev, *dev_next;
+    struct device_extension *ext, *next;
     DEVICE_OBJECT *ret = NULL;
     int cont;
 
     TRACE("bus_id %p\n", debugstr_w(bus_id));
 
     EnterCriticalSection(&device_list_cs);
-    LIST_FOR_EACH_ENTRY_SAFE(dev, dev_next, &pnp_devset, struct pnp_device, entry)
+    LIST_FOR_EACH_ENTRY_SAFE(ext, next, &device_list, struct device_extension, entry)
     {
-        struct device_extension *ext = (struct device_extension *)dev->device->DeviceExtension;
         if (strcmpW(ext->busid, bus_id)) continue;
         LeaveCriticalSection(&device_list_cs);
-        cont = function(dev->device, context);
+        cont = function(ext->device, context);
         EnterCriticalSection(&device_list_cs);
         if (!cont)
         {
-            ret = dev->device;
+            ret = ext->device;
             break;
         }
     }
@@ -375,20 +361,19 @@ DEVICE_OBJECT *bus_enumerate_hid_devices(const WCHAR *bus_id, enum_func function
 void bus_unlink_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    struct pnp_device *pnp_device = ext->pnp_device;
 
     EnterCriticalSection(&device_list_cs);
-    list_remove(&pnp_device->entry);
+    list_remove(&ext->entry);
     LeaveCriticalSection(&device_list_cs);
 }
 
 static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
 {
+    struct device_extension *ext;
     int i;
-    struct pnp_device *ptr;
 
     EnterCriticalSection(&device_list_cs);
-    *devices = ExAllocatePool(PagedPool, offsetof(DEVICE_RELATIONS, Objects[list_count(&pnp_devset)]));
+    *devices = ExAllocatePool(PagedPool, offsetof(DEVICE_RELATIONS, Objects[list_count(&device_list)]));
 
     if (!*devices)
     {
@@ -397,10 +382,10 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
     }
 
     i = 0;
-    LIST_FOR_EACH_ENTRY(ptr, &pnp_devset, struct pnp_device, entry)
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
     {
-        (*devices)->Objects[i] = ptr->device;
-        call_fastcall_func1(ObfReferenceObject, ptr->device);
+        (*devices)->Objects[i] = ext->device;
+        call_fastcall_func1(ObfReferenceObject, ext->device);
         i++;
     }
     LeaveCriticalSection(&device_list_cs);
@@ -835,9 +820,6 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
 
         case IRP_MN_REMOVE_DEVICE:
-        {
-            struct pnp_device *pnp_device = ext->pnp_device;
-
             remove_pending_irps(device);
 
             bus_unlink_hid_device(device);
@@ -853,12 +835,7 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             IoCompleteRequest(irp, IO_NO_INCREMENT);
 
             IoDeleteDevice(device);
-
-            /* pnp_device must be released after the device is gone */
-            HeapFree(GetProcessHeap(), 0, pnp_device);
-
             return STATUS_SUCCESS;
-        }
 
         default:
             FIXME("Unhandled function %08x\n", irpsp->MinorFunction);
