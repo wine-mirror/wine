@@ -970,11 +970,19 @@ BLUE_INI TEXTFILE
 "ImageSelectType = Dpi\r\n"
 "UniformSizing = True\r\n"
 "ImageFile1 = blue_treeview_expand_collapse_9px.bmp\r\n"
-"ImageFile2 = blue_treeview_expand_collapse_10px.bmp\r\n"
-"ImageFile3 = blue_treeview_expand_collapse_15px.bmp\r\n"
+"ImageFile2 = blue_treeview_expand_collapse_11px.bmp\r\n"
+"ImageFile3 = blue_treeview_expand_collapse_13px.bmp\r\n"
+"ImageFile4 = blue_treeview_expand_collapse_16px.bmp\r\n"
+"ImageFile5 = blue_treeview_expand_collapse_18px.bmp\r\n"
+"ImageFile6 = blue_treeview_expand_collapse_20px.bmp\r\n"
+"ImageFile7 = blue_treeview_expand_collapse_23px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 133\r\n"
-"MinDpi3 = 150\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
 }
 
 /* Button */
@@ -1275,11 +1283,23 @@ BLUE_TRACKBAR_THUMB_UP_21PX_BMP BITMAP "blue_trackbar_thumb_up_21px.bmp"
 /* @makedep: blue_treeview_expand_collapse_9px.bmp */
 BLUE_TREEVIEW_EXPAND_COLLAPSE_9PX_BMP BITMAP "blue_treeview_expand_collapse_9px.bmp"
 
-/* @makedep: blue_treeview_expand_collapse_10px.bmp */
-BLUE_TREEVIEW_EXPAND_COLLAPSE_10PX_BMP BITMAP "blue_treeview_expand_collapse_10px.bmp"
+/* @makedep: blue_treeview_expand_collapse_11px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_11PX_BMP BITMAP "blue_treeview_expand_collapse_11px.bmp"
 
-/* @makedep: blue_treeview_expand_collapse_15px.bmp */
-BLUE_TREEVIEW_EXPAND_COLLAPSE_15PX_BMP BITMAP "blue_treeview_expand_collapse_15px.bmp"
+/* @makedep: blue_treeview_expand_collapse_13px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_13PX_BMP BITMAP "blue_treeview_expand_collapse_13px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_16px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_16PX_BMP BITMAP "blue_treeview_expand_collapse_16px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_18px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_18PX_BMP BITMAP "blue_treeview_expand_collapse_18px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_20px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_20PX_BMP BITMAP "blue_treeview_expand_collapse_20px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_23px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_23PX_BMP BITMAP "blue_treeview_expand_collapse_23px.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"

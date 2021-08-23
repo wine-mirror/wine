@@ -97,6 +97,10 @@ SVG_SRCS = \
 	blue_trackbar_thumb_up_15px.svg \
 	blue_trackbar_thumb_up_21px.svg \
 	blue_trackbar_thumb_vertical.svg \
-	blue_treeview_expand_collapse_10px.svg \
-	blue_treeview_expand_collapse_15px.svg \
+	blue_treeview_expand_collapse_11px.svg \
+	blue_treeview_expand_collapse_13px.svg \
+	blue_treeview_expand_collapse_16px.svg \
+	blue_treeview_expand_collapse_18px.svg \
+	blue_treeview_expand_collapse_20px.svg \
+	blue_treeview_expand_collapse_23px.svg \
 	blue_treeview_expand_collapse_9px.svg
