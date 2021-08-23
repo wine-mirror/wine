@@ -89,7 +89,7 @@
 @ stdcall UiaRaiseAutomationPropertyChangedEvent(ptr long int128 int128)
 #@ stub UiaRaiseChangesEvent
 #@ stub UiaRaiseNotificationEvent
-@ stub UiaRaiseStructureChangedEvent
+@ stdcall UiaRaiseStructureChangedEvent(ptr long ptr long)
 #@ stub UiaRaiseTextEditTextChangedEvent
 @ stdcall UiaRegisterProviderCallback(ptr)
 @ stdcall UiaRemoveEvent(ptr)
