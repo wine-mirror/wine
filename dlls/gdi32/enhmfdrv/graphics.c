@@ -94,25 +94,21 @@ static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, DC_A
 /* helper for path stroke and fill functions */
 static BOOL emfdrv_stroke_and_fill_path( struct emf *emf, INT type )
 {
-    DC *dc = get_physdev_dc( &emf->dev );
     EMRSTROKEANDFILLPATH emr;
-    struct gdi_path *path;
-    POINT *points;
-    BYTE *flags;
+    HRGN region;
 
     emr.emr.iType = type;
     emr.emr.nSize = sizeof(emr);
+    emr.rclBounds = empty_bounds;
 
-    if ((path = get_gdi_flat_path( dc, NULL )))
+    if ((region = NtGdiPathToRegion( emf->dc_attr->hdc )))
     {
-        int count = get_gdi_path_data( path, &points, &flags );
-        get_points_bounds( &emr.rclBounds, points, count, 0 );
-        free_gdi_path( path );
+        NtGdiGetRgnBox( region, (RECT *)&emr.rclBounds );
+        DeleteObject( region );
     }
-    else emr.rclBounds = empty_bounds;
 
     if (!emfdc_record( emf, &emr.emr )) return FALSE;
-    if (!path) return FALSE;
+    if (!region) return FALSE;
     emfdc_update_bounds( emf, &emr.rclBounds );
     return TRUE;
 }
