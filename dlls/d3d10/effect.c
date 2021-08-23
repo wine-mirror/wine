@@ -320,12 +320,6 @@ static void read_dword(const char **ptr, DWORD *d)
     *ptr += sizeof(*d);
 }
 
-static void write_dword(char **ptr, DWORD d)
-{
-    memcpy(*ptr, &d, sizeof(d));
-    *ptr += sizeof(d);
-}
-
 static BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
 {
     return !count || (data_size - offset) / count >= size;
@@ -342,12 +336,6 @@ static void skip_dword_unknown(const char *location, const char **ptr, unsigned 
         read_dword(ptr, &d);
         FIXME("\t0x%08x\n", d);
     }
-}
-
-static void write_dword_unknown(char **ptr, DWORD d)
-{
-    FIXME("Writing unknown DWORD 0x%08x\n", d);
-    write_dword(ptr, d);
 }
 
 static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
@@ -507,156 +495,6 @@ static BOOL copy_name(const char *ptr, char **name)
     return TRUE;
 }
 
-static const char *shader_get_string(const char *data, size_t data_size, DWORD offset)
-{
-    const char *s;
-    size_t l;
-
-    if (!fx10_get_string(data, data_size, offset, &s, &l))
-        return NULL;
-
-    return l ? s : "";
-}
-
-static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct d3d10_effect_shader_signature *s)
-{
-    D3D10_SIGNATURE_PARAMETER_DESC *e;
-    const char *ptr = data;
-    unsigned int i;
-    DWORD count;
-
-    if (!require_space(0, 2, sizeof(DWORD), data_size))
-    {
-        WARN("Invalid data size %#x.\n", data_size);
-        return E_INVALIDARG;
-    }
-
-    read_dword(&ptr, &count);
-    TRACE("%u elements\n", count);
-
-    skip_dword_unknown("shader signature", &ptr, 1);
-
-    if (!require_space(ptr - data, count, 6 * sizeof(DWORD), data_size))
-    {
-        WARN("Invalid count %#x (data size %#x).\n", count, data_size);
-        return E_INVALIDARG;
-    }
-
-    if (!(e = heap_calloc(count, sizeof(*e))))
-    {
-        ERR("Failed to allocate signature memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < count; ++i)
-    {
-        UINT name_offset;
-        UINT mask;
-
-        read_dword(&ptr, &name_offset);
-        if (!(e[i].SemanticName = shader_get_string(data, data_size, name_offset)))
-        {
-            WARN("Invalid name offset %#x (data size %#x).\n", name_offset, data_size);
-            heap_free(e);
-            return E_INVALIDARG;
-        }
-        read_dword(&ptr, &e[i].SemanticIndex);
-        read_dword(&ptr, &e[i].SystemValueType);
-        read_dword(&ptr, &e[i].ComponentType);
-        read_dword(&ptr, &e[i].Register);
-        read_dword(&ptr, &mask);
-
-        e[i].ReadWriteMask = mask >> 8;
-        e[i].Mask = mask & 0xff;
-
-        TRACE("semantic: %s, semantic idx: %u, sysval_semantic %#x, "
-                "type %u, register idx: %u, use_mask %#x, input_mask %#x\n",
-                debugstr_a(e[i].SemanticName), e[i].SemanticIndex, e[i].SystemValueType,
-                e[i].ComponentType, e[i].Register, e[i].Mask, e[i].ReadWriteMask);
-    }
-
-    s->elements = e;
-    s->element_count = count;
-
-    return S_OK;
-}
-
-static void shader_free_signature(struct d3d10_effect_shader_signature *s)
-{
-    heap_free(s->signature);
-    heap_free(s->elements);
-}
-
-static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
-{
-    struct d3d10_effect_shader_variable *s = ctx;
-    HRESULT hr;
-
-    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
-
-    TRACE("chunk size: %#x\n", data_size);
-
-    switch(tag)
-    {
-        case TAG_ISGN:
-        {
-            /* 32 (DXBC header) + 1 * 4 (chunk index) + 2 * 4 (chunk header) + data_size (chunk data) */
-            UINT size = 44 + data_size;
-            struct d3d10_effect_shader_signature *sig = &s->input_signature;
-            char *ptr;
-
-            if (!(sig->signature = heap_alloc_zero(size)))
-            {
-                ERR("Failed to allocate input signature data\n");
-                return E_OUTOFMEMORY;
-            }
-            sig->signature_size = size;
-
-            ptr = sig->signature;
-
-            write_dword(&ptr, TAG_DXBC);
-
-            /* signature(?) */
-            write_dword_unknown(&ptr, 0);
-            write_dword_unknown(&ptr, 0);
-            write_dword_unknown(&ptr, 0);
-            write_dword_unknown(&ptr, 0);
-
-            /* seems to be always 1 */
-            write_dword_unknown(&ptr, 1);
-
-            /* DXBC size */
-            write_dword(&ptr, size);
-
-            /* chunk count */
-            write_dword(&ptr, 1);
-
-            /* chunk index */
-            write_dword(&ptr, (ptr - sig->signature) + 4);
-
-            /* chunk */
-            write_dword(&ptr, tag);
-            write_dword(&ptr, data_size);
-            memcpy(ptr, data, data_size);
-
-            hr = shader_parse_signature(ptr, data_size, sig);
-            if (FAILED(hr))
-            {
-                ERR("Failed to parse shader, hr %#x\n", hr);
-                shader_free_signature(sig);
-            }
-
-            break;
-        }
-
-        default:
-            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
-            break;
-    }
-
-    return S_OK;
-}
-
 static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const void *data, size_t data_size)
 {
     struct d3d10_effect_shader_variable *sv = &v->u.shader;
@@ -766,6 +604,8 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
     if (FAILED(hr = D3D10ReflectShader(ptr, dxbc_size, &v->u.shader.reflection)))
         return hr;
 
+    D3DGetInputSignatureBlob(ptr, dxbc_size, &v->u.shader.input_signature);
+
     if (FAILED(hr = get_fx10_shader_resources(v, ptr, dxbc_size)))
         return hr;
 
@@ -793,7 +633,7 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
             return E_FAIL;
     }
 
-    return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, &v->u.shader);
+    return hr;
 }
 
 static D3D10_SHADER_VARIABLE_CLASS d3d10_variable_class(DWORD c, BOOL is_column_major)
@@ -2741,7 +2581,8 @@ static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_vari
 {
     if (s->reflection)
         s->reflection->lpVtbl->Release(s->reflection);
-    shader_free_signature(&s->input_signature);
+    if (s->input_signature)
+        ID3D10Blob_Release(s->input_signature);
 
     switch (type)
     {
@@ -3597,8 +3438,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
 
     desc->Name = pass->name;
     desc->Annotations = pass->annotation_count;
-    desc->pIAInputSignature = (BYTE *)s->input_signature.signature;
-    desc->IAInputSignatureSize = s->input_signature.signature_size;
+    if (s->input_signature)
+    {
+        desc->pIAInputSignature = ID3D10Blob_GetBufferPointer(s->input_signature);
+        desc->IAInputSignatureSize = ID3D10Blob_GetBufferSize(s->input_signature);
+    }
+    else
+    {
+        desc->pIAInputSignature = NULL;
+        desc->IAInputSignatureSize = 0;
+    }
     desc->StencilRef = pass->stencil_ref;
     desc->SampleMask = pass->sample_mask;
     memcpy(desc->BlendFactor, pass->blend_factor, 4 * sizeof(float));

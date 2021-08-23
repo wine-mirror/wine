@@ -5740,6 +5740,7 @@ static void test_effect_resource_variable(void)
     ID3D10EffectTechnique *technique;
     ID3D10Texture2D *tex0, *tex_a[2];
     D3D10_EFFECT_DESC effect_desc;
+    D3D10_PASS_DESC pass_desc;
     ID3D10EffectVariable *var;
     ID3D10EffectPass *pass;
     ID3D10Device *device;
@@ -5795,6 +5796,12 @@ static void test_effect_resource_variable(void)
     ok(!!technique, "Got unexpected technique %p.\n", technique);
     pass = technique->lpVtbl->GetPassByName(technique, "p0");
     ok(!!pass, "Got unexpected pass %p.\n", pass);
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!pass_desc.pIAInputSignature, "Unexpected input signature.\n");
+    ok(pass_desc.IAInputSignatureSize == 88, "Unexpected input signature size %lu.\n",
+            pass_desc.IAInputSignatureSize);
+
     hr = pass->lpVtbl->Apply(pass, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
