@@ -492,6 +492,11 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
             strarray_add( flags, opts->image_base );
         }
         if (opts->strip) strarray_add( flags, "-Wl,-x" );
+        if (opts->unix_lib)
+        {
+            strarray_add( flags, "-install_name" );
+            strarray_add( flags, strmake( "@loader_path/%s.so", output_name ) );
+        }
         strarray_addall( link_args, flags );
         return link_args;
 
