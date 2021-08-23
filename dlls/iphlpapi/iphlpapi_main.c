@@ -1280,9 +1280,9 @@ static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADD
             aa[i].FriendlyName = (WCHAR *)str_ptr;
             str_ptr += sizeof(rw[i].alias.String);
         }
-        aa[i].PhysicalAddressLength = rw->phys_addr.Length;
+        aa[i].PhysicalAddressLength = rw[i].phys_addr.Length;
         if (aa[i].PhysicalAddressLength > sizeof(aa[i].PhysicalAddress)) aa[i].PhysicalAddressLength = 0;
-        memcpy( aa[i].PhysicalAddress, rw->phys_addr.Address, aa[i].PhysicalAddressLength );
+        memcpy( aa[i].PhysicalAddress, rw[i].phys_addr.Address, aa[i].PhysicalAddressLength );
         aa[i].Mtu = dyn[i].mtu;
         aa[i].IfType = stat[i].type;
         aa[i].OperStatus = dyn[i].oper_status;
