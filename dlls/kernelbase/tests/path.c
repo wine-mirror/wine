@@ -426,7 +426,6 @@ struct combine_test
     const CHAR *path1;
     const CHAR *path2;
     const CHAR *result;
-    BOOL todo;
 };
 
 static const struct combine_test combine_tests[] =
@@ -474,21 +473,21 @@ static const struct combine_test combine_tests[] =
     /* Second path is fully qualified */
     {"X:\\", "C:", "C:\\"},
     {"X:\\", "C:\\", "C:\\"},
-    {"X:\\", "C:\\a", "C:\\a", TRUE},
+    {"X:\\", "C:\\a", "C:\\a"},
     {"X:\\", "\\\\", "\\\\"},
-    {"X:\\", "\\\\a", "\\\\a", TRUE},
+    {"X:\\", "\\\\a", "\\\\a"},
     {"X:\\", "\\\\?\\C:", "C:\\"},
     {"X:\\", "\\\\?\\C:\\", "C:\\"},
-    {"X:\\", "\\\\?\\C:\\a", "C:\\a", TRUE},
-    {"X:\\", "\\\\?\\UNC", "\\\\?\\UNC", TRUE},
+    {"X:\\", "\\\\?\\C:\\a", "C:\\a"},
+    {"X:\\", "\\\\?\\UNC", "\\\\?\\UNC"},
     {"X:\\", "\\\\?\\UNC\\", "\\\\"},
-    {"X:\\", "\\\\?\\UNC\\a", "\\\\a", TRUE},
+    {"X:\\", "\\\\?\\UNC\\a", "\\\\a"},
     {"X:\\", "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}",
-     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}", TRUE},
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}"},
     {"X:\\", "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\",
      "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\"},
     {"X:\\", "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a",
-     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", TRUE},
+     "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a"},
 
     /* Canonicalization */
     {"C:\\a", ".\\b", "C:\\a\\b"},
@@ -547,7 +546,6 @@ static void test_PathAllocCombine(void)
         if (SUCCEEDED(hr))
         {
             WideCharToMultiByte(CP_ACP, 0, resultW, -1, resultA, ARRAY_SIZE(resultA), NULL, NULL);
-            todo_wine_if(t->todo)
             ok(!lstrcmpA(resultA, t->result), "combine %s %s expect result %s, got %s\n", t->path1, t->path2, t->result,
                resultA);
             LocalFree(resultW);
@@ -611,7 +609,6 @@ static void test_PathCchCombine(void)
 
         hr = pPathCchCombine(output, ARRAY_SIZE(output), p1, p2);
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        todo_wine_if(combine_tests[i].todo)
         ok(!lstrcmpW(output, expected), "Combining %s with %s returned %s, expected %s\n", wine_dbgstr_w(p1),
            wine_dbgstr_w(p2), wine_dbgstr_w(output), wine_dbgstr_w(expected));
     }
@@ -680,7 +677,6 @@ static void test_PathCchCombineEx(void)
 
         hr = pPathCchCombineEx(output, MAX_PATH, p1, p2, 0);
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        todo_wine_if(combine_tests[i].todo)
         ok(!lstrcmpW(output, expected), "Combining %s with %s returned %s, expected %s\n",
             wine_dbgstr_w(p1), wine_dbgstr_w(p2), wine_dbgstr_w(output), wine_dbgstr_w(expected));
     }

@@ -401,7 +401,7 @@ HRESULT WINAPI PathAllocCombine(const WCHAR *path1, const WCHAR *path2, DWORD fl
 {
     SIZE_T combined_length, length2;
     WCHAR *combined_path;
-    BOOL from_path2 = FALSE;
+    BOOL add_backslash = FALSE;
     HRESULT hr;
 
     TRACE("%s %s %#x %p\n", wine_dbgstr_w(path1), wine_dbgstr_w(path2), flags, out);
@@ -419,7 +419,8 @@ HRESULT WINAPI PathAllocCombine(const WCHAR *path1, const WCHAR *path2, DWORD fl
     {
         path1 = path2;
         path2 = NULL;
-        from_path2 = TRUE;
+        add_backslash = (is_drive_spec(path1) && !path1[2])
+                        || (is_prefixed_disk(path1) && !path1[6]);
     }
 
     length2 = path2 ? lstrlenW(path2) : 0;
@@ -435,7 +436,7 @@ HRESULT WINAPI PathAllocCombine(const WCHAR *path1, const WCHAR *path2, DWORD fl
 
     lstrcpyW(combined_path, path1);
     PathCchStripPrefix(combined_path, combined_length);
-    if (from_path2) PathCchAddBackslashEx(combined_path, combined_length, NULL, NULL);
+    if (add_backslash) PathCchAddBackslashEx(combined_path, combined_length, NULL, NULL);
 
     if (path2 && path2[0])
     {
