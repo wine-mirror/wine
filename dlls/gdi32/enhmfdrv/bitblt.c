@@ -168,7 +168,7 @@ BOOL EMFDC_AlphaBlend( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, IN
 
 BOOL EMFDC_PatBlt( DC_ATTR *dc_attr, INT left, INT top, INT width, INT height, DWORD rop )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRBITBLT emr;
     BOOL ret;
 

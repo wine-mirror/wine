@@ -55,19 +55,16 @@ static UINT EMFDRV_AddHandle( struct emf *emf, HGDIOBJ obj )
 }
 
 /******************************************************************
- *         EMFDRV_FindObject
+ *         emfdc_find_object
  */
-static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
+static UINT emfdc_find_object( struct emf *emf, HGDIOBJ obj )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
 
-    for(index = 0; index < physDev->handles_size; index++)
-        if(physDev->handles[index] == obj) break;
+    for (index = 0; index < emf->handles_size; index++)
+        if (emf->handles[index] == obj) return index + 1;
 
-    if(index == physDev->handles_size) return 0;
-
-    return index + 1;
+    return 0;
 }
 
 
@@ -77,11 +74,11 @@ static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 void EMFDC_DeleteObject( HDC hdc, HGDIOBJ obj )
 {
     DC_ATTR *dc_attr = get_dc_attr( hdc );
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRDELETEOBJECT emr;
     UINT index;
 
-    if(!(index = EMFDRV_FindObject( &emf->dev, obj ))) return;
+    if(!(index = emfdc_find_object( emf, obj ))) return;
 
     emr.emr.iType = EMR_DELETEOBJECT;
     emr.emr.nSize = sizeof(emr);
@@ -189,7 +186,7 @@ DWORD emfdc_create_brush( struct emf *emf, HBRUSH hBrush )
  */
 static BOOL EMFDC_SelectBrush( DC_ATTR *dc_attr, HBRUSH brush )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -207,7 +204,7 @@ static BOOL EMFDC_SelectBrush( DC_ATTR *dc_attr, HBRUSH brush )
             goto found;
         }
     }
-    if((index = EMFDRV_FindObject( &emf->dev, brush )) != 0)
+    if((index = emfdc_find_object( emf, brush )) != 0)
         goto found;
 
     if (!(index = emfdc_create_brush( emf, brush ))) return 0;
@@ -264,7 +261,7 @@ static BOOL EMFDRV_CreateFontIndirect( struct emf *emf, HFONT hFont )
  */
 static BOOL EMFDC_SelectFont( DC_ATTR *dc_attr, HFONT font )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -284,7 +281,7 @@ static BOOL EMFDC_SelectFont( DC_ATTR *dc_attr, HFONT font )
         }
     }
 
-    if (!(index = EMFDRV_FindObject( &emf->dev, font )))
+    if (!(index = emfdc_find_object( emf, font )))
     {
         if (!(index = EMFDRV_CreateFontIndirect( emf, font ))) return FALSE;
         GDI_hdc_using_object( font, emf->dev.hdc, EMFDC_DeleteObject );
@@ -339,7 +336,7 @@ static DWORD EMFDRV_CreatePenIndirect( struct emf *emf, HPEN hPen )
  */
 static BOOL EMFDC_SelectPen( DC_ATTR *dc_attr, HPEN pen )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -358,7 +355,7 @@ static BOOL EMFDC_SelectPen( DC_ATTR *dc_attr, HPEN pen )
             goto found;
         }
     }
-    if((index = EMFDRV_FindObject( &emf->dev, pen )) != 0)
+    if((index = emfdc_find_object( emf, pen )) != 0)
         goto found;
 
     if (!(index = EMFDRV_CreatePenIndirect( emf, pen ))) return FALSE;
@@ -405,7 +402,7 @@ static DWORD EMFDRV_CreatePalette( struct emf *emf, HPALETTE hPal )
  */
 BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRSELECTPALETTE emr;
     DWORD index;
 
@@ -415,7 +412,7 @@ BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
         goto found;
     }
 
-    if ((index = EMFDRV_FindObject( &emf->dev, palette )) != 0)
+    if ((index = emfdc_find_object( emf, palette )) != 0)
         goto found;
 
     if (!(index = EMFDRV_CreatePalette( emf, palette ))) return 0;
@@ -449,7 +446,7 @@ BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )
  */
 BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
 
@@ -470,7 +467,7 @@ BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color )
  */
 BOOL EMFDC_SetDCPenColor( DC_ATTR *dc_attr, COLORREF color )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRSELECTOBJECT emr;
     DWORD index;
     LOGPEN logpen = { PS_SOLID, { 0, 0 }, color };

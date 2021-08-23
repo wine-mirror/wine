@@ -22,6 +22,11 @@
 #include "enhmfdrv/enhmetafiledrv.h"
 
 
+static inline EMFDRV_PDEVICE *get_emf_physdev( PHYSDEV dev )
+{
+    return CONTAINING_RECORD( dev, EMFDRV_PDEVICE, dev );
+}
+
 static void emfdrv_update_bounds( DC *dc, RECTL *rect )
 {
     RECTL *bounds = &dc->attr->emf_bounds;

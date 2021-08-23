@@ -122,7 +122,7 @@ static BOOL emfdrv_stroke_and_fill_path( struct emf *emf, INT type )
  */
 BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRMOVETOEX emr;
 
     emr.emr.iType = EMR_MOVETOEX;
@@ -154,7 +154,7 @@ BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y )
 BOOL EMFDC_ArcChordPie( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend, DWORD type )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRARC emr;
     INT temp;
 
@@ -205,7 +205,7 @@ BOOL EMFDC_AngleArc( DC_ATTR *dc_attr, INT x, INT y, DWORD radius, FLOAT start, 
  */
 BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRELLIPSE emr;
 
     if (left == right || top == bottom) return FALSE;
@@ -230,7 +230,7 @@ BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
  */
 BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRRECTANGLE emr;
 
     if(left == right || top == bottom) return FALSE;
@@ -256,7 +256,7 @@ BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom
 BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right,
                       INT bottom, INT ell_width, INT ell_height )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRROUNDRECT emr;
 
     if (left == right || top == bottom) return FALSE;
@@ -300,7 +300,7 @@ BOOL EMFDC_SetPixel( DC_ATTR *dc_attr, INT x, INT y, COLORREF color )
  */
 static BOOL EMFDC_Polylinegon( DC_ATTR *dc_attr, const POINT *points, INT count, DWORD type )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRPOLYLINE *emr;
     DWORD size;
     BOOL ret, use_small_emr = can_use_short_points( points, count );
@@ -374,7 +374,7 @@ BOOL EMFDC_PolyBezierTo( DC_ATTR *dc_attr, const POINT *pts, DWORD count )
  *
  * Helper for EMFDRV_PolyPoly{line|gon}
  */
-static BOOL EMFDC_PolyPolylinegon( EMFDRV_PDEVICE *emf, const POINT *pt, const INT *counts,
+static BOOL EMFDC_PolyPolylinegon( struct emf *emf, const POINT *pt, const INT *counts,
                                    UINT polys, DWORD type)
 {
     EMRPOLYPOLYLINE *emr;
@@ -446,7 +446,7 @@ BOOL EMFDC_PolyPolygon( DC_ATTR *dc_attr, const POINT *pt, const INT *counts, UI
  */
 BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWORD count )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRPOLYDRAW *emr;
     BOOL ret;
     BYTE *types_dest;
@@ -501,7 +501,7 @@ BOOL EMFDC_ExtFloodFill( DC_ATTR *dc_attr, INT x, INT y, COLORREF color, UINT fi
  */
 BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRFILLRGN *emr;
     DWORD size, rgnsize, index;
     BOOL ret;
@@ -537,7 +537,7 @@ BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush )
  */
 BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMRFRAMERGN *emr;
     DWORD size, rgnsize, index;
     BOOL ret;
@@ -623,7 +623,7 @@ BOOL EMFDC_InvertRgn( DC_ATTR *dc_attr, HRGN hrgn )
 BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *lprect,
                        const WCHAR *str, UINT count, const INT *lpDx )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;
     BOOL ret;

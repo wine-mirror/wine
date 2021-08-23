@@ -45,11 +45,6 @@ typedef struct emf
     INT        dev_caps[COLORMGMTCAPS + 1];
 } EMFDRV_PDEVICE;
 
-static inline EMFDRV_PDEVICE *get_emf_physdev( PHYSDEV dev )
-{
-    return CONTAINING_RECORD( dev, EMFDRV_PDEVICE, dev );
-}
-
 extern BOOL emfdc_record( struct emf *emf, EMR *emr ) DECLSPEC_HIDDEN;
 extern void emfdc_update_bounds( struct emf *emf, RECTL *rect ) DECLSPEC_HIDDEN;
 extern DWORD emfdc_create_brush( struct emf *emf, HBRUSH hBrush ) DECLSPEC_HIDDEN;

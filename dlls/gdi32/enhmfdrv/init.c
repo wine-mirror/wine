@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 void EMFDC_DeleteDC( DC_ATTR *dc_attr )
 {
-    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    struct emf *emf = dc_attr->emf;
     UINT index;
 
     HeapFree( GetProcessHeap(), 0, emf->emh );
@@ -164,7 +164,7 @@ HDC WINAPI CreateEnhMetaFileW(
     )
 {
     HDC ret;
-    EMFDRV_PDEVICE *emf;
+    struct emf *emf;
     DC_ATTR *dc_attr;
     HANDLE hFile;
     DWORD size = 0, length = 0;
