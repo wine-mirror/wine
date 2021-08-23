@@ -936,10 +936,24 @@ BLUE_INI TEXTFILE
 "\r\n; Tooltip\r\n"
 "[Tooltip.Close]\r\n"
 "BgType = ImageFile\r\n"
-"ImageFile = blue_tooltip_close.bmp\r\n"
+"ImageSelectType = Dpi\r\n"
 "ImageCount = 3\r\n"
 "SizingType = TrueSize\r\n"
 "ImageLayout = Vertical\r\n"
+"ImageFile1 = blue_tooltip_close_16px.bmp\r\n"
+"ImageFile2 = blue_tooltip_close_20px.bmp\r\n"
+"ImageFile3 = blue_tooltip_close_24px.bmp\r\n"
+"ImageFile4 = blue_tooltip_close_28px.bmp\r\n"
+"ImageFile5 = blue_tooltip_close_32px.bmp\r\n"
+"ImageFile6 = blue_tooltip_close_36px.bmp\r\n"
+"ImageFile7 = blue_tooltip_close_40px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
 
 "\r\n; TreeView\r\n"
 "[TreeView]\r\n"
@@ -1190,8 +1204,26 @@ BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_BMP BITMAP "blue_toolbar_buttons_split_dropd
 BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph.bmp"
 
 /* Tooltip */
-/* @makedep: blue_tooltip_close.bmp */
-BLUE_TOOLTIP_CLOSE_BMP BITMAP "blue_tooltip_close.bmp"
+/* @makedep: blue_tooltip_close_16px.bmp */
+BLUE_TOOLTIP_CLOSE_16PX_BMP BITMAP "blue_tooltip_close_16px.bmp"
+
+/* @makedep: blue_tooltip_close_20px.bmp */
+BLUE_TOOLTIP_CLOSE_20PX_BMP BITMAP "blue_tooltip_close_20px.bmp"
+
+/* @makedep: blue_tooltip_close_24px.bmp */
+BLUE_TOOLTIP_CLOSE_24PX_BMP BITMAP "blue_tooltip_close_24px.bmp"
+
+/* @makedep: blue_tooltip_close_28px.bmp */
+BLUE_TOOLTIP_CLOSE_28PX_BMP BITMAP "blue_tooltip_close_28px.bmp"
+
+/* @makedep: blue_tooltip_close_32px.bmp */
+BLUE_TOOLTIP_CLOSE_32PX_BMP BITMAP "blue_tooltip_close_32px.bmp"
+
+/* @makedep: blue_tooltip_close_36px.bmp */
+BLUE_TOOLTIP_CLOSE_36PX_BMP BITMAP "blue_tooltip_close_36px.bmp"
+
+/* @makedep: blue_tooltip_close_40px.bmp */
+BLUE_TOOLTIP_CLOSE_40PX_BMP BITMAP "blue_tooltip_close_40px.bmp"
 
 /* TrackBar */
 /* @makedep: blue_trackbar_thumb_horizontal.bmp */

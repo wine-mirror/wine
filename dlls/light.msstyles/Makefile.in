@@ -75,7 +75,13 @@ SVG_SRCS = \
 	blue_toolbar_buttons_split_dropdown_glyph.svg \
 	blue_toolbar_separator_horizontal.svg \
 	blue_toolbar_separator_vertical.svg \
-	blue_tooltip_close.svg \
+	blue_tooltip_close_16px.svg \
+	blue_tooltip_close_20px.svg \
+	blue_tooltip_close_24px.svg \
+	blue_tooltip_close_28px.svg \
+	blue_tooltip_close_32px.svg \
+	blue_tooltip_close_36px.svg \
+	blue_tooltip_close_40px.svg \
 	blue_trackbar_slider_track.svg \
 	blue_trackbar_thumb_down_11px.svg \
 	blue_trackbar_thumb_down_15px.svg \
