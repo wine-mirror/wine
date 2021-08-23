@@ -193,7 +193,7 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
 void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    RECTL *bounds = &physDev->emh->rclBounds;
+    RECTL *bounds = &physDev->dc_attr->emf_bounds;
     RECTL vportRect = *rect;
 
     LPtoDP( dev->hdc, (LPPOINT)&vportRect, 2 );
@@ -362,6 +362,7 @@ HDC WINAPI CreateEnhMetaFileW(
         DeleteDC( ret );
         return 0;
     }
+    emf->dc_attr = dc_attr;
 
     emf->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                               HANDLE_LIST_INC * sizeof(emf->handles[0]) );
@@ -375,8 +376,8 @@ HDC WINAPI CreateEnhMetaFileW(
     emf->emh->iType = EMR_HEADER;
     emf->emh->nSize = size;
 
-    emf->emh->rclBounds.left = emf->emh->rclBounds.top = 0;
-    emf->emh->rclBounds.right = emf->emh->rclBounds.bottom = -1;
+    dc_attr->emf_bounds.left = dc_attr->emf_bounds.top = 0;
+    dc_attr->emf_bounds.right = dc_attr->emf_bounds.bottom = -1;
 
     if (rect)
     {
@@ -472,6 +473,8 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
     emr.nSizeLast = emr.emr.nSize;
     EMFDRV_WriteRecord( &physDev->dev, &emr.emr );
+
+    physDev->emh->rclBounds = dc->attr->emf_bounds;
 
     /* Update rclFrame if not initialized in CreateEnhMetaFile */
     if(physDev->emh->rclFrame.left > physDev->emh->rclFrame.right) {

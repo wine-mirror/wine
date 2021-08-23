@@ -157,6 +157,7 @@ typedef struct DC_ATTR
     SIZE      virtual_res;
     SIZE      virtual_size;
     UINT      font_code_page;
+    RECTL     emf_bounds;
     void     *emf;
 } DC_ATTR;
 
