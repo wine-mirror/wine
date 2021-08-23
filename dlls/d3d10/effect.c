@@ -1408,7 +1408,7 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
         const char **ptr, D3D_SHADER_VARIABLE_TYPE container_type, void *container)
 {
     const struct d3d10_effect_state_property_info *property_info;
-    UINT value_offset;
+    UINT value_offset, operation;
     unsigned int i;
     DWORD count;
     UINT idx;
@@ -1421,7 +1421,7 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
     {
         read_dword(ptr, &id);
         read_dword(ptr, &idx);
-        skip_dword_unknown("read property", ptr, 1);
+        read_dword(ptr, &operation);
         read_dword(ptr, &value_offset);
 
         if (!(property_info = get_property_info(id)))
