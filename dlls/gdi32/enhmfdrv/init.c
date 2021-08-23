@@ -282,55 +282,26 @@ static inline BOOL devcap_is_valid( int cap )
 }
 
 /**********************************************************************
- *          CreateEnhMetaFileW   (GDI32.@)
+ *           NtGdiCreateMetafileDC   (win32u.@)
  */
-HDC WINAPI CreateEnhMetaFileW(
-    HDC           hdc,        /* [in] optional reference DC */
-    LPCWSTR       filename,   /* [in] optional filename for disk metafiles */
-    const RECT*   rect,       /* [in] optional bounding rectangle */
-    LPCWSTR       description /* [in] optional description */
-    )
+HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
 {
-    HDC ret, ref_dc;
-    DC *dc;
     EMFDRV_PDEVICE *physDev;
-    HANDLE hFile;
-    DWORD size = 0, length = 0;
+    HDC ref_dc, ret;
     int cap;
-
-    TRACE("(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect), debugstr_w(description) );
+    DC *dc;
 
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_ENHMETADC ))) return 0;
 
-    physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
-    if (!physDev) {
+    physDev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev) );
+    if (!physDev)
+    {
         free_dc_ptr( dc );
         return 0;
     }
     dc->attr->emf = physDev;
-    if(description) { /* App name\0Title\0\0 */
-        length = lstrlenW(description);
-	length += lstrlenW(description + length + 1);
-	length += 3;
-	length *= 2;
-    }
-    size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
-
-    if (!(physDev->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size))) {
-        HeapFree( GetProcessHeap(), 0, physDev );
-        free_dc_ptr( dc );
-        return 0;
-    }
 
     push_dc_driver( &dc->physDev, &physDev->dev, &emfdrv_driver );
-
-    physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
-    physDev->handles_size = HANDLE_LIST_INC;
-    physDev->cur_handles = 1;
-    physDev->hFile = 0;
-    physDev->dc_brush = 0;
-    physDev->dc_pen = 0;
-    physDev->path = FALSE;
 
     if (hdc)  /* if no ref, use current display */
         ref_dc = hdc;
@@ -340,69 +311,125 @@ HDC WINAPI CreateEnhMetaFileW(
     memset( physDev->dev_caps, 0, sizeof(physDev->dev_caps) );
     for (cap = 0; cap < ARRAY_SIZE( physDev->dev_caps ); cap++)
         if (devcap_is_valid( cap ))
-            physDev->dev_caps[cap] = GetDeviceCaps( ref_dc, cap );
+            physDev->dev_caps[cap] = NtGdiGetDeviceCaps( ref_dc, cap );
 
-    if (!hdc) DeleteDC( ref_dc );
+    if (!hdc) NtGdiDeleteObjectApp( ref_dc );
 
-    NtGdiSetVirtualResolution(physDev->dev.hdc, 0, 0, 0, 0);
+    NtGdiSetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
 
-    physDev->emh->iType = EMR_HEADER;
-    physDev->emh->nSize = size;
+    ret = dc->hSelf;
+    release_dc_ptr( dc );
+    return ret;
+}
 
-    physDev->emh->rclBounds.left = physDev->emh->rclBounds.top = 0;
-    physDev->emh->rclBounds.right = physDev->emh->rclBounds.bottom = -1;
+/**********************************************************************
+ *          CreateEnhMetaFileW   (GDI32.@)
+ */
+HDC WINAPI CreateEnhMetaFileW(
+    HDC           hdc,        /* [in] optional reference DC */
+    LPCWSTR       filename,   /* [in] optional filename for disk metafiles */
+    const RECT*   rect,       /* [in] optional bounding rectangle */
+    LPCWSTR       description /* [in] optional description */
+    )
+{
+    HDC ret;
+    EMFDRV_PDEVICE *emf;
+    DC_ATTR *dc_attr;
+    HANDLE hFile;
+    DWORD size = 0, length = 0;
 
-    if(rect) {
-        physDev->emh->rclFrame.left   = rect->left;
-	physDev->emh->rclFrame.top    = rect->top;
-	physDev->emh->rclFrame.right  = rect->right;
-	physDev->emh->rclFrame.bottom = rect->bottom;
-    } else {  /* Set this to {0,0 - -1,-1} and update it at the end */
-        physDev->emh->rclFrame.left = physDev->emh->rclFrame.top = 0;
-	physDev->emh->rclFrame.right = physDev->emh->rclFrame.bottom = -1;
+    TRACE("(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect), debugstr_w(description) );
+
+    if (!(ret = NtGdiCreateMetafileDC( hdc ))) return 0;
+
+    if (!(dc_attr = get_dc_attr( ret )))
+    {
+        DeleteDC( ret );
+        return 0;
+    }
+    emf = dc_attr->emf;
+
+    if(description) { /* App name\0Title\0\0 */
+        length = lstrlenW(description);
+	length += lstrlenW(description + length + 1);
+	length += 3;
+	length *= 2;
+    }
+    size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
+
+    if (!(emf->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size)))
+    {
+        DeleteDC( ret );
+        return 0;
     }
 
-    physDev->emh->dSignature = ENHMETA_SIGNATURE;
-    physDev->emh->nVersion = 0x10000;
-    physDev->emh->nBytes = physDev->emh->nSize;
-    physDev->emh->nRecords = 1;
-    physDev->emh->nHandles = 1;
+    emf->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                              HANDLE_LIST_INC * sizeof(emf->handles[0]) );
+    emf->handles_size = HANDLE_LIST_INC;
+    emf->cur_handles = 1;
+    emf->hFile = 0;
+    emf->dc_brush = 0;
+    emf->dc_pen = 0;
+    emf->path = FALSE;
 
-    physDev->emh->sReserved = 0; /* According to docs, this is reserved and must be 0 */
-    physDev->emh->nDescription = length / 2;
+    emf->emh->iType = EMR_HEADER;
+    emf->emh->nSize = size;
 
-    physDev->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
+    emf->emh->rclBounds.left = emf->emh->rclBounds.top = 0;
+    emf->emh->rclBounds.right = emf->emh->rclBounds.bottom = -1;
 
-    physDev->emh->nPalEntries = 0; /* I guess this should start at 0 */
+    if (rect)
+    {
+        emf->emh->rclFrame.left   = rect->left;
+        emf->emh->rclFrame.top    = rect->top;
+        emf->emh->rclFrame.right  = rect->right;
+        emf->emh->rclFrame.bottom = rect->bottom;
+    }
+    else
+    {
+        /* Set this to {0,0 - -1,-1} and update it at the end */
+        emf->emh->rclFrame.left = emf->emh->rclFrame.top = 0;
+        emf->emh->rclFrame.right = emf->emh->rclFrame.bottom = -1;
+    }
+
+    emf->emh->dSignature = ENHMETA_SIGNATURE;
+    emf->emh->nVersion = 0x10000;
+    emf->emh->nBytes = emf->emh->nSize;
+    emf->emh->nRecords = 1;
+    emf->emh->nHandles = 1;
+
+    emf->emh->sReserved = 0; /* According to docs, this is reserved and must be 0 */
+    emf->emh->nDescription = length / 2;
+
+    emf->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
+
+    emf->emh->nPalEntries = 0; /* I guess this should start at 0 */
 
     /* Size in pixels */
-    physDev->emh->szlDevice.cx = physDev->dev_caps[HORZRES];
-    physDev->emh->szlDevice.cy = physDev->dev_caps[VERTRES];
+    emf->emh->szlDevice.cx = GetDeviceCaps( ret, HORZRES );
+    emf->emh->szlDevice.cy = GetDeviceCaps( ret, VERTRES );
 
     /* Size in millimeters */
-    physDev->emh->szlMillimeters.cx = physDev->dev_caps[HORZSIZE];
-    physDev->emh->szlMillimeters.cy = physDev->dev_caps[VERTSIZE];
+    emf->emh->szlMillimeters.cx = GetDeviceCaps( ret, HORZSIZE );
+    emf->emh->szlMillimeters.cy = GetDeviceCaps( ret, VERTSIZE );
 
     /* Size in micrometers */
-    physDev->emh->szlMicrometers.cx = physDev->emh->szlMillimeters.cx * 1000;
-    physDev->emh->szlMicrometers.cy = physDev->emh->szlMillimeters.cy * 1000;
+    emf->emh->szlMicrometers.cx = emf->emh->szlMillimeters.cx * 1000;
+    emf->emh->szlMicrometers.cy = emf->emh->szlMillimeters.cy * 1000;
 
-    memcpy((char *)physDev->emh + sizeof(ENHMETAHEADER), description, length);
+    memcpy( (char *)emf->emh + sizeof(ENHMETAHEADER), description, length );
 
     if (filename)  /* disk based metafile */
     {
         if ((hFile = CreateFileW(filename, GENERIC_WRITE | GENERIC_READ, 0,
 				 NULL, CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-            free_dc_ptr( dc );
+            DeleteDC( ret );
             return 0;
         }
-	physDev->hFile = hFile;
+        emf->hFile = hFile;
     }
 
-    TRACE("returning %p\n", physDev->dev.hdc);
-    ret = physDev->dev.hdc;
-    release_dc_ptr( dc );
-
+    TRACE( "returning %p\n", ret );
     return ret;
 }
 
