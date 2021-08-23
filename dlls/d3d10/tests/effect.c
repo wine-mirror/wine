@@ -3656,25 +3656,23 @@ todo_wine
     ps = v->lpVtbl->AsShader(v);
 
     hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 0, 0, &sign);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!strcmp(sign.SemanticName, "SV_Target"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!strcmp(sign.SemanticName, "SV_Target"), "Unexpected semantic %s.\n", sign.SemanticName);
+
+    hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 4, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
     v = effect->lpVtbl->GetVariableByName(effect, "v");
     vs = v->lpVtbl->AsShader(v);
 
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 0, 0, &sign);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 1, 0, &sign);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
     /* NULL shader variable */
     v = effect->lpVtbl->GetVariableByName(effect, "v0");
@@ -3682,6 +3680,16 @@ todo_wine
 
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 0, 0, &sign);
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 1, 0, &sign);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 2, 0, &sign);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 3, 0, &sign);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
 
     effect->lpVtbl->Release(effect);
 

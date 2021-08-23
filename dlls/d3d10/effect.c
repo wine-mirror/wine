@@ -6999,6 +6999,43 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetPixelShader(
     return S_OK;
 }
 
+static HRESULT d3d10_get_shader_variable_signature(struct d3d10_effect_variable *v,
+        UINT shader_index, UINT element_index, BOOL output, D3D10_SIGNATURE_PARAMETER_DESC *desc)
+{
+    struct d3d10_effect_shader_variable *s;
+    unsigned int i;
+
+    if (v->type->element_count)
+        v = &v->elements[0];
+
+    if (shader_index == 0)
+    {
+        s = &v->u.shader;
+    }
+    else
+    {
+        /* Index is used as an offset from this variable. */
+
+        for (i = 0; i < v->effect->used_shader_count; ++i)
+        {
+            if (v == v->effect->used_shaders[i]) break;
+        }
+
+        if (i + shader_index >= v->effect->used_shader_count)
+        {
+            WARN("This should crash!\n");
+            return E_FAIL;
+        }
+
+        s = &v->effect->used_shaders[i + shader_index]->u.shader;
+    }
+
+    if (!s->reflection)
+        return D3DERR_INVALIDCALL;
+
+    return s->reflection->lpVtbl->GetOutputParameterDesc(s->reflection, element_index, desc);
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureElementDesc(
         ID3D10EffectShaderVariable *iface, UINT shader_index, UINT element_index,
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
@@ -7060,7 +7097,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
-    struct d3d10_effect_shader_variable *s;
 
     TRACE("iface %p, shader_index %u, element_index %u, desc %p\n",
             iface, shader_index, element_index, desc);
@@ -7071,19 +7107,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
         return E_FAIL;
     }
 
-    /* Check shader_index, this crashes on W7/DX10 */
-    if (shader_index >= v->effect->used_shader_count)
-    {
-        WARN("This should crash on W7/DX10!\n");
-        return E_FAIL;
-    }
-
-    s = &v->effect->used_shaders[shader_index]->u.shader;
-
-    if (!s->reflection)
-        return D3DERR_INVALIDCALL;
-
-    return s->reflection->lpVtbl->GetOutputParameterDesc(s->reflection, element_index, desc);
+    return d3d10_get_shader_variable_signature(v, shader_index, element_index, TRUE, desc);
 }
 
 
