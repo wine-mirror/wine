@@ -142,15 +142,21 @@ static const struct gdi_dc_funcs emfdrv_driver =
 static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    UINT index;
-
-    HeapFree( GetProcessHeap(), 0, physDev->emh );
-    for(index = 0; index < physDev->handles_size; index++)
-        if(physDev->handles[index])
-	    GDI_hdc_not_using_object(physDev->handles[index], dev->hdc);
-    HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;
+}
+
+
+void EMFDC_DeleteDC( DC_ATTR *dc_attr )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    UINT index;
+
+    HeapFree( GetProcessHeap(), 0, emf->emh );
+    for (index = 0; index < emf->handles_size; index++)
+        if (emf->handles[index])
+	    GDI_hdc_not_using_object( emf->handles[index], emf->dev.hdc );
+    HeapFree( GetProcessHeap(), 0, emf->handles );
 }
 
 
@@ -440,75 +446,62 @@ HDC WINAPI CreateEnhMetaFileW(
 HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 {
     HENHMETAFILE hmf;
-    EMFDRV_PDEVICE *physDev;
-    DC *dc;
+    EMFDRV_PDEVICE *emf;
+    DC_ATTR *dc_attr;
     EMREOF emr;
     HANDLE hMapping = 0;
 
     TRACE("(%p)\n", hdc );
 
-    if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    if (GetObjectType( hdc ) != OBJ_ENHMETADC)
-    {
-        release_dc_ptr( dc );
-        return NULL;
-    }
-    if (dc->refcount != 1)
-    {
-        FIXME( "not deleting busy DC %p refcount %u\n", hdc, dc->refcount );
-        release_dc_ptr( dc );
-        return NULL;
-    }
-    physDev = get_emf_physdev( find_dc_driver( dc, &emfdrv_driver ));
+    if (!(dc_attr = get_dc_attr( hdc )) || !dc_attr->emf) return 0;
+    emf = dc_attr->emf;
 
-    if (dc->attr->save_level)
+    if (dc_attr->save_level)
         RestoreDC( hdc, 1 );
 
-    if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
-    if (physDev->dc_pen) DeleteObject( physDev->dc_pen );
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
 
     emr.emr.iType = EMR_EOF;
     emr.emr.nSize = sizeof(emr);
     emr.nPalEntries = 0;
     emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
     emr.nSizeLast = emr.emr.nSize;
-    EMFDRV_WriteRecord( &physDev->dev, &emr.emr );
+    EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 
-    physDev->emh->rclBounds = dc->attr->emf_bounds;
+    emf->emh->rclBounds = dc_attr->emf_bounds;
 
     /* Update rclFrame if not initialized in CreateEnhMetaFile */
-    if(physDev->emh->rclFrame.left > physDev->emh->rclFrame.right) {
-        physDev->emh->rclFrame.left = physDev->emh->rclBounds.left *
-	  physDev->emh->szlMillimeters.cx * 100 / physDev->emh->szlDevice.cx;
-        physDev->emh->rclFrame.top = physDev->emh->rclBounds.top *
-	  physDev->emh->szlMillimeters.cy * 100 / physDev->emh->szlDevice.cy;
-        physDev->emh->rclFrame.right = physDev->emh->rclBounds.right *
-	  physDev->emh->szlMillimeters.cx * 100 / physDev->emh->szlDevice.cx;
-        physDev->emh->rclFrame.bottom = physDev->emh->rclBounds.bottom *
-	  physDev->emh->szlMillimeters.cy * 100 / physDev->emh->szlDevice.cy;
+    if (emf->emh->rclFrame.left > emf->emh->rclFrame.right)
+    {
+        emf->emh->rclFrame.left = emf->emh->rclBounds.left *
+            emf->emh->szlMillimeters.cx * 100 / emf->emh->szlDevice.cx;
+        emf->emh->rclFrame.top = emf->emh->rclBounds.top *
+            emf->emh->szlMillimeters.cy * 100 / emf->emh->szlDevice.cy;
+        emf->emh->rclFrame.right = emf->emh->rclBounds.right *
+            emf->emh->szlMillimeters.cx * 100 / emf->emh->szlDevice.cx;
+        emf->emh->rclFrame.bottom = emf->emh->rclBounds.bottom *
+            emf->emh->szlMillimeters.cy * 100 / emf->emh->szlDevice.cy;
     }
 
-    if (physDev->hFile)  /* disk based metafile */
+    if (emf->hFile)  /* disk based metafile */
     {
-        if (!WriteFile(physDev->hFile, physDev->emh, physDev->emh->nBytes,
-                       NULL, NULL))
+        if (!WriteFile( emf->hFile, emf->emh, emf->emh->nBytes, NULL, NULL ))
         {
-            CloseHandle( physDev->hFile );
-            free_dc_ptr( dc );
+            CloseHandle( emf->hFile );
             return 0;
         }
-	HeapFree( GetProcessHeap(), 0, physDev->emh );
-        hMapping = CreateFileMappingA(physDev->hFile, NULL, PAGE_READONLY, 0,
-				      0, NULL);
-	TRACE("hMapping = %p\n", hMapping );
-	physDev->emh = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-	TRACE("view = %p\n", physDev->emh );
+        HeapFree( GetProcessHeap(), 0, emf->emh );
+        hMapping = CreateFileMappingA( emf->hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        TRACE( "hMapping = %p\n", hMapping );
+        emf->emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+        TRACE( "view = %p\n", emf->emh );
         CloseHandle( hMapping );
-        CloseHandle( physDev->hFile );
+        CloseHandle( emf->hFile );
     }
 
-    hmf = EMF_Create_HENHMETAFILE( physDev->emh, physDev->emh->nBytes, (physDev->hFile != 0) );
-    physDev->emh = NULL;  /* So it won't be deleted */
-    free_dc_ptr( dc );
+    hmf = EMF_Create_HENHMETAFILE( emf->emh, emf->emh->nBytes, emf->hFile != 0 );
+    emf->emh = NULL;  /* So it won't be deleted */
+    DeleteDC( hdc );
     return hmf;
 }

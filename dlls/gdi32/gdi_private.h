@@ -137,6 +137,7 @@ extern BOOL EMFDC_BeginPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_BitBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width, INT height,
                           HDC hdc_src, INT x_src, INT y_src, DWORD rop );
 extern BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+extern void EMFDC_DeleteDC( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
                            INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_EndPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;

@@ -3219,7 +3219,6 @@ static void test_enhmetafile_file(void)
 
     SetLastError(0xdeadbeef);
     metafile = CloseEnhMetaFile(dc);
-    todo_wine
     ok(!metafile && GetLastError() == ERROR_INVALID_HANDLE, "CloseMetaFile returned %p (%u)\n",
        metafile, GetLastError());
 
