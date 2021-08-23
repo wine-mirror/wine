@@ -256,15 +256,6 @@ void update_dc( DC *dc )
 }
 
 
-/***********************************************************************
- *           DC_DeleteObject
- */
-static BOOL DC_DeleteObject( HGDIOBJ handle )
-{
-    return DeleteDC( handle );
-}
-
-
 static void set_bk_color( DC *dc, COLORREF color )
 {
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
@@ -427,6 +418,37 @@ static BOOL reset_dc_state( HDC hdc )
     dc->saved_dc = NULL;
     dc->attr->save_level = 0;
     release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DC_DeleteObject
+ */
+static BOOL DC_DeleteObject( HGDIOBJ handle )
+{
+    DC *dc;
+
+    TRACE( "%p\n", handle );
+
+    GDI_CheckNotLock();
+
+    if (!(dc = get_dc_ptr( handle ))) return FALSE;
+    if (dc->refcount != 1)
+    {
+        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
+        release_dc_ptr( dc );
+        return FALSE;
+    }
+
+    /* Call hook procedure to check whether is it OK to delete this DC */
+    if (dc->hookProc && !dc->hookProc( dc->hSelf, DCHC_DELETEDC, dc->dwHookData, 0 ))
+    {
+        release_dc_ptr( dc );
+        return TRUE;
+    }
+    reset_dc_state( handle );
+    free_dc_ptr( dc );
     return TRUE;
 }
 
@@ -733,39 +755,6 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
     DC_InitDC( dc );
     release_dc_ptr( dc );
     return ret;
-}
-
-
-/***********************************************************************
- *           DeleteDC    (GDI32.@)
- */
-BOOL WINAPI DeleteDC( HDC hdc )
-{
-    DC * dc;
-
-    TRACE("%p\n", hdc );
-
-    if (is_meta_dc( hdc )) return METADC_DeleteDC( hdc );
-
-    GDI_CheckNotLock();
-
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
-    if (dc->refcount != 1)
-    {
-        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
-        release_dc_ptr( dc );
-        return FALSE;
-    }
-
-    /* Call hook procedure to check whether is it OK to delete this DC */
-    if (dc->hookProc && !dc->hookProc( dc->hSelf, DCHC_DELETEDC, dc->dwHookData, 0 ))
-    {
-        release_dc_ptr( dc );
-        return TRUE;
-    }
-    reset_dc_state( hdc );
-    free_dc_ptr( dc );
-    return TRUE;
 }
 
 

@@ -827,8 +827,8 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     DeleteObject(hBitmap2);
     DeleteObject(hbrMask);
 
-    DeleteDC(hDC1);
-    DeleteDC(hDC2);
+    NtGdiDeleteObjectApp( hDC1 );
+    NtGdiDeleteObjectApp( hDC2 );
 
     return TRUE;
 }
@@ -923,12 +923,12 @@ error:
     SetTextColor(hdcDest, oldForeground);
     if(hdcWork) {
         NtGdiSelectBitmap(hdcWork, oldWork);
-        DeleteDC(hdcWork);
+        NtGdiDeleteObjectApp( hdcWork );
     }
     if(bmpWork) DeleteObject(bmpWork);
     if(hdcMask) {
         NtGdiSelectBitmap(hdcMask, oldMask);
-        DeleteDC(hdcMask);
+        NtGdiDeleteObjectApp( hdcMask );
     }
     if(bmpMask) DeleteObject(bmpMask);
     return ret;

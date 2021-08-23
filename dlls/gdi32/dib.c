@@ -1687,7 +1687,7 @@ NTSTATUS WINAPI D3DKMTCreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 error:
     if (bmp) HeapFree( GetProcessHeap(), 0, bmp->color_table );
     HeapFree( GetProcessHeap(), 0, bmp );
-    DeleteDC( dc );
+    NtGdiDeleteObjectApp( dc );
     return STATUS_INVALID_PARAMETER;
 }
 
@@ -1704,7 +1704,7 @@ NTSTATUS WINAPI D3DKMTDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *des
     if (GetObjectType( desc->hDc ) != OBJ_MEMDC ||
         GetObjectType( desc->hBitmap ) != OBJ_BITMAP) return STATUS_INVALID_PARAMETER;
     DeleteObject( desc->hBitmap );
-    DeleteDC( desc->hDc );
+    NtGdiDeleteObjectApp( desc->hDc );
 
     return STATUS_SUCCESS;
 }

@@ -153,7 +153,14 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     struct hdc_list *hdc_list = NULL;
     struct wine_rb_entry *entry;
 
-    if (is_meta_dc( obj )) return METADC_DeleteDC( obj );
+    switch (gdi_handle_type( obj ))
+    {
+    case NTGDI_OBJ_DC:
+    case NTGDI_OBJ_MEMDC:
+    case NTGDI_OBJ_ENHMETADC:
+    case NTGDI_OBJ_METADC:
+        return DeleteDC( obj );
+    }
 
     EnterCriticalSection( &obj_map_cs );
 
