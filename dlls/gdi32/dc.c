@@ -770,17 +770,18 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
 
 /***********************************************************************
- *           ResetDCW    (GDI32.@)
+ *           NtGdiResetDC    (win32u.@)
  */
-HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
+BOOL WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
+                          DRIVER_INFO_2W *driver_info, void *dev )
 {
     DC *dc;
-    HDC ret = 0;
+    BOOL ret = FALSE;
 
     if ((dc = get_dc_ptr( hdc )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pResetDC );
-        ret = physdev->funcs->pResetDC( physdev, devmode );
+        ret = physdev->funcs->pResetDC( physdev, devmode ) != 0;
         if (ret)  /* reset the visible region */
         {
             dc->dirty = 0;
@@ -788,7 +789,7 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
             dc->attr->vis_rect.top    = 0;
             dc->attr->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
             dc->attr->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
-            if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
+            if (dc->hVisRgn) NtGdiDeleteObjectApp( dc->hVisRgn );
             dc->hVisRgn = 0;
             update_dc_clipping( dc );
         }
@@ -996,7 +997,7 @@ BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
 
 
 /***********************************************************************
- *           SetDCHook   (GDI32.@)
+ *           SetDCHook   (win32u.@)
  *
  * Note: this doesn't exist in Win32, we add it here because user32 needs it.
  */
@@ -1014,7 +1015,7 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD_PTR dwHookData )
 
 
 /***********************************************************************
- *           GetDCHook   (GDI32.@)
+ *           GetDCHook   (win32u.@)
  *
  * Note: this doesn't exist in Win32, we add it here because user32 needs it.
  */
@@ -1032,7 +1033,7 @@ DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
 
 
 /***********************************************************************
- *           SetHookFlags   (GDI32.@)
+ *           SetHookFlags   (win32u.@)
  *
  * Note: this doesn't exist in Win32, we add it here because user32 needs it.
  */

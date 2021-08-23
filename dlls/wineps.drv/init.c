@@ -448,7 +448,7 @@ static BOOL CDECL PSDRV_DeleteDC( PHYSDEV dev )
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-static HDC CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
+static BOOL CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -457,7 +457,7 @@ static HDC CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
         PSDRV_MergeDevmodes(physDev->Devmode, (const PSDRV_DEVMODE *)lpInitData, physDev->pi);
         PSDRV_UpdateDevCaps(physDev);
     }
-    return dev->hdc;
+    return TRUE;
 }
 
 /***********************************************************************

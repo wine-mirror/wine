@@ -20,6 +20,7 @@
 #define _NTGDI_
 
 #include <wingdi.h>
+#include <winspool.h>
 
 typedef struct _GDI_HANDLE_ENTRY
 {
@@ -268,7 +269,8 @@ BOOL     WINAPI NtGdiPtVisible( HDC hdc, INT x, INT y );
 BOOL     WINAPI NtGdiRectInRegion( HRGN hrgn, const RECT *rect );
 BOOL     WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect );
 BOOL     WINAPI NtGdiRectangle( HDC hdc, INT left, INT top, INT right, INT bottom );
-HDC      WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode );
+BOOL     WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
+                              DRIVER_INFO_2W *driver_info, void *dev );
 BOOL     WINAPI NtGdiResizePalette( HPALETTE palette, UINT count );
 BOOL     WINAPI NtGdiRestoreDC( HDC hdc, INT level );
 BOOL     WINAPI NtGdiRoundRect( HDC hdc, INT left, INT top, INT right,

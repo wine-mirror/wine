@@ -720,9 +720,9 @@ static BOOL CDECL nulldrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, 
     return TRUE;
 }
 
-static HDC CDECL nulldrv_ResetDC( PHYSDEV dev, const DEVMODEW *devmode )
+static BOOL CDECL nulldrv_ResetDC( PHYSDEV dev, const DEVMODEW *devmode )
 {
-    return 0;
+    return FALSE;
 }
 
 static BOOL CDECL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,

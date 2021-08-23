@@ -113,6 +113,14 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 }
 
 /***********************************************************************
+ *           ResetDCW    (GDI32.@)
+ */
+HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
+{
+    return NtGdiResetDC( hdc, devmode, NULL, NULL, NULL ) ? hdc : 0;
+}
+
+/***********************************************************************
  *           SaveDC    (GDI32.@)
  */
 INT WINAPI SaveDC( HDC hdc )
