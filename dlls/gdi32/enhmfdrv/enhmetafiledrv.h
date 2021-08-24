@@ -45,7 +45,6 @@ struct emf
 
 extern BOOL emfdc_record( struct emf *emf, EMR *emr ) DECLSPEC_HIDDEN;
 extern void emfdc_update_bounds( struct emf *emf, RECTL *rect ) DECLSPEC_HIDDEN;
-extern DWORD emfdc_create_brush( struct emf *emf, HBRUSH hBrush ) DECLSPEC_HIDDEN;
 
 #define HANDLE_LIST_INC 20
 
