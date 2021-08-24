@@ -1727,6 +1727,15 @@ union codeview_symbol
         unsigned short          inst_len;
         unsigned int            index;
     } heap_alloc_site;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        cv_typ_t                symtype;
+        unsigned short          varflags;
+        char                    name[1];
+    } local_v3;
 };
 
 #define S_COMPILE       0x0001

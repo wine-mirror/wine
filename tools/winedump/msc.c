@@ -288,6 +288,33 @@ static const char* get_funcattr(unsigned attr)
     return tmp;
 }
 
+static const char* get_varflags(unsigned flags)
+{
+    static char tmp[1024];
+    unsigned    pos = 0;
+
+    if (!flags) return "none";
+#define X(s) {if (pos) tmp[pos++] = ';'; strcpy(tmp + pos, s); pos += strlen(s);}
+    if (flags & 0x0001) X("param");
+    if (flags & 0x0002) X("addr-taken");
+    if (flags & 0x0004) X("compiler-gen");
+    if (flags & 0x0008) X("aggregated");
+    if (flags & 0x0010) X("in-aggreate");
+    if (flags & 0x0020) X("aliased");
+    if (flags & 0x0040) X("alias");
+    if (flags & 0x0080) X("retval");
+    if (flags & 0x0100) X("optimized-out");
+    if (flags & 0x0200) X("enreg-global");
+    if (flags & 0x0400) X("enreg-static");
+    if (flags & 0xf800) pos += sprintf(tmp, "unk:%x", flags & 0xf800);
+#undef X
+
+    tmp[pos] = '\0';
+    assert(pos < sizeof(tmp));
+
+    return tmp;
+}
+
 static const char* get_machine(unsigned m)
 {
     const char*     machine;
@@ -1562,6 +1589,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             printf("\tS-Thread %s Var V3 '%s' seg=%04x offset=%08x type=%x\n",
                    sym->generic.id == S_LTHREAD32 ? "global" : "local", sym->thread_v3.name,
                    sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype);
+            break;
+
+        case S_LOCAL:
+            printf("\tS-Local V3 '%s' type=%x flags=%s\n",
+                   sym->local_v3.name, sym->local_v3.symtype,
+                   get_varflags(sym->local_v3.varflags));
+
             break;
 
         default:
