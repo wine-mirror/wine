@@ -814,6 +814,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     switch (type->generic.id)
     {
+    /* types from TPI (aka #2) stream */
     case LF_POINTER_V1:
         printf("\t%x => Pointer V1 to type:%x\n",
                curr_type, type->pointer_v1.datatype);
@@ -1097,6 +1098,49 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
             printf(" %x", reftype->derived_v2.drvdcls[j]);
         }
         printf("\n");
+        break;
+
+    /* types from IPI (aka #4) stream */
+    case LF_FUNC_ID:
+        printf("\t%x => FuncId %s scopeId:%04x type:%04x\n",
+               curr_type, type->func_id_v3.name,
+               type->func_id_v3.scopeId, type->func_id_v3.type);
+        break;
+    case LF_MFUNC_ID:
+        printf("\t%x => MFuncId %s parent:%04x type:%04x\n",
+               curr_type, type->mfunc_id_v3.name,
+               type->mfunc_id_v3.parentType, type->mfunc_id_v3.type);
+        break;
+    case LF_BUILDINFO:
+        printf("\t%x => BuildInfo count:%d\n", curr_type, type->buildinfo_v3.count);
+        if (type->buildinfo_v3.count >= 1) printf("\t\tcurrent dir: %04x\n", type->buildinfo_v3.arg[0]);
+        if (type->buildinfo_v3.count >= 2) printf("\t\tbuild tool:  %04x\n", type->buildinfo_v3.arg[1]);
+        if (type->buildinfo_v3.count >= 3) printf("\t\tsource file: %04x\n", type->buildinfo_v3.arg[2]);
+        if (type->buildinfo_v3.count >= 4) printf("\t\tPDB file:    %04x\n", type->buildinfo_v3.arg[3]);
+        if (type->buildinfo_v3.count >= 5) printf("\t\tArguments:   %04x\n", type->buildinfo_v3.arg[4]);
+        break;
+    case LF_SUBSTR_LIST:
+        printf("\t%x => SubstrList V3(#%u):", curr_type, reftype->arglist_v2.num);
+        for (j = 0; j < reftype->arglist_v2.num; j++)
+        {
+            printf("\t %x", reftype->arglist_v2.args[j]);
+        }
+        printf("\t\n");
+        break;
+    case LF_STRING_ID:
+        printf("\t%x => StringId %s strid:%04x\n",
+               curr_type, type->string_id_v3.name, type->string_id_v3.strid);
+        break;
+    case LF_UDT_SRC_LINE:
+        printf("\t%x => Udt-SrcLine type:%04x src:%04x line:%d\n",
+               curr_type, type->udt_src_line_v3.type,
+               type->udt_src_line_v3.src, type->udt_src_line_v3.line);
+        break;
+    case LF_UDT_MOD_SRC_LINE:
+        printf("\t%x => Udt-ModSrcLine type:%04x src:%04x line:%d mod:%d\n",
+               curr_type, type->udt_mod_src_line_v3.type,
+               type->udt_mod_src_line_v3.src, type->udt_mod_src_line_v3.line,
+               type->udt_mod_src_line_v3.imod);
         break;
 
     default:

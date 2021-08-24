@@ -124,6 +124,7 @@ union codeview_type
         unsigned short int      id;
     } generic;
 
+    /* types found in TPI stream (#2) */
     struct
     {
         unsigned short int      len;
@@ -360,6 +361,61 @@ union codeview_type
         cv_typ_t                arglist;
         unsigned int            this_adjust;
     } mfunction_v2;
+
+    /* types found in IPI stream (#4) */
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id; /* LF_FUNC_ID */
+        cv_itemid_t             scopeId;
+        cv_typ_t                type;
+        char                    name[1];
+    } func_id_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id; /* LF_MFUNC_ID */
+        cv_typ_t                parentType;
+        cv_typ_t                type;
+        char                    name[1];
+    } mfunc_id_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id; /* LF_STRING_ID */
+        cv_itemid_t             strid;
+        char                    name[1];
+    } string_id_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id; /* LF_UDT_SRC_LINE */
+        cv_typ_t                type;
+        cv_itemid_t             src;
+        unsigned int            line;
+    } udt_src_line_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id; /*  LF_UDT_MOD_SRC_LINE */
+        cv_typ_t                type;
+        cv_itemid_t             src;
+        unsigned int            line;
+        unsigned short          imod;
+    } udt_mod_src_line_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id; /*  LF_BUILDINFO */
+        unsigned short          count;
+        cv_itemid_t             arg[1];
+    } buildinfo_v3;
+
 };
 
 union codeview_reftype
@@ -1215,6 +1271,17 @@ union codeview_fieldtype
 #define LF_METHOD_V3            0x150f
 #define LF_NESTTYPE_V3          0x1510
 #define LF_ONEMETHOD_V3         0x1511
+
+/* leaves found in second type type (aka IPI)
+ * for simplicity, stored in the same union as other TPI leaves
+ */
+#define LF_FUNC_ID              0x1601
+#define LF_MFUNC_ID             0x1602
+#define LF_BUILDINFO            0x1603
+#define LF_SUBSTR_LIST          0x1604
+#define LF_STRING_ID            0x1605
+#define LF_UDT_SRC_LINE         0x1606
+#define LF_UDT_MOD_SRC_LINE     0x1607
 
 #define LF_NUMERIC              0x8000    /* numeric leaf types */
 #define LF_CHAR                 0x8000
