@@ -11691,6 +11691,15 @@ static void test_sockopt_validity(void)
         { IPV6_USER_MTU,              0,               0,          TRUE },
         {}
     };
+    static const struct sockopt_validity_test file_handle_tests[] =
+    {
+        { -1,                         WSAENOTSOCK,     0,          TRUE },
+        { SO_TYPE,                    WSAENOTSOCK,     0,          TRUE },
+        { SO_OPENTYPE                                                   },
+        {}
+    };
+    char path[MAX_PATH];
+    HANDLE file;
     SOCKET sock;
 
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -11736,6 +11745,12 @@ static void test_sockopt_validity(void)
         do_sockopt_validity_tests("IPv6 raw", sock, IPPROTO_IPV6, ipv6_raw_tests);
         closesocket(sock);
     }
+
+    GetSystemWindowsDirectoryA(path, ARRAY_SIZE(path));
+    strcat(path, "\\system.ini");
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0x0, NULL);
+    do_sockopt_validity_tests("file", (SOCKET)file, SOL_SOCKET, file_handle_tests);
+    CloseHandle(file);
 }
 
 START_TEST( sock )
