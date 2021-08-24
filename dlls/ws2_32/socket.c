@@ -379,6 +379,8 @@ static BOOL socket_list_find( SOCKET socket )
 {
     unsigned int i;
 
+    if (!socket) return FALSE;
+
     EnterCriticalSection( &cs_socket_list );
     for (i = 0; i < socket_list_size; ++i)
     {
@@ -396,6 +398,8 @@ static BOOL socket_list_find( SOCKET socket )
 static BOOL socket_list_remove( SOCKET socket )
 {
     unsigned int i;
+
+    if (!socket) return FALSE;
 
     EnterCriticalSection(&cs_socket_list);
     for (i = 0; i < socket_list_size; ++i)
