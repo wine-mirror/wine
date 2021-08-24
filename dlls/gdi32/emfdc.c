@@ -22,7 +22,8 @@
 
 #include <assert.h>
 
-#include "enhmfdrv/enhmetafiledrv.h"
+#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "winnls.h"
 
 #include "wine/debug.h"
@@ -30,6 +31,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 
+struct emf
+{
+    ENHMETAHEADER  *emh;
+    DC_ATTR *dc_attr;
+    UINT     handles_size, cur_handles;
+    HGDIOBJ *handles;
+    HANDLE   file;
+    HBRUSH   dc_brush;
+    HPEN     dc_pen;
+    BOOL     path;
+};
+
+#define HANDLE_LIST_INC 20
 static const RECTL empty_bounds = { 0, 0, -1, -1 };
 
 static BOOL emfdc_record( struct emf *emf, EMR *emr )
@@ -1880,7 +1894,7 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
     HeapFree( GetProcessHeap(), 0, emf->emh );
     for (index = 0; index < emf->handles_size; index++)
         if (emf->handles[index])
-            GDI_hdc_not_using_object( emf->handles[index], dc_attr->hdc );
+            GDI_hdc_not_using_object( emf->handles[index], emf->dc_attr->hdc );
     HeapFree( GetProcessHeap(), 0, emf->handles );
 }
 
@@ -1970,6 +1984,7 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
         return 0;
     }
 
+    emf->dc_attr = dc_attr;
     dc_attr->emf = emf;
 
     if (description) /* App name\0Title\0\0 */
@@ -1992,7 +2007,7 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
                               HANDLE_LIST_INC * sizeof(emf->handles[0]) );
     emf->handles_size = HANDLE_LIST_INC;
     emf->cur_handles = 1;
-    emf->hFile = 0;
+    emf->file = 0;
     emf->dc_brush = 0;
     emf->dc_pen = 0;
     emf->path = FALSE;
@@ -2052,7 +2067,7 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
             DeleteDC( ret );
             return 0;
         }
-        emf->hFile = file;
+        emf->file = file;
     }
 
     TRACE( "returning %p\n", ret );
@@ -2103,23 +2118,23 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
             emf->emh->szlMillimeters.cy * 100 / emf->emh->szlDevice.cy;
     }
 
-    if (emf->hFile)  /* disk based metafile */
+    if (emf->file)  /* disk based metafile */
     {
-        if (!WriteFile( emf->hFile, emf->emh, emf->emh->nBytes, NULL, NULL ))
+        if (!WriteFile( emf->file, emf->emh, emf->emh->nBytes, NULL, NULL ))
         {
-            CloseHandle( emf->hFile );
+            CloseHandle( emf->file );
             return 0;
         }
         HeapFree( GetProcessHeap(), 0, emf->emh );
-        mapping = CreateFileMappingA( emf->hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        mapping = CreateFileMappingA( emf->file, NULL, PAGE_READONLY, 0, 0, NULL );
         TRACE( "mapping = %p\n", mapping );
         emf->emh = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
         TRACE( "view = %p\n", emf->emh );
         CloseHandle( mapping );
-        CloseHandle( emf->hFile );
+        CloseHandle( emf->file );
     }
 
-    hmf = EMF_Create_HENHMETAFILE( emf->emh, emf->emh->nBytes, emf->hFile != 0 );
+    hmf = EMF_Create_HENHMETAFILE( emf->emh, emf->emh->nBytes, emf->file != 0 );
     emf->emh = NULL;  /* So it won't be deleted */
     DeleteDC( hdc );
     return hmf;
