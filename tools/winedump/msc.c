@@ -1743,6 +1743,10 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    sym->callsiteinfo_v3.sect, sym->callsiteinfo_v3.off, sym->callsiteinfo_v3.typind);
             break;
 
+        case S_BUILDINFO:
+            printf("Build-info V3 item:%04x\n", sym->build_info_v3.itemid);
+            break;
+
         case S_INLINESITE:
             printf("Inline-site V3 parent:%x end:%x inlinee:%x\n",
                    sym->inline_site_v3.pParent, sym->inline_site_v3.pEnd, sym->inline_site_v3.inlinee);

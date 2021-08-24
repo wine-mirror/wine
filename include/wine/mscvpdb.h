@@ -1825,6 +1825,13 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
+        cv_itemid_t             itemid;
+    } build_info_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
         unsigned int            pParent;
         unsigned int            pEnd;
         cv_itemid_t             inlinee;
