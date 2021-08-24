@@ -1990,6 +1990,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
         else
             device = NULL;
         irp->PendingReturned = !!(irpsp->Control & SL_PENDING_RETURNED);
+        irpsp->Control = 0;
         if (call_flag)
         {
             TRACE( "calling %p( %p, %p, %p )\n", routine, device, irp, irpsp->Context );

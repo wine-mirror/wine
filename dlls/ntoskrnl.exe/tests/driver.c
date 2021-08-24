@@ -1753,7 +1753,7 @@ static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *cont
         ok(stack->Control == (SL_INVOKE_ON_CANCEL | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_SUCCESS),
                 "Got control flags %#x.\n", stack->Control);
         stack = IoGetNextIrpStackLocation(irp);
-        todo_wine ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
         stack = irp->Tail.Overlay.CurrentStackLocation + 1; /* previous location */
         ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
 
@@ -1768,9 +1768,9 @@ static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *cont
         ok(irp->CurrentLocation == 3, "Got current location %u.\n", irp->CurrentLocation);
         ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
         stack = IoGetNextIrpStackLocation(irp);
-        todo_wine ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
         stack = irp->Tail.Overlay.CurrentStackLocation - 2; /* lowest location */
-        todo_wine ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
     }
 
     ++got_completion;
