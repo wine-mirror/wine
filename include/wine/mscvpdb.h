@@ -1368,7 +1368,7 @@ union codeview_symbol
         unsigned short int      id;
         unsigned int            offset;
         unsigned short          segment;
-        cv_typ16_t              symtype;
+        unsigned short          pubsymflags;
         struct p_string         p_name;
     } public_v1;
 
@@ -1376,7 +1376,7 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
-        cv_typ_t                symtype;
+        unsigned int            pubsymflags;
         unsigned int            offset;
         unsigned short          segment;
         struct p_string         p_name;

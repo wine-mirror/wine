@@ -2058,7 +2058,7 @@ static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BY
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 terminate_string(&sym->public_v1.p_name),
-                                sym->public_v1.symtype == SYMTYPE_FUNCTION,
+                                sym->public_v1.pubsymflags == SYMTYPE_FUNCTION,
                                 codeview_get_address(msc_dbg, sym->public_v1.segment, sym->public_v1.offset), 1);
             }
             break;
@@ -2067,7 +2067,7 @@ static BOOL codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BY
             {
                 symt_new_public(msc_dbg->module, compiland,
                                 terminate_string(&sym->public_v2.p_name),
-                                sym->public_v2.symtype == SYMTYPE_FUNCTION,
+                                sym->public_v2.pubsymflags == SYMTYPE_FUNCTION,
                                 codeview_get_address(msc_dbg, sym->public_v2.segment, sym->public_v2.offset), 1);
             }
             break;

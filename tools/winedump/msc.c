@@ -457,6 +457,20 @@ static const char* get_callconv(unsigned cc)
     return callconv;
 }
 
+static const char* get_pubflags(unsigned flags)
+{
+    static char ret[32];
+
+    ret[0] = '\0';
+#define X(s) {if (ret[0]) strcat(ret, ";"); strcat(ret, s);}
+    if (flags & 1) X("code");
+    if (flags & 2) X("func");
+    if (flags & 4) X("manage");
+    if (flags & 8) X("msil");
+#undef X
+    return ret;
+}
+
 static void do_field(const unsigned char* start, const unsigned char* end)
 {
     /*
@@ -1134,21 +1148,25 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    sym->data_v3.symtype);
             break;
 
+	case S_PUB32_16t:
+            printf("\tS-Public V1 '%s' %04x:%08x flags:%s\n",
+                   get_symbol_str(p_string(&sym->public_v1.p_name)),
+                   sym->public_v1.segment, sym->public_v1.offset,
+                   get_pubflags(sym->public_v1.pubsymflags));
+	    break;
+
 	case S_PUB32_ST:
-            printf("\tS-Public V2 '%s' %04x:%08x type:%08x\n",
+            printf("\tS-Public V2 '%s' %04x:%08x flags:%s\n",
                    get_symbol_str(p_string(&sym->public_v2.p_name)),
                    sym->public_v2.segment, sym->public_v2.offset,
-                   sym->public_v2.symtype);
+                   get_pubflags(sym->public_v2.pubsymflags));
 	    break;
 
 	case S_PUB32:
-            printf("\tS-Public V3 '%s' %04x:%08x flags%s%s%s%s\n",
+            printf("\tS-Public V3 '%s' %04x:%08x flags:%s\n",
                    get_symbol_str(sym->public_v3.name),
                    sym->public_v3.segment, sym->public_v3.offset,
-                   (sym->public_v3.pubsymflags & 1) ? "-code" : "",
-                   (sym->public_v3.pubsymflags & 2) ? "-func" : "",
-                   (sym->public_v3.pubsymflags & 4) ? "-manage" : "",
-                   (sym->public_v3.pubsymflags & 8) ? "-msil" : "");
+                   get_pubflags(sym->public_v3.pubsymflags));
 	    break;
 
 	case S_DATAREF:
