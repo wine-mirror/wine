@@ -1746,9 +1746,8 @@ static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *cont
 
     if (device == upper_device)
     {
-        todo_wine_if (completion_lower_pending)
-            ok(irp->PendingReturned == completion_lower_pending, "Got PendingReturned %u, expected %u.\n",
-                    irp->PendingReturned, completion_lower_pending);
+        ok(irp->PendingReturned == completion_lower_pending, "Got PendingReturned %u, expected %u.\n",
+                irp->PendingReturned, completion_lower_pending);
 
         ok(irp->CurrentLocation == 2, "Got current location %u.\n", irp->CurrentLocation);
         ok(stack->Control == (SL_INVOKE_ON_CANCEL | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_SUCCESS),
@@ -1763,9 +1762,8 @@ static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *cont
     }
     else
     {
-        todo_wine_if (completion_upper_pending)
-            ok(irp->PendingReturned == completion_upper_pending, "Got PendingReturned %u, expected %u.\n",
-                    irp->PendingReturned, completion_upper_pending);
+        ok(irp->PendingReturned == completion_upper_pending, "Got PendingReturned %u, expected %u.\n",
+                irp->PendingReturned, completion_upper_pending);
 
         ok(irp->CurrentLocation == 3, "Got current location %u.\n", irp->CurrentLocation);
         ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
