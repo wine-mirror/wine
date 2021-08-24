@@ -1737,11 +1737,44 @@ static void test_stack_limits(void)
     ok(low < (ULONG_PTR)&low && (ULONG_PTR)&low < high, "stack variable is not in stack limits\n");
 }
 
-static unsigned int got_completion;
+static unsigned int got_completion, completion_lower_pending, completion_upper_pending;
 
 static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *context)
 {
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     ok(device == context, "Got device %p; expected %p.\n", device, context);
+
+    if (device == upper_device)
+    {
+        todo_wine_if (completion_lower_pending)
+            ok(irp->PendingReturned == completion_lower_pending, "Got PendingReturned %u, expected %u.\n",
+                    irp->PendingReturned, completion_lower_pending);
+
+        ok(irp->CurrentLocation == 2, "Got current location %u.\n", irp->CurrentLocation);
+        ok(stack->Control == (SL_INVOKE_ON_CANCEL | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_SUCCESS),
+                "Got control flags %#x.\n", stack->Control);
+        stack = IoGetNextIrpStackLocation(irp);
+        todo_wine ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        stack = irp->Tail.Overlay.CurrentStackLocation + 1; /* previous location */
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+
+        if (irp->PendingReturned && completion_upper_pending)
+            IoMarkIrpPending(irp);
+    }
+    else
+    {
+        todo_wine_if (completion_upper_pending)
+            ok(irp->PendingReturned == completion_upper_pending, "Got PendingReturned %u, expected %u.\n",
+                    irp->PendingReturned, completion_upper_pending);
+
+        ok(irp->CurrentLocation == 3, "Got current location %u.\n", irp->CurrentLocation);
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        stack = IoGetNextIrpStackLocation(irp);
+        todo_wine ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        stack = irp->Tail.Overlay.CurrentStackLocation - 2; /* lowest location */
+        todo_wine ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+    }
+
     ++got_completion;
     return STATUS_SUCCESS;
 }
@@ -1753,14 +1786,49 @@ static void test_completion(void)
     KEVENT event;
     IRP *irp;
 
+    completion_lower_pending = completion_upper_pending = FALSE;
+
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
     irp = IoBuildDeviceIoControlRequest(IOCTL_WINETEST_COMPLETION, upper_device,
             NULL, 0, NULL, 0, FALSE, &event, &io);
-
     IoSetCompletionRoutine(irp, completion_cb, NULL, TRUE, TRUE, TRUE);
     ret = IoCallDriver(upper_device, irp);
     ok(ret == STATUS_SUCCESS, "IoCallDriver returned %#x\n", ret);
+    ok(got_completion == 2, "got %u calls to completion routine\n", got_completion);
+
+    completion_lower_pending = TRUE;
+    got_completion = 0;
+
+    irp = IoBuildDeviceIoControlRequest(IOCTL_WINETEST_COMPLETION, upper_device,
+            NULL, 0, NULL, 0, FALSE, &event, &io);
+    IoSetCompletionRoutine(irp, completion_cb, NULL, TRUE, TRUE, TRUE);
+    ret = IoCallDriver(upper_device, irp);
+    ok(ret == STATUS_PENDING, "IoCallDriver returned %#x\n", ret);
+    ok(!got_completion, "got %u calls to completion routine\n", got_completion);
+
+    ok(irp->CurrentLocation == 1, "Got current location %u.\n", irp->CurrentLocation);
+    ok(!irp->PendingReturned, "Got pending flag %u.\n", irp->PendingReturned);
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    ok(got_completion == 2, "got %u calls to completion routine\n", got_completion);
+
+    completion_upper_pending = TRUE;
+    got_completion = 0;
+
+    irp = IoBuildDeviceIoControlRequest(IOCTL_WINETEST_COMPLETION, upper_device,
+            NULL, 0, NULL, 0, FALSE, &event, &io);
+    IoSetCompletionRoutine(irp, completion_cb, NULL, TRUE, TRUE, TRUE);
+    ret = IoCallDriver(upper_device, irp);
+    ok(ret == STATUS_PENDING, "IoCallDriver returned %#x\n", ret);
+    ok(!got_completion, "got %u calls to completion routine\n", got_completion);
+
+    ok(irp->CurrentLocation == 1, "Got current location %u.\n", irp->CurrentLocation);
+    ok(!irp->PendingReturned, "Got pending flag %u.\n", irp->PendingReturned);
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
     ok(got_completion == 2, "got %u calls to completion routine\n", got_completion);
 }
 
@@ -2392,10 +2460,19 @@ static NTSTATUS test_mismatched_status_ioctl(IRP *irp, IO_STACK_LOCATION *stack,
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS test_completion_ioctl(DEVICE_OBJECT *device, IRP *irp)
+static NTSTATUS completion_ioctl(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     if (device == upper_device)
     {
+        ok(irp->CurrentLocation == 2, "Got current location %u.\n", irp->CurrentLocation);
+        ok(!irp->PendingReturned, "Got pending flag %u.\n", irp->PendingReturned);
+        ok(stack->Control == (SL_INVOKE_ON_CANCEL | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_SUCCESS),
+                "Got control flags %#x.\n", stack->Control);
+        stack = IoGetNextIrpStackLocation(irp);
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+        stack = irp->Tail.Overlay.CurrentStackLocation + 1; /* previous location */
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+
         IoCopyCurrentIrpStackLocationToNext(irp);
         IoSetCompletionRoutine(irp, completion_cb, upper_device, TRUE, TRUE, TRUE);
         return IoCallDriver(lower_device, irp);
@@ -2403,9 +2480,27 @@ static NTSTATUS test_completion_ioctl(DEVICE_OBJECT *device, IRP *irp)
     else
     {
         ok(device == lower_device, "Got wrong device.\n");
-        irp->IoStatus.Status = STATUS_SUCCESS;
-        IoCompleteRequest(irp, IO_NO_INCREMENT);
-        return STATUS_SUCCESS;
+        ok(irp->CurrentLocation == 1, "Got current location %u.\n", irp->CurrentLocation);
+        ok(!irp->PendingReturned, "Got pending flag %u.\n", irp->PendingReturned);
+        ok(stack->Control == (SL_INVOKE_ON_CANCEL | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_SUCCESS),
+                "Got control flags %#x.\n", stack->Control);
+        stack = irp->Tail.Overlay.CurrentStackLocation + 1; /* previous location */
+        ok(stack->Control == (SL_INVOKE_ON_CANCEL | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_SUCCESS),
+                "Got control flags %#x.\n", stack->Control);
+        stack = irp->Tail.Overlay.CurrentStackLocation + 2; /* top location */
+        ok(!stack->Control, "Got control flags %#x.\n", stack->Control);
+
+        if (completion_lower_pending)
+        {
+            IoMarkIrpPending(irp);
+            return STATUS_PENDING;
+        }
+        else
+        {
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            IoCompleteRequest(irp, IO_NO_INCREMENT);
+            return STATUS_SUCCESS;
+        }
     }
 }
 
@@ -2481,7 +2576,7 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_WINETEST_MISMATCHED_STATUS:
             return test_mismatched_status_ioctl(irp, stack, &irp->IoStatus.Information);
         case IOCTL_WINETEST_COMPLETION:
-            return test_completion_ioctl(device, irp);
+            return completion_ioctl(device, irp, stack);
         default:
             break;
     }
