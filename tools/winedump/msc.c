@@ -1166,6 +1166,8 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
         const union codeview_symbol* sym = (const union codeview_symbol*)((const char*)root + i);
         length = sym->generic.len + 2;
         if (!sym->generic.id || length < 4) break;
+        printf("\t%04x => ", i + 4); /* ref is made after id and len */
+
         switch (sym->generic.id)
         {
         /*
@@ -1174,7 +1176,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
          */
 	case S_GDATA32_ST:
 	case S_LDATA32_ST:
-            printf("\tS-%s-Data V2 '%s' %04x:%08x type:%08x\n",
+            printf("%s-Data V2 '%s' %04x:%08x type:%08x\n",
                    sym->generic.id == S_GDATA32_ST ? "Global" : "Local",
                    get_symbol_str(p_string(&sym->data_v2.p_name)),
                    sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype);
@@ -1183,7 +1185,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
         case S_LDATA32:
         case S_GDATA32:
 /* EPP         case S_DATA32: */
-            printf("\tS-%s-Data V3 '%s' (%04x:%08x) type:%08x\n",
+            printf("%s-Data V3 '%s' (%04x:%08x) type:%08x\n",
                    sym->generic.id == S_GDATA32 ? "Global" : "Local",
                    get_symbol_str(sym->data_v3.name),
                    sym->data_v3.segment, sym->data_v3.offset,
@@ -1191,21 +1193,21 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
 	case S_PUB32_16t:
-            printf("\tS-Public V1 '%s' %04x:%08x flags:%s\n",
+            printf("Public V1 '%s' %04x:%08x flags:%s\n",
                    get_symbol_str(p_string(&sym->public_v1.p_name)),
                    sym->public_v1.segment, sym->public_v1.offset,
                    get_pubflags(sym->public_v1.pubsymflags));
 	    break;
 
 	case S_PUB32_ST:
-            printf("\tS-Public V2 '%s' %04x:%08x flags:%s\n",
+            printf("Public V2 '%s' %04x:%08x flags:%s\n",
                    get_symbol_str(p_string(&sym->public_v2.p_name)),
                    sym->public_v2.segment, sym->public_v2.offset,
                    get_pubflags(sym->public_v2.pubsymflags));
 	    break;
 
 	case S_PUB32:
-            printf("\tS-Public V3 '%s' %04x:%08x flags:%s\n",
+            printf("Public V3 '%s' %04x:%08x flags:%s\n",
                    get_symbol_str(sym->public_v3.name),
                    sym->public_v3.segment, sym->public_v3.offset,
                    get_pubflags(sym->public_v3.pubsymflags));
@@ -1214,7 +1216,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 	case S_DATAREF:
 	case S_PROCREF:
 	case S_LPROCREF:
-            printf("\tS-%sref V3 '%s' mod:%04x sym:%08x name:%08x\n",
+            printf("%sref V3 '%s' %04x:%08x name:%08x\n",
                    sym->generic.id == S_DATAREF ? "Data" :
                                       (sym->generic.id == S_PROCREF ? "Proc" : "Lproc"),
                    get_symbol_str(sym->refsym2_v3.name),
@@ -1227,7 +1229,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
          * a PLT slot in the normal jargon that everyone else uses.
          */
 	case S_THUNK32_ST:
-            printf("\tS-Thunk V1 '%s' (%04x:%08x#%x) type:%x\n",
+            printf("Thunk V1 '%s' (%04x:%08x#%x) type:%x\n",
                    p_string(&sym->thunk_v1.p_name),
                    sym->thunk_v1.segment, sym->thunk_v1.offset,
                    sym->thunk_v1.thunk_len, sym->thunk_v1.thtype);
@@ -1235,7 +1237,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 	    break;
 
 	case S_THUNK32:
-            printf("\tS-Thunk V3 '%s' (%04x:%08x#%x) type:%x\n",
+            printf("Thunk V3 '%s' (%04x:%08x#%x) type:%x\n",
                    sym->thunk_v3.name,
                    sym->thunk_v3.segment, sym->thunk_v3.offset,
                    sym->thunk_v3.thunk_len, sym->thunk_v3.thtype);
@@ -1245,13 +1247,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
         /* Global and static functions */
 	case S_GPROC32_16t:
 	case S_LPROC32_16t:
-            printf("\tS-%s-Proc V1: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
+            printf("%s-Proc V1: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
                    sym->generic.id == S_GPROC32_16t ? "Global" : "-Local",
                    p_string(&sym->proc_v1.p_name),
                    sym->proc_v1.segment, sym->proc_v1.offset,
                    sym->proc_v1.proc_len, sym->proc_v1.proctype,
                    sym->proc_v1.flags);
-            printf("\t  Debug: start=%08x end=%08x\n",
+            printf("\t\tDebug: start=%08x end=%08x\n",
                    sym->proc_v1.debug_start, sym->proc_v1.debug_end);
             if (nest_block)
             {
@@ -1266,13 +1268,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
 	case S_GPROC32_ST:
 	case S_LPROC32_ST:
-            printf("\tS-%s-Proc V2: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
+            printf("%s-Proc V2: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
                    sym->generic.id == S_GPROC32_ST ? "Global" : "-Local",
                    p_string(&sym->proc_v2.p_name),
                    sym->proc_v2.segment, sym->proc_v2.offset,
                    sym->proc_v2.proc_len, sym->proc_v2.proctype,
                    sym->proc_v2.flags);
-            printf("\t  Debug: start=%08x end=%08x\n",
+            printf("\t\tDebug: start=%08x end=%08x\n",
                    sym->proc_v2.debug_start, sym->proc_v2.debug_end);
             if (nest_block)
             {
@@ -1287,13 +1289,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
         case S_LPROC32:
         case S_GPROC32:
-            printf("\tS-%s-Procedure V3 '%s' (%04x:%08x#%x) type:%x attr:%x\n",
+            printf("%s-Procedure V3 '%s' (%04x:%08x#%x) type:%x attr:%x\n",
                    sym->generic.id == S_GPROC32 ? "Global" : "Local",
                    sym->proc_v3.name,
                    sym->proc_v3.segment, sym->proc_v3.offset,
                    sym->proc_v3.proc_len, sym->proc_v3.proctype,
                    sym->proc_v3.flags);
-            printf("\t  Debug: start=%08x end=%08x\n",
+            printf("\t\tDebug: start=%08x end=%08x\n",
                    sym->proc_v3.debug_start, sym->proc_v3.debug_end);
             if (nest_block)
             {
@@ -1308,49 +1310,49 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
         /* Function parameters and stack variables */
 	case S_BPREL32_16t:
-            printf("\tS-BP-relative V1: '%s' @%d type:%x (%s)\n",
+            printf("BP-relative V1: '%s' @%d type:%x (%s)\n",
                    p_string(&sym->stack_v1.p_name),
                    sym->stack_v1.offset, sym->stack_v1.symtype, curr_func);
             break;
 
 	case S_BPREL32_ST:
-            printf("\tS-BP-relative V2: '%s' @%d type:%x (%s)\n",
+            printf("BP-relative V2: '%s' @%d type:%x (%s)\n",
                    p_string(&sym->stack_v2.p_name),
                    sym->stack_v2.offset, sym->stack_v2.symtype, curr_func);
             break;
 
         case S_BPREL32:
-            printf("\tS-BP-relative V3: '%s' @%d type:%x (in %s)\n",
+            printf("BP-relative V3: '%s' @%d type:%x (in %s)\n",
                    sym->stack_v3.name, sym->stack_v3.offset,
                    sym->stack_v3.symtype, curr_func);
             break;
 
         case S_REGREL32:
-            printf("\tS-Reg-relative V3: '%s' @%d type:%x reg:%x (in %s)\n",
+            printf("Reg-relative V3: '%s' @%d type:%x reg:%x (in %s)\n",
                    sym->regrel_v3.name, sym->regrel_v3.offset,
                    sym->regrel_v3.symtype, sym->regrel_v3.reg, curr_func);
             break;
 
         case S_REGISTER_16t:
-            printf("\tS-Register V1 '%s' in %s type:%x register:%x\n",
+            printf("Register V1 '%s' in %s type:%x register:%x\n",
                    p_string(&sym->register_v1.p_name),
                    curr_func, sym->register_v1.reg, sym->register_v1.type);
             break;
 
         case S_REGISTER_ST:
-            printf("\tS-Register V2 '%s' in %s type:%x register:%x\n",
+            printf("Register V2 '%s' in %s type:%x register:%x\n",
                    p_string(&sym->register_v2.p_name),
                    curr_func, sym->register_v2.reg, sym->register_v2.type);
             break;
 
         case S_REGISTER:
-            printf("\tS-Register V3 '%s' in %s type:%x register:%x\n",
+            printf("Register V3 '%s' in %s type:%x register:%x\n",
                    sym->register_v3.name,
                    curr_func, sym->register_v3.reg, sym->register_v3.type);
             break;
 
         case S_BLOCK32_ST:
-            printf("\tS-Block V1 '%s' in '%s' (%04x:%08x#%08x)\n",
+            printf("Block V1 '%s' in '%s' (%04x:%08x#%08x)\n",
                    p_string(&sym->block_v1.p_name),
                    curr_func,
                    sym->block_v1.segment, sym->block_v1.offset,
@@ -1359,7 +1361,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_BLOCK32:
-            printf("\tS-Block V3 '%s' in '%s' (%04x:%08x#%08x) parent:%u end:%x\n",
+            printf("Block V3 '%s' in '%s' (%04x:%08x#%08x) parent:%u end:%x\n",
                    sym->block_v3.name, curr_func,
                    sym->block_v3.segment, sym->block_v3.offset, sym->block_v3.length,
                    sym->block_v3.parent, sym->block_v3.end);
@@ -1368,7 +1370,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
         /* Additional function information */
         case S_FRAMEPROC:
-            printf("\tS-Frame-Info V2: frame-size:%x unk2:%x unk3:%x saved-regs-sz:%x eh(%04x:%08x) flags:%08x\n",
+            printf("Frame-Info V2: frame-size:%x unk2:%x unk3:%x saved-regs-sz:%x eh(%04x:%08x) flags:%08x\n",
                    sym->frame_info_v2.sz_frame,
                    sym->frame_info_v2.unknown2,
                    sym->frame_info_v2.unknown3,
@@ -1379,7 +1381,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_FRAMECOOKIE:
-            printf("\tSecurity Cookie V3 @%d unk:%x\n",
+            printf("Security Cookie V3 @%d unk:%x\n",
                    sym->security_cookie_v3.offset, sym->security_cookie_v3.unknown);
             break;
 
@@ -1387,18 +1389,18 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             if (nest_block)
             {
                 nest_block--;
-                printf("\tS-End-Of block (%u)\n", nest_block);
+                printf("End-Of block (%u)\n", nest_block);
             }
             else
             {
-                printf("\tS-End-Of %s\n", curr_func);
+                printf("End-Of %s\n", curr_func);
                 free(curr_func);
                 curr_func = NULL;
             }
             break;
 
         case S_COMPILE:
-            printf("\tS-Compile V1 machine:%s lang:%s _unk:%x '%s'\n",
+            printf("Compile V1 machine:%s lang:%s _unk:%x '%s'\n",
                    get_machine(sym->compile_v1.machine),
                    get_language(sym->compile_v1.flags.language),
                    sym->compile_v1.flags._dome,
@@ -1406,7 +1408,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_COMPILE2_ST:
-            printf("\tS-Compile2-V2 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
+            printf("Compile2-V2 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
                    get_language(sym->compile2_v2.flags.iLanguage),
                    get_machine(sym->compile2_v2.machine),
                    sym->compile2_v2.flags._dome,
@@ -1424,7 +1426,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_COMPILE2:
-            printf("\tS-Compile2-V3 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
+            printf("Compile2-V3 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
                    get_language(sym->compile2_v3.flags.iLanguage),
                    get_machine(sym->compile2_v3.machine),
                    sym->compile2_v3.flags._dome,
@@ -1442,7 +1444,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_COMPILE3:
-            printf("\tS-Compile3-V3 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
+            printf("Compile3-V3 lang:%s machine:%s _unk:%x front-end:%d.%d.%d back-end:%d.%d.%d '%s'\n",
                    get_language(sym->compile3_v3.flags.iLanguage),
                    get_machine(sym->compile3_v3.machine),
                    sym->compile3_v3.flags._dome,
@@ -1468,23 +1470,23 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_OBJNAME:
-            printf("\tS-ObjName V3 sig:%x '%s'\n",
+            printf("ObjName V3 sig:%x '%s'\n",
                    sym->objname_v3.signature, sym->objname_v3.name);
             break;
 
         case S_OBJNAME_ST:
-            printf("\tS-ObjName V1 sig:%x '%s'\n",
+            printf("ObjName V1 sig:%x '%s'\n",
                    sym->objname_v1.signature, p_string(&sym->objname_v1.p_name));
             break;
 
         case S_LABEL32_ST:
-            printf("\tS-Label V1 '%s' in '%s' (%04x:%08x)\n",
+            printf("Label V1 '%s' in '%s' (%04x:%08x)\n",
                    p_string(&sym->label_v1.p_name),
                    curr_func, sym->label_v1.segment, sym->label_v1.offset);
             break;
 
         case S_LABEL32:
-            printf("\tS-Label V3 '%s' in '%s' (%04x:%08x) flag:%x\n",
+            printf("Label V3 '%s' in '%s' (%04x:%08x) flag:%x\n",
                    sym->label_v3.name, curr_func, sym->label_v3.segment,
                    sym->label_v3.offset, sym->label_v3.flags);
             break;
@@ -1495,7 +1497,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                 struct full_value fv;
 
                 vlen = full_numeric_leaf(&fv, &sym->constant_v2.cvalue);
-                printf("\tS-Constant V2 '%s' = %s type:%x\n",
+                printf("Constant V2 '%s' = %s type:%x\n",
                        p_string(PSTRING(&sym->constant_v2.cvalue, vlen)),
                        full_value_string(&fv), sym->constant_v2.type);
             }
@@ -1507,24 +1509,24 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                 struct full_value fv;
 
                 vlen = full_numeric_leaf(&fv, &sym->constant_v3.cvalue);
-                printf("\tS-Constant V3 '%s' =  %s type:%x\n",
+                printf("Constant V3 '%s' =  %s type:%x\n",
                        (const char*)&sym->constant_v3.cvalue + vlen,
                        full_value_string(&fv), sym->constant_v3.type);
             }
             break;
 
         case S_UDT_16t:
-            printf("\tS-Udt V1 '%s': type:0x%x\n",
+            printf("Udt V1 '%s': type:0x%x\n",
                    p_string(&sym->udt_v1.p_name), sym->udt_v1.type);
             break;
 
         case S_UDT_ST:
-            printf("\tS-Udt V2 '%s': type:0x%x\n",
+            printf("Udt V2 '%s': type:0x%x\n",
                    p_string(&sym->udt_v2.p_name), sym->udt_v2.type);
             break;
 
         case S_UDT:
-            printf("\tS-Udt V3 '%s': type:0x%x\n",
+            printf("Udt V3 '%s': type:0x%x\n",
                    sym->udt_v3.name, sym->udt_v3.type);
             break;
         /*
@@ -1533,11 +1535,11 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
          * into the symbol length count.  We need to skip it.
          */
 	case S_PROCREF_ST:
-            printf("\tS-Procref V1 "); goto doaref;
+            printf("Procref V1 "); goto doaref;
 	case S_DATAREF_ST:
-            printf("\tS-Dataref V1 "); goto doaref;
+            printf("Dataref V1 "); goto doaref;
 	case S_LPROCREF_ST:
-            printf("\tS-L-Procref V1 "); goto doaref;
+            printf("L-Procref V1 "); goto doaref;
         doaref:
             {
                 const struct p_string* pname;
@@ -1555,12 +1557,12 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_SSEARCH:
-            printf("\tSSearch V1: (%04x:%08x)\n",
+            printf("Search V1: (%04x:%08x)\n",
                    sym->ssearch_v1.segment, sym->ssearch_v1.offset);
             break;
 
         case S_SECTION:
-            printf("\tSSection Info: seg=%04x ?=%04x rva=%08x size=%08x attr=%08x %s\n",
+            printf("Section Info: seg=%04x ?=%04x rva=%08x size=%08x attr=%08x %s\n",
                    *(const unsigned short*)((const char*)sym + 4),
                    *(const unsigned short*)((const char*)sym + 6),
                    *(const unsigned*)((const char*)sym + 8),
@@ -1570,7 +1572,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_COFFGROUP:
-            printf("\tSSubSection Info: addr=%04x:%08x size=%08x attr=%08x %s\n",
+            printf("SubSection Info: addr=%04x:%08x size=%08x attr=%08x %s\n",
                    *(const unsigned short*)((const char*)sym + 16),
                    *(const unsigned*)((const char*)sym + 12),
                    *(const unsigned*)((const char*)sym + 4),
@@ -1579,13 +1581,13 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             break;
 
         case S_EXPORT:
-            printf("\tSEntryPoint: id=%x '%s'\n",
+            printf("EntryPoint: id=%x '%s'\n",
                    *(const unsigned*)((const char*)sym + 4), (const char*)sym + 8);
             break;
 
         case S_LTHREAD32_16t:
         case S_GTHREAD32_16t:
-            printf("\tS-Thread %s Var V1 '%s' seg=%04x offset=%08x type=%x\n",
+            printf("Thread %s Var V1 '%s' seg=%04x offset=%08x type=%x\n",
                    sym->generic.id == S_LTHREAD32_16t ? "global" : "local",
                    p_string(&sym->thread_v1.p_name),
                    sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype);
@@ -1593,7 +1595,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
         case S_LTHREAD32_ST:
         case S_GTHREAD32_ST:
-            printf("\tS-Thread %s Var V2 '%s' seg=%04x offset=%08x type=%x\n",
+            printf("Thread %s Var V2 '%s' seg=%04x offset=%08x type=%x\n",
                    sym->generic.id == S_LTHREAD32_ST ? "global" : "local",
                    p_string(&sym->thread_v2.p_name),
                    sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype);
@@ -1601,57 +1603,56 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
 
         case S_LTHREAD32:
         case S_GTHREAD32:
-            printf("\tS-Thread %s Var V3 '%s' seg=%04x offset=%08x type=%x\n",
+            printf("Thread %s Var V3 '%s' seg=%04x offset=%08x type=%x\n",
                    sym->generic.id == S_LTHREAD32 ? "global" : "local", sym->thread_v3.name,
                    sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype);
             break;
 
         case S_LOCAL:
-            printf("\tS-Local V3 '%s' type=%x flags=%s\n",
+            printf("Local V3 '%s' type=%x flags=%s\n",
                    sym->local_v3.name, sym->local_v3.symtype,
                    get_varflags(sym->local_v3.varflags));
-
             break;
 
         case S_DEFRANGE:
-            printf("\tS-DefRange dia:%x\n", sym->defrange_v3.program);
+            printf("DefRange dia:%x\n", sym->defrange_v3.program);
             dump_defrange(&sym->defrange_v3.range, get_last(sym), "\t\t");
             break;
         case S_DEFRANGE_SUBFIELD:
-            printf("\tS-DefRange-subfield V3 dia:%x off-parent:%x\n",
+            printf("DefRange-subfield V3 dia:%x off-parent:%x\n",
                    sym->defrange_subfield_v3.program, sym->defrange_subfield_v3.offParent);
             dump_defrange(&sym->defrange_subfield_v3.range, get_last(sym), "\t\t");
             break;
         case S_DEFRANGE_REGISTER:
-            printf("\tS-DefRange-register V3 reg:%x attr-unk:%x\n",
+            printf("DefRange-register V3 reg:%x attr-unk:%x\n",
                    sym->defrange_register_v3.reg, sym->defrange_register_v3.attr);
             dump_defrange(&sym->defrange_register_v3.range, get_last(sym), "\t\t");
             break;
         case S_DEFRANGE_FRAMEPOINTER_REL:
-            printf("\tS-DefRange-framepointer-rel V3 offFP:%x\n",
+            printf("DefRange-framepointer-rel V3 offFP:%x\n",
                    sym->defrange_frameptrrel_v3.offFramePointer);
             dump_defrange(&sym->defrange_frameptrrel_v3.range, get_last(sym), "\t\t");
             break;
         case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
-            printf("\tS-DefRange-framepointer-rel-fullscope V3 offFP:%x\n",
+            printf("DefRange-framepointer-rel-fullscope V3 offFP:%x\n",
                    sym->defrange_frameptr_relfullscope_v3.offFramePointer);
             break;
         case S_DEFRANGE_SUBFIELD_REGISTER:
-            printf("\tS-DefRange-subfield-register V3 reg:%d attr-unk:%x off-parent:%x\n",
+            printf("DefRange-subfield-register V3 reg:%d attr-unk:%x off-parent:%x\n",
                    sym->defrange_subfield_register_v3.reg,
                    sym->defrange_subfield_register_v3.attr,
                    sym->defrange_subfield_register_v3.offParent);
             dump_defrange(&sym->defrange_subfield_register_v3.range, get_last(sym), "\t\t");
             break;
         case S_DEFRANGE_REGISTER_REL:
-            printf("\tS-DefRange-register-rel V3 reg:%x off-parent:%x off-BP:%x\n",
+            printf("DefRange-register-rel V3 reg:%x off-parent:%x off-BP:%x\n",
                    sym->defrange_registerrel_v3.baseReg, sym->defrange_registerrel_v3.offsetParent,
                    sym->defrange_registerrel_v3.offBasePointer);
             dump_defrange(&sym->defrange_registerrel_v3.range, get_last(sym), "\t\t");
             break;
 
         default:
-            printf(">>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
+            printf("\n\t\t>>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
         }
     }
