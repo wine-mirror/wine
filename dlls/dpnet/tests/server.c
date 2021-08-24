@@ -184,6 +184,91 @@ static void test_server_info(void)
     }
 }
 
+static void test_enum_service_providers(void)
+{
+    DPN_SERVICE_PROVIDER_INFO *serv_prov_info = NULL;
+    IDirectPlay8Server *server = NULL;
+    DWORD items, size;
+    DWORD i;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Server, NULL, CLSCTX_ALL, &IID_IDirectPlay8Server, (LPVOID*)&server);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Server object\n");
+    if (FAILED(hr))
+        return;
+
+    size = 0;
+    items = 0;
+    hr = IDirectPlay8Server_EnumServiceProviders(server, NULL, NULL, serv_prov_info, &size, &items, 0);
+    ok(hr == DPNERR_UNINITIALIZED, "got %x\n", hr);
+
+    hr = IDirectPlay8Server_Initialize(server, NULL, DirectPlayMessageHandler, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectPlay8Server_Release(server);
+        return;
+    }
+
+    size = 0;
+    items = 0;
+
+    hr = IDirectPlay8Server_EnumServiceProviders(server, NULL, NULL, NULL, &size, NULL, 0);
+    ok(hr == E_POINTER, "IDirectPlay8Server_EnumServiceProviders failed with %x\n", hr);
+
+    hr = IDirectPlay8Server_EnumServiceProviders(server, NULL, NULL, NULL, NULL, &items, 0);
+    ok(hr == E_POINTER, "IDirectPlay8Server_EnumServiceProviders failed with %x\n", hr);
+
+    hr = IDirectPlay8Server_EnumServiceProviders(server, NULL, NULL, NULL, &size, &items, 0);
+    ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Server_EnumServiceProviders failed with %x\n", hr);
+    ok(size != 0, "size is unexpectedly 0\n");
+
+    serv_prov_info = HeapAlloc(GetProcessHeap(), 0, size);
+
+    hr = IDirectPlay8Server_EnumServiceProviders(server, NULL, NULL, serv_prov_info, &size, &items, 0);
+    ok(hr == S_OK, "IDirectPlay8Server_EnumServiceProviders failed with %x\n", hr);
+    ok(items != 0, "Found unexpectedly no service providers\n");
+
+    trace("number of items found: %d\n", items);
+
+    for (i=0;i<items;i++)
+    {
+        trace("Found Service Provider: %s\n", wine_dbgstr_w(serv_prov_info[i].pwszName));
+        trace("Found guid: %s\n", wine_dbgstr_guid(&serv_prov_info[i].guid));
+    }
+
+    ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
+
+    size = 0;
+    items = 0;
+
+    hr = IDirectPlay8Server_EnumServiceProviders(server, &CLSID_DP8SP_TCPIP, NULL, NULL, &size, &items, 0);
+    ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Server_EnumServiceProviders failed with %x\n", hr);
+    ok(size != 0, "size is unexpectedly 0\n");
+
+    serv_prov_info = HeapAlloc(GetProcessHeap(), 0, size);
+
+    hr = IDirectPlay8Server_EnumServiceProviders(server, &CLSID_DP8SP_TCPIP, NULL, serv_prov_info, &size, &items, 0);
+    ok(hr == S_OK, "IDirectPlay8Server_EnumServiceProviders failed with %x\n", hr);
+    ok(items != 0, "Found unexpectedly no adapter\n");
+
+
+    for (i=0;i<items;i++)
+    {
+        trace("Found adapter: %s\n", wine_dbgstr_w(serv_prov_info[i].pwszName));
+        trace("Found adapter guid: %s\n", wine_dbgstr_guid(&serv_prov_info[i].guid));
+    }
+
+    /* Invalid GUID */
+    items = 88;
+    hr = IDirectPlay8Server_EnumServiceProviders(server, &appguid, NULL, serv_prov_info, &size, &items, 0);
+    ok(hr == DPNERR_DOESNOTEXIST, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(items == 88, "Found adapter %d\n", items);
+
+    HeapFree(GetProcessHeap(), 0, serv_prov_info);
+    IDirectPlay8Server_Release(server);
+}
+
 BOOL is_process_elevated(void)
 {
     HANDLE token;
@@ -398,6 +483,7 @@ START_TEST(server)
 
     create_server();
     test_server_info();
+    test_enum_service_providers();
 
     CoUninitialize();
 
