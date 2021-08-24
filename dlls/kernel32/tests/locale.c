@@ -189,6 +189,29 @@ static void expect_err_(int line, int ret, const char *str, DWORD err, const cha
 #define EXPECT_LENW ok(ret == lstrlenW(Expected)+1, "Expected Len %d, got %d\n", lstrlenW(Expected)+1, ret)
 #define EXPECT_EQW  ok(wcsncmp(buffer, Expected, lstrlenW(Expected)) == 0, "Bad conversion\n")
 
+#define expect_wstr(r,s,e) expect_wstr_(__LINE__, r, s, e)
+static void expect_wstr_(int line, int ret, const WCHAR *str, const WCHAR *expected)
+{
+  if (ret)
+  {
+    ok_(__FILE__, line)(GetLastError() == 0xdeadbeef, "unexpected gle %u\n", GetLastError());
+    ok_(__FILE__, line)(ret == wcslen(expected) + 1, "Expected ret %d, got %d\n", wcslen(expected) + 1, ret);
+    if (str)
+        ok_(__FILE__, line)(wcscmp(str, expected) == 0, "Expected %s, got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(str));
+  }
+  else
+    ok_(__FILE__, line)(0, "expected success, got error %d\n", GetLastError());
+}
+
+#define expect_werr(r,s,e) expect_werr_(__LINE__, r, s, e, #e)
+static void expect_werr_(int line, int ret, const WCHAR *str, DWORD err, const char* err_name)
+{
+  ok_(__FILE__, line)(!ret && GetLastError() == err,
+      "Expected %s, got %d and ret=%d\n", err_name, GetLastError(), ret);
+  if (str)
+      ok_(__FILE__, line)(wcscmp(str, L"pristine") == 0, "Expected a pristine buffer, got %s\n", wine_dbgstr_w(str));
+}
+
 #define NUO LOCALE_NOUSEROVERRIDE
 
 static void test_GetLocaleInfoA(void)
@@ -620,7 +643,7 @@ static void test_GetTimeFormatEx(void)
 {
   int ret;
   SYSTEMTIME  curtime;
-  WCHAR buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  WCHAR buffer[BUFFER_SIZE];
 
   if (!pGetTimeFormatEx)
   {
@@ -628,114 +651,102 @@ static void test_GetTimeFormatEx(void)
       return;
   }
 
-  memset(&curtime, 2, sizeof(SYSTEMTIME));
-  STRINGSW("tt HH':'mm'@'ss", ""); /* Invalid time */
   SetLastError(0xdeadbeef);
-  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
+  /* Invalid time */
+  memset(&curtime, 2, sizeof(SYSTEMTIME));
+  wcscpy(buffer, L"pristine");
+  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, L"tt HH':'mm'@'ss", buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Valid time */
   curtime.wHour = 8;
   curtime.wMinute = 56;
   curtime.wSecond = 13;
   curtime.wMilliseconds = 22;
-  STRINGSW("tt HH':'mm'@'ss", "AM 08:56@13"); /* Valid time */
-  SetLastError(0xdeadbeef);
-  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, L"tt HH':'mm'@'ss", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"AM 08:56@13");
 
   /* MSDN: LOCALE_NOUSEROVERRIDE can't be specified with a format string */
+  wcscpy(buffer, L"pristine");
+  ret = pGetTimeFormatEx(localeW, NUO|TIME_FORCE24HOURFORMAT, &curtime, L"HH", buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = pGetTimeFormatEx(localeW, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
-  STRINGSW("tt HH':'mm'@'ss", "A"); /* Insufficient buffer */
+  /* Insufficient buffer */
+  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, L" tt", buffer, 2);
+  /* there is no guarantee on the buffer content, see GetTimeFormatA() */
+  expect_werr(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
   SetLastError(0xdeadbeef);
-  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
-  ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-      "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
-  STRINGSW("tt HH':'mm'@'ss", "AM 08:56@13"); /* Calculate length only */
-  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, input, NULL, 0);
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW;
+  /* Calculate length only */
+  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, L"tt HH':'mm'@'ss", NULL, 0);
+  expect_wstr(ret, NULL, L"AM 08:56@13");
 
-  STRINGSW("", "8 AM"); /* TIME_NOMINUTESORSECONDS, default format */
+  /* TIME_NOMINUTESORSECONDS, default format */
   ret = pGetTimeFormatEx(localeW, NUO|TIME_NOMINUTESORSECONDS, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  expect_wstr(ret, buffer, L"8 AM");
 
-  STRINGSW("m1s2m3s4", ""); /* TIME_NOMINUTESORSECONDS/complex format */
-  ret = pGetTimeFormatEx(localeW, TIME_NOMINUTESORSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == lstrlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* TIME_NOMINUTESORSECONDS/complex format */
+  wcscpy(buffer, L"pristine");
+  ret = pGetTimeFormatEx(localeW, TIME_NOMINUTESORSECONDS, &curtime, L"m1s2m3s4", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"");
 
-  STRINGSW("", "8:56 AM"); /* TIME_NOSECONDS/Default format */
+  /* TIME_NOSECONDS/Default format */
   ret = pGetTimeFormatEx(localeW, NUO|TIME_NOSECONDS, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  expect_wstr(ret, buffer, L"8:56 AM");
 
-  STRINGSW("h:m:s tt", "8:56 AM"); /* TIME_NOSECONDS */
-  ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* TIME_NOSECONDS */
+  wcscpy(buffer, L"pristine"); /* clear previous identical result */
+  ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, L"h:m:s tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"8:56 AM");
 
-  STRINGSW("h.@:m.@:s.@:tt", "8.@:56AM"); /* Multiple delimiters */
-  ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Multiple delimiters */
+  ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, L"h.@:m.@:s.@:tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"8.@:56AM");
 
-  STRINGSW("s1s2s3", ""); /* Duplicate tokens */
-  ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == lstrlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Duplicate tokens */
+  wcscpy(buffer, L"pristine");
+  ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, L"s1s2s3", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"");
 
-  STRINGSW("t/tt", "A/AM"); /* AM time marker */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* AM time marker */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"t/tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"A/AM");
 
+  /* PM time marker */
   curtime.wHour = 13;
-  STRINGSW("t/tt", "P/PM"); /* PM time marker */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"t/tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"P/PM");
 
-  STRINGSW("h1t2tt3m", "156"); /* TIME_NOTIMEMARKER: removes text around time marker token */
-  ret = pGetTimeFormatEx(localeW, TIME_NOTIMEMARKER, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* TIME_NOTIMEMARKER: removes text around time marker token */
+  ret = pGetTimeFormatEx(localeW, TIME_NOTIMEMARKER, &curtime, L"h1t2tt3m", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"156");
 
-  STRINGSW("h:m:s tt", "13:56:13 PM"); /* TIME_FORCE24HOURFORMAT */
-  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* TIME_FORCE24HOURFORMAT */
+  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, L"h:m:s tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"13:56:13 PM");
 
-  STRINGSW("h:m:s", "13:56:13"); /* TIME_FORCE24HOURFORMAT doesn't add time marker */
-  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* TIME_FORCE24HOURFORMAT doesn't add time marker */
+  ret = pGetTimeFormatEx(localeW, TIME_FORCE24HOURFORMAT, &curtime, L"h:m:s", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"13:56:13");
 
+  /* 24 hrs, leading 0 */
   curtime.wHour = 14; /* change this to 14 or 2pm */
   curtime.wMinute = 5;
   curtime.wSecond = 3;
-  STRINGSW("h hh H HH m mm s ss t tt", "2 02 14 14 5 05 3 03 P PM"); /* 24 hrs, leading 0 */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h hh H HH m mm s ss t tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2 02 14 14 5 05 3 03 P PM");
 
+  /* "hh" and "HH" */
   curtime.wHour = 0;
-  STRINGSW("h/H/hh/HH", "12/0/12/00"); /* "hh" and "HH" */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h/H/hh/HH", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"12/0/12/00");
 
-  STRINGSW("h:m:s tt", "12:5:3 AM"); /* non-zero flags should fail with format, doesn't */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* non-zero flags should fail with format, doesn't */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h:m:s tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"12:5:3 AM");
 
   /* try to convert formatting strings with more than two letters
    * "h:hh:hhh:H:HH:HHH:m:mm:mmm:M:MM:MMM:s:ss:sss:S:SS:SSS"
@@ -747,69 +758,57 @@ static void test_GetTimeFormatEx(void)
   curtime.wMinute = 56;
   curtime.wSecond = 13;
   curtime.wMilliseconds = 22;
-  STRINGSW("h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS",
-           "8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
 
-  STRINGSW("h", "text"); /* Don't write to buffer if len is 0 */
-  lstrcpyW(buffer, Expected);
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, 0);
-  ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQW;
+  /* Don't write to buffer if len is 0 */
+  wcscpy(buffer, L"pristine");
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h:mm", buffer, 0);
+  expect_wstr(ret, NULL, L"8:56");
+  ok(wcscmp(buffer, L"pristine") == 0, "Expected a pristine buffer, got %s\n", wine_dbgstr_w(buffer));
 
-  STRINGSW("h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'",
-           "8 h 8 H 08 HH 56 m 13 s A t AM tt"); /* "'" preserves tokens */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* "'" preserves tokens */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"8 h 8 H 08 HH 56 m 13 s A t AM tt");
 
-  STRINGSW("'''", "'"); /* invalid quoted string */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* invalid quoted string */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"'''", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"'");
 
-  /* test that msdn suggested single quotation usage works as expected */
-  STRINGSW("''''", "'"); /* single quote mark */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* check that MSDN's suggested single quotation usage works as expected */
+  wcscpy(buffer, L"pristine"); /* clear previous identical result */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"''''", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"'");
 
-  STRINGSW("''HHHHHH", "08"); /* Normal use */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Normal use */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"''HHHHHH", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"08");
 
   /* and test for normal use of the single quotation mark */
-  STRINGSW("'''HHHHHH'", "'HHHHHH"); /* Normal use */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"'''HHHHHH'", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"'HHHHHH");
 
-  STRINGSW("'''HHHHHH", "'HHHHHH"); /* Odd use */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Odd use */
+  wcscpy(buffer, L"pristine"); /* clear previous identical result */
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"'''HHHHHH", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"'HHHHHH");
 
-  STRINGSW("'123'tt", ""); /* TIME_NOTIMEMARKER drops literals too */
-  ret = pGetTimeFormatEx(localeW, TIME_NOTIMEMARKER, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* TIME_NOTIMEMARKER drops literals too */
+  ret = pGetTimeFormatEx(localeW, TIME_NOTIMEMARKER, &curtime, L"'123'tt", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"");
 
+  /* Invalid time */
   curtime.wHour = 25;
-  STRINGSW("'123'tt", ""); /* Invalid time */
+  wcscpy(buffer, L"pristine");
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"'123'tt", buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
   SetLastError(0xdeadbeef);
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
+  /* Invalid date */
   curtime.wHour = 12;
-  curtime.wMonth = 60; /* Invalid */
-  STRINGSW("h:m:s", "12:56:13"); /* Invalid date */
-  ret = pGetTimeFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  curtime.wMonth = 60;
+  ret = pGetTimeFormatEx(localeW, 0, &curtime, L"h:m:s", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"12:56:13");
 }
 
 static void test_GetDateFormatA(void)
