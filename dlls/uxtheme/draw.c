@@ -149,7 +149,8 @@ HRESULT WINAPI DrawThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Select the image to use
  */
-static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph)
+static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
+                                           const RECT *pRect, BOOL glyph, int *imageDpi)
 {
     PTHEME_PROPERTY tp;
     int imageselecttype = IST_NONE;
@@ -159,6 +160,9 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
         image = TMT_GLYPHIMAGEFILE;
     else
         image = TMT_IMAGEFILE;
+
+    if (imageDpi)
+        *imageDpi = 96;
 
     if((tp=MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, image)))
         return tp;
@@ -172,6 +176,10 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
             if(SUCCEEDED(GetThemeInt(hTheme, iPartId, iStateId, i + TMT_MINDPI1, &reqdpi))) {
                 if(reqdpi != 0 && screendpi >= reqdpi) {
                     TRACE("Using %d DPI, image %d\n", reqdpi, i + TMT_IMAGEFILE1);
+
+                    if (imageDpi)
+                        *imageDpi = reqdpi;
+
                     return MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, i + TMT_IMAGEFILE1);
                 }
             }
@@ -228,15 +236,18 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
  *
  * Load image for part/state
  */
-static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph,
-                          HBITMAP *hBmp, RECT *bmpRect, BOOL* hasImageAlpha)
+static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
+                                 const RECT *pRect, BOOL glyph, HBITMAP *hBmp, RECT *bmpRect,
+                                 BOOL *hasImageAlpha, int *imageDpi)
 {
     int imagelayout = IL_HORIZONTAL;
     int imagecount = 1;
     int imagenum;
     BITMAP bmp;
     WCHAR szPath[MAX_PATH];
-    PTHEME_PROPERTY tp = UXTHEME_SelectImage(hTheme, hdc, iPartId, iStateId, pRect, glyph);
+    PTHEME_PROPERTY tp;
+
+    tp = UXTHEME_SelectImage(hTheme, hdc, iPartId, iStateId, pRect, glyph, imageDpi);
     if(!tp) {
         FIXME("Couldn't determine image for part/state %d/%d, invalid theme?\n", iPartId, iStateId);
         return E_PROP_ID_UNSUPPORTED;
@@ -484,8 +495,8 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     POINT topleft;
     BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, TRUE, 
-        &bmpSrc, &rcSrc, &hasAlpha);
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, TRUE, &bmpSrc, &rcSrc, &hasAlpha,
+                           NULL);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
@@ -554,30 +565,50 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                                     int iStateId, RECT *prc, THEMESIZE eSize,
                                     POINT *psz)
 {
+    int imageDpi, dstDpi;
     HRESULT hr = S_OK;
     HBITMAP bmpSrc;
     RECT rcSrc;
     BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, prc, FALSE, 
-        &bmpSrc, &rcSrc, &hasAlpha);
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, prc, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
+                           &imageDpi);
     if (FAILED(hr)) return hr;
 
     switch (eSize)
     {
         case TS_DRAW:
+        {
+            int sizingType = ST_STRETCH, scalingType = TSST_NONE;
+            POINT srcSize;
+
+            srcSize.x = rcSrc.right - rcSrc.left;
+            srcSize.y = rcSrc.bottom - rcSrc.top;
+
+            GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingType);
+            if (sizingType == ST_TRUESIZE)
+            {
+                GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_TRUESIZESCALINGTYPE, &scalingType);
+                if (scalingType == TSST_DPI)
+                {
+                    dstDpi = GetDeviceCaps(hdc, LOGPIXELSY);
+                    if (dstDpi && dstDpi != imageDpi)
+                    {
+                        srcSize.x = MulDiv(srcSize.x, dstDpi, imageDpi);
+                        srcSize.y = MulDiv(srcSize.y, dstDpi, imageDpi);
+                    }
+                }
+            }
+            *psz = srcSize;
+
             if (prc != NULL)
             {
                 POINT dstSize;
-                POINT srcSize;
-                int sizingtype = ST_STRETCH;
                 BOOL uniformsizing = FALSE;
 
                 dstSize.x = prc->right - prc->left;
                 dstSize.y = prc->bottom - prc->top;
-                srcSize.x = rcSrc.right-rcSrc.left;
-                srcSize.y = rcSrc.bottom-rcSrc.top;
-            
+
                 GetThemeBool(hTheme, iPartId, iStateId, TMT_UNIFORMSIZING, &uniformsizing);
                 if(uniformsizing) {
                     /* Scale height and width equally */
@@ -586,9 +617,9 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                     else
                         dstSize.x = MulDiv (srcSize.x, dstSize.y, srcSize.y);
                 }
-            
-                GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingtype);
-                if(sizingtype == ST_TRUESIZE) {
+
+                if (sizingType == ST_TRUESIZE)
+                {
                     int truesizestretchmark = 100;
 
                     /* Whatever TrueSizeStretchMark does - it does not seem to
@@ -599,13 +630,11 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                     /* Only stretch when target exceeds source by truesizestretchmark percent */
                     GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &truesizestretchmark);
 #endif
-                    if(dstSize.x < 0 || dstSize.y < 0 ||
-                      (MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark &&
-                      MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark)) {
-                        memcpy (psz, &dstSize, sizeof (SIZE));
-                    }
-                    else {
-                        memcpy (psz, &srcSize, sizeof (SIZE));
+                    if (scalingType == TSST_SIZE || dstSize.x < 0 || dstSize.y < 0
+                        || (MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark
+                            && MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark))
+                    {
+                        *psz = dstSize;
                     }
                 }
                 else
@@ -613,9 +642,10 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                     psz->x = abs(dstSize.x);
                     psz->y = abs(dstSize.y);
                 }
-                break;
             }
-            /* else fall through */
+
+            break;
+        }
         case TS_MIN:
             /* FIXME: couldn't figure how native uxtheme computes min size */
         case TS_TRUE:
@@ -649,8 +679,8 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     COLORREF transparentcolor = 0;
     BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, FALSE, 
-        &bmpSrc, &rcSrc, &hasAlpha);
+    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
+                           NULL);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
@@ -2078,8 +2108,8 @@ BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME hTheme, int iPartId,
 
     if (bgtype != BT_IMAGEFILE) return FALSE;
 
-    if(FAILED (UXTHEME_LoadImage (hTheme, 0, iPartId, iStateId, &rect, FALSE, 
-                                  &bmpSrc, &rcSrc, &hasAlpha))) 
+    if (FAILED(UXTHEME_LoadImage(hTheme, 0, iPartId, iStateId, &rect, FALSE, &bmpSrc, &rcSrc,
+                                 &hasAlpha, NULL)))
         return FALSE;
 
     get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
