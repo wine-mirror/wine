@@ -579,7 +579,7 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
     {
         case TS_DRAW:
         {
-            int sizingType = ST_STRETCH, scalingType = TSST_NONE;
+            int sizingType = ST_STRETCH, scalingType = TSST_NONE, stretchMark = 0;
             POINT srcSize;
 
             srcSize.x = rcSrc.right - rcSrc.left;
@@ -589,10 +589,13 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
             if (sizingType == ST_TRUESIZE)
             {
                 GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_TRUESIZESCALINGTYPE, &scalingType);
+                GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &stretchMark);
                 if (scalingType == TSST_DPI)
                 {
+                    /* Scale to DPI only if the destination DPI exceeds the source DPI by
+                     * stretchMark percent */
                     dstDpi = GetDeviceCaps(hdc, LOGPIXELSY);
-                    if (dstDpi && dstDpi != imageDpi)
+                    if (dstDpi && dstDpi != imageDpi && MulDiv(100, dstDpi, imageDpi) >= stretchMark + 100)
                     {
                         srcSize.x = MulDiv(srcSize.x, dstDpi, imageDpi);
                         srcSize.y = MulDiv(srcSize.y, dstDpi, imageDpi);
@@ -620,19 +623,11 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
 
                 if (sizingType == ST_TRUESIZE)
                 {
-                    int truesizestretchmark = 100;
-
-                    /* Whatever TrueSizeStretchMark does - it does not seem to
-                     * be what's outlined below. It appears as if native 
-                     * uxtheme always stretches if dest is smaller than source
-                     * (ie as if TrueSizeStretchMark==100 with the code below) */
-#if 0
-                    /* Only stretch when target exceeds source by truesizestretchmark percent */
-                    GetThemeInt(hTheme, iPartId, iStateId, TMT_TRUESIZESTRETCHMARK, &truesizestretchmark);
-#endif
-                    if (scalingType == TSST_SIZE || dstSize.x < 0 || dstSize.y < 0
-                        || (MulDiv(srcSize.x, 100, dstSize.x) > truesizestretchmark
-                            && MulDiv(srcSize.y, 100, dstSize.y) > truesizestretchmark))
+                    if ((dstSize.x < 0 || dstSize.y < 0)
+                        || (dstSize.x < srcSize.x && dstSize.y < srcSize.y)
+                        || (scalingType == TSST_SIZE
+                            && MulDiv(100, dstSize.x, srcSize.x) >= stretchMark + 100
+                            && MulDiv(100, dstSize.y, srcSize.y) >= stretchMark + 100))
                     {
                         *psz = dstSize;
                     }
