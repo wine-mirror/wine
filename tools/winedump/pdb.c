@@ -562,6 +562,21 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     free(filesimage);
 }
 
+static void pdb_dump_types_hash(struct pdb_reader* reader, unsigned file, const char* strmname)
+{
+    void*  hash = NULL;
+    DWORD  size;
+
+    hash = reader->read_file(reader, file);
+    if (!hash) return;
+
+    size = pdb_get_file_size(reader, file);
+
+    printf("Types (%s) hash:\n", strmname);
+    dump_data(hash, size, "    ");
+    free(hash);
+}
+
 /* there are two 'type' related streams, but with different indexes... */
 static void pdb_dump_types(struct pdb_reader* reader, unsigned strmidx, const char* strmname)
 {
@@ -616,6 +631,7 @@ static void pdb_dump_types(struct pdb_reader* reader, unsigned strmidx, const ch
            types->unknown_offset,
            types->unknown_len);
     codeview_dump_types_from_block((const char*)types + types->type_offset, types->type_size);
+    pdb_dump_types_hash(reader, types->file, strmname);
     free(types);
 }
 
