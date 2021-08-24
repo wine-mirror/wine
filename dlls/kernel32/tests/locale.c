@@ -160,11 +160,6 @@ static void InitFunctionPointers(void)
 
 #define BUFFER_SIZE    128
 
-#define STRINGSA(x,y) strcpy(input, x); strcpy(Expected, y); SetLastError(0xdeadbeef); buffer[0] = '\0'
-#define EXPECT_LENA ok(ret == lstrlenA(Expected)+1, "Expected len %d, got %d\n", lstrlenA(Expected)+1, ret)
-#define EXPECT_EQA ok(strncmp(buffer, Expected, strlen(Expected)) == 0, \
-  "Expected '%s', got '%s'\n", Expected, buffer)
-
 #define expect_str(r,s,e) expect_str_(__LINE__, r, s, e)
 static void expect_str_(int line, int ret, const char *str, const char *expected)
 {
@@ -1323,95 +1318,89 @@ static void test_GetNumberFormatA(void)
   static char szComma[] = { ',', '\0' };
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
-  char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], input[BUFFER_SIZE];
+  char buffer[BUFFER_SIZE];
   NUMBERFMTA format;
 
+  SetLastError(0xdeadbeef);
+
+  /* NULL output, length > 0 --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, "23", NULL, NULL, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Invalid character --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, "23,53", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Double '-' --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, "--", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Trailing '-' --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, "0-", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Double '.' --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, "0..", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Leading space --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, " 0.1", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Length too small --> Write up to length chars */
+  ret = GetNumberFormatA(lcid, NUO, "1234", NULL, buffer, 2);
+  /* there is no guarantee on the buffer content, see GetTimeFormatA() */
+  expect_err(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
+  SetLastError(0xdeadbeef);
+
+  /* Valid number */
+  ret = GetNumberFormatA(lcid, NUO, "2353", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2,353.00");
+
+  /* Valid negative number */
+  ret = GetNumberFormatA(lcid, NUO, "-2353", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "-2,353.00");
+
+  /* test for off by one error in grouping */
+  ret = GetNumberFormatA(lcid, NUO, "-353", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "-353.00");
+
+  /* Valid real number */
+  ret = GetNumberFormatA(lcid, NUO, "2353.1", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2,353.10");
+
+  /* Too many DP --> Truncated */
+  ret = GetNumberFormatA(lcid, NUO, "2353.111", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2,353.11");
+
+  /* Too many DP --> Rounded */
+  ret = GetNumberFormatA(lcid, NUO, "2353.119", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2,353.12");
+
+  /* Format and flags given --> Error */
   memset(&format, 0, sizeof(format));
-
-  STRINGSA("23",""); /* NULL output, length > 0 --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, NUO, "2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, NULL, NULL, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-  STRINGSA("23,53",""); /* Invalid character --> Error */
+  /* Invalid format --> Error */
+  strcpy(buffer, "pristine");
+  ret = GetNumberFormatA(lcid, 0, "2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
   SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-
-  STRINGSA("--",""); /* Double '-' --> Error */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-
-  STRINGSA("0-",""); /* Trailing '-' --> Error */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-
-  STRINGSA("0..",""); /* Double '.' --> Error */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-
-  STRINGSA(" 0.1",""); /* Leading space --> Error */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-
-  STRINGSA("1234","1"); /* Length too small --> Write up to length chars */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, 2);
-  ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-      "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-
-  STRINGSA("2353",""); /* Format and flags given --> Error */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, NUO, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok( !ret, "Expected ret == 0, got %d\n", ret);
-  ok( GetLastError() == ERROR_INVALID_FLAGS,
-      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-
-  STRINGSA("2353",""); /* Invalid format --> Error */
-  SetLastError(0xdeadbeef);
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-
-  STRINGSA("2353","2,353.00"); /* Valid number */
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
-
-  STRINGSA("-2353","-2,353.00"); /* Valid negative number */
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
-
-  STRINGSA("-353","-353.00"); /* test for off by one error in grouping */
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
-
-  STRINGSA("2353.1","2,353.10"); /* Valid real number */
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
-
-  STRINGSA("2353.111","2,353.11"); /* Too many DP --> Truncated */
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
-
-  STRINGSA("2353.119","2,353.12");  /* Too many DP --> Rounded */
-  ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
 
   format.NumDigits = 0; /* No decimal separator */
   format.LeadingZero = 0;
@@ -1420,80 +1409,58 @@ static void test_GetNumberFormatA(void)
   format.lpDecimalSep = szDot;
   format.lpThousandSep = szComma;
 
-  STRINGSA("2353","2353"); /* No decimal or grouping chars expected */
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* No decimal or grouping chars expected */
+  ret = GetNumberFormatA(lcid, 0, "2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2353");
 
   format.NumDigits = 1; /* 1 DP --> Expect decimal separator */
-  STRINGSA("2353","2353.0");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "2353.0");
 
   format.Grouping = 2; /* Group by 100's */
-  STRINGSA("2353","23,53.0");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "23,53.0");
 
-  STRINGSA("235","235.0"); /* Grouping of a positive number */
+  /* Grouping of a positive number */
   format.Grouping = 3;
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "235", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "235.0");
 
-  STRINGSA("-235","-235.0"); /* Grouping of a negative number */
+  /* Grouping of a negative number */
   format.NegativeOrder = NEG_LEFT;
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "-235", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "-235.0");
 
   format.LeadingZero = 1; /* Always provide leading zero */
-  STRINGSA(".5","0.5");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, ".5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "0.5");
 
   format.NegativeOrder = NEG_PARENS;
-  STRINGSA("-1","(1.0)");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "(1.0)");
 
   format.NegativeOrder = NEG_LEFT;
-  STRINGSA("-1","-1.0");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "-1.0");
 
   format.NegativeOrder = NEG_LEFT_SPACE;
-  STRINGSA("-1","- 1.0");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "- 1.0");
 
   format.NegativeOrder = NEG_RIGHT;
-  STRINGSA("-1","1.0-");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1.0-");
 
   format.NegativeOrder = NEG_RIGHT_SPACE;
-  STRINGSA("-1","1.0 -");
-  ret = GetNumberFormatA(lcid, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetNumberFormatA(lcid, 0, "-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1.0 -");
 
+  /* Test French formatting */
   lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
-
   if (IsValidLocale(lcid, 0))
   {
-    STRINGSA("-12345","-12 345,00"); /* Try French formatting */
-    Expected[3] = (char)160; /* Non breaking space */
-    ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-    ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-    EXPECT_LENA; EXPECT_EQA;
+    ret = GetNumberFormatA(lcid, NUO, "-12345", NULL, buffer, ARRAY_SIZE(buffer));
+    expect_str(ret, buffer, "-12\xa0\x33\x34\x35,00"); /* Non breaking space */
   }
 }
 
