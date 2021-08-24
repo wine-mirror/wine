@@ -91,6 +91,410 @@ void emfdc_update_bounds( struct emf *emf, RECTL *rect )
     }
 }
 
+static UINT emfdc_add_handle( struct emf *emf, HGDIOBJ obj )
+{
+    UINT index;
+
+    for (index = 0; index < emf->handles_size; index++)
+        if (emf->handles[index] == 0) break;
+
+    if (index == emf->handles_size)
+    {
+        emf->handles_size += HANDLE_LIST_INC;
+        emf->handles = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                    emf->handles,
+                                    emf->handles_size * sizeof(emf->handles[0]) );
+    }
+    emf->handles[index] = get_full_gdi_handle( obj );
+
+    emf->cur_handles++;
+    if (emf->cur_handles > emf->emh->nHandles)
+        emf->emh->nHandles++;
+
+    return index + 1; /* index 0 is reserved for the hmf, so we increment everything by 1 */
+}
+
+static UINT emfdc_find_object( struct emf *emf, HGDIOBJ obj )
+{
+    UINT index;
+
+    for (index = 0; index < emf->handles_size; index++)
+        if (emf->handles[index] == obj) return index + 1;
+
+    return 0;
+}
+
+static void emfdc_delete_object( HDC hdc, HGDIOBJ obj )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    struct emf *emf = dc_attr->emf;
+    EMRDELETEOBJECT emr;
+    UINT index;
+
+    if(!(index = emfdc_find_object( emf, obj ))) return;
+
+    emr.emr.iType = EMR_DELETEOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+
+    emfdc_record( emf, &emr.emr );
+
+    emf->handles[index - 1] = 0;
+    emf->cur_handles--;
+}
+
+DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
+{
+    DWORD index = 0;
+    LOGBRUSH logbrush;
+
+    if (!GetObjectA( brush, sizeof(logbrush), &logbrush )) return 0;
+
+    switch (logbrush.lbStyle) {
+    case BS_SOLID:
+    case BS_HATCHED:
+    case BS_NULL:
+        {
+            EMRCREATEBRUSHINDIRECT emr;
+            emr.emr.iType = EMR_CREATEBRUSHINDIRECT;
+            emr.emr.nSize = sizeof(emr);
+            emr.ihBrush = index = emfdc_add_handle( emf, brush );
+            emr.lb.lbStyle = logbrush.lbStyle;
+            emr.lb.lbColor = logbrush.lbColor;
+            emr.lb.lbHatch = logbrush.lbHatch;
+
+            if(!emfdc_record( emf, &emr.emr ))
+                index = 0;
+        }
+      break;
+    case BS_PATTERN:
+    case BS_DIBPATTERN:
+        {
+            EMRCREATEDIBPATTERNBRUSHPT *emr;
+            char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+            BITMAPINFO *info = (BITMAPINFO *)buffer;
+            DWORD info_size;
+            void *bits;
+            UINT usage;
+
+            if (!get_brush_bitmap_info( brush, info, &bits, &usage )) break;
+            info_size = get_dib_info_size( info, usage );
+
+            emr = HeapAlloc( GetProcessHeap(), 0,
+                             sizeof(EMRCREATEDIBPATTERNBRUSHPT)+info_size+info->bmiHeader.biSizeImage );
+            if(!emr) break;
+
+            if (logbrush.lbStyle == BS_PATTERN && info->bmiHeader.biBitCount == 1)
+            {
+                /* Presumably to reduce the size of the written EMF, MS supports an
+                 * undocumented iUsage value of 2, indicating a mono bitmap without the
+                 * 8 byte 2 entry black/white palette. Stupidly, they could have saved
+                 * over 20 bytes more by also ignoring the BITMAPINFO fields that are
+                 * irrelevant/constant for monochrome bitmaps.
+                 * FIXME: It may be that the DIB functions themselves accept this value.
+                 */
+                emr->emr.iType = EMR_CREATEMONOBRUSH;
+                usage = DIB_PAL_MONO;
+                /* FIXME: There is an extra DWORD written by native before the BMI.
+                 *        Not sure what it's meant to contain.
+                 */
+                emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT ) + sizeof(DWORD);
+                emr->cbBmi = sizeof( BITMAPINFOHEADER );
+            }
+            else
+            {
+                emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
+                emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT );
+                emr->cbBmi = info_size;
+            }
+            emr->ihBrush = index = emfdc_add_handle( emf, brush );
+            emr->iUsage = usage;
+            emr->offBits = emr->offBmi + emr->cbBmi;
+            emr->cbBits = info->bmiHeader.biSizeImage;
+            emr->emr.nSize = emr->offBits + emr->cbBits;
+
+            memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
+            memcpy( (BYTE *)emr + emr->offBits, bits, emr->cbBits );
+
+            if (!emfdc_record( emf, &emr->emr )) index = 0;
+            HeapFree( GetProcessHeap(), 0, emr );
+        }
+        break;
+
+    default:
+        FIXME("Unknown style %x\n", logbrush.lbStyle);
+        break;
+    }
+
+    return index;
+}
+
+static BOOL emfdc_select_brush( DC_ATTR *dc_attr, HBRUSH brush )
+{
+    struct emf *emf = dc_attr->emf;
+    EMRSELECTOBJECT emr;
+    DWORD index = 0;
+    int i;
+
+    /* If the object is a stock brush object, do not need to create it.
+     * See definitions in  wingdi.h for range of stock brushes.
+     * We do however have to handle setting the higher order bit to
+     * designate that this is a stock object.
+     */
+    for (i = WHITE_BRUSH; i <= DC_BRUSH; i++)
+    {
+        if (brush == GetStockObject(i))
+        {
+            index = i | 0x80000000;
+            break;
+        }
+    }
+
+    if (!index && !(index = emfdc_find_object( emf, brush )))
+    {
+        if (!(index = emfdc_create_brush( emf, brush ))) return 0;
+        GDI_hdc_using_object( brush, dc_attr->hdc, emfdc_delete_object );
+    }
+
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return emfdc_record( emf, &emr.emr );
+}
+
+static BOOL emfdc_create_font( struct emf *emf, HFONT font )
+{
+    DWORD index = 0;
+    EMREXTCREATEFONTINDIRECTW emr;
+    int i;
+
+    if (!GetObjectW( font, sizeof(emr.elfw.elfLogFont), &emr.elfw.elfLogFont )) return FALSE;
+
+    emr.emr.iType = EMR_EXTCREATEFONTINDIRECTW;
+    emr.emr.nSize = (sizeof(emr) + 3) / 4 * 4;
+    emr.ihFont = index = emfdc_add_handle( emf, font );
+    emr.elfw.elfFullName[0] = '\0';
+    emr.elfw.elfStyle[0]    = '\0';
+    emr.elfw.elfVersion     = 0;
+    emr.elfw.elfStyleSize   = 0;
+    emr.elfw.elfMatch       = 0;
+    emr.elfw.elfReserved    = 0;
+    for (i = 0; i < ELF_VENDOR_SIZE; i++)
+        emr.elfw.elfVendorId[i] = 0;
+    emr.elfw.elfCulture                 = PAN_CULTURE_LATIN;
+    emr.elfw.elfPanose.bFamilyType      = PAN_NO_FIT;
+    emr.elfw.elfPanose.bSerifStyle      = PAN_NO_FIT;
+    emr.elfw.elfPanose.bWeight          = PAN_NO_FIT;
+    emr.elfw.elfPanose.bProportion      = PAN_NO_FIT;
+    emr.elfw.elfPanose.bContrast        = PAN_NO_FIT;
+    emr.elfw.elfPanose.bStrokeVariation = PAN_NO_FIT;
+    emr.elfw.elfPanose.bArmStyle        = PAN_NO_FIT;
+    emr.elfw.elfPanose.bLetterform      = PAN_NO_FIT;
+    emr.elfw.elfPanose.bMidline         = PAN_NO_FIT;
+    emr.elfw.elfPanose.bXHeight         = PAN_NO_FIT;
+
+    return emfdc_record( emf, &emr.emr ) ? index : 0;
+}
+
+static BOOL emfdc_select_font( DC_ATTR *dc_attr, HFONT font )
+{
+    struct emf *emf = dc_attr->emf;
+    EMRSELECTOBJECT emr;
+    DWORD index;
+    int i;
+
+    /* If the object is a stock font object, do not need to create it.
+     * See definitions in  wingdi.h for range of stock fonts.
+     * We do however have to handle setting the higher order bit to
+     * designate that this is a stock object.
+     */
+
+    for (i = OEM_FIXED_FONT; i <= DEFAULT_GUI_FONT; i++)
+    {
+        if (i != DEFAULT_PALETTE && font == GetStockObject(i))
+        {
+            index = i | 0x80000000;
+            goto found;
+        }
+    }
+
+    if (!(index = emfdc_find_object( emf, font )))
+    {
+        if (!(index = emfdc_create_font( emf, font ))) return FALSE;
+        GDI_hdc_using_object( font, dc_attr->hdc, emfdc_delete_object );
+    }
+
+ found:
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return emfdc_record( emf, &emr.emr );
+}
+
+static DWORD emfdc_create_pen( struct emf *emf, HPEN hPen )
+{
+    EMRCREATEPEN emr;
+    DWORD index = 0;
+
+    if (!GetObjectW( hPen, sizeof(emr.lopn), &emr.lopn ))
+    {
+        /* must be an extended pen */
+        EXTLOGPEN *elp;
+        INT size = GetObjectW( hPen, 0, NULL );
+
+        if (!size) return 0;
+
+        elp = HeapAlloc( GetProcessHeap(), 0, size );
+
+        GetObjectW( hPen, size, elp );
+        /* FIXME: add support for user style pens */
+        emr.lopn.lopnStyle = elp->elpPenStyle;
+        emr.lopn.lopnWidth.x = elp->elpWidth;
+        emr.lopn.lopnWidth.y = 0;
+        emr.lopn.lopnColor = elp->elpColor;
+
+        HeapFree( GetProcessHeap(), 0, elp );
+    }
+
+    emr.emr.iType = EMR_CREATEPEN;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihPen = index = emfdc_add_handle( emf, hPen );
+    return emfdc_record( emf, &emr.emr ) ? index : 0;
+}
+
+static BOOL emfdc_select_pen( DC_ATTR *dc_attr, HPEN pen )
+{
+    struct emf *emf = dc_attr->emf;
+    EMRSELECTOBJECT emr;
+    DWORD index = 0;
+    int i;
+
+    /* If the object is a stock pen object, do not need to create it.
+     * See definitions in  wingdi.h for range of stock pens.
+     * We do however have to handle setting the higher order bit to
+     * designate that this is a stock object.
+     */
+
+    for (i = WHITE_PEN; i <= DC_PEN; i++)
+    {
+        if (pen == GetStockObject(i))
+        {
+            index = i | 0x80000000;
+            break;
+        }
+    }
+    if (!index && !(index = emfdc_find_object( emf, pen )))
+    {
+        if (!(index = emfdc_create_pen( emf, pen ))) return FALSE;
+        GDI_hdc_using_object( pen, dc_attr->hdc, emfdc_delete_object );
+    }
+
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return emfdc_record( emf, &emr.emr );
+}
+
+static DWORD emfdc_create_palette( struct emf *emf, HPALETTE hPal )
+{
+    WORD i;
+    struct {
+        EMRCREATEPALETTE hdr;
+        PALETTEENTRY entry[255];
+    } pal;
+
+    memset( &pal, 0, sizeof(pal) );
+
+    if (!GetObjectW( hPal, sizeof(pal.hdr.lgpl) + sizeof(pal.entry), &pal.hdr.lgpl ))
+        return 0;
+
+    for (i = 0; i < pal.hdr.lgpl.palNumEntries; i++)
+        pal.hdr.lgpl.palPalEntry[i].peFlags = 0;
+
+    pal.hdr.emr.iType = EMR_CREATEPALETTE;
+    pal.hdr.emr.nSize = sizeof(pal.hdr) + pal.hdr.lgpl.palNumEntries * sizeof(PALETTEENTRY);
+    pal.hdr.ihPal = emfdc_add_handle( emf, hPal );
+
+    if (!emfdc_record( emf, &pal.hdr.emr ))
+        pal.hdr.ihPal = 0;
+    return pal.hdr.ihPal;
+}
+
+BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette )
+{
+    struct emf *emf = dc_attr->emf;
+    EMRSELECTPALETTE emr;
+    DWORD index = 0;
+
+    if (palette == GetStockObject( DEFAULT_PALETTE ))
+    {
+        index = DEFAULT_PALETTE | 0x80000000;
+    }
+    else if (!(index = emfdc_find_object( emf, palette )))
+    {
+        if (!(index = emfdc_create_palette( emf, palette ))) return 0;
+        GDI_hdc_using_object( palette, dc_attr->hdc, emfdc_delete_object );
+    }
+
+    emr.emr.iType = EMR_SELECTPALETTE;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihPal = index;
+    return emfdc_record( emf, &emr.emr );
+}
+
+BOOL EMFDC_SelectObject( DC_ATTR *dc_attr, HGDIOBJ obj )
+{
+    switch (gdi_handle_type( obj ))
+    {
+    case NTGDI_OBJ_BRUSH:
+        return emfdc_select_brush( dc_attr, obj );
+    case NTGDI_OBJ_FONT:
+        return emfdc_select_font( dc_attr, obj );
+    case NTGDI_OBJ_PEN:
+    case NTGDI_OBJ_EXTPEN:
+        return emfdc_select_pen( dc_attr, obj );
+    default:
+        return TRUE;
+    }
+}
+
+BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color )
+{
+    struct emf *emf = dc_attr->emf;
+    EMRSELECTOBJECT emr;
+    DWORD index;
+
+    if (GetCurrentObject( dc_attr->hdc, OBJ_BRUSH ) != GetStockObject( DC_BRUSH )) return TRUE;
+
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    if (!(emf->dc_brush = CreateSolidBrush( color ))) return FALSE;
+    if (!(index = emfdc_create_brush( emf, emf->dc_brush ))) return FALSE;
+    GDI_hdc_using_object( emf->dc_brush, dc_attr->hdc, emfdc_delete_object );
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return emfdc_record( emf, &emr.emr );
+}
+
+BOOL EMFDC_SetDCPenColor( DC_ATTR *dc_attr, COLORREF color )
+{
+    struct emf *emf = dc_attr->emf;
+    EMRSELECTOBJECT emr;
+    DWORD index;
+    LOGPEN logpen = { PS_SOLID, { 0, 0 }, color };
+
+    if (GetCurrentObject( dc_attr->hdc, OBJ_PEN ) != GetStockObject( DC_PEN )) return TRUE;
+
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
+    if (!(emf->dc_pen = CreatePenIndirect( &logpen ))) return FALSE;
+    if (!(index = emfdc_create_pen( emf, emf->dc_pen ))) return FALSE;
+    GDI_hdc_using_object( emf->dc_pen, dc_attr->hdc, emfdc_delete_object );
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return emfdc_record( emf, &emr.emr );
+}
+
 BOOL EMFDC_SaveDC( DC_ATTR *dc_attr )
 {
     EMRSAVEDC emr;
@@ -488,6 +892,35 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
         if (emf->handles[index])
             GDI_hdc_not_using_object( emf->handles[index], dc_attr->hdc );
     HeapFree( GetProcessHeap(), 0, emf->handles );
+}
+
+/*******************************************************************
+ *      GdiComment   (GDI32.@)
+ */
+BOOL WINAPI GdiComment( HDC hdc, UINT bytes, const BYTE *buffer )
+{
+    DC_ATTR *dc_attr;
+    EMRGDICOMMENT *emr;
+    UINT total, rounded_size;
+    BOOL ret;
+
+    if (!(dc_attr = get_dc_attr( hdc )) || !dc_attr->emf) return FALSE;
+
+    rounded_size = (bytes+3) & ~3;
+    total = offsetof(EMRGDICOMMENT,Data) + rounded_size;
+
+    emr = HeapAlloc(GetProcessHeap(), 0, total);
+    emr->emr.iType = EMR_GDICOMMENT;
+    emr->emr.nSize = total;
+    emr->cbData = bytes;
+    memset(&emr->Data[bytes], 0, rounded_size - bytes);
+    memcpy(&emr->Data[0], buffer, bytes);
+
+    ret = emfdc_record( dc_attr->emf, &emr->emr );
+
+    HeapFree(GetProcessHeap(), 0, emr);
+
+    return ret;
 }
 
 /**********************************************************************
