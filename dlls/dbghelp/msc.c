@@ -1993,9 +1993,9 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
             TRACE("S-Align V1\n");
             break;
         case S_HEAPALLOCSITE:
-            TRACE("heap site: offset=0x%08x at sect_idx 0x%04x, inst_len 0x%08x, index 0x%08x\n",
-                    sym->heap_alloc_site.offset, sym->heap_alloc_site.sect_idx,
-                    sym->heap_alloc_site.inst_len, sym->heap_alloc_site.index);
+            TRACE("S-heap site V3: offset=0x%08x at sect_idx 0x%04x, inst_len 0x%08x, index 0x%08x\n",
+                  sym->heap_alloc_site_v3.offset, sym->heap_alloc_site_v3.sect_idx,
+                  sym->heap_alloc_site_v3.inst_len, sym->heap_alloc_site_v3.index);
             break;
 
         /* the symbols we can safely ignore for now */

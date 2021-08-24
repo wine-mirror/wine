@@ -1751,8 +1751,8 @@ union codeview_symbol
         unsigned int            offset;
         unsigned short          sect_idx;
         unsigned short          inst_len;
-        unsigned int            index;
-    } heap_alloc_site;
+        cv_typ_t                index;
+    } heap_alloc_site_v3;
 
     struct
     {

@@ -1791,6 +1791,15 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                     printf("\t\tfunc:%x invoc:%u\n", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
             }
             break;
+
+        case S_HEAPALLOCSITE:
+            printf("Heap-alloc-site V3 %04x:%08x#%x type:%04x\n",
+                   sym->heap_alloc_site_v3.sect_idx,
+                   sym->heap_alloc_site_v3.offset,
+                   sym->heap_alloc_site_v3.inst_len,
+                   sym->heap_alloc_site_v3.index);
+            break;
+
         default:
             printf("\n\t\t>>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
