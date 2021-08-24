@@ -562,11 +562,13 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     free(filesimage);
 }
 
-static void pdb_dump_types(struct pdb_reader* reader)
+/* there are two 'type' related streams, but with different indexes... */
+static void pdb_dump_types(struct pdb_reader* reader, unsigned strmidx, const char* strmname)
 {
     PDB_TYPES*  types = NULL;
 
-    types = reader->read_file(reader, 2);
+    types = reader->read_file(reader, strmidx);
+    if (!types) return;
 
     switch (types->version)
     {
@@ -581,7 +583,7 @@ static void pdb_dump_types(struct pdb_reader* reader)
     }
 
     /* Read type table */
-    printf("Types:\n"
+    printf("Types (%s):\n"
            "\tversion:        %u\n"
            "\ttype_offset:    %08x\n"
            "\tfirst_index:    %x\n"
@@ -597,6 +599,7 @@ static void pdb_dump_types(struct pdb_reader* reader)
            "\tsearch_len:     %x\n"
            "\tunknown_offset: %x\n"
            "\tunknown_len:    %x\n",
+           strmname,
            types->version,
            types->type_offset,
            types->first_index,
@@ -782,7 +785,8 @@ static void pdb_jg_dump(void)
         default:
             printf("-Unknown root block version %d\n", reader.u.jg.root->Version);
         }
-        pdb_dump_types(&reader);
+        pdb_dump_types(&reader, 2, "TPI");
+        pdb_dump_types(&reader, 4, "IPI");
         pdb_dump_symbols(&reader, &sidx);
         pdb_dump_fpo(&reader, sidx.FPO);
         pdb_dump_segments(&reader, sidx.segments);
@@ -926,7 +930,8 @@ static void pdb_ds_dump(void)
         }
         if (numok) printf(">>> unmatched present field with found\n");
 
-        pdb_dump_types(&reader);
+        pdb_dump_types(&reader, 2, "TPI");
+        pdb_dump_types(&reader, 4, "IPI");
         pdb_dump_symbols(&reader, &sidx);
         pdb_dump_fpo(&reader, sidx.FPO);
         pdb_dump_fpo_ext(&reader, sidx.FPO_EXT);
