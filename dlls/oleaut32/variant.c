@@ -545,24 +545,13 @@ static inline HRESULT VARIANT_ValidateType(VARTYPE vt)
 /******************************************************************************
  *		VariantInit	[OLEAUT32.8]
  *
- * Initialise a variant.
- *
- * PARAMS
- *  pVarg [O] Variant to initialise
- *
- * RETURNS
- *  Nothing.
- *
- * NOTES
- *  This function simply sets the type of the variant to VT_EMPTY. It does not
- *  free any existing value, use VariantClear() for that.
+ * Since Windows 8.1 whole structure is initialized, before that only type field was reset to VT_EMPTY.
  */
 void WINAPI VariantInit(VARIANTARG* pVarg)
 {
-  TRACE("(%p)\n", pVarg);
+    TRACE("(%p)\n", pVarg);
 
-  /* Win8.1 zeroes whole struct. Previous implementations don't set any other fields. */
-  V_VT(pVarg) = VT_EMPTY;
+    memset(pVarg, 0, sizeof(*pVarg));
 }
 
 HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)

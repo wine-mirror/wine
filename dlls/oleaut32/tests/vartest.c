@@ -673,11 +673,16 @@ static void _test_bstr_var(unsigned line, const VARIANT *v, const WCHAR *str)
 
 static void test_VariantInit(void)
 {
-  VARIANT v;
+    VARIANT v, v2, v3;
 
-  memset(&v, -1, sizeof(v));
-  VariantInit(&v);
-  ok(V_VT(&v) == VT_EMPTY, "VariantInit() returned vt %d\n", V_VT(&v));
+    memset(&v, -1, sizeof(v));
+    memset(&v2, 0, sizeof(v2));
+    memset(&v3, -1, sizeof(v3));
+    V_VT(&v3) = VT_EMPTY;
+
+    VariantInit(&v);
+    ok(!memcmp(&v, &v2, sizeof(v)) ||
+            broken(!memcmp(&v, &v3, sizeof(v3)) /* pre Win8 */), "Unexpected contents.\n");
 }
 
 /* All possible combinations of extra V_VT() flags */
