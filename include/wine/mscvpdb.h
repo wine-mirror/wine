@@ -1501,6 +1501,18 @@ union codeview_symbol
     {
         unsigned short int      len;
         unsigned short int      id;
+        unsigned short          trampType; /* 0: incremental, 1: branchisland */
+        unsigned short          cbThunk;
+        unsigned int            offThunk;
+        unsigned int            offTarget;
+        unsigned short          sectThunk;
+        unsigned short          sectTarget;
+    } trampoline_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
         unsigned int            offset;
         unsigned short          segment;
         unsigned char           flags;

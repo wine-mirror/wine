@@ -1566,6 +1566,16 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    sym->objname_v1.signature, p_string(&sym->objname_v1.p_name));
             break;
 
+        case S_TRAMPOLINE:
+            printf("Trampoline V3 kind:%u %04x:%08x#%x -> %04x:%08x\n",
+                   sym->trampoline_v3.trampType,
+                   sym->trampoline_v3.sectThunk,
+                   sym->trampoline_v3.offThunk,
+                   sym->trampoline_v3.cbThunk,
+                   sym->trampoline_v3.sectTarget,
+                   sym->trampoline_v3.offTarget);
+            break;
+
         case S_LABEL32_ST:
             printf("Label V1 '%s' in '%s' (%04x:%08x)\n",
                    p_string(&sym->label_v1.p_name),
