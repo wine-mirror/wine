@@ -11693,8 +11693,8 @@ static void test_sockopt_validity(void)
     };
     static const struct sockopt_validity_test file_handle_tests[] =
     {
-        { -1,                         WSAENOTSOCK,     0,          TRUE },
-        { SO_TYPE,                    WSAENOTSOCK,     0,          TRUE },
+        { -1,                         WSAENOTSOCK                       },
+        { SO_TYPE,                    WSAENOTSOCK                       },
         { SO_OPENTYPE                                                   },
         {}
     };

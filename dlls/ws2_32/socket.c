@@ -1363,6 +1363,13 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
           debugstr_sockopt(level, optname), debugstr_optval(optval, 0),
           optlen, optlen ? *optlen : 0);
 
+    if ((level != SOL_SOCKET || optname != SO_OPENTYPE) &&
+        !socket_list_find( s ))
+    {
+        SetLastError( WSAENOTSOCK );
+        return SOCKET_ERROR;
+    }
+
     switch(level)
     {
     case SOL_SOCKET:
