@@ -818,62 +818,57 @@ static void test_GetDateFormatA(void)
   SYSTEMTIME  curtime;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
-  char buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE];
   char short_day[10], month[10], genitive_month[10];
 
-  memset(&curtime, 2, sizeof(SYSTEMTIME)); /* Invalid time */
-  STRINGSA("ddd',' MMM dd yy","");
   SetLastError(0xdeadbeef);
-  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
+  /* Invalid time */
+  memset(&curtime, 2, sizeof(SYSTEMTIME));
+  strcpy(buffer, "pristine");
+  ret = GetDateFormatA(lcid, 0, &curtime, "ddd',' MMM dd yy", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* Simple case */
   curtime.wYear = 2002;
   curtime.wMonth = 5;
   curtime.wDay = 4;
   curtime.wDayOfWeek = 3;
-  STRINGSA("ddd',' MMM dd yy","Sat, May 04 02"); /* Simple case */
-  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ret = GetDateFormatA(lcid, 0, &curtime, "ddd',' MMM dd yy", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "Sat, May 04 02");
 
   /* Same as above but with LOCALE_NOUSEROVERRIDE */
-  STRINGSA("ddd',' MMM dd yy",""); /* Simple case */
+  strcpy(buffer, "pristine");
+  ret = GetDateFormatA(lcid, NUO, &curtime, "ddd',' MMM dd yy", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = GetDateFormatA(lcid, NUO, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-  EXPECT_EQA;
 
-  STRINGSA("ddd',' MMM dd yy","Sat, May 04 02"); /* Format containing "'" */
-  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* Format containing "'" */
+  ret = GetDateFormatA(lcid, 0, &curtime, "ddd',' MMM dd yy", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "Sat, May 04 02");
 
-  curtime.wHour = 36; /* Invalid */
-  STRINGSA("ddd',' MMM dd ''''yy","Sat, May 04 '02"); /* Invalid time */
-  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  /* Invalid time */
+  curtime.wHour = 36;
+  ret = GetDateFormatA(lcid, 0, &curtime, "ddd',' MMM dd ''''yy", buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "Sat, May 04 '02");
 
-  STRINGSA("ddd',' MMM dd ''''yy",""); /* Get size only */
-  ret = GetDateFormatA(lcid, 0, &curtime, input, NULL, 0);
-  ok(ret == 16, "Expected ret == 16, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  /* Get size only */
+  ret = GetDateFormatA(lcid, 0, &curtime, "ddd',' MMM dd ''''yy", NULL, 0);
+  expect_str(ret, NULL, "Sat, May 04 '02");
 
-  STRINGSA("ddd',' MMM dd ''''yy",""); /* Buffer too small */
+  /* Buffer too small */
+  strcpy(buffer, "pristine");
+  ret = GetDateFormatA(lcid, 0, &curtime, "ddd", buffer, 2);
+  /* there is no guarantee on the buffer content, see GetTimeFormatA() */
+  expect_err(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
   SetLastError(0xdeadbeef);
-  ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, 2);
-  ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-      "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
-  STRINGSA("ddd',' MMM dd ''''yy","5/4/2002"); /* Default to DATE_SHORTDATE */
+  /* Default to DATE_SHORTDATE */
   ret = GetDateFormatA(lcid, NUO, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  if (strncmp(buffer, Expected, strlen(Expected)) && strncmp(buffer, "5/4/02", strlen(Expected)) != 0)
-	  ok (0, "Expected '%s' or '5/4/02', got '%s'\n", Expected, buffer);
+  expect_str(ret, buffer, "5/4/2002");
 
-  SetLastError(0xdeadbeef); buffer[0] = '\0'; /* DATE_LONGDATE */
+  /* DATE_LONGDATE */
   ret = GetDateFormatA(lcid, NUO|DATE_LONGDATE, &curtime, NULL, buffer, ARRAY_SIZE(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   ok(strcmp(buffer, "Saturday, May 04, 2002") == 0 ||
@@ -882,21 +877,16 @@ static void test_GetDateFormatA(void)
 
   /* test for expected DATE_YEARMONTH behavior with null format */
   /* NT4 returns ERROR_INVALID_FLAGS for DATE_YEARMONTH */
-  STRINGSA("ddd',' MMM dd ''''yy", ""); /* DATE_YEARMONTH */
+  strcpy(buffer, "pristine");
+  ret = GetDateFormatA(lcid, NUO|DATE_YEARMONTH, &curtime, "ddd',' MMM dd ''''yy", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = GetDateFormatA(lcid, NUO|DATE_YEARMONTH, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-  EXPECT_EQA;
 
   /* Test that using invalid DATE_* flags results in the correct error */
   /* and return values */
-  STRINGSA("m/d/y", ""); /* Invalid flags */
+  ret = GetDateFormatA(lcid, DATE_YEARMONTH|DATE_SHORTDATE|DATE_LONGDATE, &curtime, "m/d/y", buffer, ARRAY_SIZE(buffer));
+  expect_err(ret, NULL, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = GetDateFormatA(lcid, DATE_YEARMONTH|DATE_SHORTDATE|DATE_LONGDATE, &curtime, input,
-                       buffer, ARRAY_SIZE(buffer));
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
 
   ret = GetDateFormatA(lcid_ru, 0, &curtime, "ddMMMM", buffer, ARRAY_SIZE(buffer));
   if (!ret)
@@ -916,54 +906,38 @@ static void test_GetDateFormatA(void)
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   strcpy(short_day, buffer);
 
-  STRINGSA("dd MMMMddd dd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "dd MMMMddd dd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "04 %s%s 04", genitive_month, short_day);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
-  STRINGSA("MMMMddd dd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "MMMMddd dd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "%s%s 04", month, short_day);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
-  STRINGSA("MMMMddd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "MMMMddd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "%s%s", month, short_day);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
-  STRINGSA("MMMMdd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "MMMMdd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "%s04", genitive_month);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
-  STRINGSA("MMMMdd ddd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "MMMMdd ddd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "%s04 %s", genitive_month, short_day);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
-  STRINGSA("dd dddMMMM", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "dd dddMMMM", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "04 %s%s", short_day, month);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
-  STRINGSA("dd dddMMMM ddd MMMMdd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "dd dddMMMM ddd MMMMdd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "04 %s%s %s %s04", short_day, month, short_day, genitive_month);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 
   /* with literal part */
-  STRINGSA("ddd',' MMMM dd", "");
+  ret = GetDateFormatA(lcid_ru, 0, &curtime, "ddd',' MMMM dd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "%s, %s 04", short_day, genitive_month);
-  ret = GetDateFormatA(lcid_ru, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_EQA;
+  expect_str(ret, buffer, Expected);
 }
 
 static void test_GetDateFormatEx(void)
