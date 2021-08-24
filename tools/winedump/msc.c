@@ -1151,6 +1151,93 @@ static inline const char* get_last(const union codeview_symbol* sym)
     return (const char*)sym + sym->generic.len + 2;
 }
 
+static unsigned binannot_uncompress(const unsigned char** pptr)
+{
+    unsigned res = (unsigned)(-1);
+    const unsigned char* ptr = *pptr;
+
+    if ((*ptr & 0x80) == 0x00)
+        res = (unsigned)(*ptr++);
+    else if ((*ptr & 0xC0) == 0x80)
+    {
+        res = (unsigned)((*ptr++ & 0x3f) << 8);
+        res |= *ptr++;
+    }
+    else if ((*ptr & 0xE0) == 0xC0)
+    {
+        res = (*ptr++ & 0x1f) << 24;
+        res |= *ptr++ << 16;
+        res |= *ptr++ << 8;
+        res |= *ptr++;
+    }
+    else res = (unsigned)(-1);
+    *pptr = ptr;
+    return res;
+}
+
+static void dump_binannot(const unsigned char* ba, const char* last, const char* pfx)
+{
+    while (ba < (const unsigned char*)last)
+    {
+        unsigned opcode = binannot_uncompress(&ba);
+        switch (opcode)
+        {
+        case BA_OP_Invalid:
+            /* not clear if param? */
+            printf("%sInvalid\n", pfx);
+            break;
+        case BA_OP_CodeOffset:
+            printf("%sCodeOffset %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeCodeOffsetBase:
+            printf("%sChangeCodeOffsetBase %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeCodeOffset:
+            printf("%sChangeCodeOffset %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeCodeLength:
+            printf("%sChangeCodeLength %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeFile:
+            printf("%sChangeFile %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeLineOffset:
+            printf("%sChangeLineOffset %d\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeLineEndDelta:
+            printf("%sChangeLineEndDelta %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeRangeKind:
+            printf("%sChangeRangeKind %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeColumnStart:
+            printf("%sChangeColumnStart %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeColumnEndDelta:
+            printf("%sChangeColumnEndDelta %u\n", pfx, binannot_uncompress(&ba));
+            break;
+        case BA_OP_ChangeCodeOffsetAndLineOffset:
+            {
+                unsigned p1 = binannot_uncompress(&ba);
+                printf("%sChangeCodeOffsetAndLineOffset %u %u (0x%x)\n", pfx, p1 & 0xf, p1 >> 4, p1);
+            }
+            break;
+        case BA_OP_ChangeCodeLengthAndCodeOffset:
+            {
+                unsigned p1 = binannot_uncompress(&ba);
+                unsigned p2 = binannot_uncompress(&ba);
+                printf("%sChangeCodeLengthAndCodeOffset %u %u\n", pfx, p1, p2);
+            }
+            break;
+        case BA_OP_ChangeColumnEnd:
+            printf("%sChangeColumnEnd %u\n", pfx, binannot_uncompress(&ba));
+            break;
+
+        default: printf("%sUnsupported op %d %x\n", pfx, opcode, opcode); /* may cause issues because of param */
+        }
+    }
+}
+
 BOOL codeview_dump_symbols(const void* root, unsigned long size)
 {
     unsigned int i;
@@ -1649,6 +1736,26 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    sym->defrange_registerrel_v3.baseReg, sym->defrange_registerrel_v3.offsetParent,
                    sym->defrange_registerrel_v3.offBasePointer);
             dump_defrange(&sym->defrange_registerrel_v3.range, get_last(sym), "\t\t");
+            break;
+
+        case S_CALLSITEINFO:
+            printf("Call-site-info V3 %04x:%08x typeindex:%x\n",
+                   sym->callsiteinfo_v3.sect, sym->callsiteinfo_v3.off, sym->callsiteinfo_v3.typind);
+            break;
+
+        case S_INLINESITE:
+            printf("Inline-site V3 parent:%x end:%x inlinee:%x\n",
+                   sym->inline_site_v3.pParent, sym->inline_site_v3.pEnd, sym->inline_site_v3.inlinee);
+            dump_binannot(sym->inline_site_v3.binaryAnnotations, get_last(sym), "\t\t");
+            break;
+        case S_INLINESITE2:
+            printf("Inline-site2 V3 parent:%x end:%x inlinee:%x #inv:%u\n",
+                   sym->inline_site2_v3.pParent, sym->inline_site2_v3.pEnd, sym->inline_site2_v3.inlinee,
+                   sym->inline_site2_v3.invocations);
+            dump_binannot(sym->inline_site2_v3.binaryAnnotations, get_last(sym), "\t\t");
+            break;
+        case S_INLINESITE_END:
+            printf("Inline-site-end\n");
             break;
 
         default:

@@ -110,6 +110,7 @@ struct p_string
 
 typedef unsigned short  cv_typ16_t;
 typedef unsigned int    cv_typ_t;
+typedef cv_typ_t        cv_itemid_t;
 
 /* ======================================== *
  *             Type information
@@ -1819,6 +1820,56 @@ union codeview_symbol
         struct cv_addr_range    range;
         struct cv_addr_gap      gaps[0];
     } defrange_registerrel_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            pParent;
+        unsigned int            pEnd;
+        cv_itemid_t             inlinee;
+        unsigned char           binaryAnnotations[0];
+    } inline_site_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      typ;
+        unsigned int            off;
+        unsigned short          sect;
+        unsigned short          _pad0;
+        cv_typ_t                typind;
+    } callsiteinfo_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            pParent;
+        unsigned int            pEnd;
+        cv_itemid_t             inlinee;
+        unsigned int            invocations;
+        unsigned char           binaryAnnotations[0];
+    } inline_site2_v3;
+
+};
+
+enum BinaryAnnotationOpcode
+{
+    BA_OP_Invalid,
+    BA_OP_CodeOffset,
+    BA_OP_ChangeCodeOffsetBase,
+    BA_OP_ChangeCodeOffset,
+    BA_OP_ChangeCodeLength,
+    BA_OP_ChangeFile,
+    BA_OP_ChangeLineOffset,
+    BA_OP_ChangeLineEndDelta,
+    BA_OP_ChangeRangeKind,
+    BA_OP_ChangeColumnStart,
+    BA_OP_ChangeColumnEndDelta,
+    BA_OP_ChangeCodeOffsetAndLineOffset,
+    BA_OP_ChangeCodeLengthAndCodeOffset,
+    BA_OP_ChangeColumnEnd,
 };
 
 #define S_COMPILE       0x0001
