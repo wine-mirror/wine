@@ -23,6 +23,73 @@
 #include <assert.h>
 
 #include "enhmfdrv/enhmetafiledrv.h"
+#include "winnls.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
+
+
+BOOL emfdc_record( struct emf *emf, EMR *emr )
+{
+    DWORD len, size;
+    ENHMETAHEADER *emh;
+
+    TRACE( "record %d, size %d\n", emr->iType, emr->nSize );
+
+    assert( !(emr->nSize & 3) );
+
+    emf->emh->nBytes += emr->nSize;
+    emf->emh->nRecords++;
+
+    size = HeapSize( GetProcessHeap(), 0, emf->emh );
+    len = emf->emh->nBytes;
+    if (len > size)
+    {
+        size += (size / 2) + emr->nSize;
+        emh = HeapReAlloc( GetProcessHeap(), 0, emf->emh, size );
+        if (!emh) return FALSE;
+        emf->emh = emh;
+    }
+    memcpy( (char *)emf->emh + emf->emh->nBytes - emr->nSize, emr, emr->nSize );
+    return TRUE;
+}
+
+void emfdc_update_bounds( struct emf *emf, RECTL *rect )
+{
+    RECTL *bounds = &emf->dc_attr->emf_bounds;
+    RECTL vport_rect = *rect;
+
+    LPtoDP( emf->dc_attr->hdc, (POINT *)&vport_rect, 2 );
+
+    /* The coordinate systems may be mirrored
+       (LPtoDP handles points, not rectangles) */
+    if (vport_rect.left > vport_rect.right)
+    {
+        LONG temp = vport_rect.right;
+        vport_rect.right = vport_rect.left;
+        vport_rect.left = temp;
+    }
+    if (vport_rect.top > vport_rect.bottom)
+    {
+        LONG temp = vport_rect.bottom;
+        vport_rect.bottom = vport_rect.top;
+        vport_rect.top = temp;
+    }
+
+    if (bounds->left > bounds->right)
+    {
+        /* first bounding rectangle */
+        *bounds = vport_rect;
+    }
+    else
+    {
+        bounds->left   = min(bounds->left,   vport_rect.left);
+        bounds->top    = min(bounds->top,    vport_rect.top);
+        bounds->right  = max(bounds->right,  vport_rect.right);
+        bounds->bottom = max(bounds->bottom, vport_rect.bottom);
+    }
+}
 
 BOOL EMFDC_SaveDC( DC_ATTR *dc_attr )
 {
@@ -409,4 +476,228 @@ BOOL EMFDC_WidenPath( DC_ATTR *dc_attr )
     emr.emr.iType = EMR_WIDENPATH;
     emr.emr.nSize = sizeof(emr);
     return emfdc_record( dc_attr->emf, &emr.emr );
+}
+
+void EMFDC_DeleteDC( DC_ATTR *dc_attr )
+{
+    struct emf *emf = dc_attr->emf;
+    UINT index;
+
+    HeapFree( GetProcessHeap(), 0, emf->emh );
+    for (index = 0; index < emf->handles_size; index++)
+        if (emf->handles[index])
+            GDI_hdc_not_using_object( emf->handles[index], dc_attr->hdc );
+    HeapFree( GetProcessHeap(), 0, emf->handles );
+}
+
+/**********************************************************************
+ *           CreateEnhMetaFileA   (GDI32.@)
+ */
+HDC WINAPI CreateEnhMetaFileA( HDC hdc, const char *filename, const RECT *rect,
+                               const char *description )
+{
+    WCHAR *filenameW = NULL;
+    WCHAR *descriptionW = NULL;
+    DWORD len1, len2, total;
+    HDC ret;
+
+    if (filename)
+    {
+        total = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
+        filenameW = HeapAlloc( GetProcessHeap(), 0, total * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, filename, -1, filenameW, total );
+    }
+
+    if(description)
+    {
+        len1 = strlen(description);
+        len2 = strlen(description + len1 + 1);
+        total = MultiByteToWideChar( CP_ACP, 0, description, len1 + len2 + 3, NULL, 0 );
+        descriptionW = HeapAlloc( GetProcessHeap(), 0, total * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, description, len1 + len2 + 3, descriptionW, total );
+    }
+
+    ret = CreateEnhMetaFileW( hdc, filenameW, rect, descriptionW );
+
+    HeapFree( GetProcessHeap(), 0, filenameW );
+    HeapFree( GetProcessHeap(), 0, descriptionW );
+    return ret;
+}
+
+/**********************************************************************
+ *           CreateEnhMetaFileW   (GDI32.@)
+ */
+HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
+                               const WCHAR *description )
+{
+    HDC ret;
+    struct emf *emf;
+    DC_ATTR *dc_attr;
+    HANDLE file;
+    DWORD size = 0, length = 0;
+
+    TRACE( "(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect),
+           debugstr_w(description) );
+
+    if (!(ret = NtGdiCreateMetafileDC( hdc ))) return 0;
+
+    if (!(dc_attr = get_dc_attr( ret )) || !(emf = HeapAlloc( GetProcessHeap(), 0, sizeof(*emf) )))
+    {
+        DeleteDC( ret );
+        return 0;
+    }
+
+    dc_attr->emf = emf;
+
+    if (description) /* App name\0Title\0\0 */
+    {
+        length = lstrlenW( description );
+        length += lstrlenW( description + length + 1 );
+        length += 3;
+        length *= 2;
+    }
+    size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
+
+    if (!(emf->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size)))
+    {
+        DeleteDC( ret );
+        return 0;
+    }
+    emf->dc_attr = dc_attr;
+
+    emf->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                              HANDLE_LIST_INC * sizeof(emf->handles[0]) );
+    emf->handles_size = HANDLE_LIST_INC;
+    emf->cur_handles = 1;
+    emf->hFile = 0;
+    emf->dc_brush = 0;
+    emf->dc_pen = 0;
+    emf->path = FALSE;
+
+    emf->emh->iType = EMR_HEADER;
+    emf->emh->nSize = size;
+
+    dc_attr->emf_bounds.left = dc_attr->emf_bounds.top = 0;
+    dc_attr->emf_bounds.right = dc_attr->emf_bounds.bottom = -1;
+
+    if (rect)
+    {
+        emf->emh->rclFrame.left   = rect->left;
+        emf->emh->rclFrame.top    = rect->top;
+        emf->emh->rclFrame.right  = rect->right;
+        emf->emh->rclFrame.bottom = rect->bottom;
+    }
+    else
+    {
+        /* Set this to {0,0 - -1,-1} and update it at the end */
+        emf->emh->rclFrame.left = emf->emh->rclFrame.top = 0;
+        emf->emh->rclFrame.right = emf->emh->rclFrame.bottom = -1;
+    }
+
+    emf->emh->dSignature = ENHMETA_SIGNATURE;
+    emf->emh->nVersion = 0x10000;
+    emf->emh->nBytes = emf->emh->nSize;
+    emf->emh->nRecords = 1;
+    emf->emh->nHandles = 1;
+
+    emf->emh->sReserved = 0; /* According to docs, this is reserved and must be 0 */
+    emf->emh->nDescription = length / 2;
+
+    emf->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
+
+    emf->emh->nPalEntries = 0; /* I guess this should start at 0 */
+
+    /* Size in pixels */
+    emf->emh->szlDevice.cx = GetDeviceCaps( ret, HORZRES );
+    emf->emh->szlDevice.cy = GetDeviceCaps( ret, VERTRES );
+
+    /* Size in millimeters */
+    emf->emh->szlMillimeters.cx = GetDeviceCaps( ret, HORZSIZE );
+    emf->emh->szlMillimeters.cy = GetDeviceCaps( ret, VERTSIZE );
+
+    /* Size in micrometers */
+    emf->emh->szlMicrometers.cx = emf->emh->szlMillimeters.cx * 1000;
+    emf->emh->szlMicrometers.cy = emf->emh->szlMillimeters.cy * 1000;
+
+    memcpy( (char *)emf->emh + sizeof(ENHMETAHEADER), description, length );
+
+    if (filename)  /* disk based metafile */
+    {
+        if ((file = CreateFileW( filename, GENERIC_WRITE | GENERIC_READ, 0,
+                                  NULL, CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE)
+        {
+            DeleteDC( ret );
+            return 0;
+        }
+        emf->hFile = file;
+    }
+
+    TRACE( "returning %p\n", ret );
+    return ret;
+}
+
+/******************************************************************
+ *           CloseEnhMetaFile (GDI32.@)
+ */
+HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc )
+{
+    HENHMETAFILE hmf;
+    struct emf *emf;
+    DC_ATTR *dc_attr;
+    EMREOF emr;
+    HANDLE mapping = 0;
+
+    TRACE("(%p)\n", hdc );
+
+    if (!(dc_attr = get_dc_attr( hdc )) || !dc_attr->emf) return 0;
+    emf = dc_attr->emf;
+
+    if (dc_attr->save_level)
+        RestoreDC( hdc, 1 );
+
+    if (emf->dc_brush) DeleteObject( emf->dc_brush );
+    if (emf->dc_pen) DeleteObject( emf->dc_pen );
+
+    emr.emr.iType = EMR_EOF;
+    emr.emr.nSize = sizeof(emr);
+    emr.nPalEntries = 0;
+    emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
+    emr.nSizeLast = emr.emr.nSize;
+    emfdc_record( emf, &emr.emr );
+
+    emf->emh->rclBounds = dc_attr->emf_bounds;
+
+    /* Update rclFrame if not initialized in CreateEnhMetaFile */
+    if (emf->emh->rclFrame.left > emf->emh->rclFrame.right)
+    {
+        emf->emh->rclFrame.left = emf->emh->rclBounds.left *
+            emf->emh->szlMillimeters.cx * 100 / emf->emh->szlDevice.cx;
+        emf->emh->rclFrame.top = emf->emh->rclBounds.top *
+            emf->emh->szlMillimeters.cy * 100 / emf->emh->szlDevice.cy;
+        emf->emh->rclFrame.right = emf->emh->rclBounds.right *
+            emf->emh->szlMillimeters.cx * 100 / emf->emh->szlDevice.cx;
+        emf->emh->rclFrame.bottom = emf->emh->rclBounds.bottom *
+            emf->emh->szlMillimeters.cy * 100 / emf->emh->szlDevice.cy;
+    }
+
+    if (emf->hFile)  /* disk based metafile */
+    {
+        if (!WriteFile( emf->hFile, emf->emh, emf->emh->nBytes, NULL, NULL ))
+        {
+            CloseHandle( emf->hFile );
+            return 0;
+        }
+        HeapFree( GetProcessHeap(), 0, emf->emh );
+        mapping = CreateFileMappingA( emf->hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        TRACE( "mapping = %p\n", mapping );
+        emf->emh = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+        TRACE( "view = %p\n", emf->emh );
+        CloseHandle( mapping );
+        CloseHandle( emf->hFile );
+    }
+
+    hmf = EMF_Create_HENHMETAFILE( emf->emh, emf->emh->nBytes, emf->hFile != 0 );
+    emf->emh = NULL;  /* So it won't be deleted */
+    DeleteDC( hdc );
+    return hmf;
 }

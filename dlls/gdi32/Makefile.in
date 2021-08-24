@@ -27,7 +27,6 @@ C_SRCS = \
 	enhmetafile.c \
 	enhmfdrv/bitblt.c \
 	enhmfdrv/graphics.c \
-	enhmfdrv/init.c \
 	enhmfdrv/objects.c \
 	font.c \
 	freetype.c \
