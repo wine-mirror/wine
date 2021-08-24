@@ -1245,6 +1245,19 @@ union codeview_fieldtype
  *            Symbol information
  * ======================================== */
 
+struct cv_addr_range
+{
+    unsigned int                offStart;
+    unsigned short              isectStart;
+    unsigned short              cbRange;
+};
+
+struct cv_addr_gap
+{
+    unsigned short              gapStartOffset;
+    unsigned short              cbRange;
+};
+
 union codeview_symbol
 {
     struct
@@ -1736,6 +1749,76 @@ union codeview_symbol
         unsigned short          varflags;
         char                    name[1];
     } local_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            program;
+        struct cv_addr_range    range;
+        struct cv_addr_gap      gaps[0];
+    } defrange_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            program;
+        unsigned int            offParent;
+        struct cv_addr_range    range;
+        struct cv_addr_gap      gaps[0];
+    } defrange_subfield_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned short          reg;
+        unsigned short          attr;
+        struct cv_addr_range    range;
+        struct cv_addr_gap      gaps[0];
+    } defrange_register_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            offFramePointer;
+        struct cv_addr_range    range;
+        struct cv_addr_gap      gaps[0];
+    } defrange_frameptrrel_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            offFramePointer;
+    } defrange_frameptr_relfullscope_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned short          reg;
+        unsigned short          attr;
+        unsigned int            offParent : 12;
+        unsigned int            padding   : 20;
+        struct cv_addr_range    range;
+        struct cv_addr_gap      gaps[0];
+    } defrange_subfield_register_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned short          baseReg;
+        unsigned short          spilledUdtMember : 1;
+        unsigned short          padding          : 3;
+        unsigned short          offsetParent     : 12;
+        unsigned int            offBasePointer;
+        struct cv_addr_range    range;
+        struct cv_addr_gap      gaps[0];
+    } defrange_registerrel_v3;
 };
 
 #define S_COMPILE       0x0001

@@ -1136,6 +1136,21 @@ BOOL codeview_dump_types_from_block(const void* table, unsigned long len)
     return TRUE;
 }
 
+static void dump_defrange(const struct cv_addr_range* range, const void* last, const char* pfx)
+{
+    const struct cv_addr_gap* gap;
+
+    printf("%s%04x:%08x range:#%x\n", pfx, range->isectStart, range->offStart, range->cbRange);
+    for (gap = (const struct cv_addr_gap*)(range + 1); (const void*)(gap + 1) <= last; ++gap)
+        printf("%s\toffset:%x range:#%x\n", pfx, gap->gapStartOffset, gap->cbRange);
+}
+
+/* return adress of first byte after the symbol */
+static inline const char* get_last(const union codeview_symbol* sym)
+{
+    return (const char*)sym + sym->generic.len + 2;
+}
+
 BOOL codeview_dump_symbols(const void* root, unsigned long size)
 {
     unsigned int i;
@@ -1596,6 +1611,43 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    sym->local_v3.name, sym->local_v3.symtype,
                    get_varflags(sym->local_v3.varflags));
 
+            break;
+
+        case S_DEFRANGE:
+            printf("\tS-DefRange dia:%x\n", sym->defrange_v3.program);
+            dump_defrange(&sym->defrange_v3.range, get_last(sym), "\t\t");
+            break;
+        case S_DEFRANGE_SUBFIELD:
+            printf("\tS-DefRange-subfield V3 dia:%x off-parent:%x\n",
+                   sym->defrange_subfield_v3.program, sym->defrange_subfield_v3.offParent);
+            dump_defrange(&sym->defrange_subfield_v3.range, get_last(sym), "\t\t");
+            break;
+        case S_DEFRANGE_REGISTER:
+            printf("\tS-DefRange-register V3 reg:%x attr-unk:%x\n",
+                   sym->defrange_register_v3.reg, sym->defrange_register_v3.attr);
+            dump_defrange(&sym->defrange_register_v3.range, get_last(sym), "\t\t");
+            break;
+        case S_DEFRANGE_FRAMEPOINTER_REL:
+            printf("\tS-DefRange-framepointer-rel V3 offFP:%x\n",
+                   sym->defrange_frameptrrel_v3.offFramePointer);
+            dump_defrange(&sym->defrange_frameptrrel_v3.range, get_last(sym), "\t\t");
+            break;
+        case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+            printf("\tS-DefRange-framepointer-rel-fullscope V3 offFP:%x\n",
+                   sym->defrange_frameptr_relfullscope_v3.offFramePointer);
+            break;
+        case S_DEFRANGE_SUBFIELD_REGISTER:
+            printf("\tS-DefRange-subfield-register V3 reg:%d attr-unk:%x off-parent:%x\n",
+                   sym->defrange_subfield_register_v3.reg,
+                   sym->defrange_subfield_register_v3.attr,
+                   sym->defrange_subfield_register_v3.offParent);
+            dump_defrange(&sym->defrange_subfield_register_v3.range, get_last(sym), "\t\t");
+            break;
+        case S_DEFRANGE_REGISTER_REL:
+            printf("\tS-DefRange-register-rel V3 reg:%x off-parent:%x off-BP:%x\n",
+                   sym->defrange_registerrel_v3.baseReg, sym->defrange_registerrel_v3.offsetParent,
+                   sym->defrange_registerrel_v3.offBasePointer);
+            dump_defrange(&sym->defrange_registerrel_v3.range, get_last(sym), "\t\t");
             break;
 
         default:
