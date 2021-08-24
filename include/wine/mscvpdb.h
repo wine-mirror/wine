@@ -1881,6 +1881,16 @@ union codeview_symbol
         unsigned int            invocations[0]; /* array of count entries, paires with funcs */
 #endif
     } function_list_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        cv_typ_t                typind;
+        unsigned int            modOffset;
+        unsigned short          varflags;
+        char                    name[1];
+    } file_static_v3;
 };
 
 enum BinaryAnnotationOpcode

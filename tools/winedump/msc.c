@@ -1800,6 +1800,14 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    sym->heap_alloc_site_v3.index);
             break;
 
+        case S_FILESTATIC:
+            printf("File-static V3 '%s' type:%04x modOff:%08x flags:%s\n",
+                   sym->file_static_v3.name,
+                   sym->file_static_v3.typind,
+                   sym->file_static_v3.modOffset,
+                   get_varflags(sym->file_static_v3.varflags));
+            break;
+
         default:
             printf("\n\t\t>>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
