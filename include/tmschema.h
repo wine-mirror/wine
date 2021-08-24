@@ -322,6 +322,8 @@ BEGIN_TM_PROPS()
     TM_PROP(2422, TMT, MINDPI3,                   INT)
     TM_PROP(2423, TMT, MINDPI4,                   INT)
     TM_PROP(2424, TMT, MINDPI5,                   INT)
+    TM_PROP(2433, TMT, MINDPI6,                   INT)
+    TM_PROP(2434, TMT, MINDPI7,                   INT)
 
     /* Font rendering properties */
     TM_PROP(2601, TMT, GLYPHFONT,                 FONT)
@@ -335,6 +337,8 @@ BEGIN_TM_PROPS()
     TM_PROP(3006, TMT, IMAGEFILE5,                FILENAME)
     TM_PROP(3007, TMT, STOCKIMAGEFILE,            FILENAME)
     TM_PROP(3008, TMT, GLYPHIMAGEFILE,            FILENAME)
+    TM_PROP(3009, TMT, IMAGEFILE6,                FILENAME)
+    TM_PROP(3010, TMT, IMAGEFILE7,                FILENAME)
 
     /* String rendering properties */
     TM_PROP(3201, TMT, TEXT,                      STRING)
@@ -349,6 +353,8 @@ BEGIN_TM_PROPS()
     TM_PROP(3407, TMT, MINSIZE4,                  POSITION)
     TM_PROP(3408, TMT, MINSIZE5,                  POSITION)
     TM_PROP(3409, TMT, NORMALSIZE,                POSITION)
+    TM_PROP(3410, TMT, MINSIZE6,                  POSITION)
+    TM_PROP(3411, TMT, MINSIZE7,                  POSITION)
 
     /* Margin rendering properties */
     TM_PROP(3601, TMT, SIZINGMARGINS,             MARGINS)

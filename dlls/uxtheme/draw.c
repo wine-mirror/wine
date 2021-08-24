@@ -144,6 +144,24 @@ HRESULT WINAPI DrawThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
     return DrawThemeBackgroundEx(hTheme, hdc, iPartId, iStateId, pRect, &opts);
 }
 
+/* Map integer 1..7 to TMT_MINDPI1..TMT_MINDPI7 */
+static int mindpi_index_to_property(int index)
+{
+    return index <= 5 ? TMT_MINDPI1 + index - 1 : TMT_MINDPI6 + index - 6;
+}
+
+/* Map integer 1..7 to TMT_MINSIZE1..TMT_MINSIZE7 */
+static int minsize_index_to_property(int index)
+{
+    return index <= 5 ? TMT_MINSIZE1 + index - 1 : TMT_MINSIZE6 + index - 6;
+}
+
+/* Map integer 1..7 to TMT_IMAGEFILE1..TMT_IMAGEFILE7 */
+static int imagefile_index_to_property(int index)
+{
+    return index <= 5 ? TMT_IMAGEFILE1 + index - 1 : TMT_IMAGEFILE6 + index - 6;
+}
+
 /***********************************************************************
  *      UXTHEME_SelectImage
  *
@@ -171,16 +189,20 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
     if(imageselecttype == IST_DPI) {
         int reqdpi = 0;
         int screendpi = GetDeviceCaps(hdc, LOGPIXELSX);
-        for(i=4; i>=0; i--) {
+        for (i = 7; i >= 1; i--)
+        {
             reqdpi = 0;
-            if(SUCCEEDED(GetThemeInt(hTheme, iPartId, iStateId, i + TMT_MINDPI1, &reqdpi))) {
+            if (SUCCEEDED(GetThemeInt(hTheme, iPartId, iStateId, mindpi_index_to_property(i),
+                                      &reqdpi)))
+            {
                 if(reqdpi != 0 && screendpi >= reqdpi) {
-                    TRACE("Using %d DPI, image %d\n", reqdpi, i + TMT_IMAGEFILE1);
+                    TRACE("Using %d DPI, image %d\n", reqdpi, imagefile_index_to_property(i));
 
                     if (imageDpi)
                         *imageDpi = reqdpi;
 
-                    return MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, i + TMT_IMAGEFILE1);
+                    return MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME,
+                                                 imagefile_index_to_property(i));
                 }
             }
         }
@@ -190,11 +212,16 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
     else if(imageselecttype == IST_SIZE) {
         POINT size = {pRect->right-pRect->left, pRect->bottom-pRect->top};
         POINT reqsize;
-        for(i=4; i>=0; i--) {
-            PTHEME_PROPERTY fileProp = 
-                MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME, i + TMT_IMAGEFILE1);
+        for (i = 7; i >= 1; i--)
+        {
+            PTHEME_PROPERTY fileProp;
+
+            fileProp = MSSTYLES_FindProperty(hTheme, iPartId, iStateId, TMT_FILENAME,
+                                             imagefile_index_to_property(i));
             if (!fileProp) continue;
-            if(FAILED(GetThemePosition(hTheme, iPartId, iStateId, i + TMT_MINSIZE1, &reqsize))) {
+            if (FAILED(GetThemePosition(hTheme, iPartId, iStateId, minsize_index_to_property(i),
+                                        &reqsize)))
+            {
                 /* fall back to size of Nth image */
                 WCHAR szPath[MAX_PATH];
                 int imagelayout = IL_HORIZONTAL;
@@ -221,7 +248,8 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
                 }
             }
             if(reqsize.x <= size.x && reqsize.y <= size.y) {
-                TRACE("Using image size %dx%d, image %d\n", reqsize.x, reqsize.y, i + TMT_IMAGEFILE1);
+                TRACE("Using image size %dx%d, image %d\n", reqsize.x, reqsize.y,
+                      imagefile_index_to_property(i));
                 return fileProp;
             }
         }
