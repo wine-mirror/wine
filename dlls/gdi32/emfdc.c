@@ -1,8 +1,9 @@
 /*
- * Enhanced MetaFile driver dc value functions
+ * Enhanced MetaFile recording functions
  *
  * Copyright 1999 Huw D M Davies
  * Copyright 2016 Alexandre Julliard
+ * Copyright 2021 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,11 +21,13 @@
  */
 
 #include <assert.h>
+
 #include "enhmfdrv/enhmetafiledrv.h"
 
 BOOL EMFDC_SaveDC( DC_ATTR *dc_attr )
 {
     EMRSAVEDC emr;
+
     emr.emr.iType = EMR_SAVEDC;
     emr.emr.nSize = sizeof(emr);
     return emfdc_record( dc_attr->emf, &emr.emr );
@@ -48,6 +51,7 @@ BOOL EMFDC_RestoreDC( DC_ATTR *dc_attr, INT level )
 BOOL EMFDC_SetTextAlign( DC_ATTR *dc_attr, UINT align )
 {
     EMRSETTEXTALIGN emr;
+
     emr.emr.iType = EMR_SETTEXTALIGN;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = align;
@@ -57,6 +61,7 @@ BOOL EMFDC_SetTextAlign( DC_ATTR *dc_attr, UINT align )
 BOOL EMFDC_SetTextJustification( DC_ATTR *dc_attr, INT extra, INT breaks )
 {
     EMRSETTEXTJUSTIFICATION emr;
+
     emr.emr.iType = EMR_SETTEXTJUSTIFICATION;
     emr.emr.nSize = sizeof(emr);
     emr.nBreakExtra = extra;
@@ -67,6 +72,7 @@ BOOL EMFDC_SetTextJustification( DC_ATTR *dc_attr, INT extra, INT breaks )
 BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode )
 {
     EMRSETBKMODE emr;
+
     emr.emr.iType = EMR_SETBKMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
@@ -97,6 +103,7 @@ BOOL EMFDC_SetTextColor( DC_ATTR *dc_attr, COLORREF color )
 BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )
 {
     EMRSETROP2 emr;
+
     emr.emr.iType = EMR_SETROP2;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = rop;
@@ -106,6 +113,7 @@ BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )
 BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode )
 {
     EMRSETPOLYFILLMODE emr;
+
     emr.emr.iType = EMR_SETPOLYFILLMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
@@ -115,6 +123,7 @@ BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode )
 BOOL EMFDC_SetStretchBltMode( DC_ATTR *dc_attr, INT mode )
 {
     EMRSETSTRETCHBLTMODE emr;
+
     emr.emr.iType = EMR_SETSTRETCHBLTMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
@@ -325,7 +334,6 @@ BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags )
     emr.emr.iType = EMR_SETMAPPERFLAGS;
     emr.emr.nSize = sizeof(emr);
     emr.dwFlags   = flags;
-
     return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
@@ -348,8 +356,8 @@ BOOL EMFDC_BeginPath( DC_ATTR *dc_attr )
 
     emr.emr.iType = EMR_BEGINPATH;
     emr.emr.nSize = sizeof(emr);
-
     if (!emfdc_record( emf, &emr.emr )) return FALSE;
+
     emf->path = TRUE;
     return TRUE;
 }
@@ -360,7 +368,6 @@ BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr )
 
     emr.emr.iType = EMR_CLOSEFIGURE;
     emr.emr.nSize = sizeof(emr);
-
     return emfdc_record( dc_attr->emf, &emr.emr );
 }
 
@@ -369,10 +376,10 @@ BOOL EMFDC_EndPath( DC_ATTR *dc_attr )
     struct emf *emf = dc_attr->emf;
     EMRENDPATH emr;
 
+    emf->path = FALSE;
+
     emr.emr.iType = EMR_ENDPATH;
     emr.emr.nSize = sizeof(emr);
-
-    emf->path = FALSE;
     return emfdc_record( emf, &emr.emr );
 }
 

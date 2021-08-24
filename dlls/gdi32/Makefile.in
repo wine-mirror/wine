@@ -22,10 +22,10 @@ C_SRCS = \
 	dibdrv/opengl.c \
 	dibdrv/primitives.c \
 	driver.c \
+	emfdc.c \
 	emfdrv.c \
 	enhmetafile.c \
 	enhmfdrv/bitblt.c \
-	enhmfdrv/dc.c \
 	enhmfdrv/graphics.c \
 	enhmfdrv/init.c \
 	enhmfdrv/objects.c \
