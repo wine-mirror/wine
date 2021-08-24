@@ -1755,7 +1755,7 @@ UINT WINAPI ImmGetDescriptionA(
   /* fetch the unicode buffer */
   len = ImmGetDescriptionW( hKL, buf, len + 1 );
 
-  /* convert it back to ASCII */
+  /* convert it back to ANSI */
   len = WideCharToMultiByte( CP_ACP, 0, buf, len + 1,
                              lpszDescription, uBufLen, NULL, NULL );
 
