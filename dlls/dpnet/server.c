@@ -126,9 +126,19 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_EnumServiceProviders(IDirectPlay8Se
                                             PDWORD pcReturned, DWORD dwFlags)
 {
     IDirectPlay8ServerImpl *This = impl_from_IDirectPlay8Server(iface);
-    FIXME("(%p)->(%s %s %p %p %p %d)\n", This, debugstr_guid(pguidServiceProvider), debugstr_guid(pguidApplication),
+    TRACE("(%p)->(%s %s %p %p %p %d)\n", This, debugstr_guid(pguidServiceProvider), debugstr_guid(pguidApplication),
                 pSPInfoBuffer, pcbEnumData, pcReturned, dwFlags);
-    return E_NOTIMPL;
+
+    if(!This->msghandler)
+       return DPNERR_UNINITIALIZED;
+
+    if(dwFlags)
+        FIXME("Unhandled flags %x\n", dwFlags);
+
+    if(pguidApplication)
+        FIXME("Application guid %s is currently being ignored\n", debugstr_guid(pguidApplication));
+
+    return enum_services_providers(pguidServiceProvider, pSPInfoBuffer, pcbEnumData, pcReturned);
 }
 
 static HRESULT WINAPI IDirectPlay8ServerImpl_CancelAsyncOperation(IDirectPlay8Server *iface, DPNHANDLE hAsyncHandle, DWORD dwFlags)
