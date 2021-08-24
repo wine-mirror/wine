@@ -1651,7 +1651,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWO
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
     /* we need to fetch the contents for a string type even if not requested,
-     * because we need to compute the length of the ASCII string. */
+     * because we need to compute the length of the ANSI string. */
     if (data || is_string(info->Type))
     {
         /* retry with a dynamically allocated buffer */
@@ -2106,7 +2106,7 @@ LSTATUS WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_c
                                   buffer, total_size, &total_size );
 
     /* we need to fetch the contents for a string type even if not requested,
-     * because we need to compute the length of the ASCII string. */
+     * because we need to compute the length of the ANSI string. */
 
     /* retry with a dynamically allocated buffer */
     while (status == STATUS_BUFFER_OVERFLOW)
