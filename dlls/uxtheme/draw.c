@@ -568,16 +568,13 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
         case TS_DRAW:
             if (prc != NULL)
             {
-                RECT rcDst;
                 POINT dstSize;
                 POINT srcSize;
                 int sizingtype = ST_STRETCH;
                 BOOL uniformsizing = FALSE;
 
-                rcDst = *prc;
-
-                dstSize.x = rcDst.right-rcDst.left;
-                dstSize.y = rcDst.bottom-rcDst.top;
+                dstSize.x = prc->right - prc->left;
+                dstSize.y = prc->bottom - prc->top;
                 srcSize.x = rcSrc.right-rcSrc.left;
                 srcSize.y = rcSrc.bottom-rcSrc.top;
             
@@ -585,35 +582,15 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                 if(uniformsizing) {
                     /* Scale height and width equally */
                     if (dstSize.x*srcSize.y < dstSize.y*srcSize.x)
-                    {
                         dstSize.y = MulDiv (srcSize.y, dstSize.x, srcSize.x);
-                        rcDst.bottom = rcDst.top + dstSize.y;
-                    }
                     else
-                    {
                         dstSize.x = MulDiv (srcSize.x, dstSize.y, srcSize.y);
-                        rcDst.right = rcDst.left + dstSize.x;
-                    }
                 }
             
                 GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_SIZINGTYPE, &sizingtype);
                 if(sizingtype == ST_TRUESIZE) {
                     int truesizestretchmark = 100;
-            
-                    if(dstSize.x < 0 || dstSize.y < 0) {
-                        BOOL mirrorimage = TRUE;
-                        GetThemeBool(hTheme, iPartId, iStateId, TMT_MIRRORIMAGE, &mirrorimage);
-                        if(mirrorimage) {
-                            if(dstSize.x < 0) {
-                                rcDst.left += dstSize.x;
-                                rcDst.right += dstSize.x;
-                            }
-                            if(dstSize.y < 0) {
-                                rcDst.top += dstSize.y;
-                                rcDst.bottom += dstSize.y;
-                            }
-                        }
-                    }
+
                     /* Whatever TrueSizeStretchMark does - it does not seem to
                      * be what's outlined below. It appears as if native 
                      * uxtheme always stretches if dest is smaller than source
