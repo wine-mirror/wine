@@ -58,6 +58,10 @@
 #include <netinet/ip_var.h>
 #endif
 
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+
 #ifdef HAVE_NETINET_TCP_VAR_H
 #include <netinet/tcp_var.h>
 #endif
