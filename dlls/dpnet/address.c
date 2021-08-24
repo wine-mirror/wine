@@ -500,7 +500,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
         case DPNA_DATATYPE_STRING_ANSI:
             if ((strlen((const CHAR*)lpvData)+1) != dwDataSize)
             {
-                WARN("Invalid ASCII size, returning DPNERR_INVALIDPARAM\n");
+                WARN("Invalid ANSI size, returning DPNERR_INVALIDPARAM\n");
                 return DPNERR_INVALIDPARAM;
             }
             break;
