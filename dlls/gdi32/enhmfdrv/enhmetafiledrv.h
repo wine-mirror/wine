@@ -43,9 +43,6 @@ struct emf
     BOOL       path;
 };
 
-extern BOOL emfdc_record( struct emf *emf, EMR *emr ) DECLSPEC_HIDDEN;
-extern void emfdc_update_bounds( struct emf *emf, RECTL *rect ) DECLSPEC_HIDDEN;
-
 #define HANDLE_LIST_INC 20
 
 

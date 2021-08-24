@@ -25,7 +25,6 @@ C_SRCS = \
 	emfdc.c \
 	emfdrv.c \
 	enhmetafile.c \
-	enhmfdrv/bitblt.c \
 	font.c \
 	freetype.c \
 	gdidc.c \
