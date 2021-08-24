@@ -1758,6 +1758,25 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
             printf("Inline-site-end\n");
             break;
 
+        case S_CALLEES:
+        case S_CALLERS:
+        case S_INLINEES:
+            {
+                unsigned i, ninvoc;
+                const unsigned* invoc;
+                const char* tag;
+
+                if (sym->generic.id == S_CALLERS) tag = "Callers";
+                else if (sym->generic.id == S_CALLEES) tag = "Callees";
+                else tag = "Inlinees";
+                printf("%s V3 count:%u\n", tag, sym->function_list_v3.count);
+                invoc = (const unsigned*)&sym->function_list_v3.funcs[sym->function_list_v3.count];
+                ninvoc = (const unsigned*)get_last(sym) - invoc;
+
+                for (i = 0; i < sym->function_list_v3.count; ++i)
+                    printf("\t\tfunc:%x invoc:%u\n", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
+            }
+            break;
         default:
             printf("\n\t\t>>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");

@@ -1852,6 +1852,16 @@ union codeview_symbol
         unsigned char           binaryAnnotations[0];
     } inline_site2_v3;
 
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned int            count;
+        cv_typ_t                funcs[0];  /* array of cuntions, count entries */
+#if 0
+        unsigned int            invocations[0]; /* array of count entries, paires with funcs */
+#endif
+    } function_list_v3;
 };
 
 enum BinaryAnnotationOpcode
@@ -2024,6 +2034,9 @@ enum BinaryAnnotationOpcode
 #define S_LDATA_HLSL32      0x1163
 #define S_GDATA_HLSL32_EX   0x1164
 #define S_LDATA_HLSL32_EX   0x1165
+
+/* not documented yet on MS CV github repo, but that's how LLVM calls it */
+#define S_INLINEES          0x1168
 
 /* ======================================== *
  *          Line number information
