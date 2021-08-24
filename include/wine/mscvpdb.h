@@ -2367,8 +2367,8 @@ typedef struct _PDB_SYMBOL_IMPORT
 
 typedef struct _PDB_SYMBOLS_OLD
 {
-    WORD        hash1_file;
-    WORD        hash2_file;
+    WORD        global_file;
+    WORD        public_file;
     WORD        gsym_file;
     WORD        pad;
     DWORD       module_size;
@@ -2381,11 +2381,13 @@ typedef struct _PDB_SYMBOLS
 {
     DWORD       signature;
     DWORD       version;
-    DWORD       unknown;
-    DWORD       hash1_file;
-    DWORD       hash2_file;
+    DWORD       age;
+    WORD        global_file;
+    WORD        flags;
+    WORD        public_file;
+    WORD        bldVer;
     WORD        gsym_file;
-    WORD        unknown1;
+    WORD        rbldVer;
     DWORD       module_size;
     DWORD       offset_size;
     DWORD       hash_size;

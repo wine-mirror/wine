@@ -2392,8 +2392,8 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
         symbols->hash_size       = old->hash_size;
         symbols->srcmodule_size  = old->srcmodule_size;
         symbols->pdbimport_size  = 0;
-        symbols->hash1_file      = old->hash1_file;
-        symbols->hash2_file      = old->hash2_file;
+        symbols->global_file     = old->global_file;
+        symbols->public_file     = old->public_file;
         symbols->gsym_file       = old->gsym_file;
 
         *header_size = sizeof(PDB_SYMBOLS_OLD);
