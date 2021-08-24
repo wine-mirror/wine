@@ -28,7 +28,7 @@
  *
  * The Name field of the IP_ADAPTER_INDEX_MAP entries returned by
  * GetInterfaceInfo is declared as a wide string, but the bytes are actually
- * an ASCII string on some versions of the IP helper API under Win9x.  This was
+ * an ANSI string on some versions of the IP helper API under Win9x.  This was
  * apparently an MS bug, it's corrected in later versions.
  *
  * The DomainName field of FIXED_INFO isn't NULL-terminated on Win98.
