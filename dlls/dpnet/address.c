@@ -256,20 +256,96 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_Clear(IDirectPlay8Address *iface)
   return DPN_OK; 
 }
 
-static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLW(IDirectPlay8Address *iface, WCHAR *pwszURL,
-        DWORD *pdwNumChars)
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLW(IDirectPlay8Address *iface, WCHAR *url, DWORD *length)
 {
-  IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
-  TRACE("(%p): stub\n", This);
-  return DPN_OK; 
+    IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
+    HRESULT hr = DPNERR_BUFFERTOOSMALL;
+    int i;
+    WCHAR buffer[1024];
+    int position = 0;
+
+    TRACE("(%p, %p, %p)\n", This, url, length);
+
+    if(!length || (!url && *length != 0))
+        return DPNERR_INVALIDPOINTER;
+
+    for(i=0; i < This->comp_count; i++)
+    {
+        struct component *entry = This->components[i];
+
+        if (position) buffer[position++] = ';';
+
+        switch(entry->type)
+        {
+            case DPNA_DATATYPE_GUID:
+                position += swprintf( &buffer[position], ARRAY_SIZE(buffer) - position,
+                      L"%s=%%7B%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X%%7D",
+                      entry->name, entry->data.guid.Data1, entry->data.guid.Data2, entry->data.guid.Data3,
+                      entry->data.guid.Data4[0], entry->data.guid.Data4[1], entry->data.guid.Data4[2],
+                      entry->data.guid.Data4[3], entry->data.guid.Data4[4], entry->data.guid.Data4[5],
+                      entry->data.guid.Data4[6], entry->data.guid.Data4[7] );
+
+                break;
+            case DPNA_DATATYPE_STRING:
+                position += swprintf(&buffer[position], ARRAY_SIZE(buffer) - position, L"%s=%s", entry->name, entry->data.string);
+                break;
+            case DPNA_DATATYPE_DWORD:
+                position += swprintf(&buffer[position], ARRAY_SIZE(buffer) - position, L"%s=%d", entry->name, entry->data.value);
+                break;
+            case DPNA_DATATYPE_STRING_ANSI:
+                position += swprintf(&buffer[position], ARRAY_SIZE(buffer) - position, L"%s=%hs", entry->name, entry->data.ansi);
+                break;
+            case DPNA_DATATYPE_BINARY:
+            default:
+                FIXME("Unsupported type %d\n", entry->type);
+        }
+    }
+    buffer[position] = 0;
+
+    if(url && *length >= lstrlenW(buffer) + lstrlenW(DPNA_HEADER) + 1)
+    {
+        lstrcpyW(url, DPNA_HEADER);
+        lstrcatW(url, buffer);
+        hr = DPN_OK;
+    }
+
+    *length = lstrlenW(buffer) + lstrlenW(DPNA_HEADER) + 1;
+
+    return hr;
 }
 
-static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(IDirectPlay8Address *iface, CHAR *pszURL,
-        DWORD *pdwNumChars)
+static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(IDirectPlay8Address *iface, char *url, DWORD *length)
 {
-  IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
-  TRACE("(%p): stub\n", This);
-  return DPN_OK; 
+    IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
+    HRESULT hr;
+    WCHAR *buffer = NULL;
+
+    TRACE("(%p, %p %p)\n", This, url, length);
+
+    if(!length || (!url && *length != 0))
+        return DPNERR_INVALIDPOINTER;
+
+    if(url && *length)
+    {
+        url[0] = '\0';
+        buffer = heap_alloc(*length * sizeof(WCHAR));
+    }
+
+    hr = IDirectPlay8Address_GetURLW(iface, buffer, length);
+    if(hr == DPN_OK)
+    {
+        DWORD size;
+        size = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
+        if(size <= *length)
+            WideCharToMultiByte(CP_ACP, 0, buffer, -1, url, *length, NULL, NULL);
+        else
+        {
+            *length = size;
+            hr = DPNERR_BUFFERTOOSMALL;
+        }
+    }
+    heap_free(buffer);
+    return hr;
 }
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_GetSP(IDirectPlay8Address *iface, GUID *pguidSP)

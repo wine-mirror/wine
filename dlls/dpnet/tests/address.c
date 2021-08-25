@@ -304,6 +304,136 @@ static void address_setsp(void)
     }
 }
 
+static void address_urlW(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *localaddr = NULL;
+    WCHAR buffer[1024];
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
+    if(SUCCEEDED(hr))
+    {
+        DWORD bufflen = 0, bufflen2;
+        DWORD port = 4321;
+
+        hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetURLW(localaddr, NULL, NULL);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
+
+        bufflen = 10;
+        hr = IDirectPlay8Address_GetURLW(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        hr = IDirectPlay8Address_GetURLW(localaddr, NULL, &bufflen);
+        ok(bufflen == 66, "got %d\n", bufflen);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetURLW(localaddr, buffer, &bufflen);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(L"x-directplay:/provider=%7BEBFE7BA0-628D-11D2-AE0F-006097B01411%7D", buffer), "got %s\n", wine_dbgstr_w(buffer));
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(DWORD), DPNA_DATATYPE_DWORD);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        hr = IDirectPlay8Address_GetURLW(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        bufflen2 = bufflen/2;
+        memset( buffer, 0xcc, sizeof(buffer) );
+        hr = IDirectPlay8Address_GetURLW(localaddr, buffer, &bufflen2);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+        ok(buffer[0] == 0xcccc, "buffer modified\n");
+
+        hr = IDirectPlay8Address_GetURLW(localaddr, buffer, &bufflen);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(L"x-directplay:/provider=%7BEBFE7BA0-628D-11D2-AE0F-006097B01411%7D;port=4321", buffer), "got %s\n", wine_dbgstr_w(buffer));
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost), DPNA_DATATYPE_STRING);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        hr = IDirectPlay8Address_GetURLW(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetURLW(localaddr, buffer, &bufflen);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpW(L"x-directplay:/provider=%7BEBFE7BA0-628D-11D2-AE0F-006097B01411%7D;port=4321;hostname=localhost", buffer), "got %s\n", wine_dbgstr_w(buffer));
+
+        IDirectPlay8Address_Release(localaddr);
+    }
+}
+
+static void address_urlA(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *localaddr = NULL;
+    char buffer[1024];
+    static const char urlA1[] = "x-directplay:/provider=%7BEBFE7BA0-628D-11D2-AE0F-006097B01411%7D";
+    static const char urlA2[] = "x-directplay:/provider=%7BEBFE7BA0-628D-11D2-AE0F-006097B01411%7D;port=4321";
+    static const char urlA3[] = "x-directplay:/provider=%7BEBFE7BA0-628D-11D2-AE0F-006097B01411%7D;port=4321;hostname=localhost";
+    static const char localhostA[] = "localhost";
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
+    if(SUCCEEDED(hr))
+    {
+        DWORD bufflen = 0, bufflen2;
+        DWORD port = 4321;
+
+        hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetURLA(localaddr, NULL, NULL);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
+
+        bufflen = 10;
+        hr = IDirectPlay8Address_GetURLA(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        hr = IDirectPlay8Address_GetURLA(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        bufflen2 = bufflen/2;
+        hr = IDirectPlay8Address_GetURLA(localaddr, buffer, &bufflen2);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+        ok(!strlen(buffer), "wrong length\n");
+
+        hr = IDirectPlay8Address_GetURLA(localaddr, buffer, &bufflen);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpA(urlA1, buffer), "got %s\n", buffer);
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(DWORD), DPNA_DATATYPE_DWORD);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        hr = IDirectPlay8Address_GetURLA(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetURLA(localaddr, buffer, &bufflen);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpA(urlA2, buffer), "got %s\n", buffer);
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhostA, sizeof(localhostA), DPNA_DATATYPE_STRING_ANSI);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        hr = IDirectPlay8Address_GetURLA(localaddr, NULL, &bufflen);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetURLA(localaddr, buffer, &bufflen);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!lstrcmpA(urlA3, buffer), "got %s\n", buffer);
+
+        IDirectPlay8Address_Release(localaddr);
+    }
+}
+
 static void address_duplicate(void)
 {
     HRESULT hr;
@@ -381,6 +511,8 @@ START_TEST(address)
     address_addcomponents();
     address_setsp();
     address_duplicate();
+    address_urlW();
+    address_urlA();
 
     CoUninitialize();
 }
