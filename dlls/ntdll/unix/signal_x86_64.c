@@ -285,6 +285,8 @@ C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in ca
 #define SYSCALL_HAVE_PTHREAD_TEB 4
 #define SYSCALL_HAVE_WRFSGSBASE  8
 
+static unsigned int syscall_flags;
+
 /* stack layout when calling an user apc function.
  * FIXME: match Windows ABI. */
 struct apc_stack_layout
@@ -325,7 +327,8 @@ struct syscall_frame
     DWORD                 restore_flags; /* 0094 */
     ULONG64               rbp;           /* 0098 */
     struct syscall_frame *prev_frame;    /* 00a0 */
-    ULONG64               align[3];      /* 00a8 */
+    DWORD                 syscall_flags; /* 00a8 */
+    DWORD                 align[5];      /* 00ac */
     XMM_SAVE_AREA32       xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSTATE xstate;    /* 02c0 */
 };
@@ -2314,6 +2317,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.eflags        = 0x200;
         callback_frame.frame.restore_flags = CONTEXT_CONTROL | CONTEXT_INTEGER;
         callback_frame.frame.prev_frame    = frame;
+        callback_frame.frame.syscall_flags = frame->syscall_flags;
         amd64_thread_data()->syscall_frame = &callback_frame.frame;
 
         __wine_syscall_dispatcher_return( &callback_frame.frame, 0 );
@@ -2935,8 +2939,8 @@ void signal_init_process(void)
     anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
     *(void **)ptr = __wine_syscall_dispatcher;
 
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) __wine_syscall_flags |= SYSCALL_HAVE_XSAVE;
-    if (xstate_compaction_enabled) __wine_syscall_flags |= SYSCALL_HAVE_XSAVEC;
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
 #ifdef __linux__
     if (NtCurrentTeb()->WowTebOffset)
@@ -2948,8 +2952,8 @@ void signal_init_process(void)
         if ((sel = alloc_fs_sel( -1, teb32 )) != -1)
         {
             fs32_sel = (sel << 3) | 3;
-            __wine_syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
-            if (getauxval( AT_HWCAP2 ) & 2) __wine_syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
+            syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
+            if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
         }
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
@@ -3038,6 +3042,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->rcx = (ULONG64)ctx;
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
+    frame->syscall_flags = syscall_flags;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );

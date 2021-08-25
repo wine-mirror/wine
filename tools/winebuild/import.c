@@ -1576,7 +1576,7 @@ static void output_syscall_dispatcher(void)
         /* Legends of Runeterra hooks the first system call return instruction, and
          * depends on us returning to it. Adjust the return address accordingly. */
         output( "\tsubq $0xb,0x70(%%rcx)\n" );
-        output( "\tmovl %s(%%rip),%%r14d\n", asm_name("__wine_syscall_flags") );
+        output( "\tmovl 0xa8(%%rcx),%%r14d\n" );  /* frame->syscall_flags */
         output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 2f\n" );
         output( "\tmovl $7,%%eax\n" );
@@ -1685,7 +1685,7 @@ static void output_syscall_dispatcher(void)
         output( "5:\tmovl $0x%x,%%edx\n", invalid_param );
         output( "\tmovq %%rsp,%%rcx\n" );
         output( "%s\n", asm_globl("__wine_syscall_dispatcher_return") );
-        output( "\tmovl %s(%%rip),%%r14d\n", asm_name("__wine_syscall_flags") );
+        output( "\tmovl 0xa8(%%rcx),%%r14d\n" );  /* frame->syscall_flags */
         output( "\tmovq %%rdx,%%rax\n" );
         output( "\tjmp 2b\n" );
         break;
@@ -1932,9 +1932,6 @@ void output_syscalls( DLLSPEC *spec )
         output( ".Lsyscall_args:\n" );
         for (i = 0; i < count; i++)
             output( "\t.byte %u\n", get_args_size( syscalls[i] ));
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "%s\n", asm_globl("__wine_syscall_flags") );
-        output( "\t.long 0\n" );
         return;
     }
 

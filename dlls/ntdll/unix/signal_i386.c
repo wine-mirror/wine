@@ -519,6 +519,8 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, sysca
 #define SYSCALL_HAVE_XSAVEC   2
 #define SYSCALL_HAVE_FXSAVE   4
 
+static unsigned int syscall_flags;
+
 static inline struct x86_thread_data *x86_thread_data(void)
 {
     return (struct x86_thread_data *)ntdll_get_thread_data()->cpu_data;
@@ -1614,7 +1616,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.esp           = (ULONG_PTR)stack;
         callback_frame.frame.eip           = (ULONG_PTR)pKiUserCallbackDispatcher;
         callback_frame.frame.eflags        = 0x202;
-        callback_frame.frame.syscall_flags = __wine_syscall_flags;
+        callback_frame.frame.syscall_flags = frame->syscall_flags;
         callback_frame.frame.prev_frame    = frame;
         x86_thread_data()->syscall_frame = &callback_frame.frame;
 
@@ -2340,9 +2342,9 @@ void signal_init_process(void)
 
     x86_thread_data()->syscall_frame = (struct syscall_frame *)kernel_stack - 1;
 
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) __wine_syscall_flags |= SYSCALL_HAVE_FXSAVE;
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) __wine_syscall_flags |= SYSCALL_HAVE_XSAVE;
-    if (xstate_compaction_enabled) __wine_syscall_flags |= SYSCALL_HAVE_XSAVEC;
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) syscall_flags |= SYSCALL_HAVE_FXSAVE;
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
@@ -2417,7 +2419,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->esp = (DWORD)stack;
     frame->eip = (DWORD)pLdrInitializeThunk;
     frame->prev_frame    = NULL;
-    frame->syscall_flags = __wine_syscall_flags;
+    frame->syscall_flags = syscall_flags;
     frame->restore_flags |= CONTEXT_INTEGER;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
