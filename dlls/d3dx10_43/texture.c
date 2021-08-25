@@ -709,8 +709,7 @@ end:
         IWICFormatConverter_Release(converter);
     if (dds_frame)
         IWICDdsFrameDecode_Release(dds_frame);
-    if (buffer)
-        heap_free(buffer);
+    heap_free(buffer);
     if (frame)
         IWICBitmapFrameDecode_Release(frame);
     if (decoder)
