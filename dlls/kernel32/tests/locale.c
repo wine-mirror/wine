@@ -1031,31 +1031,33 @@ static void test_GetDateFormatW(void)
 {
   int ret;
   SYSTEMTIME  curtime;
-  WCHAR buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  WCHAR buffer[BUFFER_SIZE];
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-  STRINGSW("",""); /* If flags is not zero then format must be NULL */
-  ret = GetDateFormatW(LOCALE_SYSTEM_DEFAULT, DATE_LONGDATE, NULL, input, buffer, ARRAY_SIZE(buffer));
+  SetLastError(0xdeadbeef);
+
+  /* If flags is not zero then format must be NULL */
+  wcscpy(buffer, L"pristine");
+  ret = GetDateFormatW(LOCALE_SYSTEM_DEFAULT, DATE_LONGDATE, NULL, L"", buffer, ARRAY_SIZE(buffer));
   if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
     win_skip("GetDateFormatW is not implemented\n");
     return;
   }
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-  EXPECT_EQW;
-
-  STRINGSW("",""); /* NULL buffer, len > 0 */
+  expect_werr(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = GetDateFormatW (lcid, 0, NULL, input, NULL, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-  STRINGSW("",""); /* NULL buffer, len == 0 */
-  ret = GetDateFormatW (lcid, 0, NULL, input, NULL, 0);
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* NULL buffer, len > 0 */
+  wcscpy(buffer, L"pristine");
+  ret = GetDateFormatW (lcid, 0, NULL, L"", NULL, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
+  /* NULL buffer, len == 0 */
+  ret = GetDateFormatW (lcid, 0, NULL, L"", NULL, 0);
+  expect_wstr(ret, NULL, L"");
+
+  /* Incorrect DOW and time */
   curtime.wYear = 2002;
   curtime.wMonth = 10;
   curtime.wDay = 23;
@@ -1064,10 +1066,8 @@ static void test_GetDateFormatW(void)
   curtime.wMinute = 34512; /* Invalid */
   curtime.wSecond = 65535; /* Invalid */
   curtime.wMilliseconds = 12345;
-  STRINGSW("dddd d MMMM yyyy","Wednesday 23 October 2002"); /* Incorrect DOW and time */
-  ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = GetDateFormatW (lcid, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"Wednesday 23 October 2002");
 
   /* Limit tests */
 
@@ -1079,11 +1079,8 @@ static void test_GetDateFormatW(void)
   curtime.wMinute = 0;
   curtime.wSecond = 0;
   curtime.wMilliseconds = 0;
-  STRINGSW("dddd d MMMM yyyy","Monday 1 January 1601");
-  SetLastError(0xdeadbeef);
-  ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = GetDateFormatW (lcid, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"Monday 1 January 1601");
 
   curtime.wYear = 1600;
   curtime.wMonth = 12;
@@ -1093,11 +1090,9 @@ static void test_GetDateFormatW(void)
   curtime.wMinute = 59;
   curtime.wSecond = 59;
   curtime.wMilliseconds = 999;
-  STRINGSW("dddd d MMMM yyyy","Friday 31 December 1600");
-  SetLastError(0xdeadbeef);
-  ret = GetDateFormatW (lcid, 0, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  wcscpy(buffer, L"pristine");
+  ret = GetDateFormatW (lcid, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
 }
 
 
