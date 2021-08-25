@@ -2,6 +2,7 @@
  * Win32 5.1 Theme drawing
  *
  * Copyright (C) 2003 Kevin Koltzau
+ * Copyright 2021 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -25,6 +28,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
+#include "commctrl.h"
+#include "commoncontrols.h"
 #include "vfwmsgs.h"
 #include "uxtheme.h"
 #include "tmschema.h"
@@ -1649,10 +1654,57 @@ HRESULT WINAPI DrawThemeEdge(HTHEME hTheme, HDC hdc, int iPartId,
 HRESULT WINAPI DrawThemeIcon(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
                              const RECT *pRect, HIMAGELIST himl, int iImageIndex)
 {
-    FIXME("%d %d: stub\n", iPartId, iStateId);
-    if(!hTheme)
+    INT effect = ICE_NONE, saturation = 0, alpha = 128;
+    IImageList *image_list = (IImageList *)himl;
+    IMAGELISTDRAWPARAMS params = {0};
+    COLORREF color = 0;
+
+    TRACE("%p %p %d %d %s %p %d\n", hTheme, hdc, iPartId, iStateId, wine_dbgstr_rect(pRect), himl,
+          iImageIndex);
+
+    if (!hTheme)
         return E_HANDLE;
-    return E_NOTIMPL;
+
+    GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_ICONEFFECT, &effect);
+    switch (effect)
+    {
+    case ICE_NONE:
+        params.fState = ILS_NORMAL;
+        break;
+    case ICE_GLOW:
+        GetThemeColor(hTheme, iPartId, iStateId, TMT_GLOWCOLOR, &color);
+        params.fState = ILS_GLOW;
+        params.crEffect = color;
+        break;
+    case ICE_SHADOW:
+        GetThemeColor(hTheme, iPartId, iStateId, TMT_SHADOWCOLOR, &color);
+        params.fState = ILS_SHADOW;
+        params.crEffect = color;
+        break;
+    case ICE_PULSE:
+        GetThemeInt(hTheme, iPartId, iStateId, TMT_SATURATION, &saturation);
+        params.fState = ILS_SATURATE;
+        params.Frame = saturation;
+        break;
+    case ICE_ALPHA:
+        GetThemeInt(hTheme, iPartId, iStateId, TMT_ALPHALEVEL, &alpha);
+        params.fState = ILS_ALPHA;
+        params.Frame = alpha;
+        break;
+    }
+
+    params.cbSize = sizeof(params);
+    params.himl = himl;
+    params.i = iImageIndex;
+    params.hdcDst = hdc;
+    params.x = pRect->left;
+    params.y = pRect->top;
+    params.cx = pRect->right - pRect->left;
+    params.cy = pRect->bottom - pRect->top;
+    params.rgbBk = CLR_NONE;
+    params.rgbFg = CLR_NONE;
+    params.fStyle = ILD_TRANSPARENT;
+    return IImageList_Draw(image_list, &params);
 }
 
 /***********************************************************************
