@@ -245,20 +245,21 @@ HBRUSH WINAPI CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
 
 
 /***********************************************************************
- *           CreateDIBPatternBrushPt    (GDI32.@)
+ *           NtGdiCreateDIBBrush    (win32u.@)
  *
  * Create a logical brush with a pattern from a DIB.
  */
-HBRUSH WINAPI CreateDIBPatternBrushPt( const void* data, UINT coloruse )
+HBRUSH WINAPI NtGdiCreateDIBBrush( const void *data, UINT coloruse, UINT size,
+                                   BOOL is_8x8, BOOL pen, const void *client )
 {
-    const BITMAPINFO *info=data;
+    const BITMAPINFO *info = data;
     LOGBRUSH logbrush;
 
     if (!data)
         return NULL;
 
-    TRACE("%p %dx%d %dbpp\n", info, info->bmiHeader.biWidth,
-	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
+    TRACE( "%p %dx%d %dbpp\n", info, info->bmiHeader.biWidth,
+           info->bmiHeader.biHeight,  info->bmiHeader.biBitCount );
 
     logbrush.lbStyle = BS_DIBPATTERNPT;
     logbrush.lbColor = coloruse;

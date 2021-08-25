@@ -449,6 +449,14 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP bitmap )
 }
 
 /***********************************************************************
+ *           CreateDIBPatternBrushPt    (GDI32.@)
+ */
+HBRUSH WINAPI CreateDIBPatternBrushPt( const void *data, UINT coloruse )
+{
+    return NtGdiCreateDIBBrush( data, coloruse, /* FIXME */ 0, FALSE, FALSE, data );
+}
+
+/***********************************************************************
  *           CreateBitmapIndirect (GDI32.@)
  */
 HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )

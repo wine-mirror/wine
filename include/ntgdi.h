@@ -195,7 +195,8 @@ HANDLE   WINAPI NtGdiCreateClientObj( ULONG type );
 HFONT    WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *enumex, ULONG unk2, ULONG unk3,
                                   ULONG unk4, void *data );
 HDC      WINAPI NtGdiCreateCompatibleDC( HDC hdc );
-HBRUSH   WINAPI NtGdiCreateDIBBrush( const void* data, UINT coloruse );
+HBRUSH   WINAPI NtGdiCreateDIBBrush( const void *data, UINT coloruse, UINT size,
+                                     BOOL is_8x8, BOOL pen, const void *client );
 HRGN     WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom );
 HBRUSH   WINAPI NtGdiCreateHatchBrush( INT style, COLORREF color, BOOL pen );
 HBRUSH   WINAPI NtGdiCreatePatternBrushInternal( HBITMAP hbitmap, BOOL pen, BOOL is_8x8 );
