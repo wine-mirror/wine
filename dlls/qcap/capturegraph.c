@@ -66,7 +66,6 @@ HRESULT capture_graph_create(IUnknown *outer, IUnknown **out)
     object->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CaptureGraphImpl.csFilter");
 
     TRACE("Created capture graph builder %p.\n", object);
-    ObjectRefCount(TRUE);
     *out = (IUnknown *)&object->ICaptureGraphBuilder_iface;
     return S_OK;
 }
@@ -123,7 +122,6 @@ static ULONG WINAPI fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface
         if (This->mygraph)
             IGraphBuilder_Release(This->mygraph);
         free(This);
-        ObjectRefCount(FALSE);
     }
     return ref;
 }

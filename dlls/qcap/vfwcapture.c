@@ -107,7 +107,6 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
-    ObjectRefCount(FALSE);
 }
 
 static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
@@ -861,7 +860,6 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
     object->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": vfw_capture.state_cs");
 
     TRACE("Created VFW capture filter %p.\n", object);
-    ObjectRefCount(TRUE);
     *out = &object->filter.IUnknown_inner;
     return S_OK;
 }

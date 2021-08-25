@@ -30,8 +30,6 @@
 
 extern HINSTANCE qcap_instance DECLSPEC_HIDDEN;
 
-extern DWORD ObjectRefCount(BOOL increment) DECLSPEC_HIDDEN;
-
 HRESULT audio_record_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT avi_mux_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
