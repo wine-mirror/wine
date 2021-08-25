@@ -481,6 +481,65 @@ NTSTATUS WINAPI HidP_SetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, 
     return HIDP_STATUS_SUCCESS;
 }
 
+struct unset_usage_params
+{
+    USAGE usage;
+    char *report_buf;
+    BOOL found;
+};
+
+static NTSTATUS unset_usage( const struct hid_value_caps *caps, void *user )
+{
+    struct unset_usage_params *params = user;
+    ULONG bit, index, last;
+
+    if (HID_VALUE_CAPS_IS_ARRAY( caps ))
+    {
+        for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
+        {
+            index = caps->start_index + params->usage - caps->usage_min;
+            if (params->report_buf[bit / 8] != index) continue;
+            params->report_buf[bit / 8] = 0;
+            params->found = TRUE;
+            break;
+        }
+
+        return HIDP_STATUS_NULL;
+    }
+
+    bit = caps->start_bit + params->usage - caps->usage_min;
+    if (params->report_buf[bit / 8] & (1 << (bit % 8))) params->found = TRUE;
+    params->report_buf[bit / 8] &= ~(1 << (bit % 8));
+    return HIDP_STATUS_NULL;
+}
+
+NTSTATUS WINAPI HidP_UnsetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection, USAGE *usages,
+                                  ULONG *usage_count, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
+{
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
+    struct unset_usage_params params = {.report_buf = report_buf, .found = FALSE};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
+    NTSTATUS status;
+    USHORT limit = 1;
+    ULONG i, count = *usage_count;
+
+    TRACE( "report_type %d, usage_page %x, collection %d, usages %p, usage_count %p, preparsed_data %p, "
+           "report_buf %p, report_len %u.\n",
+           report_type, usage_page, collection, usages, usage_count, preparsed_data, report_buf, report_len );
+
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    filter.report_id = report_buf[0];
+    for (i = 0; i < count; ++i)
+    {
+        params.usage = filter.usage = usages[i];
+        status = enum_value_caps( preparsed, report_type, report_len, &filter, unset_usage, &params, &limit );
+        if (status != HIDP_STATUS_SUCCESS) return status;
+    }
+
+    if (!params.found) return HIDP_STATUS_BUTTON_NOT_PRESSED;
+    return HIDP_STATUS_SUCCESS;
+}
 
 NTSTATUS WINAPI HidP_TranslateUsagesToI8042ScanCodes(USAGE *ChangedUsageList,
     ULONG UsageListLength, HIDP_KEYBOARD_DIRECTION KeyAction,

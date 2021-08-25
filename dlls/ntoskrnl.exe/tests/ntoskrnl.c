@@ -2344,8 +2344,16 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
        report[caps.InputReportByteLength - 2]);
     ok(report[caps.InputReportByteLength - 1] == 4, "unexpected usage index %d, expected 4\n",
        report[caps.InputReportByteLength - 1]);
-    report[caps.InputReportByteLength - 2] = 0;
-    report[caps.InputReportByteLength - 1] = 0;
+    status = HidP_UnsetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
+                              report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_UnsetUsages returned %#x\n", status);
+    ok(report[caps.InputReportByteLength - 2] == 0, "unexpected usage index %d, expected 0\n",
+       report[caps.InputReportByteLength - 2]);
+    ok(report[caps.InputReportByteLength - 1] == 0, "unexpected usage index %d, expected 0\n",
+       report[caps.InputReportByteLength - 1]);
+    status = HidP_UnsetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
+                              report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_BUTTON_NOT_PRESSED, "HidP_UnsetUsages returned %#x\n", status);
     value = 1;
     usages[0] = 0x8c;
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
