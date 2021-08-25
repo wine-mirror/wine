@@ -183,12 +183,6 @@ static void expect_err_(int line, int ret, const char *str, DWORD err, const cha
     ok_(__FILE__, line)(strcmp(str, "pristine") == 0, "Expected a pristine buffer, got '%s'\n", str);
 }
 
-#define STRINGSW(x,y) MultiByteToWideChar(CP_ACP,0,x,-1,input,ARRAY_SIZE(input)); \
-   MultiByteToWideChar(CP_ACP,0,y,-1,Expected,ARRAY_SIZE(Expected)); \
-   SetLastError(0xdeadbeef); buffer[0] = '\0'
-#define EXPECT_LENW ok(ret == lstrlenW(Expected)+1, "Expected Len %d, got %d\n", lstrlenW(Expected)+1, ret)
-#define EXPECT_EQW  ok(wcsncmp(buffer, Expected, lstrlenW(Expected)) == 0, "Bad conversion\n")
-
 #define expect_wstr(r,s,e) expect_wstr_(__LINE__, r, s, e)
 static void expect_wstr_(int line, int ret, const WCHAR *str, const WCHAR *expected)
 {
@@ -943,7 +937,7 @@ static void test_GetDateFormatEx(void)
 {
   int ret;
   SYSTEMTIME  curtime;
-  WCHAR buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  WCHAR buffer[BUFFER_SIZE];
 
   if (!pGetDateFormatEx)
   {
@@ -1434,7 +1428,7 @@ static void test_GetNumberFormatEx(void)
   static const WCHAR enW[] = {'e','n','-','U','S',0};
   static const WCHAR frW[] = {'f','r','-','F','R',0};
   static const WCHAR bogusW[] = {'b','o','g','u','s',0};
-  WCHAR buffer[BUFFER_SIZE], input[BUFFER_SIZE], Expected[BUFFER_SIZE];
+  WCHAR buffer[BUFFER_SIZE];
 
   if (!pGetNumberFormatEx)
   {
@@ -1442,88 +1436,94 @@ static void test_GetNumberFormatEx(void)
     return;
   }
 
-  STRINGSW("23",""); /* NULL output, length > 0 --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, NULL, NULL, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("23,53",""); /* Invalid character --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* NULL output, length > 0 --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L"23", NULL, NULL, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("--",""); /* Double '-' --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* Invalid character --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L"23,53", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("0-",""); /* Trailing '-' --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* Double '-' --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L"--", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("0..",""); /* Double '.' --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* Trailing '-' --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L"0-", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW(" 0.1",""); /* Leading space --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* Double '.' --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L"0..", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("1234","1"); /* Length too small --> Write up to length chars */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, 2);
-  ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-      "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+  /* Leading space --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L" 0.1", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("23",""); /* Bogus locale --> Error */
-  ret = pGetNumberFormatEx(bogusW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* Length too small --> Write up to length chars */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, NUO, L"1234", NULL, buffer, 2);
+  /* there is no guarantee on the buffer content, see GetTimeFormatA() */
+  expect_werr(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
+  SetLastError(0xdeadbeef);
+
+  /* Bogus locale --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(bogusW, NUO, L"23", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
   memset(&format, 0, sizeof(format));
 
-  STRINGSW("2353",""); /* Format and flags given --> Error */
-  ret = pGetNumberFormatEx(enW, NUO, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok( !ret, "Expected ret == 0, got %d\n", ret);
-  ok( GetLastError() == ERROR_INVALID_FLAGS,
-      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
+  /* Format and flags given --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, NUO, L"2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_FLAGS);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("2353",""); /* Invalid format --> Error */
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  /* Invalid format --> Error */
+  wcscpy(buffer, L"pristine");
+  ret = pGetNumberFormatEx(enW, 0, L"2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
-  STRINGSW("2353","2,353.00"); /* Valid number */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Valid number */
+  ret = pGetNumberFormatEx(enW, NUO, L"2353", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2,353.00");
 
-  STRINGSW("-2353","-2,353.00"); /* Valid negative number */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Valid negative number */
+  ret = pGetNumberFormatEx(enW, NUO, L"-2353", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"-2,353.00");
 
-  STRINGSW("-353","-353.00"); /* test for off by one error in grouping */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* test for off by one error in grouping */
+  ret = pGetNumberFormatEx(enW, NUO, L"-353", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"-353.00");
 
-  STRINGSW("2353.1","2,353.10"); /* Valid real number */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Valid real number */
+  ret = pGetNumberFormatEx(enW, NUO, L"2353.1", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2,353.10");
 
-  STRINGSW("2353.111","2,353.11"); /* Too many DP --> Truncated */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Too many DP --> Truncated */
+  ret = pGetNumberFormatEx(enW, NUO, L"2353.111", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2,353.11");
 
-  STRINGSW("2353.119","2,353.12");  /* Too many DP --> Rounded */
-  ret = pGetNumberFormatEx(enW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Too many DP --> Rounded */
+  ret = pGetNumberFormatEx(enW, NUO, L"2353.119", NULL, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2,353.12");
 
   format.NumDigits = 0; /* No decimal separator */
   format.LeadingZero = 0;
@@ -1532,78 +1532,60 @@ static void test_GetNumberFormatEx(void)
   format.lpDecimalSep = dotW;
   format.lpThousandSep = commaW;
 
-  STRINGSW("2353","2353"); /* No decimal or grouping chars expected */
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* No decimal or grouping chars expected */
+  ret = pGetNumberFormatEx(enW, 0, L"2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2353");
 
-  format.NumDigits = 1; /* 1 DP --> Expect decimal separator */
-  STRINGSW("2353","2353.0");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* 1 DP --> Expect decimal separator */
+  format.NumDigits = 1;
+  ret = pGetNumberFormatEx(enW, 0, L"2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"2353.0");
 
-  format.Grouping = 2; /* Group by 100's */
-  STRINGSW("2353","23,53.0");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Group by 100's */
+  format.Grouping = 2;
+  ret = pGetNumberFormatEx(enW, 0, L"2353", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"23,53.0");
 
-  STRINGSW("235","235.0"); /* Grouping of a positive number */
+  /* Grouping of a positive number */
   format.Grouping = 3;
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"235", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"235.0");
 
-  STRINGSW("-235","-235.0"); /* Grouping of a negative number */
+  /* Grouping of a negative number */
   format.NegativeOrder = NEG_LEFT;
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"-235", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"-235.0");
 
-  format.LeadingZero = 1; /* Always provide leading zero */
-  STRINGSW(".5","0.5");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  /* Always provide leading zero */
+  format.LeadingZero = 1;
+  ret = pGetNumberFormatEx(enW, 0, L".5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"0.5");
 
   format.NegativeOrder = NEG_PARENS;
-  STRINGSW("-1","(1.0)");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"(1.0)");
 
   format.NegativeOrder = NEG_LEFT;
-  STRINGSW("-1","-1.0");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"-1.0");
 
   format.NegativeOrder = NEG_LEFT_SPACE;
-  STRINGSW("-1","- 1.0");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"- 1.0");
 
   format.NegativeOrder = NEG_RIGHT;
-  STRINGSW("-1","1.0-");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"1.0-");
 
   format.NegativeOrder = NEG_RIGHT_SPACE;
-  STRINGSW("-1","1.0 -");
-  ret = pGetNumberFormatEx(enW, 0, input, &format, buffer, ARRAY_SIZE(buffer));
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetNumberFormatEx(enW, 0, L"-1", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"1.0 -");
 
+  /* Test French formatting */
   if (pIsValidLocaleName(frW))
   {
-    STRINGSW("-12345","-12 345,00"); /* Try French formatting */
-    Expected[3] = 160; /* Non breaking space */
-    ret = pGetNumberFormatEx(frW, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
-    ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-    EXPECT_LENW; EXPECT_EQW;
+    ret = pGetNumberFormatEx(frW, NUO, L"-12345", NULL, buffer, ARRAY_SIZE(buffer));
+    expect_wstr(ret, buffer, L"-12\xa0\x33\x34\x35,00"); /* Non breaking space */
   }
 }
 
