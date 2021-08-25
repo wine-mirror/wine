@@ -1384,7 +1384,7 @@ static void testAcquireCredentialsHandleW(void)
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
 
-    /* Test using the ASCII structure. */
+    /* Test using the ANSI structure. */
     idA.User = (unsigned char*) test_user;
     idA.UserLength = strlen(test_user);
     idA.Domain = (unsigned char *) workgroup;
