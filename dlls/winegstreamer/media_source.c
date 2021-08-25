@@ -1315,14 +1315,14 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     if (FAILED(hr = MFAllocateWorkQueue(&object->async_commands_queue)))
         goto fail;
 
-    object->read_thread = CreateThread(NULL, 0, read_thread, object, 0, NULL);
-
     if (!(parser = unix_funcs->wg_decodebin_parser_create()))
     {
         hr = E_OUTOFMEMORY;
         goto fail;
     }
     object->wg_parser = parser;
+
+    object->read_thread = CreateThread(NULL, 0, read_thread, object, 0, NULL);
 
     object->state = SOURCE_OPENING;
 
