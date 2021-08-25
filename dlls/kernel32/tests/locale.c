@@ -951,31 +951,42 @@ static void test_GetDateFormatEx(void)
       return;
   }
 
-  STRINGSW("",""); /* If flags are set, then format must be NULL */
   SetLastError(0xdeadbeef);
-  ret = pGetDateFormatEx(localeW, DATE_LONGDATE, NULL, input, buffer, ARRAY_SIZE(buffer), NULL);
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-  EXPECT_EQW;
 
-  STRINGSW("",""); /* NULL buffer, len > 0 */
+  /* If flags are set, then format must be NULL */
+  wcscpy(buffer, L"pristine");
+  ret = pGetDateFormatEx(localeW, DATE_LONGDATE, NULL, L"", buffer, ARRAY_SIZE(buffer), NULL);
+  expect_werr(ret, buffer, ERROR_INVALID_FLAGS);
   SetLastError(0xdeadbeef);
-  ret = pGetDateFormatEx(localeW, 0, NULL, input, NULL, ARRAY_SIZE(buffer), NULL);
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-  STRINGSW("",""); /* NULL buffer, len == 0 */
-  ret = pGetDateFormatEx(localeW, 0, NULL, input, NULL, 0, NULL);
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
-
-  STRINGSW("",""); /* Invalid flag combination */
+  /* NULL buffer, len > 0 */
+  wcscpy(buffer, L"pristine");
+  ret = pGetDateFormatEx(localeW, 0, NULL, L"", NULL, ARRAY_SIZE(buffer), NULL);
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
   SetLastError(0xdeadbeef);
+
+  /* NULL buffer, len == 0 */
+  ret = pGetDateFormatEx(localeW, 0, NULL, L"", NULL, 0, NULL);
+  expect_wstr(ret, NULL, L"");
+
+  /* Invalid flag combination */
+  wcscpy(buffer, L"pristine");
   ret = pGetDateFormatEx(localeW, DATE_LONGDATE|DATE_SHORTDATE, NULL,
-                       input, NULL, 0, NULL);
-  ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-  EXPECT_EQW;
+                         L"", NULL, 0, NULL);
+  expect_werr(ret, buffer, ERROR_INVALID_FLAGS);
+  SetLastError(0xdeadbeef);
+
+  /* Incorrect DOW and time */
+  curtime.wYear = 2002;
+  curtime.wMonth = 10;
+  curtime.wDay = 23;
+  curtime.wDayOfWeek = 45612; /* Should be 3 - Wednesday */
+  curtime.wHour = 65432; /* Invalid */
+  curtime.wMinute = 34512; /* Invalid */
+  curtime.wSecond = 65535; /* Invalid */
+  curtime.wMilliseconds = 12345;
+  ret = pGetDateFormatEx(localeW, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer), NULL);
+  expect_wstr(ret, buffer, L"Wednesday 23 October 2002");
 
   curtime.wYear = 2002;
   curtime.wMonth = 10;
@@ -985,23 +996,10 @@ static void test_GetDateFormatEx(void)
   curtime.wMinute = 34512; /* Invalid */
   curtime.wSecond = 65535; /* Invalid */
   curtime.wMilliseconds = 12345;
-  STRINGSW("dddd d MMMM yyyy","Wednesday 23 October 2002"); /* Incorrect DOW and time */
-  ret = pGetDateFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer), NULL);
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
-
-  curtime.wYear = 2002;
-  curtime.wMonth = 10;
-  curtime.wDay = 23;
-  curtime.wDayOfWeek = 45612; /* Should be 3 - Wednesday */
-  curtime.wHour = 65432; /* Invalid */
-  curtime.wMinute = 34512; /* Invalid */
-  curtime.wSecond = 65535; /* Invalid */
-  curtime.wMilliseconds = 12345;
-  STRINGSW("dddd d MMMM yyyy","Wednesday 23 October 2002");
-  ret = pGetDateFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer), emptyW); /* Use reserved arg */
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  wcscpy(buffer, L"pristine");
+  ret = pGetDateFormatEx(localeW, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer), emptyW); /* Use reserved arg */
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
 
   /* Limit tests */
 
@@ -1013,11 +1011,8 @@ static void test_GetDateFormatEx(void)
   curtime.wMinute = 0;
   curtime.wSecond = 0;
   curtime.wMilliseconds = 0;
-  STRINGSW("dddd d MMMM yyyy","Monday 1 January 1601");
-  SetLastError(0xdeadbeef);
-  ret = pGetDateFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer), NULL);
-  ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENW; EXPECT_EQW;
+  ret = pGetDateFormatEx(localeW, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer), NULL);
+  expect_wstr(ret, buffer, L"Monday 1 January 1601");
 
   curtime.wYear = 1600;
   curtime.wMonth = 12;
@@ -1027,11 +1022,9 @@ static void test_GetDateFormatEx(void)
   curtime.wMinute = 59;
   curtime.wSecond = 59;
   curtime.wMilliseconds = 999;
-  STRINGSW("dddd d MMMM yyyy","Friday 31 December 1600");
-  SetLastError(0xdeadbeef);
-  ret = pGetDateFormatEx(localeW, 0, &curtime, input, buffer, ARRAY_SIZE(buffer), NULL);
-  ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+  wcscpy(buffer, L"pristine");
+  ret = pGetDateFormatEx(localeW, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer), NULL);
+  expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
 }
 
 static void test_GetDateFormatW(void)
