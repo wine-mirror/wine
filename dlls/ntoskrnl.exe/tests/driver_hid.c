@@ -356,6 +356,16 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 /* reset global items */
                 UNIT(1, 0), /* None */
                 UNIT_EXPONENT(1, 0),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+                USAGE(1, HID_USAGE_GENERIC_Z),
+                LOGICAL_MINIMUM(4, 0x0000),
+                LOGICAL_MAXIMUM(4, 0x7fff),
+                PHYSICAL_MINIMUM(4, 0xfff90000),
+                PHYSICAL_MAXIMUM(4, 0x0003ffff),
+                REPORT_SIZE(1, 32),
+                REPORT_COUNT(1, 1),
+                FEATURE(1, Data|Var|Abs),
             END_COLLECTION,
 
             USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),

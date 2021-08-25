@@ -1686,14 +1686,14 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
             .UsagePage = HID_USAGE_PAGE_GENERIC,
             .InputReportByteLength = 26,
             .OutputReportByteLength = 3,
-            .FeatureReportByteLength = 18,
+            .FeatureReportByteLength = 22,
             .NumberLinkCollectionNodes = 10,
             .NumberInputButtonCaps = 17,
             .NumberInputValueCaps = 7,
             .NumberInputDataIndices = 47,
             .NumberFeatureButtonCaps = 1,
-            .NumberFeatureValueCaps = 5,
-            .NumberFeatureDataIndices = 7,
+            .NumberFeatureValueCaps = 6,
+            .NumberFeatureDataIndices = 8,
         },
         /* with report id */
         {
@@ -1701,14 +1701,14 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
             .UsagePage = HID_USAGE_PAGE_GENERIC,
             .InputReportByteLength = 25,
             .OutputReportByteLength = 2,
-            .FeatureReportByteLength = 17,
+            .FeatureReportByteLength = 21,
             .NumberLinkCollectionNodes = 10,
             .NumberInputButtonCaps = 17,
             .NumberInputValueCaps = 7,
             .NumberInputDataIndices = 47,
             .NumberFeatureButtonCaps = 1,
-            .NumberFeatureValueCaps = 5,
-            .NumberFeatureDataIndices = 7,
+            .NumberFeatureValueCaps = 6,
+            .NumberFeatureDataIndices = 8,
         },
     };
     const HIDP_BUTTON_CAPS expect_button_caps[] =
@@ -2182,6 +2182,10 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#x\n", status);
     ok(value == 0, "got value %x, expected %#x\n", value, 0);
+    status = HidP_SetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
+                                      0, preparsed_data, report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#x\n", status);
+    ok(value == 0, "got value %x, expected %#x\n", value, 0);
 
     value = HidP_MaxUsageListLength(HidP_Feature + 1, 0, preparsed_data);
     ok(value == 0, "HidP_MaxUsageListLength(HidP_Feature + 1, 0) returned %d, expected %d\n", value, 0);
@@ -2311,7 +2315,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     value = HidP_MaxDataListLength(HidP_Output, preparsed_data);
     ok(value == 0, "HidP_MaxDataListLength(HidP_Output) returned %d, expected %d\n", value, 0);
     value = HidP_MaxDataListLength(HidP_Feature, preparsed_data);
-    ok(value == 13, "HidP_MaxDataListLength(HidP_Feature) returned %d, expected %d\n", value, 13);
+    ok(value == 14, "HidP_MaxDataListLength(HidP_Feature) returned %d, expected %d\n", value, 14);
 
     value = 1;
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
@@ -2472,6 +2476,74 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValueArray returned %#x\n", status);
     memset(buffer + 16, 0xff, 8);
     ok(!memcmp(buffer, buffer + 16, 16), "unexpected report value\n");
+
+
+    value = 0x7fffffff;
+    status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
+    value = 0xdeadbeef;
+    status = HidP_GetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_VALUE_OUT_OF_RANGE, "HidP_GetScaledUsageValue returned %#x\n", status);
+    ok(value == 0, "got value %x, expected %#x\n", value, 0);
+    value = 0xdeadbeef;
+    status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                &value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
+    ok(value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff);
+
+    value = 0x7fff;
+    status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
+    value = 0xdeadbeef;
+    status = HidP_GetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
+    ok(value == 0x0003ffff, "got value %x, expected %#x\n", value, 0x0003ffff);
+
+    value = 0;
+    status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
+    value = 0xdeadbeef;
+    status = HidP_GetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
+    ok(value == 0xfff90000, "got value %x, expected %#x\n", value, 0xfff90000);
+    status = HidP_SetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      0x1000, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status);
+    value = 0;
+    status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                &value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
+    ok(value == 0xfffff518, "got value %x, expected %#x\n", value, 0xfffff518);
+    status = HidP_SetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      0, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status);
+    value = 0;
+    status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                &value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
+    ok(value == 0xfffff45e, "got value %x, expected %#x\n", value, 0xfffff45e);
+    status = HidP_SetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      0xdead, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status);
+    value = 0;
+    status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                &value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
+    ok(value == 0xfffffe7d, "got value %x, expected %#x\n", value, 0xfffffe7d);
+    status = HidP_SetScaledUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                      0xbeef, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#x\n", status);
+    value = 0;
+    status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                &value, preparsed_data, report, caps.FeatureReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
+    ok(value == 0xfffffd0b, "got value %x, expected %#x\n", value, 0xfffffd0b);
 
 
     memset(report, 0xcd, sizeof(report));

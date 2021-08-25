@@ -380,6 +380,53 @@ ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_
     return count;
 }
 
+static NTSTATUS set_scaled_usage_value( const struct hid_value_caps *caps, void *user )
+{
+    ULONG bit_count = caps->bit_size * caps->report_count;
+    struct usage_value_params *params = user;
+    LONG value, log_range, phy_range;
+
+    if (caps->logical_min > caps->logical_max) return HIDP_STATUS_BAD_LOG_PHY_VALUES;
+    if (caps->physical_min > caps->physical_max) return HIDP_STATUS_BAD_LOG_PHY_VALUES;
+
+    if ((bit_count + 7) / 8 > sizeof(value)) return HIDP_STATUS_BUFFER_TOO_SMALL;
+    if (sizeof(LONG) > params->value_len) return HIDP_STATUS_BUFFER_TOO_SMALL;
+    value = *(LONG *)params->value_buf;
+
+    if (caps->physical_min || caps->physical_max)
+    {
+        /* testing shows that this is what the function does, including all
+         * the overflows and rounding errors... */
+        log_range = (caps->logical_max - caps->logical_min + 1) / 2;
+        phy_range = (caps->physical_max - caps->physical_min + 1) / 2;
+        value = value - caps->physical_min;
+        value = (log_range * value) / phy_range;
+        value = caps->logical_min + value;
+    }
+
+    copy_bits( params->report_buf, (unsigned char *)&value, bit_count, caps->start_bit );
+
+    return HIDP_STATUS_NULL;
+}
+
+NTSTATUS WINAPI HidP_SetScaledUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection,
+                                          USAGE usage, LONG value, PHIDP_PREPARSED_DATA preparsed_data,
+                                          char *report_buf, ULONG report_len )
+{
+    struct usage_value_params params = {.value_buf = &value, .value_len = sizeof(value), .report_buf = report_buf};
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
+    struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage };
+    USHORT count = 1;
+
+    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %d, preparsed_data %p, report_buf %p, report_len %u.\n",
+           report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
+
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    filter.report_id = report_buf[0];
+    return enum_value_caps( preparsed, report_type, report_len, &filter, set_scaled_usage_value, &params, &count );
+}
+
 static NTSTATUS set_usage_value( const struct hid_value_caps *caps, void *user )
 {
     struct usage_value_params *params = user;
