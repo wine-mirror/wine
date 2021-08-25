@@ -34,7 +34,7 @@
 @ stdcall D3DX10CreateFontIndirectA(ptr ptr ptr)
 @ stdcall D3DX10CreateFontIndirectW(ptr ptr ptr)
 @ stdcall D3DX10CreateFontW(ptr long long long long long long long long long wstr ptr)
-@ stub D3DX10CreateMesh(ptr ptr long str long long long ptr)
+@ stdcall D3DX10CreateMesh(ptr ptr long str long long long ptr)
 @ stub D3DX10CreateShaderResourceViewFromFileA(ptr str ptr ptr ptr ptr)
 @ stub D3DX10CreateShaderResourceViewFromFileW(ptr wstr ptr ptr ptr ptr)
 @ stub D3DX10CreateShaderResourceViewFromMemory(ptr ptr long ptr ptr ptr ptr)

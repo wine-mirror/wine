@@ -10,6 +10,7 @@ C_SRCS = \
 	compiler.c \
 	d3dx10_43_main.c \
 	font.c \
+	mesh.c \
 	sprite.c \
 	texture.c
 
