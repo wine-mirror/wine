@@ -354,14 +354,13 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     }
     value = state->values[type] + *value_idx;
 
-    state->items.start_index = 0;
+    state->items.start_index = usages_size;
     if (!(is_array = HID_VALUE_CAPS_IS_ARRAY( &state->items ))) state->items.report_count -= usages_size - 1;
     else state->items.start_bit -= state->items.report_count * state->items.bit_size;
 
     while (usages_size--)
     {
         if (!is_array) state->items.start_bit -= state->items.report_count * state->items.bit_size;
-        else state->items.start_index += 1;
         state->items.usage_page = state->usages_page[usages_size];
         state->items.usage_min = state->usages_min[usages_size];
         state->items.usage_max = state->usages_max[usages_size];
@@ -371,6 +370,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         *value++ = state->items;
         *value_idx += 1;
         if (!is_array) state->items.report_count = 1;
+        else state->items.start_index -= 1;
     }
 
     state->items.usage_page = usage_page;

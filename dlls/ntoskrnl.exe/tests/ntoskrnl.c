@@ -2340,10 +2340,8 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                             report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
-    todo_wine
     ok(report[caps.InputReportByteLength - 2] == 3, "unexpected usage index %d, expected 3\n",
        report[caps.InputReportByteLength - 2]);
-    todo_wine
     ok(report[caps.InputReportByteLength - 1] == 4, "unexpected usage index %d, expected 4\n",
        report[caps.InputReportByteLength - 1]);
     report[caps.InputReportByteLength - 2] = 0;
@@ -2353,7 +2351,6 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                             report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
-    todo_wine
     ok(report[caps.InputReportByteLength - 2] == 1, "unexpected usage index %d, expected 1\n",
        report[caps.InputReportByteLength - 2]);
 
