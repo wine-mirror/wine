@@ -327,8 +327,9 @@ struct syscall_frame
     DWORD                 restore_flags; /* 0094 */
     ULONG64               rbp;           /* 0098 */
     struct syscall_frame *prev_frame;    /* 00a0 */
-    DWORD                 syscall_flags; /* 00a8 */
-    DWORD                 align[5];      /* 00ac */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 00a8 */
+    DWORD                 syscall_flags; /* 00b0 */
+    DWORD                 align[3];      /* 00b4 */
     XMM_SAVE_AREA32       xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSTATE xstate;    /* 02c0 */
 };
@@ -2318,6 +2319,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.restore_flags = CONTEXT_CONTROL | CONTEXT_INTEGER;
         callback_frame.frame.prev_frame    = frame;
         callback_frame.frame.syscall_flags = frame->syscall_flags;
+        callback_frame.frame.syscall_table = frame->syscall_table;
         amd64_thread_data()->syscall_frame = &callback_frame.frame;
 
         __wine_syscall_dispatcher_return( &callback_frame.frame, 0 );
@@ -3043,6 +3045,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
     frame->syscall_flags = syscall_flags;
+    frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );

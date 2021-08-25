@@ -192,10 +192,12 @@ struct syscall_frame
     DWORD                 restore_flags;  /* 044 */
     DWORD                 fpscr;          /* 048 */
     struct syscall_frame *prev_frame;     /* 04c */
-    ULONGLONG             d[32];          /* 050 */
+    SYSTEM_SERVICE_TABLE *syscall_table;  /* 050 */
+    DWORD                 align[3];       /* 054 */
+    ULONGLONG             d[32];          /* 060 */
 };
 
-C_ASSERT( sizeof( struct syscall_frame ) == 0x150);
+C_ASSERT( sizeof( struct syscall_frame ) == 0x160);
 
 struct arm_thread_data
 {
@@ -607,6 +609,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.sp            = (ULONG_PTR)args_data;
         callback_frame.frame.pc            = (ULONG_PTR)pKiUserCallbackDispatcher;
         callback_frame.frame.restore_flags = CONTEXT_INTEGER;
+        callback_frame.frame.syscall_table = frame->syscall_table;
         callback_frame.frame.prev_frame    = frame;
         arm_thread_data()->syscall_frame = &callback_frame.frame;
 
@@ -993,6 +996,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->r0 = (DWORD)ctx;
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
+    frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );
@@ -1009,7 +1013,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    /* set syscall frame */
                    "ldr r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "cbnz r6, 1f\n\t"
-                   "sub r6, sp, #0x150\n\t"   /* sizeof(struct syscall_frame) */
+                   "sub r6, sp, #0x160\n\t"   /* sizeof(struct syscall_frame) */
                    "str r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "1:\tmov sp, r6\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )

@@ -3761,6 +3761,14 @@ typedef struct
 } SYSTEM_DLL_INIT_BLOCK;
 #endif
 
+typedef struct
+{
+    ULONG_PTR *ServiceTable;
+    ULONG_PTR *CounterTable;
+    ULONG_PTR  ServiceLimit;
+    BYTE      *ArgumentTable;
+} SYSTEM_SERVICE_TABLE;
+
 /***********************************************************************
  * Function declarations
  */

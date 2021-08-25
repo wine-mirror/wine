@@ -463,26 +463,27 @@ enum i386_trap_code
 
 struct syscall_frame
 {
-    DWORD              restore_flags;  /* 000 */
-    DWORD              eflags;         /* 004 */
-    DWORD              eip;            /* 008 */
-    DWORD              esp;            /* 00c */
-    WORD               cs;             /* 010 */
-    WORD               ss;             /* 012 */
-    WORD               ds;             /* 014 */
-    WORD               es;             /* 016 */
-    WORD               fs;             /* 018 */
-    WORD               gs;             /* 01a */
-    DWORD              eax;            /* 01c */
-    DWORD              ebx;            /* 020 */
-    DWORD              ecx;            /* 024 */
-    DWORD              edx;            /* 028 */
-    DWORD              edi;            /* 02c */
-    DWORD              esi;            /* 030 */
-    DWORD              ebp;            /* 034 */
-    DWORD              syscall_flags;  /* 038 */
-    struct syscall_frame *prev_frame;  /* 03c */
-    union                              /* 040 */
+    WORD                  syscall_flags;  /* 000 */
+    WORD                  restore_flags;  /* 002 */
+    DWORD                 eflags;         /* 004 */
+    DWORD                 eip;            /* 008 */
+    DWORD                 esp;            /* 00c */
+    WORD                  cs;             /* 010 */
+    WORD                  ss;             /* 012 */
+    WORD                  ds;             /* 014 */
+    WORD                  es;             /* 016 */
+    WORD                  fs;             /* 018 */
+    WORD                  gs;             /* 01a */
+    DWORD                 eax;            /* 01c */
+    DWORD                 ebx;            /* 020 */
+    DWORD                 ecx;            /* 024 */
+    DWORD                 edx;            /* 028 */
+    DWORD                 edi;            /* 02c */
+    DWORD                 esi;            /* 030 */
+    DWORD                 ebp;            /* 034 */
+    SYSTEM_SERVICE_TABLE *syscall_table;  /* 038 */
+    struct syscall_frame *prev_frame;     /* 03c */
+    union                                 /* 040 */
     {
         XSAVE_FORMAT       xsave;
         FLOATING_SAVE_AREA fsave;
@@ -490,7 +491,7 @@ struct syscall_frame
     /* Leave space for the whole set of YMM registers. They're not used in
      * 32-bit mode, but some processors fault if they're not in writable memory.
      */
-    DECLSPEC_ALIGN(64) XSTATE xstate;  /* 240 */
+    DECLSPEC_ALIGN(64) XSTATE xstate;     /* 240 */
 };
 
 C_ASSERT( sizeof(struct syscall_frame) == 0x380 );
@@ -873,7 +874,7 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
-        x86_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+        x86_thread_data()->syscall_frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
     return status;
 }
 
@@ -1617,6 +1618,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.eip           = (ULONG_PTR)pKiUserCallbackDispatcher;
         callback_frame.frame.eflags        = 0x202;
         callback_frame.frame.syscall_flags = frame->syscall_flags;
+        callback_frame.frame.syscall_table = frame->syscall_table;
         callback_frame.frame.prev_frame    = frame;
         x86_thread_data()->syscall_frame = &callback_frame.frame;
 
@@ -1779,7 +1781,7 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 
     frame->eip = *(ULONG *)ESP_sig( sigcontext );
     frame->eflags = EFL_sig(sigcontext);
-    frame->restore_flags = CONTEXT_CONTROL;
+    frame->restore_flags = LOWORD(CONTEXT_CONTROL);
 
     EIP_sig( sigcontext ) = (ULONG)__wine_syscall_dispatcher_prolog_end;
     ECX_sig( sigcontext ) = (ULONG)frame;
@@ -2420,7 +2422,8 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->eip = (DWORD)pLdrInitializeThunk;
     frame->prev_frame    = NULL;
     frame->syscall_flags = syscall_flags;
-    frame->restore_flags |= CONTEXT_INTEGER;
+    frame->syscall_table = KeServiceDescriptorTable;
+    frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );

@@ -142,12 +142,14 @@ struct syscall_frame
     ULONG                 cpsr;           /* 108 */
     ULONG                 restore_flags;  /* 10c */
     struct syscall_frame *prev_frame;     /* 110 */
-    ULONG                 fpcr;           /* 118 */
-    ULONG                 fpsr;           /* 11c */
-    NEON128               v[32];          /* 120 */
+    SYSTEM_SERVICE_TABLE *syscall_table;  /* 118 */
+    ULONG64               align;          /* 120 */
+    ULONG                 fpcr;           /* 128 */
+    ULONG                 fpsr;           /* 12c */
+    NEON128               v[32];          /* 130 */
 };
 
-C_ASSERT( sizeof( struct syscall_frame ) == 0x320 );
+C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 
 struct arm64_thread_data
 {
@@ -756,6 +758,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.sp            = (ULONG_PTR)args_data;
         callback_frame.frame.pc            = (ULONG_PTR)pKiUserCallbackDispatcher;
         callback_frame.frame.restore_flags = CONTEXT_INTEGER;
+        callback_frame.frame.syscall_table = frame->syscall_table;
         callback_frame.frame.prev_frame    = frame;
         arm64_thread_data()->syscall_frame = &callback_frame.frame;
 
@@ -1186,6 +1189,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     frame->x[18] = (ULONG64)teb;
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
+    frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );
@@ -1203,7 +1207,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    /* set syscall frame */
                    "ldr x8, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
                    "cbnz x8, 1f\n\t"
-                   "sub x8, sp, #0x320\n\t"     /* sizeof(struct syscall_frame) */
+                   "sub x8, sp, #0x330\n\t"     /* sizeof(struct syscall_frame) */
                    "str x8, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
                    "1:\tmov sp, x8\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )

@@ -26,6 +26,8 @@ typedef UINT64 unixlib_handle_t;
 
 extern NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args );
 
+extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
+
 /* some useful helpers from ntdll */
 extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
 extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
