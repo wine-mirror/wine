@@ -198,8 +198,6 @@ struct unix_funcs
 
 extern const struct unix_funcs *unix_funcs;
 
-extern LONG object_locks;
-
 HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;

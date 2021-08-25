@@ -354,12 +354,6 @@ static HRESULT WINAPI class_factory_CreateInstance(IClassFactory *iface, IUnknow
 static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
 {
     TRACE("%p, %d.\n", iface, dolock);
-
-    if (dolock)
-        InterlockedIncrement(&object_locks);
-    else
-        InterlockedDecrement(&object_locks);
-
     return S_OK;
 }
 
