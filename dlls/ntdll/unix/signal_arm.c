@@ -1031,4 +1031,77 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
                    "movne sp, r3\n\t"
                    "blx r1" )
 
+
+/***********************************************************************
+ *           __wine_syscall_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   "mrc p15, 0, r1, c13, c0, 2\n\t" /* NtCurrentTeb() */
+                   "ldr r1, [r1, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
+                   "add r0, r1, #0x10\n\t"
+                   "stm r0, {r4-r12,lr}\n\t"
+                   "str sp, [r1, #0x38]\n\t"
+                   "str r3, [r1, #0x3c]\n\t"
+                   "mrs r0, CPSR\n\t"
+                   "bfi r0, lr, #5, #1\n\t"         /* set thumb bit */
+                   "str r0, [r1, #0x40]\n\t"
+                   "mov r0, #0\n\t"
+                   "str r0, [r1, #0x44]\n\t"        /* frame->restore_flags */
+#ifndef __SOFTFP__
+                   "vmrs r0, fpscr\n\t"
+                   "str r0, [r1, #0x48]\n\t"
+                   "add r0, r1, #0x60\n\t"
+                   "vstm r0, {d0-d15}\n\t"
+#endif
+                   "mov r6, sp\n\t"
+                   "mov sp, r1\n\t"
+                   "mov r8, r1\n\t"
+                   "ldr r5, [r1, #0x50]\n\t"        /* frame->syscall_table */
+                   "ubfx r4, ip, #12, #2\n\t"       /* syscall table number */
+                   "bfc ip, #12, #20\n\t"           /* syscall number */
+                   "add r4, r5, r4, lsl #4\n\t"
+                   "ldr r5, [r4, #8]\n\t"           /* table->ServiceLimit */
+                   "cmp ip, r5\n\t"
+                   "bcs 5f\n\t"
+                   "ldr r5, [r4, #12]\n\t"          /* table->ArgumentTable */
+                   "ldrb r5, [r5, ip]\n\t"
+                   "cmp r5, #16\n\t"
+                   "it le\n\t"
+                   "movle r5, #16\n\t"
+                   "sub r0, sp, r5\n\t"
+                   "and r0, #~7\n\t"
+                   "mov sp, r0\n"
+                   "2:\tsubs r5, r5, #4\n\t"
+                   "ldr r0, [r6, r5]\n\t"
+                   "str r0, [sp, r5]\n\t"
+                   "bgt 2b\n\t"
+                   "pop {r0-r3}\n\t"                /* first 4 args are in registers */
+                   "ldr r5, [r4]\n\t"               /* table->ServiceTable */
+                   "ldr ip, [r5, ip, lsl #2]\n\t"
+                   "blx ip\n"
+                   "4:\tldr ip, [r8, #0x44]\n\t"    /* frame->restore_flags */
+#ifndef __SOFTFP__
+                   "tst ip, #4\n\t"                 /* CONTEXT_FLOATING_POINT */
+                   "beq 3f\n\t"
+                   "ldr r4, [r8, #0x48]\n\t"
+                   "vmsr fpscr, r4\n\t"
+                   "add r4, r8, #0x60\n\t"
+                   "vldm r4, {d0-d15}\n"
+                   "3:\n\t"
+#endif
+                   "tst ip, #2\n\t"                 /* CONTEXT_INTEGER */
+                   "it ne\n\t"
+                   "ldmne r8, {r0-r3}\n\t"
+                   "ldr lr, [r8, #0x3c]\n\t"
+                   "ldr sp, [r8, #0x38]\n\t"
+                   "add r8, r8, #0x10\n\t"
+                   "ldm r8, {r4-r12,pc}\n"
+                   "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
+                   "movt r0, #0xc000\n\t"
+                   "b 4b\n"
+                   __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
+                   "mov r8, r0\n\t"
+                   "mov r0, r1\n\t"
+                   "b 4b" )
+
 #endif  /* __arm__ */

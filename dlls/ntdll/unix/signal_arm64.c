@@ -1224,6 +1224,133 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
                    "1:\tldp x29, x30, [sp], #16\n\t"
                    "br x1" )
 
+
+/***********************************************************************
+ *           __wine_syscall_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   /* FIXME: use x18 directly instead */
+                   "stp x0, x1, [sp, #-96]!\n\t"
+                   "stp x2, x3, [sp, #16]\n\t"
+                   "stp x4, x5, [sp, #32]\n\t"
+                   "stp x6, x7, [sp, #48]\n\t"
+                   "stp x8, x9, [sp, #64]\n\t"
+                   "str x30,    [sp, #80]\n\t"
+                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
+                   "mov x18, x0\n\t"
+                   "ldp x2, x3, [sp, #16]\n\t"
+                   "ldp x4, x5, [sp, #32]\n\t"
+                   "ldp x6, x7, [sp, #48]\n\t"
+                   "ldp x8, x9, [sp, #64]\n\t"
+                   "ldr x30,    [sp, #80]\n\t"
+                   "ldp x0, x1, [sp], #96\n\t"
+
+                   "ldr x10, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_frame */
+                   "stp x18, x19, [x10, #0x90]\n\t"
+                   "stp x20, x21, [x10, #0xa0]\n\t"
+                   "stp x22, x23, [x10, #0xb0]\n\t"
+                   "stp x24, x25, [x10, #0xc0]\n\t"
+                   "stp x26, x27, [x10, #0xd0]\n\t"
+                   "stp x28, x29, [x10, #0xe0]\n\t"
+                   "mov x19, sp\n\t"
+                   "stp x9, x19, [x10, #0xf0]\n\t"
+                   "mrs x9, NZCV\n\t"
+                   "stp x30, x9, [x10, #0x100]\n\t"
+                   "mrs x9, FPCR\n\t"
+                   "str w9, [x10, #0x128]\n\t"
+                   "mrs x9, FPSR\n\t"
+                   "str w9, [x10, #0x12c]\n\t"
+                   "stp q0,  q1,  [x10, #0x130]\n\t"
+                   "stp q2,  q3,  [x10, #0x150]\n\t"
+                   "stp q4,  q5,  [x10, #0x170]\n\t"
+                   "stp q6,  q7,  [x10, #0x190]\n\t"
+                   "stp q8,  q9,  [x10, #0x1b0]\n\t"
+                   "stp q10, q11, [x10, #0x1d0]\n\t"
+                   "stp q12, q13, [x10, #0x1f0]\n\t"
+                   "stp q14, q15, [x10, #0x210]\n\t"
+                   "stp q16, q17, [x10, #0x230]\n\t"
+                   "stp q18, q19, [x10, #0x250]\n\t"
+                   "stp q20, q21, [x10, #0x270]\n\t"
+                   "stp q22, q23, [x10, #0x290]\n\t"
+                   "stp q24, q25, [x10, #0x2b0]\n\t"
+                   "stp q26, q27, [x10, #0x2d0]\n\t"
+                   "stp q28, q29, [x10, #0x2f0]\n\t"
+                   "stp q30, q31, [x10, #0x310]\n\t"
+                   "mov sp, x10\n\t"
+                   "and x20, x8, #0xfff\n\t"    /* syscall number */
+                   "ubfx x21, x8, #12, #2\n\t"  /* syscall table number */
+                   "ldr x16, [x10, #0x118]\n\t" /* frame->syscall_table */
+                   "add x21, x16, x21, lsl #5\n\t"
+                   "ldr x16, [x21, #16]\n\t"    /* table->ServiceLimit */
+                   "cmp x20, x16\n\t"
+                   "bcs 4f\n\t"
+                   "mov x22, sp\n\t"
+                   "ldr x16, [x21, #24]\n\t"    /* table->ArgumentTable */
+                   "ldrb w9, [x16, x20]\n\t"
+                   "subs x9, x9, #64\n\t"
+                   "bls 2f\n\t"
+                   "sub sp, sp, x9\n\t"
+                   "tbz x9, #3, 1f\n\t"
+                   "sub sp, sp, #8\n"
+                   "1:\tsub x9, x9, #8\n\t"
+                   "ldr x10, [x19, x9]\n\t"
+                   "str x10, [sp, x9]\n\t"
+                   "cbnz x9, 1b\n"
+                   "2:\tldr x16, [x21]\n\t"     /* table->ServiceTable */
+                   "ldr x16, [x16, x20, lsl 3]\n\t"
+                   "blr x16\n\t"
+                   "mov sp, x22\n"
+                   "3:\tldp x18, x19, [sp, #0x90]\n\t"
+                   "ldp x20, x21, [sp, #0xa0]\n\t"
+                   "ldp x22, x23, [sp, #0xb0]\n\t"
+                   "ldp x24, x25, [sp, #0xc0]\n\t"
+                   "ldp x26, x27, [sp, #0xd0]\n\t"
+                   "ldp x28, x29, [sp, #0xe0]\n\t"
+                   "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
+                   "tbz x16, #2, 1f\n\t"        /* CONTEXT_FLOATING_POINT */
+                   "ldp q0,  q1,  [sp, #0x130]\n\t"
+                   "ldp q2,  q3,  [sp, #0x150]\n\t"
+                   "ldp q4,  q5,  [sp, #0x170]\n\t"
+                   "ldp q6,  q7,  [sp, #0x190]\n\t"
+                   "ldp q8,  q9,  [sp, #0x1b0]\n\t"
+                   "ldp q10, q11, [sp, #0x1d0]\n\t"
+                   "ldp q12, q13, [sp, #0x1f0]\n\t"
+                   "ldp q14, q15, [sp, #0x210]\n\t"
+                   "ldp q16, q17, [sp, #0x230]\n\t"
+                   "ldp q18, q19, [sp, #0x250]\n\t"
+                   "ldp q20, q21, [sp, #0x270]\n\t"
+                   "ldp q22, q23, [sp, #0x290]\n\t"
+                   "ldp q24, q25, [sp, #0x2b0]\n\t"
+                   "ldp q26, q27, [sp, #0x2d0]\n\t"
+                   "ldp q28, q29, [sp, #0x2f0]\n\t"
+                   "ldp q30, q31, [sp, #0x310]\n\t"
+                   "ldr w9, [sp, #0x128]\n\t"
+                   "msr FPCR, x9\n\t"
+                   "ldr w9, [sp, #0x12c]\n\t"
+                   "msr FPSR, x9\n"
+                   "1:\ttbz x16, #1, 1f\n\t"    /* CONTEXT_INTEGER */
+                   "ldp x0, x1, [sp, #0x00]\n\t"
+                   "ldp x2, x3, [sp, #0x10]\n\t"
+                   "ldp x4, x5, [sp, #0x20]\n\t"
+                   "ldp x6, x7, [sp, #0x30]\n\t"
+                   "ldp x8, x9, [sp, #0x40]\n\t"
+                   "ldp x10, x11, [sp, #0x50]\n\t"
+                   "ldp x12, x13, [sp, #0x60]\n\t"
+                   "ldp x14, x15, [sp, #0x70]\n"
+                   "1:\tldp x16, x17, [sp, #0x100]\n\t"
+                   "msr NZCV, x17\n\t"
+                   "ldp x30, x17, [sp, #0xf0]\n\t"
+                   "mov sp, x17\n\t"
+                   "ret x16\n"
+                   "4:\tmov x0, #0xc0000000\n\t" /* STATUS_INVALID_PARAMETER */
+                   "movk x0, #0x000d\n\t"
+                   "b 3b\n"
+                   __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
+                   "mov sp, x0\n\t"
+                   "mov x0, x1\n\t"
+                   "b 3b" )
+
+
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
  */

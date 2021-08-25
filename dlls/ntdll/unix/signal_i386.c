@@ -1770,7 +1770,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
  */
 static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 {
-    extern void __wine_syscall_dispatcher_prolog_end(void);
+    extern void __wine_syscall_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
 
     /* disallow single-stepping through a syscall */
@@ -2486,6 +2486,135 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
                    "leal -20(%ebp),%esp\n\t"
                    "pushl %eax\n\t"
                    "call *%ecx" )
+
+
+/***********************************************************************
+ *           __wine_syscall_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+                   "movl %fs:0x1f8,%ecx\n\t"       /* x86_thread_data()->syscall_frame */
+                   "movw $0,0x02(%ecx)\n\t"        /* frame->restore_flags */
+                   "popl 0x08(%ecx)\n\t"           /* frame->eip */
+                   "pushfl\n\t"
+                   "popl 0x04(%ecx)\n"             /* frame->eflags */
+                   __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
+                   "movl %esp,0x0c(%ecx)\n\t"      /* frame->esp */
+                   "movw %cs,0x10(%ecx)\n\t"
+                   "movw %ss,0x12(%ecx)\n\t"
+                   "movw %ds,0x14(%ecx)\n\t"
+                   "movw %es,0x16(%ecx)\n\t"
+                   "movw %fs,0x18(%ecx)\n\t"
+                   "movw %gs,0x1a(%ecx)\n\t"
+                   "movl %eax,0x1c(%ecx)\n\t"
+                   "movl %ebx,0x20(%ecx)\n\t"
+                   "movl %edi,0x2c(%ecx)\n\t"
+                   "movl %esi,0x30(%ecx)\n\t"
+                   "movl %ebp,0x34(%ecx)\n\t"
+                   "leal 0x34(%ecx),%ebp\n\t"
+                   "leal 4(%esp),%esi\n\t"         /* first argument */
+                   "movl %eax,%ebx\n\t"
+                   "shrl $8,%ebx\n\t"
+                   "andl $0x30,%ebx\n\t"           /* syscall table number */
+                   "addl 0x38(%ecx),%ebx\n\t"      /* frame->syscall_table */
+                   "testl $3,(%ecx)\n\t"           /* frame->syscall_flags & (SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC) */
+                   "jz 2f\n\t"
+                   "movl $7,%eax\n\t"
+                   "xorl %edx,%edx\n\t"
+                   "movl %edx,0x240(%ecx)\n\t"
+                   "movl %edx,0x244(%ecx)\n\t"
+                   "movl %edx,0x248(%ecx)\n\t"
+                   "movl %edx,0x24c(%ecx)\n\t"
+                   "movl %edx,0x250(%ecx)\n\t"
+                   "movl %edx,0x254(%ecx)\n\t"
+                   "testl $2,(%ecx)\n\t"           /* frame->syscall_flags & SYSCALL_HAVE_XSAVEC */
+                   "jz 1f\n\t"
+                   "movl %edx,0x258(%ecx)\n\t"
+                   "movl %edx,0x25c(%ecx)\n\t"
+                   "movl %edx,0x260(%ecx)\n\t"
+                   "movl %edx,0x264(%ecx)\n\t"
+                   "movl %edx,0x268(%ecx)\n\t"
+                   "movl %edx,0x26c(%ecx)\n\t"
+                   "movl %edx,0x270(%ecx)\n\t"
+                   "movl %edx,0x274(%ecx)\n\t"
+                   "movl %edx,0x278(%ecx)\n\t"
+                   "movl %edx,0x27c(%ecx)\n\t"
+                   "xsavec 0x40(%ecx)\n\t"
+                   "jmp 4f\n"
+                   "1:\txsave 0x40(%ecx)\n\t"
+                   "jmp 4f\n"
+                   "2:\ttestl $4,(%ecx)\n\t"       /* frame->syscall_flags & SYSCALL_HAVE_FXSAVE */
+                   "jz 3f\n\t"
+                   "fxsave 0x40(%ecx)\n\t"
+                   "jmp 4f\n"
+                   "3:\tfnsave 0x40(%ecx)\n\t"
+                   "fwait\n"
+                   "4:\tmovl %ecx,%esp\n\t"
+                   "movl 0x1c(%esp),%edx\n\t"      /* frame->eax */
+                   "andl $0xfff,%edx\n\t"          /* syscall number */
+                   "cmpl 8(%ebx),%edx\n\t"         /* table->ServiceLimit */
+                   "jae 6f\n\t"
+                   "movl 12(%ebx),%eax\n\t"        /* table->ArgumentTable */
+                   "movzbl (%eax,%edx,1),%ecx\n\t"
+                   "movl (%ebx),%eax\n\t"          /* table->ServiceTable */
+                   "subl %ecx,%esp\n\t"
+                   "shrl $2,%ecx\n\t"
+                   "andl $~15,%esp\n\t"
+                   "movl %esp,%edi\n\t"
+                   "cld\n\t"
+                   "rep; movsl\n\t"
+                   "call *(%eax,%edx,4)\n\t"
+                   "leal -0x34(%ebp),%esp\n"
+                   "5:\tmovl 0(%esp),%ecx\n\t"     /* frame->syscall_flags + (frame->restore_flags << 16) */
+                   "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
+                   "jz 3f\n\t"
+                   "testl $3,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+                   "jz 1f\n\t"
+                   "movl %eax,%esi\n\t"
+                   "movl $7,%eax\n\t"
+                   "xorl %edx,%edx\n\t"
+                   "xrstor 0x40(%esp)\n\t"
+                   "movl %esi,%eax\n\t"
+                   "jmp 3f\n"
+                   "1:\ttestl $4,%ecx\n\t"         /* SYSCALL_HAVE_FXSAVE */
+                   "jz 2f\n\t"
+                   "fxrstor 0x40(%esp)\n\t"
+                   "jmp 3f\n"
+                   "2:\tfrstor 0x40(%esp)\n\t"
+                   "fwait\n"
+                   "3:\tmovl 0x2c(%esp),%edi\n\t"
+                   "movl 0x30(%esp),%esi\n\t"
+                   "movl 0x34(%esp),%ebp\n\t"
+                   "testl $0x7 << 16,%ecx\n\t"     /* CONTEXT_CONTROL | CONTEXT_SEGMENTS | CONTEXT_INTEGER */
+                   "jnz 1f\n\t"
+                   "movl 0x20(%esp),%ebx\n\t"
+                   "movl 0x08(%esp),%ecx\n\t"      /* frame->eip */
+                   "movl 0x0c(%esp),%esp\n\t"      /* frame->esp */
+                   "jmpl *%ecx\n"
+                   "1:\ttestl $0x2 << 16,%ecx\n\t" /* CONTEXT_INTEGER */
+                   "jz 1f\n\t"
+                   "movl 0x1c(%esp),%eax\n\t"
+                   "movl 0x24(%esp),%ecx\n\t"
+                   "movl 0x28(%esp),%edx\n"
+                   "1:\tmovl 0x0c(%esp),%ebx\n\t"  /* frame->esp */
+                   "movw 0x12(%esp),%ss\n\t"
+                   "xchgl %ebx,%esp\n\t"
+                   "pushl 0x04(%ebx)\n\t"          /* frame->eflags */
+                   "pushl 0x10(%ebx)\n\t"          /* frame->cs */
+                   "pushl 0x08(%ebx)\n\t"          /* frame->eip */
+                   "pushl 0x14(%ebx)\n\t"          /* frame->ds */
+                   "movw 0x16(%ebx),%es\n\t"
+                   "movw 0x18(%ebx),%fs\n\t"
+                   "movw 0x1a(%ebx),%gs\n\t"
+                   "movl 0x20(%ebx),%ebx\n\t"
+                   "popl %ds\n\t"
+                   "iret\n"
+                   "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
+                   "jmp 5b\n"
+                   __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
+                   "movl 8(%esp),%eax\n\t"
+                   "movl 4(%esp),%esp\n\t"
+                   "jmp 5b" )
+
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
