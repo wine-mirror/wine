@@ -1101,8 +1101,7 @@ static void test_demangle_datatype(void)
         name = p__unDName(0, demangle[i].mangled, 0, malloc, free, 0x2800);
         todo_wine_if (!demangle[i].test_in_wine)
             ok(name != NULL && !strcmp(name,demangle[i].result), "Got name \"%s\" for %d\n", name, i);
-        if(name)
-            free(name);
+        free(name);
     }
 }
 
