@@ -57,7 +57,7 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_
 
 DWORD joystick_map_pov(const POINTL *p) DECLSPEC_HIDDEN;
 
-BOOL device_disabled_registry(const char* name) DECLSPEC_HIDDEN;
+BOOL device_disabled_registry(const char* name, BOOL disable) DECLSPEC_HIDDEN;
 
 ULONG WINAPI JoystickWGenericImpl_Release(LPDIRECTINPUTDEVICE8W iface);
 

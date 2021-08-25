@@ -271,13 +271,13 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
     }
 }
 
-BOOL device_disabled_registry(const char* name)
+BOOL device_disabled_registry(const char* name, BOOL disable)
 {
     static const char disabled_str[] = "disabled";
+    static const char enabled_str[] = "enabled";
     static const char joystick_key[] = "Joysticks";
     char buffer[MAX_PATH];
     HKEY hkey, appkey, temp;
-    BOOL do_disable = FALSE;
 
     get_app_key(&hkey, &appkey);
 
@@ -297,16 +297,23 @@ BOOL device_disabled_registry(const char* name)
 
     /* Look for the "controllername"="disabled" key */
     if (!get_config_key(hkey, appkey, name, buffer, sizeof(buffer)))
-        if (!strcmp(disabled_str, buffer))
+    {
+        if (!disable && !strcmp(disabled_str, buffer))
         {
             TRACE("Disabling joystick '%s' based on registry key.\n", name);
-            do_disable = TRUE;
+            disable = TRUE;
         }
+        else if (disable && !strcmp(enabled_str, buffer))
+        {
+            TRACE("Enabling joystick '%s' based on registry key.\n", name);
+            disable = FALSE;
+        }
+    }
 
     if (appkey) RegCloseKey(appkey);
     if (hkey)   RegCloseKey(hkey);
 
-    return do_disable;
+    return disable;
 }
 
 BOOL is_xinput_device(const DIDEVCAPS *devcaps, WORD vid, WORD pid)

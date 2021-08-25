@@ -264,7 +264,7 @@ static void find_joydevs(void)
         else
             joydev.name = joydev.device;
 
-        if (device_disabled_registry(joydev.name)) {
+        if (device_disabled_registry(joydev.name, FALSE)) {
             close(fd);
             HeapFree(GetProcessHeap(), 0, joydev.name);
             if (joydev.name != joydev.device)
