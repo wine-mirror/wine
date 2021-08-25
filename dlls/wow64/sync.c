@@ -1482,6 +1482,22 @@ NTSTATUS WINAPI wow64_NtTestAlert( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtTraceControl
+ */
+NTSTATUS WINAPI wow64_NtTraceControl( UINT *args )
+{
+    ULONG code = get_ulong( &args );
+    void *inbuf = get_ptr( &args );
+    ULONG inbuf_len = get_ulong( &args );
+    void *outbuf = get_ptr( &args );
+    ULONG outbuf_len = get_ulong( &args );
+    ULONG *size = get_ptr( &args );
+
+    return NtTraceControl( code, inbuf, inbuf_len, outbuf, outbuf_len, size );
+}
+
+
+/**********************************************************************
  *           wow64_NtWaitForDebugEvent
  */
 NTSTATUS WINAPI wow64_NtWaitForDebugEvent( UINT *args )

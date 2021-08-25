@@ -34,6 +34,8 @@
 # include <unistd.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
@@ -42,6 +44,7 @@
 
 WINE_DECLARE_DEBUG_CHANNEL(pid);
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
+WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 struct debug_info
 {
@@ -327,4 +330,16 @@ void dbg_init(void)
     debug_options = options;
     options[nb_debug_options] = default_option;
     init_done = TRUE;
+}
+
+
+/***********************************************************************
+ *              NtTraceControl  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtTraceControl( ULONG code, void *inbuf, ULONG inbuf_len,
+                                void *outbuf, ULONG outbuf_len, ULONG *size )
+{
+    FIXME( "code %u, inbuf %p, inbuf_len %u, outbuf %p, outbuf_len %u, size %p\n", code, inbuf, inbuf_len,
+           outbuf, outbuf_len, size );
+    return STATUS_SUCCESS;
 }

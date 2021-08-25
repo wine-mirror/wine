@@ -228,6 +228,7 @@
     SYSCALL_ENTRY( NtTerminateProcess ) \
     SYSCALL_ENTRY( NtTerminateThread ) \
     SYSCALL_ENTRY( NtTestAlert ) \
+    SYSCALL_ENTRY( NtTraceControl ) \
     SYSCALL_ENTRY( NtUnloadDriver ) \
     SYSCALL_ENTRY( NtUnloadKey ) \
     SYSCALL_ENTRY( NtUnlockFile ) \
