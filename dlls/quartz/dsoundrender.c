@@ -549,8 +549,6 @@ static void dsound_render_destroy(struct strmbase_filter *iface)
     strmbase_passthrough_cleanup(&filter->passthrough);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
-
-    InterlockedDecrement(&object_locks);
 }
 
 static struct strmbase_pin *dsound_render_get_pin(struct strmbase_filter *iface, unsigned int index)

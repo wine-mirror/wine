@@ -484,8 +484,6 @@ static void acm_wrapper_destroy(struct strmbase_filter *iface)
     FreeMediaType(&filter->mt);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
-
-    InterlockedDecrement(&object_locks);
 }
 
 static HRESULT acm_wrapper_init_stream(struct strmbase_filter *iface)

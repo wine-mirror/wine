@@ -475,8 +475,6 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
         DeleteCriticalSection(&This->event_cs);
 	DeleteCriticalSection(&This->cs);
         free(This);
-
-        InterlockedDecrement(&object_locks);
     }
     return ref;
 }

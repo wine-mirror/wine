@@ -80,8 +80,6 @@ static ULONG WINAPI seeking_passthrough_Release(IUnknown *iface)
     {
         strmbase_passthrough_cleanup(&passthrough->passthrough);
         free(passthrough);
-
-        InterlockedDecrement(&object_locks);
     }
     return refcount;
 }

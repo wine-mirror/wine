@@ -58,8 +58,6 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
     return wine_dbg_sprintf("%s", rev);
 }
 
-extern LONG object_locks;
-
 /* see IAsyncReader::Request on MSDN for the explanation of this */
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 #define BYTES_FROM_MEDIATIME(time) ((time) / 10000000)

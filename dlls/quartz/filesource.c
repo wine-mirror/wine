@@ -351,8 +351,6 @@ static void async_reader_destroy(struct strmbase_filter *iface)
 
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
-
-    InterlockedDecrement(&object_locks);
 }
 
 static HRESULT async_reader_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)

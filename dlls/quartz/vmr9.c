@@ -528,12 +528,6 @@ static void vmr_disconnect(struct strmbase_renderer *This)
     }
 }
 
-static void vmr_free(struct quartz_vmr *filter)
-{
-    free(filter);
-    InterlockedDecrement(&object_locks);
-}
-
 static void vmr_destroy(struct strmbase_renderer *iface)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
@@ -563,7 +557,7 @@ static void vmr_destroy(struct strmbase_renderer *iface)
     FreeLibrary(filter->hD3d9);
     strmbase_renderer_cleanup(&filter->renderer);
     if (!filter->IVMRSurfaceAllocatorNotify9_refcount)
-        vmr_free(filter);
+        free(filter);
 }
 
 static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
@@ -1955,7 +1949,7 @@ static ULONG WINAPI VMR9SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotif
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount && !filter->renderer.filter.refcount)
-        vmr_free(filter);
+        free(filter);
 
     return refcount;
 }

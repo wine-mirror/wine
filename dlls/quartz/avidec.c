@@ -538,8 +538,6 @@ static void avi_decompressor_destroy(struct strmbase_filter *iface)
 
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
-
-    InterlockedDecrement(&object_locks);
 }
 
 static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)

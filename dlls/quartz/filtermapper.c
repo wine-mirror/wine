@@ -487,8 +487,6 @@ static ULONG WINAPI Inner_Release(IUnknown *iface)
     if (ref == 0)
     {
         CoTaskMemFree(This);
-
-        InterlockedDecrement(&object_locks);
     }
 
     return ref;

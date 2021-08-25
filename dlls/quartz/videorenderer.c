@@ -130,8 +130,6 @@ static void video_renderer_destroy(struct strmbase_renderer *iface)
     video_window_cleanup(&filter->window);
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);
-
-    InterlockedDecrement(&object_locks);
 }
 
 static HRESULT video_renderer_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
