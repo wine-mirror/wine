@@ -2815,19 +2815,26 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
     return !ret;
 }
 
+static DWORD query_data_ready( struct request *request )
+{
+    DWORD count;
+
+    count = get_available_data( request );
+    if (!request->read_chunked && request->netconn) count += netconn_query_data_available( request->netconn );
+
+    return count;
+}
+
 static DWORD query_data_available( struct request *request, DWORD *available, BOOL async )
 {
     DWORD ret = ERROR_SUCCESS, count = 0;
 
     if (end_of_read_data( request )) goto done;
 
-    count = get_available_data( request );
-    if (!request->read_chunked && request->netconn) count += netconn_query_data_available( request->netconn );
-    if (!count)
+    if (!(count = query_data_ready( request )))
     {
         if ((ret = refill_buffer( request, async ))) goto done;
-        count = get_available_data( request );
-        if (!request->read_chunked && request->netconn) count += netconn_query_data_available( request->netconn );
+        count = query_data_ready( request );
     }
 
 done:
