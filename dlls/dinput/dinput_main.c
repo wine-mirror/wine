@@ -80,7 +80,8 @@ static const struct dinput_device *dinput_devices[] =
     &keyboard_device,
     &joystick_linuxinput_device,
     &joystick_linux_device,
-    &joystick_osx_device
+    &joystick_osx_device,
+    &joystick_hid_device,
 };
 
 HINSTANCE DINPUT_instance;
