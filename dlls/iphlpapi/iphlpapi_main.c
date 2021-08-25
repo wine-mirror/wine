@@ -1206,15 +1206,11 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
                 }
             }
             if (servers != (DNS_ADDR_ARRAY *)buf) heap_free( servers );
-            if (err) goto err;
+            if (err) return err;
         }
 
         aa->DnsSuffix = heap_alloc( MAX_DNS_SUFFIX_STRING_LENGTH * sizeof(WCHAR) );
-        if (!aa->DnsSuffix)
-        {
-            err = ERROR_NOT_ENOUGH_MEMORY;
-            goto err;
-        }
+        if (!aa->DnsSuffix) return ERROR_NOT_ENOUGH_MEMORY;
         aa->DnsSuffix[0] = '\0';
 
         if (!DnsQueryConfig( DnsConfigSearchList, 0, name, NULL, NULL, &size ) &&
@@ -1231,8 +1227,7 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
         aa = aa->Next;
     }
 
-err:
-    return err;
+    return ERROR_SUCCESS;
 }
 
 static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADDRESSES **info )
