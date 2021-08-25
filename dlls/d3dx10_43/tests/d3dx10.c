@@ -2973,6 +2973,200 @@ todo_wine
     ID3DX10Font_Release(font);
 }
 
+static void test_sprite(void)
+{
+    ID3D10ShaderResourceView *srv1, *srv2;
+    ID3D10Texture2D *texture1, *texture2;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10Device *device, *device2;
+    D3DX10_SPRITE sprite_desc;
+    ID3DX10Sprite *sprite;
+    D3DXMATRIX mat, mat2;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    texture_desc.Width = 64;
+    texture_desc.Height = 64;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture1);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture2);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture1, NULL, &srv1);
+    ok(SUCCEEDED(hr), "Failed to create srv, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture1, NULL, &srv2);
+    ok(SUCCEEDED(hr), "Failed to create srv, hr %#x.\n", hr);
+
+    hr = D3DX10CreateSprite(device, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateSprite(NULL, 0, &sprite);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateSprite(device, 0, &sprite);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* GetDevice */
+    hr = ID3DX10Sprite_GetDevice(sprite, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_GetDevice(sprite, &device2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device == device2, "Unexpected device.\n");
+
+    ID3D10Device_Release(device2);
+
+    /* Projection transform */
+    hr = ID3DX10Sprite_GetProjectionTransform(sprite, NULL);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Sprite_GetProjectionTransform(sprite, &mat);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Set a transform and test if it gets returned correctly */
+    mat.m[0][0] = 2.1f; mat.m[0][1] = 6.5f; mat.m[0][2] =-9.6f; mat.m[0][3] = 1.7f;
+    mat.m[1][0] = 4.2f; mat.m[1][1] =-2.5f; mat.m[1][2] = 2.1f; mat.m[1][3] = 5.5f;
+    mat.m[2][0] =-2.6f; mat.m[2][1] = 0.3f; mat.m[2][2] = 8.6f; mat.m[2][3] = 8.4f;
+    mat.m[3][0] = 6.7f; mat.m[3][1] =-5.1f; mat.m[3][2] = 6.1f; mat.m[3][3] = 2.2f;
+
+    hr = ID3DX10Sprite_SetProjectionTransform(sprite, NULL);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_SetProjectionTransform(sprite, &mat);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_GetProjectionTransform(sprite, &mat2);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!memcmp(&mat, &mat2, sizeof(mat)), "Unexpected matrix.\n");
+}
+
+    /* View transform */
+    hr = ID3DX10Sprite_SetViewTransform(sprite, NULL);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_SetViewTransform(sprite, &mat);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Begin */
+    hr = ID3DX10Sprite_Begin(sprite, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Flush/End */
+    hr = ID3DX10Sprite_Flush(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_End(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* May not be called before next Begin */
+    hr = ID3DX10Sprite_Flush(sprite);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+    hr = ID3DX10Sprite_End(sprite);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    /* Draw */
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, NULL, 0);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    memset(&sprite_desc, 0, sizeof(sprite_desc));
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 0);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_Begin(sprite, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&sprite_desc, 0, sizeof(sprite_desc));
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    sprite_desc.pTexture = srv1;
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_Flush(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_Flush(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10Sprite_End(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* D3DX10_SPRITE_ADDREF_TEXTURES */
+    hr = ID3DX10Sprite_Begin(sprite, D3DX10_SPRITE_ADDREF_TEXTURES);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&sprite_desc, 0, sizeof(sprite_desc));
+    sprite_desc.pTexture = srv1;
+
+    refcount = get_refcount(srv1);
+    hr = ID3DX10Sprite_DrawSpritesBuffered(sprite, &sprite_desc, 1);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(get_refcount(srv1) > refcount, "Unexpected refcount.\n");
+}
+
+    hr = ID3DX10Sprite_Flush(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(get_refcount(srv1) == refcount, "Unexpected refcount.\n");
+
+    hr = ID3DX10Sprite_End(sprite);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ID3DX10Sprite_Release(sprite);
+    ID3D10Texture2D_Release(texture1);
+    ID3D10Texture2D_Release(texture2);
+    ID3D10ShaderResourceView_Release(srv1);
+    ID3D10ShaderResourceView_Release(srv2);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Unexpected refcount.\n");
+}
+
 START_TEST(d3dx10)
 {
     test_D3DX10UnsetAllDeviceObjects();
@@ -2982,4 +3176,5 @@ START_TEST(d3dx10)
     test_get_image_info();
     test_create_texture();
     test_font();
+    test_sprite();
 }
