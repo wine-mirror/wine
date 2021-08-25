@@ -433,6 +433,14 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 }
 
 /***********************************************************************
+ *           CreateHatchBrush    (GDI32.@)
+ */
+HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
+{
+    return NtGdiCreateHatchBrush( style, color, FALSE );
+}
+
+/***********************************************************************
  *           CreateBitmapIndirect (GDI32.@)
  */
 HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )

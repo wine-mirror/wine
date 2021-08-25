@@ -190,15 +190,15 @@ HBRUSH create_brush( const LOGBRUSH *brush )
 
 
 /***********************************************************************
- *           CreateHatchBrush    (GDI32.@)
+ *           NtGdiCreateHatchBrush    (win32u.@)
  *
  * Create a logical brush with a hatched pattern.
  */
-HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
+HBRUSH WINAPI NtGdiCreateHatchBrush( INT style, COLORREF color, BOOL pen )
 {
     LOGBRUSH logbrush;
 
-    TRACE("%d %06x\n", style, color );
+    TRACE( "%d %06x\n", style, color );
 
     logbrush.lbStyle = BS_HATCHED;
     logbrush.lbColor = color;
