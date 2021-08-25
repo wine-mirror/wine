@@ -157,6 +157,9 @@ static HRESULT WINAPI d3dx10_sprite_GetDevice(ID3DX10Sprite *iface, ID3D10Device
 
     TRACE("iface %p, device %p.\n", iface, device);
 
+    if (!device)
+        return E_FAIL;
+
     *device = sprite->device;
     ID3D10Device_AddRef(*device);
 
