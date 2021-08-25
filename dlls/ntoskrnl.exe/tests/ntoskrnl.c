@@ -1684,13 +1684,13 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
         {
             .Usage = HID_USAGE_GENERIC_JOYSTICK,
             .UsagePage = HID_USAGE_PAGE_GENERIC,
-            .InputReportByteLength = 24,
+            .InputReportByteLength = 26,
             .OutputReportByteLength = 3,
             .FeatureReportByteLength = 18,
             .NumberLinkCollectionNodes = 10,
-            .NumberInputButtonCaps = 13,
+            .NumberInputButtonCaps = 17,
             .NumberInputValueCaps = 7,
-            .NumberInputDataIndices = 43,
+            .NumberInputDataIndices = 47,
             .NumberFeatureButtonCaps = 1,
             .NumberFeatureValueCaps = 5,
             .NumberFeatureDataIndices = 7,
@@ -1699,13 +1699,13 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
         {
             .Usage = HID_USAGE_GENERIC_JOYSTICK,
             .UsagePage = HID_USAGE_PAGE_GENERIC,
-            .InputReportByteLength = 23,
+            .InputReportByteLength = 25,
             .OutputReportByteLength = 2,
             .FeatureReportByteLength = 17,
             .NumberLinkCollectionNodes = 10,
-            .NumberInputButtonCaps = 13,
+            .NumberInputButtonCaps = 17,
             .NumberInputValueCaps = 7,
-            .NumberInputDataIndices = 43,
+            .NumberInputDataIndices = 47,
             .NumberFeatureButtonCaps = 1,
             .NumberFeatureValueCaps = 5,
             .NumberFeatureDataIndices = 7,
@@ -1872,12 +1872,12 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     HIDP_LINK_COLLECTION_NODE collections[16];
     PHIDP_PREPARSED_DATA preparsed_data;
     USAGE_AND_PAGE usage_and_pages[16];
-    HIDP_BUTTON_CAPS button_caps[16];
+    HIDP_BUTTON_CAPS button_caps[32];
     HIDP_VALUE_CAPS value_caps[16];
     char buffer[200], report[200];
     DWORD collection_count;
     DWORD waveform_list;
-    HIDP_DATA data[32];
+    HIDP_DATA data[64];
     USAGE usages[16];
     NTSTATUS status;
     HIDP_CAPS caps;
@@ -2186,7 +2186,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     value = HidP_MaxUsageListLength(HidP_Feature + 1, 0, preparsed_data);
     ok(value == 0, "HidP_MaxUsageListLength(HidP_Feature + 1, 0) returned %d, expected %d\n", value, 0);
     value = HidP_MaxUsageListLength(HidP_Input, 0, preparsed_data);
-    ok(value == 42, "HidP_MaxUsageListLength(HidP_Input, 0) returned %d, expected %d\n", value, 42);
+    ok(value == 50, "HidP_MaxUsageListLength(HidP_Input, 0) returned %d, expected %d\n", value, 50);
     value = HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_BUTTON, preparsed_data);
     ok(value == 32, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_BUTTON) returned %d, expected %d\n", value, 32);
     value = HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_LED, preparsed_data);
@@ -2307,7 +2307,7 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
     value = HidP_MaxDataListLength(HidP_Feature + 1, preparsed_data);
     ok(value == 0, "HidP_MaxDataListLength(HidP_Feature + 1) returned %d, expected %d\n", value, 0);
     value = HidP_MaxDataListLength(HidP_Input, preparsed_data);
-    ok(value == 50, "HidP_MaxDataListLength(HidP_Input) returned %d, expected %d\n", value, 50);
+    ok(value == 58, "HidP_MaxDataListLength(HidP_Input) returned %d, expected %d\n", value, 58);
     value = HidP_MaxDataListLength(HidP_Output, preparsed_data);
     ok(value == 0, "HidP_MaxDataListLength(HidP_Output) returned %d, expected %d\n", value, 0);
     value = HidP_MaxDataListLength(HidP_Feature, preparsed_data);
@@ -2327,6 +2327,35 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
         check_member(data[i], expect_data[i], "%d", RawValue);
         winetest_pop_context();
     }
+
+    /* HID nary usage collections are set with 1-based usage index in their declaration order */
+
+    memset(report, 0, caps.InputReportByteLength);
+    status = HidP_InitializeReportForID(HidP_Input, report_id, preparsed_data, report,
+                                        caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
+    value = 2;
+    usages[0] = 0x8e;
+    usages[1] = 0x8f;
+    status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
+                            report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
+    todo_wine
+    ok(report[caps.InputReportByteLength - 2] == 3, "unexpected usage index %d, expected 3\n",
+       report[caps.InputReportByteLength - 2]);
+    todo_wine
+    ok(report[caps.InputReportByteLength - 1] == 4, "unexpected usage index %d, expected 4\n",
+       report[caps.InputReportByteLength - 1]);
+    report[caps.InputReportByteLength - 2] = 0;
+    report[caps.InputReportByteLength - 1] = 0;
+    value = 1;
+    usages[0] = 0x8c;
+    status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
+                            report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
+    todo_wine
+    ok(report[caps.InputReportByteLength - 2] == 1, "unexpected usage index %d, expected 1\n",
+       report[caps.InputReportByteLength - 2]);
 
     memset(report, 0xcd, sizeof(report));
     status = HidP_InitializeReportForID(HidP_Feature, 3, preparsed_data, report, caps.FeatureReportByteLength);

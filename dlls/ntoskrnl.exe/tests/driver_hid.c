@@ -299,6 +299,16 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 REPORT_COUNT(1, 8),
                 REPORT_SIZE(1, 1),
                 INPUT(1, Data|Var|Abs),
+
+                USAGE(4, (HID_USAGE_PAGE_KEYBOARD<<16)|0x8c),
+                USAGE(4, (HID_USAGE_PAGE_KEYBOARD<<16)|0x8d),
+                USAGE(4, (HID_USAGE_PAGE_KEYBOARD<<16)|0x8e),
+                USAGE(4, (HID_USAGE_PAGE_KEYBOARD<<16)|0x8f),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 16),
+                REPORT_COUNT(1, 2),
+                REPORT_SIZE(1, 8),
+                INPUT(1, Data|Ary|Abs),
             END_COLLECTION,
 
             USAGE_PAGE(2, HID_USAGE_PAGE_HAPTICS),
@@ -477,7 +487,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
         case IOCTL_HID_READ_REPORT:
         {
-            ULONG expected_size = 23;
+            ULONG expected_size = 25;
             ok(!in_size, "got input size %u\n", in_size);
             ok(out_size == expected_size, "got output size %u\n", out_size);
 
