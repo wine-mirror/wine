@@ -615,6 +615,11 @@ static void test_async( void )
 
     WaitForSingleObject( info.wait, INFINITE );
 
+    ok(info.last_status == WINHTTP_CALLBACK_STATUS_READ_COMPLETE, "got status %#x.\n", status);
+    ok((err == ERROR_SUCCESS && info.last_thread_id == GetCurrentThreadId())
+            || (err == ERROR_IO_PENDING && info.last_thread_id != GetCurrentThreadId()),
+            "Got unexpected thread %#x, err %#x.\n", info.last_thread_id, err);
+
     setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
