@@ -268,11 +268,11 @@ HBRUSH WINAPI CreateDIBPatternBrushPt( const void* data, UINT coloruse )
 
 
 /***********************************************************************
- *           CreateSolidBrush    (GDI32.@)
+ *           NtGdiCreateSolidBrush    (win32u.@)
  *
  * Create a logical brush consisting of a single colour.
  */
-HBRUSH WINAPI CreateSolidBrush( COLORREF color )
+HBRUSH WINAPI NtGdiCreateSolidBrush( COLORREF color, HBRUSH brush )
 {
     LOGBRUSH logbrush;
 

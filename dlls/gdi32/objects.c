@@ -425,6 +425,14 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH *brush )
 }
 
 /***********************************************************************
+ *           CreateSolidBrush    (GDI32.@)
+ */
+HBRUSH WINAPI CreateSolidBrush( COLORREF color )
+{
+    return NtGdiCreateSolidBrush( color, NULL );
+}
+
+/***********************************************************************
  *           CreateBitmapIndirect (GDI32.@)
  */
 HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
