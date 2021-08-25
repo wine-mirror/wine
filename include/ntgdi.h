@@ -20,7 +20,9 @@
 #define _NTGDI_
 
 #include <wingdi.h>
+#include <winternl.h>
 #include <winspool.h>
+#include <ddk/d3dkmthk.h>
 
 typedef struct _GDI_HANDLE_ENTRY
 {
@@ -324,5 +326,15 @@ BOOL     WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *po
 BOOL     WINAPI NtGdiUnrealizeObject( HGDIOBJ obj );
 BOOL     WINAPI NtGdiUpdateColors( HDC hdc );
 BOOL     WINAPI NtGdiWidenPath( HDC hdc );
+
+NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc );
+NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc );
+NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc );
+NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc );
+NTSTATUS WINAPI NtGdiDdDDIDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *desc );
+NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc );
+NTSTATUS WINAPI NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats );
+NTSTATUS WINAPI NtGdiDdDDISetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc );
+NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc );
 
 #endif /* _NTGDI_ */

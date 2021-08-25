@@ -80,18 +80,18 @@
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)
-@ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr)
-@ stdcall D3DKMTCloseAdapter(ptr)
-@ stdcall D3DKMTCreateDCFromMemory(ptr)
-@ stdcall D3DKMTCreateDevice(ptr)
-@ stdcall D3DKMTDestroyDCFromMemory(ptr)
-@ stdcall D3DKMTDestroyDevice(ptr)
-@ stdcall D3DKMTEscape(ptr)
+@ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) NtGdiDdDDICheckVidPnExclusiveOwnership
+@ stdcall D3DKMTCloseAdapter(ptr) NtGdiDdDDICloseAdapter
+@ stdcall D3DKMTCreateDCFromMemory(ptr) NtGdiDdDDICreateDCFromMemory
+@ stdcall D3DKMTCreateDevice(ptr) NtGdiDdDDICreateDevice
+@ stdcall D3DKMTDestroyDCFromMemory(ptr) NtGdiDdDDIDestroyDCFromMemory
+@ stdcall D3DKMTDestroyDevice(ptr) NtGdiDdDDIDestroyDevice
+@ stdcall D3DKMTEscape(ptr) NtGdiDdDDIEscape
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
-@ stdcall D3DKMTOpenAdapterFromHdc(ptr)
-@ stdcall D3DKMTQueryStatistics(ptr)
-@ stdcall D3DKMTSetQueuedLimit(ptr)
-@ stdcall D3DKMTSetVidPnSourceOwner(ptr)
+@ stdcall D3DKMTOpenAdapterFromHdc(ptr) NtGdiDdDDIOpenAdapterFromHdc
+@ stdcall D3DKMTQueryStatistics(ptr) NtGdiDdDDIQueryStatistics
+@ stdcall D3DKMTSetQueuedLimit(ptr) NtGdiDdDDISetQueuedLimit
+@ stdcall D3DKMTSetVidPnSourceOwner(ptr) NtGdiDdDDISetVidPnSourceOwner
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
 @ stdcall DeleteDC(long)

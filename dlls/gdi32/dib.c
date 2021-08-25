@@ -1579,9 +1579,9 @@ error:
 
 
 /***********************************************************************
- *           D3DKMTCreateDCFromMemory    (GDI32.@)
+ *           NtGdiDdDDICreateDCFromMemory    (win32u.@)
  */
-NTSTATUS WINAPI D3DKMTCreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
+NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 {
     const struct d3dddi_format_info
     {
@@ -1693,9 +1693,9 @@ error:
 
 
 /***********************************************************************
- *           D3DKMTDestroyDCFromMemory    (GDI32.@)
+ *           NtGdiDdDDIDestroyDCFromMemory    (win32u.@)
  */
-NTSTATUS WINAPI D3DKMTDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *desc )
+NTSTATUS WINAPI NtGdiDdDDIDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *desc )
 {
     if (!desc) return STATUS_INVALID_PARAMETER;
 
