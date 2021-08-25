@@ -209,16 +209,17 @@ HBRUSH WINAPI NtGdiCreateHatchBrush( INT style, COLORREF color, BOOL pen )
 
 
 /***********************************************************************
- *           CreatePatternBrush    (GDI32.@)
+ *           NtGdiCreatePatternBrushInternal    (win32u.@)
  *
  * Create a logical brush with a pattern from a bitmap.
  */
-HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
+HBRUSH WINAPI NtGdiCreatePatternBrushInternal( HBITMAP bitmap, BOOL pen, BOOL is_8x8 )
 {
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
-    TRACE("%p\n", hbitmap );
 
-    logbrush.lbHatch = (ULONG_PTR)hbitmap;
+    TRACE( "%p\n", bitmap );
+
+    logbrush.lbHatch = (ULONG_PTR)bitmap;
     return create_brush( &logbrush );
 }
 

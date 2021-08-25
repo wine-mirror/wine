@@ -441,6 +441,14 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 }
 
 /***********************************************************************
+ *           CreatePatternBrush    (GDI32.@)
+ */
+HBRUSH WINAPI CreatePatternBrush( HBITMAP bitmap )
+{
+    return NtGdiCreatePatternBrushInternal( bitmap, FALSE, FALSE );
+}
+
+/***********************************************************************
  *           CreateBitmapIndirect (GDI32.@)
  */
 HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
