@@ -449,6 +449,22 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP bitmap )
 }
 
 /***********************************************************************
+ *           CreateDIBPatternBrush    (GDI32.@)
+ */
+HBRUSH WINAPI CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
+{
+    HBRUSH brush;
+    void *mem;
+
+    TRACE( "%p\n", hbitmap );
+
+    if (!(mem = GlobalLock( hbitmap ))) return 0;
+    brush = NtGdiCreateDIBBrush( mem, coloruse, /* FIXME */ 0, FALSE, FALSE, hbitmap );
+    GlobalUnlock( hbitmap );
+    return brush;
+}
+
+/***********************************************************************
  *           CreateDIBPatternBrushPt    (GDI32.@)
  */
 HBRUSH WINAPI CreateDIBPatternBrushPt( const void *data, UINT coloruse )

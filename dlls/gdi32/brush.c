@@ -225,26 +225,6 @@ HBRUSH WINAPI NtGdiCreatePatternBrushInternal( HBITMAP bitmap, BOOL pen, BOOL is
 
 
 /***********************************************************************
- *           CreateDIBPatternBrush    (GDI32.@)
- *
- * Create a logical brush with a pattern from a DIB.
- */
-HBRUSH WINAPI CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
-{
-    LOGBRUSH logbrush;
-
-    TRACE("%p\n", hbitmap );
-
-    logbrush.lbStyle = BS_DIBPATTERN;
-    logbrush.lbColor = coloruse;
-
-    logbrush.lbHatch = (ULONG_PTR)hbitmap;
-
-    return create_brush( &logbrush );
-}
-
-
-/***********************************************************************
  *           NtGdiCreateDIBBrush    (win32u.@)
  *
  * Create a logical brush with a pattern from a DIB.
