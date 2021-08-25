@@ -641,12 +641,12 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     font_init();
 
     /* create stock objects */
-    stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
-    stock_objects[LTGRAY_BRUSH] = CreateBrushIndirect( &LtGrayBrush );
-    stock_objects[GRAY_BRUSH]   = CreateBrushIndirect( &GrayBrush );
-    stock_objects[DKGRAY_BRUSH] = CreateBrushIndirect( &DkGrayBrush );
-    stock_objects[BLACK_BRUSH]  = CreateBrushIndirect( &BlackBrush );
-    stock_objects[NULL_BRUSH]   = CreateBrushIndirect( &NullBrush );
+    stock_objects[WHITE_BRUSH]  = create_brush( &WhiteBrush );
+    stock_objects[LTGRAY_BRUSH] = create_brush( &LtGrayBrush );
+    stock_objects[GRAY_BRUSH]   = create_brush( &GrayBrush );
+    stock_objects[DKGRAY_BRUSH] = create_brush( &DkGrayBrush );
+    stock_objects[BLACK_BRUSH]  = create_brush( &BlackBrush );
+    stock_objects[NULL_BRUSH]   = create_brush( &NullBrush );
 
     stock_objects[WHITE_PEN]    = CreatePenIndirect( &WhitePen );
     stock_objects[BLACK_PEN]    = CreatePenIndirect( &BlackPen );
@@ -672,7 +672,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     scaled_stock_objects[SYSTEM_FIXED_FONT] = create_scaled_font( &deffonts->SystemFixedFont );
     scaled_stock_objects[DEFAULT_GUI_FONT]  = create_scaled_font( &deffonts->DefaultGuiFont );
 
-    stock_objects[DC_BRUSH]     = CreateBrushIndirect( &DCBrush );
+    stock_objects[DC_BRUSH]     = create_brush( &DCBrush );
     stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
 
     /* clear the NOSYSTEM bit on all stock objects*/

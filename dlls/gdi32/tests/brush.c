@@ -361,6 +361,16 @@ static void test_brush_org( void )
     ReleaseDC( 0, hdc );
 }
 
+static void test_null_brush(void)
+{
+    LOGBRUSH lb;
+    HBRUSH brush;
+
+    lb.lbStyle = BS_NULL;
+    brush = CreateBrushIndirect(&lb);
+    ok(brush == GetStockObject(NULL_BRUSH), "brush is not NULL_BRUSH\n");
+}
+
 START_TEST(brush)
 {
     test_solidbrush();
@@ -368,4 +378,5 @@ START_TEST(brush)
     test_pattern_brush();
     test_palette_brush();
     test_brush_org();
+    test_null_brush();
 }

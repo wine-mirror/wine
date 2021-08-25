@@ -399,6 +399,32 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 }
 
 /***********************************************************************
+ *           CreateBrushIndirect    (GDI32.@)
+ */
+HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH *brush )
+{
+    switch (brush->lbStyle)
+    {
+    case BS_NULL:
+        return GetStockObject( NULL_BRUSH );
+    case BS_SOLID:
+        return CreateSolidBrush( brush->lbColor );
+    case BS_HATCHED:
+        return CreateHatchBrush( brush->lbHatch, brush->lbColor );
+    case BS_PATTERN:
+    case BS_PATTERN8X8:
+        return CreatePatternBrush( (HBITMAP)brush->lbHatch );
+    case BS_DIBPATTERN:
+        return CreateDIBPatternBrush( (HGLOBAL)brush->lbHatch, brush->lbColor );
+    case BS_DIBPATTERNPT:
+        return CreateDIBPatternBrushPt( (void *)brush->lbHatch, brush->lbColor );
+    default:
+        WARN( "invalid brush style %u\n", brush->lbStyle );
+        return 0;
+    }
+}
+
+/***********************************************************************
  *           CreateBitmapIndirect (GDI32.@)
  */
 HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
