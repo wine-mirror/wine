@@ -1072,11 +1072,18 @@ static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha)
     if (!bmp || GetObjectW( bmp, sizeof(dib), &dib ) != sizeof(dib))
         return FALSE;
 
-    if(dib.dsBm.bmBitsPixel != 32)
+    if (dib.dsBm.bmBitsPixel != 32 || dib.dsBmih.biCompression != BI_RGB)
         /* nothing to do */
         return TRUE;
 
-    *hasAlpha = TRUE;
+    /* If all alpha values are 0xff, don't use alpha blending */
+    for (n = 0, p = dib.dsBm.bmBits; n < dib.dsBmih.biWidth * dib.dsBmih.biHeight; n++, p += 4)
+        if ((*hasAlpha = (p[3] != 0xff)))
+            break;
+
+    if (!*hasAlpha)
+        return TRUE;
+
     p = dib.dsBm.bmBits;
     n = dib.dsBmih.biHeight * dib.dsBmih.biWidth;
     /* AlphaBlend() wants premultiplied alpha, so do that now */
