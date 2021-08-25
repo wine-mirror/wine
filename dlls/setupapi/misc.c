@@ -1781,7 +1781,7 @@ BOOL WINAPI SetupLogErrorW(LPCWSTR message, LogSeverity severity)
         WideCharToMultiByte(CP_ACP, 0, message, -1, msg, len, NULL, NULL);
     }
 
-    /* This is the normal way to proceed. The log files are ASCII files
+    /* This is the normal way to proceed. The log files are ANSI files
      * and W is to be converted.
      */
     ret = SetupLogErrorA(msg, severity);
