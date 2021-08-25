@@ -1144,6 +1144,7 @@ unsigned int get_args_size( const ORDDEF *odp )
         {
         case ARG_INT64:
         case ARG_DOUBLE:
+            if (target_cpu == CPU_ARM) size = (size + 7) & ~7;
             size += 8;
             break;
         case ARG_INT128:
