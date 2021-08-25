@@ -71,6 +71,8 @@ struct info
     unsigned int index;
     HANDLE wait;
     unsigned int line;
+    DWORD last_thread_id;
+    DWORD last_status;
 };
 
 struct test_request
@@ -84,6 +86,9 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
 {
     BOOL status_ok, function_ok;
     struct info *info = (struct info *)context;
+
+    info->last_status = status;
+    info->last_thread_id = GetCurrentThreadId();
 
     if (status == WINHTTP_CALLBACK_STATUS_HANDLE_CREATED)
     {
@@ -177,6 +182,8 @@ static void setup_test( struct info *info, enum api function, unsigned int line 
     ok_(__FILE__,line)(info->test[info->index].function == function,
                        "unexpected function %u, expected %u. probably some notifications were missing\n",
                        info->test[info->index].function, function);
+    info->last_thread_id = 0xdeadbeef;
+    info->last_status = 0xdeadbeef;
 }
 
 static void end_test( struct info *info, unsigned int line )
@@ -597,6 +604,10 @@ static void test_async( void )
     ok(err == ERROR_SUCCESS || err == ERROR_IO_PENDING || broken(err == 0xdeadbeef) /* < win7 */, "got %u\n", err);
 
     WaitForSingleObject( info.wait, INFINITE );
+    ok(info.last_status == WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, "got status %#x.\n", status);
+    ok((err == ERROR_SUCCESS && info.last_thread_id == GetCurrentThreadId())
+            || (err == ERROR_IO_PENDING && info.last_thread_id != GetCurrentThreadId()),
+            "Got unexpected thread %#x, err %#x.\n", info.last_thread_id, err);
 
     setup_test( &info, winhttp_read_data, __LINE__ );
     ret = WinHttpReadData( req, buffer, sizeof(buffer), NULL );
