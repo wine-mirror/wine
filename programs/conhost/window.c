@@ -683,9 +683,9 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
     if (console->window->font && logfont->lfHeight == console->active->font.height &&
         logfont->lfWeight == console->active->font.weight &&
         !logfont->lfItalic && !logfont->lfUnderline && !logfont->lfStrikeOut &&
-        console->active->font.face_len == wcslen( logfont->lfFaceName ) * sizeof(WCHAR) &&
+        console->active->font.face_len == wcslen( logfont->lfFaceName ) &&
         !memcmp( logfont->lfFaceName, console->active->font.face_name,
-                 console->active->font.face_len ))
+                 console->active->font.face_len * sizeof(WCHAR) ))
     {
         TRACE( "equal to current\n" );
         return TRUE;
@@ -708,9 +708,9 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
     font_info->weight = tm.tmWeight;
 
     free( font_info->face_name );
-    font_info->face_len = wcslen( logfont->lfFaceName ) * sizeof(WCHAR);
-    font_info->face_name = malloc( font_info->face_len );
-    memcpy( font_info->face_name, logfont->lfFaceName, font_info->face_len );
+    font_info->face_len = wcslen( logfont->lfFaceName );
+    font_info->face_name = malloc( font_info->face_len * sizeof(WCHAR) );
+    memcpy( font_info->face_name, logfont->lfFaceName, font_info->face_len * sizeof(WCHAR) );
 
     /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
     if (GetCPInfo( console->output_cp, &cpinfo ) && cpinfo.MaxCharSize > 1)
@@ -819,9 +819,10 @@ static int WINAPI get_first_font_sub_enum( const LOGFONTW *lf, const TEXTMETRICW
             load_config( fc->console->window->config_key, &config );
             config.cell_width  = fc->console->active->font.width;
             config.cell_height = fc->console->active->font.height;
-            fc->console->active->font.face_len = wcslen( config.face_name ) * sizeof(WCHAR);
-            memcpy( fc->console->active->font.face_name, config.face_name,
-                    fc->console->active->font.face_len );
+            memcpy( config.face_name, fc->console->active->font.face_name,
+                    fc->console->active->font.face_len * sizeof(WCHAR) );
+            config.face_name[fc->console->active->font.face_len] = 0;
+
             /* Force also its writing back to the registry so that we can get it
              * the next time.
              */
@@ -1895,8 +1896,9 @@ static void apply_config( struct console *console, const struct console_config *
         console->active->font.height != config->cell_height ||
         console->active->font.weight != config->font_weight ||
         console->active->font.pitch_family != config->font_pitch_family ||
-        console->active->font.face_len != wcslen( config->face_name ) * sizeof(WCHAR) ||
-        memcmp( console->active->font.face_name, config->face_name, console->active->font.face_len ))
+        console->active->font.face_len != wcslen( config->face_name ) ||
+        memcmp( console->active->font.face_name, config->face_name,
+                console->active->font.face_len * sizeof(WCHAR) ))
     {
         update_console_font( console, config->face_name, config->cell_height, config->font_weight );
     }
@@ -1930,7 +1932,7 @@ static void current_config( struct console *console, struct console_config *conf
     config->cell_height = console->active->font.height;
     config->font_weight = console->active->font.weight;
     config->font_pitch_family = console->active->font.pitch_family;
-    len = min( ARRAY_SIZE(config->face_name) - 1, console->active->font.face_len / sizeof(WCHAR) );
+    len = min( ARRAY_SIZE(config->face_name) - 1, console->active->font.face_len );
     if (len) memcpy( config->face_name, console->active->font.face_name, len * sizeof(WCHAR) );
     config->face_name[len] = 0;
 

@@ -97,9 +97,14 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         screen_buffer->popup_attr = console->active->attr;
         screen_buffer->font       = console->active->font;
 
-        if (!(screen_buffer->font.face_name = malloc( screen_buffer->font.face_len ))) return NULL;
-        memcpy( screen_buffer->font.face_name, console->active->font.face_name,
-                screen_buffer->font.face_len );
+        if (screen_buffer->font.face_len)
+        {
+            screen_buffer->font.face_name = malloc( screen_buffer->font.face_len * sizeof(WCHAR) );
+            if (!screen_buffer->font.face_name) return NULL;
+
+            memcpy( screen_buffer->font.face_name, console->active->font.face_name,
+                    screen_buffer->font.face_len * sizeof(WCHAR) );
+        }
     }
     else
     {
@@ -1728,7 +1733,7 @@ static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *ou
 {
     struct condrv_output_info *info;
 
-    *out_size = min( *out_size, sizeof(*info) + screen_buffer->font.face_len );
+    *out_size = min( *out_size, sizeof(*info) + screen_buffer->font.face_len * sizeof(WCHAR) );
     if (!(info = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
 
     info->cursor_size    = screen_buffer->cursor_size;
