@@ -89,6 +89,7 @@
 @ stdcall D3DKMTEscape(ptr) NtGdiDdDDIEscape
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr) NtGdiDdDDIOpenAdapterFromHdc
+@ stdcall D3DKMTOpenAdapterFromLuid(ptr) NtGdiDdDDIOpenAdapterFromLuid
 @ stdcall D3DKMTQueryStatistics(ptr) NtGdiDdDDIQueryStatistics
 @ stdcall D3DKMTSetQueuedLimit(ptr) NtGdiDdDDISetQueuedLimit
 @ stdcall D3DKMTSetVidPnSourceOwner(ptr) NtGdiDdDDISetVidPnSourceOwner

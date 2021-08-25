@@ -1257,13 +1257,11 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     WCHAR *end, key_nameW[MAX_PATH], bufferW[MAX_PATH];
     HDEVINFO devinfo = INVALID_HANDLE_VALUE;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    static D3DKMT_HANDLE handle_start = 0;
-    struct d3dkmt_adapter *adapter;
+    D3DKMT_OPENADAPTERFROMLUID luid_desc;
     SP_DEVINFO_DATA device_data;
     DWORD size, state_flags;
     DEVPROPTYPE type;
     HANDLE mutex;
-    LUID luid;
     int index;
 
     TRACE("(%p)\n", desc);
@@ -1278,10 +1276,6 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     index = wcstol( desc->DeviceName + lstrlenW(L"\\\\.\\DISPLAY"), &end, 10 ) - 1;
     if (*end)
         return STATUS_UNSUCCESSFUL;
-
-    adapter = heap_alloc( sizeof( *adapter ) );
-    if (!adapter)
-        return STATUS_NO_MEMORY;
 
     /* Get adapter LUID from SetupAPI */
     mutex = get_display_device_init_mutex();
@@ -1309,26 +1303,37 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     device_data.cbSize = sizeof( device_data );
     SetupDiOpenDeviceInfoW( devinfo, bufferW, NULL, 0, &device_data );
     if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &type,
-                                    (BYTE *)&luid, sizeof( luid ), NULL, 0))
+                                    (BYTE *)&luid_desc.AdapterLuid, sizeof( luid_desc.AdapterLuid ),
+                                    NULL, 0))
         goto done;
 
-    EnterCriticalSection( &driver_section );
-    /* D3DKMT_HANDLE is UINT, so we can't use pointer as handle */
-    adapter->handle = ++handle_start;
-    list_add_tail( &d3dkmt_adapters, &adapter->entry );
-    LeaveCriticalSection( &driver_section );
+    if ((status = NtGdiDdDDIOpenAdapterFromLuid( &luid_desc ))) goto done;
 
-    desc->hAdapter = handle_start;
-    desc->AdapterLuid = luid;
+    desc->hAdapter = luid_desc.hAdapter;
+    desc->AdapterLuid = luid_desc.AdapterLuid;
     desc->VidPnSourceId = index;
-    status = STATUS_SUCCESS;
 
 done:
     SetupDiDestroyDeviceInfoList( devinfo );
     release_display_device_init_mutex( mutex );
-    if (status != STATUS_SUCCESS)
-        heap_free( adapter );
     return status;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenAdapterFromLuid    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
+{
+    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
+
+    if (!(adapter = heap_alloc( sizeof( *adapter ) ))) return STATUS_NO_MEMORY;
+
+    EnterCriticalSection( &driver_section );
+    desc->hAdapter = adapter->handle = ++handle_start;
+    list_add_tail( &d3dkmt_adapters, &adapter->entry );
+    LeaveCriticalSection( &driver_section );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
