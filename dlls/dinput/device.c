@@ -1708,11 +1708,20 @@ HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *
                                    const GUID *guid, IDirectInputImpl *dinput, void **out )
 {
     IDirectInputDeviceImpl *This;
+    DIDATAFORMAT *format;
+
     if (!(This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return DIERR_OUTOFMEMORY;
+    if (!(format = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*format) )))
+    {
+        HeapFree( GetProcessHeap(), 0, This );
+        return DIERR_OUTOFMEMORY;
+    }
+
     This->IDirectInputDevice8A_iface.lpVtbl = &dinput_device_a_vtbl;
     This->IDirectInputDevice8W_iface.lpVtbl = vtbl;
     This->ref = 1;
     This->guid = *guid;
+    This->data_format.wine_df = format;
     InitializeCriticalSection( &This->crit );
     This->dinput = dinput;
     IDirectInput_AddRef( &dinput->IDirectInput7A_iface );

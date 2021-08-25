@@ -407,6 +407,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
 
     if (FAILED(hr = direct_input_device_alloc( sizeof(JoystickImpl), &JoystickWvt, rguid, dinput, (void **)&newDevice )))
         return hr;
+    df = newDevice->generic.base.data_format.wine_df;
     newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
     newDevice->generic.joy_polldev = joy_polldev;
@@ -468,7 +469,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
     if (setup_dinput_options(&newDevice->generic, default_axis_map) != DI_OK) goto failed;
 
     /* Create copy of default data format */
-    if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto failed;
     memcpy(df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
     if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto failed;
 
@@ -514,7 +514,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwButtons++) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
-    newDevice->generic.base.data_format.wine_df = df;
 
     fake_current_js_state(newDevice);
 
