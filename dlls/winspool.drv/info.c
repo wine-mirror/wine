@@ -4047,7 +4047,7 @@ BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
  * Get ValueName from hkey storing result in out
  * when the Value in the registry has only a filename, use driverdir as prefix
  * outlen is space left in out
- * String is stored either as unicode or ascii
+ * String is stored either as unicode or ansi
  *
  */
 
@@ -4180,7 +4180,7 @@ static void WINSPOOL_GetDefaultDevMode(LPBYTE ptr, DWORD buflen, DWORD *needed)
  *    WINSPOOL_GetDevModeFromReg
  *
  * Get ValueName from hkey storing result in ptr.  buflen is space left in ptr
- * DevMode is stored either as unicode or ascii.
+ * DevMode is stored either as unicode or ansi.
  */
 static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
 				       LPBYTE ptr,
@@ -6770,7 +6770,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 
 	memcpy (ppev->pValueName, pBuffer, len);
 
-	TRACE ("Converted '%s' from Unicode to ASCII\n", pBuffer);
+	TRACE ("Converted '%s' from Unicode to ANSI\n", pBuffer);
 
 	if (ppev->dwType != REG_SZ && ppev->dwType != REG_EXPAND_SZ &&
 		ppev->dwType != REG_MULTI_SZ)
@@ -6789,7 +6789,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 
 	memcpy (ppev->pData, pBuffer, len);
 
-	TRACE ("Converted '%s' from Unicode to ASCII\n", pBuffer);
+	TRACE ("Converted '%s' from Unicode to ANSI\n", pBuffer);
 	TRACE ("  (only first string of REG_MULTI_SZ printed)\n");
     }
 
