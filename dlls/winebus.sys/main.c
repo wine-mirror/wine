@@ -339,7 +339,7 @@ DEVICE_OBJECT *bus_enumerate_hid_devices(const WCHAR *bus_id, enum_func function
     DEVICE_OBJECT *ret = NULL;
     int cont;
 
-    TRACE("bus_id %p\n", debugstr_w(bus_id));
+    TRACE("bus_id %s\n", debugstr_w(bus_id));
 
     EnterCriticalSection(&device_list_cs);
     LIST_FOR_EACH_ENTRY_SAFE(ext, next, &device_list, struct device_extension, entry)
