@@ -3129,7 +3129,7 @@ static void test_event_queue(void)
     ok(hr == MF_S_MULTIPLE_BEGIN, "Unexpected hr %#x.\n", hr);
 
     /* Same callback, different state. */
-    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, (IUnknown *)&callback);
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
     ok(hr == MF_E_MULTIPLE_BEGIN, "Unexpected hr %#x.\n", hr);
 
     /* Different callback, same state. */
