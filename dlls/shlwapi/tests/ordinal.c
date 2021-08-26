@@ -1423,7 +1423,7 @@ static HRESULT WINAPI Contain_FindConnectionPoint(
     else
     {
         *ppCP = iface->pt[0];
-        IUnknown_AddRef((IUnknown*)*ppCP);
+        IConnectionPoint_AddRef(*ppCP);
     }
 
     return S_OK;
@@ -1459,7 +1459,8 @@ static void test_IConnectionPoint(void)
     dispatch->IDispatch_iface.lpVtbl = &disp_vtbl;
     dispatch->refCount = 1;
 
-    rc = pConnectToConnectionPoint((IUnknown*)dispatch, &IID_NULL, TRUE, (IUnknown*)container, &cookie, &point);
+    rc = pConnectToConnectionPoint((IUnknown*)&dispatch->IDispatch_iface, &IID_NULL, TRUE,
+                                   (IUnknown*)&container->IConnectionPointContainer_iface, &cookie, &point);
     ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
     ok(point != NULL, "returned ConnectionPoint is NULL\n");
     ok(cookie != 0xffffffff, "invalid cookie returned\n");
@@ -1475,15 +1476,16 @@ static void test_IConnectionPoint(void)
     rc = pIConnectionPoint_SimpleInvoke(point,0xa1,&params);
     ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
 
-    rc = pConnectToConnectionPoint(NULL, &IID_NULL, FALSE, (IUnknown*)container, &cookie, NULL);
+    rc = pConnectToConnectionPoint(NULL, &IID_NULL, FALSE,
+                                   (IUnknown*)&container->IConnectionPointContainer_iface, &cookie, NULL);
     ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
 
 /* MSDN says this should be required but it crashes on XP
     IUnknown_Release(point);
 */
-    ref = IUnknown_Release((IUnknown*)container);
+    ref = IConnectionPointContainer_Release(&container->IConnectionPointContainer_iface);
     ok(ref == 0, "leftover IConnectionPointContainer reference %i\n",ref);
-    ref = IUnknown_Release((IUnknown*)dispatch);
+    ref = IDispatch_Release(&dispatch->IDispatch_iface);
     ok(ref == 0, "leftover IDispatch reference %i\n",ref);
 }
 
@@ -1593,7 +1595,7 @@ static void test_SHPropertyBag_ReadLONG(void)
     rc = pSHPropertyBag_ReadLONG(&pb->IPropertyBag_iface, szName1, &out);
     ok(rc == DISP_E_BADVARTYPE || broken(rc == S_OK) || broken(rc == S_FALSE), "incorrect return %x\n",rc);
     ok(out == 0xfeedface  || broken(out == 0xfeedfa00), "value should not have changed %x\n",out);
-    IUnknown_Release((IUnknown*)pb);
+    IPropertyBag_Release(&pb->IPropertyBag_iface);
 }
 
 static void test_SHSetWindowBits(void)
