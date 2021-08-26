@@ -189,6 +189,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             init_io(hinstDLL);
 #if _MSVCP_VER >= 100
             init_misc(hinstDLL);
+            init_concurrency_details(hinstDLL);
 #endif
             break;
         case DLL_PROCESS_DETACH:

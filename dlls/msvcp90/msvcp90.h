@@ -622,7 +622,12 @@ void init_exception(void*);
 void init_locale(void*);
 void init_io(void*);
 void free_io(void);
+
+#if _MSVCP_VER >= 100
+void init_concurrency_details(void*);
 void init_misc(void*);
+void free_misc(void);
+#endif
 
 /* class complex<float> */
 typedef struct {
@@ -658,5 +663,3 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #define mbstowcs_s( ret, wcs, size, mbs, count ) mbstowcs_wrapper( ret, wcs, size, mbs, count )
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
-
-void free_misc(void);

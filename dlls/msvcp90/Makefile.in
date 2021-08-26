@@ -5,6 +5,7 @@ EXTRADEFS = -D_MSVCP_VER=90
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	details.c \
 	exception.c \
 	ios.c \
 	locale.c \

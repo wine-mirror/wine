@@ -5,6 +5,7 @@ PARENTSRC = ../msvcp90
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	details.c \
 	exception.c \
 	ios.c \
 	locale.c \
