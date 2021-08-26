@@ -400,9 +400,10 @@ static void address_urlA(void)
         ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
 
         bufflen2 = bufflen/2;
+        memset( buffer, 0x55, sizeof(buffer) );
         hr = IDirectPlay8Address_GetURLA(localaddr, buffer, &bufflen2);
         ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
-        ok(!strlen(buffer), "wrong length\n");
+        ok(buffer[0] == 0x55, "buffer modified\n");
 
         hr = IDirectPlay8Address_GetURLA(localaddr, buffer, &bufflen);
         ok(hr == S_OK, "got 0x%08x\n", hr);

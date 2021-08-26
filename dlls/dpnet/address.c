@@ -326,10 +326,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(IDirectPlay8Address *iface
         return DPNERR_INVALIDPOINTER;
 
     if(url && *length)
-    {
-        url[0] = '\0';
         buffer = heap_alloc(*length * sizeof(WCHAR));
-    }
 
     hr = IDirectPlay8Address_GetURLW(iface, buffer, length);
     if(hr == DPN_OK)
