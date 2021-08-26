@@ -17,12 +17,10 @@ C_SRCS = \
 
 LEX_SRCS = \
 	asmshader.l \
-	hlsl.l \
 	ppl.l
 
 BISON_SRCS = \
 	asmshader.y \
-	hlsl.y \
 	ppy.y
 
 RC_SRCS = version.rc
