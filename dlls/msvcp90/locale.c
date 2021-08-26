@@ -296,11 +296,6 @@ static struct list lazy_facets = LIST_INIT(lazy_facets);
 void __cdecl locale_facet_register(locale_facet *add)
 {
     facets_elem *head = operator_new(sizeof(*head));
-    if(!head) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
-
     head->fac = add;
     list_add_head(&lazy_facets, &head->entry);
 }
@@ -715,16 +710,14 @@ _Ctypevec __cdecl _Getctype(void)
 #else
     if((name = ___lc_locale_name_func()[LC_COLLATE])) {
         size = wcslen(name)+1;
-        ret.name = malloc(size*sizeof(*name));
-        if(!ret.name) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        ret.name = operator_new(size*sizeof(*name));
         memcpy(ret.name, name, size*sizeof(*name));
     } else {
         ret.name = NULL;
     }
 #endif
     ret.delfl = TRUE;
-    table = malloc(sizeof(short[256]));
-    if(!table) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    table = operator_new(sizeof(short[256]));
     memcpy(table, __pctype_func(), sizeof(short[256]));
     ret.table = table;
     return ret;
@@ -1080,11 +1073,6 @@ size_t __cdecl collate_char__Getcat(const locale_facet **facet, const locale *lo
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(collate));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         collate_char_ctor_name((collate*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0);
     }
@@ -1372,11 +1360,6 @@ size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const locale *l
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(collate));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         collate_wchar_ctor_name((collate*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0);
     }
@@ -1936,12 +1919,6 @@ size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale *loc)
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(ctype_char));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         ctype_char_ctor_locinfo((ctype_char*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -2741,12 +2718,6 @@ size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const locale *loc
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(ctype_wchar));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         ctype_wchar_ctor_locinfo((ctype_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -3334,11 +3305,6 @@ size_t __cdecl codecvt_char__Getcat(const locale_facet **facet, const locale *lo
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(codecvt_char));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         codecvt_char_ctor((codecvt_char*)*facet);
     }
 
@@ -3673,12 +3639,6 @@ size_t __cdecl codecvt_wchar__Getcat(const locale_facet **facet, const locale *l
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(codecvt_wchar));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         codecvt_wchar_ctor_locinfo((codecvt_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -3732,12 +3692,6 @@ size_t __cdecl codecvt_short__Getcat(const locale_facet **facet, const locale *l
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(codecvt_wchar));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         codecvt_short_ctor((codecvt_wchar*)*facet);
         _Locinfo_dtor(&locinfo);
@@ -4059,18 +4013,15 @@ void __thiscall numpunct_char__Init(numpunct_char *this, const _Locinfo *locinfo
 
     len = strlen(_Locinfo__Getfalse(locinfo))+1;
     this->false_name = operator_new(len);
-    if(this->false_name)
-        memcpy((char*)this->false_name, _Locinfo__Getfalse(locinfo), len);
+    memcpy((char*)this->false_name, _Locinfo__Getfalse(locinfo), len);
 
     len = strlen(_Locinfo__Gettrue(locinfo))+1;
     this->true_name = operator_new(len);
-    if(this->true_name)
-        memcpy((char*)this->true_name, _Locinfo__Gettrue(locinfo), len);
+    memcpy((char*)this->true_name, _Locinfo__Gettrue(locinfo), len);
 
     if(isdef) {
         this->grouping = operator_new(1);
-        if(this->grouping)
-            *(char*)this->grouping = 0;
+        *(char*)this->grouping = 0;
 
         this->dp = '.';
         this->sep = ',';
@@ -4079,20 +4030,10 @@ void __thiscall numpunct_char__Init(numpunct_char *this, const _Locinfo *locinfo
 
         len = strlen(lc->grouping)+1;
         this->grouping = operator_new(len);
-        if(this->grouping)
-            memcpy((char*)this->grouping, lc->grouping, len);
+        memcpy((char*)this->grouping, lc->grouping, len);
 
         this->dp = lc->decimal_point[0];
         this->sep = lc->thousands_sep[0];
-    }
-
-    if(!this->false_name || !this->true_name || !this->grouping) {
-        operator_delete((char*)this->grouping);
-        operator_delete((char*)this->false_name);
-        operator_delete((char*)this->true_name);
-
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
 }
 
@@ -4195,11 +4136,6 @@ size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const locale *l
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(numpunct_char));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         numpunct_char_ctor_name((numpunct_char*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0, TRUE);
     }
@@ -4399,21 +4335,18 @@ void __thiscall numpunct_wchar__Init(numpunct_wchar *this,
     to_convert = _Locinfo__Getfalse(locinfo);
     len = MultiByteToWideChar(cvt.page, 0, to_convert, -1, NULL, 0);
     this->false_name = operator_new(len*sizeof(WCHAR));
-    if(this->false_name)
-        MultiByteToWideChar(cvt.page, 0, to_convert, -1,
-                (wchar_t*)this->false_name, len);
+    MultiByteToWideChar(cvt.page, 0, to_convert, -1,
+            (wchar_t*)this->false_name, len);
 
     to_convert = _Locinfo__Gettrue(locinfo);
     len = MultiByteToWideChar(cvt.page, 0, to_convert, -1, NULL, 0);
     this->true_name = operator_new(len*sizeof(WCHAR));
-    if(this->true_name)
-        MultiByteToWideChar(cvt.page, 0, to_convert, -1,
-                (wchar_t*)this->true_name, len);
+    MultiByteToWideChar(cvt.page, 0, to_convert, -1,
+            (wchar_t*)this->true_name, len);
 
     if(isdef) {
         this->grouping = operator_new(1);
-        if(this->grouping)
-            *(char*)this->grouping = 0;
+        *(char*)this->grouping = 0;
 
         this->dp = '.';
         this->sep = ',';
@@ -4422,20 +4355,10 @@ void __thiscall numpunct_wchar__Init(numpunct_wchar *this,
 
         len = strlen(lc->grouping)+1;
         this->grouping = operator_new(len);
-        if(this->grouping)
-            memcpy((char*)this->grouping, lc->grouping, len);
+        memcpy((char*)this->grouping, lc->grouping, len);
 
         this->dp = mb_to_wc(lc->decimal_point[0], &cvt);
         this->sep = mb_to_wc(lc->thousands_sep[0], &cvt);
-    }
-
-    if(!this->false_name || !this->true_name || !this->grouping) {
-        operator_delete((char*)this->grouping);
-        operator_delete((wchar_t*)this->false_name);
-        operator_delete((wchar_t*)this->true_name);
-
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
 }
 
@@ -4582,11 +4505,6 @@ size_t __cdecl numpunct_wchar__Getcat(const locale_facet **facet, const locale *
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(numpunct_wchar));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         numpunct_wchar_ctor_name((numpunct_wchar*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0, TRUE);
     }
@@ -4637,11 +4555,6 @@ size_t __cdecl numpunct_short__Getcat(const locale_facet **facet, const locale *
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(numpunct_wchar));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         numpunct_short_ctor_name((numpunct_wchar*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0, TRUE);
     }
@@ -5064,12 +4977,6 @@ size_t __cdecl num_get_wchar__Getcat(const locale_facet **facet, const locale *l
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(num_get));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         num_get_wchar_ctor_locinfo((num_get*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -6314,12 +6221,6 @@ size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const locale *lo
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(num_get));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         num_get_char_ctor_locinfo((num_get*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -7265,12 +7166,6 @@ size_t __cdecl num_put_char__Getcat(const locale_facet **facet, const locale *lo
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(num_put));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         num_put_char_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -7691,10 +7586,6 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *t
 
     /* TODO: don't use dynamic allocation */
     tmp = operator_new(size*2);
-    if(!tmp) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     num_put_char_fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v));
     operator_delete(tmp);
     return ret;
@@ -8042,12 +7933,6 @@ size_t __cdecl num_put_wchar__Getcat(const locale_facet **facet, const locale *l
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(num_put));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         num_put_wchar_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -8073,12 +7958,6 @@ size_t __cdecl num_put_short__Getcat(const locale_facet **facet, const locale *l
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(num_put));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         num_put_short_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -8640,10 +8519,6 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_double(const num_put 
 
     /* TODO: don't use dynamic allocation */
     tmp = operator_new(size*2);
-    if(!tmp) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     num_put__fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v),
             numpunct_wchar_use_facet(IOS_LOCALE(base)));
     operator_delete(tmp);
@@ -8675,10 +8550,6 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_double(const num_put 
 
     /* TODO: don't use dynamic allocation */
     tmp = operator_new(size*2);
-    if(!tmp) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     num_put__fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v),
             numpunct_short_use_facet(IOS_LOCALE(base)));
     operator_delete(tmp);
@@ -9095,12 +8966,6 @@ size_t __cdecl time_put_char__Getcat(const locale_facet **facet, const locale *l
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(time_put));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         time_put_char_ctor_locinfo((time_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -9465,11 +9330,6 @@ size_t __cdecl time_put_wchar__Getcat(const locale_facet **facet, const locale *
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(time_put));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         time_put_wchar_ctor_name((time_put*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0);
     }
@@ -9520,11 +9380,6 @@ size_t __cdecl time_put_short__Getcat(const locale_facet **facet, const locale *
 
     if(facet && !*facet) {
         *facet = operator_new(sizeof(time_put));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
         time_put_short_ctor_name((time_put*)*facet,
                 locale_string_char_c_str(&loc->ptr->name), 0);
     }
@@ -9798,23 +9653,11 @@ void __thiscall time_get_char__Init(time_get_char *this, const _Locinfo *locinfo
     days = _Locinfo__Getdays(locinfo);
     len = strlen(days)+1;
     this->days = operator_new(len);
-    if(!this->days)
-    {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     memcpy((char*)this->days, days, len);
 
     months = _Locinfo__Getmonths(locinfo);
     len = strlen(months)+1;
     this->months = operator_new(len);
-    if(!this->months)
-    {
-        operator_delete((char*)this->days);
-
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     memcpy((char*)this->months, months, len);
 
     this->dateorder = _Locinfo__Getdateorder(locinfo);
@@ -9923,12 +9766,6 @@ unsigned int __cdecl time_get_char__Getcat(const locale_facet **facet, const loc
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(time_get_char));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         time_get_char_ctor_locinfo((time_get_char*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -10667,8 +10504,7 @@ static wchar_t* create_time_get_str(const wchar_t *str)
 
     len = lstrlenW(str)+1;
     ret = operator_new(len * sizeof(wchar_t));
-    if(ret)
-        memcpy(ret, str, len*sizeof(wchar_t));
+    memcpy(ret, str, len*sizeof(wchar_t));
     return ret;
 }
 #else
@@ -10681,8 +10517,7 @@ static wchar_t* create_time_get_str(const char *str, const _Locinfo *locinfo)
     _Locinfo__Getcvt(locinfo, &cvt);
     len = MultiByteToWideChar(cvt.page, 0, str, -1, NULL, 0);
     ret = operator_new(len*sizeof(WCHAR));
-    if(ret)
-        MultiByteToWideChar(cvt.page, 0, str, -1, ret, len);
+    MultiByteToWideChar(cvt.page, 0, str, -1, ret, len);
     return ret;
 }
 #endif
@@ -10699,24 +10534,12 @@ void __thiscall time_get_wchar__Init(time_get_wchar *this, const _Locinfo *locin
 #else
     this->days = create_time_get_str(_Locinfo__Getdays(locinfo), locinfo);
 #endif
-    if(!this->days)
-    {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
 
 #if _MSVCP_VER >=110
     this->months = create_time_get_str(_Locinfo__W_Getmonths(locinfo));
 #else
     this->months = create_time_get_str(_Locinfo__Getmonths(locinfo), locinfo);
 #endif
-    if(!this->months)
-    {
-        operator_delete((wchar_t*)this->days);
-
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
 
     this->dateorder = _Locinfo__Getdateorder(locinfo);
     _Locinfo__Getcvt(locinfo, &this->cvt);
@@ -10824,12 +10647,6 @@ unsigned int __cdecl time_get_wchar__Getcat(const locale_facet **facet, const lo
         _Locinfo locinfo;
 
         *facet = operator_new(sizeof(time_get_wchar));
-        if(!*facet) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return 0;
-        }
-
         _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
         time_get_wchar_ctor_locinfo((time_get_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
@@ -11596,12 +11413,6 @@ locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const 
     this->facet.vtable = &locale__Locimp_vtable;
     if(copy->facetvec) {
         this->facetvec = operator_new(copy->facet_cnt*sizeof(locale_facet*));
-        if(!this->facetvec) {
-            _Lockit_dtor(&lock);
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return NULL;
-        }
         for(i=0; i<this->facet_cnt; i++)
         {
             this->facetvec[i] = copy->facetvec[i];
@@ -11675,11 +11486,6 @@ locale__Locimp* __cdecl locale__Locimp__New_Locimp(const locale__Locimp *copy)
     TRACE("(%p)\n", copy);
 
     ret = operator_new(sizeof(locale__Locimp));
-    if(!ret) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        return NULL;
-    }
     return locale__Locimp_copy_ctor(ret, copy);
 }
 
@@ -11692,11 +11498,6 @@ locale__Locimp* __cdecl locale__Locimp__New_Locimp_transparent(bool transparent)
     TRACE("(%x)\n", transparent);
 
     ret = operator_new(sizeof(locale__Locimp));
-    if(!ret) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        return NULL;
-    }
     return locale__Locimp_ctor_transparent(ret, transparent);
 }
 
@@ -11717,13 +11518,6 @@ void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet 
             new_size = 40;
 
         new_facetvec = operator_new(sizeof(locale_facet*)*new_size);
-        if(!new_facetvec) {
-            _Lockit_dtor(&lock);
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return;
-        }
-
         memset(new_facetvec, 0, sizeof(locale_facet*)*new_size);
         memcpy(new_facetvec, locimp->facetvec, sizeof(locale_facet*)*locimp->facet_cnt);
         operator_delete(locimp->facetvec);
@@ -11772,10 +11566,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
             ctype = ctype_short_use_facet(loc);
         }else {
             ctype = operator_new(sizeof(ctype_wchar));
-            if(!ctype) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             ctype_short_ctor_locinfo(ctype, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &ctype->base.facet, locale_id_operator_size_t(&ctype_short_id));
@@ -11788,10 +11578,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
             numget = num_get_short_use_facet(loc);
         }else {
             numget = operator_new(sizeof(num_get));
-            if(!numget) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             num_get_short_ctor_locinfo(numget, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &numget->facet, locale_id_operator_size_t(&num_get_short_id));
@@ -11804,10 +11590,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
             numput = num_put_short_use_facet(loc);
         }else {
             numput = operator_new(sizeof(num_put));
-            if(!numput) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             num_put_short_ctor_locinfo(numput, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &numput->facet, locale_id_operator_size_t(&num_put_short_id));
@@ -11820,10 +11602,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
             numpunct = numpunct_short_use_facet(loc);
         }else {
             numpunct = operator_new(sizeof(numpunct_wchar));
-            if(!numpunct) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             numpunct_short_ctor_locinfo(numpunct, locinfo, 0, FALSE);
         }
         locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_short_id));
@@ -11836,10 +11614,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
             c = collate_short_use_facet(loc);
         }else {
             c = operator_new(sizeof(collate));
-            if(!c) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             collate_short_ctor_locinfo(c, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_short_id));
@@ -11852,10 +11626,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
              t = time_put_short_use_facet(loc);
          }else {
              t = operator_new(sizeof(time_put));
-             if(!t) {
-                 ERR("Out of memory\n");
-                 throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-             }
              time_put_short_ctor_locinfo(t, locinfo, 0);
          }
          locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_put_short_id));
@@ -11868,10 +11638,6 @@ void __cdecl locale__Locimp__Makeushloc(const _Locinfo *locinfo, category cat, l
             codecvt = codecvt_short_use_facet(loc);
         }else {
             codecvt = operator_new(sizeof(codecvt_wchar));
-            if(!codecvt) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             codecvt_short_ctor_locinfo(codecvt, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &codecvt->base.facet, locale_id_operator_size_t(&codecvt_short_id));
@@ -11894,10 +11660,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             ctype = ctype_wchar_use_facet(loc);
         }else {
             ctype = operator_new(sizeof(ctype_wchar));
-            if(!ctype) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             ctype_wchar_ctor_locinfo(ctype, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &ctype->base.facet, locale_id_operator_size_t(&ctype_wchar_id));
@@ -11910,10 +11672,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             numget = num_get_wchar_use_facet(loc);
         }else {
             numget = operator_new(sizeof(num_get));
-            if(!numget) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             num_get_wchar_ctor_locinfo(numget, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &numget->facet, locale_id_operator_size_t(&num_get_wchar_id));
@@ -11926,10 +11684,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             numput = num_put_wchar_use_facet(loc);
         }else {
             numput = operator_new(sizeof(num_put));
-            if(!numput) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             num_put_wchar_ctor_locinfo(numput, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &numput->facet, locale_id_operator_size_t(&num_put_wchar_id));
@@ -11942,10 +11696,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             numpunct = numpunct_wchar_use_facet(loc);
         }else {
             numpunct = operator_new(sizeof(numpunct_wchar));
-            if(!numpunct) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             numpunct_wchar_ctor_locinfo(numpunct, locinfo, 0, FALSE);
         }
         locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_wchar_id));
@@ -11958,10 +11708,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             c = collate_wchar_use_facet(loc);
         }else {
             c = operator_new(sizeof(collate));
-            if(!c) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             collate_wchar_ctor_locinfo(c, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_wchar_id));
@@ -11974,10 +11720,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             t = time_get_wchar_use_facet(loc);
         }else {
             t = operator_new(sizeof(time_get_wchar));
-            if(!t) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             time_get_wchar_ctor_locinfo(t, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_get_wchar_id));
@@ -11990,10 +11732,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             t = time_put_wchar_use_facet(loc);
         }else {
             t = operator_new(sizeof(time_put));
-            if(!t) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             time_put_wchar_ctor_locinfo(t, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_put_wchar_id));
@@ -12006,10 +11744,6 @@ void __cdecl locale__Locimp__Makewloc(const _Locinfo *locinfo, category cat, loc
             codecvt = codecvt_wchar_use_facet(loc);
         }else {
             codecvt = operator_new(sizeof(codecvt_wchar));
-            if(!codecvt) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             codecvt_wchar_ctor_locinfo(codecvt, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &codecvt->base.facet, locale_id_operator_size_t(&codecvt_wchar_id));
@@ -12032,10 +11766,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             ctype = ctype_char_use_facet(loc);
         }else {
             ctype = operator_new(sizeof(ctype_char));
-            if(!ctype) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             ctype_char_ctor_locinfo(ctype, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &ctype->base.facet, locale_id_operator_size_t(&ctype_char_id));
@@ -12048,10 +11778,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             numget = num_get_char_use_facet(loc);
         }else {
             numget = operator_new(sizeof(num_get));
-            if(!numget) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             num_get_char_ctor_locinfo(numget, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &numget->facet, locale_id_operator_size_t(&num_get_char_id));
@@ -12064,10 +11790,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             numput = num_put_char_use_facet(loc);
         }else {
             numput = operator_new(sizeof(num_put));
-            if(!numput) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             num_put_char_ctor_locinfo(numput, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &numput->facet, locale_id_operator_size_t(&num_put_char_id));
@@ -12080,10 +11802,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             numpunct = numpunct_char_use_facet(loc);
         }else {
             numpunct = operator_new(sizeof(numpunct_char));
-            if(!numpunct) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             numpunct_char_ctor_locinfo(numpunct, locinfo, 0, FALSE);
         }
         locale__Locimp__Addfac(locimp, &numpunct->facet, locale_id_operator_size_t(&numpunct_char_id));
@@ -12096,10 +11814,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             c = collate_char_use_facet(loc);
         }else {
             c = operator_new(sizeof(collate));
-            if(!c) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             collate_char_ctor_locinfo(c, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_char_id));
@@ -12112,10 +11826,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             t = time_get_char_use_facet(loc);
         }else {
             t = operator_new(sizeof(time_get_char));
-            if(!t) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             time_get_char_ctor_locinfo(t, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_get_char_id));
@@ -12128,10 +11838,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             t = time_put_char_use_facet(loc);
         }else {
             t = operator_new(sizeof(time_put));
-            if(!t) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             time_put_char_ctor_locinfo(t, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_put_char_id));
@@ -12144,10 +11850,6 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             codecvt = codecvt_char_use_facet(loc);
         }else {
             codecvt = operator_new(sizeof(codecvt_char));
-            if(!codecvt) {
-                ERR("Out of memory\n");
-                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            }
             codecvt_char_ctor_locinfo(codecvt, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &codecvt->base.facet, locale_id_operator_size_t(&codecvt_char_id));
@@ -12195,13 +11897,6 @@ locale__Locimp* __cdecl locale__Init(void)
     }
 
     global_locale = operator_new(sizeof(locale__Locimp));
-    if(!global_locale) {
-        _Lockit_dtor(&lock);
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        return NULL;
-    }
-
     locale__Locimp_ctor(global_locale);
     global_locale->catmask = (1<<(LC_MAX+1))-1;
     locale_string_char_dtor(&global_locale->name);
@@ -12255,10 +11950,6 @@ locale* __thiscall locale_ctor_locale_locale(locale *this, const locale *loc, co
     TRACE("(%p %p %p %d)\n", this, loc, other, cat);
 
     this->ptr = operator_new(sizeof(locale__Locimp));
-    if(!this->ptr) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     locale__Locimp_copy_ctor(this->ptr, loc->ptr);
 
     _Locinfo_ctor_cat_cstr(&locinfo, loc->ptr->catmask, locale_string_char_c_str(&loc->ptr->name));
@@ -12297,11 +11988,6 @@ locale* __thiscall locale_ctor_locale_cstr(locale *this, const locale *loc, cons
     }
 
     this->ptr = operator_new(sizeof(locale__Locimp));
-    if(!this->ptr) {
-        ERR("Out of memory\n");
-        _Locinfo_dtor(&locinfo);
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     locale__Locimp_copy_ctor(this->ptr, loc->ptr);
 
     locale__Locimp__Makeloc(&locinfo, cat, this->ptr, NULL);
@@ -12319,10 +12005,6 @@ locale* __thiscall locale_ctor_cstr(locale *this, const char *locname, category 
     TRACE("(%p %s %d)\n", this, locname, cat);
 
     this->ptr = operator_new(sizeof(locale__Locimp));
-    if(!this->ptr) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     locale__Locimp_ctor(this->ptr);
 
     locale__Init();
@@ -12410,11 +12092,6 @@ locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, size_t id, 
 
     if(this->ptr->facet.refs > 1) {
         locale__Locimp *new_ptr = operator_new(sizeof(locale__Locimp));
-        if(!new_ptr) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-            return NULL;
-        }
         locale__Locimp_copy_ctor(new_ptr, this->ptr);
         call_locale_facet__Decref(&this->ptr->facet);
         this->ptr = new_ptr;
@@ -12487,10 +12164,6 @@ locale* __cdecl locale_empty(locale *ret)
     locale__Init();
 
     ret->ptr = operator_new(sizeof(locale__Locimp));
-    if(!ret->ptr) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
     locale__Locimp_ctor_transparent(ret->ptr, TRUE);
     return ret;
 }

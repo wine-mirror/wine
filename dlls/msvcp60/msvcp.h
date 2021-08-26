@@ -32,8 +32,8 @@ void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
 BOOL __cdecl __uncaught_exception(void);
 
-extern void* (__cdecl *operator_new)(size_t);
-extern void (__cdecl *operator_delete)(void*);
+void* __cdecl operator_new(size_t);
+void __cdecl operator_delete(void*);
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
 typedef struct

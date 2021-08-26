@@ -263,11 +263,6 @@ DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
 mutex* __thiscall mutex_ctor(mutex *this)
 {
     CRITICAL_SECTION *cs = operator_new(sizeof(*cs));
-    if(!cs) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
-
     InitializeCriticalSection(cs);
     cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Mutex critical section");
     this->mutex = cs;

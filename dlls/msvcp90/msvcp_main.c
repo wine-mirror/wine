@@ -109,8 +109,22 @@ void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const 
    _invalid_parameter_noinfo();
 }
 #else
-void* (__cdecl *operator_new)(size_t);
-void (__cdecl *operator_delete)(void*);
+static void* (__cdecl *MSVCRT_operator_new)(size_t);
+static void (__cdecl *MSVCRT_operator_delete)(void*);
+
+void* __cdecl operator_new(size_t size)
+{
+    void *ret = MSVCRT_operator_new(size);
+#if _MSVCP_VER < 80
+    if (!ret) throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
+#endif
+    return ret;
+}
+
+void __cdecl operator_delete(void *mem)
+{
+    MSVCRT_operator_delete(mem);
+}
 #endif
 
 static void init_cxx_funcs(void)
@@ -130,14 +144,14 @@ static void init_cxx_funcs(void)
 #else
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
-        operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
-        operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z");
     }
     else
     {
-        operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
-        operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z");
     }
 #endif

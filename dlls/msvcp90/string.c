@@ -1648,10 +1648,6 @@ _Yarn_char* __thiscall _Yarn_char_op_assign_cstr(_Yarn_char *this, const char *s
             size_t len = strlen(str);
 
             this->str = operator_new((len+1)*sizeof(char));
-            if(!this->str) {
-                ERR("out of memory\n");
-                return NULL;
-            }
             memcpy(this->str, str, (len+1)*sizeof(char));
         }
     }
@@ -1768,10 +1764,6 @@ _Yarn_wchar* __thiscall _Yarn_wchar_op_assign_cstr(_Yarn_wchar *this, const wcha
             size_t len = wcslen(str);
 
             this->str = operator_new((len+1)*sizeof(wchar_t));
-            if(!this->str) {
-                ERR("out of memory\n");
-                return NULL;
-            }
             memcpy(this->str, str, (len+1)*sizeof(wchar_t));
         }
     }

@@ -3913,10 +3913,6 @@ void __thiscall basic_stringbuf_char__Init(basic_stringbuf_char *this, const cha
 
     if(count && str) {
         char *buf = operator_new(count);
-        if(!buf) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        }
 
         memcpy(buf, str, count);
         this->seekhigh = buf + count;
@@ -4051,10 +4047,6 @@ int __thiscall basic_stringbuf_char_overflow(basic_stringbuf_char *this, int met
     size = oldsize|0xf;
     size += size/2;
     buf = operator_new(size);
-    if(!buf) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
 
     if(!oldsize) {
         this->seekhigh = buf;
@@ -4290,10 +4282,6 @@ void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const w
 
     if(count && str) {
         wchar_t *buf = operator_new(count*sizeof(wchar_t));
-        if(!buf) {
-            ERR("Out of memory\n");
-            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        }
 
         memcpy(buf, str, count*sizeof(wchar_t));
         this->seekhigh = buf + count;
@@ -4464,10 +4452,6 @@ unsigned short __thiscall basic_stringbuf_wchar_overflow(basic_stringbuf_wchar *
     size = oldsize|0xf;
     size += size/2;
     buf = operator_new(size*sizeof(wchar_t));
-    if(!buf) {
-        ERR("Out of memory\n");
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-    }
 
     if(!oldsize) {
         this->seekhigh = buf;
