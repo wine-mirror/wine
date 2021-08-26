@@ -1127,6 +1127,12 @@ static void ABCWidths_helper(const char* description, HDC hdc, WORD *glyphs, con
     ok(abc->abcA * base_abci->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
     ok(abc->abcC * base_abci->abcC >= 0, "%s: abcC's sign should be unchanged\n", description);
 
+    ret = GetCharABCWidthsI(hdc, glyphs[0], 1, NULL, abc);
+    ok(ret, "%s: GetCharABCWidthsI should have succeeded\n", description);
+    ok ((INT)abc->abcB > 0, "%s: abcB should be positive\n", description);
+    ok(abc->abcA * base_abci->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
+    ok(abc->abcC * base_abci->abcC >= 0, "%s: abcC's sign should be unchanged\n", description);
+
     ret = GetCharABCWidthsW(hdc, 'i', 'i', abc);
     ok(ret, "%s: GetCharABCWidthsW should have succeeded\n", description);
     ok ((INT)abc->abcB > 0, "%s: abcB should be positive\n", description);
@@ -7009,8 +7015,9 @@ static void test_GetCharWidthI(void)
     HFONT hfont, prev_hfont;
     WORD glyphs[5];
     INT widths[5];
+    INT width;
     LOGFONTA lf;
-    ABC abc[5];
+    ABC abc[5], abc1;
     int len, i;
     DWORD nb;
     BOOL ret;
@@ -7033,9 +7040,19 @@ static void test_GetCharWidthI(void)
     ret = GetCharABCWidthsI(hdc, 0, len, glyphs, abc);
     ok(ret, "GetCharABCWidthsI failed\n");
 
+    memset(&abc1, 0xcc, sizeof(abc1));
+    ret = GetCharABCWidthsI(hdc, glyphs[0], 1, NULL, &abc1);
+    ok(ret, "GetCharABCWidthsI failed\n");
+    ok(!memcmp(&abc1, abc, sizeof(abc1)), "unexpected abc1\n");
+
     memset(widths, 0xcc, sizeof(widths));
     ret = GetCharWidthI(hdc, 0, len, glyphs, widths);
     ok(ret, "GetCharWidthI failed\n");
+
+    width = 0xdeadbeef;
+    ret = GetCharWidthI(hdc, glyphs[0], 1, NULL, &width);
+    ok(ret, "GetCharWidthI failed\n");
+    ok(width == widths[0], "unexpected width %u\n", width);
 
     for (i = 0; i < len; i++)
         ok(widths[i] == abc[i].abcA + abc[i].abcB + abc[i].abcC, "%u, glyph %u, got width %d\n",
