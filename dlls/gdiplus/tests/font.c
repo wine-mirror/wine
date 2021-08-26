@@ -883,8 +883,10 @@ static void test_font_substitution(void)
     ok(lstrcmpA(lf.lfFaceName, "MS Shell Dlg") != 0, "expected substitution of MS Shell Dlg\n");
     GdipDeleteFont(font);
 
+    family = NULL;
     status = GdipCreateFontFamilyFromName(L"MS Shell Dlg", NULL, &family);
     expect(Ok, status);
+    font = NULL;
     status = GdipCreateFont(family, 12, FontStyleRegular, UnitPoint, &font);
     expect(Ok, status);
     memset(&lf, 0xfe, sizeof(lf));
