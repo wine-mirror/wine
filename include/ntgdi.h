@@ -134,7 +134,7 @@ enum
 typedef struct DC_ATTR
 {
     HDC       hdc;                 /* handle to self */
-    LONG      disabled;            /* disabled flag, controled by DCHF_(DISABLE|ENABLE)DC */
+    LONG      disabled;            /* disabled flag, controlled by DCHF_(DISABLE|ENABLE)DC */
     int       save_level;
     COLORREF  background_color;
     COLORREF  brush_color;
