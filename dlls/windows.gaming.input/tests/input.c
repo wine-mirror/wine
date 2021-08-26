@@ -190,7 +190,7 @@ static void test_Gamepad(void)
     ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
 
     token.value = 0xdeadbeef;
-    IGamepadStatics_add_GamepadRemoved(gamepad_statics, &gamepad_event_handler.IEventHandler_Gamepad_iface, &token);
+    hr = IGamepadStatics_add_GamepadRemoved(gamepad_statics, &gamepad_event_handler.IEventHandler_Gamepad_iface, &token);
     ok(hr == S_OK, "IGamepadStatics_add_GamepadRemoved failed, hr %#x\n", hr);
     ok(token.value != 0xdeadbeef, "IGamepadStatics_add_GamepadRemoved returned token %#I64x\n", token.value);
 
@@ -367,7 +367,7 @@ static void test_RawGameController(void)
     ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
 
     token.value = 0xdeadbeef;
-    IRawGameControllerStatics_add_RawGameControllerRemoved(controller_statics, &controller_event_handler.IEventHandler_RawGameController_iface, &token);
+    hr = IRawGameControllerStatics_add_RawGameControllerRemoved(controller_statics, &controller_event_handler.IEventHandler_RawGameController_iface, &token);
     ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerRemoved failed, hr %#x\n", hr);
     ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerRemoved returned token %#I64x\n", token.value);
 
