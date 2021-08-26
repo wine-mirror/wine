@@ -1649,3 +1649,11 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT first, UINT last, INT *buffer )
     HeapFree( GetProcessHeap(), 0, chars );
     return ret;
 }
+
+/***********************************************************************
+ *           GetCharWidthFloatW    (GDI32.@)
+ */
+BOOL WINAPI GetCharWidthFloatW( HDC hdc, UINT first, UINT last, float *buffer )
+{
+    return NtGdiGetCharWidthW( hdc, first, last, NULL, 0, buffer );
+}

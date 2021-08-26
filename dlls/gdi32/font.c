@@ -4882,10 +4882,19 @@ BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first, UINT last, WCHAR *chars,
 
     if (ret)
     {
-        INT *buffer = buf;
-        /* convert device units to logical */
-        for (i = 0; i < count; i++)
-            buffer[i] = width_to_LP( dc, buffer[i] );
+        if (flags & NTGDI_GETCHARWIDTH_INT)
+        {
+            INT *buffer = buf;
+            /* convert device units to logical */
+            for (i = 0; i < count; i++)
+                buffer[i] = width_to_LP( dc, buffer[i] );
+        }
+        else
+        {
+            float scale = fabs( dc->xformVport2World.eM11 ) / 16.0f;
+            for (i = 0; i < count; i++)
+                ((float *)buf)[i] = ((int *)buf)[i] * scale;
+        }
     }
     release_dc_ptr( dc );
     return ret;
@@ -6458,39 +6467,6 @@ BOOL WINAPI GetCharWidthFloatA( HDC hdc, UINT first, UINT last, float *buffer )
     }
     heap_free(wstr);
     return TRUE;
-}
-
-/*************************************************************************
- *      GetCharWidthFloatW [GDI32.@]
- */
-BOOL WINAPI GetCharWidthFloatW( HDC hdc, UINT first, UINT last, float *buffer )
-{
-    DC *dc = get_dc_ptr( hdc );
-    int *ibuffer;
-    PHYSDEV dev;
-    BOOL ret;
-    UINT i;
-
-    TRACE("dc %p, first %#x, last %#x, buffer %p\n", dc, first, last, buffer);
-
-    if (!dc) return FALSE;
-
-    if (!(ibuffer = heap_alloc( (last - first + 1) * sizeof(int) )))
-    {
-        release_dc_ptr( dc );
-        return FALSE;
-    }
-
-    dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
-    if ((ret = dev->funcs->pGetCharWidth( dev, first, last - first + 1, NULL, ibuffer )))
-    {
-        float scale = fabs( dc->xformVport2World.eM11 ) / 16.0f;
-        for (i = first; i <= last; ++i)
-            buffer[i - first] = ibuffer[i - first] * scale;
-    }
-
-    heap_free(ibuffer);
-    return ret;
 }
 
 /***********************************************************************
