@@ -5055,7 +5055,7 @@ static void test_audiostreamsample_get_sample_times(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
 
-    IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
+    hr = IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     current_time = 0xdeadbeefdeadbeef;
@@ -9338,7 +9338,7 @@ static void test_ddrawstreamsample_get_sample_times(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
 
-    IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
+    hr = IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     current_time = 0xdeadbeefdeadbeef;
