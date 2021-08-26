@@ -70,7 +70,7 @@ void* __thiscall MSVCP_allocator_char_assign(void *this, const void *assign)
 DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_deallocate, 12)
 void __thiscall MSVCP_allocator_char_deallocate(void *this, char *ptr, size_t size)
 {
-    MSVCRT_operator_delete(ptr);
+    operator_delete(ptr);
 }
 
 /* ?allocate@?$allocator@D@std@@QAEPADI@Z */
@@ -78,7 +78,7 @@ void __thiscall MSVCP_allocator_char_deallocate(void *this, char *ptr, size_t si
 DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_allocate, 8)
 char* __thiscall MSVCP_allocator_char_allocate(void *this, size_t count)
 {
-    return MSVCRT_operator_new(count);
+    return operator_new(count);
 }
 
 /* ?allocate@?$allocator@D@std@@QAEPADIPBX@Z */
@@ -162,7 +162,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_allocator_wchar_deallocate, 12)
 void __thiscall MSVCP_allocator_wchar_deallocate(void *this,
         wchar_t *ptr, size_t size)
 {
-    MSVCRT_operator_delete(ptr);
+    operator_delete(ptr);
 }
 
 /* ?allocate@?$allocator@_W@std@@QAEPA_WI@Z */
@@ -175,7 +175,7 @@ wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void *this, size_t count)
         return NULL;
     }
 
-    return MSVCRT_operator_new(count * sizeof(wchar_t));
+    return operator_new(count * sizeof(wchar_t));
 }
 
 /* ?allocate@?$allocator@_W@std@@QAEPA_WIPBX@Z */
@@ -260,7 +260,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_deallocate, 12)
 void __thiscall MSVCP_allocator_short_deallocate(void *this,
         unsigned short *ptr, size_t size)
 {
-    MSVCRT_operator_delete(ptr);
+    operator_delete(ptr);
 }
 
 /* ?allocate@?$allocator@G@std@@QAEPAGI@Z */
@@ -274,7 +274,7 @@ unsigned short* __thiscall MSVCP_allocator_short_allocate(
         return NULL;
     }
 
-    return MSVCRT_operator_new(count * sizeof(unsigned short));
+    return operator_new(count * sizeof(unsigned short));
 }
 
 /* ?allocate@?$allocator@G@std@@QAEPAGIPBX@Z */

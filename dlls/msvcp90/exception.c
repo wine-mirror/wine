@@ -133,11 +133,11 @@ void * __thiscall MSVCP_exception_vector_dtor(exception *this, unsigned int flag
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_exception_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         MSVCP_exception_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -149,7 +149,7 @@ void * __thiscall MSVCP_exception_scalar_dtor(exception *this, unsigned int flag
 {
     TRACE("(%p %x)\n", this, flags);
     MSVCP_exception_dtor(this);
-    if (flags & 1) MSVCRT_operator_delete(this);
+    if (flags & 1) operator_delete(this);
     return this;
 }
 
@@ -249,11 +249,11 @@ void * __thiscall MSVCP_bad_alloc_vector_dtor(bad_alloc *this, unsigned int flag
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_bad_alloc_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         MSVCP_bad_alloc_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -353,11 +353,11 @@ void* __thiscall MSVCP_logic_error_vector_dtor(
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_logic_error_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         MSVCP_logic_error_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -369,7 +369,7 @@ void * __thiscall MSVCP_logic_error_scalar_dtor(logic_error *this, unsigned int 
 {
     TRACE("(%p %x)\n", this, flags);
     MSVCP_logic_error_dtor(this);
-    if (flags & 1) MSVCRT_operator_delete(this);
+    if (flags & 1) operator_delete(this);
     return this;
 }
 
@@ -597,11 +597,11 @@ void* __thiscall MSVCP_runtime_error_vector_dtor(
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_runtime_error_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         MSVCP_runtime_error_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -793,11 +793,11 @@ void * __thiscall MSVCP_bad_cast_vector_dtor(bad_cast *this, unsigned int flags)
 
         for(i=*ptr-1; i>=0; i--)
             MSVCP_bad_cast_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         MSVCP_bad_cast_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;

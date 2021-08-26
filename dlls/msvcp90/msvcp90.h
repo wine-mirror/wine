@@ -41,8 +41,13 @@ void __cdecl _invalid_parameter_noinfo(void);
 BOOL __cdecl __uncaught_exception(void);
 int __cdecl _callnewh(size_t);
 
-extern void* (__cdecl *MSVCRT_operator_new)(size_t);
-extern void (__cdecl *MSVCRT_operator_delete)(void*);
+#if _MSVCP_VER >= 140
+void* __cdecl operator_new(size_t);
+void __cdecl operator_delete(void*);
+#else
+extern void* (__cdecl *operator_new)(size_t);
+extern void (__cdecl *operator_delete)(void*);
+#endif
 extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #if _MSVCP_VER >= 110

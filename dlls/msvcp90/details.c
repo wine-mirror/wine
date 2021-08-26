@@ -100,7 +100,7 @@ _Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_ctor(
 {
     TRACE("(%p %Iu)\n", this, size);
 
-    this->data = MSVCRT_operator_new(sizeof(*this->data));
+    this->data = operator_new(sizeof(*this->data));
     memset(this->data, 0, sizeof(*this->data));
 
     this->vtable = &_Concurrent_queue_base_v4_vtable;
@@ -122,7 +122,7 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_dtor, 4)
 void __thiscall _Concurrent_queue_base_v4_dtor(_Concurrent_queue_base_v4 *this)
 {
     TRACE("(%p)\n", this);
-    MSVCRT_operator_delete(this->data);
+    operator_delete(this->data);
 }
 
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_vector_dtor, 8)
@@ -136,11 +136,11 @@ _Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_vector_dtor(
 
         for(i=*ptr-1; i>=0; i--)
             _Concurrent_queue_base_v4_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         if(flags & 1)
             _Concurrent_queue_base_v4_dtor(this);
-        MSVCRT_operator_delete(this);
+        operator_delete(this);
     }
 
     return this;

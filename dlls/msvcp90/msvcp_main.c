@@ -54,8 +54,6 @@ DEFINE_VTBL_WRAPPER(56);
 
 #endif
 
-void* (__cdecl *MSVCRT_operator_new)(size_t);
-void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #if _MSVCP_VER >= 110
@@ -79,7 +77,7 @@ bool (__cdecl *Context_IsCurrentTaskCollectionCanceling)(void);
 #endif
 
 #if _MSVCP_VER >= 140
-static void* __cdecl operator_new(size_t size)
+void* __cdecl operator_new(size_t size)
 {
     void *retval;
     int freed;
@@ -100,7 +98,7 @@ static void* __cdecl operator_new(size_t size)
     return NULL;
 }
 
-static void __cdecl operator_delete(void *mem)
+void __cdecl operator_delete(void *mem)
 {
     TRACE("(%p)\n", mem);
     free(mem);
@@ -110,6 +108,9 @@ void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const 
 {
    _invalid_parameter_noinfo();
 }
+#else
+void* (__cdecl *operator_new)(size_t);
+void (__cdecl *operator_delete)(void*);
 #endif
 
 static void init_cxx_funcs(void)
@@ -122,8 +123,6 @@ static void init_cxx_funcs(void)
     if (!hmod) FIXME( "%s not loaded\n", MSVCRT_NAME(_MSVCP_VER) );
 
 #if _MSVCP_VER >= 140
-    MSVCRT_operator_new = operator_new;
-    MSVCRT_operator_delete = operator_delete;
     MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "_set_new_handler");
 
     hcon = LoadLibraryA( CONCRT_NAME(_MSVCP_VER) );
@@ -131,14 +130,14 @@ static void init_cxx_funcs(void)
 #else
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
-        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
-        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+        operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
+        operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z");
     }
     else
     {
-        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
-        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+        operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
+        operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z");
     }
 #endif

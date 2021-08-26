@@ -262,7 +262,7 @@ typedef struct __Container_proxy {
 DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
 mutex* __thiscall mutex_ctor(mutex *this)
 {
-    CRITICAL_SECTION *cs = MSVCRT_operator_new(sizeof(*cs));
+    CRITICAL_SECTION *cs = operator_new(sizeof(*cs));
     if(!cs) {
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -281,7 +281,7 @@ void __thiscall mutex_dtor(mutex *this)
 {
     ((CRITICAL_SECTION*)this->mutex)->DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(this->mutex);
-    MSVCRT_operator_delete(this->mutex);
+    operator_delete(this->mutex);
 }
 
 /* ?_Lock@_Mutex@std@@QAEXXZ */
@@ -765,7 +765,7 @@ void __cdecl _Mtx_init_in_situ(_Mtx_t mtx, int flags)
 
 int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
 {
-    *mtx = MSVCRT_operator_new(sizeof(**mtx));
+    *mtx = operator_new(sizeof(**mtx));
     _Mtx_init_in_situ(*mtx, flags);
     return 0;
 }
@@ -778,7 +778,7 @@ void __cdecl _Mtx_destroy_in_situ(_Mtx_t mtx)
 void __cdecl _Mtx_destroy(_Mtx_arg_t mtx)
 {
     call_func1(critical_section_dtor, &MTX_T_FROM_ARG(mtx)->cs);
-    MSVCRT_operator_delete(MTX_T_FROM_ARG(mtx));
+    operator_delete(MTX_T_FROM_ARG(mtx));
 }
 
 int __cdecl _Mtx_current_owns(_Mtx_arg_t mtx)
@@ -875,7 +875,7 @@ void __cdecl _Cnd_init_in_situ(_Cnd_t cnd)
 
 int __cdecl _Cnd_init(_Cnd_t *cnd)
 {
-    *cnd = MSVCRT_operator_new(sizeof(**cnd));
+    *cnd = operator_new(sizeof(**cnd));
     _Cnd_init_in_situ(*cnd);
     return 0;
 }
@@ -940,7 +940,7 @@ void __cdecl _Cnd_destroy(_Cnd_arg_t cnd)
 {
     if(cnd) {
         _Cnd_broadcast(cnd);
-        MSVCRT_operator_delete(CND_T_FROM_ARG(cnd));
+        operator_delete(CND_T_FROM_ARG(cnd));
     }
 }
 
@@ -1075,10 +1075,10 @@ custom_category* __thiscall custom_category_vector_dtor(custom_category *this, u
         INT_PTR i, *ptr = (INT_PTR *)this-1;
 
         for(i=*ptr-1; i>=0; i--)
-            MSVCRT_operator_delete(ptr);
+            operator_delete(ptr);
     } else {
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -1624,7 +1624,7 @@ LONGLONG __cdecl _Query_perf_frequency(void)
 
 void __cdecl threads__Mtx_new(void **mtx)
 {
-    *mtx = MSVCRT_operator_new(sizeof(CRITICAL_SECTION));
+    *mtx = operator_new(sizeof(CRITICAL_SECTION));
     InitializeCriticalSection(*mtx);
 }
 

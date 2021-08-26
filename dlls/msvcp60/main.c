@@ -58,8 +58,8 @@ DEFINE_VTBL_WRAPPER(56);
 /* ?_Fpz@std@@3_JB */
 const __int64 std_Fpz = 0;
 
-void* (__cdecl *MSVCRT_operator_new)(size_t);
-void (__cdecl *MSVCRT_operator_delete)(void*);
+void* (__cdecl *operator_new)(size_t);
+void (__cdecl *operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 static void init_cxx_funcs(void)
@@ -68,14 +68,14 @@ static void init_cxx_funcs(void)
 
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
-        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
-        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+        operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
+        operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z");
     }
     else
     {
-        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
-        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+        operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
+        operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z");
     }
 }

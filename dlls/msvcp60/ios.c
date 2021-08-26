@@ -1015,7 +1015,7 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char 
     mutex_ctor(&this->lock);
 #endif
 #if _MSVCP_VER >= 70
-    this->loc = MSVCRT_operator_new(sizeof(locale));
+    this->loc = operator_new(sizeof(locale));
 #endif
     locale_ctor(IOS_LOCALE(this));
     basic_streambuf_char__Init_empty(this);
@@ -1035,7 +1035,7 @@ void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
 #endif
     locale_dtor(IOS_LOCALE(this));
 #if _MSVCP_VER >= 70
-    MSVCRT_operator_delete(this->loc);
+    operator_delete(this->loc);
 #endif
 }
 
@@ -1049,11 +1049,11 @@ basic_streambuf_char* __thiscall basic_streambuf_char_vector_dtor(basic_streambu
 
         for(i=*ptr-1; i>=0; i--)
             basic_streambuf_char_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_streambuf_char_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -1865,7 +1865,7 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_ctor(basic_streambuf_wch
     mutex_ctor(&this->lock);
 #endif
 #if _MSVCP_VER >= 70
-    this->loc = MSVCRT_operator_new(sizeof(locale));
+    this->loc = operator_new(sizeof(locale));
 #endif
     locale_ctor(IOS_LOCALE(this));
     basic_streambuf_wchar__Init_empty(this);
@@ -1898,7 +1898,7 @@ void __thiscall basic_streambuf_wchar_dtor(basic_streambuf_wchar *this)
 #endif
     locale_dtor(IOS_LOCALE(this));
 #if _MSVCP_VER >= 70
-    MSVCRT_operator_delete(this->loc);
+    operator_delete(this->loc);
 #endif
 }
 
@@ -1912,11 +1912,11 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_vector_dtor(basic_stream
 
         for(i=*ptr-1; i>=0; i--)
             basic_streambuf_wchar_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_streambuf_wchar_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -2757,7 +2757,7 @@ void __thiscall basic_filebuf_char__Initcvt_cvt(basic_filebuf_char *this, codecv
     if(codecvt_base_always_noconv(&cvt->base)) {
         this->cvt = NULL;
     }else {
-        this->str = MSVCRT_operator_new(sizeof(basic_string_char));
+        this->str = operator_new(sizeof(basic_string_char));
         MSVCP_basic_string_char_ctor(this->str);
         this->cvt = cvt;
     }
@@ -2839,7 +2839,7 @@ void __thiscall basic_filebuf_char_dtor(basic_filebuf_char *this)
         basic_filebuf_char_close(this);
     if(this->str) {
         MSVCP_basic_string_char_dtor(this->str);
-        MSVCRT_operator_delete(this->str);
+        operator_delete(this->str);
     }
     locale_dtor(&this->loc);
     basic_streambuf_char_dtor(&this->base);
@@ -2855,11 +2855,11 @@ basic_filebuf_char* __thiscall basic_filebuf_char_vector_dtor(basic_filebuf_char
 
         for(i=*ptr-1; i>=0; i--)
             basic_filebuf_char_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_filebuf_char_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -3431,7 +3431,7 @@ void __thiscall basic_filebuf_wchar_dtor(basic_filebuf_wchar *this)
         basic_filebuf_wchar_close(this);
     if(this->str) {
         MSVCP_basic_string_char_dtor(this->str);
-        MSVCRT_operator_delete(this->str);
+        operator_delete(this->str);
     }
     locale_dtor(&this->loc);
     basic_streambuf_wchar_dtor(&this->base);
@@ -3447,11 +3447,11 @@ basic_filebuf_wchar* __thiscall basic_filebuf_wchar_vector_dtor(basic_filebuf_wc
 
         for(i=*ptr-1; i>=0; i--)
             basic_filebuf_wchar_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_filebuf_wchar_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -3912,7 +3912,7 @@ void __thiscall basic_stringbuf_char__Init(basic_stringbuf_char *this, const cha
     this->seekhigh = NULL;
 
     if(count && str) {
-        char *buf = MSVCRT_operator_new(count);
+        char *buf = operator_new(count);
         if(!buf) {
             ERR("Out of memory\n");
             throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -3982,7 +3982,7 @@ void __thiscall basic_stringbuf_char__Tidy(basic_stringbuf_char *this)
     TRACE("(%p)\n", this);
 
     if(this->state & STRINGBUF_allocated) {
-        MSVCRT_operator_delete(basic_streambuf_char_eback(&this->base));
+        operator_delete(basic_streambuf_char_eback(&this->base));
         this->seekhigh = NULL;
         this->state &= ~STRINGBUF_allocated;
     }
@@ -4013,12 +4013,12 @@ basic_stringbuf_char* __thiscall basic_stringbuf_char_vector_dtor(basic_stringbu
         for (i = *ptr - 1; i >= 0; i--)
             basic_stringbuf_char_dtor(this+i);
 
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     }else {
         basic_stringbuf_char_dtor(this);
 
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -4050,7 +4050,7 @@ int __thiscall basic_stringbuf_char_overflow(basic_stringbuf_char *this, int met
     oldsize = (ptr ? basic_streambuf_char_epptr(&this->base)-basic_streambuf_char_eback(&this->base): 0);
     size = oldsize|0xf;
     size += size/2;
-    buf = MSVCRT_operator_new(size);
+    buf = operator_new(size);
     if(!buf) {
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -4079,7 +4079,7 @@ int __thiscall basic_stringbuf_char_overflow(basic_stringbuf_char *this, int met
                     buf+(basic_streambuf_char_gptr(&this->base)-ptr),
                     basic_streambuf_char_pptr(&this->base)+1);
 
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     }
 
     return (unsigned char)(*basic_streambuf_char__Pninc(&this->base) = meta);
@@ -4289,7 +4289,7 @@ void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const w
     this->seekhigh = NULL;
 
     if(count && str) {
-        wchar_t *buf = MSVCRT_operator_new(count*sizeof(wchar_t));
+        wchar_t *buf = operator_new(count*sizeof(wchar_t));
         if(!buf) {
             ERR("Out of memory\n");
             throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -4391,7 +4391,7 @@ void __thiscall basic_stringbuf_wchar__Tidy(basic_stringbuf_wchar *this)
     TRACE("(%p)\n", this);
 
     if(this->state & STRINGBUF_allocated) {
-        MSVCRT_operator_delete(basic_streambuf_wchar_eback(&this->base));
+        operator_delete(basic_streambuf_wchar_eback(&this->base));
         this->seekhigh = NULL;
         this->state &= ~STRINGBUF_allocated;
     }
@@ -4424,12 +4424,12 @@ basic_stringbuf_wchar* __thiscall basic_stringbuf_wchar_vector_dtor(basic_string
         for (i = *ptr - 1; i >= 0; i--)
             basic_stringbuf_wchar_dtor(this+i);
 
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     }else {
         basic_stringbuf_wchar_dtor(this);
 
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -4463,7 +4463,7 @@ unsigned short __thiscall basic_stringbuf_wchar_overflow(basic_stringbuf_wchar *
     oldsize = (ptr ? basic_streambuf_wchar_epptr(&this->base)-basic_streambuf_wchar_eback(&this->base): 0);
     size = oldsize|0xf;
     size += size/2;
-    buf = MSVCRT_operator_new(size*sizeof(wchar_t));
+    buf = operator_new(size*sizeof(wchar_t));
     if(!buf) {
         ERR("Out of memory\n");
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -4492,7 +4492,7 @@ unsigned short __thiscall basic_stringbuf_wchar_overflow(basic_stringbuf_wchar *
                     buf+(basic_streambuf_wchar_gptr(&this->base)-ptr),
                     basic_streambuf_wchar_pptr(&this->base)+1);
 
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     }
 
     return (*basic_streambuf_wchar__Pninc(&this->base) = meta);
@@ -4721,13 +4721,13 @@ void __cdecl ios_base_Tidy(ios_base *this)
 
     for(arr_cur=this->arr; arr_cur; arr_cur=arr_next) {
         arr_next = arr_cur->next;
-        MSVCRT_operator_delete(arr_cur);
+        operator_delete(arr_cur);
     }
     this->arr = NULL;
 
     for(event_cur=this->calls; event_cur; event_cur=event_next) {
         event_next = event_cur->next;
-        MSVCRT_operator_delete(event_cur);
+        operator_delete(event_cur);
     }
     this->calls = NULL;
 }
@@ -4739,7 +4739,7 @@ void __cdecl ios_base_Ios_base_dtor(ios_base *obj)
     TRACE("(%p)\n", obj);
     locale_dtor(IOS_LOCALE(obj));
 #if _MSVCP_VER >= 70
-    MSVCRT_operator_delete(obj->loc);
+    operator_delete(obj->loc);
 #endif
     ios_base_Tidy(obj);
 }
@@ -4762,11 +4762,11 @@ ios_base* __thiscall ios_base_vector_dtor(ios_base *this, unsigned int flags)
 
         for(i=*ptr-1; i>=0; i--)
             ios_base_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         ios_base_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -4778,10 +4778,10 @@ void* __thiscall iosb_vector_dtor(void *this, unsigned int flags)
     TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         INT_PTR *ptr = (INT_PTR *)this-1;
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -4808,7 +4808,7 @@ IOS_BASE_iosarray* __thiscall ios_base_Findarr(ios_base *this, int index)
         }
     }
 
-    p = MSVCRT_operator_new(sizeof(IOS_BASE_iosarray));
+    p = operator_new(sizeof(IOS_BASE_iosarray));
     p->next = this->arr;
     p->index = index;
     p->long_val = 0;
@@ -4844,7 +4844,7 @@ void __thiscall ios_base_register_callback(ios_base *this, IOS_BASE_event_callba
 
     TRACE("(%p %p %d)\n", this, callback, index);
 
-    event = MSVCRT_operator_new(sizeof(IOS_BASE_fnarray));
+    event = operator_new(sizeof(IOS_BASE_fnarray));
     event->next = this->calls;
     event->index = index;
     event->event_handler = callback;
@@ -5035,7 +5035,7 @@ void __thiscall ios_base__Init(ios_base *this)
     this->arr = NULL;
     this->calls = NULL;
 #if _MSVCP_VER >= 70
-    this->loc = MSVCRT_operator_new(sizeof(locale));
+    this->loc = operator_new(sizeof(locale));
 #endif
     locale_ctor(IOS_LOCALE(this));
 }
@@ -5349,11 +5349,11 @@ basic_ios_char* __thiscall basic_ios_char_vector_dtor(basic_ios_char *this, unsi
 
         for(i=*ptr-1; i>=0; i--)
             basic_ios_char_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ios_char_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -5616,11 +5616,11 @@ basic_ios_wchar* __thiscall basic_ios_wchar_vector_dtor(basic_ios_wchar *this, u
 
         for(i=*ptr-1; i>=0; i--)
             basic_ios_wchar_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ios_wchar_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -5928,11 +5928,11 @@ basic_ostream_char* __thiscall basic_ostream_char_vector_dtor(basic_ios_char *ba
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ostream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -6755,11 +6755,11 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_vector_dtor(basic_ios_wchar 
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ostream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -7783,11 +7783,11 @@ basic_istream_char* __thiscall basic_istream_char_vector_dtor(basic_ios_char *ba
 
         for(i=*ptr-1; i>=0; i--)
             basic_istream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_istream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -9233,11 +9233,11 @@ basic_istream_wchar* __thiscall basic_istream_wchar_vector_dtor(basic_ios_wchar 
 
         for(i=*ptr-1; i>=0; i--)
             basic_istream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_istream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -10689,11 +10689,11 @@ basic_iostream_char* __thiscall basic_iostream_char_vector_dtor(basic_ios_char *
 
         for(i=*ptr-1; i>=0; i--)
             basic_iostream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_iostream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -10799,11 +10799,11 @@ basic_iostream_wchar* __thiscall basic_iostream_wchar_vector_dtor(basic_ios_wcha
 
         for(i=*ptr-1; i>=0; i--)
             basic_iostream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_iostream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -10946,11 +10946,11 @@ basic_ofstream_char* __thiscall basic_ofstream_char_vector_dtor(basic_ios_char *
 
         for(i=*ptr-1; i>=0; i--)
             basic_ofstream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ofstream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -11156,11 +11156,11 @@ basic_ofstream_wchar* __thiscall basic_ofstream_wchar_vector_dtor(basic_ios_wcha
 
         for(i=*ptr-1; i>=0; i--)
             basic_ofstream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ofstream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -11347,11 +11347,11 @@ basic_ifstream_char* __thiscall basic_ifstream_char_vector_dtor(basic_ios_char *
 
         for(i=*ptr-1; i>=0; i--)
             basic_ifstream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ifstream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -11557,11 +11557,11 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_vector_dtor(basic_ios_wcha
 
         for(i=*ptr-1; i>=0; i--)
             basic_ifstream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ifstream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -11750,11 +11750,11 @@ basic_fstream_char* __thiscall basic_fstream_char_vector_dtor(basic_ios_char *ba
 
         for(i=*ptr-1; i>=0; i--)
             basic_fstream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_fstream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -11962,11 +11962,11 @@ basic_fstream_wchar* __thiscall basic_fstream_wchar_vector_dtor(basic_ios_wchar 
 
         for(i=*ptr-1; i>=0; i--)
             basic_fstream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_fstream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -12136,11 +12136,11 @@ basic_ostringstream_char* __thiscall basic_ostringstream_char_vector_dtor(basic_
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostringstream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ostringstream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -12312,11 +12312,11 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_vector_dtor(basi
 
         for(i=*ptr-1; i>=0; i--)
             basic_ostringstream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_ostringstream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -12459,11 +12459,11 @@ basic_istringstream_char* __thiscall basic_istringstream_char_vector_dtor(basic_
 
         for(i=*ptr-1; i>=0; i--)
             basic_istringstream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_istringstream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -12635,11 +12635,11 @@ basic_istringstream_wchar* __thiscall basic_istringstream_wchar_vector_dtor(basi
 
         for(i=*ptr-1; i>=0; i--)
             basic_istringstream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_istringstream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -12785,11 +12785,11 @@ basic_stringstream_char* __thiscall basic_stringstream_char_vector_dtor(basic_io
 
         for(i=*ptr-1; i>=0; i--)
             basic_stringstream_char_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_stringstream_char_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -12965,11 +12965,11 @@ basic_stringstream_wchar* __thiscall basic_stringstream_wchar_vector_dtor(basic_
 
         for(i=*ptr-1; i>=0; i--)
             basic_stringstream_wchar_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         basic_stringstream_wchar_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -13130,7 +13130,7 @@ void __thiscall strstreambuf__Tidy(strstreambuf *this)
         if(this->pfree)
             this->pfree(basic_streambuf_char_eback(&this->base));
         else
-            MSVCRT_operator_delete(basic_streambuf_char_eback(&this->base));
+            operator_delete(basic_streambuf_char_eback(&this->base));
     }
 
     this->endsave = NULL;
@@ -13161,11 +13161,11 @@ strstreambuf* __thiscall strstreambuf_vector_dtor(strstreambuf *this, unsigned i
 
         for(i=*ptr-1; i>=0; i--)
             strstreambuf_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         strstreambuf_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -13249,7 +13249,7 @@ int __thiscall strstreambuf_overflow(strstreambuf *this, int c)
     if(this->palloc)
         buf = this->palloc(size);
     else
-        buf = MSVCRT_operator_new(size);
+        buf = operator_new(size);
     if(!buf)
         return EOF;
 
@@ -13258,7 +13258,7 @@ int __thiscall strstreambuf_overflow(strstreambuf *this, int c)
         if(this->pfree)
             this->pfree(ptr);
         else
-            MSVCRT_operator_delete(ptr);
+            operator_delete(ptr);
     }
 
     this->strmode |= STRSTATE_Allocated;
@@ -13473,11 +13473,11 @@ ostrstream* __thiscall ostrstream_vector_dtor(basic_ios_char *base, unsigned int
 
         for(i=*ptr-1; i>=0; i--)
             ostrstream_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         ostrstream_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
@@ -13676,11 +13676,11 @@ strstream* __thiscall strstream_vector_dtor(basic_ios_char *base, unsigned int f
 
         for(i=*ptr-1; i>=0; i--)
             strstream_vbase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         strstream_vbase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return this;
