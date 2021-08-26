@@ -1814,10 +1814,10 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
     return S_OK;
 }
 
-static HRESULT parse_fx10_variable(const char *data, size_t data_size,
+static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
         const char **ptr, struct d3d10_effect_variable *v)
 {
-    DWORD offset;
+    DWORD offset, default_value_offset;
     unsigned int i;
     HRESULT hr;
 
@@ -1837,10 +1837,13 @@ static HRESULT parse_fx10_variable(const char *data, size_t data_size,
     read_dword(ptr, &v->buffer_offset);
     TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
 
-    skip_dword_unknown("variable", ptr, 1);
+    read_dword(ptr, &default_value_offset);
 
     read_dword(ptr, &v->flag);
     TRACE("Variable flag: %#x.\n", v->flag);
+
+    if (default_value_offset)
+        FIXME("Set default variable value.\n");
 
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
@@ -2230,7 +2233,7 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
         v->buffer = l;
         v->effect = l->effect;
 
-        if (FAILED(hr = parse_fx10_variable(data, data_size, ptr, v)))
+        if (FAILED(hr = parse_fx10_numeric_variable(data, data_size, ptr, v)))
             return hr;
 
         /*
