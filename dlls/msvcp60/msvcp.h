@@ -483,3 +483,5 @@ typedef struct {
     double real;
     double imag;
 } complex_double;
+
+void WINAPI DECLSPEC_NORETURN _CxxThrowException(exception*,const cxx_exception_type*);

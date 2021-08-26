@@ -526,7 +526,7 @@ static void concurrent_vector_alloc_segment(_Concurrent_vector_base_v4 *this,
         __EXCEPT_ALL
         {
             this->segment[seg] = NULL;
-            throw_exception(EXCEPTION_RERAISE, NULL);
+            _CxxThrowException(NULL, NULL);
         }
         __ENDTRY
         if(!this->segment[seg])

@@ -5264,7 +5264,7 @@ void __thiscall ios_base_clear_reraise(ios_base *this, IOSB_iostate state, bool 
         return;
 
     if(reraise)
-        throw_exception(EXCEPTION_RERAISE, NULL);
+        _CxxThrowException(NULL, NULL);
     else if(this->state & this->except & IOSTATE_eofbit)
         throw_exception(EXCEPTION_FAILURE, "eofbit is set");
     else if(this->state & this->except & IOSTATE_failbit)

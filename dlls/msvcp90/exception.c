@@ -31,7 +31,6 @@ CREATE_TYPE_INFO_VTABLE
 #define CLASS_IS_SIMPLE_TYPE          1
 #define CLASS_HAS_VIRTUAL_BASE_CLASS  4
 
-void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
 int* __cdecl __processing_throw(void);
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
@@ -1044,8 +1043,6 @@ void throw_exception(exception_type et, const char *str)
     exception_name name = EXCEPTION_NAME(str);
 
     switch(et) {
-    case EXCEPTION_RERAISE:
-        _CxxThrowException(NULL, NULL);
     case EXCEPTION: {
         exception e;
         MSVCP_exception_ctor(&e, name);
