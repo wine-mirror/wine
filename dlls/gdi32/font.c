@@ -4862,11 +4862,10 @@ static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT 
 }
 
 /***********************************************************************
- *           GetCharWidthW      (GDI32.@)
- *           GetCharWidth32W    (GDI32.@)
+ *           NtGdiGetCharWidthW    (win32u.@)
  */
-BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
-                               LPINT buffer )
+BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT firstChar, UINT lastChar, WCHAR *chars,
+                                ULONG flags, void *buf )
 {
     UINT i;
     BOOL ret;
@@ -4876,50 +4875,16 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
     if (!dc) return FALSE;
 
     dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
-    ret = dev->funcs->pGetCharWidth( dev, firstChar, lastChar, buffer );
+    ret = dev->funcs->pGetCharWidth( dev, firstChar, lastChar, buf );
 
     if (ret)
     {
+        INT *buffer = buf;
         /* convert device units to logical */
         for( i = firstChar; i <= lastChar; i++, buffer++ )
             *buffer = width_to_LP( dc, *buffer );
     }
     release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetCharWidthA      (GDI32.@)
- *           GetCharWidth32A    (GDI32.@)
- */
-BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
-                               LPINT buffer )
-{
-    INT i, wlen;
-    LPSTR str;
-    LPWSTR wstr;
-    BOOL ret = TRUE;
-
-    str = FONT_GetCharsByRangeA(hdc, firstChar, lastChar, &i);
-    if(str == NULL)
-        return FALSE;
-
-    wstr = FONT_mbtowc(hdc, str, i, &wlen, NULL);
-
-    for(i = 0; i < wlen; i++)
-    {
-	if(!GetCharWidth32W(hdc, wstr[i], wstr[i], buffer))
-	{
-	    ret = FALSE;
-	    break;
-	}
-	buffer++;
-    }
-
-    HeapFree(GetProcessHeap(), 0, str);
-    HeapFree(GetProcessHeap(), 0, wstr);
-
     return ret;
 }
 

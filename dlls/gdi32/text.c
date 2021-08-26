@@ -1570,3 +1570,96 @@ UINT WINAPI GetOutlineTextMetricsW( HDC hdc, UINT size, OUTLINETEXTMETRICW *otm 
 {
     return NtGdiGetOutlineTextMetricsInternalW( hdc, size, otm, 0 );
 }
+
+/***********************************************************************
+ *           GetCharWidthW      (GDI32.@)
+ *           GetCharWidth32W    (GDI32.@)
+ */
+BOOL WINAPI GetCharWidth32W( HDC hdc, UINT first, UINT last, INT *buffer )
+{
+    return NtGdiGetCharWidthW( hdc, first, last, NULL, NTGDI_GETCHARWIDTH_INT, buffer );
+}
+
+static char *get_chars_by_range( HDC hdc, UINT first, UINT last, INT *byte_len )
+{
+    INT i, count = last - first + 1;
+    UINT mbcp;
+    UINT c;
+    LPSTR str;
+
+    if (count <= 0)
+        return NULL;
+
+    mbcp = GdiGetCodePage( hdc );
+    switch (mbcp)
+    {
+    case 932:
+    case 936:
+    case 949:
+    case 950:
+    case 1361:
+        if (last > 0xffff)
+            return NULL;
+        if ((first ^ last) > 0xff)
+            return NULL;
+        break;
+    default:
+        if (last > 0xff)
+            return NULL;
+        mbcp = 0;
+        break;
+    }
+
+    if (!(str = HeapAlloc( GetProcessHeap(), 0, count * 2 + 1 )))
+        return NULL;
+
+    for (i = 0, c = first; c <= last; i++, c++)
+    {
+        if (mbcp) {
+            if (c > 0xff)
+                str[i++] = (BYTE)(c >> 8);
+            if (c <= 0xff && IsDBCSLeadByteEx( mbcp, c ))
+                str[i] = 0x1f; /* FIXME: use default character */
+            else
+                str[i] = (BYTE)c;
+        }
+        else
+            str[i] = (BYTE)c;
+    }
+    str[i] = '\0';
+
+    *byte_len = i;
+    return str;
+}
+
+/***********************************************************************
+ *           GetCharWidthA      (GDI32.@)
+ *           GetCharWidth32A    (GDI32.@)
+ */
+BOOL WINAPI GetCharWidth32A( HDC hdc, UINT first, UINT last, INT *buffer )
+{
+    INT i, wlen;
+    LPSTR str;
+    LPWSTR wstr;
+    BOOL ret = TRUE;
+
+    str = get_chars_by_range( hdc, first, last, &i );
+    if (str == NULL)
+        return FALSE;
+
+    wstr = text_mbtowc( hdc, str, i, &wlen, NULL );
+
+    for(i = 0; i < wlen; i++)
+    {
+	if(!GetCharWidth32W( hdc, wstr[i], wstr[i], buffer ))
+	{
+	    ret = FALSE;
+	    break;
+	}
+	buffer++;
+    }
+
+    HeapFree( GetProcessHeap(), 0, str );
+    HeapFree( GetProcessHeap(), 0, wstr );
+    return ret;
+}

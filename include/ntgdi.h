@@ -123,6 +123,9 @@ enum
     NtGdiSetDIBColorTable,
 };
 
+#define NTGDI_GETCHARWIDTH_INT      0x02
+#define NTGDI_GETCHARWIDTH_INDICES  0x08
+
 #define MWT_SET  4
 
 /* structs not compatible with native Windows */
@@ -227,7 +230,8 @@ INT      WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect );
 BOOL     WINAPI NtGdiGetBitmapDimension( HBITMAP bitmap, SIZE *size );
 UINT     WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags );
 BOOL     WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first_char, UINT last_char, ABC *abc );
-BOOL     WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, INT *buffer );
+BOOL     WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
+                                    ULONG flags, void *buffer );
 BOOL     WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result );
 BOOL     WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result );
 INT      WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap );
