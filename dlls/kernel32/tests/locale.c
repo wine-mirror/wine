@@ -631,6 +631,34 @@ static void test_GetTimeFormatA(void)
   curtime.wMonth = 60;
   ret = GetTimeFormatA(lcid, 0, &curtime, "h:m:s", buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "12:56:13");
+
+  /* The ANSI string may be longer than the Unicode one.
+   * In particular, in the Japanese code page, "\x93\xfa" = L"\x65e5".
+   */
+
+  lcid = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_DEFAULT);
+
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h\x93\xfa", buffer, 5);
+  if (broken(1)) /* FIXME Remove once Wine is less broken */
+  expect_str(ret, buffer, "12\x93\xfa"); /* only 3+1 WCHARs */
+  todo_wine ok(ret == strlen("12\x93\xfa") + 1, "Expected ret %d, got %d\n", strlen("12\x93\xfa") + 1, ret);
+  ok(strcmp(buffer, "12\x93\xfa") == 0, "Expected '12\x93\xfa', got '%s'\n", buffer);
+
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h\x93\xfa", buffer, 4);
+  todo_wine expect_err(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
+  SetLastError(0xdeadbeef);
+
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h\x93\xfa", NULL, 0);
+  if (broken(1)) /* FIXME Remove once Wine is less broken */
+  expect_str(ret, NULL, "12\x93\xfa");
+  todo_wine ok(ret == strlen("12\x93\xfa") + 1, "Expected ret %d, got %d\n", strlen("12\x93\xfa") + 1, ret);
+
+  strcpy(buffer, "pristine"); /* clear previous identical result */
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h\x93\xfa", buffer, 0);
+  if (broken(1)) /* FIXME Remove once Wine is less broken */
+  expect_str(ret, NULL, "12\x93\xfa");
+  todo_wine ok(ret == strlen("12\x93\xfa") + 1, "Expected ret %d, got %d\n", strlen("12\x93\xfa") + 1, ret);
+  ok(strcmp(buffer, "pristine") == 0, "Expected a pristine buffer, got '%s'\n", buffer);
 }
 
 static void test_GetTimeFormatEx(void)
