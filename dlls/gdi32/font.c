@@ -6443,32 +6443,6 @@ done:
     return ret;
 }
 
-/*************************************************************************
- *      GetCharWidthFloatA [GDI32.@]
- */
-BOOL WINAPI GetCharWidthFloatA( HDC hdc, UINT first, UINT last, float *buffer )
-{
-    WCHAR *wstr;
-    int i, wlen;
-    char *str;
-
-    if (!(str = FONT_GetCharsByRangeA( hdc, first, last, &i )))
-        return FALSE;
-    wstr = FONT_mbtowc( hdc, str, i, &wlen, NULL );
-    heap_free(str);
-
-    for (i = 0; i < wlen; ++i)
-    {
-        if (!GetCharWidthFloatW( hdc, wstr[i], wstr[i], &buffer[i] ))
-        {
-            heap_free(wstr);
-            return FALSE;
-        }
-    }
-    heap_free(wstr);
-    return TRUE;
-}
-
 /***********************************************************************
  *								       *
  *           Font Resource API					       *
