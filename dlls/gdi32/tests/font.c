@@ -5493,9 +5493,9 @@ static INT CALLBACK enum_ms_shell_dlg_proc(const LOGFONTA *lf, const TEXTMETRICA
 {
     struct enum_fullname_data *efnd = (struct enum_fullname_data *)lParam;
 
-if (0) /* Disabled to limit console spam */
-    trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
-          lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
+    if (winetest_debug > 2)
+        trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
+              lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
     if (strcmp(lf->lfFaceName, "MS Shell Dlg") != 0) return 1;
@@ -5514,9 +5514,9 @@ static INT CALLBACK enum_ms_shell_dlg2_proc(const LOGFONTA *lf, const TEXTMETRIC
 {
     struct enum_fullname_data *efnd = (struct enum_fullname_data *)lParam;
 
-if (0) /* Disabled to limit console spam */
-    trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
-          lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
+    if (winetest_debug > 2)
+        trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
+              lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
     if (strcmp(lf->lfFaceName, "MS Shell Dlg 2") != 0) return 1;
