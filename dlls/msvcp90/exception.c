@@ -870,14 +870,14 @@ DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info, &exception_cxx_type_
 void __cdecl _Nomemory(void)
 {
     TRACE("()\n");
-    throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
 }
 
 /* ?_Xmem@tr1@std@@YAXXZ */
 void __cdecl _Xmem(void)
 {
     TRACE("()\n");
-    throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
 }
 
 /* ?_Xinvalid_argument@std@@YAXPBD@Z */
