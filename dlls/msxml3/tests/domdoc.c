@@ -258,7 +258,7 @@ static IDispatch* create_dispevent(void)
     event->IDispatch_iface.lpVtbl = &dispeventVtbl;
     event->ref = 1;
 
-    return (IDispatch*)&event->IDispatch_iface;
+    return &event->IDispatch_iface;
 }
 
 /* IStream */
