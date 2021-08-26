@@ -1996,7 +1996,7 @@ static HRESULT WINAPI dwritefont_GetFontFamily(IDWriteFont3 *iface, IDWriteFontF
 
     TRACE("%p, %p.\n", iface, family);
 
-    *family = (IDWriteFontFamily *)font->family;
+    *family = (IDWriteFontFamily *)&font->family->IDWriteFontFamily2_iface;
     IDWriteFontFamily_AddRef(*family);
     return S_OK;
 }
@@ -2531,7 +2531,7 @@ static HRESULT WINAPI dwritefontfamily_GetFontCollection(IDWriteFontFamily2 *ifa
 
     TRACE("%p, %p.\n", iface, collection);
 
-    *collection = (IDWriteFontCollection *)family->collection;
+    *collection = (IDWriteFontCollection *)&family->collection->IDWriteFontCollection3_iface;
     IDWriteFontCollection_AddRef(*collection);
     return S_OK;
 }
