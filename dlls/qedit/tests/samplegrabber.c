@@ -661,7 +661,6 @@ static void test_sink_allocator(IPin *pin)
     hr = IMemInputPin_GetAllocator(input, &ret_allocator);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_allocator == req_allocator, "Allocators didn't match.\n");
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IMemAllocator_Release(ret_allocator);
 
     hr = IMemAllocator_SetProperties(req_allocator, &req_props, &ret_props);
