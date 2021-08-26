@@ -94,8 +94,7 @@ void* __cdecl operator_new(size_t size)
     } while (freed);
 
     TRACE("(%Iu) out of memory\n", size);
-    throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
-    return NULL;
+    _Xmem();
 }
 
 void __cdecl operator_delete(void *mem)
@@ -116,7 +115,7 @@ void* __cdecl operator_new(size_t size)
 {
     void *ret = MSVCRT_operator_new(size);
 #if _MSVCP_VER < 80
-    if (!ret) throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
+    if (!ret) _Xmem();
 #endif
     return ret;
 }

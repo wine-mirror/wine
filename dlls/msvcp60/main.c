@@ -65,7 +65,7 @@ void* (__cdecl *MSVCRT_set_new_handler)(void*);
 void* __cdecl operator_new(size_t size)
 {
     void *ret = MSVCRT_operator_new(size);
-    if (!ret) throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
+    if (!ret) _Xmem();
     return ret;
 }
 

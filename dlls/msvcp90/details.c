@@ -89,7 +89,7 @@ void __thiscall _Concurrent_queue_base_v4__Internal_throw_exception(
         const _Concurrent_queue_base_v4 *this)
 {
     TRACE("(%p)\n", this);
-    throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    _Xmem();
 }
 
 /* ??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z */

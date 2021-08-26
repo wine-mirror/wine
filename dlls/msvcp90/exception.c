@@ -867,17 +867,25 @@ DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor, &exceptio
 DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_runtime_error_dtor)
 
 /* ?_Nomemory@std@@YAXXZ */
-void __cdecl _Nomemory(void)
+void __cdecl DECLSPEC_NORETURN _Nomemory(void)
 {
+    bad_alloc e;
+
     TRACE("()\n");
-    throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
+
+    MSVCP_bad_alloc_default_ctor(&e);
+    _CxxThrowException(&e, &bad_alloc_cxx_type);
 }
 
 /* ?_Xmem@tr1@std@@YAXXZ */
-void __cdecl _Xmem(void)
+void __cdecl DECLSPEC_NORETURN _Xmem(void)
 {
+    bad_alloc e;
+
     TRACE("()\n");
-    throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
+
+    MSVCP_bad_alloc_default_ctor(&e);
+    _CxxThrowException(&e, &bad_alloc_cxx_type);
 }
 
 /* ?_Xinvalid_argument@std@@YAXPBD@Z */
@@ -1047,11 +1055,6 @@ void throw_exception(exception_type et, const char *str)
         exception e;
         MSVCP_exception_ctor(&e, name);
         _CxxThrowException(&e, &exception_cxx_type);
-    }
-    case EXCEPTION_BAD_ALLOC: {
-        bad_alloc e;
-        MSVCP_bad_alloc_ctor(&e, name);
-        _CxxThrowException(&e, &bad_alloc_cxx_type);
     }
     case EXCEPTION_BAD_CAST: {
         bad_cast e;

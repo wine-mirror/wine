@@ -317,7 +317,6 @@ typedef struct __exception
 /* Internal: throws selected exception */
 typedef enum __exception_type {
     EXCEPTION,
-    EXCEPTION_BAD_ALLOC,
     EXCEPTION_BAD_CAST,
     EXCEPTION_LOGIC_ERROR,
     EXCEPTION_LENGTH_ERROR,

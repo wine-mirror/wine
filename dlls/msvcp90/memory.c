@@ -170,11 +170,7 @@ void __thiscall MSVCP_allocator_wchar_deallocate(void *this,
 DEFINE_THISCALL_WRAPPER(MSVCP_allocator_wchar_allocate, 8)
 wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void *this, size_t count)
 {
-    if(UINT_MAX/count < sizeof(wchar_t)) {
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        return NULL;
-    }
-
+    if(UINT_MAX/count < sizeof(wchar_t)) _Xmem();
     return operator_new(count * sizeof(wchar_t));
 }
 
@@ -269,11 +265,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_allocate, 8)
 unsigned short* __thiscall MSVCP_allocator_short_allocate(
         void *this, size_t count)
 {
-    if(UINT_MAX/count < sizeof(unsigned short)) {
-        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        return NULL;
-    }
-
+    if(UINT_MAX/count < sizeof(unsigned short)) _Xmem();
     return operator_new(count * sizeof(unsigned short));
 }
 
