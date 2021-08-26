@@ -2438,7 +2438,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                                            test_cmd_w_to_a, sizeof(test_cmd_w_to_a), NULL, NULL );
         switch (str_index)
         {
-        case 0:  /* ASCII string */
+        case 0:  /* ANSI string */
             if (unicode_server)
             {
                 ok(size == size_a_to_w, "Wrong size %d/%d, msg_index=%d\n", size, size_a_to_w, msg_index);
@@ -2447,7 +2447,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
             }
             else if (unicode_client)
             {
-                /* ASCII string mapped W->A -> garbage */
+                /* ANSI string mapped W->A -> garbage */
             }
             else
             {
