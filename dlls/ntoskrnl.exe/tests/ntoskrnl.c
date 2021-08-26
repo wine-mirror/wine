@@ -1355,7 +1355,7 @@ static void test_pnp_devices(void)
     ok(!ret, "failed to open child: %#x\n", ret);
 
     ret = DeviceIoControl(child, IOCTL_WINETEST_MARK_PENDING, NULL, 0, NULL, 0, &size, &ovl);
-    ok(!ret, "DeviceIoControl succeded\n");
+    ok(!ret, "DeviceIoControl succeeded\n");
     ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
     ok(size == 0, "got size %u\n", size);
 
@@ -2693,12 +2693,12 @@ static void test_hidp(HANDLE file, HANDLE async_file, int report_id, BOOL polled
 
         SetLastError(0xdeadbeef);
         ret = ReadFile(async_file, report, caps.InputReportByteLength, NULL, &overlapped);
-        ok(!ret, "ReadFile succeded\n");
+        ok(!ret, "ReadFile succeeded\n");
         ok(GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError());
 
         SetLastError(0xdeadbeef);
         ret = ReadFile(async_file, buffer, caps.InputReportByteLength, NULL, &overlapped2);
-        ok(!ret, "ReadFile succeded\n");
+        ok(!ret, "ReadFile succeeded\n");
         ok(GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError());
 
         /* wait for second report to be ready */
