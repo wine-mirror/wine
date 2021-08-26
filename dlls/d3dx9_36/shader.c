@@ -2336,10 +2336,13 @@ HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **sample
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXDisassembleShader(const DWORD *shader, BOOL colorcode, const char *comments, ID3DXBuffer **disassembly)
+HRESULT WINAPI D3DXDisassembleShader(const DWORD *shader, BOOL colorcode, const char *comments,
+        ID3DXBuffer **buffer)
 {
-   FIXME("%p %d %s %p: stub\n", shader, colorcode, debugstr_a(comments), disassembly);
-   return E_OUTOFMEMORY;
+    TRACE("shader %p, colorcode %d, comments %s, buffer %p.\n", shader, colorcode, debugstr_a(comments), buffer);
+
+    return D3DDisassemble(shader, D3DXGetShaderSize(shader), colorcode ? D3D_DISASM_ENABLE_COLOR_CODE : 0,
+            comments, (ID3DBlob **)buffer);
 }
 
 struct d3dx9_texture_shader
