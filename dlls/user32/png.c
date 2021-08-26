@@ -293,7 +293,7 @@ static BITMAPINFO * CDECL load_png(const char *png_data, DWORD *size)
     return info;
 }
 
-static const struct png_funcs png_funcs =
+static const struct png_funcs funcs =
 {
     get_png_info,
     load_png
@@ -335,7 +335,7 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     LOAD_FUNCPTR(png_set_read_fn);
 #undef LOAD_FUNCPTR
 
-    *(const struct png_funcs **)ptr_out = &png_funcs;
+    *(const struct png_funcs **)ptr_out = &funcs;
     return STATUS_SUCCESS;
 }
 

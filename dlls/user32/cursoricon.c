@@ -111,21 +111,6 @@ static int get_display_bpp(void)
     return ret;
 }
 
-static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-
-static const struct png_funcs *png_funcs;
-
-static BOOL WINAPI load_libpng( INIT_ONCE *once, void *param, void **context )
-{
-    __wine_init_unix_lib( user32_module, DLL_PROCESS_ATTACH, NULL, &png_funcs );
-    return TRUE;
-}
-
-static BOOL have_libpng(void)
-{
-    return InitOnceExecuteOnce( &init_once, load_libpng, NULL, NULL ) && png_funcs;
-}
-
 static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
 {
     struct cursoricon_object *obj;
@@ -571,7 +556,7 @@ static BOOL CURSORICON_GetResIconEntry( LPCVOID dir, DWORD size, int n,
     *width = icon->bWidth;
     *height = icon->bHeight;
     *bits = resdir->idEntries[n].wBitCount;
-    if (!*width && !*height && have_libpng()) *width = *height = 256;
+    if (!*width && !*height && png_funcs) *width = *height = 256;
     return TRUE;
 }
 
@@ -704,7 +689,7 @@ static BOOL CURSORICON_GetFileEntry( LPCVOID dir, DWORD size, int n,
 
     if (info->biSize == PNG_SIGN)
     {
-        if (have_libpng()) return png_funcs->get_png_info(info, size, width, height, bits);
+        if (png_funcs) return png_funcs->get_png_info(info, size, width, height, bits);
         *width = *height = *bits = 0;
         return TRUE;
     }
@@ -858,7 +843,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     {
         BITMAPINFO *bmi_png;
 
-        if (!have_libpng()) return 0;
+        if (!png_funcs) return 0;
         bmi_png = png_funcs->load_png( (const char *)bmi, &maxsize );
         if (bmi_png)
         {

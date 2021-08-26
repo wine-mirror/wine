@@ -380,6 +380,9 @@ struct png_funcs
     BITMAPINFO * (CDECL *load_png)(const char *png_data, DWORD *size);
 };
 
+/* May be NULL if libpng cannot be loaded. */
+extern const struct png_funcs *png_funcs DECLSPEC_HIDDEN;
+
 /* Mingw's assert() imports MessageBoxA and gets confused by user32 exporting it */
 #ifdef __MINGW32__
 #undef assert
