@@ -4872,9 +4872,30 @@ BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first, UINT last, WCHAR *chars,
     UINT i, count = last;
     BOOL ret;
     PHYSDEV dev;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (!dc) return FALSE;
+    if (flags & NTGDI_GETCHARWIDTH_INDICES)
+    {
+        ABC *abc;
+        unsigned int i;
+
+        if (!(abc = HeapAlloc(GetProcessHeap(), 0, count * sizeof(ABC))))
+            return FALSE;
+
+        if (!GetCharABCWidthsI( hdc, first, last, chars, abc ))
+        {
+            HeapFree( GetProcessHeap(), 0, abc );
+            return FALSE;
+        }
+
+        for (i = 0; i < count; i++)
+            ((INT *)buf)[i] = abc[i].abcA + abc[i].abcB + abc[i].abcC;
+
+        HeapFree(GetProcessHeap(), 0, abc);
+        return TRUE;
+    }
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
     if (!chars) count = last - first + 1;
     dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
@@ -7112,48 +7133,6 @@ BOOL WINAPI EnableEUDC(BOOL fEnableEUDC)
 {
     FIXME("(%d): stub\n", fEnableEUDC);
     return FALSE;
-}
-
-/***********************************************************************
- *           GetCharWidthI    (GDI32.@)
- *
- * Retrieve widths of characters.
- *
- * PARAMS
- *  hdc    [I] Handle to a device context.
- *  first  [I] First glyph in range to query.
- *  count  [I] Number of glyph indices to query.
- *  glyphs [I] Array of glyphs to query.
- *  buffer [O] Buffer to receive character widths.
- *
- * NOTES
- *  Only works with TrueType fonts.
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- */
-BOOL WINAPI GetCharWidthI(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPINT buffer)
-{
-    ABC *abc;
-    unsigned int i;
-
-    TRACE("(%p, %d, %d, %p, %p)\n", hdc, first, count, glyphs, buffer);
-
-    if (!(abc = HeapAlloc(GetProcessHeap(), 0, count * sizeof(ABC))))
-        return FALSE;
-
-    if (!GetCharABCWidthsI(hdc, first, count, glyphs, abc))
-    {
-        HeapFree(GetProcessHeap(), 0, abc);
-        return FALSE;
-    }
-
-    for (i = 0; i < count; i++)
-        buffer[i] = abc[i].abcA + abc[i].abcB + abc[i].abcC;
-
-    HeapFree(GetProcessHeap(), 0, abc);
-    return TRUE;
 }
 
 /***********************************************************************
