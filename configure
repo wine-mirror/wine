@@ -20386,6 +20386,7 @@ wine_fn_config_makefile dlls/d3dx10_37 enable_d3dx10_37
 wine_fn_config_makefile dlls/d3dx10_38 enable_d3dx10_38
 wine_fn_config_makefile dlls/d3dx10_39 enable_d3dx10_39
 wine_fn_config_makefile dlls/d3dx10_40 enable_d3dx10_40
+wine_fn_config_makefile dlls/d3dx10_40/tests enable_tests
 wine_fn_config_makefile dlls/d3dx10_41 enable_d3dx10_41
 wine_fn_config_makefile dlls/d3dx10_41/tests enable_tests
 wine_fn_config_makefile dlls/d3dx10_42 enable_d3dx10_42
