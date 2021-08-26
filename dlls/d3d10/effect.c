@@ -2442,7 +2442,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
 static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_size)
 {
     const char *ptr = data;
-    DWORD unknown;
+    DWORD unused;
 
     if (!require_space(0, 19, sizeof(DWORD), data_size))
     {
@@ -2464,14 +2464,13 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     TRACE("Object count: %u\n", e->local_variable_count);
 
     read_dword(&ptr, &e->sharedbuffers_count);
-    TRACE("Sharedbuffers count: %u\n", e->sharedbuffers_count);
+    TRACE("Pool buffer count: %u\n", e->sharedbuffers_count);
 
-    /* Number of variables in shared buffers? */
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 0: %u\n", unknown);
+    read_dword(&ptr, &unused);
+    TRACE("Pool variable count: %u\n", unused);
 
     read_dword(&ptr, &e->sharedobjects_count);
-    TRACE("Sharedobjects count: %u\n", e->sharedobjects_count);
+    TRACE("Pool objects count: %u\n", e->sharedobjects_count);
 
     read_dword(&ptr, &e->technique_count);
     TRACE("Technique count: %u\n", e->technique_count);
@@ -2479,8 +2478,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->index_offset);
     TRACE("Index offset: %#x\n", e->index_offset);
 
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 1: %u\n", unknown);
+    read_dword(&ptr, &unused);
+    TRACE("String count: %u\n", unused);
 
     read_dword(&ptr, &e->texture_count);
     TRACE("Texture count: %u\n", e->texture_count);
