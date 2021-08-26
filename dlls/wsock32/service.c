@@ -65,7 +65,7 @@ INT WINAPI GetAddressByNameW(DWORD dwNameSpace, LPGUID lpServiceType, LPWSTR lpS
  * Retrieve a service type GUID for a network service specified by name.
  *
  * PARAMETERS
- *      lpServiceName [I] NUL-terminated ASCII string that uniquely represents the name of the service
+ *      lpServiceName [I] NUL-terminated ANSI string that uniquely represents the name of the service
  *      lpServiceType [O] Destination for the service type GUID
  *
  * RETURNS
@@ -114,7 +114,7 @@ INT WINAPI GetTypeByNameW(LPWSTR lpServiceName, LPGUID lpServiceType)
  *      dwNameSpace        [I] Name space or set of name spaces within which the function will operate
  *      dwOperation        [I] Operation to perform
  *      dwFlags            [I] Flags to modify the function's operation
- *      lpServiceInfo      [I] Pointer to a ASCII SERVICE_INFO structure
+ *      lpServiceInfo      [I] Pointer to an ANSI SERVICE_INFO structure
  *      lpServiceAsyncInfo [I] Reserved for future use.  Must be NULL.
  *      lpdwStatusFlags    [O] Destination for function status information
  *
@@ -167,7 +167,7 @@ INT WINAPI SetServiceW(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSE
  *      dwNameSpace        [I] Name space or set of name spaces within which the function 
  *                             will operate.
  *      lpGuid             [I] Pointer to GUID of network service type.
- *      lpServiceName      [I] NUL-terminated ASCII string that uniquely represents the name 
+ *      lpServiceName      [I] NUL-terminated ANSI string that uniquely represents the name
  *                             of the service.
  *      dwProperties       [I] Flags specifying which information to return in lpBuffer.
  *      lpBuffer           [O] Pointer to buffer where the function returns an array
