@@ -671,7 +671,7 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_compact(
             (alloc_seg + 1) * sizeof(this->segment[0]));
     this->first_block = 0;
     _Concurrent_vector_base_v4__Internal_reserve(this, size, element_size,
-            MSVCP_SIZE_T_MAX / element_size);
+            ~(size_t)0 / element_size);
     for(i = 0; i < seg_no; i++)
         copy(this->segment[i], b->blocks[i], i ? 1 << i : 2);
     copy_element = size - ((1 << seg_no) & ~1);
@@ -703,7 +703,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_copy(
        return;
     }
     _Concurrent_vector_base_v4__Internal_reserve(this, v_size,
-            element_size, MSVCP_SIZE_T_MAX / element_size);
+            element_size, ~(size_t)0 / element_size);
     seg_no = _vector_base_v4__Segment_index_of(v_size - 1);
     for(i = 0; i < seg_no; i++)
         copy(this->segment[i], v->segment[i], i ? 1 << i : 2);
@@ -764,7 +764,7 @@ void __thiscall _Concurrent_vector_base_v4__Internal_assign(
         if(i < v_seg_no)
         {
             _Concurrent_vector_base_v4__Internal_reserve(this, v_size,
-                    element_size, MSVCP_SIZE_T_MAX / element_size);
+                    element_size, ~(size_t)0 / element_size);
             for(i++; i < v_seg_no; i++)
                 copy(this->segment[i], v->segment[i], 1 << i);
             copy(this->segment[i], v->segment[i], v->early_size - (1 << i));
@@ -788,7 +788,7 @@ size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
     do {
         size = this->early_size;
         _Concurrent_vector_base_v4__Internal_reserve(this, size + count, element_size,
-                MSVCP_SIZE_T_MAX / element_size);
+                ~(size_t)0 / element_size);
     } while(InterlockedCompareExchangeSizeT(&this->early_size, size + count, size) != size);
 
     seg_no = size ? _vector_base_v4__Segment_index_of(size - 1) : 0;
@@ -818,7 +818,7 @@ size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_with_res
     TRACE("(%p %Iu %Iu %p %p)\n", this, count, element_size, copy, v);
 
     _Concurrent_vector_base_v4__Internal_reserve(this, count, element_size,
-            MSVCP_SIZE_T_MAX / element_size);
+            ~(size_t)0 / element_size);
     do {
         size = this->early_size;
         if(size >= count) return size;
@@ -853,7 +853,7 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
     do {
         index = this->early_size;
         _Concurrent_vector_base_v4__Internal_reserve(this, index + 1,
-                element_size, MSVCP_SIZE_T_MAX / element_size);
+                element_size, ~(size_t)0 / element_size);
     } while(InterlockedCompareExchangeSizeT(&this->early_size, index + 1, index) != index);
     seg = _vector_base_v4__Segment_index_of(index);
     segment_base = (seg == 0) ? 0 : (1 << seg);
