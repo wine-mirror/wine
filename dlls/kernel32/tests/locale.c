@@ -839,6 +839,7 @@ static void test_GetDateFormatA(void)
   SYSTEMTIME  curtime;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   LCID lcid_ru = MAKELCID(MAKELANGID(LANG_RUSSIAN, SUBLANG_NEUTRAL), SORT_DEFAULT);
+  LCID lcid_ja = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_DEFAULT);
   char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE];
   char short_day[10], month[10], genitive_month[10];
 
@@ -959,6 +960,27 @@ static void test_GetDateFormatA(void)
   ret = GetDateFormatA(lcid_ru, 0, &curtime, "ddd',' MMMM dd", buffer, ARRAY_SIZE(buffer));
   sprintf(Expected, "%s, %s 04", short_day, genitive_month);
   expect_str(ret, buffer, Expected);
+
+  /* The ANSI string may be longer than the Unicode one.
+   * In particular, in the Japanese code page, "\x93\xfa" = L"\x65e5".
+   * See the corresponding GetDateFormatW() test.
+   */
+
+  ret = GetDateFormatA(lcid_ja, 0, &curtime, "d\x93\xfa", buffer, 4);
+  if (broken(1)) /* FIXME Remove once Wine is less broken */
+  expect_str(ret, buffer, "4\x93\xfa"); /* only 2+1 WCHARs */
+  todo_wine ok(ret == strlen("4\x93\xfa") + 1, "Expected ret %d, got %d\n", strlen("4\x93\xfa") + 1, ret);
+  ok(strcmp(buffer, "4\x93\xfa") == 0, "Expected '4\x93\xfa', got '%s'\n", buffer);
+
+  ret = GetDateFormatA(lcid_ja, 0, &curtime, "d\x93\xfa", buffer, 3);
+  todo_wine expect_err(ret, NULL, ERROR_INSUFFICIENT_BUFFER);
+  SetLastError(0xdeadbeef);
+
+  strcpy(buffer, "pristine"); /* clear previous identical result */
+  ret = GetDateFormatA(lcid_ja, 0, &curtime, "d\x93\xfa", NULL, 0);
+  if (broken(1)) /* FIXME Remove once Wine is less broken */
+  expect_str(ret, NULL, "4\x93\xfa");
+  todo_wine ok(ret == strlen("4\x93\xfa") + 1, "Expected ret %d, got %d\n", strlen("4\x93\xfa") + 1, ret);
 }
 
 static void test_GetDateFormatEx(void)
@@ -1115,6 +1137,20 @@ static void test_GetDateFormatW(void)
   wcscpy(buffer, L"pristine");
   ret = GetDateFormatW (lcid, 0, &curtime, L"dddd d MMMM yyyy", buffer, ARRAY_SIZE(buffer));
   expect_werr(ret, buffer, ERROR_INVALID_PARAMETER);
+  SetLastError(0xdeadbeef);
+
+  /* See the corresponding GetDateFormatA() test */
+
+  lcid = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_DEFAULT);
+
+  curtime.wYear = 2002;
+  curtime.wMonth = 5;
+  curtime.wDay = 4;
+  ret = GetDateFormatW(lcid, 0, &curtime, L"d\x65e5", buffer, 3);
+  expect_wstr(ret, buffer, L"4\x65e5");
+
+  ret = GetDateFormatW(lcid, 0, &curtime, L"d\x65e5", NULL, 0);
+  expect_wstr(ret, NULL, L"4\x65e5");
 }
 
 
