@@ -2649,8 +2649,8 @@ static void test_end_to_end_server(void)
     HDDEDATA hdata;
     static const char test_service[] = "TestDDEService";
 
-    trace("client %s, server %s\n", unicode_client ? "unicode" : "ascii",
-            unicode_server ? "unicode" : "ascii");
+    trace("client %s, server %s\n", unicode_client ? "unicode" : "ansi",
+            unicode_server ? "unicode" : "ansi");
     server_pid = 0;
     msg_index = 0;
 
