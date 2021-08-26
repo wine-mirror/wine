@@ -388,12 +388,9 @@ static void test_fontfamily (void)
     expect (Ok, stat);
     expect (0, lstrcmpiW(itsName, L"Tahoma"));
 
-    if (0)
-    {
-        /* Crashes on Windows XP SP2, Vista, and so Wine as well */
-        stat = GdipGetFamilyName (family, NULL, LANG_NEUTRAL);
-        expect (Ok, stat);
-    }
+    /* Crashes on Windows XP SP2 and Vista */
+    stat = GdipGetFamilyName (family, NULL, LANG_NEUTRAL);
+    expect (Ok, stat);
 
     /* Make sure we don't read old data */
     ZeroMemory (itsName, sizeof(itsName));
