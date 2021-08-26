@@ -798,17 +798,20 @@ GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily *family, GpFontFamily **clo
  *  FAILURE: InvalidParameter if family is NULL
  *
  * NOTES
- *   If name is a NULL ptr, then both XP and Vista will crash (so we do as well)
+ *   If name is NULL, XP and Vista crash but not Windows 7+
  */
 GpStatus WINGDIPAPI GdipGetFamilyName (GDIPCONST GpFontFamily *family,
                                        WCHAR *name, LANGID language)
 {
     static int lang_fixme;
 
+    TRACE("%p, %p, %d\n", family, name, language);
+
     if (family == NULL)
          return InvalidParameter;
 
-    TRACE("%p, %p, %d\n", family, name, language);
+    if (name == NULL)
+         return Ok;
 
     if (language != LANG_NEUTRAL && !lang_fixme++)
         FIXME("No support for handling of multiple languages!\n");
