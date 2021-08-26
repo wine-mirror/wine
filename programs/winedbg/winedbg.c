@@ -411,45 +411,6 @@ BOOL dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade)
     return ret;
 }
 
-struct mod_loader_info
-{
-    HANDLE              handle;
-    IMAGEHLP_MODULE64*  imh_mod;
-};
-
-static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
-{
-    struct mod_loader_info*     mli = ctx;
-
-    if (!strcmp(mod_name, "<wine-loader>"))
-    {
-        if (SymGetModuleInfo64(mli->handle, base, mli->imh_mod))
-            return FALSE; /* stop enum */
-    }
-    return TRUE;
-}
-
-BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE64* imh_mod)
-{
-    struct mod_loader_info  mli;
-    BOOL                    opt;
-
-    /* this will resynchronize builtin dbghelp's internal ELF module list */
-    SymLoadModule(hProcess, 0, 0, 0, 0, 0);
-    mli.handle  = hProcess;
-    mli.imh_mod = imh_mod;
-    imh_mod->SizeOfStruct = sizeof(*imh_mod);
-    imh_mod->BaseOfImage = 0;
-    /* this is a wine specific options to return also ELF modules in the
-     * enumeration
-     */
-    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
-    SymEnumerateModules64(hProcess, mod_loader_cb, &mli);
-    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
-
-    return imh_mod->BaseOfImage != 0;
-}
-
 BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size)
 {
     BOOL ret = SymLoadModuleExW(hProc, NULL, name, NULL, base, size, NULL, 0);
