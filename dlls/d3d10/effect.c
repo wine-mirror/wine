@@ -1165,6 +1165,8 @@ static HRESULT parse_fx10_variable_head(const char *data, size_t data_size,
     }
     set_variable_vtbl(v);
 
+    v->explicit_bind_point = ~0u;
+
     return copy_variableinfo_from_type(v);
 }
 
@@ -1927,7 +1929,8 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
     }
     TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
 
-    skip_dword_unknown("local variable", ptr, 1);
+    read_dword(ptr, &v->explicit_bind_point);
+    TRACE("Variable explicit bind point %#x.\n", v->explicit_bind_point);
 
     switch (v->type->basetype)
     {
@@ -2191,7 +2194,8 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     read_dword(ptr, &l->type->member_count);
     TRACE("Local buffer member count: %#x.\n", l->type->member_count);
 
-    skip_dword_unknown("local buffer", ptr, 1);
+    read_dword(ptr, &l->explicit_bind_point);
+    TRACE("Local buffer explicit bind point: %#x.\n", l->explicit_bind_point);
 
     read_dword(ptr, &l->annotation_count);
     TRACE("Local buffer has %u annotations.\n", l->annotation_count);

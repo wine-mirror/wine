@@ -199,6 +199,7 @@ struct d3d10_effect_variable
     DWORD annotation_count;
     DWORD flag;
     DWORD data_size;
+    DWORD explicit_bind_point;
     struct d3d10_effect *effect;
     struct d3d10_effect_variable *elements;
     struct d3d10_effect_variable *members;
