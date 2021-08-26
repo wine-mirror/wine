@@ -99,7 +99,7 @@ struct gdi_dc_funcs
     UINT     (CDECL *pGetBoundsRect)(PHYSDEV,RECT*,UINT);
     BOOL     (CDECL *pGetCharABCWidths)(PHYSDEV,UINT,UINT,LPABC);
     BOOL     (CDECL *pGetCharABCWidthsI)(PHYSDEV,UINT,UINT,WORD*,LPABC);
-    BOOL     (CDECL *pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
+    BOOL     (CDECL *pGetCharWidth)(PHYSDEV,UINT,UINT,const WCHAR*,LPINT);
     BOOL     (CDECL *pGetCharWidthInfo)(PHYSDEV,void*);
     INT      (CDECL *pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (CDECL *pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
@@ -169,7 +169,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 64
+#define WINE_GDI_DRIVER_VERSION 65
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

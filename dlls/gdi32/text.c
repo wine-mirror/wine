@@ -1580,12 +1580,13 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT first, UINT last, INT *buffer )
     return NtGdiGetCharWidthW( hdc, first, last, NULL, NTGDI_GETCHARWIDTH_INT, buffer );
 }
 
-static char *get_chars_by_range( HDC hdc, UINT first, UINT last, INT *byte_len )
+static WCHAR *get_chars_by_range( HDC hdc, UINT first, UINT last, INT *ret_len )
 {
     INT i, count = last - first + 1;
+    WCHAR *wstr;
+    char *str;
     UINT mbcp;
     UINT c;
-    LPSTR str;
 
     if (count <= 0)
         return NULL;
@@ -1628,8 +1629,9 @@ static char *get_chars_by_range( HDC hdc, UINT first, UINT last, INT *byte_len )
     }
     str[i] = '\0';
 
-    *byte_len = i;
-    return str;
+    wstr = text_mbtowc( hdc, str, i, ret_len, NULL );
+    HeapFree( GetProcessHeap(), 0, str );
+    return wstr;
 }
 
 /***********************************************************************
@@ -1638,28 +1640,12 @@ static char *get_chars_by_range( HDC hdc, UINT first, UINT last, INT *byte_len )
  */
 BOOL WINAPI GetCharWidth32A( HDC hdc, UINT first, UINT last, INT *buffer )
 {
-    INT i, wlen;
-    LPSTR str;
-    LPWSTR wstr;
-    BOOL ret = TRUE;
+    WCHAR *chars;
+    INT count;
+    BOOL ret;
 
-    str = get_chars_by_range( hdc, first, last, &i );
-    if (str == NULL)
-        return FALSE;
-
-    wstr = text_mbtowc( hdc, str, i, &wlen, NULL );
-
-    for(i = 0; i < wlen; i++)
-    {
-	if(!GetCharWidth32W( hdc, wstr[i], wstr[i], buffer ))
-	{
-	    ret = FALSE;
-	    break;
-	}
-	buffer++;
-    }
-
-    HeapFree( GetProcessHeap(), 0, str );
-    HeapFree( GetProcessHeap(), 0, wstr );
+    if (!(chars = get_chars_by_range( hdc, first, last, &count ))) return FALSE;
+    ret = NtGdiGetCharWidthW( hdc, 0, count, chars, NTGDI_GETCHARWIDTH_INT, buffer );
+    HeapFree( GetProcessHeap(), 0, chars );
     return ret;
 }

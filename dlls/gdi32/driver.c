@@ -380,7 +380,8 @@ static BOOL CDECL nulldrv_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
+static BOOL CDECL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT count,
+                                        const WCHAR *chars, INT *buffer )
 {
     return FALSE;
 }

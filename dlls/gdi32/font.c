@@ -3089,27 +3089,29 @@ static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, W
 /*************************************************************
  * font_GetCharWidth
  */
-static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
+static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT count,
+                                     const WCHAR *chars, INT *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    UINT c, i;
     ABC abc;
-    UINT c;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
-        return dev->funcs->pGetCharWidth( dev, first, last, buffer );
+        return dev->funcs->pGetCharWidth( dev, first, count, chars, buffer );
     }
 
-    TRACE( "%p, %d, %d, %p\n", physdev->font, first, last, buffer );
+    TRACE( "%p, %d, %d, %p\n", physdev->font, first, count, buffer );
 
     EnterCriticalSection( &font_cs );
-    for (c = first; c <= last; c++)
+    for (i = 0; i < count; i++)
     {
+        c = chars ? chars[i] : i + first;
         if (get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, &abc, 0, NULL, NULL ) == GDI_ERROR)
-            buffer[c - first] = 0;
+            buffer[i] = 0;
         else
-            buffer[c - first] = abc.abcA + abc.abcB + abc.abcC;
+            buffer[i] = abc.abcA + abc.abcB + abc.abcC;
     }
     LeaveCriticalSection( &font_cs );
     return TRUE;
@@ -4864,25 +4866,26 @@ static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT 
 /***********************************************************************
  *           NtGdiGetCharWidthW    (win32u.@)
  */
-BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT firstChar, UINT lastChar, WCHAR *chars,
+BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first, UINT last, WCHAR *chars,
                                 ULONG flags, void *buf )
 {
-    UINT i;
+    UINT i, count = last;
     BOOL ret;
     PHYSDEV dev;
     DC * dc = get_dc_ptr( hdc );
 
     if (!dc) return FALSE;
 
+    if (!chars) count = last - first + 1;
     dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
-    ret = dev->funcs->pGetCharWidth( dev, firstChar, lastChar, buf );
+    ret = dev->funcs->pGetCharWidth( dev, first, count, chars, buf );
 
     if (ret)
     {
         INT *buffer = buf;
         /* convert device units to logical */
-        for( i = firstChar; i <= lastChar; i++, buffer++ )
-            *buffer = width_to_LP( dc, *buffer );
+        for (i = 0; i < count; i++)
+            buffer[i] = width_to_LP( dc, buffer[i] );
     }
     release_dc_ptr( dc );
     return ret;
@@ -6479,7 +6482,7 @@ BOOL WINAPI GetCharWidthFloatW( HDC hdc, UINT first, UINT last, float *buffer )
     }
 
     dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
-    if ((ret = dev->funcs->pGetCharWidth( dev, first, last, ibuffer )))
+    if ((ret = dev->funcs->pGetCharWidth( dev, first, last - first + 1, NULL, ibuffer )))
     {
         float scale = fabs( dc->xformVport2World.eM11 ) / 16.0f;
         for (i = first; i <= last; ++i)
