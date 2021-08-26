@@ -31,6 +31,7 @@ static HRESULT (WINAPI *pD3DAssemble)(const void *data, SIZE_T datasize, const c
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, UINT flags, ID3DBlob **shader,
         ID3DBlob **error_messages);
 static pD3DPreprocess ppD3DPreprocess;
+static pD3DDisassemble ppD3DDisassemble;
 
 struct shader_test {
     const char *text;
@@ -1721,6 +1722,41 @@ static void d3dpreprocess_test(void)
     if (shader) ID3D10Blob_Release(shader);
 }
 
+static const DWORD vs_2_0[] =
+{
+    0xfffe0200,                         /* vs_2_0 */
+    0x0200001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+    0x0200001f, 0x80000003, 0x900f0001, /* dcl_normal v1 */
+    0x0200001f, 0x8001000a, 0x900f0002, /* dcl_color1 v2 */
+    0x0200001f, 0x80000005, 0x900f0003, /* dcl_texcoord0 v3 */
+    0x02000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0 */
+    0x02000001, 0xd00f0001, 0x90e40002, /* mov oD1, v2 */
+    0x02000001, 0xe0070000, 0x90e40003, /* mov oT0.xyz, v3 */
+    0x02000001, 0xc00f0001, 0x90ff0002, /* mov oFog, v2.w */
+    0x02000001, 0xc00f0002, 0x90ff0001, /* mov oPts, v1.w */
+    0x0000ffff
+};
+
+static void test_disassemble_shader(void)
+{
+    ID3DBlob *blob;
+    HRESULT hr;
+
+    hr = ppD3DDisassemble(vs_2_0, 0, 0, NULL, &blob);
+todo_wine
+#if D3D_COMPILER_VERSION == 47
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+#else
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+#endif
+
+    hr = ppD3DDisassemble(vs_2_0, sizeof(vs_2_0), 0, NULL, &blob);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Blob_Release(blob);
+}
+
 static BOOL load_d3dcompiler(void)
 {
     HMODULE module;
@@ -1733,6 +1769,7 @@ static BOOL load_d3dcompiler(void)
 
     pD3DAssemble = (void*)GetProcAddress(module, "D3DAssemble");
     ppD3DPreprocess = (void*)GetProcAddress(module, "D3DPreprocess");
+    ppD3DDisassemble = (void *)GetProcAddress(module, "D3DDisassemble");
     return TRUE;
 }
 
@@ -1761,4 +1798,5 @@ START_TEST(asm)
     assembleshader_test();
 
     d3dpreprocess_test();
+    test_disassemble_shader();
 }
