@@ -589,9 +589,9 @@ static HRESULT create_server(IUnknown *outer, const CLSID *class, void **obj)
     server->class = *class;
     server->inner_unk = NULL;
     if(IsEqualGUID(class, &CLSID_wine_row_server))
-        create_row_marshal((IUnknown*)server, (void**)&server->marshal);
+        create_row_marshal((IUnknown*)&server->IWineRowServer_iface, (void**)&server->marshal);
     else if(IsEqualGUID(class, &CLSID_wine_rowset_server))
-        create_rowset_marshal((IUnknown*)server, (void**)&server->marshal);
+        create_rowset_marshal((IUnknown*)&server->IWineRowServer_iface, (void**)&server->marshal);
     else
         ERR("create_server called with class %s\n", debugstr_guid(class));
 
