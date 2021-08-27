@@ -90,7 +90,7 @@ static const char * CDECL wrap_datalink_val_to_name( int link )
     return pcap_datalink_val_to_name( link );
 }
 
-void wrap_pcap_handler( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *packet )
+static void wrap_pcap_handler( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *packet )
 {
     struct handler_callback *cb = (struct handler_callback *)user;
     callbacks->handler( cb, hdr, packet );
