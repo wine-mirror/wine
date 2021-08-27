@@ -475,8 +475,7 @@ void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*
     switch(idx) {
     case 0: _Xout_of_range("Index out of range");
     case 1: _Xout_of_range("Index out of segments table range");
-    case 2: throw_exception(EXCEPTION_RANGE_ERROR,
-                    "Index is inside segment which failed to be allocated");
+    case 2: throw_range_error("Index is inside segment which failed to be allocated");
     }
 }
 
