@@ -1049,7 +1049,7 @@ static int *kern_string( HDC hdc, const WCHAR *str, int len, int *kern_total )
     ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(*ret) );
     if (!ret) return NULL;
 
-    count = GetKerningPairsW( hdc, 0, NULL );
+    count = NtGdiGetKerningPairsW( hdc, 0, NULL );
     if (count)
     {
         kern = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*kern) );
@@ -1059,7 +1059,7 @@ static int *kern_string( HDC hdc, const WCHAR *str, int len, int *kern_total )
             return NULL;
         }
 
-        GetKerningPairsW( hdc, count, kern );
+        NtGdiGetKerningPairsW( hdc, count, kern );
     }
 
     for (i = 0; i < len - 1; i++)
@@ -1785,4 +1785,67 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metr
                                DWORD size, void *buffer, const MAT2 *mat2 )
 {
     return NtGdiGetGlyphOutlineW( hdc, ch, format, metrics, size, buffer, mat2, FALSE );
+}
+
+/*************************************************************************
+ *             GetKerningPairsA   (GDI32.@)
+ */
+DWORD WINAPI GetKerningPairsA( HDC hdc, DWORD count, KERNINGPAIR *kern_pairA )
+{
+    DWORD i, total_kern_pairs, kern_pairs_copied = 0;
+    KERNINGPAIR *kern_pairW;
+    CPINFO cpi;
+    UINT cp;
+
+    if (!count && kern_pairA)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    cp = GdiGetCodePage( hdc );
+
+    /* GetCPInfo() will fail on CP_SYMBOL, and WideCharToMultiByte is supposed
+     * to fail on an invalid character for CP_SYMBOL.
+     */
+    cpi.DefaultChar[0] = 0;
+    if (cp != CP_SYMBOL && !GetCPInfo( cp, &cpi ))
+    {
+        FIXME( "Can't find codepage %u info\n", cp );
+        return 0;
+    }
+
+    total_kern_pairs = NtGdiGetKerningPairsW( hdc, 0, NULL );
+    if (!total_kern_pairs) return 0;
+
+    kern_pairW = HeapAlloc( GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pairW) );
+    NtGdiGetKerningPairsW( hdc, total_kern_pairs, kern_pairW );
+
+    for (i = 0; i < total_kern_pairs; i++)
+    {
+        char first, second;
+
+        if (!WideCharToMultiByte( cp, 0, &kern_pairW[i].wFirst, 1, &first, 1, NULL, NULL ))
+            continue;
+
+        if (!WideCharToMultiByte( cp, 0, &kern_pairW[i].wSecond, 1, &second, 1, NULL, NULL ))
+            continue;
+
+        if (first == cpi.DefaultChar[0] || second == cpi.DefaultChar[0])
+            continue;
+
+        if (kern_pairA)
+        {
+            if (kern_pairs_copied >= count) break;
+
+            kern_pairA->wFirst = (BYTE)first;
+            kern_pairA->wSecond = (BYTE)second;
+            kern_pairA->iKernAmount = kern_pairW[i].iKernAmount;
+            kern_pairA++;
+        }
+        kern_pairs_copied++;
+    }
+
+    HeapFree( GetProcessHeap(), 0, kern_pairW );
+    return kern_pairs_copied;
 }

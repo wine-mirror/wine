@@ -5976,93 +5976,27 @@ done:
 }
 
 /*************************************************************************
- *             GetKerningPairsA   (GDI32.@)
+ *             NtGdiGetKerningPairsW   (win32u.@)
  */
-DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
-                               LPKERNINGPAIR kern_pairA )
-{
-    UINT cp;
-    CPINFO cpi;
-    DWORD i, total_kern_pairs, kern_pairs_copied = 0;
-    KERNINGPAIR *kern_pairW;
-
-    if (!cPairs && kern_pairA)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    cp = GdiGetCodePage(hDC);
-
-    /* GetCPInfo() will fail on CP_SYMBOL, and WideCharToMultiByte is supposed
-     * to fail on an invalid character for CP_SYMBOL.
-     */
-    cpi.DefaultChar[0] = 0;
-    if (cp != CP_SYMBOL && !GetCPInfo(cp, &cpi))
-    {
-        FIXME("Can't find codepage %u info\n", cp);
-        return 0;
-    }
-
-    total_kern_pairs = GetKerningPairsW(hDC, 0, NULL);
-    if (!total_kern_pairs) return 0;
-
-    kern_pairW = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pairW));
-    GetKerningPairsW(hDC, total_kern_pairs, kern_pairW);
-
-    for (i = 0; i < total_kern_pairs; i++)
-    {
-        char first, second;
-
-        if (!WideCharToMultiByte(cp, 0, &kern_pairW[i].wFirst, 1, &first, 1, NULL, NULL))
-            continue;
-
-        if (!WideCharToMultiByte(cp, 0, &kern_pairW[i].wSecond, 1, &second, 1, NULL, NULL))
-            continue;
-
-        if (first == cpi.DefaultChar[0] || second == cpi.DefaultChar[0])
-            continue;
-
-        if (kern_pairA)
-        {
-            if (kern_pairs_copied >= cPairs) break;
-
-            kern_pairA->wFirst = (BYTE)first;
-            kern_pairA->wSecond = (BYTE)second;
-            kern_pairA->iKernAmount = kern_pairW[i].iKernAmount;
-            kern_pairA++;
-        }
-        kern_pairs_copied++;
-    }
-
-    HeapFree(GetProcessHeap(), 0, kern_pairW);
-
-    return kern_pairs_copied;
-}
-
-/*************************************************************************
- *             GetKerningPairsW   (GDI32.@)
- */
-DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
-                                 LPKERNINGPAIR lpKerningPairs )
+DWORD WINAPI NtGdiGetKerningPairsW( HDC hdc, DWORD count, KERNINGPAIR *kern_pair )
 {
     DC *dc;
     DWORD ret;
     PHYSDEV dev;
 
-    TRACE("(%p,%d,%p)\n", hDC, cPairs, lpKerningPairs);
+    TRACE( "(%p,%d,%p)\n", hdc, count, kern_pair );
 
-    if (!cPairs && lpKerningPairs)
+    if (!count && kern_pair)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
-    dc = get_dc_ptr(hDC);
+    dc = get_dc_ptr( hdc );
     if (!dc) return 0;
 
     dev = GET_DC_PHYSDEV( dc, pGetKerningPairs );
-    ret = dev->funcs->pGetKerningPairs( dev, cPairs, lpKerningPairs );
+    ret = dev->funcs->pGetKerningPairs( dev, count, kern_pair );
     release_dc_ptr( dc );
     return ret;
 }
@@ -6147,7 +6081,7 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 	if( (fontsig.fsCsb[0]&GCP_LIGATE_MASK)!=0 )
 		result|=GCP_LIGATE;
 
-	if( GetKerningPairsW( hdc, 0, NULL ) )
+	if( NtGdiGetKerningPairsW( hdc, 0, NULL ) )
 		result|=GCP_USEKERNING;
 
         /* this might need a test for a HEBREW- or ARABIC_CHARSET as well */
