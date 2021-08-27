@@ -389,21 +389,16 @@ HANDLE WINAPI OpenVxDHandle(HANDLE hHandleRing3)
 /****************************************************************************
  *		DeviceIoControl (KERNEL32.@)
  */
-BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
-                            LPVOID lpvInBuffer, DWORD cbInBuffer,
-                            LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-                            LPDWORD lpcbBytesReturned,
-                            LPOVERLAPPED lpOverlapped)
+BOOL WINAPI KERNEL32_DeviceIoControl( HANDLE handle, DWORD code, void *in_buff, DWORD in_count,
+                                      void *out_buff, DWORD out_count, DWORD *returned,
+                                      OVERLAPPED *overlapped )
 {
-    NTSTATUS status;
-
-    TRACE( "(%p,%x,%p,%d,%p,%d,%p,%p)\n",
-           hDevice,dwIoControlCode,lpvInBuffer,cbInBuffer,
-           lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped );
+    TRACE( "(%p,%#x,%p,%d,%p,%d,%p,%p)\n",
+           handle, code, in_buff, in_count, out_buff, out_count, returned, overlapped );
 
     /* Check if this is a user defined control code for a VxD */
 
-    if (HIWORD( dwIoControlCode ) == 0 && (GetVersion() & 0x80000000))
+    if (HIWORD( code ) == 0 && (GetVersion() & 0x80000000))
     {
         typedef BOOL (WINAPI *DeviceIoProc)(DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
         static DeviceIoProc (*vxd_get_proc)(HANDLE);
@@ -411,45 +406,11 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 
         if (!vxd_get_proc) vxd_get_proc = (void *)GetProcAddress( GetModuleHandleW(L"krnl386.exe16"),
                                                                   "__wine_vxd_get_proc" );
-        if (vxd_get_proc) proc = vxd_get_proc( hDevice );
-        if (proc) return proc( dwIoControlCode, lpvInBuffer, cbInBuffer,
-                               lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped );
+        if (vxd_get_proc) proc = vxd_get_proc( handle );
+        if (proc) return proc( code, in_buff, in_count, out_buff, out_count, returned, overlapped );
     }
 
-    /* Not a VxD, let ntdll handle it */
-
-    if (lpOverlapped)
-    {
-        LPVOID cvalue = ((ULONG_PTR)lpOverlapped->hEvent & 1) ? NULL : lpOverlapped;
-        lpOverlapped->Internal = STATUS_PENDING;
-        lpOverlapped->InternalHigh = 0;
-        if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
-            status = NtFsControlFile(hDevice, lpOverlapped->hEvent,
-                                     NULL, cvalue, (PIO_STATUS_BLOCK)lpOverlapped,
-                                     dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                     lpvOutBuffer, cbOutBuffer);
-        else
-            status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent,
-                                           NULL, cvalue, (PIO_STATUS_BLOCK)lpOverlapped,
-                                           dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                           lpvOutBuffer, cbOutBuffer);
-        if (lpcbBytesReturned) *lpcbBytesReturned = lpOverlapped->InternalHigh;
-    }
-    else
-    {
-        IO_STATUS_BLOCK iosb;
-
-        if (HIWORD(dwIoControlCode) == FILE_DEVICE_FILE_SYSTEM)
-            status = NtFsControlFile(hDevice, NULL, NULL, NULL, &iosb,
-                                     dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                     lpvOutBuffer, cbOutBuffer);
-        else
-            status = NtDeviceIoControlFile(hDevice, NULL, NULL, NULL, &iosb,
-                                           dwIoControlCode, lpvInBuffer, cbInBuffer,
-                                           lpvOutBuffer, cbOutBuffer);
-        if (lpcbBytesReturned) *lpcbBytesReturned = iosb.Information;
-    }
-    return set_ntstatus( status );
+    return DeviceIoControl( handle, code, in_buff, in_count, out_buff, out_count, returned, overlapped );
 }
 
 

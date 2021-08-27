@@ -377,7 +377,7 @@
 @ stdcall DeleteVolumeMountPointA(str)
 @ stdcall -import DeleteVolumeMountPointW(wstr)
 @ stdcall -arch=x86_64 DequeueUmsCompletionListItems(ptr long ptr)
-@ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
+@ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) KERNEL32_DeviceIoControl
 @ stdcall -import DisableThreadLibraryCalls(long)
 @ stdcall -import DisconnectNamedPipe(long)
 @ stdcall DnsHostnameToComputerNameA (str ptr ptr)
