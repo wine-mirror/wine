@@ -1613,7 +1613,7 @@ ctype_base* __thiscall ctype_base_vector_dtor(ctype_base *this, unsigned int fla
 /* ?_Xran@ctype_base@std@@KAXXZ */
 void __cdecl ctype_base__Xran(void)
 {
-    throw_exception(EXCEPTION_OUT_OF_RANGE, "out of range in ctype<T>");
+    _Xout_of_range("out of range in ctype<T>");
 }
 
 /* ?id@?$ctype@D@std@@2V0locale@2@A */

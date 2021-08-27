@@ -319,7 +319,6 @@ typedef enum __exception_type {
     EXCEPTION,
     EXCEPTION_BAD_CAST,
     EXCEPTION_LOGIC_ERROR,
-    EXCEPTION_OUT_OF_RANGE,
     EXCEPTION_FAILURE,
     EXCEPTION_RANGE_ERROR,
 } exception_type;

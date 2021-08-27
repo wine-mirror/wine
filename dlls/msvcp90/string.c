@@ -468,10 +468,8 @@ void __thiscall _String_base__Xlen(const void/*_String_base*/ *this)
 /* ?_Xran@_String_base@std@@SAXXZ */
 void CDECL MSVCP__String_base_Xran(void)
 {
-    static const char msg[] = "invalid string position";
-
     TRACE("\n");
-    throw_exception(EXCEPTION_OUT_OF_RANGE, msg);
+    _Xout_of_range("invalid string position");
 }
 
 /* ?_Xran@_String_base@std@@QBEXXZ */

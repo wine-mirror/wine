@@ -470,19 +470,14 @@ size_t __cdecl _vector_base_v4__Segment_index_of(size_t x)
 DEFINE_THISCALL_WRAPPER(_vector_base_v4__Internal_throw_exception, 8)
 void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*/ *this, size_t idx)
 {
-    static const struct {
-        exception_type type;
-        const char *msg;
-    } exceptions[] = {
-        { EXCEPTION_OUT_OF_RANGE, "Index out of range" },
-        { EXCEPTION_OUT_OF_RANGE, "Index out of segments table range" },
-        { EXCEPTION_RANGE_ERROR,  "Index is inside segment which failed to be allocated" },
-    };
-
     TRACE("(%p %Iu)\n", this, idx);
 
-    if(idx < ARRAY_SIZE(exceptions))
-        throw_exception(exceptions[idx].type, exceptions[idx].msg);
+    switch(idx) {
+    case 0: _Xout_of_range("Index out of range");
+    case 1: _Xout_of_range("Index out of segments table range");
+    case 2: throw_exception(EXCEPTION_RANGE_ERROR,
+                    "Index is inside segment which failed to be allocated");
+    }
 }
 
 #ifdef _WIN64

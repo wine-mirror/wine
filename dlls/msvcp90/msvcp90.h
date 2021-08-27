@@ -667,4 +667,5 @@ void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*
 void __cdecl DECLSPEC_NORETURN _Xinvalid_argument(const char*);
 void __cdecl DECLSPEC_NORETURN _Xlength_error(const char*);
 void __cdecl DECLSPEC_NORETURN _Xmem(void);
+void __cdecl DECLSPEC_NORETURN _Xout_of_range(const char*);
 void __cdecl DECLSPEC_NORETURN _Xruntime_error(const char*);

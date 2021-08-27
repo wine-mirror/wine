@@ -46,10 +46,8 @@ typedef struct {
 /* ?_Xran@std@@YAXXZ */
 void __cdecl _Xran(void)
 {
-    static const char msg[] = "invalid string position";
-
     TRACE("\n");
-    throw_exception(EXCEPTION_OUT_OF_RANGE, msg);
+    _Xout_of_range("invalid string position");
 }
 
 /* ?_Xlen@std@@YAXXZ */
