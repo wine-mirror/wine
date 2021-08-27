@@ -147,7 +147,7 @@ struct ACImpl {
     AudioSessionWrapper *session_wrapper;
 };
 
-static const WCHAR defaultW[] = L"Pulseaudio";
+static const WCHAR defaultW[] = L"PulseAudio";
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
