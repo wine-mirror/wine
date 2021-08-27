@@ -1718,6 +1718,21 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, ABCFLOAT *ab
 }
 
 /***********************************************************************
+ *      GetCharABCWidthsFloatA    (GDI32.@)
+ */
+BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, ABCFLOAT *abcf )
+{
+    WCHAR *chars;
+    INT count;
+    BOOL ret;
+
+    if (!(chars = get_chars_by_range( hdc, first, last, &count ))) return FALSE;
+    ret = NtGdiGetCharABCWidthsW( hdc, 0, count, chars, 0, abcf );
+    HeapFree( GetProcessHeap(), 0, chars );
+    return ret;
+}
+
+/***********************************************************************
  *           GetCharABCWidthsI    (GDI32.@)
  */
 BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT first, UINT count, WORD *glyphs, ABC *buffer )

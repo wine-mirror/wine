@@ -4813,60 +4813,6 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
     return ret;
 }
 
-static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT pByteLen)
-{
-    INT i, count = lastChar - firstChar + 1;
-    UINT mbcp;
-    UINT c;
-    LPSTR str;
-
-    if (count <= 0)
-        return NULL;
-
-    mbcp = GdiGetCodePage(hdc);
-    switch (mbcp)
-    {
-    case 932:
-    case 936:
-    case 949:
-    case 950:
-    case 1361:
-        if (lastChar > 0xffff)
-            return NULL;
-        if ((firstChar ^ lastChar) > 0xff)
-            return NULL;
-        break;
-    default:
-        if (lastChar > 0xff)
-            return NULL;
-        mbcp = 0;
-        break;
-    }
-
-    str = HeapAlloc(GetProcessHeap(), 0, count * 2 + 1);
-    if (str == NULL)
-        return NULL;
-
-    for(i = 0, c = firstChar; c <= lastChar; i++, c++)
-    {
-        if (mbcp) {
-            if (c > 0xff)
-                str[i++] = (BYTE)(c >> 8);
-            if (c <= 0xff && IsDBCSLeadByteEx(mbcp, c))
-                str[i] = 0x1f; /* FIXME: use default character */
-            else
-                str[i] = (BYTE)c;
-        }
-        else
-            str[i] = (BYTE)c;
-    }
-    str[i] = '\0';
-
-    *pByteLen = i;
-
-    return str;
-}
-
 /***********************************************************************
  *           NtGdiGetCharWidthW    (win32u.@)
  */
@@ -6317,40 +6263,6 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
     dev = GET_DC_PHYSDEV( dc, pGetGlyphIndices );
     ret = dev->funcs->pGetGlyphIndices( dev, lpstr, count, pgi, flags );
     release_dc_ptr( dc );
-    return ret;
-}
-
-/*************************************************************************
- *      GetCharABCWidthsFloatA [GDI32.@]
- *
- * See GetCharABCWidthsFloatW.
- */
-BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
-{
-    INT i, wlen;
-    LPSTR str;
-    LPWSTR wstr;
-    BOOL ret = TRUE;
-
-    str = FONT_GetCharsByRangeA(hdc, first, last, &i);
-    if (str == NULL)
-        return FALSE;
-
-    wstr = FONT_mbtowc( hdc, str, i, &wlen, NULL );
-
-    for (i = 0; i < wlen; i++)
-    {
-        if (!GetCharABCWidthsFloatW( hdc, wstr[i], wstr[i], abcf ))
-        {
-            ret = FALSE;
-            break;
-        }
-        abcf++;
-    }
-
-    HeapFree( GetProcessHeap(), 0, str );
-    HeapFree( GetProcessHeap(), 0, wstr );
-
     return ret;
 }
 
