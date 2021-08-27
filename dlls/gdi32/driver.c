@@ -370,7 +370,8 @@ static UINT CDECL nulldrv_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
     return DCB_RESET;
 }
 
-static BOOL CDECL nulldrv_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, LPABC abc )
+static BOOL CDECL nulldrv_GetCharABCWidths( PHYSDEV dev, UINT first, UINT count,
+                                            WCHAR *chars, ABC *abc )
 {
     return FALSE;
 }

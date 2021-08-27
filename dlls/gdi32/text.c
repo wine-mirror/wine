@@ -1690,3 +1690,20 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT first, UINT last, ABC *abc )
 {
     return NtGdiGetCharABCWidthsW( hdc, first, last, NULL, NTGDI_GETCHARABCWIDTHS_INT, abc );
 }
+
+/***********************************************************************
+ *           GetCharABCWidthsA   (GDI32.@)
+ *
+ * See GetCharABCWidthsW.
+ */
+BOOL WINAPI GetCharABCWidthsA( HDC hdc, UINT first, UINT last, ABC *abc )
+{
+    WCHAR *chars;
+    INT count;
+    BOOL ret;
+
+    if (!(chars = get_chars_by_range( hdc, first, last, &count ))) return FALSE;
+    ret = NtGdiGetCharABCWidthsW( hdc, 0, count, chars, NTGDI_GETCHARABCWIDTHS_INT, abc );
+    HeapFree( GetProcessHeap(), 0, chars );
+    return ret;
+}

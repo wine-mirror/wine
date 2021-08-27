@@ -3040,22 +3040,26 @@ static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
 /*************************************************************
  * font_GetCharABCWidths
  */
-static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC *buffer )
+static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT count,
+                                         WCHAR *chars, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    UINT c;
+    UINT c, i;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidths );
-        return dev->funcs->pGetCharABCWidths( dev, first, last, buffer );
+        return dev->funcs->pGetCharABCWidths( dev, first, count, chars, buffer );
     }
 
-    TRACE( "%p, %u, %u, %p\n", physdev->font, first, last, buffer );
+    TRACE( "%p, %u, %u, %p\n", physdev->font, first, count, buffer );
 
     EnterCriticalSection( &font_cs );
-    for (c = first; c <= last; c++, buffer++)
-        get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, buffer, 0, NULL, NULL );
+    for (i = 0; i < count; i++)
+    {
+        c = chars ? chars[i] : first + i;
+        get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, &buffer[i], 0, NULL, NULL );
+    }
     LeaveCriticalSection( &font_cs );
     return TRUE;
 }
@@ -5606,47 +5610,6 @@ BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 }
 
 
-/***********************************************************************
- *           GetCharABCWidthsA   (GDI32.@)
- *
- * See GetCharABCWidthsW.
- */
-BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
-                                  LPABC abc )
-{
-    INT i, wlen;
-    LPSTR str;
-    LPWSTR wstr;
-    BOOL ret = TRUE;
-
-    str = FONT_GetCharsByRangeA(hdc, firstChar, lastChar, &i);
-    if (str == NULL)
-        return FALSE;
-
-    wstr = FONT_mbtowc(hdc, str, i, &wlen, NULL);
-    if (wstr == NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, str);
-        return FALSE;
-    }
-
-    for(i = 0; i < wlen; i++)
-    {
-	if(!GetCharABCWidthsW(hdc, wstr[i], wstr[i], abc))
-	{
-	    ret = FALSE;
-	    break;
-	}
-	abc++;
-    }
-
-    HeapFree(GetProcessHeap(), 0, str);
-    HeapFree(GetProcessHeap(), 0, wstr);
-
-    return ret;
-}
-
-
 /******************************************************************************
  *           NtGdiGetCharABCWidthsW    (win32u.@)
  *
@@ -5661,12 +5624,12 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
  * NOTES
  *    Only works with TrueType fonts
  */
-BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar, WCHAR *chars,
+BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars,
                                     ULONG flags, void *buffer )
 {
     DC *dc = get_dc_ptr(hdc);
     PHYSDEV dev;
-    unsigned int i;
+    unsigned int i, count = last;
     BOOL ret;
     TEXTMETRICW tm;
 
@@ -5678,6 +5641,8 @@ BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar, WCHA
         return FALSE;
     }
 
+    if (!chars) count = last - first + 1;
+
     /* unlike GetCharABCWidthsFloatW, this one is supposed to fail on non-scalable fonts */
     dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
     if (!dev->funcs->pGetTextMetrics( dev, &tm ) || !(tm.tmPitchAndFamily & TMPF_VECTOR))
@@ -5687,15 +5652,16 @@ BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar, WCHA
     }
 
     dev = GET_DC_PHYSDEV( dc, pGetCharABCWidths );
-    ret = dev->funcs->pGetCharABCWidths( dev, firstChar, lastChar, buffer );
+    ret = dev->funcs->pGetCharABCWidths( dev, first, count, chars, buffer );
     if (ret)
     {
         ABC *abc = buffer;
         /* convert device units to logical */
-        for( i = firstChar; i <= lastChar; i++, abc++ ) {
-            abc->abcA = width_to_LP(dc, abc->abcA);
-            abc->abcB = width_to_LP(dc, abc->abcB);
-            abc->abcC = width_to_LP(dc, abc->abcC);
+        for (i = 0; i < count; i++)
+        {
+            abc[i].abcA = width_to_LP( dc, abc[i].abcA );
+            abc[i].abcB = width_to_LP( dc, abc[i].abcB );
+            abc[i].abcC = width_to_LP( dc, abc[i].abcC );
 	}
     }
 
@@ -6442,7 +6408,7 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
     if (!(abc = HeapAlloc( GetProcessHeap(), 0, (last - first + 1) * sizeof(*abc) ))) goto done;
 
     dev = GET_DC_PHYSDEV( dc, pGetCharABCWidths );
-    ret = dev->funcs->pGetCharABCWidths( dev, first, last, abc );
+    ret = dev->funcs->pGetCharABCWidths( dev, first, last - first + 1, NULL, abc );
     if (ret)
     {
         /* convert device units to logical */
