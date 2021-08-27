@@ -1387,7 +1387,7 @@ static void build(struct options* opts)
     else entry_point = opts->entry_point;
 
     /* run winebuild to generate the .spec.o file */
-    if (!(opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "native")))
+    if (!(opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "unixlib")))
         spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
 
     if (fake_module) return;  /* nothing else to do */
