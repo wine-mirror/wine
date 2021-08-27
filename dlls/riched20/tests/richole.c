@@ -3323,7 +3323,7 @@ static void test_InsertObject(void)
   received_reo.polesite = (IOleClientSite *)0xdeadbeef;
   hr = IRichEditOle_GetObject(reole, 2, &received_reo, REO_GETOBJ_NO_INTERFACES);
   ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
-  ok(received_reo.polesite == (IOleClientSite *)NULL, "Got wrong site interface.\n");
+  ok(received_reo.polesite == NULL, "Got wrong site interface.\n");
 
   CHECK_REOBJECT_STRUCT(reole, REO_IOB_USE_CP, REO_GETOBJ_ALL_INTERFACES, 0, NULL, NULL, reo1.polesite, 1);
   CHECK_REOBJECT_STRUCT(reole, REO_IOB_USE_CP, REO_GETOBJ_ALL_INTERFACES, 1, NULL, NULL, reo3.polesite, 3);
