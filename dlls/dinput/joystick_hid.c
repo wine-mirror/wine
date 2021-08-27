@@ -427,6 +427,16 @@ static HRESULT WINAPI hid_joystick_GetCapabilities( IDirectInputDevice8W *iface,
     return DI_OK;
 }
 
+static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_caps *caps,
+                                     DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    HIDP_VALUE_CAPS *value_caps = caps->value;
+    DIPROPRANGE *value = data;
+    value->lMin = value_caps->PhysicalMin;
+    value->lMax = value_caps->PhysicalMax;
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
                                                 DIPROPHEADER *header )
 {
@@ -439,6 +449,9 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
 
     switch (LOWORD( guid ))
     {
+    case (DWORD_PTR)DIPROP_RANGE:
+        enum_value_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header );
+        return DI_OK;
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
@@ -472,6 +485,41 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     }
     default:
         return IDirectInputDevice2WImpl_GetProperty( iface, guid, header );
+    }
+
+    return DI_OK;
+}
+
+static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_caps *caps,
+                                     DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    HIDP_VALUE_CAPS *value_caps = caps->value;
+    DIPROPRANGE *value = data;
+    LONG range = value_caps->LogicalMax - value_caps->LogicalMin;
+    value_caps->PhysicalMin = value->lMin;
+    value_caps->PhysicalMax = value->lMax;
+    if (instance->dwType & DIDFT_POV && range > 0)
+        value_caps->PhysicalMax -= value->lMax / (range + 1);
+    return DIENUM_CONTINUE;
+}
+
+static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, const GUID *guid,
+                                                const DIPROPHEADER *header )
+{
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
+
+    if (!header) return DIERR_INVALIDPARAM;
+    if (!IS_DIPROP( guid )) return DI_OK;
+
+    switch (LOWORD( guid ))
+    {
+    case (DWORD_PTR)DIPROP_RANGE:
+        enum_value_objects( impl, header, DIDFT_AXIS, set_property_prop_range, (void *)header );
+        return DI_OK;
+    default:
+        return IDirectInputDevice2WImpl_SetProperty( iface, guid, header );
     }
 
     return DI_OK;
@@ -536,7 +584,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
     hid_joystick_GetProperty,
-    IDirectInputDevice2WImpl_SetProperty,
+    hid_joystick_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
     hid_joystick_GetDeviceState,
@@ -747,6 +795,15 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
         .guidProduct = *guid,
         .guidInstance = *guid
     };
+    DIPROPRANGE range =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(range),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
     HIDP_LINK_COLLECTION_NODE *nodes;
     struct hid_joystick *impl = NULL;
@@ -825,6 +882,11 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     enum_collections_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
 
     _dump_DIDATAFORMAT( impl->base.data_format.wine_df );
+
+    range.lMax = 65535;
+    enum_value_objects( impl, &range.diph, DIDFT_AXIS, set_property_prop_range, &range );
+    range.lMax = 36000;
+    enum_value_objects( impl, &range.diph, DIDFT_POV, set_property_prop_range, &range );
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
