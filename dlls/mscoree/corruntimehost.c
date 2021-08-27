@@ -137,7 +137,7 @@ static void domain_restore(MonoDomain *prev_domain)
 
 static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *config_path, MonoDomain **result)
 {
-    WCHAR config_dir[MAX_PATH];
+    WCHAR exe_config[MAX_PATH];
     WCHAR base_dir[MAX_PATH];
     char *base_dirA, *config_pathA, *slash;
     HRESULT res=S_OK;
@@ -151,18 +151,10 @@ static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *conf
 
     if (!config_path)
     {
-        DWORD len = ARRAY_SIZE(config_dir);
+        GetModuleFileNameW(NULL, exe_config, MAX_PATH);
+        lstrcatW(exe_config, L".config");
 
-        static const WCHAR machine_configW[] = {'\\','C','O','N','F','I','G','\\','m','a','c','h','i','n','e','.','c','o','n','f','i','g',0};
-
-        res = ICLRRuntimeInfo_GetRuntimeDirectory(&This->version->ICLRRuntimeInfo_iface,
-                config_dir, &len);
-        if (FAILED(res))
-            goto end;
-
-        lstrcatW(config_dir, machine_configW);
-
-        config_path = config_dir;
+        config_path = exe_config;
     }
 
     config_pathA = WtoA(config_path);
