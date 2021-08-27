@@ -1707,3 +1707,14 @@ BOOL WINAPI GetCharABCWidthsA( HDC hdc, UINT first, UINT last, ABC *abc )
     HeapFree( GetProcessHeap(), 0, chars );
     return ret;
 }
+
+/***********************************************************************
+ *           GetCharABCWidthsI    (GDI32.@)
+ */
+BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT first, UINT count, WORD *glyphs, ABC *buffer )
+{
+    TRACE( "(%p, %d, %d, %p, %p)\n", hdc, first, count, glyphs, buffer );
+    return NtGdiGetCharABCWidthsW( hdc, first, count, glyphs,
+                                   NTGDI_GETCHARABCWIDTHS_INDICES | NTGDI_GETCHARABCWIDTHS_INT,
+                                   buffer );
+}
