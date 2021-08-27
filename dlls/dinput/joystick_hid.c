@@ -54,6 +54,8 @@ struct hid_joystick
 
     HANDLE device;
     PHIDP_PREPARSED_DATA preparsed;
+
+    DIDEVICEINSTANCEW instance;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -97,14 +99,18 @@ static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, 
 
 static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, DIDEVICEINSTANCEW *instance )
 {
-    FIXME( "iface %p, instance %p stub!\n", iface, instance );
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p, instance %p.\n", iface, instance );
 
     if (!instance) return E_POINTER;
     if (instance->dwSize != sizeof(DIDEVICEINSTANCE_DX3W) &&
         instance->dwSize != sizeof(DIDEVICEINSTANCEW))
         return DIERR_INVALIDPARAM;
 
-    return DIERR_UNSUPPORTED;
+    memcpy( instance, &impl->instance, instance->dwSize );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI hid_joystick_BuildActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
@@ -341,6 +347,8 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     hr = hid_joystick_device_open( -1, &instance, device_path, &impl->device, &impl->preparsed,
                                    &attrs, &caps, dinput->dwVersion );
     if (hr != DI_OK) goto failed;
+
+    impl->instance = instance;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
