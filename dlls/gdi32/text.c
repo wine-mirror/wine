@@ -1682,3 +1682,11 @@ BOOL WINAPI GetCharWidthI( HDC hdc, UINT first, UINT count, WORD *glyphs, INT *b
     return NtGdiGetCharWidthW( hdc, first, count, glyphs,
                                NTGDI_GETCHARWIDTH_INT | NTGDI_GETCHARWIDTH_INDICES, buffer );
 }
+
+/***********************************************************************
+ *           GetCharABCWidthsW    (GDI32.@)
+ */
+BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT first, UINT last, ABC *abc )
+{
+    return NtGdiGetCharABCWidthsW( hdc, first, last, NULL, NTGDI_GETCHARABCWIDTHS_INT, abc );
+}

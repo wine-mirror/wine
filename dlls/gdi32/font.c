@@ -5648,7 +5648,7 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /******************************************************************************
- * GetCharABCWidthsW [GDI32.@]
+ *           NtGdiGetCharABCWidthsW    (win32u.@)
  *
  * Retrieves widths of characters in range.
  *
@@ -5660,13 +5660,9 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
  *
  * NOTES
  *    Only works with TrueType fonts
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
  */
-BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
-                                   LPABC abc )
+BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar, WCHAR *chars,
+                                    ULONG flags, void *buffer )
 {
     DC *dc = get_dc_ptr(hdc);
     PHYSDEV dev;
@@ -5676,7 +5672,7 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
 
     if (!dc) return FALSE;
 
-    if (!abc)
+    if (!buffer)
     {
         release_dc_ptr( dc );
         return FALSE;
@@ -5691,9 +5687,10 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
     }
 
     dev = GET_DC_PHYSDEV( dc, pGetCharABCWidths );
-    ret = dev->funcs->pGetCharABCWidths( dev, firstChar, lastChar, abc );
+    ret = dev->funcs->pGetCharABCWidths( dev, firstChar, lastChar, buffer );
     if (ret)
     {
+        ABC *abc = buffer;
         /* convert device units to logical */
         for( i = firstChar; i <= lastChar; i++, abc++ ) {
             abc->abcA = width_to_LP(dc, abc->abcA);

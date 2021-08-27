@@ -126,6 +126,9 @@ enum
 #define NTGDI_GETCHARWIDTH_INT      0x02
 #define NTGDI_GETCHARWIDTH_INDICES  0x08
 
+#define NTGDI_GETCHARABCWIDTHS_INT      0x01
+#define NTGDI_GETCHARABCWIDTHS_INDICES  0x02
+
 #define MWT_SET  4
 
 /* structs not compatible with native Windows */
@@ -229,7 +232,8 @@ BOOL     WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD 
 INT      WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect );
 BOOL     WINAPI NtGdiGetBitmapDimension( HBITMAP bitmap, SIZE *size );
 UINT     WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags );
-BOOL     WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first_char, UINT last_char, ABC *abc );
+BOOL     WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars,
+                                        ULONG flags, void *buffer );
 BOOL     WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
                                     ULONG flags, void *buffer );
 BOOL     WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result );
