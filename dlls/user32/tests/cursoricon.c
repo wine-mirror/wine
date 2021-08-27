@@ -1139,7 +1139,7 @@ static const DWORD biSize_tests[] = {
     0xffffffff
 };
 
-static void test_LoadImageBitmap(const char * test_desc, HBITMAP hbm)
+static void test_LoadImageBitmap(HBITMAP hbm)
 {
     BITMAP bm;
     BITMAPINFO bmi;
@@ -1157,9 +1157,9 @@ static void test_LoadImageBitmap(const char * test_desc, HBITMAP hbm)
     bmi.bmiHeader.biBitCount= 24;
     bmi.bmiHeader.biCompression= BI_RGB;
     ret = GetDIBits(hdc, hbm, 0, bm.bmHeight, &pixel, &bmi, DIB_RGB_COLORS);
-    ok(ret == bm.bmHeight, "%s: %d lines were converted, not %d\n", test_desc, ret, bm.bmHeight);
+    ok(ret == bm.bmHeight, "%d lines were converted, not %d\n", ret, bm.bmHeight);
 
-    ok(color_match(pixel, 0x00ffffff), "%s: Pixel is 0x%08x\n", test_desc, pixel);
+    ok(color_match(pixel, 0x00ffffff), "Pixel is 0x%08x\n", pixel);
 
     ReleaseDC(NULL, hdc);
 }
@@ -1172,6 +1172,7 @@ static void test_LoadImageFile(const char * test_desc, const unsigned char * ima
     DWORD error, bytes_written;
     char filename[64];
 
+    winetest_push_context("%s", test_desc);
     strcpy(filename, "test.");
     strcat(filename, ext);
 
@@ -1186,7 +1187,7 @@ static void test_LoadImageFile(const char * test_desc, const unsigned char * ima
     /* Load as cursor. For all tested formats, this should fail */
     SetLastError(0xdeadbeef);
     handle = LoadImageA(NULL, filename, IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
-    ok(handle == NULL, "%s: IMAGE_CURSOR succeeded incorrectly.\n", test_desc);
+    ok(handle == NULL, "IMAGE_CURSOR succeeded incorrectly\n");
     error = GetLastError();
     ok(error == 0 ||
         broken(error == 0xdeadbeef) || /* Win9x */
@@ -1197,7 +1198,7 @@ static void test_LoadImageFile(const char * test_desc, const unsigned char * ima
     /* Load as icon. For all tested formats, this should fail */
     SetLastError(0xdeadbeef);
     handle = LoadImageA(NULL, filename, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-    ok(handle == NULL, "%s: IMAGE_ICON succeeded incorrectly.\n", test_desc);
+    ok(handle == NULL, "IMAGE_ICON succeeded incorrectly\n");
     error = GetLastError();
     ok(error == 0 ||
         broken(error == 0xdeadbeef) || /* Win9x */
@@ -1214,13 +1215,14 @@ static void test_LoadImageFile(const char * test_desc, const unsigned char * ima
         "Last error: %u\n", error);
 
     if (expect_success) {
-        ok(handle != NULL, "%s: IMAGE_BITMAP failed.\n", test_desc);
-        if (handle != NULL) test_LoadImageBitmap(test_desc, handle);
+        ok(handle != NULL, "IMAGE_BITMAP failed\n");
+        if (handle != NULL) test_LoadImageBitmap(handle);
     }
-    else ok(handle == NULL, "%s: IMAGE_BITMAP succeeded incorrectly.\n", test_desc);
+    else ok(handle == NULL, "IMAGE_BITMAP succeeded incorrectly\n");
 
     if (handle != NULL) DeleteObject(handle);
     DeleteFileA(filename);
+    winetest_pop_context();
 }
 
 typedef struct {
