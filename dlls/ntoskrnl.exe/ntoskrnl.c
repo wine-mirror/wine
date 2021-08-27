@@ -3008,6 +3008,13 @@ HANDLE WINAPI PsGetCurrentProcessId(void)
     return KeGetCurrentThread()->id.UniqueProcess;
 }
 
+/***********************************************************************
+ *           PsGetCurrentProcessSessionId   (NTOSKRNL.EXE.@)
+ */
+ULONG WINAPI PsGetCurrentProcessSessionId(void)
+{
+    return PsGetCurrentProcess()->info.PebBaseAddress->SessionId;
+}
 
 /***********************************************************************
  *           PsGetCurrentThreadId   (NTOSKRNL.EXE.@)

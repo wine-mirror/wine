@@ -888,7 +888,7 @@
 @ stub PsGetContextThread
 @ stdcall PsGetCurrentProcess() IoGetCurrentProcess
 @ stdcall PsGetCurrentProcessId()
-@ stub PsGetCurrentProcessSessionId
+@ stdcall PsGetCurrentProcessSessionId()
 @ stdcall PsGetCurrentThread() KeGetCurrentThread
 @ stdcall PsGetCurrentThreadId()
 @ stub PsGetCurrentThreadPreviousMode
