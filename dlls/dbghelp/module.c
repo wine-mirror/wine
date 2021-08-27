@@ -677,7 +677,7 @@ BOOL image_check_alternate(struct image_file_map* fmap, const struct module* mod
         const char* dbg_link;
 
         found = TRUE;
-        dbg_link = (const char*)image_map_section(&debuglink_sect);
+        dbg_link = image_map_section(&debuglink_sect);
         if (dbg_link != IMAGE_NO_MAP)
         {
             /* The content of a debug link section is:

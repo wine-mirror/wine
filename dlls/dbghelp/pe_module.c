@@ -428,7 +428,7 @@ static BOOL pe_load_coff_symbol_table(struct module* module)
     if (!fmap->u.pe.ntheader.FileHeader.PointerToSymbolTable || !numsym)
         return TRUE;
     if (!(mapping = pe_map_full(fmap, NULL))) return FALSE;
-    isym = (const IMAGE_SYMBOL*)((const char*)mapping + fmap->u.pe.ntheader.FileHeader.PointerToSymbolTable);
+    isym = (const IMAGE_SYMBOL*)(mapping + fmap->u.pe.ntheader.FileHeader.PointerToSymbolTable);
     /* FIXME: no way to get strtable size */
     strtable = (const char*)&isym[numsym];
     sect = IMAGE_FIRST_SECTION(RtlImageNtHeader((HMODULE)mapping));

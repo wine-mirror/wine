@@ -3167,7 +3167,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
             case 1: stack[sp] = *(unsigned char*)&tmp; break;
             case 2: stack[sp] = *(unsigned short*)&tmp; break;
             case 4: stack[sp] = *(unsigned int*)&tmp; break;
-            case 8: stack[sp] = *(ULONG_PTR*)&tmp; break; /* FIXME: won't work on 32bit platform */
+            case 8: stack[sp] = tmp; break; /* FIXME: won't work on 32bit platform */
             default: FIXME("Unknown size for deref 0x%lx\n", sz);
             }
             break;
