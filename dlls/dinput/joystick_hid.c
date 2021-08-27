@@ -59,6 +59,7 @@ struct hid_joystick
     DIDEVICEINSTANCEW instance;
     WCHAR device_path[MAX_PATH];
     HIDD_ATTRIBUTES attrs;
+    DIDEVCAPS dev_caps;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -84,11 +85,15 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
 
 static HRESULT WINAPI hid_joystick_GetCapabilities( IDirectInputDevice8W *iface, DIDEVCAPS *caps )
 {
-    FIXME( "iface %p, caps %p stub!\n", iface, caps );
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p, caps %p.\n", iface, caps );
 
     if (!caps) return E_POINTER;
 
-    return DIERR_UNSUPPORTED;
+    *caps = impl->dev_caps;
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
@@ -404,6 +409,9 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
 
     impl->instance = instance;
     impl->attrs = attrs;
+    impl->dev_caps.dwSize = sizeof(impl->dev_caps);
+    impl->dev_caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
+    impl->dev_caps.dwDevType = instance.dwDevType;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
