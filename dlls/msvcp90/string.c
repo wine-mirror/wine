@@ -454,10 +454,8 @@ unsigned short CDECL MSVCP_char_traits_short_not_eof(const unsigned short *in)
 /* ?_Xlen@_String_base@std@@SAXXZ */
 void  CDECL MSVCP__String_base_Xlen(void)
 {
-    static const char msg[] = "string too long";
-
     TRACE("\n");
-    throw_exception(EXCEPTION_LENGTH_ERROR, msg);
+    _Xlength_error("string too long");
 }
 
 /* ?_Xlen@_String_base@std@@QBEXXZ */

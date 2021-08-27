@@ -664,4 +664,5 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #endif
 
 void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
+void __cdecl DECLSPEC_NORETURN _Xlength_error(const char*);
 void __cdecl DECLSPEC_NORETURN _Xmem(void);

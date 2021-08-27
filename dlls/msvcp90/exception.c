@@ -898,10 +898,15 @@ void __cdecl _Xinvalid_argument(const char *str)
 
 /* ?_Xlength_error@std@@YAXPBD@Z */
 /* ?_Xlength_error@std@@YAXPEBD@Z */
-void __cdecl _Xlength_error(const char *str)
+void __cdecl DECLSPEC_NORETURN _Xlength_error(const char *str)
 {
+    exception_name name = EXCEPTION_NAME(str);
+    length_error e;
+
     TRACE("(%s)\n", debugstr_a(str));
-    throw_exception(EXCEPTION_LENGTH_ERROR, str);
+
+    MSVCP_length_error_ctor(&e, name);
+    _CxxThrowException(&e, &length_error_cxx_type);
 }
 
 /* ?_Xout_of_range@std@@YAXPBD@Z */
@@ -1065,11 +1070,6 @@ void throw_exception(exception_type et, const char *str)
         logic_error e;
         MSVCP_logic_error_ctor(&e, name);
         _CxxThrowException(&e, &logic_error_cxx_type);
-    }
-    case EXCEPTION_LENGTH_ERROR: {
-        length_error e;
-        MSVCP_length_error_ctor(&e, name);
-        _CxxThrowException(&e, &length_error_cxx_type);
     }
     case EXCEPTION_OUT_OF_RANGE: {
         out_of_range e;

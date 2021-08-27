@@ -55,10 +55,8 @@ void __cdecl _Xran(void)
 /* ?_Xlen@std@@YAXXZ */
 void __cdecl _Xlen(void)
 {
-    static const char msg[] = "string too long";
-
     TRACE("\n");
-    throw_exception(EXCEPTION_LENGTH_ERROR, msg);
+    _Xlength_error("string too long");
 }
 
 /* ?compare@?$char_traits@D@std@@SAHPBD0I@Z */
