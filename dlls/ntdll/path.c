@@ -133,7 +133,7 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
  *		is_valid_directory
  *
  * Helper for RtlDosPathNameToNtPathName_U_WithStatus.
- * Test if the path is an exisiting directory.
+ * Test if the path is an existing directory.
  */
 static BOOL is_valid_directory(LPCWSTR path)
 {
