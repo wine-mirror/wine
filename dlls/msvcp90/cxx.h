@@ -319,7 +319,6 @@ typedef enum __exception_type {
     EXCEPTION,
     EXCEPTION_BAD_CAST,
     EXCEPTION_LOGIC_ERROR,
-    EXCEPTION_FAILURE,
 } exception_type;
 void throw_exception(exception_type, const char *);
 

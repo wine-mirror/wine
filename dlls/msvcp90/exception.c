@@ -1086,11 +1086,6 @@ void throw_exception(exception_type et, const char *str)
         MSVCP_logic_error_ctor(&e, name);
         _CxxThrowException(&e, &logic_error_cxx_type);
     }
-    case EXCEPTION_FAILURE: {
-        failure e;
-        MSVCP_failure_ctor(&e, name);
-        _CxxThrowException(&e, &failure_cxx_type);
-    }
     }
 }
 
@@ -1102,6 +1097,16 @@ void DECLSPEC_NORETURN throw_range_error(const char *str)
 
     MSVCP_range_error_ctor(&e, name);
     _CxxThrowException(&e, &range_error_cxx_type);
+}
+
+/* Internal: throws failure exception */
+void DECLSPEC_NORETURN throw_failure(const char *str)
+{
+    exception_name name = EXCEPTION_NAME(str);
+    failure e;
+
+    MSVCP_failure_ctor(&e, name);
+    _CxxThrowException(&e, &failure_cxx_type);
 }
 
 void init_exception(void *base)

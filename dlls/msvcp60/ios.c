@@ -4849,13 +4849,13 @@ void __thiscall ios_base_clear_reraise(ios_base *this, IOSB_iostate state, bool 
     if(reraise)
         _CxxThrowException(NULL, NULL);
     else if(this->state & this->except & IOSTATE_eofbit)
-        throw_exception(EXCEPTION_FAILURE, "eofbit is set");
+        throw_failure("eofbit is set");
     else if(this->state & this->except & IOSTATE_failbit)
-        throw_exception(EXCEPTION_FAILURE, "failbit is set");
+        throw_failure("failbit is set");
     else if(this->state & this->except & IOSTATE_badbit)
-        throw_exception(EXCEPTION_FAILURE, "badbit is set");
+        throw_failure("badbit is set");
     else if(this->state & this->except & IOSTATE__Hardfail)
-        throw_exception(EXCEPTION_FAILURE, "_Hardfail is set");
+        throw_failure("_Hardfail is set");
 }
 
 /* ?clear@ios_base@std@@QAEXH@Z */
