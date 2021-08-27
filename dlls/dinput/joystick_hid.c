@@ -141,6 +141,7 @@ struct hid_joystick
     DIJOYSTATE2 state;
 
     HANDLE device;
+    OVERLAPPED read_ovl;
     PHIDP_PREPARSED_DATA preparsed;
 
     DIDEVICEINSTANCEW instance;
@@ -152,6 +153,12 @@ struct hid_joystick
     HIDP_LINK_COLLECTION_NODE *collection_nodes;
     HIDP_BUTTON_CAPS *input_button_caps;
     HIDP_VALUE_CAPS *input_value_caps;
+
+    char *input_report_buf;
+    USAGE_AND_PAGE *usages_buf;
+    ULONG usages_count;
+
+    BYTE device_state_report_id;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -404,10 +411,14 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
 
     if (!(ref = IDirectInputDevice2WImpl_Release( iface )))
     {
+        HeapFree( GetProcessHeap(), 0, tmp.usages_buf );
+        HeapFree( GetProcessHeap(), 0, tmp.input_report_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_value_caps );
         HeapFree( GetProcessHeap(), 0, tmp.input_button_caps );
         HeapFree( GetProcessHeap(), 0, tmp.collection_nodes );
         HidD_FreePreparsedData( tmp.preparsed );
+        CancelIoEx( tmp.device, &tmp.read_ovl );
+        CloseHandle( tmp.base.read_event );
         CloseHandle( tmp.device );
     }
 
@@ -568,6 +579,40 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
     return DI_OK;
 }
 
+static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
+{
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    ULONG report_len = impl->caps.InputReportByteLength;
+    HRESULT hr;
+
+    TRACE( "iface %p.\n", iface );
+
+    if ((hr = IDirectInputDevice2WImpl_Acquire( iface )) != DI_OK) return hr;
+
+    memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
+    impl->read_ovl.hEvent = impl->base.read_event;
+    if (ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl ))
+        impl->base.read_callback( iface );
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
+{
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr;
+    BOOL ret;
+
+    TRACE( "iface %p.\n", iface );
+
+    if ((hr = IDirectInputDevice2WImpl_Unacquire( iface )) != DI_OK) return hr;
+
+    ret = CancelIoEx( impl->device, &impl->read_ovl );
+    if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
+
+    return DI_OK;
+}
+
 static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, DWORD len, void *ptr )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -665,8 +710,8 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_EnumObjects,
     hid_joystick_GetProperty,
     hid_joystick_SetProperty,
-    IDirectInputDevice2WImpl_Acquire,
-    IDirectInputDevice2WImpl_Unacquire,
+    hid_joystick_Acquire,
+    hid_joystick_Unacquire,
     hid_joystick_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
@@ -695,6 +740,183 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice8WImpl_GetImageInfo,
 };
 
+struct parse_device_state_params
+{
+    DIJOYSTATE2 old_state;
+    DWORD time;
+    DWORD seq;
+};
+
+static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_caps *caps,
+                                       DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
+    struct parse_device_state_params *params = data;
+    DWORD i = DIDFT_GETINSTANCE( instance->dwType );
+
+    if (!(instance->dwType & DIDFT_BUTTON))
+        FIXME( "unexpected object type %#x, expected DIDFT_BUTTON\n", instance->dwType );
+    else if (params->old_state.rgbButtons[i] != impl->state.rgbButtons[i])
+        queue_event( iface, instance->dwType, impl->state.rgbButtons[i], params->time, params->seq );
+
+    return DIENUM_CONTINUE;
+}
+
+static LONG sign_extend( ULONG value, const HIDP_VALUE_CAPS *caps )
+{
+    UINT sign = 1 << (caps->BitSize - 1);
+    if (sign <= 1 || caps->LogicalMin >= 0) return value;
+    return value - ((value & sign) << 1);
+}
+
+static LONG scale_value( ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG max )
+{
+    ULONG bit_max = (1 << caps->BitSize) - 1;
+    LONG tmp = sign_extend( value, caps );
+
+    /* xinput HID gamepad have bogus logical value range, let's use the bit range instead */
+    if (caps->LogicalMin == 0 && caps->LogicalMax == -1) return min + MulDiv( tmp, max - min, bit_max );
+    if (caps->LogicalMin > tmp || caps->LogicalMax < tmp) return -1; /* invalid / null value */
+    return min + MulDiv( tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin );
+}
+
+static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps *caps,
+                                     DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
+    ULONG logical_value, report_len = impl->caps.InputReportByteLength;
+    struct parse_device_state_params *params = data;
+    char *report_buf = impl->input_report_buf;
+    HIDP_VALUE_CAPS *value_caps = caps->value;
+    NTSTATUS status;
+    LONG value;
+
+    if (!(instance->dwType & (DIDFT_POV | DIDFT_AXIS)))
+        FIXME( "unexpected object type %#x, expected DIDFT_POV | DIDFT_AXIS\n", instance->dwType );
+    else
+    {
+        status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
+                                     &logical_value, impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
+                                                 instance->wUsagePage, instance->wUsage, status );
+        value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
+
+        switch (instance->dwOfs)
+        {
+        case DIJOFS_X:
+            if (impl->state.lX == value) break;
+            impl->state.lX = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        case DIJOFS_Y:
+            if (impl->state.lY == value) break;
+            impl->state.lY = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        case DIJOFS_Z:
+            if (impl->state.lZ == value) break;
+            impl->state.lZ = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        case DIJOFS_RX:
+            if (impl->state.lRx == value) break;
+            impl->state.lRx = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        case DIJOFS_RY:
+            if (impl->state.lRy == value) break;
+            impl->state.lRy = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        case DIJOFS_RZ:
+            if (impl->state.lRz == value) break;
+            impl->state.lRz = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        case DIJOFS_POV( 0 ):
+            if (impl->state.rgdwPOV[0] == value) break;
+            impl->state.rgdwPOV[0] = value;
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+            break;
+        default:
+            FIXME( "unimplemented offset %#x.\n", instance->dwOfs );
+            break;
+        }
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
+{
+    static const DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = DIPH_DEVICE,
+    };
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    ULONG i, count, report_len = impl->caps.InputReportByteLength;
+    struct parse_device_state_params params = {0};
+    char *report_buf = impl->input_report_buf;
+    USAGE_AND_PAGE *usages;
+    NTSTATUS status;
+    BOOL ret;
+
+    ret = GetOverlappedResult( impl->device, &impl->read_ovl, &count, FALSE );
+    if (!ret) WARN( "ReadFile failed, error %u\n", GetLastError() );
+    else if (TRACE_ON(dinput))
+    {
+        TRACE( "read size %u report:\n", count );
+        for (i = 0; i < report_len;)
+        {
+            char buffer[256], *buf = buffer;
+            buf += sprintf(buf, "%08x ", i);
+            do
+            {
+                buf += sprintf(buf, " %02x", (BYTE)report_buf[i] );
+            } while (++i % 16 && i < report_len);
+            TRACE("%s\n", buffer);
+        }
+    }
+
+    do
+    {
+        count = impl->usages_count;
+        memset( impl->usages_buf, 0, count * sizeof(*impl->usages_buf) );
+        status = HidP_GetUsagesEx( HidP_Input, 0, impl->usages_buf, &count,
+                                   impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsagesEx returned %#x\n", status );
+
+        if (report_buf[0] == impl->device_state_report_id)
+        {
+            params.old_state = impl->state;
+            params.time = GetCurrentTime();
+            params.seq = impl->base.dinput->evsequence++;
+
+            memset( impl->state.rgbButtons, 0, sizeof(impl->state.rgbButtons) );
+            while (count--)
+            {
+                usages = impl->usages_buf + count;
+                if (usages->UsagePage != HID_USAGE_PAGE_BUTTON)
+                    FIXME( "unimplemented usage page %x.\n", usages->UsagePage );
+                else if (usages->Usage >= 128)
+                    FIXME( "ignoring extraneous button %d.\n", usages->Usage );
+                else
+                    impl->state.rgbButtons[usages->Usage - 1] = 0x80;
+            }
+
+            enum_value_objects( impl, &filter, DIDFT_ALL, read_device_state_value, &params );
+            enum_button_objects( impl, &filter, DIDFT_ALL, check_device_state_button, &params );
+        }
+
+        memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
+        impl->read_ovl.hEvent = impl->base.read_event;
+    } while (ReadFile( impl->device, report_buf, report_len, &count, &impl->read_ovl ));
+
+    return DI_OK;
+}
+
 static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HANDLE *device,
                                           PHIDP_PREPARSED_DATA *preparsed, HIDD_ATTRIBUTES *attrs,
                                           HIDP_CAPS *caps, DIDEVICEINSTANCEW *instance, DWORD version )
@@ -703,7 +925,7 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
     HANDLE device_file;
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                               NULL, OPEN_EXISTING, 0, 0 );
+                               NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
     if (device_file == INVALID_HANDLE_VALUE) return FALSE;
 
     if (!HidD_GetPreparsedData( device_file, &preparsed_data )) goto failed;
@@ -841,6 +1063,11 @@ static BOOL init_objects( struct hid_joystick *impl, struct hid_caps *caps,
     if (instance->dwType & DIDFT_AXIS) impl->dev_caps.dwAxes++;
     if (instance->dwType & DIDFT_POV) impl->dev_caps.dwPOVs++;
 
+    if (!impl->device_state_report_id)
+        impl->device_state_report_id = instance->wReportId;
+    else if (impl->device_state_report_id != instance->wReportId)
+        FIXME( "multiple device state reports found!\n" );
+
     return DIENUM_CONTINUE;
 }
 
@@ -890,8 +1117,10 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     DIDATAFORMAT *format = NULL;
     HIDP_BUTTON_CAPS *buttons;
     HIDP_VALUE_CAPS *values;
+    USAGE_AND_PAGE *usages;
     DWORD size, index;
     NTSTATUS status;
+    char *buffer;
     HRESULT hr;
 
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
@@ -911,6 +1140,8 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     if (FAILED(hr)) return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
+    impl->base.read_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    impl->base.read_callback = hid_joystick_read_state;
 
     hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
                                    &attrs, &impl->caps, dinput->dwVersion );
@@ -931,6 +1162,14 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     size = impl->caps.NumberInputValueCaps * sizeof(HIDP_VALUE_CAPS);
     if (!(values = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
     impl->input_value_caps = values;
+
+    size = impl->caps.InputReportByteLength;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
+    impl->input_report_buf = buffer;
+    impl->usages_count = HidP_MaxUsageListLength( HidP_Input, 0, impl->preparsed );
+    size = impl->usages_count * sizeof(USAGE_AND_PAGE);
+    if (!(usages = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
+    impl->usages_buf = usages;
 
     size = impl->caps.NumberLinkCollectionNodes;
     status = HidP_GetLinkCollectionNodes( nodes, &size, impl->preparsed );
