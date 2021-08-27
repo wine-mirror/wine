@@ -1849,3 +1849,51 @@ DWORD WINAPI GetKerningPairsA( HDC hdc, DWORD count, KERNINGPAIR *kern_pairA )
     HeapFree( GetProcessHeap(), 0, kern_pairW );
     return kern_pairs_copied;
 }
+
+/*************************************************************************
+ *             GetFontLanguageInfo   (GDI32.@)
+ */
+DWORD WINAPI GetFontLanguageInfo( HDC hdc )
+{
+    FONTSIGNATURE fontsig;
+    DWORD result = 0;
+
+    static const DWORD GCP_DBCS_MASK = FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB,
+        GCP_DIACRITIC_MASK = 0x00000000,
+        FLI_GLYPHS_MASK = 0x00000000,
+        GCP_GLYPHSHAPE_MASK = FS_ARABIC,
+        GCP_KASHIDA_MASK = 0x00000000,
+        GCP_LIGATE_MASK = 0x00000000,
+        GCP_REORDER_MASK = FS_HEBREW|FS_ARABIC;
+
+
+    NtGdiGetTextCharsetInfo( hdc, &fontsig, 0 );
+    /* We detect each flag we return using a bitmask on the Codepage Bitfields */
+
+    if (fontsig.fsCsb[0] & GCP_DBCS_MASK)
+        result |= GCP_DBCS;
+
+    if (fontsig.fsCsb[0] & GCP_DIACRITIC_MASK)
+        result |= GCP_DIACRITIC;
+
+    if (fontsig.fsCsb[0] & FLI_GLYPHS_MASK)
+        result |= FLI_GLYPHS;
+
+    if (fontsig.fsCsb[0] & GCP_GLYPHSHAPE_MASK)
+        result |= GCP_GLYPHSHAPE;
+
+    if (fontsig.fsCsb[0] & GCP_KASHIDA_MASK)
+        result |= GCP_KASHIDA;
+
+    if (fontsig.fsCsb[0] & GCP_LIGATE_MASK)
+        result |= GCP_LIGATE;
+
+    if (NtGdiGetKerningPairsW( hdc, 0, NULL ))
+        result |= GCP_USEKERNING;
+
+    /* this might need a test for a HEBREW- or ARABIC_CHARSET as well */
+    if ((GetTextAlign( hdc ) & TA_RTLREADING) && (fontsig.fsCsb[0] & GCP_REORDER_MASK))
+        result |= GCP_REORDER;
+
+    return result;
+}
