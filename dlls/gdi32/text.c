@@ -1709,6 +1709,15 @@ BOOL WINAPI GetCharABCWidthsA( HDC hdc, UINT first, UINT last, ABC *abc )
 }
 
 /***********************************************************************
+ *      GetCharABCWidthsFloatW    (GDI32.@)
+ */
+BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, ABCFLOAT *abcf )
+{
+    TRACE( "%p, %d, %d, %p\n", hdc, first, last, abcf );
+    return NtGdiGetCharABCWidthsW( hdc, first, last, NULL, 0, abcf );
+}
+
+/***********************************************************************
  *           GetCharABCWidthsI    (GDI32.@)
  */
 BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT first, UINT count, WORD *glyphs, ABC *buffer )

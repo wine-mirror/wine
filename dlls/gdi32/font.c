@@ -5650,12 +5650,15 @@ BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars
     }
     else
     {
-        /* unlike GetCharABCWidthsFloatW, this one is supposed to fail on non-scalable fonts */
-        dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
-        if (!dev->funcs->pGetTextMetrics( dev, &tm ) || !(tm.tmPitchAndFamily & TMPF_VECTOR))
+        if (flags & NTGDI_GETCHARABCWIDTHS_INT)
         {
-            release_dc_ptr( dc );
-            return FALSE;
+            /* unlike float variant, this one is supposed to fail on non-scalable fonts */
+            dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
+            if (!dev->funcs->pGetTextMetrics( dev, &tm ) || !(tm.tmPitchAndFamily & TMPF_VECTOR))
+            {
+                release_dc_ptr( dc );
+                return FALSE;
+            }
         }
 
         if (!chars) count = last - first + 1;
@@ -5666,13 +5669,29 @@ BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars
     if (ret)
     {
         ABC *abc = buffer;
-        /* convert device units to logical */
-        for (i = 0; i < count; i++)
+        if (flags & NTGDI_GETCHARABCWIDTHS_INT)
         {
-            abc[i].abcA = width_to_LP( dc, abc[i].abcA );
-            abc[i].abcB = width_to_LP( dc, abc[i].abcB );
-            abc[i].abcC = width_to_LP( dc, abc[i].abcC );
-	}
+            /* convert device units to logical */
+            for (i = 0; i < count; i++)
+            {
+                abc[i].abcA = width_to_LP( dc, abc[i].abcA );
+                abc[i].abcB = width_to_LP( dc, abc[i].abcB );
+                abc[i].abcC = width_to_LP( dc, abc[i].abcC );
+            }
+        }
+        else
+        {
+            /* convert device units to logical */
+            FLOAT scale = fabs( dc->xformVport2World.eM11 );
+            ABCFLOAT *abcf = buffer;
+
+            for (i = 0; i < count; i++)
+            {
+                abcf[i].abcfA = abc[i].abcA * scale;
+                abcf[i].abcfB = abc[i].abcB * scale;
+                abcf[i].abcfC = abc[i].abcC * scale;
+            }
+        }
     }
 
     release_dc_ptr( dc );
@@ -6332,56 +6351,6 @@ BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT a
     HeapFree( GetProcessHeap(), 0, str );
     HeapFree( GetProcessHeap(), 0, wstr );
 
-    return ret;
-}
-
-/*************************************************************************
- *      GetCharABCWidthsFloatW [GDI32.@]
- *
- * Retrieves widths of a range of characters.
- *
- * PARAMS
- *    hdc   [I] Handle to device context.
- *    first [I] First character in range to query.
- *    last  [I] Last character in range to query.
- *    abcf  [O] Array of LPABCFLOAT structures.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
-{
-    UINT i;
-    ABC *abc;
-    PHYSDEV dev;
-    BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hdc );
-
-    TRACE("%p, %d, %d, %p\n", hdc, first, last, abcf);
-
-    if (!dc) return FALSE;
-
-    if (!abcf) goto done;
-    if (!(abc = HeapAlloc( GetProcessHeap(), 0, (last - first + 1) * sizeof(*abc) ))) goto done;
-
-    dev = GET_DC_PHYSDEV( dc, pGetCharABCWidths );
-    ret = dev->funcs->pGetCharABCWidths( dev, first, last - first + 1, NULL, abc );
-    if (ret)
-    {
-        /* convert device units to logical */
-        FLOAT scale = fabs( dc->xformVport2World.eM11 );
-        for (i = first; i <= last; i++, abcf++)
-        {
-            abcf->abcfA = abc[i - first].abcA * scale;
-            abcf->abcfB = abc[i - first].abcB * scale;
-            abcf->abcfC = abc[i - first].abcC * scale;
-        }
-    }
-    HeapFree( GetProcessHeap(), 0, abc );
-
-done:
-    release_dc_ptr( dc );
     return ret;
 }
 
