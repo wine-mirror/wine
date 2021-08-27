@@ -240,6 +240,9 @@ BOOL     WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result );
 BOOL     WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result );
 INT      WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap );
 BOOL     WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr );
+DWORD    WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
+                                       DWORD size, void *buffer, const MAT2 *mat2,
+                                       BOOL ignore_rotation );
 BOOL     WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
                                   const WCHAR *str, UINT count, const INT *dx, DWORD cp );
 BOOL     WINAPI NtGdiGetMiterLimit( HDC hdc, FLOAT *limit );

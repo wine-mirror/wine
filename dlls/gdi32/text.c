@@ -1742,3 +1742,47 @@ BOOL WINAPI GetCharABCWidthsI( HDC hdc, UINT first, UINT count, WORD *glyphs, AB
                                    NTGDI_GETCHARABCWIDTHS_INDICES | NTGDI_GETCHARABCWIDTHS_INT,
                                    buffer );
 }
+
+/***********************************************************************
+ *           GetGlyphOutlineA    (GDI32.@)
+ */
+DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics, DWORD size,
+                               void *buffer, const MAT2 *mat2 )
+{
+    if (!mat2) return GDI_ERROR;
+
+    if (!(format & GGO_GLYPH_INDEX))
+    {
+        UINT cp;
+        int len;
+        char mbchs[2];
+        WCHAR wChar;
+
+        cp = GdiGetCodePage( hdc );
+        if (IsDBCSLeadByteEx( cp, ch >> 8 ))
+        {
+            len = 2;
+            mbchs[0] = (ch & 0xff00) >> 8;
+            mbchs[1] = (ch & 0xff);
+        }
+        else
+        {
+            len = 1;
+            mbchs[0] = ch & 0xff;
+        }
+        wChar = 0;
+        MultiByteToWideChar(cp, 0, mbchs, len, &wChar, 1 );
+        ch = wChar;
+    }
+
+    return GetGlyphOutlineW( hdc, ch, format, metrics, size, buffer, mat2 );
+}
+
+/***********************************************************************
+ *           GetGlyphOutlineW    (GDI32.@)
+ */
+DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
+                               DWORD size, void *buffer, const MAT2 *mat2 )
+{
+    return NtGdiGetGlyphOutlineW( hdc, ch, format, metrics, size, buffer, mat2, FALSE );
+}

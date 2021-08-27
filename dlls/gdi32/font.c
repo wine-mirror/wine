@@ -5646,61 +5646,25 @@ BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars
 
 
 /***********************************************************************
- *           GetGlyphOutlineA    (GDI32.@)
+ *           NtGdiGetGlyphOutlineW    (win32u.@)
  */
-DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
-                                 LPGLYPHMETRICS lpgm, DWORD cbBuffer,
-                                 LPVOID lpBuffer, const MAT2 *lpmat2 )
-{
-    if (!lpmat2) return GDI_ERROR;
-
-    if(!(fuFormat & GGO_GLYPH_INDEX)) {
-        UINT cp;
-        int len;
-        char mbchs[2];
-        WCHAR wChar;
-
-        cp = GdiGetCodePage(hdc);
-        if (IsDBCSLeadByteEx(cp, uChar >> 8)) {
-            len = 2;
-            mbchs[0] = (uChar & 0xff00) >> 8;
-            mbchs[1] = (uChar & 0xff);
-        } else {
-            len = 1;
-            mbchs[0] = (uChar & 0xff);
-        }
-        wChar = 0;
-        MultiByteToWideChar(cp, 0, mbchs, len, &wChar, 1);
-        uChar = wChar;
-    }
-
-    return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer,
-                            lpmat2);
-}
-
-/***********************************************************************
- *           GetGlyphOutlineW    (GDI32.@)
- */
-DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
-                                 LPGLYPHMETRICS lpgm, DWORD cbBuffer,
-                                 LPVOID lpBuffer, const MAT2 *lpmat2 )
+DWORD WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
+                                    DWORD size, void *buffer, const MAT2 *mat2,
+                                    BOOL ignore_rotation )
 {
     DC *dc;
     DWORD ret;
     PHYSDEV dev;
 
-    TRACE("(%p, %04x, %04x, %p, %d, %p, %p)\n",
-	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    TRACE( "(%p, %04x, %04x, %p, %d, %p, %p)\n", hdc, ch, format, metrics, size, buffer, mat2 );
 
-    if (!lpmat2) return GDI_ERROR;
+    if (!mat2) return GDI_ERROR;
 
     dc = get_dc_ptr(hdc);
     if(!dc) return GDI_ERROR;
 
-    uChar &= 0xffff;
-
     dev = GET_DC_PHYSDEV( dc, pGetGlyphOutline );
-    ret = dev->funcs->pGetGlyphOutline( dev, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    ret = dev->funcs->pGetGlyphOutline( dev, ch & 0xffff, format, metrics, size, buffer, mat2 );
     release_dc_ptr( dc );
     return ret;
 }
