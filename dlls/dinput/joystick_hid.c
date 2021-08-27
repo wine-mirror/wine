@@ -427,6 +427,49 @@ static HRESULT WINAPI hid_joystick_GetCapabilities( IDirectInputDevice8W *iface,
     return DI_OK;
 }
 
+struct enum_objects_params
+{
+    LPDIENUMDEVICEOBJECTSCALLBACKW callback;
+    void *context;
+};
+
+static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_caps *caps,
+                                   DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct enum_objects_params *params = data;
+    return params->callback( instance, params->context );
+}
+
+static HRESULT WINAPI hid_joystick_EnumObjects( IDirectInputDevice8W *iface, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
+                                                void *context, DWORD flags )
+{
+    static const DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = DIPH_DEVICE,
+    };
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    struct enum_objects_params params =
+    {
+        .callback = callback,
+        .context = context,
+    };
+    BOOL ret;
+
+    TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    ret = enum_value_objects( impl, &filter, flags, enum_objects_callback, &params );
+    if (ret != DIENUM_CONTINUE) return S_OK;
+    ret = enum_button_objects( impl, &filter, flags, enum_objects_callback, &params );
+    if (ret != DIENUM_CONTINUE) return S_OK;
+    enum_collections_objects( impl, &filter, flags, enum_objects_callback, &params );
+
+    return S_OK;
+}
+
 static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
@@ -619,7 +662,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_Release,
     /*** IDirectInputDevice methods ***/
     hid_joystick_GetCapabilities,
-    IDirectInputDevice2WImpl_EnumObjects,
+    hid_joystick_EnumObjects,
     hid_joystick_GetProperty,
     hid_joystick_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
