@@ -924,10 +924,15 @@ void __cdecl _Xout_of_range(const char *str)
 
 /* ?_Xruntime_error@std@@YAXPBD@Z */
 /* ?_Xruntime_error@std@@YAXPEBD@Z */
-void __cdecl _Xruntime_error(const char *str)
+void __cdecl DECLSPEC_NORETURN _Xruntime_error(const char *str)
 {
+    exception_name name = EXCEPTION_NAME(str);
+    runtime_error e;
+
     TRACE("(%s)\n", debugstr_a(str));
-    throw_exception(EXCEPTION_RUNTIME_ERROR, str);
+
+    MSVCP_runtime_error_ctor(&e, name);
+    _CxxThrowException(&e, &runtime_error_cxx_type);
 }
 
 /* ?uncaught_exception@std@@YA_NXZ */
@@ -1080,11 +1085,6 @@ void throw_exception(exception_type et, const char *str)
         out_of_range e;
         MSVCP_out_of_range_ctor(&e, name);
         _CxxThrowException(&e, &out_of_range_cxx_type);
-    }
-    case EXCEPTION_RUNTIME_ERROR: {
-        runtime_error e;
-        MSVCP_runtime_error_ctor(&e, name);
-        _CxxThrowException(&e, &runtime_error_cxx_type);
     }
     case EXCEPTION_FAILURE: {
         failure e;

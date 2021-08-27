@@ -520,7 +520,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
     FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
 
     if(!locstr)
-        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+        _Xruntime_error("bad locale name");
 
     _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
     locale_string_char_ctor(&locinfo->days);
@@ -625,7 +625,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
     /* This function is probably modifying more global objects */
     FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
     if(!locstr)
-        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+        _Xruntime_error("bad locale name");
 
     locale_string_char_dtor(&locinfo->newlocname);
 
@@ -11984,7 +11984,7 @@ locale* __thiscall locale_ctor_locale_cstr(locale *this, const locale *loc, cons
     if(!memcmp(locale_string_char_c_str(&locinfo.newlocname), "*", 2)) {
         _Locinfo_dtor(&locinfo);
         operator_delete(this->ptr);
-        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+        _Xruntime_error("bad locale name");
     }
 
     this->ptr = operator_new(sizeof(locale__Locimp));
@@ -12013,7 +12013,7 @@ locale* __thiscall locale_ctor_cstr(locale *this, const char *locname, category 
     if(!memcmp(locale_string_char_c_str(&locinfo.newlocname), "*", 2)) {
         _Locinfo_dtor(&locinfo);
         operator_delete(this->ptr);
-        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+        _Xruntime_error("bad locale name");
     }
 
     locale__Locimp__Makeloc(&locinfo, cat, this->ptr, NULL);
