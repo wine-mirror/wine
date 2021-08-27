@@ -56,6 +56,8 @@ struct hid_joystick
     PHIDP_PREPARSED_DATA preparsed;
 
     DIDEVICEINSTANCEW instance;
+    WCHAR device_path[MAX_PATH];
+    HIDD_ATTRIBUTES attrs;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -86,6 +88,56 @@ static HRESULT WINAPI hid_joystick_GetCapabilities( IDirectInputDevice8W *iface,
     if (!caps) return E_POINTER;
 
     return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
+                                                DIPROPHEADER *header )
+{
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
+
+    if (!header) return DIERR_INVALIDPARAM;
+    if (!IS_DIPROP( guid )) return DI_OK;
+
+    switch (LOWORD( guid ))
+    {
+    case (DWORD_PTR)DIPROP_PRODUCTNAME:
+    {
+        DIPROPSTRING *value = (DIPROPSTRING *)header;
+        lstrcpynW( value->wsz, impl->instance.tszProductName, MAX_PATH );
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_INSTANCENAME:
+    {
+        DIPROPSTRING *value = (DIPROPSTRING *)header;
+        lstrcpynW( value->wsz, impl->instance.tszInstanceName, MAX_PATH );
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_VIDPID:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (!impl->attrs.VendorID || !impl->attrs.ProductID) return DIERR_UNSUPPORTED;
+        value->dwData = MAKELONG( impl->attrs.VendorID, impl->attrs.ProductID );
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_JOYSTICKID:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        value->dwData = impl->instance.guidInstance.Data3;
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_GUIDANDPATH:
+    {
+        DIPROPGUIDANDPATH *value = (DIPROPGUIDANDPATH *)header;
+        lstrcpynW( value->wszPath, impl->device_path, MAX_PATH );
+        return DI_OK;
+    }
+    default:
+        return IDirectInputDevice2WImpl_GetProperty( iface, guid, header );
+    }
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, DWORD len, void *ptr )
@@ -144,7 +196,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     /*** IDirectInputDevice methods ***/
     hid_joystick_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
-    IDirectInputDevice2WImpl_GetProperty,
+    hid_joystick_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
@@ -322,7 +374,6 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     };
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
     struct hid_joystick *impl = NULL;
-    WCHAR device_path[MAX_PATH];
     HIDP_CAPS caps;
     HRESULT hr;
 
@@ -344,11 +395,12 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
-    hr = hid_joystick_device_open( -1, &instance, device_path, &impl->device, &impl->preparsed,
+    hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
                                    &attrs, &caps, dinput->dwVersion );
     if (hr != DI_OK) goto failed;
 
     impl->instance = instance;
+    impl->attrs = attrs;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
