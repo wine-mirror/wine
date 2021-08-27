@@ -6045,7 +6045,7 @@ BOOL WINAPI TranslateCharsetInfo(
 }
 
 /*************************************************************************
- * GetFontData [GDI32.@]
+ *           NtGdiGetFontData    (win32u.@)
  *
  * Retrieve data for TrueType font.
  *
@@ -6059,8 +6059,7 @@ BOOL WINAPI TranslateCharsetInfo(
  * Calls SetLastError()
  *
  */
-DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
-    LPVOID buffer, DWORD length)
+DWORD WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length )
 {
     DC *dc = get_dc_ptr(hdc);
     PHYSDEV dev;
