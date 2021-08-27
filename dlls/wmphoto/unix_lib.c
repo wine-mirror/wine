@@ -180,7 +180,7 @@ static JXR_ERR wmp_stream_GetPos(struct WMPStream *iface, size_t *pos)
     return WMP_errSuccess;
 }
 
-HRESULT CDECL wmp_decoder_initialize(struct decoder *iface, IStream *stream, struct decoder_stat *st)
+static HRESULT CDECL wmp_decoder_initialize(struct decoder *iface, IStream *stream, struct decoder_stat *st)
 {
     struct wmp_decoder *This = impl_from_decoder(iface);
     HRESULT hr;
@@ -252,7 +252,7 @@ HRESULT CDECL wmp_decoder_initialize(struct decoder *iface, IStream *stream, str
     return S_OK;
 }
 
-HRESULT CDECL wmp_decoder_get_frame_info(struct decoder *iface, UINT frame, struct decoder_frame *info)
+static HRESULT CDECL wmp_decoder_get_frame_info(struct decoder *iface, UINT frame, struct decoder_frame *info)
 {
     struct wmp_decoder *This = impl_from_decoder(iface);
 
@@ -268,7 +268,7 @@ HRESULT CDECL wmp_decoder_get_frame_info(struct decoder *iface, UINT frame, stru
     return S_OK;
 }
 
-HRESULT CDECL wmp_decoder_copy_pixels(struct decoder *iface, UINT frame, const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
+static HRESULT CDECL wmp_decoder_copy_pixels(struct decoder *iface, UINT frame, const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
 {
     struct wmp_decoder *This = impl_from_decoder(iface);
     PKRect pkrect;
@@ -306,7 +306,7 @@ HRESULT CDECL wmp_decoder_copy_pixels(struct decoder *iface, UINT frame, const W
         prc, stride, buffersize, buffer);
 }
 
-HRESULT CDECL wmp_decoder_get_metadata_blocks(struct decoder* iface, UINT frame, UINT *count, struct decoder_block **blocks)
+static HRESULT CDECL wmp_decoder_get_metadata_blocks(struct decoder* iface, UINT frame, UINT *count, struct decoder_block **blocks)
 {
     TRACE("iface %p, frame %d, count %p, blocks %p\n", iface, frame, count, blocks);
 
@@ -315,7 +315,7 @@ HRESULT CDECL wmp_decoder_get_metadata_blocks(struct decoder* iface, UINT frame,
     return S_OK;
 }
 
-HRESULT CDECL wmp_decoder_get_color_context(struct decoder* iface, UINT frame, UINT num, BYTE **data, DWORD *datasize)
+static HRESULT CDECL wmp_decoder_get_color_context(struct decoder* iface, UINT frame, UINT num, BYTE **data, DWORD *datasize)
 {
     struct wmp_decoder *This = impl_from_decoder(iface);
     U32 count;
@@ -348,7 +348,7 @@ HRESULT CDECL wmp_decoder_get_color_context(struct decoder* iface, UINT frame, U
     return S_OK;
 }
 
-void CDECL wmp_decoder_destroy(struct decoder* iface)
+static void CDECL wmp_decoder_destroy(struct decoder* iface)
 {
     struct wmp_decoder *This = impl_from_decoder(iface);
 
