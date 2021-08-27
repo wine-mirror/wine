@@ -1662,8 +1662,10 @@ static void test_volume_info(void)
                            PIPE_TYPE_MESSAGE, 4096 )) return;
 
     memset( buffer, 0xaa, sizeof(buffer) );
+    memset( &iosb, 0xaa, sizeof(iosb) );
     status = pNtQueryVolumeInformationFile( read, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
     ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
+    ok( iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status );
     ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
     device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
     ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
@@ -1671,8 +1673,10 @@ static void test_volume_info(void)
         "Characteristics = %x\n", device_info->Characteristics );
 
     memset( buffer, 0xaa, sizeof(buffer) );
+    memset( &iosb, 0xaa, sizeof(iosb) );
     status = pNtQueryVolumeInformationFile( write, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
     ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
+    ok( iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status );
     ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
     device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
     ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
