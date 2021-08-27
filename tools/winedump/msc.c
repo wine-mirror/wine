@@ -299,7 +299,7 @@ static const char* get_varflags(unsigned flags)
     if (flags & 0x0002) X("addr-taken");
     if (flags & 0x0004) X("compiler-gen");
     if (flags & 0x0008) X("aggregated");
-    if (flags & 0x0010) X("in-aggreate");
+    if (flags & 0x0010) X("in-aggregate");
     if (flags & 0x0020) X("aliased");
     if (flags & 0x0040) X("alias");
     if (flags & 0x0080) X("retval");
@@ -1189,7 +1189,7 @@ static void dump_defrange(const struct cv_addr_range* range, const void* last, c
         printf("%s\toffset:%x range:#%x\n", pfx, gap->gapStartOffset, gap->cbRange);
 }
 
-/* return adress of first byte after the symbol */
+/* return address of first byte after the symbol */
 static inline const char* get_last(const union codeview_symbol* sym)
 {
     return (const char*)sym + sym->generic.len + 2;
