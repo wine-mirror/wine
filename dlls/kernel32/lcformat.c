@@ -315,7 +315,7 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
 /**************************************************************************
  * NLS_IsUnicodeOnlyLcid <internal>
  *
- * Determine if a locale is Unicode only, and thus invalid in ASCII calls.
+ * Determine if a locale is Unicode only, and thus invalid in ANSI calls.
  */
 static BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
 {
@@ -816,7 +816,7 @@ static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
  *|  gg     Era string, for example 'AD'.
  *  - To output any literal character that could be misidentified as a token,
  *    enclose it in single quotes.
- *  - The Ascii version of this function fails if lcid is Unicode only.
+ *  - The ANSI version of this function fails if lcid is Unicode only.
  *
  * RETURNS
  *  Success: The number of character written to lpDateStr, or that would
@@ -922,7 +922,7 @@ INT WINAPI GetDateFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
  *|  tt     Long time marker (e.g. "AM", "PM")
  *  - To output any literal character that could be misidentified as a token,
  *    enclose it in single quotes.
- *  - The Ascii version of this function fails if lcid is Unicode only.
+ *  - The ANSI version of this function fails if lcid is Unicode only.
  *
  * RETURNS
  *  Success: The number of character written to lpTimeStr, or that would
@@ -1006,7 +1006,7 @@ INT WINAPI GetTimeFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
  *  - This function rounds the number string if the number of decimals exceeds the
  *    locales normal number of decimal places.
  *  - If cchOut is 0, this function does not write to lpNumberStr.
- *  - The Ascii version of this function fails if lcid is Unicode only.
+ *  - The ANSI version of this function fails if lcid is Unicode only.
  *
  * RETURNS
  *  Success: The number of character written to lpNumberStr, or that would
@@ -1370,7 +1370,7 @@ INT WINAPI GetNumberFormatEx(LPCWSTR name, DWORD flags,
  *  - This function rounds the currency if the number of decimals exceeds the
  *    locales number of currency decimal places.
  *  - If cchOut is 0, this function does not write to lpCurrencyStr.
- *  - The Ascii version of this function fails if lcid is Unicode only.
+ *  - The ANSI version of this function fails if lcid is Unicode only.
  *
  * RETURNS
  *  Success: The number of character written to lpNumberStr, or that would

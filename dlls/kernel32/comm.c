@@ -398,7 +398,7 @@ static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpt
  *         BuildCommDCBA		(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
- *  ascii device control string.  The device control string has two forms
+ *  ANSI device control string.  The device control string has two forms
  *  normal and extended, it must be exclusively in one or the other form.
  *
  * RETURNS
@@ -406,7 +406,7 @@ static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpt
  *  True on success, false on a malformed control string.
  */
 BOOL WINAPI BuildCommDCBA(
-    LPCSTR device, /* [in] The ascii device control string used to update the DCB. */
+    LPCSTR device, /* [in] The ANSI device control string used to update the DCB. */
     LPDCB  lpdcb)  /* [out] The device control block to be updated. */
 {
 	return BuildCommDCBAndTimeoutsA(device,lpdcb,NULL);
@@ -416,7 +416,7 @@ BOOL WINAPI BuildCommDCBA(
  *         BuildCommDCBAndTimeoutsA		(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
- *  ascii device control string.  Taking timeout values from a timeouts
+ *  ANSI device control string.  Taking timeout values from a timeouts
  *  struct if desired by the control string.
  *
  * RETURNS
@@ -424,7 +424,7 @@ BOOL WINAPI BuildCommDCBA(
  *  True on success, false bad handles etc.
  */
 BOOL WINAPI BuildCommDCBAndTimeoutsA(
-    LPCSTR         device,     /* [in] The ascii device control string. */
+    LPCSTR         device,     /* [in] The ANSI device control string. */
     LPDCB          lpdcb,      /* [out] The device control block to be updated. */
     LPCOMMTIMEOUTS lptimeouts) /* [in] The COMMTIMEOUTS structure to be updated. */
 {
@@ -705,7 +705,7 @@ BOOL WINAPI GetDefaultCommConfigW(
 /**************************************************************************
  *         GetDefaultCommConfigA		(KERNEL32.@)
  *
- *   Acquires the default configuration of the specified communication device. (ascii)
+ *   Acquires the default configuration of the specified communication device.
  *
  *  RETURNS
  *
@@ -713,7 +713,7 @@ BOOL WINAPI GetDefaultCommConfigW(
  *   if the device is not found or the buffer is too small.
  */
 BOOL WINAPI GetDefaultCommConfigA(
-    LPCSTR       lpszName, /* [in] The ascii name of the device targeted for configuration. */
+    LPCSTR       lpszName, /* [in] The ANSI name of the device targeted for configuration. */
     LPCOMMCONFIG lpCC,     /* [out] The default configuration for the device. */
     LPDWORD      lpdwSize) /* [in/out] Initially the size of the default configuration buffer,
 			      afterwards the number of bytes copied to the buffer or
