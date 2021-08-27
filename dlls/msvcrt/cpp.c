@@ -755,7 +755,6 @@ const type_info* CDECL __RTtypeid(void *cppobj)
         bad_typeid e;
         bad_typeid_ctor( &e, "Attempted a typeid of NULL pointer!" );
         _CxxThrowException( &e, &bad_typeid_exception_type );
-        return NULL;
     }
 
     __TRY
@@ -768,7 +767,6 @@ const type_info* CDECL __RTtypeid(void *cppobj)
         __non_rtti_object e;
         __non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
         _CxxThrowException( &e, &__non_rtti_object_exception_type );
-        return NULL;
     }
     __ENDTRY
     return ret;
@@ -785,7 +783,6 @@ const type_info* CDECL __RTtypeid(void *cppobj)
         bad_typeid e;
         bad_typeid_ctor( &e, "Attempted a typeid of NULL pointer!" );
         _CxxThrowException( &e, &bad_typeid_exception_type );
-        return NULL;
     }
 
     __TRY
@@ -805,7 +802,6 @@ const type_info* CDECL __RTtypeid(void *cppobj)
         __non_rtti_object e;
         __non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
         _CxxThrowException( &e, &__non_rtti_object_exception_type );
-        return NULL;
     }
     __ENDTRY
     return ret;
@@ -892,7 +888,6 @@ void* CDECL __RTDynamicCast(void *cppobj, int unknown,
         __non_rtti_object e;
         __non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
         _CxxThrowException( &e, &__non_rtti_object_exception_type );
-        return NULL;
     }
     __ENDTRY
     return ret;
@@ -955,7 +950,6 @@ void* CDECL __RTDynamicCast(void *cppobj, int unknown,
         __non_rtti_object e;
         __non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
         _CxxThrowException( &e, &__non_rtti_object_exception_type );
-        return NULL;
     }
     __ENDTRY
     return ret;
@@ -995,7 +989,6 @@ void* CDECL __RTCastToVoid(void *cppobj)
         __non_rtti_object e;
         __non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
         _CxxThrowException( &e, &__non_rtti_object_exception_type );
-        return NULL;
     }
     __ENDTRY
     return ret;
@@ -1006,7 +999,7 @@ void* CDECL __RTCastToVoid(void *cppobj)
  *		_CxxThrowException (MSVCRT.@)
  */
 #ifndef __x86_64__
-void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *type )
+void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
 {
     ULONG_PTR args[3];
 
@@ -1016,7 +1009,7 @@ void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *typ
     RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
 }
 #else
-void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *type )
+void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
 {
     ULONG_PTR args[4];
 

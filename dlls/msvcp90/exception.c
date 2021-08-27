@@ -1064,37 +1064,37 @@ void throw_exception(exception_type et, const char *str)
     case EXCEPTION_LOGIC_ERROR: {
         logic_error e;
         MSVCP_logic_error_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &logic_error_cxx_type);
+        _CxxThrowException(&e, &logic_error_cxx_type);
     }
     case EXCEPTION_LENGTH_ERROR: {
         length_error e;
         MSVCP_length_error_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &length_error_cxx_type);
+        _CxxThrowException(&e, &length_error_cxx_type);
     }
     case EXCEPTION_OUT_OF_RANGE: {
         out_of_range e;
         MSVCP_out_of_range_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &out_of_range_cxx_type);
+        _CxxThrowException(&e, &out_of_range_cxx_type);
     }
     case EXCEPTION_INVALID_ARGUMENT: {
         invalid_argument e;
         MSVCP_invalid_argument_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &invalid_argument_cxx_type);
+        _CxxThrowException(&e, &invalid_argument_cxx_type);
     }
     case EXCEPTION_RUNTIME_ERROR: {
         runtime_error e;
         MSVCP_runtime_error_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &runtime_error_cxx_type);
+        _CxxThrowException(&e, &runtime_error_cxx_type);
     }
     case EXCEPTION_FAILURE: {
         failure e;
         MSVCP_failure_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &failure_cxx_type);
+        _CxxThrowException(&e, &failure_cxx_type);
     }
     case EXCEPTION_RANGE_ERROR: {
         range_error e;
         MSVCP_range_error_ctor(&e, name);
-        _CxxThrowException((exception*)&e, &range_error_cxx_type);
+        _CxxThrowException(&e, &range_error_cxx_type);
     }
     }
 }

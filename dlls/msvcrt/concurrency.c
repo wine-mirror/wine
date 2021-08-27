@@ -620,7 +620,7 @@ static Context* get_current_context(void)
             scheduler_resource_allocation_error e;
             scheduler_resource_allocation_error_ctor_name(&e, NULL,
                     HRESULT_FROM_WIN32(GetLastError()));
-            _CxxThrowException(&e.e, &scheduler_resource_allocation_error_exception_type);
+            _CxxThrowException(&e, &scheduler_resource_allocation_error_exception_type);
         }
 
         if(InterlockedCompareExchange(&context_tls_index, tls_index, TLS_OUT_OF_INDEXES) != TLS_OUT_OF_INDEXES)

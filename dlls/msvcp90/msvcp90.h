@@ -663,5 +663,5 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
 
-void WINAPI DECLSPEC_NORETURN _CxxThrowException(exception*,const cxx_exception_type*);
+void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
 void __cdecl DECLSPEC_NORETURN _Xmem(void);
