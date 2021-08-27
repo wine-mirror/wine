@@ -2395,22 +2395,64 @@ static NTSTATUS get_fscontext(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *inf
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS return_status(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+static NTSTATUS return_status(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 {
-    char *buffer = irp->AssociatedIrp.SystemBuffer;
-    NTSTATUS ret;
+    ULONG input_length = stack->Parameters.DeviceIoControl.InputBufferLength;
+    ULONG output_length = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    const struct return_status_params *input_buffer;
+    struct return_status_params params;
+    void *output_buffer;
 
-    if (!buffer)
+    if (code == IOCTL_WINETEST_RETURN_STATUS_NEITHER)
+    {
+        input_buffer = stack->Parameters.DeviceIoControl.Type3InputBuffer;
+        output_buffer = irp->UserBuffer;
+    }
+    else if (code == IOCTL_WINETEST_RETURN_STATUS_DIRECT)
+    {
+        input_buffer = irp->AssociatedIrp.SystemBuffer;
+        output_buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
+    }
+    else
+    {
+        input_buffer = irp->AssociatedIrp.SystemBuffer;
+        output_buffer = irp->AssociatedIrp.SystemBuffer;
+    }
+
+    if (!input_buffer || !output_buffer)
+    {
+        irp->IoStatus.Status = STATUS_ACCESS_VIOLATION;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_ACCESS_VIOLATION;
+    }
 
-    if (stack->Parameters.DeviceIoControl.InputBufferLength < sizeof(DWORD)
-            || stack->Parameters.DeviceIoControl.OutputBufferLength < 3)
+    if (input_length < sizeof(params) || output_length < 6)
+    {
+        irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_BUFFER_TOO_SMALL;
+    }
 
-    ret = *(DWORD *)irp->AssociatedIrp.SystemBuffer;
-    memcpy(buffer, "ghi", 3);
-    *info = 3;
-    return ret;
+    params = *input_buffer;
+
+    if (params.ret_status == STATUS_PENDING && !params.pending)
+    {
+        /* this causes kernel hangs under certain conditions */
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (params.pending)
+        IoMarkIrpPending(irp);
+
+    /* intentionally report the wrong information (and status) */
+    memcpy(output_buffer, "ghijkl", 6);
+    irp->IoStatus.Information = 3;
+    irp->IoStatus.Status = params.iosb_status;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+    return params.ret_status;
 }
 
 static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
@@ -2428,34 +2470,6 @@ static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG
         return ZwLoadDriver(&name);
     else
         return ZwUnloadDriver(&name);
-}
-
-static NTSTATUS test_mismatched_status_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
-{
-    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
-    char *buffer = irp->UserBuffer;
-
-    if (!buffer)
-    {
-        irp->IoStatus.Status = STATUS_ACCESS_VIOLATION;
-        IoCompleteRequest(irp, IO_NO_INCREMENT);
-        return STATUS_ACCESS_VIOLATION;
-    }
-
-    if (length < sizeof(teststr))
-    {
-        irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-        IoCompleteRequest(irp, IO_NO_INCREMENT);
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-
-    memcpy(buffer, teststr, sizeof(teststr));
-
-    /* This is deliberate; some broken drivers do this */
-    *info = 0;
-    irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
-    return STATUS_SUCCESS;
 }
 
 static NTSTATUS completion_ioctl(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
@@ -2564,15 +2578,14 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_WINETEST_GET_FSCONTEXT:
             status = get_fscontext(irp, stack, &irp->IoStatus.Information);
             break;
-        case IOCTL_WINETEST_RETURN_STATUS:
-            status = return_status(irp, stack, &irp->IoStatus.Information);
-            break;
+        case IOCTL_WINETEST_RETURN_STATUS_BUFFERED:
+        case IOCTL_WINETEST_RETURN_STATUS_DIRECT:
+        case IOCTL_WINETEST_RETURN_STATUS_NEITHER:
+            return return_status(irp, stack, stack->Parameters.DeviceIoControl.IoControlCode);
         case IOCTL_WINETEST_DETACH:
             IoDetachDevice(lower_device);
             status = STATUS_SUCCESS;
             break;
-        case IOCTL_WINETEST_MISMATCHED_STATUS:
-            return test_mismatched_status_ioctl(irp, stack, &irp->IoStatus.Information);
         case IOCTL_WINETEST_COMPLETION:
             return completion_ioctl(device, irp, stack);
         default:

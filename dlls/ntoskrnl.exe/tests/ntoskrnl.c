@@ -430,18 +430,6 @@ static void test_basic_ioctl(void)
     ok(!strcmp(buf, "Wine is no"), "got '%s'\n", buf);
 }
 
-static void test_mismatched_status_ioctl(void)
-{
-    DWORD written;
-    char buf[32];
-    BOOL res;
-
-    res = DeviceIoControl(device, IOCTL_WINETEST_MISMATCHED_STATUS, NULL, 0, buf,
-                          sizeof(buf), &written, NULL);
-    todo_wine ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    todo_wine ok(!strcmp(buf, teststr), "got '%s'\n", buf);
-}
-
 static void test_overlapped(void)
 {
     OVERLAPPED overlapped, overlapped2, *o;
@@ -631,72 +619,376 @@ static void test_file_handles(void)
     ok(count == 3, "got %u\n", count);
 }
 
-static void test_return_status(void)
+static unsigned int got_return_status_apc;
+
+static void WINAPI return_status_apc(void *apc_user, IO_STATUS_BLOCK *io, ULONG reserved)
 {
-    NTSTATUS status;
+    ++got_return_status_apc;
+    ok(apc_user == (void *)456, "got %p\n", apc_user);
+    ok(!reserved, "got reserved %#x\n", reserved);
+}
+
+static void do_return_status(ULONG ioctl, struct return_status_params *params)
+{
+    const char *expect_buffer;
+    LARGE_INTEGER zero = {{0}};
+    HANDLE file, port, event;
+    NTSTATUS expect_status;
+    ULONG_PTR key, value;
+    IO_STATUS_BLOCK io;
     char buffer[7];
-    DWORD ret_size;
+    DWORD size;
     BOOL ret;
 
-    strcpy(buffer, "abcdef");
-    status = STATUS_SUCCESS;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
-            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
-    ok(ret, "ioctl failed\n");
-    ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
-    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
-    ok(ret_size == 3, "got size %u\n", ret_size);
+    if (params->ret_status == STATUS_PENDING && !params->pending)
+    {
+        /* this causes kernel hangs under certain conditions */
+        return;
+    }
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        expect_buffer = "ghijkl";
+    else if (NT_ERROR(params->iosb_status))
+        expect_buffer = "abcdef";
+    else
+        expect_buffer = "ghidef";
+
+    /* Test the non-overlapped case. */
+
+    expect_status = (params->ret_status == STATUS_PENDING ? params->iosb_status : params->ret_status);
 
     strcpy(buffer, "abcdef");
-    status = STATUS_TIMEOUT;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
-            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
-    todo_wine ok(ret, "ioctl failed\n");
-    todo_wine ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
-    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
-    ok(ret_size == 3, "got size %u\n", ret_size);
+    size = 0xdeadf00d;
+    SetLastError(0xdeadf00d);
+    ret = DeviceIoControl(device, ioctl, params, sizeof(*params), buffer, sizeof(buffer), &size, NULL);
+    todo_wine_if (NT_SUCCESS(expect_status) != !params->iosb_status)
+        ok(ret == NT_SUCCESS(expect_status), "got %d\n", ret);
+    if (NT_SUCCESS(expect_status))
+    {
+        todo_wine_if (params->iosb_status)
+            ok(GetLastError() == 0xdeadf00d, "got error %u\n", GetLastError());
+    }
+    else
+    {
+        todo_wine_if (RtlNtStatusToDosError(expect_status) != RtlNtStatusToDosError(params->iosb_status)
+                || params->iosb_status == STATUS_PENDING)
+            ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %u\n", GetLastError());
+    }
+    if (NT_ERROR(expect_status))
+        todo_wine ok(size == 0xdeadf00d, "got size %u\n", size);
+    else if (!NT_ERROR(params->iosb_status))
+        ok(size == 3, "got size %u\n", size);
+    /* size is garbage if !NT_ERROR(expect_status) && NT_ERROR(iosb_status) */
+    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     strcpy(buffer, "abcdef");
-    status = 0x0eadbeef;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
-            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
-    todo_wine ok(ret, "ioctl failed\n");
-    todo_wine ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
-    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
-    ok(ret_size == 3, "got size %u\n", ret_size);
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    ret = NtDeviceIoControlFile(device, NULL, NULL, NULL, &io,
+            ioctl, params, sizeof(*params), buffer, sizeof(buffer));
+    todo_wine_if ((params->ret_status != params->iosb_status && params->ret_status != STATUS_PENDING)
+            || params->iosb_status == STATUS_PENDING)
+        ok(ret == expect_status, "got %#x\n", ret);
+    if (NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+    }
+    else
+    {
+        todo_wine_if (params->iosb_status == STATUS_PENDING)
+            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
+    }
+    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+
+    /* Test the overlapped case. */
+
+    file = CreateFileA("\\\\.\\WineTestDriver", FILE_ALL_ACCESS,
+            0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device, error %u\n", GetLastError());
+    port = CreateIoCompletionPort(file, NULL, 123, 0);
+    ok(port != NULL, "failed to create port, error %u\n", GetLastError());
+
+    ret = WaitForSingleObject(file, 0);
+    todo_wine ok(!ret, "got %d\n", ret);
+
+    ResetEvent(event);
+    strcpy(buffer, "abcdef");
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
+            ioctl, params, sizeof(*params), buffer, sizeof(buffer));
+    todo_wine_if (params->ret_status != params->iosb_status || params->ret_status == STATUS_PENDING)
+        ok(ret == params->ret_status
+                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                "got %#x\n", ret);
+    if (!params->pending && NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ret = WaitForSingleObject(event, 0);
+        todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    }
+    else
+    {
+        todo_wine_if (params->iosb_status == STATUS_PENDING)
+            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
+        ret = WaitForSingleObject(event, 0);
+        ok(!ret, "got %d\n", ret);
+    }
+    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+
+    ret = WaitForSingleObject(file, 0);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+
+    key = 0xdeadf00d;
+    value = 0xdeadf00d;
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
+    if (!params->pending && NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+    }
+    else
+    {
+        ok(!ret, "got %#x\n", ret);
+        ok(key == 123, "got key %Iu\n", key);
+        ok(value == 456, "got value %Iu\n", value);
+        todo_wine_if (params->iosb_status == STATUS_PENDING)
+            ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
+        ok(io.Information == 3, "got information %Iu\n", io.Information);
+    }
+
+    /* As above, but set the event first, to show that the event is always
+     * reset. */
+    ResetEvent(event);
+    strcpy(buffer, "abcdef");
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    ret = NtDeviceIoControlFile(file, event, NULL, NULL, &io,
+            ioctl, params, sizeof(*params), buffer, sizeof(buffer));
+    todo_wine_if (params->ret_status != params->iosb_status || params->ret_status == STATUS_PENDING)
+        ok(ret == params->ret_status
+                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                "got %#x\n", ret);
+    if (!params->pending && NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ret = WaitForSingleObject(event, 0);
+        todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    }
+    else
+    {
+        todo_wine_if (params->iosb_status == STATUS_PENDING)
+            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
+        ret = WaitForSingleObject(event, 0);
+        ok(!ret, "got %d\n", ret);
+    }
+    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+
+    /* As above, but use the file handle instead of an event. */
+    ret = WaitForSingleObject(file, 0);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
 
     strcpy(buffer, "abcdef");
-    status = 0x4eadbeef;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
-            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
-    todo_wine ok(ret, "ioctl failed\n");
-    todo_wine ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
-    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
-    ok(ret_size == 3, "got size %u\n", ret_size);
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    ret = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io,
+            ioctl, params, sizeof(*params), buffer, sizeof(buffer));
+    todo_wine_if (params->ret_status != params->iosb_status || params->ret_status == STATUS_PENDING)
+        ok(ret == params->ret_status
+                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                "got %#x\n", ret);
+    if (!params->pending && NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ret = WaitForSingleObject(file, 0);
+        todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    }
+    else
+    {
+        todo_wine_if (params->iosb_status == STATUS_PENDING)
+            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
+        ret = WaitForSingleObject(file, 0);
+        ok(!ret, "got %d\n", ret);
+    }
+    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+
+    /* Test FILE_SKIP_COMPLETION_PORT_ON_SUCCESS. */
+
+    if (pSetFileCompletionNotificationModes)
+    {
+        ret = pSetFileCompletionNotificationModes(file, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+        ok(ret, "got error %u\n", GetLastError());
+
+        SetEvent(event);
+        strcpy(buffer, "abcdef");
+        io.Status = 0xdeadf00d;
+        io.Information = 0xdeadf00d;
+        ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
+                ioctl, params, sizeof(*params), buffer, sizeof(buffer));
+        todo_wine_if (params->ret_status != params->iosb_status || params->ret_status == STATUS_PENDING)
+            ok(ret == params->ret_status
+                    || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                    "got %#x\n", ret);
+        if (!params->pending && NT_ERROR(params->iosb_status))
+        {
+            todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+            todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+            ret = WaitForSingleObject(event, 0);
+            todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+        }
+        else
+        {
+            todo_wine_if (params->iosb_status == STATUS_PENDING)
+                ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+            ok(io.Information == 3, "got size %Iu\n", io.Information);
+            ret = WaitForSingleObject(event, 0);
+            ok(!ret, "got %d\n", ret);
+        }
+        todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+            ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+
+        key = 0xdeadf00d;
+        value = 0xdeadf00d;
+        memset(&io, 0xcc, sizeof(io));
+        ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
+        if (!params->pending)
+        {
+            /* Completion is skipped on non-pending NT_ERROR regardless of file
+             * options. Windows < 8 interprets
+             * FILE_SKIP_COMPLETION_PORT_ON_SUCCESS to mean that !NT_ERROR
+             * should also be skipped. Windows >= 8 restricts this to
+             * NT_SUCCESS, which has the weird effect that non-pending
+             * NT_WARNING does *not* skip completion. It's not clear whether
+             * this is a bug or not—it looks like one, but on the other hand it
+             * arguably follows the letter of the documentation more closely. */
+            ok(ret == STATUS_TIMEOUT || (NT_WARNING(params->iosb_status) && !ret), "got %#x\n", ret);
+        }
+        else
+        {
+            todo_wine ok(!ret, "got %#x\n", ret);
+        }
+        if (!ret)
+        {
+            ok(key == 123, "got key %Iu\n", key);
+            ok(value == 456, "got value %Iu\n", value);
+            ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
+            ok(io.Information == 3, "got information %Iu\n", io.Information);
+        }
+    }
+
+    ret = CloseHandle(file);
+    ok(ret, "failed to close file, error %u\n", GetLastError());
+    ret = CloseHandle(port);
+    ok(ret, "failed to close port, error %u\n", GetLastError());
+
+    /* Test with an APC. */
+
+    got_return_status_apc = 0;
+
+    file = CreateFileA("\\\\.\\WineTestDriver", FILE_ALL_ACCESS,
+            0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device, error %u\n", GetLastError());
 
     strcpy(buffer, "abcdef");
-    status = 0x8eadbeef;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
-            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
-    ok(!ret, "ioctl succeeded\n");
-    ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
-    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
-    ok(ret_size == 3, "got size %u\n", ret_size);
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    ret = NtDeviceIoControlFile(file, NULL, return_status_apc, (void *)456, &io,
+            ioctl, params, sizeof(*params), buffer, sizeof(buffer));
+    todo_wine_if (params->ret_status != params->iosb_status || params->ret_status == STATUS_PENDING)
+        ok(ret == params->ret_status, "got %#x\n", ret);
+    if (!params->pending && NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+    }
+    else
+    {
+        todo_wine_if (params->iosb_status == STATUS_PENDING)
+            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
+    }
+    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
-    strcpy(buffer, "abcdef");
-    status = 0xceadbeef;
-    SetLastError(0xdeadbeef);
-    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
-            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
-    ok(!ret, "ioctl succeeded\n");
-    ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
-    ok(!strcmp(buffer, "abcdef"), "got buffer %s\n", buffer);
-    ok(ret_size == 3, "got size %u\n", ret_size);
+    ret = SleepEx(0, TRUE);
+    if (!params->pending && NT_ERROR(params->iosb_status))
+    {
+        todo_wine ok(!ret, "got %d\n", ret);
+        todo_wine ok(!got_return_status_apc, "got %u APC calls\n", got_return_status_apc);
+    }
+    else
+    {
+        ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+        ok(got_return_status_apc == 1, "got %u APC calls\n", got_return_status_apc);
+    }
+
+    ret = CloseHandle(file);
+    ok(ret, "failed to close file, error %u\n", GetLastError());
+
+    CloseHandle(event);
+}
+
+static void test_return_status(void)
+{
+    struct return_status_params params;
+    unsigned int i, j, k;
+
+    static const ULONG method_tests[] =
+    {
+        IOCTL_WINETEST_RETURN_STATUS_BUFFERED,
+        IOCTL_WINETEST_RETURN_STATUS_DIRECT,
+        IOCTL_WINETEST_RETURN_STATUS_NEITHER,
+    };
+
+    static const NTSTATUS status_tests[] =
+    {
+        STATUS_SUCCESS,
+        STATUS_PENDING,
+        STATUS_TIMEOUT,
+        0x0eadbeef,
+        0x4eadbeef,
+        STATUS_BUFFER_OVERFLOW,
+        0x8eadbeef,
+        STATUS_NOT_IMPLEMENTED,
+        0xceadbeef,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(status_tests); ++i)
+    {
+        for (j = 0; j < ARRAY_SIZE(status_tests); ++j)
+        {
+            for (params.pending = 0; params.pending <= 1; ++params.pending)
+            {
+                for (k = 0; k < ARRAY_SIZE(method_tests); ++k)
+                {
+                    params.ret_status = status_tests[i];
+                    params.iosb_status = status_tests[j];
+
+                    winetest_push_context("return 0x%08x, iosb 0x%08x, pending %d, method %u",
+                            params.ret_status, params.iosb_status, params.pending, method_tests[k] & 3);
+
+                    do_return_status(method_tests[k], &params);
+
+                    winetest_pop_context();
+                }
+            }
+        }
+    }
 }
 
 static BOOL compare_unicode_string(const WCHAR *buffer, ULONG len, const WCHAR *expect)
@@ -765,12 +1057,24 @@ static void test_object_info(void)
     ok(compare_unicode_string(file_info->FileName, file_info->FileNameLength, L"\\subfile"),
             "wrong name %s\n", debugstr_wn(file_info->FileName, file_info->FileNameLength / sizeof(WCHAR)));
 
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsVolumeInformation);
     ok(!status, "got %#x\n", status);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    size = offsetof(FILE_FS_VOLUME_INFORMATION, VolumeLabel) + volume_info->VolumeLabelLength;
+    ok(io.Information == size, "expected information %Iu, got %Iu\n", size, io.Information);
     ok(volume_info->VolumeSerialNumber == 0xdeadbeef,
             "wrong serial number 0x%08x\n", volume_info->VolumeSerialNumber);
     ok(compare_unicode_string(volume_info->VolumeLabel, volume_info->VolumeLabelLength, L"WineTestDriver"),
             "wrong name %s\n", debugstr_wn(volume_info->VolumeLabel, volume_info->VolumeLabelLength / sizeof(WCHAR)));
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsAttributeInformation);
+    ok(status == STATUS_NOT_IMPLEMENTED, "got %#x\n", status);
+    ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %Iu\n", io.Information);
 
     CloseHandle(file);
 
@@ -1354,7 +1658,7 @@ static void test_pnp_devices(void)
     ret = NtOpenFile(&child, SYNCHRONIZE, &attr, &io, 0, 0);
     ok(!ret, "failed to open child: %#x\n", ret);
 
-    ret = DeviceIoControl(child, IOCTL_WINETEST_MARK_PENDING, NULL, 0, NULL, 0, &size, &ovl);
+    ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_MARK_PENDING, NULL, 0, NULL, 0, &size, &ovl);
     ok(!ret, "DeviceIoControl succeeded\n");
     ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
     ok(size == 0, "got size %u\n", size);
@@ -1367,7 +1671,7 @@ static void test_pnp_devices(void)
     ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
     ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
 
-    ret = DeviceIoControl(child, IOCTL_WINETEST_CHECK_REMOVED, NULL, 0, NULL, 0, &size, NULL);
+    ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_CHECK_REMOVED, NULL, 0, NULL, 0, &size, NULL);
     todo_wine ok(ret, "got error %u\n", GetLastError());
 
     ret = NtOpenFile(&tmp, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
@@ -3162,7 +3466,6 @@ START_TEST(ntoskrnl)
     ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
 
     test_basic_ioctl();
-    test_mismatched_status_ioctl();
 
     main_test();
     todo_wine ok(modified_value == 0xdeadbeeffeedcafe, "Got unexpected value %#I64x.\n", modified_value);

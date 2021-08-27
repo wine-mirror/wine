@@ -276,7 +276,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
         }
 
         case IRP_MN_REMOVE_DEVICE:
-            /* should've been checked and reset by IOCTL_WINETEST_CHECK_REMOVED */
+            /* should've been checked and reset by IOCTL_WINETEST_CHILD_CHECK_REMOVED */
             ok(remove_device_count == 0, "expected no IRP_MN_REMOVE_DEVICE\n");
             todo_wine ok(surprise_removal_count == 0, "expected no IRP_MN_SURPRISE_REMOVAL\n");
             ok(query_remove_device_count == 0, "expected no IRP_MN_QUERY_REMOVE_DEVICE\n");
@@ -665,12 +665,12 @@ static NTSTATUS pdo_ioctl(DEVICE_OBJECT *device_obj, IRP *irp, IO_STACK_LOCATION
             irp->IoStatus.Information = sizeof(device->id);
             return STATUS_SUCCESS;
 
-        case IOCTL_WINETEST_MARK_PENDING:
+        case IOCTL_WINETEST_CHILD_MARK_PENDING:
             IoMarkIrpPending(irp);
             irp_queue_push(&device->irp_queue, irp);
             return STATUS_PENDING;
 
-        case IOCTL_WINETEST_CHECK_REMOVED:
+        case IOCTL_WINETEST_CHILD_CHECK_REMOVED:
             ok(remove_device_count == 0, "expected IRP_MN_REMOVE_DEVICE\n");
             ok(surprise_removal_count == 1, "expected IRP_MN_SURPRISE_REMOVAL\n");
             ok(query_remove_device_count == 0, "expected no IRP_MN_QUERY_REMOVE_DEVICE\n");
