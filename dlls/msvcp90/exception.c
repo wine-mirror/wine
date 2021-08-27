@@ -890,10 +890,15 @@ void __cdecl DECLSPEC_NORETURN _Xmem(void)
 
 /* ?_Xinvalid_argument@std@@YAXPBD@Z */
 /* ?_Xinvalid_argument@std@@YAXPEBD@Z */
-void __cdecl _Xinvalid_argument(const char *str)
+void __cdecl DECLSPEC_NORETURN _Xinvalid_argument(const char *str)
 {
+    exception_name name = EXCEPTION_NAME(str);
+    invalid_argument e;
+
     TRACE("(%s)\n", debugstr_a(str));
-    throw_exception(EXCEPTION_INVALID_ARGUMENT, str);
+
+    MSVCP_invalid_argument_ctor(&e, name);
+    _CxxThrowException(&e, &invalid_argument_cxx_type);
 }
 
 /* ?_Xlength_error@std@@YAXPBD@Z */
@@ -1075,11 +1080,6 @@ void throw_exception(exception_type et, const char *str)
         out_of_range e;
         MSVCP_out_of_range_ctor(&e, name);
         _CxxThrowException(&e, &out_of_range_cxx_type);
-    }
-    case EXCEPTION_INVALID_ARGUMENT: {
-        invalid_argument e;
-        MSVCP_invalid_argument_ctor(&e, name);
-        _CxxThrowException(&e, &invalid_argument_cxx_type);
     }
     case EXCEPTION_RUNTIME_ERROR: {
         runtime_error e;

@@ -484,10 +484,8 @@ void __thiscall _String_base__Xran(const void/*_String_base*/ *this)
 /* ?_Xinvarg@_String_base@std@@SAXXZ */
 void CDECL MSVCP__String_base_Xinvarg(void)
 {
-    static const char msg[] = "invalid string argument";
-
     TRACE("\n");
-    throw_exception(EXCEPTION_INVALID_ARGUMENT, msg);
+    _Xinvalid_argument("invalid string argument");
 }
 
 
