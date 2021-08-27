@@ -21,26 +21,20 @@ msgid "Security"
 msgstr "Sikkerhet"
 
 #: dlls/aclui/aclui.rc:32
-#, fuzzy
-#| msgid "&User name:"
 msgid "&Group or user names:"
-msgstr "Br&ukernavn:"
+msgstr "&Gruppe eller brukernavn:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "Gul"
+msgstr "Tillat"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "Nekt"
 
 #: dlls/aclui/aclui.rc:47
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permissions for %1"
-msgstr "Tilgang nektet.\n"
+msgstr "Tilgang for %1"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -3769,7 +3763,7 @@ msgstr "Spillkontrollere"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Test og konfigurer spillkontrollere."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3875,7 +3869,7 @@ msgstr "Forventet '@'"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript kompileringsfeil"
 
 #: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
@@ -6969,38 +6963,28 @@ msgid "Connection reset by peer.\n"
 msgstr "Tilkobling nullstilt av likemann.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "Ikke implementert"
+msgstr "Ikke implementert.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC-kall feilet.\n"
+msgstr "Kall feilet.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Fant ingen signatur i filen.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Ugyldig nivå.\n"
+msgstr "Ugyldig kall.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "Verdi er ikke tilgjengelig.\n"
+msgstr "Ressursen er for øyeblikket ikke tilgjengelig.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Klassenavn:"
+msgstr "Klassisk Blå"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
@@ -9200,32 +9184,24 @@ msgid "Provider"
 msgstr "Tilbyder"
 
 #: dlls/oledb32/version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Velg formatet du ønsker å bruke:"
+msgstr "Velg data du ønsker å koble til:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Nettverksforbindelser"
+msgstr "Nettverksforbindelse"
 
 #: dlls/oledb32/version.rc:69
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Velg formatet du ønsker å bruke:"
+msgstr "Spesifiser følgende for å koble til ODBC-data:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Spesifiser datakilden:"
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Skriv inn navnet ditt"
+msgstr "Bruk &datakilde-navnet"
 
 #: dlls/oledb32/version.rc:74
 #, fuzzy
@@ -9250,64 +9226,48 @@ msgid "2. Enter information to log on to the server"
 msgstr ""
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "Br&ukernavn:"
+msgstr "Bruker&navn:"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "&Tom side"
+msgstr "&Blankt passord"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Feil passord.\n"
+msgstr "Tillat lagring av pa%ssord"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Tilbakestill tilkoblinger"
+msgstr "&Test tilkobling"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
 msgstr "Avansert"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Nettverksressurs"
+msgstr "Nettverksinnstillinger"
 
 #: dlls/oledb32/version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Ugyldig personifiseringsnivå.\n"
+msgstr "Person&ifiseringsnivå:"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Tilkoblet"
+msgstr "Koble til:"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "sekunder"
+msgstr "sekunder."
 
 #: dlls/oledb32/version.rc:104
 #, fuzzy
@@ -10371,7 +10331,7 @@ msgstr "Nedlastinger"
 
 #: dlls/shell32/shell32.rc:169
 msgid "Unable to create new Folder: Permission denied."
-msgstr "Kunne ikke opprette ny mappe: tilgang nektet."
+msgstr "Kunne ikke opprette ny mappe: Tilgang nektet."
 
 #: dlls/shell32/shell32.rc:170
 msgid "Error during creation of a new folder"
@@ -13957,7 +13917,7 @@ msgstr "Ethernet"
 
 #: programs/ipconfig/ipconfig.rc:35
 msgid "Connection-specific DNS suffix"
-msgstr "TIlkoblingsspesifikt DNS-suffiks"
+msgstr "Tilkoblingsspesifikt DNS-suffiks"
 
 #: programs/ipconfig/ipconfig.rc:36
 msgid "IPv4 address"
