@@ -150,7 +150,7 @@ static void test_profile_string(void)
     WriteFile( h, content2, sizeof(content2), &count, NULL);
     CloseHandle( h);
 
-    /* works only in unicode, ascii crashes */
+    /* works only in unicode, ansi crashes */
     ret=GetPrivateProfileStringW(emptyW, keyW, emptyW, bufW, ARRAY_SIZE(bufW), TESTFILE2W);
     todo_wine
     ok(ret == 13, "expected 13, got %u\n", ret);
@@ -158,7 +158,7 @@ static void test_profile_string(void)
     ok(!lstrcmpW(valsectionW,bufW), "expected %s, got %s\n",
         wine_dbgstr_w(valsectionW), wine_dbgstr_w(bufW) );
 
-    /* works only in unicode, ascii crashes */
+    /* works only in unicode, ansi crashes */
     ret=GetPrivateProfileStringW(sW, emptyW, emptyW, bufW, ARRAY_SIZE(bufW), TESTFILE2W);
     ok(ret == 10, "expected 10, got %u\n", ret);
     ok(!lstrcmpW(valnokeyW,bufW), "expected %s, got %s\n",

@@ -144,7 +144,7 @@ static void test_message_from_string_wide(void)
     ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
 
-    /* S is ascii */
+    /* S is ansi */
     r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!S!", 0, 0, out, ARRAY_SIZE(out), "test");
     ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
@@ -417,7 +417,7 @@ static void test_message_from_string(void)
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
-    /* s is ascii */
+    /* s is ansi */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!s!", 0, 0, out, ARRAY_SIZE(out), "test");
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
