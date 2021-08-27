@@ -53,6 +53,8 @@ typedef struct
     UINT_PTR uAppData;
 } ActionMap;
 
+typedef HRESULT dinput_device_read_state( IDirectInputDevice8W *iface );
+
 /* Device implementation */
 typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
 struct IDirectInputDeviceImpl
@@ -84,6 +86,10 @@ struct IDirectInputDeviceImpl
     /* Action mapping */
     int                         num_actions; /* number of actions mapped */
     ActionMap                  *action_map;  /* array of mappings */
+
+    /* internal device file reading */
+    HANDLE                    read_event;
+    dinput_device_read_state *read_callback;
 };
 
 extern HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtbl, const GUID *guid,

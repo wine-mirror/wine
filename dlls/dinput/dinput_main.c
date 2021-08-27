@@ -1289,6 +1289,12 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 static DWORD WINAPI hook_thread_proc(void *param)
 {
     static HHOOK kbd_hook, mouse_hook;
+    IDirectInputDeviceImpl *impl;
+    IDirectInputDevice8W *iface;
+    SIZE_T events_count = 0;
+    HANDLE finished_event;
+    HANDLE events[128];
+    DWORD ret;
     MSG msg;
 
     di_em_win = CreateWindowW( di_em_win_w, di_em_win_w, 0, 0, 0, 0, 0,
@@ -1298,13 +1304,42 @@ static DWORD WINAPI hook_thread_proc(void *param)
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );
     SetEvent(param);
 
-    while (GetMessageW( &msg, 0, 0, 0 ))
+    while ((ret = MsgWaitForMultipleObjectsEx( events_count, events, INFINITE, QS_ALLINPUT, 0 )) <= events_count)
     {
         UINT kbd_cnt = 0, mice_cnt = 0;
 
-        if (msg.message == WM_USER+0x10)
+        if (ret < events_count)
         {
-            HANDLE finished_event = (HANDLE)msg.lParam;
+            iface = NULL;
+            EnterCriticalSection( &dinput_hook_crit );
+            LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, IDirectInputDeviceImpl, entry )
+            {
+                if (impl->read_event == events[ret])
+                {
+                    iface = &impl->IDirectInputDevice8W_iface;
+                    IDirectInputDevice8_AddRef( iface );
+                    break;
+                }
+            }
+            LeaveCriticalSection( &dinput_hook_crit );
+
+            if (iface)
+            {
+                impl->read_callback( iface );
+                IDirectInputDevice8_Release( iface );
+            }
+        }
+
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            if (msg.message != WM_USER+0x10)
+            {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+                continue;
+            }
+
+            finished_event = (HANDLE)msg.lParam;
 
             TRACE( "Processing hook change notification wp:%ld lp:%#lx\n", msg.wParam, msg.lParam );
 
@@ -1313,12 +1348,19 @@ static DWORD WINAPI hook_thread_proc(void *param)
                 if (kbd_hook) UnhookWindowsHookEx( kbd_hook );
                 if (mouse_hook) UnhookWindowsHookEx( mouse_hook );
                 kbd_hook = mouse_hook = NULL;
-                break;
+                goto done;
             }
 
+            events_count = 0;
             EnterCriticalSection( &dinput_hook_crit );
             kbd_cnt = list_count( &acquired_keyboard_list );
             mice_cnt = list_count( &acquired_mouse_list );
+            LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, IDirectInputDeviceImpl, entry )
+            {
+                if (!impl->read_event || !impl->read_callback) continue;
+                if (events_count >= ARRAY_SIZE(events)) break;
+                events[events_count++] = impl->read_event;
+            }
             LeaveCriticalSection( &dinput_hook_crit );
 
             if (kbd_cnt && !kbd_hook)
@@ -1340,10 +1382,9 @@ static DWORD WINAPI hook_thread_proc(void *param)
             if (finished_event)
                 SetEvent(finished_event);
         }
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
     }
 
+done:
     DestroyWindow( di_em_win );
     di_em_win = NULL;
 
