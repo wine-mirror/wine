@@ -6515,7 +6515,7 @@ static const WCHAR *find_token(const WCHAR *list, const WCHAR *token, unsigned i
     return NULL;
 }
 
-static HRESULT WINAPI token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL remove)
+static HRESULT token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL remove)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
     unsigned int i, len, old_len, new_len;
