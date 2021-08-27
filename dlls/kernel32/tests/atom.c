@@ -86,7 +86,7 @@ static void test_add_atom(void)
 
     if (unicode_OS)
     {
-        ok( w_atom == atom, "Unicode atom does not match ASCII\n" );
+        ok( w_atom == atom, "Unicode atom does not match ANSI one\n" );
         ok( GetLastError() == 0xdeadbeef, "GlobalAddAtomW set last error\n" );
     }
 
@@ -344,7 +344,7 @@ static void test_local_add_atom(void)
 
     if (unicode_OS)
     {
-        ok( w_atom == atom, "Unicode atom does not match ASCII\n" );
+        ok( w_atom == atom, "Unicode atom does not match ANSI one\n" );
         ok( GetLastError() == 0xdeadbeef, "AddAtomW set last error\n" );
     }
 
