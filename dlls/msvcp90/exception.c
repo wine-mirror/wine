@@ -399,7 +399,7 @@ DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_er
 #else
 DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_error@@")
 #endif
-DEFINE_CXX_DATA1(logic_error, &exception_cxx_type_info, MSVCP_logic_error_dtor)
+DEFINE_CXX_TYPE_INFO(logic_error)
 
 /* length_error class data */
 typedef logic_error length_error;
@@ -817,7 +817,6 @@ bad_cast* __thiscall MSVCP_bad_cast_opequals(bad_cast *this, const bad_cast *rhs
 }
 
 DEFINE_RTTI_DATA1(bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@std@@")
-DEFINE_CXX_DATA1(bad_cast, &exception_cxx_type_info, MSVCP_bad_cast_dtor)
 
 /* range_error class data */
 typedef runtime_error range_error;
@@ -1065,28 +1064,14 @@ __ASM_BLOCK_BEGIN(exception_vtables)
             VTABLE_ADD_FUNC(MSVCP_runtime_error_what));
 __ASM_BLOCK_END
 
-/* Internal: throws selected exception */
-void throw_exception(exception_type et, const char *str)
+/* Internal: throws exception */
+void DECLSPEC_NORETURN throw_exception(const char *str)
 {
     exception_name name = EXCEPTION_NAME(str);
+    exception e;
 
-    switch(et) {
-    case EXCEPTION: {
-        exception e;
-        MSVCP_exception_ctor(&e, name);
-        _CxxThrowException(&e, &exception_cxx_type);
-    }
-    case EXCEPTION_BAD_CAST: {
-        bad_cast e;
-        MSVCP_bad_cast_ctor(&e, str);
-        _CxxThrowException(&e, &bad_cast_cxx_type);
-    }
-    case EXCEPTION_LOGIC_ERROR: {
-        logic_error e;
-        MSVCP_logic_error_ctor(&e, name);
-        _CxxThrowException(&e, &logic_error_cxx_type);
-    }
-    }
+    MSVCP_exception_ctor(&e, name);
+    _CxxThrowException(&e, &exception_cxx_type);
 }
 
 /* Internal: throws range_error exception */
@@ -1132,7 +1117,7 @@ void init_exception(void *base)
 
     init_exception_cxx(base);
     init_bad_alloc_cxx(base);
-    init_logic_error_cxx(base);
+    init_logic_error_cxx_type_info(base);
     init_length_error_cxx(base);
     init_out_of_range_cxx(base);
     init_invalid_argument_cxx(base);
@@ -1144,7 +1129,6 @@ void init_exception(void *base)
     init_system_error_cxx_type_info(base);
 #endif
     init_failure_cxx(base);
-    init_bad_cast_cxx(base);
     init_range_error_cxx(base);
 #endif
 }

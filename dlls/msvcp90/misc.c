@@ -700,7 +700,7 @@ unsigned int __cdecl _Random_device(void)
 
     /* TODO: throw correct exception in case of failure */
     if(rand_s(&ret))
-        throw_exception(EXCEPTION, "random number generator failed\n");
+        throw_exception("random number generator failed\n");
     return ret;
 }
 #endif

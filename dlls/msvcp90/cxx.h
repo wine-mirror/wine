@@ -314,14 +314,6 @@ typedef struct __exception
     int               do_free; /* Whether to free 'name' in our dtor */
 } exception;
 
-/* Internal: throws selected exception */
-typedef enum __exception_type {
-    EXCEPTION,
-    EXCEPTION_BAD_CAST,
-    EXCEPTION_LOGIC_ERROR,
-} exception_type;
-void throw_exception(exception_type, const char *);
-
 /* rtti */
 typedef struct __type_info
 {
