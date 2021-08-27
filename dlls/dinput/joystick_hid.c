@@ -536,6 +536,43 @@ static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, 
     return DI_OK;
 }
 
+static BOOL get_object_info( struct hid_joystick *impl, struct hid_caps *caps,
+                             DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    DIDEVICEOBJECTINSTANCEW *dest = data;
+    memcpy( dest, instance, dest->dwSize );
+    return DIENUM_STOP;
+}
+
+static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, DIDEVICEOBJECTINSTANCEW *instance,
+                                                  DWORD obj, DWORD how )
+{
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    const DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = how,
+        .dwObj = obj
+    };
+    BOOL ret;
+
+    TRACE( "iface %p, instance %p, obj %#x, how %#x.\n", iface, instance, obj, how );
+
+    if (!instance) return E_POINTER;
+    if (instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W) &&
+        instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
+        return DIERR_INVALIDPARAM;
+
+    ret = enum_value_objects( impl, &filter, DIDFT_ALL, get_object_info, NULL );
+    if (ret != DIENUM_CONTINUE) return S_OK;
+    ret = enum_button_objects( impl, &filter, DIDFT_ALL, get_object_info, NULL );
+    if (ret != DIENUM_CONTINUE) return S_OK;
+    enum_collections_objects( impl, &filter, DIDFT_ALL, get_object_info, NULL );
+
+    return S_OK;
+}
+
 static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, DIDEVICEINSTANCEW *instance )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -592,7 +629,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
-    IDirectInputDevice2WImpl_GetObjectInfo,
+    hid_joystick_GetObjectInfo,
     hid_joystick_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
