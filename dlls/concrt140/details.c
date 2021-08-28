@@ -16,15 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* Keep in sync with concrt140/detail.c */
+/* Keep in sync with msvcp90/detail.c */
 
 #include <stdarg.h>
-#include "msvcp90.h"
 
 #include "wine/debug.h"
 #include "wine/exception.h"
-
-#if _MSVCP_VER >= 100
+#include "details.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
@@ -61,17 +59,6 @@ typedef struct
 } _Concurrent_queue_base_v4;
 
 extern const vtable_ptr _Concurrent_queue_base_v4_vtable;
-#if _MSVCP_VER == 100
-#define call__Concurrent_queue_base_v4__Move_item call__Concurrent_queue_base_v4__Copy_item
-#define call__Concurrent_queue_base_v4__Copy_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
-        0, void, (_Concurrent_queue_base_v4*,_Page*,size_t,const void*), (this,dst,idx,src))
-#define  call__Concurrent_queue_base_v4__Assign_and_destroy_item(this,dst,src,idx) CALL_VTBL_FUNC(this, \
-        4, void, (_Concurrent_queue_base_v4*,void*,_Page*,size_t), (this,dst,src,idx))
-#define call__Concurrent_queue_base_v4__Allocate_page(this) CALL_VTBL_FUNC(this, \
-        12, _Page*, (_Concurrent_queue_base_v4*), (this))
-#define call__Concurrent_queue_base_v4__Deallocate_page(this, page) CALL_VTBL_FUNC(this, \
-        16, void, (_Concurrent_queue_base_v4*,_Page*), (this,page))
-#else
 #define call__Concurrent_queue_base_v4__Move_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
         0, void, (_Concurrent_queue_base_v4*,_Page*,size_t,void*), (this,dst,idx,src))
 #define call__Concurrent_queue_base_v4__Copy_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
@@ -82,7 +69,6 @@ extern const vtable_ptr _Concurrent_queue_base_v4_vtable;
         16, _Page*, (_Concurrent_queue_base_v4*), (this))
 #define call__Concurrent_queue_base_v4__Deallocate_page(this, page) CALL_VTBL_FUNC(this, \
         20, void, (_Concurrent_queue_base_v4*,_Page*), (this,page))
-#endif
 
 /* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IBEXXZ */
 /* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IEBAXXZ */
@@ -929,7 +915,6 @@ size_t __cdecl _GetCombinableSize(void)
     return 11;
 }
 
-#if _MSVCP_VER >= 140
 typedef struct {
     void *unk0;
     BYTE unk1;
@@ -1105,13 +1090,10 @@ bool __cdecl _Task_impl_base__IsNonBlockingThread(void)
     FIXME("() stub\n");
     return FALSE;
 }
-#endif
 
 __ASM_BLOCK_BEGIN(concurrency_details_vtables)
     __ASM_VTABLE(_Concurrent_queue_base_v4,
-#if _MSVCP_VER >= 110
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
-#endif
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
             VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_vector_dtor)
@@ -1128,4 +1110,3 @@ void init_concurrency_details(void *base)
     init__Runtime_object_rtti(base);
 #endif
 }
-#endif
