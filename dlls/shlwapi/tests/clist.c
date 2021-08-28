@@ -24,17 +24,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
-
-typedef struct tagSHLWAPI_CLIST
-{
-  ULONG ulSize;
-  ULONG ulId;
-} SHLWAPI_CLIST, *LPSHLWAPI_CLIST;
-
-typedef const SHLWAPI_CLIST* LPCSHLWAPI_CLIST;
+#include "shlobj.h"
 
 /* Items to add */
-static const SHLWAPI_CLIST SHLWAPI_CLIST_items[] =
+static const DATABLOCK_HEADER clist_items[] =
 {
   {4, 1},
   {8, 3},
@@ -66,7 +59,7 @@ struct dummystream
   int   seekcalls;
   int   statcalls;
   BOOL  failstatcall;
-  LPCSHLWAPI_CLIST item;
+  const DATABLOCK_HEADER *item;
   ULARGE_INTEGER   pos;
 };
 
@@ -126,7 +119,7 @@ static HRESULT WINAPI Read(IStream *iface, void *lpMem, ULONG ulSize, ULONG *lpR
   if (ulSize == sizeof(ULONG))
   {
     /* Read size of item */
-    *((ULONG*)lpMem) = This->item->ulSize ? This->item->ulSize + sizeof(SHLWAPI_CLIST) : 0;
+    *((ULONG*)lpMem) = This->item->cbSize ? This->item->cbSize + sizeof(DATABLOCK_HEADER) : 0;
     *lpRead = ulSize;
   }
   else
@@ -135,16 +128,16 @@ static HRESULT WINAPI Read(IStream *iface, void *lpMem, ULONG ulSize, ULONG *lpR
     char* buff = lpMem;
 
     /* Read item data */
-    if (!This->item->ulSize)
+    if (!This->item->cbSize)
     {
       This->readbeyondend = TRUE;
       *lpRead = 0;
       return E_FAIL; /* Should never happen */
     }
-    *((ULONG*)lpMem) = This->item->ulId;
+    *((ULONG *)lpMem) = This->item->dwSignature;
     *lpRead = ulSize;
 
-    for (i = 0; i < This->item->ulSize; i++)
+    for (i = 0; i < This->item->cbSize; i++)
       buff[4+i] = i*2;
 
     This->item++;
@@ -217,12 +210,12 @@ static IStreamVtbl iclvt =
 /* Function ptrs for ordinal calls */
 static HMODULE SHLWAPI_hshlwapi = 0;
 
-static VOID    (WINAPI *pSHLWAPI_19)(LPSHLWAPI_CLIST);
-static HRESULT (WINAPI *pSHLWAPI_20)(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
-static BOOL    (WINAPI *pSHLWAPI_21)(LPSHLWAPI_CLIST*,ULONG);
-static LPSHLWAPI_CLIST (WINAPI *pSHLWAPI_22)(LPSHLWAPI_CLIST,ULONG);
-static HRESULT (WINAPI *pSHLWAPI_17)(IStream*, SHLWAPI_CLIST*);
-static HRESULT (WINAPI *pSHLWAPI_18)(IStream*, SHLWAPI_CLIST**);
+static void (WINAPI *pSHLWAPI_19)(DATABLOCK_HEADER *);
+static HRESULT (WINAPI *pSHLWAPI_20)(DATABLOCK_HEADER **, DATABLOCK_HEADER *);
+static BOOL (WINAPI *pSHLWAPI_21)(DATABLOCK_HEADER **,ULONG);
+static DATABLOCK_HEADER *(WINAPI *pSHLWAPI_22)(DATABLOCK_HEADER *,ULONG);
+static HRESULT (WINAPI *pSHLWAPI_17)(IStream *, DATABLOCK_HEADER *);
+static HRESULT (WINAPI *pSHLWAPI_18)(IStream *, DATABLOCK_HEADER **);
 
 static BOOL    (WINAPI *pSHLWAPI_166)(IStream*);
 static HRESULT (WINAPI *pSHLWAPI_184)(IStream*, void*, ULONG);
@@ -282,7 +275,7 @@ static void InitDummyStream(struct dummystream *obj)
     obj->seekcalls = 0;
     obj->statcalls = 0;
     obj->failstatcall = FALSE;
-    obj->item = SHLWAPI_CLIST_items;
+    obj->item = clist_items;
     obj->pos.QuadPart = 0;
 }
 
@@ -290,10 +283,10 @@ static void InitDummyStream(struct dummystream *obj)
 static void test_CList(void)
 {
   struct dummystream streamobj;
-  LPSHLWAPI_CLIST list = NULL;
-  LPCSHLWAPI_CLIST item = SHLWAPI_CLIST_items;
+  DATABLOCK_HEADER *list = NULL;
+  const DATABLOCK_HEADER *item = clist_items;
   HRESULT hRet;
-  LPSHLWAPI_CLIST inserted;
+  DATABLOCK_HEADER *inserted;
   BYTE buff[64];
   unsigned int i;
 
@@ -302,14 +295,14 @@ static void test_CList(void)
     return;
 
   /* Populate a list and test the items are added correctly */
-  while (item->ulSize)
+  while (item->cbSize)
   {
     /* Create item and fill with data */
-    inserted = (LPSHLWAPI_CLIST)buff;
-    inserted->ulSize = item->ulSize + sizeof(SHLWAPI_CLIST);
-    inserted->ulId = item->ulId;
-    for (i = 0; i < item->ulSize; i++)
-      buff[sizeof(SHLWAPI_CLIST)+i] = i*2;
+    inserted = (DATABLOCK_HEADER *)buff;
+    inserted->cbSize = item->cbSize + sizeof(DATABLOCK_HEADER);
+    inserted->dwSignature = item->dwSignature;
+    for (i = 0; i < item->cbSize; i++)
+      buff[sizeof(DATABLOCK_HEADER) + i] = i * 2;
 
     /* Add it */
     hRet = pSHLWAPI_20(&list, inserted);
@@ -317,39 +310,39 @@ static void test_CList(void)
 
     if (hRet > S_OK)
     {
-      ok(list && list->ulSize, "item not added\n");
+      ok(list && list->cbSize, "item not added\n");
 
       /* Find it */
-      inserted = pSHLWAPI_22(list, item->ulId);
+      inserted = pSHLWAPI_22(list, item->dwSignature);
       ok(inserted != NULL, "lost after adding\n");
 
-      ok(!inserted || inserted->ulId != ~0U, "find returned a container\n");
+      ok(!inserted || inserted->dwSignature != ~0U, "find returned a container\n");
 
       /* Check size */
-      if (inserted && inserted->ulSize & 0x3)
+      if (inserted && (inserted->cbSize & 0x3))
       {
         /* Contained */
-        ok(inserted[-1].ulId == ~0U, "invalid size is not countained\n");
-        ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
+        ok(inserted[-1].dwSignature == ~0U, "invalid size is not countained\n");
+        ok(inserted[-1].cbSize > inserted->cbSize + sizeof(DATABLOCK_HEADER),
            "container too small\n");
       }
       else if (inserted)
       {
-        ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
-           "id %d wrong size %d\n", inserted->ulId, inserted->ulSize);
+        ok(inserted->cbSize == item->cbSize + sizeof(DATABLOCK_HEADER),
+           "id %d wrong size %d\n", inserted->dwSignature, inserted->cbSize);
       }
       if (inserted)
       {
         BOOL bDataOK = TRUE;
         LPBYTE bufftest = (LPBYTE)inserted;
 
-        for (i = 0; i < inserted->ulSize - sizeof(SHLWAPI_CLIST); i++)
-          if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)
+        for (i = 0; i < inserted->cbSize - sizeof(DATABLOCK_HEADER); i++)
+          if (bufftest[sizeof(DATABLOCK_HEADER) + i] != i * 2)
             bDataOK = FALSE;
 
         ok(bDataOK == TRUE, "data corrupted on insert\n");
       }
-      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item\n");
+      ok(!inserted || inserted->dwSignature == item->dwSignature, "find got wrong item\n");
     }
     item++;
   }
@@ -362,7 +355,7 @@ static void test_CList(void)
   if (hRet == S_OK)
   {
     /* 1 call for each element, + 1 for OK (use our null element for this) */
-    ok(streamobj.writecalls == ARRAY_SIZE(SHLWAPI_CLIST_items), "wrong call count\n");
+    ok(streamobj.writecalls == ARRAY_SIZE(clist_items), "wrong call count\n");
     ok(streamobj.readcalls == 0,"called Read() in write\n");
     ok(streamobj.seekcalls == 0,"called Seek() in write\n");
   }
@@ -386,9 +379,9 @@ static void test_CList(void)
   ok(streamobj.seekcalls == 0,"called Seek() after failure\n");
 
   /* Invalid inputs for adding */
-  inserted = (LPSHLWAPI_CLIST)buff;
-  inserted->ulSize = sizeof(SHLWAPI_CLIST) -1;
-  inserted->ulId = 33;
+  inserted = (DATABLOCK_HEADER *)buff;
+  inserted->cbSize = sizeof(DATABLOCK_HEADER) - 1;
+  inserted->dwSignature = 33;
 
   /* The call succeeds but the item is not inserted, except on some early
    * versions which return failure. Wine behaves like later versions.
@@ -398,23 +391,23 @@ static void test_CList(void)
   inserted = pSHLWAPI_22(list, 33);
   ok(inserted == NULL, "inserted bad element size\n");
 
-  inserted = (LPSHLWAPI_CLIST)buff;
-  inserted->ulSize = 44;
-  inserted->ulId = ~0U;
+  inserted = (DATABLOCK_HEADER *)buff;
+  inserted->cbSize = 44;
+  inserted->dwSignature = ~0U;
 
   /* See comment above, some early versions fail this call */
   pSHLWAPI_20(&list, inserted);
 
-  item = SHLWAPI_CLIST_items;
+  item = clist_items;
 
   /* Look for nonexistent item in populated list */
   inserted = pSHLWAPI_22(list, 99999999);
   ok(inserted == NULL, "found a nonexistent item\n");
 
-  while (item->ulSize)
+  while (item->cbSize)
   {
     /* Delete items */
-    BOOL bRet = pSHLWAPI_21(&list, item->ulId);
+    BOOL bRet = pSHLWAPI_21(&list, item->dwSignature);
     ok(bRet == TRUE, "couldn't find item to delete\n");
     item++;
   }
@@ -432,41 +425,41 @@ static void test_CList(void)
   {
     ok(streamobj.readbeyondend == FALSE, "read beyond end\n");
     /* 2 calls per item, but only 1 for the terminator */
-    ok(streamobj.readcalls == ARRAY_SIZE(SHLWAPI_CLIST_items) * 2 - 1, "wrong call count\n");
+    ok(streamobj.readcalls == ARRAY_SIZE(clist_items) * 2 - 1, "wrong call count\n");
     ok(streamobj.writecalls == 0, "called Write() from create\n");
     ok(streamobj.seekcalls == 0,"called Seek() from create\n");
 
-    item = SHLWAPI_CLIST_items;
+    item = clist_items;
 
     /* Check the items were added correctly */
-    while (item->ulSize)
+    while (item->cbSize)
     {
-      inserted = pSHLWAPI_22(list, item->ulId);
+      inserted = pSHLWAPI_22(list, item->dwSignature);
       ok(inserted != NULL, "lost after adding\n");
 
-      ok(!inserted || inserted->ulId != ~0U, "find returned a container\n");
+      ok(!inserted || inserted->dwSignature != ~0U, "find returned a container\n");
 
       /* Check size */
-      if (inserted && inserted->ulSize & 0x3)
+      if (inserted && inserted->cbSize & 0x3)
       {
         /* Contained */
-        ok(inserted[-1].ulId == ~0U, "invalid size is not countained\n");
-        ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
+        ok(inserted[-1].dwSignature == ~0U, "invalid size is not countained\n");
+        ok(inserted[-1].cbSize > inserted->cbSize + sizeof(DATABLOCK_HEADER),
            "container too small\n");
       }
       else if (inserted)
       {
-        ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
-           "id %d wrong size %d\n", inserted->ulId, inserted->ulSize);
+        ok(inserted->cbSize == item->cbSize + sizeof(DATABLOCK_HEADER),
+           "id %d wrong size %d\n", inserted->dwSignature, inserted->cbSize);
       }
-      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item\n");
+      ok(!inserted || inserted->dwSignature == item->dwSignature, "find got wrong item\n");
       if (inserted)
       {
         BOOL bDataOK = TRUE;
         LPBYTE bufftest = (LPBYTE)inserted;
 
-        for (i = 0; i < inserted->ulSize - sizeof(SHLWAPI_CLIST); i++)
-          if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)
+        for (i = 0; i < inserted->cbSize - sizeof(DATABLOCK_HEADER); i++)
+          if (bufftest[sizeof(DATABLOCK_HEADER) + i] != i * 2)
             bDataOK = FALSE;
 
         ok(bDataOK == TRUE, "data corrupted on insert\n");
