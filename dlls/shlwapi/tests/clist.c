@@ -289,6 +289,7 @@ static void test_CList(void)
   DATABLOCK_HEADER *inserted;
   BYTE buff[64];
   unsigned int i;
+  BOOL ret;
 
   if (!pSHWriteDataBlockList || !pSHReadDataBlockList || !pSHFreeDataBlockList || !pSHAddDataBlock ||
       !pSHRemoveDataBlock || !pSHFindDataBlock)
@@ -304,10 +305,10 @@ static void test_CList(void)
     for (i = 0; i < item->cbSize; i++)
       buff[sizeof(DATABLOCK_HEADER) + i] = i * 2;
 
-    hRet = pSHAddDataBlock(&list, inserted);
-    ok(hRet > S_OK, "failed list add\n");
+    ret = pSHAddDataBlock(&list, inserted);
+    ok(ret == TRUE, "got %d\n", ret);
 
-    if (hRet > S_OK)
+    if (ret == TRUE)
     {
       ok(list && list->cbSize, "item not added\n");
 
@@ -381,10 +382,11 @@ static void test_CList(void)
   inserted->cbSize = sizeof(DATABLOCK_HEADER) - 1;
   inserted->dwSignature = 33;
 
-  /* The call succeeds but the item is not inserted, except on some early
-   * versions which return failure. Wine behaves like later versions.
-   */
-  pSHAddDataBlock(&list, inserted);
+  ret = pSHAddDataBlock(NULL, inserted);
+  ok(!ret, "got %d\n", ret);
+
+  ret = pSHAddDataBlock(&list, inserted);
+  ok(!ret, "got %d\n", ret);
 
   inserted = pSHFindDataBlock(list, 33);
   ok(inserted == NULL, "inserted bad element size\n");
@@ -393,8 +395,8 @@ static void test_CList(void)
   inserted->cbSize = 44;
   inserted->dwSignature = ~0U;
 
-  /* See comment above, some early versions fail this call */
-  pSHAddDataBlock(&list, inserted);
+  ret = pSHAddDataBlock(&list, inserted);
+  ok(!ret, "got %d\n", ret);
 
   item = clist_items;
 
