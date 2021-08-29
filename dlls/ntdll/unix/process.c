@@ -368,16 +368,18 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     get_redirect( &attr, &redir );
     status = nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN );
-    free( nt_name.Buffer );
-    free( redir.Buffer );
-    if (status) return -1;
+    if (status) goto done;
     status = open_unix_file( &handle, unix_name, FILE_TRAVERSE | SYNCHRONIZE, &attr, 0,
                              FILE_SHARE_READ | FILE_SHARE_DELETE,
                              FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     free( unix_name );
-    if (status) return -1;
+    if (status) goto done;
     wine_server_handle_to_fd( handle, FILE_TRAVERSE, &fd, NULL );
     NtClose( handle );
+
+done:
+    free( nt_name.Buffer );
+    free( redir.Buffer );
     return fd;
 }
 
