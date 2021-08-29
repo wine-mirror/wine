@@ -46,19 +46,16 @@ static inline IDirectPlay8ThreadPoolImpl *impl_from_IDirectPlay8ThreadPool(IDire
 
 /* IUnknown interface follows */
 static HRESULT WINAPI IDirectPlay8ThreadPoolImpl_QueryInterface(IDirectPlay8ThreadPool *iface,
-        REFIID riid, void **ppobj)
+        REFIID riid, void **ret_iface)
 {
-    IDirectPlay8ThreadPoolImpl *This = impl_from_IDirectPlay8ThreadPool(iface);
-
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_IDirectPlay8ThreadPool))
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectPlay8ThreadPool))
     {
-        IUnknown_AddRef(iface);
-        *ppobj = This;
-        return DPN_OK;
+        IDirectPlay8ThreadPool_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
     }
 
-    WARN("(%p)->(%s,%p): not found\n", This, debugstr_guid(riid), ppobj);
+    WARN("(%p)->(%s,%p): not found\n", iface, debugstr_guid(riid), ret_iface);
     return E_NOINTERFACE;
 }
 

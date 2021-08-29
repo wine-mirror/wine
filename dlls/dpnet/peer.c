@@ -60,19 +60,16 @@ static inline IDirectPlay8PeerImpl *impl_from_IDirectPlay8Peer(IDirectPlay8Peer 
 
 /* IUnknown interface follows */
 static HRESULT WINAPI IDirectPlay8PeerImpl_QueryInterface(IDirectPlay8Peer *iface, REFIID riid,
-        void **ppobj)
+        void **ret_iface)
 {
-    IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
-
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_IDirectPlay8Peer))
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectPlay8Peer))
     {
-        IUnknown_AddRef(iface);
-        *ppobj = This;
-        return DPN_OK;
+        IDirectPlay8Peer_AddRef(iface);
+        *ret_iface = iface;
+        return S_OK;
     }
 
-    WARN("(%p)->(%s,%p): not found\n", This, debugstr_guid(riid), ppobj);
+    WARN("(%p)->(%s,%p): not found\n", iface, debugstr_guid(riid), ret_iface);
     return E_NOINTERFACE;
 }
 
