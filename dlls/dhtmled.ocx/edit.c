@@ -1647,7 +1647,7 @@ static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
 static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
-    return IConnectionPointContainer_AddRef(&This->dhed->IConnectionPointContainer_iface);
+    return IConnectionPointContainer_Release(&This->dhed->IConnectionPointContainer_iface);
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *iid)
