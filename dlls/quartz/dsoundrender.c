@@ -955,7 +955,7 @@ static ULONG WINAPI dsound_render_qc_AddRef(IQualityControl *iface)
 static ULONG WINAPI dsound_render_qc_Release(IQualityControl *iface)
 {
     struct dsound_render *filter = impl_from_IQualityControl(iface);
-    return IUnknown_AddRef(filter->filter.outer_unk);
+    return IUnknown_Release(filter->filter.outer_unk);
 }
 
 static HRESULT WINAPI dsound_render_qc_Notify(IQualityControl *iface,
