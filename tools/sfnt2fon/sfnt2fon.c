@@ -743,7 +743,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
         for(x = 0; x < ((info->dfCharTable[i].width + 7) / 8); x++) {
             for(y = 0; y < ppem; y++) {
                 if(y < ascent - face->glyph->bitmap_top ||
-                   y >=  face->glyph->bitmap.rows + ascent - face->glyph->bitmap_top) {
+                   y >= (int)face->glyph->bitmap.rows + ascent - face->glyph->bitmap_top) {
                     info->data[data_pos++] = 0;
                     continue;
                 }
