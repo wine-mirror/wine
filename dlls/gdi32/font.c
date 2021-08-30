@@ -5570,51 +5570,6 @@ DWORD WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS 
 }
 
 
-/***********************************************************************
- *           CreateScalableFontResourceA   (GDI32.@)
- */
-BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
-                                             LPCSTR lpszResourceFile,
-                                             LPCSTR lpszFontFile,
-                                             LPCSTR lpszCurrentPath )
-{
-    LPWSTR lpszResourceFileW = NULL;
-    LPWSTR lpszFontFileW = NULL;
-    LPWSTR lpszCurrentPathW = NULL;
-    int len;
-    BOOL ret;
-
-    if (lpszResourceFile)
-    {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszResourceFile, -1, NULL, 0);
-        lpszResourceFileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszResourceFile, -1, lpszResourceFileW, len);
-    }
-
-    if (lpszFontFile)
-    {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszFontFile, -1, NULL, 0);
-        lpszFontFileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszFontFile, -1, lpszFontFileW, len);
-    }
-
-    if (lpszCurrentPath)
-    {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszCurrentPath, -1, NULL, 0);
-        lpszCurrentPathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszCurrentPath, -1, lpszCurrentPathW, len);
-    }
-
-    ret = CreateScalableFontResourceW(fHidden, lpszResourceFileW,
-            lpszFontFileW, lpszCurrentPathW);
-
-    HeapFree(GetProcessHeap(), 0, lpszResourceFileW);
-    HeapFree(GetProcessHeap(), 0, lpszFontFileW);
-    HeapFree(GetProcessHeap(), 0, lpszCurrentPathW);
-
-    return ret;
-}
-
 #define NE_FFLAGS_LIBMODULE     0x8000
 #define NE_OSFLAGS_WINDOWS      0x02
 
@@ -5998,38 +5953,6 @@ DWORD WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
  *           Font Resource API					       *
  *								       *
  ***********************************************************************/
-
-/***********************************************************************
- *           AddFontResourceA    (GDI32.@)
- */
-INT WINAPI AddFontResourceA( LPCSTR str )
-{
-    return AddFontResourceExA( str, 0, NULL);
-}
-
-/***********************************************************************
- *           AddFontResourceW    (GDI32.@)
- */
-INT WINAPI AddFontResourceW( LPCWSTR str )
-{
-    return AddFontResourceExW(str, 0, NULL);
-}
-
-
-/***********************************************************************
- *           AddFontResourceExA    (GDI32.@)
- */
-INT WINAPI AddFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
-{
-    DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    LPWSTR strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    INT ret;
-
-    MultiByteToWideChar(CP_ACP, 0, str, -1, strW, len);
-    ret = AddFontResourceExW(strW, fl, pdv);
-    HeapFree(GetProcessHeap(), 0, strW);
-    return ret;
-}
 
 static BOOL CALLBACK load_enumed_resource(HMODULE hModule, LPCWSTR type, LPWSTR name, LONG_PTR lParam)
 {
@@ -6486,22 +6409,6 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
 }
 
 /***********************************************************************
- *           RemoveFontResourceA    (GDI32.@)
- */
-BOOL WINAPI RemoveFontResourceA( LPCSTR str )
-{
-    return RemoveFontResourceExA(str, 0, 0);
-}
-
-/***********************************************************************
- *           RemoveFontResourceW    (GDI32.@)
- */
-BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
-{
-    return RemoveFontResourceExW(str, 0, 0);
-}
-
-/***********************************************************************
  *           AddFontMemResourceEx    (GDI32.@)
  */
 HANDLE WINAPI AddFontMemResourceEx( PVOID ptr, DWORD size, PVOID pdv, DWORD *pcFonts )
@@ -6559,21 +6466,6 @@ BOOL WINAPI RemoveFontMemResourceEx( HANDLE fh )
 }
 
 /***********************************************************************
- *           RemoveFontResourceExA    (GDI32.@)
- */
-BOOL WINAPI RemoveFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
-{
-    DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    LPWSTR strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    INT ret;
-
-    MultiByteToWideChar(CP_ACP, 0, str, -1, strW, len);
-    ret = RemoveFontResourceExW(strW, fl, pdv);
-    HeapFree(GetProcessHeap(), 0, strW);
-    return ret;
-}
-
-/***********************************************************************
  *           RemoveFontResourceExW    (GDI32.@)
  */
 BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
@@ -6601,15 +6493,6 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
         }
     }
     return ret;
-}
-
-/***********************************************************************
- *           GetFontResourceInfoW    (GDI32.@)
- */
-BOOL WINAPI GetFontResourceInfoW( LPCWSTR str, LPDWORD size, PVOID buffer, DWORD type )
-{
-    FIXME("%s %p(%d) %p %d\n", debugstr_w(str), size, size ? *size : 0, buffer, type);
-    return FALSE;
 }
 
 /***********************************************************************

@@ -2054,3 +2054,116 @@ INT WINAPI EnumFontsW( HDC hdc, const WCHAR *name, FONTENUMPROCW efproc, LPARAM 
 {
     return EnumFontFamiliesW( hdc, name, efproc, data );
 }
+
+/***********************************************************************
+ *           CreateScalableFontResourceA   (GDI32.@)
+ */
+BOOL WINAPI CreateScalableFontResourceA( DWORD hidden, const char *resource_file,
+                                         const char *font_file, const char *current_path )
+{
+    WCHAR *resource_fileW = NULL;
+    WCHAR *current_pathW = NULL;
+    WCHAR *font_fileW = NULL;
+    int len;
+    BOOL ret;
+
+    if (resource_file)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, resource_file, -1, NULL, 0 );
+        resource_fileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, resource_file, -1, resource_fileW, len );
+    }
+
+    if (font_file)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, font_file, -1, NULL, 0 );
+        font_fileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, font_file, -1, font_fileW, len );
+    }
+
+    if (current_path)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, current_path, -1, NULL, 0 );
+        current_pathW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, current_path, -1, current_pathW, len );
+    }
+
+    ret = CreateScalableFontResourceW( hidden, resource_fileW,
+                                       font_fileW, current_pathW );
+
+    HeapFree(GetProcessHeap(), 0, resource_fileW);
+    HeapFree(GetProcessHeap(), 0, font_fileW);
+    HeapFree(GetProcessHeap(), 0, current_pathW);
+    return ret;
+}
+
+/***********************************************************************
+ *           AddFontResourceA    (GDI32.@)
+ */
+INT WINAPI AddFontResourceA( const char *str )
+{
+    return AddFontResourceExA( str, 0, NULL);
+}
+
+/***********************************************************************
+ *           AddFontResourceW    (GDI32.@)
+ */
+INT WINAPI AddFontResourceW( const WCHAR *str )
+{
+    return AddFontResourceExW( str, 0, NULL );
+}
+
+/***********************************************************************
+ *           AddFontResourceExA    (GDI32.@)
+ */
+INT WINAPI AddFontResourceExA( const char *str, DWORD fl, void *pdv )
+{
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    INT ret;
+
+    MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
+    ret = AddFontResourceExW( strW, fl, pdv );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
+}
+
+/***********************************************************************
+ *           RemoveFontResourceA    (GDI32.@)
+ */
+BOOL WINAPI RemoveFontResourceA( const char *str )
+{
+    return RemoveFontResourceExA( str, 0, 0 );
+}
+
+/***********************************************************************
+ *           RemoveFontResourceW    (GDI32.@)
+ */
+BOOL WINAPI RemoveFontResourceW( const WCHAR *str )
+{
+    return RemoveFontResourceExW( str, 0, 0 );
+}
+
+/***********************************************************************
+ *           RemoveFontResourceExA    (GDI32.@)
+ */
+BOOL WINAPI RemoveFontResourceExA( const char *str, DWORD fl, void *pdv )
+{
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    INT ret;
+
+    MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
+    ret = RemoveFontResourceExW( strW, fl, pdv );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
+}
+
+/***********************************************************************
+ *           GetFontResourceInfoW    (GDI32.@)
+ */
+BOOL WINAPI GetFontResourceInfoW( const WCHAR *str, DWORD *size, void *buffer, DWORD type )
+{
+    FIXME( "%s %p(%d) %p %d\n", debugstr_w(str), size, size ? *size : 0, buffer, type );
+    return FALSE;
+}
