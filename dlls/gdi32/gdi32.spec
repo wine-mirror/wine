@@ -264,7 +264,7 @@
 @ stub GetCharWidthWOW
 @ stdcall GetCharacterPlacementA(long str long long ptr long)
 @ stdcall GetCharacterPlacementW(long wstr long long ptr long)
-@ stdcall GetClipBox(long ptr)
+@ stdcall GetClipBox(long ptr) NtGdiGetAppClipBox
 @ stdcall GetClipRgn(long long)
 @ stdcall GetColorAdjustment(long ptr)
 @ stdcall GetColorSpace(long)
@@ -332,7 +332,7 @@
 @ stdcall GetPixelFormat(long)
 @ stdcall GetPolyFillMode(long)
 @ stdcall GetROP2(long)
-@ stdcall GetRandomRgn(long long long)
+@ stdcall GetRandomRgn(long long long) NtGdiGetRandomRgn
 @ stdcall GetRasterizerCaps(ptr long) NtGdiGetRasterizerCaps
 @ stdcall GetRegionData(long long ptr) NtGdiGetRegionData
 @ stdcall GetRelAbs(long long)

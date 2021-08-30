@@ -197,7 +197,7 @@ INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN rgn, INT mode )
 }
 
 /***********************************************************************
- *           __wine_set_visible_region   (GDI32.@)
+ *           __wine_set_visible_region   (win32u.@)
  */
 void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
                                       struct window_surface *surface )
@@ -357,9 +357,9 @@ BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
 
 
 /***********************************************************************
- *           GetClipBox    (GDI32.@)
+ *           NtGdiGetAppClipBox    (win32u.@)
  */
-INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
+INT WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect )
 {
     RECT visrect;
     INT ret;
@@ -440,7 +440,7 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 
 
 /***********************************************************************
- * GetRandomRgn [GDI32.@]
+ *           NtGdiGetRandomRgn    (win32u.@)
  *
  * NOTES
  *     This function is documented in MSDN online for the case of
@@ -453,7 +453,7 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
  *
  *     See http://www.codeproject.com/gdi/cliprgnguide.asp
  */
-INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
+INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
 {
     INT ret = 1;
     DC *dc = get_dc_ptr( hDC );

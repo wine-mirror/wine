@@ -1217,7 +1217,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     UINT ret, full_size;
     RECT rc;
 
-    GetClipBox(hdcRef, &rc);
+    NtGdiGetAppClipBox(hdcRef, &rc);
 
     TRACE("(%p,%d,%p,%d,%p) rc=%s\n", hemf, cbBuffer, lpbBuffer,
           map_mode, hdcRef, wine_dbgstr_rect(&rc));
