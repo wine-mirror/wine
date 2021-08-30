@@ -1539,7 +1539,7 @@ void destroy_gl_drawable( HWND hwnd )
  *
  * Get the pixel-format descriptor associated to the given id
  */
-static int WINAPI describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd, BOOL allow_offscreen )
+static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd, BOOL allow_offscreen )
 {
   /*XVisualInfo *vis;*/
   int value;
