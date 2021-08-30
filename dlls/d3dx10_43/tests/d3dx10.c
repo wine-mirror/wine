@@ -2200,13 +2200,12 @@ static void test_font(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hdc = ID3DX10Font_GetDC(font);
-todo_wine
     ok(!!hdc, "Unexpected hdc %p.\n", hdc);
 
-    ret = ID3DX10Font_GetTextMetricsA(font, &metrics);
-todo_wine
-    ok(ret, "Unexpected ret %#x.\n", ret);
     ret = GetTextMetricsA(hdc, &expmetrics);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+
+    ret = ID3DX10Font_GetTextMetricsA(font, &metrics);
 todo_wine
     ok(ret, "Unexpected ret %#x.\n", ret);
 
@@ -2303,7 +2302,6 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hdc = ID3DX10Font_GetDC(font);
-todo_wine
     ok(!!hdc, "Unexpected hdc %p.\n", hdc);
 
     hr = ID3DX10Font_GetGlyphData(font, 0, NULL, &blackbox, &cellinc);
@@ -2333,14 +2331,19 @@ todo_wine
 
     for (c = 'b'; c <= 'z'; ++c)
     {
-        if (!hdc) break;
-
         winetest_push_context("Character %c", c);
         count = GetGlyphIndicesA(hdc, &c, 1, &glyph, 0);
         ok(count != GDI_ERROR, "Unexpected count %u.\n", count);
 
         hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, &blackbox, &cellinc);
+    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        if (FAILED(hr))
+        {
+            winetest_pop_context();
+            break;
+        }
 
         ID3D10ShaderResourceView_GetResource(srv, &resource);
         hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture);
@@ -2415,21 +2418,21 @@ todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         hdc = ID3DX10Font_GetDC(font);
-    todo_wine
         ok(!!hdc, "Unexpected hdc %p.\n", hdc);
-
-        if (!hdc)
-        {
-            ID3DX10Font_Release(font);
-            winetest_pop_context();
-            break;
-        }
 
         count = GetGlyphIndicesA(hdc, &c, 1, &glyph, 0);
         ok(count != GDI_ERROR, "Unexpected count %u.\n", count);
 
         hr = ID3DX10Font_GetGlyphData(font, glyph, &srv, NULL, NULL);
+    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        if (FAILED(hr))
+        {
+            ID3DX10Font_Release(font);
+            winetest_pop_context();
+            break;
+        }
 
         ID3D10ShaderResourceView_GetResource(srv, &resource);
         hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture);

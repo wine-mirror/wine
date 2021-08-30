@@ -32,6 +32,8 @@ struct d3dx_font
     ID3DX10Font ID3DX10Font_iface;
     LONG refcount;
 
+    HDC hdc;
+    HFONT hfont;
     D3DX10_FONT_DESCW desc;
     ID3D10Device *device;
 };
@@ -77,6 +79,8 @@ static ULONG WINAPI d3dx_font_Release(ID3DX10Font *iface)
 
     if (!refcount)
     {
+        DeleteObject(font->hfont);
+        DeleteDC(font->hdc);
         ID3D10Device_Release(font->device);
         heap_free(font);
     }
@@ -142,9 +146,11 @@ static BOOL WINAPI d3dx_font_GetTextMetricsW(ID3DX10Font *iface, TEXTMETRICW *me
 
 static HDC WINAPI d3dx_font_GetDC(ID3DX10Font *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dx_font *font = impl_from_ID3DX10Font(iface);
 
-    return NULL;
+    TRACE("iface %p.\n", iface);
+
+    return font->hdc;
 }
 
 static HRESULT WINAPI d3dx_font_GetGlyphData(ID3DX10Font *iface, UINT glyph,
@@ -353,11 +359,27 @@ HRESULT WINAPI D3DX10CreateFontIndirectW(ID3D10Device *device, const D3DX10_FONT
     if (!device || !desc || !font)
         return D3DERR_INVALIDCALL;
 
+    *font = NULL;
+
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        *font = NULL;
         return E_OUTOFMEMORY;
+
+    object->hdc = CreateCompatibleDC(NULL);
+    if (!object->hdc)
+    {
+        heap_free(object);
+        return E_FAIL;
     }
+
+    object->hfont = CreateFontW(desc->Height, desc->Width, 0, 0, desc->Weight, desc->Italic, FALSE, FALSE, desc->CharSet,
+            desc->OutputPrecision, CLIP_DEFAULT_PRECIS, desc->Quality, desc->PitchAndFamily, desc->FaceName);
+    if (!object->hfont)
+    {
+        DeleteDC(object->hdc);
+        heap_free(object);
+        return E_FAIL;
+    }
+    SelectObject(object->hdc, object->hfont);
 
     object->ID3DX10Font_iface.lpVtbl = &d3dx_font_vtbl;
     object->refcount = 1;
