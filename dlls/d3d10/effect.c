@@ -3225,9 +3225,31 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
+    struct d3d10_effect_variable *v;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    FIXME("iface %p semi-stub!\n", iface);
+
+    for (i = 0; i < effect->used_shader_count; ++i)
+    {
+        v = effect->used_shaders[i];
+
+        if (v->u.shader.reflection)
+        {
+            v->u.shader.reflection->lpVtbl->Release(v->u.shader.reflection);
+            v->u.shader.reflection = NULL;
+        }
+        if (v->u.shader.bytecode)
+        {
+            ID3D10Blob_Release(v->u.shader.bytecode);
+            v->u.shader.bytecode = NULL;
+        }
+        heap_free(v->u.shader.stream_output_declaration);
+        v->u.shader.stream_output_declaration = NULL;
+    }
+
+    return S_OK;
 }
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_IsOptimized(ID3D10Effect *iface)

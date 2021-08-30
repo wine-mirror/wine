@@ -5894,20 +5894,18 @@ static void test_effect_optimize(void)
     ok(!!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
 
     hr = effect->lpVtbl->Optimize(effect);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = gs->lpVtbl->GetShaderDesc(gs, 0, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
     ok(!!shaderdesc.pInputSignature, "Expected input signature.\n");
     ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
-todo_wine {
     ok(!shaderdesc.pBytecode, "Unexpected bytecode.\n");
     ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length.\n");
     ok(!shaderdesc.SODecl, "Unexpected stream output declaration %p.\n", shaderdesc.SODecl);
     ok(!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
     ok(!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
-}
+
     effect->lpVtbl->Release(effect);
 
     refcount = ID3D10Device_Release(device);
