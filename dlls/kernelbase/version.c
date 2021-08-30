@@ -127,9 +127,16 @@ typedef struct
 
 
 /***********************************************************************
- * Win8 info, reported if app doesn't provide compat GUID in manifest.
+ * Win8 info, reported if the app doesn't provide compat GUID in the manifest and
+ * doesn't have higher OS version in PE header.
  */
 static const struct version_info windows8_version_info = { 6, 2, 0x23f0 };
+
+/***********************************************************************
+ * Win8.1 info, reported if the app doesn't provide compat GUID in the manifest and
+ * OS version in PE header is 8.1 or higher but below 10.
+ */
+static const struct version_info windows8_1_version_info = { 6, 3, 0x2580 };
 
 
 /***********************************************************************
@@ -161,7 +168,8 @@ static const struct
  * Initialize the current_version variable.
  *
  * For compatibility, Windows 8.1 and later report Win8 version unless the app
- * has a manifest that confirms its compatibility with newer versions of Windows.
+ * has a manifest or higher OS version in the PE optional header
+ * that confirms its compatibility with newer versions of Windows.
  *
  */
 static RTL_OSVERSIONINFOEXW current_version;
@@ -173,7 +181,9 @@ static BOOL CALLBACK init_current_version(PINIT_ONCE init_once, PVOID parameter,
         DWORD ElementCount;
         COMPATIBILITY_CONTEXT_ELEMENT Elements[1];
     } *acci;
+    BOOL have_os_compat_elements = FALSE;
     const struct version_info *ver;
+    IMAGE_NT_HEADERS *nt;
     SIZE_T req;
     int idx;
 
@@ -209,8 +219,12 @@ static BOOL CALLBACK init_current_version(PINIT_ONCE init_once, PVOID parameter,
 
             for (i = 0; i < acci->ElementCount; i++)
             {
-                if (acci->Elements[i].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS &&
-                    IsEqualGUID(&acci->Elements[i].Id, &version_data[idx].guid))
+                if (acci->Elements[i].Type != ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS)
+                    continue;
+
+                have_os_compat_elements = TRUE;
+
+                if (IsEqualGUID(&acci->Elements[i].Id, &version_data[idx].guid))
                 {
                     ver = &version_data[idx].info;
 
@@ -227,6 +241,18 @@ static BOOL CALLBACK init_current_version(PINIT_ONCE init_once, PVOID parameter,
     HeapFree(GetProcessHeap(), 0, acci);
 
 done:
+    if (!have_os_compat_elements && current_version.dwMajorVersion >= 10
+            && (nt = RtlImageNtHeader(NtCurrentTeb()->Peb->ImageBaseAddress))
+            && (nt->OptionalHeader.MajorOperatingSystemVersion > 6
+            || (nt->OptionalHeader.MajorOperatingSystemVersion == 6
+            && nt->OptionalHeader.MinorOperatingSystemVersion >= 3)))
+    {
+        if (current_version.dwMajorVersion > 10)
+            FIXME("Unsupported current_version.dwMajorVersion %u.\n", current_version.dwMajorVersion);
+
+        ver = nt->OptionalHeader.MajorOperatingSystemVersion >= 10 ? NULL : &windows8_1_version_info;
+    }
+
     if (ver)
     {
         current_version.dwMajorVersion = ver->major;

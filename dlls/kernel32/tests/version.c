@@ -918,13 +918,188 @@ static void test_PackageIdFromFullName(void)
     ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
 }
 
+#define TEST_VERSION_WIN7   1
+#define TEST_VERSION_WIN8   2
+#define TEST_VERSION_WIN8_1 4
+#define TEST_VERSION_WIN10  8
+
+static const struct
+{
+    unsigned int pe_version_major, pe_version_minor;
+    unsigned int manifest_versions;
+    unsigned int expected_major, expected_minor;
+}
+test_pe_os_version_tests[] =
+{
+    { 4, 0,                         0,  6, 2},
+    { 4, 0,        TEST_VERSION_WIN10, 10, 0},
+    { 6, 3,         TEST_VERSION_WIN8,  6, 2},
+    {10, 0,                         0, 10, 0},
+    { 6, 3,                         0,  6, 3},
+    { 6, 4,                         0,  6, 3},
+    { 9, 0,                         0,  6, 3},
+    {11, 0,                         0, 10, 0},
+    {10, 0,
+            TEST_VERSION_WIN7 | TEST_VERSION_WIN8 | TEST_VERSION_WIN8_1,
+                                        6, 3},
+};
+
+static void test_pe_os_version_child(unsigned int test)
+{
+    OSVERSIONINFOEXA info;
+    BOOL ret;
+
+    info.dwOSVersionInfoSize = sizeof(info);
+    ret = GetVersionExA((OSVERSIONINFOA *)&info);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(info.dwMajorVersion == test_pe_os_version_tests[test].expected_major,
+            "Test %u, expected major version %u, got %u.\n", test, test_pe_os_version_tests[test].expected_major,
+            info.dwMajorVersion);
+    ok(info.dwMinorVersion == test_pe_os_version_tests[test].expected_minor,
+            "Test %u, expected minor version %u, got %u.\n", test, test_pe_os_version_tests[test].expected_minor,
+            info.dwMinorVersion);
+}
+
+static void test_pe_os_version(void)
+{
+    static const char manifest_header[] =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+            "<assembly manifestVersion=\"1.0\" xmlns=\"urn:schemas-microsoft-com:asm.v1\""
+                    " xmlns:asmv3=\"urn:schemas-microsoft-com:asm.v3\">\n"
+                "\t<compatibility xmlns=\"urn:schemas-microsoft-com:compatibility.v1\">\n"
+                    "\t\t<application>\n";
+    static const char manifest_footer[] =
+                    "\t\t</application>\n"
+                "\t</compatibility>\n"
+            "</assembly>\n";
+    static const char *version_guids[] =
+    {
+        "{35138b9a-5d96-4fbd-8e2d-a2440225f93a}",
+        "{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}",
+        "{1f676c76-80e1-4239-95bb-83d0f6d0da78}",
+        "{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}",
+    };
+    LONG hdr_offset, offset_major, offset_minor;
+    char str[MAX_PATH], tmp_exe_name[9];
+    RTL_OSVERSIONINFOEXW rtlinfo;
+    STARTUPINFOA si = { 0 };
+    PROCESS_INFORMATION pi;
+    DWORD result, code;
+    unsigned int i, j;
+    HANDLE file;
+    char **argv;
+    DWORD size;
+    BOOL ret;
+
+    winetest_get_mainargs( &argv );
+
+    if (!pRtlGetVersion)
+    {
+        win_skip("RtlGetVersion is not supported, skipping tests.\n");
+        return;
+    }
+
+    rtlinfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    ok(!pRtlGetVersion(&rtlinfo), "RtlGetVersion failed.\n");
+    if (rtlinfo.dwMajorVersion < 10)
+    {
+        skip("Too old Windows version %u.%u, skipping tests.\n", rtlinfo.dwMajorVersion, rtlinfo.dwMinorVersion);
+        return;
+    }
+
+    file = CreateFileA(argv[0], GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed, GetLastError() %u.\n", GetLastError());
+    SetFilePointer(file, 0x3c, NULL, FILE_BEGIN);
+    ReadFile(file, &hdr_offset, sizeof(hdr_offset), &size, NULL);
+    CloseHandle(file);
+
+    offset_major = hdr_offset + FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader)
+            + FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, MajorOperatingSystemVersion);
+    offset_minor = hdr_offset + FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader)
+            + FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, MinorOperatingSystemVersion);
+
+    si.cb = sizeof(si);
+
+    for (i = 0; i < ARRAY_SIZE(test_pe_os_version_tests); ++i)
+    {
+        sprintf(tmp_exe_name, "tmp%u.exe", i);
+        ret = CopyFileA(argv[0], tmp_exe_name, FALSE);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+        file = CreateFileA(tmp_exe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "CreateFile failed, GetLastError() %u.\n", GetLastError());
+
+        SetFilePointer(file, offset_major, NULL, FILE_BEGIN);
+        WriteFile(file, &test_pe_os_version_tests[i].pe_version_major,
+                sizeof(test_pe_os_version_tests[i].pe_version_major), &size, NULL);
+        SetFilePointer(file, offset_minor, NULL, FILE_BEGIN);
+        WriteFile(file, &test_pe_os_version_tests[i].pe_version_minor,
+                sizeof(test_pe_os_version_tests[i].pe_version_minor), &size, NULL);
+
+        CloseHandle(file);
+
+        sprintf(str, "%s.manifest", tmp_exe_name);
+        file = CreateFileA(str, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "CreateFile failed, GetLastError() %u.\n", GetLastError());
+
+        WriteFile(file, manifest_header, strlen(manifest_header), &size, NULL);
+        for (j = 0; j < ARRAY_SIZE(version_guids); ++j)
+        {
+            if (test_pe_os_version_tests[i].manifest_versions & (1 << j))
+            {
+                sprintf(str, "\t\t\t<supportedOS Id=\"%s\"/>\n", version_guids[j]);
+                WriteFile(file, str, strlen(str), &size, NULL);
+            }
+        }
+        WriteFile(file, manifest_footer, strlen(manifest_footer), &size, NULL);
+
+        CloseHandle(file);
+
+        sprintf(str, "%s version pe_os_version %u", tmp_exe_name, i);
+
+        ret = CreateProcessA(NULL, str, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        CloseHandle(pi.hThread);
+        result = WaitForSingleObject(pi.hProcess, 10000);
+        ok(result == WAIT_OBJECT_0, "Got unexpected result %#x.\n", result);
+
+        ret = GetExitCodeProcess(pi.hProcess, &code);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        ok(!code, "Test %u failed.\n", i);
+
+        CloseHandle(pi.hProcess);
+
+        DeleteFileA(tmp_exe_name);
+        sprintf(str, "%s.manifest", tmp_exe_name);
+        DeleteFileA(str);
+    }
+}
+
 START_TEST(version)
 {
+    char **argv;
+    int argc;
+
+    argc = winetest_get_mainargs( &argv );
+
     init_function_pointers();
+
+    if (argc >= 4)
+    {
+        if (!strcmp(argv[2], "pe_os_version"))
+        {
+            unsigned int test;
+
+            test = atoi(argv[3]);
+            test_pe_os_version_child(test);
+        }
+        return;
+    }
 
     test_GetProductInfo();
     test_GetVersionEx();
     test_VerifyVersionInfo();
+    test_pe_os_version();
     test_GetSystemFirmwareTable();
     test_PackageIdFromFullName();
 }
