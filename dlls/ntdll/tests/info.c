@@ -883,7 +883,7 @@ static void test_query_cache(void)
     status = pNtQuerySystemInformation(SystemFileCacheInformation, sci, i, &ReturnLength);
     if (!status)
     {
-        expected = offsetof(SYSTEM_CACHE_INFORMATION, MinimumWorkingSet);
+        expected = 3 * sizeof(ULONG);
         for (; i>= expected; i--)
         {
             ReturnLength = 0xdeadbeef;
