@@ -32,6 +32,7 @@ struct d3dx_font
     ID3DX10Font ID3DX10Font_iface;
     LONG refcount;
 
+    D3DX10_FONT_DESCW desc;
     ID3D10Device *device;
 };
 
@@ -97,16 +98,32 @@ static HRESULT WINAPI d3dx_font_GetDevice(ID3DX10Font *iface, ID3D10Device **dev
 
 static HRESULT WINAPI d3dx_font_GetDescA(ID3DX10Font *iface, D3DX10_FONT_DESCA *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3dx_font *font = impl_from_ID3DX10Font(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+        return D3DERR_INVALIDCALL;
+
+    memcpy(desc, &font->desc, FIELD_OFFSET(D3DX10_FONT_DESCA, FaceName));
+    WideCharToMultiByte(CP_ACP, 0, font->desc.FaceName, -1, desc->FaceName,
+            ARRAY_SIZE(desc->FaceName), NULL, NULL);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3dx_font_GetDescW(ID3DX10Font *iface, D3DX10_FONT_DESCW *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3dx_font *font = impl_from_ID3DX10Font(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+        return D3DERR_INVALIDCALL;
+
+    *desc = font->desc;
+
+    return S_OK;
 }
 
 static BOOL WINAPI d3dx_font_GetTextMetricsA(ID3DX10Font *iface, TEXTMETRICA *metrics)
@@ -345,6 +362,7 @@ HRESULT WINAPI D3DX10CreateFontIndirectW(ID3D10Device *device, const D3DX10_FONT
     object->ID3DX10Font_iface.lpVtbl = &d3dx_font_vtbl;
     object->refcount = 1;
     object->device = device;
+    object->desc = *desc;
     ID3D10Device_AddRef(device);
 
     *font = &object->ID3DX10Font_iface;

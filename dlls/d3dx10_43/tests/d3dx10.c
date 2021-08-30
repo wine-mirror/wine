@@ -2176,15 +2176,11 @@ static void test_font(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Font_GetDescA(font, NULL);
-todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Font_GetDescA(font, &desc);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     ok(desc.Height == 12, "Unexpected height %d.\n", desc.Height);
     ok(desc.Width == 8, "Unexpected width %u.\n", desc.Width);
     ok(desc.Weight == FW_BOLD, "Unexpected weight %u.\n", desc.Weight);
@@ -2195,7 +2191,7 @@ if (SUCCEEDED(hr))
     ok(desc.Quality == ANTIALIASED_QUALITY, "Unexpected quality %u.\n", desc.Quality);
     ok(desc.PitchAndFamily == VARIABLE_PITCH, "Unexpected pitch and family %#x.\n", desc.PitchAndFamily);
     ok(!strcmp(desc.FaceName, "Tahoma"), "Unexpected facename %s.\n", debugstr_a(desc.FaceName));
-}
+
     ID3DX10Font_Release(font);
 
     /* GetDC + GetTextMetrics */
