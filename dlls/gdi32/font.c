@@ -5518,16 +5518,6 @@ done:
 }
 
 
-/***********************************************************************
- *          GetAspectRatioFilterEx  (GDI32.@)
- */
-BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
-{
-  FIXME("(%p, %p): -- Empty Stub !\n", hdc, pAspectRatio);
-  return FALSE;
-}
-
-
 /******************************************************************************
  *           NtGdiGetCharABCWidthsW    (win32u.@)
  *
@@ -6679,58 +6669,6 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
 BOOL WINAPI GetFontResourceInfoW( LPCWSTR str, LPDWORD size, PVOID buffer, DWORD type )
 {
     FIXME("%s %p(%d) %p %d\n", debugstr_w(str), size, size ? *size : 0, buffer, type);
-    return FALSE;
-}
-
-/***********************************************************************
- *           GetTextCharset    (GDI32.@)
- */
-UINT WINAPI GetTextCharset(HDC hdc)
-{
-    /* MSDN docs say this is equivalent */
-    return NtGdiGetTextCharsetInfo( hdc, NULL, 0 );
-}
-
-/***********************************************************************
- *           GdiGetCharDimensions    (GDI32.@)
- *
- * Gets the average width of the characters in the English alphabet.
- *
- * PARAMS
- *  hdc    [I] Handle to the device context to measure on.
- *  lptm   [O] Pointer to memory to store the text metrics into.
- *  height [O] On exit, the maximum height of characters in the English alphabet.
- *
- * RETURNS
- *  The average width of characters in the English alphabet.
- *
- * NOTES
- *  This function is used by the dialog manager to get the size of a dialog
- *  unit. It should also be used by other pieces of code that need to know
- *  the size of a dialog unit in logical units without having access to the
- *  window handle of the dialog.
- *  Windows caches the font metrics from this function, but we don't and
- *  there doesn't appear to be an immediate advantage to do so.
- *
- * SEE ALSO
- *  GetTextExtentPointW, GetTextMetricsW, MapDialogRect.
- */
-LONG WINAPI GdiGetCharDimensions(HDC hdc, LPTEXTMETRICW lptm, LONG *height)
-{
-    SIZE sz;
-
-    if(lptm && !GetTextMetricsW(hdc, lptm)) return 0;
-
-    if(!GetTextExtentPointW(hdc, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 52, &sz))
-        return 0;
-
-    if (height) *height = sz.cy;
-    return (sz.cx / 26 + 1) / 2;
-}
-
-BOOL WINAPI EnableEUDC(BOOL fEnableEUDC)
-{
-    FIXME("(%d): stub\n", fEnableEUDC);
     return FALSE;
 }
 

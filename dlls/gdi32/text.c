@@ -1914,3 +1914,57 @@ DWORD WINAPI GetGlyphIndicesA( HDC hdc, const char *str, INT count, WORD *indice
     HeapFree( GetProcessHeap(), 0, strW );
     return ret;
 }
+
+/***********************************************************************
+ *          GetAspectRatioFilterEx  (GDI32.@)
+ */
+BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, SIZE *aspect_ratio )
+{
+  FIXME( "(%p, %p): stub\n", hdc, aspect_ratio );
+  return FALSE;
+}
+
+/***********************************************************************
+ *           GetTextCharset    (GDI32.@)
+ */
+UINT WINAPI GetTextCharset( HDC hdc )
+{
+    /* MSDN docs say this is equivalent */
+    return NtGdiGetTextCharsetInfo( hdc, NULL, 0 );
+}
+
+/***********************************************************************
+ *           GdiGetCharDimensions    (GDI32.@)
+ *
+ * Gets the average width of the characters in the English alphabet.
+ *
+ * NOTES
+ *  This function is used by the dialog manager to get the size of a dialog
+ *  unit. It should also be used by other pieces of code that need to know
+ *  the size of a dialog unit in logical units without having access to the
+ *  window handle of the dialog.
+ *  Windows caches the font metrics from this function, but we don't and
+ *  there doesn't appear to be an immediate advantage to do so.
+ */
+LONG WINAPI GdiGetCharDimensions( HDC hdc, TEXTMETRICW *metric, LONG *height )
+{
+    SIZE sz;
+
+    if (metric && !GetTextMetricsW( hdc, metric )) return 0;
+
+    if (!GetTextExtentPointW( hdc, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                              52, &sz ))
+        return 0;
+
+    if (height) *height = sz.cy;
+    return (sz.cx / 26 + 1) / 2;
+}
+
+/***********************************************************************
+ *          EnableEUDC  (GDI32.@)
+ */
+BOOL WINAPI EnableEUDC( BOOL enable )
+{
+    FIXME( "(%d): stub\n", enable );
+    return FALSE;
+}
