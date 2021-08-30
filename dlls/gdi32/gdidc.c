@@ -22,6 +22,7 @@
 
 #include "gdi_private.h"
 #include "winternl.h"
+#include "ddrawgdi.h"
 
 #include "wine/debug.h"
 
@@ -1842,4 +1843,35 @@ BOOL WINAPI GdiIsPlayMetafileDC( HDC hdc )
 {
     FIXME( "%p\n", hdc );
     return FALSE;
+}
+
+/*******************************************************************
+ *           DrawEscape    (GDI32.@)
+ */
+INT WINAPI DrawEscape( HDC hdc, INT escape, INT input_size, const char *input )
+{
+    FIXME( "stub\n" );
+    return 0;
+}
+
+/*******************************************************************
+ *           NamedEscape    (GDI32.@)
+ */
+INT WINAPI NamedEscape( HDC hdc, const WCHAR *driver, INT escape, INT input_size,
+                        const char *input, INT output_size, char *output )
+{
+    FIXME( "(%p %s %d, %d %p %d %p)\n", hdc, wine_dbgstr_w(driver), escape, input_size,
+           input, output_size, output );
+    return 0;
+}
+
+/*******************************************************************
+ *           DdQueryDisplaySettingsUniqueness    (GDI32.@)
+ *           GdiEntry13
+ */
+ULONG WINAPI DdQueryDisplaySettingsUniqueness(void)
+{
+    static int warn_once;
+    if (!warn_once++) FIXME( "stub\n" );
+    return 0;
 }

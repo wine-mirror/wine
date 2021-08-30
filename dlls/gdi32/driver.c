@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
-#include "ddrawgdi.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
 
@@ -1146,42 +1145,6 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, int driver_id, INT escape, IN
     return ret;
 }
 
-
-/*******************************************************************
- *      DrawEscape [GDI32.@]
- *
- *
- */
-INT WINAPI DrawEscape(HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData)
-{
-    FIXME("DrawEscape, stub\n");
-    return 0;
-}
-
-/*******************************************************************
- *      NamedEscape [GDI32.@]
- */
-INT WINAPI NamedEscape( HDC hdc, LPCWSTR pDriver, INT nEscape, INT cbInput, LPCSTR lpszInData,
-                        INT cbOutput, LPSTR lpszOutData )
-{
-    FIXME("(%p, %s, %d, %d, %p, %d, %p)\n",
-          hdc, wine_dbgstr_w(pDriver), nEscape, cbInput, lpszInData, cbOutput,
-          lpszOutData);
-    return 0;
-}
-
-/*******************************************************************
- *      DdQueryDisplaySettingsUniqueness [GDI32.@]
- *      GdiEntry13                       [GDI32.@]
- */
-ULONG WINAPI DdQueryDisplaySettingsUniqueness(VOID)
-{
-    static int warn_once;
-
-    if (!warn_once++)
-        FIXME("stub\n");
-    return 0;
-}
 
 /******************************************************************************
  *           NtGdiDdDDIOpenAdapterFromHdc    (win32u.@)
