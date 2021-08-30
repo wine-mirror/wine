@@ -261,7 +261,7 @@ BOOL symt_set_udt_size(struct module* module, struct symt_udt* udt, unsigned siz
  */
 BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
                           const char* name, struct symt* elt_type,
-                          unsigned offset, unsigned size)
+                          unsigned offset, unsigned bit_offset, unsigned bit_size)
 {
     struct symt_data*   m;
     struct symt**       p;
@@ -292,7 +292,8 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     m->container       = &udt_type->symt;
     m->type            = elt_type;
     m->u.member.offset = offset;
-    m->u.member.length = ((offset & 7) || (size & 7)) ? size : 0;
+    m->u.member.bit_offset = bit_offset;
+    m->u.member.bit_length = bit_size;
     p = vector_add(&udt_type->vchildren, &module->pool);
     *p = &m->symt;
 
@@ -580,8 +581,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
     case TI_GET_BITPOSITION:
         if (type->tag == SymTagData &&
             ((const struct symt_data*)type)->kind == DataIsMember &&
-            ((const struct symt_data*)type)->u.member.length != 0)
-            X(DWORD) = ((const struct symt_data*)type)->u.member.offset & 7;
+            ((const struct symt_data*)type)->u.member.bit_length != 0)
+            X(DWORD) = ((const struct symt_data*)type)->u.member.bit_offset;
         else return FALSE;
         break;
 
@@ -657,9 +658,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             break;
         case SymTagData:
             if (((const struct symt_data*)type)->kind != DataIsMember ||
-                !((const struct symt_data*)type)->u.member.length)
+                !((const struct symt_data*)type)->u.member.bit_length)
                 return FALSE;
-            X(DWORD64) = ((const struct symt_data*)type)->u.member.length;
+            X(DWORD64) = ((const struct symt_data*)type)->u.member.bit_length;
             break;
         case SymTagArrayType:
             if (!symt_get_info(module, ((const struct symt_array*)type)->base_type,
@@ -735,7 +736,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
                 X(ULONG) = ((const struct symt_data*)type)->u.var.offset; 
                 break;
             case DataIsMember:
-                X(ULONG) = ((const struct symt_data*)type)->u.member.offset >> 3; 
+                X(ULONG) = ((const struct symt_data*)type)->u.member.offset;
                 break;
             default:
                 FIXME("Unknown kind (%u) for get-offset\n",     

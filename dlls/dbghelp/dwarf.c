@@ -1422,7 +1422,7 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
     }
     else bit_offset.u.uvalue = 0;
     symt_add_udt_element(ctx->module, parent, name.u.string, elt_type,    
-                         (loc.offset << 3) + bit_offset.u.uvalue,
+                         loc.offset, bit_offset.u.uvalue,
                          bit_size.u.uvalue);
 
     if (dwarf2_get_di_children(ctx, di)) FIXME("Unsupported children\n");

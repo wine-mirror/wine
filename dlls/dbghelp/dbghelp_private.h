@@ -194,7 +194,8 @@ struct symt_data
         struct
         {
             LONG_PTR                    offset;
-            ULONG_PTR                   length;
+            ULONG_PTR                   bit_length;
+            ULONG_PTR                   bit_offset;
         } member;
         /* DataIsConstant */
         VARIANT                 value;
@@ -793,7 +794,7 @@ extern BOOL         symt_add_udt_element(struct module* module,
                                          struct symt_udt* udt_type, 
                                          const char* name,
                                          struct symt* elt_type, unsigned offset, 
-                                         unsigned size) DECLSPEC_HIDDEN;
+                                         unsigned bit_offset, unsigned bit_size) DECLSPEC_HIDDEN;
 extern struct symt_enum*
                     symt_new_enum(struct module* module, const char* typename,
                                   struct symt* basetype) DECLSPEC_HIDDEN;

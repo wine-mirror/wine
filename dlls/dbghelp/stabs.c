@@ -615,19 +615,11 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             if (doadd && adt)
             {
                 char    tmp[256];
-                DWORD64 size;
 
                 strcpy(tmp, "__inherited_class_");
                 strcat(tmp, symt_get_name(adt));
 
-                /* FIXME: TI_GET_LENGTH will not always work, especially when adt
-                 * has just been seen as a forward definition and not the real stuff
-                 * yet.
-                 * As we don't use much the size of members in structs, this may not
-                 * be much of a problem
-                 */
-                symt_get_info(ptd->module, adt, TI_GET_LENGTH, &size);
-                symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, (DWORD)size * 8);
+                symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, 0, 0);
             }
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
         }
@@ -701,7 +693,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &sz) == -1);
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
 
-            if (doadd) symt_add_udt_element(ptd->module, sdt, ptd->buf + idx, adt, ofs, sz);
+            if (doadd) symt_add_udt_element(ptd->module, sdt, ptd->buf + idx, adt, ofs, 0, 0);
             break;
         case ':':
             {
