@@ -708,6 +708,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagFunctionArgType:
             X(DWORD) = symt_ptr2index(module, ((const struct symt_function_arg_type*)type)->container);
             break;
+        case SymTagUDT:
+            X(DWORD) = symt_ptr2index(module, &module->top->symt);
+            break;
         default:
             FIXME("Unsupported sym-tag %s for get-lexical-parent\n", 
                   symt_get_tag_str(type->tag));
