@@ -663,7 +663,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD64) = ((const struct symt_udt*)type)->size;
             break;
         case SymTagEnum:
-            X(DWORD64) = sizeof(int); /* FIXME: should be size of base-type of enum !!! */
+            if (!symt_get_info(module, ((const struct symt_enum*)type)->base_type, TI_GET_LENGTH, pInfo))
+                return FALSE;
             break;
         case SymTagData:
             if (((const struct symt_data*)type)->kind != DataIsMember ||
