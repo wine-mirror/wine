@@ -1170,8 +1170,7 @@ struct sym_enumW
     PSYM_ENUMERATESYMBOLS_CALLBACKW     cb;
     void*                               ctx;
     PSYMBOL_INFOW                       sym_info;
-    char                                buffer[sizeof(SYMBOL_INFOW) + MAX_SYM_NAME];
-
+    char                                buffer[sizeof(SYMBOL_INFOW) + MAX_SYM_NAME * sizeof(WCHAR)];
 };
     
 static BOOL CALLBACK sym_enumW(PSYMBOL_INFO si, ULONG size, PVOID ctx)
@@ -1438,7 +1437,7 @@ BOOL WINAPI SymFromNameW(HANDLE process, const WCHAR *name, SYMBOL_INFOW *symbol
 
     TRACE("(%p, %s, %p)\n", process, debugstr_w(name), symbol);
 
-    len = sizeof(*si) + symbol->MaxNameLen * sizeof(WCHAR);
+    len = sizeof(*si) + symbol->MaxNameLen;
     if (!(si = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
 
     len = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
