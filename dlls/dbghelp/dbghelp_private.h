@@ -161,6 +161,12 @@ struct symt_block
     struct vector               vchildren;      /* sub-blocks & local variables */
 };
 
+struct symt_module /* in fact any of .exe, .dll... */
+{
+    struct symt                 symt;           /* module */
+    struct module*              module;
+};
+
 struct symt_compiland
 {
     struct symt                 symt;
@@ -375,6 +381,7 @@ struct module
     unsigned                    sorttab_size;
     struct symt_ht**            addr_sorttab;
     struct hash_table           ht_symbols;
+    struct symt_module*         top;
 
     /* types */
     struct hash_table           ht_types;
@@ -708,6 +715,8 @@ extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si) DECLS
 extern void         symbol_setname(SYMBOL_INFO* si, const char* name) DECLSPEC_HIDDEN;
 extern struct symt_ht*
                     symt_find_nearest(struct module* module, DWORD_PTR addr) DECLSPEC_HIDDEN;
+extern struct symt_module*
+                    symt_new_module(struct module* module) DECLSPEC_HIDDEN;
 extern struct symt_compiland*
                     symt_new_compiland(struct module* module, ULONG_PTR address,
                                        unsigned src_idx) DECLSPEC_HIDDEN;

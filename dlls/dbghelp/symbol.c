@@ -183,6 +183,19 @@ static WCHAR* file_regex(const char* srcfile)
     return mask;
 }
 
+struct symt_module* symt_new_module(struct module* module)
+{
+    struct symt_module*    sym;
+
+    TRACE_(dbghelp_symt)("Adding toplevel exe symbol %s\n", debugstr_w(module->module.ModuleName));
+    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    {
+        sym->symt.tag = SymTagExe;
+        sym->module   = module;
+    }
+    return sym;
+}
+
 struct symt_compiland* symt_new_compiland(struct module* module, 
                                           ULONG_PTR address, unsigned src_idx)
 {

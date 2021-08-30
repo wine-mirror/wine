@@ -233,6 +233,9 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->sources           = 0;
     wine_rb_init(&module->sources_offsets_tree, source_rb_compare);
 
+    /* add top level symbol */
+    module->top = symt_new_module(module);
+
     return module;
 }
 

@@ -752,6 +752,15 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         break;
 
     case TI_GET_SYMNAME:
+        if (type->tag == SymTagExe)
+        {
+            DWORD len = (lstrlenW(module->modulename) + 1) * sizeof(WCHAR);
+            WCHAR* wname = HeapAlloc(GetProcessHeap(), 0, len);
+            if (!wname) return FALSE;
+            memcpy(wname, module->modulename, len);
+            X(WCHAR*) = wname;
+        }
+        else
         {
             const char* name = symt_get_name(type);
             if (!name) return FALSE;
