@@ -170,6 +170,7 @@ struct symt_module /* in fact any of .exe, .dll... */
 struct symt_compiland
 {
     struct symt                 symt;
+    struct symt_module*         container;      /* symt_module */
     ULONG_PTR                   address;
     unsigned                    source;
     struct vector               vchildren;      /* global variables & functions */

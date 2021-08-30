@@ -91,6 +91,8 @@ const char* symt_get_name(const struct symt* sym)
     case SymTagEnum:            return ((const struct symt_enum*)sym)->name;
     case SymTagTypedef:         return ((const struct symt_typedef*)sym)->hash_elt.name;
     case SymTagUDT:             return ((const struct symt_udt*)sym)->hash_elt.name;
+    case SymTagCompiland:       return source_get(((const struct symt_compiland*)sym)->container->module,
+                                                  ((const struct symt_compiland*)sym)->source);
     default:
         FIXME("Unsupported sym-tag %s\n", symt_get_tag_str(sym->tag));
         /* fall through */

@@ -205,9 +205,10 @@ struct symt_compiland* symt_new_compiland(struct module* module,
                          debugstr_w(module->module.ModuleName), source_get(module, src_idx));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
-        sym->symt.tag = SymTagCompiland;
-        sym->address  = address;
-        sym->source   = src_idx;
+        sym->symt.tag  = SymTagCompiland;
+        sym->container = module->top;
+        sym->address   = address;
+        sym->source    = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
     }
     return sym;
