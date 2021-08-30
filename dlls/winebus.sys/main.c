@@ -374,7 +374,7 @@ DEVICE_OBJECT *bus_enumerate_hid_devices(const WCHAR *bus_id, enum_func function
     return ret;
 }
 
-void bus_unlink_hid_device(DEVICE_OBJECT *device)
+static void bus_unlink_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
 

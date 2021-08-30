@@ -97,6 +97,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
+static struct list event_queue = LIST_INIT(event_queue);
 
 static const WCHAR busidW[] = {'I','O','H','I','D',0};
 static struct iohid_bus_options options;
@@ -377,19 +378,13 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
 
 static void handle_RemovalCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
 {
-    DEVICE_OBJECT *device;
     TRACE("OS/X IOHID Device Removed %p\n", IOHIDDevice);
     IOHIDDeviceRegisterInputReportCallback(IOHIDDevice, NULL, 0, NULL, NULL);
     /* Note: Yes, we leak the buffer. But according to research there is no
              safe way to deallocate that buffer. */
     IOHIDDeviceUnscheduleFromRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     IOHIDDeviceClose(IOHIDDevice, 0);
-    device = bus_find_hid_device(busidW, IOHIDDevice);
-    if (device)
-    {
-        bus_unlink_hid_device(device);
-        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-    }
+    bus_event_queue_device_removed(&event_queue, busidW, IOHIDDevice);
 }
 
 NTSTATUS iohid_bus_init(void *args)
@@ -415,9 +410,15 @@ NTSTATUS iohid_bus_init(void *args)
 
 NTSTATUS iohid_bus_wait(void *args)
 {
-    CFRunLoopRun();
+    struct bus_event *result = args;
+
+    do
+    {
+        if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
+    } while (CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, TRUE) != kCFRunLoopRunStopped);
 
     TRACE("IOHID main loop exiting\n");
+    bus_event_queue_destroy(&event_queue);
     IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
     IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
     CFRelease(hid_manager);
