@@ -668,7 +668,7 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
     wszConvertedPart = GetWideString(szPart);
 
     ok(lstrcmpW(wszPart,wszConvertedPart)==0,
-        "Strings didn't match between ascii and unicode UrlGetPart!\n");
+        "Strings didn't match between ansi and unicode UrlGetPart!\n");
 
     FreeWideString(wszConvertedPart);
   }
@@ -860,7 +860,7 @@ static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, H
 
         wszConvertedUrl = GetWideString(szReturnUrl);
         ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0,
-            "Strings didn't match between ascii and unicode UrlCanonicalize, index %d!\n", index);
+            "Strings didn't match between ansi and unicode UrlCanonicalize, index %d!\n", index);
         FreeWideString(wszConvertedUrl);
     }
 
@@ -1284,7 +1284,7 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
         ok(dwSize == dwExpectLen, "Got length %d, expected %d\n", dwSize, dwExpectLen);
         if(SUCCEEDED(hr)) {
             wszConvertedUrl = GetWideString(szReturnUrl);
-            ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCombine!\n");
+            ok(lstrcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ansi and unicode UrlCombine!\n");
             FreeWideString(wszConvertedUrl);
         }
     }
