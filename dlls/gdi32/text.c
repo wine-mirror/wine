@@ -2002,3 +2002,55 @@ BOOL WINAPI GdiRealizationInfo( HDC hdc, struct realization_info *info )
     info->instance_id = ri.instance_id;
     return TRUE;
 }
+
+/***********************************************************************
+ *           EnumFontFamiliesA    (GDI32.@)
+ */
+INT WINAPI EnumFontFamiliesA( HDC hdc, const char *family, FONTENUMPROCA efproc, LPARAM data )
+{
+    LOGFONTA lf;
+
+    if (family)
+    {
+        if (!*family) return 1;
+        lstrcpynA( lf.lfFaceName, family, LF_FACESIZE );
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+    }
+
+    return EnumFontFamiliesExA( hdc, family ? &lf : NULL, efproc, data, 0 );
+}
+
+/***********************************************************************
+ *           EnumFontFamiliesW    (GDI32.@)
+ */
+INT WINAPI EnumFontFamiliesW( HDC hdc, const WCHAR *family, FONTENUMPROCW efproc, LPARAM data )
+{
+    LOGFONTW lf;
+
+    if (family)
+    {
+        if (!*family) return 1;
+        lstrcpynW( lf.lfFaceName, family, LF_FACESIZE );
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+    }
+
+    return EnumFontFamiliesExW( hdc, family ? &lf : NULL, efproc, data, 0 );
+}
+
+/***********************************************************************
+ *           EnumFontsA    (GDI32.@)
+ */
+INT WINAPI EnumFontsA( HDC hdc, const char *name, FONTENUMPROCA efproc, LPARAM data )
+{
+    return EnumFontFamiliesA( hdc, name, efproc, data );
+}
+
+/***********************************************************************
+ *           EnumFontsW    (GDI32.@)
+ */
+INT WINAPI EnumFontsW( HDC hdc, const WCHAR *name, FONTENUMPROCW efproc, LPARAM data )
+{
+    return EnumFontFamiliesW( hdc, name, efproc, data );
+}

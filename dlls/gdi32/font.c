@@ -4490,66 +4490,6 @@ INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
     return FONT_EnumFontFamiliesEx( hDC, plfW, (FONTENUMPROCW)efproc, lParam, FALSE );
 }
 
-/***********************************************************************
- *              EnumFontFamiliesA	(GDI32.@)
- */
-INT WINAPI EnumFontFamiliesA( HDC hDC, LPCSTR lpFamily,
-                                  FONTENUMPROCA efproc, LPARAM lpData )
-{
-    LOGFONTA lf, *plf;
-
-    if (lpFamily)
-    {
-        if (!*lpFamily) return 1;
-        lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
-        lf.lfCharSet = DEFAULT_CHARSET;
-        lf.lfPitchAndFamily = 0;
-        plf = &lf;
-    }
-    else plf = NULL;
-
-    return EnumFontFamiliesExA( hDC, plf, efproc, lpData, 0 );
-}
-
-/***********************************************************************
- *              EnumFontFamiliesW	(GDI32.@)
- */
-INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
-                                  FONTENUMPROCW efproc, LPARAM lpData )
-{
-    LOGFONTW lf, *plf;
-
-    if (lpFamily)
-    {
-        if (!*lpFamily) return 1;
-        lstrcpynW( lf.lfFaceName, lpFamily, LF_FACESIZE );
-        lf.lfCharSet = DEFAULT_CHARSET;
-        lf.lfPitchAndFamily = 0;
-        plf = &lf;
-    }
-    else plf = NULL;
-
-    return EnumFontFamiliesExW( hDC, plf, efproc, lpData, 0 );
-}
-
-/***********************************************************************
- *              EnumFontsA		(GDI32.@)
- */
-INT WINAPI EnumFontsA( HDC hDC, LPCSTR lpName, FONTENUMPROCA efproc,
-                           LPARAM lpData )
-{
-    return EnumFontFamiliesA( hDC, lpName, efproc, lpData );
-}
-
-/***********************************************************************
- *              EnumFontsW		(GDI32.@)
- */
-INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
-                           LPARAM lpData )
-{
-    return EnumFontFamiliesW( hDC, lpName, efproc, lpData );
-}
-
 
 /***********************************************************************
  *           NtGdiSetTextJustification    (win32u.@)
