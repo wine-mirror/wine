@@ -49,4 +49,24 @@ extern void bus_event_queue_destroy(struct list *queue) DECLSPEC_HIDDEN;
 extern BOOL bus_event_queue_device_removed(struct list *queue, const WCHAR *bus_id, void *context) DECLSPEC_HIDDEN;
 extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event) DECLSPEC_HIDDEN;
 
+struct hid_descriptor
+{
+    BYTE *data;
+    SIZE_T size;
+    SIZE_T max_size;
+};
+
+extern BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_end(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+extern void hid_descriptor_free(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+
+extern BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
+                                       USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_padding(struct hid_descriptor *desc, BYTE bitcount) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count) DECLSPEC_HIDDEN;
+extern BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
+                                    const USAGE *usages, BOOL rel, INT size, LONG min, LONG max) DECLSPEC_HIDDEN;
+
+extern BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+
 #endif /* __WINEBUS_UNIX_PRIVATE_H */

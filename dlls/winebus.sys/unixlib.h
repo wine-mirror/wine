@@ -68,6 +68,11 @@ struct bus_event
     };
 };
 
+struct device_create_params
+{
+    struct unix_device *device;
+};
+
 enum unix_funcs
 {
     sdl_init,
@@ -79,6 +84,8 @@ enum unix_funcs
     iohid_init,
     iohid_wait,
     iohid_stop,
+    mouse_create,
+    keyboard_create,
 };
 
 extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
