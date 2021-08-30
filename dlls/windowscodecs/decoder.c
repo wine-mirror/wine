@@ -565,7 +565,7 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetContainerFormat(IWICMetadataBl
     return S_OK;
 }
 
-static HRESULT WINAPI CommonDecoderFrame_InitializeMetadata(CommonDecoderFrame *This)
+static HRESULT CommonDecoderFrame_InitializeMetadata(CommonDecoderFrame *This)
 {
     HRESULT hr=S_OK;
 
