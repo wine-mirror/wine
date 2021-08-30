@@ -1444,13 +1444,10 @@ void output_syscalls( DLLSPEC *spec )
         output( "\t.data\n" );
         output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
         output( "%s\n", asm_globl("__wine_syscall_table") );
-        output( "\t%s .Lsyscall_table, 0, %u, .Lsyscall_args\n", get_asm_ptr_keyword(), count );
+        output( "\t%s .Lsyscall_table, 0, %u, 0\n", get_asm_ptr_keyword(), count );
         output( ".Lsyscall_table:\n" );
         for (i = 0; i < count; i++)
             output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( syscalls[i] )));
-        output( ".Lsyscall_args:\n" );
-        for (i = 0; i < count; i++)
-            output( "\t.byte %u\n", get_args_size( syscalls[i] ));
         return;
     }
 
@@ -1574,6 +1571,8 @@ void output_syscalls( DLLSPEC *spec )
     output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
     output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
     output( "\t%s 0\n", get_asm_ptr_keyword() );
+    output( "\t.short %u\n", count );
+    for (i = 0; i < count; i++) output( "\t.byte %u\n", get_args_size( syscalls[i] ));
 }
 
 

@@ -118,6 +118,8 @@ static void *p__wine_syscall_dispatcher;
 
 extern SYSTEM_SERVICE_TABLE __wine_syscall_table DECLSPEC_HIDDEN;
 
+static BYTE syscall_args[4096];
+
 SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
 
 
@@ -1148,8 +1150,21 @@ static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr
  */
 NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **dispatcher )
 {
+    struct syscall_info
+    {
+        void  *dispatcher;
+        USHORT limit;
+        BYTE  args[1];
+    } *info = (struct syscall_info *)dispatcher;
+
     if (id > 3) return STATUS_INVALID_PARAMETER;
-    *dispatcher = __wine_syscall_dispatcher;
+    if (info->limit != table->ServiceLimit)
+    {
+        ERR( "syscall count mismatch %u / %lu\n", info->limit, table->ServiceLimit );
+        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
+    }
+    info->dispatcher = __wine_syscall_dispatcher;
+    memcpy( table->ArgumentTable, info->args, table->ServiceLimit );
     KeServiceDescriptorTable[id] = *table;
     return STATUS_SUCCESS;
 }
@@ -1932,6 +1947,7 @@ static struct unix_funcs unix_funcs =
  */
 static void start_main_thread(void)
 {
+    SYSTEM_SERVICE_TABLE syscall_table = __wine_syscall_table;
     NTSTATUS status;
     TEB *teb = virtual_alloc_first_teb();
 
@@ -1954,7 +1970,8 @@ static void start_main_thread(void)
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
-    ntdll_init_syscalls( 0, &__wine_syscall_table, p__wine_syscall_dispatcher );
+    syscall_table.ArgumentTable = syscall_args;
+    ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     if (status == STATUS_REVISION_MISMATCH)
     {
