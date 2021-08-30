@@ -717,6 +717,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD) = symt_ptr2index(module, ((const struct symt_function_arg_type*)type)->container);
             break;
         case SymTagUDT:
+        case SymTagEnum:
             X(DWORD) = symt_ptr2index(module, &module->top->symt);
             break;
         default:
