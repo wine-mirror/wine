@@ -270,8 +270,8 @@ struct symt_basic
 struct symt_enum
 {
     struct symt                 symt;
+    struct hash_table_elt       hash_elt;
     struct symt*                base_type;
-    const char*                 name;
     struct vector               vchildren;
 };
 

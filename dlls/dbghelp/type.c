@@ -88,7 +88,7 @@ const char* symt_get_name(const struct symt* sym)
     case SymTagLabel:           return ((const struct symt_hierarchy_point*)sym)->hash_elt.name;
     case SymTagThunk:           return ((const struct symt_thunk*)sym)->hash_elt.name;
     /* hierarchy tree */
-    case SymTagEnum:            return ((const struct symt_enum*)sym)->name;
+    case SymTagEnum:            return ((const struct symt_enum*)sym)->hash_elt.name;
     case SymTagTypedef:         return ((const struct symt_typedef*)sym)->hash_elt.name;
     case SymTagUDT:             return ((const struct symt_udt*)sym)->hash_elt.name;
     case SymTagCompiland:       return source_get(((const struct symt_compiland*)sym)->container->module,
@@ -307,12 +307,19 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename,
 {
     struct symt_enum*   sym;
 
+    TRACE_(dbghelp_symt)("Adding enum %s:%s\n",
+                         debugstr_w(module->module.ModuleName), typename);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag            = SymTagEnum;
-        sym->name = (typename) ? pool_strdup(&module->pool, typename) : NULL;
+        if (typename)
+        {
+            sym->hash_elt.name = pool_strdup(&module->pool, typename);
+            hash_table_add(&module->ht_types, &sym->hash_elt);
+        } else sym->hash_elt.name = NULL;
         sym->base_type           = basetype;
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        symt_add_type(module, &sym->symt);
     }
     return sym;
 }
