@@ -1968,3 +1968,12 @@ BOOL WINAPI EnableEUDC( BOOL enable )
     FIXME( "(%d): stub\n", enable );
     return FALSE;
 }
+
+/*************************************************************************
+ *             GetFontFileData   (GDI32.@)
+ */
+BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD file_index, UINT64 offset,
+                             void *buff, DWORD buff_size )
+{
+    return NtGdiGetFontFileData( instance_id, file_index, &offset, buff, buff_size );
+}

@@ -6753,9 +6753,10 @@ BOOL WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size )
 }
 
 /*************************************************************************
- *             GetFontFileData   (GDI32.@)
+ *             NtGdiGetFontFileData   (win32u.@)
  */
-BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD file_index, UINT64 offset, void *buff, DWORD buff_size )
+BOOL WINAPI NtGdiGetFontFileData( DWORD instance_id, DWORD file_index, UINT64 *offset,
+                                  void *buff, DWORD buff_size )
 {
     struct gdi_font *font;
     DWORD tag = 0, size;
@@ -6767,8 +6768,8 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD file_index, UINT64 offset,
     {
         if (font->ttc_item_offset) tag = MS_TTCF_TAG;
         size = font_funcs->get_font_data( font, tag, 0, NULL, 0 );
-        if (size != GDI_ERROR && size >= buff_size && offset <= size - buff_size)
-            ret = font_funcs->get_font_data( font, tag, offset, buff, buff_size ) != GDI_ERROR;
+        if (size != GDI_ERROR && size >= buff_size && *offset <= size - buff_size)
+            ret = font_funcs->get_font_data( font, tag, *offset, buff, buff_size ) != GDI_ERROR;
         else
             SetLastError( ERROR_INVALID_PARAMETER );
     }
