@@ -6807,35 +6807,6 @@ BOOL WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struct fo
     return ret;
 }
 
-struct realization_info
-{
-    DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
-    DWORD cache_num;   /* keeps incrementing - num of fonts that have been created allowing for caching?? */
-    DWORD instance_id; /* identifies a realized font instance */
-};
-
-/*************************************************************
- *           GdiRealizationInfo    (GDI32.@)
- *
- * Returns a structure that contains some font information.
- */
-BOOL WINAPI GdiRealizationInfo(HDC hdc, struct realization_info *info)
-{
-    struct font_realization_info ri;
-    BOOL ret;
-
-    ri.size = sizeof(ri);
-    ret = NtGdiGetRealizationInfo( hdc, &ri );
-    if (ret)
-    {
-        info->flags = ri.flags;
-        info->cache_num = ri.cache_num;
-        info->instance_id = ri.instance_id;
-    }
-
-    return ret;
-}
-
 /*************************************************************
  *           NtGdiGetCharWidthInfo    (win32u.@)
  */
