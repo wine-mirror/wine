@@ -314,6 +314,32 @@ static const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t
 
 #undef WINE_D3D10_TO_STR
 
+static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
+{
+    SIZE_T max_capacity, new_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(1, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = count;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
 static void read_dword(const char **ptr, DWORD *d)
 {
     memcpy(d, *ptr, sizeof(*d));
@@ -566,6 +592,127 @@ static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const 
     return S_OK;
 }
 
+struct d3d10_effect_so_decl
+{
+    D3D10_SO_DECLARATION_ENTRY *entries;
+    SIZE_T capacity;
+    SIZE_T count;
+    unsigned int stride;
+    char *decl;
+};
+
+static void d3d10_effect_cleanup_so_decl(struct d3d10_effect_so_decl *so_decl)
+{
+    heap_free(so_decl->entries);
+    heap_free(so_decl->decl);
+    memset(so_decl, 0, sizeof(*so_decl));
+}
+
+static HRESULT d3d10_effect_parse_stream_output_declaration(const char *decl,
+        struct d3d10_effect_so_decl *so_decl)
+{
+    static const char * allmask = "xyzw";
+    char *p, *ptr, *end, *next, *mask, *m, *slot;
+    unsigned int len = strlen(decl);
+    D3D10_SO_DECLARATION_ENTRY e;
+
+    memset(so_decl, 0, sizeof(*so_decl));
+
+    if (!(so_decl->decl = heap_alloc(len + 1)))
+        return E_OUTOFMEMORY;
+    memcpy(so_decl->decl, decl, len + 1);
+
+    p = so_decl->decl;
+
+    while (p && *p)
+    {
+        memset(&e, 0, sizeof(e));
+
+        end = strchr(p, ';');
+        next = end ? end + 1 : p + strlen(p);
+
+        len = next - p;
+        if (end) len--;
+
+        /* Remove leading and trailing spaces. */
+        while (len && isspace(*p)) { len--; p++; }
+        while (len && isspace(p[len - 1])) len--;
+
+        p[len] = 0;
+
+        /* Output slot */
+        if ((slot = strchr(p, ':')))
+        {
+            *slot = 0;
+
+            ptr = p;
+            while (*ptr)
+            {
+                if (!isdigit(*ptr))
+                {
+                    WARN("Invalid output slot %s.\n", debugstr_a(p));
+                    goto failed;
+                }
+                ptr++;
+            }
+
+            e.OutputSlot = atoi(p);
+            p = slot + 1;
+        }
+
+        /* Mask */
+        if ((mask = strchr(p, '.')))
+        {
+            *mask = 0; mask++;
+
+            if (!(m = strstr(allmask, mask)))
+            {
+                WARN("Invalid component mask %s.\n", debugstr_a(mask));
+                goto failed;
+            }
+
+            e.StartComponent = m - allmask;
+            e.ComponentCount = strlen(mask);
+        }
+        else
+        {
+            e.StartComponent = 0;
+            e.ComponentCount = 4;
+        }
+
+        /* Semantic index and name */
+        len = strlen(p);
+        while (isdigit(p[len - 1]))
+            len--;
+
+        if (p[len])
+        {
+            e.SemanticIndex = atoi(&p[len]);
+            p[len] = 0;
+        }
+
+        e.SemanticName = p;
+
+        if (!d3d_array_reserve((void **)&so_decl->entries, &so_decl->capacity, so_decl->count + 1,
+                sizeof(*so_decl->entries)))
+            goto failed;
+
+        so_decl->entries[so_decl->count++] = e;
+
+        if (e.OutputSlot == 0)
+            so_decl->stride += e.ComponentCount * sizeof(float);
+
+        p = next;
+    }
+
+    return S_OK;
+
+failed:
+    d3d10_effect_cleanup_so_decl(so_decl);
+
+    return E_FAIL;
+}
+
 static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offset, struct d3d10_effect_variable *v)
 {
     ID3D10Device *device = v->effect->device;
@@ -628,9 +775,22 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
 
         case D3D10_SVT_GEOMETRYSHADER:
             if (v->type->flags & D3D10_EOT_FLAG_GS_SO)
-                FIXME("Create geometry shader with stream output.\n");
-            hr = ID3D10Device_CreateGeometryShader(device, ptr, dxbc_size, &v->u.shader.shader.gs);
-            if (FAILED(hr)) return hr;
+            {
+                struct d3d10_effect_so_decl so_decl;
+
+                if (FAILED(hr = d3d10_effect_parse_stream_output_declaration(v->u.shader.stream_output_declaration, &so_decl)))
+                {
+                    WARN("Failed to parse stream output declaration, hr %#x.\n", hr);
+                    break;
+                }
+
+                hr = ID3D10Device_CreateGeometryShaderWithStreamOutput(device, ptr, dxbc_size,
+                        so_decl.entries, so_decl.count, so_decl.stride, &v->u.shader.shader.gs);
+
+                d3d10_effect_cleanup_so_decl(&so_decl);
+            }
+            else
+                hr = ID3D10Device_CreateGeometryShader(device, ptr, dxbc_size, &v->u.shader.shader.gs);
             break;
 
         default:
@@ -1996,9 +2156,6 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
                 read_dword(ptr, &shader_offset);
                 TRACE("Shader offset: %#x.\n", shader_offset);
 
-                if (FAILED(hr = parse_fx10_shader(data, data_size, shader_offset, var)))
-                    return hr;
-
                 if (v->type->flags & D3D10_EOT_FLAG_GS_SO)
                 {
                     read_dword(ptr, &sodecl_offset);
@@ -2013,6 +2170,9 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
 
                     TRACE("Stream output declaration: %s.\n", debugstr_a(var->u.shader.stream_output_declaration));
                 }
+
+                if (FAILED(hr = parse_fx10_shader(data, data_size, shader_offset, var)))
+                    return hr;
             }
             break;
 
