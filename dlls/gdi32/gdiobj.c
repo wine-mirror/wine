@@ -407,7 +407,7 @@ static const struct DefaultFontInfo default_fonts[] =
 
 
 /*************************************************************************
- * __wine_make_gdi_object_system    (GDI32.@)
+ * __wine_make_gdi_object_system    (win32u.@)
  *
  * USER has to tell GDI that its system brushes and pens are non-deletable.
  * For a description of the GDI object magics and their flags,
@@ -1065,9 +1065,9 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 
 
 /***********************************************************************
- *           UnrealizeObject    (GDI32.@)
+ *           NtGdiUnrealizeObject    (win32u.@)
  */
-BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
+BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )
 {
     const struct gdi_obj_funcs *funcs = NULL;
     GDI_HANDLE_ENTRY *entry;
@@ -1180,9 +1180,9 @@ DWORD WINAPI GdiInitializeLanguagePack( DWORD arg )
 }
 
 /***********************************************************************
- *           GdiFlush    (GDI32.@)
+ *           NtGdiFlush    (win32u.@)
  */
-BOOL WINAPI GdiFlush(void)
+BOOL WINAPI NtGdiFlush(void)
 {
     return TRUE;  /* FIXME */
 }
@@ -1207,23 +1207,19 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 
 
 /*******************************************************************
- *      GetColorAdjustment [GDI32.@]
- *
- *
+ *           NtGdiGetColorAdjustment    (win32u.@)
  */
-BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
+BOOL WINAPI NtGdiGetColorAdjustment( HDC hdc, COLORADJUSTMENT *ca )
 {
-    FIXME("stub\n");
+    FIXME( "stub\n" );
     return FALSE;
 }
 
 /*******************************************************************
- *      SetColorAdjustment [GDI32.@]
- *
- *
+ *           NtGdiSetColorAdjustment    (win32u.@)
  */
-BOOL WINAPI SetColorAdjustment(HDC hdc, const COLORADJUSTMENT* lpca)
+BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
 {
-    FIXME("stub\n");
+    FIXME( "stub\n" );
     return FALSE;
 }

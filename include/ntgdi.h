@@ -253,6 +253,7 @@ INT      WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escap
 BOOL     WINAPI NtGdiExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT type );
 BOOL     WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
                                   const WCHAR *str, UINT count, const INT *dx, DWORD cp );
+BOOL     WINAPI NtGdiFlush(void);
 BOOL     WINAPI NtGdiFrameRgn( HDC hdc, HRGN hrgn, HBRUSH brush,
                                INT width, INT height );
 BOOL     WINAPI NtGdiFillPath( HDC hdc );
@@ -265,6 +266,7 @@ BOOL     WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *c
 BOOL     WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info );
 BOOL     WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
                                     ULONG flags, void *buffer );
+BOOL     WINAPI NtGdiGetColorAdjustment( HDC hdc, COLORADJUSTMENT *ca );
 BOOL     WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result );
 BOOL     WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result );
 INT      WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap );
@@ -343,6 +345,7 @@ LONG     WINAPI NtGdiSetBitmapBits( HBITMAP hbitmap, LONG count, const void *bit
 BOOL     WINAPI NtGdiSetBitmapDimension( HBITMAP hbitmap, INT x, INT y, SIZE *prev_size );
 BOOL     WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *prev_org );
 UINT     WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags );
+BOOL     WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca );
 INT      WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
                                                 DWORD cy, INT x_src, INT y_src, UINT startscan,
                                                 UINT lines, const void *bits, const BITMAPINFO *bmi,

@@ -215,7 +215,7 @@ static UINT set_palette_entries( HPALETTE hpalette, UINT start, UINT count,
     if (start+count > numEntries) count = numEntries - start;
     memcpy( &palPtr->entries[start], entries, count * sizeof(PALETTEENTRY) );
     GDI_ReleaseObj( hpalette );
-    UnrealizeObject( hpalette );
+    NtGdiUnrealizeObject( hpalette );
     return count;
 }
 

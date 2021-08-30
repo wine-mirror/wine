@@ -189,7 +189,7 @@
 # @ stub GdiEndPageEMF
 @ stdcall GdiEntry13()
 # @ stub GdiFixUpHandle
-@ stdcall GdiFlush()
+@ stdcall GdiFlush() NtGdiFlush
 # @ stub GdiFullscreenControl
 @ stdcall GdiGetBatchLimit()
 @ stdcall GdiGetCharDimensions(long ptr ptr)
@@ -266,7 +266,7 @@
 @ stdcall GetCharacterPlacementW(long wstr long long ptr long)
 @ stdcall GetClipBox(long ptr) NtGdiGetAppClipBox
 @ stdcall GetClipRgn(long long)
-@ stdcall GetColorAdjustment(long ptr)
+@ stdcall GetColorAdjustment(long ptr) NtGdiGetColorAdjustment
 @ stdcall GetColorSpace(long)
 @ stdcall GetCurrentObject(long long)
 @ stdcall GetCurrentPositionEx(long ptr)
@@ -482,7 +482,7 @@
 @ stdcall SetBoundsRect(long ptr long) NtGdiSetBoundsRect
 # @ stub SetBrushAttributes
 @ stdcall SetBrushOrgEx(long long long ptr)
-@ stdcall SetColorAdjustment(long ptr)
+@ stdcall SetColorAdjustment(long ptr) NtGdiSetColorAdjustment
 @ stdcall SetColorSpace(long long)
 @ stdcall SetDCBrushColor(long long)
 @ stdcall SetDCPenColor(long long)
@@ -539,7 +539,7 @@
 @ stdcall TextOutW(long long long wstr long)
 @ stdcall TranslateCharsetInfo(ptr ptr long)
 @ stub UnloadNetworkFonts
-@ stdcall UnrealizeObject(long)
+@ stdcall UnrealizeObject(long) NtGdiUnrealizeObject
 @ stdcall UpdateColors(long) NtGdiUpdateColors
 @ stdcall UpdateICMRegKey(long str str long) UpdateICMRegKeyA
 @ stdcall UpdateICMRegKeyA(long str str long)

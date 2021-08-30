@@ -1439,7 +1439,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         const EMRSETCOLORADJUSTMENT *lpSetColorAdjust = (const EMRSETCOLORADJUSTMENT *)mr;
 
-        SetColorAdjustment( hdc, &lpSetColorAdjust->ColorAdjustment );
+        NtGdiSetColorAdjustment( hdc, &lpSetColorAdjust->ColorAdjustment );
 
         break;
       }
