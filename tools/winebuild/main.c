@@ -202,6 +202,15 @@ static void set_subsystem( const char *subsystem, DLLSPEC *spec )
     free( str );
 }
 
+/* set the syscall table id */
+static void set_syscall_table( const char *id, DLLSPEC *spec )
+{
+    int val = atoi( id );
+
+    if (val < 0 || val > 3) fatal_error( "Invalid syscall table id '%s', must be 0-3\n", id );
+    spec->syscall_table = val;
+}
+
 /* set the target CPU and platform */
 static void set_target( const char *target )
 {
@@ -303,6 +312,7 @@ static const char usage_str[] =
 "       --safeseh             Mark object files as SEH compatible\n"
 "       --save-temps          Do not delete the generated intermediate files\n"
 "       --subsystem=SUBSYS    Set the subsystem (one of native, windows, console, wince)\n"
+"       --syscall-table=ID    Set the syscall table id (between 0 and 3)\n"
 "   -u, --undefined=SYMBOL    Add an undefined reference to SYMBOL when linking\n"
 "   -v, --verbose             Display the programs invoked\n"
 "       --version             Print the version and exit\n"
@@ -340,6 +350,7 @@ enum long_options_values
     LONG_OPT_SAVE_TEMPS,
     LONG_OPT_STATICLIB,
     LONG_OPT_SUBSYSTEM,
+    LONG_OPT_SYSCALL_TABLE,
     LONG_OPT_VERSION
 };
 
@@ -367,6 +378,7 @@ static const struct option long_options[] =
     { "safeseh",       0, 0, LONG_OPT_SAFE_SEH },
     { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
     { "subsystem",     1, 0, LONG_OPT_SUBSYSTEM },
+    { "syscall-table", 1, 0, LONG_OPT_SYSCALL_TABLE },
     { "version",       0, 0, LONG_OPT_VERSION },
     /* aliases for short options */
     { "target",        1, 0, 'b' },
@@ -594,6 +606,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_SUBSYSTEM:
             set_subsystem( optarg, spec );
+            break;
+        case LONG_OPT_SYSCALL_TABLE:
+            set_syscall_table( optarg, spec );
             break;
         case LONG_OPT_VERSION:
             printf( "winebuild version " PACKAGE_VERSION "\n" );

@@ -255,6 +255,11 @@ argument array to use Unicode strings. A graphical executable has a
 Optionally a major and minor subsystem version can also be specified;
 the default subsystem version is 4.0.
 .TP
+.BI --syscall-table= id
+Set the system call table id, between 0 and 3. The default is 0, the
+ntdll syscall table. Only useful in modules that define syscall entry
+points.
+.TP
 .BI \-u,\ --undefined= symbol
 Add \fIsymbol\fR to the list of undefined symbols when invoking the
 linker. This makes it possible to force a specific module of a static
