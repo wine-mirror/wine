@@ -27,6 +27,7 @@
 #include <ddk/wdm.h>
 #include <hidusage.h>
 
+#include "wine/list.h"
 #include "wine/unixlib.h"
 
 struct sdl_bus_options
@@ -49,11 +50,22 @@ struct unix_device;
 enum bus_event_type
 {
     BUS_EVENT_TYPE_NONE,
+    BUS_EVENT_TYPE_DEVICE_REMOVED,
 };
 
 struct bus_event
 {
     enum bus_event_type type;
+    struct list entry;
+
+    union
+    {
+        struct
+        {
+            const WCHAR *bus_id;
+            void *context;
+        } device_removed;
+    };
 };
 
 enum unix_funcs

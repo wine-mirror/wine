@@ -64,6 +64,7 @@ static struct sdl_bus_options options;
 
 static void *sdl_handle = NULL;
 static UINT quit_event = -1;
+static struct list event_queue = LIST_INIT(event_queue);
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(SDL_GetError);
@@ -730,12 +731,6 @@ static BOOL set_mapped_report_from_event(DEVICE_OBJECT *device, SDL_Event *event
     return FALSE;
 }
 
-static void try_remove_device(DEVICE_OBJECT *device)
-{
-    bus_unlink_hid_device(device);
-    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-}
-
 static void try_add_device(unsigned int index)
 {
     DWORD vid = 0, pid = 0, version = 0;
@@ -821,9 +816,7 @@ static void process_device_event(SDL_Event *event)
     else if (event->type == SDL_JOYDEVICEREMOVED)
     {
         id = ((SDL_JoyDeviceEvent *)event)->which;
-        device = bus_find_hid_device(sdl_busidW, ULongToPtr(id));
-        if (device) try_remove_device(device);
-        else WARN("failed to find device with id %d\n", id);
+        bus_event_queue_device_removed(&event_queue, sdl_busidW, ULongToPtr(id));
     }
     else if (event->type >= SDL_JOYAXISMOTION && event->type <= SDL_JOYBUTTONUP)
     {
@@ -980,15 +973,18 @@ failed:
 
 NTSTATUS sdl_bus_wait(void *args)
 {
+    struct bus_event *result = args;
     SDL_Event event;
 
     do
     {
+        if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
         if (pSDL_WaitEvent(&event) != 0) process_device_event(&event);
         else WARN("SDL_WaitEvent failed: %s\n", pSDL_GetError());
     } while (event.type != quit_event);
 
     TRACE("SDL main loop exiting\n");
+    bus_event_queue_destroy(&event_queue);
     dlclose(sdl_handle);
     sdl_handle = NULL;
     return STATUS_SUCCESS;

@@ -27,6 +27,8 @@
 
 #include "unixlib.h"
 
+#include "wine/list.h"
+
 struct unix_device
 {
 };
@@ -42,5 +44,9 @@ extern NTSTATUS udev_bus_stop(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS iohid_bus_init(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS iohid_bus_wait(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS iohid_bus_stop(void *) DECLSPEC_HIDDEN;
+
+extern void bus_event_queue_destroy(struct list *queue) DECLSPEC_HIDDEN;
+extern BOOL bus_event_queue_device_removed(struct list *queue, const WCHAR *bus_id, void *context) DECLSPEC_HIDDEN;
+extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event) DECLSPEC_HIDDEN;
 
 #endif /* __WINEBUS_UNIX_PRIVATE_H */

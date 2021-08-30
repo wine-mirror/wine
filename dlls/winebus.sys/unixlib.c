@@ -26,6 +26,7 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "wine/unixlib.h"
 
 #include "unix_private.h"
@@ -42,3 +43,41 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     iohid_bus_wait,
     iohid_bus_stop,
 };
+
+void bus_event_queue_destroy(struct list *queue)
+{
+    struct bus_event *event, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(event, next, queue, struct bus_event, entry)
+        HeapFree(GetProcessHeap(), 0, event);
+}
+
+BOOL bus_event_queue_device_removed(struct list *queue, const WCHAR *bus_id, void *context)
+{
+    ULONG size = sizeof(struct bus_event);
+    struct bus_event *event = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!event) return FALSE;
+
+    event->type = BUS_EVENT_TYPE_DEVICE_REMOVED;
+    event->device_removed.bus_id = bus_id;
+    event->device_removed.context = context;
+    list_add_tail(queue, &event->entry);
+
+    return TRUE;
+}
+
+BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
+{
+    struct list *entry = list_head(queue);
+    struct bus_event *tmp;
+
+    if (!entry) return FALSE;
+
+    tmp = LIST_ENTRY(entry, struct bus_event, entry);
+    list_remove(entry);
+
+    memcpy(event, tmp, sizeof(*event));
+    HeapFree(GetProcessHeap(), 0, tmp);
+
+    return TRUE;
+}

@@ -654,6 +654,7 @@ struct bus_main_params
 static DWORD CALLBACK bus_main_thread(void *args)
 {
     struct bus_main_params bus = *(struct bus_main_params *)args;
+    DEVICE_OBJECT *device;
     NTSTATUS status;
 
     TRACE("%s main loop starting\n", debugstr_w(bus.name));
@@ -663,7 +664,24 @@ static DWORD CALLBACK bus_main_thread(void *args)
 
     bus.bus_event->type = BUS_EVENT_TYPE_NONE;
     if (status) WARN("%s bus init returned status %#x\n", debugstr_w(bus.name), status);
-    else while ((status = winebus_call(bus.wait_code, bus.bus_event)) == STATUS_PENDING) {}
+    else while ((status = winebus_call(bus.wait_code, bus.bus_event)) == STATUS_PENDING)
+    {
+        struct bus_event *event = bus.bus_event;
+        switch (event->type)
+        {
+        case BUS_EVENT_TYPE_NONE: break;
+        case BUS_EVENT_TYPE_DEVICE_REMOVED:
+            EnterCriticalSection(&device_list_cs);
+            if (!(device = bus_find_hid_device(event->device_removed.bus_id, event->device_removed.context)))
+                WARN("could not find removed device matching bus %s, context %p\n",
+                     debugstr_w(event->device_removed.bus_id), event->device_removed.context);
+            else
+                bus_unlink_hid_device(device);
+            LeaveCriticalSection(&device_list_cs);
+            IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+            break;
+        }
+    }
 
     if (status) WARN("%s bus wait returned status %#x\n", debugstr_w(bus.name), status);
     else TRACE("%s main loop exited\n", debugstr_w(bus.name));
