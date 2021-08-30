@@ -694,7 +694,7 @@ static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
            U+0640: kashida */
         WORD gi[4];
 
-        if (GetGlyphIndicesW(hdc, chars, 4, gi, GGI_MARK_NONEXISTING_GLYPHS) != GDI_ERROR)
+        if (NtGdiGetGlyphIndicesW(hdc, chars, 4, gi, GGI_MARK_NONEXISTING_GLYPHS) != GDI_ERROR)
         {
             if(gi[0] != 0xFFFF) /* 0xFFFF: index of default non exist char */
                 sc->sfp.wgBlank = gi[0];
@@ -3499,7 +3499,8 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
         {
             WORD glyph;
             if (!hdc) return E_PENDING;
-            if (GetGlyphIndicesW(hdc, &inChar, 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS) == GDI_ERROR) return S_FALSE;
+            if (NtGdiGetGlyphIndicesW(hdc, &inChar, 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS) == GDI_ERROR)
+                return S_FALSE;
             if (glyph == 0xffff)
             {
                 hr = S_FALSE;

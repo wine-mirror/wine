@@ -298,7 +298,7 @@
 @ stdcall GetFontResourceInfoW(wstr ptr ptr long)
 @ stdcall GetFontUnicodeRanges(ptr ptr)
 @ stdcall GetGlyphIndicesA(long ptr long ptr long)
-@ stdcall GetGlyphIndicesW(long ptr long ptr long)
+@ stdcall GetGlyphIndicesW(long ptr long ptr long) NtGdiGetGlyphIndicesW
 @ stdcall GetGlyphOutline(long long long ptr long ptr ptr) GetGlyphOutlineA
 @ stdcall GetGlyphOutlineA(long long long ptr long ptr ptr)
 @ stdcall GetGlyphOutlineW(long long long ptr long ptr ptr)

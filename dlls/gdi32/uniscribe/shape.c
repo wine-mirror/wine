@@ -723,7 +723,7 @@ int SHAPE_does_GSUB_feature_apply_to_chars(HDC hdc, SCRIPT_ANALYSIS *psa, Script
     INT rc;
 
     glyphs = heap_calloc(count, 2 * sizeof(*glyphs));
-    GetGlyphIndicesW(hdc, chars, count, glyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, chars, count, glyphs, 0);
     rc = apply_GSUB_feature_to_glyph(hdc, psa, psc, glyphs, 0, write_dir, &glyph_count, feature);
     if (rc > GSUB_E_NOGLYPH)
         rc = count - glyph_count;
@@ -919,7 +919,7 @@ static void mark_invalid_combinations(HDC hdc, const WCHAR* pwcChars, INT cChars
     for (i = 0; i < cChars; i++)
        context_type[i] = lex(pwcChars[i]);
 
-    GetGlyphIndicesW(hdc, &invalid, 1, &invalid_glyph, 0);
+    NtGdiGetGlyphIndicesW(hdc, &invalid, 1, &invalid_glyph, 0);
     for (i = 1, g=1; i < cChars - 1; i++, g++)
     {
         if (context_type[i] != 0 && context_type[i+write_dir]==context_type[i])
@@ -1163,7 +1163,9 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
                 {
                     /* fall back to presentation form B */
                     WCHAR context_char = wine_shaping_forms[pwcChars[char_index] - FIRST_ARABIC_CHAR][context_shape[char_index]];
-                    if (context_char != pwcChars[char_index] && GetGlyphIndicesW(hdc, &context_char, 1, &newGlyph, 0) != GDI_ERROR && newGlyph != 0x0000)
+                    if (context_char != pwcChars[char_index] &&
+                        NtGdiGetGlyphIndicesW(hdc, &context_char, 1, &newGlyph, 0) != GDI_ERROR &&
+                        newGlyph != 0x0000)
                         pwOutGlyphs[glyph_index] = newGlyph;
                 }
             }
@@ -2319,7 +2321,7 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     }
 
     /* Step 4: Base Form application to syllables */
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
     ShapeIndicSyllables(hdc, psc, psa, input, cChars, syllables, syllable_count, pwOutGlyphs, pcGlyphs, pwLogClust, sinhala_lex, NULL, TRUE);
 
@@ -2374,7 +2376,7 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, devanagari_lex, Reorder_Like_Devanagari, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2431,7 +2433,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, bengali_lex, Reorder_Like_Bengali, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Initial form is only applied to the beginning of words */
@@ -2494,7 +2496,7 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, gurmukhi_lex, Reorder_Like_Bengali, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2534,7 +2536,7 @@ static void ContextualShape_Gujarati(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     /* Step 1: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, gujarati_lex, Reorder_Like_Devanagari, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 2: Base Form application to syllables */
@@ -2590,7 +2592,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, oriya_lex, Reorder_Like_Bengali, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2640,7 +2642,7 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, tamil_lex, Reorder_Like_Bengali, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2689,7 +2691,7 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, telugu_lex, Reorder_Like_Bengali, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2741,7 +2743,7 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, kannada_lex, Reorder_Like_Kannada, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2786,7 +2788,7 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     /* Step 2: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, malayalam_lex, Reorder_Like_Devanagari, modern);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 3: Base Form application to syllables */
@@ -2820,7 +2822,7 @@ static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     /* Step 1: Reorder within Syllables */
     Indic_ReorderCharacters( hdc, psa, psc, input, cCount, &syllables, &syllable_count, khmer_lex, Reorder_Like_Devanagari, FALSE);
     TRACE("reordered string %s\n",debugstr_wn(input,cCount));
-    GetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
+    NtGdiGetGlyphIndicesW(hdc, input, cCount, pwOutGlyphs, 0);
     *pcGlyphs = cCount;
 
     /* Step 2: Base Form application to syllables */

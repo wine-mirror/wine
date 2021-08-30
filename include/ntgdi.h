@@ -243,6 +243,8 @@ BOOL     WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result );
 INT      WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap );
 BOOL     WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr );
 DWORD    WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length );
+DWORD    WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
+                                       WORD *indices, DWORD flags );
 DWORD    WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
                                        DWORD size, void *buffer, const MAT2 *mat2,
                                        BOOL ignore_rotation );

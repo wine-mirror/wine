@@ -1187,7 +1187,7 @@ DWORD WINAPI GetCharacterPlacementW( HDC hdc, const WCHAR *str, INT count, INT m
     }
 
     if (result->lpGlyphs)
-        GetGlyphIndicesW( hdc, str, set_cnt, result->lpGlyphs, 0 );
+        NtGdiGetGlyphIndicesW( hdc, str, set_cnt, result->lpGlyphs, 0 );
 
     if (GetTextExtentPoint32W( hdc, str, count, &size ))
         ret = MAKELONG( size.cx + kern_total, size.cy );
@@ -1896,4 +1896,21 @@ DWORD WINAPI GetFontLanguageInfo( HDC hdc )
         result |= GCP_REORDER;
 
     return result;
+}
+
+/*************************************************************************
+ *           GetGlyphIndicesA    (GDI32.@)
+ */
+DWORD WINAPI GetGlyphIndicesA( HDC hdc, const char *str, INT count, WORD *indices, DWORD flags )
+{
+    DWORD ret;
+    WCHAR *strW;
+    INT countW;
+
+    TRACE( "(%p, %s, %d, %p, 0x%x)\n", hdc, debugstr_an(str, count), count, indices, flags );
+
+    strW = text_mbtowc( hdc, str, count, &countW, NULL );
+    ret = NtGdiGetGlyphIndicesW( hdc, strW, countW, indices, flags );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
 }

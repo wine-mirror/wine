@@ -4189,36 +4189,6 @@ UINT WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags )
 }
 
 /***********************************************************************
- *           FONT_mbtowc
- *
- * Returns a Unicode translation of str using the charset of the
- * currently selected font in hdc.  If count is -1 then str is assumed
- * to be '\0' terminated, otherwise it contains the number of bytes to
- * convert.  If plenW is non-NULL, on return it will point to the
- * number of WCHARs that have been written.  If pCP is non-NULL, on
- * return it will point to the codepage used in the conversion.  The
- * caller should free the returned LPWSTR from the process heap
- * itself.
- */
-static LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
-{
-    UINT cp;
-    INT lenW;
-    LPWSTR strW;
-
-    cp = GdiGetCodePage( hdc );
-
-    if(count == -1) count = strlen(str);
-    lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
-    strW = HeapAlloc(GetProcessHeap(), 0, lenW*sizeof(WCHAR));
-    MultiByteToWideChar(cp, 0, str, count, strW, lenW);
-    TRACE("mapped %s -> %s\n", debugstr_an(str, count), debugstr_wn(strW, lenW));
-    if(plenW) *plenW = lenW;
-    if(pCP) *pCP = cp;
-    return strW;
-}
-
-/***********************************************************************
  *           NtGdiHfontCreate   (win32u.@)
  */
 HFONT WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *penumex, ULONG size, ULONG type,
@@ -6074,42 +6044,21 @@ DWORD WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer,
 }
 
 /*************************************************************************
- * GetGlyphIndicesA [GDI32.@]
+ *           NtGdiGetGlyphIndicesW    (win32u.@)
  */
-DWORD WINAPI GetGlyphIndicesA(HDC hdc, LPCSTR lpstr, INT count,
-			      LPWORD pgi, DWORD flags)
-{
-    DWORD ret;
-    WCHAR *lpstrW;
-    INT countW;
-
-    TRACE("(%p, %s, %d, %p, 0x%x)\n",
-          hdc, debugstr_an(lpstr, count), count, pgi, flags);
-
-    lpstrW = FONT_mbtowc(hdc, lpstr, count, &countW, NULL);
-    ret = GetGlyphIndicesW(hdc, lpstrW, countW, pgi, flags);
-    HeapFree(GetProcessHeap(), 0, lpstrW);
-
-    return ret;
-}
-
-/*************************************************************************
- * GetGlyphIndicesW [GDI32.@]
- */
-DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
-			      LPWORD pgi, DWORD flags)
+DWORD WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
+                                    WORD *indices, DWORD flags )
 {
     DC *dc = get_dc_ptr(hdc);
     PHYSDEV dev;
     DWORD ret;
 
-    TRACE("(%p, %s, %d, %p, 0x%x)\n",
-          hdc, debugstr_wn(lpstr, count), count, pgi, flags);
+    TRACE( "(%p, %s, %d, %p, 0x%x)\n", hdc, debugstr_wn(str, count), count, indices, flags );
 
     if(!dc) return GDI_ERROR;
 
     dev = GET_DC_PHYSDEV( dc, pGetGlyphIndices );
-    ret = dev->funcs->pGetGlyphIndices( dev, lpstr, count, pgi, flags );
+    ret = dev->funcs->pGetGlyphIndices( dev, str, count, indices, flags );
     release_dc_ptr( dc );
     return ret;
 }
