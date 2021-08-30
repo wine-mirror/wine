@@ -914,6 +914,7 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
 {
     struct module_pair  pair;
     struct symt*        type;
+    DWORD64             size;
 
     pair.pcs = process_find_by_handle(hProcess);
     if (!pair.pcs) return FALSE;
@@ -921,7 +922,12 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
     if (!module_get_debug(&pair)) return FALSE;
     type = symt_find_type_by_name(pair.effective, SymTagNull, Name);
     if (!type) return FALSE;
-    Symbol->TypeIndex = symt_ptr2index(pair.effective, type);
+    Symbol->Index = Symbol->TypeIndex = symt_ptr2index(pair.effective, type);
+    symbol_setname(Symbol, symt_get_name(type));
+    symt_get_info(pair.effective, type, TI_GET_LENGTH, &size);
+    Symbol->Size = size;
+    Symbol->ModBase = pair.requested->module.BaseOfImage;
+    Symbol->Tag = type->tag;
 
     return TRUE;
 }
