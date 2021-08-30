@@ -172,6 +172,32 @@ typedef struct DC_ATTR
 
 #endif /* __WINESRC__ */
 
+struct font_realization_info
+{
+    DWORD size;          /* could be 16 or 24 */
+    DWORD flags;         /* 1 for bitmap fonts, 3 for scalable fonts */
+    DWORD cache_num;     /* keeps incrementing */
+    DWORD instance_id;   /* identifies a realized font instance */
+    DWORD file_count;    /* number of files that make up this font */
+    WORD  face_index;    /* face index in case of font collections */
+    WORD  simulations;   /* 0 bit - bold simulation, 1 bit - oblique simulation */
+};
+
+struct char_width_info
+{
+    INT lsb;   /* minimum left side bearing */
+    INT rsb;   /* minimum right side bearing */
+    INT unk;   /* unknown */
+};
+
+struct font_fileinfo
+{
+    FILETIME writetime;
+    LARGE_INTEGER size;
+    WCHAR path[1];
+};
+
+
 INT      WINAPI NtGdiAbortDoc( HDC hdc );
 BOOL     WINAPI NtGdiAbortPath( HDC hdc );
 BOOL     WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
@@ -236,6 +262,7 @@ BOOL     WINAPI NtGdiGetBitmapDimension( HBITMAP bitmap, SIZE *size );
 UINT     WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags );
 BOOL     WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars,
                                         ULONG flags, void *buffer );
+BOOL     WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info );
 BOOL     WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WCHAR *chars,
                                     ULONG flags, void *buffer );
 BOOL     WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result );
@@ -243,6 +270,11 @@ BOOL     WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result );
 INT      WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap );
 BOOL     WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr );
 DWORD    WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length );
+BOOL     WINAPI NtGdiGetFontFileData( DWORD instance_id, DWORD file_index, UINT64 *offset,
+                                      void *buff, DWORD buff_size );
+BOOL     WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
+                                      SIZE_T size, SIZE_T *needed );
+DWORD    WINAPI NtGdiGetFontUnicodeRanges( HDC hdc, GLYPHSET *lpgs );
 DWORD    WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
                                        WORD *indices, DWORD flags );
 DWORD    WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
@@ -257,6 +289,8 @@ UINT     WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
 INT      WINAPI NtGdiGetPath( HDC hdc, POINT *points, BYTE *types, INT size );
 COLORREF WINAPI NtGdiGetPixel( HDC hdc, INT x, INT y );
 INT      WINAPI NtGdiGetRandomRgn( HDC hdc, HRGN region, INT code );
+BOOL     WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size );
+BOOL     WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info );
 DWORD    WINAPI NtGdiGetRegionData( HRGN hrgn, DWORD count, RGNDATA *data );
 INT      WINAPI NtGdiGetRgnBox( HRGN hrgn, RECT *rect );
 UINT     WINAPI NtGdiGetSystemPaletteUse( HDC hdc );

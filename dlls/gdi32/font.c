@@ -6673,7 +6673,7 @@ BOOL WINAPI GetFontResourceInfoW( LPCWSTR str, LPDWORD size, PVOID buffer, DWORD
 }
 
 /***********************************************************************
- *           GetFontUnicodeRanges    (GDI32.@)
+ *           NtGdiGetFontUnicodeRanges    (win32u.@)
  *
  *  Retrieve a list of supported Unicode characters in a font.
  *
@@ -6686,7 +6686,7 @@ BOOL WINAPI GetFontResourceInfoW( LPCWSTR str, LPDWORD size, PVOID buffer, DWORD
  *   Failure: 0
  *
  */
-DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
+DWORD WINAPI NtGdiGetFontUnicodeRanges( HDC hdc, GLYPHSET *lpgs )
 {
     DWORD ret;
     PHYSDEV dev;
@@ -6704,9 +6704,9 @@ DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
 
 
 /*************************************************************
- *           FontIsLinked    (GDI32.@)
+ *           NtGdiFontIsLinked    (win32u.@)
  */
-BOOL WINAPI FontIsLinked(HDC hdc)
+BOOL WINAPI NtGdiFontIsLinked( HDC hdc )
 {
     DC *dc = get_dc_ptr(hdc);
     PHYSDEV dev;
@@ -6721,9 +6721,9 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 }
 
 /*************************************************************
- *           GetFontRealizationInfo    (GDI32.@)
+ *           NtGdiGetRealizationInfo    (win32u.@)
  */
-BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info)
+BOOL WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info )
 {
     BOOL is_v0 = info->size == FIELD_OFFSET(struct font_realization_info, file_count);
     PHYSDEV dev;
@@ -6742,13 +6742,13 @@ BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info)
 }
 
 /*************************************************************************
- *             GetRasterizerCaps   (GDI32.@)
+ *           NtGdiGetRasterizerCaps   (win32u.@)
  */
-BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
+BOOL WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size )
 {
-    lprs->nSize = sizeof(RASTERIZER_STATUS);
-    lprs->wFlags = font_funcs ? (TT_AVAILABLE | TT_ENABLED) : 0;
-    lprs->nLanguageID = 0;
+    status->nSize = sizeof(RASTERIZER_STATUS);
+    status->wFlags = font_funcs ? (TT_AVAILABLE | TT_ENABLED) : 0;
+    status->nLanguageID = 0;
     return TRUE;
 }
 
@@ -6776,19 +6776,11 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD file_index, UINT64 offset,
     return ret;
 }
 
-/* Undocumented structure filled in by GetFontFileInfo */
-struct font_fileinfo
-{
-    FILETIME writetime;
-    LARGE_INTEGER size;
-    WCHAR path[1];
-};
-
 /*************************************************************************
- *             GetFontFileInfo   (GDI32.@)
+ *             NtGdiGetFontFileInfo   (win32u.@)
  */
-BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
-                             SIZE_T size, SIZE_T *needed )
+BOOL WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
+                                  SIZE_T size, SIZE_T *needed )
 {
     SIZE_T required_size = 0;
     struct gdi_font *font;
@@ -6832,7 +6824,7 @@ BOOL WINAPI GdiRealizationInfo(HDC hdc, struct realization_info *info)
     BOOL ret;
 
     ri.size = sizeof(ri);
-    ret = GetFontRealizationInfo( hdc, &ri );
+    ret = NtGdiGetRealizationInfo( hdc, &ri );
     if (ret)
     {
         info->flags = ri.flags;
@@ -6844,10 +6836,9 @@ BOOL WINAPI GdiRealizationInfo(HDC hdc, struct realization_info *info)
 }
 
 /*************************************************************
- *           GetCharWidthInfo    (GDI32.@)
- *
+ *           NtGdiGetCharWidthInfo    (win32u.@)
  */
-BOOL WINAPI GetCharWidthInfo(HDC hdc, struct char_width_info *info)
+BOOL WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info )
 {
     PHYSDEV dev;
     BOOL ret;

@@ -251,26 +251,6 @@ struct font_gamma_ramp
     BYTE  decode[256];
 };
 
-/* Undocumented structure filled in by GetFontRealizationInfo */
-struct font_realization_info
-{
-    DWORD size;        /* could be 16 or 24 */
-    DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
-    DWORD cache_num;   /* keeps incrementing - num of fonts that have been created allowing for caching?? */
-    DWORD instance_id; /* identifies a realized font instance */
-    DWORD file_count;  /* number of files that make up this font */
-    WORD  face_index;  /* face index in case of font collections */
-    WORD  simulations; /* 0 bit - bold simulation, 1 bit - oblique simulation */
-};
-
-/* Undocumented structure filled in by GetCharWidthInfo */
-struct char_width_info
-{
-    INT lsb;   /* minimum left side bearing */
-    INT rsb;   /* minimum right side bearing */
-    INT unk;   /* unknown */
-};
-
 typedef struct { FLOAT eM11, eM12, eM21, eM22; } FMAT2;
 
 struct bitmap_font_size

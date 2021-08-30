@@ -138,7 +138,7 @@
 @ stdcall FixBrushOrgEx(long long long ptr)
 @ stdcall FlattenPath(long)
 @ stdcall FloodFill(long long long long)
-@ stdcall FontIsLinked(long)
+@ stdcall FontIsLinked(long) NtGdiFontIsLinked
 @ stdcall FrameRgn(long long long long long)
 @ stub FreeImageColorMatcher
 # @ stub GdiAddFontResourceW
@@ -259,7 +259,7 @@
 @ stdcall GetCharWidthFloatA(long long long ptr)
 @ stdcall GetCharWidthFloatW(long long long ptr)
 @ stdcall GetCharWidthI(ptr long long ptr ptr)
-@ stdcall GetCharWidthInfo(ptr ptr)
+@ stdcall GetCharWidthInfo(ptr ptr) NtGdiGetCharWidthInfo
 @ stdcall GetCharWidthW(long long long ptr) GetCharWidth32W
 @ stub GetCharWidthWOW
 @ stdcall GetCharacterPlacementA(long str long long ptr long)
@@ -291,12 +291,12 @@
 # @ stub GetFontAssocStatus
 @ stdcall GetFontData(long long long ptr long) NtGdiGetFontData
 @ stdcall GetFontFileData(long long int64 ptr long)
-@ stdcall GetFontFileInfo(long long ptr long ptr)
+@ stdcall GetFontFileInfo(long long ptr long ptr) NtGdiGetFontFileInfo
 @ stdcall GetFontLanguageInfo(long)
-@ stdcall GetFontRealizationInfo(long ptr)
+@ stdcall GetFontRealizationInfo(long ptr) NtGdiGetRealizationInfo
 @ stub GetFontResourceInfo
 @ stdcall GetFontResourceInfoW(wstr ptr ptr long)
-@ stdcall GetFontUnicodeRanges(ptr ptr)
+@ stdcall GetFontUnicodeRanges(ptr ptr) NtGdiGetFontUnicodeRanges
 @ stdcall GetGlyphIndicesA(long ptr long ptr long)
 @ stdcall GetGlyphIndicesW(long ptr long ptr long) NtGdiGetGlyphIndicesW
 @ stdcall GetGlyphOutline(long long long ptr long ptr ptr) GetGlyphOutlineA
@@ -333,7 +333,7 @@
 @ stdcall GetPolyFillMode(long)
 @ stdcall GetROP2(long)
 @ stdcall GetRandomRgn(long long long)
-@ stdcall GetRasterizerCaps(ptr long)
+@ stdcall GetRasterizerCaps(ptr long) NtGdiGetRasterizerCaps
 @ stdcall GetRegionData(long long ptr) NtGdiGetRegionData
 @ stdcall GetRelAbs(long long)
 @ stdcall GetRgnBox(long ptr) NtGdiGetRgnBox
