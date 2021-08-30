@@ -5887,10 +5887,8 @@ static void test_effect_optimize(void)
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
     ok(!!shaderdesc.pInputSignature, "Expected input signature.\n");
     ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
-todo_wine {
     ok(!!shaderdesc.pBytecode, "Expected bytecode.\n");
     ok(!!shaderdesc.BytecodeLength, "Unexpected bytecode length.\n");
-}
     ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected stream output declaration %s.\n", shaderdesc.SODecl);
     ok(!!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
     ok(!!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
@@ -5903,9 +5901,9 @@ todo_wine
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
     ok(!!shaderdesc.pInputSignature, "Expected input signature.\n");
     ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
+todo_wine {
     ok(!shaderdesc.pBytecode, "Unexpected bytecode.\n");
     ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length.\n");
-todo_wine {
     ok(!shaderdesc.SODecl, "Unexpected stream output declaration %p.\n", shaderdesc.SODecl);
     ok(!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
     ok(!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
@@ -5950,28 +5948,23 @@ static void test_effect_shader_description(void)
     ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length %u.\n", shaderdesc.BytecodeLength);
     hr = s->lpVtbl->GetShaderDesc(s, 3, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
-todo_wine
     ok(shaderdesc.BytecodeLength == 424, "Unexpected bytecode length %u.\n",
             shaderdesc.BytecodeLength);
     hr = s->lpVtbl->GetShaderDesc(s, 4, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
-todo_wine
     ok(shaderdesc.BytecodeLength == 424, "Unexpected bytecode length %u.\n",
             shaderdesc.BytecodeLength);
     hr = s->lpVtbl->GetShaderDesc(s, 5, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
-todo_wine
     ok(shaderdesc.BytecodeLength == 420, "Unexpected bytecode length %u.\n",
             shaderdesc.BytecodeLength);
     hr = s->lpVtbl->GetShaderDesc(s, 6, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
-todo_wine
     ok(shaderdesc.BytecodeLength == 516, "Unexpected bytecode length %u.\n",
             shaderdesc.BytecodeLength);
     ok(!shaderdesc.SODecl, "Unexpected SO declaration %p.\n", shaderdesc.SODecl);
     hr = s->lpVtbl->GetShaderDesc(s, 7, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
-todo_wine
     ok(shaderdesc.BytecodeLength == 516, "Unexpected bytecode length %u.\n",
             shaderdesc.BytecodeLength);
     ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected SO declaration %s.\n",

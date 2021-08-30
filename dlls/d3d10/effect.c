@@ -606,6 +606,11 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
 
     D3DGetInputSignatureBlob(ptr, dxbc_size, &v->u.shader.input_signature);
 
+    if (FAILED(hr = D3DCreateBlob(dxbc_size, &v->u.shader.bytecode)))
+        return hr;
+
+    memcpy(ID3D10Blob_GetBufferPointer(v->u.shader.bytecode), ptr, dxbc_size);
+
     if (FAILED(hr = get_fx10_shader_resources(v, ptr, dxbc_size)))
         return hr;
 
@@ -2589,6 +2594,8 @@ static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_vari
         s->reflection->lpVtbl->Release(s->reflection);
     if (s->input_signature)
         ID3D10Blob_Release(s->input_signature);
+    if (s->bytecode)
+        ID3D10Blob_Release(s->bytecode);
 
     switch (type)
     {
@@ -6828,6 +6835,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetShaderDesc(
     if (s->input_signature)
         desc->pInputSignature = ID3D10Blob_GetBufferPointer(s->input_signature);
     desc->SODecl = s->stream_output_declaration;
+    if (s->bytecode)
+    {
+        desc->pBytecode = ID3D10Blob_GetBufferPointer(s->bytecode);
+        desc->BytecodeLength = ID3D10Blob_GetBufferSize(s->bytecode);
+    }
     if (s->reflection)
     {
         if (SUCCEEDED(hr = s->reflection->lpVtbl->GetDesc(s->reflection, &shader_desc)))
