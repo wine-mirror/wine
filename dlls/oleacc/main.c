@@ -331,6 +331,53 @@ HRESULT WINAPI AccessibleObjectFromPoint( POINT ptScreen, IAccessible** ppacc, V
     return E_NOTIMPL;
 }
 
+static void variant_init_i4( VARIANT *v, int val )
+{
+    V_VT(v) = VT_I4;
+    V_I4(v) = val;
+}
+
+HRESULT WINAPI AccessibleObjectFromEvent( HWND hwnd, DWORD object_id, DWORD child_id,
+                             IAccessible **acc_out, VARIANT *child_id_out )
+{
+    VARIANT child_id_variant;
+    IAccessible *acc = NULL;
+    IDispatch *child = NULL;
+    HRESULT hr;
+
+    TRACE("%p %d %d %p %p\n", hwnd, object_id, child_id, acc_out, child_id_out);
+
+    if (!acc_out)
+        return E_INVALIDARG;
+    *acc_out = NULL;
+    VariantInit(child_id_out);
+
+    hr = AccessibleObjectFromWindow(hwnd, object_id, &IID_IAccessible, (void **)&acc);
+    if (FAILED(hr))
+        return hr;
+
+    variant_init_i4(&child_id_variant, child_id);
+    hr = IAccessible_get_accChild(acc, child_id_variant, &child);
+    if (FAILED(hr))
+        TRACE("get_accChild failed with %#x!\n", hr);
+
+    if (SUCCEEDED(hr) && child)
+    {
+        IAccessible_Release(acc);
+        hr = IDispatch_QueryInterface(child, &IID_IAccessible, (void **)&acc);
+        IDispatch_Release(child);
+        if (FAILED(hr))
+            return hr;
+
+        variant_init_i4(&child_id_variant, CHILDID_SELF);
+    }
+
+    *acc_out = acc;
+    *child_id_out = child_id_variant;
+
+    return S_OK;
+}
+
 HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
                              REFIID riid, void** ppvObject )
 {
