@@ -450,7 +450,6 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
     struct module_pair  pair;
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
-    const char*         tmp;
     struct symt*        type;
     DWORD64             size;
     unsigned int        i;
@@ -480,15 +479,7 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
         sym_info->Register = 0; /* FIXME */
         sym_info->Scope = 0; /* FIXME */
         sym_info->Tag = type->tag;
-        tmp = symt_get_name(type);
-        if (tmp)
-        {
-            sym_info->NameLen = min(strlen(tmp),sym_info->MaxNameLen-1);
-            memcpy(sym_info->Name, tmp, sym_info->NameLen);
-            sym_info->Name[sym_info->NameLen] = '\0';
-        }
-        else
-           sym_info->Name[sym_info->NameLen = 0] = '\0';
+        symbol_setname(sym_info, symt_get_name(type));
         if (!EnumSymbolsCallback(sym_info, sym_info->Size, UserContext)) break;
     }
     return TRUE;
