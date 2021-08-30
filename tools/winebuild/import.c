@@ -1426,6 +1426,8 @@ void output_syscalls( DLLSPEC *spec )
     int i, count;
     ORDDEF **syscalls = NULL;
 
+    if (unix_lib) return;
+
     for (i = count = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
@@ -1438,18 +1440,6 @@ void output_syscalls( DLLSPEC *spec )
 
     output( "\n/* system calls */\n\n" );
     output( "\t.text\n" );
-
-    if (unix_lib)
-    {
-        output( "\t.data\n" );
-        output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
-        output( "%s\n", asm_globl("__wine_syscall_table") );
-        output( "\t%s .Lsyscall_table, 0, %u, 0\n", get_asm_ptr_keyword(), count );
-        output( ".Lsyscall_table:\n" );
-        for (i = 0; i < count; i++)
-            output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( syscalls[i] )));
-        return;
-    }
 
     for (i = 0; i < count; i++)
     {
