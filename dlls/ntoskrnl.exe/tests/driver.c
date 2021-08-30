@@ -36,6 +36,7 @@
 #include "ddk/ntddk.h"
 #include "ddk/ntifs.h"
 #include "ddk/wdm.h"
+#include "ddk/fltkernel.h"
 
 #include "driver.h"
 
@@ -2345,6 +2346,85 @@ static void test_driver_object_extension(void)
     ok(get_obj_ext == NULL, "got %p\n", get_obj_ext);
 }
 
+static void test_default_security(void)
+{
+    PSECURITY_DESCRIPTOR sd = NULL;
+    NTSTATUS status;
+    PSID group = NULL, owner = NULL;
+    BOOLEAN isdefault, present;
+    PACL acl = NULL;
+    PACCESS_ALLOWED_ACE ace;
+    SID_IDENTIFIER_AUTHORITY auth = { SECURITY_NULL_SID_AUTHORITY };
+    SID_IDENTIFIER_AUTHORITY authwine7 = { SECURITY_NT_AUTHORITY };
+    PSID sid1, sid2, sidwin7;
+    BOOL ret;
+
+    status = FltBuildDefaultSecurityDescriptor(&sd, STANDARD_RIGHTS_ALL);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    if (status != STATUS_SUCCESS)
+    {
+        win_skip("Skipping FltBuildDefaultSecurityDescriptor tests\n");
+        return;
+    }
+    ok(sd != NULL, "Failed to return descriptor\n");
+
+    status = RtlGetGroupSecurityDescriptor(sd, &group, &isdefault);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(group == NULL, "group isn't NULL\n");
+
+    status = RtlGetOwnerSecurityDescriptor(sd, &owner, &isdefault);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(owner == NULL, "owner isn't NULL\n");
+
+    status = RtlGetDaclSecurityDescriptor(sd, &present, &acl, &isdefault);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(acl != NULL, "acl is NULL\n");
+    ok(acl->AceCount == 2, "got %d\n", acl->AceCount);
+
+    sid1 = ExAllocatePool(NonPagedPool, RtlLengthRequiredSid(2));
+    status = RtlInitializeSid(sid1, &auth, 2);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    *RtlSubAuthoritySid(sid1, 0)  = SECURITY_BUILTIN_DOMAIN_RID;
+    *RtlSubAuthoritySid(sid1, 1) = DOMAIN_GROUP_RID_ADMINS;
+
+    sidwin7 = ExAllocatePool(NonPagedPool, RtlLengthRequiredSid(2));
+    status = RtlInitializeSid(sidwin7, &authwine7, 2);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    *RtlSubAuthoritySid(sidwin7, 0)  = SECURITY_BUILTIN_DOMAIN_RID;
+    *RtlSubAuthoritySid(sidwin7, 1) = DOMAIN_ALIAS_RID_ADMINS;
+
+    sid2 = ExAllocatePool(NonPagedPool, RtlLengthRequiredSid(1));
+    RtlInitializeSid(sid2, &auth, 1);
+    *RtlSubAuthoritySid(sid2, 0)  = SECURITY_LOCAL_SYSTEM_RID;
+
+    /* SECURITY_BUILTIN_DOMAIN_RID */
+    status = RtlGetAce(acl, 0, (void**)&ace);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    ok(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, "got %#x\n", ace->Header.AceType);
+    ok(ace->Header.AceFlags == 0, "got %#x\n", ace->Header.AceFlags);
+    ok(ace->Mask == STANDARD_RIGHTS_ALL, "got %#lx\n", ace->Mask);
+
+    ret = RtlEqualSid(sid1, (PSID)&ace->SidStart) || RtlEqualSid(sidwin7, (PSID)&ace->SidStart);
+    ok(ret, "SID not equal\n");
+
+    /* SECURITY_LOCAL_SYSTEM_RID */
+    status = RtlGetAce(acl, 1, (void**)&ace);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    ok(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, "got %#x\n", ace->Header.AceType);
+    ok(ace->Header.AceFlags == 0, "got %#x\n", ace->Header.AceFlags);
+    ok(ace->Mask == STANDARD_RIGHTS_ALL, "got %#lx\n", ace->Mask);
+
+    ret = RtlEqualSid(sid2, (PSID)&ace->SidStart) || RtlEqualSid(sidwin7, (PSID)&ace->SidStart);
+    ok(ret, "SID not equal\n");
+
+    ExFreePool(sid1);
+    ExFreePool(sid2);
+
+    FltFreeSecurityDescriptor(sd);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     void *buffer = irp->AssociatedIrp.SystemBuffer;
@@ -2389,6 +2469,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_process_memory(test_input);
     test_permanence();
     test_driver_object_extension();
+    test_default_security();
 
     IoMarkIrpPending(irp);
     IoQueueWorkItem(work_item, main_test_task, DelayedWorkQueue, irp);
