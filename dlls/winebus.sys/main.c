@@ -648,6 +648,7 @@ struct bus_main_params
     HANDLE init_done;
     unsigned int init_code;
     unsigned int wait_code;
+    struct bus_event *bus_event;
 };
 
 static DWORD CALLBACK bus_main_thread(void *args)
@@ -660,11 +661,13 @@ static DWORD CALLBACK bus_main_thread(void *args)
     SetEvent(bus.init_done);
     TRACE("%s main loop started\n", debugstr_w(bus.name));
 
+    bus.bus_event->type = BUS_EVENT_TYPE_NONE;
     if (status) WARN("%s bus init returned status %#x\n", debugstr_w(bus.name), status);
-    else status = winebus_call(bus.wait_code, NULL);
+    else while ((status = winebus_call(bus.wait_code, bus.bus_event)) == STATUS_PENDING) {}
 
     if (status) WARN("%s bus wait returned status %#x\n", debugstr_w(bus.name), status);
     else TRACE("%s main loop exited\n", debugstr_w(bus.name));
+    HeapFree(GetProcessHeap(), 0, bus.bus_event);
     return status;
 }
 
@@ -675,6 +678,14 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
     if (!(bus->init_done = CreateEventW(NULL, FALSE, FALSE, NULL)))
     {
         ERR("failed to create %s bus init done event.\n", debugstr_w(bus->name));
+        bus_count--;
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (!(bus->bus_event = HeapAlloc(GetProcessHeap(), 0, sizeof(struct bus_event))))
+    {
+        ERR("failed to allocate %s bus event.\n", debugstr_w(bus->name));
+        CloseHandle(bus->init_done);
         bus_count--;
         return STATUS_UNSUCCESSFUL;
     }

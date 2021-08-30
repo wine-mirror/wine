@@ -46,6 +46,16 @@ struct iohid_bus_options
 
 struct unix_device;
 
+enum bus_event_type
+{
+    BUS_EVENT_TYPE_NONE,
+};
+
+struct bus_event
+{
+    enum bus_event_type type;
+};
+
 enum unix_funcs
 {
     sdl_init,
