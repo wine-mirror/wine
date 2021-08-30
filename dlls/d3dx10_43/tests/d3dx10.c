@@ -2206,11 +2206,8 @@ static void test_font(void)
     ok(ret, "Unexpected ret %#x.\n", ret);
 
     ret = ID3DX10Font_GetTextMetricsA(font, &metrics);
-todo_wine
     ok(ret, "Unexpected ret %#x.\n", ret);
 
-if (ret)
-{
     ok(metrics.tmHeight == expmetrics.tmHeight, "Unexpected height %d, expected %d.\n",
             metrics.tmHeight, expmetrics.tmHeight);
     ok(metrics.tmAscent == expmetrics.tmAscent, "Unexpected ascent %d, expected %d.\n",
@@ -2251,7 +2248,7 @@ if (ret)
             metrics.tmPitchAndFamily, expmetrics.tmPitchAndFamily);
     ok(metrics.tmCharSet == expmetrics.tmCharSet, "Unexpected charset %u, expected %u.\n",
             metrics.tmCharSet, expmetrics.tmCharSet);
-}
+
     ID3DX10Font_Release(font);
 
     /* PreloadText */

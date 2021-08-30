@@ -132,16 +132,20 @@ static HRESULT WINAPI d3dx_font_GetDescW(ID3DX10Font *iface, D3DX10_FONT_DESCW *
 
 static BOOL WINAPI d3dx_font_GetTextMetricsA(ID3DX10Font *iface, TEXTMETRICA *metrics)
 {
-    FIXME("iface %p, metrics %p stub!\n", iface, metrics);
+    struct d3dx_font *font = impl_from_ID3DX10Font(iface);
 
-    return FALSE;
+    TRACE("iface %p, metrics %p.\n", iface, metrics);
+
+    return GetTextMetricsA(font->hdc, metrics);
 }
 
 static BOOL WINAPI d3dx_font_GetTextMetricsW(ID3DX10Font *iface, TEXTMETRICW *metrics)
 {
-    FIXME("iface %p, metrics %p stub!\n", iface, metrics);
+    struct d3dx_font *font = impl_from_ID3DX10Font(iface);
 
-    return FALSE;
+    TRACE("iface %p, metrics %p.\n", iface, metrics);
+
+    return GetTextMetricsW(font->hdc, metrics);
 }
 
 static HDC WINAPI d3dx_font_GetDC(ID3DX10Font *iface)
