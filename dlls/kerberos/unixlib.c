@@ -493,7 +493,7 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
     return ret;
 }
 
-NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, SecBufferDesc *input,
+static NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, SecBufferDesc *input,
                                LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr,
                                TimeStamp *expiry )
 {
