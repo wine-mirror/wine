@@ -539,7 +539,7 @@ LPWSTR WINAPI StrNCatW(LPWSTR lpszStr, LPCWSTR lpszCat, INT cchMax)
 /*************************************************************************
  *      _SHStrDupAA	[INTERNAL]
  *
- * Duplicates a ASCII string to ASCII. The destination buffer is allocated.
+ * Duplicates a ANSI string to ANSI. The destination buffer is allocated.
  */
 static HRESULT _SHStrDupAA(LPCSTR src, LPSTR * dest)
 {
@@ -606,7 +606,7 @@ HRESULT WINAPI SHStrDupA(LPCSTR lpszStr, LPWSTR * lppszDest)
 /*************************************************************************
  *      _SHStrDupAW	[INTERNAL]
  *
- * Duplicates a UNICODE to a ASCII string. The destination buffer is allocated.
+ * Duplicates a UNICODE to a ANSI string. The destination buffer is allocated.
  */
 static HRESULT _SHStrDupAW(LPCWSTR src, LPSTR * dest)
 {
@@ -942,7 +942,7 @@ LPSTR WINAPI StrFormatByteSize64A(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
  *  lpszDest.
  *
  * NOTES
- *  The Ascii and Unicode versions of this function accept a different
+ *  The ANSI and Unicode versions of this function accept a different
  *  integer type for dwBytes. See StrFormatByteSize64A().
  */
 LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
@@ -1020,11 +1020,11 @@ WCHAR WINAPI SHStripMneumonicW(LPCWSTR lpszStr)
 /*************************************************************************
  *      @	[SHLWAPI.216]
  *
- * Convert an Ascii string to Unicode.
+ * Convert an ANSI string to Unicode.
  *
  * PARAMS
  * dwCp     [I] Code page for the conversion
- * lpSrcStr [I] Source Ascii string to convert
+ * lpSrcStr [I] Source ANSI string to convert
  * lpDstStr [O] Destination for converted Unicode string
  * iLen     [I] Length of lpDstStr
  *
@@ -1043,10 +1043,10 @@ DWORD WINAPI SHAnsiToUnicodeCP(DWORD dwCp, LPCSTR lpSrcStr, LPWSTR lpDstStr, int
 /*************************************************************************
  *      @	[SHLWAPI.215]
  *
- * Convert an Ascii string to Unicode.
+ * Convert an ANSI string to Unicode.
  *
  * PARAMS
- * lpSrcStr [I] Source Ascii string to convert
+ * lpSrcStr [I] Source ANSI string to convert
  * lpDstStr [O] Destination for converted Unicode string
  * iLen     [I] Length of lpDstStr
  *
@@ -1064,12 +1064,12 @@ DWORD WINAPI SHAnsiToUnicode(LPCSTR lpSrcStr, LPWSTR lpDstStr, int iLen)
 /*************************************************************************
  *      @	[SHLWAPI.218]
  *
- * Convert a Unicode string to Ascii.
+ * Convert a Unicode string to ANSI.
  *
  * PARAMS
  *  CodePage [I] Code page to use for the conversion
  *  lpSrcStr [I] Source Unicode string to convert
- *  lpDstStr [O] Destination for converted Ascii string
+ *  lpDstStr [O] Destination for converted ANSI string
  *  dstlen   [I] Length of buffer at lpDstStr
  *
  * RETURNS
@@ -1167,11 +1167,11 @@ DWORD WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr, 
 /*************************************************************************
  *      @	[SHLWAPI.217]
  *
- * Convert a Unicode string to Ascii.
+ * Convert a Unicode string to ANSI.
  *
  * PARAMS
  *  lpSrcStr [I] Source Unicode string to convert
- *  lpDstStr [O] Destination for converted Ascii string
+ *  lpDstStr [O] Destination for converted ANSI string
  *  iLen     [O] Length of lpDstStr in characters
  *
  * RETURNS
@@ -1188,15 +1188,15 @@ INT WINAPI SHUnicodeToAnsi(LPCWSTR lpSrcStr, LPSTR lpDstStr, INT iLen)
 /*************************************************************************
  *      @	[SHLWAPI.364]
  *
- * Determine if an Ascii string converts to Unicode and back identically.
+ * Determine if an ANSI string converts to Unicode and back identically.
  *
  * PARAMS
  *  lpSrcStr [I] Source Unicode string to convert
- *  lpDst    [O] Destination for resulting Ascii string
+ *  lpDst    [O] Destination for resulting ANSI string
  *  iLen     [I] Length of lpDst in characters
  *
  * RETURNS
- *  TRUE, since Ascii strings always convert identically.
+ *  TRUE, since ANSI strings always convert identically.
  */
 BOOL WINAPI DoesStringRoundTripA(LPCSTR lpSrcStr, LPSTR lpDst, INT iLen)
 {
@@ -1207,15 +1207,15 @@ BOOL WINAPI DoesStringRoundTripA(LPCSTR lpSrcStr, LPSTR lpDst, INT iLen)
 /*************************************************************************
  *      @	[SHLWAPI.365]
  *
- * Determine if a Unicode string converts to Ascii and back identically.
+ * Determine if a Unicode string converts to ANSI and back identically.
  *
  * PARAMS
  *  lpSrcStr [I] Source Unicode string to convert
- *  lpDst    [O] Destination for resulting Ascii string
+ *  lpDst    [O] Destination for resulting ANSI string
  *  iLen     [I] Length of lpDst in characters
  *
  * RETURNS
- *  TRUE, if lpSrcStr converts to Ascii and back identically,
+ *  TRUE, if lpSrcStr converts to ANSI and back identically,
  *  FALSE otherwise.
  */
 BOOL WINAPI DoesStringRoundTripW(LPCWSTR lpSrcStr, LPSTR lpDst, INT iLen)

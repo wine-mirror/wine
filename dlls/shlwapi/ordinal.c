@@ -1253,7 +1253,7 @@ static BOOL CALLBACK SHLWAPI_EnumChildProc(HWND hWnd, LPARAM lParam)
  *  Nothing.
  *
  * NOTES
- *  The appropriate ASCII or Unicode function is called for the window.
+ *  The appropriate ANSI or Unicode function is called for the window.
  */
 void WINAPI SHPropagateMessage(HWND hWnd, UINT uiMsgId, WPARAM wParam, LPARAM lParam, BOOL bSend)
 {
@@ -2038,7 +2038,7 @@ void WINAPI SHUnregisterClassesW(HINSTANCE hInst, LPCWSTR *lppClasses, INT iCoun
 /*************************************************************************
  *      @	[SHLWAPI.240]
  *
- * Call The correct (Ascii/Unicode) default window procedure for a window.
+ * Call The correct (ANSI/Unicode) default window procedure for a window.
  *
  * PARAMS
  *  hWnd     [I] Window to call the default procedure for
@@ -2264,7 +2264,7 @@ VOID WINAPI SHWeakReleaseInterface(IUnknown *lpDest, IUnknown **lppUnknown)
 /*************************************************************************
  *      @	[SHLWAPI.269]
  *
- * Convert an ASCII string of a CLSID into a CLSID.
+ * Convert an ANSI string of a CLSID into a CLSID.
  *
  * PARAMS
  *  idstr [I] String representing a CLSID in registry format

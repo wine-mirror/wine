@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /*************************************************************************
  * SHLWAPI_ParamAToW
  *
- * Internal helper function: Convert ASCII parameter to Unicode.
+ * Internal helper function: Convert ANSI parameter to Unicode.
  */
 static BOOL SHLWAPI_ParamAToW(LPCSTR lpszParam, LPWSTR lpszBuff, DWORD dwLen,
                               LPWSTR* lpszOut)
