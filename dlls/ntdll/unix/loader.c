@@ -114,6 +114,7 @@ void     (WINAPI *p__wine_ctrl_routine)(void*);
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
+static void *p__wine_syscall_dispatcher;
 
 extern SYSTEM_SERVICE_TABLE __wine_syscall_table DECLSPEC_HIDDEN;
 
@@ -825,8 +826,6 @@ static NTSTATUS fixup_ntdll_imports( const char *name, HMODULE module )
 
 static void load_ntdll_functions( HMODULE module )
 {
-    void **ptr;
-
     ntdll_exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
     assert( ntdll_exports );
 
@@ -844,16 +843,15 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_ctrl_routine );
     GET_FUNC( __wine_set_unix_funcs );
-#undef GET_FUNC
-#define SET_PTR(name,val) \
-    if ((ptr = (void *)find_named_export( module, ntdll_exports, #name ))) *ptr = val; \
-    else ERR( "%s not found\n", #name )
-
-    SET_PTR( __wine_syscall_dispatcher, __wine_syscall_dispatcher );
+    GET_FUNC( __wine_syscall_dispatcher );
 #ifdef __i386__
-    SET_PTR( __wine_ldt_copy, &__wine_ldt_copy );
+    {
+        void **p__wine_ldt_copy;
+        GET_FUNC( __wine_ldt_copy );
+        *p__wine_ldt_copy = &__wine_ldt_copy;
+    }
 #endif
-#undef SET_PTR
+#undef GET_FUNC
 }
 
 static void load_ntdll_wow64_functions( HMODULE module )
@@ -1142,6 +1140,18 @@ static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr
     }
     init_func = entry;
     return init_func( module, reason, ptr_in, ptr_out );
+}
+
+
+/***********************************************************************
+ *           ntdll_init_syscalls
+ */
+NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **dispatcher )
+{
+    if (id > 3) return STATUS_INVALID_PARAMETER;
+    *dispatcher = __wine_syscall_dispatcher;
+    KeServiceDescriptorTable[id] = *table;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1944,7 +1954,7 @@ static void start_main_thread(void)
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
-    KeServiceDescriptorTable[0] = __wine_syscall_table;
+    ntdll_init_syscalls( 0, &__wine_syscall_table, p__wine_syscall_dispatcher );
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     if (status == STATUS_REVISION_MISMATCH)
     {
