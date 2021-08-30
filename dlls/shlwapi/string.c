@@ -370,7 +370,7 @@ HRESULT WINAPI StrRetToStrW(LPSTRRET lpStrRet, const ITEMIDLIST *pidl, LPWSTR *p
   return hRet;
 }
 
-/* Create an ASCII string copy using SysAllocString() */
+/* Makes a Unicode copy of an ANSI string using SysAllocString() */
 static HRESULT _SHStrDupAToBSTR(LPCSTR src, BSTR *pBstrOut)
 {
     *pBstrOut = NULL;
