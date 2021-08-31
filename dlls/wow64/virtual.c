@@ -257,6 +257,12 @@ NTSTATUS WINAPI wow64_NtMapViewOfSection( UINT *args )
                                  commit, offset, size_32to64( &size, size32 ), inherit, alloc, protect );
     if (NT_SUCCESS(status))
     {
+        SECTION_IMAGE_INFORMATION info;
+
+        if (!NtQuerySection( handle, SectionImageInformation, &info, sizeof(info), NULL ))
+        {
+            if (info.Machine == current_machine) init_image_mapping( addr );
+        }
         put_addr( addr32, addr );
         put_size( size32, size );
     }

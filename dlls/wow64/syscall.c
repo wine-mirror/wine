@@ -335,6 +335,17 @@ static DWORD get_syscall_num( const BYTE *syscall )
 
 
 /**********************************************************************
+ *           init_image_mapping
+ */
+void init_image_mapping( HMODULE module )
+{
+    void **ptr = RtlFindExportedRoutineByName( module, "Wow64Transition" );
+
+    if (ptr) *ptr = pBTCpuGetBopCode();
+}
+
+
+/**********************************************************************
  *           init_syscall_table
  */
 static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_TABLE *orig_table )
@@ -440,7 +451,6 @@ static HMODULE load_cpu_dll(void)
  */
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
-    void **pWow64Transition, **p__wine_syscall_dispatcher;
     HMODULE module;
     UNICODE_STRING str;
 
@@ -454,18 +464,17 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     LdrGetDllHandle( NULL, 0, &str, &module );
     GET_PTR( LdrSystemDllInitBlock );
 
-    module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
-    GET_PTR( Wow64Transition );
-    GET_PTR( __wine_syscall_dispatcher );
-    init_syscall_table( module, 0, &ntdll_syscall_table );
-
     module = load_cpu_dll();
     GET_PTR( BTCpuGetBopCode );
     GET_PTR( BTCpuProcessInit );
     GET_PTR( BTCpuSimulate );
 
     pBTCpuProcessInit();
-    *pWow64Transition = *p__wine_syscall_dispatcher = pBTCpuGetBopCode();
+
+    module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
+    init_image_mapping( module );
+    init_syscall_table( module, 0, &ntdll_syscall_table );
+    *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
 
     init_file_redirects();
     return TRUE;
