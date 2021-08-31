@@ -725,6 +725,15 @@ UINT WINAPI GetSystemPaletteEntries( HDC hdc, UINT start, UINT count, PALETTEENT
 }
 
 /***********************************************************************
+ *           GetDIBits    (GDI32.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH GetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
+                                        void *bits, BITMAPINFO *info, UINT coloruse )
+{
+    return NtGdiGetDIBitsInternal( hdc, hbitmap, startscan, lines, bits, info, coloruse, 0, 0 );
+}
+
+/***********************************************************************
  *           GetDIBColorTable    (GDI32.@)
  */
 UINT WINAPI GetDIBColorTable( HDC hdc, UINT start, UINT count, RGBQUAD *colors )

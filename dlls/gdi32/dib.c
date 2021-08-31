@@ -1190,22 +1190,13 @@ BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage )
 }
 
 /******************************************************************************
- * GetDIBits [GDI32.@]
+ *           NtGdiGetDIBitsInternal    (win32u.@)
  *
  * Retrieves bits of bitmap and copies to buffer.
- *
- * RETURNS
- *    Success: Number of scan lines copied from bitmap
- *    Failure: 0
  */
-INT WINAPI DECLSPEC_HOTPATCH GetDIBits(
-    HDC hdc,         /* [in]  Handle to device context */
-    HBITMAP hbitmap, /* [in]  Handle to bitmap */
-    UINT startscan,  /* [in]  First scan line to set in dest bitmap */
-    UINT lines,      /* [in]  Number of scan lines to copy */
-    LPVOID bits,       /* [out] Address of array for bitmap bits */
-    BITMAPINFO * info, /* [out] Address of structure with bitmap data */
-    UINT coloruse)   /* [in]  RGB or palette index */
+INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
+                                   void *bits, BITMAPINFO *info, UINT coloruse,
+                                   UINT max_bits, UINT max_info )
 {
     DC * dc;
     BITMAPOBJ * bmp;
