@@ -90,8 +90,6 @@ done:
 
 BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
 {
-    HGLOBAL hmem = 0;
-
     pattern->info = NULL;
     pattern->bits.free = NULL;
 
@@ -117,20 +115,16 @@ BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
         brush->lbColor = 0;
         return copy_bitmap( pattern, (HBITMAP)brush->lbHatch );
 
-    case BS_DIBPATTERN:
-        hmem = (HGLOBAL)brush->lbHatch;
-        if (!(brush->lbHatch = (ULONG_PTR)GlobalLock( hmem ))) return FALSE;
-        /* fall through */
     case BS_DIBPATTERNPT:
         pattern->usage = brush->lbColor;
         pattern->info = copy_packed_dib( (BITMAPINFO *)brush->lbHatch, pattern->usage );
-        if (hmem) GlobalUnlock( hmem );
         if (!pattern->info) return FALSE;
         pattern->bits.ptr = (char *)pattern->info + get_dib_info_size( pattern->info, pattern->usage );
         brush->lbStyle = BS_DIBPATTERN;
         brush->lbColor = 0;
         return TRUE;
 
+    case BS_DIBPATTERN:
     case BS_DIBPATTERN8X8:
     case BS_MONOPATTERN:
     case BS_INDEXED:

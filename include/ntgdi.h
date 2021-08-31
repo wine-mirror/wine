@@ -242,8 +242,10 @@ BOOL     WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj );
 LONG     WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                 DWORD func, BOOL inbound );
 INT      WINAPI NtGdiEndPage( HDC hdc );
-HPEN     WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, const LOGBRUSH *brush,
-                                   DWORD style_count, const DWORD *style_bits );
+HPEN     WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, ULONG brush_style, ULONG color,
+                                   ULONG_PTR client_hatch, ULONG_PTR hatch, DWORD style_count,
+                                   const DWORD *style_bits, ULONG dib_size, BOOL old_style,
+                                   HBRUSH brush );
 HRGN     WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA *data );
 INT      WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer );
 INT      WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode );

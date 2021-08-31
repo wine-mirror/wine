@@ -399,6 +399,29 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 }
 
 /***********************************************************************
+ *           ExtCreatePen    (GDI32.@)
+ */
+HPEN WINAPI ExtCreatePen( DWORD style, DWORD width, const LOGBRUSH *brush, DWORD style_count,
+                          const DWORD *style_bits )
+{
+    ULONG brush_style = brush->lbStyle;
+    ULONG_PTR hatch = brush->lbHatch;
+    HPEN pen;
+
+    if (brush_style == BS_DIBPATTERN)
+    {
+        if (!(hatch = (ULONG_PTR)GlobalLock( (HGLOBAL)hatch ))) return 0;
+        brush_style = BS_DIBPATTERNPT;
+    }
+
+    pen = NtGdiExtCreatePen( style, width, brush_style, brush->lbColor, brush->lbHatch, hatch,
+                             style_count, style_bits, /* FIXME */ 0, FALSE, NULL );
+
+    if (brush->lbStyle == BS_DIBPATTERN) GlobalUnlock( (HGLOBAL)brush->lbHatch );
+    return pen;
+}
+
+/***********************************************************************
  *           CreateBrushIndirect    (GDI32.@)
  */
 HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH *brush )

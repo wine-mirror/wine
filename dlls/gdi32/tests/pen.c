@@ -646,8 +646,7 @@ static void test_brush_pens(void)
             ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
             ok( elp->elpBrushStyle == BS_DIBPATTERNPT, "wrong brush style %x\n", elp->elpBrushStyle );
             ok( elp->elpColor == 0, "wrong color %x\n", elp->elpColor );
-            ok( elp->elpHatch == lb.lbHatch || broken(elp->elpHatch != lb.lbHatch), /* <= w2k */
-                "wrong hatch %lx/%lx\n", elp->elpHatch, lb.lbHatch );
+            ok( elp->elpHatch == lb.lbHatch, "wrong hatch %lx/%lx\n", elp->elpHatch, lb.lbHatch );
             ok( elp->elpNumEntries == 0, "wrong entries %x\n", elp->elpNumEntries );
             break;
 
