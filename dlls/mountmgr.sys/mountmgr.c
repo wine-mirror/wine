@@ -168,8 +168,9 @@ static NTSTATUS query_mount_points( void *buff, SIZE_T insize,
     MOUNTMGR_MOUNT_POINTS *info;
     struct mount_point *mount;
 
-    /* sanity checks */
-    if (input->SymbolicLinkNameOffset + input->SymbolicLinkNameLength > insize ||
+    if (insize < sizeof(*input) ||
+        outsize < sizeof(*info) ||
+        input->SymbolicLinkNameOffset + input->SymbolicLinkNameLength > insize ||
         input->UniqueIdOffset + input->UniqueIdLength > insize ||
         input->DeviceNameOffset + input->DeviceNameLength > insize ||
         input->SymbolicLinkNameOffset + input->SymbolicLinkNameLength < input->SymbolicLinkNameOffset ||
@@ -193,7 +194,7 @@ static NTSTATUS query_mount_points( void *buff, SIZE_T insize,
     if (size > outsize)
     {
         info = buff;
-        if (size >= sizeof(info->Size)) info->Size = size;
+        info->Size = size;
         iosb->Information = sizeof(info->Size);
         return STATUS_MORE_ENTRIES;
     }
@@ -907,11 +908,6 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
     switch(irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
     case IOCTL_MOUNTMGR_QUERY_POINTS:
-        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(MOUNTMGR_MOUNT_POINT))
-        {
-            status = STATUS_INVALID_PARAMETER;
-            break;
-        }
         status = query_mount_points( irp->AssociatedIrp.SystemBuffer,
                                      irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                      irpsp->Parameters.DeviceIoControl.OutputBufferLength,
