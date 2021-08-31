@@ -4360,7 +4360,7 @@ INT WINAPI SHFormatDateTimeA(const FILETIME UNALIGNED *fileTime, DWORD *flags,
     retval = SHFormatDateTimeW(fileTime, flags, bufW, size);
 
     if (retval != 0)
-        WideCharToMultiByte(CP_ACP, 0, bufW, -1, buf, size, NULL, NULL);
+        retval = WideCharToMultiByte(CP_ACP, 0, bufW, -1, buf, size, NULL, NULL);
 
     HeapFree(GetProcessHeap(), 0, bufW);
     return retval;
