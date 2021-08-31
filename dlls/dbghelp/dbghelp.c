@@ -286,7 +286,7 @@ const WCHAR *process_getenv(const struct process *process, const WCHAR *name)
  *		check_live_target
  *
  */
-static BOOL check_live_target(struct process* pcs)
+static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 {
     PROCESS_BASIC_INFORMATION pbi;
     ULONG_PTR base = 0, env = 0;
@@ -300,11 +300,17 @@ static BOOL check_live_target(struct process* pcs)
 
     if (!pcs->is_64bit)
     {
+        const char* peb32_addr;
         DWORD env32;
         PEB32 peb32;
+
         C_ASSERT(sizeof(void*) != 4 || FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment) == 0x48);
-        if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb32, sizeof(peb32), NULL)) return FALSE;
-        if (!ReadProcessMemory(pcs->handle, (char *)pbi.PebBaseAddress + 0x460 /* CloudFileFlags */, &base, sizeof(base), NULL)) return FALSE;
+        peb32_addr = (const char*)pbi.PebBaseAddress;
+        if (!wow64 && child_wow64)
+            /* current process is 64bit, while child process is 32 bit, need to read 32bit PEB */
+            peb32_addr += 0x1000;
+        if (!ReadProcessMemory(pcs->handle, peb32_addr, &peb32, sizeof(peb32), NULL)) return FALSE;
+        if (!ReadProcessMemory(pcs->handle, peb32_addr + 0x460 /* CloudFileFlags */, &base, sizeof(base), NULL)) return FALSE;
         if (read_process_memory(pcs, peb32.ProcessParameters + 0x48, &env32, sizeof(env32))) env = env32;
     }
     else
@@ -454,7 +460,7 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     pcs->next = process_first;
     process_first = pcs;
     
-    if (check_live_target(pcs))
+    if (check_live_target(pcs, wow64, child_wow64))
     {
         if (fInvadeProcess)
             EnumerateLoadedModulesW64(hProcess, process_invade_cb, hProcess);
