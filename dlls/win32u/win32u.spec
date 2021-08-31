@@ -1,3 +1,4 @@
+@ extern -arch=win32 Wow64Transition __wine_syscall_dispatcher
 @ stub NtBindCompositionSurface
 @ stub NtCloseCompositionInputSink
 @ stub NtCompositionInputThread
@@ -435,7 +436,7 @@
 @ stub NtGdiFillPath
 @ stub NtGdiFillRgn
 @ stub NtGdiFlattenPath
-@ stub NtGdiFlush
+@ stdcall -syscall NtGdiFlush()
 @ stub NtGdiFontIsLinked
 @ stub NtGdiForceUFIMapping
 @ stub NtGdiFrameRgn

@@ -1,1 +1,9 @@
 MODULE    = win32u.dll
+IMPORTS   = ntdll winecrt0
+EXTRALIBS = -Wl,--subsystem,unixlib
+
+EXTRADLLFLAGS = -nodefaultlibs -mno-cygwin -Wb,--syscall-table,1
+
+C_SRCS = \
+	main.c \
+	syscall.c
