@@ -539,7 +539,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
         res = ERROR_SUCCESS;
         break;
     default:
-        res = ERROR_NOT_SUPPORTED;
+        res = ERROR_CANCELLED;
     }
 
     if(req)
