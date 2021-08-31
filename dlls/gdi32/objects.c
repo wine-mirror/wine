@@ -725,7 +725,36 @@ UINT WINAPI GetSystemPaletteEntries( HDC hdc, UINT start, UINT count, PALETTEENT
 }
 
 /***********************************************************************
- *           GetDIBits    (GDI32.@)
+ *           CreateDIBitmap    (GDI32.@)
+ */
+HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header, DWORD init,
+                               const void *bits, const BITMAPINFO *data, UINT coloruse )
+{
+    int width, height;
+
+    if (!header) return 0;
+
+    if (header->biSize == sizeof(BITMAPCOREHEADER))
+    {
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)header;
+        width  = core->bcWidth;
+        height = core->bcHeight;
+    }
+    else if (header->biSize >= sizeof(BITMAPINFOHEADER))
+    {
+        if (header->biCompression == BI_JPEG || header->biCompression == BI_PNG) return 0;
+        width  = header->biWidth;
+        height = header->biHeight;
+    }
+    else return 0;
+
+    if (!width || !height) return GetStockObject( STOCK_LAST + 1 ); /* default 1x1 bitmap */
+    return NtGdiCreateDIBitmapInternal( hdc, width, height, init, bits, data, coloruse,
+                                        0, 0, 0, 0 );
+}
+
+/***********************************************************************
+ *           GetDIBits    (win32u.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
                                         void *bits, BITMAPINFO *info, UINT coloruse )

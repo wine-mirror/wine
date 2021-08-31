@@ -218,6 +218,10 @@ BOOL     WINAPI NtGdiComputeXformCoefficients( HDC hdc );
 HBITMAP  WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
                                    UINT bpp, const void *bits );
 HBITMAP  WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height );
+HBITMAP  WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWORD init,
+                                             const void *bits, const BITMAPINFO *data,
+                                             UINT coloruse, UINT max_info, UINT max_bits,
+                                             ULONG flags, HANDLE xform );
 HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc );
 HBRUSH   WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen );
 HDC      WINAPI NtGdiCreateMetafileDC( HDC hdc );
