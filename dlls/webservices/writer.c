@@ -220,15 +220,7 @@ HRESULT WINAPI WsCreateWriter( const WS_XML_WRITER_PROPERTY *properties, ULONG c
         }
     }
 
-    hr = prop_get( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE,
-                   &max_size, sizeof(max_size) );
-    if (hr != S_OK)
-    {
-        free_writer( writer );
-        return hr;
-    }
-
-    hr = WsCreateHeap( max_size, 0, NULL, 0, &writer->output_heap, NULL );
+    hr = WsCreateHeap( 1 << 20, 0, NULL, 0, &writer->output_heap, NULL );
     if (hr != S_OK)
     {
         free_writer( writer );
