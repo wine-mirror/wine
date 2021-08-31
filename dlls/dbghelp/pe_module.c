@@ -65,6 +65,11 @@ static void pe_unmap_full(struct image_file_map* fmap)
     }
 }
 
+/* as we store either IMAGE_OPTIONAL_HEADER(32|64) inside pe_file_map,
+ * this helper will read to any field 'field' inside such an header
+ */
+#define PE_FROM_OPTHDR(fmap, field) (((fmap)->addr_size == 32) ? ((fmap)->u.pe.opt.header32. field) : ((fmap)->u.pe.opt.header64. field))
+
 /******************************************************************
  *		pe_map_section
  *
@@ -259,12 +264,24 @@ BOOL pe_map_file(HANDLE file, struct image_file_map* fmap, enum module_type mt)
 
             if (!(nthdr = RtlImageNtHeader(mapping))) goto error;
             memcpy(&fmap->u.pe.file_header, &nthdr->FileHeader, sizeof(fmap->u.pe.file_header));
-            memcpy(&fmap->u.pe.opt_header, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt_header));
             switch (nthdr->OptionalHeader.Magic)
             {
-            case 0x10b: fmap->addr_size = 32; break;
-            case 0x20b: fmap->addr_size = 64; break;
-            default: return FALSE;
+            case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+                if (sizeof(void*) == 8 && !(SymGetOptions() & SYMOPT_INCLUDE_32BIT_MODULES))
+                {
+                    TRACE("Won't load 32bit module in 64bit dbghelp when options don't ask for it\n");
+                    goto error;
+                }
+                fmap->addr_size = 32;
+                memcpy(&fmap->u.pe.opt.header32, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header32));
+                break;
+            case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+                if (sizeof(void*) == 4) return FALSE;
+                fmap->addr_size = 64;
+                memcpy(&fmap->u.pe.opt.header64, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header64));
+                break;
+            default:
+                return FALSE;
             }
 
             fmap->u.pe.builtin = !memcmp((const IMAGE_DOS_HEADER*)mapping + 1, builtin_signature, sizeof(builtin_signature));
@@ -497,7 +514,7 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module)
         if (stab != IMAGE_NO_MAP && stabstr != IMAGE_NO_MAP)
         {
             ret = stabs_parse(module,
-                              module->module.BaseOfImage - fmap->u.pe.opt_header.ImageBase,
+                              module->module.BaseOfImage - PE_FROM_OPTHDR(fmap, ImageBase),
                               stab, image_get_map_size(&sect_stabs) / sizeof(struct stab_nlist), sizeof(struct stab_nlist),
                               stabstr, image_get_map_size(&sect_stabstr),
                               NULL, NULL);
@@ -523,7 +540,7 @@ static BOOL pe_load_dwarf(struct module* module)
     BOOL                        ret;
 
     ret = dwarf2_parse(module,
-                       module->module.BaseOfImage - fmap->u.pe.opt_header.ImageBase,
+                       module->module.BaseOfImage - PE_FROM_OPTHDR(fmap, ImageBase),
                        NULL, /* FIXME: some thunks to deal with ? */
                        fmap);
     TRACE("%s the DWARF debug info\n", ret ? "successfully loaded" : "failed to load");
@@ -793,12 +810,12 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
             image_unmap_file(&modfmt->u.pe_info->fmap);
             modfmt->u.pe_info->fmap = builtin.fmap;
         }
-        if (!base) base = modfmt->u.pe_info->fmap.u.pe.opt_header.ImageBase;
-        if (!size) size = modfmt->u.pe_info->fmap.u.pe.opt_header.SizeOfImage;
+        if (!base) base = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
+        if (!size) size = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, SizeOfImage);
 
         module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
                             modfmt->u.pe_info->fmap.u.pe.file_header.TimeDateStamp,
-                            modfmt->u.pe_info->fmap.u.pe.opt_header.CheckSum);
+                            PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, CheckSum));
         if (module)
         {
             module->real_path = builtin.path;
@@ -811,7 +828,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
                 module->module.SymType = SymDeferred;
             else
                 pe_load_debug_info(pcs, module);
-            module->reloc_delta = base - modfmt->u.pe_info->fmap.u.pe.opt_header.ImageBase;
+            module->reloc_delta = base - PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
         }
         else
         {
