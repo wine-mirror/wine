@@ -1818,8 +1818,9 @@ static INT_PTR WINAPI save_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LP
     switch (msg)
     {
     case WM_INITDIALOG:
+        SendMessageW( dialog, WM_NEXTDLGCTL, (WPARAM)GetDlgItem( dialog, IDC_SAV_SESSION ), TRUE );
         SendDlgItemMessageW( dialog, IDC_SAV_SESSION, BM_SETCHECK, BST_CHECKED, 0 );
-        break;
+        return FALSE;
 
     case WM_COMMAND:
         switch (LOWORD(wparam))
