@@ -319,7 +319,7 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
         {
             if (offset >= sizeof(query->size)) query->size = offset;
             offset = sizeof(query->size);
-            irp->IoStatus.u.Status = STATUS_MORE_ENTRIES;
+            irp->IoStatus.u.Status = STATUS_BUFFER_OVERFLOW;
             goto err;
         }
     }
