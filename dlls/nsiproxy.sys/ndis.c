@@ -488,7 +488,7 @@ static NTSTATUS ifinfo_enumerate_all( void *key_data, DWORD key_size, void *rw_d
     LeaveCriticalSection( &if_list_cs );
 
     if (!want_data || num <= *count) *count = num;
-    else status = STATUS_MORE_ENTRIES;
+    else status = STATUS_BUFFER_OVERFLOW;
 
     return status;
 }

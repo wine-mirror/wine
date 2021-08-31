@@ -74,7 +74,7 @@ static void nsiproxy_enumerate_all( IRP *irp )
     enum_all.count = in->count;
 
     irp->IoStatus.u.Status = nsi_enumerate_all_ex( &enum_all );
-    if (irp->IoStatus.u.Status == STATUS_SUCCESS || irp->IoStatus.u.Status == STATUS_MORE_ENTRIES)
+    if (irp->IoStatus.u.Status == STATUS_SUCCESS || irp->IoStatus.u.Status == STATUS_BUFFER_OVERFLOW)
     {
         irp->IoStatus.Information = out_len;
         *(DWORD *)out = enum_all.count;

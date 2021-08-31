@@ -390,7 +390,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void
 #endif
 
     if (!want_data || num <= *count) *count = num;
-    else status = STATUS_MORE_ENTRIES;
+    else status = STATUS_BUFFER_OVERFLOW;
 
     heap_free( pid_map );
     heap_free( addr_scopes );

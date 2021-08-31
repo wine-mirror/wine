@@ -736,7 +736,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
 #endif
 
     if (!want_data || num <= *count) *count = num;
-    else status = STATUS_MORE_ENTRIES;
+    else status = STATUS_BUFFER_OVERFLOW;
 
     heap_free( pid_map );
     heap_free( addr_scopes );

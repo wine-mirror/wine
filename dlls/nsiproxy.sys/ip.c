@@ -754,7 +754,7 @@ static NTSTATUS ip_unicast_enumerate_all( int family, void *key_data, DWORD key_
     freeifaddrs( addrs );
 
     if (!want_data || num <= *count) *count = num;
-    else status = STATUS_MORE_ENTRIES;
+    else status = STATUS_BUFFER_OVERFLOW;
 
     return status;
 }
@@ -990,7 +990,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, vo
 #endif
 
     if (!want_data || num <= *count) *count = num;
-    else status = STATUS_MORE_ENTRIES;
+    else status = STATUS_BUFFER_OVERFLOW;
 
     return status;
 }
@@ -1233,7 +1233,7 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, DWORD key_size, void
 #endif
 
     if (!want_data || num <= *count) *count = num;
-    else status = STATUS_MORE_ENTRIES;
+    else status = STATUS_BUFFER_OVERFLOW;
 
     return status;
 }
