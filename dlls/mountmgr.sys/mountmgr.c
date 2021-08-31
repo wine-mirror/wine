@@ -196,7 +196,7 @@ static NTSTATUS query_mount_points( void *buff, SIZE_T insize,
         info = buff;
         info->Size = size;
         iosb->Information = sizeof(info->Size);
-        return STATUS_MORE_ENTRIES;
+        return STATUS_BUFFER_OVERFLOW;
     }
 
     input = HeapAlloc( GetProcessHeap(), 0, insize );

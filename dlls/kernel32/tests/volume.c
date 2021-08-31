@@ -1678,8 +1678,8 @@ static void test_mountmgr_query_points(void)
     memset(output, 0xcc, sizeof(*output));
     status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
             IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), output, sizeof(*output) );
-    todo_wine ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
-    todo_wine ok(io.Status == STATUS_BUFFER_OVERFLOW, "got status %#x\n", io.Status);
+    ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
+    ok(io.Status == STATUS_BUFFER_OVERFLOW, "got status %#x\n", io.Status);
     todo_wine ok(io.Information == offsetof(MOUNTMGR_MOUNT_POINTS, MountPoints[0]), "got information %#Ix\n", io.Information);
     ok(output->Size > offsetof(MOUNTMGR_MOUNT_POINTS, MountPoints[0]), "got size %u\n", output->Size);
     todo_wine ok(output->NumberOfMountPoints && output->NumberOfMountPoints != 0xcccccccc,
