@@ -150,7 +150,8 @@ struct image_file_map
         struct pe_file_map
         {
             HANDLE                      hMap;
-            IMAGE_NT_HEADERS            ntheader;
+            IMAGE_FILE_HEADER           file_header;
+            IMAGE_OPTIONAL_HEADER       opt_header;
             BOOL                        builtin;
             unsigned                    full_count;
             void*                       full_map;
