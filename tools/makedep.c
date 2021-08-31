@@ -3365,7 +3365,7 @@ static void output_module( struct makefile *make )
 
         if (native_unix_lib)
         {
-            if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+            if (strcmp( make->module, "ntdll.dll" ))
             {
                 strarray_add( &unix_libs, "-lntdll" );
                 strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
