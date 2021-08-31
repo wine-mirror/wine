@@ -4937,6 +4937,8 @@ static void test_binary_encoding(void)
         {0x40,0x01,'t',0x08,0x02,'n','s',0x01};
     static const char test31[] =
         {0x40,0x01,'t',0x09,0x01,'p',0x02,'n','s',0x01};
+    static const char test32[] =
+        {0x40,0x01,'t',0xb3,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
     static const char test100[] =
         {0x40,0x01,'t',0x04,0x01,'t',0x98,0x00,0x01};
     static const char test101[] =
@@ -4973,6 +4975,14 @@ static void test_binary_encoding(void)
     {
         WS_BYTES data;
     } *typetest;
+    struct typetest2
+    {
+        UINT32 val;
+    } *typetest2;
+    struct typetest3
+    {
+        UINT64 val;
+    } *typetest3;
 
     hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -5628,6 +5638,56 @@ static void test_binary_encoding(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( typetest->data.length == 2, "got %u\n", typetest->data.length );
     ok( !memcmp( typetest->data.bytes, "ab", 2 ), "wrong data\n" );
+
+    /* record value too large for description type */
+    hr = set_input_bin( reader, test32, sizeof(test32), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 8, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping      = WS_ELEMENT_FIELD_MAPPING;
+    f.localName    = &localname;
+    f.ns           = &ns;
+    f.type         = WS_UINT32_TYPE;
+    f.offset       = FIELD_OFFSET(struct typetest2, val);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct typetest2);
+    s.alignment  = TYPE_ALIGNMENT(struct typetest2);
+    s.fields     = fields;
+    s.fieldCount = 1;
+
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &typetest2, sizeof(typetest2), NULL );
+    ok( hr == WS_E_NUMERIC_OVERFLOW, "got %08x\n", hr );
+
+    /* record value too small for description type */
+    hr = set_input_bin( reader, test16, sizeof(test16), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 8, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping      = WS_ELEMENT_FIELD_MAPPING;
+    f.localName    = &localname;
+    f.ns           = &ns;
+    f.type         = WS_UINT64_TYPE;
+    f.offset       = FIELD_OFFSET(struct typetest3, val);
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct typetest3);
+    s.alignment  = TYPE_ALIGNMENT(struct typetest3);
+    s.fields     = fields;
+    s.fieldCount = 1;
+
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &typetest3, sizeof(typetest3), NULL );
+    ok( hr == WS_E_NUMERIC_OVERFLOW, "got %08x\n", hr );
 
     WsFreeHeap( heap );
     WsFreeReader( reader );

@@ -4495,8 +4495,7 @@ static HRESULT text_to_int8( const WS_XML_TEXT *text, INT64 *val )
     case WS_XML_TEXT_TYPE_INT32:
     {
         const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
-        assert( text_int32->value >= MIN_INT8 );
-        assert( text_int32->value <= MAX_INT8 );
+        if (text_int32->value < MIN_INT8 || text_int32->value > MAX_INT8) return WS_E_NUMERIC_OVERFLOW;
         *val = text_int32->value;
         hr = S_OK;
         break;
@@ -4577,8 +4576,7 @@ static HRESULT text_to_int16( const WS_XML_TEXT *text, INT64 *val )
     case WS_XML_TEXT_TYPE_INT32:
     {
         const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
-        assert( text_int32->value >= MIN_INT16 );
-        assert( text_int32->value <= MAX_INT16 );
+        if (text_int32->value < MIN_INT16 || text_int32->value > MAX_INT16) return WS_E_NUMERIC_OVERFLOW;
         *val = text_int32->value;
         hr = S_OK;
         break;
@@ -4819,7 +4817,7 @@ static HRESULT text_to_uint8( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_UINT64:
     {
         const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
-        assert( text_uint64->value <= MAX_UINT8 );
+        if (text_uint64->value > MAX_UINT8) return WS_E_NUMERIC_OVERFLOW;
         *val = text_uint64->value;
         hr = S_OK;
         break;
@@ -4900,8 +4898,7 @@ static HRESULT text_to_uint16( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_INT32:
     {
         const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
-        assert( text_int32->value >= 0 );
-        assert( text_int32->value <= MAX_UINT16 );
+        if (text_int32->value < 0 || text_int32->value > MAX_UINT16) return WS_E_NUMERIC_OVERFLOW;
         *val = text_int32->value;
         hr = S_OK;
         break;
@@ -4909,7 +4906,7 @@ static HRESULT text_to_uint16( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_UINT64:
     {
         const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
-        assert( text_uint64->value <= MAX_UINT16 );
+        if (text_uint64->value > MAX_UINT16) return WS_E_NUMERIC_OVERFLOW;
         *val = text_uint64->value;
         hr = S_OK;
         break;
@@ -4990,7 +4987,7 @@ static HRESULT text_to_uint32( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_INT32:
     {
         const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
-        assert( text_int32->value >= 0 );
+        if (text_int32->value < 0) return WS_E_NUMERIC_OVERFLOW;
         *val = text_int32->value;
         hr = S_OK;
         break;
@@ -4998,7 +4995,7 @@ static HRESULT text_to_uint32( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_UINT64:
     {
         const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
-        assert( text_uint64->value <= MAX_UINT32 );
+        if (text_uint64->value > MAX_UINT32) return WS_E_NUMERIC_OVERFLOW;
         *val = text_uint64->value;
         hr = S_OK;
         break;
@@ -5079,6 +5076,7 @@ static HRESULT text_to_uint64( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_INT32:
     {
         const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        if (text_int32->value < 0) return WS_E_NUMERIC_OVERFLOW;
         *val = text_int32->value;
         hr = S_OK;
         break;
@@ -5086,6 +5084,7 @@ static HRESULT text_to_uint64( const WS_XML_TEXT *text, UINT64 *val )
     case WS_XML_TEXT_TYPE_INT64:
     {
         const WS_XML_INT64_TEXT *text_int64 = (const WS_XML_INT64_TEXT *)text;
+        if (text_int64->value < 0) return WS_E_NUMERIC_OVERFLOW;
         *val = text_int64->value;
         hr = S_OK;
         break;
