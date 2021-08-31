@@ -754,6 +754,15 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header, DWORD in
 }
 
 /***********************************************************************
+ *           CreateDIBSection    (GDI32.@)
+ */
+HBITMAP WINAPI DECLSPEC_HOTPATCH CreateDIBSection( HDC hdc, const BITMAPINFO *bmi, UINT usage,
+                                                   void **bits, HANDLE section, DWORD offset )
+{
+    return NtGdiCreateDIBSection( hdc, section, offset, bmi, usage, 0, 0, 0, bits );
+}
+
+/***********************************************************************
  *           GetDIBits    (win32u.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,

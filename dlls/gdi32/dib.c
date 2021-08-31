@@ -1460,10 +1460,11 @@ HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWOR
 
 
 /***********************************************************************
- *           CreateDIBSection    (GDI32.@)
+ *           NtGdiCreateDIBSection    (win32u.@)
  */
-HBITMAP WINAPI DECLSPEC_HOTPATCH CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
-                                                  void **bits, HANDLE section, DWORD offset)
+HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, const BITMAPINFO *bmi,
+                                      UINT usage, UINT header_size, ULONG flags,
+                                      ULONG_PTR color_space, void **bits )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;

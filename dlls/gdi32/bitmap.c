@@ -76,7 +76,7 @@ HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
             memcpy( bi->bmiColors, dib.dsBitfields, sizeof(dib.dsBitfields) );
         else if (dib.dsBmih.biBitCount <= 8)  /* copy the color table */
             NtGdiDoPalette( hdc, 0, 256, bi->bmiColors, NtGdiGetDIBColorTable, FALSE );
-        return CreateDIBSection( hdc, bi, DIB_RGB_COLORS, NULL, NULL, 0 );
+        return NtGdiCreateDIBSection( hdc, NULL, 0, bi, DIB_RGB_COLORS, 0, 0, 0, NULL );
 
     default:
         return 0;

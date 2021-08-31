@@ -222,6 +222,9 @@ HBITMAP  WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWO
                                              const void *bits, const BITMAPINFO *data,
                                              UINT coloruse, UINT max_info, UINT max_bits,
                                              ULONG flags, HANDLE xform );
+HBITMAP  WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, const BITMAPINFO *bmi,
+                                       UINT usage, UINT header_size, ULONG flags,
+                                       ULONG_PTR color_space, void **bits );
 HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc );
 HBRUSH   WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen );
 HDC      WINAPI NtGdiCreateMetafileDC( HDC hdc );

@@ -877,7 +877,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
         info.bmiHeader.biPlanes = 1;
         info.bmiHeader.biBitCount = 24;
         info.bmiHeader.biCompression = BI_RGB;
-        bmpWork = CreateDIBSection( 0, &info, DIB_RGB_COLORS, NULL, NULL, 0 );
+        bmpWork = NtGdiCreateDIBSection( 0, NULL, 0, &info, DIB_RGB_COLORS, 0, 0, 0, NULL );
     }
     else bmpWork = NtGdiCreateCompatibleBitmap( hdcDest, widthDest, heightDest );
     oldWork = NtGdiSelectBitmap(hdcWork, bmpWork);
