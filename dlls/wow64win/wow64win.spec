@@ -1,2 +1,2 @@
 #@ extern sdwhcon
-#@ extern sdwhwin32
+@ extern sdwhwin32
