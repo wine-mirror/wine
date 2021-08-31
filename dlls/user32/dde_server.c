@@ -782,7 +782,7 @@ static HDDEDATA map_A_to_W( DWORD instance, void *ptr, DWORD size )
     return ret;
 }
 
-/* convert data to ASCII, unless it looks like it's not in Unicode format */
+/* convert data to ANSI, unless it looks like it's not in Unicode format */
 static HDDEDATA map_W_to_A( DWORD instance, void *ptr, DWORD size )
 {
     HDDEDATA ret;
@@ -821,7 +821,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleExecute(WDML_CONV* pConv, WDML_XACT* pX
 	{
             if (pConv->instance->unicode)  /* Unicode server, try to map A->W */
                 hDdeData = map_A_to_W( pConv->instance->instanceID, ptr, size );
-            else if (!IsWindowUnicode( pConv->hwndClient )) /* ASCII server and client, try to map W->A */
+            else if (!IsWindowUnicode( pConv->hwndClient )) /* ANSI server and client, try to map W->A */
                 hDdeData = map_W_to_A( pConv->instance->instanceID, ptr, size );
             else
                 hDdeData = DdeCreateDataHandle(pConv->instance->instanceID, ptr, size, 0, 0, CF_TEXT, 0);

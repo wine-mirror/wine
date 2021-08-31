@@ -235,7 +235,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
 /***********************************************************************
  *           CLASS_GetMenuNameA
  *
- * Get the menu name as a ASCII string.
+ * Get the menu name as an ANSI string.
  */
 static inline LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
 {
@@ -524,7 +524,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
  *           register_builtin
  *
  * Register a builtin control class.
- * This allows having both ASCII and Unicode winprocs for the same class.
+ * This allows having both ANSI and Unicode winprocs for the same class.
  */
 static void register_builtin( const struct builtin_class_descr *descr )
 {

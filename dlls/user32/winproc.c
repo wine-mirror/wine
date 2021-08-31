@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 typedef struct tagWINDOWPROC
 {
-    WNDPROC        procA;    /* ASCII window proc */
+    WNDPROC        procA;    /* ANSI window proc */
     WNDPROC        procW;    /* Unicode window proc */
 } WINDOWPROC;
 

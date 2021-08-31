@@ -1185,7 +1185,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
  *           GrayString functions
  */
 
-/* callback for ASCII gray string proc */
+/* callback for ANSI gray string proc */
 static BOOL CALLBACK gray_string_callbackA( HDC hdc, LPARAM param, INT len )
 {
     return TextOutA( hdc, 0, 0, (LPCSTR)param, len );
