@@ -832,7 +832,7 @@ static void address_lists_iterate( IP_ADAPTER_ADDRESSES *aa, void (*fn)(void *en
     }
 }
 
-void adapters_addresses_free( IP_ADAPTER_ADDRESSES *info )
+static void adapters_addresses_free( IP_ADAPTER_ADDRESSES *info )
 {
     IP_ADAPTER_ADDRESSES *aa;
 
@@ -845,7 +845,7 @@ void adapters_addresses_free( IP_ADAPTER_ADDRESSES *info )
     heap_free( info );
 }
 
-ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
+static ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
 {
     IP_ADAPTER_ADDRESSES *aa;
     ULONG size = 0, align = sizeof(ULONGLONG) - 1;
@@ -861,7 +861,7 @@ ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
     return size;
 }
 
-void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES *src )
+static void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES *src )
 {
     char *ptr;
     DWORD len;
@@ -3115,7 +3115,7 @@ static int tcp6_row_owner_cmp( const void *a, const void *b )
  * Implementation of GetExtendedTcpTable() which additionally handles TCP_TABLE2
  * corresponding to GetTcp(6)Table2()
  */
-DWORD get_extended_tcp_table( void *table, DWORD *size, BOOL sort, ULONG family, ULONG table_class )
+static DWORD get_extended_tcp_table( void *table, DWORD *size, BOOL sort, ULONG family, ULONG table_class )
 {
     DWORD err, count, needed, i, num = 0, row_size = 0;
     struct nsi_tcp_conn_key *key;
