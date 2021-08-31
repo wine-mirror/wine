@@ -53,7 +53,14 @@ static const char *syscall_names[] =
 #undef SYSCALL_ENTRY
 };
 
-static unsigned short syscall_map[1024];
+static const SYSTEM_SERVICE_TABLE ntdll_syscall_table =
+{
+    (ULONG_PTR *)syscall_thunks,
+    (ULONG_PTR *)syscall_names,
+    ARRAY_SIZE(syscall_thunks)
+};
+
+static SYSTEM_SERVICE_TABLE syscall_tables[4];
 
 /* header for Wow64AllocTemp blocks; probably not the right layout */
 struct mem_header
@@ -330,50 +337,64 @@ static DWORD get_syscall_num( const BYTE *syscall )
 /**********************************************************************
  *           init_syscall_table
  */
-static void init_syscall_table( HMODULE ntdll )
+static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_TABLE *orig_table )
 {
+    static syscall_thunk thunks[2048];
+    static ULONG start_pos;
+
     const IMAGE_EXPORT_DIRECTORY *exports;
     const ULONG *functions, *names;
     const USHORT *ordinals;
-    ULONG id, exp_size, exp_pos, wrap_pos;
+    ULONG id, exp_size, exp_pos, wrap_pos, max_pos = 0;
+    const char **syscall_names = (const char **)orig_table->CounterTable;
 
-    args_alignment = (current_machine == IMAGE_FILE_MACHINE_I386) ? sizeof(ULONG) : sizeof(ULONG64);
-
-    exports = RtlImageDirectoryEntryToData( ntdll, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
-    ordinals = get_rva( ntdll, exports->AddressOfNameOrdinals );
-    functions = get_rva( ntdll, exports->AddressOfFunctions );
-    names = get_rva( ntdll, exports->AddressOfNames );
+    exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
+    ordinals = get_rva( module, exports->AddressOfNameOrdinals );
+    functions = get_rva( module, exports->AddressOfFunctions );
+    names = get_rva( module, exports->AddressOfNames );
 
     for (exp_pos = wrap_pos = 0; exp_pos < exports->NumberOfNames; exp_pos++)
     {
-        char *name = get_rva( ntdll, names[exp_pos] );
+        char *name = get_rva( module, names[exp_pos] );
         int res = -1;
 
         if (strncmp( name, "Nt", 2 ) && strncmp( name, "wine", 4 ) && strncmp( name, "__wine", 6 ))
             continue;  /* not a syscall */
 
-        if ((id = get_syscall_num( get_rva( ntdll, functions[ordinals[exp_pos]] ))) == ~0u)
+        if ((id = get_syscall_num( get_rva( module, functions[ordinals[exp_pos]] ))) == ~0u)
             continue; /* not a syscall */
 
-        if (wrap_pos < ARRAY_SIZE(syscall_names))
-            res = strcmp( name, syscall_names[wrap_pos] );
+        if (wrap_pos < orig_table->ServiceLimit) res = strcmp( name, syscall_names[wrap_pos] );
 
         if (!res)  /* got a match */
         {
-            if (id < ARRAY_SIZE(syscall_map)) syscall_map[id] = wrap_pos++;
-            else ERR( "invalid syscall id %04x for %s\n", id, name );
+            ULONG table_idx = (id >> 12) & 3, table_pos = id & 0xfff;
+            if (table_idx == idx)
+            {
+                if (start_pos + table_pos < ARRAY_SIZE(thunks))
+                {
+                    thunks[start_pos + table_pos] = (syscall_thunk)orig_table->ServiceTable[wrap_pos++];
+                    max_pos = max( table_pos, max_pos );
+                }
+                else ERR( "invalid syscall id %04x for %s\n", id, name );
+            }
+            else ERR( "wrong syscall table id %04x for %s\n", id, name );
         }
         else if (res > 0)
         {
-            FIXME( "no ntdll export for syscall %s\n", syscall_names[wrap_pos] );
+            FIXME( "no export for syscall %s\n", syscall_names[wrap_pos] );
             wrap_pos++;
             exp_pos--;  /* try again */
         }
         else FIXME( "missing wrapper for syscall %04x %s\n", id, name );
     }
 
-    for ( ; wrap_pos < ARRAY_SIZE(syscall_thunks); wrap_pos++)
-        FIXME( "no ntdll export for syscall %s\n", syscall_names[wrap_pos] );
+    for ( ; wrap_pos < orig_table->ServiceLimit; wrap_pos++)
+        FIXME( "no export for syscall %s\n", syscall_names[wrap_pos] );
+
+    syscall_tables[idx].ServiceTable = (ULONG_PTR *)(thunks + start_pos);
+    syscall_tables[idx].ServiceLimit = max_pos + 1;
+    start_pos += max_pos + 1;
 }
 
 
@@ -425,6 +446,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
 
     RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
     if (!current_machine) current_machine = native_machine;
+    args_alignment = (current_machine == IMAGE_FILE_MACHINE_I386) ? sizeof(ULONG) : sizeof(ULONG64);
 
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
 
@@ -435,7 +457,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
     GET_PTR( Wow64Transition );
     GET_PTR( __wine_syscall_dispatcher );
-    init_syscall_table( module );
+    init_syscall_table( module, 0, &ntdll_syscall_table );
 
     module = load_cpu_dll();
     GET_PTR( BTCpuGetBopCode );
@@ -540,15 +562,17 @@ static LONG CALLBACK syscall_filter( EXCEPTION_POINTERS *ptrs )
 NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 {
     NTSTATUS status;
+    UINT id = num & 0xfff;
+    const SYSTEM_SERVICE_TABLE *table = &syscall_tables[(num >> 12) & 3];
 
-    if (num >= ARRAY_SIZE( syscall_map ) || !syscall_map[num])
+    if (id >= table->ServiceLimit || !table->ServiceTable[id])
     {
         ERR( "unsupported syscall %04x\n", num );
         return STATUS_INVALID_SYSTEM_SERVICE;
     }
     __TRY
     {
-        syscall_thunk thunk = syscall_thunks[syscall_map[num]];
+        syscall_thunk thunk = (syscall_thunk)table->ServiceTable[id];
         status = thunk( args );
     }
     __EXCEPT( syscall_filter )
