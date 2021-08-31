@@ -663,17 +663,17 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     size = 0xdeadf00d;
     SetLastError(0xdeadf00d);
     ret = DeviceIoControl(device, ioctl, params, sizeof(*params), buffer, sizeof(buffer), &size, NULL);
-    todo_wine_if (NT_SUCCESS(expect_status) != !params->iosb_status)
+    todo_wine_if (NT_SUCCESS(expect_status) != NT_SUCCESS(params->iosb_status))
         ok(ret == NT_SUCCESS(expect_status), "got %d\n", ret);
     if (NT_SUCCESS(expect_status))
     {
-        todo_wine_if (params->iosb_status)
+        todo_wine_if (!NT_SUCCESS(params->iosb_status))
             ok(GetLastError() == 0xdeadf00d, "got error %u\n", GetLastError());
     }
     else
     {
         todo_wine_if (RtlNtStatusToDosError(expect_status) != RtlNtStatusToDosError(params->iosb_status)
-                || params->iosb_status == STATUS_PENDING)
+                || NT_SUCCESS(params->iosb_status))
             ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %u\n", GetLastError());
     }
     if (NT_ERROR(expect_status))
