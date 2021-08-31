@@ -406,18 +406,6 @@ const CLSID* DOMDocument_version(MSXML_VERSION v)
     }
 }
 
-const CLSID* SchemaCache_version(MSXML_VERSION v)
-{
-    switch (v)
-    {
-    default:
-    case MSXML_DEFAULT: return &CLSID_XMLSchemaCache;
-    case MSXML3: return &CLSID_XMLSchemaCache30;
-    case MSXML4: return &CLSID_XMLSchemaCache40;
-    case MSXML6: return &CLSID_XMLSchemaCache60;
-    }
-}
-
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
 {
     MSXML_hInstance = hInstDLL;

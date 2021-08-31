@@ -34,7 +34,6 @@
 #endif
 
 extern const CLSID * DOMDocument_version(MSXML_VERSION v) DECLSPEC_HIDDEN;
-extern const CLSID * SchemaCache_version(MSXML_VERSION v) DECLSPEC_HIDDEN;
 
 
 /* The XDR datatypes (urn:schemas-microsoft-com:datatypes)
