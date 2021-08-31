@@ -18,14 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/test.h"
+#include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
 #include "winbase.h"
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "winternl.h"
-#include <stdio.h>
 #include "ddk/ntddcdvd.h"
 #include "ddk/mountmgr.h"
+#include "wine/test.h"
 
 #include <pshpack1.h>
 struct COMPLETE_DVD_LAYER_DESCRIPTOR
@@ -1619,6 +1622,87 @@ static void test_GetVolumeInformationByHandle(void)
     CloseHandle( file );
 }
 
+static void test_mountmgr_query_points(void)
+{
+    char input_buffer[64];
+    MOUNTMGR_MOUNT_POINTS *output;
+    MOUNTMGR_MOUNT_POINT *input = (MOUNTMGR_MOUNT_POINT *)input_buffer;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE file;
+
+    output = malloc(1024);
+
+    file = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, 0, 0, NULL, OPEN_EXISTING, 0, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open mountmgr, error %u\n", GetLastError());
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+            IOCTL_MOUNTMGR_QUERY_POINTS, NULL, 0, NULL, 0 );
+    ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+
+    memset( input, 0, sizeof(*input) );
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+            IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input) - 1, NULL, 0 );
+    ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+            IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), NULL, 0 );
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    memset(output, 0xcc, sizeof(*output));
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+            IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), output, sizeof(*output) - 1 );
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    todo_wine ok(output->Size == 0xcccccccc, "got size %u\n", output->Size);
+    ok(output->NumberOfMountPoints == 0xcccccccc, "got count %u\n", output->NumberOfMountPoints);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    memset(output, 0xcc, sizeof(*output));
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+            IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), output, sizeof(*output) );
+    todo_wine ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
+    todo_wine ok(io.Status == STATUS_BUFFER_OVERFLOW, "got status %#x\n", io.Status);
+    todo_wine ok(io.Information == offsetof(MOUNTMGR_MOUNT_POINTS, MountPoints[0]), "got information %#Ix\n", io.Information);
+    ok(output->Size > offsetof(MOUNTMGR_MOUNT_POINTS, MountPoints[0]), "got size %u\n", output->Size);
+    todo_wine ok(output->NumberOfMountPoints && output->NumberOfMountPoints != 0xcccccccc,
+            "got count %u\n", output->NumberOfMountPoints);
+
+    output = realloc(output, output->Size);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+            IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), output, output->Size );
+    ok(!status, "got %#x\n", status);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(io.Information == output->Size, "got size %u, information %#Ix\n", output->Size, io.Information);
+    ok(output->Size > offsetof(MOUNTMGR_MOUNT_POINTS, MountPoints[0]), "got size %u\n", output->Size);
+    ok(output->NumberOfMountPoints && output->NumberOfMountPoints != 0xcccccccc,
+            "got count %u\n", output->NumberOfMountPoints);
+
+    CloseHandle( file );
+
+    free(output);
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -1650,4 +1734,5 @@ START_TEST(volume)
     test_cdrom_ioctl();
     test_mounted_folder();
     test_GetVolumeInformationByHandle();
+    test_mountmgr_query_points();
 }
