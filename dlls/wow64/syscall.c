@@ -72,6 +72,9 @@ struct mem_header
 
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
+/* wow64win syscall table */
+static const SYSTEM_SERVICE_TABLE *psdwhwin32;
+
 /* cpu backend dll functions */
 static void *   (WINAPI *pBTCpuGetBopCode)(void);
 static void     (WINAPI *pBTCpuProcessInit)(void);
@@ -410,39 +413,84 @@ static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_
 
 
 /**********************************************************************
- *           load_cpu_dll
+ *           load_64bit_module
  */
-static HMODULE load_cpu_dll(void)
+static HMODULE load_64bit_module( const WCHAR *name )
 {
     NTSTATUS status;
     HMODULE module;
     UNICODE_STRING str;
     WCHAR path[MAX_PATH];
-    const WCHAR *dir, *name;
-
-    switch (current_machine)
-    {
-    case IMAGE_FILE_MACHINE_I386:
-        name = (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"xtajit.dll" : L"wow64cpu.dll");
-        break;
-    case IMAGE_FILE_MACHINE_ARM:
-        name = L"wowarmhw.dll";
-        break;
-    default:
-        ERR( "unsupported machine %04x\n", current_machine );
-        RtlExitUserProcess( 1 );
-    }
-
-    dir = get_machine_wow64_dir( IMAGE_FILE_MACHINE_TARGET_HOST );
+    const WCHAR *dir = get_machine_wow64_dir( IMAGE_FILE_MACHINE_TARGET_HOST );
 
     swprintf( path, MAX_PATH, L"%s\\%s", dir, name );
     RtlInitUnicodeString( &str, path );
     if ((status = LdrLoadDll( NULL, 0, &str, &module )))
     {
-        ERR( "failed to load CPU dll %x\n", status );
+        ERR( "failed to load dll %x\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     return module;
+}
+
+
+/**********************************************************************
+ *           load_32bit_module
+ */
+static HMODULE load_32bit_module( const WCHAR *name )
+{
+    NTSTATUS status;
+    UNICODE_STRING str;
+    WCHAR path[MAX_PATH];
+    HANDLE file, mapping;
+    LARGE_INTEGER size;
+    IO_STATUS_BLOCK io;
+    OBJECT_ATTRIBUTES attr;
+    SIZE_T len = 0;
+    void *module = NULL;
+    const WCHAR *dir = get_machine_wow64_dir( current_machine );
+
+    swprintf( path, MAX_PATH, L"%s\\%s", dir, name );
+    RtlInitUnicodeString( &str, path );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if ((status = NtOpenFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                              FILE_SHARE_READ | FILE_SHARE_DELETE,
+                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE ))) goto failed;
+
+    size.QuadPart = 0;
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, file );
+    NtClose( file );
+    if (status) goto failed;
+
+    status = NtMapViewOfSection( mapping, GetCurrentProcess(), &module, 0, 0, NULL, &len,
+                                 ViewShare, 0, PAGE_EXECUTE_READ );
+    NtClose( mapping );
+    if (!status) return module;
+
+failed:
+    ERR( "failed to load dll %x\n", status );
+    NtTerminateProcess( GetCurrentProcess(), status );
+    return NULL;
+}
+
+
+/**********************************************************************
+ *           get_cpu_dll_name
+ */
+static const WCHAR *get_cpu_dll_name(void)
+{
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        return (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"xtajit.dll" : L"wow64cpu.dll");
+    case IMAGE_FILE_MACHINE_ARM:
+        return L"wowarmhw.dll";
+    default:
+        ERR( "unsupported machine %04x\n", current_machine );
+        RtlExitUserProcess( 1 );
+    }
 }
 
 
@@ -464,10 +512,13 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     LdrGetDllHandle( NULL, 0, &str, &module );
     GET_PTR( LdrSystemDllInitBlock );
 
-    module = load_cpu_dll();
+    module = load_64bit_module( get_cpu_dll_name() );
     GET_PTR( BTCpuGetBopCode );
     GET_PTR( BTCpuProcessInit );
     GET_PTR( BTCpuSimulate );
+
+    module = load_64bit_module( L"wow64win.dll" );
+    GET_PTR( sdwhwin32 );
 
     pBTCpuProcessInit();
 
@@ -475,6 +526,10 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     init_image_mapping( module );
     init_syscall_table( module, 0, &ntdll_syscall_table );
     *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
+
+    module = load_32bit_module( L"win32u.dll" );
+    init_syscall_table( module, 1, psdwhwin32 );
+    NtUnmapViewOfSection( GetCurrentProcess(), module );
 
     init_file_redirects();
     return TRUE;
