@@ -1473,6 +1473,7 @@ enable_wineps_drv
 enable_winepulse_drv
 enable_wineusb_sys
 enable_winevulkan
+enable_winewayland_drv
 enable_winex11_drv
 enable_winexinput_sys
 enable_wing32
@@ -21733,6 +21734,7 @@ wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
 wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
 wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
 wine_fn_config_makefile dlls/winevulkan enable_winevulkan
+wine_fn_config_makefile dlls/winewayland.drv enable_winewayland_drv
 wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
 wine_fn_config_makefile dlls/winexinput.sys enable_winexinput_sys
 wine_fn_config_makefile dlls/wing.dll16 enable_win16
