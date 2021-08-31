@@ -1441,10 +1441,7 @@ __int32 WINAPI _CorExeMain(void)
 
     GetModuleFileNameW(NULL, filename, MAX_PATH);
 
-    TRACE("%s", debugstr_w(filename));
-    for (i=0; i<argc; i++)
-        TRACE(" %s", debugstr_a(argv[i]));
-    TRACE("\n");
+    TRACE("%s argc=%i\n", debugstr_w(filename), argc);
 
     filenameA = WtoA(filename);
     if (!filenameA)
