@@ -2766,6 +2766,26 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         }
         return S_OK;
     }
+    case RECORD_BYTES32_TEXT:
+    {
+        const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
+        UINT32 rem = text_base64->length % 3, len = text_base64->length - rem;
+        if (len)
+        {
+            if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+            write_char( writer, rem ? RECORD_BYTES32_TEXT : RECORD_BYTES32_TEXT_WITH_ENDELEMENT );
+            write_bytes( writer, (const BYTE *)&len, sizeof(len) );
+            write_bytes( writer, text_base64->bytes, len );
+        }
+        if (rem)
+        {
+            if ((hr = write_grow_buffer( writer, 3 )) != S_OK) return hr;
+            write_char( writer, RECORD_BYTES8_TEXT_WITH_ENDELEMENT );
+            write_char( writer, rem );
+            write_bytes( writer, (const BYTE *)text_base64->bytes + len, rem );
+        }
+        return S_OK;
+    }
     case RECORD_ZERO_TEXT_WITH_ENDELEMENT:
     case RECORD_ONE_TEXT_WITH_ENDELEMENT:
     case RECORD_FALSE_TEXT_WITH_ENDELEMENT:
