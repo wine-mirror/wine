@@ -1133,6 +1133,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetProcessAffinityUpdateMode( HANDLE process, DWOR
 }
 
 
+/***********************************************************************
+ *           SetProcessGroupAffinity   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetProcessGroupAffinity( HANDLE process, const GROUP_AFFINITY *new,
+                                                       GROUP_AFFINITY *old )
+{
+    FIXME( "(%p,%p,%p): stub\n", process, new, old );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
 /**********************************************************************
  *           SetProcessMitigationPolicy   (kernelbase.@)
  */
