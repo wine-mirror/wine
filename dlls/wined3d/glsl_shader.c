@@ -12624,7 +12624,7 @@ static void gen_yv12_read(struct wined3d_string_buffer *buffer,
     /* Read odd lines from the right side (add 0.5 to the x coordinate). Keep
      * in mind that each line of the chroma plane corresponds to 2 lines of the
      * resulting image. */
-    shader_addline(buffer, "    if (fract(floor(texcoord.y * size.y) * 0.25 + 1.0 / 6.0) >= 0.5)\n");
+    shader_addline(buffer, "    if (fract(texcoord.y * size.y * 0.25) >= 0.5)\n");
     shader_addline(buffer, "        texcoord.x += 0.5;\n");
 
     /* Clamp, keep the half pixel origin in mind. */
