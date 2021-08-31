@@ -31,6 +31,8 @@
 
 static NTSTATUS waylanddrv_unix_init(void *arg)
 {
+    if (!wayland_process_init()) return STATUS_UNSUCCESSFUL;
+
     return 0;
 }
 

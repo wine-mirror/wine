@@ -37,6 +37,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libusb-1.0-0-dev:amd64 libusb-1.0-0-dev:i386 \
                        libv4l-dev:amd64 libv4l-dev:i386 \
                        libvulkan-dev:amd64 libvulkan-dev:i386 \
+                       libwayland-dev:amd64 libwayland-dev:i386 \
                        libx11-dev:amd64 libx11-dev:i386 \
                        libxcomposite-dev:amd64 libxcomposite-dev:i386 \
                        libxcursor-dev:amd64 libxcursor-dev:i386 \

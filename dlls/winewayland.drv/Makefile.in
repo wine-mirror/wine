@@ -1,8 +1,11 @@
 MODULE = winewayland.drv
 UNIXLIB = winewayland.so
+UNIX_CFLAGS = $(WAYLAND_CLIENT_CFLAGS)
+UNIX_LIBS = $(WAYLAND_CLIENT_LIBS)
 
 C_SRCS = \
 	dllmain.c \
+	wayland.c \
 	waylanddrv_main.c
 
 RC_SRCS = version.rc
