@@ -1019,7 +1019,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
                         HDC hdcSrc, INT nXSrc, INT nYSrc, INT nWidth,
                         INT nHeight, HBITMAP hbmMask, INT xMask, INT yMask)
 {
-    int oldgMode;
+    DWORD prev_mode;
     /* parallelogram coords */
     POINT plg[3];
     /* rect coords */
@@ -1030,8 +1030,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
     double det;
 
     /* save actual mode, set GM_ADVANCED */
-    oldgMode = SetGraphicsMode(hdcDest,GM_ADVANCED);
-    if (oldgMode == 0)
+    if (!NtGdiGetAndSetDCDword( hdcDest, NtGdiSetGraphicsMode, GM_ADVANCED, &prev_mode ))
         return FALSE;
 
     memcpy(plg,lpPoint,sizeof(POINT)*3);
@@ -1047,7 +1046,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
 
     if (fabs(det) < 1e-5)
     {
-        SetGraphicsMode(hdcDest,oldgMode);
+        NtGdiGetAndSetDCDword( hdcDest, NtGdiSetGraphicsMode, prev_mode, NULL );
         return FALSE;
     }
 
@@ -1084,7 +1083,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
             SRCCOPY);
     /* restore dest DC */
     SetWorldTransform(hdcDest,&oldDestXf);
-    SetGraphicsMode(hdcDest,oldgMode);
+    NtGdiGetAndSetDCDword( hdcDest, NtGdiSetGraphicsMode, prev_mode, NULL );
 
     return TRUE;
 }

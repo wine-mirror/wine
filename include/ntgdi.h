@@ -111,6 +111,7 @@ enum
     NtGdiSetTextColor,
     NtGdiSetDCBrushColor,
     NtGdiSetDCPenColor,
+    NtGdiSetGraphicsMode,
 };
 
 enum

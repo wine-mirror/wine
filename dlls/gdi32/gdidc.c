@@ -437,6 +437,15 @@ INT WINAPI GetGraphicsMode( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetGraphicsMode    (GDI32.@)
+ */
+INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
+{
+    DWORD ret;
+    return NtGdiGetAndSetDCDword( hdc, NtGdiSetGraphicsMode, mode, &ret ) ? ret : 0;
+}
+
+/***********************************************************************
  *		GetArcDirection (GDI32.@)
  */
 INT WINAPI GetArcDirection( HDC hdc )

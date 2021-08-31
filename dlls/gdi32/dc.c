@@ -806,6 +806,24 @@ INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
 }
 
 
+static BOOL set_graphics_mode( DC *dc, int mode )
+{
+    if (mode == dc->attr->graphics_mode) return TRUE;
+    if (mode <= 0 || mode > GM_LAST) return FALSE;
+
+    /* One would think that setting the graphics mode to GM_COMPATIBLE
+     * would also reset the world transformation matrix to the unity
+     * matrix. However, in Windows, this is not the case. This doesn't
+     * make a lot of sense to me, but that's the way it is.
+     */
+    dc->attr->graphics_mode = mode;
+
+    /* font metrics depend on the graphics mode */
+    NtGdiSelectFont(dc->hSelf, dc->hFont);
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           NtGdiGetAndSetDCDword    (win32u.@)
  */
@@ -848,38 +866,17 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
         if (value != CLR_INVALID) dc->attr->pen_color = value;
         break;
 
+    case NtGdiSetGraphicsMode:
+        if (prev_value) *prev_value = dc->attr->graphics_mode;
+        ret = set_graphics_mode( dc, value );
+        break;
+
     default:
         WARN( "unknown method %u\n", method );
         ret = FALSE;
         break;
     }
 
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           SetGraphicsMode    (GDI32.@)
- */
-INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC *dc = get_dc_ptr( hdc );
-
-    /* One would think that setting the graphics mode to GM_COMPATIBLE
-     * would also reset the world transformation matrix to the unity
-     * matrix. However, in Windows, this is not the case. This doesn't
-     * make a lot of sense to me, but that's the way it is.
-     */
-    if (!dc) return 0;
-    if ((mode > 0) && (mode <= GM_LAST))
-    {
-        ret = dc->attr->graphics_mode;
-        dc->attr->graphics_mode = mode;
-    }
-    /* font metrics depend on the graphics mode */
-    if (ret != mode) NtGdiSelectFont(dc->hSelf, dc->hFont);
     release_dc_ptr( dc );
     return ret;
 }
