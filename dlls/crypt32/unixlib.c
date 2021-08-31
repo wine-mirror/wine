@@ -84,7 +84,7 @@ static void gnutls_log( int level, const char *msg )
     TRACE( "<%d> %s", level, msg );
 }
 
-BOOL gnutls_initialize(void)
+static BOOL gnutls_initialize(void)
 {
     const char *env_str;
     int ret;
@@ -146,7 +146,7 @@ fail:
     return FALSE;
 }
 
-void gnutls_uninitialize(void)
+static void gnutls_uninitialize(void)
 {
     pgnutls_global_deinit();
     dlclose( libgnutls_handle );
