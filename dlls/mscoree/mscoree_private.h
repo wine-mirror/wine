@@ -219,4 +219,6 @@ extern HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_pa
 extern void runtimehost_init(void) DECLSPEC_HIDDEN;
 extern void runtimehost_uninit(void) DECLSPEC_HIDDEN;
 
+extern void CDECL mono_print_handler_fn(const char *string, INT is_stdout) DECLSPEC_HIDDEN;
+
 #endif   /* __MSCOREE_PRIVATE__ */

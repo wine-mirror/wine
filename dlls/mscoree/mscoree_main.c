@@ -50,6 +50,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+struct print_handler_tls
+{
+    int length;
+    char buffer[1018];
+};
+
+static DWORD print_tls_index = TLS_OUT_OF_INDEXES;
+
 typedef HRESULT (*fnCreateInstance)(REFIID riid, LPVOID *ppObj);
 
 char *WtoA(LPCWSTR wstr)
@@ -214,6 +222,46 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
     return ret;
 }
 
+void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
+{
+    struct print_handler_tls *tls = TlsGetValue(print_tls_index);
+
+    if (!tls)
+    {
+        tls = HeapAlloc(GetProcessHeap(), 0, sizeof(*tls));
+        tls->length = 0;
+        TlsSetValue(print_tls_index, tls);
+    }
+
+    while (*string)
+    {
+        int remaining_buffer = sizeof(tls->buffer) - tls->length;
+        int length = strlen(string);
+        const char *newline = memchr(string, '\n', min(length, remaining_buffer));
+
+        if (newline)
+        {
+            length = newline - string + 1;
+            wine_dbg_printf("%.*s%.*s", tls->length, tls->buffer, length, string);
+            tls->length = 0;
+            string += length;
+        }
+        else if (length > remaining_buffer)
+        {
+            /* this would overflow Wine's debug buffer */
+            wine_dbg_printf("%.*s%.*s\n", tls->length, tls->buffer, remaining_buffer, string);
+            tls->length = 0;
+            string += remaining_buffer;
+        }
+        else
+        {
+            memcpy(tls->buffer + tls->length, string, length);
+            tls->length += length;
+            break;
+        }
+    }
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
@@ -222,12 +270,26 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
     case DLL_PROCESS_ATTACH:
         runtimehost_init();
-        DisableThreadLibraryCalls(hinstDLL);
+
+        print_tls_index = TlsAlloc();
+
+        if (print_tls_index == TLS_OUT_OF_INDEXES)
+            return FALSE;
+
+        break;
+    case DLL_THREAD_DETACH:
+        if (print_tls_index != TLS_OUT_OF_INDEXES)
+            HeapFree(GetProcessHeap(), 0, TlsGetValue(print_tls_index));
         break;
     case DLL_PROCESS_DETACH:
         expect_no_runtimes();
         if (lpvReserved) break; /* process is terminating */
         runtimehost_uninit();
+        if (print_tls_index != TLS_OUT_OF_INDEXES)
+        {
+            HeapFree(GetProcessHeap(), 0, TlsGetValue(print_tls_index));
+            TlsFree(print_tls_index);
+        }
         break;
     }
     return TRUE;

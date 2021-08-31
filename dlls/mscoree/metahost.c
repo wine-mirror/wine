@@ -137,8 +137,6 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
 
 static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof);
 
-static void CDECL mono_print_handler_fn(const char *string, INT is_stdout);
-
 static MonoImage* CDECL image_open_module_handle_dummy(HMODULE module_handle,
     char* fname, UINT has_entry_point, MonoImageOpenStatus* status)
 {
@@ -376,17 +374,6 @@ MonoDomain* get_root_domain(void)
 static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof)
 {
     is_mono_shutdown = TRUE;
-}
-
-static void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
-{
-    const char *p;
-    for (; *string; string = p)
-    {
-        if ((p = strstr(string, "\n"))) p++;
-        else p = string + strlen(string);
-        wine_dbg_printf("%.*s", (int)(p - string), string);
-    }
 }
 
 static HRESULT WINAPI thread_set_fn(void)
