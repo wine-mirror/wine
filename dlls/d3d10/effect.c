@@ -6780,12 +6780,64 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetRawValue(
 
 /* ID3D10EffectShaderVariable methods */
 
+static HRESULT d3d10_get_shader_variable(struct d3d10_effect_variable *v, UINT shader_index,
+        struct d3d10_effect_shader_variable **s)
+{
+    unsigned int i;
+
+    if (v->type->element_count)
+        v = &v->elements[0];
+
+    if (!shader_index)
+    {
+        *s = &v->u.shader;
+        return S_OK;
+    }
+
+    /* Index is used as an offset from this variable. */
+
+    for (i = 0; i < v->effect->used_shader_count; ++i)
+    {
+        if (v == v->effect->used_shaders[i]) break;
+    }
+
+    if (i + shader_index >= v->effect->used_shader_count)
+    {
+        WARN("Invalid shader index %u.\n", shader_index);
+        return E_FAIL;
+    }
+
+    *s = &v->effect->used_shaders[i + shader_index]->u.shader;
+    return S_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetShaderDesc(
         ID3D10EffectShaderVariable *iface, UINT index, D3D10_EFFECT_SHADER_DESC *desc)
 {
-    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
+    struct d3d10_effect_shader_variable *s;
+    D3D10_SHADER_DESC shader_desc;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, index %u, desc %p semi-stub.\n", iface, index, desc);
+
+    if (FAILED(hr = d3d10_get_shader_variable(v, index, &s)))
+        return hr;
+
+    memset(desc, 0, sizeof(*desc));
+    if (s->input_signature)
+        desc->pInputSignature = ID3D10Blob_GetBufferPointer(s->input_signature);
+    desc->SODecl = s->stream_output_declaration;
+    if (s->reflection)
+    {
+        if (SUCCEEDED(hr = s->reflection->lpVtbl->GetDesc(s->reflection, &shader_desc)))
+        {
+            desc->NumInputSignatureEntries = shader_desc.InputParameters;
+            desc->NumOutputSignatureEntries = shader_desc.OutputParameters;
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetVertexShader(
@@ -6858,32 +6910,10 @@ static HRESULT d3d10_get_shader_variable_signature(struct d3d10_effect_variable 
         UINT shader_index, UINT element_index, BOOL output, D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
     struct d3d10_effect_shader_variable *s;
-    unsigned int i;
+    HRESULT hr;
 
-    if (v->type->element_count)
-        v = &v->elements[0];
-
-    if (shader_index == 0)
-    {
-        s = &v->u.shader;
-    }
-    else
-    {
-        /* Index is used as an offset from this variable. */
-
-        for (i = 0; i < v->effect->used_shader_count; ++i)
-        {
-            if (v == v->effect->used_shaders[i]) break;
-        }
-
-        if (i + shader_index >= v->effect->used_shader_count)
-        {
-            WARN("This should crash!\n");
-            return E_FAIL;
-        }
-
-        s = &v->effect->used_shaders[i + shader_index]->u.shader;
-    }
+    if (FAILED(hr = d3d10_get_shader_variable(v, shader_index, &s)))
+        return hr;
 
     if (!s->reflection)
         return D3DERR_INVALIDCALL;

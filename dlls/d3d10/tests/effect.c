@@ -3642,14 +3642,10 @@ if (0)
     v = effect->lpVtbl->GetVariableByName(effect, "g_so");
     gs = v->lpVtbl->AsShader(v);
     hr = gs->lpVtbl->GetShaderDesc(gs, 0, &shaderdesc);
-todo_wine
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
-        ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected stream output declaration %s.\n",
-                shaderdesc.SODecl);
-    }
+    ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
+    ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected stream output declaration %s.\n",
+            shaderdesc.SODecl);
 
     /* Signature description */
     v = effect->lpVtbl->GetVariableByName(effect, "p");
@@ -5865,6 +5861,128 @@ static void test_effect_resource_variable(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_effect_optimize(void)
+{
+    D3D10_EFFECT_SHADER_DESC shaderdesc;
+    ID3D10EffectShaderVariable *gs;
+    ID3D10EffectVariable *v;
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect.\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "g_so");
+
+    gs = v->lpVtbl->AsShader(v);
+    hr = gs->lpVtbl->GetShaderDesc(gs, 0, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+    ok(!!shaderdesc.pInputSignature, "Expected input signature.\n");
+    ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
+todo_wine {
+    ok(!!shaderdesc.pBytecode, "Expected bytecode.\n");
+    ok(!!shaderdesc.BytecodeLength, "Unexpected bytecode length.\n");
+}
+    ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected stream output declaration %s.\n", shaderdesc.SODecl);
+    ok(!!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
+    ok(!!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
+
+    hr = effect->lpVtbl->Optimize(effect);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = gs->lpVtbl->GetShaderDesc(gs, 0, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+    ok(!!shaderdesc.pInputSignature, "Expected input signature.\n");
+    ok(!shaderdesc.IsInline, "Unexpected inline flag.\n");
+    ok(!shaderdesc.pBytecode, "Unexpected bytecode.\n");
+    ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length.\n");
+todo_wine {
+    ok(!shaderdesc.SODecl, "Unexpected stream output declaration %p.\n", shaderdesc.SODecl);
+    ok(!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
+    ok(!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
+}
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void test_effect_shader_description(void)
+{
+    D3D10_EFFECT_SHADER_DESC shaderdesc;
+    ID3D10EffectShaderVariable *s;
+    ID3D10EffectVariable *v;
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect.\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "v0");
+
+    /* GetShaderDesc() is indexing through all shaders in the effect.*/
+    s = v->lpVtbl->AsShader(v);
+    hr = s->lpVtbl->GetShaderDesc(s, 0, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+    ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length %u.\n", shaderdesc.BytecodeLength);
+    hr = s->lpVtbl->GetShaderDesc(s, 1, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+    ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length %u.\n", shaderdesc.BytecodeLength);
+    hr = s->lpVtbl->GetShaderDesc(s, 2, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+    ok(!shaderdesc.BytecodeLength, "Unexpected bytecode length %u.\n", shaderdesc.BytecodeLength);
+    hr = s->lpVtbl->GetShaderDesc(s, 3, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+todo_wine
+    ok(shaderdesc.BytecodeLength == 424, "Unexpected bytecode length %u.\n",
+            shaderdesc.BytecodeLength);
+    hr = s->lpVtbl->GetShaderDesc(s, 4, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+todo_wine
+    ok(shaderdesc.BytecodeLength == 424, "Unexpected bytecode length %u.\n",
+            shaderdesc.BytecodeLength);
+    hr = s->lpVtbl->GetShaderDesc(s, 5, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+todo_wine
+    ok(shaderdesc.BytecodeLength == 420, "Unexpected bytecode length %u.\n",
+            shaderdesc.BytecodeLength);
+    hr = s->lpVtbl->GetShaderDesc(s, 6, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+todo_wine
+    ok(shaderdesc.BytecodeLength == 516, "Unexpected bytecode length %u.\n",
+            shaderdesc.BytecodeLength);
+    ok(!shaderdesc.SODecl, "Unexpected SO declaration %p.\n", shaderdesc.SODecl);
+    hr = s->lpVtbl->GetShaderDesc(s, 7, &shaderdesc);
+    ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
+todo_wine
+    ok(shaderdesc.BytecodeLength == 516, "Unexpected bytecode length %u.\n",
+            shaderdesc.BytecodeLength);
+    ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.x"), "Unexpected SO declaration %s.\n",
+            wine_dbgstr_a(shaderdesc.SODecl));
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -5881,4 +5999,6 @@ START_TEST(effect)
     test_effect_vector_variable();
     test_effect_matrix_variable();
     test_effect_resource_variable();
+    test_effect_optimize();
+    test_effect_shader_description();
 }
