@@ -297,6 +297,7 @@ my @dll_groups =
   "api-ms-win-core-wow64-l1-1-0",
   "api-ms-win-core-wow64-l1-1-1",
   "api-ms-win-core-xstate-l2-1-0",
+  "api-ms-win-core-processtopology-l1-1-0",
   "api-ms-win-core-processtopology-obsolete-l1-1-0",
   "api-ms-win-core-util-l1-1-0",
   "api-ms-win-downlevel-kernel32-l2-1-0",
