@@ -821,3 +821,76 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 {
     return 1; /* FIXME */
 }
+
+/* Solid colors to enumerate */
+static const COLORREF solid_colors[] =
+{
+    RGB(0x00,0x00,0x00), RGB(0xff,0xff,0xff),
+    RGB(0xff,0x00,0x00), RGB(0x00,0xff,0x00),
+    RGB(0x00,0x00,0xff), RGB(0xff,0xff,0x00),
+    RGB(0xff,0x00,0xff), RGB(0x00,0xff,0xff),
+    RGB(0x80,0x00,0x00), RGB(0x00,0x80,0x00),
+    RGB(0x80,0x80,0x00), RGB(0x00,0x00,0x80),
+    RGB(0x80,0x00,0x80), RGB(0x00,0x80,0x80),
+    RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
+};
+
+/***********************************************************************
+ *           EnumObjects    (GDI32.@)
+ */
+INT WINAPI EnumObjects( HDC hdc, INT type, GOBJENUMPROC enum_func, LPARAM param )
+{
+    UINT i;
+    INT retval = 0;
+    LOGPEN pen;
+    LOGBRUSH brush;
+
+    TRACE( "%p %d %p %08lx\n", hdc, type, enum_func, param );
+
+    switch(type)
+    {
+    case OBJ_PEN:
+        /* Enumerate solid pens */
+        for (i = 0; i < ARRAY_SIZE(solid_colors); i++)
+        {
+            pen.lopnStyle   = PS_SOLID;
+            pen.lopnWidth.x = 1;
+            pen.lopnWidth.y = 0;
+            pen.lopnColor   = solid_colors[i];
+            retval = enum_func( &pen, param );
+            TRACE( "solid pen %08x, ret=%d\n", solid_colors[i], retval );
+            if (!retval) break;
+        }
+        break;
+
+    case OBJ_BRUSH:
+        /* Enumerate solid brushes */
+        for (i = 0; i < ARRAY_SIZE(solid_colors); i++)
+        {
+            brush.lbStyle = BS_SOLID;
+            brush.lbColor = solid_colors[i];
+            brush.lbHatch = 0;
+            retval = enum_func( &brush, param );
+            TRACE( "solid brush %08x, ret=%d\n", solid_colors[i], retval );
+            if (!retval) break;
+        }
+
+        /* Now enumerate hatched brushes */
+        for (i = HS_HORIZONTAL; retval && i <= HS_DIAGCROSS; i++)
+        {
+            brush.lbStyle = BS_HATCHED;
+            brush.lbColor = RGB(0,0,0);
+            brush.lbHatch = i;
+            retval = enum_func( &brush, param );
+            TRACE( "hatched brush %d, ret=%d\n", i, retval );
+        }
+        break;
+
+    default:
+        /* FIXME: implement Win32 types */
+        WARN( "(%d): Invalid type\n", type );
+        break;
+    }
+
+    return retval;
+}
