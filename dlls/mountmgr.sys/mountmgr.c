@@ -877,7 +877,7 @@ static NTSTATUS enumerate_credentials( void *buff, SIZE_T insize, SIZE_T outsize
         {
             if (size >= sizeof(list->size)) list->size = size;
             iosb->Information = sizeof(list->size);
-            status = STATUS_MORE_ENTRIES;
+            status = STATUS_BUFFER_OVERFLOW;
         }
         else
         {
