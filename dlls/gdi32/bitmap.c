@@ -44,44 +44,38 @@ static const struct gdi_obj_funcs bitmap_funcs =
 
 
 /******************************************************************************
- * CreateCompatibleBitmap [GDI32.@]
+ *           NtGdiCreateCompatibleBitmap    (win32u.@)
  *
  * Creates a bitmap compatible with the DC.
- *
- * PARAMS
- *    hdc    [I] Handle to device context
- *    width  [I] Width of bitmap
- *    height [I] Height of bitmap
- *
- * RETURNS
- *    Success: Handle to bitmap
- *    Failure: 0
  */
-HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
+HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *bi = (BITMAPINFO *)buffer;
     DIBSECTION dib;
 
-    TRACE("(%p,%d,%d)\n", hdc, width, height);
+    TRACE( "(%p,%d,%d)\n", hdc, width, height );
+
+    if (!width || !height) return 0;
 
     if (GetObjectType( hdc ) != OBJ_MEMDC)
-        return CreateBitmap( width, height,
-                             GetDeviceCaps(hdc, PLANES), GetDeviceCaps(hdc, BITSPIXEL), NULL );
+        return NtGdiCreateBitmap( width, height,
+                                  NtGdiGetDeviceCaps( hdc, PLANES ),
+                                  NtGdiGetDeviceCaps( hdc, BITSPIXEL ), NULL );
 
-    switch (GetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(dib), &dib ))
+    switch (NtGdiExtGetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(dib), &dib ))
     {
     case sizeof(BITMAP): /* A device-dependent bitmap is selected in the DC */
-        return CreateBitmap( width, height, dib.dsBm.bmPlanes, dib.dsBm.bmBitsPixel, NULL );
+        return NtGdiCreateBitmap( width, height, dib.dsBm.bmPlanes, dib.dsBm.bmBitsPixel, NULL );
 
     case sizeof(DIBSECTION): /* A DIB section is selected in the DC */
         bi->bmiHeader = dib.dsBmih;
         bi->bmiHeader.biWidth  = width;
         bi->bmiHeader.biHeight = height;
         if (dib.dsBmih.biCompression == BI_BITFIELDS)  /* copy the color masks */
-            memcpy(bi->bmiColors, dib.dsBitfields, sizeof(dib.dsBitfields));
+            memcpy( bi->bmiColors, dib.dsBitfields, sizeof(dib.dsBitfields) );
         else if (dib.dsBmih.biBitCount <= 8)  /* copy the color table */
-            GetDIBColorTable(hdc, 0, 256, bi->bmiColors);
+            NtGdiDoPalette( hdc, 0, 256, bi->bmiColors, NtGdiGetDIBColorTable, FALSE );
         return CreateDIBSection( hdc, bi, DIB_RGB_COLORS, NULL, NULL, 0 );
 
     default:

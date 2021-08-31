@@ -525,6 +525,19 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 }
 
 /******************************************************************************
+ *           CreateCompatibleBitmap    (GDI32.@)
+ *
+ * Creates a bitmap compatible with the DC.
+ */
+HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height )
+{
+    if (!width || !height)
+        return GetStockObject( STOCK_LAST + 1 ); /* default 1x1 bitmap */
+
+    return NtGdiCreateCompatibleBitmap( hdc, width, height );
+}
+
+/******************************************************************************
  *           CreateDiscardableBitmap (GDI32.@)
  *
  * Creates a discardable bitmap.

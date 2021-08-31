@@ -216,6 +216,7 @@ INT      WINAPI NtGdiCombineRgn( HRGN dest, HRGN src1, HRGN src2, INT mode );
 BOOL     WINAPI NtGdiComputeXformCoefficients( HDC hdc );
 HBITMAP  WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
                                    UINT bpp, const void *bits );
+HBITMAP  WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height );
 HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc );
 HBRUSH   WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen );
 HDC      WINAPI NtGdiCreateMetafileDC( HDC hdc );

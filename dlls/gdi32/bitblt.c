@@ -789,7 +789,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 
     /* make bitmap */
     hDC1 = NtGdiCreateCompatibleDC( hdcDest );
-    hBitmap1 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
+    hBitmap1 = NtGdiCreateCompatibleBitmap( hdcDest, nWidth, nHeight );
     hOldBitmap1 = NtGdiSelectBitmap(hDC1, hBitmap1);
 
     /* draw using bkgnd rop */
@@ -800,7 +800,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 
     /* make bitmap */
     hDC2 = NtGdiCreateCompatibleDC( hdcDest );
-    hBitmap2 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
+    hBitmap2 = NtGdiCreateCompatibleBitmap( hdcDest, nWidth, nHeight );
     hOldBitmap2 = NtGdiSelectBitmap(hDC2, hBitmap2);
 
     /* draw using foregnd rop */
@@ -879,7 +879,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
         info.bmiHeader.biCompression = BI_RGB;
         bmpWork = CreateDIBSection( 0, &info, DIB_RGB_COLORS, NULL, NULL, 0 );
     }
-    else bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
+    else bmpWork = NtGdiCreateCompatibleBitmap( hdcDest, widthDest, heightDest );
     oldWork = NtGdiSelectBitmap(hdcWork, bmpWork);
     if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) {
         TRACE("Failed to stretch\n");
@@ -889,7 +889,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
 
     /* Create mask */
     hdcMask = NtGdiCreateCompatibleDC( hdcDest );
-    bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
+    bmpMask = NtGdiCreateCompatibleBitmap( hdcMask, widthDest, heightDest );
     oldMask = NtGdiSelectBitmap(hdcMask, bmpMask);
     if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) {
         TRACE("Failed to create mask\n");
