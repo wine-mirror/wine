@@ -277,7 +277,7 @@ static DNS_STATUS map_h_errno( int error )
     }
 }
 
-DNS_STATUS CDECL resolv_get_searchlist( DNS_TXT_DATAW *list, DWORD *len )
+static DNS_STATUS CDECL resolv_get_searchlist( DNS_TXT_DATAW *list, DWORD *len )
 {
     DWORD i, needed, str_needed = 0;
     char *ptr, *end;
@@ -320,7 +320,7 @@ static inline int filter( unsigned short sin_family, USHORT family )
 
 #ifdef HAVE_RES_GETSERVERS
 
-DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
+static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
 {
     struct __res_state *state = &_res;
     DWORD i, found, total, needed;
@@ -386,7 +386,7 @@ DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DW
 
 #else
 
-DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
+static DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DWORD *len )
 {
     DWORD needed, found, i;
 
@@ -451,7 +451,7 @@ DNS_STATUS CDECL resolv_get_serverlist( USHORT family, DNS_ADDR_ARRAY *addrs, DW
 }
 #endif
 
-DNS_STATUS CDECL resolv_set_serverlist( const IP4_ARRAY *addrs )
+static DNS_STATUS CDECL resolv_set_serverlist( const IP4_ARRAY *addrs )
 {
     int i;
 
@@ -872,7 +872,7 @@ static void free_record_list( DNS_RECORD *list )
 }
 
 #define DNS_MAX_PACKET_SIZE 4096
-DNS_STATUS CDECL resolv_query( const char *name, WORD type, DWORD options, DNS_RECORDA **result )
+static DNS_STATUS CDECL resolv_query( const char *name, WORD type, DWORD options, DNS_RECORDA **result )
 {
     DNS_STATUS ret = DNS_ERROR_RCODE_NOT_IMPLEMENTED;
     unsigned int i, num;

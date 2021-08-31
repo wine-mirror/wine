@@ -121,11 +121,6 @@ static inline char *strdup_ua( const char *src )
 
 extern const char *type_to_str( unsigned short ) DECLSPEC_HIDDEN;
 
-extern DNS_STATUS CDECL resolv_get_searchlist( DNS_TXT_DATAW *, DWORD * ) DECLSPEC_HIDDEN;
-extern DNS_STATUS CDECL resolv_get_serverlist( USHORT, DNS_ADDR_ARRAY *, DWORD * ) DECLSPEC_HIDDEN;
-extern DNS_STATUS CDECL resolv_query( const char *, WORD, DWORD, DNS_RECORDA ** ) DECLSPEC_HIDDEN;
-extern DNS_STATUS CDECL resolv_set_serverlist( const IP4_ARRAY * ) DECLSPEC_HIDDEN;
-
 struct resolv_funcs
 {
     DNS_STATUS (CDECL *get_searchlist)( DNS_TXT_DATAW *list, DWORD *len );
