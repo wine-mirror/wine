@@ -788,3 +788,36 @@ done:
     release_display_device_init_mutex( mutex );
     return status;
 }
+
+/***********************************************************************
+ *           SetObjectOwner    (GDI32.@)
+ */
+void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
+{
+    /* Nothing to do */
+}
+
+/***********************************************************************
+ *           GdiInitializeLanguagePack    (GDI32.@)
+ */
+DWORD WINAPI GdiInitializeLanguagePack( DWORD arg )
+{
+    FIXME( "stub\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           GdiGetBatchLimit    (GDI32.@)
+ */
+DWORD WINAPI GdiGetBatchLimit(void)
+{
+    return 1;  /* FIXME */
+}
+
+/***********************************************************************
+ *           GdiSetBatchLimit    (GDI32.@)
+ */
+DWORD WINAPI GdiSetBatchLimit( DWORD limit )
+{
+    return 1; /* FIXME */
+}

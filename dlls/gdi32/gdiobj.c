@@ -1163,46 +1163,11 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
 
 
 /***********************************************************************
- *           SetObjectOwner    (GDI32.@)
- */
-void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
-{
-    /* Nothing to do */
-}
-
-/***********************************************************************
- *           GdiInitializeLanguagePack    (GDI32.@)
- */
-DWORD WINAPI GdiInitializeLanguagePack( DWORD arg )
-{
-    FIXME("stub\n");
-    return 0;
-}
-
-/***********************************************************************
  *           NtGdiFlush    (win32u.@)
  */
 BOOL WINAPI NtGdiFlush(void)
 {
     return TRUE;  /* FIXME */
-}
-
-
-/***********************************************************************
- *           GdiGetBatchLimit    (GDI32.@)
- */
-DWORD WINAPI GdiGetBatchLimit(void)
-{
-    return 1;  /* FIXME */
-}
-
-
-/***********************************************************************
- *           GdiSetBatchLimit    (GDI32.@)
- */
-DWORD WINAPI GdiSetBatchLimit( DWORD limit )
-{
-    return 1; /* FIXME */
 }
 
 
