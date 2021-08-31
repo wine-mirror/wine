@@ -671,8 +671,16 @@ static struct symt* codeview_add_type_array(struct codeview_type_parse* ctp,
 {
     struct symt*        elem = codeview_fetch_type(ctp, elemtype, FALSE);
     struct symt*        index = codeview_fetch_type(ctp, indextype, FALSE);
+    DWORD64             elem_size;
+    DWORD               count = 0;
 
-    return &symt_new_array(ctp->module, 0, -arr_len, elem, index)->symt;
+    if (symt_get_info(ctp->module, elem, TI_GET_LENGTH, &elem_size) && elem_size)
+    {
+        if (arr_len % (DWORD)elem_size)
+            FIXME("array size should be a multiple of element size %u %u\n", arr_len, (DWORD)elem_size);
+        count = arr_len / (unsigned)elem_size;
+    }
+    return &symt_new_array(ctp->module, 0, count, elem, index)->symt;
 }
 
 static BOOL codeview_add_type_enum_field_list(struct module* module,

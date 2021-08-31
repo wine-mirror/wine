@@ -1266,7 +1266,7 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
         /* FIXME: int4 even on 64bit machines??? */
         idx_type = ctx->symt_cache[sc_int4];
         min.u.uvalue = 0;
-        max.u.uvalue = -1;
+        cnt.u.uvalue = 0;
     }
     else for (i = 0; i < vector_length(children); i++)
     {
@@ -1277,10 +1277,10 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
             idx_type = dwarf2_lookup_type(ctx, child);
             if (!dwarf2_find_attribute(ctx, child, DW_AT_lower_bound, &min))
                 min.u.uvalue = 0;
-            if (!dwarf2_find_attribute(ctx, child, DW_AT_upper_bound, &max))
-                max.u.uvalue = 0;
-            if (dwarf2_find_attribute(ctx, child, DW_AT_count, &cnt))
-                max.u.uvalue = min.u.uvalue + cnt.u.uvalue;
+            if (dwarf2_find_attribute(ctx, child, DW_AT_upper_bound, &max))
+                cnt.u.uvalue = max.u.uvalue + 1 - min.u.uvalue;
+            else if (!dwarf2_find_attribute(ctx, child, DW_AT_count, &cnt))
+                cnt.u.uvalue = 0;
             break;
         default:
             FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
@@ -1288,7 +1288,7 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
             break;
         }
     }
-    di->symt = &symt_new_array(ctx->module, min.u.uvalue, max.u.uvalue, ref_type, idx_type)->symt;
+    di->symt = &symt_new_array(ctx->module, min.u.uvalue, cnt.u.uvalue, ref_type, idx_type)->symt;
     return di->symt;
 }
 

@@ -254,7 +254,7 @@ struct symt_array
 {
     struct symt                 symt;
     int		                start;
-    int		                end;            /* end index if > 0, or -array_len (in bytes) if < 0 */
+    DWORD                       count;
     struct symt*                base_type;
     struct symt*                index_type;
 };
@@ -812,7 +812,7 @@ extern BOOL         symt_add_enum_element(struct module* module,
                                           struct symt_enum* enum_type, 
                                           const char* name, int value) DECLSPEC_HIDDEN;
 extern struct symt_array*
-                    symt_new_array(struct module* module, int min, int max, 
+                    symt_new_array(struct module* module, int min, DWORD count,
                                    struct symt* base, struct symt* index) DECLSPEC_HIDDEN;
 extern struct symt_function_signature*
                     symt_new_function_signature(struct module* module, 

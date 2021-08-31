@@ -350,7 +350,7 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
     return TRUE;
 }
 
-struct symt_array* symt_new_array(struct module* module, int min, int max, 
+struct symt_array* symt_new_array(struct module* module, int min, DWORD cnt,
                                   struct symt* base, struct symt* index)
 {
     struct symt_array*  sym;
@@ -359,27 +359,12 @@ struct symt_array* symt_new_array(struct module* module, int min, int max,
     {
         sym->symt.tag   = SymTagArrayType;
         sym->start      = min;
-        sym->end        = max;
+        sym->count      = cnt;
         sym->base_type  = base;
         sym->index_type = index;
         symt_add_type(module, &sym->symt);
     }
     return sym;
-}
-
-static inline DWORD symt_array_count(struct module* module, const struct symt_array* array)
-{
-    if (array->end < 0)
-    {
-        DWORD64 elem_size;
-        /* One could want to also set the array->end field in array, but we won't do it
-         * as long as all the get_type() helpers use const objects
-         */
-        if (symt_get_info(module, array->base_type, TI_GET_LENGTH, &elem_size) && elem_size)
-            return -array->end / (DWORD)elem_size;
-        return 0;
-    }
-    return array->end - array->start + 1;
 }
 
 struct symt_function_signature* symt_new_function_signature(struct module* module, 
@@ -630,7 +615,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         switch (type->tag)
         {
         case SymTagArrayType:
-            X(DWORD) = symt_array_count(module, (const struct symt_array*)type);
+            X(DWORD) = ((const struct symt_array*)type)->count;
             break;
         case SymTagFunctionType:
             /* this seems to be wrong for (future) C++ methods, where 'this' parameter
@@ -676,7 +661,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             if (!symt_get_info(module, ((const struct symt_array*)type)->base_type,
                                TI_GET_LENGTH, pInfo))
                 return FALSE;
-            X(DWORD64) *= symt_array_count(module, (const struct symt_array*)type);
+            X(DWORD64) *= ((const struct symt_array*)type)->count;
             break;
         case SymTagPublicSymbol:
             X(DWORD64) = ((const struct symt_public*)type)->size;
