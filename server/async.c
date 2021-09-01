@@ -42,7 +42,6 @@ struct async
     struct list          process_entry;   /* entry in process list */
     struct async_queue  *queue;           /* queue containing this async */
     struct fd           *fd;              /* fd associated with an unqueued async */
-    unsigned int         status;          /* current status */
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
@@ -53,6 +52,7 @@ struct async
     unsigned int         pending :1;      /* request successfully queued, but pending */
     unsigned int         direct_result :1;/* a flag if we're passing result directly from request instead of APC  */
     unsigned int         alerted :1;      /* fd is signaled, but we are waiting for client-side I/O */
+    unsigned int         terminated :1;   /* async has been terminated */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
     unsigned int         comp_flags;      /* completion flags */
@@ -158,9 +158,9 @@ void async_terminate( struct async *async, unsigned int status )
 {
     assert( status != STATUS_PENDING );
 
-    if (async->status != STATUS_PENDING) return; /* already terminated */
+    if (async->terminated) return;
 
-    async->status = status;
+    async->terminated = 1;
     if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
     if (status == STATUS_ALERTED)
         async->alerted = 1;
@@ -240,7 +240,6 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
 
     async->thread        = (struct thread *)grab_object( thread );
     async->event         = event;
-    async->status        = STATUS_PENDING;
     async->data          = *data;
     async->timeout       = NULL;
     async->queue         = NULL;
@@ -250,6 +249,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->wait_handle   = 0;
     async->direct_result = 0;
     async->alerted       = 0;
+    async->terminated    = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
     async->comp_flags    = 0;
     async->completion_callback = NULL;
@@ -273,7 +273,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
 
 void set_async_pending( struct async *async, int signal )
 {
-    if (async->status == STATUS_PENDING)
+    if (!async->terminated)
     {
         async->pending = 1;
         if (signal && !async->signaled)
@@ -390,13 +390,13 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
 
     if (obj->ops != &async_ops) return;  /* in case the client messed up the APC results */
 
-    assert( async->status != STATUS_PENDING );  /* it must have been woken up if we get a result */
+    assert( async->terminated );  /* it must have been woken up if we get a result */
 
     if (status == STATUS_PENDING)  /* restart it */
     {
         if (async->alerted)
         {
-            async->status = STATUS_PENDING;
+            async->terminated = 0;
             async->alerted = 0;
             async_reselect( async );
         }
@@ -405,7 +405,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
     {
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
-        async->status = status;
+        async->terminated = 1;
         if (async->iosb) async->iosb->status = status;
 
         if (async->data.apc)
@@ -457,7 +457,7 @@ int async_waiting( struct async_queue *queue )
 
     if (!(ptr = list_head( &queue->queue ))) return 0;
     async = LIST_ENTRY( ptr, struct async, queue_entry );
-    return async->status == STATUS_PENDING;
+    return !async->terminated;
 }
 
 static int cancel_async( struct process *process, struct object *obj, struct thread *thread, client_ptr_t iosb )
@@ -468,7 +468,7 @@ static int cancel_async( struct process *process, struct object *obj, struct thr
 restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
-        if (async->status != STATUS_PENDING) continue;
+        if (async->terminated) continue;
         if ((!obj || (get_fd_user( async->fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
@@ -578,7 +578,7 @@ struct async *find_pending_async( struct async_queue *queue )
 {
     struct async *async;
     LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
-        if (async->status == STATUS_PENDING) return (struct async *)grab_object( async );
+        if (!async->terminated) return (struct async *)grab_object( async );
     return NULL;
 }
 
