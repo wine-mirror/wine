@@ -676,6 +676,33 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
 
 
 /*******************************************************************
+ *           get_work_rect
+ *
+ * Get the work area that a maximized window can cover, depending on style.
+ */
+static BOOL get_work_rect( HWND hwnd, RECT *rect )
+{
+    HMONITOR monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY );
+    MONITORINFO mon_info;
+    DWORD style;
+
+    if (!monitor) return FALSE;
+
+    mon_info.cbSize = sizeof(mon_info);
+    GetMonitorInfoW( monitor, &mon_info );
+    *rect = mon_info.rcMonitor;
+
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    if (style & WS_MAXIMIZEBOX)
+    {
+        if ((style & WS_CAPTION) == WS_CAPTION || !(style & (WS_CHILD | WS_POPUP)))
+            *rect = mon_info.rcWork;
+    }
+    return TRUE;
+}
+
+
+/*******************************************************************
  *           WINPOS_GetMinMaxInfo
  *
  * Get the minimized and maximized information for a window.
@@ -683,8 +710,8 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
 MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
 {
     DPI_AWARENESS_CONTEXT context;
+    RECT rc_work, rc_primary;
     MINMAXINFO MinMax;
-    HMONITOR monitor;
     INT xinc, yinc;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG adjustedStyle;
@@ -738,22 +765,8 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
 
     /* if the app didn't change the values, adapt them for the current monitor */
 
-    if ((monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY )))
+    if (get_work_rect( hwnd, &rc_work ))
     {
-        RECT rc_work, rc_primary;
-        MONITORINFO mon_info;
-
-        mon_info.cbSize = sizeof(mon_info);
-        GetMonitorInfoW( monitor, &mon_info );
-
-        rc_work = mon_info.rcMonitor;
-
-        if (style & WS_MAXIMIZEBOX)
-        {
-            if ((style & WS_CAPTION) == WS_CAPTION || !(style & (WS_CHILD | WS_POPUP)))
-                rc_work = mon_info.rcWork;
-        }
-
         rc_primary = get_primary_monitor_rect();
         if (MinMax.ptMaxSize.x == (rc_primary.right - rc_primary.left) + 2 * xinc &&
             MinMax.ptMaxSize.y == (rc_primary.bottom - rc_primary.top) + 2 * yinc)
