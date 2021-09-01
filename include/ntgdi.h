@@ -171,6 +171,13 @@ typedef struct DC_ATTR
     void     *emf;
 } DC_ATTR;
 
+struct font_enum_entry
+{
+    DWORD            type;
+    ENUMLOGFONTEXW   lf;
+    NEWTEXTMETRICEXW tm;
+};
+
 #endif /* __WINESRC__ */
 
 struct font_realization_info
@@ -259,6 +266,8 @@ HRGN     WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGN
 INT      WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer );
 INT      WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode );
 BOOL     WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush );
+BOOL     WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
+                                const WCHAR *face_name, ULONG charset, ULONG *count, void *buf );
 INT      WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
                                 const char *input, INT output_size, char *output );
 BOOL     WINAPI NtGdiExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT type );

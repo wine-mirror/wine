@@ -2037,6 +2037,49 @@ BOOL WINAPI GdiRealizationInfo( HDC hdc, struct realization_info *info )
     return TRUE;
 }
 
+/***********************************************************************
+ *           EnumFontFamiliesExW    (GDI32.@)
+ */
+INT WINAPI EnumFontFamiliesExW( HDC hdc, LOGFONTW *lf, FONTENUMPROCW efproc,
+                                LPARAM lparam, DWORD flags )
+{
+    struct font_enum_entry buf[32], *entries = buf;
+    const WCHAR *face_name = NULL;
+    DWORD charset, face_name_len = 0;
+    ULONG count, i;
+    INT ret = 1;
+
+    if (lf)
+    {
+        if (lf->lfFaceName[0])
+        {
+            face_name = lf->lfFaceName;
+            face_name_len = lstrlenW( face_name );
+        }
+        charset = lf->lfCharSet;
+    }
+    else charset = DEFAULT_CHARSET;
+
+    count = sizeof(buf);
+    if (!NtGdiEnumFonts( hdc, 0, 0, face_name_len, face_name, charset, &count, buf ) &&
+        count <= sizeof(buf))
+        return 0;
+    if (count > sizeof(buf))
+    {
+        if (!(entries = HeapAlloc( GetProcessHeap(), 0, count ))) return 0;
+        ret = NtGdiEnumFonts( hdc, 0, 0, face_name_len, face_name, charset, &count, entries );
+    }
+    count /= sizeof(*entries);
+    for (i = 0; ret && i < count; i++)
+    {
+        ret = efproc( (const LOGFONTW *)&entries[i].lf, (const TEXTMETRICW *)&entries[i].tm,
+                      entries[i].type, lparam );
+    }
+
+    if (entries != buf) HeapFree( GetProcessHeap(), 0, entries );
+    return ret;
+}
+
 struct enum_proc_paramsWtoA
 {
     LPARAM lparam;

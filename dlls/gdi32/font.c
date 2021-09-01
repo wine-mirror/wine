@@ -196,15 +196,6 @@ typedef struct
     LOGFONTW              logfont;
 } FONTOBJ;
 
-struct font_enum
-{
-  LPLOGFONTW          lpLogFontParam;
-  FONTENUMPROCW       lpEnumFunc;
-  LPARAM              lpData;
-  HDC                 hdc;
-  INT                 retval;
-};
-
 /*
  *  For TranslateCharsetInfo
  */
@@ -4315,64 +4306,65 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
 }
 
 
-/***********************************************************************
- *              FONT_EnumInstance
- *
- * Note: plf is really an ENUMLOGFONTEXW, and ptm is a NEWTEXTMETRICEXW.
- *       We have to use other types because of the FONTENUMPROCW definition.
- */
-static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *ptm,
-                                       DWORD fType, LPARAM lp )
+struct font_enum
 {
-    struct font_enum *pfe = (struct font_enum *)lp;
-    INT ret = 1;
+    HDC hdc;
+    struct font_enum_entry *buf;
+    ULONG size;
+    ULONG count;
+    ULONG charset;
+};
 
-    /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
-    if ((!pfe->lpLogFontParam ||
-        pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
-        pfe->lpLogFontParam->lfCharSet == plf->lfCharSet) &&
-       (!(fType & RASTER_FONTTYPE) || GetDeviceCaps(pfe->hdc, TEXTCAPS) & TC_RA_ABLE) )
+static INT WINAPI font_enum_proc( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                  DWORD type, LPARAM lp )
+{
+    struct font_enum *fe = (struct font_enum *)lp;
+
+    if (fe->charset != DEFAULT_CHARSET && lf->lfCharSet != fe->charset) return 1;
+    if ((type & RASTER_FONTTYPE) && !(NtGdiGetDeviceCaps( fe->hdc, TEXTCAPS ) & TC_RA_ABLE))
+        return 1;
+
+    if (fe->buf && fe->count < fe->size)
     {
-        ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
-        pfe->retval = ret;
+        fe->buf[fe->count].type = type;
+        fe->buf[fe->count].lf = *(const ENUMLOGFONTEXW *)lf;
+        fe->buf[fe->count].tm = *(const NEWTEXTMETRICEXW *)tm;
     }
-    return ret;
+    fe->count++;
+    return 1;
 }
 
 /***********************************************************************
- *		FONT_EnumFontFamiliesEx
+ *           NtGdiEnumFonts    (win32u.@)
  */
-static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efproc,
-                                    LPARAM lParam )
+BOOL WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
+                            const WCHAR *face_name, ULONG charset, ULONG *count, void *buf )
 {
-    INT ret = 0;
-    DC *dc = get_dc_ptr( hDC );
     struct font_enum fe;
+    PHYSDEV physdev;
+    LOGFONTW lf;
+    BOOL ret;
+    DC *dc;
 
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEnumFonts );
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-        if (plf) TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName), plf->lfCharSet);
-        fe.lpLogFontParam = plf;
-        fe.lpEnumFunc = efproc;
-        fe.lpData = lParam;
-        fe.hdc = hDC;
-        fe.retval = 1;
-        ret = physdev->funcs->pEnumFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
-        release_dc_ptr( dc );
-    }
-    return ret ? fe.retval : 0;
-}
+    memset( &lf, 0, sizeof(lf) );
+    lf.lfCharSet = charset;
+    if (face_name_len) memcpy( lf.lfFaceName, face_name, face_name_len * sizeof(WCHAR) );
 
-/***********************************************************************
- *              EnumFontFamiliesExW	(GDI32.@)
- */
-INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
-                                    FONTENUMPROCW efproc,
-                                    LPARAM lParam, DWORD dwFlags )
-{
-    return FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam );
+    fe.hdc     = hdc;
+    fe.buf     = buf;
+    fe.size    = *count / sizeof(*fe.buf);
+    fe.count   = 0;
+    fe.charset = charset;
+
+    physdev = GET_DC_PHYSDEV( dc, pEnumFonts );
+    ret = physdev->funcs->pEnumFonts( physdev, &lf, font_enum_proc, (LPARAM)&fe );
+    if (ret && buf) ret = fe.count <= fe.size;
+    *count = fe.count * sizeof(*fe.buf);
+
+    release_dc_ptr( dc );
+    return ret;
 }
 
 
