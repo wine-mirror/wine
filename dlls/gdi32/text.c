@@ -2276,6 +2276,22 @@ BOOL WINAPI RemoveFontResourceExA( const char *str, DWORD fl, void *pdv )
 }
 
 /***********************************************************************
+ *           AddFontResourceExW    (GDI32.@)
+ */
+INT WINAPI AddFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
+{
+    return NtGdiAddFontResourceW( str, 0, 1, flags, 0, dv );
+}
+
+/***********************************************************************
+ *           RemoveFontResourceExW    (GDI32.@)
+ */
+BOOL WINAPI RemoveFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
+{
+    return NtGdiRemoveFontResourceW( str, 0, 1, flags, 0, dv );
+}
+
+/***********************************************************************
  *           GetFontResourceInfoW    (GDI32.@)
  */
 BOOL WINAPI GetFontResourceInfoW( const WCHAR *str, DWORD *size, void *buffer, DWORD type )

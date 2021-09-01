@@ -6251,9 +6251,10 @@ void font_init(void)
 }
 
 /***********************************************************************
- *           AddFontResourceExW    (GDI32.@)
+ *           NtGdiAddFontResourceW    (win32u.@)
  */
-INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
+INT WINAPI NtGdiAddFontResourceW( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
+                                  DWORD tid, void *dv )
 {
     int ret;
     WCHAR *filename;
@@ -6344,9 +6345,10 @@ BOOL WINAPI NtGdiRemoveFontMemResourceEx( HANDLE handle )
 }
 
 /***********************************************************************
- *           RemoveFontResourceExW    (GDI32.@)
+ *           NtGdiRemoveFontResourceW    (win32u.@)
  */
-BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
+BOOL WINAPI NtGdiRemoveFontResourceW( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
+                                      DWORD tid, void *dv )
 {
     int ret;
     WCHAR *filename;

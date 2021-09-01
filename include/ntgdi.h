@@ -210,6 +210,8 @@ INT      WINAPI NtGdiAbortDoc( HDC hdc );
 BOOL     WINAPI NtGdiAbortPath( HDC hdc );
 HANDLE   WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG dv_size,
                                            DWORD *count );
+INT      WINAPI NtGdiAddFontResourceW( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
+                                       DWORD tid, void *dv );
 BOOL     WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                  HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                  BLENDFUNCTION blend_function, HANDLE xform );
@@ -351,6 +353,8 @@ BOOL     WINAPI NtGdiRectInRegion( HRGN hrgn, const RECT *rect );
 BOOL     WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect );
 BOOL     WINAPI NtGdiRectangle( HDC hdc, INT left, INT top, INT right, INT bottom );
 BOOL     WINAPI NtGdiRemoveFontMemResourceEx( HANDLE handle );
+BOOL     WINAPI NtGdiRemoveFontResourceW( const WCHAR *str, ULONG size, ULONG files,
+                                          DWORD flags, DWORD tid, void *dv );
 BOOL     WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
                               DRIVER_INFO_2W *driver_info, void *dev );
 BOOL     WINAPI NtGdiResizePalette( HPALETTE palette, UINT count );
