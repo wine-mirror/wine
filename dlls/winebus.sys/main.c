@@ -242,16 +242,24 @@ static WCHAR *get_hardware_ids(DEVICE_OBJECT *device)
 
 static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
 {
+    static const WCHAR xinput_compat[] =
+    {
+        'W','I','N','E','B','U','S','\\','W','I','N','E','_','C','O','M','P','_','X','I','N','P','U','T',0
+    };
     static const WCHAR hid_compat[] =
     {
         'W','I','N','E','B','U','S','\\','W','I','N','E','_','C','O','M','P','_','H','I','D',0
     };
+    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     DWORD size = sizeof(hid_compat);
     WCHAR *dst;
 
+    if (ext->is_gamepad) size += sizeof(xinput_compat);
+
     if ((dst = ExAllocatePool(PagedPool, size + sizeof(WCHAR))))
     {
-        memcpy(dst, hid_compat, sizeof(hid_compat));
+        if (ext->is_gamepad) memcpy(dst, xinput_compat, sizeof(xinput_compat));
+        memcpy((char *)dst + size - sizeof(hid_compat), hid_compat, sizeof(hid_compat));
         dst[size / sizeof(WCHAR)] = 0;
     }
 
