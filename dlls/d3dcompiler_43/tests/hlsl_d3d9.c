@@ -1523,7 +1523,7 @@ struct test_d3dinclude
 static void test_d3dcompile(void)
 {
     struct test_d3dinclude include = {{&test_d3dinclude_vtbl}};
-    WCHAR filename[MAX_PATH], directory[MAX_PATH];
+    WCHAR filename[MAX_PATH], directory[MAX_PATH], include_filename[MAX_PATH];
     ID3D10Blob *blob = NULL, *errors = NULL;
     CHAR filename_a[MAX_PATH];
     HRESULT hr;
@@ -1542,12 +1542,20 @@ static void test_d3dcompile(void)
     static const char include2[] =
         "#include \"include1.h\"\n"
         "float4 light_color = LIGHT;\n";
+    static const char ps_absolute_template[] =
+        "#include \"%ls\"\n"
+        "\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return light_color;\n"
+        "}";
+    char ps_absolute_buffer[sizeof(ps_absolute_template) + MAX_PATH];
 
     create_file(L"source.ps", ps_code, strlen(ps_code), filename);
     create_directory(L"include");
     create_file(L"include\\include1.h", include1_wrong, strlen(include1_wrong), NULL);
     create_file(L"include1.h", include1, strlen(include1), NULL);
-    create_file(L"include\\include2.h", include2, strlen(include2), NULL);
+    create_file(L"include\\include2.h", include2, strlen(include2), include_filename);
 
     len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
@@ -1644,6 +1652,18 @@ static void test_d3dcompile(void)
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
     ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    sprintf(ps_absolute_buffer, ps_absolute_template, include_filename);
+    hr = ppD3DCompile(ps_absolute_buffer, sizeof(ps_absolute_buffer), filename_a, NULL,
+            D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_2_0", 0, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    todo_wine ok(!errors, "Got unexpected errors.\n");
     if (blob)
     {
         ID3D10Blob_Release(blob);
