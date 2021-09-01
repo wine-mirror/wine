@@ -2307,14 +2307,12 @@ todo_wine
         ID3D10ShaderResourceView_Release(srv);
 
     hr = ID3DX10Font_PreloadCharacters(font, 'b', 'a');
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadGlyphs(font, 1, 0);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Font_PreloadCharacters(font, 'a', 'a');
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     for (c = 'b'; c <= 'z'; ++c)
@@ -2376,7 +2374,6 @@ todo_wine
     }
 
     hr = ID3DX10Font_PreloadCharacters(font, 'a', 'z');
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Test multiple textures */
