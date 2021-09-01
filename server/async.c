@@ -156,6 +156,8 @@ static void async_destroy( struct object *obj )
 /* notifies client thread of new status of its async request */
 void async_terminate( struct async *async, unsigned int status )
 {
+    struct iosb *iosb = async->iosb;
+
     if (async->terminated) return;
 
     async->terminated = 1;
@@ -176,7 +178,15 @@ void async_terminate( struct async *async, unsigned int status )
         data.type            = APC_ASYNC_IO;
         data.async_io.user   = async->data.user;
         data.async_io.sb     = async->data.iosb;
-        data.async_io.status = status;
+
+        /* if the result is nonzero or there is output data, the client needs to
+         * make an extra request to retrieve them; use STATUS_ALERTED to signal
+         * this case */
+        if (iosb && (iosb->result || iosb->out_data))
+            data.async_io.status = STATUS_ALERTED;
+        else
+            data.async_io.status = status;
+
         thread_queue_apc( async->thread->process, async->thread, &async->obj, &data );
     }
 
@@ -353,11 +363,6 @@ void async_request_complete( struct async *async, unsigned int status, data_size
 
     release_object( iosb );
 
-    /* if the result is nonzero or there is output data, the client needs to
-     * make an extra request to retrieve them; use STATUS_ALERTED to signal
-     * this case */
-    if (result || out_data)
-        status = STATUS_ALERTED;
     async_terminate( async, status );
 }
 
