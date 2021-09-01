@@ -491,9 +491,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return YES;
     }
 
-    - (void) drawRect:(NSRect)rect
+    - (void) viewWillDraw
     {
-        WineWindow* window = (WineWindow*)[self window];
+        [super viewWillDraw];
 
         for (WineOpenGLContext* context in pendingGlContexts)
         {
@@ -506,6 +506,11 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
         [glContexts addObjectsFromArray:pendingGlContexts];
         [pendingGlContexts removeAllObjects];
+    }
+
+    - (void) drawRect:(NSRect)rect
+    {
+        WineWindow* window = (WineWindow*)[self window];
 
         if ([window contentView] != self)
             return;
