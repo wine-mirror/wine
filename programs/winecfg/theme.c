@@ -1090,7 +1090,7 @@ static void on_draw_item(HWND hDlg, WPARAM wParam, LPARAM lParam)
         HTHEME theme;
         RECT buttonrect;
 
-        theme = OpenThemeData(NULL, WC_BUTTONW);
+        theme = OpenThemeDataForDpi(NULL, WC_BUTTONW, GetDpiForWindow(hDlg));
 
         if (theme) {
             MARGINS margins;
