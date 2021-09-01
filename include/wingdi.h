@@ -3286,18 +3286,20 @@ typedef struct _RGNDATA {
 typedef BOOL (CALLBACK *ABORTPROC)(HDC, INT);
 
 typedef enum {
-    DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME                = 1,
-    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME                = 2,
-    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE      = 3,
-    DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME               = 4,
-    DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE         = 5,
-    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE           = 6,
-    DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION = 7,
-    DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION = 8,
-    DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO        = 9,
-    DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE       = 10,
-    DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL            = 11,
-    DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32                   = 0xffffffff
+    DISPLAYCONFIG_DEVICE_INFO_SET_SOURCE_DPI_SCALE           = (int)-4,
+    DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_DPI_SCALE           = (int)-3,
+    DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME                = (int)1,
+    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME                = (int)2,
+    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE      = (int)3,
+    DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME               = (int)4,
+    DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE         = (int)5,
+    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE           = (int)6,
+    DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION = (int)7,
+    DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION = (int)8,
+    DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO        = (int)9,
+    DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE       = (int)10,
+    DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL            = (int)11,
+    DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32                   = (int)0xffffffff
 } DISPLAYCONFIG_DEVICE_INFO_TYPE;
 
 typedef struct DISPLAYCONFIG_DEVICE_INFO_HEADER {
@@ -3637,6 +3639,31 @@ typedef struct DISPLAYCONFIG_SDR_WHITE_LEVEL {
     DISPLAYCONFIG_DEVICE_INFO_HEADER header;
     ULONG                            SDRWhiteLevel;
 } DISPLAYCONFIG_SDR_WHITE_LEVEL;
+
+/* Scale steps are relative to the recommended scale. For example:
+ * Scale : 100% 125% 150% 175% 200% 225% 250% 300% 350% 400% 450% 500%
+ * DPI   : 96   120  144  168  192  216  240  288  336  384  432  480
+ *         ^         ^         ^                             ^
+ *         |         |         Recommended scale, step is 0. |
+ *         |         Current scale, step is -2.              Max scale step is 6.
+ *         Minimum scale, step is -4.
+ *
+ * The scale values can be found in the display settings drop-down. The algorithm to calculate the
+ * recommended scale is unclear.
+ */
+typedef struct DISPLAYCONFIG_GET_SOURCE_DPI_SCALE
+{
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    int minRelativeScaleStep;   /* Minimum scale step relative to the recommended scale */
+    int curRelativeScaleStep;   /* Current scale step relative to the recommended scale */
+    int maxRelativeScaleStep;   /* Maximum scale step relative to the recommended scale */
+} DISPLAYCONFIG_GET_SOURCE_DPI_SCALE;
+
+typedef struct DISPLAYCONFIG_SET_SOURCE_DPI_SCALE
+{
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    int relativeScaleStep;      /* Target scale step relative to the recommended scale */
+} DISPLAYCONFIG_SET_SOURCE_DPI_SCALE;
 
 #define DISPLAYCONFIG_PATH_MODE_IDX_INVALID             0xffffffff
 #define DISPLAYCONFIG_PATH_TARGET_MODE_IDX_INVALID      0xffff

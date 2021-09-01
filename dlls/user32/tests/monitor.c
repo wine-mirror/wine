@@ -19,34 +19,49 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include "wine/test.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "winternl.h"
+#include "ddk/d3dkmthk.h"
 #include "wine/heap.h"
 #include <stdio.h>
 
-static HMODULE hdll;
 static LONG (WINAPI *pGetDisplayConfigBufferSizes)(UINT32,UINT32*,UINT32*);
+static BOOL (WINAPI *pGetDpiForMonitorInternal)(HMONITOR,UINT,UINT*,UINT*);
 static LONG (WINAPI *pQueryDisplayConfig)(UINT32,UINT32*,DISPLAYCONFIG_PATH_INFO*,UINT32*,
                                           DISPLAYCONFIG_MODE_INFO*,DISPLAYCONFIG_TOPOLOGY_ID*);
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
+static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+
+static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER*);
+static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME*);
 
 static void init_function_pointers(void)
 {
-    hdll = GetModuleHandleA("user32.dll");
+    HMODULE user32 = GetModuleHandleA("user32.dll");
+    HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
 
-#define GET_PROC(func) \
-    p ## func = (void*)GetProcAddress(hdll, #func); \
-    if(!p ## func) \
-      trace("GetProcAddress(%s) failed\n", #func);
+#define GET_PROC(module, func)                       \
+    p##func = (void *)GetProcAddress(module, #func); \
+    if (!p##func)                                    \
+        trace("GetProcAddress(%s, %s) failed.\n", #module, #func);
 
-    GET_PROC(GetDisplayConfigBufferSizes)
-    GET_PROC(QueryDisplayConfig)
-    GET_PROC(DisplayConfigGetDeviceInfo)
-    GET_PROC(SetThreadDpiAwarenessContext)
+    GET_PROC(user32, GetDisplayConfigBufferSizes)
+    GET_PROC(user32, GetDpiForMonitorInternal)
+    GET_PROC(user32, QueryDisplayConfig)
+    GET_PROC(user32, DisplayConfigGetDeviceInfo)
+    GET_PROC(user32, DisplayConfigSetDeviceInfo)
+    GET_PROC(user32, SetThreadDpiAwarenessContext)
+
+    GET_PROC(gdi32, D3DKMTCloseAdapter)
+    GET_PROC(gdi32, D3DKMTOpenAdapterFromGdiDisplayName)
 
 #undef GET_PROC
 }
@@ -66,6 +81,23 @@ static void flush_events(void)
             DispatchMessageA(&msg);
         diff = time - GetTickCount();
     }
+}
+
+static unsigned int get_primary_dpi(void)
+{
+    DPI_AWARENESS_CONTEXT old_context;
+    UINT dpi_x = 0, dpi_y = 0;
+    POINT point = {0, 0};
+    HMONITOR monitor;
+
+    if (!pSetThreadDpiAwarenessContext || !pGetDpiForMonitorInternal)
+        return 0;
+
+    old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+    monitor = MonitorFromPoint(point, MONITOR_DEFAULTTOPRIMARY);
+    pGetDpiForMonitorInternal(monitor, 0, &dpi_x, &dpi_y);
+    pSetThreadDpiAwarenessContext(old_context);
+    return dpi_y;
 }
 
 static int get_bitmap_stride(int width, int bpp)
@@ -1959,6 +1991,85 @@ static void test_display_config(void)
     test_DisplayConfigGetDeviceInfo();
 }
 
+static void test_DisplayConfigSetDeviceInfo(void)
+{
+    static const unsigned int scales[] = {100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500};
+    int current_scale, current_scale_idx, recommended_scale_idx, step, dpi, old_dpi;
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
+    DISPLAYCONFIG_GET_SOURCE_DPI_SCALE get_scale_req;
+    DISPLAYCONFIG_SET_SOURCE_DPI_SCALE set_scale_req;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    NTSTATUS status;
+    LONG ret;
+
+#define CHECK_FUNC(func)                       \
+    if (!p##func)                              \
+    {                                          \
+        skip("%s() is unavailable.\n", #func); \
+        return;                                \
+    }
+
+    CHECK_FUNC(D3DKMTCloseAdapter)
+    CHECK_FUNC(D3DKMTOpenAdapterFromGdiDisplayName)
+    CHECK_FUNC(DisplayConfigGetDeviceInfo)
+    CHECK_FUNC(DisplayConfigSetDeviceInfo)
+    CHECK_FUNC(GetDpiForMonitorInternal)
+    CHECK_FUNC(SetThreadDpiAwarenessContext)
+
+#undef CHECK_FUNC
+
+    lstrcpyW(open_adapter_gdi_desc.DeviceName, L"\\\\.\\DISPLAY1");
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_gdi_desc);
+    ok(status == STATUS_SUCCESS, "D3DKMTOpenAdapterFromGdiDisplayName failed, status %#x.\n", status);
+
+    get_scale_req.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_DPI_SCALE;
+    get_scale_req.header.size = sizeof(get_scale_req);
+    get_scale_req.header.adapterId = open_adapter_gdi_desc.AdapterLuid;
+    get_scale_req.header.id = open_adapter_gdi_desc.VidPnSourceId;
+    ret = pDisplayConfigGetDeviceInfo(&get_scale_req.header);
+    if (ret != NO_ERROR)
+    {
+        skip("DisplayConfigGetDeviceInfo failed, returned %d.\n", ret);
+        goto failed;
+    }
+
+    dpi = get_primary_dpi();
+    old_dpi = dpi;
+    current_scale = dpi * 100 / 96;
+    for (current_scale_idx = 0; current_scale_idx < ARRAY_SIZE(scales); ++current_scale_idx)
+    {
+        if (scales[current_scale_idx] == current_scale)
+            break;
+    }
+    ok(scales[current_scale_idx] == current_scale, "Failed to find current scale.\n");
+    recommended_scale_idx = current_scale_idx - get_scale_req.curRelativeScaleStep;
+
+    set_scale_req.header.type = DISPLAYCONFIG_DEVICE_INFO_SET_SOURCE_DPI_SCALE;
+    set_scale_req.header.size = sizeof(set_scale_req);
+    set_scale_req.header.adapterId = open_adapter_gdi_desc.AdapterLuid;
+    set_scale_req.header.id = open_adapter_gdi_desc.VidPnSourceId;
+    for (step = get_scale_req.minRelativeScaleStep; step <= get_scale_req.maxRelativeScaleStep; ++step)
+    {
+        set_scale_req.relativeScaleStep = step;
+        ret = pDisplayConfigSetDeviceInfo(&set_scale_req.header);
+        ok(ret == NO_ERROR, "DisplayConfigSetDeviceInfo failed, returned %d.\n", ret);
+
+        dpi = scales[step + recommended_scale_idx] * 96 / 100;
+        ok(dpi == get_primary_dpi(), "Expected %d, got %d.\n", get_primary_dpi(), dpi);
+    }
+
+    /* Restore to the original scale */
+    set_scale_req.relativeScaleStep = get_scale_req.curRelativeScaleStep;
+    ret = pDisplayConfigSetDeviceInfo(&set_scale_req.header);
+    ok(ret == NO_ERROR, "DisplayConfigSetDeviceInfo failed, returned %d.\n", ret);
+    ok(old_dpi == get_primary_dpi(), "Expected %d, got %d.\n", get_primary_dpi(), old_dpi);
+
+failed:
+    close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#x.\n", status);
+}
+
 static BOOL CALLBACK test_handle_proc(HMONITOR full_monitor, HDC hdc, LPRECT rect, LPARAM lparam)
 {
     MONITORINFO monitor_info = {sizeof(monitor_info)};
@@ -2283,6 +2394,7 @@ START_TEST(monitor)
     init_function_pointers();
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx();
+    test_DisplayConfigSetDeviceInfo();
     test_EnumDisplayMonitors();
     test_monitors();
     test_work_area();
