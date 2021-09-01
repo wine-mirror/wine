@@ -434,7 +434,7 @@ HOTKEY_NCPaint (HWND hwnd, HRGN region)
     RECT r;
     HDC dc;
 
-    theme = OpenThemeData(NULL, WC_EDITW);
+    theme = OpenThemeDataForDpi(NULL, WC_EDITW, GetDpiForWindow(hwnd));
     if (!theme)
         return DefWindowProcW(hwnd, WM_NCPAINT, (WPARAM)region, 0);
 
