@@ -159,6 +159,11 @@ void async_terminate( struct async *async, unsigned int status )
     async->status = status;
     if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
 
+    /* if no APC could be queued (e.g. the process is terminated),
+     * thread_queue_apc() may trigger async_set_result(), which may drop the
+     * last reference to the async, so grab a temporary reference here */
+    grab_object( async );
+
     if (!async->direct_result)
     {
         apc_call_t data;
@@ -172,7 +177,8 @@ void async_terminate( struct async *async, unsigned int status )
     }
 
     async_reselect( async );
-    if (async->queue) release_object( async );  /* so that it gets destroyed when the async is done */
+
+    release_object( async );
 }
 
 /* callback for timeout on an async request */
@@ -191,7 +197,6 @@ void free_async_queue( struct async_queue *queue )
 
     LIST_FOR_EACH_ENTRY_SAFE( async, next, &queue->queue, struct async, queue_entry )
     {
-        grab_object( &async->obj );
         if (!async->completion) async->completion = fd_get_completion( async->fd, &async->comp_key );
         async->fd = NULL;
         async_terminate( async, STATUS_HANDLES_CLOSED );
@@ -384,7 +389,6 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
     {
         status = async->status;
         async->status = STATUS_PENDING;
-        grab_object( async );
 
         if (status != STATUS_ALERTED)  /* it was terminated in the meantime */
             async_terminate( async, status );
@@ -425,6 +429,16 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         if (async->completion_callback)
             async->completion_callback( async->completion_callback_private );
         async->completion_callback = NULL;
+
+        async_reselect( async );
+
+        if (async->queue)
+        {
+            async->fd = NULL;
+            list_remove( &async->queue_entry );
+            async->queue = NULL;
+            release_object( async );
+        }
     }
 }
 
