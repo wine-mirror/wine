@@ -311,6 +311,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @end
 
 
+#ifndef MAC_OS_X_VERSION_10_14
+@protocol NSViewLayerContentScaleDelegate <NSObject>
+@optional
+
+    - (BOOL) layer:(CALayer*)layer shouldInheritContentsScale:(CGFloat)newScale fromWindow:(NSWindow*)window;
+
+@end
+#endif
+
+
 @interface WineBaseView : NSView
 @end
 
@@ -327,7 +337,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 #endif
 
 
-@interface WineContentView : WineBaseView <NSTextInputClient>
+@interface WineContentView : WineBaseView <NSTextInputClient, NSViewLayerContentScaleDelegate>
 {
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
@@ -339,6 +349,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     NSMutableAttributedString* markedText;
     NSRange markedTextSelection;
 
+    BOOL _retinaMode;
     int backingSize[2];
 
 #ifdef HAVE_METAL_METAL_H
@@ -688,7 +699,13 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self setWantsBestResolutionOpenGLSurface:mode];
         [self updateGLContexts];
 
+        _retinaMode = !!mode;
         [super setRetinaMode:mode];
+    }
+
+    - (BOOL) layer:(CALayer*)layer shouldInheritContentsScale:(CGFloat)newScale fromWindow:(NSWindow*)window
+    {
+        return (_retinaMode || newScale == 1.0);
     }
 
     - (void) viewDidHide
@@ -1002,6 +1019,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         contentView = [[[WineContentView alloc] initWithFrame:NSZeroRect] autorelease];
         if (!contentView)
             return nil;
+        [contentView setWantsLayer:YES];
         [contentView setAutoresizesSubviews:NO];
 
         /* We use tracking areas in addition to setAcceptsMouseMovedEvents:YES
@@ -3573,6 +3591,7 @@ macdrv_view macdrv_create_view(CGRect rect)
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 
         view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(cgrect_mac_from_win(rect))];
+        [view setWantsLayer:YES];
         [view setAutoresizesSubviews:NO];
         [view setAutoresizingMask:NSViewNotSizable];
         [view setHidden:YES];
