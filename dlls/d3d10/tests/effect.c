@@ -6010,6 +6010,62 @@ static void test_effect_shader_description(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_effect_shader_object(void)
+{
+    ID3D10EffectShaderVariable *s;
+    ID3D10EffectVariable *v;
+    ID3D10VertexShader *vs;
+    ID3D10Effect* effect;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect!\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "v0");
+
+    s = v->lpVtbl->AsShader(v);
+
+    vs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetVertexShader(s, 0, &vs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!vs, "Unexpected shader object.\n");
+
+    vs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetVertexShader(s, 1, &vs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!vs, "Unexpected shader object.\n");
+
+    vs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetVertexShader(s, 2, &vs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!vs, "Unexpected shader object.\n");
+
+    vs = NULL;
+    hr = s->lpVtbl->GetVertexShader(s, 3, &vs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!vs, "Unexpected shader object.\n");
+    ID3D10VertexShader_Release(vs);
+
+    vs = NULL;
+    hr = s->lpVtbl->GetVertexShader(s, 4, &vs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!vs, "Unexpected shader object.\n");
+    ID3D10VertexShader_Release(vs);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -6028,4 +6084,5 @@ START_TEST(effect)
     test_effect_resource_variable();
     test_effect_optimize();
     test_effect_shader_description();
+    test_effect_shader_object();
 }

@@ -6983,7 +6983,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetRawValue(
 /* ID3D10EffectShaderVariable methods */
 
 static HRESULT d3d10_get_shader_variable(struct d3d10_effect_variable *v, UINT shader_index,
-        struct d3d10_effect_shader_variable **s)
+        struct d3d10_effect_shader_variable **s, D3D10_SHADER_VARIABLE_TYPE *basetype)
 {
     unsigned int i;
 
@@ -6993,6 +6993,7 @@ static HRESULT d3d10_get_shader_variable(struct d3d10_effect_variable *v, UINT s
     if (!shader_index)
     {
         *s = &v->u.shader;
+        if (basetype) *basetype = v->type->basetype;
         return S_OK;
     }
 
@@ -7010,6 +7011,8 @@ static HRESULT d3d10_get_shader_variable(struct d3d10_effect_variable *v, UINT s
     }
 
     *s = &v->effect->used_shaders[i + shader_index]->u.shader;
+    if (basetype) *basetype = v->effect->used_shaders[i + shader_index]->type->basetype;
+
     return S_OK;
 }
 
@@ -7023,7 +7026,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetShaderDesc(
 
     TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
-    if (FAILED(hr = d3d10_get_shader_variable(v, index, &s)))
+    if (FAILED(hr = d3d10_get_shader_variable(v, index, &s, NULL)))
         return hr;
 
     memset(desc, 0, sizeof(*desc));
@@ -7052,19 +7055,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetVertexShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10VertexShader **shader)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
+    struct d3d10_effect_shader_variable *s;
+    D3D10_SHADER_VARIABLE_TYPE basetype;
+    HRESULT hr;
 
     TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+    *shader = NULL;
 
-    if (v->type->basetype != D3D10_SVT_VERTEXSHADER)
+    if (FAILED(hr = d3d10_get_shader_variable(v, index, &s, &basetype)))
+        return hr;
+
+    if (basetype != D3D10_SVT_VERTEXSHADER)
     {
         WARN("Shader is not a vertex shader.\n");
-        return E_FAIL;
+        return D3DERR_INVALIDCALL;
     }
 
-    if ((*shader = v->u.shader.shader.vs))
+    if ((*shader = s->shader.vs))
         ID3D10VertexShader_AddRef(*shader);
 
     return S_OK;
@@ -7120,7 +7128,7 @@ static HRESULT d3d10_get_shader_variable_signature(struct d3d10_effect_variable 
     struct d3d10_effect_shader_variable *s;
     HRESULT hr;
 
-    if (FAILED(hr = d3d10_get_shader_variable(v, shader_index, &s)))
+    if (FAILED(hr = d3d10_get_shader_variable(v, shader_index, &s, NULL)))
         return hr;
 
     if (!s->reflection)
