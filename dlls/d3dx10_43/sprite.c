@@ -32,6 +32,7 @@ struct d3dx10_sprite
     ID3DX10Sprite ID3DX10Sprite_iface;
     LONG refcount;
 
+    D3DXMATRIX projection;
     ID3D10Device *device;
 };
 
@@ -139,16 +140,30 @@ static HRESULT WINAPI d3dx10_sprite_SetViewTransform(ID3DX10Sprite *iface, D3DXM
 static HRESULT WINAPI d3dx10_sprite_GetProjectionTransform(ID3DX10Sprite *iface,
         D3DXMATRIX *transform)
 {
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    if (!transform)
+        return E_FAIL;
+
+    *transform = sprite->projection;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3dx10_sprite_SetProjectionTransform(ID3DX10Sprite *iface, D3DXMATRIX *transform)
 {
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    struct d3dx10_sprite *sprite = impl_from_ID3DX10Sprite(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    if (!transform)
+        return E_FAIL;
+
+    sprite->projection = *transform;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3dx10_sprite_GetDevice(ID3DX10Sprite *iface, ID3D10Device **device)
@@ -201,6 +216,10 @@ HRESULT WINAPI D3DX10CreateSprite(ID3D10Device *device, UINT size, ID3DX10Sprite
     object->refcount = 1;
     object->device = device;
     ID3D10Device_AddRef(device);
+    object->projection._11 = 1.0f;
+    object->projection._22 = 1.0f;
+    object->projection._33 = 1.0f;
+    object->projection._44 = 1.0f;
 
     *sprite = &object->ID3DX10Sprite_iface;
 

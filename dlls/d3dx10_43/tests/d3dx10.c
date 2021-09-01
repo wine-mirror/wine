@@ -2968,6 +2968,13 @@ static void test_sprite(void)
     D3DXMATRIX mat, mat2;
     ULONG refcount;
     HRESULT hr;
+    static const D3DXMATRIX identity =
+    {
+        ._11 = 1.0f,
+        ._22 = 1.0f,
+        ._33 = 1.0f,
+        ._44 = 1.0f,
+    };
 
     if (!(device = create_device()))
     {
@@ -3020,11 +3027,10 @@ static void test_sprite(void)
 
     /* Projection transform */
     hr = ID3DX10Sprite_GetProjectionTransform(sprite, NULL);
-todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Sprite_GetProjectionTransform(sprite, &mat);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!memcmp(&mat, &identity, sizeof(mat)), "Unexpected projection transform.\n");
 
     /* Set a transform and test if it gets returned correctly */
     mat.m[0][0] = 2.1f; mat.m[0][1] = 6.5f; mat.m[0][2] =-9.6f; mat.m[0][3] = 1.7f;
@@ -3033,18 +3039,14 @@ todo_wine
     mat.m[3][0] = 6.7f; mat.m[3][1] =-5.1f; mat.m[3][2] = 6.1f; mat.m[3][3] = 2.2f;
 
     hr = ID3DX10Sprite_SetProjectionTransform(sprite, NULL);
-todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_SetProjectionTransform(sprite, &mat);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Sprite_GetProjectionTransform(sprite, &mat2);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!memcmp(&mat, &mat2, sizeof(mat)), "Unexpected matrix.\n");
-}
 
     /* View transform */
     hr = ID3DX10Sprite_SetViewTransform(sprite, NULL);
