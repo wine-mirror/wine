@@ -299,7 +299,6 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     CFStringRef str = NULL;
     WCHAR serial_string[256];
     BOOL is_gamepad = FALSE;
-    WORD input = -1;
 
     TRACE("OS/X IOHID Device Added %p\n", IOHIDDevice);
 
@@ -361,13 +360,11 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
             is_gamepad = (axes == 6  && buttons >= 14);
         }
     }
-    if (is_gamepad)
-        input = 0;
 
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
         return;
 
-    device = bus_create_hid_device(busidW, vid, pid, input, version, uid, str ? serial_string : NULL,
+    device = bus_create_hid_device(busidW, vid, pid, -1, version, uid, str ? serial_string : NULL,
                                    is_gamepad, &iohid_vtbl, &private->unix_device);
     if (!device) HeapFree(GetProcessHeap(), 0, private);
     else

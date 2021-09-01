@@ -744,7 +744,6 @@ static void try_add_device(unsigned int index)
     WCHAR serial[34] = {0};
     char guid_str[34];
     BOOL is_xbox_gamepad;
-    WORD input = -1;
 
     SDL_Joystick* joystick;
     SDL_JoystickID id;
@@ -795,12 +794,10 @@ static void try_add_device(unsigned int index)
         button_count = pSDL_JoystickNumButtons(joystick);
         is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
     }
-    if (is_xbox_gamepad)
-        input = 0;
 
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private)))) return;
 
-    device = bus_create_hid_device(sdl_busidW, vid, pid, input, version, index, serial, is_xbox_gamepad,
+    device = bus_create_hid_device(sdl_busidW, vid, pid, -1, version, index, serial, is_xbox_gamepad,
                                    &sdl_vtbl, &private->unix_device);
     if (!device) HeapFree(GetProcessHeap(), 0, private);
     else

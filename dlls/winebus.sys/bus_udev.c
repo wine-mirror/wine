@@ -1131,8 +1131,6 @@ static void try_add_device(struct udev_device *dev)
         is_gamepad = (axes == 6  && buttons >= 14);
     }
 #endif
-    if (input == (WORD)-1 && is_gamepad)
-        input = 0;
 
     TRACE("Found udev device %s (vid %04x, pid %04x, version %04x, input %d, serial %s)\n",
           debugstr_a(devnode), vid, pid, version, input, debugstr_w(serial));

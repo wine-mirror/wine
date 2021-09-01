@@ -149,8 +149,6 @@ static CRITICAL_SECTION device_list_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 static struct list device_list = LIST_INIT(device_list);
 
 static const WCHAR zero_serialW[]= {'0','0','0','0',0};
-static const WCHAR miW[] = {'M','I',0};
-static const WCHAR igW[] = {'I','G',0};
 
 static NTSTATUS winebus_call(unsigned int code, void *args)
 {
@@ -202,25 +200,17 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 
 static WCHAR *get_device_id(DEVICE_OBJECT *device)
 {
+    static const WCHAR input_formatW[] = {'&','M','I','_','%','0','2','u',0};
     static const WCHAR formatW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
             '&','p','i','d','_','%','0','4','x',0};
-    static const WCHAR format_inputW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
-            '&','p','i','d','_','%','0','4','x','&','%','s','_','%','0','2','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     DWORD len = strlenW(ext->busid) + 34;
-    WCHAR *dst;
+    WCHAR *dst, *tmp;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
-        if (ext->input == (WORD)-1)
-        {
-            sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid);
-        }
-        else
-        {
-            sprintfW(dst, format_inputW, ext->busid, ext->vid, ext->pid,
-                    ext->is_gamepad ? igW : miW, ext->input);
-        }
+        tmp = dst + sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid);
+        if (ext->input != (WORD)-1) sprintfW(tmp, input_formatW, ext->input);
     }
 
     return dst;
