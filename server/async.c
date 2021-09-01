@@ -387,13 +387,11 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
 
     if (status == STATUS_PENDING)  /* restart it */
     {
-        status = async->status;
-        async->status = STATUS_PENDING;
-
-        if (status != STATUS_ALERTED)  /* it was terminated in the meantime */
-            async_terminate( async, status );
-        else
+        if (async->status == STATUS_ALERTED)
+        {
+            async->status = STATUS_PENDING;
             async_reselect( async );
+        }
     }
     else
     {
