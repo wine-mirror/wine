@@ -24,9 +24,6 @@
 #include "d3d11.h"
 #include "wine/test.h"
 
-static pD3DCompile ppD3DCompile;
-static HRESULT (WINAPI *pD3DReflect)(const void *data, SIZE_T size, REFIID iid, void **out);
-
 static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, const D3D_FEATURE_LEVEL *feature_levels, UINT levels,
         UINT sdk_version, ID3D11Device **device_out, D3D_FEATURE_LEVEL *obtained_feature_level,
@@ -49,7 +46,7 @@ static ID3D10Blob *compile_shader_(unsigned int line, const char *source, const 
     ID3D10Blob *blob = NULL, *errors = NULL;
     HRESULT hr;
 
-    hr = ppD3DCompile(source, strlen(source), NULL, NULL, NULL, "main", target, flags, 0, &blob, &errors);
+    hr = D3DCompile(source, strlen(source), NULL, NULL, NULL, "main", target, flags, 0, &blob, &errors);
     ok_(__FILE__, line)(hr == S_OK, "Failed to compile shader, hr %#x.\n", hr);
     if (errors)
     {
@@ -832,7 +829,7 @@ static void test_reflection(void)
     if (!code)
         return;
 
-    hr = pD3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
+    hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -910,7 +907,7 @@ static void test_reflection(void)
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
     code = compile_shader_flags(ps_source, "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
-    hr = pD3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
+    hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1140,7 +1137,7 @@ static void test_semantic_reflection(void)
             continue;
         }
 
-        hr = pD3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
+        hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
                 &IID_ID3D11ShaderReflection, (void **)&reflection);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1177,30 +1174,9 @@ static void test_semantic_reflection(void)
     }
 }
 
-static BOOL load_d3dcompiler(void)
-{
-    HMODULE module;
-
-#if D3D_COMPILER_VERSION == 47
-    if (!(module = LoadLibraryA("d3dcompiler_47.dll"))) return FALSE;
-#else
-    if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
-#endif
-
-    ppD3DCompile = (void *)GetProcAddress(module, "D3DCompile");
-    pD3DReflect = (void *)GetProcAddress(module, "D3DReflect");
-    return TRUE;
-}
-
 START_TEST(hlsl_d3d11)
 {
     HMODULE mod;
-
-    if (!load_d3dcompiler())
-    {
-        win_skip("Could not load DLL.\n");
-        return;
-    }
 
     test_reflection();
     test_semantic_reflection();
