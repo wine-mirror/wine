@@ -1674,12 +1674,6 @@ static void test_SHFormatDateTimeA(void)
     DWORD flags;
     INT ret;
 
-if (0)
-{
-    /* crashes on native */
-    pSHFormatDateTimeA(NULL, NULL, NULL, 0);
-}
-
     GetLocalTime(&st);
     SystemTimeToFileTime(&st, &filetime);
     /* SHFormatDateTime expects input as utc */
