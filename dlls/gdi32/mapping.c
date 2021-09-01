@@ -347,10 +347,12 @@ BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
             ret = TRUE;
             break;
         case MWT_LEFTMULTIPLY:
-            ret = CombineTransform( &dc->xformWorld2Wnd, xform, &dc->xformWorld2Wnd );
+            combine_transform( &dc->xformWorld2Wnd, xform, &dc->xformWorld2Wnd );
+            ret = TRUE;
             break;
         case MWT_RIGHTMULTIPLY:
-            ret = CombineTransform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd, xform );
+            combine_transform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd, xform );
+            ret = TRUE;
             break;
         case MWT_SET:
             ret = dc->attr->graphics_mode == GM_ADVANCED &&
@@ -413,4 +415,20 @@ BOOL WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,
 
     release_dc_ptr( dc );
     return TRUE;
+}
+
+void combine_transform( XFORM *result, const XFORM *xform1, const XFORM *xform2 )
+{
+    XFORM r;
+
+    /* Create the result in a temporary XFORM, since result may be
+     * equal to xform1 or xform2 */
+    r.eM11 = xform1->eM11 * xform2->eM11 + xform1->eM12 * xform2->eM21;
+    r.eM12 = xform1->eM11 * xform2->eM12 + xform1->eM12 * xform2->eM22;
+    r.eM21 = xform1->eM21 * xform2->eM11 + xform1->eM22 * xform2->eM21;
+    r.eM22 = xform1->eM21 * xform2->eM12 + xform1->eM22 * xform2->eM22;
+    r.eDx  = xform1->eDx  * xform2->eM11 + xform1->eDy  * xform2->eM21 + xform2->eDx;
+    r.eDy  = xform1->eDx  * xform2->eM12 + xform1->eDy  * xform2->eM22 + xform2->eDy;
+
+    *result = r;
 }

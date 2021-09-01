@@ -977,3 +977,27 @@ INT WINAPI EnumObjects( HDC hdc, INT type, GOBJENUMPROC enum_func, LPARAM param 
 
     return retval;
 }
+
+/***********************************************************************
+ *           CombineTransform  (GDI32.@)
+ *
+ * Combines two transformation matrices.
+ */
+BOOL WINAPI CombineTransform( XFORM *result, const XFORM *xform1, const XFORM *xform2 )
+{
+    XFORM r;
+
+    if (!result || !xform1 || !xform2) return FALSE;
+
+    /* Create the result in a temporary XFORM, since result may be
+     * equal to xform1 or xform2 */
+    r.eM11 = xform1->eM11 * xform2->eM11 + xform1->eM12 * xform2->eM21;
+    r.eM12 = xform1->eM11 * xform2->eM12 + xform1->eM12 * xform2->eM22;
+    r.eM21 = xform1->eM21 * xform2->eM11 + xform1->eM22 * xform2->eM21;
+    r.eM22 = xform1->eM21 * xform2->eM12 + xform1->eM22 * xform2->eM22;
+    r.eDx  = xform1->eDx  * xform2->eM11 + xform1->eDy  * xform2->eM21 + xform2->eDx;
+    r.eDy  = xform1->eDx  * xform2->eM12 + xform1->eDy  * xform2->eM22 + xform2->eDy;
+
+    *result = r;
+    return TRUE;
+}

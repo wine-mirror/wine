@@ -366,8 +366,7 @@ void DC_UpdateXforms( DC *dc )
 
     oldworld2vport = dc->xformWorld2Vport;
     /* Combine with the world transformation */
-    CombineTransform( &dc->xformWorld2Vport, &dc->xformWorld2Wnd,
-        &xformWnd2Vport );
+    combine_transform( &dc->xformWorld2Vport, &dc->xformWorld2Wnd, &xformWnd2Vport );
 
     /* Create inverse of world-to-viewport transformation */
     dc->vport2WorldValid = DC_InvertXform( &dc->xformWorld2Vport,
@@ -930,55 +929,6 @@ BOOL WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform )
 
     release_dc_ptr( dc );
     return ret;
-}
-
-
-/****************************************************************************
- * CombineTransform [GDI32.@]
- * Combines two transformation matrices.
- *
- * PARAMS
- *    xformResult [O] Stores the result of combining the two matrices
- *    xform1      [I] Specifies the first matrix to apply
- *    xform2      [I] Specifies the second matrix to apply
- *
- * REMARKS
- *    The same matrix can be passed in for more than one of the parameters.
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: FALSE. Use GetLastError() to determine the cause.
- */
-BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
-    const XFORM *xform2 )
-{
-    XFORM xformTemp;
-
-    /* Check for illegal parameters */
-    if (!xformResult || !xform1 || !xform2)
-        return FALSE;
-
-    /* Create the result in a temporary XFORM, since xformResult may be
-     * equal to xform1 or xform2 */
-    xformTemp.eM11 = xform1->eM11 * xform2->eM11 +
-                     xform1->eM12 * xform2->eM21;
-    xformTemp.eM12 = xform1->eM11 * xform2->eM12 +
-                     xform1->eM12 * xform2->eM22;
-    xformTemp.eM21 = xform1->eM21 * xform2->eM11 +
-                     xform1->eM22 * xform2->eM21;
-    xformTemp.eM22 = xform1->eM21 * xform2->eM12 +
-                     xform1->eM22 * xform2->eM22;
-    xformTemp.eDx  = xform1->eDx  * xform2->eM11 +
-                     xform1->eDy  * xform2->eM21 +
-                     xform2->eDx;
-    xformTemp.eDy  = xform1->eDx  * xform2->eM12 +
-                     xform1->eDy  * xform2->eM22 +
-                     xform2->eDy;
-
-    /* Copy the result to xformResult */
-    *xformResult = xformTemp;
-
-    return TRUE;
 }
 
 

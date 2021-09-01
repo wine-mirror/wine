@@ -1070,7 +1070,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
                ) / det;
 
     GetWorldTransform(hdcSrc,&SrcXf);
-    CombineTransform(&xf,&xf,&SrcXf);
+    combine_transform( &xf, &xf, &SrcXf );
 
     /* save actual dest transform */
     GetWorldTransform(hdcDest,&oldDestXf);
