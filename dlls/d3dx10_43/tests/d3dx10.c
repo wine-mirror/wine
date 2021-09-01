@@ -2263,32 +2263,23 @@ static void test_font(void)
     hr = ID3DX10Font_PreloadTextA(font, NULL, 1);
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextA(font, "test", -1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextA(font, "", 0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextA(font, "", -1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = ID3DX10Font_PreloadTextW(font, NULL, -1);
-todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextW(font, NULL, 0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextW(font, NULL, 1);
-todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextW(font, testW, -1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextW(font, L"", 0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = ID3DX10Font_PreloadTextW(font, L"", -1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     ID3DX10Font_Release(font);

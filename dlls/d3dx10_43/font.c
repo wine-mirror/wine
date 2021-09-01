@@ -210,9 +210,33 @@ static HRESULT WINAPI d3dx_font_PreloadTextA(ID3DX10Font *iface, const char *str
 
 static HRESULT WINAPI d3dx_font_PreloadTextW(ID3DX10Font *iface, const WCHAR *string, INT count)
 {
-    FIXME("iface %p, string %s, count %d stub!\n", iface, debugstr_wn(string, count), count);
+    struct d3dx_font *font = impl_from_ID3DX10Font(iface);
+    WORD *indices;
+    int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, string %s, count %d.\n", iface, debugstr_wn(string, count), count);
+
+    if (!string && !count)
+        return S_OK;
+
+    if (!string)
+        return D3DERR_INVALIDCALL;
+
+    if (count < 0)
+        count = lstrlenW(string);
+
+    indices = heap_alloc(count * sizeof(*indices));
+    if (!indices)
+        return E_OUTOFMEMORY;
+
+    GetGlyphIndicesW(font->hdc, string, count, indices, 0);
+
+    for (i = 0; i < count; ++i)
+        ID3DX10Font_PreloadGlyphs(iface, indices[i], indices[i]);
+
+    heap_free(indices);
+
+    return S_OK;
 }
 
 static INT WINAPI d3dx_font_DrawTextA(ID3DX10Font *iface, ID3DX10Sprite *sprite,
