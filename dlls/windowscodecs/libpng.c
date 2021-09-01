@@ -203,7 +203,7 @@ static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t lengt
     }
 }
 
-HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, struct decoder_stat *st)
+static HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, struct decoder_stat *st)
 {
     struct png_decoder *This = impl_from_decoder(iface);
     png_structp png_ptr;
@@ -484,14 +484,14 @@ end:
     return hr;
 }
 
-HRESULT CDECL png_decoder_get_frame_info(struct decoder *iface, UINT frame, struct decoder_frame *info)
+static HRESULT CDECL png_decoder_get_frame_info(struct decoder *iface, UINT frame, struct decoder_frame *info)
 {
     struct png_decoder *This = impl_from_decoder(iface);
     *info = This->decoder_frame;
     return S_OK;
 }
 
-HRESULT CDECL png_decoder_copy_pixels(struct decoder *iface, UINT frame,
+static HRESULT CDECL png_decoder_copy_pixels(struct decoder *iface, UINT frame,
     const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
 {
     struct png_decoder *This = impl_from_decoder(iface);
@@ -501,7 +501,7 @@ HRESULT CDECL png_decoder_copy_pixels(struct decoder *iface, UINT frame,
         prc, stride, buffersize, buffer);
 }
 
-HRESULT CDECL png_decoder_get_metadata_blocks(struct decoder* iface,
+static HRESULT CDECL png_decoder_get_metadata_blocks(struct decoder* iface,
     UINT frame, UINT *count, struct decoder_block **blocks)
 {
     struct png_decoder *This = impl_from_decoder(iface);
@@ -574,7 +574,7 @@ end:
     return hr;
 }
 
-HRESULT CDECL png_decoder_get_color_context(struct decoder* iface, UINT frame, UINT num,
+static HRESULT CDECL png_decoder_get_color_context(struct decoder* iface, UINT frame, UINT num,
     BYTE **data, DWORD *datasize)
 {
     struct png_decoder *This = impl_from_decoder(iface);
@@ -590,7 +590,7 @@ HRESULT CDECL png_decoder_get_color_context(struct decoder* iface, UINT frame, U
     return S_OK;
 }
 
-void CDECL png_decoder_destroy(struct decoder* iface)
+static void CDECL png_decoder_destroy(struct decoder* iface)
 {
     struct png_decoder *This = impl_from_decoder(iface);
 
@@ -738,7 +738,7 @@ static HRESULT CDECL png_encoder_initialize(struct encoder *encoder, IStream *st
     return S_OK;
 }
 
-HRESULT CDECL png_encoder_get_supported_format(struct encoder* iface, GUID *pixel_format, DWORD *bpp, BOOL *indexed)
+static HRESULT CDECL png_encoder_get_supported_format(struct encoder* iface, GUID *pixel_format, DWORD *bpp, BOOL *indexed)
 {
     int i;
 
@@ -869,7 +869,7 @@ static HRESULT CDECL png_encoder_create_frame(struct encoder *encoder, const str
     return S_OK;
 }
 
-HRESULT CDECL png_encoder_write_lines(struct encoder* encoder, BYTE *data, DWORD line_count, DWORD stride)
+static HRESULT CDECL png_encoder_write_lines(struct encoder* encoder, BYTE *data, DWORD line_count, DWORD stride)
 {
     struct png_encoder *This = impl_from_encoder(encoder);
     jmp_buf jmpbuf;
