@@ -41,7 +41,11 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
     HTHEME theme;
     DWORD style;
 
-    theme = bar == SB_CTL ? GetWindowTheme(hwnd) : OpenThemeData(NULL, WC_SCROLLBARW);
+    if (bar == SB_CTL)
+        theme = GetWindowTheme(hwnd);
+    else
+        theme = OpenThemeDataForDpi(NULL, WC_SCROLLBARW, GetDpiForWindow(hwnd));
+
     if (!theme)
     {
         user_api.pScrollBarDraw(hwnd, dc, bar, hit_test, tracking_info, draw_arrows, draw_interior,
