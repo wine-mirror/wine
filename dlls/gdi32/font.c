@@ -6286,15 +6286,16 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
 }
 
 /***********************************************************************
- *           AddFontMemResourceEx    (GDI32.@)
+ *           NtGdiAddFontMemResourceEx    (win32u.@)
  */
-HANDLE WINAPI AddFontMemResourceEx( PVOID ptr, DWORD size, PVOID pdv, DWORD *pcFonts )
+HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG dv_size,
+                                         DWORD *count )
 {
     HANDLE ret;
     DWORD num_fonts;
     void *copy;
 
-    if (!ptr || !size || !pcFonts)
+    if (!ptr || !size || !count)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
@@ -6320,12 +6321,12 @@ HANDLE WINAPI AddFontMemResourceEx( PVOID ptr, DWORD size, PVOID pdv, DWORD *pcF
 
     __TRY
     {
-        *pcFonts = num_fonts;
+        *count = num_fonts;
     }
     __EXCEPT_PAGE_FAULT
     {
-        WARN("page fault while writing to *pcFonts (%p)\n", pcFonts);
-        RemoveFontMemResourceEx( ret );
+        WARN( "page fault while writing to *count (%p)\n", count );
+        NtGdiRemoveFontMemResourceEx( ret );
         ret = 0;
     }
     __ENDTRY
@@ -6334,11 +6335,11 @@ HANDLE WINAPI AddFontMemResourceEx( PVOID ptr, DWORD size, PVOID pdv, DWORD *pcF
 }
 
 /***********************************************************************
- *           RemoveFontMemResourceEx    (GDI32.@)
+ *           NtGdiRemoveFontMemResourceEx    (win32u.@)
  */
-BOOL WINAPI RemoveFontMemResourceEx( HANDLE fh )
+BOOL WINAPI NtGdiRemoveFontMemResourceEx( HANDLE handle )
 {
-    FIXME("(%p) stub\n", fh);
+    FIXME( "(%p) stub\n", handle );
     return TRUE;
 }
 

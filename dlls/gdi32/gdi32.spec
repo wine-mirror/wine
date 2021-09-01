@@ -414,7 +414,7 @@
 @ stdcall RectInRegion(long ptr) NtGdiRectInRegion
 @ stdcall RectVisible(long ptr) NtGdiRectVisible
 @ stdcall Rectangle(long long long long long)
-@ stdcall RemoveFontMemResourceEx(ptr)
+@ stdcall RemoveFontMemResourceEx(ptr) NtGdiRemoveFontMemResourceEx
 @ stdcall RemoveFontResourceA(str)
 @ stdcall RemoveFontResourceExA(str long ptr)
 @ stdcall RemoveFontResourceExW(wstr long ptr)

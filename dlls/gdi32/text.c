@@ -2283,3 +2283,11 @@ BOOL WINAPI GetFontResourceInfoW( const WCHAR *str, DWORD *size, void *buffer, D
     FIXME( "%s %p(%d) %p %d\n", debugstr_w(str), size, size ? *size : 0, buffer, type );
     return FALSE;
 }
+
+/***********************************************************************
+ *           AddFontMemResourceEx    (GDI32.@)
+ */
+HANDLE WINAPI AddFontMemResourceEx( void *ptr, DWORD size, void *dv, DWORD *count )
+{
+    return NtGdiAddFontMemResourceEx( ptr, size, dv, 0, count );
+}
