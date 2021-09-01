@@ -52,6 +52,7 @@ struct async
     unsigned int         signaled :1;
     unsigned int         pending :1;      /* request successfully queued, but pending */
     unsigned int         direct_result :1;/* a flag if we're passing result directly from request instead of APC  */
+    unsigned int         alerted :1;      /* fd is signaled, but we are waiting for client-side I/O */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
     unsigned int         comp_flags;      /* completion flags */
@@ -161,6 +162,8 @@ void async_terminate( struct async *async, unsigned int status )
 
     async->status = status;
     if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
+    if (status == STATUS_ALERTED)
+        async->alerted = 1;
 
     /* if no APC could be queued (e.g. the process is terminated),
      * thread_queue_apc() may trigger async_set_result(), which may drop the
@@ -246,6 +249,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->pending       = 1;
     async->wait_handle   = 0;
     async->direct_result = 0;
+    async->alerted       = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
     async->comp_flags    = 0;
     async->completion_callback = NULL;
@@ -390,9 +394,10 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
 
     if (status == STATUS_PENDING)  /* restart it */
     {
-        if (async->status == STATUS_ALERTED)
+        if (async->alerted)
         {
             async->status = STATUS_PENDING;
+            async->alerted = 0;
             async_reselect( async );
         }
     }
