@@ -306,7 +306,7 @@ VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_cont
     return vk_memory;
 }
 
-struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
+static struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
         unsigned int memory_type, VkDeviceSize size, VkDeviceMemory *vk_memory)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);

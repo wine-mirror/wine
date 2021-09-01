@@ -2611,8 +2611,6 @@ static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_conte
 void wined3d_context_vk_accumulate_pending_queries(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 void wined3d_context_vk_add_pending_query(struct wined3d_context_vk *context_vk,
         struct wined3d_query_vk *query_vk) DECLSPEC_HIDDEN;
-struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
-        unsigned int memory_type, VkDeviceSize size, VkDeviceMemory *vk_memory) DECLSPEC_HIDDEN;
 bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
         enum wined3d_query_type type, struct wined3d_query_pool_idx_vk *pool_idx) DECLSPEC_HIDDEN;
 VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,
