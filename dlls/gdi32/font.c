@@ -196,11 +196,8 @@ typedef struct
     LOGFONTW              logfont;
 } FONTOBJ;
 
-/*
- *  For TranslateCharsetInfo
- */
-#define MAXTCIINDEX 32
-static const CHARSETINFO FONT_tci[MAXTCIINDEX] = {
+/* for translate_charset_info */
+static const CHARSETINFO charset_info[] = {
   /* ANSI */
   { ANSI_CHARSET, 1252, {{0,0,0,0},{FS_LATIN1,0}} },
   { EASTEUROPE_CHARSET, 1250, {{0,0,0,0},{FS_LATIN2,0}} },
@@ -1432,6 +1429,34 @@ static void load_system_links(void)
     }
 }
 
+/* see TranslateCharsetInfo */
+BOOL translate_charset_info( DWORD *src, CHARSETINFO *cs, DWORD flags )
+{
+    int index = 0;
+
+    switch (flags)
+    {
+    case TCI_SRCFONTSIG:
+        while (index < ARRAY_SIZE(charset_info) && !(*src>>index & 0x0001)) index++;
+        break;
+    case TCI_SRCCODEPAGE:
+        while (index < ARRAY_SIZE(charset_info) && PtrToUlong(src) != charset_info[index].ciACP)
+            index++;
+        break;
+    case TCI_SRCCHARSET:
+        while (index < ARRAY_SIZE(charset_info) &&
+               PtrToUlong(src) != charset_info[index].ciCharset)
+            index++;
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (index >= ARRAY_SIZE(charset_info) || charset_info[index].ciCharset == DEFAULT_CHARSET) return FALSE;
+    *cs = charset_info[index];
+    return TRUE;
+}
+
 /* font matching */
 
 static BOOL can_select_face( const struct gdi_font_face *face, FONTSIGNATURE fs, BOOL can_use_bitmap )
@@ -1562,7 +1587,7 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
     BOOL want_vertical = (lf->lfFaceName[0] == '@');
     struct gdi_font_face *face;
 
-    if (!TranslateCharsetInfo( (DWORD *)(INT_PTR)lf->lfCharSet, csi, TCI_SRCCHARSET ))
+    if (!translate_charset_info( (DWORD *)(INT_PTR)lf->lfCharSet, csi, TCI_SRCCHARSET ))
     {
         if (lf->lfCharSet != DEFAULT_CHARSET) FIXME( "Untranslated charset %d\n", lf->lfCharSet );
         csi->fs.fsCsb[0] = 0;
@@ -1578,7 +1603,7 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
 	    TRACE( "substituting %s,%d -> %s,%d\n", debugstr_w(lf->lfFaceName), lf->lfCharSet,
                    debugstr_w(subst), (subst_charset != -1) ? subst_charset : lf->lfCharSet );
 	    if (subst_charset != -1)
-                TranslateCharsetInfo( (DWORD *)(INT_PTR)subst_charset, csi, TCI_SRCCHARSET );
+                translate_charset_info( (DWORD *)(INT_PTR)subst_charset, csi, TCI_SRCCHARSET );
             *orig_name = lf->lfFaceName;
 	}
 
@@ -1592,7 +1617,7 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
     if (!csi->fs.fsCsb[0])
     {
         INT acp = GetACP();
-        if (!TranslateCharsetInfo( (DWORD *)(INT_PTR)acp, csi, TCI_SRCCODEPAGE ))
+        if (!translate_charset_info( (DWORD *)(INT_PTR)acp, csi, TCI_SRCCODEPAGE ))
         {
             FIXME( "TCI failed on codepage %d\n", acp );
             csi->fs.fsCsb[0] = 0;
@@ -2609,7 +2634,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset *list)
     CHARSETINFO csi;
     int i;
 
-    if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET ) && csi.fs.fsCsb[0] != 0)
+    if (translate_charset_info( ULongToPtr(charset), &csi, TCI_SRCCHARSET ) && csi.fs.fsCsb[0] != 0)
     {
         list->mask    = csi.fs.fsCsb[0];
         list->charset = csi.ciCharset;
@@ -2623,7 +2648,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset *list)
 
         /* Set the current codepage's charset as the first element. */
         if (!is_complex_script_ansi_cp(acp) &&
-            TranslateCharsetInfo( (DWORD *)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE ) &&
+            translate_charset_info( (DWORD *)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE ) &&
             csi.fs.fsCsb[0] != 0)
         {
             list->mask    = csi.fs.fsCsb[0];
@@ -2640,7 +2665,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset *list)
             fs.fsCsb[0] = 1u << i;
             fs.fsCsb[1] = 0;
             if (fs.fsCsb[0] & mask) continue; /* skip, already added. */
-            if (!TranslateCharsetInfo( fs.fsCsb, &csi, TCI_SRCFONTSIG ))
+            if (!translate_charset_info( fs.fsCsb, &csi, TCI_SRCFONTSIG ))
                 continue; /* skip, this is an invalid fsCsb bit. */
             list->mask    = fs.fsCsb[0];
             list->charset = csi.ciCharset;
@@ -3605,7 +3630,7 @@ static void get_nearest_charset( const WCHAR *family_name, struct gdi_font_face 
 
     int i;
 
-    if (TranslateCharsetInfo( (DWORD*)(INT_PTR)GetACP(), csi, TCI_SRCCODEPAGE ))
+    if (translate_charset_info( (DWORD*)(INT_PTR)GetACP(), csi, TCI_SRCCODEPAGE ))
     {
         const struct gdi_font_link *font_link;
 
@@ -3618,7 +3643,7 @@ static void get_nearest_charset( const WCHAR *family_name, struct gdi_font_face 
         DWORD fs0 = 1u << i;
         if (face->fs.fsCsb[0] & fs0)
         {
-	    if (TranslateCharsetInfo(&fs0, csi, TCI_SRCFONTSIG)) return;
+	    if (translate_charset_info(&fs0, csi, TCI_SRCFONTSIG)) return;
             FIXME("TCI failing on %x\n", fs0);
 	}
     }
@@ -4200,7 +4225,7 @@ static void update_font_code_page( DC *dc, HANDLE font )
     }
 
     /* Hmm, nicely designed api this one! */
-    if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )
+    if (translate_charset_info( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )
         dc->attr->font_code_page = csi.ciACP;
     else {
         switch(charset) {
@@ -5731,49 +5756,6 @@ DWORD WINAPI NtGdiGetKerningPairsW( HDC hdc, DWORD count, KERNINGPAIR *kern_pair
     ret = dev->funcs->pGetKerningPairs( dev, count, kern_pair );
     release_dc_ptr( dc );
     return ret;
-}
-
-/*************************************************************************
- * TranslateCharsetInfo [GDI32.@]
- *
- * Fills a CHARSETINFO structure for a character set, code page, or
- * font. This allows making the correspondence between different labels
- * (character set, Windows, ANSI, and OEM codepages, and Unicode ranges)
- * of the same encoding.
- *
- * Only one codepage will be set in lpCs->fs. If TCI_SRCFONTSIG is used,
- * only one codepage should be set in *lpSrc.
- *
- * RETURNS
- *   TRUE on success, FALSE on failure.
- *
- */
-BOOL WINAPI TranslateCharsetInfo(
-  LPDWORD lpSrc, /* [in]
-       if flags == TCI_SRCFONTSIG: pointer to fsCsb of a FONTSIGNATURE
-       if flags == TCI_SRCCHARSET: a character set value
-       if flags == TCI_SRCCODEPAGE: a code page value
-		 */
-  LPCHARSETINFO lpCs, /* [out] structure to receive charset information */
-  DWORD flags /* [in] determines interpretation of lpSrc */)
-{
-    int index = 0;
-    switch (flags) {
-    case TCI_SRCFONTSIG:
-      while (index < MAXTCIINDEX && !(*lpSrc>>index & 0x0001)) index++;
-      break;
-    case TCI_SRCCODEPAGE:
-      while (index < MAXTCIINDEX && PtrToUlong(lpSrc) != FONT_tci[index].ciACP) index++;
-      break;
-    case TCI_SRCCHARSET:
-      while (index < MAXTCIINDEX && PtrToUlong(lpSrc) != FONT_tci[index].ciCharset) index++;
-      break;
-    default:
-      return FALSE;
-    }
-    if (index >= MAXTCIINDEX || FONT_tci[index].ciCharset == DEFAULT_CHARSET) return FALSE;
-    *lpCs = FONT_tci[index];
-    return TRUE;
 }
 
 /*************************************************************************

@@ -2307,3 +2307,85 @@ HANDLE WINAPI AddFontMemResourceEx( void *ptr, DWORD size, void *dv, DWORD *coun
 {
     return NtGdiAddFontMemResourceEx( ptr, size, dv, 0, count );
 }
+
+static const CHARSETINFO charset_info[] = {
+    /* ANSI */
+    { ANSI_CHARSET, 1252, {{0,0,0,0},{FS_LATIN1,0}} },
+    { EASTEUROPE_CHARSET, 1250, {{0,0,0,0},{FS_LATIN2,0}} },
+    { RUSSIAN_CHARSET, 1251, {{0,0,0,0},{FS_CYRILLIC,0}} },
+    { GREEK_CHARSET, 1253, {{0,0,0,0},{FS_GREEK,0}} },
+    { TURKISH_CHARSET, 1254, {{0,0,0,0},{FS_TURKISH,0}} },
+    { HEBREW_CHARSET, 1255, {{0,0,0,0},{FS_HEBREW,0}} },
+    { ARABIC_CHARSET, 1256, {{0,0,0,0},{FS_ARABIC,0}} },
+    { BALTIC_CHARSET, 1257, {{0,0,0,0},{FS_BALTIC,0}} },
+    { VIETNAMESE_CHARSET, 1258, {{0,0,0,0},{FS_VIETNAMESE,0}} },
+    /* reserved by ANSI */
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    /* ANSI and OEM */
+    { THAI_CHARSET, 874, {{0,0,0,0},{FS_THAI,0}} },
+    { SHIFTJIS_CHARSET, 932, {{0,0,0,0},{FS_JISJAPAN,0}} },
+    { GB2312_CHARSET, 936, {{0,0,0,0},{FS_CHINESESIMP,0}} },
+    { HANGEUL_CHARSET, 949, {{0,0,0,0},{FS_WANSUNG,0}} },
+    { CHINESEBIG5_CHARSET, 950, {{0,0,0,0},{FS_CHINESETRAD,0}} },
+    { JOHAB_CHARSET, 1361, {{0,0,0,0},{FS_JOHAB,0}} },
+    /* reserved for alternate ANSI and OEM */
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    /* reserved for system */
+    { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
+    { SYMBOL_CHARSET, CP_SYMBOL, {{0,0,0,0},{FS_SYMBOL,0}} }
+};
+
+/***********************************************************************
+ *           TranslateCharsetInfo    (GDI32.@)
+ *
+ * Fills a CHARSETINFO structure for a character set, code page, or
+ * font. This allows making the correspondence between different labels
+ * (character set, Windows, ANSI, and OEM codepages, and Unicode ranges)
+ * of the same encoding.
+ *
+ * Only one codepage will be set in cs->fs. If TCI_SRCFONTSIG is used,
+ * only one codepage should be set in *src.
+ *
+ * if flags == TCI_SRCFONTSIG: src is a pointer to fsCsb of a FONTSIGNATURE
+ * if flags == TCI_SRCCHARSET: src is a character set value
+ * if flags == TCI_SRCCODEPAGE: src is a code page value
+ */
+BOOL WINAPI TranslateCharsetInfo( DWORD *src, CHARSETINFO *cs, DWORD flags )
+{
+    int index = 0;
+
+    switch (flags)
+    {
+    case TCI_SRCFONTSIG:
+        while (index < ARRAY_SIZE(charset_info) && !(*src>>index & 0x0001)) index++;
+        break;
+    case TCI_SRCCODEPAGE:
+        while (index < ARRAY_SIZE(charset_info) && PtrToUlong(src) != charset_info[index].ciACP)
+            index++;
+        break;
+    case TCI_SRCCHARSET:
+        while (index < ARRAY_SIZE(charset_info) &&
+               PtrToUlong(src) != charset_info[index].ciCharset)
+            index++;
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (index >= ARRAY_SIZE(charset_info) || charset_info[index].ciCharset == DEFAULT_CHARSET) return FALSE;
+    *cs = charset_info[index];
+    return TRUE;
+}

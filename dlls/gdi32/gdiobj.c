@@ -452,7 +452,7 @@ static UINT get_default_charset( void )
 
     uACP = GetACP();
     csi.ciCharset = ANSI_CHARSET;
-    if ( !TranslateCharsetInfo( ULongToPtr(uACP), &csi, TCI_SRCCODEPAGE ) )
+    if ( !translate_charset_info( ULongToPtr(uACP), &csi, TCI_SRCCODEPAGE ) )
     {
         FIXME( "unhandled codepage %u - use ANSI_CHARSET for default stock objects\n", uACP );
         return ANSI_CHARSET;
