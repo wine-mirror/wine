@@ -4060,6 +4060,7 @@ services,"@%11%\ws2_32.dll,-4"
 winebus.inf,"@%12%\winebus.sys,-1"
 winehid.inf,"@%12%\winehid.sys,-1"
 wineusb.inf,"@%12%\wineusb.sys,-1"
+winexinput.inf,"@%12%\winexinput.sys,-1"
 
 [NlsFiles]
 c_037.nls

@@ -1,0 +1,8 @@
+MODULE        = winexinput.sys
+IMPORTS       = ntoskrnl
+EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = winexinput.rc
