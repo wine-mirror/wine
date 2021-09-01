@@ -1409,6 +1409,7 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
 
     v->type = t;
     v->effect = e;
+    v->u.shader.isinline = 1;
     set_variable_vtbl(v);
 
     if (!copy_name("$Anonymous", &v->name))
@@ -7008,7 +7009,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetShaderDesc(
     D3D10_SHADER_DESC shader_desc;
     HRESULT hr;
 
-    FIXME("iface %p, index %u, desc %p semi-stub.\n", iface, index, desc);
+    TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
 
     if (FAILED(hr = d3d10_get_shader_variable(v, index, &s)))
         return hr;
@@ -7017,6 +7018,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetShaderDesc(
     if (s->input_signature)
         desc->pInputSignature = ID3D10Blob_GetBufferPointer(s->input_signature);
     desc->SODecl = s->stream_output_declaration;
+    desc->IsInline = s->isinline;
     if (s->bytecode)
     {
         desc->pBytecode = ID3D10Blob_GetBufferPointer(s->bytecode);

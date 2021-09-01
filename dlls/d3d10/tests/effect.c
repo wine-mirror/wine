@@ -3671,8 +3671,8 @@ if (0)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = pdesc.pShaderVariable->lpVtbl->GetShaderDesc(pdesc.pShaderVariable, 0, &shaderdesc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine {
     ok(shaderdesc.IsInline, "Unexpected inline flag.\n");
+todo_wine {
     ok(shaderdesc.SODecl && !strcmp(shaderdesc.SODecl, "SV_POSITION.y"), "Unexpected stream output declaration %s.\n",
                 shaderdesc.SODecl);
 }
