@@ -1,4 +1,9 @@
 MODULE    = avicap32.dll
 IMPORTLIB = avicap32
+EXTRALIBS = -Wl,--subsystem,unixlib
 
-C_SRCS = avicap32_main.c
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	avicap32_main.c \
+	v4l.c

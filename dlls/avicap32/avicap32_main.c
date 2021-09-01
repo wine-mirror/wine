@@ -17,45 +17,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
-#include <stdio.h>
-#include <fcntl.h>
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#include <errno.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_ASM_TYPES_H
-# include <asm/types.h>
-#endif
-#ifdef HAVE_LINUX_VIDEODEV2_H
-# include <linux/videodev2.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "vfw.h"
-#include "winnls.h"
 #include "winternl.h"
 #include "wine/debug.h"
 
-#define CAP_DESC_MAX 32
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(avicap);
 
+static unixlib_handle_t unix_handle;
 
 /***********************************************************************
  *             capCreateCaptureWindowW   (AVICAP32.@)
@@ -88,81 +63,6 @@ HWND VFWAPI capCreateCaptureWindowA(LPCSTR lpszWindowName, DWORD dwStyle, INT x,
     return retW;
 }
 
-#ifdef HAVE_LINUX_VIDEODEV2_H
-
-static int xioctl(int fd, int request, void * arg)
-{
-   int r;
-
-   do r = ioctl (fd, request, arg);
-   while (-1 == r && EINTR == errno);
-
-   return r;
-}
-
-static BOOL query_video_device(int devnum, char *name, int namesize, char *version, int versionsize)
-{
-   int fd;
-   char device[16];
-   struct stat st;
-   struct v4l2_capability caps;
-
-   snprintf(device, sizeof(device), "/dev/video%i", devnum);
-
-   if (stat (device, &st) == -1) {
-      /* This is probably because the device does not exist */
-      WARN("%s: %s\n", device, strerror(errno));
-      return FALSE;
-   }
-
-   if (!S_ISCHR (st.st_mode)) {
-      ERR("%s: Not a device\n", device);
-      return FALSE;
-   }
-
-   fd = open(device, O_RDWR | O_NONBLOCK);
-   if (fd == -1) {
-      ERR("%s: Failed to open: %s\n", device, strerror(errno));
-      return FALSE;
-   }
-
-   memset(&caps, 0, sizeof(caps));
-   if (xioctl(fd, VIDIOC_QUERYCAP, &caps) != -1) {
-      BOOL isCaptureDevice;
-#ifdef V4L2_CAP_DEVICE_CAPS
-      if (caps.capabilities & V4L2_CAP_DEVICE_CAPS)
-         isCaptureDevice = caps.device_caps & V4L2_CAP_VIDEO_CAPTURE;
-      else
-#endif
-         isCaptureDevice = caps.capabilities & V4L2_CAP_VIDEO_CAPTURE;
-      if (isCaptureDevice) {
-         lstrcpynA(name, (char *)caps.card, namesize);
-         snprintf(version, versionsize, "%s v%u.%u.%u", (char *)caps.driver, (caps.version >> 16) & 0xFF,
-                             (caps.version >> 8) & 0xFF, caps.version & 0xFF);
-      }
-      close(fd);
-      return isCaptureDevice;
-   }
-
-   if (errno != EINVAL && errno != 515)
-/* errno 515 is used by some webcam drivers for unknown IOICTL command */
-      ERR("%s: Querying failed: %s\n", device, strerror(errno));
-   else ERR("%s: Querying failed: Not a V4L compatible device\n", device);
-
-   close(fd);
-   return FALSE;
-}
-
-#else /* HAVE_LINUX_VIDEODEV2_H */
-
-static BOOL query_video_device(int devnum, char *name, int namesize, char *version, int versionsize)
-{
-   ERR("Video 4 Linux support not enabled\n");
-   return FALSE;
-}
-
-#endif /* HAVE_LINUX_VIDEODEV2_H */
-
 /***********************************************************************
  *             capGetDriverDescriptionA   (AVICAP32.@)
  */
@@ -183,15 +83,30 @@ BOOL VFWAPI capGetDriverDescriptionA(WORD wDriverIndex, LPSTR lpszName,
 /***********************************************************************
  *             capGetDriverDescriptionW   (AVICAP32.@)
  */
-BOOL VFWAPI capGetDriverDescriptionW(WORD wDriverIndex, LPWSTR lpszName,
-                                     INT cbName, LPWSTR lpszVer, INT cbVer)
+BOOL VFWAPI capGetDriverDescriptionW(WORD index, WCHAR *name, int name_len, WCHAR *version, int version_len)
 {
-   char devname[CAP_DESC_MAX], devver[CAP_DESC_MAX];
+    struct get_device_desc_params params;
 
-   if (!query_video_device(wDriverIndex, devname, CAP_DESC_MAX, devver, CAP_DESC_MAX)) return FALSE;
+    params.index = index;
+    if (__wine_unix_call(unix_handle, unix_get_device_desc, &params))
+        return FALSE;
 
-   MultiByteToWideChar(CP_UNIXCP, 0, devname, -1, lpszName, cbName);
-   MultiByteToWideChar(CP_UNIXCP, 0, devver, -1, lpszVer, cbVer);
-   TRACE("Version: %s - Name: %s\n", debugstr_w(lpszVer), debugstr_w(lpszName));
-   return TRUE;
+    TRACE("Found device name %s, version %s.\n", debugstr_w(params.name), debugstr_w(params.version));
+    lstrcpynW(name, params.name, name_len);
+    lstrcpynW(version, params.version, version_len);
+    return TRUE;
+}
+
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
+{
+    switch (reason)
+    {
+        case DLL_PROCESS_ATTACH:
+            NtQueryVirtualMemory(GetCurrentProcess(), instance,
+                    MemoryWineUnixFuncs, &unix_handle, sizeof(unix_handle), NULL);
+            DisableThreadLibraryCalls(instance);
+            break;
+    }
+
+    return TRUE;
 }
