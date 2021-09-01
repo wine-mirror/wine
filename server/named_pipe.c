@@ -390,9 +390,7 @@ static void wake_message( struct pipe_message *message, data_size_t result )
     message->async = NULL;
     if (!async) return;
 
-    message->iosb->status = STATUS_SUCCESS;
-    message->iosb->result = result;
-    async_terminate( async, message->iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
+    async_request_complete( async, STATUS_SUCCESS, result, 0, NULL );
     release_object( async );
 }
 

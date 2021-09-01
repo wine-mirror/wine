@@ -385,16 +385,12 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
     irp->file = NULL;
     if (irp->async)
     {
-        struct iosb *iosb = irp->iosb;
+        void *out_data;
 
-        iosb->status = status;
-        iosb->result = result;
-        iosb->out_size = min( iosb->out_size, out_size );
-        if (iosb->out_size && !(iosb->out_data = memdup( out_data, iosb->out_size )))
-            iosb->out_size = 0;
-
-        if (result) status = STATUS_ALERTED;
-        async_terminate( irp->async, status );
+        out_size = min( irp->iosb->out_size, out_size );
+        if (out_size && !(out_data = memdup( out_data, out_size )))
+            out_size = 0;
+        async_request_complete( irp->async, status, result, out_size, out_data );
         release_object( irp->async );
         irp->async = NULL;
     }

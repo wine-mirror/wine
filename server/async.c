@@ -332,6 +332,35 @@ obj_handle_t async_handoff( struct async *async, int success, data_size_t *resul
     return async->wait_handle;
 }
 
+/* complete a request-based async with a pre-allocated buffer */
+void async_request_complete( struct async *async, unsigned int status, data_size_t result,
+                             data_size_t out_size, void *out_data )
+{
+    struct iosb *iosb = async_get_iosb( async );
+
+    /* the async may have already been canceled */
+    if (iosb->status != STATUS_PENDING)
+    {
+        release_object( iosb );
+        free( out_data );
+        return;
+    }
+
+    iosb->status = status;
+    iosb->result = result;
+    iosb->out_data = out_data;
+    iosb->out_size = out_size;
+
+    release_object( iosb );
+
+    /* if the result is nonzero or there is output data, the client needs to
+     * make an extra request to retrieve them; use STATUS_ALERTED to signal
+     * this case */
+    if (result || out_data)
+        status = STATUS_ALERTED;
+    async_terminate( async, status );
+}
+
 /* set the timeout of an async operation */
 void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status )
 {

@@ -976,7 +976,6 @@ static int console_flush( struct fd *fd, struct async *async )
 static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct screen_buffer *screen_buffer = get_fd_user( fd );
-    struct iosb *iosb;
 
     if (!screen_buffer->input || !screen_buffer->input->server)
     {
@@ -984,16 +983,8 @@ static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t p
         return 0;
     }
 
-    if (!queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_WRITE_FILE,
-                           screen_buffer->id, async, &screen_buffer->ioctl_q ))
-        return 0;
-
-    /* we can't use default async handling, because write result is not
-     * compatible with ioctl result */
-    iosb = async_get_iosb( async );
-    iosb->result = iosb->in_size;
-    release_object( iosb );
-    return 1;
+    return queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_WRITE_FILE,
+                             screen_buffer->id, async, &screen_buffer->ioctl_q );
 }
 
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -1498,36 +1489,28 @@ DECL_HANDLER(get_next_console_request)
 
     if (ioctl)
     {
+        struct async *async = ioctl->async;
         unsigned int status = req->status;
+
         if (status == STATUS_PENDING) status = STATUS_INVALID_PARAMETER;
-        if (ioctl->async)
+        if (async)
         {
-            iosb = async_get_iosb( ioctl->async );
+            iosb = async_get_iosb( async );
             if (iosb->status == STATUS_PENDING)
             {
-                iosb->status = status;
-                iosb->out_size = min( iosb->out_size, get_req_data_size() );
-                if (iosb->out_size)
-                {
-                    if ((iosb->out_data = memdup( get_req_data(), iosb->out_size )))
-                    {
-                        iosb->result = iosb->out_size;
-                    }
-                    else if (!status)
-                    {
-                        iosb->status = STATUS_NO_MEMORY;
-                        iosb->out_size = 0;
-                    }
-                }
-                if (iosb->result) status = STATUS_ALERTED;
+                data_size_t out_size = min( iosb->out_size, get_req_data_size() );
+                data_size_t result = ioctl->code == IOCTL_CONDRV_WRITE_FILE ? iosb->in_size : out_size;
+                void *out_data;
+
+                if (!out_size || (out_data = memdup( get_req_data(), out_size )))
+                    async_request_complete( async, status, result, out_size, out_data );
+                else
+                    async_terminate( async, STATUS_NO_MEMORY );
             }
-            else
-            {
-                release_object( ioctl->async );
-                ioctl->async = NULL;
-            }
+
+            release_object( async );
         }
-        console_host_ioctl_terminate( ioctl, status );
+        free( ioctl );
         if (iosb) release_object( iosb );
 
         if (req->read)
