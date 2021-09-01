@@ -112,13 +112,16 @@ static void async_satisfied( struct object *obj, struct wait_queue_entry *entry 
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );
 
+    /* we only return an async handle for asyncs created via create_request_async() */
+    assert( async->iosb );
+
     if (async->direct_result)
     {
         async_set_result( &async->obj, async->iosb->status, async->iosb->result );
         async->direct_result = 0;
     }
 
-    set_wait_status( entry, async->status );
+    set_wait_status( entry, async->iosb->status );
 
     /* close wait handle here to avoid extra server round trip */
     if (async->wait_handle)
@@ -398,6 +401,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
+        if (async->iosb) async->iosb->status = status;
 
         if (async->data.apc)
         {
