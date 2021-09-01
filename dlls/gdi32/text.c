@@ -738,12 +738,30 @@ static void text_metric_WtoA( const TEXTMETRICW *tmW, TEXTMETRICA *tmA )
     tmA->tmCharSet = tmW->tmCharSet;
 }
 
+static void text_metric_ex_WtoA(const NEWTEXTMETRICEXW *tmW, NEWTEXTMETRICEXA *tmA )
+{
+    text_metric_WtoA( (const TEXTMETRICW *)tmW, (LPTEXTMETRICA)tmA );
+    tmA->ntmTm.ntmFlags = tmW->ntmTm.ntmFlags;
+    tmA->ntmTm.ntmSizeEM = tmW->ntmTm.ntmSizeEM;
+    tmA->ntmTm.ntmCellHeight = tmW->ntmTm.ntmCellHeight;
+    tmA->ntmTm.ntmAvgWidth = tmW->ntmTm.ntmAvgWidth;
+    memcpy( &tmA->ntmFontSig, &tmW->ntmFontSig, sizeof(FONTSIGNATURE) );
+}
+
 static void logfont_AtoW( const LOGFONTA *fontA, LPLOGFONTW fontW )
 {
     memcpy( fontW, fontA, sizeof(LOGFONTA) - LF_FACESIZE );
     MultiByteToWideChar( CP_ACP, 0, fontA->lfFaceName, -1, fontW->lfFaceName,
                          LF_FACESIZE );
     fontW->lfFaceName[LF_FACESIZE - 1] = 0;
+}
+
+static void logfont_WtoA( const LOGFONTW *fontW, LPLOGFONTA fontA )
+{
+    memcpy( fontA, fontW, sizeof(LOGFONTA) - LF_FACESIZE );
+    WideCharToMultiByte( CP_ACP, 0, fontW->lfFaceName, -1, fontA->lfFaceName,
+                         LF_FACESIZE, NULL, NULL );
+    fontA->lfFaceName[LF_FACESIZE - 1] = 0;
 }
 
 static void logfontex_AtoW( const ENUMLOGFONTEXA *fontA, LPENUMLOGFONTEXW fontW )
@@ -759,6 +777,22 @@ static void logfontex_AtoW( const ENUMLOGFONTEXA *fontA, LPENUMLOGFONTEXW fontW 
     MultiByteToWideChar( CP_ACP, 0, (LPCSTR)fontA->elfScript, -1,
                          fontW->elfScript, LF_FACESIZE );
     fontW->elfScript[LF_FACESIZE - 1] = '\0';
+}
+
+
+static void logfontex_WtoA( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEXA fontA )
+{
+    logfont_WtoA( &fontW->elfLogFont, &fontA->elfLogFont );
+
+    WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
+			 (char *)fontA->elfFullName, LF_FULLFACESIZE, NULL, NULL );
+    fontA->elfFullName[LF_FULLFACESIZE - 1] = '\0';
+    WideCharToMultiByte( CP_ACP, 0, fontW->elfStyle, -1,
+			 (char *)fontA->elfStyle, LF_FACESIZE, NULL, NULL );
+    fontA->elfStyle[LF_FACESIZE - 1] = '\0';
+    WideCharToMultiByte( CP_ACP, 0, fontW->elfScript, -1,
+			 (char *)fontA->elfScript, LF_FACESIZE, NULL, NULL );
+    fontA->elfScript[LF_FACESIZE - 1] = '\0';
 }
 
 /***********************************************************************
@@ -2001,6 +2035,45 @@ BOOL WINAPI GdiRealizationInfo( HDC hdc, struct realization_info *info )
     info->cache_num = ri.cache_num;
     info->instance_id = ri.instance_id;
     return TRUE;
+}
+
+struct enum_proc_paramsWtoA
+{
+    LPARAM lparam;
+    FONTENUMPROCA proc;
+};
+
+static INT WINAPI enum_proc_WtoA( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                  DWORD type, LPARAM lparam )
+{
+    struct enum_proc_paramsWtoA *params = (struct enum_proc_paramsWtoA *)lparam;
+    ENUMLOGFONTEXA lfA;
+    NEWTEXTMETRICEXA tmA;
+
+    logfontex_WtoA( (const ENUMLOGFONTEXW *)lf, &lfA );
+    text_metric_ex_WtoA( (const NEWTEXTMETRICEXW *)tm, &tmA );
+    return params->proc( (const LOGFONTA *)&lfA, (const TEXTMETRICA *)&tmA, type, params->lparam );
+}
+
+/***********************************************************************
+ *              EnumFontFamiliesExA	(GDI32.@)
+ */
+INT WINAPI EnumFontFamiliesExA( HDC hdc, LOGFONTA *lf, FONTENUMPROCA efproc,
+                                LPARAM lparam, DWORD flags )
+{
+    struct enum_proc_paramsWtoA param;
+    LOGFONTW lfW, *plfW;
+
+    if (lf)
+    {
+        logfont_AtoW( lf, &lfW );
+        plfW = &lfW;
+    }
+    else plfW = NULL;
+
+    param.lparam = lparam;
+    param.proc   = efproc;
+    return EnumFontFamiliesExW( hdc, plfW, enum_proc_WtoA, (LPARAM)&param, flags );
 }
 
 /***********************************************************************

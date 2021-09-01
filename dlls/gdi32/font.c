@@ -201,7 +201,6 @@ struct font_enum
   LPLOGFONTW          lpLogFontParam;
   FONTENUMPROCW       lpEnumFunc;
   LPARAM              lpData;
-  BOOL                unicode;
   HDC                 hdc;
   INT                 retval;
 };
@@ -3991,89 +3990,6 @@ static void init_font_options(void)
 }
 
 
-static void FONT_LogFontAToW( const LOGFONTA *fontA, LPLOGFONTW fontW )
-{
-    memcpy(fontW, fontA, sizeof(LOGFONTA) - LF_FACESIZE);
-    MultiByteToWideChar(CP_ACP, 0, fontA->lfFaceName, -1, fontW->lfFaceName,
-			LF_FACESIZE);
-    fontW->lfFaceName[LF_FACESIZE-1] = 0;
-}
-
-static void FONT_LogFontWToA( const LOGFONTW *fontW, LPLOGFONTA fontA )
-{
-    memcpy(fontA, fontW, sizeof(LOGFONTA) - LF_FACESIZE);
-    WideCharToMultiByte(CP_ACP, 0, fontW->lfFaceName, -1, fontA->lfFaceName,
-			LF_FACESIZE, NULL, NULL);
-    fontA->lfFaceName[LF_FACESIZE-1] = 0;
-}
-
-static void FONT_EnumLogFontExWToA( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEXA fontA )
-{
-    FONT_LogFontWToA( &fontW->elfLogFont, &fontA->elfLogFont );
-
-    WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
-			 (LPSTR) fontA->elfFullName, LF_FULLFACESIZE, NULL, NULL );
-    fontA->elfFullName[LF_FULLFACESIZE-1] = '\0';
-    WideCharToMultiByte( CP_ACP, 0, fontW->elfStyle, -1,
-			 (LPSTR) fontA->elfStyle, LF_FACESIZE, NULL, NULL );
-    fontA->elfStyle[LF_FACESIZE-1] = '\0';
-    WideCharToMultiByte( CP_ACP, 0, fontW->elfScript, -1,
-			 (LPSTR) fontA->elfScript, LF_FACESIZE, NULL, NULL );
-    fontA->elfScript[LF_FACESIZE-1] = '\0';
-}
-
-/***********************************************************************
- *              TEXTMETRIC conversion functions.
- */
-static void FONT_TextMetricWToA(const TEXTMETRICW *ptmW, LPTEXTMETRICA ptmA )
-{
-    ptmA->tmHeight = ptmW->tmHeight;
-    ptmA->tmAscent = ptmW->tmAscent;
-    ptmA->tmDescent = ptmW->tmDescent;
-    ptmA->tmInternalLeading = ptmW->tmInternalLeading;
-    ptmA->tmExternalLeading = ptmW->tmExternalLeading;
-    ptmA->tmAveCharWidth = ptmW->tmAveCharWidth;
-    ptmA->tmMaxCharWidth = ptmW->tmMaxCharWidth;
-    ptmA->tmWeight = ptmW->tmWeight;
-    ptmA->tmOverhang = ptmW->tmOverhang;
-    ptmA->tmDigitizedAspectX = ptmW->tmDigitizedAspectX;
-    ptmA->tmDigitizedAspectY = ptmW->tmDigitizedAspectY;
-    ptmA->tmFirstChar = min(ptmW->tmFirstChar, 255);
-    if (ptmW->tmCharSet == SYMBOL_CHARSET)
-    {
-        ptmA->tmFirstChar = 0x1e;
-        ptmA->tmLastChar = 0xff;  /* win9x behaviour - we need the OS2 table data to calculate correctly */
-    }
-    else if (ptmW->tmPitchAndFamily & TMPF_TRUETYPE)
-    {
-        ptmA->tmFirstChar = ptmW->tmDefaultChar - 1;
-        ptmA->tmLastChar = min(ptmW->tmLastChar, 0xff);
-    }
-    else
-    {
-        ptmA->tmFirstChar = min(ptmW->tmFirstChar, 0xff);
-        ptmA->tmLastChar  = min(ptmW->tmLastChar,  0xff);
-    }
-    ptmA->tmDefaultChar = ptmW->tmDefaultChar;
-    ptmA->tmBreakChar = ptmW->tmBreakChar;
-    ptmA->tmItalic = ptmW->tmItalic;
-    ptmA->tmUnderlined = ptmW->tmUnderlined;
-    ptmA->tmStruckOut = ptmW->tmStruckOut;
-    ptmA->tmPitchAndFamily = ptmW->tmPitchAndFamily;
-    ptmA->tmCharSet = ptmW->tmCharSet;
-}
-
-
-static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRICEXA *ptmA )
-{
-    FONT_TextMetricWToA((const TEXTMETRICW *)ptmW, (LPTEXTMETRICA)ptmA);
-    ptmA->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
-    ptmA->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
-    ptmA->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
-    ptmA->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
-    memcpy(&ptmA->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
-}
-
 /* compute positions for text rendering, in device coords */
 static BOOL get_char_positions( DC *dc, const WCHAR *str, INT count, INT *dx, SIZE *size )
 {
@@ -4417,17 +4333,6 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
         pfe->lpLogFontParam->lfCharSet == plf->lfCharSet) &&
        (!(fType & RASTER_FONTTYPE) || GetDeviceCaps(pfe->hdc, TEXTCAPS) & TC_RA_ABLE) )
     {
-	/* convert font metrics */
-        ENUMLOGFONTEXA logfont;
-        NEWTEXTMETRICEXA tmA;
-
-        if (!pfe->unicode)
-        {
-            FONT_EnumLogFontExWToA( (const ENUMLOGFONTEXW *)plf, &logfont);
-            FONT_NewTextMetricExWToA( (const NEWTEXTMETRICEXW *)ptm, &tmA );
-            plf = (LOGFONTW *)&logfont.elfLogFont;
-            ptm = (TEXTMETRICW *)&tmA;
-        }
         ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
         pfe->retval = ret;
     }
@@ -4438,7 +4343,7 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
  *		FONT_EnumFontFamiliesEx
  */
 static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efproc,
-                                    LPARAM lParam, BOOL unicode )
+                                    LPARAM lParam )
 {
     INT ret = 0;
     DC *dc = get_dc_ptr( hDC );
@@ -4452,7 +4357,6 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efpro
         fe.lpLogFontParam = plf;
         fe.lpEnumFunc = efproc;
         fe.lpData = lParam;
-        fe.unicode = unicode;
         fe.hdc = hDC;
         fe.retval = 1;
         ret = physdev->funcs->pEnumFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
@@ -4468,26 +4372,7 @@ INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
                                     FONTENUMPROCW efproc,
                                     LPARAM lParam, DWORD dwFlags )
 {
-    return FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam, TRUE );
-}
-
-/***********************************************************************
- *              EnumFontFamiliesExA	(GDI32.@)
- */
-INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
-                                    FONTENUMPROCA efproc,
-                                    LPARAM lParam, DWORD dwFlags)
-{
-    LOGFONTW lfW, *plfW;
-
-    if (plf)
-    {
-        FONT_LogFontAToW( plf, &lfW );
-        plfW = &lfW;
-    }
-    else plfW = NULL;
-
-    return FONT_EnumFontFamiliesEx( hDC, plfW, (FONTENUMPROCW)efproc, lParam, FALSE );
+    return FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam );
 }
 
 
