@@ -248,6 +248,16 @@ PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf)
 }
 
 /***********************************************************************
+ *      MSSTYLES_GetThemeDPI
+ *
+ * Retrieves the DPI from a theme handle when it was opened
+ */
+UINT MSSTYLES_GetThemeDPI(PTHEME_CLASS tc)
+{
+    return tc->dpi;
+}
+
+/***********************************************************************
  *      MSSTYLES_GetActiveThemeIni
  *
  * Retrieve the ini file for the selected color/style

@@ -1030,7 +1030,6 @@ static void test_GetThemePartSize(void)
     ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
     hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#x.\n", hr);
-    todo_wine
     ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d.\n",
        size.cx, size.cy, size2.cx, size2.cy);
     ReleaseDC(hwnd, hdc);

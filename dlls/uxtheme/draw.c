@@ -172,7 +172,7 @@ static int imagefile_index_to_property(int index)
  *
  * Select the image to use
  */
-static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
+static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStateId,
                                            const RECT *pRect, BOOL glyph, int *imageDpi)
 {
     PTHEME_PROPERTY tp;
@@ -193,14 +193,15 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
 
     if(imageselecttype == IST_DPI) {
         int reqdpi = 0;
-        int screendpi = GetDeviceCaps(hdc, LOGPIXELSX);
+        int dpi = MSSTYLES_GetThemeDPI(hTheme);
         for (i = 7; i >= 1; i--)
         {
             reqdpi = 0;
             if (SUCCEEDED(GetThemeInt(hTheme, iPartId, iStateId, mindpi_index_to_property(i),
                                       &reqdpi)))
             {
-                if(reqdpi != 0 && screendpi >= reqdpi) {
+                if (reqdpi != 0 && dpi >= reqdpi)
+                {
                     TRACE("Using %d DPI, image %d\n", reqdpi, imagefile_index_to_property(i));
 
                     if (imageDpi)
@@ -269,9 +270,9 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
  *
  * Load image for part/state
  */
-static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
-                                 const RECT *pRect, BOOL glyph, HBITMAP *hBmp, RECT *bmpRect,
-                                 BOOL *hasImageAlpha, int *imageDpi)
+static HRESULT UXTHEME_LoadImage(HTHEME hTheme, int iPartId, int iStateId, const RECT *pRect,
+                                 BOOL glyph, HBITMAP *hBmp, RECT *bmpRect, BOOL *hasImageAlpha,
+                                 int *imageDpi)
 {
     int imagelayout = IL_HORIZONTAL;
     int imagecount = 1;
@@ -280,7 +281,7 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
     WCHAR szPath[MAX_PATH];
     PTHEME_PROPERTY tp;
 
-    tp = UXTHEME_SelectImage(hTheme, hdc, iPartId, iStateId, pRect, glyph, imageDpi);
+    tp = UXTHEME_SelectImage(hTheme, iPartId, iStateId, pRect, glyph, imageDpi);
     if(!tp) {
         FIXME("Couldn't determine image for part/state %d/%d, invalid theme?\n", iPartId, iStateId);
         return E_PROP_ID_UNSUPPORTED;
@@ -528,7 +529,7 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     POINT topleft;
     BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, TRUE, &bmpSrc, &rcSrc, &hasAlpha,
+    hr = UXTHEME_LoadImage(hTheme, iPartId, iStateId, pRect, TRUE, &bmpSrc, &rcSrc, &hasAlpha,
                            NULL);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
@@ -594,9 +595,8 @@ static HRESULT UXTHEME_DrawGlyph(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Used by GetThemePartSize and UXTHEME_DrawImageBackground
  */
-static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
-                                    int iStateId, RECT *prc, THEMESIZE eSize,
-                                    POINT *psz)
+static HRESULT get_image_part_size(HTHEME hTheme, int iPartId, int iStateId, RECT *prc,
+                                   THEMESIZE eSize, POINT *psz)
 {
     int imageDpi, dstDpi;
     HRESULT hr = S_OK;
@@ -604,7 +604,7 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
     RECT rcSrc;
     BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, prc, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
+    hr = UXTHEME_LoadImage(hTheme, iPartId, iStateId, prc, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
                            &imageDpi);
     if (FAILED(hr)) return hr;
 
@@ -627,8 +627,8 @@ static HRESULT get_image_part_size (HTHEME hTheme, HDC hdc, int iPartId,
                 {
                     /* Scale to DPI only if the destination DPI exceeds the source DPI by
                      * stretchMark percent */
-                    dstDpi = GetDeviceCaps(hdc, LOGPIXELSY);
-                    if (dstDpi && dstDpi != imageDpi && MulDiv(100, dstDpi, imageDpi) >= stretchMark + 100)
+                    dstDpi = MSSTYLES_GetThemeDPI(hTheme);
+                    if (dstDpi != imageDpi && MulDiv(100, dstDpi, imageDpi) >= stretchMark + 100)
                     {
                         srcSize.x = MulDiv(srcSize.x, dstDpi, imageDpi);
                         srcSize.y = MulDiv(srcSize.y, dstDpi, imageDpi);
@@ -707,7 +707,7 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     COLORREF transparentcolor = 0;
     BOOL hasAlpha;
 
-    hr = UXTHEME_LoadImage(hTheme, hdc, iPartId, iStateId, pRect, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
+    hr = UXTHEME_LoadImage(hTheme, iPartId, iStateId, pRect, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
                            NULL);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
@@ -731,7 +731,7 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     if(sizingtype == ST_TRUESIZE) {
         int valign = VA_CENTER, halign = HA_CENTER;
 
-        get_image_part_size (hTheme, hdc, iPartId, iStateId, pRect, TS_DRAW, &drawSize);
+        get_image_part_size(hTheme, iPartId, iStateId, pRect, TS_DRAW, &drawSize);
         GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_VALIGN, &valign);
         GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_HALIGN, &halign);
 
@@ -2072,7 +2072,7 @@ HRESULT WINAPI GetThemePartSize(HTHEME hTheme, HDC hdc, int iPartId,
     if (bgtype == BT_NONE)
         /* do nothing */;
     else if(bgtype == BT_IMAGEFILE)
-        hr = get_image_part_size (hTheme, hdc, iPartId, iStateId, prc, eSize, &size);
+        hr = get_image_part_size(hTheme, iPartId, iStateId, prc, eSize, &size);
     else if(bgtype == BT_BORDERFILL)
         hr = get_border_background_size (hTheme, iPartId, iStateId, eSize, &size);
     else {
@@ -2183,7 +2183,7 @@ BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME hTheme, int iPartId,
 
     if (bgtype != BT_IMAGEFILE) return FALSE;
 
-    if (FAILED(UXTHEME_LoadImage(hTheme, 0, iPartId, iStateId, &rect, FALSE, &bmpSrc, &rcSrc,
+    if (FAILED(UXTHEME_LoadImage(hTheme, iPartId, iStateId, &rect, FALSE, &bmpSrc, &rcSrc,
                                  &hasAlpha, NULL)))
         return FALSE;
 
