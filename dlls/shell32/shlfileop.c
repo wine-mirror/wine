@@ -819,9 +819,9 @@ static DWORD SHFindAttrW(LPCWSTR pName, BOOL fileOnly)
  *
  * SHNameTranslate HelperFunction for SHFileOperationA
  *
- * Translates a list of 0 terminated ASCII strings into Unicode. If *wString
+ * Translates a list of 0 terminated ANSI strings into Unicode. If *wString
  * is NULL, only the necessary size of the string is determined and returned,
- * otherwise the ASCII strings are copied into it and the buffer is increased
+ * otherwise the ANSI strings are copied into it and the buffer is increased
  * to point to the location after the final 0 termination char.
  */
 static DWORD SHNameTranslate(LPWSTR* wString, LPCWSTR* pWToFrom, BOOL more)

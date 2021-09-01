@@ -680,7 +680,7 @@ static HRESULT Stream_LoadLocation( IStream *stm,
  *
  *    0          Length of the block (4 bytes, usually 0x314)
  *    4          tag (dword)
- *    8          string data in ASCII
+ *    8          string data in ANSI
  *    8+0x104    string data in UNICODE
  *
  * In the original Win32 implementation the buffers are not initialized

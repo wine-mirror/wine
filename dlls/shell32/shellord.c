@@ -1,6 +1,6 @@
 /*
  * The parameters of many functions changes between different OS versions
- * (NT uses Unicode strings, 95 uses ASCII strings)
+ * (NT uses Unicode strings, 95 uses ANSI strings)
  *
  * Copyright 1997 Marcus Meissner
  *           1998 Jürgen Schmied
