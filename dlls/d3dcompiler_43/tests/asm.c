@@ -1726,7 +1726,7 @@ static void test_disassemble_shader(void)
 
     hr = D3DDisassemble(vs_2_0, 0, 0, NULL, &blob);
 todo_wine
-#if D3D_COMPILER_VERSION == 47
+#if D3D_COMPILER_VERSION >= 46
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 #else
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
