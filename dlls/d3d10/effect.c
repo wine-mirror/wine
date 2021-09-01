@@ -774,7 +774,7 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
             break;
 
         case D3D10_SVT_GEOMETRYSHADER:
-            if (v->type->flags & D3D10_EOT_FLAG_GS_SO)
+            if (v->u.shader.stream_output_declaration)
             {
                 struct d3d10_effect_so_decl so_decl;
 
