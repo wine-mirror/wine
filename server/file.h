@@ -229,6 +229,8 @@ extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_request_complete( struct async *async, unsigned int status, data_size_t result,
                                     data_size_t out_size, void *out_data );
+extern void async_request_complete_alloc( struct async *async, unsigned int status, data_size_t result,
+                                          data_size_t out_size, const void *out_data );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );
 extern struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key );
 extern void fd_copy_completion( struct fd *src, struct fd *dst );

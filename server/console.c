@@ -1500,12 +1500,7 @@ DECL_HANDLER(get_next_console_request)
             {
                 data_size_t out_size = min( iosb->out_size, get_req_data_size() );
                 data_size_t result = ioctl->code == IOCTL_CONDRV_WRITE_FILE ? iosb->in_size : out_size;
-                void *out_data;
-
-                if (!out_size || (out_data = memdup( get_req_data(), out_size )))
-                    async_request_complete( async, status, result, out_size, out_data );
-                else
-                    async_terminate( async, STATUS_NO_MEMORY );
+                async_request_complete_alloc( async, status, result, out_size, get_req_data() );
             }
 
             release_object( async );

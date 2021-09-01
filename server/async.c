@@ -361,6 +361,21 @@ void async_request_complete( struct async *async, unsigned int status, data_size
     async_terminate( async, status );
 }
 
+/* complete a request-based async */
+void async_request_complete_alloc( struct async *async, unsigned int status, data_size_t result,
+                                   data_size_t out_size, const void *out_data )
+{
+    void *out_data_copy = NULL;
+
+    if (out_size && !(out_data_copy = memdup( out_data, out_size )))
+    {
+        async_terminate( async, STATUS_NO_MEMORY );
+        return;
+    }
+
+    async_request_complete( async, status, result, out_size, out_data_copy );
+}
+
 /* set the timeout of an async operation */
 void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status )
 {

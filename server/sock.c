@@ -710,7 +710,6 @@ static void complete_async_accept( struct sock *sock, struct accept_req *req )
     else
     {
         obj_handle_t handle;
-        void *out_data;
 
         if (!(acceptsock = accept_socket( sock )))
         {
@@ -727,10 +726,7 @@ static void complete_async_accept( struct sock *sock, struct accept_req *req )
             return;
         }
 
-        if (!(out_data = malloc( sizeof(handle) ))) return;
-
-        memcpy( out_data, &handle, sizeof(handle) );
-        async_request_complete( req->async, STATUS_SUCCESS, 0, sizeof(handle), out_data );
+        async_request_complete_alloc( req->async, STATUS_SUCCESS, 0, sizeof(handle), &handle );
     }
 }
 
