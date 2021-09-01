@@ -765,12 +765,10 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
     {
         case D3D10_SVT_VERTEXSHADER:
             hr = ID3D10Device_CreateVertexShader(device, ptr, dxbc_size, &v->u.shader.shader.vs);
-            if (FAILED(hr)) return hr;
             break;
 
         case D3D10_SVT_PIXELSHADER:
             hr = ID3D10Device_CreatePixelShader(device, ptr, dxbc_size, &v->u.shader.shader.ps);
-            if (FAILED(hr)) return hr;
             break;
 
         case D3D10_SVT_GEOMETRYSHADER:
