@@ -1,5 +1,6 @@
 MODULE    = avicap32.dll
 IMPORTLIB = avicap32
+IMPORTS   = user32
 EXTRALIBS = -Wl,--subsystem,unixlib
 
 EXTRADLLFLAGS = -mno-cygwin

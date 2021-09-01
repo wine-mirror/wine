@@ -30,37 +30,74 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(avicap);
 
+static HINSTANCE avicap_instance;
 static unixlib_handle_t unix_handle;
+
+static const WCHAR class_name[] = L"wine_avicap_class";
+
+static LRESULT CALLBACK avicap_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        default:
+            if (msg >= WM_CAP_START && msg <= WM_CAP_END)
+                FIXME("Unhandled message %#x.\n", msg);
+            return DefWindowProcW(hwnd, msg, wparam, lparam);
+    }
+}
+
+static void register_class(void)
+{
+    WNDCLASSEXW class =
+    {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .lpfnWndProc = avicap_wndproc,
+        .hInstance = avicap_instance,
+        .hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW),
+        .hbrBackground = (HBRUSH)(COLOR_BTNFACE+1),
+        .lpszClassName = class_name,
+    };
+
+    if (!RegisterClassExW(&class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+        ERR("Failed to register class, error %u.\n", GetLastError());
+}
+
+static void unregister_class(void)
+{
+    if (!UnregisterClassW(class_name, avicap_instance) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
+        ERR("Failed to unregister class, error %u.\n", GetLastError());
+}
 
 /***********************************************************************
  *             capCreateCaptureWindowW   (AVICAP32.@)
  */
-HWND VFWAPI capCreateCaptureWindowW(LPCWSTR lpszWindowName, DWORD dwStyle, INT x,
-                                    INT y, INT nWidth, INT nHeight, HWND hWnd,
-                                    INT nID)
+HWND VFWAPI capCreateCaptureWindowW(const WCHAR *window_name, DWORD style,
+        int x, int y, int width, int height, HWND parent, int id)
 {
-    FIXME("(%s, %08x, %08x, %08x, %08x, %08x, %p, %08x): stub\n",
-           debugstr_w(lpszWindowName), dwStyle, x, y, nWidth, nHeight, hWnd, nID);
-    return 0;
+    TRACE("window_name %s, style %#x, x %d, y %d, width %d, height %d, parent %p, id %#x.\n",
+            debugstr_w(window_name), style, x, y, width, height, parent, id);
+
+    return CreateWindowW(class_name, window_name, style, x, y, width, height, parent, NULL, avicap_instance, NULL);
 }
 
 /***********************************************************************
  *             capCreateCaptureWindowA   (AVICAP32.@)
  */
-HWND VFWAPI capCreateCaptureWindowA(LPCSTR lpszWindowName, DWORD dwStyle, INT x,
-                                    INT y, INT nWidth, INT nHeight, HWND hWnd,
-                                    INT nID)
-{   UNICODE_STRING nameW;
-    HWND retW;
+HWND VFWAPI capCreateCaptureWindowA(const char *window_name, DWORD style,
+        int x, int y, int width, int height, HWND parent, int id)
+{
+    UNICODE_STRING nameW;
+    HWND window;
 
-    if (lpszWindowName) RtlCreateUnicodeStringFromAsciiz(&nameW, lpszWindowName);
-    else nameW.Buffer = NULL;
+    if (window_name)
+        RtlCreateUnicodeStringFromAsciiz(&nameW, window_name);
+    else
+        nameW.Buffer = NULL;
 
-    retW = capCreateCaptureWindowW(nameW.Buffer, dwStyle, x, y, nWidth, nHeight,
-                                   hWnd, nID);
+    window = capCreateCaptureWindowW(nameW.Buffer, style, x, y, width, height, parent, id);
     RtlFreeUnicodeString(&nameW);
 
-    return retW;
+    return window;
 }
 
 /***********************************************************************
@@ -105,6 +142,13 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
             NtQueryVirtualMemory(GetCurrentProcess(), instance,
                     MemoryWineUnixFuncs, &unix_handle, sizeof(unix_handle), NULL);
             DisableThreadLibraryCalls(instance);
+            register_class();
+            avicap_instance = instance;
+            break;
+
+        case DLL_PROCESS_DETACH:
+            if (!reserved)
+                unregister_class();
             break;
     }
 
