@@ -369,11 +369,6 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
         irp->user_ptr = 0;
 
         if (async) irp->iosb = async_get_iosb( async );
-        if (!irp->iosb && !(irp->iosb = create_iosb( NULL, 0, 0 )))
-        {
-            release_object( irp );
-            irp = NULL;
-        }
     }
     return irp;
 }
@@ -382,21 +377,22 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
                             const void *out_data, data_size_t out_size, data_size_t result )
 {
     struct device_file *file = irp->file;
-    struct iosb *iosb = irp->iosb;
 
     if (!file) return;  /* already finished */
-
-    iosb->status = status;
-    iosb->result = result;
-    iosb->out_size = min( iosb->out_size, out_size );
-    if (iosb->out_size && !(iosb->out_data = memdup( out_data, iosb->out_size )))
-        iosb->out_size = 0;
 
     /* remove it from the device queue */
     list_remove( &irp->dev_entry );
     irp->file = NULL;
     if (irp->async)
     {
+        struct iosb *iosb = irp->iosb;
+
+        iosb->status = status;
+        iosb->result = result;
+        iosb->out_size = min( iosb->out_size, out_size );
+        if (iosb->out_size && !(iosb->out_data = memdup( out_data, iosb->out_size )))
+            iosb->out_size = 0;
+
         if (result) status = STATUS_ALERTED;
         async_terminate( irp->async, status );
         release_object( irp->async );
@@ -993,15 +989,21 @@ DECL_HANDLER(get_next_device_request)
         reply->client_tid    = get_thread_id( thread );
 
         iosb = irp->iosb;
-        reply->in_size = iosb->in_size;
-        if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
+        if (iosb)
+            reply->in_size = iosb->in_size;
+
+        if (iosb && iosb->in_size > get_reply_max_size())
+            set_error( STATUS_BUFFER_OVERFLOW );
         else if (!irp->file || (reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
             if (fill_irp_params( manager, irp, &reply->params ))
             {
-                set_reply_data_ptr( iosb->in_data, iosb->in_size );
-                iosb->in_data = NULL;
-                iosb->in_size = 0;
+                if (iosb)
+                {
+                    set_reply_data_ptr( iosb->in_data, iosb->in_size );
+                    iosb->in_data = NULL;
+                    iosb->in_size = 0;
+                }
                 list_remove( &irp->mgr_entry );
                 list_init( &irp->mgr_entry );
                 /* we already own the object if it's only on manager queue */

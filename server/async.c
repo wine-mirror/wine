@@ -282,32 +282,6 @@ void set_async_pending( struct async *async, int signal )
     }
 }
 
-/* create an async associated with iosb for async-based requests
- * returned async must be passed to async_handoff */
-struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data )
-{
-    struct async *async;
-    struct iosb *iosb;
-
-    if (!(iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
-        return NULL;
-
-    async = create_async( fd, current, data, iosb );
-    release_object( iosb );
-    if (async)
-    {
-        if (!(async->wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
-        {
-            release_object( async );
-            return NULL;
-        }
-        async->pending       = 0;
-        async->direct_result = 1;
-        async->comp_flags    = comp_flags;
-    }
-    return async;
-}
-
 /* return async object status and wait handle to client */
 obj_handle_t async_handoff( struct async *async, int success, data_size_t *result, int force_blocking )
 {
@@ -536,7 +510,7 @@ static void iosb_destroy( struct object *obj )
 }
 
 /* allocate iosb struct */
-struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t out_size )
+static struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t out_size )
 {
     struct iosb *iosb;
 
@@ -556,6 +530,32 @@ struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t 
     }
 
     return iosb;
+}
+
+/* create an async associated with iosb for async-based requests
+ * returned async must be passed to async_handoff */
+struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data )
+{
+    struct async *async;
+    struct iosb *iosb;
+
+    if (!(iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
+        return NULL;
+
+    async = create_async( fd, current, data, iosb );
+    release_object( iosb );
+    if (async)
+    {
+        if (!(async->wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
+        {
+            release_object( async );
+            return NULL;
+        }
+        async->pending       = 0;
+        async->direct_result = 1;
+        async->comp_flags    = comp_flags;
+    }
+    return async;
 }
 
 struct iosb *async_get_iosb( struct async *async )
