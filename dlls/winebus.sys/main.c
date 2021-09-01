@@ -226,7 +226,7 @@ static WCHAR *get_device_id(DEVICE_OBJECT *device)
     return dst;
 }
 
-static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
+static WCHAR *get_hardware_ids(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     WCHAR *dst;
@@ -235,6 +235,24 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
     {
         strcpyW(dst, ext->busid);
         dst[strlenW(dst) + 1] = 0;
+    }
+
+    return dst;
+}
+
+static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
+{
+    static const WCHAR hid_compat[] =
+    {
+        'W','I','N','E','B','U','S','\\','W','I','N','E','_','C','O','M','P','_','H','I','D',0
+    };
+    DWORD size = sizeof(hid_compat);
+    WCHAR *dst;
+
+    if ((dst = ExAllocatePool(PagedPool, size + sizeof(WCHAR))))
+    {
+        memcpy(dst, hid_compat, sizeof(hid_compat));
+        dst[size / sizeof(WCHAR)] = 0;
     }
 
     return dst;
@@ -444,7 +462,7 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
     {
         case BusQueryHardwareIDs:
             TRACE("BusQueryHardwareIDs\n");
-            irp->IoStatus.Information = (ULONG_PTR)get_compatible_ids(device);
+            irp->IoStatus.Information = (ULONG_PTR)get_hardware_ids(device);
             break;
         case BusQueryCompatibleIDs:
             TRACE("BusQueryCompatibleIDs\n");
