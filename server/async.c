@@ -156,8 +156,6 @@ static void async_destroy( struct object *obj )
 /* notifies client thread of new status of its async request */
 void async_terminate( struct async *async, unsigned int status )
 {
-    assert( status != STATUS_PENDING );
-
     if (async->terminated) return;
 
     async->terminated = 1;

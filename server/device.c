@@ -386,7 +386,6 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
 
     if (!file) return;  /* already finished */
 
-    /* FIXME: handle the STATUS_PENDING case */
     iosb->status = status;
     iosb->result = result;
     iosb->out_size = min( iosb->out_size, out_size );
