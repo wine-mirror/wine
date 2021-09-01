@@ -638,7 +638,7 @@ static ULONG WINAPI video_stream_get_service_Release(IMFGetService *iface)
     return IMFStreamSink_Release(&stream->IMFStreamSink_iface);
 }
 
-static HRESULT WINAPI video_stream_get_service(struct video_stream *stream, REFGUID service, REFIID riid, void **obj)
+static HRESULT video_stream_get_service(struct video_stream *stream, REFGUID service, REFIID riid, void **obj)
 {
     HRESULT hr = S_OK;
 
