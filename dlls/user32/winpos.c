@@ -1285,6 +1285,47 @@ UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
 }
 
 
+static RECT get_maximized_work_rect( HWND hwnd )
+{
+    RECT work_rect = { 0 };
+
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_MINIMIZE | WS_MAXIMIZE)) == WS_MAXIMIZE)
+    {
+        if (!get_work_rect( hwnd, &work_rect ))
+            work_rect = get_primary_monitor_rect();
+    }
+    return work_rect;
+}
+
+
+/*******************************************************************
+ *           update_maximized_pos
+ *
+ * For top level windows covering the work area, we might have to
+ * "forget" the maximized position. Windows presumably does this
+ * to avoid situations where the border style changes, which would
+ * lead the window to be outside the screen, or the window gets
+ * reloaded on a different screen, and the "saved" position no
+ * longer applies to it (despite being maximized).
+ *
+ * Some applications (e.g. Imperiums: Greek Wars) depend on this.
+ */
+static void update_maximized_pos( WND *wnd, RECT *work_rect )
+{
+    if (wnd->parent && wnd->parent != GetDesktopWindow())
+        return;
+
+    if (wnd->dwStyle & WS_MAXIMIZE)
+    {
+        if (wnd->window_rect.left  <= work_rect->left  && wnd->window_rect.top    <= work_rect->top &&
+            wnd->window_rect.right >= work_rect->right && wnd->window_rect.bottom >= work_rect->bottom)
+            wnd->max_pos.x = wnd->max_pos.y = -1;
+    }
+    else
+        wnd->max_pos.x = wnd->max_pos.y = -1;
+}
+
+
 /***********************************************************************
  *		GetWindowPlacement (USER32.@)
  *
@@ -1293,6 +1334,7 @@ UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
  */
 BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
 {
+    RECT work_rect = get_maximized_work_rect( hwnd );
     WND *pWnd = WIN_GetPtr( hwnd );
 
     if (!pWnd) return FALSE;
@@ -1350,6 +1392,7 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     {
         pWnd->normal_rect = pWnd->window_rect;
     }
+    update_maximized_pos( pWnd, &work_rect );
 
     wndpl->length  = sizeof(*wndpl);
     if( pWnd->dwStyle & WS_MINIMIZE )
@@ -1421,6 +1464,7 @@ static void make_point_onscreen( POINT *pt )
 static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT flags )
 {
     DWORD style;
+    RECT work_rect = get_maximized_work_rect( hwnd );
     WND *pWnd = WIN_GetPtr( hwnd );
     WINDOWPLACEMENT wp = *wndpl;
 
@@ -1438,7 +1482,11 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     if (!pWnd || pWnd == WND_OTHER_PROCESS || pWnd == WND_DESKTOP) return FALSE;
 
     if (flags & PLACE_MIN) pWnd->min_pos = point_thread_to_win_dpi( hwnd, wp.ptMinPosition );
-    if (flags & PLACE_MAX) pWnd->max_pos = point_thread_to_win_dpi( hwnd, wp.ptMaxPosition );
+    if (flags & PLACE_MAX)
+    {
+        pWnd->max_pos = point_thread_to_win_dpi( hwnd, wp.ptMaxPosition );
+        update_maximized_pos( pWnd, &work_rect );
+    }
     if (flags & PLACE_RECT) pWnd->normal_rect = rect_thread_to_win_dpi( hwnd, wp.rcNormalPosition );
 
     style = pWnd->dwStyle;
