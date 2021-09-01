@@ -763,16 +763,20 @@ static int pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigne
     return 0;
 }
 
-static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
+static void message_queue_read( struct pipe_end *pipe_end, struct async *async )
 {
+    struct iosb *iosb = async_get_iosb( async );
+    unsigned int status = STATUS_SUCCESS;
     struct pipe_message *message;
+    data_size_t out_size;
 
     if (pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_READ)
     {
         message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
-        iosb->out_size = min( iosb->out_size, message->iosb->in_size - message->read_pos );
-        iosb->status = message->read_pos + iosb->out_size < message->iosb->in_size
-            ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
+        out_size = min( iosb->out_size, message->iosb->in_size - message->read_pos );
+
+        if (message->read_pos + out_size < message->iosb->in_size)
+            status = STATUS_BUFFER_OVERFLOW;
     }
     else
     {
@@ -782,14 +786,13 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
             avail += message->iosb->in_size - message->read_pos;
             if (avail >= iosb->out_size) break;
         }
-        iosb->out_size = min( iosb->out_size, avail );
-        iosb->status = STATUS_SUCCESS;
+        out_size = min( iosb->out_size, avail );
     }
 
     message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
     if (!message->read_pos && message->iosb->in_size == iosb->out_size) /* fast path */
     {
-        iosb->out_data = message->iosb->in_data;
+        async_request_complete( async, status, out_size, out_size, message->iosb->in_data );
         message->iosb->in_data = NULL;
         wake_message( message, message->iosb->in_size );
         free_message( message );
@@ -799,17 +802,17 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
         data_size_t write_pos = 0, writing;
         char *buf = NULL;
 
-        if (iosb->out_size && !(buf = iosb->out_data = malloc( iosb->out_size )))
+        if (out_size && !(buf = malloc( out_size )))
         {
-            iosb->out_size = 0;
-            iosb->status = STATUS_NO_MEMORY;
+            async_terminate( async, STATUS_NO_MEMORY );
+            release_object( iosb );
             return;
         }
 
         do
         {
             message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
-            writing = min( iosb->out_size - write_pos, message->iosb->in_size - message->read_pos );
+            writing = min( out_size - write_pos, message->iosb->in_size - message->read_pos );
             if (writing) memcpy( buf + write_pos, (const char *)message->iosb->in_data + message->read_pos, writing );
             write_pos += writing;
             message->read_pos += writing;
@@ -818,9 +821,12 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
                 wake_message(message, message->iosb->in_size);
                 free_message(message);
             }
-        } while (write_pos < iosb->out_size);
+        } while (write_pos < out_size);
+
+        async_request_complete( async, status, out_size, out_size, buf );
     }
-    iosb->result = iosb->out_size;
+
+    release_object( iosb );
 }
 
 /* We call async_terminate in our reselect implementation, which causes recursive reselect.
@@ -832,16 +838,12 @@ static void reselect_write_queue( struct pipe_end *pipe_end );
 static void reselect_read_queue( struct pipe_end *pipe_end, int reselect_write )
 {
     struct async *async;
-    struct iosb *iosb;
 
     ignore_reselect = 1;
     while (!list_empty( &pipe_end->message_queue ) && (async = find_pending_async( &pipe_end->read_q )))
     {
-        iosb = async_get_iosb( async );
-        message_queue_read( pipe_end, iosb );
-        async_terminate( async, iosb->result ? STATUS_ALERTED : iosb->status );
+        message_queue_read( pipe_end, async );
         release_object( async );
-        release_object( iosb );
         reselect_write = 1;
     }
     ignore_reselect = 0;
