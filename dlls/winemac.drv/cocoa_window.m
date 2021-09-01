@@ -491,6 +491,54 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return YES;
     }
 
+    - (BOOL) wantsUpdateLayer
+    {
+        return YES /*!_everHadGLContext*/;
+    }
+
+    - (void) updateLayer
+    {
+        WineWindow* window = (WineWindow*)[self window];
+        CGImageRef image = NULL;
+        CGRect imageRect;
+        CALayer* layer = [self layer];
+
+        if ([window contentView] != self)
+            return;
+
+        if (!window.surface || !window.surface_mutex)
+            return;
+
+        pthread_mutex_lock(window.surface_mutex);
+        if (get_surface_blit_rects(window.surface, NULL, NULL))
+        {
+            imageRect = layer.bounds;
+            imageRect.origin.x *= layer.contentsScale;
+            imageRect.origin.y *= layer.contentsScale;
+            imageRect.size.width *= layer.contentsScale;
+            imageRect.size.height *= layer.contentsScale;
+            image = create_surface_image(window.surface, &imageRect, FALSE, window.colorKeyed,
+                                         window.colorKeyRed, window.colorKeyGreen, window.colorKeyBlue);
+        }
+        pthread_mutex_unlock(window.surface_mutex);
+
+        if (image)
+        {
+            layer.contents = (id)image;
+            CFRelease(image);
+            [window windowDidDrawContent];
+
+            // If the window may be transparent, then we have to invalidate the
+            // shadow every time we draw.  Also, if this is the first time we've
+            // drawn since changing from transparent to opaque.
+            if (window.colorKeyed || window.usePerPixelAlpha || window.shapeChangedSinceLastDraw)
+            {
+                window.shapeChangedSinceLastDraw = FALSE;
+                [window invalidateShadow];
+            }
+        }
+    }
+
     - (void) viewWillDraw
     {
         [super viewWillDraw];
@@ -521,11 +569,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             const CGRect* rects;
             int count;
 
-            if (get_surface_blit_rects(window.surface, &rects, &count) && count)
+            if (get_surface_blit_rects(window.surface, &rects, &count))
             {
                 CGRect dirtyRect = cgrect_win_from_mac(NSRectToCGRect(rect));
+                NSAffineTransform* xform = [NSAffineTransform transform];
                 CGContextRef context;
                 int i;
+
+                [xform translateXBy:0.0 yBy:self.bounds.size.height];
+                [xform scaleXBy:1.0 yBy:-1.0];
+                [xform concat];
 
                 context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
                 CGContextSetBlendMode(context, kCGBlendModeCopy);
@@ -537,25 +590,15 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     CGImageRef image;
 
                     imageRect = CGRectIntersection(rects[i], dirtyRect);
-                    image = create_surface_image(window.surface, &imageRect, FALSE);
+                    image = create_surface_image(window.surface, &imageRect, FALSE, window.colorKeyed,
+                                                 window.colorKeyRed, window.colorKeyGreen, window.colorKeyBlue);
 
                     if (image)
                     {
-                        if (window.colorKeyed)
-                        {
-                            CGImageRef maskedImage;
-                            CGFloat components[] = { window.colorKeyRed - 0.5, window.colorKeyRed + 0.5,
-                                                     window.colorKeyGreen - 0.5, window.colorKeyGreen + 0.5,
-                                                     window.colorKeyBlue - 0.5, window.colorKeyBlue + 0.5 };
-                            maskedImage = CGImageCreateWithMaskingColors(image, components);
-                            if (maskedImage)
-                            {
-                                CGImageRelease(image);
-                                image = maskedImage;
-                            }
-                        }
-
-                        CGContextDrawImage(context, cgrect_mac_from_win(imageRect), image);
+                        // Account for the flipped coordinate system.
+                        imageRect = cgrect_mac_from_win(imageRect);
+                        imageRect.origin.y = self.bounds.size.height - imageRect.origin.y - imageRect.size.height;
+                        CGContextDrawImage(context, imageRect, image);
 
                         CGImageRelease(image);
                     }
@@ -708,6 +751,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self updateGLContexts];
 
         _retinaMode = !!mode;
+        [self layer].contentsScale = mode ? 2.0 : 1.0;
+        [self layer].minificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
+        [self layer].magnificationFilter = mode ? kCAFilterLinear : kCAFilterNearest;
         [super setRetinaMode:mode];
     }
 
@@ -1028,6 +1074,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if (!contentView)
             return nil;
         [contentView setWantsLayer:YES];
+        [contentView layer].minificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
+        [contentView layer].magnificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
+        [contentView layer].contentsScale = retina_on ? 2.0 : 1.0;
         [contentView setAutoresizesSubviews:NO];
 
         /* We use tracking areas in addition to setAcceptsMouseMovedEvents:YES
@@ -3597,6 +3646,9 @@ macdrv_view macdrv_create_view(CGRect rect)
 
         view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(cgrect_mac_from_win(rect))];
         [view setWantsLayer:YES];
+        [view layer].minificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
+        [view layer].magnificationFilter = retina_on ? kCAFilterLinear : kCAFilterNearest;
+        [view layer].contentsScale = retina_on ? 2.0 : 1.0;
         [view setAutoresizesSubviews:NO];
         [view setAutoresizingMask:NSViewNotSizable];
         [view setHidden:YES];
