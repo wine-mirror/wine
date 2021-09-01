@@ -390,14 +390,11 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
 
     assert( async->terminated );  /* it must have been woken up if we get a result */
 
-    if (status == STATUS_PENDING)  /* restart it */
+    if (async->alerted && status == STATUS_PENDING)  /* restart it */
     {
-        if (async->alerted)
-        {
-            async->terminated = 0;
-            async->alerted = 0;
-            async_reselect( async );
-        }
+        async->terminated = 0;
+        async->alerted = 0;
+        async_reselect( async );
     }
     else
     {
