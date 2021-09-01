@@ -34,6 +34,7 @@
 #include "wine/test.h"
 
 static HTHEME  (WINAPI * pOpenThemeDataEx)(HWND, LPCWSTR, DWORD);
+static HTHEME (WINAPI *pOpenThemeDataForDpi)(HWND, LPCWSTR, UINT);
 static HPAINTBUFFER (WINAPI *pBeginBufferedPaint)(HDC, const RECT *, BP_BUFFERFORMAT, BP_PAINTPARAMS *, HDC *);
 static HRESULT (WINAPI *pBufferedPaintClear)(HPAINTBUFFER, const RECT *);
 static HRESULT (WINAPI *pEndBufferedPaint)(HPAINTBUFFER, BOOL);
@@ -79,6 +80,7 @@ static void init_funcs(void)
     GET_PROC(uxtheme, GetBufferedPaintTargetDC)
     GET_PROC(uxtheme, GetBufferedPaintTargetRect)
     GET_PROC(uxtheme, OpenThemeDataEx)
+    GET_PROC(uxtheme, OpenThemeDataForDpi)
 
     GET_PROC(user32, DisplayConfigGetDeviceInfo)
     GET_PROC(user32, DisplayConfigSetDeviceInfo)
@@ -642,6 +644,34 @@ static void test_OpenThemeDataEx(void)
     DestroyWindow(hWnd);
 }
 
+static void test_OpenThemeDataForDpi(void)
+{
+    BOOL is_theme_active;
+    HTHEME htheme;
+
+    if (!pOpenThemeDataForDpi)
+    {
+        win_skip("OpenThemeDataForDpi is unavailable.\n");
+        return;
+    }
+
+    is_theme_active = IsThemeActive();
+    SetLastError(0xdeadbeef);
+    htheme = OpenThemeDataForDpi(NULL, WC_BUTTONW, 96);
+    if (is_theme_active)
+    {
+        ok(!!htheme, "Got a NULL handle.\n");
+        ok(GetLastError() == NO_ERROR, "Expected error %u, got %u.\n", NO_ERROR, GetLastError());
+        CloseThemeData(htheme);
+    }
+    else
+    {
+        ok(!htheme, "Got a non-NULL handle.\n");
+        ok(GetLastError() == E_PROP_ID_UNSUPPORTED, "Expected error %u, got %u.\n",
+           E_PROP_ID_UNSUPPORTED, GetLastError());
+    }
+}
+
 static void test_GetCurrentThemeName(void)
 {
     BOOL    bThemeActive;
@@ -1084,6 +1114,7 @@ START_TEST(system)
     test_SetWindowTheme();
     test_OpenThemeData();
     test_OpenThemeDataEx();
+    test_OpenThemeDataForDpi();
     test_GetCurrentThemeName();
     test_GetThemePartSize();
     test_CloseThemeData();

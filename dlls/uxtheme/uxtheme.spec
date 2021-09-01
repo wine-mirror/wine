@@ -106,6 +106,7 @@
 @ stdcall IsThemeDialogTextureEnabled(ptr)
 @ stdcall IsThemePartDefined(ptr long long)
 @ stdcall OpenThemeData(ptr wstr)
+@ stdcall OpenThemeDataForDpi(ptr wstr long)
 @ stdcall SetThemeAppProperties(long)
 @ stdcall SetWindowTheme(ptr wstr wstr)
 @ stdcall SetWindowThemeAttribute(ptr long ptr long)

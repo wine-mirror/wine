@@ -53,6 +53,7 @@ typedef struct _THEME_CLASS {
     struct _THEME_FILE* tf;
     WCHAR szAppName[MAX_THEME_APP_NAME];
     WCHAR szClassName[MAX_THEME_CLASS_NAME];
+    UINT dpi;
     PTHEME_PARTSTATE partstate;
     struct _THEME_CLASS *overrides;
 
@@ -87,7 +88,7 @@ typedef struct _UXINI_FILE *PUXINI_FILE;
 HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWSTR pszSizeName, PTHEME_FILE *tf) DECLSPEC_HIDDEN;
 void MSSTYLES_CloseThemeFile(PTHEME_FILE tf) DECLSPEC_HIDDEN;
 HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf, BOOL setMetrics) DECLSPEC_HIDDEN;
-PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList) DECLSPEC_HIDDEN;
+PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, UINT dpi) DECLSPEC_HIDDEN;
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc) DECLSPEC_HIDDEN;
 BOOL MSSTYLES_LookupProperty(LPCWSTR pszPropertyName, int *dwPrimitive, int *dwId) DECLSPEC_HIDDEN;
 BOOL MSSTYLES_LookupEnum(LPCWSTR pszValueName, int dwEnum, int *dwValue) DECLSPEC_HIDDEN;

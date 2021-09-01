@@ -971,8 +971,9 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
  *     pszAppName          Application name, for theme styles specific
  *                         to a particular application
  *     pszClassList        List of requested classes, semicolon delimited
+ *     dpi                 DPI for theme parts
  */
-PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
+PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, UINT dpi)
 {
     PTHEME_CLASS cls = NULL;
     WCHAR szClassName[MAX_THEME_CLASS_NAME];
@@ -1004,6 +1005,7 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
         TRACE("Opened app %s, class %s from list %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName), debugstr_w(pszClassList));
 	cls->tf = tfActiveTheme;
 	cls->tf->dwRefCount++;
+        cls->dpi = dpi;
     }
     return cls;
 }

@@ -617,10 +617,7 @@ static LPWSTR UXTHEME_GetWindowProperty(HWND hwnd, ATOM aProp, LPWSTR pszBuffer,
     return NULL;
 }
 
-/***********************************************************************
- *      OpenThemeDataEx                                     (UXTHEME.61)
- */
-HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
+static HTHEME open_theme_data(HWND hwnd, LPCWSTR pszClassList, DWORD flags, UINT dpi)
 {
     WCHAR szAppBuff[256];
     WCHAR szClassBuff[256];
@@ -647,11 +644,11 @@ HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
             pszUseClassList = pszClassList;
 
         if (pszUseClassList)
-            hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
+            hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList, dpi);
 
         /* Fall back to default class if the specified subclass is not found */
         if (!hTheme)
-            hTheme = MSSTYLES_OpenThemeClass(NULL, pszUseClassList);
+            hTheme = MSSTYLES_OpenThemeClass(NULL, pszUseClassList, dpi);
     }
     if(IsWindow(hwnd))
         SetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atWindowTheme), hTheme);
@@ -659,6 +656,28 @@ HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
 
     SetLastError(hTheme ? ERROR_SUCCESS : E_PROP_ID_UNSUPPORTED);
     return hTheme;
+}
+
+/***********************************************************************
+ *      OpenThemeDataEx                                     (UXTHEME.61)
+ */
+HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
+{
+    UINT dpi;
+
+    dpi = GetDpiForWindow(hwnd);
+    if (!dpi)
+        dpi = 96;
+
+    return open_theme_data(hwnd, pszClassList, flags, dpi);
+}
+
+/***********************************************************************
+ *      OpenThemeDataForDpi                                 (UXTHEME.@)
+ */
+HTHEME WINAPI OpenThemeDataForDpi(HWND hwnd, LPCWSTR class_list, UINT dpi)
+{
+    return open_theme_data(hwnd, class_list, 0, dpi);
 }
 
 /***********************************************************************
