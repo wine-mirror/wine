@@ -550,6 +550,7 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
 
     case DW_FORM_udata:
         attr->u.uvalue = dwarf2_get_leb128_as_unsigned(data, NULL);
+        TRACE("udata<0x%lx>\n", attr->u.uvalue);
         break;
 
     case DW_FORM_string:
@@ -567,21 +568,25 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         
     case DW_FORM_block:
         attr->u.block.size = dwarf2_get_leb128_as_unsigned(data, &attr->u.block.ptr);
+        TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
         break;
 
     case DW_FORM_block1:
         attr->u.block.size = dwarf2_get_byte(data);
         attr->u.block.ptr  = data + 1;
+        TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
         break;
 
     case DW_FORM_block2:
         attr->u.block.size = dwarf2_get_u2(data);
         attr->u.block.ptr  = data + 2;
+        TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
         break;
 
     case DW_FORM_block4:
         attr->u.block.size = dwarf2_get_u4(data);
         attr->u.block.ptr  = data + 4;
+        TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
         break;
 
     default:
