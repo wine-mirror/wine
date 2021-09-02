@@ -393,31 +393,6 @@ INT WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect )
 
 
 /***********************************************************************
- *           GetClipRgn  (GDI32.@)
- */
-INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
-{
-    INT ret = -1;
-    DC * dc;
-    if ((dc = get_dc_ptr( hdc )))
-    {
-      if( dc->hClipRgn )
-      {
-          if (NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY ) != ERROR)
-          {
-              ret = 1;
-              if (dc->attr->layout & LAYOUT_RTL)
-                  mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
-          }
-      }
-      else ret = 0;
-      release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           GetMetaRgn    (GDI32.@)
  */
 INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
@@ -460,11 +435,11 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
 
     if (!dc) return -1;
 
-    switch (iCode)
+    switch (iCode & ~NTGDI_RGN_MIRROR_RTL)
     {
     case 1:
-        if (dc->hClipRgn) NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
-        else ret = 0;
+        if (!dc->hClipRgn) ret = 0;
+        else if (!NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY )) ret = -1;
         break;
     case 2:
         if (dc->hMetaRgn) NtGdiCombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
@@ -496,6 +471,11 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
         ret = -1;
         break;
     }
+
+    /* Wine extension */
+    if (ret > 0 && (iCode & NTGDI_RGN_MIRROR_RTL) && (dc->attr->layout & LAYOUT_RTL))
+        mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
+
     release_dc_ptr( dc );
     return ret;
 }

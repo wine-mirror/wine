@@ -178,6 +178,9 @@ struct font_enum_entry
     NEWTEXTMETRICEXW tm;
 };
 
+/* flag for NtGdiGetRandomRgn to respect LAYOUT_RTL */
+#define NTGDI_RGN_MIRROR_RTL   0x80000000
+
 #endif /* __WINESRC__ */
 
 struct font_realization_info

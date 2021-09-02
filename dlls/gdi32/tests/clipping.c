@@ -42,6 +42,8 @@ static void test_GetRandomRgn(void)
 
     ret = GetRandomRgn(hdc, hrgn, 1);
     ok(ret == 0, "GetRandomRgn rets %d\n", ret);
+    ret = GetRandomRgn(hdc, NULL, 1);
+    ok(ret == 0, "GetRandomRgn rets %d\n", ret);
     ret = GetRandomRgn(hdc, hrgn, 2);
     ok(ret == 0, "GetRandomRgn rets %d\n", ret);
     ret = GetRandomRgn(hdc, hrgn, 3);
@@ -84,9 +86,12 @@ static void test_GetRandomRgn(void)
     IntersectClipRect(hdc, rc2.left, rc2.top, rc2.right, rc2.bottom);
 
     ret = GetRandomRgn(hdc, hrgn, 1);
-    ok(ret != 0, "GetRandomRgn rets %d\n", ret);
+    ok(ret > 0, "GetRandomRgn rets %d\n", ret);
     GetRgnBox(hrgn, &ret_rc);
     ok(EqualRect(&rc2, &ret_rc), "GetRandomRgn %s\n", wine_dbgstr_rect(&ret_rc));
+
+    ret = GetRandomRgn(hdc, NULL, 1);
+    ok(ret == -1, "GetRandomRgn rets %d\n", ret);
 
     ret = GetRandomRgn(hdc, hrgn, 2);
     ok(ret != 0, "GetRandomRgn rets %d\n", ret);

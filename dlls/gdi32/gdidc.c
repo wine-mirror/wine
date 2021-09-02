@@ -1634,6 +1634,14 @@ BOOL WINAPI SelectClipPath( HDC hdc, INT mode )
 }
 
 /***********************************************************************
+ *           GetClipRgn  (GDI32.@)
+ */
+INT WINAPI GetClipRgn( HDC hdc, HRGN rgn )
+{
+    return NtGdiGetRandomRgn( hdc, rgn, NTGDI_RGN_MIRROR_RTL | 1 );
+}
+
+/***********************************************************************
  *           IntersectClipRect    (GDI32.@)
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
