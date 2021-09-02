@@ -2389,43 +2389,45 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
 
     sparse_array_init(&ctx.debug_info_table, sizeof(dwarf2_debug_info_t), 128);
-    dwarf2_read_one_debug_info(&ctx, &cu_ctx, NULL, &di);
 
-    if (di->abbrev->tag == DW_TAG_compile_unit)
+    if (dwarf2_read_one_debug_info(&ctx, &cu_ctx, NULL, &di))
     {
-        struct attribute            name;
-        struct vector*              children;
-        dwarf2_debug_info_t*        child = NULL;
-        unsigned int                i;
-        struct attribute            stmt_list, low_pc;
-        struct attribute            comp_dir;
-
-        if (!dwarf2_find_attribute(&ctx, di, DW_AT_name, &name))
-            name.u.string = NULL;
-
-        /* get working directory of current compilation unit */
-        if (!dwarf2_find_attribute(&ctx, di, DW_AT_comp_dir, &comp_dir))
-            comp_dir.u.string = NULL;
-
-        if (!dwarf2_find_attribute(&ctx, di, DW_AT_low_pc, &low_pc))
-            low_pc.u.uvalue = 0;
-        ctx.compiland = symt_new_compiland(module, ctx.load_offset + low_pc.u.uvalue,
-                                           source_new(module, comp_dir.u.string, name.u.string));
-        di->symt = &ctx.compiland->symt;
-        children = dwarf2_get_di_children(&ctx, di);
-        if (children) for (i = 0; i < vector_length(children); i++)
+        if (di->abbrev->tag == DW_TAG_compile_unit)
         {
-            child = *(dwarf2_debug_info_t**)vector_at(children, i);
-            dwarf2_load_one_entry(&ctx, child);
+            struct attribute            name;
+            struct vector*              children;
+            dwarf2_debug_info_t*        child = NULL;
+            unsigned int                i;
+            struct attribute            stmt_list, low_pc;
+            struct attribute            comp_dir;
+
+            if (!dwarf2_find_attribute(&ctx, di, DW_AT_name, &name))
+                name.u.string = NULL;
+
+            /* get working directory of current compilation unit */
+            if (!dwarf2_find_attribute(&ctx, di, DW_AT_comp_dir, &comp_dir))
+                comp_dir.u.string = NULL;
+
+            if (!dwarf2_find_attribute(&ctx, di, DW_AT_low_pc, &low_pc))
+                low_pc.u.uvalue = 0;
+            ctx.compiland = symt_new_compiland(module, ctx.load_offset + low_pc.u.uvalue,
+                                               source_new(module, comp_dir.u.string, name.u.string));
+            di->symt = &ctx.compiland->symt;
+            children = dwarf2_get_di_children(&ctx, di);
+            if (children) for (i = 0; i < vector_length(children); i++)
+            {
+                child = *(dwarf2_debug_info_t**)vector_at(children, i);
+                dwarf2_load_one_entry(&ctx, child);
+            }
+            if (dwarf2_find_attribute(&ctx, di, DW_AT_stmt_list, &stmt_list))
+            {
+                if (dwarf2_parse_line_numbers(sections, &ctx, comp_dir.u.string, stmt_list.u.uvalue))
+                    module->module.LineNumbers = TRUE;
+            }
+            ret = TRUE;
         }
-        if (dwarf2_find_attribute(&ctx, di, DW_AT_stmt_list, &stmt_list))
-        {
-            if (dwarf2_parse_line_numbers(sections, &ctx, comp_dir.u.string, stmt_list.u.uvalue))
-                module->module.LineNumbers = TRUE;
-        }
-        ret = TRUE;
+        else FIXME("Should have a compilation unit here\n");
     }
-    else FIXME("Should have a compilation unit here\n");
     pool_destroy(&ctx.pool);
     return ret;
 }
