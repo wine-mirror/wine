@@ -35,10 +35,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(print);
 
 /******************************************************************
- * GdiGetSpoolMessage [GDI32.@]
- *
+ *           NtGdiGetSpoolMessage    (win32u.@)
  */
-DWORD WINAPI GdiGetSpoolMessage(LPVOID ptr1, DWORD data2, LPVOID ptr3, DWORD data4)
+DWORD WINAPI NtGdiGetSpoolMessage( void *ptr1, DWORD data2, void *ptr3, DWORD data4 )
 {
     TRACE("(%p 0x%x %p 0x%x) stub\n", ptr1, data2, ptr3, data4);
     /* avoid 100% cpu usage with spoolsv.exe from w2k
@@ -48,10 +47,9 @@ DWORD WINAPI GdiGetSpoolMessage(LPVOID ptr1, DWORD data2, LPVOID ptr3, DWORD dat
 }
 
 /******************************************************************
- * GdiInitSpool [GDI32.@]
- *
+ *           NtGdiInitSpool    (win32u.@)
  */
-DWORD WINAPI GdiInitSpool(void)
+DWORD WINAPI NtGdiInitSpool(void)
 {
     FIXME("stub\n");
     return TRUE;
