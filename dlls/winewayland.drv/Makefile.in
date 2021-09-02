@@ -3,11 +3,11 @@ UNIXLIB = winewayland.so
 UNIX_CFLAGS = $(WAYLAND_CLIENT_CFLAGS)
 UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS)
 
-C_SRCS = \
+SOURCES = \
 	display.c \
 	dllmain.c \
+	version.rc \
 	wayland.c \
 	wayland_output.c \
-	waylanddrv_main.c
-
-RC_SRCS = version.rc
+	waylanddrv_main.c \
+	xdg-output-unstable-v1.xml

@@ -387,6 +387,11 @@ sub assign_sources_to_makefiles(@)
         {
             push @nls_files, $name if $dir eq "nls";
         }
+        elsif ($name =~ /\.xml$/ && $dir eq "dlls/winewayland.drv")
+        {
+            push @{${$make}{"=SOURCES"}}, $name;
+            next;
+        }
         elsif ($dir ne "loader")  # loader dir contains misc files
         {
             next;

@@ -702,6 +702,7 @@ INOTIFY_LIBS
 INOTIFY_CFLAGS
 PCSCLITE_LIBS
 PCAP_LIBS
+WAYLAND_SCANNER
 WAYLAND_CLIENT_LIBS
 WAYLAND_CLIENT_CFLAGS
 X_EXTRA_LIBS
@@ -15614,14 +15615,13 @@ fi
 rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $WAYLAND_CLIENT_CFLAGS"
-ac_fn_c_check_header_compile "$LINENO" "wayland-client.h" "ac_cv_header_wayland_client_h" "$ac_includes_default"
+       for ac_header in wayland-client.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "wayland-client.h" "ac_cv_header_wayland_client_h" "$ac_includes_default"
 if test "x$ac_cv_header_wayland_client_h" = xyes
 then :
   printf "%s\n" "#define HAVE_WAYLAND_CLIENT_H 1" >>confdefs.h
-
-fi
-
-         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for wl_display_connect in -lwayland-client" >&5
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for wl_display_connect in -lwayland-client" >&5
 printf %s "checking for wl_display_connect in -lwayland-client... " >&6; }
 if test ${ac_cv_lib_wayland_client_wl_display_connect+y}
 then :
@@ -15658,15 +15658,63 @@ fi
 printf "%s\n" "$ac_cv_lib_wayland_client_wl_display_connect" >&6; }
 if test "x$ac_cv_lib_wayland_client_wl_display_connect" = xyes
 then :
-  :
+  # Extract the first word of "wayland-scanner", so it can be a program name with args.
+set dummy wayland-scanner; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_path_WAYLAND_SCANNER+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  case $WAYLAND_SCANNER in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_WAYLAND_SCANNER="$WAYLAND_SCANNER" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_path_WAYLAND_SCANNER="$as_dir$ac_word$ac_exec_ext"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_WAYLAND_SCANNER" && ac_cv_path_WAYLAND_SCANNER="`test -n "$PKG_CONFIG" && $PKG_CONFIG --variable=wayland_scanner wayland-scanner 2>/dev/null`"
+  ;;
+esac
+fi
+WAYLAND_SCANNER=$ac_cv_path_WAYLAND_SCANNER
+if test -n "$WAYLAND_SCANNER"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $WAYLAND_SCANNER" >&5
+printf "%s\n" "$WAYLAND_SCANNER" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
 else $as_nop
   WAYLAND_CLIENT_LIBS=""
 fi
 
+fi
+
+done
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test -z "$WAYLAND_CLIENT_LIBS"
+if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER"
 then :
   case "x$with_wayland" in
   x)   as_fn_append wine_notices "|Wayland ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
@@ -23178,6 +23226,7 @@ X_LIBS = $X_LIBS
 X_EXTRA_LIBS = $X_EXTRA_LIBS
 WAYLAND_CLIENT_CFLAGS = $WAYLAND_CLIENT_CFLAGS
 WAYLAND_CLIENT_LIBS = $WAYLAND_CLIENT_LIBS
+WAYLAND_SCANNER = $WAYLAND_SCANNER
 PCAP_LIBS = $PCAP_LIBS
 PCSCLITE_LIBS = $PCSCLITE_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS
