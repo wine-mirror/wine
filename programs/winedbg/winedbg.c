@@ -657,7 +657,8 @@ int main(int argc, char** argv)
     dbg_init_console();
 
     SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
-                  SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
+                  SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS |
+                  SYMOPT_INCLUDE_32BIT_MODULES);
 
     if (argc && !strcmp(argv[0], "--auto"))
     {
