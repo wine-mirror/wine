@@ -78,7 +78,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         if (!tmp) return ret;
         full = tmp;
         strcpy(tmp, base);
-        if (tmp[bsz - 1] != '/') tmp[bsz++] = '/';
+        if (bsz && tmp[bsz - 1] != '/') tmp[bsz++] = '/';
         strcpy(&tmp[bsz], name);
     }
     rb_module = module;

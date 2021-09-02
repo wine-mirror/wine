@@ -2190,6 +2190,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     p = vector_add(&dirs, &ctx->pool);
     *p = compile_dir ? compile_dir : ".";
     while (*traverse.data)
+    while (traverse.data < traverse.end_data && *traverse.data)
     {
         const char*  rel = (const char*)traverse.data;
         unsigned     rellen = strlen(rel);
@@ -2205,7 +2206,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
            unsigned  baselen = strlen(compile_dir);
            char*     tmp = pool_alloc(&ctx->pool, baselen + 1 + rellen + 1);
            strcpy(tmp, compile_dir);
-           if (tmp[baselen - 1] != '/') tmp[baselen++] = '/';
+           if (baselen && tmp[baselen - 1] != '/') tmp[baselen++] = '/';
            strcpy(&tmp[baselen], rel);
            *p = tmp;
         }
@@ -2214,7 +2215,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     traverse.data++;
 
     vector_init(&files, sizeof(unsigned), 16);
-    while (*traverse.data)
+    while (traverse.data < traverse.end_data && *traverse.data)
     {
         unsigned int    dir_index, mod_time;
         const char*     name;
@@ -2233,7 +2234,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     }
     traverse.data++;
 
-    while (traverse.data < traverse.end_data)
+    while (traverse.data < traverse.end_data && *traverse.data)
     {
         ULONG_PTR address = 0;
         unsigned file = 1;
