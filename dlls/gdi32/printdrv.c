@@ -81,10 +81,9 @@ INT WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job )
 
 
 /******************************************************************
- *                  EndDoc  [GDI32.@]
- *
+ *           NtGdiEndDoc    (win32u.@)
  */
-INT WINAPI EndDoc(HDC hdc)
+INT WINAPI NtGdiEndDoc( HDC hdc )
 {
     INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
@@ -100,10 +99,9 @@ INT WINAPI EndDoc(HDC hdc)
 
 
 /******************************************************************
- *                  StartPage  [GDI32.@]
- *
+ *           NtGdiStartPage    (win32u.@)
  */
-INT WINAPI StartPage(HDC hdc)
+INT WINAPI NtGdiStartPage( HDC hdc )
 {
     INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
@@ -119,10 +117,9 @@ INT WINAPI StartPage(HDC hdc)
 
 
 /******************************************************************
- *                  EndPage  [GDI32.@]
- *
+ *           NtGdiEndPage    (win32u.@)
  */
-INT WINAPI EndPage(HDC hdc)
+INT WINAPI NtGdiEndPage( HDC hdc )
 {
     INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
@@ -137,10 +134,10 @@ INT WINAPI EndPage(HDC hdc)
 }
 
 
-/******************************************************************************
- *                 AbortDoc  [GDI32.@]
+/***********************************************************************
+ *           NtGdiAbortDoc    (win32u.@)
  */
-INT WINAPI AbortDoc(HDC hdc)
+INT WINAPI NtGdiAbortDoc( HDC hdc )
 {
     INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );

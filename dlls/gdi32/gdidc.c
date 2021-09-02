@@ -1888,6 +1888,38 @@ INT WINAPI StartDocA( HDC hdc, const DOCINFOA *doc )
     return ret;
 }
 
+/***********************************************************************
+ *           StartPage    (GDI32.@)
+ */
+INT WINAPI StartPage( HDC hdc )
+{
+    return NtGdiStartPage( hdc );
+}
+
+/***********************************************************************
+ *           EndPage    (GDI32.@)
+ */
+INT WINAPI EndPage( HDC hdc )
+{
+    return NtGdiEndPage( hdc );
+}
+
+/***********************************************************************
+ *           EndDoc    (GDI32.@)
+ */
+INT WINAPI EndDoc( HDC hdc )
+{
+    return NtGdiEndDoc( hdc );
+}
+
+/***********************************************************************
+ *           AbortDoc    (GDI32.@)
+ */
+INT WINAPI AbortDoc( HDC hdc )
+{
+    return NtGdiAbortDoc( hdc );
+}
+
 /**********************************************************************
  *           SetAbortProc   (GDI32.@)
  */
