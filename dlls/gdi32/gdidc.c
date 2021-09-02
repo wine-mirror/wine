@@ -1642,6 +1642,14 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN rgn )
 }
 
 /***********************************************************************
+ *           GetMetaRgn    (GDI32.@)
+ */
+INT WINAPI GetMetaRgn( HDC hdc, HRGN rgn )
+{
+    return NtGdiGetRandomRgn( hdc, rgn, NTGDI_RGN_MIRROR_RTL | 2 );
+}
+
+/***********************************************************************
  *           IntersectClipRect    (GDI32.@)
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
