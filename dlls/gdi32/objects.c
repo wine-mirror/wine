@@ -1001,3 +1001,61 @@ BOOL WINAPI CombineTransform( XFORM *result, const XFORM *xform1, const XFORM *x
     *result = r;
     return TRUE;
 }
+
+/***********************************************************************
+ *           LineDDA   (GDI32.@)
+ */
+BOOL WINAPI LineDDA( INT x_start, INT y_start, INT x_end, INT y_end,
+                     LINEDDAPROC callback, LPARAM lparam )
+{
+    INT xadd = 1, yadd = 1;
+    INT err,erradd;
+    INT cnt;
+    INT dx = x_end - x_start;
+    INT dy = y_end - y_start;
+
+    TRACE( "(%d, %d), (%d, %d), %p, %lx\n", x_start, y_start,
+           x_end, y_end, callback, lparam );
+
+    if (dx < 0)
+    {
+        dx = -dx;
+        xadd = -1;
+    }
+    if (dy < 0)
+    {
+        dy = -dy;
+        yadd = -1;
+    }
+    if (dx > dy)  /* line is "more horizontal" */
+    {
+        err = 2*dy - dx; erradd = 2*dy - 2*dx;
+        for(cnt = 0;cnt < dx; cnt++)
+        {
+            callback( x_start, y_start, lparam );
+            if (err > 0)
+            {
+                y_start += yadd;
+                err += erradd;
+            }
+            else err += 2*dy;
+            x_start += xadd;
+        }
+    }
+    else   /* line is "more vertical" */
+    {
+        err = 2*dx - dy; erradd = 2*dx - 2*dy;
+        for(cnt = 0; cnt < dy; cnt++)
+        {
+            callback( x_start, y_start, lparam );
+            if (err > 0)
+            {
+                x_start += xadd;
+                err += erradd;
+            }
+            else err += 2*dx;
+            y_start += yadd;
+        }
+    }
+    return TRUE;
+}
