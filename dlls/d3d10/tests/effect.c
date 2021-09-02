@@ -3672,10 +3672,8 @@ if (0)
     hr = pdesc.pShaderVariable->lpVtbl->GetShaderDesc(pdesc.pShaderVariable, 0, &shaderdesc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(shaderdesc.IsInline, "Unexpected inline flag.\n");
-todo_wine {
-    ok(shaderdesc.SODecl && !strcmp(shaderdesc.SODecl, "SV_POSITION.y"), "Unexpected stream output declaration %s.\n",
+    ok(!strcmp(shaderdesc.SODecl, "SV_POSITION.y"), "Unexpected stream output declaration %s.\n",
                 shaderdesc.SODecl);
-}
 
     v = effect->lpVtbl->GetVariableByName(effect, "g_so");
     gs = v->lpVtbl->AsShader(v);

@@ -1629,7 +1629,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
 {
     ID3D10EffectVariable *variable = &null_variable.ID3D10EffectVariable_iface;
     const char *data_ptr = NULL;
-    DWORD offset;
+    DWORD offset, sodecl_offset;
     enum d3d10_effect_object_operation operation;
     HRESULT hr;
     struct d3d10_effect *effect = o->pass->technique->effect;
@@ -1753,7 +1753,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                 return E_FAIL;
             }
 
-            if (offset >= data_size || !require_space(offset, 1, sizeof(DWORD), data_size))
+            if (offset >= data_size || !require_space(offset, 2, sizeof(DWORD), data_size))
             {
                 WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
                 return E_FAIL;
@@ -1761,6 +1761,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             data_ptr = data + offset;
             read_dword(&data_ptr, &offset);
             TRACE("Effect object starts at offset %#x.\n", offset);
+            read_dword(&data_ptr, &sodecl_offset);
 
             if (FAILED(hr = parse_fx10_anonymous_shader(effect,
                     &effect->anonymous_shaders[effect->anonymous_shader_current], o->type)))
@@ -1769,6 +1770,19 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             v = &effect->anonymous_shaders[effect->anonymous_shader_current].shader;
             variable = &v->ID3D10EffectVariable_iface;
             ++effect->anonymous_shader_current;
+
+            if (sodecl_offset)
+            {
+                TRACE("Anonymous shader stream output declaration at offset %#x.\n", sodecl_offset);
+                if (!fx10_copy_string(data, data_size, sodecl_offset,
+                        &v->u.shader.stream_output_declaration))
+                {
+                    ERR("Failed to copy stream output declaration.\n");
+                    return E_OUTOFMEMORY;
+                }
+
+                TRACE("Stream output declaration: %s.\n", debugstr_a(v->u.shader.stream_output_declaration));
+            }
 
             switch (o->type)
             {
