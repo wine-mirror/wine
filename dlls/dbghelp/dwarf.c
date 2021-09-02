@@ -544,7 +544,8 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_ref_udata:
-        attr->u.uvalue = dwarf2_get_leb128_as_unsigned(data, NULL);
+        attr->u.uvalue = ctx->ref_offset + dwarf2_get_leb128_as_unsigned(data, NULL);
+        TRACE("ref_udata<0x%lx>\n", attr->u.uvalue);
         break;
 
     case DW_FORM_udata:
