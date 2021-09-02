@@ -657,7 +657,7 @@ static void test_OpenThemeDataForDpi(void)
 
     is_theme_active = IsThemeActive();
     SetLastError(0xdeadbeef);
-    htheme = OpenThemeDataForDpi(NULL, WC_BUTTONW, 96);
+    htheme = pOpenThemeDataForDpi(NULL, WC_BUTTONW, 96);
     if (is_theme_active)
     {
         ok(!!htheme, "Got a NULL handle.\n");
