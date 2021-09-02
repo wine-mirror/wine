@@ -1821,6 +1821,18 @@ BOOL WINAPI CancelDC(HDC hdc)
     return TRUE;
 }
 
+/**********************************************************************
+ *           SetAbortProc   (GDI32.@)
+ */
+INT WINAPI SetAbortProc( HDC hdc, ABORTPROC abrtprc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    dc_attr->abort_proc = abrtprc;
+    return TRUE;
+}
+
 /***********************************************************************
  *           SetICMMode    (GDI32.@)
  */

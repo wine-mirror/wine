@@ -169,6 +169,7 @@ typedef struct DC_ATTR
     UINT      font_code_page;
     RECTL     emf_bounds;
     void     *emf;
+    ABORTPROC abort_proc;          /* AbortProc for printing */
 } DC_ATTR;
 
 struct font_enum_entry

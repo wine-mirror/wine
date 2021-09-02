@@ -76,7 +76,7 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 
     if(!dc) return SP_ERROR;
 
-    if (dc->pAbortProc && !dc->pAbortProc( hdc, 0 )) ret = 0;
+    if (dc->attr->abort_proc && !dc->attr->abort_proc( hdc, 0 )) ret = 0;
     else
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStartDoc );
@@ -203,19 +203,4 @@ INT WINAPI AbortDoc(HDC hdc)
         release_dc_ptr( dc );
     }
     return ret;
-}
-
-
-/**********************************************************************
- *           SetAbortProc   (GDI32.@)
- *
- */
-INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
-{
-    DC *dc = get_dc_ptr( hdc );
-
-    if (!dc) return FALSE;
-    dc->pAbortProc = abrtprc;
-    release_dc_ptr( dc );
-    return TRUE;
 }
