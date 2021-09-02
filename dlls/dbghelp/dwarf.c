@@ -1602,10 +1602,10 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             /* either a pmt/variable relative to frame pointer or
              * pmt/variable in a register
              */
-            assert(subpgm->func);
-            symt_add_func_local(subpgm->ctx->module, subpgm->func, 
-                                is_pmt ? DataIsParam : DataIsLocal,
-                                &loc, block, param_type, name.u.string);
+            if (subpgm->func)
+                symt_add_func_local(subpgm->ctx->module, subpgm->func,
+                                    is_pmt ? DataIsParam : DataIsLocal,
+                                    &loc, block, param_type, name.u.string);
             break;
         }
     }
