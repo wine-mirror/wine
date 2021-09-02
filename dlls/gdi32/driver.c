@@ -225,7 +225,7 @@ done:
 
 
 /***********************************************************************
- *           __wine_set_display_driver    (GDI32.@)
+ *           __wine_set_display_driver    (win32u.@)
  */
 void CDECL __wine_set_display_driver( HMODULE module )
 {
@@ -938,56 +938,6 @@ BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size )
     *p = 0;
     TRACE("Found %s for %s\n", debugstr_w(driver), debugstr_w(device));
     return TRUE;
-}
-
-
-/***********************************************************************
- *           GdiConvertToDevmodeW    (GDI32.@)
- */
-DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *dmA)
-{
-    DEVMODEW *dmW;
-    WORD dmW_size, dmA_size;
-
-    dmA_size = dmA->dmSize;
-
-    /* this is the minimal dmSize that XP accepts */
-    if (dmA_size < FIELD_OFFSET(DEVMODEA, dmFields))
-        return NULL;
-
-    if (dmA_size > sizeof(DEVMODEA))
-        dmA_size = sizeof(DEVMODEA);
-
-    dmW_size = dmA_size + CCHDEVICENAME;
-    if (dmA_size >= FIELD_OFFSET(DEVMODEA, dmFormName) + CCHFORMNAME)
-        dmW_size += CCHFORMNAME;
-
-    dmW = HeapAlloc(GetProcessHeap(), 0, dmW_size + dmA->dmDriverExtra);
-    if (!dmW) return NULL;
-
-    MultiByteToWideChar(CP_ACP, 0, (const char*) dmA->dmDeviceName, -1,
-                                   dmW->dmDeviceName, CCHDEVICENAME);
-    /* copy slightly more, to avoid long computations */
-    memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion, dmA_size - CCHDEVICENAME);
-
-    if (dmA_size >= FIELD_OFFSET(DEVMODEA, dmFormName) + CCHFORMNAME)
-    {
-        if (dmA->dmFields & DM_FORMNAME)
-            MultiByteToWideChar(CP_ACP, 0, (const char*) dmA->dmFormName, -1,
-                                       dmW->dmFormName, CCHFORMNAME);
-        else
-            dmW->dmFormName[0] = 0;
-
-        if (dmA_size > FIELD_OFFSET(DEVMODEA, dmLogPixels))
-            memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA_size - FIELD_OFFSET(DEVMODEA, dmLogPixels));
-    }
-
-    if (dmA->dmDriverExtra)
-        memcpy((char *)dmW + dmW_size, (const char *)dmA + dmA_size, dmA->dmDriverExtra);
-
-    dmW->dmSize = dmW_size;
-
-    return dmW;
 }
 
 
