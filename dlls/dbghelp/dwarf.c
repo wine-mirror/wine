@@ -2198,7 +2198,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
         traverse.data += rellen + 1;
         p = vector_add(&dirs, &ctx->pool);
 
-        if (*rel == '/' || !compile_dir)
+        if (*rel == '/' || !compile_dir || !*compile_dir)
             *p = rel;
         else
         {
