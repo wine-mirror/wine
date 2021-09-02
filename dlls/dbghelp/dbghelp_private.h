@@ -151,6 +151,11 @@ struct symt_ht
     struct hash_table_elt       hash_elt;        /* if global symbol or type */
 };
 
+static inline BOOL symt_check_tag(const struct symt* s, enum SymTagEnum tag)
+{
+    return s && s->tag == tag;
+}
+
 /* lexical tree */
 struct symt_block
 {

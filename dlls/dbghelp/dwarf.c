@@ -1439,7 +1439,8 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
             break;
         case DW_TAG_member:
             /* FIXME: should I follow the sibling stuff ?? */
-            dwarf2_parse_udt_member(ctx, child, (struct symt_udt*)di->symt);
+            if (symt_check_tag(di->symt, SymTagUDT))
+                dwarf2_parse_udt_member(ctx, child, (struct symt_udt*)di->symt);
             break;
         case DW_TAG_enumeration_type:
             dwarf2_parse_enumeration_type(ctx, child);
@@ -1527,7 +1528,8 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
         switch (child->abbrev->tag)
         {
         case DW_TAG_enumerator:
-            dwarf2_parse_enumerator(ctx, child, (struct symt_enum*)di->symt);
+            if (symt_check_tag(di->symt, SymTagEnum))
+                dwarf2_parse_enumerator(ctx, child, (struct symt_enum*)di->symt);
             break;
         default:
             FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
@@ -1683,7 +1685,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             WARN("dropping global variable %s which has been optimized away\n", debugstr_a(name.u.string));
         }
     }
-    if (is_pmt && subpgm->func && subpgm->func->type)
+    if (is_pmt && subpgm->func && symt_check_tag(subpgm->func->type, SymTagFunctionType))
         symt_add_function_signature_parameter(subpgm->ctx->module,
                                               (struct symt_function_signature*)subpgm->func->type,
                                               param_type);
@@ -2129,10 +2131,12 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
 
     TRACE("%s %lx %s %u\n",
           debugstr_w(module->module.ModuleName), address, debugstr_a(source_get(module, *psrc)), line);
-    if (!(symt = symt_find_nearest(module, address)) ||
-        symt->symt.tag != SymTagFunction) return;
-    func = (struct symt_function*)symt;
-    symt_add_func_line(module, func, *psrc, line, address - func->address);
+    symt = symt_find_nearest(module, address);
+    if (symt && symt_check_tag(&symt->symt, SymTagFunction))
+    {
+        func = (struct symt_function*)symt;
+        symt_add_func_line(module, func, *psrc, line, address - func->address);
+    }
 }
 
 static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
@@ -2466,7 +2470,7 @@ static enum location_error loc_compute_frame(struct process* pcs,
     for (i=0; i<vector_length(&func->vchildren); i++)
     {
         psym = vector_at(&func->vchildren, i);
-        if ((*psym)->tag == SymTagCustom)
+        if (psym && symt_check_tag(*psym, SymTagCustom))
         {
             pframe = &((struct symt_hierarchy_point*)*psym)->loc;
 
@@ -3279,7 +3283,7 @@ static void dwarf2_location_compute(struct process* pcs,
     int                         err;
     dwarf2_traverse_context_t   lctx;
 
-    if (!func->container || func->container->tag != SymTagCompiland)
+    if (!func || !symt_check_tag(func->container, SymTagCompiland))
     {
         WARN("We'd expect function %s's container to exist and be a compiland\n", debugstr_a(func->hash_elt.name));
         err = loc_err_internal;
