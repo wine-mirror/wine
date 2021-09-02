@@ -167,8 +167,7 @@ typedef enum dwarf_attribute_e
   DW_AT_allocated                       = 0x4e,
   DW_AT_associated                      = 0x4f,
   DW_AT_data_location                   = 0x50,
-  DW_AT_byte_stride                     = 0x51,
-  DW_AT_stride                          = 0x51,
+  DW_AT_byte_stride                     = 0x51, /* used to be DW_AT_stride in Dwarf3 (not final) */
   DW_AT_entry_pc                        = 0x52,
   DW_AT_use_UTF8                        = 0x53,
   DW_AT_extension                       = 0x54,
@@ -178,7 +177,7 @@ typedef enum dwarf_attribute_e
   DW_AT_call_file                       = 0x58,
   DW_AT_call_line                       = 0x59,
   DW_AT_description                     = 0x5a,
-  /** Dwarf3 new values */
+  /** Dwarf3 (final) new values */
   DW_AT_binary_scale                    = 0x5b,
   DW_AT_decimal_scale                   = 0x5c,
   DW_AT_small                           = 0x5d,
@@ -283,12 +282,15 @@ typedef enum dwarf_type_e
   DW_ATE_unsigned_char                  = 0x8,
   /* Dwarf3 new values */
   DW_ATE_imaginary_float                = 0x9,
+  /* Dwarf3 (final) new values */
   DW_ATE_packed_decimal                 = 0xa,
   DW_ATE_numeric_string                 = 0xb,
   DW_ATE_edited                         = 0xc,
   DW_ATE_signed_fixed                   = 0xd,
   DW_ATE_unsigned_fixed                 = 0xe,
   DW_ATE_decimal_float                  = 0xf,
+  /* Dwarf4 new values */
+  DW_ATE_UTF                            = 0x10,
 } dwarf_type_t;
 
 typedef enum dwarf_operation_e
@@ -443,6 +445,7 @@ typedef enum dwarf_operation_e
   DW_OP_call2                           = 0x98,
   DW_OP_call4                           = 0x99,
   DW_OP_call_ref                        = 0x9a,
+  /** Dwarf3 (final) new values */
   DW_OP_form_tls_address                = 0x9b,
   DW_OP_call_frame_cfa                  = 0x9c,
   DW_OP_bit_piece                       = 0x9d,
@@ -497,6 +500,8 @@ enum dwarf_calling_convention
 #define DW_LNE_define_file              0x03
 /* Dwarf4 new values */
 #define DW_LNE_set_discriminator        0x04
+#define DW_LNE_lo_user                  0x80
+#define DW_LNE_hi_user                  0xff
 
 #define DW_CIE_ID                       ~(0x0)
 
@@ -520,11 +525,13 @@ enum dwarf_call_frame_info
     DW_CFA_def_cfa = 0x0c,
     DW_CFA_def_cfa_register = 0x0d,
     DW_CFA_def_cfa_offset = 0x0e,
+    /* Dwarf3 new values */
     DW_CFA_def_cfa_expression = 0x0f,
     DW_CFA_expression = 0x10,
     DW_CFA_offset_extended_sf = 0x11,
     DW_CFA_def_cfa_sf = 0x12,
     DW_CFA_def_cfa_offset_sf = 0x13,
+    /* Dwarf3 (final) new values */
     DW_CFA_val_offset = 0x14,
     DW_CFA_val_offset_sf = 0x15,
     DW_CFA_val_expression = 0x16,
@@ -554,3 +561,32 @@ enum dwarf_call_frame_info
 #define DW_INL_inlined                  0x01
 #define DW_INL_declared_not_inlined     0x02
 #define DW_INL_declared_inlined         0x03
+
+/* DWARF languages */
+enum
+{
+    DW_LANG_C89 = 0x0001,
+    DW_LANG_C = 0x0002,
+    DW_LANG_Ada83 = 0x0003,
+    DW_LANG_C_plus_plus	= 0x0004,
+    DW_LANG_Cobol74 = 0x0005,
+    DW_LANG_Cobol85 = 0x0006,
+    DW_LANG_Fortran77 = 0x0007,
+    DW_LANG_Fortran90 = 0x0008,
+    DW_LANG_Pascal83 = 0x0009,
+    DW_LANG_Modula2 = 0x000a,
+    /* Dwarf3 additions */
+    DW_LANG_Java = 0x000b,
+    DW_LANG_C99 = 0x000c,
+    DW_LANG_Ada95 = 0x000d,
+    DW_LANG_Fortran95 = 0x000e,
+    DW_LANG_PLI = 0x000f,
+    /* Dwarf3 (final) additions */
+    DW_LANG_ObjC = 0x0010,
+    DW_LANG_ObjC_plus_plus = 0x0011,
+    DW_LANG_UPC = 0x0012,
+    DW_LANG_D = 0x0013,
+
+    DW_LANG_lo_user = 0x8000,
+    DW_LANG_hi_user = 0xffff
+  };
