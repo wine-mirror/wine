@@ -1833,13 +1833,13 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
             dwarf2_parse_variable(subpgm, block, child);
             break;
         case DW_TAG_pointer_type:
-            dwarf2_parse_pointer_type(subpgm->ctx, di);
+            dwarf2_parse_pointer_type(subpgm->ctx, child);
             break;
         case DW_TAG_subroutine_type:
-            dwarf2_parse_subroutine_type(subpgm->ctx, di);
+            dwarf2_parse_subroutine_type(subpgm->ctx, child);
             break;
         case DW_TAG_const_type:
-            dwarf2_parse_const_type(subpgm->ctx, di);
+            dwarf2_parse_const_type(subpgm->ctx, child);
             break;
         case DW_TAG_lexical_block:
             dwarf2_parse_subprogram_block(subpgm, block, child);
