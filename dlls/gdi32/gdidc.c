@@ -23,6 +23,7 @@
 #include "gdi_private.h"
 #include "winternl.h"
 #include "ddrawgdi.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
@@ -1819,6 +1820,72 @@ BOOL WINAPI CancelDC(HDC hdc)
 {
     FIXME( "stub\n" );
     return TRUE;
+}
+
+/***********************************************************************
+ *           StartDocW  [GDI32.@]
+ *
+ * StartDoc calls the STARTDOC Escape with the input data pointing to DocName
+ * and the output data (which is used as a second input parameter).pointing at
+ * the whole docinfo structure.  This seems to be an undocumented feature of
+ * the STARTDOC Escape.
+ *
+ * Note: we now do it the other way, with the STARTDOC Escape calling StartDoc.
+ */
+INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE("DocName %s, Output %s, Datatype %s, fwType %#x\n",
+          debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
+          debugstr_w(doc->lpszDatatype), doc->fwType);
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
+
+    if (dc_attr->abort_proc && !dc_attr->abort_proc( hdc, 0 )) return 0;
+    return NtGdiStartDoc( hdc, doc, NULL, 0 );
+}
+
+/***********************************************************************
+ *           StartDocA [GDI32.@]
+ */
+INT WINAPI StartDocA( HDC hdc, const DOCINFOA *doc )
+{
+    WCHAR *doc_name = NULL, *output = NULL, *data_type = NULL;
+    DOCINFOW docW;
+    INT ret, len;
+
+    docW.cbSize = doc->cbSize;
+    if (doc->lpszDocName)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, doc->lpszDocName, -1, NULL, 0 );
+        doc_name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, doc->lpszDocName, -1, doc_name, len );
+    }
+    if (doc->lpszOutput)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, doc->lpszOutput, -1, NULL, 0 );
+        output = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, doc->lpszOutput, -1, output, len );
+    }
+    if (doc->lpszDatatype)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, doc->lpszDatatype, -1, NULL, 0);
+        data_type = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, doc->lpszDatatype, -1, data_type, len );
+    }
+
+    docW.lpszDocName = doc_name;
+    docW.lpszOutput = output;
+    docW.lpszDatatype = data_type;
+    docW.fwType = doc->fwType;
+
+    ret = StartDocW(hdc, &docW);
+
+    HeapFree( GetProcessHeap(), 0, doc_name );
+    HeapFree( GetProcessHeap(), 0, output );
+    HeapFree( GetProcessHeap(), 0, data_type );
+    return ret;
 }
 
 /**********************************************************************

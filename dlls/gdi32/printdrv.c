@@ -56,16 +56,9 @@ DWORD WINAPI NtGdiInitSpool(void)
 }
 
 /******************************************************************
- *                  StartDocW  [GDI32.@]
- *
- * StartDoc calls the STARTDOC Escape with the input data pointing to DocName
- * and the output data (which is used as a second input parameter).pointing at
- * the whole docinfo structure.  This seems to be an undocumented feature of
- * the STARTDOC Escape.
- *
- * Note: we now do it the other way, with the STARTDOC Escape calling StartDoc.
+ *           NtGdiStartDoc    (win32u.@)
  */
-INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
+INT WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job )
 {
     INT ret;
     DC *dc = get_dc_ptr( hdc );
@@ -83,50 +76,6 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
         ret = physdev->funcs->pStartDoc( physdev, doc );
     }
     release_dc_ptr( dc );
-    return ret;
-}
-
-/*************************************************************************
- *                  StartDocA [GDI32.@]
- *
- */
-INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
-{
-    LPWSTR szDocName = NULL, szOutput = NULL, szDatatype = NULL;
-    DOCINFOW docW;
-    INT ret, len;
-
-    docW.cbSize = doc->cbSize;
-    if (doc->lpszDocName)
-    {
-        len = MultiByteToWideChar(CP_ACP,0,doc->lpszDocName,-1,NULL,0);
-        szDocName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP,0,doc->lpszDocName,-1,szDocName,len);
-    }
-    if (doc->lpszOutput)
-    {
-        len = MultiByteToWideChar(CP_ACP,0,doc->lpszOutput,-1,NULL,0);
-        szOutput = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP,0,doc->lpszOutput,-1,szOutput,len);
-    }
-    if (doc->lpszDatatype)
-    {
-        len = MultiByteToWideChar(CP_ACP,0,doc->lpszDatatype,-1,NULL,0);
-        szDatatype = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP,0,doc->lpszDatatype,-1,szDatatype,len);
-    }
-
-    docW.lpszDocName = szDocName;
-    docW.lpszOutput = szOutput;
-    docW.lpszDatatype = szDatatype;
-    docW.fwType = doc->fwType;
-
-    ret = StartDocW(hdc, &docW);
-
-    HeapFree( GetProcessHeap(), 0, szDocName );
-    HeapFree( GetProcessHeap(), 0, szOutput );
-    HeapFree( GetProcessHeap(), 0, szDatatype );
-
     return ret;
 }
 
