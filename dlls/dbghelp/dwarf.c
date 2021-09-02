@@ -163,8 +163,9 @@ typedef struct dwarf2_traverse_context_s
 } dwarf2_traverse_context_t;
 
 /* symt_cache indexes */
-#define sc_void 0
-#define sc_num  1
+#define sc_void         0
+#define sc_unknown      1
+#define sc_num          2
 
 typedef struct dwarf2_parse_context_s
 {
@@ -178,7 +179,7 @@ typedef struct dwarf2_parse_context_s
     struct sparse_array         debug_info_table;
     ULONG_PTR                   load_offset;
     ULONG_PTR                   ref_offset;
-    struct symt*                symt_cache[sc_num]; /* void */
+    struct symt*                symt_cache[sc_num]; /* void, unknown */
     char*                       cpp_name;
 } dwarf2_parse_context_t;
 
@@ -946,11 +947,12 @@ static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
     dwarf2_debug_info_t* type;
 
     if (!dwarf2_find_attribute(ctx, di, DW_AT_type, &attr))
+        /* this is only valid if current language of CU is C or C++ */
         return ctx->symt_cache[sc_void];
     if (!(type = sparse_array_find(&ctx->debug_info_table, attr.u.uvalue)))
     {
         FIXME("Unable to find back reference to type %lx\n", attr.u.uvalue);
-        return ctx->symt_cache[sc_void];
+        return ctx->symt_cache[sc_unknown];
     }
     if (!type->symt)
     {
@@ -959,7 +961,7 @@ static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
         if (!type->symt)
         {
             FIXME("Unable to load forward reference for tag %lx\n", type->abbrev->tag);
-            return ctx->symt_cache[sc_void];
+            return ctx->symt_cache[sc_unknown];
         }
     }
     return type->symt;
@@ -2373,6 +2375,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     ctx.ref_offset = comp_unit_start - sections[section_debug].address;
     memset(ctx.symt_cache, 0, sizeof(ctx.symt_cache));
     ctx.symt_cache[sc_void] = &symt_new_basic(module, btVoid, "void", 0)->symt;
+    ctx.symt_cache[sc_unknown] = &symt_new_basic(module, btNoType, "# unknown", 0)->symt;
     ctx.cpp_name = NULL;
 
     abbrev_ctx.data = sections[section_abbrev].address + cu_abbrev_offset;
