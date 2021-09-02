@@ -1059,3 +1059,14 @@ BOOL WINAPI LineDDA( INT x_start, INT y_start, INT x_end, INT y_end,
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *           GdiDllInitialize    (GDI32.@)
+ *
+ * Stub entry point, some games (CoD: Black Ops 3) call it directly.
+ */
+BOOL WINAPI GdiDllInitialize( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    FIXME( "stub\n" );
+    return TRUE;
+}
