@@ -230,7 +230,7 @@ static void sock_release_ifchange( struct sock *sock );
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_fd_type( struct fd *fd );
-static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -2022,14 +2022,14 @@ static struct accept_req *alloc_accept_req( struct sock *sock, struct sock *acce
     return req;
 }
 
-static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct sock *sock = get_fd_user( fd );
     int unix_fd;
 
     assert( sock->obj.ops == &sock_ops );
 
-    if (code != IOCTL_AFD_WINE_CREATE && (unix_fd = get_unix_fd( fd )) < 0) return 0;
+    if (code != IOCTL_AFD_WINE_CREATE && (unix_fd = get_unix_fd( fd )) < 0) return;
 
     switch(code)
     {
@@ -2040,10 +2040,10 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() != sizeof(*params))
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
         init_socket( sock, params->family, params->type, params->protocol, params->flags );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_ACCEPT:
@@ -2054,31 +2054,31 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() != sizeof(handle))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         if (!(acceptsock = accept_socket( sock )))
         {
             struct accept_req *req;
 
-            if (sock->nonblocking) return 0;
-            if (get_error() != STATUS_DEVICE_NOT_READY) return 0;
+            if (sock->nonblocking) return;
+            if (get_error() != STATUS_DEVICE_NOT_READY) return;
 
-            if (!(req = alloc_accept_req( sock, NULL, async, NULL ))) return 0;
+            if (!(req = alloc_accept_req( sock, NULL, async, NULL ))) return;
             list_add_tail( &sock->accept_list, &req->entry );
 
             async_set_completion_callback( async, free_accept_req, req );
             queue_async( &sock->accept_q, async );
             sock_reselect( sock );
             set_error( STATUS_PENDING );
-            return 1;
+            return;
         }
         handle = alloc_handle( current->process, &acceptsock->obj,
                                GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT );
         acceptsock->wparam = handle;
         release_object( acceptsock );
         set_reply_data( &handle, sizeof(handle) );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_ACCEPT_INTO:
@@ -2094,30 +2094,30 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             get_reply_max_size() - params->recv_len < params->local_len)
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         remote_len = get_reply_max_size() - params->recv_len - params->local_len;
         if (remote_len < sizeof(int))
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (!(acceptsock = (struct sock *)get_handle_obj( current->process, params->accept_handle, access, &sock_ops )))
-            return 0;
+            return;
 
         if (acceptsock->accept_recv_req)
         {
             release_object( acceptsock );
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (!(req = alloc_accept_req( sock, acceptsock, async, params )))
         {
             release_object( acceptsock );
-            return 0;
+            return;
         }
         list_add_tail( &sock->accept_list, &req->entry );
         acceptsock->accept_recv_req = req;
@@ -2128,7 +2128,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         queue_async( &sock->accept_q, async );
         sock_reselect( sock );
         set_error( STATUS_PENDING );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_LISTEN:
@@ -2138,19 +2138,19 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(*params))
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (!sock->bound)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (listen( unix_fd, params->backlog ) < 0)
         {
             set_error( sock_get_ntstatus( errno ) );
-            return 0;
+            return;
         }
 
         sock->state = SOCK_LISTENING;
@@ -2160,7 +2160,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         /* we may already be selecting for AFD_POLL_ACCEPT */
         sock_reselect( sock );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_CONNECT:
@@ -2176,7 +2176,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             get_req_data_size() - sizeof(*params) < params->addr_len)
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         send_len = get_req_data_size() - sizeof(*params) - params->addr_len;
         addr = (const struct WS_sockaddr *)(params + 1);
@@ -2184,36 +2184,36 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (!params->synchronous && !sock->bound)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (sock->accept_recv_req)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (sock->connect_req)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         switch (sock->state)
         {
             case SOCK_LISTENING:
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
 
             case SOCK_CONNECTING:
                 /* FIXME: STATUS_ADDRESS_ALREADY_ASSOCIATED probably isn't right,
                  * but there's no status code that maps to WSAEALREADY... */
                 set_error( params->synchronous ? STATUS_ADDRESS_ALREADY_ASSOCIATED : STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
 
             case SOCK_CONNECTED:
                 set_error( STATUS_CONNECTION_ACTIVE );
-                return 0;
+                return;
 
             case SOCK_UNCONNECTED:
             case SOCK_CONNECTIONLESS:
@@ -2224,7 +2224,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (!unix_len)
         {
             set_error( STATUS_INVALID_ADDRESS );
-            return 0;
+            return;
         }
         if (unix_addr.addr.sa_family == AF_INET && !memcmp( &unix_addr.in.sin_addr, magic_loopback_addr, 4 ))
             unix_addr.in.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
@@ -2233,7 +2233,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (ret < 0 && errno != EINPROGRESS)
         {
             set_error( sock_get_ntstatus( errno ) );
-            return 0;
+            return;
         }
 
         /* a connected or connecting socket can no longer be accepted into */
@@ -2248,11 +2248,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         {
             sock->state = SOCK_CONNECTED;
 
-            if (!send_len) return 1;
+            if (!send_len) return;
         }
 
         if (!(req = mem_alloc( sizeof(*req) )))
-            return 0;
+            return;
 
         sock->state = SOCK_CONNECTING;
 
@@ -2260,7 +2260,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         {
             sock_reselect( sock );
             set_error( STATUS_DEVICE_NOT_READY );
-            return 0;
+            return;
         }
 
         req->async = (struct async *)grab_object( async );
@@ -2275,7 +2275,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         queue_async( &sock->connect_q, async );
         sock_reselect( sock );
         set_error( STATUS_PENDING );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_SHUTDOWN:
@@ -2285,20 +2285,20 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(int))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         how = *(int *)get_req_data();
 
         if (how > SD_BOTH)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (sock->state != SOCK_CONNECTED && sock->state != SOCK_CONNECTIONLESS)
         {
             set_error( STATUS_INVALID_CONNECTION );
-            return 0;
+            return;
         }
 
         if (how != SD_SEND)
@@ -2324,7 +2324,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
 
         sock_reselect( sock );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE:
@@ -2334,26 +2334,26 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(int))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         force_async = *(int *)get_req_data();
 
         if (sock->nonblocking && !force_async)
         {
             set_error( STATUS_DEVICE_NOT_READY );
-            return 0;
+            return;
         }
-        if (!sock_get_ifchange( sock )) return 0;
+        if (!sock_get_ifchange( sock )) return;
         queue_async( &sock->ifchange_q, async );
         set_error( STATUS_PENDING );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_FIONBIO:
         if (get_req_data_size() < sizeof(int))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         if (*(int *)get_req_data())
         {
@@ -2364,11 +2364,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             if (sock->mask)
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             sock->nonblocking = 0;
         }
-        return 1;
+        return;
 
     case IOCTL_AFD_GET_EVENTS:
     {
@@ -2378,7 +2378,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(params))
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         params.flags = sock->pending_events & sock->mask;
@@ -2389,7 +2389,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         sock_reselect( sock );
 
         set_reply_data( &params, sizeof(params) );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_EVENT_SELECT:
@@ -2407,7 +2407,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             if (get_req_data_size() < sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 1;
+                return;
             }
 
             event_handle = params->event;
@@ -2420,7 +2420,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             if (get_req_data_size() < sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 1;
+                return;
             }
 
             event_handle = params->event;
@@ -2431,7 +2431,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             !(event = get_event_obj( current->process, event_handle, EVENT_MODIFY_STATE )))
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 1;
+            return;
         }
 
         if (sock->event) release_object( sock->event );
@@ -2444,7 +2444,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         sock_reselect( sock );
 
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_MESSAGE_SELECT:
@@ -2454,7 +2454,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(params))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         if (sock->event) release_object( sock->event );
@@ -2473,7 +2473,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         sock_reselect( sock );
 
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_BIND:
@@ -2488,27 +2488,27 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < get_reply_max_size())
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         in_size = get_req_data_size() - get_reply_max_size();
         if (in_size < offsetof(struct afd_bind_params, addr.sa_data)
                 || get_reply_max_size() < in_size - sizeof(int))
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (sock->bound)
         {
             set_error( STATUS_ADDRESS_ALREADY_ASSOCIATED );
-            return 0;
+            return;
         }
 
         unix_len = sockaddr_to_unix( &params->addr, in_size - sizeof(int), &unix_addr );
         if (!unix_len)
         {
             set_error( STATUS_INVALID_ADDRESS );
-            return 0;
+            return;
         }
         bind_addr = unix_addr;
 
@@ -2543,7 +2543,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             }
 
             set_error( sock_get_ntstatus( errno ) );
-            return 1;
+            return;
         }
 
         sock->bound = 1;
@@ -2560,24 +2560,24 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         if (get_reply_max_size() >= sock->addr_len)
             set_reply_data( &sock->addr, sock->addr_len );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_GETSOCKNAME:
         if (!sock->bound)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
 
         if (get_reply_max_size() < sock->addr_len)
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         set_reply_data( &sock->addr, sock->addr_len );
-        return 1;
+        return;
 
     case IOCTL_AFD_WINE_DEFER:
     {
@@ -2587,14 +2587,14 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(*handle))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         acceptsock = (struct sock *)get_handle_obj( current->process, *handle, 0, &sock_ops );
-        if (!acceptsock) return 0;
+        if (!acceptsock) return;
 
         sock->deferred = acceptsock;
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_INFO:
@@ -2604,14 +2604,14 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(params))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         params.family = sock->family;
         params.type = sock->type;
         params.protocol = sock->proto;
         set_reply_data( &params, sizeof(params) );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_ACCEPTCONN:
@@ -2621,11 +2621,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(listening))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         set_reply_data( &listening, sizeof(listening) );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_ERROR:
@@ -2637,13 +2637,13 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(error))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         if (getsockopt( unix_fd, SOL_SOCKET, SO_ERROR, (char *)&error, &len ) < 0)
         {
             set_error( sock_get_ntstatus( errno ) );
-            return 0;
+            return;
         }
 
         if (!error)
@@ -2659,7 +2659,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
 
         set_reply_data( &error, sizeof(error) );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_RCVBUF:
@@ -2669,11 +2669,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(rcvbuf))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         set_reply_data( &rcvbuf, sizeof(rcvbuf) );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_SET_SO_RCVBUF:
@@ -2683,7 +2683,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(rcvbuf))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         rcvbuf = *(DWORD *)get_req_data();
 
@@ -2691,7 +2691,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             sock->rcvbuf = rcvbuf;
         else
             set_error( sock_get_ntstatus( errno ) );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_RCVTIMEO:
@@ -2701,11 +2701,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(rcvtimeo))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         set_reply_data( &rcvtimeo, sizeof(rcvtimeo) );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_SET_SO_RCVTIMEO:
@@ -2715,12 +2715,12 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(rcvtimeo))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         rcvtimeo = *(DWORD *)get_req_data();
 
         sock->rcvtimeo = rcvtimeo;
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_SNDBUF:
@@ -2730,11 +2730,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(sndbuf))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         set_reply_data( &sndbuf, sizeof(sndbuf) );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_SET_SO_SNDBUF:
@@ -2744,7 +2744,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(sndbuf))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         sndbuf = *(DWORD *)get_req_data();
 
@@ -2753,7 +2753,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         {
             /* setsockopt fails if a zero value is passed */
             sock->sndbuf = sndbuf;
-            return 0;
+            return;
         }
 #endif
 
@@ -2761,7 +2761,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             sock->sndbuf = sndbuf;
         else
             set_error( sock_get_ntstatus( errno ) );
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_SNDTIMEO:
@@ -2771,11 +2771,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(sndtimeo))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         set_reply_data( &sndtimeo, sizeof(sndtimeo) );
-        return 1;
+        return;
     }
 
     case IOCTL_AFD_WINE_SET_SO_SNDTIMEO:
@@ -2785,12 +2785,12 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_req_data_size() < sizeof(sndtimeo))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
         sndtimeo = *(DWORD *)get_req_data();
 
         sock->sndtimeo = sndtimeo;
-        return 0;
+        return;
     }
 
     case IOCTL_AFD_WINE_GET_SO_CONNECT_TIME:
@@ -2800,19 +2800,19 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (get_reply_max_size() < sizeof(time))
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
-            return 0;
+            return;
         }
 
         if (sock->state == SOCK_CONNECTED)
             time = (current_time - sock->connect_time) / 10000000;
 
         set_reply_data( &time, sizeof(time) );
-        return 1;
+        return;
     }
 
     default:
         set_error( STATUS_NOT_SUPPORTED );
-        return 0;
+        return;
     }
 }
 

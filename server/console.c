@@ -102,7 +102,7 @@ static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned 
 static void console_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 static void console_read( struct fd *fd, struct async *async, file_pos_t pos );
 static void console_flush( struct fd *fd, struct async *async );
-static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_fd_ops =
 {
@@ -172,7 +172,7 @@ static const struct object_ops console_server_ops =
     console_server_destroy            /* destroy */
 };
 
-static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_server_fd_ops =
 {
@@ -241,7 +241,7 @@ static const struct object_ops screen_buffer_ops =
 };
 
 static void screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos );
-static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops screen_buffer_fd_ops =
 {
@@ -327,7 +327,7 @@ static const struct object_ops console_input_ops =
 
 static void console_input_read( struct fd *fd, struct async *async, file_pos_t pos );
 static void console_input_flush( struct fd *fd, struct async *async );
-static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_input_fd_ops =
 {
@@ -382,7 +382,7 @@ static const struct object_ops console_output_ops =
 };
 
 static void console_output_write( struct fd *fd, struct async *async, file_pos_t pos );
-static int console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_output_fd_ops =
 {
@@ -438,7 +438,7 @@ static const struct object_ops console_connection_ops =
     console_connection_destroy        /* destroy */
 };
 
-static int console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_connection_fd_ops =
 {
@@ -913,7 +913,7 @@ static int is_blocking_read_ioctl( unsigned int code )
     }
 }
 
-static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console *console = get_fd_user( fd );
 
@@ -926,25 +926,25 @@ static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
             if (get_req_data_size() != sizeof(*event))
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             group = event->group_id ? event->group_id : current->process->group_id;
             if (!group)
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             propagate_console_signal( console, event->event, group );
-            return !get_error();
+            return;
         }
 
     default:
         if (!console->server || code >> 16 != FILE_DEVICE_CONSOLE)
         {
             set_error( STATUS_INVALID_HANDLE );
-            return 0;
+            return;
         }
-        return queue_host_ioctl( console->server, code, 0, async, &console->ioctl_q );
+        queue_host_ioctl( console->server, code, 0, async, &console->ioctl_q );
     }
 }
 
@@ -986,7 +986,7 @@ static void screen_buffer_write( struct fd *fd, struct async *async, file_pos_t 
                       screen_buffer->id, async, &screen_buffer->ioctl_q );
 }
 
-static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct screen_buffer *screen_buffer = get_fd_user( fd );
 
@@ -996,25 +996,25 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         if (!screen_buffer->input)
         {
             set_error( STATUS_INVALID_HANDLE );
-            return 0;
+            return;
         }
 
         set_active_screen_buffer( screen_buffer->input, screen_buffer );
-        return 1;
+        return;
 
     default:
         if (!screen_buffer->input || !screen_buffer->input->server || code >> 16 != FILE_DEVICE_CONSOLE ||
             is_blocking_read_ioctl( code ))
         {
             set_error( STATUS_INVALID_HANDLE );
-            return 0;
+            return;
         }
-        return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
-                                 async, &screen_buffer->ioctl_q );
+        queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                          async, &screen_buffer->ioctl_q );
     }
 }
 
-static int console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console_connection *console_connection = get_fd_user( fd );
 
@@ -1027,31 +1027,31 @@ static int console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct as
             if (get_req_data_size() != sizeof(unsigned int))
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             if (current->process->console)
             {
                 set_error( STATUS_INVALID_HANDLE );
-                return 0;
+                return;
             }
 
             pid = *(unsigned int *)get_req_data();
             if (pid == ATTACH_PARENT_PROCESS) pid = current->process->parent_id;
-            if (!(process = get_process_from_id( pid ))) return 0;
+            if (!(process = get_process_from_id( pid ))) return;
 
             if (process->console)
                 current->process->console = (struct console *)grab_object( process->console );
             else set_error( STATUS_ACCESS_DENIED );
             release_object( process );
-            return !get_error();
+            return;
         }
 
     default:
-        return default_fd_ioctl( console_connection->fd, code, async );
+        default_fd_ioctl( console_connection->fd, code, async );
     }
 }
 
-static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console_server *server = get_fd_user( fd );
 
@@ -1063,15 +1063,15 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
             if (get_req_data_size() != sizeof(*event))
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             if (!server->console)
             {
                 set_error( STATUS_INVALID_HANDLE );
-                return 0;
+                return;
             }
             propagate_console_signal( server->console, event->event, event->group_id );
-            return !get_error();
+            return;
         }
 
     case IOCTL_CONDRV_SETUP_INPUT:
@@ -1084,7 +1084,7 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
             if (get_req_data_size() != sizeof(unsigned int) || get_reply_max_size())
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             if (server->term_fd != -1)
             {
@@ -1093,10 +1093,10 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
                 server->term_fd = -1;
             }
             handle = *(unsigned int *)get_req_data();
-            if (!handle) return 1;
+            if (!handle) return;
             if (!(file = get_file_obj( current->process, handle, FILE_READ_DATA  )))
             {
-                return 0;
+                return;
             }
             unix_fd = get_file_unix_fd( file );
             release_object( file );
@@ -1104,7 +1104,7 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
             if (tcgetattr( unix_fd, &server->termios ))
             {
                 file_set_error();
-                return 0;
+                return;
             }
             term = server->termios;
             term.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
@@ -1114,16 +1114,13 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
             term.c_cc[VMIN] = 1;
             term.c_cc[VTIME] = 0;
             if (tcsetattr( unix_fd, TCSANOW, &term ) || (server->term_fd = dup( unix_fd )) == -1)
-            {
                 file_set_error();
-                return 0;
-            }
-            return 1;
+            return;
         }
 
     default:
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
 }
 
@@ -1337,16 +1334,16 @@ static void console_input_destroy( struct object *obj )
     if (console_input->fd) release_object( console_input->fd );
 }
 
-static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console *console = current->process->console;
 
     if (!console)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return console_ioctl( console->fd, code, async );
+    console_ioctl( console->fd, code, async );
 }
 
 static void console_input_read( struct fd *fd, struct async *async, file_pos_t pos )
@@ -1409,16 +1406,16 @@ static void console_output_destroy( struct object *obj )
     if (console_output->fd) release_object( console_output->fd );
 }
 
-static int console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console *console = current->process->console;
 
     if (!console || !console->active)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return screen_buffer_ioctl( console->active->fd, code, async );
+    screen_buffer_ioctl( console->active->fd, code, async );
 }
 
 static void console_output_write( struct fd *fd, struct async *async, file_pos_t pos )

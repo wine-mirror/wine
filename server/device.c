@@ -204,7 +204,7 @@ static enum server_fd_type device_file_get_fd_type( struct fd *fd );
 static void device_file_read( struct fd *fd, struct async *async, file_pos_t pos );
 static void device_file_write( struct fd *fd, struct async *async, file_pos_t pos );
 static void device_file_flush( struct fd *fd, struct async *async );
-static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void device_file_reselect_async( struct fd *fd, struct async_queue *queue );
 static void device_file_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 
@@ -596,17 +596,16 @@ static void free_irp_params( struct irp_call *irp )
 }
 
 /* queue an irp to the device */
-static int queue_irp( struct device_file *file, const irp_params_t *params, struct async *async )
+static void queue_irp( struct device_file *file, const irp_params_t *params, struct async *async )
 {
     struct irp_call *irp = create_irp( file, params, async );
-    if (!irp) return 0;
+    if (!irp) return;
 
     fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT );
     irp->async = (struct async *)grab_object( async );
     add_irp_to_queue( file->device->manager, irp, current );
     release_object( irp );
     async_set_unknown_status( async );
-    return 1;
 }
 
 static enum server_fd_type device_file_get_fd_type( struct fd *fd )
@@ -659,7 +658,7 @@ static void device_file_flush( struct fd *fd, struct async *async )
     queue_irp( file, &params, async );
 }
 
-static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct device_file *file = get_fd_user( fd );
     irp_params_t params;
@@ -667,7 +666,7 @@ static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
     memset( &params, 0, sizeof(params) );
     params.ioctl.type = IRP_CALL_IOCTL;
     params.ioctl.code = code;
-    return queue_irp( file, &params, async );
+    queue_irp( file, &params, async );
 }
 
 static void cancel_irp_call( struct irp_call *irp )

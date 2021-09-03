@@ -2372,23 +2372,22 @@ void no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int inf
 }
 
 /* default ioctl() routine */
-int no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+void no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 /* default ioctl() routine */
-int default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     switch(code)
     {
     case FSCTL_DISMOUNT_VOLUME:
         unmount_device( fd );
-        return 1;
+        break;
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
-        return 0;
     }
 }
 

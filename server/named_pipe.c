@@ -157,7 +157,7 @@ static struct object *pipe_server_lookup_name( struct object *obj, struct unicod
 static struct object *pipe_server_open_file( struct object *obj, unsigned int access,
                                              unsigned int sharing, unsigned int options );
 static void pipe_server_destroy( struct object *obj);
-static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct object_ops pipe_server_ops =
 {
@@ -200,7 +200,7 @@ static const struct fd_ops pipe_server_fd_ops =
 
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
-static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct object_ops pipe_client_ops =
 {
@@ -275,7 +275,7 @@ static const struct object_ops named_pipe_device_ops =
 static void named_pipe_device_file_dump( struct object *obj, int verbose );
 static struct fd *named_pipe_device_file_get_fd( struct object *obj );
 static WCHAR *named_pipe_device_file_get_full_name( struct object *obj, data_size_t *len );
-static int named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static enum server_fd_type named_pipe_device_file_get_fd_type( struct fd *fd );
 static void named_pipe_device_file_destroy( struct object *obj );
 
@@ -973,7 +973,7 @@ static enum server_fd_type pipe_end_get_fd_type( struct fd *fd )
     return FD_TYPE_PIPE;
 }
 
-static int pipe_end_peek( struct pipe_end *pipe_end )
+static void pipe_end_peek( struct pipe_end *pipe_end )
 {
     unsigned reply_size = get_reply_max_size();
     FILE_PIPE_PEEK_BUFFER *buffer;
@@ -984,7 +984,7 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     if (reply_size < offsetof( FILE_PIPE_PEEK_BUFFER, Data ))
     {
         set_error( STATUS_INFO_LENGTH_MISMATCH );
-        return 0;
+        return;
     }
     reply_size -= offsetof( FILE_PIPE_PEEK_BUFFER, Data );
 
@@ -995,10 +995,10 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     case FILE_PIPE_CLOSING_STATE:
         if (!list_empty( &pipe_end->message_queue )) break;
         set_error( STATUS_PIPE_BROKEN );
-        return 0;
+        return;
     default:
         set_error( pipe_end->pipe ? STATUS_INVALID_PIPE_STATE : STATUS_PIPE_DISCONNECTED );
-        return 0;
+        return;
     }
 
     LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
@@ -1012,7 +1012,7 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
         reply_size = min( reply_size, message_length );
     }
 
-    if (!(buffer = set_reply_data_size( offsetof( FILE_PIPE_PEEK_BUFFER, Data[reply_size] )))) return 0;
+    if (!(buffer = set_reply_data_size( offsetof( FILE_PIPE_PEEK_BUFFER, Data[reply_size] )))) return;
     buffer->NamedPipeState    = pipe_end->state;
     buffer->ReadDataAvailable = avail;
     buffer->NumberOfMessages  = 0;  /* FIXME */
@@ -1031,10 +1031,9 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
         }
     }
     if (message_length > reply_size) set_error( STATUS_BUFFER_OVERFLOW );
-    return 1;
 }
 
-static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
+static void pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
 {
     struct pipe_message *message;
     struct iosb *iosb;
@@ -1042,20 +1041,20 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
     if (!pipe_end->connection)
     {
         set_error( pipe_end->pipe ? STATUS_INVALID_PIPE_STATE : STATUS_PIPE_DISCONNECTED );
-        return 0;
+        return;
     }
 
     if (!(pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_READ))
     {
         set_error( STATUS_INVALID_READ_MODE );
-        return 0;
+        return;
     }
 
     /* not allowed if we already have read data buffered */
     if (!list_empty( &pipe_end->message_queue ))
     {
         set_error( STATUS_PIPE_BUSY );
-        return 0;
+        return;
     }
 
     iosb = async_get_iosb( async );
@@ -1064,16 +1063,15 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
     /* transaction never blocks on write, so just queue a message without async */
     message = queue_message( pipe_end->connection, iosb );
     release_object( iosb );
-    if (!message) return 0;
+    if (!message) return;
     reselect_read_queue( pipe_end->connection, 0 );
 
     queue_async( &pipe_end->read_q, async );
     reselect_read_queue( pipe_end, 0 );
     set_error( STATUS_PENDING );
-    return 1;
 }
 
-static int pipe_end_get_connection_attribute( struct pipe_end *pipe_end )
+static void pipe_end_get_connection_attribute( struct pipe_end *pipe_end )
 {
     const char *attr = get_req_data();
     data_size_t value_size, attr_size = get_req_data_size();
@@ -1092,38 +1090,40 @@ static int pipe_end_get_connection_attribute( struct pipe_end *pipe_end )
     else
     {
         set_error( STATUS_ILLEGAL_FUNCTION );
-        return 0;
+        return;
     }
 
     if (get_reply_max_size() < value_size)
     {
         set_error( STATUS_INFO_LENGTH_MISMATCH );
-        return 0;
+        return;
     }
 
     set_reply_data( value, value_size );
-    return 1;
 }
 
-static int pipe_end_ioctl( struct pipe_end *pipe_end, ioctl_code_t code, struct async *async )
+static void pipe_end_ioctl( struct pipe_end *pipe_end, ioctl_code_t code, struct async *async )
 {
     switch(code)
     {
     case FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE:
-        return pipe_end_get_connection_attribute( pipe_end );
+        pipe_end_get_connection_attribute( pipe_end );
+        break;
 
     case FSCTL_PIPE_PEEK:
-        return pipe_end_peek( pipe_end );
+        pipe_end_peek( pipe_end );
+        break;
 
     case FSCTL_PIPE_TRANSCEIVE:
-        return pipe_end_transceive( pipe_end, async );
+        pipe_end_transceive( pipe_end, async );
+        break;
 
     default:
-        return default_fd_ioctl( pipe_end->fd, code, async );
+        default_fd_ioctl( pipe_end->fd, code, async );
     }
 }
 
-static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct pipe_server *server = get_fd_user( fd );
 
@@ -1140,21 +1140,21 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             break;
         case FILE_PIPE_CONNECTED_STATE:
             set_error( STATUS_PIPE_CONNECTED );
-            return 0;
+            return;
         case FILE_PIPE_CLOSING_STATE:
             set_error( STATUS_PIPE_CLOSING );
-            return 0;
+            return;
         }
 
         if (server->pipe_end.flags & NAMED_PIPE_NONBLOCKING_MODE)
         {
             set_error( STATUS_PIPE_LISTENING );
-            return 0;
+            return;
         }
         queue_async( &server->listen_q, async );
         async_wake_up( &server->pipe_end.pipe->waiters, STATUS_SUCCESS );
         set_error( STATUS_PENDING );
-        return 1;
+        return;
 
     case FSCTL_PIPE_DISCONNECT:
         switch(server->pipe_end.state)
@@ -1169,32 +1169,32 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             break;
         case FILE_PIPE_LISTENING_STATE:
             set_error( STATUS_PIPE_LISTENING );
-            return 0;
+            return;
         case FILE_PIPE_DISCONNECTED_STATE:
             set_error( STATUS_PIPE_DISCONNECTED );
-            return 0;
+            return;
         }
 
         pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
-        return 1;
+        return;
 
     case FSCTL_PIPE_IMPERSONATE:
         if (current->process->token) /* FIXME: use the client token */
         {
             struct token *token;
             if (!(token = token_duplicate( current->process->token, 0, SecurityImpersonation, NULL, NULL, 0, NULL, 0 )))
-                return 0;
+                return;
             if (current->token) release_object( current->token );
             current->token = token;
         }
-        return 1;
+        return;
 
     default:
-        return pipe_end_ioctl( &server->pipe_end, code, async );
+        pipe_end_ioctl( &server->pipe_end, code, async );
     }
 }
 
-static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct pipe_end *client = get_fd_user( fd );
 
@@ -1202,10 +1202,10 @@ static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
     {
     case FSCTL_PIPE_LISTEN:
         set_error( STATUS_ILLEGAL_FUNCTION );
-        return 0;
+        return;
 
     default:
-        return pipe_end_ioctl( client, code, async );
+        pipe_end_ioctl( client, code, async );
     }
 }
 
@@ -1323,7 +1323,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
     return &client->obj;
 }
 
-static int named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static void named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct named_pipe_device *device = get_fd_user( fd );
 
@@ -1341,11 +1341,11 @@ static int named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct asy
                 size < FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[buffer->NameLength/sizeof(WCHAR)]))
             {
                 set_error( STATUS_INVALID_PARAMETER );
-                return 0;
+                return;
             }
             name.str = buffer->Name;
             name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
-            if (!(pipe = open_named_object( &device->obj, &named_pipe_ops, &name, 0 ))) return 0;
+            if (!(pipe = open_named_object( &device->obj, &named_pipe_ops, &name, 0 ))) return;
 
             if (list_empty( &pipe->listeners ))
             {
@@ -1356,11 +1356,11 @@ static int named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct asy
             }
 
             release_object( pipe );
-            return 1;
+            return;
         }
 
     default:
-        return default_fd_ioctl( fd, code, async );
+        default_fd_ioctl( fd, code, async );
     }
 }
 
