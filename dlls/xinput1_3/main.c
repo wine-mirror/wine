@@ -43,6 +43,8 @@
 
 #include "wine/debug.h"
 
+DEFINE_GUID(GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x47,0x67,0x50,0xc5,0xe1,0xa6);
+
 /* Not defined in the headers, used only by XInputGetStateEx */
 #define XINPUT_GAMEPAD_GUIDE 0x0400
 
@@ -324,7 +326,7 @@ static void update_controller_list(void)
     GUID guid;
     int i;
 
-    HidD_GetHidGuid(&guid);
+    guid = GUID_DEVINTERFACE_WINEXINPUT;
 
     set = SetupDiGetClassDevsW(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     detail->cbSize = sizeof(*detail);
@@ -334,8 +336,6 @@ static void update_controller_list(void)
     {
         if (!SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, sizeof(buffer), NULL, NULL))
             continue;
-
-        if (!wcsstr(detail->DevicePath, L"IG_")) continue;
 
         if (find_opened_device(detail, &i)) continue; /* already opened */
         if (i == XUSER_MAX_COUNT) break; /* no more slots */
