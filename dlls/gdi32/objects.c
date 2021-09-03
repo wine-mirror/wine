@@ -95,10 +95,10 @@ static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
     return NULL;
 }
 
-static WORD get_object_type( HGDIOBJ obj )
+static DWORD get_object_type( HGDIOBJ obj )
 {
     GDI_HANDLE_ENTRY *entry = handle_entry( obj );
-    return entry ? entry->ExtType : 0;
+    return entry ? entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT : 0;
 }
 
 void set_gdi_client_ptr( HGDIOBJ obj, void *ptr )
@@ -107,10 +107,10 @@ void set_gdi_client_ptr( HGDIOBJ obj, void *ptr )
     if (entry) entry->UserPointer = (UINT_PTR)ptr;
 }
 
-void *get_gdi_client_ptr( HGDIOBJ obj, WORD type )
+void *get_gdi_client_ptr( HGDIOBJ obj, DWORD type )
 {
     GDI_HANDLE_ENTRY *entry = handle_entry( obj );
-    if (!entry || (type && entry->ExtType != type) || !entry->UserPointer)
+    if (!entry || (type && entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT != type))
         return NULL;
     return (void *)(UINT_PTR)entry->UserPointer;
 }

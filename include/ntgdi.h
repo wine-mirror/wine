@@ -54,21 +54,21 @@ typedef struct _GDI_HANDLE_ENTRY
 
 #define GDI_MAX_HANDLE_COUNT 0x10000
 
-#define NTGDI_OBJ_DC              0x01
-#define NTGDI_OBJ_ENHMETADC       0x21
-#define NTGDI_OBJ_REGION          0x04
-#define NTGDI_OBJ_METAFILE        0x26
-#define NTGDI_OBJ_ENHMETAFILE     0x46
-#define NTGDI_OBJ_METADC          0x66
-#define NTGDI_OBJ_PAL             0x08
-#define NTGDI_OBJ_BITMAP          0x09
-#define NTGDI_OBJ_FONT            0x0a
-#define NTGDI_OBJ_BRUSH           0x10
-#define NTGDI_OBJ_PEN             0x30
-#define NTGDI_OBJ_EXTPEN          0x50
+#define NTGDI_OBJ_DC              0x010000
+#define NTGDI_OBJ_ENHMETADC       0x210000
+#define NTGDI_OBJ_REGION          0x040000
+#define NTGDI_OBJ_METAFILE        0x260000
+#define NTGDI_OBJ_ENHMETAFILE     0x460000
+#define NTGDI_OBJ_METADC          0x660000
+#define NTGDI_OBJ_PAL             0x080000
+#define NTGDI_OBJ_BITMAP          0x090000
+#define NTGDI_OBJ_FONT            0x0a0000
+#define NTGDI_OBJ_BRUSH           0x100000
+#define NTGDI_OBJ_PEN             0x300000
+#define NTGDI_OBJ_EXTPEN          0x500000
 
 /* Wine extension, native uses NTGDI_OBJ_DC */
-#define NTGDI_OBJ_MEMDC           0x41
+#define NTGDI_OBJ_MEMDC           0x410000
 
 #define NTGDI_HANDLE_TYPE_SHIFT    16
 #define NTGDI_HANDLE_TYPE_MASK     0x007f0000

@@ -199,7 +199,7 @@ HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
 {
     PENOBJ *pen;
     HGDIOBJ ret = 0;
-    WORD type;
+    DWORD type;
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
@@ -262,7 +262,7 @@ static BOOL PEN_DeleteObject( HGDIOBJ handle )
  */
 static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    WORD type;
+    DWORD type;
     PENOBJ *pen = get_any_obj_ptr( handle, &type );
     INT ret = 0;
 

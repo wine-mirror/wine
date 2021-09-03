@@ -31,9 +31,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 DC_ATTR *get_dc_attr( HDC hdc )
 {
-    WORD type = gdi_handle_type( hdc );
+    DWORD type = gdi_handle_type( hdc );
     DC_ATTR *dc_attr;
-    if ((type & 0x1f) != NTGDI_OBJ_DC || !(dc_attr = get_gdi_client_ptr( hdc, 0 )))
+    if ((type & 0x1f0000) != NTGDI_OBJ_DC || !(dc_attr = get_gdi_client_ptr( hdc, 0 )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;

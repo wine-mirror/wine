@@ -389,15 +389,18 @@ static void test_shared_handle_entry( HGDIOBJ obj, unsigned int type, BOOL is_st
        entry->Unique, handle >> 16);
     if (type != NTGDI_OBJ_MEMDC)
     {
-        ok(entry->ExtType == type, "ExtType = %x, expected %x\n", entry->ExtType, type);
+        ok(entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT == type, "ExtType = %x, expected %x\n",
+           entry->ExtType, type);
     }
     else
     {
         todo_wine
-        ok(entry->ExtType == NTGDI_OBJ_DC, "ExtType = %x, expected NTGDI_OBJ_DC\n", entry->ExtType);
+        ok(entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT == NTGDI_OBJ_DC,
+           "ExtType = %x, expected NTGDI_OBJ_DC\n", entry->ExtType);
     }
     ok(entry->StockFlag == is_stock, "StockFlag = %x\n", entry->StockFlag);
-    ok(entry->Type == (type & 0x1f), "Type = %x, expected %x\n", entry->Type, type & 0x1f);
+    ok(entry->Type << NTGDI_HANDLE_TYPE_SHIFT == (type & 0x1f0000),
+       "Type = %x, expected %x\n", entry->Type, type & 0x1f);
     ok(entry->Object, "Object = NULL\n");
     ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);
 }

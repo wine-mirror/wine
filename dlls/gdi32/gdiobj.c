@@ -47,7 +47,7 @@ HMODULE gdi32_module = 0;
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
     unsigned int idx = entry - gdi_shared.Handles;
-    return LongToHandle( idx | (entry->Unique << 16) );
+    return LongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
 }
 
 static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
@@ -720,8 +720,8 @@ static void dump_gdi_objects( void )
         else
             TRACE( "handle %p obj %s type %s selcount %u deleted %u\n",
                    entry_to_handle( entry ), wine_dbgstr_longlong( entry->Object ),
-                   gdi_obj_type( entry->ExtType ), entry_obj( entry )->selcount,
-                   entry_obj( entry )->deleted );
+                   gdi_obj_type( entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT ),
+                   entry_obj( entry )->selcount, entry_obj( entry )->deleted );
     }
     LeaveCriticalSection( &gdi_section );
 }
@@ -731,7 +731,7 @@ static void dump_gdi_objects( void )
  *
  * Allocate a GDI handle for an object, which must have been allocated on the process heap.
  */
-HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, WORD type, const struct gdi_obj_funcs *funcs )
+HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct gdi_obj_funcs *funcs )
 {
     GDI_HANDLE_ENTRY *entry;
     HGDIOBJ ret;
@@ -757,8 +757,8 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, WORD type, const struct gd
     obj->system   = 0;
     obj->deleted  = 0;
     entry->Object  = (UINT_PTR)obj;
-    entry->Type    = type & 0x1f;
-    entry->ExtType = type;
+    entry->ExtType = type >> NTGDI_HANDLE_TYPE_SHIFT;
+    entry->Type    = entry->ExtType & 0x1f;
     if (++entry->Generation == 0xff) entry->Generation = 1;
     ret = entry_to_handle( entry );
     LeaveCriticalSection( &gdi_section );
@@ -781,8 +781,8 @@ void *free_gdi_handle( HGDIOBJ handle )
     EnterCriticalSection( &gdi_section );
     if ((entry = handle_entry( handle )))
     {
-        TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->ExtType ), handle,
-               InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
+        TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT ),
+               handle, InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
         object = entry_obj( entry );
         entry->Type = 0;
         entry->Object = (UINT_PTR)next_free;
@@ -818,7 +818,7 @@ HGDIOBJ get_full_gdi_handle( HGDIOBJ handle )
  * associated with the handle.
  * The object must be released with GDI_ReleaseObj.
  */
-void *get_any_obj_ptr( HGDIOBJ handle, WORD *type )
+void *get_any_obj_ptr( HGDIOBJ handle, DWORD *type )
 {
     void *ptr = NULL;
     GDI_HANDLE_ENTRY *entry;
@@ -828,7 +828,7 @@ void *get_any_obj_ptr( HGDIOBJ handle, WORD *type )
     if ((entry = handle_entry( handle )))
     {
         ptr = entry_obj( entry );
-        *type = entry->ExtType;
+        *type = entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT;
     }
 
     if (!ptr) LeaveCriticalSection( &gdi_section );
@@ -842,9 +842,9 @@ void *get_any_obj_ptr( HGDIOBJ handle, WORD *type )
  * Return NULL if the object has the wrong type.
  * The object must be released with GDI_ReleaseObj.
  */
-void *GDI_GetObjPtr( HGDIOBJ handle, WORD type )
+void *GDI_GetObjPtr( HGDIOBJ handle, DWORD type )
 {
-    WORD ret_type;
+    DWORD ret_type;
     void *ptr = get_any_obj_ptr( handle, &ret_type );
     if (ptr && ret_type != type)
     {

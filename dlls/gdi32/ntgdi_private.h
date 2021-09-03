@@ -187,7 +187,7 @@ static inline HRGN get_dc_region( DC *dc )
 }
 
 /* dc.c */
-extern DC *alloc_dc_ptr( WORD magic ) DECLSPEC_HIDDEN;
+extern DC *alloc_dc_ptr( DWORD magic ) DECLSPEC_HIDDEN;
 extern void free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern DC *get_dc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
@@ -390,12 +390,12 @@ extern BOOL opentype_get_properties( const void *data, size_t size, const struct
 extern BOOL translate_charset_info( DWORD *src, CHARSETINFO *cs, DWORD flags ) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */
-extern HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, WORD type,
+extern HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type,
                                  const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ get_full_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
-extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
-extern void *get_any_obj_ptr( HGDIOBJ, WORD * ) DECLSPEC_HIDDEN;
+extern void *GDI_GetObjPtr( HGDIOBJ, DWORD ) DECLSPEC_HIDDEN;
+extern void *get_any_obj_ptr( HGDIOBJ, DWORD * ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
 extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;

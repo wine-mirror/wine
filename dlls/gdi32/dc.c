@@ -47,7 +47,7 @@ static const struct gdi_obj_funcs dc_funcs =
 
 static inline DC *get_dc_obj( HDC hdc )
 {
-    WORD type;
+    DWORD type;
     DC *dc = get_any_obj_ptr( hdc, &type );
     if (!dc) return NULL;
 
@@ -118,7 +118,7 @@ static void set_initial_dc_state( DC *dc )
 /***********************************************************************
  *           alloc_dc_ptr
  */
-DC *alloc_dc_ptr( WORD magic )
+DC *alloc_dc_ptr( DWORD magic )
 {
     DC *dc;
 

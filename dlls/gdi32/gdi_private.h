@@ -29,16 +29,16 @@
 #include "ntgdi.h"
 
 void set_gdi_client_ptr( HGDIOBJ handle, void *ptr ) DECLSPEC_HIDDEN;
-void *get_gdi_client_ptr( HGDIOBJ handle, WORD type ) DECLSPEC_HIDDEN;
+void *get_gdi_client_ptr( HGDIOBJ handle, DWORD type ) DECLSPEC_HIDDEN;
 DC_ATTR *get_dc_attr( HDC hdc ) DECLSPEC_HIDDEN;
 void GDI_hdc_using_object( HGDIOBJ obj, HDC hdc,
                            void (*delete)( HDC hdc, HGDIOBJ handle )) DECLSPEC_HIDDEN;
 void GDI_hdc_not_using_object( HGDIOBJ obj, HDC hdc ) DECLSPEC_HIDDEN;
 
-static inline WORD gdi_handle_type( HGDIOBJ obj )
+static inline DWORD gdi_handle_type( HGDIOBJ obj )
 {
     unsigned int handle = HandleToULong( obj );
-    return (handle & NTGDI_HANDLE_TYPE_MASK) >> NTGDI_HANDLE_TYPE_SHIFT;
+    return handle & NTGDI_HANDLE_TYPE_MASK;
 }
 
 static inline BOOL is_meta_dc( HDC hdc )
