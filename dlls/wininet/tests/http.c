@@ -596,11 +596,9 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     trace("Starting InternetReadFile test with flags 0x%x on url %s\n",flags,test->url);
     reset_events();
 
-    trace("InternetOpenA <--\n");
     hi = InternetOpenA((test->flags & TESTF_COMPRESSED) ? "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)" : "",
             INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, flags);
     ok((hi != 0x0),"InternetOpen failed with error %u\n", GetLastError());
-    trace("InternetOpenA -->\n");
 
     if (hi == 0x0) goto abort;
 
@@ -608,18 +606,15 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
-    trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi, test->host, INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
     ok((hic != 0x0),"InternetConnect failed with error %u\n", GetLastError());
-    trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
 
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
-    trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, test->post_data ? "POST" : "GET", test->path, NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RELOAD,
                            0xdeadbead);
@@ -633,7 +628,6 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     } else  {
         ok((hor != 0x0),"HttpOpenRequest failed with error %u\n", GetLastError());
     }
-    trace("HttpOpenRequestA -->\n");
 
     if (hor == 0x0) goto abort;
 
@@ -684,7 +678,6 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
     test_status_code(hor, 0);
 
-    trace("HttpSendRequestA -->\n");
     if(test->post_data) {
         post_len = strlen(test->post_data);
         post_data = HeapAlloc(GetProcessHeap(), 0, post_len);
@@ -698,7 +691,6 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     else
         ok(res || (GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED),
            "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
-    trace("HttpSendRequestA <--\n");
 
     if (flags & INTERNET_FLAG_ASYNC) {
         WaitForSingleObject(complete_event, INFINITE);
@@ -968,22 +960,17 @@ static void InternetReadFile_chunked_test(void)
 
     trace("Starting InternetReadFile chunked test\n");
 
-    trace("InternetOpenA <--\n");
     hi = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok((hi != 0x0),"InternetOpen failed with error %u\n", GetLastError());
-    trace("InternetOpenA -->\n");
 
     if (hi == 0x0) goto abort;
 
-    trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi, "test.winehq.org", INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
     ok((hic != 0x0),"InternetConnect failed with error %u\n", GetLastError());
-    trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
 
-    trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET", "/tests/chunked", NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RELOAD,
                            0xdeadbead);
@@ -997,16 +984,13 @@ static void InternetReadFile_chunked_test(void)
     } else  {
         ok((hor != 0x0),"HttpOpenRequest failed with error %u\n", GetLastError());
     }
-    trace("HttpOpenRequestA -->\n");
 
     if (hor == 0x0) goto abort;
 
-    trace("HttpSendRequestA -->\n");
     SetLastError(0xdeadbeef);
     res = HttpSendRequestA(hor, "", -1, NULL, 0);
     ok(res || (GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED),
        "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
-    trace("HttpSendRequestA <--\n");
 
     test_request_flags(hor, 0);
 
@@ -1092,10 +1076,8 @@ static void InternetReadFileExA_test(int flags)
     trace("Starting InternetReadFileExA test with flags 0x%x\n",flags);
     reset_events();
 
-    trace("InternetOpenA <--\n");
     hi = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, flags);
     ok((hi != 0x0),"InternetOpen failed with error %u\n", GetLastError());
-    trace("InternetOpenA -->\n");
 
     if (hi == 0x0) goto abort;
 
@@ -1103,18 +1085,15 @@ static void InternetReadFileExA_test(int flags)
 
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
-    trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi, "test.winehq.org", INTERNET_INVALID_PORT_NUMBER,
                          NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
     ok((hic != 0x0),"InternetConnect failed with error %u\n", GetLastError());
-    trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
 
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
-    trace("HttpOpenRequestA <--\n");
     hor = HttpOpenRequestA(hic, "GET", "/tests/redirect", NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RELOAD,
                            0xdeadbead);
@@ -1128,7 +1107,6 @@ static void InternetReadFileExA_test(int flags)
     } else  {
         ok((hor != 0x0),"HttpOpenRequest failed with error %u\n", GetLastError());
     }
-    trace("HttpOpenRequestA -->\n");
 
     if (hor == 0x0) goto abort;
 
@@ -1157,7 +1135,6 @@ static void InternetReadFileExA_test(int flags)
     else
         SET_WINE_ALLOW(INTERNET_STATUS_REQUEST_COMPLETE);
 
-    trace("HttpSendRequestA -->\n");
     SetLastError(0xdeadbeef);
     rc = HttpSendRequestA(hor, "", -1, NULL, 0);
     if (flags & INTERNET_FLAG_ASYNC)
@@ -1166,7 +1143,6 @@ static void InternetReadFileExA_test(int flags)
     else
         ok((rc != 0) || GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED,
            "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
-    trace("HttpSendRequestA <--\n");
 
     if (!rc && (GetLastError() == ERROR_IO_PENDING)) {
         WaitForSingleObject(complete_event, INFINITE);
