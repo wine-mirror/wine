@@ -7104,19 +7104,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetPixelShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10PixelShader **shader)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
+    struct d3d10_effect_shader_variable *s;
+    D3D10_SHADER_VARIABLE_TYPE basetype;
+    HRESULT hr;
 
     TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
 
-    if (v->type->element_count)
-        v = impl_from_ID3D10EffectVariable(iface->lpVtbl->GetElement(iface, index));
+    *shader = NULL;
 
-    if (v->type->basetype != D3D10_SVT_PIXELSHADER)
+    if (FAILED(hr = d3d10_get_shader_variable(v, index, &s, &basetype)))
+        return hr;
+
+    if (basetype != D3D10_SVT_PIXELSHADER)
     {
         WARN("Shader is not a pixel shader.\n");
-        return E_FAIL;
+        return D3DERR_INVALIDCALL;
     }
 
-    if ((*shader = v->u.shader.shader.ps))
+    if ((*shader = s->shader.ps))
         ID3D10PixelShader_AddRef(*shader);
 
     return S_OK;

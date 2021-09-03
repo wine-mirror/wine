@@ -6015,6 +6015,7 @@ static void test_effect_shader_object(void)
     ID3D10EffectShaderVariable *s;
     ID3D10EffectVariable *v;
     ID3D10VertexShader *vs;
+    ID3D10PixelShader *ps;
     ID3D10Effect* effect;
     ID3D10Device *device;
     ULONG refcount;
@@ -6059,6 +6060,37 @@ static void test_effect_shader_object(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!vs, "Unexpected shader object.\n");
     ID3D10VertexShader_Release(vs);
+
+    ps = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetPixelShader(s, 0, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!ps, "Unexpected shader object.\n");
+
+    ps = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetPixelShader(s, 1, &ps);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!ps, "Unexpected shader object.\n");
+
+    ps = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetPixelShader(s, 2, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!ps, "Unexpected shader object.\n");
+
+    ps = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetPixelShader(s, 3, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!ps, "Unexpected shader object.\n");
+
+    ps = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetPixelShader(s, 4, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!ps, "Unexpected shader object.\n");
+
+    ps = NULL;
+    hr = s->lpVtbl->GetPixelShader(s, 5, &ps);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!ps, "Unexpected shader object.\n");
+    ID3D10PixelShader_Release(ps);
 
     effect->lpVtbl->Release(effect);
 
