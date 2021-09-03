@@ -27,15 +27,12 @@
 
 #include "unixlib.h"
 
-typedef int(*enum_func)(DEVICE_OBJECT *device, void *context);
-
 struct unix_device *get_unix_device(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 
 /* HID Plug and Play Bus */
 DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct unix_device *unix_device) DECLSPEC_HIDDEN;
 DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev) DECLSPEC_HIDDEN;
 void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length) DECLSPEC_HIDDEN;
-DEVICE_OBJECT *bus_enumerate_hid_devices(const WCHAR *bus_id, enum_func function, void *context) DECLSPEC_HIDDEN;
 
 /* General Bus Functions */
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
