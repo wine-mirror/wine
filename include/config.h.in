@@ -147,9 +147,6 @@
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
-/* Define to 1 if you have the `getnameinfo' function. */
-#undef HAVE_GETNAMEINFO
-
 /* Define to 1 if you have the <getopt.h> header file. */
 #undef HAVE_GETOPT_H
 
@@ -158,9 +155,6 @@
 
 /* Define to 1 if you have the `getrandom' function. */
 #undef HAVE_GETRANDOM
-
-/* Define to 1 if you have the `getservbyport' function. */
-#undef HAVE_GETSERVBYPORT
 
 /* Define to 1 if you have the <gettext-po.h> header file. */
 #undef HAVE_GETTEXT_PO_H
@@ -197,9 +191,6 @@
 
 /* Define to 1 if you have the `if_nameindex' function. */
 #undef HAVE_IF_NAMEINDEX
-
-/* Define to 1 if you have the <inet/mib2.h> header file. */
-#undef HAVE_INET_MIB2_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -519,9 +510,6 @@
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
-/* Define to 1 if you have the `pread' function. */
-#undef HAVE_PREAD
-
 /* Define to 1 if you have the `proc_pidinfo' function. */
 #undef HAVE_PROC_PIDINFO
 
@@ -539,9 +527,6 @@
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
-
-/* Define to 1 if you have the `pwrite' function. */
-#undef HAVE_PWRITE
 
 /* Define to 1 if you have the <QuickTime/ImageCompression.h> header file. */
 #undef HAVE_QUICKTIME_IMAGECOMPRESSION_H
@@ -626,9 +611,6 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the <stropts.h> header file. */
-#undef HAVE_STROPTS_H
 
 /* Define to 1 if `direction' is a member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
@@ -794,9 +776,6 @@
 /* Define to 1 if you have the <sys/mount.h> header file. */
 #undef HAVE_SYS_MOUNT_H
 
-/* Define to 1 if you have the <sys/msg.h> header file. */
-#undef HAVE_SYS_MSG_H
-
 /* Define to 1 if you have the <sys/mtio.h> header file. */
 #undef HAVE_SYS_MTIO_H
 
@@ -865,9 +844,6 @@
 
 /* Define to 1 if you have the <sys/thr.h> header file. */
 #undef HAVE_SYS_THR_H
-
-/* Define to 1 if you have the <sys/tihdr.h> header file. */
-#undef HAVE_SYS_TIHDR_H
 
 /* Define to 1 if you have the <sys/timeout.h> header file. */
 #undef HAVE_SYS_TIMEOUT_H

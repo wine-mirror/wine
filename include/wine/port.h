@@ -194,30 +194,6 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
 
-#ifndef HAVE_POLL
-struct pollfd
-{
-    int fd;
-    short events;
-    short revents;
-};
-#define POLLIN   0x01
-#define POLLPRI  0x02
-#define POLLOUT  0x04
-#define POLLERR  0x08
-#define POLLHUP  0x10
-#define POLLNVAL 0x20
-int poll( struct pollfd *fds, unsigned int count, int timeout );
-#endif /* HAVE_POLL */
-
-#ifndef HAVE_PREAD
-ssize_t pread( int fd, void *buf, size_t count, off_t offset );
-#endif /* HAVE_PREAD */
-
-#ifndef HAVE_PWRITE
-ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
-#endif /* HAVE_PWRITE */
-
 #ifndef HAVE_READLINK
 int readlink( const char *path, char *buf, size_t size );
 #endif /* HAVE_READLINK */

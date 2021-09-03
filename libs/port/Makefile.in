@@ -4,9 +4,6 @@ C_SRCS = \
 	getopt.c \
 	lstat.c \
 	mkstemps.c \
-	poll.c \
-	pread.c \
-	pwrite.c \
 	readlink.c \
 	spawn.c \
 	symlink.c

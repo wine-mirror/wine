@@ -467,7 +467,6 @@ AC_CHECK_HEADERS(\
 	gsm.h \
 	gsm/gsm.h \
 	ieeefp.h \
-	inet/mib2.h \
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
@@ -504,7 +503,6 @@ AC_CHECK_HEADERS(\
 	scsi/scsi_ioctl.h \
 	scsi/sg.h \
 	stdint.h \
-	stropts.h \
 	sys/attr.h \
 	sys/auxv.h \
 	sys/cdio.h \
@@ -516,7 +514,6 @@ AC_CHECK_HEADERS(\
 	sys/link.h \
 	sys/mman.h \
 	sys/modem.h \
-	sys/msg.h \
 	sys/mtio.h \
 	sys/param.h \
 	sys/poll.h \
@@ -536,7 +533,6 @@ AC_CHECK_HEADERS(\
 	sys/strtio.h \
 	sys/syscall.h \
 	sys/sysinfo.h \
-	sys/tihdr.h \
 	sys/time.h \
 	sys/timeout.h \
 	sys/times.h \
@@ -2188,9 +2184,7 @@ AC_CHECK_FUNCS(\
 	port_create \
 	posix_fadvise \
 	prctl \
-	pread \
 	proc_pidinfo \
-	pwrite \
 	readlink \
 	sched_yield \
 	setproctitle \
@@ -2223,11 +2217,7 @@ dnl Check for -lresolv for Solaris
 AC_SEARCH_LIBS(inet_aton, resolv)
 
 dnl **** Check for functions which may rely on -lsocket on Solaris.
-AC_CHECK_FUNCS(\
-	getaddrinfo \
-	getnameinfo \
-	getservbyport \
-)
+AC_CHECK_FUNCS(getaddrinfo)
 
 dnl Check for clock_gettime which may be in -lrt
 case $host_os in
