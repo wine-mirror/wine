@@ -3850,6 +3850,9 @@ static void test_effect_get_variable_by(void)
     variable = effect->lpVtbl->GetVariableBySemantic(effect, "SV_POSITION");
     ok(variable_by_index == variable, "GetVariableBySemantic got %p, expected %p\n", variable, variable_by_index);
 
+    variable = effect->lpVtbl->GetVariableBySemantic(effect, "sv_POSITION");
+    ok(variable_by_index == variable, "GetVariableBySemantic got %p, expected %p\n", variable, variable_by_index);
+
     /* variable f2 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 1);
     ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
@@ -3858,6 +3861,9 @@ static void test_effect_get_variable_by(void)
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
 
     variable = effect->lpVtbl->GetVariableBySemantic(effect, "COLOR0");
+    ok(variable_by_index == variable, "GetVariableBySemantic got %p, expected %p\n", variable, variable_by_index);
+
+    variable = effect->lpVtbl->GetVariableBySemantic(effect, "color0");
     ok(variable_by_index == variable, "GetVariableBySemantic got %p, expected %p\n", variable, variable_by_index);
 
     /* variable f3 */
