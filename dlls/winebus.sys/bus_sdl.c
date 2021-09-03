@@ -478,9 +478,9 @@ failed:
     return STATUS_NO_MEMORY;
 }
 
-static void free_device(DEVICE_OBJECT *device)
+static void sdl_device_destroy(struct unix_device *iface)
 {
-    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
 
     pSDL_JoystickClose(ext->sdl_joystick);
     if (ext->sdl_controller)
@@ -491,21 +491,22 @@ static void free_device(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, ext);
 }
 
-static int compare_platform_device(DEVICE_OBJECT *device, void *context)
+static int sdl_device_compare(struct unix_device *iface, void *context)
 {
-    return impl_from_DEVICE_OBJECT(device)->id - PtrToUlong(context);
+    return impl_from_unix_device(iface)->id - PtrToUlong(context);
 }
 
-static NTSTATUS start_device(DEVICE_OBJECT *device)
+static NTSTATUS sdl_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
-    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
     if (ext->sdl_controller) return build_mapped_report_descriptor(ext);
     return build_report_descriptor(ext);
 }
 
-static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
+static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE *buffer,
+                                                DWORD length, DWORD *out_length)
 {
-    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
 
     *out_length = ext->desc.size;
     if (length < ext->desc.size) return STATUS_BUFFER_TOO_SMALL;
@@ -514,9 +515,9 @@ static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+static NTSTATUS sdl_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
     const char* str = NULL;
 
     switch (index)
@@ -545,9 +546,9 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
     return STATUS_SUCCESS;
 }
 
-static void set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void sdl_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
 
     if (ext->sdl_haptic && packet->reportId == 0)
     {
@@ -592,28 +593,28 @@ static void set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO
     }
 }
 
-static void get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void sdl_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void sdl_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static const platform_vtbl sdl_vtbl =
+static const struct unix_device_vtbl sdl_device_vtbl =
 {
-    free_device,
-    compare_platform_device,
-    start_device,
-    get_reportdescriptor,
-    get_string,
-    set_output_report,
-    get_feature_report,
-    set_feature_report,
+    sdl_device_destroy,
+    sdl_device_compare,
+    sdl_device_start,
+    sdl_device_get_reportdescriptor,
+    sdl_device_get_string,
+    sdl_device_set_output_report,
+    sdl_device_get_feature_report,
+    sdl_device_set_feature_report,
 };
 
 static BOOL set_report_from_event(DEVICE_OBJECT *device, SDL_Event *event)
@@ -787,9 +788,11 @@ static void sdl_add_device(unsigned int index)
 
     TRACE("%s id %d, desc %s.\n", controller ? "controller" : "joystick", id, debugstr_device_desc(&desc));
 
-    if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private)))) return;
+    if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private))))
+        return;
+    private->unix_device.vtbl = &sdl_device_vtbl;
 
-    device = bus_create_hid_device(&desc, &sdl_vtbl, &private->unix_device);
+    device = bus_create_hid_device(&desc, &private->unix_device);
     if (!device) HeapFree(GetProcessHeap(), 0, private);
     else
     {

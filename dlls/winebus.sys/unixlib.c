@@ -30,7 +30,6 @@
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
-#include "bus.h"
 #include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
@@ -38,11 +37,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 static struct hid_descriptor mouse_desc;
 static struct hid_descriptor keyboard_desc;
 
-static void mouse_free_device(DEVICE_OBJECT *device)
+static void mouse_remove(struct unix_device *iface)
 {
 }
 
-static NTSTATUS mouse_start_device(DEVICE_OBJECT *device)
+static int mouse_compare(struct unix_device *iface, void *context)
+{
+    return 0;
+}
+
+static NTSTATUS mouse_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
     if (!hid_descriptor_begin(&mouse_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
         return STATUS_NO_MEMORY;
@@ -54,7 +58,7 @@ static NTSTATUS mouse_start_device(DEVICE_OBJECT *device)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
+static NTSTATUS mouse_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
 
@@ -65,7 +69,7 @@ static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+static NTSTATUS mouse_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
     static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','m','o','u','s','e',0};
     if (index != HID_STRING_ID_IPRODUCT)
@@ -76,36 +80,37 @@ static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buff
     return STATUS_SUCCESS;
 }
 
-static void mouse_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void mouse_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void mouse_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void mouse_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void mouse_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void mouse_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-const platform_vtbl mouse_vtbl =
+static const struct unix_device_vtbl mouse_vtbl =
 {
-    .free_device = mouse_free_device,
-    .start_device = mouse_start_device,
-    .get_reportdescriptor = mouse_get_reportdescriptor,
-    .get_string = mouse_get_string,
-    .set_output_report = mouse_set_output_report,
-    .get_feature_report = mouse_get_feature_report,
-    .set_feature_report = mouse_set_feature_report,
+    mouse_remove,
+    mouse_compare,
+    mouse_start,
+    mouse_get_report_descriptor,
+    mouse_get_string,
+    mouse_set_output_report,
+    mouse_get_feature_report,
+    mouse_set_feature_report,
 };
 
 static const WCHAR mouse_bus_id[] = {'W','I','N','E','M','O','U','S','E',0};
@@ -115,7 +120,7 @@ static const struct device_desc mouse_device_desc =
     .input = -1,
     .serial = {'0','0','0','0',0},
 };
-static struct unix_device mouse_device;
+static struct unix_device mouse_device = {.vtbl = &mouse_vtbl};
 
 static NTSTATUS mouse_device_create(void *args)
 {
@@ -125,11 +130,16 @@ static NTSTATUS mouse_device_create(void *args)
     return STATUS_SUCCESS;
 }
 
-static void keyboard_free_device(DEVICE_OBJECT *device)
+static void keyboard_remove(struct unix_device *iface)
 {
 }
 
-static NTSTATUS keyboard_start_device(DEVICE_OBJECT *device)
+static int keyboard_compare(struct unix_device *iface, void *context)
+{
+    return 0;
+}
+
+static NTSTATUS keyboard_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
     if (!hid_descriptor_begin(&keyboard_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
         return STATUS_NO_MEMORY;
@@ -141,7 +151,7 @@ static NTSTATUS keyboard_start_device(DEVICE_OBJECT *device)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS keyboard_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
+static NTSTATUS keyboard_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
 
@@ -152,7 +162,7 @@ static NTSTATUS keyboard_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffe
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS keyboard_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+static NTSTATUS keyboard_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
     static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','k','e','y','b','o','a','r','d',0};
     if (index != HID_STRING_ID_IPRODUCT)
@@ -163,36 +173,37 @@ static NTSTATUS keyboard_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *b
     return STATUS_SUCCESS;
 }
 
-static void keyboard_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void keyboard_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void keyboard_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void keyboard_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void keyboard_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void keyboard_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-const platform_vtbl keyboard_vtbl =
+static const struct unix_device_vtbl keyboard_vtbl =
 {
-    .free_device = keyboard_free_device,
-    .start_device = keyboard_start_device,
-    .get_reportdescriptor = keyboard_get_reportdescriptor,
-    .get_string = keyboard_get_string,
-    .set_output_report = keyboard_set_output_report,
-    .get_feature_report = keyboard_get_feature_report,
-    .set_feature_report = keyboard_set_feature_report,
+    keyboard_remove,
+    keyboard_compare,
+    keyboard_start,
+    keyboard_get_report_descriptor,
+    keyboard_get_string,
+    keyboard_set_output_report,
+    keyboard_get_feature_report,
+    keyboard_set_feature_report,
 };
 
 static const WCHAR keyboard_bus_id[] = {'W','I','N','E','K','E','Y','B','O','A','R','D',0};
@@ -202,13 +213,72 @@ static const struct device_desc keyboard_device_desc =
     .input = -1,
     .serial = {'0','0','0','0',0},
 };
-static struct unix_device keyboard_device;
+static struct unix_device keyboard_device = {.vtbl = &keyboard_vtbl};
 
 static NTSTATUS keyboard_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = keyboard_device_desc;
     params->device = &keyboard_device;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS unix_device_remove(void *args)
+{
+    struct unix_device *iface = args;
+    iface->vtbl->destroy(iface);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS unix_device_compare(void *args)
+{
+    struct device_compare_params *params = args;
+    struct unix_device *iface = params->iface;
+    return iface->vtbl->compare(iface, params->context);
+}
+
+static NTSTATUS unix_device_start(void *args)
+{
+    struct device_start_params *params = args;
+    struct unix_device *iface = params->iface;
+    return iface->vtbl->start(iface, params->device);
+}
+
+static NTSTATUS unix_device_get_report_descriptor(void *args)
+{
+    struct device_descriptor_params *params = args;
+    struct unix_device *iface = params->iface;
+    return iface->vtbl->get_report_descriptor(iface, params->buffer, params->length, params->out_length);
+}
+
+static NTSTATUS unix_device_get_string(void *args)
+{
+    struct device_string_params *params = args;
+    struct unix_device *iface = params->iface;
+    return iface->vtbl->get_string(iface, params->index, params->buffer, params->length);
+}
+
+static NTSTATUS unix_device_set_output_report(void *args)
+{
+    struct device_report_params *params = args;
+    struct unix_device *iface = params->iface;
+    iface->vtbl->set_output_report(iface, params->packet, params->io);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS unix_device_get_feature_report(void *args)
+{
+    struct device_report_params *params = args;
+    struct unix_device *iface = params->iface;
+    iface->vtbl->get_feature_report(iface, params->packet, params->io);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS unix_device_set_feature_report(void *args)
+{
+    struct device_report_params *params = args;
+    struct unix_device *iface = params->iface;
+    iface->vtbl->set_feature_report(iface, params->packet, params->io);
     return STATUS_SUCCESS;
 }
 
@@ -225,6 +295,14 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     iohid_bus_stop,
     mouse_device_create,
     keyboard_device_create,
+    unix_device_remove,
+    unix_device_compare,
+    unix_device_start,
+    unix_device_get_report_descriptor,
+    unix_device_get_string,
+    unix_device_set_output_report,
+    unix_device_get_feature_report,
+    unix_device_set_feature_report,
 };
 
 void bus_event_queue_destroy(struct list *queue)

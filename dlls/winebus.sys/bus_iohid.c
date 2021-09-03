@@ -114,11 +114,6 @@ static inline struct platform_private *impl_from_unix_device(struct unix_device 
     return CONTAINING_RECORD(iface, struct platform_private, unix_device);
 }
 
-static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
-{
-    return impl_from_unix_device(get_unix_device(device));
-}
-
 static void CFStringToWSTR(CFStringRef cstr, LPWSTR wstr, int length)
 {
     int len = min(CFStringGetLength(cstr), length-1);
@@ -142,26 +137,26 @@ static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
     process_hid_report(device, report, report_length);
 }
 
-static void free_device(DEVICE_OBJECT *device)
+static void iohid_device_destroy(struct unix_device *iface)
 {
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
     HeapFree(GetProcessHeap(), 0, private);
 }
 
-static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
+static int iohid_device_compare(struct unix_device *iface, void *context)
 {
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
-    IOHIDDeviceRef dev2 = (IOHIDDeviceRef)platform_dev;
+    struct platform_private *private = impl_from_unix_device(iface);
+    IOHIDDeviceRef dev2 = (IOHIDDeviceRef)context;
     if (private->device != dev2)
         return 1;
     else
         return 0;
 }
 
-static NTSTATUS start_device(DEVICE_OBJECT *device)
+static NTSTATUS iohid_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
     DWORD length;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
     CFNumberRef num;
 
     num = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDMaxInputReportSizeKey));
@@ -172,9 +167,10 @@ static NTSTATUS start_device(DEVICE_OBJECT *device)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
+static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
+                                                   DWORD length, DWORD *out_length)
 {
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
     CFDataRef data = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDReportDescriptorKey));
     int data_length = CFDataGetLength(data);
     const UInt8 *ptr;
@@ -188,9 +184,9 @@ static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+static NTSTATUS iohid_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
     CFStringRef str;
     switch (index)
     {
@@ -223,10 +219,10 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
     return STATUS_SUCCESS;
 }
 
-static void set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void iohid_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn result;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
     result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeOutput, packet->reportId,
                                   packet->reportBuffer, packet->reportBufferLen);
     if (result == kIOReturnSuccess)
@@ -241,11 +237,11 @@ static void set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO
     }
 }
 
-static void get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void iohid_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn ret;
     CFIndex report_length = packet->reportBufferLen;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
 
     ret = IOHIDDeviceGetReport(private->device, kIOHIDReportTypeFeature, packet->reportId,
                                packet->reportBuffer, &report_length);
@@ -261,10 +257,10 @@ static void get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, I
     }
 }
 
-static void set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void iohid_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn result;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
 
     result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeFeature, packet->reportId,
                                   packet->reportBuffer, packet->reportBufferLen);
@@ -280,16 +276,16 @@ static void set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, I
     }
 }
 
-static const platform_vtbl iohid_vtbl =
+static const struct unix_device_vtbl iohid_device_vtbl =
 {
-    free_device,
-    compare_platform_device,
-    start_device,
-    get_reportdescriptor,
-    get_string,
-    set_output_report,
-    get_feature_report,
-    set_feature_report,
+    iohid_device_destroy,
+    iohid_device_compare,
+    iohid_device_start,
+    iohid_device_get_report_descriptor,
+    iohid_device_get_string,
+    iohid_device_set_output_report,
+    iohid_device_get_feature_report,
+    iohid_device_set_feature_report,
 };
 
 static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
@@ -367,8 +363,9 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
 
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
         return;
+    private->unix_device.vtbl = &iohid_device_vtbl;
 
-    device = bus_create_hid_device(&desc, &iohid_vtbl, &private->unix_device);
+    device = bus_create_hid_device(&desc, &private->unix_device);
     if (!device) HeapFree(GetProcessHeap(), 0, private);
     else
     {

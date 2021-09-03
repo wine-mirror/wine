@@ -25,6 +25,7 @@
 #include <winbase.h>
 #include <winternl.h>
 #include <ddk/wdm.h>
+#include <ddk/hidclass.h>
 #include <hidusage.h>
 
 #include "wine/debug.h"
@@ -87,6 +88,41 @@ struct device_create_params
     struct unix_device *device;
 };
 
+struct device_compare_params
+{
+    struct unix_device *iface;
+    void *context;
+};
+
+struct device_start_params
+{
+    struct unix_device *iface;
+    DEVICE_OBJECT *device;
+};
+
+struct device_descriptor_params
+{
+    struct unix_device *iface;
+    BYTE *buffer;
+    DWORD length;
+    DWORD *out_length;
+};
+
+struct device_string_params
+{
+    struct unix_device *iface;
+    DWORD index;
+    WCHAR *buffer;
+    DWORD length;
+};
+
+struct device_report_params
+{
+    struct unix_device *iface;
+    HID_XFER_PACKET *packet;
+    IO_STATUS_BLOCK *io;
+};
+
 enum unix_funcs
 {
     sdl_init,
@@ -100,6 +136,14 @@ enum unix_funcs
     iohid_stop,
     mouse_create,
     keyboard_create,
+    device_remove,
+    device_compare,
+    device_start,
+    device_get_report_descriptor,
+    device_get_string,
+    device_set_output_report,
+    device_get_feature_report,
+    device_set_feature_report,
 };
 
 extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;

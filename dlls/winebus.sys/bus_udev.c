@@ -543,9 +543,9 @@ static WCHAR *get_sysattr_string(struct udev_device *dev, const char *sysattr)
     return strdupAtoW(attr);
 }
 
-static void hidraw_free_device(DEVICE_OBJECT *device)
+static void hidraw_device_destroy(struct unix_device *iface)
 {
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
 
     if (private->report_thread)
     {
@@ -562,18 +562,18 @@ static void hidraw_free_device(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, private);
 }
 
-static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
+static int udev_device_compare(struct unix_device *iface, void *platform_dev)
 {
-    struct udev_device *dev1 = impl_from_DEVICE_OBJECT(device)->udev_device;
+    struct udev_device *dev1 = impl_from_unix_device(iface)->udev_device;
     struct udev_device *dev2 = platform_dev;
     return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
 }
 
 static DWORD CALLBACK device_report_thread(void *args);
 
-static NTSTATUS hidraw_start_device(DEVICE_OBJECT *device)
+static NTSTATUS hidraw_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
 
     if (pipe(private->control_pipe) != 0)
     {
@@ -593,11 +593,12 @@ static NTSTATUS hidraw_start_device(DEVICE_OBJECT *device)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
+static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
+                                                    DWORD length, DWORD *out_length)
 {
 #ifdef HAVE_LINUX_HIDRAW_H
     struct hidraw_report_descriptor descriptor;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
 
     if (ioctl(private->device_fd, HIDIOCGRDESCSIZE, &descriptor.size) == -1)
     {
@@ -625,10 +626,10 @@ static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer,
 #endif
 }
 
-static NTSTATUS hidraw_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+static NTSTATUS hidraw_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
     struct udev_device *usbdev;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *private = impl_from_unix_device(iface);
     WCHAR *str = NULL;
 
     usbdev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "usb", "usb_device");
@@ -727,9 +728,9 @@ static DWORD CALLBACK device_report_thread(void *args)
     return 0;
 }
 
-static void hidraw_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
     ULONG length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
@@ -757,10 +758,11 @@ static void hidraw_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *pac
     }
 }
 
-static void hidraw_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void hidraw_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet,
+                                             IO_STATUS_BLOCK *io)
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
-    struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
     ULONG length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
@@ -792,10 +794,11 @@ static void hidraw_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *pa
 #endif
 }
 
-static void hidraw_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet,
+                                             IO_STATUS_BLOCK *io)
 {
 #if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
-    struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    struct platform_private *ext = impl_from_unix_device(iface);
     ULONG length = packet->reportBufferLen;
     BYTE buffer[8192];
     int count = 0;
@@ -827,28 +830,33 @@ static void hidraw_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *pa
 #endif
 }
 
-static const platform_vtbl hidraw_vtbl =
+static const struct unix_device_vtbl hidraw_device_vtbl =
 {
-    hidraw_free_device,
-    compare_platform_device,
-    hidraw_start_device,
-    hidraw_get_reportdescriptor,
-    hidraw_get_string,
-    hidraw_set_output_report,
-    hidraw_get_feature_report,
-    hidraw_set_feature_report,
+    hidraw_device_destroy,
+    udev_device_compare,
+    hidraw_device_start,
+    hidraw_device_get_report_descriptor,
+    hidraw_device_get_string,
+    hidraw_device_set_output_report,
+    hidraw_device_get_feature_report,
+    hidraw_device_set_feature_report,
 };
 
 #ifdef HAS_PROPER_INPUT_HEADER
+
+static inline struct wine_input_private *input_impl_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(impl_from_unix_device(iface), struct wine_input_private, base);
+}
 
 static inline struct wine_input_private *input_impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
     return CONTAINING_RECORD(impl_from_DEVICE_OBJECT(device), struct wine_input_private, base);
 }
 
-static void lnxev_free_device(DEVICE_OBJECT *device)
+static void lnxev_device_destroy(struct unix_device *iface)
 {
-    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+    struct wine_input_private *ext = input_impl_from_unix_device(iface);
 
     if (ext->base.report_thread)
     {
@@ -871,9 +879,9 @@ static void lnxev_free_device(DEVICE_OBJECT *device)
 
 static DWORD CALLBACK lnxev_device_report_thread(void *args);
 
-static NTSTATUS lnxev_start_device(DEVICE_OBJECT *device)
+static NTSTATUS lnxev_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
-    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+    struct wine_input_private *ext = input_impl_from_unix_device(iface);
     NTSTATUS status;
 
     if ((status = build_report_descriptor(ext, ext->base.udev_device)))
@@ -897,9 +905,10 @@ static NTSTATUS lnxev_start_device(DEVICE_OBJECT *device)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
+static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
+                                                   DWORD length, DWORD *out_length)
 {
-    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+    struct wine_input_private *ext = input_impl_from_unix_device(iface);
 
     *out_length = ext->desc.size;
     if (length < ext->desc.size) return STATUS_BUFFER_TOO_SMALL;
@@ -908,9 +917,9 @@ static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS lnxev_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+static NTSTATUS lnxev_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+    struct wine_input_private *ext = input_impl_from_unix_device(iface);
     char str[255];
 
     str[0] = 0;
@@ -965,33 +974,34 @@ static DWORD CALLBACK lnxev_device_report_thread(void *args)
     return 0;
 }
 
-static void lnxev_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void lnxev_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void lnxev_get_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void lnxev_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static void lnxev_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static void lnxev_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     io->Information = 0;
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static const platform_vtbl lnxev_vtbl = {
-    lnxev_free_device,
-    compare_platform_device,
-    lnxev_start_device,
-    lnxev_get_reportdescriptor,
-    lnxev_get_string,
-    lnxev_set_output_report,
-    lnxev_get_feature_report,
-    lnxev_set_feature_report,
+static const struct unix_device_vtbl lnxev_device_vtbl =
+{
+    lnxev_device_destroy,
+    udev_device_compare,
+    lnxev_device_start,
+    lnxev_device_get_report_descriptor,
+    lnxev_device_get_string,
+    lnxev_device_set_output_report,
+    lnxev_device_get_feature_report,
+    lnxev_device_set_feature_report,
 };
 #endif
 
@@ -1145,7 +1155,9 @@ static void udev_add_device(struct udev_device *dev)
     {
         if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
             return;
-        device = bus_create_hid_device(&desc, &hidraw_vtbl, &private->unix_device);
+        private->unix_device.vtbl = &hidraw_device_vtbl;
+
+        device = bus_create_hid_device(&desc, &private->unix_device);
         if (!device) HeapFree(GetProcessHeap(), 0, private);
     }
 #ifdef HAS_PROPER_INPUT_HEADER
@@ -1153,7 +1165,9 @@ static void udev_add_device(struct udev_device *dev)
     {
         if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct wine_input_private))))
             return;
-        device = bus_create_hid_device(&desc, &lnxev_vtbl, &private->unix_device);
+        private->unix_device.vtbl = &lnxev_device_vtbl;
+
+        device = bus_create_hid_device(&desc, &private->unix_device);
         if (!device) HeapFree(GetProcessHeap(), 0, private);
     }
 #endif
