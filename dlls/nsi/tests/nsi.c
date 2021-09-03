@@ -28,9 +28,12 @@
 #include "wine/nsi.h"
 #include "wine/test.h"
 
-static int bounded( ULONG64 val, ULONG64 lo, ULONG64 hi )
+
+#define expect_bounded(name,val,lo,hi) expect_bounded_(__LINE__,name,val,lo,hi)
+static void expect_bounded_( int line, const char* name, ULONG64 val, ULONG64 lo, ULONG64 hi )
 {
-    return lo <= val && val <= hi;
+    ok_(__FILE__, line)( lo <= val && val <= hi, "%s: %I64d not in [%I64d %I64d]\n",
+        name, val, lo, hi );
 }
 
 static int unstable( int val )
@@ -337,25 +340,27 @@ static void test_ndis_ifinfo( void )
         ok( row->TransmitLinkSpeed == dyn->xmit_speed, "mismatch\n" );
         if (dyn->rcv_speed == ~0ULL) dyn->rcv_speed = 0;
         ok( row->ReceiveLinkSpeed == dyn->rcv_speed, "mismatch\n" );
-        ok( bounded( row->InOctets, dyn->in_octets, dyn_2->in_octets ), "mismatch\n" );
-        ok( bounded( row->InUcastPkts, dyn->in_ucast_pkts, dyn_2->in_ucast_pkts ), "mismatch\n" );
-        ok( bounded( row->InNUcastPkts, dyn->in_mcast_pkts + dyn->in_bcast_pkts,
-                     dyn_2->in_mcast_pkts + dyn_2->in_bcast_pkts ), "mismatch\n" );
-        ok( bounded( row->InDiscards, dyn->in_discards, dyn_2->in_discards ), "mismatch\n" );
-        ok( bounded( row->InErrors, dyn->in_errors, dyn_2->in_errors ), "mismatch\n" );
+        expect_bounded( "InOctets", row->InOctets, dyn->in_octets, dyn_2->in_octets );
+        expect_bounded( "InUcastPkts", row->InUcastPkts, dyn->in_ucast_pkts, dyn_2->in_ucast_pkts );
+        expect_bounded( "InNUcastPkts", row->InNUcastPkts,
+                        dyn->in_mcast_pkts + dyn->in_bcast_pkts,
+                        dyn_2->in_mcast_pkts + dyn_2->in_bcast_pkts );
+        expect_bounded( "InDiscards", row->InDiscards, dyn->in_discards, dyn_2->in_discards );
+        expect_bounded( "InErrors", row->InErrors, dyn->in_errors, dyn_2->in_errors );
         /* InUnknownProtos */
-        ok( bounded( row->InUcastOctets, dyn->in_ucast_octs, dyn_2->in_ucast_octs ), "mismatch\n" );
-        ok( bounded( row->InMulticastOctets, dyn->in_mcast_octs, dyn_2->in_mcast_octs ), "mismatch\n" );
-        ok( bounded( row->InBroadcastOctets, dyn->in_bcast_octs, dyn_2->in_bcast_octs ), "mismatch\n" );
-        ok( bounded( row->OutOctets, dyn->out_octets, dyn_2->out_octets ), "mismatch\n" );
-        ok( bounded( row->OutUcastPkts, dyn->out_ucast_pkts, dyn_2->out_ucast_pkts ), "mismatch\n" );
-        ok( bounded( row->OutNUcastPkts, dyn->out_mcast_pkts + dyn->out_bcast_pkts,
-                     dyn_2->out_mcast_pkts + dyn_2->out_bcast_pkts ), "mismatch\n" );
-        ok( bounded( row->OutDiscards, dyn->out_discards, dyn_2->out_discards ), "mismatch\n" );
-        ok( bounded( row->OutErrors, dyn->out_errors, dyn_2->out_errors ), "mismatch\n" );
-        ok( bounded( row->OutUcastOctets, dyn->out_ucast_octs, dyn_2->out_ucast_octs ), "mismatch\n" );
-        ok( bounded( row->OutMulticastOctets, dyn->out_mcast_octs, dyn_2->out_mcast_octs ), "mismatch\n" );
-        ok( bounded( row->OutBroadcastOctets, dyn->out_bcast_octs, dyn_2->out_bcast_octs ), "mismatch\n" );
+        expect_bounded( "InUcastOctets", row->InUcastOctets, dyn->in_ucast_octs, dyn_2->in_ucast_octs );
+        expect_bounded( "InMulticastOctets", row->InMulticastOctets, dyn->in_mcast_octs, dyn_2->in_mcast_octs );
+        expect_bounded( "InBroadcastOctets", row->InBroadcastOctets, dyn->in_bcast_octs, dyn_2->in_bcast_octs );
+        expect_bounded( "OutOctets", row->OutOctets, dyn->out_octets, dyn_2->out_octets );
+        expect_bounded( "OutUcastPkts", row->OutUcastPkts, dyn->out_ucast_pkts, dyn_2->out_ucast_pkts );
+        expect_bounded( "OutNUcastPkts", row->OutNUcastPkts,
+                        dyn->out_mcast_pkts + dyn->out_bcast_pkts,
+                        dyn_2->out_mcast_pkts + dyn_2->out_bcast_pkts );
+        expect_bounded( "OutDiscards", row->OutDiscards, dyn->out_discards, dyn_2->out_discards );
+        expect_bounded( "OutErrors", row->OutErrors, dyn->out_errors, dyn_2->out_errors );
+        expect_bounded( "OutUcastOctets", row->OutUcastOctets, dyn->out_ucast_octs, dyn_2->out_ucast_octs );
+        expect_bounded( "OutMulticastOctets", row->OutMulticastOctets, dyn->out_mcast_octs, dyn_2->out_mcast_octs );
+        expect_bounded( "OutBroadcastOctets", row->OutBroadcastOctets, dyn->out_bcast_octs, dyn_2->out_bcast_octs );
         /* OutQLen */
         winetest_pop_context();
     }
@@ -471,21 +476,15 @@ static void test_ip_icmpstats( int family )
     err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0, &nsi_stats2, sizeof(nsi_stats2), NULL, 0 );
     ok( !err, "got %d\n", err );
 
-    ok( bounded( table.icmpInStats.dwMsgs, nsi_stats.in_msgs, nsi_stats2.in_msgs ),
-        "%d vs [%d %d]\n", table.icmpInStats.dwMsgs, nsi_stats.in_msgs, nsi_stats2.in_msgs );
-    ok( bounded( table.icmpInStats.dwErrors, nsi_stats.in_errors, nsi_stats2.in_errors ),
-        "%d vs [%d %d]\n", table.icmpInStats.dwErrors, nsi_stats.in_errors, nsi_stats2.in_errors );
-    ok( bounded( table.icmpOutStats.dwMsgs, nsi_stats.out_msgs, nsi_stats2.out_msgs ),
-        "%d vs [%d %d]\n", table.icmpOutStats.dwMsgs, nsi_stats.out_msgs, nsi_stats2.out_msgs );
-    ok( bounded( table.icmpOutStats.dwErrors, nsi_stats.out_errors, nsi_stats2.out_errors ),
-        "%d vs [%d %d]\n", table.icmpOutStats.dwErrors, nsi_stats.out_errors, nsi_stats2.out_errors );
+    expect_bounded( "icmpInStats.dwMsgs", table.icmpInStats.dwMsgs, nsi_stats.in_msgs, nsi_stats2.in_msgs );
+    expect_bounded( "icmpInStats.dwErrors", table.icmpInStats.dwErrors, nsi_stats.in_errors, nsi_stats2.in_errors );
+    expect_bounded( "icmpOutStats.dwMsgs", table.icmpOutStats.dwMsgs, nsi_stats.out_msgs, nsi_stats2.out_msgs );
+    expect_bounded( "icmpOutStats.dwErrors", table.icmpOutStats.dwErrors, nsi_stats.out_errors, nsi_stats2.out_errors );
     for (i = 0; i < ARRAY_SIZE(nsi_stats.in_type_counts); i++)
     {
         winetest_push_context( "%d", i );
-        ok( bounded( table.icmpInStats.rgdwTypeCount[i], nsi_stats.in_type_counts[i], nsi_stats2.in_type_counts[i] ),
-            "%d vs [%d %d]\n", table.icmpInStats.rgdwTypeCount[i], nsi_stats.in_type_counts[i], nsi_stats2.in_type_counts[i] );
-        ok( bounded( table.icmpOutStats.rgdwTypeCount[i], nsi_stats.out_type_counts[i], nsi_stats2.out_type_counts[i] ),
-            "%d vs [%d %d]\n", table.icmpOutStats.rgdwTypeCount[i], nsi_stats.out_type_counts[i], nsi_stats2.out_type_counts[i] );
+        expect_bounded( "icmpInStats.rgdwTypeCount", table.icmpInStats.rgdwTypeCount[i], nsi_stats.in_type_counts[i], nsi_stats2.in_type_counts[i] );
+        expect_bounded( "icmpOutStats.rgdwTypeCount", table.icmpOutStats.rgdwTypeCount[i], nsi_stats.out_type_counts[i], nsi_stats2.out_type_counts[i] );
         winetest_pop_context();
     }
 err:
@@ -516,24 +515,24 @@ static void test_ip_ipstats( int family )
     ok( !err, "got %x\n", err );
 
     /* dwForwarding and dwDefaultTTL come from the compartment table */
-    ok( bounded( table.dwInReceives, dyn.in_recv, dyn2.in_recv ), "mismatch\n" );
-    ok( bounded( table.dwInHdrErrors, dyn.in_hdr_errs, dyn2.in_hdr_errs ), "mismatch\n" );
-    ok( bounded( table.dwInAddrErrors, dyn.in_addr_errs, dyn2.in_addr_errs ), "mismatch\n" );
-    ok( bounded( table.dwForwDatagrams, dyn.fwd_dgrams, dyn2.fwd_dgrams ), "mismatch\n" );
-    ok( bounded( table.dwInUnknownProtos, dyn.in_unk_protos, dyn2.in_unk_protos ), "mismatch\n" );
-    ok( bounded( table.dwInDiscards, dyn.in_discards, dyn2.in_discards ), "mismatch\n" );
-    ok( bounded( table.dwInDelivers, dyn.in_delivers, dyn2.in_delivers ), "mismatch\n" );
-    ok( bounded( table.dwOutRequests, dyn.out_reqs, dyn2.out_reqs ), "mismatch\n" );
-    ok( bounded( table.dwRoutingDiscards, dyn.routing_discards, dyn2.routing_discards ), "mismatch\n" );
-    ok( bounded( table.dwOutDiscards, dyn.out_discards, dyn2.out_discards ), "mismatch\n" );
-    ok( bounded( table.dwOutNoRoutes, dyn.out_no_routes, dyn2.out_no_routes ), "mismatch\n" );
-    ok( table.dwReasmTimeout == stat.reasm_timeout, "mismatch\n" );
-    ok( bounded( table.dwReasmReqds, dyn.reasm_reqds, dyn2.reasm_reqds ), "mismatch\n" );
-    ok( bounded( table.dwReasmOks, dyn.reasm_oks, dyn2.reasm_oks ), "mismatch\n" );
-    ok( bounded( table.dwReasmFails, dyn.reasm_fails, dyn2.reasm_fails ), "mismatch\n" );
-    ok( bounded( table.dwFragOks, dyn.frag_oks, dyn2.frag_oks ), "mismatch\n" );
-    ok( bounded( table.dwFragFails, dyn.frag_fails, dyn2.frag_fails ), "mismatch\n" );
-    ok( bounded( table.dwFragCreates, dyn.frag_creates, dyn2.frag_creates ), "mismatch\n" );
+    expect_bounded( "dwInReceives", table.dwInReceives, dyn.in_recv, dyn2.in_recv );
+    expect_bounded( "dwInHdrErrors", table.dwInHdrErrors, dyn.in_hdr_errs, dyn2.in_hdr_errs );
+    expect_bounded( "dwInAddrErrors", table.dwInAddrErrors, dyn.in_addr_errs, dyn2.in_addr_errs );
+    expect_bounded( "dwForwDatagrams", table.dwForwDatagrams, dyn.fwd_dgrams, dyn2.fwd_dgrams );
+    expect_bounded( "dwInUnknownProtos", table.dwInUnknownProtos, dyn.in_unk_protos, dyn2.in_unk_protos );
+    expect_bounded( "dwInDiscards", table.dwInDiscards, dyn.in_discards, dyn2.in_discards );
+    expect_bounded( "dwInDelivers", table.dwInDelivers, dyn.in_delivers, dyn2.in_delivers );
+    expect_bounded( "dwOutRequests", table.dwOutRequests, dyn.out_reqs, dyn2.out_reqs );
+    expect_bounded( "dwRoutingDiscards", table.dwRoutingDiscards, dyn.routing_discards, dyn2.routing_discards );
+    expect_bounded( "dwOutDiscards", table.dwOutDiscards, dyn.out_discards, dyn2.out_discards );
+    expect_bounded( "dwOutNoRoutes", table.dwOutNoRoutes, dyn.out_no_routes, dyn2.out_no_routes );
+    ok( table.dwReasmTimeout == stat.reasm_timeout, "bad timeout %d != %d\n",  table.dwReasmTimeout, stat.reasm_timeout );
+    expect_bounded( "dwReasmReqds", table.dwReasmReqds, dyn.reasm_reqds, dyn2.reasm_reqds );
+    expect_bounded( "dwReasmOks", table.dwReasmOks, dyn.reasm_oks, dyn2.reasm_oks );
+    expect_bounded( "dwReasmFails", table.dwReasmFails, dyn.reasm_fails, dyn2.reasm_fails );
+    expect_bounded( "dwFragOks", table.dwFragOks, dyn.frag_oks, dyn2.frag_oks );
+    expect_bounded( "dwFragFails", table.dwFragFails, dyn.frag_fails, dyn2.frag_fails );
+    expect_bounded( "dwFragCreates", table.dwFragCreates, dyn.frag_creates, dyn2.frag_creates );
     /* dwNumIf, dwNumAddr and dwNumRoutes come from the compartment table */
 
 err:
@@ -828,21 +827,14 @@ static void test_tcp_stats( int family )
 
     ok( unstable( table.dwActiveOpens == dyn.active_opens ), "%d vs %d\n", table.dwActiveOpens, dyn.active_opens );
     ok( unstable( table.dwPassiveOpens == dyn.passive_opens ), "%d vs %d\n", table.dwPassiveOpens, dyn.passive_opens );
-    ok( bounded( table.dwAttemptFails, dyn.attempt_fails, dyn2.attempt_fails ), "%d vs [%d %d]\n",
-        table.dwAttemptFails, dyn.attempt_fails, dyn2.attempt_fails );
-    ok( bounded( table.dwEstabResets, dyn.est_rsts, dyn2.est_rsts ), "%d vs [%d %d]\n",
-        table.dwEstabResets, dyn.est_rsts, dyn2.est_rsts );
+    expect_bounded( "dwAttemptFails", table.dwAttemptFails, dyn.attempt_fails, dyn2.attempt_fails );
+    expect_bounded( "dwEstabResets", table.dwEstabResets, dyn.est_rsts, dyn2.est_rsts );
     ok( unstable( table.dwCurrEstab == dyn.cur_est ), "%d vs %d\n", table.dwCurrEstab, dyn.cur_est );
-    ok( bounded( table.dwInSegs, dyn.in_segs, dyn2.in_segs ), "%d vs [%I64d %I64d]\n",
-        table.dwInSegs, dyn.in_segs, dyn2.in_segs );
-    ok( bounded( table.dwOutSegs, dyn.out_segs, dyn2.out_segs ), "%d vs [%I64d %I64d]\n",
-        table.dwOutSegs, dyn.out_segs, dyn2.out_segs );
-    ok( bounded( table.dwRetransSegs, dyn.retrans_segs, dyn2.retrans_segs ), "%d vs [%d %d]\n",
-        table.dwRetransSegs, dyn.retrans_segs, dyn2.retrans_segs );
-    ok( bounded( table.dwInErrs, dyn.in_errs, dyn2.in_errs ), "%d vs [%d %d]\n",
-        table.dwInErrs, dyn.in_errs, dyn2.in_errs );
-    ok( bounded( table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts ), "%d vs [%d %d]\n",
-        table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts );
+    expect_bounded( "dwInSegs", table.dwInSegs, dyn.in_segs, dyn2.in_segs );
+    expect_bounded( "dwOutSegs", table.dwOutSegs, dyn.out_segs, dyn2.out_segs );
+    expect_bounded( "dwRetransSegs", table.dwRetransSegs, dyn.retrans_segs, dyn2.retrans_segs );
+    expect_bounded( "dwInErrs", table.dwInErrs, dyn.in_errs, dyn2.in_errs );
+    expect_bounded( "dwOutRsts", table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts );
     ok( unstable( table.dwNumConns == dyn.num_conns ), "%d vs %d\n", table.dwNumConns, dyn.num_conns );
 
     winetest_pop_context();
@@ -958,14 +950,10 @@ static void test_udp_stats( int family )
                                &dyn2, sizeof(dyn2), NULL, 0 );
     ok( !err, "got %x\n", err );
 
-    ok( bounded( table.dwInDatagrams, dyn.in_dgrams, dyn2.in_dgrams ), "%d vs [%I64d %I64d]\n",
-        table.dwInDatagrams, dyn.in_dgrams, dyn2.in_dgrams );
-    ok( bounded( table.dwNoPorts, dyn.no_ports, dyn2.no_ports ), "%d vs [%d %d]\n",
-        table.dwNoPorts, dyn.no_ports, dyn2.no_ports);
-    ok( bounded( table.dwInErrors, dyn.in_errs, dyn2.in_errs ), "%d vs [%d %d]\n",
-        table.dwInErrors, dyn.in_errs, dyn2.in_errs );
-    ok( bounded( table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams ), "%d vs [%I64d %I64d]\n",
-        table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams );
+    expect_bounded( "dwInDatagrams", table.dwInDatagrams, dyn.in_dgrams, dyn2.in_dgrams );
+    expect_bounded( "dwNoPorts", table.dwNoPorts, dyn.no_ports, dyn2.no_ports );
+    expect_bounded( "dwInErrors", table.dwInErrors, dyn.in_errs, dyn2.in_errs );
+    expect_bounded( "dwOutDatagrams", table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams );
     ok( unstable( table.dwNumAddrs == dyn.num_addrs ), "%d %d\n", table.dwNumAddrs, dyn.num_addrs );
 
     winetest_pop_context();
