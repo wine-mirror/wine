@@ -354,6 +354,32 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, void *buffer )
 }
 
 /***********************************************************************
+ *           GetCurrentObject    (GDI32.@)
+ */
+HGDIOBJ WINAPI GetCurrentObject( HDC hdc, UINT type )
+{
+    unsigned int obj_type;
+
+    switch (type)
+    {
+    case OBJ_EXTPEN: obj_type = NTGDI_OBJ_EXTPEN; break;
+    case OBJ_PEN:    obj_type = NTGDI_OBJ_PEN; break;
+    case OBJ_BRUSH:  obj_type = NTGDI_OBJ_BRUSH; break;
+    case OBJ_PAL:    obj_type = NTGDI_OBJ_PAL; break;
+    case OBJ_FONT:   obj_type = NTGDI_OBJ_FONT; break;
+    case OBJ_BITMAP: obj_type = NTGDI_OBJ_SURF; break;
+    case OBJ_REGION:
+        /* tests show that OBJ_REGION is explicitly ignored */
+        return 0;
+    default:
+        FIXME( "(%p,%d): unknown type.\n", hdc, type );
+        return 0;
+    }
+
+    return NtGdiGetDCObject( hdc, obj_type );
+}
+
+/***********************************************************************
  *           GetObjectA    (GDI32.@)
  */
 INT WINAPI GetObjectA( HGDIOBJ handle, INT count, void *buffer )

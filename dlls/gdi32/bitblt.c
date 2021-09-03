@@ -866,7 +866,8 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
     hdcWork = NtGdiCreateCompatibleDC( hdcDest );
     if ((GetObjectType( hdcDest ) != OBJ_MEMDC ||
-         GetObjectW( GetCurrentObject( hdcDest, OBJ_BITMAP ), sizeof(dib), &dib ) == sizeof(BITMAP)) &&
+         GetObjectW( NtGdiGetDCObject( hdcDest, NTGDI_OBJ_SURF ),
+                     sizeof(dib), &dib ) == sizeof(BITMAP)) &&
         GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
     {
         /* screen DCs or DDBs are not supposed to have an alpha channel, so use a 24-bpp bitmap as copy */

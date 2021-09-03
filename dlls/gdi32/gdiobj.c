@@ -1005,47 +1005,28 @@ INT WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer )
 }
 
 /***********************************************************************
- *           GetCurrentObject    	(GDI32.@)
+ *           NtGdiGetDCObject    (win32u.@)
  *
  * Get the currently selected object of a given type in a device context.
- *
- * PARAMS
- *  hdc  [I] Device context to get the current object from
- *  type [I] Type of current object to get (OBJ_* defines from "wingdi.h")
- *
- * RETURNS
- *  Success: The current object of the given type selected in hdc.
- *  Failure: A NULL handle.
- *
- * NOTES
- * - only the following object types are supported:
- *| OBJ_PEN
- *| OBJ_BRUSH
- *| OBJ_PAL
- *| OBJ_FONT
- *| OBJ_BITMAP
  */
-HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
+HANDLE WINAPI NtGdiGetDCObject( HDC hdc, UINT type )
 {
     HGDIOBJ ret = 0;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (!dc) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    switch (type) {
-	case OBJ_EXTPEN: /* fall through */
-	case OBJ_PEN:	 ret = dc->hPen; break;
-	case OBJ_BRUSH:	 ret = dc->hBrush; break;
-	case OBJ_PAL:	 ret = dc->hPalette; break;
-	case OBJ_FONT:	 ret = dc->hFont; break;
-	case OBJ_BITMAP: ret = dc->hBitmap; break;
-
-	/* tests show that OBJ_REGION is explicitly ignored */
-	case OBJ_REGION: break;
-        default:
-            /* the SDK only mentions those above */
-            FIXME("(%p,%d): unknown type.\n",hdc,type);
-	    break;
+    switch (type)
+    {
+    case NTGDI_OBJ_EXTPEN: /* fall through */
+    case NTGDI_OBJ_PEN:    ret = dc->hPen; break;
+    case NTGDI_OBJ_BRUSH:  ret = dc->hBrush; break;
+    case NTGDI_OBJ_PAL:    ret = dc->hPalette; break;
+    case NTGDI_OBJ_FONT:   ret = dc->hFont; break;
+    case NTGDI_OBJ_SURF:   ret = dc->hBitmap; break;
+    default:
+        FIXME( "(%p, %d): unknown type.\n", hdc, type );
+        break;
     }
     release_dc_ptr( dc );
     return ret;

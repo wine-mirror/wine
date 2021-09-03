@@ -57,6 +57,7 @@ typedef struct _GDI_HANDLE_ENTRY
 #define NTGDI_OBJ_DC              0x010000
 #define NTGDI_OBJ_ENHMETADC       0x210000
 #define NTGDI_OBJ_REGION          0x040000
+#define NTGDI_OBJ_SURF            0x050000
 #define NTGDI_OBJ_METAFILE        0x260000
 #define NTGDI_OBJ_ENHMETAFILE     0x460000
 #define NTGDI_OBJ_METADC          0x660000
@@ -296,6 +297,7 @@ BOOL     WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WC
                                     ULONG flags, void *buffer );
 BOOL     WINAPI NtGdiGetColorAdjustment( HDC hdc, COLORADJUSTMENT *ca );
 BOOL     WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result );
+HANDLE   WINAPI NtGdiGetDCObject( HDC hdc, UINT type );
 BOOL     WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result );
 INT      WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
                                         void *bits, BITMAPINFO *info, UINT coloruse,

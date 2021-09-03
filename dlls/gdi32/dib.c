@@ -253,7 +253,7 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
 static int fill_color_table_from_palette( BITMAPINFO *info, HDC hdc )
 {
     PALETTEENTRY palEntry[256];
-    HPALETTE palette = GetCurrentObject( hdc, OBJ_PAL );
+    HPALETTE palette = NtGdiGetDCObject( hdc, NTGDI_OBJ_PAL );
     int i, colors = 1 << info->bmiHeader.biBitCount;
 
     info->bmiHeader.biClrUsed = colors;
@@ -284,7 +284,8 @@ BOOL fill_color_table_from_pal_colors( BITMAPINFO *info, HDC hdc )
     int i, count, colors = info->bmiHeader.biClrUsed;
 
     if (!colors) return TRUE;
-    if (!(palette = GetCurrentObject( hdc, OBJ_PAL ))) return FALSE;
+    if (!(palette = NtGdiGetDCObject( hdc, NTGDI_OBJ_PAL )))
+        return FALSE;
     if (!(count = get_palette_entries( palette, 0, colors, entries ))) return FALSE;
 
     for (i = 0; i < colors; i++, index++)

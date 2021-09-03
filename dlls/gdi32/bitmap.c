@@ -63,7 +63,8 @@ HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
                                   NtGdiGetDeviceCaps( hdc, PLANES ),
                                   NtGdiGetDeviceCaps( hdc, BITSPIXEL ), NULL );
 
-    switch (NtGdiExtGetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(dib), &dib ))
+    switch (NtGdiExtGetObjectW( NtGdiGetDCObject( hdc, NTGDI_OBJ_SURF ),
+                                sizeof(dib), &dib ))
     {
     case sizeof(BITMAP): /* A device-dependent bitmap is selected in the DC */
         return NtGdiCreateBitmap( width, height, dib.dsBm.bmPlanes, dib.dsBm.bmBitsPixel, NULL );
