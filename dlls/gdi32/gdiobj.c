@@ -82,13 +82,6 @@ static const LOGBRUSH DkGrayBrush = { BS_SOLID, RGB(64,64,64), 0 };
 
 static const LOGBRUSH DCBrush = { BS_SOLID, RGB(255,255,255), 0 };
 
-/* reserve one extra entry for the stock default bitmap */
-/* this is what Windows does too */
-#define NB_STOCK_OBJECTS (STOCK_LAST+2)
-
-static HGDIOBJ stock_objects[NB_STOCK_OBJECTS];
-static HGDIOBJ scaled_stock_objects[NB_STOCK_OBJECTS];
-
 static CRITICAL_SECTION gdi_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -617,14 +610,62 @@ static void set_gdi_shared(void)
     NtCurrentTeb()->Peb->GdiSharedHandleTable = &gdi_shared;
 }
 
-static HGDIOBJ make_stock_object( HGDIOBJ obj )
+static void init_stock_objects(void)
 {
-    GDI_HANDLE_ENTRY *entry;
+    const struct DefaultFontInfo *deffonts;
+    unsigned int i;
+    HGDIOBJ obj;
 
-    if (!(entry = handle_entry( obj ))) return 0;
-    entry_obj( entry )->system = TRUE;
-    entry->StockFlag = 1;
-    return entry_to_handle( entry );
+    /* Create stock objects in order matching stock object macros,
+     * so that they use predictable handle slots. Our GetStockObject
+     * depends on it. */
+    create_brush( &WhiteBrush );
+    create_brush( &LtGrayBrush );
+    create_brush( &GrayBrush );
+    create_brush( &DkGrayBrush );
+    create_brush( &BlackBrush );
+    create_brush( &NullBrush );
+
+    create_pen( PS_SOLID, 0, RGB(255,255,255) );
+    create_pen( PS_SOLID, 0, RGB(0,0,0) );
+    create_pen( PS_NULL,  0, RGB(0,0,0) );
+
+    /* slot 9 is not used for non-scaled stock objects */
+    create_scaled_font( &OEMFixedFont );
+
+    /* language-independent stock fonts */
+    create_font( &OEMFixedFont );
+    create_font( &AnsiFixedFont );
+    create_font( &AnsiVarFont );
+
+    /* language-dependent stock fonts */
+    deffonts = get_default_fonts(get_default_charset());
+    create_font( &deffonts->SystemFont );
+    create_font( &deffonts->DeviceDefaultFont );
+
+    PALETTE_Init();
+
+    create_font( &deffonts->SystemFixedFont );
+    create_font( &deffonts->DefaultGuiFont );
+
+    create_brush( &DCBrush );
+    NtGdiCreatePen( PS_SOLID, 0, RGB(0,0,0), NULL );
+
+    obj = NtGdiCreateBitmap( 1, 1, 1, 1, NULL );
+
+    assert( (HandleToULong( obj ) & 0xffff) == FIRST_GDI_HANDLE + DEFAULT_BITMAP );
+
+    create_scaled_font( &deffonts->SystemFont );
+    create_scaled_font( &deffonts->SystemFixedFont );
+    create_scaled_font( &deffonts->DefaultGuiFont );
+
+    /* clear the NOSYSTEM bit on all stock objects*/
+    for (i = 0; i < STOCK_LAST + 5; i++)
+    {
+        GDI_HANDLE_ENTRY *entry = &gdi_shared.Handles[FIRST_GDI_HANDLE + i];
+        entry_obj( entry )->system = TRUE;
+        entry->StockFlag = 1;
+    }
 }
 
 /***********************************************************************
@@ -634,57 +675,13 @@ static HGDIOBJ make_stock_object( HGDIOBJ obj )
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
-    const struct DefaultFontInfo* deffonts;
-    int i;
-
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     gdi32_module = inst;
     DisableThreadLibraryCalls( inst );
     set_gdi_shared();
     font_init();
-
-    /* create stock objects */
-    stock_objects[WHITE_BRUSH]  = create_brush( &WhiteBrush );
-    stock_objects[LTGRAY_BRUSH] = create_brush( &LtGrayBrush );
-    stock_objects[GRAY_BRUSH]   = create_brush( &GrayBrush );
-    stock_objects[DKGRAY_BRUSH] = create_brush( &DkGrayBrush );
-    stock_objects[BLACK_BRUSH]  = create_brush( &BlackBrush );
-    stock_objects[NULL_BRUSH]   = create_brush( &NullBrush );
-
-    stock_objects[WHITE_PEN]    = create_pen( PS_SOLID, 0, RGB(255,255,255) );
-    stock_objects[BLACK_PEN]    = create_pen( PS_SOLID, 0, RGB(0,0,0) );
-    stock_objects[NULL_PEN]     = create_pen( PS_NULL, 0, RGB(0,0,0) );
-
-    stock_objects[DEFAULT_PALETTE] = PALETTE_Init();
-    stock_objects[DEFAULT_BITMAP]  = NtGdiCreateBitmap( 1, 1, 1, 1, NULL );
-
-    /* language-independent stock fonts */
-    stock_objects[OEM_FIXED_FONT]      = create_font( &OEMFixedFont );
-    stock_objects[ANSI_FIXED_FONT]     = create_font( &AnsiFixedFont );
-    stock_objects[ANSI_VAR_FONT]       = create_font( &AnsiVarFont );
-
-    /* language-dependent stock fonts */
-    deffonts = get_default_fonts(get_default_charset());
-    stock_objects[SYSTEM_FONT]         = create_font( &deffonts->SystemFont );
-    stock_objects[DEVICE_DEFAULT_FONT] = create_font( &deffonts->DeviceDefaultFont );
-    stock_objects[SYSTEM_FIXED_FONT]   = create_font( &deffonts->SystemFixedFont );
-    stock_objects[DEFAULT_GUI_FONT]    = create_font( &deffonts->DefaultGuiFont );
-
-    scaled_stock_objects[OEM_FIXED_FONT]    = create_scaled_font( &OEMFixedFont );
-    scaled_stock_objects[SYSTEM_FONT]       = create_scaled_font( &deffonts->SystemFont );
-    scaled_stock_objects[SYSTEM_FIXED_FONT] = create_scaled_font( &deffonts->SystemFixedFont );
-    scaled_stock_objects[DEFAULT_GUI_FONT]  = create_scaled_font( &deffonts->DefaultGuiFont );
-
-    stock_objects[DC_BRUSH]     = create_brush( &DCBrush );
-    stock_objects[DC_PEN]       = create_pen( PS_SOLID, 0, RGB(0,0,0) );
-
-    /* clear the NOSYSTEM bit on all stock objects*/
-    for (i = 0; i < NB_STOCK_OBJECTS; i++)
-    {
-        stock_objects[i] = make_stock_object( stock_objects[i] );
-        scaled_stock_objects[i] = make_stock_object( scaled_stock_objects[i] );
-    }
+    init_stock_objects();
     return TRUE;
 }
 
@@ -958,24 +955,6 @@ BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ handle )
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
     HeapFree( GetProcessHeap(), 0, obj );
     return TRUE;
-}
-
-/***********************************************************************
- *           GetStockObject    (GDI32.@)
- */
-HGDIOBJ WINAPI GetStockObject( INT obj )
-{
-    if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
-    switch (obj)
-    {
-    case OEM_FIXED_FONT:
-    case SYSTEM_FONT:
-    case SYSTEM_FIXED_FONT:
-    case DEFAULT_GUI_FONT:
-        if (get_system_dpi() != 96) return scaled_stock_objects[obj];
-        break;
-    }
-    return stock_objects[obj];
 }
 
 

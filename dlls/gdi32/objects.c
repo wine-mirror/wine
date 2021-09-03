@@ -39,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
+#define FIRST_GDI_HANDLE 32
+
 struct hdc_list
 {
     HDC hdc;
@@ -93,6 +95,12 @@ static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
     }
     if (handle) WARN( "invalid handle %p\n", handle );
     return NULL;
+}
+
+static HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
+{
+    unsigned int idx = entry - get_gdi_shared()->Handles;
+    return LongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
 }
 
 static DWORD get_object_type( HGDIOBJ obj )
@@ -377,6 +385,50 @@ HGDIOBJ WINAPI GetCurrentObject( HDC hdc, UINT type )
     }
 
     return NtGdiGetDCObject( hdc, obj_type );
+}
+
+/******************************************************************************
+ *              get_system_dpi
+ *
+ * Get the system DPI, based on the DPI awareness mode.
+ */
+static DWORD get_system_dpi(void)
+{
+    static UINT (WINAPI *pGetDpiForSystem)(void);
+
+    if (!pGetDpiForSystem)
+    {
+        HMODULE user = GetModuleHandleW( L"user32.dll" );
+        if (user) pGetDpiForSystem = (void *)GetProcAddress( user, "GetDpiForSystem" );
+    }
+    return pGetDpiForSystem ? pGetDpiForSystem() : 96;
+}
+
+/***********************************************************************
+ *           GetStockObject    (GDI32.@)
+ */
+HGDIOBJ WINAPI GetStockObject( INT obj )
+{
+    if (obj < 0 || obj > STOCK_LAST + 1 || obj == 9) return 0;
+
+    /* Wine stores stock objects in predictable order, see init_stock_objects */
+    switch (obj)
+    {
+    case OEM_FIXED_FONT:
+        if (get_system_dpi() != 96) obj = 9;
+        break;
+    case SYSTEM_FONT:
+        if (get_system_dpi() != 96) obj = STOCK_LAST + 2;
+        break;
+    case SYSTEM_FIXED_FONT:
+        if (get_system_dpi() != 96) obj = STOCK_LAST + 3;
+        break;
+    case DEFAULT_GUI_FONT:
+        if (get_system_dpi() != 96) obj = STOCK_LAST + 4;
+        break;
+    }
+
+    return entry_to_handle( handle_entry( ULongToHandle( obj + FIRST_GDI_HANDLE )));
 }
 
 /***********************************************************************
