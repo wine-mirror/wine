@@ -731,14 +731,17 @@ static BOOL set_mapped_report_from_event(DEVICE_OBJECT *device, SDL_Event *event
     return FALSE;
 }
 
-static void try_add_device(unsigned int index)
+static void sdl_add_device(unsigned int index)
 {
-    DWORD vid = 0, pid = 0, version = 0;
+    struct device_desc desc =
+    {
+        .busid = sdl_busidW,
+        .input = -1,
+        .serial = {'0','0','0','0',0},
+    };
     struct platform_private *private;
     DEVICE_OBJECT *device = NULL;
-    WCHAR serial[34] = {0};
     char guid_str[34];
-    BOOL is_xbox_gamepad;
 
     SDL_Joystick* joystick;
     SDL_JoystickID id;
@@ -757,43 +760,36 @@ static void try_add_device(unsigned int index)
     id = pSDL_JoystickInstanceID(joystick);
 
     if (pSDL_JoystickGetProductVersion != NULL) {
-        vid = pSDL_JoystickGetVendor(joystick);
-        pid = pSDL_JoystickGetProduct(joystick);
-        version = pSDL_JoystickGetProductVersion(joystick);
+        desc.vid = pSDL_JoystickGetVendor(joystick);
+        desc.pid = pSDL_JoystickGetProduct(joystick);
+        desc.version = pSDL_JoystickGetProductVersion(joystick);
     }
     else
     {
-        vid = 0x01;
-        pid = pSDL_JoystickInstanceID(joystick) + 1;
-        version = 0;
+        desc.vid = 0x01;
+        desc.pid = pSDL_JoystickInstanceID(joystick) + 1;
+        desc.version = 0;
     }
 
     guid = pSDL_JoystickGetGUID(joystick);
     pSDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
-    MultiByteToWideChar(CP_ACP, 0, guid_str, -1, serial, sizeof(guid_str));
+    MultiByteToWideChar(CP_ACP, 0, guid_str, -1, desc.serial, sizeof(guid_str));
 
-    if (controller)
-    {
-        TRACE("Found sdl game controller %i (vid %04x, pid %04x, version %u, serial %s)\n",
-              id, vid, pid, version, debugstr_w(serial));
-        is_xbox_gamepad = TRUE;
-    }
+    if (controller) desc.is_gamepad = TRUE;
     else
     {
         int button_count, axis_count;
 
-        TRACE("Found sdl device %i (vid %04x, pid %04x, version %u, serial %s)\n",
-              id, vid, pid, version, debugstr_w(serial));
-
         axis_count = pSDL_JoystickNumAxes(joystick);
         button_count = pSDL_JoystickNumButtons(joystick);
-        is_xbox_gamepad = (axis_count == 6  && button_count >= 14);
+        desc.is_gamepad = (axis_count == 6  && button_count >= 14);
     }
+
+    TRACE("%s id %d, desc %s.\n", controller ? "controller" : "joystick", id, debugstr_device_desc(&desc));
 
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private)))) return;
 
-    device = bus_create_hid_device(sdl_busidW, vid, pid, -1, version, index, serial, is_xbox_gamepad,
-                                   &sdl_vtbl, &private->unix_device);
+    device = bus_create_hid_device(&desc, &sdl_vtbl, &private->unix_device);
     if (!device) HeapFree(GetProcessHeap(), 0, private);
     else
     {
@@ -812,7 +808,7 @@ static void process_device_event(SDL_Event *event)
     TRACE_(hid_report)("Received action %x\n", event->type);
 
     if (event->type == SDL_JOYDEVICEADDED)
-        try_add_device(((SDL_JoyDeviceEvent*)event)->which);
+        sdl_add_device(((SDL_JoyDeviceEvent *)event)->which);
     else if (event->type == SDL_JOYDEVICEREMOVED)
     {
         id = ((SDL_JoyDeviceEvent *)event)->which;

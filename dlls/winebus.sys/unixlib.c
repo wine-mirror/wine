@@ -108,11 +108,19 @@ const platform_vtbl mouse_vtbl =
     .set_feature_report = mouse_set_feature_report,
 };
 
+static const WCHAR mouse_bus_id[] = {'W','I','N','E','M','O','U','S','E',0};
+static const struct device_desc mouse_device_desc =
+{
+    .busid = mouse_bus_id,
+    .input = -1,
+    .serial = {'0','0','0','0',0},
+};
 static struct unix_device mouse_device;
 
 static NTSTATUS mouse_device_create(void *args)
 {
     struct device_create_params *params = args;
+    params->desc = mouse_device_desc;
     params->device = &mouse_device;
     return STATUS_SUCCESS;
 }
@@ -187,11 +195,19 @@ const platform_vtbl keyboard_vtbl =
     .set_feature_report = keyboard_set_feature_report,
 };
 
+static const WCHAR keyboard_bus_id[] = {'W','I','N','E','K','E','Y','B','O','A','R','D',0};
+static const struct device_desc keyboard_device_desc =
+{
+    .busid = keyboard_bus_id,
+    .input = -1,
+    .serial = {'0','0','0','0',0},
+};
 static struct unix_device keyboard_device;
 
 static NTSTATUS keyboard_device_create(void *args)
 {
     struct device_create_params *params = args;
+    params->desc = keyboard_device_desc;
     params->device = &keyboard_device;
     return STATUS_SUCCESS;
 }

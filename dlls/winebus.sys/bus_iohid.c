@@ -294,25 +294,26 @@ static const platform_vtbl iohid_vtbl =
 
 static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
 {
+    struct device_desc desc =
+    {
+        .busid = busidW,
+        .input = -1,
+        .serial = {'0','0','0','0',0},
+    };
     struct platform_private *private;
     DEVICE_OBJECT *device;
-    DWORD vid, pid, version, uid;
     CFStringRef str = NULL;
-    WCHAR serial_string[256];
-    BOOL is_gamepad = FALSE;
 
-    TRACE("OS/X IOHID Device Added %p\n", IOHIDDevice);
-
-    vid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVendorIDKey)));
-    pid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductIDKey)));
-    version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
+    desc.vid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVendorIDKey)));
+    desc.pid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductIDKey)));
+    desc.version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDSerialNumberKey));
-    if (str) CFStringToWSTR(str, serial_string, ARRAY_SIZE(serial_string));
-    uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
+    if (str) CFStringToWSTR(str, desc.serial, ARRAY_SIZE(desc.serial));
+    desc.uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
     if (IOHIDDeviceOpen(IOHIDDevice, 0) != kIOReturnSuccess)
     {
-        ERR("Failed to open HID device %p (vid %04x, pid %04x)\n", IOHIDDevice, vid, pid);
+        ERR("Failed to open HID device %p (vid %04x, pid %04x)\n", IOHIDDevice, desc.vid, desc.pid);
         return;
     }
     IOHIDDeviceScheduleWithRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
@@ -320,8 +321,8 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
        IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))
     {
-        if (is_xbox_gamepad(vid, pid))
-            is_gamepad = TRUE;
+        if (is_xbox_gamepad(desc.vid, desc.pid))
+            desc.is_gamepad = TRUE;
         else
         {
             int axes=0, buttons=0;
@@ -358,15 +359,16 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
                 }
                 CFRelease(element_array);
             }
-            is_gamepad = (axes == 6  && buttons >= 14);
+            desc.is_gamepad = (axes == 6  && buttons >= 14);
         }
     }
+
+    TRACE("dev %p, desc %s.\n", IOHIDDevice, debugstr_device_desc(&desc));
 
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
         return;
 
-    device = bus_create_hid_device(busidW, vid, pid, -1, version, uid, str ? serial_string : NULL,
-                                   is_gamepad, &iohid_vtbl, &private->unix_device);
+    device = bus_create_hid_device(&desc, &iohid_vtbl, &private->unix_device);
     if (!device) HeapFree(GetProcessHeap(), 0, private);
     else
     {

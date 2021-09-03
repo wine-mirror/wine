@@ -27,8 +27,21 @@
 #include <ddk/wdm.h>
 #include <hidusage.h>
 
+#include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/unixlib.h"
+
+struct device_desc
+{
+    const WCHAR *busid;
+    DWORD vid;
+    DWORD pid;
+    DWORD version;
+    DWORD input;
+    DWORD uid;
+    WCHAR serial[256];
+    BOOL is_gamepad;
+};
 
 struct sdl_bus_options
 {
@@ -70,6 +83,7 @@ struct bus_event
 
 struct device_create_params
 {
+    struct device_desc desc;
     struct unix_device *device;
 };
 
@@ -89,5 +103,13 @@ enum unix_funcs
 };
 
 extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
+
+static inline const char *debugstr_device_desc(struct device_desc *desc)
+{
+    if (!desc) return "(null)";
+    return wine_dbg_sprintf("{busid %s, vid %04x, pid %04x, version %04x, input %d, uid %08x, serial %s, is_gamepad %u}",
+                            debugstr_w(desc->busid), desc->vid, desc->pid, desc->version,
+                            desc->input, desc->uid, debugstr_w(desc->serial), desc->is_gamepad);
+}
 
 #endif /* __WINEBUS_UNIXLIB_H */
