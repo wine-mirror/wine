@@ -64,7 +64,7 @@ void __cdecl MSVCRT_operator_delete(void *mem)
     free(mem);
 }
 
-static void* __cdecl MSVCRT_operator_new_aligned(size_t size, size_t alignment)
+static void* MSVCRT_operator_new_aligned(size_t size, size_t alignment)
 {
     void *retval;
     int freed;
@@ -85,7 +85,7 @@ static void* __cdecl MSVCRT_operator_new_aligned(size_t size, size_t alignment)
     return NULL;
 }
 
-static void __cdecl MSVCRT_operator_delete_aligned(void *mem, size_t alignment)
+static void MSVCRT_operator_delete_aligned(void *mem, size_t alignment)
 {
     _aligned_free(mem);
 }
