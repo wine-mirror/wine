@@ -53,6 +53,7 @@ __ASM_STDCALL_FUNC(wrap_fastcall_func1, 8,
 struct device
 {
     BOOL is_fdo;
+    BOOL is_gamepad;
     BOOL removed;
     WCHAR device_id[MAX_DEVICE_ID_LEN];
 };
@@ -75,12 +76,18 @@ struct func_device
 
     /* the bogus HID gamepad, as exposed by native XUSB */
     DEVICE_OBJECT *gamepad_device;
+
+    /* the Wine-specific hidden HID device, used by XInput */
+    DEVICE_OBJECT *xinput_device;
+
     WCHAR instance_id[MAX_DEVICE_ID_LEN];
 
     /* everything below requires holding the cs */
     CRITICAL_SECTION cs;
     ULONG report_len;
     char *report_buf;
+    IRP *pending_read;
+    BOOL pending_is_gamepad;
 };
 
 static inline struct func_device *fdo_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -88,6 +95,108 @@ static inline struct func_device *fdo_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
     struct device *impl = impl_from_DEVICE_OBJECT(device);
     if (impl->is_fdo) return CONTAINING_RECORD(impl, struct func_device, base);
     else return CONTAINING_RECORD(impl, struct phys_device, base)->fdo;
+}
+
+static NTSTATUS WINAPI read_completion(DEVICE_OBJECT *device, IRP *xinput_irp, void *context)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(xinput_irp);
+    ULONG offset, read_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
+    char *read_buf = xinput_irp->UserBuffer;
+    IRP *gamepad_irp = context;
+
+    gamepad_irp->IoStatus.Status = xinput_irp->IoStatus.Status;
+    gamepad_irp->IoStatus.Information = xinput_irp->IoStatus.Information;
+
+    if (!xinput_irp->IoStatus.Status)
+    {
+        RtlEnterCriticalSection(&fdo->cs);
+        offset = fdo->report_buf[0] ? 0 : 1;
+        memcpy(fdo->report_buf + offset, read_buf, read_len);
+        memcpy(gamepad_irp->UserBuffer, read_buf, read_len);
+        RtlLeaveCriticalSection(&fdo->cs);
+    }
+
+    IoCompleteRequest(gamepad_irp, IO_NO_INCREMENT);
+    if (xinput_irp->PendingReturned) IoMarkIrpPending(xinput_irp);
+    return STATUS_SUCCESS;
+}
+
+/* check for a pending read from the other PDO, and complete both at a time.
+ * if there's none, save irp as pending, the other PDO will complete it.
+ * if the device is being removed, complete irp with an error. */
+static NTSTATUS try_complete_pending_read(DEVICE_OBJECT *device, IRP *irp)
+{
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
+    struct device *impl = impl_from_DEVICE_OBJECT(device);
+    IRP *pending, *xinput_irp, *gamepad_irp;
+    BOOL removed, pending_is_gamepad;
+
+    RtlEnterCriticalSection(&fdo->cs);
+    pending_is_gamepad = fdo->pending_is_gamepad;
+    if ((removed = impl->removed))
+        pending = NULL;
+    else if ((pending = fdo->pending_read))
+        fdo->pending_read = NULL;
+    else
+    {
+        fdo->pending_read = irp;
+        fdo->pending_is_gamepad = impl->is_gamepad;
+        IoMarkIrpPending(irp);
+    }
+    RtlLeaveCriticalSection(&fdo->cs);
+
+    if (removed)
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        irp->IoStatus.Information = 0;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_DELETE_PENDING;
+    }
+
+    if (!pending) return STATUS_PENDING;
+
+    /* only one read at a time per device from hidclass.sys design */
+    if (pending_is_gamepad == impl->is_gamepad) ERR("multiple read requests!\n");
+    gamepad_irp = impl->is_gamepad ? irp : pending;
+    xinput_irp = impl->is_gamepad ? pending : irp;
+
+    /* pass xinput irp down, and complete gamepad irp on its way back */
+    IoCopyCurrentIrpStackLocationToNext(xinput_irp);
+    IoSetCompletionRoutine(xinput_irp, read_completion, gamepad_irp, TRUE, TRUE, TRUE);
+    return IoCallDriver(fdo->bus_device, xinput_irp);
+}
+
+static NTSTATUS WINAPI gamepad_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
+
+    TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
+
+    switch (code)
+    {
+    case IOCTL_HID_GET_INPUT_REPORT:
+    {
+        HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
+
+        RtlEnterCriticalSection(&fdo->cs);
+        memcpy(packet->reportBuffer, fdo->report_buf, fdo->report_len);
+        irp->IoStatus.Information = fdo->report_len;
+        RtlLeaveCriticalSection(&fdo->cs);
+
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        IoSkipCurrentIrpStackLocation(irp);
+        return IoCallDriver(fdo->bus_device, irp);
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
@@ -106,6 +215,9 @@ static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
     }
 
     TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
+
+    if (code == IOCTL_HID_READ_REPORT) return try_complete_pending_read(device, irp);
+    if (impl->is_gamepad) return gamepad_internal_ioctl(device, irp);
 
     IoSkipCurrentIrpStackLocation(irp);
     return IoCallDriver(fdo->bus_device, irp);
@@ -172,6 +284,7 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     struct device *impl = impl_from_DEVICE_OBJECT(device);
     ULONG code = stack->MinorFunction;
     NTSTATUS status;
+    IRP *pending;
 
     TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
 
@@ -184,6 +297,18 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     case IRP_MN_SURPRISE_REMOVAL:
         status = STATUS_SUCCESS;
         if (InterlockedExchange(&impl->removed, TRUE)) break;
+
+        RtlEnterCriticalSection(&fdo->cs);
+        pending = fdo->pending_read;
+        fdo->pending_read = NULL;
+        RtlLeaveCriticalSection(&fdo->cs);
+
+        if (pending)
+        {
+            pending->IoStatus.Status = STATUS_DELETE_PENDING;
+            pending->IoStatus.Information = 0;
+            IoCompleteRequest(pending, IO_NO_INCREMENT);
+        }
         break;
 
     case IRP_MN_REMOVE_DEVICE:
@@ -247,7 +372,7 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS create_child_pdos(DEVICE_OBJECT *device)
 {
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
-    DEVICE_OBJECT *gamepad_device;
+    DEVICE_OBJECT *gamepad_device, *xinput_device;
     struct phys_device *pdo;
     UNICODE_STRING name_str;
     WCHAR *tmp, name[255];
@@ -264,16 +389,41 @@ static NTSTATUS create_child_pdos(DEVICE_OBJECT *device)
         return status;
     }
 
+    swprintf(name, ARRAY_SIZE(name), L"\\Device\\WINEXINPUT#%p&%p&1",
+             device->DriverObject, fdo->bus_device);
+    RtlInitUnicodeString(&name_str, name);
+
+    if ((status = IoCreateDevice(device->DriverObject, sizeof(struct phys_device),
+                                 &name_str, 0, 0, FALSE, &xinput_device)))
+    {
+        ERR("failed to create xinput device, status %#x.\n", status);
+        IoDeleteDevice(gamepad_device);
+        return status;
+    }
+
     fdo->gamepad_device = gamepad_device;
     pdo = gamepad_device->DeviceExtension;
     pdo->fdo = fdo;
     pdo->base.is_fdo = FALSE;
+    pdo->base.is_gamepad = TRUE;
     wcscpy(pdo->base.device_id, fdo->base.device_id);
 
     if ((tmp = wcsstr(pdo->base.device_id, L"&MI_"))) memcpy(tmp, L"&IG", 6);
     else wcscat(pdo->base.device_id, L"&IG_00");
 
     TRACE("device %p, gamepad device %p.\n", device, gamepad_device);
+
+    fdo->xinput_device = xinput_device;
+    pdo = xinput_device->DeviceExtension;
+    pdo->fdo = fdo;
+    pdo->base.is_fdo = FALSE;
+    pdo->base.is_gamepad = FALSE;
+    wcscpy(pdo->base.device_id, fdo->base.device_id);
+
+    if ((tmp = wcsstr(pdo->base.device_id, L"&MI_"))) memcpy(tmp, L"&XI", 6);
+    else wcscat(pdo->base.device_id, L"&XI_00");
+
+    TRACE("device %p, xinput device %p.\n", device, xinput_device);
 
     IoInvalidateDeviceRelations(fdo->bus_device, BusRelations);
     return STATUS_SUCCESS;
@@ -363,6 +513,12 @@ static NTSTATUS WINAPI fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
 
             devices->Count = 0;
+            if ((child = fdo->xinput_device))
+            {
+                devices->Objects[devices->Count] = child;
+                call_fastcall_func1(ObfReferenceObject, child);
+                devices->Count++;
+            }
             if ((child = fdo->gamepad_device))
             {
                 devices->Objects[devices->Count] = child;
