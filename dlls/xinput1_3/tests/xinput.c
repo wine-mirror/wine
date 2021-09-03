@@ -434,10 +434,10 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     HIDP_LINK_COLLECTION_NODE collections[16];
     HIDP_BUTTON_CAPS button_caps[16];
     HIDP_VALUE_CAPS value_caps[16];
+    XINPUT_STATE last_state, state;
     XINPUT_CAPABILITIES xi_caps;
     char buffer[200] = {0};
     ULONG length, value;
-    XINPUT_STATE state;
     USAGE usages[15];
     NTSTATUS status;
     USHORT count;
@@ -637,18 +637,30 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     else if (attrs->VendorID == 0x045e && attrs->ProductID == 0x02ff) skip("skipping interactive tests (Xbox One For Windows)\n");
     else
     {
+        res = pXInputGetState(index, &last_state);
+        ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+
         trace("press A button on gamepad %d\n", index);
 
-        SetLastError(0xdeadbeef);
-        memset(buffer, 0, sizeof(buffer));
-        length = hid_caps->InputReportByteLength;
-        ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
-        ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-        ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
-
-        res = pXInputGetState(index, &state);
-        ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+        do
+        {
+            Sleep(5);
+            res = pXInputGetState(index, &state);
+            ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+        } while (res == ERROR_SUCCESS && state.dwPacketNumber == last_state.dwPacketNumber);
         ok(state.Gamepad.wButtons & XINPUT_GAMEPAD_A, "unexpected button state %#x\n", state.Gamepad.wButtons);
+
+        /* now read as many reports from the device to get a consistent final state */
+        for (i = 0; i < (state.dwPacketNumber - last_state.dwPacketNumber); ++i)
+        {
+            SetLastError(0xdeadbeef);
+            memset(buffer, 0, sizeof(buffer));
+            length = hid_caps->InputReportByteLength;
+            ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
+            ok(ret, "ReadFile failed, last error %u\n", GetLastError());
+            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+        }
+        last_state = state;
 
         length = ARRAY_SIZE(usages);
         status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &length, preparsed, buffer, hid_caps->InputReportByteLength);
@@ -658,16 +670,25 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
         trace("release A on gamepad %d\n", index);
 
-        SetLastError(0xdeadbeef);
-        memset(buffer, 0, sizeof(buffer));
-        length = hid_caps->InputReportByteLength;
-        ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
-        ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-        ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
-
-        res = pXInputGetState(index, &state);
-        ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+        do
+        {
+            Sleep(5);
+            res = pXInputGetState(index, &state);
+            ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+        } while (res == ERROR_SUCCESS && state.dwPacketNumber == last_state.dwPacketNumber);
         ok(!state.Gamepad.wButtons, "unexpected button state %#x\n", state.Gamepad.wButtons);
+
+        /* now read as many reports from the device to get a consistent final state */
+        for (i = 0; i < (state.dwPacketNumber - last_state.dwPacketNumber); ++i)
+        {
+            SetLastError(0xdeadbeef);
+            memset(buffer, 0, sizeof(buffer));
+            length = hid_caps->InputReportByteLength;
+            ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
+            ok(ret, "ReadFile failed, last error %u\n", GetLastError());
+            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+        }
+        last_state = state;
 
         length = ARRAY_SIZE(usages);
         status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &length, preparsed, buffer, hid_caps->InputReportByteLength);
@@ -678,15 +699,24 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
         do
         {
-            SetLastError(0xdeadbeef);
-            memset(buffer, 0, sizeof(buffer));
-            length = hid_caps->InputReportByteLength;
-            ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
-            ok(ret, "ReadFile failed, last error %u\n", GetLastError());
-            ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+            do
+            {
+                Sleep(5);
+                res = pXInputGetState(index, &state);
+                ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+            } while (res == ERROR_SUCCESS && state.dwPacketNumber == last_state.dwPacketNumber);
 
-            res = pXInputGetState(index, &state);
-            ok(res == ERROR_SUCCESS, "XInputGetState returned %#x\n", res);
+            /* now read as many reports from the device to get a consistent final state */
+            for (i = 0; i < (state.dwPacketNumber - last_state.dwPacketNumber); ++i)
+            {
+                SetLastError(0xdeadbeef);
+                memset(buffer, 0, sizeof(buffer));
+                length = hid_caps->InputReportByteLength;
+                ret = ReadFile(device, buffer, hid_caps->InputReportByteLength, &length, NULL);
+                ok(ret, "ReadFile failed, last error %u\n", GetLastError());
+                ok(length == hid_caps->InputReportByteLength, "ReadFile returned length %u\n", length);
+            }
+            last_state = state;
 
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, preparsed, buffer, hid_caps->InputReportByteLength);
