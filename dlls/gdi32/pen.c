@@ -92,7 +92,7 @@ HPEN create_pen( INT style, INT width, COLORREF color )
 HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
 {
     if (brush) FIXME( "brush not supported\n" );
-    if (style == PS_NULL) return GetStockObject( NULL_PEN );
+    if (style == PS_NULL) return get_stock_object( NULL_PEN );
     return create_pen( style, width, color );
 }
 

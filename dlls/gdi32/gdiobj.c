@@ -610,6 +610,29 @@ static void set_gdi_shared(void)
     NtCurrentTeb()->Peb->GdiSharedHandleTable = &gdi_shared;
 }
 
+HGDIOBJ get_stock_object( INT obj )
+{
+    assert( obj >= 0 && obj <= STOCK_LAST + 1 && obj != 9 );
+
+    switch (obj)
+    {
+    case OEM_FIXED_FONT:
+        if (get_system_dpi() != 96) obj = 9;
+        break;
+    case SYSTEM_FONT:
+        if (get_system_dpi() != 96) obj = STOCK_LAST + 2;
+        break;
+    case SYSTEM_FIXED_FONT:
+        if (get_system_dpi() != 96) obj = STOCK_LAST + 3;
+        break;
+    case DEFAULT_GUI_FONT:
+        if (get_system_dpi() != 96) obj = STOCK_LAST + 4;
+        break;
+    }
+
+    return entry_to_handle( handle_entry( ULongToHandle( obj + FIRST_GDI_HANDLE )));
+}
+
 static void init_stock_objects(void)
 {
     const struct DefaultFontInfo *deffonts;

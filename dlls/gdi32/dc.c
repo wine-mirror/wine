@@ -133,10 +133,10 @@ DC *alloc_dc_ptr( DWORD magic )
     dc->physDev             = &dc->nulldrv;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
-    dc->hPen                = GDI_inc_ref_count( GetStockObject( BLACK_PEN ));
-    dc->hBrush              = GDI_inc_ref_count( GetStockObject( WHITE_BRUSH ));
-    dc->hFont               = GDI_inc_ref_count( GetStockObject( SYSTEM_FONT ));
-    dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
+    dc->hPen                = GDI_inc_ref_count( get_stock_object( BLACK_PEN ));
+    dc->hBrush              = GDI_inc_ref_count( get_stock_object( WHITE_BRUSH ));
+    dc->hFont               = GDI_inc_ref_count( get_stock_object( SYSTEM_FONT ));
+    dc->hPalette            = get_stock_object( DEFAULT_PALETTE );
 
     set_initial_dc_state( dc );
 
@@ -395,11 +395,11 @@ static BOOL reset_dc_state( HDC hdc )
     set_initial_dc_state( dc );
     set_bk_color( dc, RGB( 255, 255, 255 ));
     set_text_color( dc, RGB( 0, 0, 0 ));
-    NtGdiSelectBrush( hdc, GetStockObject( WHITE_BRUSH ));
-    NtGdiSelectFont( hdc, GetStockObject( SYSTEM_FONT ));
-    NtGdiSelectPen( hdc, GetStockObject( BLACK_PEN ));
+    NtGdiSelectBrush( hdc, get_stock_object( WHITE_BRUSH ));
+    NtGdiSelectFont( hdc, get_stock_object( SYSTEM_FONT ));
+    NtGdiSelectPen( hdc, get_stock_object( BLACK_PEN ));
     NtGdiSetVirtualResolution( hdc, 0, 0, 0, 0 );
-    GDISelectPalette( hdc, GetStockObject( DEFAULT_PALETTE ), FALSE );
+    GDISelectPalette( hdc, get_stock_object( DEFAULT_PALETTE ), FALSE );
     NtGdiSetBoundsRect( hdc, NULL, DCB_DISABLE );
     NtGdiAbortPath( hdc );
 
@@ -659,7 +659,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
-    dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
+    dc->hBitmap = GDI_inc_ref_count( get_stock_object( DEFAULT_BITMAP ));
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
           debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
@@ -727,7 +727,7 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
-    dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
+    dc->hBitmap = GDI_inc_ref_count( get_stock_object( DEFAULT_BITMAP ));
     dc->attr->vis_rect.left   = 0;
     dc->attr->vis_rect.top    = 0;
     dc->attr->vis_rect.right  = 1;
