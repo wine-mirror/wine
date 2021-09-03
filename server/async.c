@@ -53,6 +53,7 @@ struct async
     unsigned int         direct_result :1;/* a flag if we're passing result directly from request instead of APC  */
     unsigned int         alerted :1;      /* fd is signaled, but we are waiting for client-side I/O */
     unsigned int         terminated :1;   /* async has been terminated */
+    unsigned int         unknown_status :1; /* initial status is not known yet */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
     unsigned int         comp_flags;      /* completion flags */
@@ -258,6 +259,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->direct_result = 0;
     async->alerted       = 0;
     async->terminated    = 0;
+    async->unknown_status = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
     async->comp_flags    = 0;
     async->completion_callback = NULL;
@@ -284,6 +286,7 @@ void set_async_pending( struct async *async, int signal )
     if (!async->terminated)
     {
         async->pending = 1;
+        async->unknown_status = 0;
         if (signal && !async->signaled)
         {
             async->signaled = 1;
@@ -295,14 +298,15 @@ void set_async_pending( struct async *async, int signal )
 /* return async object status and wait handle to client */
 obj_handle_t async_handoff( struct async *async, int success, data_size_t *result, int force_blocking )
 {
+    if (async->unknown_status)
+    {
+        /* even the initial status is not known yet */
+        set_error( STATUS_PENDING );
+        return async->wait_handle;
+    }
+
     if (!success)
     {
-        if (get_error() == STATUS_PENDING)
-        {
-            /* we don't know the result yet, so client needs to wait */
-            async->direct_result = 0;
-            return async->wait_handle;
-        }
         close_handle( async->thread->process, async->wait_handle );
         async->wait_handle = 0;
         return 0;
@@ -379,6 +383,13 @@ void async_request_complete_alloc( struct async *async, unsigned int status, dat
     }
 
     async_request_complete( async, status, result, out_size, out_data_copy );
+}
+
+/* mark an async as having unknown initial status */
+void async_set_unknown_status( struct async *async )
+{
+    async->unknown_status = 1;
+    async->direct_result = 0;
 }
 
 /* set the timeout of an async operation */

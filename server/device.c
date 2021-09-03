@@ -605,8 +605,8 @@ static int queue_irp( struct device_file *file, const irp_params_t *params, stru
     irp->async = (struct async *)grab_object( async );
     add_irp_to_queue( file->device->manager, irp, current );
     release_object( irp );
-    set_error( STATUS_PENDING );
-    return 0;
+    async_set_unknown_status( async );
+    return 1;
 }
 
 static enum server_fd_type device_file_get_fd_type( struct fd *fd )
