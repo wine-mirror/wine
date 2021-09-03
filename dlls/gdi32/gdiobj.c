@@ -80,12 +80,7 @@ static const LOGBRUSH LtGrayBrush = { BS_SOLID, RGB(192,192,192), 0 };
 static const LOGBRUSH GrayBrush   = { BS_SOLID, RGB(128,128,128), 0 };
 static const LOGBRUSH DkGrayBrush = { BS_SOLID, RGB(64,64,64), 0 };
 
-static const LOGPEN WhitePen = { PS_SOLID, { 0, 0 }, RGB(255,255,255) };
-static const LOGPEN BlackPen = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
-static const LOGPEN NullPen  = { PS_NULL,  { 0, 0 }, 0 };
-
 static const LOGBRUSH DCBrush = { BS_SOLID, RGB(255,255,255), 0 };
-static const LOGPEN DCPen     = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
 
 /* reserve one extra entry for the stock default bitmap */
 /* this is what Windows does too */
@@ -582,6 +577,15 @@ DWORD get_system_dpi(void)
     return pGetDpiForSystem ? pGetDpiForSystem() : 96;
 }
 
+static HFONT create_font( const LOGFONTW *deffont )
+{
+    ENUMLOGFONTEXDVW lf;
+
+    memset( &lf, 0, sizeof(lf) );
+    lf.elfEnumLogfontEx.elfLogFont = *deffont;
+    return NtGdiHfontCreate( &lf, sizeof(lf), 0, 0, NULL );
+}
+
 static HFONT create_scaled_font( const LOGFONTW *deffont )
 {
     LOGFONTW lf;
@@ -595,7 +599,7 @@ static HFONT create_scaled_font( const LOGFONTW *deffont )
 
     lf = *deffont;
     lf.lfHeight = MulDiv( lf.lfHeight, dpi, 96 );
-    return CreateFontIndirectW( &lf );
+    return create_font( &lf );
 }
 
 static void set_gdi_shared(void)
@@ -648,24 +652,24 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     stock_objects[BLACK_BRUSH]  = create_brush( &BlackBrush );
     stock_objects[NULL_BRUSH]   = create_brush( &NullBrush );
 
-    stock_objects[WHITE_PEN]    = CreatePenIndirect( &WhitePen );
-    stock_objects[BLACK_PEN]    = CreatePenIndirect( &BlackPen );
-    stock_objects[NULL_PEN]     = CreatePenIndirect( &NullPen );
+    stock_objects[WHITE_PEN]    = create_pen( PS_SOLID, 0, RGB(255,255,255) );
+    stock_objects[BLACK_PEN]    = create_pen( PS_SOLID, 0, RGB(0,0,0) );
+    stock_objects[NULL_PEN]     = create_pen( PS_NULL, 0, RGB(0,0,0) );
 
     stock_objects[DEFAULT_PALETTE] = PALETTE_Init();
-    stock_objects[DEFAULT_BITMAP]  = CreateBitmap( 1, 1, 1, 1, NULL );
+    stock_objects[DEFAULT_BITMAP]  = NtGdiCreateBitmap( 1, 1, 1, 1, NULL );
 
     /* language-independent stock fonts */
-    stock_objects[OEM_FIXED_FONT]      = CreateFontIndirectW( &OEMFixedFont );
-    stock_objects[ANSI_FIXED_FONT]     = CreateFontIndirectW( &AnsiFixedFont );
-    stock_objects[ANSI_VAR_FONT]       = CreateFontIndirectW( &AnsiVarFont );
+    stock_objects[OEM_FIXED_FONT]      = create_font( &OEMFixedFont );
+    stock_objects[ANSI_FIXED_FONT]     = create_font( &AnsiFixedFont );
+    stock_objects[ANSI_VAR_FONT]       = create_font( &AnsiVarFont );
 
     /* language-dependent stock fonts */
     deffonts = get_default_fonts(get_default_charset());
-    stock_objects[SYSTEM_FONT]         = CreateFontIndirectW( &deffonts->SystemFont );
-    stock_objects[DEVICE_DEFAULT_FONT] = CreateFontIndirectW( &deffonts->DeviceDefaultFont );
-    stock_objects[SYSTEM_FIXED_FONT]   = CreateFontIndirectW( &deffonts->SystemFixedFont );
-    stock_objects[DEFAULT_GUI_FONT]    = CreateFontIndirectW( &deffonts->DefaultGuiFont );
+    stock_objects[SYSTEM_FONT]         = create_font( &deffonts->SystemFont );
+    stock_objects[DEVICE_DEFAULT_FONT] = create_font( &deffonts->DeviceDefaultFont );
+    stock_objects[SYSTEM_FIXED_FONT]   = create_font( &deffonts->SystemFixedFont );
+    stock_objects[DEFAULT_GUI_FONT]    = create_font( &deffonts->DefaultGuiFont );
 
     scaled_stock_objects[OEM_FIXED_FONT]    = create_scaled_font( &OEMFixedFont );
     scaled_stock_objects[SYSTEM_FONT]       = create_scaled_font( &deffonts->SystemFont );
@@ -673,7 +677,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     scaled_stock_objects[DEFAULT_GUI_FONT]  = create_scaled_font( &deffonts->DefaultGuiFont );
 
     stock_objects[DC_BRUSH]     = create_brush( &DCBrush );
-    stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
+    stock_objects[DC_PEN]       = create_pen( PS_SOLID, 0, RGB(0,0,0) );
 
     /* clear the NOSYSTEM bit on all stock objects*/
     for (i = 0; i < NB_STOCK_OBJECTS; i++)

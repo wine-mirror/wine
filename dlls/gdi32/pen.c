@@ -50,17 +50,12 @@ static const struct gdi_obj_funcs pen_funcs =
     PEN_DeleteObject   /* pDeleteObject */
 };
 
-
-/***********************************************************************
- *           NtGdiCreatePen    (win32u.@)
- */
-HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
+HPEN create_pen( INT style, INT width, COLORREF color )
 {
     PENOBJ *penPtr;
     HPEN hpen;
 
     TRACE( "%d %d %06x\n", style, width, color );
-    if (brush) FIXME( "brush not supported\n" );
 
     switch (style)
     {
@@ -72,7 +67,6 @@ HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
     case PS_INSIDEFRAME:
         break;
     case PS_NULL:
-        if ((hpen = GetStockObject( NULL_PEN ))) return hpen;
         width = 1;
         color = 0;
         break;
@@ -90,6 +84,16 @@ HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
     if (!(hpen = alloc_gdi_handle( &penPtr->obj, NTGDI_OBJ_PEN, &pen_funcs )))
         HeapFree( GetProcessHeap(), 0, penPtr );
     return hpen;
+}
+
+/***********************************************************************
+ *           NtGdiCreatePen    (win32u.@)
+ */
+HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
+{
+    if (brush) FIXME( "brush not supported\n" );
+    if (style == PS_NULL) return GetStockObject( NULL_PEN );
+    return create_pen( style, width, color );
 }
 
 /***********************************************************************

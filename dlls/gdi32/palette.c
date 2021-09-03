@@ -89,7 +89,7 @@ HPALETTE PALETTE_Init(void)
         palPtr->palPalEntry[i].peBlue  = entries[i < 10 ? i : 236 + i].rgbBlue;
         palPtr->palPalEntry[i].peFlags = 0;
     }
-    return CreatePalette( palPtr );
+    return NtGdiCreatePaletteInternal( palPtr, palPtr->palNumEntries );
 }
 
 
