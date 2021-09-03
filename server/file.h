@@ -59,7 +59,7 @@ struct fd_ops
     /* perform a read on the file */
     void (*read)(struct fd *, struct async *, file_pos_t );
     /* perform a write on the file */
-    int (*write)(struct fd *, struct async *, file_pos_t );
+    void (*write)(struct fd *, struct async *, file_pos_t );
     /* flush the object buffers */
     int (*flush)(struct fd *, struct async *);
     /* query file info */
@@ -110,7 +110,7 @@ extern void fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
-extern int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
+extern void no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
 extern int no_fd_flush( struct fd *fd, struct async *async );
 extern void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 extern void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );

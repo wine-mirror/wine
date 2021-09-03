@@ -2298,10 +2298,9 @@ void no_fd_read( struct fd *fd, struct async *async, file_pos_t pos )
 }
 
 /* default write() routine */
-int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
+void no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 /* default flush() routine */

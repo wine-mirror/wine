@@ -240,7 +240,7 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_destroy             /* destroy */
 };
 
-static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos );
+static void screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos );
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops screen_buffer_fd_ops =
@@ -381,7 +381,7 @@ static const struct object_ops console_output_ops =
     console_output_destroy            /* destroy */
 };
 
-static int console_output_write( struct fd *fd, struct async *async, file_pos_t pos );
+static void console_output_write( struct fd *fd, struct async *async, file_pos_t pos );
 static int console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_output_fd_ops =
@@ -972,18 +972,18 @@ static int console_flush( struct fd *fd, struct async *async )
     return queue_host_ioctl( console->server, IOCTL_CONDRV_FLUSH, 0, NULL, NULL );
 }
 
-static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos )
+static void screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct screen_buffer *screen_buffer = get_fd_user( fd );
 
     if (!screen_buffer->input || !screen_buffer->input->server)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
 
-    return queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_WRITE_FILE,
-                             screen_buffer->id, async, &screen_buffer->ioctl_q );
+    queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_WRITE_FILE,
+                      screen_buffer->id, async, &screen_buffer->ioctl_q );
 }
 
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -1421,16 +1421,16 @@ static int console_output_ioctl( struct fd *fd, ioctl_code_t code, struct async 
     return screen_buffer_ioctl( console->active->fd, code, async );
 }
 
-static int console_output_write( struct fd *fd, struct async *async, file_pos_t pos )
+static void console_output_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct console *console = current->process->console;
 
     if (!console || !console->active)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return screen_buffer_write( console->active->fd, async, pos );
+    screen_buffer_write( console->active->fd, async, pos );
 }
 
 struct object *create_console_device( struct object *root, const struct unicode_str *name,

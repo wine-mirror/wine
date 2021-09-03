@@ -144,7 +144,7 @@ static int pipe_end_set_sd( struct object *obj, const struct security_descriptor
                             unsigned int set_info );
 static WCHAR *pipe_end_get_full_name( struct object *obj, data_size_t *len );
 static void pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
-static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
+static void pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static int pipe_end_flush( struct fd *fd, struct async *async );
 static void pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
@@ -923,7 +923,7 @@ static void pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
     set_error( STATUS_PENDING );
 }
 
-static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
+static void pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
     struct pipe_message *message;
@@ -935,27 +935,26 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
         break;
     case FILE_PIPE_DISCONNECTED_STATE:
         set_error( STATUS_PIPE_DISCONNECTED );
-        return 0;
+        return;
     case FILE_PIPE_LISTENING_STATE:
         set_error( STATUS_PIPE_LISTENING );
-        return 0;
+        return;
     case FILE_PIPE_CLOSING_STATE:
         set_error( STATUS_PIPE_CLOSING );
-        return 0;
+        return;
     }
 
-    if (!pipe_end->pipe->message_mode && !get_req_data_size()) return 1;
+    if (!pipe_end->pipe->message_mode && !get_req_data_size()) return;
 
     iosb = async_get_iosb( async );
     message = queue_message( pipe_end->connection, iosb );
     release_object( iosb );
-    if (!message) return 0;
+    if (!message) return;
 
     message->async = (struct async *)grab_object( async );
     queue_async( &pipe_end->write_q, async );
     reselect_read_queue( pipe_end->connection, 1 );
     set_error( STATUS_PENDING );
-    return 1;
 }
 
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
