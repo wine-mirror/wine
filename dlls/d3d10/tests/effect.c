@@ -651,6 +651,9 @@ static void test_effect_variable_member(void)
     variable = variable2->lpVtbl->GetMemberBySemantic(variable2, "SV_POSITION");
     ok(variable == variable3, "GetMemberBySemantic got %p, expected %p\n", variable, variable3);
 
+    variable = variable2->lpVtbl->GetMemberBySemantic(variable2, "sv_POSITION");
+    ok(variable == variable3, "GetMemberBySemantic got %p, expected %p\n", variable, variable3);
+
     variable = variable2->lpVtbl->GetMemberByIndex(variable2, 0);
     ok(variable == variable3, "GetMemberByIndex got %p, expected %p\n", variable, variable3);
 
@@ -666,6 +669,9 @@ static void test_effect_variable_member(void)
     ok(desc.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", desc.ExplicitBindPoint);
 
     variable = variable2->lpVtbl->GetMemberBySemantic(variable2, "COLOR0");
+    ok(variable == variable3, "GetMemberBySemantic got %p, expected %p\n", variable, variable3);
+
+    variable = variable2->lpVtbl->GetMemberBySemantic(variable2, "color0");
     ok(variable == variable3, "GetMemberBySemantic got %p, expected %p\n", variable, variable3);
 
     variable = variable2->lpVtbl->GetMemberByIndex(variable2, 1);

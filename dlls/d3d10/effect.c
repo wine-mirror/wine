@@ -4109,7 +4109,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     {
         struct d3d10_effect_variable *m = &This->members[i];
 
-        if (m->semantic && !strcmp(m->semantic, semantic))
+        if (m->semantic && !stricmp(m->semantic, semantic))
         {
             TRACE("Returning member %p\n", m);
             return &m->ID3D10EffectVariable_iface;
