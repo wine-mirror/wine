@@ -123,3 +123,85 @@ HRESULT WINAPI D3DX10CreateEffectFromFileA(const char *filename, const D3D10_SHA
 
     return hr;
 }
+
+static HRESULT get_resource_data(HMODULE module, HRSRC resinfo, void **buffer, DWORD *length)
+{
+    HGLOBAL resource;
+
+    *length = SizeofResource(module, resinfo);
+    if (!*length)
+        return D3DX10_ERR_INVALID_DATA;
+
+    resource = LoadResource(module, resinfo);
+    if (!resource)
+        return D3DX10_ERR_INVALID_DATA;
+
+    *buffer = LockResource(resource);
+    if (!*buffer)
+        return D3DX10_ERR_INVALID_DATA;
+
+    return S_OK;
+}
+
+HRESULT WINAPI D3DX10CreateEffectFromResourceA(HMODULE module, const char *resource_name,
+        const char *filename, const D3D10_SHADER_MACRO *defines, ID3D10Include *include,
+        const char *profile, UINT shader_flags, UINT effect_flags, ID3D10Device *device,
+        ID3D10EffectPool *effect_pool, ID3DX10ThreadPump *pump, ID3D10Effect **effect,
+        ID3D10Blob **errors, HRESULT *hresult)
+{
+    HRSRC resinfo;
+    void *data;
+    DWORD size;
+    HRESULT hr;
+
+    TRACE("module %p, resource_name %s, filename %s, defines %p, include %p, profile %s, "
+            "shader_flags %#x, effect_flags %#x, device %p, effect_pool %p, pump %p, effect %p, "
+            "errors %p, hresult %p.\n", module, debugstr_a(resource_name), debugstr_a(filename),
+            defines, include, debugstr_a(profile), shader_flags, effect_flags,
+            device, effect_pool, pump, effect, errors, hresult);
+
+    if (!(resinfo = FindResourceA(module, resource_name, (const char *)RT_RCDATA)))
+        return D3DX10_ERR_INVALID_DATA;
+
+    if (FAILED(hr = get_resource_data(module, resinfo, &data, &size)))
+        return hr;
+
+    return D3DX10CreateEffectFromMemory(data, size, filename, defines, include, profile,
+            shader_flags, effect_flags, device, effect_pool, pump, effect, errors, hresult);
+}
+
+HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *resource_name,
+        const WCHAR *filenameW, const D3D10_SHADER_MACRO *defines, ID3D10Include *include,
+        const char *profile, UINT shader_flags, UINT effect_flags, ID3D10Device *device,
+        ID3D10EffectPool *effect_pool, ID3DX10ThreadPump *pump, ID3D10Effect **effect,
+        ID3D10Blob **errors, HRESULT *hresult)
+{
+    char *filename;
+    HRSRC resinfo;
+    void *data;
+    DWORD size;
+    HRESULT hr;
+    int len;
+
+    TRACE("module %p, resource_name %s, filename %s, defines %p, include %p, profile %s, "
+            "shader_flags %#x, effect_flags %#x, device %p, effect_pool %p, pump %p, effect %p, "
+            "errors %p, hresult %p.\n", module, debugstr_w(resource_name), debugstr_w(filenameW),
+            defines, include, debugstr_a(profile), shader_flags, effect_flags,
+            device, effect_pool, pump, effect, errors, hresult);
+
+    if (!(resinfo = FindResourceW(module, resource_name, (const WCHAR *)RT_RCDATA)))
+        return D3DX10_ERR_INVALID_DATA;
+
+    if (FAILED(hr = get_resource_data(module, resinfo, &data, &size)))
+        return hr;
+
+    len = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+    if (!(filename = heap_alloc(len)))
+        return E_OUTOFMEMORY;
+    WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, len, NULL, NULL);
+
+    hr = D3DX10CreateEffectFromMemory(data, size, filename, defines, include, profile,
+            shader_flags, effect_flags, device, effect_pool, pump, effect, errors, hresult);
+    heap_free(filename);
+    return hr;
+}

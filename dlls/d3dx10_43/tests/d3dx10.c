@@ -3153,6 +3153,27 @@ todo_wine
     ok(!refcount, "Unexpected refcount.\n");
 }
 
+static void test_create_effect_from_resource(void)
+{
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = D3DX10CreateEffectFromResourceA(GetModuleHandleA(NULL), "resource", NULL, NULL, NULL,
+            "fx_4_0", 0, 0, device, NULL, NULL, &effect, NULL, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Unexpected hr %#x.\n", hr);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Unexpected refcount.\n");
+}
+
 START_TEST(d3dx10)
 {
     test_D3DX10UnsetAllDeviceObjects();
@@ -3163,4 +3184,5 @@ START_TEST(d3dx10)
     test_create_texture();
     test_font();
     test_sprite();
+    test_create_effect_from_resource();
 }
