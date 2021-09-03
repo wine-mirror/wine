@@ -1885,7 +1885,15 @@ static BOOL macho_search_loader(struct process* pcs, struct macho_info* macho_in
         }
     }
 
-    if (!ret) ret = macho_search_and_load_file(pcs, get_wine_loader_name(pcs), 0, macho_info);
+    if (!ret)
+    {
+        WCHAR* loader = get_wine_loader_name(pcs);
+        if (loader)
+        {
+            ret = macho_search_and_load_file(pcs, loader, 0, macho_info);
+            HeapFree(GetProcessHeap(), 0, loader);
+        }
+    }
     return ret;
 }
 

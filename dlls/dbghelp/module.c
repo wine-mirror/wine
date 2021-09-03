@@ -138,12 +138,34 @@ void module_set_module(struct module* module, const WCHAR* name)
 }
 
 /* Returned string must be freed by caller */
-const WCHAR *get_wine_loader_name(struct process *pcs)
+WCHAR *get_wine_loader_name(struct process *pcs)
 {
-    const WCHAR *name = process_getenv(pcs, L"WINELOADER");
+    const WCHAR *name;
+    WCHAR* altname;
+    unsigned len;
+
+    name = process_getenv(pcs, L"WINELOADER");
     if (!name) name = pcs->is_64bit ? L"wine64" : L"wine";
-    TRACE("returning %s\n", debugstr_w(name));
-    return name;
+    len = lstrlenW(name);
+
+    /* WINELOADER isn't properly updated in Wow64 process calling inside Windows env block
+     * (it's updated in ELF env block though)
+     * So do the adaptation ourselves.
+     */
+    altname = HeapAlloc(GetProcessHeap(), 0, (len + 2 + 1) * sizeof(WCHAR));
+    if (altname)
+    {
+        memcpy(altname, name, len * sizeof(WCHAR));
+        if (pcs->is_64bit && len >= 2 && memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)) != 0)
+            lstrcpyW(altname + len, L"64");
+        else if (!pcs->is_64bit && len >= 2 && !memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)))
+            altname[len - 2] = '\0';
+        else
+            altname[len] = '\0';
+    }
+
+    TRACE("returning %s\n", debugstr_w(altname));
+    return altname;
 }
 
 static const char*      get_module_type(enum module_type type, BOOL virtual)
