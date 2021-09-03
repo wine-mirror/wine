@@ -6013,6 +6013,7 @@ static void test_effect_shader_description(void)
 static void test_effect_shader_object(void)
 {
     ID3D10EffectShaderVariable *s;
+    ID3D10GeometryShader *gs;
     ID3D10EffectVariable *v;
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
@@ -6091,6 +6092,48 @@ static void test_effect_shader_object(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!ps, "Unexpected shader object.\n");
     ID3D10PixelShader_Release(ps);
+
+    gs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetGeometryShader(s, 0, &gs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected shader object.\n");
+
+    gs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetGeometryShader(s, 1, &gs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected shader object.\n");
+
+    gs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetGeometryShader(s, 2, &gs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected shader object.\n");
+
+    gs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetGeometryShader(s, 3, &gs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected shader object.\n");
+
+    gs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetGeometryShader(s, 4, &gs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected shader object.\n");
+
+    gs = (void *)0xdeadbeef;
+    hr = s->lpVtbl->GetGeometryShader(s, 5, &gs);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected shader object.\n");
+
+    gs = NULL;
+    hr = s->lpVtbl->GetGeometryShader(s, 6, &gs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!gs, "Unexpected shader object.\n");
+    ID3D10GeometryShader_Release(gs);
+
+    gs = NULL;
+    hr = s->lpVtbl->GetGeometryShader(s, 7, &gs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!gs, "Unexpected shader object.\n");
+    ID3D10GeometryShader_Release(gs);
 
     effect->lpVtbl->Release(effect);
 
