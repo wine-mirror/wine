@@ -88,11 +88,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
+static CRITICAL_SECTION udev_cs;
+static CRITICAL_SECTION_DEBUG udev_cs_debug =
+{
+    0, 0, &udev_cs,
+    { &udev_cs_debug.ProcessLocksList, &udev_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": udev_cs") }
+};
+static CRITICAL_SECTION udev_cs = { &udev_cs_debug, -1, 0, 0, 0, 0 };
+
 static struct udev *udev_context = NULL;
 static struct udev_monitor *udev_monitor;
 static int deviceloop_control[2];
 static int udev_monitor_fd;
 static struct list event_queue = LIST_INIT(event_queue);
+static struct list device_list = LIST_INIT(device_list);
 
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
@@ -117,6 +127,29 @@ static inline struct platform_private *impl_from_unix_device(struct unix_device 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
     return impl_from_unix_device(get_unix_device(device));
+}
+
+static const char *get_device_syspath(struct udev_device *dev)
+{
+    struct udev_device *parent;
+
+    if ((parent = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL)))
+        return udev_device_get_syspath(parent);
+
+    if ((parent = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device")))
+        return udev_device_get_syspath(parent);
+
+    return "";
+}
+
+static struct platform_private *find_device_from_syspath(const char *path)
+{
+    struct platform_private *device;
+
+    LIST_FOR_EACH_ENTRY(device, &device_list, struct platform_private, unix_device.entry)
+        if (!strcmp(get_device_syspath(device->udev_device), path)) return device;
+
+    return NULL;
 }
 
 #ifdef HAS_PROPER_INPUT_HEADER
@@ -547,6 +580,10 @@ static void hidraw_device_destroy(struct unix_device *iface)
 {
     struct platform_private *private = impl_from_unix_device(iface);
 
+    EnterCriticalSection(&udev_cs);
+    list_remove(&private->unix_device.entry);
+    LeaveCriticalSection(&udev_cs);
+
     if (private->report_thread)
     {
         write(private->control_pipe[1], "q", 1);
@@ -858,6 +895,10 @@ static void lnxev_device_destroy(struct unix_device *iface)
 {
     struct wine_input_private *ext = input_impl_from_unix_device(iface);
 
+    EnterCriticalSection(&udev_cs);
+    list_remove(&ext->base.unix_device.entry);
+    LeaveCriticalSection(&udev_cs);
+
     if (ext->base.report_thread)
     {
         write(ext->base.control_pipe[1], "q", 1);
@@ -1005,25 +1046,6 @@ static const struct unix_device_vtbl lnxev_device_vtbl =
 };
 #endif
 
-static const char *get_device_syspath(struct udev_device *dev)
-{
-    struct udev_device *parent;
-
-    if ((parent = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL)))
-        return udev_device_get_syspath(parent);
-
-    if ((parent = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device")))
-        return udev_device_get_syspath(parent);
-
-    return "";
-}
-
-static int check_device_syspath(DEVICE_OBJECT *device, void* context)
-{
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
-    return strcmp(get_device_syspath(private->udev_device), context);
-}
-
 static void get_device_subsystem_info(struct udev_device *dev, char const *subsystem, struct device_desc *desc)
 {
     struct udev_device *parent = NULL;
@@ -1093,9 +1115,10 @@ static void udev_add_device(struct udev_device *dev)
     TRACE("udev %s syspath %s\n", debugstr_a(devnode), udev_device_get_syspath(dev));
 
 #ifdef HAS_PROPER_INPUT_HEADER
-    device = bus_enumerate_hid_devices(lnxev_busidW, check_device_syspath, (void *)get_device_syspath(dev));
-    if (!device) device = bus_enumerate_hid_devices(hidraw_busidW, check_device_syspath, (void *)get_device_syspath(dev));
-    if (device)
+    EnterCriticalSection(&udev_cs);
+    private = find_device_from_syspath(get_device_syspath(dev));
+    LeaveCriticalSection(&udev_cs);
+    if (private)
     {
         TRACE("duplicate device found, not adding the new one\n");
         close(fd);
@@ -1156,6 +1179,9 @@ static void udev_add_device(struct udev_device *dev)
         if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
             return;
         private->unix_device.vtbl = &hidraw_device_vtbl;
+        EnterCriticalSection(&udev_cs);
+        list_add_tail(&device_list, &private->unix_device.entry);
+        LeaveCriticalSection(&udev_cs);
 
         device = bus_create_hid_device(&desc, &private->unix_device);
         if (!device) HeapFree(GetProcessHeap(), 0, private);
@@ -1166,6 +1192,9 @@ static void udev_add_device(struct udev_device *dev)
         if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct wine_input_private))))
             return;
         private->unix_device.vtbl = &lnxev_device_vtbl;
+        EnterCriticalSection(&udev_cs);
+        list_add_tail(&device_list, &private->unix_device.entry);
+        LeaveCriticalSection(&udev_cs);
 
         device = bus_create_hid_device(&desc, &private->unix_device);
         if (!device) HeapFree(GetProcessHeap(), 0, private);
