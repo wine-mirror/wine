@@ -556,7 +556,7 @@ void CDECL _unlock_locales(void)
     _unlock(_SETLOCALE_LOCK);
 }
 
-static void CDECL grab_locinfo(pthreadlocinfo locinfo)
+static void grab_locinfo(pthreadlocinfo locinfo)
 {
     int i;
 
@@ -578,7 +578,7 @@ static void CDECL grab_locinfo(pthreadlocinfo locinfo)
     InterlockedIncrement(&locinfo->lc_time_curr->refcount);
 }
 
-static void CDECL update_thread_locale(thread_data_t *data)
+static void update_thread_locale(thread_data_t *data)
 {
     if((data->locale_flags & LOCALE_FREE) && ((data->locale_flags & LOCALE_THREAD) ||
                 (data->locinfo == MSVCRT_locale->locinfo && data->mbcinfo == MSVCRT_locale->mbcinfo)))

@@ -90,7 +90,7 @@ static inline double fp_barrier(double x)
     return y;
 }
 
-static inline double CDECL ret_nan( BOOL update_sw )
+static inline double ret_nan( BOOL update_sw )
 {
     double x = 1.0;
     if (!update_sw) return -NAN;
@@ -2663,7 +2663,7 @@ double CDECL cos( double x )
 }
 
 /* Copied from musl: src/math/expm1.c */
-static double CDECL __expm1(double x)
+static double __expm1(double x)
 {
     static const double o_threshold = 7.09782712893383973096e+02,
         ln2_hi = 6.93147180369123816490e-01,
