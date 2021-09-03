@@ -31,6 +31,7 @@
 #include "cfgmgr32.h"
 #include "ddk/wdm.h"
 #include "ddk/hidport.h"
+#include "ddk/hidpddi.h"
 
 #include "wine/asm.h"
 #include "wine/debug.h"
@@ -75,6 +76,11 @@ struct func_device
     /* the bogus HID gamepad, as exposed by native XUSB */
     DEVICE_OBJECT *gamepad_device;
     WCHAR instance_id[MAX_DEVICE_ID_LEN];
+
+    /* everything below requires holding the cs */
+    CRITICAL_SECTION cs;
+    ULONG report_len;
+    char *report_buf;
 };
 
 static inline struct func_device *fdo_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -273,6 +279,59 @@ static NTSTATUS create_child_pdos(DEVICE_OBJECT *device)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS sync_ioctl(DEVICE_OBJECT *device, DWORD code, void *in_buf, DWORD in_len, void *out_buf, DWORD out_len)
+{
+    IO_STATUS_BLOCK io;
+    KEVENT event;
+    IRP *irp;
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+    irp = IoBuildDeviceIoControlRequest(code, device, in_buf, in_len, out_buf, out_len, TRUE, &event, &io);
+    if (IoCallDriver(device, irp) == STATUS_PENDING) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+
+    return io.Status;
+}
+
+static NTSTATUS initialize_device(DEVICE_OBJECT *device)
+{
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
+    ULONG i, report_desc_len, report_count;
+    PHIDP_REPORT_DESCRIPTOR report_desc;
+    PHIDP_PREPARSED_DATA preparsed;
+    HIDP_DEVICE_DESC device_desc;
+    HIDP_REPORT_IDS *reports;
+    HID_DESCRIPTOR hid_desc;
+    NTSTATUS status;
+    HIDP_CAPS caps;
+
+    if ((status = sync_ioctl(fdo->bus_device, IOCTL_HID_GET_DEVICE_DESCRIPTOR, NULL, 0, &hid_desc, sizeof(hid_desc))))
+        return status;
+
+    if (!(report_desc_len = hid_desc.DescriptorList[0].wReportLength)) return STATUS_UNSUCCESSFUL;
+    if (!(report_desc = malloc(report_desc_len))) return STATUS_NO_MEMORY;
+
+    status = sync_ioctl(fdo->bus_device, IOCTL_HID_GET_REPORT_DESCRIPTOR, NULL, 0, report_desc, report_desc_len);
+    if (!status) status = HidP_GetCollectionDescription(report_desc, report_desc_len, PagedPool, &device_desc);
+    free(report_desc);
+    if (status != HIDP_STATUS_SUCCESS) return status;
+
+    preparsed = device_desc.CollectionDesc->PreparsedData;
+    status = HidP_GetCaps(preparsed, &caps);
+    if (status != HIDP_STATUS_SUCCESS) return status;
+
+    reports = device_desc.ReportIDs;
+    report_count = device_desc.ReportIDsLength;
+    for (i = 0; i < report_count; ++i) if (!reports[i].ReportID || reports[i].InputLength) break;
+    if (i == report_count) i = 0; /* no input report?!, just use first ID */
+
+    fdo->report_len = caps.InputReportByteLength;
+    if (!(fdo->report_buf = malloc(fdo->report_len))) return STATUS_NO_MEMORY;
+    fdo->report_buf[0] = reports[i].ReportID;
+
+    HidP_FreeCollectionDescription(&device_desc);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS WINAPI set_event_completion(DEVICE_OBJECT *device, IRP *irp, void *context)
 {
     if (irp->PendingReturned) KeSetEvent((KEVENT *)context, IO_NO_INCREMENT, FALSE);
@@ -329,6 +388,7 @@ static NTSTATUS WINAPI fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
             status = irp->IoStatus.Status;
         }
+        if (!status) status = initialize_device(device);
         if (!status) status = create_child_pdos(device);
 
         if (status) irp->IoStatus.Status = status;
@@ -339,6 +399,8 @@ static NTSTATUS WINAPI fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         IoSkipCurrentIrpStackLocation(irp);
         status = IoCallDriver(fdo->bus_device, irp);
         IoDetachDevice(fdo->bus_device);
+        RtlDeleteCriticalSection(&fdo->cs);
+        free(fdo->report_buf);
         IoDeleteDevice(device);
         return status;
 
@@ -421,6 +483,9 @@ static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_devi
 
     fdo->bus_device = bus_device;
     wcscpy(fdo->instance_id, instance_id);
+
+    RtlInitializeCriticalSection(&fdo->cs);
+    fdo->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": func_device.cs");
 
     TRACE("device %p, bus_id %s, device_id %s, instance_id %s.\n", device, debugstr_w(bus_id),
           debugstr_w(fdo->base.device_id), debugstr_w(fdo->instance_id));
