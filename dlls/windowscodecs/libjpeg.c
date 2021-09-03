@@ -535,7 +535,7 @@ static void dest_mgr_term_destination(j_compress_ptr cinfo)
     }
 }
 
-HRESULT CDECL jpeg_encoder_initialize(struct encoder* iface, IStream *stream)
+static HRESULT CDECL jpeg_encoder_initialize(struct encoder* iface, IStream *stream)
 {
     struct jpeg_encoder *This = impl_from_encoder(iface);
     jmp_buf jmpbuf;
@@ -570,7 +570,7 @@ HRESULT CDECL jpeg_encoder_initialize(struct encoder* iface, IStream *stream)
     return S_OK;
 }
 
-HRESULT CDECL jpeg_encoder_get_supported_format(struct encoder* iface, GUID *pixel_format,
+static HRESULT CDECL jpeg_encoder_get_supported_format(struct encoder* iface, GUID *pixel_format,
     DWORD *bpp, BOOL *indexed)
 {
     int i;
@@ -590,7 +590,7 @@ HRESULT CDECL jpeg_encoder_get_supported_format(struct encoder* iface, GUID *pix
     return S_OK;
 }
 
-HRESULT CDECL jpeg_encoder_create_frame(struct encoder* iface, const struct encoder_frame *frame)
+static HRESULT CDECL jpeg_encoder_create_frame(struct encoder* iface, const struct encoder_frame *frame)
 {
     struct jpeg_encoder *This = impl_from_encoder(iface);
     jmp_buf jmpbuf;
@@ -629,7 +629,7 @@ HRESULT CDECL jpeg_encoder_create_frame(struct encoder* iface, const struct enco
     return S_OK;
 }
 
-HRESULT CDECL jpeg_encoder_write_lines(struct encoder* iface, BYTE *data,
+static HRESULT CDECL jpeg_encoder_write_lines(struct encoder* iface, BYTE *data,
     DWORD line_count, DWORD stride)
 {
     struct jpeg_encoder *This = impl_from_encoder(iface);
@@ -690,7 +690,7 @@ HRESULT CDECL jpeg_encoder_write_lines(struct encoder* iface, BYTE *data,
     return S_OK;
 }
 
-HRESULT CDECL jpeg_encoder_commit_frame(struct encoder* iface)
+static HRESULT CDECL jpeg_encoder_commit_frame(struct encoder* iface)
 {
     struct jpeg_encoder *This = impl_from_encoder(iface);
     jmp_buf jmpbuf;
@@ -705,12 +705,12 @@ HRESULT CDECL jpeg_encoder_commit_frame(struct encoder* iface)
     return S_OK;
 }
 
-HRESULT CDECL jpeg_encoder_commit_file(struct encoder* iface)
+static HRESULT CDECL jpeg_encoder_commit_file(struct encoder* iface)
 {
     return S_OK;
 }
 
-void CDECL jpeg_encoder_destroy(struct encoder* iface)
+static void CDECL jpeg_encoder_destroy(struct encoder* iface)
 {
     struct jpeg_encoder *This = impl_from_encoder(iface);
     if (This->cinfo_initialized)
