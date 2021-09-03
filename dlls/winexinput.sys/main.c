@@ -223,6 +223,10 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         status = STATUS_SUCCESS;
         break;
 
+    case IRP_MN_QUERY_DEVICE_RELATIONS:
+        status = irp->IoStatus.Status;
+        break;
+
     default:
         FIXME("code %#x, not implemented!\n", code);
         status = irp->IoStatus.Status;
