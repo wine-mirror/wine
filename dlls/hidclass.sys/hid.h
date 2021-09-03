@@ -84,6 +84,7 @@ typedef struct _BASE_DEVICE_EXTENSION
      * for convenience. */
     WCHAR device_id[MAX_DEVICE_ID_LEN];
     WCHAR instance_id[MAX_DEVICE_ID_LEN];
+    const GUID *class_guid;
 
     BOOL is_fdo;
 } BASE_DEVICE_EXTENSION;
