@@ -2369,10 +2369,9 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
 }
 
 /* default get_volume_info() routine */
-int no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
+void no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 /* default ioctl() routine */

@@ -146,7 +146,7 @@ static WCHAR *pipe_end_get_full_name( struct object *obj, data_size_t *len );
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static int pipe_end_flush( struct fd *fd, struct async *async );
-static int pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
+static void pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 
@@ -740,7 +740,7 @@ static WCHAR *pipe_end_get_full_name( struct object *obj, data_size_t *len )
     return pipe_end->pipe->obj.ops->get_full_name( &pipe_end->pipe->obj, len );
 }
 
-static int pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
+static void pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
 {
     switch (info_class)
     {
@@ -760,7 +760,6 @@ static int pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigne
     default:
         set_error( STATUS_NOT_IMPLEMENTED );
     }
-    return 0;
 }
 
 static void message_queue_read( struct pipe_end *pipe_end, struct async *async )
