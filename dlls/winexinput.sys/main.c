@@ -220,12 +220,8 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     }
 
     case IRP_MN_QUERY_CAPABILITIES:
-    {
-        DEVICE_CAPABILITIES *caps = stack->Parameters.DeviceCapabilities.Capabilities;
-        caps->RawDeviceOK = 1;
         status = STATUS_SUCCESS;
         break;
-    }
 
     default:
         FIXME("code %#x, not implemented!\n", code);
