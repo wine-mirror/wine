@@ -2304,10 +2304,9 @@ void no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
 }
 
 /* default flush() routine */
-int no_fd_flush( struct fd *fd, struct async *async )
+void no_fd_flush( struct fd *fd, struct async *async )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 /* default get_file_info() routine */

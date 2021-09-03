@@ -203,7 +203,7 @@ static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
 static void device_file_read( struct fd *fd, struct async *async, file_pos_t pos );
 static void device_file_write( struct fd *fd, struct async *async, file_pos_t pos );
-static int device_file_flush( struct fd *fd, struct async *async );
+static void device_file_flush( struct fd *fd, struct async *async );
 static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void device_file_reselect_async( struct fd *fd, struct async_queue *queue );
 static void device_file_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
@@ -649,14 +649,14 @@ static void device_file_write( struct fd *fd, struct async *async, file_pos_t po
     queue_irp( file, &params, async );
 }
 
-static int device_file_flush( struct fd *fd, struct async *async )
+static void device_file_flush( struct fd *fd, struct async *async )
 {
     struct device_file *file = get_fd_user( fd );
     irp_params_t params;
 
     memset( &params, 0, sizeof(params) );
     params.flush.type = IRP_CALL_FLUSH;
-    return queue_irp( file, &params, async );
+    queue_irp( file, &params, async );
 }
 
 static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )

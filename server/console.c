@@ -101,7 +101,7 @@ static enum server_fd_type console_get_fd_type( struct fd *fd );
 static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 static void console_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 static void console_read( struct fd *fd, struct async *async, file_pos_t pos );
-static int console_flush( struct fd *fd, struct async *async );
+static void console_flush( struct fd *fd, struct async *async );
 static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_fd_ops =
@@ -326,7 +326,7 @@ static const struct object_ops console_input_ops =
 };
 
 static void console_input_read( struct fd *fd, struct async *async, file_pos_t pos );
-static int console_input_flush( struct fd *fd, struct async *async );
+static void console_input_flush( struct fd *fd, struct async *async );
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_input_fd_ops =
@@ -960,16 +960,16 @@ static void console_read( struct fd *fd, struct async *async, file_pos_t pos )
     queue_host_ioctl( console->server, IOCTL_CONDRV_READ_FILE, 0, async, &console->ioctl_q );
 }
 
-static int console_flush( struct fd *fd, struct async *async )
+static void console_flush( struct fd *fd, struct async *async )
 {
     struct console *console = get_fd_user( fd );
 
     if (!console->server)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return queue_host_ioctl( console->server, IOCTL_CONDRV_FLUSH, 0, NULL, NULL );
+    queue_host_ioctl( console->server, IOCTL_CONDRV_FLUSH, 0, NULL, NULL );
 }
 
 static void screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos )
@@ -1361,16 +1361,16 @@ static void console_input_read( struct fd *fd, struct async *async, file_pos_t p
     console_read( console->fd, async, pos );
 }
 
-static int console_input_flush( struct fd *fd, struct async *async )
+static void console_input_flush( struct fd *fd, struct async *async )
 {
     struct console *console = current->process->console;
 
     if (!console)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return console_flush( console->fd, async );
+    console_flush( console->fd, async );
 }
 
 static void console_output_dump( struct object *obj, int verbose )
