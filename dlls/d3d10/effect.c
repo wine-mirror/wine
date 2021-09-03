@@ -8277,7 +8277,7 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
     {
         struct d3d10_effect_type_member *typem = &This->members[i];
 
-        if (typem->semantic && !strcmp(typem->semantic, semantic))
+        if (typem->semantic && !stricmp(typem->semantic, semantic))
         {
             TRACE("Returning type %p.\n", typem->type);
             return &typem->type->ID3D10EffectType_iface;

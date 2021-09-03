@@ -390,11 +390,12 @@ static void test_effect_variable_type(void)
     ok(type_desc.UnpackedSize == 0x8, "UnpackedSize is %#x, expected 0x8\n", type_desc.UnpackedSize);
     ok(type_desc.Stride == 0x10, "Stride is %x, expected 0x10\n", type_desc.Stride);
 
-    for (i = 0; i < 3; ++i)
+    for (i = 0; i < 4; ++i)
     {
         if (i == 0) type3 = type2->lpVtbl->GetMemberTypeByIndex(type2, 0);
         else if (i == 1) type3 = type2->lpVtbl->GetMemberTypeByName(type2, "f3");
-        else type3 = type2->lpVtbl->GetMemberTypeBySemantic(type2, "SV_POSITION");
+        else if (i == 2) type3 = type2->lpVtbl->GetMemberTypeBySemantic(type2, "SV_POSITION");
+        else type3 = type2->lpVtbl->GetMemberTypeBySemantic(type2, "sv_POSITION");
 
         hr = type3->lpVtbl->GetDesc(type3, &type_desc);
         ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
@@ -413,7 +414,8 @@ static void test_effect_variable_type(void)
 
         if (i == 0) type3 = type2->lpVtbl->GetMemberTypeByIndex(type2, 1);
         else if (i == 1) type3 = type2->lpVtbl->GetMemberTypeByName(type2, "f4");
-        else type3 = type2->lpVtbl->GetMemberTypeBySemantic(type2, "COLOR0");
+        else if (i == 2) type3 = type2->lpVtbl->GetMemberTypeBySemantic(type2, "COLOR0");
+        else type3 = type2->lpVtbl->GetMemberTypeBySemantic(type2, "color0");
 
         hr = type3->lpVtbl->GetDesc(type3, &type_desc);
         ok(SUCCEEDED(hr), "GetDesc failed (%x)\n", hr);
