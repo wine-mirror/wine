@@ -2398,6 +2398,8 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         obj_handle_t event_handle;
         int mask;
 
+        set_async_pending( async, 0 );
+
         if (is_machine_64bit( current->process->machine ))
         {
             const struct afd_event_select_params_64 *params = get_req_data();
