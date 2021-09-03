@@ -2527,6 +2527,8 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 #endif
         }
 
+        set_async_pending( async, 0 );
+
         if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
         {
             if (errno == EADDRINUSE)
