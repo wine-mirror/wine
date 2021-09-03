@@ -410,6 +410,26 @@ static void atomic_store_long(volatile LONG *ptr, LONG value)
 static void set_user_shared_data_time(void)
 {
     timeout_t tick_count = monotonic_time / 10000;
+    static timeout_t last_timezone_update;
+    timeout_t timezone_bias;
+    struct tm *tm;
+    time_t now;
+
+    if (monotonic_time - last_timezone_update > TICKS_PER_SEC)
+    {
+        now = time( NULL );
+        tm = gmtime( &now );
+        timezone_bias = mktime( tm ) - now;
+        tm = localtime( &now );
+        if (tm->tm_isdst) timezone_bias -= 3600;
+        timezone_bias *= TICKS_PER_SEC;
+
+        atomic_store_long(&user_shared_data->TimeZoneBias.High2Time, timezone_bias >> 32);
+        atomic_store_ulong(&user_shared_data->TimeZoneBias.LowPart, timezone_bias);
+        atomic_store_long(&user_shared_data->TimeZoneBias.High1Time, timezone_bias >> 32);
+
+        last_timezone_update = monotonic_time;
+    }
 
     atomic_store_long(&user_shared_data->SystemTime.High2Time, current_time >> 32);
     atomic_store_ulong(&user_shared_data->SystemTime.LowPart, current_time);

@@ -410,7 +410,9 @@ static ULONGLONG read_ksystem_time(volatile KSYSTEM_TIME *time)
 static void test_user_shared_data_time(void)
 {
     KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
+    SYSTEM_TIMEOFDAY_INFORMATION timeofday;
     ULONGLONG t1, t2, t3;
+    NTSTATUS status;
     int i = 0;
 
     i = 0;
@@ -464,6 +466,12 @@ static void test_user_shared_data_time(void)
         ok(t2 <= t3, "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
            wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
     }
+
+    t1 = read_ksystem_time(&user_shared_data->TimeZoneBias);
+    status = NtQuerySystemInformation(SystemTimeOfDayInformation, &timeofday, sizeof(timeofday), NULL);
+    ok(!status, "failed to query time of day, status %#x\n", status);
+    ok(timeofday.TimeZoneBias.QuadPart == t1, "got USD bias %I64u, ntdll bias %I64u\n",
+            t1, timeofday.TimeZoneBias.QuadPart);
 }
 
 START_TEST(time)
