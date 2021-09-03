@@ -2692,7 +2692,8 @@ DECL_HANDLER(flush)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->event = async_handoff( async, fd->fd_ops->flush( fd, async ), NULL, 1 );
+        fd->fd_ops->flush( fd, async );
+        reply->event = async_handoff( async, NULL, 1 );
         release_object( async );
     }
     release_object( fd );
@@ -2720,7 +2721,8 @@ DECL_HANDLER(get_volume_info)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait = async_handoff( async, fd->fd_ops->get_volume_info( fd, async, req->info_class ), NULL, 1 );
+        fd->fd_ops->get_volume_info( fd, async, req->info_class );
+        reply->wait = async_handoff( async, NULL, 1 );
         release_object( async );
     }
     release_object( fd );
@@ -2795,7 +2797,8 @@ DECL_HANDLER(read)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ), NULL, 0 );
+        fd->fd_ops->read( fd, async, req->pos );
+        reply->wait = async_handoff( async, NULL, 0 );
         reply->options = fd->options;
         release_object( async );
     }
@@ -2812,7 +2815,8 @@ DECL_HANDLER(write)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->write( fd, async, req->pos ), &reply->size, 0 );
+        fd->fd_ops->write( fd, async, req->pos );
+        reply->wait = async_handoff( async, &reply->size, 0 );
         reply->options = fd->options;
         release_object( async );
     }
@@ -2830,7 +2834,8 @@ DECL_HANDLER(ioctl)
 
     if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->ioctl( fd, req->code, async ), NULL, 0 );
+        fd->fd_ops->ioctl( fd, req->code, async );
+        reply->wait = async_handoff( async, NULL, 0 );
         reply->options = fd->options;
         release_object( async );
     }

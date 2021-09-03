@@ -1934,8 +1934,8 @@ static void test_ip_pktinfo(void)
         todo_wine ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
 
         rc = SleepEx(1000, TRUE);
-        todo_wine ok(rc == WAIT_IO_COMPLETION, "got %d\n", rc);
-        todo_wine ok(got_ip_pktinfo_apc == 1, "apc was called %u times\n", got_ip_pktinfo_apc);
+        ok(rc == WAIT_IO_COMPLETION, "got %d\n", rc);
+        ok(got_ip_pktinfo_apc == 1, "apc was called %u times\n", got_ip_pktinfo_apc);
         ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#x\n", hdr.dwFlags);
         got_ip_pktinfo_apc = 0;
 

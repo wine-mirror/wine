@@ -2839,8 +2839,8 @@ static int poll_single_socket( struct sock *sock, int mask )
     return get_poll_flags( sock, pollfd.revents ) & mask;
 }
 
-static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t timeout,
-                        unsigned int count, const struct poll_socket_input *input )
+static void poll_socket( struct sock *poll_sock, struct async *async, timeout_t timeout,
+                         unsigned int count, const struct poll_socket_input *input )
 {
     struct poll_socket_output *output;
     BOOL signaled = FALSE;
@@ -2848,13 +2848,13 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
     unsigned int i, j;
 
     if (!(output = mem_alloc( count * sizeof(*output) )))
-        return 0;
+        return;
     memset( output, 0, count * sizeof(*output) );
 
     if (!(req = mem_alloc( offsetof( struct poll_req, sockets[count] ) )))
     {
         free( output );
-        return 0;
+        return;
     }
 
     req->timeout = NULL;
@@ -2863,7 +2863,7 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
     {
         free( req );
         free( output );
-        return 0;
+        return;
     }
 
     for (i = 0; i < count; ++i)
@@ -2875,7 +2875,7 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
             if (req->timeout) remove_timeout_user( req->timeout );
             free( req );
             free( output );
-            return 0;
+            return;
         }
         req->sockets[i].flags = input[i].flags;
     }
@@ -2917,7 +2917,6 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
     for (i = 0; i < req->count; ++i)
         sock_reselect( req->sockets[i].sock );
     set_error( STATUS_PENDING );
-    return 1;
 }
 
 #ifdef HAVE_LINUX_RTNETLINK_H
@@ -3249,18 +3248,11 @@ DECL_HANDLER(recv_socket)
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
-        int success = 0;
-
         if (status == STATUS_SUCCESS)
         {
             struct iosb *iosb = async_get_iosb( async );
             iosb->result = req->total;
             release_object( iosb );
-            success = 1;
-        }
-        else if (status == STATUS_PENDING)
-        {
-            success = 1;
         }
         set_error( status );
 
@@ -3273,7 +3265,7 @@ DECL_HANDLER(recv_socket)
         /* always reselect; we changed reported_events above */
         sock_reselect( sock );
 
-        reply->wait = async_handoff( async, success, NULL, 0 );
+        reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( fd );
         release_object( async );
     }
@@ -3293,7 +3285,8 @@ DECL_HANDLER(poll_socket)
 
     if ((async = create_request_async( sock->fd, get_fd_comp_flags( sock->fd ), &req->async )))
     {
-        reply->wait = async_handoff( async, poll_socket( sock, async, req->timeout, count, input ), NULL, 0 );
+        poll_socket( sock, async, req->timeout, count, input );
+        reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( sock->fd );
         release_object( async );
     }
@@ -3357,18 +3350,11 @@ DECL_HANDLER(send_socket)
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
-        int success = 0;
-
         if (status == STATUS_SUCCESS)
         {
             struct iosb *iosb = async_get_iosb( async );
             iosb->result = req->total;
             release_object( iosb );
-            success = 1;
-        }
-        else if (status == STATUS_PENDING)
-        {
-            success = 1;
         }
         set_error( status );
 
@@ -3381,7 +3367,7 @@ DECL_HANDLER(send_socket)
         /* always reselect; we changed reported_events above */
         sock_reselect( sock );
 
-        reply->wait = async_handoff( async, success, NULL, 0 );
+        reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( fd );
         release_object( async );
     }

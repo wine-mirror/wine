@@ -296,7 +296,7 @@ void set_async_pending( struct async *async, int signal )
 }
 
 /* return async object status and wait handle to client */
-obj_handle_t async_handoff( struct async *async, int success, data_size_t *result, int force_blocking )
+obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_blocking )
 {
     if (async->unknown_status)
     {
@@ -305,7 +305,7 @@ obj_handle_t async_handoff( struct async *async, int success, data_size_t *resul
         return async->wait_handle;
     }
 
-    if (!success)
+    if (!async->pending && NT_ERROR( get_error() ))
     {
         close_handle( async->thread->process, async->wait_handle );
         async->wait_handle = 0;
