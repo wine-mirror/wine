@@ -439,7 +439,7 @@ static BOOL build_rle_bitmap( BITMAPINFO *info, struct gdi_image_bits *bits, HRG
     }
 
 done:
-    if (run) DeleteObject( run );
+    if (run) NtGdiDeleteObjectApp( run );
     if (bits->free) bits->free( bits );
 
     bits->ptr     = out_bits;
@@ -450,8 +450,8 @@ done:
     return TRUE;
 
 fail:
-    if (run) DeleteObject( run );
-    if (clip && *clip) DeleteObject( *clip );
+    if (run) NtGdiDeleteObjectApp( run );
+    if (clip && *clip) NtGdiDeleteObjectApp( *clip );
     HeapFree( GetProcessHeap(), 0, out_bits );
     return FALSE;
 }
@@ -600,7 +600,7 @@ INT CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, 
 
 done:
     if (src_bits.free) src_bits.free( &src_bits );
-    if (clip) DeleteObject( clip );
+    if (clip) NtGdiDeleteObjectApp( clip );
     return ret;
 }
 
@@ -756,7 +756,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
 done:
     if (src_bits.free) src_bits.free( &src_bits );
-    if (clip) DeleteObject( clip );
+    if (clip) NtGdiDeleteObjectApp( clip );
     GDI_ReleaseObj( hbitmap );
     return result;
 }
@@ -874,7 +874,7 @@ INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
 
 done:
     if (src_bits.free) src_bits.free( &src_bits );
-    if (clip) DeleteObject( clip );
+    if (clip) NtGdiDeleteObjectApp( clip );
     return lines;
 }
 
@@ -1691,7 +1691,7 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY 
 
     if (GetObjectType( desc->hDc ) != OBJ_MEMDC ||
         GetObjectType( desc->hBitmap ) != OBJ_BITMAP) return STATUS_INVALID_PARAMETER;
-    DeleteObject( desc->hBitmap );
+    NtGdiDeleteObjectApp( desc->hBitmap );
     NtGdiDeleteObjectApp( desc->hDc );
 
     return STATUS_SUCCESS;

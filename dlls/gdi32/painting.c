@@ -92,7 +92,7 @@ BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT
     {
         if (REGION_FrameRgn( tmp, rgn, width, height ))
             ret = NtGdiFillRgn( dev->hdc, tmp, brush );
-        DeleteObject( tmp );
+        NtGdiDeleteObjectApp( tmp );
     }
     return ret;
 }

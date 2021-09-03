@@ -303,7 +303,7 @@ LONG WINAPI NtGdiSetBitmapBits(
         last_row = NtGdiCreateRectRgn( src.visrect.left, src.visrect.bottom - 1,
                                        src.visrect.left + extra_pixels, src.visrect.bottom );
         NtGdiCombineRgn( clip, clip, last_row, RGN_OR );
-        DeleteObject( last_row );
+        NtGdiDeleteObjectApp( last_row );
     }
 
     TRACE("(%p, %d, %p) %dx%d %d bpp fetched height: %d\n",
@@ -354,7 +354,7 @@ LONG WINAPI NtGdiSetBitmapBits(
     }
     if (err) count = 0;
 
-    if (clip) DeleteObject( clip );
+    if (clip) NtGdiDeleteObjectApp( clip );
     if (src_bits.free) src_bits.free( &src_bits );
     GDI_ReleaseObj( hbitmap );
     return count;

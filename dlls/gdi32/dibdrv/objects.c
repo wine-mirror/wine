@@ -1367,7 +1367,7 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
     NtGdiGetRgnBox( join, &rect );
     if (clip_rect_to_dib( &pdev->dib, &rect ))
         NtGdiCombineRgn( region, region, join, RGN_OR );
-    DeleteObject( join );
+    NtGdiDeleteObjectApp( join );
     return;
 }
 
@@ -1499,7 +1499,7 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
         {
             segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
             NtGdiCombineRgn( total, total, segment, RGN_OR );
-            DeleteObject( segment );
+            NtGdiDeleteObjectApp( segment );
         }
 
         face_1->start = seg_pts[0];
@@ -1583,7 +1583,7 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     else
         wide_line_segments( pdev, num, pts, FALSE, 0, num - 1, &pts[0], &pts[num - 1], round_cap, total );
 
-    if (round_cap) DeleteObject( round_cap );
+    if (round_cap) NtGdiDeleteObjectApp( round_cap );
     return TRUE;
 }
 
@@ -1702,7 +1702,7 @@ static BOOL dashed_wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOO
                             &pts[0], &initial_point, round_cap, total );
     }
 
-    if (round_cap) DeleteObject( round_cap );
+    if (round_cap) NtGdiDeleteObjectApp( round_cap );
     return TRUE;
 }
 

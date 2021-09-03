@@ -504,7 +504,7 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
             entry_obj( entry )->deleted = 0;
             LeaveCriticalSection( &gdi_section );
             TRACE( "executing delayed DeleteObject for %p\n", handle );
-            DeleteObject( handle );
+            NtGdiDeleteObjectApp( handle );
             return TRUE;
         }
     }

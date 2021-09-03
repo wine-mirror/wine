@@ -488,7 +488,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     ret = !dev->funcs->pPutImage( dev, rgn, info, &bits, &src, &dst, SRCCOPY );
 
     if (bits.free) bits.free( &bits );
-    DeleteObject( rgn );
+    NtGdiDeleteObjectApp( rgn );
 
 done:
     HeapFree( GetProcessHeap(), 0, pts );
@@ -823,9 +823,9 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     NtGdiSelectBitmap(hDC2, hOldBitmap2);
 
     /* delete all temp objects */
-    DeleteObject(hBitmap1);
-    DeleteObject(hBitmap2);
-    DeleteObject(hbrMask);
+    NtGdiDeleteObjectApp( hBitmap1 );
+    NtGdiDeleteObjectApp( hBitmap2 );
+    NtGdiDeleteObjectApp( hbrMask );
 
     NtGdiDeleteObjectApp( hDC1 );
     NtGdiDeleteObjectApp( hDC2 );
@@ -926,12 +926,12 @@ error:
         NtGdiSelectBitmap(hdcWork, oldWork);
         NtGdiDeleteObjectApp( hdcWork );
     }
-    if(bmpWork) DeleteObject(bmpWork);
+    if(bmpWork) NtGdiDeleteObjectApp( bmpWork );
     if(hdcMask) {
         NtGdiSelectBitmap(hdcMask, oldMask);
         NtGdiDeleteObjectApp( hdcMask );
     }
-    if(bmpMask) DeleteObject(bmpMask);
+    if(bmpMask) NtGdiDeleteObjectApp( bmpMask );
     return ret;
 }
 

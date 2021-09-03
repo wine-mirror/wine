@@ -164,10 +164,10 @@ DC *alloc_dc_ptr( DWORD magic )
  */
 static void free_dc_state( DC *dc )
 {
-    if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
-    if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
-    if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
-    if (dc->region) DeleteObject( dc->region );
+    if (dc->hClipRgn) NtGdiDeleteObjectApp( dc->hClipRgn );
+    if (dc->hMetaRgn) NtGdiDeleteObjectApp( dc->hMetaRgn );
+    if (dc->hVisRgn) NtGdiDeleteObjectApp( dc->hVisRgn );
+    if (dc->region) NtGdiDeleteObjectApp( dc->region );
     if (dc->path) free_gdi_path( dc->path );
     HeapFree( GetProcessHeap(), 0, dc->attr );
     HeapFree( GetProcessHeap(), 0, dc );
@@ -403,8 +403,8 @@ static BOOL reset_dc_state( HDC hdc )
     NtGdiSetBoundsRect( hdc, NULL, DCB_DISABLE );
     NtGdiAbortPath( hdc );
 
-    if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
-    if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
+    if (dc->hClipRgn) NtGdiDeleteObjectApp( dc->hClipRgn );
+    if (dc->hMetaRgn) NtGdiDeleteObjectApp( dc->hMetaRgn );
     dc->hClipRgn = 0;
     dc->hMetaRgn = 0;
     update_dc_clipping( dc );

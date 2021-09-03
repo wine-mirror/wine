@@ -4839,7 +4839,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
             dp_to_lp( dc, (POINT *)&rc, 2 );
             NtGdiPatBlt( dev->hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
             NtGdiSelectBrush( dev->hdc, orig );
-            DeleteObject( brush );
+            NtGdiDeleteObjectApp( brush );
         }
     }
 
@@ -4954,7 +4954,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     }
 
     NtGdiSelectPen( dev->hdc, orig );
-    DeleteObject( pen );
+    NtGdiDeleteObjectApp( pen );
     return TRUE;
 }
 
@@ -5351,7 +5351,7 @@ done:
 
         NtGdiSelectPen(hdc, hpen);
         hbrush = NtGdiSelectBrush(hdc, hbrush);
-        DeleteObject(hbrush);
+        NtGdiDeleteObjectApp( hbrush );
     }
 
     release_dc_ptr( dc );

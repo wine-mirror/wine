@@ -721,7 +721,7 @@ BOOL WINAPI NtGdiSelectClipPath( HDC hdc, INT mode )
     if ((rgn = NtGdiPathToRegion( hdc )))
     {
         ret = NtGdiExtSelectClipRgn( hdc, rgn, mode ) != ERROR;
-        DeleteObject( rgn );
+        NtGdiDeleteObjectApp( rgn );
     }
     return ret;
 }

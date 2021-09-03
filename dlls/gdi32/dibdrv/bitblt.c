@@ -1034,7 +1034,7 @@ DWORD CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
         free_clipped_rects( &clipped_rects );
     }
     free_dib_info( &src_dib );
-    if (tmp_rgn) DeleteObject( tmp_rgn );
+    if (tmp_rgn) NtGdiDeleteObjectApp( tmp_rgn );
     return ret;
 
 update_format:
