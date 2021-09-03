@@ -100,7 +100,7 @@ static const struct object_ops console_ops =
 static enum server_fd_type console_get_fd_type( struct fd *fd );
 static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 static void console_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
-static int console_read( struct fd *fd, struct async *async, file_pos_t pos );
+static void console_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int console_flush( struct fd *fd, struct async *async );
 static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -325,7 +325,7 @@ static const struct object_ops console_input_ops =
     console_input_destroy             /* destroy */
 };
 
-static int console_input_read( struct fd *fd, struct async *async, file_pos_t pos );
+static void console_input_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int console_input_flush( struct fd *fd, struct async *async );
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -948,16 +948,16 @@ static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
     }
 }
 
-static int console_read( struct fd *fd, struct async *async, file_pos_t pos )
+static void console_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct console *console = get_fd_user( fd );
 
     if (!console->server)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return queue_host_ioctl( console->server, IOCTL_CONDRV_READ_FILE, 0, async, &console->ioctl_q );
+    queue_host_ioctl( console->server, IOCTL_CONDRV_READ_FILE, 0, async, &console->ioctl_q );
 }
 
 static int console_flush( struct fd *fd, struct async *async )
@@ -1349,16 +1349,16 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
     return console_ioctl( console->fd, code, async );
 }
 
-static int console_input_read( struct fd *fd, struct async *async, file_pos_t pos )
+static void console_input_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct console *console = current->process->console;
 
     if (!console)
     {
         set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        return;
     }
-    return console_read( console->fd, async, pos );
+    console_read( console->fd, async, pos );
 }
 
 static int console_input_flush( struct fd *fd, struct async *async )

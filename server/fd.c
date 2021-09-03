@@ -2292,10 +2292,9 @@ static void unmount_device( struct fd *device_fd )
 }
 
 /* default read() routine */
-int no_fd_read( struct fd *fd, struct async *async, file_pos_t pos )
+void no_fd_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
 }
 
 /* default write() routine */

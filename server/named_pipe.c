@@ -143,7 +143,7 @@ static struct security_descriptor *pipe_end_get_sd( struct object *obj );
 static int pipe_end_set_sd( struct object *obj, const struct security_descriptor *sd,
                             unsigned int set_info );
 static WCHAR *pipe_end_get_full_name( struct object *obj, data_size_t *len );
-static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
+static void pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static int pipe_end_flush( struct fd *fd, struct async *async );
 static void pipe_end_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
@@ -893,7 +893,7 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
     reselect_read_queue( reader, 0 );
 }
 
-static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
+static void pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
 
@@ -903,25 +903,24 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
         if ((pipe_end->flags & NAMED_PIPE_NONBLOCKING_MODE) && list_empty( &pipe_end->message_queue ))
         {
             set_error( STATUS_PIPE_EMPTY );
-            return 0;
+            return;
         }
         break;
     case FILE_PIPE_DISCONNECTED_STATE:
         set_error( STATUS_PIPE_DISCONNECTED );
-        return 0;
+        return;
     case FILE_PIPE_LISTENING_STATE:
         set_error( STATUS_PIPE_LISTENING );
-        return 0;
+        return;
     case FILE_PIPE_CLOSING_STATE:
         if (!list_empty( &pipe_end->message_queue )) break;
         set_error( STATUS_PIPE_BROKEN );
-        return 0;
+        return;
     }
 
     queue_async( &pipe_end->read_q, async );
     reselect_read_queue( pipe_end, 0 );
     set_error( STATUS_PENDING );
-    return 1;
 }
 
 static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
