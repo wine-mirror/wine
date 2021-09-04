@@ -55,6 +55,7 @@ struct async
     unsigned int         terminated :1;   /* async has been terminated */
     unsigned int         canceled :1;     /* have we already queued cancellation for this async? */
     unsigned int         unknown_status :1; /* initial status is not known yet */
+    unsigned int         blocking :1;     /* async is blocking */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
     unsigned int         comp_flags;      /* completion flags */
@@ -262,6 +263,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->terminated    = 0;
     async->canceled      = 0;
     async->unknown_status = 0;
+    async->blocking      = !is_fd_overlapped( fd );
     async->completion    = fd_get_completion( fd, &async->comp_key );
     async->comp_flags    = 0;
     async->completion_callback = NULL;
@@ -300,6 +302,8 @@ void set_async_pending( struct async *async, int signal )
 /* return async object status and wait handle to client */
 obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_blocking )
 {
+    async->blocking = force_blocking || async->blocking;
+
     if (async->unknown_status)
     {
         /* even the initial status is not known yet */
@@ -338,7 +342,7 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
     {
         async->direct_result = 0;
         async->pending = 1;
-        if (!force_blocking && async->fd && is_fd_overlapped( async->fd ))
+        if (!async->blocking)
         {
             close_handle( async->thread->process, async->wait_handle);
             async->wait_handle = 0;
