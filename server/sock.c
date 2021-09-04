@@ -274,6 +274,7 @@ static const struct fd_ops sock_fd_ops =
     default_fd_get_file_info,     /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     sock_ioctl,                   /* ioctl */
+    default_fd_cancel_async,      /* cancel_async */
     sock_queue_async,             /* queue_async */
     sock_reselect_async           /* reselect_async */
 };
@@ -2973,6 +2974,7 @@ static const struct fd_ops ifchange_fd_ops =
     no_fd_get_file_info,      /* get_file_info */
     no_fd_get_volume_info,    /* get_volume_info */
     no_fd_ioctl,              /* ioctl */
+    NULL,                     /* cancel_async */
     NULL,                     /* queue_async */
     NULL                      /* reselect_async */
 };

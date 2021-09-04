@@ -194,6 +194,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_end_get_file_info,       /* get_file_info */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_server_ioctl,            /* ioctl */
+    default_fd_cancel_async,      /* cancel_async */
     no_fd_queue_async,            /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
@@ -237,6 +238,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_end_get_file_info,       /* get_file_info */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_client_ioctl,            /* ioctl */
+    default_fd_cancel_async,      /* cancel_async */
     no_fd_queue_async,            /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
@@ -314,6 +316,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
     default_fd_get_file_info,                /* get_file_info */
     no_fd_get_volume_info,                   /* get_volume_info */
     named_pipe_device_ioctl,                 /* ioctl */
+    default_fd_cancel_async,                 /* cancel_async */
     default_fd_queue_async,                  /* queue_async */
     default_fd_reselect_async                /* reselect_async */
 };

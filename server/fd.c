@@ -2239,6 +2239,11 @@ void fd_async_wake_up( struct fd *fd, int type, unsigned int status )
     }
 }
 
+void fd_cancel_async( struct fd *fd, struct async *async )
+{
+    fd->fd_ops->cancel_async( fd, async );
+}
+
 void fd_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     fd->fd_ops->reselect_async( fd, queue );
@@ -2247,6 +2252,11 @@ void fd_reselect_async( struct fd *fd, struct async_queue *queue )
 void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
+}
+
+void default_fd_cancel_async( struct fd *fd, struct async *async )
+{
+    async_terminate( async, STATUS_CANCELLED );
 }
 
 void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count )

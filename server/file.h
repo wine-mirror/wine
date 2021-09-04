@@ -68,6 +68,8 @@ struct fd_ops
     void (*get_volume_info)( struct fd *, struct async *, unsigned int );
     /* perform an ioctl on the file */
     void (*ioctl)(struct fd *fd, ioctl_code_t code, struct async *async );
+    /* cancel an async operation */
+    void (*cancel_async)(struct fd *fd, struct async *async);
     /* queue an async operation */
     void (*queue_async)(struct fd *, struct async *async, int type, int count);
     /* selected events for async i/o need an update */
@@ -106,6 +108,7 @@ extern void get_nt_name( struct fd *fd, struct unicode_str *name );
 extern int default_fd_signaled( struct object *obj, struct wait_queue_entry *entry );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
+extern void fd_cancel_async( struct fd *fd, struct async *async );
 extern void fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
@@ -117,6 +120,7 @@ extern void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsign
 extern void no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 extern void no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+extern void default_fd_cancel_async( struct fd *fd, struct async *async );
 extern void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
 extern void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );

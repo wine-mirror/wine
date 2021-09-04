@@ -502,7 +502,7 @@ restart:
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
         {
-            async_terminate( async, STATUS_CANCELLED );
+            fd_cancel_async( async->fd, async );
             woken++;
             goto restart;
         }
