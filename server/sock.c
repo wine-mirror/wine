@@ -2399,7 +2399,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         obj_handle_t event_handle;
         int mask;
 
-        set_async_pending( async, 0 );
+        set_async_pending( async );
 
         if (is_machine_64bit( current->process->machine ))
         {
@@ -2530,7 +2530,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 #endif
         }
 
-        set_async_pending( async, 0 );
+        set_async_pending( async );
 
         if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
         {

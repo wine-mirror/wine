@@ -285,13 +285,13 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     return async;
 }
 
-void set_async_pending( struct async *async, int signal )
+void set_async_pending( struct async *async )
 {
     if (!async->terminated)
     {
         async->pending = 1;
         async->unknown_status = 0;
-        if (signal && !async->signaled)
+        if (!async->blocking && !async->signaled)
         {
             async->signaled = 1;
             wake_up( &async->obj, 0 );

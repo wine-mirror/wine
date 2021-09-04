@@ -229,7 +229,7 @@ extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned 
 extern void async_set_result( struct object *obj, unsigned int status, apc_param_t total );
 extern void async_set_completion_callback( struct async *async, async_completion_callback func, void *private );
 extern void async_set_unknown_status( struct async *async );
-extern void set_async_pending( struct async *async, int signal );
+extern void set_async_pending( struct async *async );
 extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_request_complete( struct async *async, unsigned int status, data_size_t result,

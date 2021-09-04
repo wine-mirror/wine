@@ -961,7 +961,7 @@ DECL_HANDLER(get_next_device_request)
              * so we need to do it now */
             cancel_irp_call( irp );
         else if (irp->async)
-            set_async_pending( irp->async, irp->file && is_fd_overlapped( irp->file->fd ) );
+            set_async_pending( irp->async );
 
         free_irp_params( irp );
         release_object( irp );

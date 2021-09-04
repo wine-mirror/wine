@@ -1169,15 +1169,15 @@ static void test_blocking_irp(void)
 
     memset(&io, 0xcc, sizeof(io));
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsSizeInformation);
-    todo_wine ok(!status, "got %#x\n", status);
-    todo_wine ok(!io.Status, "got iosb status %#x\n", io.Status);
-    todo_wine ok(!io.Information, "got information %#Ix\n", io.Information);
+    ok(!status, "got %#x\n", status);
+    ok(!io.Status, "got iosb status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
 
     memset(&io, 0xcc, sizeof(io));
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
-    todo_wine ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
-    todo_wine ok(io.Status == STATUS_DEVICE_NOT_READY, "got iosb status %#x\n", io.Status);
-    todo_wine ok(!io.Information, "got information %#Ix\n", io.Information);
+    ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
+    ok(io.Status == STATUS_DEVICE_NOT_READY, "got iosb status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
 }
