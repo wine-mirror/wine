@@ -51,6 +51,13 @@ HRESULT WINAPI SLOpen(HSLC *handle)
     return S_OK;
 }
 
+HRESULT WINAPI SLClose(HSLC handle)
+{
+    FIXME("(%p) stub\n", handle );
+
+    return S_OK;
+}
+
 HRESULT WINAPI SLPersistApplicationPolicies(const SLID *app, const SLID *product, DWORD flags)
 {
     FIXME("(%s,%s,%x) stub\n", wine_dbgstr_guid(app), wine_dbgstr_guid(product), flags);

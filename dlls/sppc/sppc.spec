@@ -17,7 +17,7 @@
 @ stub SLpSetActivationInProgress
 @ stub SLpTriggerServiceWorker
 @ stub SLpVLActivateProduct
-@ stub SLClose
+@ stdcall SLClose(ptr)
 @ stub SLConsumeRight
 @ stub SLDepositMigrationBlob
 @ stub SLDepositOfflineConfirmationId

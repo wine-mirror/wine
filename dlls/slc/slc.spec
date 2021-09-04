@@ -6,7 +6,7 @@
 @ stub SLpGetLicenseAcquisitionInfo
 @ stub SLpGetMachineUGUID
 @ stub SLpVLActivateProduct
-@ stub SLClose
+@ stdcall SLClose(ptr) sppc.SLClose
 @ stub SLConsumeRight
 @ stub SLConsumeWindowsRight
 @ stub SLDepositOfflineConfirmationId
