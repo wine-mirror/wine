@@ -419,17 +419,6 @@ static void *create_file_object( HANDLE handle )
 
 DECLARE_CRITICAL_SECTION(irp_completion_cs);
 
-static void WINAPI cancel_completed_irp( DEVICE_OBJECT *device, IRP *irp )
-{
-    TRACE( "(%p %p)\n", device, irp );
-
-    IoReleaseCancelSpinLock(irp->CancelIrql);
-
-    irp->IoStatus.u.Status = STATUS_CANCELLED;
-    irp->IoStatus.Information = 0;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
-}
-
 /* transfer result of IRP back to wineserver */
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
@@ -454,17 +443,6 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
-
-    if (status == STATUS_MORE_PROCESSING_REQUIRED)
-    {
-        /* IRP is complete, but server may have already ordered cancel call. In such case,
-         * it will return STATUS_MORE_PROCESSING_REQUIRED, leaving the IRP alive until
-         * cancel frees it. */
-        if (irp->Cancel)
-            status = STATUS_SUCCESS;
-        else
-            IoSetCancelRoutine( irp, cancel_completed_irp );
-    }
 
     if (irp->UserBuffer != irp->AssociatedIrp.SystemBuffer)
     {

@@ -349,6 +349,8 @@ static void test_v1_server(void)
     ret = CancelIo(queue);
     ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
 
+    ret = WaitForSingleObject(ovl.hEvent, 100);
+    ok(!ret, "Got %u.\n", ret);
     ret_size = 0xdeadbeef;
     ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
     ok(!ret, "Expected failure.\n");

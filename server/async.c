@@ -53,6 +53,7 @@ struct async
     unsigned int         direct_result :1;/* a flag if we're passing result directly from request instead of APC  */
     unsigned int         alerted :1;      /* fd is signaled, but we are waiting for client-side I/O */
     unsigned int         terminated :1;   /* async has been terminated */
+    unsigned int         canceled :1;     /* have we already queued cancellation for this async? */
     unsigned int         unknown_status :1; /* initial status is not known yet */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
@@ -259,6 +260,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->direct_result = 0;
     async->alerted       = 0;
     async->terminated    = 0;
+    async->canceled      = 0;
     async->unknown_status = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
     async->comp_flags    = 0;
@@ -494,14 +496,19 @@ static int cancel_async( struct process *process, struct object *obj, struct thr
     struct async *async;
     int woken = 0;
 
+    /* FIXME: it would probably be nice to replace the "canceled" flag with a
+     * single LIST_FOR_EACH_ENTRY_SAFE, but currently cancelling an async can
+     * cause other asyncs to be removed via async_reselect() */
+
 restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
-        if (async->terminated) continue;
+        if (async->terminated || async->canceled) continue;
         if ((!obj || (get_fd_user( async->fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
         {
+            async->canceled = 1;
             fd_cancel_async( async->fd, async );
             woken++;
             goto restart;
