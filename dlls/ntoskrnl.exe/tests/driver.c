@@ -1959,14 +1959,11 @@ static void test_object_name(void)
     ok(!name->Name.MaximumLength, "got maximum length %u\n", name->Name.MaximumLength);
 }
 
-static PIO_WORKITEM main_test_work_item;
+static PIO_WORKITEM work_item;
 
 static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
 {
     IRP *irp = context;
-
-    IoFreeWorkItem(main_test_work_item);
-    main_test_work_item = NULL;
 
     test_current_thread(TRUE);
     test_critical_region(FALSE);
@@ -2337,13 +2334,8 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_process_memory(test_input);
     test_permanence();
 
-    if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
-
-    main_test_work_item = IoAllocateWorkItem(lower_device);
-    ok(main_test_work_item != NULL, "main_test_work_item = NULL\n");
-
     IoMarkIrpPending(irp);
-    IoQueueWorkItem(main_test_work_item, main_test_task, DelayedWorkQueue, irp);
+    IoQueueWorkItem(work_item, main_test_task, DelayedWorkQueue, irp);
 
     return STATUS_PENDING;
 }
@@ -2611,6 +2603,32 @@ static NTSTATUS WINAPI driver_FlushBuffers(DEVICE_OBJECT *device, IRP *irp)
     return STATUS_PENDING;
 }
 
+static void WINAPI blocking_irp_task(DEVICE_OBJECT *device, void *context)
+{
+    LARGE_INTEGER timeout;
+    IRP *irp = context;
+
+    timeout.QuadPart = -100 * 10000;
+    KeDelayExecutionThread( KernelMode, FALSE, &timeout );
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
+static void WINAPI blocking_irp_failure_task(DEVICE_OBJECT *device, void *context)
+{
+    LARGE_INTEGER timeout;
+    IRP *irp = context;
+
+    timeout.QuadPart = -100 * 10000;
+    KeDelayExecutionThread( KernelMode, FALSE, &timeout );
+
+    irp->IoStatus.Status = STATUS_DEVICE_NOT_READY;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 static BOOL compare_file_name(const struct file_context *context, const WCHAR *expect)
 {
     return context->namelen == wcslen(expect) * sizeof(WCHAR)
@@ -2717,6 +2735,21 @@ static NTSTATUS WINAPI driver_QueryVolumeInformation(DEVICE_OBJECT *device, IRP 
         ret = STATUS_SUCCESS;
         break;
     }
+
+    case FileFsSizeInformation:
+    {
+        IoMarkIrpPending(irp);
+        IoQueueWorkItem(work_item, blocking_irp_task, DelayedWorkQueue, irp);
+        return STATUS_PENDING;
+    }
+
+    case FileFsFullSizeInformation:
+    {
+        IoMarkIrpPending(irp);
+        IoQueueWorkItem(work_item, blocking_irp_failure_task, DelayedWorkQueue, irp);
+        return STATUS_PENDING;
+    }
+
     default:
         ret = STATUS_NOT_IMPLEMENTED;
         break;
@@ -2743,6 +2776,9 @@ static VOID WINAPI driver_Unload(DRIVER_OBJECT *driver)
     UNICODE_STRING linkW;
 
     DbgPrint("unloading driver\n");
+
+    IoFreeWorkItem(work_item);
+    work_item = NULL;
 
     RtlInitUnicodeString(&linkW, L"\\DosDevices\\WineTestDriver");
     IoDeleteSymbolicLink(&linkW);
@@ -2801,6 +2837,9 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 
     IoAttachDeviceToDeviceStack(upper_device, lower_device);
     upper_device->Flags &= ~DO_DEVICE_INITIALIZING;
+
+    work_item = IoAllocateWorkItem(lower_device);
+    ok(work_item != NULL, "work_item = NULL\n");
 
     return STATUS_SUCCESS;
 }

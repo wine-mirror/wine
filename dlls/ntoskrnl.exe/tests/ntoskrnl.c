@@ -1139,6 +1139,49 @@ static void test_object_info(void)
     CloseHandle(file);
 }
 
+static void test_blocking_irp(void)
+{
+    char buffer[40];
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE file;
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\", FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    memset(&io, 0xcc, sizeof(io));
+    status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsSizeInformation);
+    ok(!status, "got %#x\n", status);
+    ok(!io.Status, "got iosb status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
+    ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
+    todo_wine ok(io.Status == 0xdeadf00d, "got iosb status %#x\n", io.Status);
+    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+
+    CloseHandle(file);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\", FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    memset(&io, 0xcc, sizeof(io));
+    status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsSizeInformation);
+    todo_wine ok(!status, "got %#x\n", status);
+    todo_wine ok(!io.Status, "got iosb status %#x\n", io.Status);
+    todo_wine ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    memset(&io, 0xcc, sizeof(io));
+    status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
+    todo_wine ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
+    todo_wine ok(io.Status == STATUS_DEVICE_NOT_READY, "got iosb status %#x\n", io.Status);
+    todo_wine ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    CloseHandle(file);
+}
+
 static void test_driver3(struct testsign_context *ctx)
 {
     WCHAR filename[MAX_PATH];
@@ -3487,6 +3530,7 @@ START_TEST(ntoskrnl)
     test_file_handles();
     test_return_status();
     test_object_info();
+    test_blocking_irp();
 
     /* We need a separate ioctl to call IoDetachDevice(); calling it in the
      * driver unload routine causes a live-lock. */
