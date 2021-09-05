@@ -212,7 +212,7 @@ void WCMD_leave_paged_mode(void)
 }
 
 /***************************************************************************
- * WCMD_Readfile
+ * WCMD_ReadFile
  *
  *	Read characters in from a console/file, returning result in Unicode
  */
