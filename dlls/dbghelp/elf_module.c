@@ -803,7 +803,7 @@ static const struct elf_sym *elf_lookup_symtab(const struct module* module,
     if (!result && !(result = weak_result))
     {
         FIXME("Couldn't find symbol %s!%s in symtab\n",
-              debugstr_w(module->module.ModuleName), name);
+              debugstr_w(module->modulename), name);
         return NULL;
     }
     return &result->sym;
@@ -847,19 +847,19 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
                 if (((struct symt_function*)sym)->address != elf_info->elf_addr &&
                     ((struct symt_function*)sym)->address != elf_info->elf_addr + symp->st_value)
                     FIXME("Changing address for %p/%s!%s from %08lx to %s\n",
-                          sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
+                          sym, debugstr_w(module->modulename), sym->hash_elt.name,
                           ((struct symt_function*)sym)->address,
                           wine_dbgstr_longlong(elf_info->elf_addr + symp->st_value));
                 if (((struct symt_function*)sym)->size && ((struct symt_function*)sym)->size != symp->st_size)
                     FIXME("Changing size for %p/%s!%s from %08lx to %08x\n",
-                          sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
+                          sym, debugstr_w(module->modulename), sym->hash_elt.name,
                           ((struct symt_function*)sym)->size, (unsigned int)symp->st_size);
 
                 ((struct symt_function*)sym)->address = elf_info->elf_addr + symp->st_value;
                 ((struct symt_function*)sym)->size    = symp->st_size;
             } else
                 FIXME("Couldn't find %s!%s\n",
-                      debugstr_w(module->module.ModuleName), sym->hash_elt.name);
+                      debugstr_w(module->modulename), sym->hash_elt.name);
             break;
         case SymTagData:
             switch (((struct symt_data*)sym)->kind)
@@ -876,7 +876,7 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
                     if (((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr &&
                         ((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr + symp->st_value)
                         FIXME("Changing address for %p/%s!%s from %08lx to %s\n",
-                              sym, debugstr_w(module->module.ModuleName), sym->hash_elt.name,
+                              sym, debugstr_w(module->modulename), sym->hash_elt.name,
                               ((struct symt_function*)sym)->address,
                               wine_dbgstr_longlong(elf_info->elf_addr + symp->st_value));
                     ((struct symt_data*)sym)->u.var.offset = elf_info->elf_addr + symp->st_value;
@@ -884,7 +884,7 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
                         DataIsFileStatic : DataIsGlobal;
                 } else
                     FIXME("Couldn't find %s!%s\n",
-                          debugstr_w(module->module.ModuleName), sym->hash_elt.name);
+                          debugstr_w(module->modulename), sym->hash_elt.name);
                 break;
             default:;
             }

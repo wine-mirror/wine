@@ -715,7 +715,7 @@ BOOL image_check_alternate(struct image_file_map* fmap, const struct module* mod
             ret = image_locate_debug_link(module, fmap, dbg_link, crc);
             if (!ret)
                 WARN("Couldn't load linked debug file for %s\n",
-                     debugstr_w(module->module.ModuleName));
+                     debugstr_w(module->modulename));
         }
         image_unmap_section(&debuglink_sect);
     }
@@ -882,7 +882,7 @@ BOOL module_remove(struct process* pcs, struct module* module)
     struct module**     p;
     unsigned            i;
 
-    TRACE("%s (%p)\n", debugstr_w(module->module.ModuleName), module);
+    TRACE("%s (%p)\n", debugstr_w(module->modulename), module);
 
     for (i = 0; i < DFI_LAST; i++)
     {

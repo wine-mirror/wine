@@ -3369,7 +3369,7 @@ static BOOL codeview_process_info(const struct process* pcs,
     }
     default:
         ERR("Unknown CODEVIEW signature %08x in module %s\n",
-            *signature, debugstr_w(msc_dbg->module->module.ModuleName));
+            *signature, debugstr_w(msc_dbg->module->modulename));
         break;
     }
     if (ret)

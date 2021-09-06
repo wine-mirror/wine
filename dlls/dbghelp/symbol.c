@@ -187,7 +187,7 @@ struct symt_module* symt_new_module(struct module* module)
 {
     struct symt_module*    sym;
 
-    TRACE_(dbghelp_symt)("Adding toplevel exe symbol %s\n", debugstr_w(module->module.ModuleName));
+    TRACE_(dbghelp_symt)("Adding toplevel exe symbol %s\n", debugstr_w(module->modulename));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagExe;
@@ -202,7 +202,7 @@ struct symt_compiland* symt_new_compiland(struct module* module,
     struct symt_compiland*    sym;
 
     TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n",
-                         debugstr_w(module->module.ModuleName), source_get(module, src_idx));
+                         debugstr_w(module->modulename), source_get(module, src_idx));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag  = SymTagCompiland;
@@ -224,7 +224,7 @@ struct symt_public* symt_new_public(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n",
-                         debugstr_w(module->module.ModuleName), name, address);
+                         debugstr_w(module->modulename), name, address);
     if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
         symt_find_nearest(module, address) != NULL)
         return NULL;
@@ -257,7 +257,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
     DWORD64             tsz;
 
     TRACE_(dbghelp_symt)("Adding global symbol %s:%s %d@%lx %p\n",
-                         debugstr_w(module->module.ModuleName), name, loc.kind, loc.offset, type);
+                         debugstr_w(module->modulename), name, loc.kind, loc.offset, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagData;
@@ -270,7 +270,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         {
             if (tsz != size)
                 FIXME("Size mismatch for %s.%s between type (%s) and src (%lu)\n",
-                      debugstr_w(module->module.ModuleName), name,
+                      debugstr_w(module->modulename), name,
                       wine_dbgstr_longlong(tsz), size);
         }
         symt_add_module_ht(module, (struct symt_ht*)sym);
@@ -293,7 +293,7 @@ struct symt_function* symt_new_function(struct module* module,
     struct symt**               p;
 
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%lx-%lx\n",
-                         debugstr_w(module->module.ModuleName), name, addr, addr + size - 1);
+                         debugstr_w(module->modulename), name, addr, addr + size - 1);
 
     assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
@@ -379,7 +379,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n",
-                         debugstr_w(module->module.ModuleName), func->hash_elt.name,
+                         debugstr_w(module->modulename), func->hash_elt.name,
                          name, type);
 
     assert(func);
@@ -494,7 +494,7 @@ struct symt_thunk* symt_new_thunk(struct module* module,
     struct symt_thunk*  sym;
 
     TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%lx-%lx\n",
-                         debugstr_w(module->module.ModuleName), name, addr, addr + size - 1);
+                         debugstr_w(module->modulename), name, addr, addr + size - 1);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -523,7 +523,7 @@ struct symt_data* symt_new_constant(struct module* module,
     struct symt_data*  sym;
 
     TRACE_(dbghelp_symt)("Adding constant value %s:%s\n",
-                         debugstr_w(module->module.ModuleName), name);
+                         debugstr_w(module->modulename), name);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -551,7 +551,7 @@ struct symt_hierarchy_point* symt_new_label(struct module* module,
     struct symt_hierarchy_point*        sym;
 
     TRACE_(dbghelp_symt)("Adding global label value %s:%s\n",
-                         debugstr_w(module->module.ModuleName), name);
+                         debugstr_w(module->modulename), name);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {

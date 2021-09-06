@@ -625,7 +625,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
             misc->DataType != IMAGE_DEBUG_MISC_EXENAME)
         {
             ERR("-Debug info stripped, but no .DBG file in module %s\n",
-                debugstr_w(module->module.ModuleName));
+                debugstr_w(module->modulename));
         }
         else
         {

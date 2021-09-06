@@ -357,7 +357,7 @@ static const char* dwarf2_debug_traverse_ctx(const dwarf2_traverse_context_t* ct
 static const char* dwarf2_debug_ctx(const dwarf2_parse_context_t* ctx)
 {
     return wine_dbg_sprintf("ctx(%p,%s)",
-                            ctx, debugstr_w(ctx->module->module.ModuleName));
+                            ctx, debugstr_w(ctx->module->modulename));
 }
 
 static const char* dwarf2_debug_di(const dwarf2_debug_info_t* di)
@@ -2130,7 +2130,7 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
     if (!file || !(psrc = vector_at(v, file - 1))) return;
 
     TRACE("%s %lx %s %u\n",
-          debugstr_w(module->module.ModuleName), address, debugstr_a(source_get(module, *psrc)), line);
+          debugstr_w(module->modulename), address, debugstr_a(source_get(module, *psrc)), line);
     symt = symt_find_nearest(module, address);
     if (symt && symt_check_tag(&symt->symt, SymTagFunction))
     {
@@ -3498,7 +3498,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
         load_offset += fmap->u.elf.elf_start - debug_sect.fmap->u.elf.elf_start;
     }
 
-    TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->module.ModuleName));
+    TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->modulename));
 
     mod_ctx.data = section[section_debug].address;
     mod_ctx.end_data = mod_ctx.data + section[section_debug].size;

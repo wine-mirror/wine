@@ -222,7 +222,7 @@ struct symt_udt* symt_new_udt(struct module* module, const char* typename,
     struct symt_udt*            sym;
 
     TRACE_(dbghelp_symt)("Adding udt %s:%s\n",
-                         debugstr_w(module->module.ModuleName), typename);
+                         debugstr_w(module->modulename), typename);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagUDT;
@@ -308,7 +308,7 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename,
     struct symt_enum*   sym;
 
     TRACE_(dbghelp_symt)("Adding enum %s:%s\n",
-                         debugstr_w(module->module.ModuleName), typename);
+                         debugstr_w(module->modulename), typename);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag            = SymTagEnum;
