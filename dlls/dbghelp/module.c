@@ -786,19 +786,19 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Data)
         FIXME("Unsupported load data parameter %p for %s\n",
               Data, debugstr_w(wImageName));
-    if (!validate_addr64(BaseOfDll)) return FALSE;
+    if (!validate_addr64(BaseOfDll)) return 0;
 
-    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+    if (!(pcs = process_find_by_handle(hProcess))) return 0;
 
     if (Flags & SLMFLAG_VIRTUAL)
     {
-        if (!wImageName) return FALSE;
+        if (!wImageName) return 0;
         module = module_new(pcs, wImageName, DMT_PE, TRUE, BaseOfDll, SizeOfDll, 0, 0);
-        if (!module) return FALSE;
+        if (!module) return 0;
         if (wModuleName) module_set_module(module, wModuleName);
         module->module.SymType = SymVirtual;
 
-        return TRUE;
+        return module->module.BaseOfImage;
     }
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08x for %s\n", Flags, debugstr_w(wImageName));
