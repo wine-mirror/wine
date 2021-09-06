@@ -1775,7 +1775,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             /* Cocoa may adjust the frame when the window is ordered onto the screen.
                Generate a frame-changed event just in case.  The back end will ignore
                it if nothing actually changed. */
-            [self windowDidResize:nil];
+            [self windowDidResize:nil skipSizeMove:TRUE];
 
             if (![self isExcludedFromWindowsMenu])
                 [NSApp addWindowsItem:self title:[self title] filename:NO];
@@ -1954,7 +1954,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 {
                     /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
                        event.  The back end will ignore it if nothing actually changed. */
-                    [self windowDidResize:nil];
+                    [self windowDidResize:nil skipSizeMove:TRUE];
                 }
             }
         }
@@ -2114,7 +2114,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         macdrv_release_event(event);
     }
 
-    - (void) postWindowFrameChanged:(NSRect)frame fullscreen:(BOOL)isFullscreen resizing:(BOOL)resizing
+    - (void) postWindowFrameChanged:(NSRect)frame fullscreen:(BOOL)isFullscreen resizing:(BOOL)resizing skipSizeMove:(BOOL)skipSizeMove
     {
         macdrv_event* event;
         NSUInteger style = self.styleMask;
@@ -2134,6 +2134,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         event->window_frame_changed.frame = cgrect_win_from_mac(NSRectToCGRect(frame));
         event->window_frame_changed.fullscreen = isFullscreen;
         event->window_frame_changed.in_resize = resizing;
+        event->window_frame_changed.skip_size_move_loop = skipSizeMove;
         [queue postEvent:event];
         macdrv_release_event(event);
     }
@@ -2897,7 +2898,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         macdrv_release_event(event);
     }
 
-    - (void)windowDidResize:(NSNotification *)notification
+    - (void)windowDidResize:(NSNotification *)notification skipSizeMove:(BOOL)skipSizeMove
     {
         NSRect frame = self.wine_fractionalFrame;
 
@@ -2920,10 +2921,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         [self postWindowFrameChanged:frame
                           fullscreen:([self styleMask] & NSWindowStyleMaskFullScreen) != 0
-                            resizing:[self inLiveResize]];
+                            resizing:[self inLiveResize]
+                        skipSizeMove:skipSizeMove];
 
         [[[self contentView] inputContext] invalidateCharacterCoordinates];
         [self updateFullscreen];
+    }
+
+    - (void)windowDidResize:(NSNotification *)notification
+    {
+        [self windowDidResize:notification skipSizeMove:FALSE];
     }
 
     - (BOOL)windowShouldClose:(id)sender
@@ -2982,7 +2989,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) windowWillExitFullScreen:(NSNotification*)notification
     {
         exitingFullScreen = TRUE;
-        [self postWindowFrameChanged:nonFullscreenFrame fullscreen:FALSE resizing:FALSE];
+        [self postWindowFrameChanged:nonFullscreenFrame fullscreen:FALSE resizing:FALSE skipSizeMove:FALSE];
     }
 
     - (void)windowWillMiniaturize:(NSNotification *)notification

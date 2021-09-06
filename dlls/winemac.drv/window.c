@@ -2322,10 +2322,11 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         flags |= SWP_NOSENDCHANGING;
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
     {
-        if (!event->window_frame_changed.in_resize && !being_dragged)
+        int send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
+        if (send_sizemove)
             SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
         SetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
-        if (!event->window_frame_changed.in_resize && !being_dragged)
+        if (send_sizemove)
             SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
     }
 }
