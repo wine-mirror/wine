@@ -4453,40 +4453,6 @@ static void _SHCreateSymbolicLink(int nFolder)
 }
 
 /******************************************************************************
- * _SHCreateSymbolicLinks  [Internal]
- *
- * Sets up symbol links for various shell folders to point into the user's home
- * directory. We do an educated guess about what the user would probably want:
- * - If there is a 'My Documents' directory in $HOME, the user probably wants
- *   wine's 'My Documents' to point there. Furthermore, we infer that the user
- *   is a Windows lover and has no problem with wine creating subfolders for
- *   'My Pictures', 'My Music', 'My Videos' etc. under '$HOME/My Documents', if
- *   those do not already exist. We put appropriate symbolic links in place for
- *   those, too.
- * - If there is no 'My Documents' directory in $HOME, we let 'My Documents'
- *   point directly to $HOME. We assume the user to be a unix hacker who does not
- *   want wine to create anything anywhere besides the .wine directory. So, if
- *   there already is a 'My Music' directory in $HOME, we symlink the 'My Music'
- *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
- *   directory, and try to link to that. If that fails, then we symlink to
- *   $HOME directly. The same holds for 'My Pictures', 'My Videos' etc.
- * - The Desktop shell folder is symlinked to XDG_DESKTOP_DIR. If that does not
- *   exist, then we try '$HOME/Desktop'. If that does not exist, then we leave
- *   it alone.
- * ('My Music',... above in fact means LoadString(IDS_MYMUSIC))
- */
-static void _SHCreateSymbolicLinks(void)
-{
-    static const int acsidlMyStuff[] = {
-        CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES, CSIDL_PERSONAL, CSIDL_DESKTOPDIRECTORY
-    };
-    UINT i;
-
-    for (i=0; i < ARRAY_SIZE(acsidlMyStuff); i++)
-        _SHCreateSymbolicLink(acsidlMyStuff[i]);
-}
-
-/******************************************************************************
  * SHGetFolderPathW			[SHELL32.@]
  *
  * Convert nFolder to path.
@@ -5197,10 +5163,8 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
  */
 HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE token, WCHAR **ret_path)
 {
-    WCHAR pathW[MAX_PATH], tempW[MAX_PATH];
+    WCHAR pathW[MAX_PATH];
     HRESULT    hr;
-    CSIDL_Type type;
-    int        ret;
     int folder = csidl_from_id(rfid), shgfp_flags;
 
     TRACE("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, ret_path);
@@ -5216,104 +5180,22 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
         FIXME("flags 0x%08x not supported\n", flags);
         return E_INVALIDARG;
     }
-
+    folder |= flags & CSIDL_FLAG_MASK;
     shgfp_flags = flags & KF_FLAG_DEFAULT_PATH ? SHGFP_TYPE_DEFAULT : SHGFP_TYPE_CURRENT;
 
-    type = CSIDL_Data[folder].type;
-    switch (type)
+    hr = SHGetFolderPathAndSubDirW( 0, folder, token, shgfp_flags, NULL, pathW );
+    if (FAILED( hr ))
     {
-        case CSIDL_Type_Disallowed:
-            hr = E_INVALIDARG;
-            break;
-        case CSIDL_Type_NonExistent:
-            *tempW = 0;
-            hr = S_FALSE;
-            break;
-        case CSIDL_Type_WindowsPath:
-            GetWindowsDirectoryW(tempW, MAX_PATH);
-            append_relative_path(folder, tempW);
-            hr = S_OK;
-            break;
-        case CSIDL_Type_SystemPath:
-            GetSystemDirectoryW(tempW, MAX_PATH);
-            append_relative_path(folder, tempW);
-            hr = S_OK;
-            break;
-        case CSIDL_Type_SystemX86Path:
-            if (!GetSystemWow64DirectoryW(tempW, MAX_PATH)) GetSystemDirectoryW(tempW, MAX_PATH);
-            append_relative_path(folder, tempW);
-            hr = S_OK;
-            break;
-        case CSIDL_Type_CurrVer:
-            hr = _SHGetCurrentVersionPath(shgfp_flags, folder, tempW);
-            break;
-        case CSIDL_Type_User:
-            hr = _SHGetUserProfilePath(token, shgfp_flags, folder, tempW);
-            break;
-        case CSIDL_Type_AllUsers:
-        case CSIDL_Type_ProgramData:
-            hr = _SHGetAllUsersProfilePath(shgfp_flags, folder, tempW);
-            break;
-        default:
-            FIXME("bogus type %d, please fix\n", type);
-            hr = E_INVALIDARG;
-            break;
+        TRACE("Failed to get folder path, %#x.\n", hr);
+        return hr;
     }
 
-    if (FAILED(hr))
-        goto failed;
-
-    /* Expand environment strings if necessary */
-    if (*tempW == '%')
-    {
-        hr = _SHExpandEnvironmentStrings(tempW, pathW);
-        if (FAILED(hr))
-            goto failed;
-    }
-    else
-        strcpyW(pathW, tempW);
-
-    /* if we don't care about existing directories we are ready */
-    if (flags & KF_FLAG_DONT_VERIFY) goto done;
-
-    if (PathFileExistsW(pathW)) goto done;
-
-    /* Does not exist but we are not allowed to create it. The return value
-     * is verified against shell32 version 6.0.
-     */
-    if (!(flags & KF_FLAG_CREATE))
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
-        goto failed;
-    }
-
-    /* create symbolic links rather than directories for specific
-     * user shell folders */
-    _SHCreateSymbolicLink(folder);
-
-    /* create directory/directories */
-    ret = SHCreateDirectoryExW(NULL, pathW, NULL);
-    if (ret && ret != ERROR_ALREADY_EXISTS)
-    {
-        ERR("Failed to create directory %s.\n", debugstr_w(pathW));
-        hr = E_FAIL;
-        goto failed;
-    }
-
-    TRACE("Created missing system directory %s\n", debugstr_w(pathW));
-
-done:
     TRACE("Final path is %s, %#x\n", debugstr_w(pathW), hr);
 
     *ret_path = CoTaskMemAlloc((strlenW(pathW) + 1) * sizeof(WCHAR));
     if (!*ret_path)
         return E_OUTOFMEMORY;
     strcpyW(*ret_path, pathW);
-
-    return hr;
-
-failed:
-    TRACE("Failed to get folder path, %#x.\n", hr);
 
     return hr;
 }
@@ -6440,12 +6322,6 @@ static void register_system_knownfolders(void)
 HRESULT SHELL_RegisterShellFolders(void)
 {
     HRESULT hr;
-
-    /* Set up '$HOME' targeted symlinks for 'My Documents', 'My Pictures',
-     * 'My Videos', 'My Music', 'Desktop' etc. in advance, so that the
-     * _SHRegister*ShellFolders() functions will find everything nice and clean
-     * and thus will not attempt to create them in the profile directory. */
-    _SHCreateSymbolicLinks();
 
     hr = _SHRegisterUserShellFolders(TRUE);
     if (SUCCEEDED(hr))
