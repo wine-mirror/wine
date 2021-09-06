@@ -741,7 +741,6 @@ static void sdl_add_device(unsigned int index)
         .serial = {'0','0','0','0',0},
     };
     struct platform_private *private;
-    DEVICE_OBJECT *device = NULL;
     char guid_str[34];
 
     SDL_Joystick* joystick;
@@ -791,16 +790,11 @@ static void sdl_add_device(unsigned int index)
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private))))
         return;
     private->unix_device.vtbl = &sdl_device_vtbl;
+    private->sdl_joystick = joystick;
+    private->sdl_controller = controller;
+    private->id = id;
 
-    device = bus_create_hid_device(&desc, &private->unix_device);
-    if (!device) HeapFree(GetProcessHeap(), 0, private);
-    else
-    {
-        private->sdl_joystick = joystick;
-        private->sdl_controller = controller;
-        private->id = id;
-        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-    }
+    bus_event_queue_device_created(&event_queue, &private->unix_device, &desc);
 }
 
 static void process_device_event(SDL_Event *event)

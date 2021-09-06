@@ -578,6 +578,16 @@ static DWORD CALLBACK bus_main_thread(void *args)
             LeaveCriticalSection(&device_list_cs);
             IoInvalidateDeviceRelations(bus_pdo, BusRelations);
             break;
+        case BUS_EVENT_TYPE_DEVICE_CREATED:
+            device = bus_create_hid_device(&event->device_created.desc, event->device_created.device);
+            if (device) IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+            else
+            {
+                WARN("failed to create device for %s bus device %p\n",
+                     debugstr_w(bus.name), event->device_created.device);
+                winebus_call(device_remove, event->device_created.device);
+            }
+            break;
         }
     }
 

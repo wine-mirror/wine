@@ -327,6 +327,20 @@ BOOL bus_event_queue_device_removed(struct list *queue, const WCHAR *bus_id, voi
     return TRUE;
 }
 
+BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *device, struct device_desc *desc)
+{
+    ULONG size = sizeof(struct bus_event);
+    struct bus_event *event = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!event) return FALSE;
+
+    event->type = BUS_EVENT_TYPE_DEVICE_CREATED;
+    event->device_created.device = device;
+    event->device_created.desc = *desc;
+    list_add_tail(queue, &event->entry);
+
+    return TRUE;
+}
+
 BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
 {
     struct list *entry = list_head(queue);

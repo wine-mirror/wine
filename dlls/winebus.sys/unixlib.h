@@ -65,6 +65,7 @@ enum bus_event_type
 {
     BUS_EVENT_TYPE_NONE,
     BUS_EVENT_TYPE_DEVICE_REMOVED,
+    BUS_EVENT_TYPE_DEVICE_CREATED,
 };
 
 struct bus_event
@@ -79,6 +80,12 @@ struct bus_event
             const WCHAR *bus_id;
             void *context;
         } device_removed;
+
+        struct
+        {
+            struct unix_device *device;
+            struct device_desc desc;
+        } device_created;
     };
 };
 
