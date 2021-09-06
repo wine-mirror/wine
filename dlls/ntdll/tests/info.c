@@ -444,7 +444,6 @@ static void test_query_process(void)
     DWORD last_pid;
     ULONG ReturnLength;
     int i = 0, k = 0;
-    SYSTEM_BASIC_INFORMATION sbi;
     PROCESS_BASIC_INFORMATION pbi;
     THREAD_BASIC_INFORMATION tbi;
     OBJECT_ATTRIBUTES attr;
@@ -491,8 +490,6 @@ static void test_query_process(void)
     }
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     spi = spi_buf;
-
-    pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
 
     for (;;)
     {
