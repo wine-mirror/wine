@@ -1599,7 +1599,6 @@ static void test_InternetErrorDlg(void)
 
         res = InternetErrorDlg(hwnd, NULL, i, FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
         todo_wine_if(i == ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION ||
-                     i == ERROR_INTERNET_INCORRECT_PASSWORD ||
                      i == ERROR_INTERNET_INSERT_CDROM ||
                      i == ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED ||
                      i == ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR ||
@@ -1611,7 +1610,7 @@ static void test_InternetErrorDlg(void)
                      i != ERROR_INTERNET_SEC_CERT_CN_INVALID && i != ERROR_INTERNET_INVALID_CA &&
                      i != ERROR_INTERNET_SEC_CERT_ERRORS && i != ERROR_INTERNET_SEC_CERT_REV_FAILED &&
                      i != ERROR_INTERNET_MIXED_SECURITY && i != ERROR_INTERNET_POST_IS_NON_SECURE &&
-                     i != ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR &&
+                     i != ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR && i != ERROR_INTERNET_INCORRECT_PASSWORD &&
                      i != ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE && i != ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT &&
                      i != ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT &&
                      i != ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION)

@@ -498,7 +498,7 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
         if( !dwError && !(dwFlags & FLAGS_ERROR_UI_FILTER_FOR_ERRORS ) )
             break;
         if(!req)
-            return ERROR_INVALID_HANDLE;
+            return ERROR_INVALID_PARAMETER;
 
         switch(req->status_code) {
         case HTTP_STATUS_PROXY_AUTH_REQ:
@@ -523,9 +523,6 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
             res = ERROR_CANCELLED;
             break;
         }
-        if(!req)
-            return ERROR_INVALID_HANDLE;
-
 
         if( dwFlags & ~FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS )
             FIXME("%08x contains unsupported flags.\n", dwFlags);
