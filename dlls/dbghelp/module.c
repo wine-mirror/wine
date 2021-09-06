@@ -815,6 +815,20 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (wImageName)
     {
         module = module_is_already_loaded(pcs, wImageName);
+        if (module)
+        {
+            if (module->module.BaseOfImage == BaseOfDll)
+                SetLastError(ERROR_SUCCESS);
+            else
+            {
+                /* native allows to load the same module at different addresses
+                 * we don't support this for now
+                 */
+                SetLastError(ERROR_INVALID_PARAMETER);
+                FIXME("Reloading %s at different base address isn't supported\n", debugstr_w(module->modulename));
+            }
+            return 0;
+        }
         if (!module && module_is_container_loaded(pcs, wImageName, BaseOfDll))
         {
             /* force the loading of DLL as builtin */
