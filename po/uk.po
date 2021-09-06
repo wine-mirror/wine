@@ -10491,503 +10491,675 @@ msgstr " сек"
 msgid "Select Source"
 msgstr "Виберіть джерело"
 
-#: dlls/tzres/tzres.rc:90
+#: dlls/tzres/tzres.rc:94
 msgid "China Standard Time"
 msgstr "Китайський стандартний час"
 
-#: dlls/tzres/tzres.rc:91
+#: dlls/tzres/tzres.rc:95
 msgid "China Daylight Time"
 msgstr "Китайський літній час"
 
-#: dlls/tzres/tzres.rc:180
+#: dlls/tzres/tzres.rc:188
 msgid "North Asia Standard Time"
 msgstr "Північноазіатський стандартний час"
 
-#: dlls/tzres/tzres.rc:181
+#: dlls/tzres/tzres.rc:189
 msgid "North Asia Daylight Time"
 msgstr "Північноазіатський літній час"
 
-#: dlls/tzres/tzres.rc:116
+#: dlls/tzres/tzres.rc:122
 msgid "Georgian Standard Time"
 msgstr "Грузинський стандартний час"
 
-#: dlls/tzres/tzres.rc:117
+#: dlls/tzres/tzres.rc:123
 msgid "Georgian Daylight Time"
 msgstr "Грузинський літній час"
 
-#: dlls/tzres/tzres.rc:172
+#: dlls/tzres/tzres.rc:270 dlls/tzres/tzres.rc:271
+msgid "UTC+12"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:178
 msgid "Nepal Standard Time"
 msgstr "Непальський стандартний час"
 
-#: dlls/tzres/tzres.rc:173
+#: dlls/tzres/tzres.rc:179
 msgid "Nepal Daylight Time"
 msgstr "Непальський літній час"
 
-#: dlls/tzres/tzres.rc:66
+#: dlls/tzres/tzres.rc:70
 msgid "Cape Verde Standard Time"
 msgstr "Стандартний час Кабо-Верде"
 
-#: dlls/tzres/tzres.rc:67
+#: dlls/tzres/tzres.rc:71
 msgid "Cape Verde Daylight Time"
 msgstr "Літній час Кабо-Верде"
 
-#: dlls/tzres/tzres.rc:126
+#: dlls/tzres/tzres.rc:132
 msgid "Haiti Standard Time"
 msgstr "Стандартний час Гаїті"
 
-#: dlls/tzres/tzres.rc:127
+#: dlls/tzres/tzres.rc:133
 msgid "Haiti Daylight Time"
 msgstr "Літній час Гаїті"
 
-#: dlls/tzres/tzres.rc:80
+#: dlls/tzres/tzres.rc:84
 msgid "Central European Standard Time"
 msgstr "Центральноєвропейський стандартний час"
 
-#: dlls/tzres/tzres.rc:81
+#: dlls/tzres/tzres.rc:85
 msgid "Central European Daylight Time"
 msgstr "Центральноєвропейський літній час"
 
-#: dlls/tzres/tzres.rc:160
+#: dlls/tzres/tzres.rc:166
 msgid "Morocco Standard Time"
 msgstr "Стандартний час Марокко"
 
-#: dlls/tzres/tzres.rc:161
+#: dlls/tzres/tzres.rc:167
 msgid "Morocco Daylight Time"
 msgstr "Літній час Марокко"
 
-#: dlls/tzres/tzres.rc:78
+#: dlls/tzres/tzres.rc:276 dlls/tzres/tzres.rc:277
+msgid "UTC-08"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:36
+#, fuzzy
+#| msgid "Atlantic Standard Time"
+msgid "Altai Standard Time"
+msgstr "Атлантичний стандартний час"
+
+#: dlls/tzres/tzres.rc:37
+#, fuzzy
+#| msgid "Atlantic Daylight Time"
+msgid "Altai Daylight Time"
+msgstr "Атлантичний літній час"
+
+#: dlls/tzres/tzres.rc:82
 msgid "Central Europe Standard Time"
 msgstr "Центральноєвропейський стандартний час"
 
-#: dlls/tzres/tzres.rc:79
+#: dlls/tzres/tzres.rc:83
 msgid "Central Europe Daylight Time"
 msgstr "Центральноєвропейський літній час"
 
-#: dlls/tzres/tzres.rc:132
+#: dlls/tzres/tzres.rc:138
 msgid "Iran Standard Time"
 msgstr "Іранський стандартний час"
 
-#: dlls/tzres/tzres.rc:133
+#: dlls/tzres/tzres.rc:139
 msgid "Iran Daylight Time"
 msgstr "Іранський літній час"
 
-#: dlls/tzres/tzres.rc:204
+#: dlls/tzres/tzres.rc:222
 msgid "Saint Pierre Standard Time"
 msgstr "Стандартний час Сен-П'єра"
 
-#: dlls/tzres/tzres.rc:205
+#: dlls/tzres/tzres.rc:223
 msgid "Saint Pierre Daylight Time"
 msgstr "Літній час Сен-П'єра"
 
-#: dlls/tzres/tzres.rc:170
+#: dlls/tzres/tzres.rc:228
+#, fuzzy
+#| msgid "Samoa Standard Time"
+msgid "Sao Tome Standard Time"
+msgstr "Стандартний час Самоа"
+
+#: dlls/tzres/tzres.rc:229
+#, fuzzy
+#| msgid "Samoa Daylight Time"
+msgid "Sao Tome Daylight Time"
+msgstr "Літній час Самоа"
+
+#: dlls/tzres/tzres.rc:176
 msgid "Namibia Standard Time"
 msgstr "Стандартний час Намібії"
 
-#: dlls/tzres/tzres.rc:171
+#: dlls/tzres/tzres.rc:177
 msgid "Namibia Daylight Time"
 msgstr "Літній час Намібії"
 
-#: dlls/tzres/tzres.rc:226
+#: dlls/tzres/tzres.rc:254
 msgid "Tonga Standard Time"
 msgstr "Стандартний час Королівства Тонга"
 
-#: dlls/tzres/tzres.rc:227
+#: dlls/tzres/tzres.rc:255
 msgid "Tonga Daylight Time"
 msgstr "Літній час Королівства Тонга"
 
-#: dlls/tzres/tzres.rc:164
+#: dlls/tzres/tzres.rc:170
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Гірський стандартний час (Мексика)"
 
-#: dlls/tzres/tzres.rc:165
+#: dlls/tzres/tzres.rc:171
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Гірський літній час (Мексика)"
 
-#: dlls/tzres/tzres.rc:118
+#: dlls/tzres/tzres.rc:124
 msgid "GMT Standard Time"
 msgstr "GMT стандартний час"
 
-#: dlls/tzres/tzres.rc:119
+#: dlls/tzres/tzres.rc:125
 msgid "GMT Daylight Time"
 msgstr "GMT літній час"
 
-#: dlls/tzres/tzres.rc:74
+#: dlls/tzres/tzres.rc:78
 msgid "Central Asia Standard Time"
 msgstr "Середньоазіатський стандартний час"
 
-#: dlls/tzres/tzres.rc:75
+#: dlls/tzres/tzres.rc:79
 msgid "Central Asia Daylight Time"
 msgstr "Середньоазіатський літній час"
 
-#: dlls/tzres/tzres.rc:146
+#: dlls/tzres/tzres.rc:152
 msgid "Lord Howe Standard Time"
 msgstr "Стандартний час острова Лорд-Хау"
 
-#: dlls/tzres/tzres.rc:147
+#: dlls/tzres/tzres.rc:153
 msgid "Lord Howe Daylight Time"
 msgstr "Літній час острова Лорд-Хау"
 
-#: dlls/tzres/tzres.rc:40
+#: dlls/tzres/tzres.rc:42
 msgid "Arabic Standard Time"
 msgstr "Арабський стандартний час"
 
-#: dlls/tzres/tzres.rc:41
+#: dlls/tzres/tzres.rc:43
 msgid "Arabic Daylight Time"
 msgstr "Арабський літній час"
 
-#: dlls/tzres/tzres.rc:148
+#: dlls/tzres/tzres.rc:272 dlls/tzres/tzres.rc:273
+msgid "UTC+13"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:154
 msgid "Magadan Standard Time"
 msgstr "Магаданський стандартний час"
 
-#: dlls/tzres/tzres.rc:149
+#: dlls/tzres/tzres.rc:155
 msgid "Magadan Daylight Time"
 msgstr "Магаданський літній час"
 
-#: dlls/tzres/tzres.rc:176
+#: dlls/tzres/tzres.rc:182
 msgid "Newfoundland Standard Time"
 msgstr "Стандартний час Ньюфаундленда"
 
-#: dlls/tzres/tzres.rc:177
+#: dlls/tzres/tzres.rc:183
 msgid "Newfoundland Daylight Time"
 msgstr "Літній час Ньюфаундленда"
 
-#: dlls/tzres/tzres.rc:250
+#: dlls/tzres/tzres.rc:240
+#, fuzzy
+#| msgid "Jordan Standard Time"
+msgid "Sudan Standard Time"
+msgstr "Йорданський стандартний час"
+
+#: dlls/tzres/tzres.rc:241
+#, fuzzy
+#| msgid "Jordan Daylight Time"
+msgid "Sudan Daylight Time"
+msgstr "Йорданський літній час"
+
+#: dlls/tzres/tzres.rc:300
 msgid "West Pacific Standard Time"
 msgstr "Західно-Тихоокеанський стандартний час"
 
-#: dlls/tzres/tzres.rc:251
+#: dlls/tzres/tzres.rc:301
 msgid "West Pacific Daylight Time"
 msgstr "Західно-Тихоокеанський літній час"
 
-#: dlls/tzres/tzres.rc:186
+#: dlls/tzres/tzres.rc:196
 msgid "Pacific Standard Time"
 msgstr "Тихоокеанський стандартний час"
 
-#: dlls/tzres/tzres.rc:187
+#: dlls/tzres/tzres.rc:197
 msgid "Pacific Daylight Time"
 msgstr "Тихоокеанський літній час"
 
-#: dlls/tzres/tzres.rc:52
+#: dlls/tzres/tzres.rc:56
 msgid "Azerbaijan Standard Time"
 msgstr "Азербайджанський стандартний час"
 
-#: dlls/tzres/tzres.rc:53
+#: dlls/tzres/tzres.rc:57
 msgid "Azerbaijan Daylight Time"
 msgstr "Азербайджанський літній час"
 
-#: dlls/tzres/tzres.rc:150
+#: dlls/tzres/tzres.rc:156
 msgid "Magallanes Standard Time"
 msgstr "Стандартний час Магальянеса"
 
-#: dlls/tzres/tzres.rc:151
+#: dlls/tzres/tzres.rc:157
 msgid "Magallanes Daylight Time"
 msgstr "Літній час Магальянеса"
 
-#: dlls/tzres/tzres.rc:206
+#: dlls/tzres/tzres.rc:226
 msgid "Samoa Standard Time"
 msgstr "Стандартний час Самоа"
 
-#: dlls/tzres/tzres.rc:207
+#: dlls/tzres/tzres.rc:227
 msgid "Samoa Daylight Time"
 msgstr "Літній час Самоа"
 
-#: dlls/tzres/tzres.rc:138
+#: dlls/tzres/tzres.rc:144
 msgid "Kaliningrad Standard Time"
 msgstr "Калінінградський стандартний час"
 
-#: dlls/tzres/tzres.rc:139
+#: dlls/tzres/tzres.rc:145
 msgid "Kaliningrad Daylight Time"
 msgstr "Калінінградський літній час"
 
-#: dlls/tzres/tzres.rc:188
+#: dlls/tzres/tzres.rc:198
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Тихоокеанський стандартний час (Мексика)"
 
-#: dlls/tzres/tzres.rc:189
+#: dlls/tzres/tzres.rc:199
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Тихоокеанський літній час (Мексика)"
 
-#: dlls/tzres/tzres.rc:156
+#: dlls/tzres/tzres.rc:162
 msgid "Middle East Standard Time"
 msgstr "Близькосхідний стандартний час"
 
-#: dlls/tzres/tzres.rc:157
+#: dlls/tzres/tzres.rc:163
 msgid "Middle East Daylight Time"
 msgstr "Близькосхідний літній час"
 
-#: dlls/tzres/tzres.rc:224
+#: dlls/tzres/tzres.rc:250
 msgid "Tokyo Standard Time"
 msgstr "Токійський стандартний час"
 
-#: dlls/tzres/tzres.rc:225
+#: dlls/tzres/tzres.rc:251
 msgid "Tokyo Daylight Time"
 msgstr "Токійський літній час"
 
-#: dlls/tzres/tzres.rc:144
+#: dlls/tzres/tzres.rc:150
 msgid "Line Islands Standard Time"
 msgstr "Стандартний час островів Лайн"
 
-#: dlls/tzres/tzres.rc:145
+#: dlls/tzres/tzres.rc:151
 msgid "Line Islands Daylight Time"
 msgstr "Літній час островів Лайн"
 
-#: dlls/tzres/tzres.rc:92
+#: dlls/tzres/tzres.rc:96
 msgid "Cuba Standard Time"
 msgstr "Кубинський стандартний час"
 
-#: dlls/tzres/tzres.rc:93
+#: dlls/tzres/tzres.rc:97
 msgid "Cuba Daylight Time"
 msgstr "Кубинський літній час"
 
-#: dlls/tzres/tzres.rc:136
+#: dlls/tzres/tzres.rc:142
 msgid "Jordan Standard Time"
 msgstr "Йорданський стандартний час"
 
-#: dlls/tzres/tzres.rc:137
+#: dlls/tzres/tzres.rc:143
 msgid "Jordan Daylight Time"
 msgstr "Йорданський літній час"
 
-#: dlls/tzres/tzres.rc:84
+#: dlls/tzres/tzres.rc:88
 msgid "Central Standard Time"
 msgstr "Центральний стандартний час"
 
-#: dlls/tzres/tzres.rc:85
+#: dlls/tzres/tzres.rc:89
 msgid "Central Daylight Time"
 msgstr "Центральний літній час"
 
-#: dlls/tzres/tzres.rc:54
+#: dlls/tzres/tzres.rc:212 dlls/tzres/tzres.rc:213
+msgid "Russia Time Zone 3"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:286
+#, fuzzy
+#| msgid "Tonga Standard Time"
+msgid "Volgograd Standard Time"
+msgstr "Стандартний час Королівства Тонга"
+
+#: dlls/tzres/tzres.rc:287
+#, fuzzy
+#| msgid "Tonga Daylight Time"
+msgid "Volgograd Daylight Time"
+msgstr "Літній час Королівства Тонга"
+
+#: dlls/tzres/tzres.rc:58
 msgid "Azores Standard Time"
 msgstr "Стандартний час Азорських островів"
 
-#: dlls/tzres/tzres.rc:55
+#: dlls/tzres/tzres.rc:59
 msgid "Azores Daylight Time"
 msgstr "Літній час Азорських островів"
 
-#: dlls/tzres/tzres.rc:178
+#: dlls/tzres/tzres.rc:186
 msgid "North Asia East Standard Time"
 msgstr "Північноазіатський східний стандартний час"
 
-#: dlls/tzres/tzres.rc:179
+#: dlls/tzres/tzres.rc:187
 msgid "North Asia East Daylight Time"
 msgstr "Північноазіатський східний літній час"
 
-#: dlls/tzres/tzres.rc:42
+#: dlls/tzres/tzres.rc:280 dlls/tzres/tzres.rc:281
+msgid "UTC-11"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:44
 msgid "Argentina Standard Time"
 msgstr "Аргентинський стандартний час"
 
-#: dlls/tzres/tzres.rc:43
+#: dlls/tzres/tzres.rc:45
 msgid "Argentina Daylight Time"
 msgstr "Аргентинський літній час"
 
-#: dlls/tzres/tzres.rc:152
+#: dlls/tzres/tzres.rc:260
+#, fuzzy
+#| msgid "Turkey Standard Time"
+msgid "Turks And Caicos Standard Time"
+msgstr "Турецький стандартний час"
+
+#: dlls/tzres/tzres.rc:261
+#, fuzzy
+#| msgid "Turkey Daylight Time"
+msgid "Turks And Caicos Daylight Time"
+msgstr "Турецький літній час"
+
+#: dlls/tzres/tzres.rc:158
 msgid "Marquesas Standard Time"
 msgstr "Стандартний час Маркізьких островів"
 
-#: dlls/tzres/tzres.rc:153
+#: dlls/tzres/tzres.rc:159
 msgid "Marquesas Daylight Time"
 msgstr "Літній час Маркізьких островів"
 
-#: dlls/tzres/tzres.rc:166
+#: dlls/tzres/tzres.rc:172
 msgid "Myanmar Standard Time"
 msgstr "Стандартний час М'янми"
 
-#: dlls/tzres/tzres.rc:167
+#: dlls/tzres/tzres.rc:173
 msgid "Myanmar Daylight Time"
 msgstr "Літній час М'янми"
 
-#: dlls/tzres/tzres.rc:236 dlls/tzres/tzres.rc:237
+#: dlls/tzres/tzres.rc:268 dlls/tzres/tzres.rc:269
 msgid "Coordinated Universal Time"
 msgstr "Всесвітній координований час"
 
-#: dlls/tzres/tzres.rc:130
+#: dlls/tzres/tzres.rc:136
 msgid "India Standard Time"
 msgstr "Індійський стандартний час"
 
-#: dlls/tzres/tzres.rc:131
+#: dlls/tzres/tzres.rc:137
 msgid "India Daylight Time"
 msgstr "Індійський літній час"
 
-#: dlls/tzres/tzres.rc:124
+#: dlls/tzres/tzres.rc:130
 msgid "GTB Standard Time"
 msgstr "GTB стандартний час"
 
-#: dlls/tzres/tzres.rc:125
+#: dlls/tzres/tzres.rc:131
 msgid "GTB Daylight Time"
 msgstr "GTB літній час"
 
-#: dlls/tzres/tzres.rc:228
+#: dlls/tzres/tzres.rc:258
 msgid "Turkey Standard Time"
 msgstr "Турецький стандартний час"
 
-#: dlls/tzres/tzres.rc:229
+#: dlls/tzres/tzres.rc:259
 msgid "Turkey Daylight Time"
 msgstr "Турецький літній час"
 
-#: dlls/tzres/tzres.rc:112
+#: dlls/tzres/tzres.rc:46
+#, fuzzy
+#| msgid "Arabian Standard Time"
+msgid "Astrakhan Standard Time"
+msgstr "Арабський стандартний час"
+
+#: dlls/tzres/tzres.rc:47
+#, fuzzy
+#| msgid "Arabian Daylight Time"
+msgid "Astrakhan Daylight Time"
+msgstr "Арабський літній час"
+
+#: dlls/tzres/tzres.rc:118
 msgid "Fiji Standard Time"
 msgstr "Стандартний час Фіджі"
 
-#: dlls/tzres/tzres.rc:113
+#: dlls/tzres/tzres.rc:119
 msgid "Fiji Daylight Time"
 msgstr "Літній час Фіджі"
 
-#: dlls/tzres/tzres.rc:64
+#: dlls/tzres/tzres.rc:68
 msgid "Canada Central Standard Time"
 msgstr "Центральний стандартний час Канади"
 
-#: dlls/tzres/tzres.rc:65
+#: dlls/tzres/tzres.rc:69
 msgid "Canada Central Daylight Time"
 msgstr "Центральний літній час Канади"
 
-#: dlls/tzres/tzres.rc:218
+#: dlls/tzres/tzres.rc:304
+#, fuzzy
+#| msgid "Yakutsk Standard Time"
+msgid "Yukon Standard Time"
+msgstr "Якутський стандартний час"
+
+#: dlls/tzres/tzres.rc:305
+#, fuzzy
+#| msgid "Yakutsk Daylight Time"
+msgid "Yukon Daylight Time"
+msgstr "Якутський літній час"
+
+#: dlls/tzres/tzres.rc:244
 msgid "Taipei Standard Time"
 msgstr "Тайбейський стандартний час"
 
-#: dlls/tzres/tzres.rc:219
+#: dlls/tzres/tzres.rc:245
 msgid "Taipei Daylight Time"
 msgstr "Тайбейський літній час"
 
-#: dlls/tzres/tzres.rc:246
+#: dlls/tzres/tzres.rc:292
 msgid "W. Europe Standard Time"
 msgstr "Західноєвропейський стандартний час"
 
-#: dlls/tzres/tzres.rc:247
+#: dlls/tzres/tzres.rc:293
 msgid "W. Europe Daylight Time"
 msgstr "Західноєвропейський літній час"
 
-#: dlls/tzres/tzres.rc:158
+#: dlls/tzres/tzres.rc:164
 msgid "Montevideo Standard Time"
 msgstr "Стандартний час Монтевідео"
 
-#: dlls/tzres/tzres.rc:159
+#: dlls/tzres/tzres.rc:165
 msgid "Montevideo Daylight Time"
 msgstr "Літній час Монтевідео"
 
-#: dlls/tzres/tzres.rc:190
+#: dlls/tzres/tzres.rc:200
 msgid "Pakistan Standard Time"
 msgstr "Пакистанський стандартний час"
 
-#: dlls/tzres/tzres.rc:191
+#: dlls/tzres/tzres.rc:201
 msgid "Pakistan Daylight Time"
 msgstr "Пакистанський літній час"
 
-#: dlls/tzres/tzres.rc:68
+#: dlls/tzres/tzres.rc:252
+#, fuzzy
+#| msgid "Tokyo Standard Time"
+msgid "Tomsk Standard Time"
+msgstr "Токійський стандартний час"
+
+#: dlls/tzres/tzres.rc:253
+#, fuzzy
+#| msgid "Tokyo Daylight Time"
+msgid "Tomsk Daylight Time"
+msgstr "Токійський літній час"
+
+#: dlls/tzres/tzres.rc:72
 msgid "Caucasus Standard Time"
 msgstr "Кавказький стандартний час"
 
-#: dlls/tzres/tzres.rc:69
+#: dlls/tzres/tzres.rc:73
 msgid "Caucasus Daylight Time"
 msgstr "Кавказький літній час"
 
-#: dlls/tzres/tzres.rc:50
+#: dlls/tzres/tzres.rc:54
 msgid "AUS Eastern Standard Time"
 msgstr "AUS східний стандартний час"
 
-#: dlls/tzres/tzres.rc:51
+#: dlls/tzres/tzres.rc:55
 msgid "AUS Eastern Daylight Time"
 msgstr "AUS східний літній час"
 
-#: dlls/tzres/tzres.rc:168
+#: dlls/tzres/tzres.rc:174
 msgid "N. Central Asia Standard Time"
 msgstr "Північно-Центральна Азія за стандартним часом"
 
-#: dlls/tzres/tzres.rc:169
+#: dlls/tzres/tzres.rc:175
 msgid "N. Central Asia Daylight Time"
 msgstr "Північно-Центральна Азія за літнім часом"
 
-#: dlls/tzres/tzres.rc:104
+#: dlls/tzres/tzres.rc:110
 msgid "Eastern Standard Time"
 msgstr "Східний стандартний час"
 
-#: dlls/tzres/tzres.rc:105
+#: dlls/tzres/tzres.rc:111
 msgid "Eastern Daylight Time"
 msgstr "Східний літній час"
 
-#: dlls/tzres/tzres.rc:86
+#: dlls/tzres/tzres.rc:256
+#, fuzzy
+#| msgid "Tasmania Standard Time"
+msgid "Transbaikal Standard Time"
+msgstr "Тасманійський стандартний час"
+
+#: dlls/tzres/tzres.rc:257
+#, fuzzy
+#| msgid "Tasmania Daylight Time"
+msgid "Transbaikal Daylight Time"
+msgstr "Тасманійський літній час"
+
+#: dlls/tzres/tzres.rc:104
+#, fuzzy
+#| msgid "W. Europe Standard Time"
+msgid "E. Europe Standard Time"
+msgstr "Західноєвропейський стандартний час"
+
+#: dlls/tzres/tzres.rc:105
+#, fuzzy
+#| msgid "W. Europe Daylight Time"
+msgid "E. Europe Daylight Time"
+msgstr "Західноєвропейський літній час"
+
+#: dlls/tzres/tzres.rc:90
 msgid "Central Standard Time (Mexico)"
 msgstr "Центральний стандартний час (Мексика)"
 
-#: dlls/tzres/tzres.rc:87
+#: dlls/tzres/tzres.rc:91
 msgid "Central Daylight Time (Mexico)"
 msgstr "Центральний літній час (Мексика)"
 
-#: dlls/tzres/tzres.rc:44
+#: dlls/tzres/tzres.rc:230
+#, fuzzy
+#| msgid "Samoa Standard Time"
+msgid "Saratov Standard Time"
+msgstr "Стандартний час Самоа"
+
+#: dlls/tzres/tzres.rc:231
+#, fuzzy
+#| msgid "Samoa Daylight Time"
+msgid "Saratov Daylight Time"
+msgstr "Літній час Самоа"
+
+#: dlls/tzres/tzres.rc:48
 msgid "Atlantic Standard Time"
 msgstr "Атлантичний стандартний час"
 
-#: dlls/tzres/tzres.rc:45
+#: dlls/tzres/tzres.rc:49
 msgid "Atlantic Daylight Time"
 msgstr "Атлантичний літній час"
 
-#: dlls/tzres/tzres.rc:162
+#: dlls/tzres/tzres.rc:168
 msgid "Mountain Standard Time"
 msgstr "Гірський стандартний час"
 
-#: dlls/tzres/tzres.rc:163
+#: dlls/tzres/tzres.rc:169
 msgid "Mountain Daylight Time"
 msgstr "Гірський літній час"
 
-#: dlls/tzres/tzres.rc:232
+#: dlls/tzres/tzres.rc:264
 msgid "US Eastern Standard Time"
 msgstr "Східний стандартний час США"
 
-#: dlls/tzres/tzres.rc:233
+#: dlls/tzres/tzres.rc:265
 msgid "US Eastern Daylight Time"
 msgstr "Східний літній час США"
 
-#: dlls/tzres/tzres.rc:182
+#: dlls/tzres/tzres.rc:224
+#, fuzzy
+#| msgid "Alaskan Standard Time"
+msgid "Sakhalin Standard Time"
+msgstr "Аляскинський стандартний час"
+
+#: dlls/tzres/tzres.rc:225
+#, fuzzy
+#| msgid "Alaskan Daylight Time"
+msgid "Sakhalin Daylight Time"
+msgstr "Аляскинський літній час"
+
+#: dlls/tzres/tzres.rc:190
 msgid "North Korea Standard Time"
 msgstr "Північнокорейський стандартний час"
 
-#: dlls/tzres/tzres.rc:183
+#: dlls/tzres/tzres.rc:191
 msgid "North Korea Daylight Time"
 msgstr "Північнокорейський літній час"
 
-#: dlls/tzres/tzres.rc:220
+#: dlls/tzres/tzres.rc:246
 msgid "Tasmania Standard Time"
 msgstr "Тасманійський стандартний час"
 
-#: dlls/tzres/tzres.rc:221
+#: dlls/tzres/tzres.rc:247
 msgid "Tasmania Daylight Time"
 msgstr "Тасманійський літній час"
 
-#: dlls/tzres/tzres.rc:72
+#: dlls/tzres/tzres.rc:76
 msgid "Central America Standard Time"
 msgstr "Центральна Америка за стандартним часом"
 
-#: dlls/tzres/tzres.rc:73
+#: dlls/tzres/tzres.rc:77
 msgid "Central America Daylight Time"
 msgstr "Центральна Америка за літнім часом"
 
-#: dlls/tzres/tzres.rc:234
+#: dlls/tzres/tzres.rc:274 dlls/tzres/tzres.rc:275
+msgid "UTC-02"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:266
 msgid "US Mountain Standard Time"
 msgstr "Американський гірський стандартний час"
 
-#: dlls/tzres/tzres.rc:235
+#: dlls/tzres/tzres.rc:267
 msgid "US Mountain Daylight Time"
 msgstr "Американський гірський літній час"
 
-#: dlls/tzres/tzres.rc:212
+#: dlls/tzres/tzres.rc:236
 msgid "South Africa Standard Time"
 msgstr "Південно-Африканський стандартний час"
 
-#: dlls/tzres/tzres.rc:213
+#: dlls/tzres/tzres.rc:237
 msgid "South Africa Daylight Time"
 msgstr "Південно-Африканський літній час"
 
-#: dlls/tzres/tzres.rc:70
+#: dlls/tzres/tzres.rc:74
 msgid "Cen. Australia Standard Time"
 msgstr "Цен. Австралійський стандартний час"
 
-#: dlls/tzres/tzres.rc:71
+#: dlls/tzres/tzres.rc:75
 msgid "Cen. Australia Daylight Time"
 msgstr "Цен. Австралійський літній час"
 
-#: dlls/tzres/tzres.rc:214
+#: dlls/tzres/tzres.rc:278 dlls/tzres/tzres.rc:279
+msgid "UTC-09"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:238
 msgid "Sri Lanka Standard Time"
 msgstr "Стандартний час Шрі-Ланки"
 
-#: dlls/tzres/tzres.rc:215
+#: dlls/tzres/tzres.rc:239
 msgid "Sri Lanka Daylight Time"
 msgstr "Літній час Шрі-Ланки"
 
@@ -10999,139 +11171,167 @@ msgstr "Стандартний час в Афганістані"
 msgid "Afghanistan Daylight Time"
 msgstr "Літній час в Афганістані"
 
-#: dlls/tzres/tzres.rc:252
+#: dlls/tzres/tzres.rc:302
 msgid "Yakutsk Standard Time"
 msgstr "Якутський стандартний час"
 
-#: dlls/tzres/tzres.rc:253
+#: dlls/tzres/tzres.rc:303
 msgid "Yakutsk Daylight Time"
 msgstr "Якутський літній час"
 
-#: dlls/tzres/tzres.rc:198
+#: dlls/tzres/tzres.rc:216
 msgid "SA Eastern Standard Time"
 msgstr "SA східний стандартний час"
 
-#: dlls/tzres/tzres.rc:199
+#: dlls/tzres/tzres.rc:217
 msgid "SA Eastern Daylight Time"
 msgstr "SA східний літній час"
 
-#: dlls/tzres/tzres.rc:36
+#: dlls/tzres/tzres.rc:38
 msgid "Arab Standard Time"
 msgstr "Арабський стандартний час"
 
-#: dlls/tzres/tzres.rc:37
+#: dlls/tzres/tzres.rc:39
 msgid "Arab Daylight Time"
 msgstr "Арабський літній час"
 
-#: dlls/tzres/tzres.rc:38
+#: dlls/tzres/tzres.rc:40
 msgid "Arabian Standard Time"
 msgstr "Арабський стандартний час"
 
-#: dlls/tzres/tzres.rc:39
+#: dlls/tzres/tzres.rc:41
 msgid "Arabian Daylight Time"
 msgstr "Арабський літній час"
 
-#: dlls/tzres/tzres.rc:222
+#: dlls/tzres/tzres.rc:248
 msgid "Tocantins Standard Time"
 msgstr "Стандартний час Токантінс"
 
-#: dlls/tzres/tzres.rc:223
+#: dlls/tzres/tzres.rc:249
 msgid "Tocantins Daylight Time"
 msgstr "Літній час Токантінс"
 
-#: dlls/tzres/tzres.rc:196
+#: dlls/tzres/tzres.rc:214
 msgid "Russian Standard Time"
 msgstr "Російський стандартний час"
 
-#: dlls/tzres/tzres.rc:197
+#: dlls/tzres/tzres.rc:215
 msgid "Russian Daylight Time"
 msgstr "Російський літній час"
 
-#: dlls/tzres/tzres.rc:48
+#: dlls/tzres/tzres.rc:52
 msgid "Aus Central W. Standard Time"
 msgstr "Aus Central W. стандартний час"
 
-#: dlls/tzres/tzres.rc:49
+#: dlls/tzres/tzres.rc:53
 msgid "Aus Central W. Daylight Time"
 msgstr "Aus Central W. літній час"
 
-#: dlls/tzres/tzres.rc:194
+#: dlls/tzres/tzres.rc:206
 msgid "Romance Standard Time"
 msgstr "Романський стандартний час"
 
-#: dlls/tzres/tzres.rc:195
+#: dlls/tzres/tzres.rc:207
 msgid "Romance Daylight Time"
 msgstr "Романський літній час"
 
-#: dlls/tzres/tzres.rc:110
+#: dlls/tzres/tzres.rc:116
 msgid "Ekaterinburg Standard Time"
 msgstr "Стандартний час Єкатеринбурга"
 
-#: dlls/tzres/tzres.rc:111
+#: dlls/tzres/tzres.rc:117
 msgid "Ekaterinburg Daylight Time"
 msgstr "Літній час Єкатеринбурга"
 
-#: dlls/tzres/tzres.rc:216
+#: dlls/tzres/tzres.rc:210 dlls/tzres/tzres.rc:211
+msgid "Russia Time Zone 11"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:298
+#, fuzzy
+#| msgid "West Asia Standard Time"
+msgid "West Bank Standard Time"
+msgstr "Західноазіатський стандартний час"
+
+#: dlls/tzres/tzres.rc:299
+#, fuzzy
+#| msgid "West Asia Daylight Time"
+msgid "West Bank Daylight Time"
+msgstr "Західноазіатський літній час"
+
+#: dlls/tzres/tzres.rc:242
 msgid "Syria Standard Time"
 msgstr "Стандартний час Сирії"
 
-#: dlls/tzres/tzres.rc:217
+#: dlls/tzres/tzres.rc:243
 msgid "Syria Daylight Time"
 msgstr "Літній час Сирії"
 
-#: dlls/tzres/tzres.rc:46
+#: dlls/tzres/tzres.rc:50
 msgid "AUS Central Standard Time"
 msgstr "Центральний стандартний час AUS"
 
-#: dlls/tzres/tzres.rc:47
+#: dlls/tzres/tzres.rc:51
 msgid "AUS Central Daylight Time"
 msgstr "Центральний літній час AUS"
 
-#: dlls/tzres/tzres.rc:122
+#: dlls/tzres/tzres.rc:128
 msgid "Greenwich Standard Time"
 msgstr "Стандартний час за Грінвічем"
 
-#: dlls/tzres/tzres.rc:123
+#: dlls/tzres/tzres.rc:129
 msgid "Greenwich Daylight Time"
 msgstr "Літній час за Грінвічем"
 
-#: dlls/tzres/tzres.rc:230
+#: dlls/tzres/tzres.rc:262
 msgid "Ulaanbaatar Standard Time"
 msgstr "Стандартний час Улан-Батора"
 
-#: dlls/tzres/tzres.rc:231
+#: dlls/tzres/tzres.rc:263
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Літній час Улан-Батора"
 
-#: dlls/tzres/tzres.rc:134
+#: dlls/tzres/tzres.rc:184
+#, fuzzy
+#| msgid "Morocco Standard Time"
+msgid "Norfolk Standard Time"
+msgstr "Стандартний час Марокко"
+
+#: dlls/tzres/tzres.rc:185
+#, fuzzy
+#| msgid "Morocco Daylight Time"
+msgid "Norfolk Daylight Time"
+msgstr "Літній час Марокко"
+
+#: dlls/tzres/tzres.rc:140
 msgid "Israel Standard Time"
 msgstr "Стандартний час Ізраїлю"
 
-#: dlls/tzres/tzres.rc:135
+#: dlls/tzres/tzres.rc:141
 msgid "Israel Daylight Time"
 msgstr "Літній час Ізраїлю"
 
-#: dlls/tzres/tzres.rc:58
+#: dlls/tzres/tzres.rc:62
 msgid "Bangladesh Standard Time"
 msgstr "Стандартний час Бангладеш"
 
-#: dlls/tzres/tzres.rc:59
+#: dlls/tzres/tzres.rc:63
 msgid "Bangladesh Daylight Time"
 msgstr "Літній час Бангладеш"
 
-#: dlls/tzres/tzres.rc:200
+#: dlls/tzres/tzres.rc:218
 msgid "SA Pacific Standard Time"
 msgstr "SA Тихоокеанський стандартний час"
 
-#: dlls/tzres/tzres.rc:201
+#: dlls/tzres/tzres.rc:219
 msgid "SA Pacific Daylight Time"
 msgstr "SA Тихоокеанський літній час"
 
-#: dlls/tzres/tzres.rc:248
+#: dlls/tzres/tzres.rc:296
 msgid "West Asia Standard Time"
 msgstr "Західноазіатський стандартний час"
 
-#: dlls/tzres/tzres.rc:249
+#: dlls/tzres/tzres.rc:297
 msgid "West Asia Daylight Time"
 msgstr "Західноазіатський літній час"
 
@@ -11143,75 +11343,99 @@ msgstr "Аляскинський стандартний час"
 msgid "Alaskan Daylight Time"
 msgstr "Аляскинський літній час"
 
-#: dlls/tzres/tzres.rc:192
+#: dlls/tzres/tzres.rc:202
 msgid "Paraguay Standard Time"
 msgstr "Парагвайський стандартний час"
 
-#: dlls/tzres/tzres.rc:193
+#: dlls/tzres/tzres.rc:203
 msgid "Paraguay Daylight Time"
 msgstr "Парагвайський літній час"
 
-#: dlls/tzres/tzres.rc:94
+#: dlls/tzres/tzres.rc:98
 msgid "Dateline Standard Time"
 msgstr "Стандартний час у Дателіні"
 
-#: dlls/tzres/tzres.rc:95
+#: dlls/tzres/tzres.rc:99
 msgid "Dateline Daylight Time"
 msgstr "Літній час у Дателіні"
 
-#: dlls/tzres/tzres.rc:142
+#: dlls/tzres/tzres.rc:148
 msgid "Libya Standard Time"
 msgstr "Лівійський стандартний час"
 
-#: dlls/tzres/tzres.rc:143
+#: dlls/tzres/tzres.rc:149
 msgid "Libya Daylight Time"
 msgstr "Лівійський літній час"
 
-#: dlls/tzres/tzres.rc:56
+#: dlls/tzres/tzres.rc:60
 msgid "Bahia Standard Time"
 msgstr "Стандартний час Баїя"
 
-#: dlls/tzres/tzres.rc:57
+#: dlls/tzres/tzres.rc:61
 msgid "Bahia Daylight Time"
 msgstr "Літній час Баїя"
 
-#: dlls/tzres/tzres.rc:238
+#: dlls/tzres/tzres.rc:282
 msgid "Venezuela Standard Time"
 msgstr "Стандартний час Венесуели"
 
-#: dlls/tzres/tzres.rc:239
+#: dlls/tzres/tzres.rc:283
 msgid "Venezuela Daylight Time"
 msgstr "Літній час Венесуели"
 
-#: dlls/tzres/tzres.rc:62
+#: dlls/tzres/tzres.rc:66
 msgid "Bougainville Standard Time"
 msgstr "Стандартний час Бугенвіля"
 
-#: dlls/tzres/tzres.rc:63
+#: dlls/tzres/tzres.rc:67
 msgid "Bougainville Daylight Time"
 msgstr "Літній час Бугенвіля"
 
-#: dlls/tzres/tzres.rc:128
+#: dlls/tzres/tzres.rc:134
 msgid "Hawaiian Standard Time"
 msgstr "Гавайський стандартний час"
 
-#: dlls/tzres/tzres.rc:129
+#: dlls/tzres/tzres.rc:135
 msgid "Hawaiian Daylight Time"
 msgstr "Гавайський літній час"
 
-#: dlls/tzres/tzres.rc:208
+#: dlls/tzres/tzres.rc:232
 msgid "SE Asia Standard Time"
 msgstr "Південно-Східний Азіатський стандартний час"
 
-#: dlls/tzres/tzres.rc:209
+#: dlls/tzres/tzres.rc:233
 msgid "SE Asia Daylight Time"
 msgstr "Південно-Східний Азіатський літній час"
 
-#: dlls/tzres/tzres.rc:174
+#: dlls/tzres/tzres.rc:204
+#, fuzzy
+#| msgid "Jordan Standard Time"
+msgid "Qyzylorda Standard Time"
+msgstr "Йорданський стандартний час"
+
+#: dlls/tzres/tzres.rc:205
+#, fuzzy
+#| msgid "Jordan Daylight Time"
+msgid "Qyzylorda Daylight Time"
+msgstr "Йорданський літній час"
+
+#: dlls/tzres/tzres.rc:294
+#, fuzzy
+#| msgid "Tonga Standard Time"
+msgid "W. Mongolia Standard Time"
+msgstr "Стандартний час Королівства Тонга"
+
+#: dlls/tzres/tzres.rc:295
+#, fuzzy
+#| msgid "Tonga Daylight Time"
+msgid "W. Mongolia Daylight Time"
+msgstr "Літній час Королівства Тонга"
+
+#: dlls/tzres/tzres.rc:180
 msgid "New Zealand Standard Time"
 msgstr "Стандартний час Нової Зеландії"
 
-#: dlls/tzres/tzres.rc:175
+#: dlls/tzres/tzres.rc:181
 msgid "New Zealand Daylight Time"
 msgstr "Літній час Нової Зеландії"
 
@@ -11223,163 +11447,179 @@ msgstr "Алеутський стандартний час"
 msgid "Aleutian Daylight Time"
 msgstr "Алеутський літній час"
 
-#: dlls/tzres/tzres.rc:76
+#: dlls/tzres/tzres.rc:192
+#, fuzzy
+#| msgid "Yakutsk Standard Time"
+msgid "Omsk Standard Time"
+msgstr "Якутський стандартний час"
+
+#: dlls/tzres/tzres.rc:193
+#, fuzzy
+#| msgid "Yakutsk Daylight Time"
+msgid "Omsk Daylight Time"
+msgstr "Якутський літній час"
+
+#: dlls/tzres/tzres.rc:80
 msgid "Central Brazilian Standard Time"
 msgstr "Центральний бразильський стандартний час"
 
-#: dlls/tzres/tzres.rc:77
+#: dlls/tzres/tzres.rc:81
 msgid "Central Brazilian Daylight Time"
 msgstr "Центральний бразильський літній час"
 
-#: dlls/tzres/tzres.rc:60
+#: dlls/tzres/tzres.rc:64
 msgid "Belarus Standard Time"
 msgstr "Білоруський стандартний час"
 
-#: dlls/tzres/tzres.rc:61
+#: dlls/tzres/tzres.rc:65
 msgid "Belarus Daylight Time"
 msgstr "Білоруський літній час"
 
-#: dlls/tzres/tzres.rc:202
+#: dlls/tzres/tzres.rc:220
 msgid "SA Western Standard Time"
 msgstr "SA Західний стандартний час"
 
-#: dlls/tzres/tzres.rc:203
+#: dlls/tzres/tzres.rc:221
 msgid "SA Western Daylight Time"
 msgstr "SA Західний літній час"
 
-#: dlls/tzres/tzres.rc:120
+#: dlls/tzres/tzres.rc:126
 msgid "Greenland Standard Time"
 msgstr "Стандартний час Гренландії"
 
-#: dlls/tzres/tzres.rc:121
+#: dlls/tzres/tzres.rc:127
 msgid "Greenland Daylight Time"
 msgstr "Літній час Гренландії"
 
-#: dlls/tzres/tzres.rc:102
+#: dlls/tzres/tzres.rc:108
 msgid "Easter Island Standard Time"
 msgstr "Стандартний час острова Пасхи"
 
-#: dlls/tzres/tzres.rc:103
+#: dlls/tzres/tzres.rc:109
 msgid "Easter Island Daylight Time"
 msgstr "Літній час острова Пасхи"
 
-#: dlls/tzres/tzres.rc:108
+#: dlls/tzres/tzres.rc:208 dlls/tzres/tzres.rc:209
+msgid "Russia Time Zone 10"
+msgstr ""
+
+#: dlls/tzres/tzres.rc:114
 msgid "Egypt Standard Time"
 msgstr "Єгипетський стандартний час"
 
-#: dlls/tzres/tzres.rc:109
+#: dlls/tzres/tzres.rc:115
 msgid "Egypt Daylight Time"
 msgstr "Єгипетський літній час"
 
-#: dlls/tzres/tzres.rc:106
+#: dlls/tzres/tzres.rc:112
 msgid "Eastern Standard Time (Mexico)"
 msgstr "Східний стандартний час (Мексика)"
 
-#: dlls/tzres/tzres.rc:107
+#: dlls/tzres/tzres.rc:113
 msgid "Eastern Daylight Time (Mexico)"
 msgstr "Східний літній час (Мексика)"
 
-#: dlls/tzres/tzres.rc:154
+#: dlls/tzres/tzres.rc:160
 msgid "Mauritius Standard Time"
 msgstr "Стандартний час Маврикія"
 
-#: dlls/tzres/tzres.rc:155
+#: dlls/tzres/tzres.rc:161
 msgid "Mauritius Daylight Time"
 msgstr "Літній час Маврикія"
 
-#: dlls/tzres/tzres.rc:240
+#: dlls/tzres/tzres.rc:284
 msgid "Vladivostok Standard Time"
 msgstr "Стандартний час Владивостока"
 
-#: dlls/tzres/tzres.rc:241
+#: dlls/tzres/tzres.rc:285
 msgid "Vladivostok Daylight Time"
 msgstr "Літній час Владивостока"
 
-#: dlls/tzres/tzres.rc:210
+#: dlls/tzres/tzres.rc:234
 msgid "Singapore Standard Time"
 msgstr "Стандартний час Сінгапуру"
 
-#: dlls/tzres/tzres.rc:211
+#: dlls/tzres/tzres.rc:235
 msgid "Singapore Daylight Time"
 msgstr "Літній час Сінгапуру"
 
-#: dlls/tzres/tzres.rc:140
+#: dlls/tzres/tzres.rc:146
 msgid "Korea Standard Time"
 msgstr "Корейський стандартний час"
 
-#: dlls/tzres/tzres.rc:141
+#: dlls/tzres/tzres.rc:147
 msgid "Korea Daylight Time"
 msgstr "Корейський літній час"
 
-#: dlls/tzres/tzres.rc:88
+#: dlls/tzres/tzres.rc:92
 msgid "Chatham Islands Standard Time"
 msgstr "Стандартний час островів Чатем"
 
-#: dlls/tzres/tzres.rc:89
+#: dlls/tzres/tzres.rc:93
 msgid "Chatham Islands Daylight Time"
 msgstr "Літній час островів Чатем"
 
-#: dlls/tzres/tzres.rc:96
+#: dlls/tzres/tzres.rc:100
 msgid "E. Africa Standard Time"
 msgstr "E. Стандартний час в Африці"
 
-#: dlls/tzres/tzres.rc:97
+#: dlls/tzres/tzres.rc:101
 msgid "E. Africa Daylight Time"
 msgstr "E. Літній час в Африці"
 
-#: dlls/tzres/tzres.rc:114
+#: dlls/tzres/tzres.rc:120
 msgid "FLE Standard Time"
 msgstr "Стандартний час FLE"
 
-#: dlls/tzres/tzres.rc:115
+#: dlls/tzres/tzres.rc:121
 msgid "FLE Daylight Time"
 msgstr "Літній час FLE"
 
-#: dlls/tzres/tzres.rc:100
+#: dlls/tzres/tzres.rc:106
 msgid "E. South America Standard Time"
 msgstr "E. Стандартний час Південної Америки"
 
-#: dlls/tzres/tzres.rc:101
+#: dlls/tzres/tzres.rc:107
 msgid "E. South America Daylight Time"
 msgstr "E. Літній час Південної Америки"
 
-#: dlls/tzres/tzres.rc:82
+#: dlls/tzres/tzres.rc:86
 msgid "Central Pacific Standard Time"
 msgstr "Центральний тихоокеанський стандартний час"
 
-#: dlls/tzres/tzres.rc:83
+#: dlls/tzres/tzres.rc:87
 msgid "Central Pacific Daylight Time"
 msgstr "Центральний тихоокеанський літній час"
 
-#: dlls/tzres/tzres.rc:244
+#: dlls/tzres/tzres.rc:290
 msgid "W. Central Africa Standard Time"
 msgstr "В. Стандартний час у Центральній Африці"
 
-#: dlls/tzres/tzres.rc:245
+#: dlls/tzres/tzres.rc:291
 msgid "W. Central Africa Daylight Time"
 msgstr "В. Літній час у Центральній Африці"
 
-#: dlls/tzres/tzres.rc:184
+#: dlls/tzres/tzres.rc:194
 msgid "Pacific SA Standard Time"
 msgstr "Тихоокеанський стандартний час SA"
 
-#: dlls/tzres/tzres.rc:185
+#: dlls/tzres/tzres.rc:195
 msgid "Pacific SA Daylight Time"
 msgstr "Тихоокеанський літній час SA"
 
-#: dlls/tzres/tzres.rc:98
+#: dlls/tzres/tzres.rc:102
 msgid "E. Australia Standard Time"
 msgstr "E. Стандартний час в Австралії"
 
-#: dlls/tzres/tzres.rc:99
+#: dlls/tzres/tzres.rc:103
 msgid "E. Australia Daylight Time"
 msgstr "E. Літній час в Австралії"
 
-#: dlls/tzres/tzres.rc:242
+#: dlls/tzres/tzres.rc:288
 msgid "W. Australia Standard Time"
 msgstr "В. Стандартний час в Австралії"
 
-#: dlls/tzres/tzres.rc:243
+#: dlls/tzres/tzres.rc:289
 msgid "W. Australia Daylight Time"
 msgstr "В. Літній час в Австралії"
 

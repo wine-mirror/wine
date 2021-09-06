@@ -949,16 +949,16 @@ static void test_GetTimeZoneInformationForYear(void)
         { L"Greenland Standard Time",     2015,  180, 0, -60, 10, 24, 3, 28 },
         { L"Greenland Standard Time",     2016,  180, 0, -60, 10, 29, 3, 26 },
         { L"Greenland Standard Time",     2017,  180, 0, -60, 10, 28, 3, 25 },
-        { L"Easter Island Standard Time", 2014,  360, 0, -60,  4, 26, 9,  6, 0, 1, 0, 1, 1, 1, 1, 1 },
-        { L"Easter Island Standard Time", 2015,  300, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
-        { L"Easter Island Standard Time", 2016,  360, 0, -60,  5, 14, 8, 13, 0, 1, 0, 1, 1, 1, 1, 1 },
-        { L"Egypt Standard Time",         2013, -120, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
-        { L"Egypt Standard Time",         2014, -120, 0, -60,  9, 25, 5, 15, 0, 0, 0, 0, 1, 1, 1, 1 },
-        { L"Egypt Standard Time",         2015, -120, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
-        { L"Egypt Standard Time",         2016, -120, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
-        { L"Altai Standard Time",         2016, -420, 0,  60,  3, 27, 1,  1, 1 },
-        { L"Altai Standard Time",         2017, -420, 0, -60,  0,  0, 0,  0, 1 },
-        { L"Altai Standard Time",         2018, -420, 0, -60,  0,  0, 0,  0, 1 },
+        { L"Easter Island Standard Time", 2014,  360, 0, -60,  4, 26, 9,  6 },
+        { L"Easter Island Standard Time", 2015,  300, 0, -60,  0,  0, 0,  0 },
+        { L"Easter Island Standard Time", 2016,  360, 0, -60,  5, 14, 8, 13 },
+        { L"Egypt Standard Time",         2013, -120, 0, -60,  0,  0, 0,  0 },
+        { L"Egypt Standard Time",         2014, -120, 0, -60,  9, 25, 5, 15, 0, 0, 0, 0, 0, 1, 0, 1 },
+        { L"Egypt Standard Time",         2015, -120, 0, -60,  0,  0, 0,  0 },
+        { L"Egypt Standard Time",         2016, -120, 0, -60,  0,  0, 0,  0 },
+        { L"Altai Standard Time",         2016, -420, 0,  60,  3, 27, 1,  1, 0, 1, 0, 1, 1, 1, 1, 1 },
+        { L"Altai Standard Time",         2017, -420, 0, -60,  0,  0, 0,  0 },
+        { L"Altai Standard Time",         2018, -420, 0, -60,  0,  0, 0,  0 },
     };
 
     if (!pGetTimeZoneInformationForYear || !pGetDynamicTimeZoneInformation)
@@ -1013,7 +1013,7 @@ static void test_GetTimeZoneInformationForYear(void)
     ret = pGetTimeZoneInformationForYear(2015, &dyn_tzinfo, &tzinfo);
     if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
         broken_test = TRUE;
-    todo_wine ok(ret == TRUE || broken(broken_test) /* before 10 1809 */,
+    ok(ret == TRUE || broken(broken_test) /* before 10 1809 */,
         "GetTimeZoneInformationForYear err %u\n", GetLastError());
 
     if (broken(broken_test))
