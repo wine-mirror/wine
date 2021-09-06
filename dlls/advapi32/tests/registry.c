@@ -4420,7 +4420,7 @@ static void test_EnumDynamicTimeZoneInformation(void)
                 memset(name, 0, sizeof(name));
                 status = pRegLoadMUIStringW(subkey, L"MUI_Display", name, size, &size, 0, sysdir);
                 /* recently added time zones may not have MUI strings */
-                todo_wine ok((status == ERROR_SUCCESS && *name) ||
+                ok((status == ERROR_SUCCESS && *name) ||
                    broken(status == ERROR_RESOURCE_TYPE_NOT_FOUND) /* Win10 1809 32-bit */ ||
                    broken(status == ERROR_MUI_FILE_NOT_FOUND) /* Win10 1809 64-bit */,
                    "status %d MUI_Display %s\n", status, wine_dbgstr_w(name));
