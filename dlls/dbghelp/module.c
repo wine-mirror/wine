@@ -786,7 +786,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Data)
         FIXME("Unsupported load data parameter %p for %s\n",
               Data, debugstr_w(wImageName));
-    if (!validate_addr64(BaseOfDll)) return 0;
 
     if (!(pcs = process_find_by_handle(hProcess))) return 0;
 
@@ -802,6 +801,8 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     }
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08x for %s\n", Flags, debugstr_w(wImageName));
+
+    if (!validate_addr64(BaseOfDll)) return 0;
 
     pcs->loader->synchronize_module_list(pcs);
 
@@ -923,7 +924,6 @@ BOOL WINAPI SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll)
 
     pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
-    if (!validate_addr64(BaseOfDll)) return FALSE;
     module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
     if (!module) return FALSE;
     return module_remove(pcs, module);
