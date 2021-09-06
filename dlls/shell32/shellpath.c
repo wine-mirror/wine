@@ -4202,7 +4202,7 @@ static void _SHCreateMyDocumentsSubDirs(const UINT * aidsMyStuff, const UINT num
  *  aidsMyStuff [I] Array of IDS_* resources to create sub dirs for.
  *  aids_num    [I] Number of elements in aidsMyStuff.
  */
-static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UINT aids_num)
+static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UINT aids_num, const WCHAR *path)
 {
     static const char * const xdg_dirs[] = { "DOCUMENTS" };
     static const unsigned int num = ARRAY_SIZE(xdg_dirs);
@@ -4212,7 +4212,7 @@ static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UIN
     char ** xdg_results;
 
     /* Get the unix path of 'My Documents'. */
-    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_DONT_VERIFY);
+    pszPersonal = wine_get_unix_file_name( path );
     if (!pszPersonal) return;
 
     _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
@@ -4284,7 +4284,7 @@ static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UIN
  * PARAMS
  *  nFolder [I] CSIDL identifying the folder.
  */
-static void _SHCreateMyStuffSymbolicLink(int nFolder)
+static void _SHCreateMyStuffSymbolicLink(int nFolder, const WCHAR *path)
 {
     static const UINT aidsMyStuff[] = {
         IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
@@ -4328,8 +4328,7 @@ static void _SHCreateMyStuffSymbolicLink(int nFolder)
 
     while (1)
     {
-        /* Get the current 'My Whatever' folder unix path. */
-        pszMyStuff = _SHGetFolderUnixPath(acsidlMyStuff[i]|CSIDL_FLAG_DONT_VERIFY);
+        pszMyStuff = wine_get_unix_file_name( path );
         if (!pszMyStuff) break;
 
         while (1)
@@ -4375,7 +4374,7 @@ static void _SHCreateMyStuffSymbolicLink(int nFolder)
  * Sets up a symbolic link for the 'Desktop' shell folder to point into the
  * users home directory.
  */
-static void _SHCreateDesktopSymbolicLink(void)
+static void _SHCreateDesktopSymbolicLink( const WCHAR *path )
 {
     static const char * const xdg_dirs[] = { "DESKTOP" };
     static const unsigned int num = ARRAY_SIZE(xdg_dirs);
@@ -4405,7 +4404,7 @@ static void _SHCreateDesktopSymbolicLink(void)
         (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
         !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode)))
     {
-        pszDesktop = _SHGetFolderUnixPath(CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_DONT_VERIFY);
+        pszDesktop = wine_get_unix_file_name( path );
         if (pszDesktop)
         {
             if (xdg_desktop_dir)
@@ -4428,7 +4427,7 @@ static void _SHCreateDesktopSymbolicLink(void)
  * PARAMS
  *  nFolder [I] CSIDL identifying the folder.
  */
-static void _SHCreateSymbolicLink(int nFolder)
+static void _SHCreateSymbolicLink(int nFolder, const WCHAR *path)
 {
     static const UINT aidsMyStuff[] = {
         IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
@@ -4437,17 +4436,17 @@ static void _SHCreateSymbolicLink(int nFolder)
 
     switch (folder) {
         case CSIDL_PERSONAL:
-            _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
+            _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff), path);
             break;
         case CSIDL_MYPICTURES:
         case CSIDL_MYVIDEO:
         case CSIDL_MYMUSIC:
         case CSIDL_DOWNLOADS:
         case CSIDL_TEMPLATES:
-            _SHCreateMyStuffSymbolicLink(folder);
+            _SHCreateMyStuffSymbolicLink(folder, path);
             break;
         case CSIDL_DESKTOPDIRECTORY:
-            _SHCreateDesktopSymbolicLink();
+            _SHCreateDesktopSymbolicLink( path );
             break;
     }
 }
@@ -4642,7 +4641,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
 
     /* create symbolic links rather than directories for specific
      * user shell folders */
-    _SHCreateSymbolicLink(folder);
+    _SHCreateSymbolicLink(folder, szBuildPath);
 
     /* create directory/directories */
     ret = SHCreateDirectoryExW(hwndOwner, szBuildPath, NULL);
