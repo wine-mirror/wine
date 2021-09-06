@@ -443,6 +443,7 @@ typedef struct macdrv_event {
             CGRect  frame;
             int     fullscreen;
             int     in_resize;
+            int     skip_size_move_loop;
         }                                           window_frame_changed;
         struct {
             unsigned long   serial;
