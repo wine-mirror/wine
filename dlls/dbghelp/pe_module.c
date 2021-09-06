@@ -815,7 +815,8 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
 
         module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
                             modfmt->u.pe_info->fmap.u.pe.file_header.TimeDateStamp,
-                            PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, CheckSum));
+                            PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, CheckSum),
+                            modfmt->u.pe_info->fmap.u.pe.file_header.Machine);
         if (module)
         {
             module->real_path = builtin.path;
@@ -877,7 +878,8 @@ struct module* pe_load_builtin_module(struct process* pcs, const WCHAR* name,
             if (!size) size = nth.OptionalHeader.SizeOfImage;
             module = module_new(pcs, name, DMT_PE, FALSE, base, size,
                                 nth.FileHeader.TimeDateStamp,
-                                nth.OptionalHeader.CheckSum);
+                                nth.OptionalHeader.CheckSum,
+                                nth.FileHeader.Machine);
         }
     }
     return module;

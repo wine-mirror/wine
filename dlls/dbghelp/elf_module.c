@@ -121,6 +121,21 @@ struct elf_module_info
 
 #define ELF_AT_SYSINFO_EHDR    33
 
+static DWORD elf_get_machine(unsigned mach)
+{
+    switch (mach)
+    {
+    default:
+        FIXME("No mapping yet for ELF e_machine %u\n", mach);
+        /* fall through */
+    case /*EM_NONE*/      0: return IMAGE_FILE_MACHINE_UNKNOWN;
+    case /*EM_386*/       3: return IMAGE_FILE_MACHINE_I386;
+    case /*EM_ARM*/      40: return IMAGE_FILE_MACHINE_ARMNT;
+    case /*EM_X86_64*/   62: return IMAGE_FILE_MACHINE_AMD64;
+    case /*EM_AARCH64*/ 183: return IMAGE_FILE_MACHINE_ARM64;
+    }
+}
+
 /******************************************************************
  *		elf_map_section
  *
@@ -1227,7 +1242,8 @@ static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
                           sizeof(struct module_format) + sizeof(struct elf_module_info));
         if (!modfmt) return FALSE;
         elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE, modbase,
-                                      fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.handle));
+                                      fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.handle),
+                                      elf_get_machine(fmap->u.elf.elfhdr.e_machine));
         if (!elf_info->module)
         {
             HeapFree(GetProcessHeap(), 0, modfmt);

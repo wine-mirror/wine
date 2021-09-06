@@ -1479,7 +1479,8 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
         if (!load_addr)
             load_addr = fmap.u.macho.segs_start;
         macho_info->module = module_new(pcs, filename, DMT_MACHO, FALSE, load_addr,
-                                        fmap.u.macho.segs_size, 0, calc_crc32(fmap.u.macho.handle));
+                                        fmap.u.macho.segs_size, 0, calc_crc32(fmap.u.macho.handle),
+                                        IMAGE_FILE_MACHINE_UNKNOWN);
         if (!macho_info->module)
         {
             HeapFree(GetProcessHeap(), 0, modfmt);

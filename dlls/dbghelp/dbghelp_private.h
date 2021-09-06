@@ -636,7 +636,7 @@ extern struct module*
                     module_new(struct process* pcs, const WCHAR* name,
                                enum module_type type, BOOL virtual,
                                DWORD64 addr, DWORD64 size,
-                               ULONG_PTR stamp, ULONG_PTR checksum) DECLSPEC_HIDDEN;
+                               ULONG_PTR stamp, ULONG_PTR checksum, WORD machine) DECLSPEC_HIDDEN;
 extern struct module*
                     module_get_containee(const struct process* pcs,
                                          const struct module* inner) DECLSPEC_HIDDEN;

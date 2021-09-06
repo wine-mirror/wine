@@ -185,7 +185,7 @@ static const char*      get_module_type(enum module_type type, BOOL virtual)
 struct module* module_new(struct process* pcs, const WCHAR* name,
                           enum module_type type, BOOL virtual,
                           DWORD64 mod_addr, DWORD64 size,
-                          ULONG_PTR stamp, ULONG_PTR checksum)
+                          ULONG_PTR stamp, ULONG_PTR checksum, WORD machine)
 {
     struct module*      module;
     unsigned            i;
@@ -229,7 +229,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->module.TypeInfo = FALSE;
     module->module.SourceIndexed = FALSE;
     module->module.Publics = FALSE;
-    module->module.MachineType = 0;
+    module->module.MachineType = machine;
     module->module.Reserved = 0;
 
     module->reloc_delta       = 0;
@@ -792,7 +792,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Flags & SLMFLAG_VIRTUAL)
     {
         if (!wImageName) return 0;
-        module = module_new(pcs, wImageName, DMT_PE, TRUE, BaseOfDll, SizeOfDll, 0, 0);
+        module = module_new(pcs, wImageName, DMT_PE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
         if (!module) return 0;
         if (wModuleName) module_set_module(module, wModuleName);
         module->module.SymType = SymVirtual;
