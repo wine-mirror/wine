@@ -1098,7 +1098,6 @@ static void udev_add_device(struct udev_device *dev)
         .input = -1,
     };
     struct platform_private *private;
-    DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
     int fd;
@@ -1182,9 +1181,10 @@ static void udev_add_device(struct udev_device *dev)
         EnterCriticalSection(&udev_cs);
         list_add_tail(&device_list, &private->unix_device.entry);
         LeaveCriticalSection(&udev_cs);
+        private->udev_device = udev_device_ref(dev);
+        private->device_fd = fd;
 
-        device = bus_create_hid_device(&desc, &private->unix_device);
-        if (!device) HeapFree(GetProcessHeap(), 0, private);
+        bus_event_queue_device_created(&event_queue, &private->unix_device, &desc);
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
@@ -1195,23 +1195,12 @@ static void udev_add_device(struct udev_device *dev)
         EnterCriticalSection(&udev_cs);
         list_add_tail(&device_list, &private->unix_device.entry);
         LeaveCriticalSection(&udev_cs);
-
-        device = bus_create_hid_device(&desc, &private->unix_device);
-        if (!device) HeapFree(GetProcessHeap(), 0, private);
-    }
-#endif
-
-    if (device)
-    {
         private->udev_device = udev_device_ref(dev);
         private->device_fd = fd;
-        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+
+        bus_event_queue_device_created(&event_queue, &private->unix_device, &desc);
     }
-    else
-    {
-        WARN("Ignoring device %s with subsystem %s\n", debugstr_a(devnode), subsystem);
-        close(fd);
-    }
+#endif
 }
 
 static void try_remove_device(struct udev_device *dev)
