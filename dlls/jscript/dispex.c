@@ -1881,7 +1881,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
         if(is_object_instance(val) && get_object(val))
             prot = iface_to_jsdisp(get_object(val));
         else
-            prot = ctx->object_prototype;
+            prot = jsdisp_addref(ctx->object_prototype);
 
         jsval_release(val);
     }
