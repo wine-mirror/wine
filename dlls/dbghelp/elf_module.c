@@ -1068,8 +1068,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         lret = dwarf2_parse(module, module->reloc_delta, thunks, fmap);
         ret = ret || lret;
     }
-    if (wcsstr(module->module.ModuleName, S_ElfW) ||
-        !wcscmp(module->module.ModuleName, S_WineLoaderW))
+    if (wcsstr(module->modulename, S_ElfW) || !wcscmp(module->modulename, S_WineLoaderW))
     {
         /* add the thunks for native libraries */
         if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))

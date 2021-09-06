@@ -271,7 +271,7 @@ struct module* module_find_by_nameW(const struct process* pcs, const WCHAR* name
 
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (!wcsicmp(name, module->module.ModuleName)) return module;
+        if (!wcsicmp(name, module->modulename)) return module;
     }
     SetLastError(ERROR_INVALID_NAME);
     return NULL;

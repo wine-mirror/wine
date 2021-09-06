@@ -1089,7 +1089,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
         {
             if (pair.requested->type == DMT_PE && module_get_debug(&pair))
             {
-                if (SymMatchStringW(pair.requested->module.ModuleName, mod, FALSE) &&
+                if (SymMatchStringW(pair.requested->modulename, mod, FALSE) &&
                     symt_enum_module(&pair, bang + 1, se))
                     break;
             }
@@ -1104,7 +1104,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
                     !module_get_containee(pair.pcs, pair.requested) &&
                     module_get_debug(&pair))
                 {
-                    if (SymMatchStringW(pair.requested->module.ModuleName, mod, FALSE) &&
+                    if (SymMatchStringW(pair.requested->modulename, mod, FALSE) &&
                         symt_enum_module(&pair, bang + 1, se))
                     break;
                 }
