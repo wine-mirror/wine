@@ -1514,7 +1514,7 @@ static void test_InternetErrorDlg(void)
 
     for(i = INTERNET_ERROR_BASE; i < INTERNET_ERROR_LAST; i++)
     {
-        DWORD expected = ERROR_CANCELLED, test_flags = 0, j;
+        DWORD expected = ERROR_CANCELLED, expected2 = ERROR_SUCCESS, test_flags = 0, j;
 
         for (j = 0; j < ARRAY_SIZE(no_ui_res); ++j)
         {
@@ -1522,6 +1522,7 @@ static void test_InternetErrorDlg(void)
             {
                 test_flags = no_ui_res[j].test_flags;
                 expected = no_ui_res[j].res;
+                expected2 = no_ui_res[j].res;
             }
         }
 
@@ -1551,12 +1552,17 @@ static void test_InternetErrorDlg(void)
         {
         case ERROR_INTERNET_CHG_POST_IS_NON_SECURE:
             if (broken(res == ERROR_CANCELLED)) /* before win10 returns ERROR_CANCELLED */
+            {
                 expected = ERROR_CANCELLED;
+                expected2 = ERROR_CANCELLED;
+            }
             break;
         default:
-            if(broken((expected == ERROR_CANCELLED || i == ERROR_INTERNET_CHG_POST_IS_NON_SECURE) &&
-                      res == ERROR_NOT_SUPPORTED)) /* XP, Win7, Win8 */
+            if(broken(expected == ERROR_CANCELLED && res == ERROR_NOT_SUPPORTED)) /* XP, Win7, Win8 */
+            {
                 expected = ERROR_NOT_SUPPORTED;
+                expected2 = ERROR_SUCCESS;
+            }
             break;
         }
 
@@ -1572,10 +1578,24 @@ static void test_InternetErrorDlg(void)
                      i == ERROR_INTERNET_CHG_POST_IS_NON_SECURE)
             ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
 
+        res = InternetErrorDlg(NULL, req, i, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
+        todo_wine_if(i != ERROR_INTERNET_INCORRECT_PASSWORD && i != ERROR_INTERNET_SEC_CERT_DATE_INVALID &&
+                     i != ERROR_INTERNET_SEC_CERT_CN_INVALID && i != ERROR_INTERNET_INVALID_CA &&
+                     i != ERROR_INTERNET_SEC_CERT_ERRORS && i != ERROR_INTERNET_SEC_CERT_REV_FAILED &&
+                     i != ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR && i != ERROR_INTERNET_POST_IS_NON_SECURE &&
+                     i != ERROR_INTERNET_MIXED_SECURITY &&
+                     i != ERROR_INTERNET_POST_IS_NON_SECURE && i != ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED &&
+                     i != ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR && i != ERROR_INTERNET_INSERT_CDROM &&
+                     i != ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE && i != ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT &&
+                     i != ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT && i != ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION)
+            ok(res == expected2, "Got %d, expected %d (%d)\n", res, expected2, i);
 
         /* With a null req */
         if(test_flags & FLAG_NEEDREQ)
+        {
             expected = ERROR_INVALID_PARAMETER;
+            expected2 = ERROR_INVALID_PARAMETER;
+        }
 
         res = InternetErrorDlg(hwnd, NULL, i, FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
         todo_wine_if(i == ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION ||
@@ -1585,7 +1605,26 @@ static void test_InternetErrorDlg(void)
                      i == ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR ||
                      i == ERROR_INTERNET_CHG_POST_IS_NON_SECURE)
             ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+
+        res = InternetErrorDlg(NULL, NULL, i, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
+        todo_wine_if(i != ERROR_INTERNET_SEC_CERT_DATE_INVALID && i != ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR &&
+                     i != ERROR_INTERNET_SEC_CERT_CN_INVALID && i != ERROR_INTERNET_INVALID_CA &&
+                     i != ERROR_INTERNET_SEC_CERT_ERRORS && i != ERROR_INTERNET_SEC_CERT_REV_FAILED &&
+                     i != ERROR_INTERNET_MIXED_SECURITY && i != ERROR_INTERNET_POST_IS_NON_SECURE &&
+                     i != ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR &&
+                     i != ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE && i != ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT &&
+                     i != ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT &&
+                     i != ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION)
+            ok(res == expected2, "Got %d, expected %d (%d)\n", res, expected2, i);
     }
+
+    res = InternetErrorDlg(NULL, req, 0xdeadbeef, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
+todo_wine
+    ok(res == ERROR_SUCCESS, "Got %d, expected ERROR_SUCCESS\n", res);
+
+    res = InternetErrorDlg(NULL, NULL, 0xdeadbeef, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
+todo_wine
+    ok(res == ERROR_SUCCESS, "Got %d, expected ERROR_SUCCESS\n", res);
 
     res = InternetCloseHandle(req);
     ok(res == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
