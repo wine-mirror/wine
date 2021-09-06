@@ -297,7 +297,6 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         .serial = {'0','0','0','0',0},
     };
     struct platform_private *private;
-    DEVICE_OBJECT *device;
     CFStringRef str = NULL;
 
     desc.vid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVendorIDKey)));
@@ -364,15 +363,10 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
         return;
     private->unix_device.vtbl = &iohid_device_vtbl;
+    private->device = IOHIDDevice;
+    private->buffer = NULL;
 
-    device = bus_create_hid_device(&desc, &private->unix_device);
-    if (!device) HeapFree(GetProcessHeap(), 0, private);
-    else
-    {
-        private->device = IOHIDDevice;
-        private->buffer = NULL;
-        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-    }
+    bus_event_queue_device_created(&event_queue, &private->unix_device, &desc);
 }
 
 static void handle_RemovalCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
