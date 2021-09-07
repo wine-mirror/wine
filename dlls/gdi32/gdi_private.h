@@ -224,4 +224,7 @@ extern BOOL EMFDC_StrokeAndFillPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StrokePath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_WidenPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 
+extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
+                                   UINT *usage ) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_GDI_PRIVATE_H */

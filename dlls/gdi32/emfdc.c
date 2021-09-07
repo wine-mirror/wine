@@ -190,10 +190,9 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
             char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
             BITMAPINFO *info = (BITMAPINFO *)buffer;
             DWORD info_size;
-            void *bits;
             UINT usage;
 
-            if (!get_brush_bitmap_info( brush, info, &bits, &usage )) break;
+            if (!get_brush_bitmap_info( brush, info, NULL, &usage )) break;
             info_size = get_dib_info_size( info, usage );
 
             emr = HeapAlloc( GetProcessHeap(), 0,
@@ -232,7 +231,7 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
             emr->emr.nSize = emr->offBits + emr->cbBits;
 
             memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
-            memcpy( (BYTE *)emr + emr->offBits, bits, emr->cbBits );
+            get_brush_bitmap_info( brush, NULL, (char *)emr + emr->offBits, NULL );
 
             if (!emfdc_record( emf, &emr->emr )) index = 0;
             HeapFree( GetProcessHeap(), 0, emr );

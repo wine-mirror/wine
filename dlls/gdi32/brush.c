@@ -140,7 +140,7 @@ void free_brush_pattern( struct brush_pattern *pattern )
     HeapFree( GetProcessHeap(), 0, pattern->info );
 }
 
-BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *usage )
+BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage )
 {
     BRUSHOBJ *brush;
     BOOL ret = FALSE;
@@ -149,11 +149,34 @@ BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *
 
     if (brush->pattern.info)
     {
-        memcpy( info, brush->pattern.info, get_dib_info_size( brush->pattern.info, brush->pattern.usage ));
-        if (info->bmiHeader.biBitCount <= 8 && !info->bmiHeader.biClrUsed)
-            fill_default_color_table( info );
-        *bits = brush->pattern.bits.ptr;
-        *usage = brush->pattern.usage;
+        if (info)
+        {
+            memcpy( info, brush->pattern.info,
+                    get_dib_info_size( brush->pattern.info, brush->pattern.usage ));
+            if (info->bmiHeader.biBitCount <= 8 && !info->bmiHeader.biClrUsed)
+                fill_default_color_table( info );
+            if (info->bmiHeader.biHeight < 0)
+                info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
+        }
+        if (bits)
+        {
+            /* always return a bottom-up DIB */
+            if (brush->pattern.info->bmiHeader.biHeight < 0)
+            {
+                unsigned int i, width_bytes, height = -brush->pattern.info->bmiHeader.biHeight;
+                char *dst_ptr;
+
+                width_bytes = get_dib_stride( brush->pattern.info->bmiHeader.biWidth,
+                                              brush->pattern.info->bmiHeader.biBitCount );
+                dst_ptr = (char *)bits + (height - 1) * width_bytes;
+                for (i = 0; i < height; i++, dst_ptr -= width_bytes)
+                    memcpy( dst_ptr, (char *)brush->pattern.bits.ptr + i * width_bytes,
+                            width_bytes );
+            }
+            else memcpy( bits, brush->pattern.bits.ptr,
+                         brush->pattern.info->bmiHeader.biSizeImage );
+        }
+        if (usage) *usage = brush->pattern.usage;
         ret = TRUE;
     }
     GDI_ReleaseObj( handle );
