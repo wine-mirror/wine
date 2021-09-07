@@ -22,7 +22,6 @@
 
 #include <stdarg.h>
 
-#include "ntgdi_private.h"
 #include "gdi_private.h"
 #include "winnls.h"
 #include "wine/wingdi16.h"

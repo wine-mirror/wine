@@ -21,9 +21,9 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 
 #include "gdi_private.h"
-#include "ntgdi_private.h"
 #include "winnls.h"
 
 #include "wine/debug.h"

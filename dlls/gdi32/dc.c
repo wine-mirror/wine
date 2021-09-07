@@ -30,7 +30,7 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "ntgdi_private.h"
-#include "gdi_private.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);

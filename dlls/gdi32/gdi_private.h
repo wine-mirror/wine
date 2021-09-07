@@ -23,6 +23,7 @@
 #define __WINE_GDI_PRIVATE_H
 
 #include <stdarg.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -272,5 +273,20 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,
 
 extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
                                    UINT *usage ) DECLSPEC_HIDDEN;
+
+static inline int get_dib_stride( int width, int bpp )
+{
+    return ((width * bpp + 31) >> 3) & ~3;
+}
+
+/* only for use on sanitized BITMAPINFO structures */
+static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
+{
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        return sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD);
+    if (coloruse == DIB_PAL_COLORS)
+        return sizeof(BITMAPINFOHEADER) + info->bmiHeader.biClrUsed * sizeof(WORD);
+    return FIELD_OFFSET( BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed] );
+}
 
 #endif /* __WINE_GDI_PRIVATE_H */

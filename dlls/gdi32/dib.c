@@ -93,7 +93,7 @@ static const struct gdi_obj_funcs dib_funcs =
  *
  * Return the size of the bitmap info structure including color table.
  */
-int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
+static int bitmap_info_size( const BITMAPINFO *info, WORD coloruse )
 {
     unsigned int colors, size, masks = 0;
 
