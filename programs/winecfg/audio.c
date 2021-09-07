@@ -22,9 +22,6 @@
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -319,7 +316,7 @@ static void initAudioDlg (HWND hDlg)
             SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&render_devs[i]);
 
-            if(reg_out_dev && !lstrcmpW(render_devs[i].id, reg_out_dev)){
+            if(reg_out_dev && !wcscmp(render_devs[i].id, reg_out_dev)){
                 SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETCURSEL, i + 1, 0);
                 SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[i].speaker_config, 0);
             }
@@ -328,7 +325,7 @@ static void initAudioDlg (HWND hDlg)
                     0, (LPARAM)render_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&render_devs[i]);
-            if(reg_vout_dev && !lstrcmpW(render_devs[i].id, reg_vout_dev))
+            if(reg_vout_dev && !wcscmp(render_devs[i].id, reg_vout_dev))
                 SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_SETCURSEL, i + 1, 0);
 
             lvitem.mask = LVIF_TEXT | LVIF_PARAM;
@@ -360,14 +357,14 @@ static void initAudioDlg (HWND hDlg)
                     0, (LPARAM)capture_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_AUDIOIN_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&capture_devs[i]);
-            if(reg_in_dev && !lstrcmpW(capture_devs[i].id, reg_in_dev))
+            if(reg_in_dev && !wcscmp(capture_devs[i].id, reg_in_dev))
                 SendDlgItemMessageW(hDlg, IDC_AUDIOIN_DEVICE, CB_SETCURSEL, i + 1, 0);
 
             SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_ADDSTRING,
                     0, (LPARAM)capture_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&capture_devs[i]);
-            if(reg_vin_dev && !lstrcmpW(capture_devs[i].id, reg_vin_dev))
+            if(reg_vin_dev && !wcscmp(capture_devs[i].id, reg_vin_dev))
                 SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_SETCURSEL, i + 1, 0);
         }
 

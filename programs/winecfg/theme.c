@@ -22,9 +22,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,7 +36,6 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <wine/debug.h>
-#include <wine/unicode.h>
 
 #include "resource.h"
 #include "winecfg.h"
@@ -744,13 +740,13 @@ static void init_shell_folder_listview_headers(HWND dialog) {
 
     listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     listColumn.pszText = szShellFolder;
-    listColumn.cchTextMax = strlenW(listColumn.pszText);
+    listColumn.cchTextMax = lstrlenW(listColumn.pszText);
     listColumn.cx = width;
 
     SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_INSERTCOLUMNW, 0, (LPARAM) &listColumn);
 
     listColumn.pszText = szLinksTo;
-    listColumn.cchTextMax = strlenW(listColumn.pszText);
+    listColumn.cchTextMax = lstrlenW(listColumn.pszText);
     listColumn.cx = viewRect.right - viewRect.left - width - 1;
 
     SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_INSERTCOLUMNW, 1, (LPARAM) &listColumn);

@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "winecfg.h"
 #include "resource.h"
 
@@ -337,7 +336,7 @@ static void on_add_app_click(HWND dialog)
       ARRAY_SIZE(selectExecutableStr));
   LoadStringW (GetModuleHandleW(NULL), IDS_EXECUTABLE_FILTER, programsFilter,
       ARRAY_SIZE(programsFilter));
-  snprintfW( filter, MAX_PATH, filterW, programsFilter, 0, 0 );
+  swprintf( filter, MAX_PATH, filterW, programsFilter, 0, 0 );
 
   ofn.lpstrTitle = selectExecutableStr;
   ofn.lpstrFilter = filter;

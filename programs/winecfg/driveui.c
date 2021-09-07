@@ -33,7 +33,6 @@
 #include <shlwapi.h>
 #include <shlobj.h>
 
-#include <wine/unicode.h>
 #include <wine/debug.h>
 
 #include "winecfg.h"

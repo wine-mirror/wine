@@ -28,7 +28,6 @@
 #include <stdio.h>
 
 #include <windows.h>
-#include <wine/unicode.h>
 #include <wine/debug.h>
 
 #include "resource.h"
@@ -78,7 +77,7 @@ static void update_gui_for_desktop_mode(HWND dialog)
     updating_ui = TRUE;
 
     buf = get_reg_keyW(config_key, explorer_desktopsW, desktop_name, NULL);
-    if (buf && (bufindex = strchrW(buf, 'x')))
+    if (buf && (bufindex = wcschr(buf, 'x')))
     {
         *bufindex++ = 0;
 
@@ -195,7 +194,7 @@ static void set_from_desktop_edits(HWND dialog)
         HeapFree(GetProcessHeap(), 0, width);
         width = strdupW(def_width);
     }
-    else if (atoiW(width) < atoiW(min_width))
+    else if (wcstol(width, NULL, 10) < wcstol(min_width, NULL, 10))
     {
         HeapFree(GetProcessHeap(), 0, width);
         width = strdupW(min_width);
@@ -204,16 +203,16 @@ static void set_from_desktop_edits(HWND dialog)
         HeapFree(GetProcessHeap(), 0, height);
         height = strdupW(def_height);
     }
-    else if (atoiW(height) < atoiW(min_height))
+    else if (wcstol(height, NULL, 10) < wcstol(min_height, NULL, 10))
     {
         HeapFree(GetProcessHeap(), 0, height);
         height = strdupW(min_height);
     }
 
-    new = HeapAlloc(GetProcessHeap(), 0, (strlenW(width) + strlenW(height) + 2) * sizeof(WCHAR));
-    strcpyW( new, width );
-    strcatW( new, x );
-    strcatW( new, height );
+    new = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(width) + lstrlenW(height) + 2) * sizeof(WCHAR));
+    lstrcpyW( new, width );
+    lstrcatW( new, x );
+    lstrcatW( new, height );
     set_reg_keyW(config_key, explorer_desktopsW, desktop_name, new);
     set_reg_keyW(config_key, keypathW(explorerW), desktopW, desktop_name);
 
@@ -360,8 +359,8 @@ static void update_font_preview(HWND hDlg)
 
         GetObjectW(hfont, sizeof(lf), &lf);
 
-        if (strcmpW(lf.lfFaceName, tahomaW) != 0)
-            strcpyW(lf.lfFaceName, tahomaW);
+        if (wcscmp(lf.lfFaceName, tahomaW) != 0)
+            lstrcpyW(lf.lfFaceName, tahomaW);
         else
             DeleteObject(hfont);
         lf.lfHeight = MulDiv(-10, dpi, 72);

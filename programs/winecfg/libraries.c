@@ -20,26 +20,16 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commdlg.h>
-#include <wine/debug.h>
 #include <stdio.h>
-#include <dirent.h>
 #include <assert.h>
 #include <stdlib.h>
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #include "winecfg.h"
 #include "resource.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
@@ -197,7 +187,7 @@ static DWORD mode_to_id(enum dllmode mode)
 }
 
 /* helper for is_builtin_only */
-static int compare_dll( const void *ptr1, const void *ptr2 )
+static int __cdecl compare_dll( const void *ptr1, const void *ptr2 )
 {
     const char * const *name1 = ptr1;
     const char * const *name2 = ptr2;
