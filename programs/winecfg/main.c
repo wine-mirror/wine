@@ -181,7 +181,7 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
  *              program execution.
  */
 static int
-ProcessCmdLine(LPSTR lpCmdLine)
+ProcessCmdLine(LPWSTR lpCmdLine)
 {
     if (!(lpCmdLine[0] == '/' || lpCmdLine[0] == '-'))
     {
@@ -189,7 +189,7 @@ ProcessCmdLine(LPSTR lpCmdLine)
     }
     if (lpCmdLine[1] == 'V' || lpCmdLine[1] == 'v')
     {
-        if (lstrlenA(lpCmdLine) > 4)
+        if (wcslen(lpCmdLine) > 4)
             return set_winver_from_string(&lpCmdLine[3]) ? 0 : 1;
 
         print_current_winver();
@@ -223,7 +223,7 @@ ProcessCmdLine(LPSTR lpCmdLine)
  * Returns    : Program exit code
  */
 int WINAPI
-WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
+wWinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPWSTR cmdline, int nShow)
 {
     BOOL is_wow64;
     int cmd_ret;
@@ -256,7 +256,7 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 	ExitProcess(1);
     }
 
-    cmd_ret = ProcessCmdLine(szCmdLine);
+    cmd_ret = ProcessCmdLine(cmdline);
     if (cmd_ret >= 0) return cmd_ret;
 
     /*

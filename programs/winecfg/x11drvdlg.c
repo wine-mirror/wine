@@ -49,12 +49,12 @@ static BOOL updating_ui;
 /* convert the x11 desktop key to the new explorer config */
 static void convert_x11_desktop_key(void)
 {
-    char *buf;
+    WCHAR *buf;
 
-    if (!(buf = get_reg_key(config_key, "X11 Driver", "Desktop", NULL))) return;
-    set_reg_key(config_key, "Explorer\\Desktops", "Default", buf);
-    set_reg_key(config_key, "Explorer", "Desktop", "Default");
-    set_reg_key(config_key, "X11 Driver", "Desktop", NULL);
+    if (!(buf = get_reg_key(config_key, L"X11 Driver", L"Desktop", NULL))) return;
+    set_reg_key(config_key, L"Explorer\\Desktops", L"Default", buf);
+    set_reg_key(config_key, L"Explorer", L"Desktop", L"Default");
+    set_reg_key(config_key, L"X11 Driver", L"Desktop", NULL);
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
@@ -66,7 +66,7 @@ static void update_gui_for_desktop_mode(HWND dialog)
     WINE_TRACE("\n");
     updating_ui = TRUE;
 
-    buf = get_reg_keyW(config_key, L"Explorer\\Desktops", desktop_name, NULL);
+    buf = get_reg_key(config_key, L"Explorer\\Desktops", desktop_name, NULL);
     if (buf && (bufindex = wcschr(buf, 'x')))
     {
         *bufindex++ = 0;
@@ -74,13 +74,13 @@ static void update_gui_for_desktop_mode(HWND dialog)
         SetDlgItemTextW(dialog, IDC_DESKTOP_WIDTH, buf);
         SetDlgItemTextW(dialog, IDC_DESKTOP_HEIGHT, bufindex);
     } else {
-        SetDlgItemTextA(dialog, IDC_DESKTOP_WIDTH, "800");
-        SetDlgItemTextA(dialog, IDC_DESKTOP_HEIGHT, "600");
+        SetDlgItemTextW(dialog, IDC_DESKTOP_WIDTH, L"800");
+        SetDlgItemTextW(dialog, IDC_DESKTOP_HEIGHT, L"600");
     }
     HeapFree(GetProcessHeap(), 0, buf);
 
     /* do we have desktop mode enabled? */
-    if (reg_key_exists(config_key, keypath("Explorer"), "Desktop"))
+    if (reg_key_exists(config_key, keypath(L"Explorer"), L"Desktop"))
     {
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
         enable(IDC_DESKTOP_WIDTH);
@@ -102,18 +102,18 @@ static void update_gui_for_desktop_mode(HWND dialog)
 
 static BOOL can_enable_desktop(void)
 {
-    char *value;
+    WCHAR *value;
     UINT guid_atom;
     BOOL ret = FALSE;
-    char key[sizeof("System\\CurrentControlSet\\Control\\Video\\{}\\0000") + 40];
+    WCHAR key[sizeof("System\\CurrentControlSet\\Control\\Video\\{}\\0000") + 40];
 
-    guid_atom = HandleToULong(GetPropA(GetDesktopWindow(), "__wine_display_device_guid"));
-    strcpy( key, "System\\CurrentControlSet\\Control\\Video\\{" );
-    if (!GlobalGetAtomNameA(guid_atom, key + strlen(key), 40)) return ret;
-    strcat( key, "}\\0000" );
-    if ((value = get_reg_key(HKEY_LOCAL_MACHINE, key, "GraphicsDriver", NULL)))
+    guid_atom = HandleToULong(GetPropW(GetDesktopWindow(), L"__wine_display_device_guid"));
+    wcscpy( key, L"System\\CurrentControlSet\\Control\\Video\\{" );
+    if (!GlobalGetAtomNameW(guid_atom, key + wcslen(key), 40)) return ret;
+    wcscat( key, L"}\\0000" );
+    if ((value = get_reg_key(HKEY_LOCAL_MACHINE, key, L"GraphicsDriver", NULL)))
     {
-        if(strcmp(value, "winemac.drv"))
+        if(wcscmp(value, L"winemac.drv"))
             ret = TRUE;
         HeapFree(GetProcessHeap(), 0, value);
     }
@@ -122,7 +122,7 @@ static BOOL can_enable_desktop(void)
 
 static void init_dialog(HWND dialog)
 {
-    char* buf;
+    WCHAR *buf;
     BOOL enable_desktop;
 
     convert_x11_desktop_key();
@@ -139,21 +139,21 @@ static void init_dialog(HWND dialog)
         SendDlgItemMessageW(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
     }
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "N");
+    buf = get_reg_key(config_key, keypath(L"X11 Driver"), L"GrabFullscreen", L"N");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_FULLSCREEN_GRAB, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_FULLSCREEN_GRAB, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
+    buf = get_reg_key(config_key, keypath(L"X11 Driver"), L"Managed", L"Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "Decorated", "Y");
+    buf = get_reg_key(config_key, keypath(L"X11 Driver"), L"Decorated", L"Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_CHECKED);
     else
@@ -174,15 +174,15 @@ static void set_from_desktop_edits(HWND dialog)
 
     WINE_TRACE("\n");
 
-    width = get_textW(dialog, IDC_DESKTOP_WIDTH);
-    height = get_textW(dialog, IDC_DESKTOP_HEIGHT);
+    width = get_text(dialog, IDC_DESKTOP_WIDTH);
+    height = get_text(dialog, IDC_DESKTOP_HEIGHT);
 
     if (width && width[0]) w = max( 640, wcstol(width, NULL, 10) );
     if (height && height[0]) h = max( 480, wcstol(height, NULL, 10) );
 
     swprintf( buffer, ARRAY_SIZE(buffer), L"%ux%u", w, h );
-    set_reg_keyW(config_key, L"Explorer\\Desktops", desktop_name, buffer);
-    set_reg_keyW(config_key, keypathW(L"Explorer"), L"Desktop", desktop_name);
+    set_reg_key(config_key, L"Explorer\\Desktops", desktop_name, buffer);
+    set_reg_key(config_key, keypath(L"Explorer"), L"Desktop", desktop_name);
 
     HeapFree(GetProcessHeap(), 0, width);
     HeapFree(GetProcessHeap(), 0, height);
@@ -194,7 +194,7 @@ static void on_enable_desktop_clicked(HWND dialog) {
     if (IsDlgButtonChecked(dialog, IDC_ENABLE_DESKTOP) == BST_CHECKED) {
         set_from_desktop_edits(dialog);
     } else {
-        set_reg_key(config_key, keypath("Explorer"), "Desktop", NULL);
+        set_reg_key(config_key, keypath(L"Explorer"), L"Desktop", NULL);
     }
     
     update_gui_for_desktop_mode(dialog);
@@ -204,9 +204,9 @@ static void on_enable_managed_clicked(HWND dialog) {
     WINE_TRACE("\n");
     
     if (IsDlgButtonChecked(dialog, IDC_ENABLE_MANAGED) == BST_CHECKED) {
-        set_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
+        set_reg_key(config_key, keypath(L"X11 Driver"), L"Managed", L"Y");
     } else {
-        set_reg_key(config_key, keypath("X11 Driver"), "Managed", "N");
+        set_reg_key(config_key, keypath(L"X11 Driver"), L"Managed", L"N");
     }
 }
 
@@ -214,25 +214,25 @@ static void on_enable_decorated_clicked(HWND dialog) {
     WINE_TRACE("\n");
 
     if (IsDlgButtonChecked(dialog, IDC_ENABLE_DECORATED) == BST_CHECKED) {
-        set_reg_key(config_key, keypath("X11 Driver"), "Decorated", "Y");
+        set_reg_key(config_key, keypath(L"X11 Driver"), L"Decorated", L"Y");
     } else {
-        set_reg_key(config_key, keypath("X11 Driver"), "Decorated", "N");
+        set_reg_key(config_key, keypath(L"X11 Driver"), L"Decorated", L"N");
     }
 }
 
 static void on_fullscreen_grab_clicked(HWND dialog)
 {
     if (IsDlgButtonChecked(dialog, IDC_FULLSCREEN_GRAB) == BST_CHECKED)
-        set_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "Y");
+        set_reg_key(config_key, keypath(L"X11 Driver"), L"GrabFullscreen", L"Y");
     else
-        set_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "N");
+        set_reg_key(config_key, keypath(L"X11 Driver"), L"GrabFullscreen", L"N");
 }
 
 static INT read_logpixels_reg(void)
 {
     DWORD dwLogPixels;
-    WCHAR *buf = get_reg_keyW(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", NULL);
-    if (!buf) buf = get_reg_keyW(HKEY_CURRENT_CONFIG, L"Software\\Fonts", L"LogPixels", NULL);
+    WCHAR *buf = get_reg_key(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", NULL);
+    if (!buf) buf = get_reg_key(HKEY_CURRENT_CONFIG, L"Software\\Fonts", L"LogPixels", NULL);
     dwLogPixels = buf ? *buf : DEFDPI;
     HeapFree(GetProcessHeap(), 0, buf);
     return dwLogPixels;
@@ -302,7 +302,7 @@ static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
     if (dpi >= MINDPI && dpi <= MAXDPI)
     {
         SendDlgItemMessageW(hDlg, IDC_RES_TRACKBAR, TBM_SETPOS, TRUE, get_trackbar_pos(dpi));
-        set_reg_key_dwordW(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", dpi);
+        set_reg_key_dword(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", dpi);
     }
 
     updating_ui = FALSE;
@@ -422,7 +422,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
 		    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, dpi_values[i], TRUE);
 		    update_font_preview(hDlg);
-		    set_reg_key_dwordW(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", dpi_values[i]);
+		    set_reg_key_dword(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", dpi_values[i]);
 		    break;
 		}
 	    }

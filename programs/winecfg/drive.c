@@ -130,25 +130,25 @@ void delete_drive(struct drive *d)
 static DWORD get_drive_type( char letter )
 {
     HKEY hKey;
-    char driveValue[4];
+    WCHAR driveValue[4];
     DWORD ret = DRIVE_UNKNOWN;
 
-    sprintf(driveValue, "%c:", letter);
+    swprintf(driveValue, 4, L"%c:", letter);
 
-    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
         WINE_TRACE("  Unable to open Software\\Wine\\Drives\n" );
     else
     {
-        char buffer[80];
-        DWORD size = sizeof(buffer);
+        WCHAR buffer[80];
+        DWORD size = ARRAY_SIZE(buffer);
 
-        if (!RegQueryValueExA( hKey, driveValue, NULL, NULL, (LPBYTE)buffer, &size ))
+        if (!RegQueryValueExW( hKey, driveValue, NULL, NULL, (LPBYTE)buffer, &size ))
         {
-            WINE_TRACE("Got type '%s' for %s\n", buffer, driveValue );
-            if (!lstrcmpiA( buffer, "hd" )) ret = DRIVE_FIXED;
-            else if (!lstrcmpiA( buffer, "network" )) ret = DRIVE_REMOTE;
-            else if (!lstrcmpiA( buffer, "floppy" )) ret = DRIVE_REMOVABLE;
-            else if (!lstrcmpiA( buffer, "cdrom" )) ret = DRIVE_CDROM;
+            WINE_TRACE("Got type %s for %s\n", debugstr_w(buffer), debugstr_w(driveValue) );
+            if (!wcsicmp( buffer, L"hd" )) ret = DRIVE_FIXED;
+            else if (!wcsicmp( buffer, L"network" )) ret = DRIVE_REMOTE;
+            else if (!wcsicmp( buffer, L"floppy" )) ret = DRIVE_REMOVABLE;
+            else if (!wcsicmp( buffer, L"cdrom" )) ret = DRIVE_CDROM;
         }
         RegCloseKey(hKey);
     }
@@ -196,49 +196,6 @@ static void set_drive_serial( WCHAR letter, DWORD serial )
         CloseHandle(hFile);
     }
 }
-
-#if 0
-
-/* currently unused, but if users have this burning desire to be able to rename drives,
-   we can put it back in.
- */
-
-BOOL copyDrive(struct drive *pSrc, struct drive *pDst)
-{
-    if(pDst->in_use)
-    {
-        WINE_TRACE("pDst already in use\n");
-        return FALSE;
-    }
-
-    if(!pSrc->unixpath) WINE_TRACE("!pSrc->unixpath\n");
-    if(!pSrc->label) WINE_TRACE("!pSrc->label\n");
-    if(!pSrc->serial) WINE_TRACE("!pSrc->serial\n");
-
-    pDst->unixpath = strdupA(pSrc->unixpath);
-    pDst->label = strdupA(pSrc->label);
-    pDst->serial = strdupA(pSrc->serial);
-    pDst->type = pSrc->type;
-    pDst->in_use = TRUE;
-
-    return TRUE;
-}
-
-BOOL moveDrive(struct drive *pSrc, struct drive *pDst)
-{
-    WINE_TRACE("pSrc->letter == %c, pDst->letter == %c\n", pSrc->letter, pDst->letter);
-
-    if(!copyDrive(pSrc, pDst))
-    {
-        WINE_TRACE("copyDrive failed\n");
-        return FALSE;
-    }
-
-    delete_drive(pSrc);
-    return TRUE;
-}
-
-#endif
 
 static HANDLE open_mountmgr(void)
 {

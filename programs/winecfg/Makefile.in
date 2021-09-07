@@ -2,7 +2,7 @@ MODULE    = winecfg.exe
 APPMODE   = -mwindows
 IMPORTS   = uuid comdlg32 comctl32 shell32 ole32 winmm shlwapi uxtheme user32 gdi32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -municode
 
 C_SRCS = \
 	about.c \

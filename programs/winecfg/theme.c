@@ -489,81 +489,73 @@ static void apply_theme(HWND dialog)
 static struct
 {
     int sm_idx, color_idx;
-    const char *color_reg;
+    const WCHAR *color_reg;
     int size;
     COLORREF color;
     LOGFONTW lf;
 } metrics[] =
 {
-    {-1,                COLOR_BTNFACE,          "ButtonFace"    }, /* IDC_SYSPARAMS_BUTTON */
-    {-1,                COLOR_BTNTEXT,          "ButtonText"    }, /* IDC_SYSPARAMS_BUTTON_TEXT */
-    {-1,                COLOR_BACKGROUND,       "Background"    }, /* IDC_SYSPARAMS_DESKTOP */
-    {SM_CXMENUSIZE,     COLOR_MENU,             "Menu"          }, /* IDC_SYSPARAMS_MENU */
-    {-1,                COLOR_MENUTEXT,         "MenuText"      }, /* IDC_SYSPARAMS_MENU_TEXT */
-    {SM_CXVSCROLL,      COLOR_SCROLLBAR,        "Scrollbar"     }, /* IDC_SYSPARAMS_SCROLLBAR */
-    {-1,                COLOR_HIGHLIGHT,        "Hilight"       }, /* IDC_SYSPARAMS_SELECTION */
-    {-1,                COLOR_HIGHLIGHTTEXT,    "HilightText"   }, /* IDC_SYSPARAMS_SELECTION_TEXT */
-    {-1,                COLOR_INFOBK,           "InfoWindow"    }, /* IDC_SYSPARAMS_TOOLTIP */
-    {-1,                COLOR_INFOTEXT,         "InfoText"      }, /* IDC_SYSPARAMS_TOOLTIP_TEXT */
-    {-1,                COLOR_WINDOW,           "Window"        }, /* IDC_SYSPARAMS_WINDOW */
-    {-1,                COLOR_WINDOWTEXT,       "WindowText"    }, /* IDC_SYSPARAMS_WINDOW_TEXT */
-    {SM_CXSIZE,         COLOR_ACTIVECAPTION,    "ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
-    {-1,                COLOR_CAPTIONTEXT,      "TitleText"     }, /* IDC_SYSPARAMS_ACTIVE_TITLE_TEXT */
-    {-1,                COLOR_INACTIVECAPTION,  "InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
-    {-1,                COLOR_INACTIVECAPTIONTEXT,"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
-    {-1,                -1,                     "MsgBoxText"    }, /* IDC_SYSPARAMS_MSGBOX_TEXT */
-    {-1,                COLOR_APPWORKSPACE,     "AppWorkSpace"  }, /* IDC_SYSPARAMS_APPWORKSPACE */
-    {-1,                COLOR_WINDOWFRAME,      "WindowFrame"   }, /* IDC_SYSPARAMS_WINDOW_FRAME */
-    {-1,                COLOR_ACTIVEBORDER,     "ActiveBorder"  }, /* IDC_SYSPARAMS_ACTIVE_BORDER */
-    {-1,                COLOR_INACTIVEBORDER,   "InactiveBorder" }, /* IDC_SYSPARAMS_INACTIVE_BORDER */
-    {-1,                COLOR_BTNSHADOW,        "ButtonShadow"  }, /* IDC_SYSPARAMS_BUTTON_SHADOW */
-    {-1,                COLOR_GRAYTEXT,         "GrayText"      }, /* IDC_SYSPARAMS_GRAY_TEXT */
-    {-1,                COLOR_BTNHIGHLIGHT,     "ButtonHilight" }, /* IDC_SYSPARAMS_BUTTON_HIGHLIGHT */
-    {-1,                COLOR_3DDKSHADOW,       "ButtonDkShadow" }, /* IDC_SYSPARAMS_BUTTON_DARK_SHADOW */
-    {-1,                COLOR_3DLIGHT,          "ButtonLight"   }, /* IDC_SYSPARAMS_BUTTON_LIGHT */
-    {-1,                COLOR_ALTERNATEBTNFACE, "ButtonAlternateFace" }, /* IDC_SYSPARAMS_BUTTON_ALTERNATE */
-    {-1,                COLOR_HOTLIGHT,         "HotTrackingColor" }, /* IDC_SYSPARAMS_HOT_TRACKING */
-    {-1,                COLOR_GRADIENTACTIVECAPTION, "GradientActiveTitle" }, /* IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT */
-    {-1,                COLOR_GRADIENTINACTIVECAPTION, "GradientInactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT */
-    {-1,                COLOR_MENUHILIGHT,      "MenuHilight"   }, /* IDC_SYSPARAMS_MENU_HIGHLIGHT */
-    {-1,                COLOR_MENUBAR,          "MenuBar"       }, /* IDC_SYSPARAMS_MENUBAR */
+    {-1,                COLOR_BTNFACE,          L"ButtonFace"    }, /* IDC_SYSPARAMS_BUTTON */
+    {-1,                COLOR_BTNTEXT,          L"ButtonText"    }, /* IDC_SYSPARAMS_BUTTON_TEXT */
+    {-1,                COLOR_BACKGROUND,       L"Background"    }, /* IDC_SYSPARAMS_DESKTOP */
+    {SM_CXMENUSIZE,     COLOR_MENU,             L"Menu"          }, /* IDC_SYSPARAMS_MENU */
+    {-1,                COLOR_MENUTEXT,         L"MenuText"      }, /* IDC_SYSPARAMS_MENU_TEXT */
+    {SM_CXVSCROLL,      COLOR_SCROLLBAR,        L"Scrollbar"     }, /* IDC_SYSPARAMS_SCROLLBAR */
+    {-1,                COLOR_HIGHLIGHT,        L"Hilight"       }, /* IDC_SYSPARAMS_SELECTION */
+    {-1,                COLOR_HIGHLIGHTTEXT,    L"HilightText"   }, /* IDC_SYSPARAMS_SELECTION_TEXT */
+    {-1,                COLOR_INFOBK,           L"InfoWindow"    }, /* IDC_SYSPARAMS_TOOLTIP */
+    {-1,                COLOR_INFOTEXT,         L"InfoText"      }, /* IDC_SYSPARAMS_TOOLTIP_TEXT */
+    {-1,                COLOR_WINDOW,           L"Window"        }, /* IDC_SYSPARAMS_WINDOW */
+    {-1,                COLOR_WINDOWTEXT,       L"WindowText"    }, /* IDC_SYSPARAMS_WINDOW_TEXT */
+    {SM_CXSIZE,         COLOR_ACTIVECAPTION,    L"ActiveTitle"   }, /* IDC_SYSPARAMS_ACTIVE_TITLE */
+    {-1,                COLOR_CAPTIONTEXT,      L"TitleText"     }, /* IDC_SYSPARAMS_ACTIVE_TITLE_TEXT */
+    {-1,                COLOR_INACTIVECAPTION,  L"InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
+    {-1,                COLOR_INACTIVECAPTIONTEXT,L"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
+    {-1,                -1,                     L"MsgBoxText"    }, /* IDC_SYSPARAMS_MSGBOX_TEXT */
+    {-1,                COLOR_APPWORKSPACE,     L"AppWorkSpace"  }, /* IDC_SYSPARAMS_APPWORKSPACE */
+    {-1,                COLOR_WINDOWFRAME,      L"WindowFrame"   }, /* IDC_SYSPARAMS_WINDOW_FRAME */
+    {-1,                COLOR_ACTIVEBORDER,     L"ActiveBorder"  }, /* IDC_SYSPARAMS_ACTIVE_BORDER */
+    {-1,                COLOR_INACTIVEBORDER,   L"InactiveBorder" }, /* IDC_SYSPARAMS_INACTIVE_BORDER */
+    {-1,                COLOR_BTNSHADOW,        L"ButtonShadow"  }, /* IDC_SYSPARAMS_BUTTON_SHADOW */
+    {-1,                COLOR_GRAYTEXT,         L"GrayText"      }, /* IDC_SYSPARAMS_GRAY_TEXT */
+    {-1,                COLOR_BTNHIGHLIGHT,     L"ButtonHilight" }, /* IDC_SYSPARAMS_BUTTON_HIGHLIGHT */
+    {-1,                COLOR_3DDKSHADOW,       L"ButtonDkShadow" }, /* IDC_SYSPARAMS_BUTTON_DARK_SHADOW */
+    {-1,                COLOR_3DLIGHT,          L"ButtonLight"   }, /* IDC_SYSPARAMS_BUTTON_LIGHT */
+    {-1,                COLOR_ALTERNATEBTNFACE, L"ButtonAlternateFace" }, /* IDC_SYSPARAMS_BUTTON_ALTERNATE */
+    {-1,                COLOR_HOTLIGHT,         L"HotTrackingColor" }, /* IDC_SYSPARAMS_HOT_TRACKING */
+    {-1,                COLOR_GRADIENTACTIVECAPTION, L"GradientActiveTitle" }, /* IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT */
+    {-1,                COLOR_GRADIENTINACTIVECAPTION, L"GradientInactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT */
+    {-1,                COLOR_MENUHILIGHT,      L"MenuHilight"   }, /* IDC_SYSPARAMS_MENU_HIGHLIGHT */
+    {-1,                COLOR_MENUBAR,          L"MenuBar"       }, /* IDC_SYSPARAMS_MENUBAR */
 };
 
 static void save_sys_color(int idx, COLORREF clr)
 {
-    char buffer[13];
+    WCHAR buffer[13];
 
-    sprintf(buffer, "%d %d %d",  GetRValue (clr), GetGValue (clr), GetBValue (clr));
-    set_reg_key(HKEY_CURRENT_USER, "Control Panel\\Colors", metrics[idx].color_reg, buffer);
+    swprintf(buffer, ARRAY_SIZE(buffer), L"%d %d %d",  GetRValue (clr), GetGValue (clr), GetBValue (clr));
+    set_reg_key(HKEY_CURRENT_USER, L"Control Panel\\Colors", metrics[idx].color_reg, buffer);
 }
 
-static void set_color_from_theme(WCHAR *keyName, COLORREF color)
+static void set_color_from_theme(const WCHAR *keyName, COLORREF color)
 {
-    char *keyNameA = NULL;
-    int keyNameSize=0, i=0;
-
-    keyNameSize = WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, 0, NULL, NULL);
-    keyNameA = HeapAlloc(GetProcessHeap(), 0, keyNameSize);
-    WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, keyNameSize, NULL, NULL);
+    int i;
 
     for (i=0; i < ARRAY_SIZE(metrics); i++)
     {
-        if (lstrcmpiA(metrics[i].color_reg, keyNameA)==0)
+        if (wcsicmp(metrics[i].color_reg, keyName)==0)
         {
             metrics[i].color = color;
             save_sys_color(i, color);
             break;
         }
     }
-    HeapFree(GetProcessHeap(), 0, keyNameA);
 }
 
 static void do_parse_theme(WCHAR *file)
 {
     WCHAR keyName[MAX_PATH], keyNameValue[MAX_PATH];
     WCHAR *keyNamePtr = NULL;
-    char *keyNameValueA = NULL;
-    int keyNameValueSize = 0;
     int red = 0, green = 0, blue = 0;
     COLORREF color;
 
@@ -577,20 +569,12 @@ static void do_parse_theme(WCHAR *file)
         GetPrivateProfileStringW(L"Control Panel\\Colors", keyNamePtr, NULL, keyNameValue,
                                  MAX_PATH, file);
 
-        keyNameValueSize = WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1,
-                                               keyNameValueA, 0, NULL, NULL);
-        keyNameValueA = HeapAlloc(GetProcessHeap(), 0, keyNameValueSize);
-        WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1, keyNameValueA, keyNameValueSize, NULL, NULL);
-
         WINE_TRACE("parsing key: %s with value: %s\n",
                    wine_dbgstr_w(keyNamePtr), wine_dbgstr_w(keyNameValue));
 
-        sscanf(keyNameValueA, "%d %d %d", &red, &green, &blue);
+        swscanf(keyNameValue, L"%d %d %d", &red, &green, &blue);
 
         color = RGB((BYTE)red, (BYTE)green, (BYTE)blue);
-
-        HeapFree(GetProcessHeap(), 0, keyNameValueA);
-
         set_color_from_theme(keyNamePtr, color);
 
         keyNamePtr+=lstrlenW(keyNamePtr);
@@ -848,7 +832,7 @@ static void on_shell_folder_selection_changed(HWND hDlg, LPNMLISTVIEW lpnm) {
  * information in sync. */
 static void on_shell_folder_edit_changed(HWND hDlg) {
     LVITEMW item;
-    WCHAR *text = get_textW(hDlg, IDC_EDIT_SFPATH);
+    WCHAR *text = get_text(hDlg, IDC_EDIT_SFPATH);
     LONG iSel = SendDlgItemMessageW(hDlg, IDC_LIST_SFPATHS, LVM_GETNEXTITEM, -1,
                                     MAKELPARAM(LVNI_SELECTED,0));
 
@@ -1093,7 +1077,7 @@ static void on_select_font(HWND hDlg)
 
 static void init_mime_types(HWND hDlg)
 {
-    char *buf = get_reg_key(config_key, keypath("FileOpenAssociations"), "Enable", "Y");
+    WCHAR *buf = get_reg_key(config_key, keypath(L"FileOpenAssociations"), L"Enable", L"Y");
     int state = IS_OPTION_TRUE(*buf) ? BST_CHECKED : BST_UNCHECKED;
 
     CheckDlgButton(hDlg, IDC_ENABLE_FILE_ASSOCIATIONS, state);
@@ -1103,12 +1087,12 @@ static void init_mime_types(HWND hDlg)
 
 static void update_mime_types(HWND hDlg)
 {
-    const char *state = "Y";
+    const WCHAR *state = L"Y";
 
     if (IsDlgButtonChecked(hDlg, IDC_ENABLE_FILE_ASSOCIATIONS) != BST_CHECKED)
-        state = "N";
+        state = L"N";
 
-    set_reg_key(config_key, keypath("FileOpenAssociations"), "Enable", state);
+    set_reg_key(config_key, keypath(L"FileOpenAssociations"), L"Enable", state);
 }
 
 INT_PTR CALLBACK
@@ -1153,14 +1137,14 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         case IDC_EDIT_SFPATH: on_shell_folder_edit_changed(hDlg); break;
                         case IDC_SYSPARAM_SIZE:
                         {
-                            char *text = get_text(hDlg, IDC_SYSPARAM_SIZE);
+                            WCHAR *text = get_text(hDlg, IDC_SYSPARAM_SIZE);
                             int index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETCURSEL, 0, 0);
 
                             index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETITEMDATA, index, 0);
 
                             if (text)
                             {
-                                metrics[index].size = atoi(text);
+                                metrics[index].size = wcstol(text, NULL, 10);
                                 HeapFree(GetProcessHeap(), 0, text);
                             }
                             else

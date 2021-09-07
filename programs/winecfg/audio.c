@@ -237,7 +237,7 @@ static void initAudioDlg (HWND hDlg)
         PropVariantInit(&pv);
         if(get_driver_name(devenum, &pv) && pv.pwszVal[0] != '\0'){
             have_driver = TRUE;
-            wnsprintfW(display_str, ARRAY_SIZE(display_str), format_str, pv.pwszVal);
+            swprintf(display_str, ARRAY_SIZE(display_str), format_str, pv.pwszVal);
             lstrcatW(g_drv_keyW, pv.pwszVal);
         }
         PropVariantClear(&pv);
@@ -291,10 +291,10 @@ static void initAudioDlg (HWND hDlg)
     if(have_driver){
         WCHAR *reg_out_dev, *reg_vout_dev, *reg_in_dev, *reg_vin_dev;
 
-        reg_out_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultOutput", NULL);
-        reg_vout_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultVoiceOutput", NULL);
-        reg_in_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultInput", NULL);
-        reg_vin_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultVoiceInput", NULL);
+        reg_out_dev = get_reg_key(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultOutput", NULL);
+        reg_vout_dev = get_reg_key(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultVoiceOutput", NULL);
+        reg_in_dev = get_reg_key(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultInput", NULL);
+        reg_vin_dev = get_reg_key(HKEY_CURRENT_USER, g_drv_keyW, L"DefaultVoiceInput", NULL);
 
         for(i = 0; i < num_render_devs; ++i){
             LVITEMW lvitem;
@@ -364,7 +364,7 @@ static void initAudioDlg (HWND hDlg)
         HeapFree(GetProcessHeap(), 0, reg_in_dev);
         HeapFree(GetProcessHeap(), 0, reg_vin_dev);
     }else
-        wnsprintfW(display_str, ARRAY_SIZE(display_str), format_str, disabled_str);
+        swprintf(display_str, ARRAY_SIZE(display_str), format_str, disabled_str);
 
     SetDlgItemTextW(hDlg, IDC_AUDIO_DRIVER, display_str);
 }
@@ -380,9 +380,9 @@ static void set_reg_device(HWND hDlg, int dlgitem, const WCHAR *key_name)
             CB_GETITEMDATA, idx, 0);
 
     if(!info || info == (void*)CB_ERR)
-        set_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, key_name, NULL);
+        set_reg_key(HKEY_CURRENT_USER, g_drv_keyW, key_name, NULL);
     else
-        set_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, key_name, info->id);
+        set_reg_key(HKEY_CURRENT_USER, g_drv_keyW, key_name, info->id);
 }
 
 static void test_sound(void)

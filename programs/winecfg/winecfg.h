@@ -51,16 +51,13 @@ extern WCHAR* current_app; /* NULL means editing global settings  */
    be copied, so free them too when necessary.
  */
 
-void set_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *value);
-void set_reg_key_dwordW(HKEY root, const WCHAR *path, const WCHAR *name, DWORD value);
-WCHAR *get_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def);
+void set_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *value);
+void set_reg_key_dword(HKEY root, const WCHAR *path, const WCHAR *name, DWORD value);
+WCHAR *get_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def);
 
-void set_reg_key(HKEY root, const char *path, const char *name, const char *value);
-void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD value);
-char *get_reg_key(HKEY root, const char *path, const char *name, const char *def);
-BOOL reg_key_exists(HKEY root, const char *path, const char *name);
+BOOL reg_key_exists(HKEY root, const WCHAR *path, const WCHAR *name);
 void apply(void);
-char **enumerate_values(HKEY root, char *path);
+WCHAR **enumerate_values(HKEY root, const WCHAR *path);
 
 /* Load a string from the resources. Allocated with HeapAlloc (GetProcessHeap()) */
 WCHAR* load_string (UINT id);
@@ -70,8 +67,7 @@ WCHAR* load_string (UINT id);
  
    no explicit free is needed of the string returned by this function
  */
-char *keypath(const char *section);
-WCHAR *keypathW(const WCHAR *section);
+WCHAR *keypath(const WCHAR *section);
 
 BOOL initialize(HINSTANCE hInstance);
 extern HKEY config_key;
@@ -90,7 +86,7 @@ INT_PTR CALLBACK ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 INT_PTR CALLBACK AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* Windows version management */
-BOOL set_winver_from_string(const char *version);
+BOOL set_winver_from_string(const WCHAR *version);
 void print_current_winver(void);
 void print_windows_versions(void);
 
@@ -153,20 +149,7 @@ static inline WCHAR *strdupU2W(const char *unix_str)
     return unicode_str;
 }
 
-static inline char *get_text(HWND dialog, WORD id)
-{
-    HWND item = GetDlgItem(dialog, id);
-    int len = GetWindowTextLengthA(item) + 1;
-    char *result = len ? HeapAlloc(GetProcessHeap(), 0, len) : NULL;
-    if (!result) return NULL;
-    if (GetWindowTextA(item, result, len) == 0) {
-        HeapFree (GetProcessHeap(), 0, result);
-        return NULL;
-    }
-    return result;
-}
-
-static inline WCHAR *get_textW(HWND dialog, WORD id)
+static inline WCHAR *get_text(HWND dialog, WORD id)
 {
     HWND item = GetDlgItem(dialog, id);
     int len = GetWindowTextLengthW(item) + 1;
@@ -189,7 +172,7 @@ static inline void set_textW(HWND dialog, WORD id, const WCHAR *text)
     SetWindowTextW(GetDlgItem(dialog, id), text);
 }
 
-#define WINE_KEY_ROOT "Software\\Wine"
+#define WINE_KEY_ROOT L"Software\\Wine"
 #define MAXBUFLEN 256
 
 extern HMENU     hPopupMenus;
