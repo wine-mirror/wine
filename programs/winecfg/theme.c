@@ -28,12 +28,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #define COBJMACROS
 
@@ -765,25 +759,14 @@ static void init_shell_folder_listview_headers(HWND dialog) {
 /* Reads the currently set shell folder symbol link targets into asfiInfo. */
 static void read_shell_folder_link_targets(void) {
     WCHAR wszPath[MAX_PATH];
-    HRESULT hr;
     int i;
 
     for (i=0; i<ARRAY_SIZE(asfiInfo); i++) {
         asfiInfo[i].szLinkTarget[0] = '\0';
-        hr = SHGetFolderPathW(NULL, asfiInfo[i].nFolder|CSIDL_FLAG_DONT_VERIFY, NULL, 
-                              SHGFP_TYPE_CURRENT, wszPath);
-        if (SUCCEEDED(hr)) {
-            char *pszUnixPath = wine_get_unix_file_name(wszPath);
-            if (pszUnixPath) {
-                struct stat statPath;
-                if (!lstat(pszUnixPath, &statPath) && S_ISLNK(statPath.st_mode)) {
-                    int cLen = readlink(pszUnixPath, asfiInfo[i].szLinkTarget, FILENAME_MAX-1);
-                    if (cLen >= 0) asfiInfo[i].szLinkTarget[cLen] = '\0';
-                }
-                HeapFree(GetProcessHeap(), 0, pszUnixPath);
-            }
-        } 
-    }    
+        if (SUCCEEDED( SHGetFolderPathW( NULL, asfiInfo[i].nFolder | CSIDL_FLAG_DONT_VERIFY, NULL,
+                                         SHGFP_TYPE_CURRENT, wszPath )))
+            query_shell_folder( wszPath, asfiInfo[i].szLinkTarget, FILENAME_MAX );
+    }
 }
 
 static void update_shell_folder_listview(HWND dialog) {
@@ -904,56 +887,12 @@ static void on_shell_folder_edit_changed(HWND hDlg) {
 
 static void apply_shell_folder_changes(void) {
     WCHAR wszPath[MAX_PATH];
-    char szBackupPath[FILENAME_MAX], szUnixPath[FILENAME_MAX], *pszUnixPath = NULL;
     int i;
-    struct stat statPath;
-    HRESULT hr;
 
     for (i=0; i<ARRAY_SIZE(asfiInfo); i++) {
-        /* Ignore nonexistent link targets */
-        if (asfiInfo[i].szLinkTarget[0] && stat(asfiInfo[i].szLinkTarget, &statPath))
-            continue;
-        
-        hr = SHGetFolderPathW(NULL, asfiInfo[i].nFolder|CSIDL_FLAG_CREATE, NULL, 
-                              SHGFP_TYPE_CURRENT, wszPath);
-        if (FAILED(hr)) continue;
-
-        /* Retrieve the corresponding unix path. */
-        pszUnixPath = wine_get_unix_file_name(wszPath);
-        if (!pszUnixPath) continue;
-        lstrcpyA(szUnixPath, pszUnixPath);
-        HeapFree(GetProcessHeap(), 0, pszUnixPath);
-            
-        /* Derive name for folder backup. */
-        lstrcpyA(szBackupPath, szUnixPath);
-        lstrcatA(szBackupPath, ".winecfg");
-        
-        if (lstat(szUnixPath, &statPath)) continue;
-    
-        /* Move old folder/link out of the way. */
-        if (S_ISLNK(statPath.st_mode)) {
-            if (unlink(szUnixPath)) continue; /* Unable to remove link. */
-        } else { 
-            if (!*asfiInfo[i].szLinkTarget) {
-                continue; /* We are done. Old was real folder, as new shall be. */
-            } else { 
-                if (rename(szUnixPath, szBackupPath)) { /* Move folder out of the way. */
-                    continue; /* Unable to move old folder. */
-                }
-            }
-        }
-    
-        /* Create new link/folder. */
-        if (*asfiInfo[i].szLinkTarget) {
-            symlink(asfiInfo[i].szLinkTarget, szUnixPath);
-        } else {
-            /* If there's a backup folder, restore it. Else create new folder. */
-            if (!lstat(szBackupPath, &statPath) && S_ISDIR(statPath.st_mode)) {
-                rename(szBackupPath, szUnixPath);
-            } else {
-                mkdir(szUnixPath, 0777);
-            }
-        }
+        if (SUCCEEDED( SHGetFolderPathW( NULL, asfiInfo[i].nFolder | CSIDL_FLAG_CREATE, NULL,
+                                         SHGFP_TYPE_CURRENT, wszPath )))
+            set_shell_folder( wszPath, asfiInfo[i].szLinkTarget );
     }
 }
 

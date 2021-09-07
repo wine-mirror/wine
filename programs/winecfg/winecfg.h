@@ -117,6 +117,8 @@ BOOL add_drive(char letter, const char *targetpath, const char *device,
                const WCHAR *label, DWORD serial, DWORD type);
 void delete_drive(struct drive *pDrive);
 void apply_drive_changes(void);
+void query_shell_folder( const WCHAR *path, char *dest, unsigned int len );
+void set_shell_folder( const WCHAR *path, const char *dest );
 BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath);
 extern struct drive drives[26]; /* one for each drive letter */
 

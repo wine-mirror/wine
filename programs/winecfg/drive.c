@@ -370,3 +370,55 @@ void apply_drive_changes(void)
     }
     CloseHandle( mgr );
 }
+
+
+void query_shell_folder( const WCHAR *path, char *dest, unsigned int len )
+{
+    UNICODE_STRING nt_name;
+    HANDLE mgr;
+
+    if ((mgr = open_mountmgr()) == INVALID_HANDLE_VALUE) return;
+
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+    {
+        CloseHandle( mgr );
+        return;
+    }
+    DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_SHELL_FOLDER, nt_name.Buffer, nt_name.Length,
+                     dest, len, NULL, NULL );
+    RtlFreeUnicodeString( &nt_name );
+}
+
+void set_shell_folder( const WCHAR *path, const char *dest )
+{
+    struct mountmgr_shell_folder *ioctl;
+    UNICODE_STRING nt_name;
+    HANDLE mgr;
+    DWORD len;
+
+    if ((mgr = open_mountmgr()) == INVALID_HANDLE_VALUE) return;
+
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+    {
+        CloseHandle( mgr );
+        return;
+    }
+
+    len = sizeof(*ioctl) + nt_name.Length;
+    if (dest) len += strlen(dest) + 1;
+
+    if (!(ioctl = HeapAlloc( GetProcessHeap(), 0, len ))) return;
+    ioctl->folder_offset = sizeof(*ioctl);
+    ioctl->folder_size = nt_name.Length;
+    memcpy( (char *)ioctl + ioctl->folder_offset, nt_name.Buffer, nt_name.Length );
+    if (dest)
+    {
+        ioctl->symlink_offset = ioctl->folder_offset + ioctl->folder_size;
+        strcpy( (char *)ioctl + ioctl->symlink_offset, dest );
+    }
+    else ioctl->symlink_offset = 0;
+
+    DeviceIoControl( mgr, IOCTL_MOUNTMGR_DEFINE_SHELL_FOLDER, ioctl, len, NULL, 0, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, ioctl );
+    RtlFreeUnicodeString( &nt_name );
+}
