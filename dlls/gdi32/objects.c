@@ -123,6 +123,12 @@ void *get_gdi_client_ptr( HGDIOBJ obj, DWORD type )
     return (void *)(UINT_PTR)entry->UserPointer;
 }
 
+HGDIOBJ get_full_gdi_handle( HGDIOBJ obj )
+{
+    GDI_HANDLE_ENTRY *entry = handle_entry( obj );
+    return entry ? entry_to_handle( entry ) : 0;
+}
+
 /***********************************************************************
  *           GetObjectType    (GDI32.@)
  */
@@ -171,6 +177,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     struct hdc_list *hdc_list = NULL;
     struct wine_rb_entry *entry;
 
+    obj = get_full_gdi_handle( obj );
     switch (gdi_handle_type( obj ))
     {
     case NTGDI_OBJ_DC:
@@ -302,6 +309,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ obj )
 
     TRACE( "(%p,%p)\n", hdc, obj );
 
+    obj = get_full_gdi_handle( obj );
     if (is_meta_dc( hdc )) return METADC_SelectObject( hdc, obj );
     if (!(dc_attr = get_dc_attr( hdc ))) return 0;
     if (dc_attr->emf && !EMFDC_SelectObject( dc_attr, obj )) return 0;
@@ -747,6 +755,7 @@ UINT WINAPI GetPaletteEntries( HPALETTE palette, UINT start, UINT count, PALETTE
 UINT WINAPI SetPaletteEntries( HPALETTE palette, UINT start, UINT count,
                                const PALETTEENTRY *entries )
 {
+    palette = get_full_gdi_handle( palette );
     return NtGdiDoPalette( palette, start, count, (void *)entries, NtGdiSetPaletteEntries, FALSE );
 }
 
@@ -755,6 +764,7 @@ UINT WINAPI SetPaletteEntries( HPALETTE palette, UINT start, UINT count,
  */
 BOOL WINAPI AnimatePalette( HPALETTE palette, UINT start, UINT count, const PALETTEENTRY *entries )
 {
+    palette = get_full_gdi_handle( palette );
     return NtGdiDoPalette( palette, start, count, (void *)entries, NtGdiAnimatePalette, FALSE );
 }
 

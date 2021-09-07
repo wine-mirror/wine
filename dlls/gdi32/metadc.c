@@ -491,7 +491,7 @@ static UINT metadc_add_handle( struct metadc *metadc, HGDIOBJ obj )
                                        metadc->handles,
                                        metadc->handles_size * sizeof(metadc->handles[0]) );
     }
-    metadc->handles[index] = get_full_gdi_handle( obj );
+    metadc->handles[index] = obj;
 
     metadc->cur_handles++;
     if (metadc->cur_handles > metadc->mh->mtNoObjects)

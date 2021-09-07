@@ -1838,6 +1838,7 @@ HPALETTE WINAPI SelectPalette( HDC hdc, HPALETTE palette, BOOL force_background 
 {
     DC_ATTR *dc_attr;
 
+    palette = get_full_gdi_handle( palette );
     if (is_meta_dc( hdc )) return ULongToHandle( METADC_SelectPalette( hdc, palette ) );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_SelectPalette( dc_attr, palette )) return 0;

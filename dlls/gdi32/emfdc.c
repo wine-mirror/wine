@@ -121,7 +121,7 @@ static UINT emfdc_add_handle( struct emf *emf, HGDIOBJ obj )
                                     emf->handles,
                                     emf->handles_size * sizeof(emf->handles[0]) );
     }
-    emf->handles[index] = get_full_gdi_handle( obj );
+    emf->handles[index] = obj;
 
     emf->cur_handles++;
     if (emf->cur_handles > emf->emh->nHandles)

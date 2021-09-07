@@ -392,7 +392,6 @@ extern BOOL translate_charset_info( DWORD *src, CHARSETINFO *cs, DWORD flags ) D
 extern HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type,
                                  const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
-extern HGDIOBJ get_full_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, DWORD ) DECLSPEC_HIDDEN;
 extern void *get_any_obj_ptr( HGDIOBJ, DWORD * ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;

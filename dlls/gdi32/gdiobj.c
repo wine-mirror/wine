@@ -818,24 +818,6 @@ void *free_gdi_handle( HGDIOBJ handle )
 
 
 /***********************************************************************
- *           get_full_gdi_handle
- *
- * Return the full GDI handle from a possibly truncated value.
- */
-HGDIOBJ get_full_gdi_handle( HGDIOBJ handle )
-{
-    GDI_HANDLE_ENTRY *entry;
-
-    if (!HIWORD( handle ))
-    {
-        EnterCriticalSection( &gdi_section );
-        if ((entry = handle_entry( handle ))) handle = entry_to_handle( entry );
-        LeaveCriticalSection( &gdi_section );
-    }
-    return handle;
-}
-
-/***********************************************************************
  *           get_any_obj_ptr
  *
  * Return a pointer to, and the type of, the GDI object
