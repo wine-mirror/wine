@@ -68,6 +68,8 @@ static DWORD register_iexplore(BOOL doregister)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE prev, WCHAR *cmdline, int show)
 {
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+
     if(*cmdline == '-' || *cmdline == '/') {
         if(!wcsicmp(cmdline+1, L"regserver"))
             return register_iexplore(TRUE);
