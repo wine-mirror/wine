@@ -30,21 +30,6 @@
 #include "ntgdi.h"
 #include "wine/gdi_driver.h"
 
-/* Metafile defines */
-#define META_EOF 0x0000
-/* values of mtType in METAHEADER.  Note however that the disk image of a disk
-   based metafile has mtType == 1 */
-#define METAFILE_MEMORY 1
-#define METAFILE_DISK   2
-#define MFHEADERSIZE (sizeof(METAHEADER))
-#define MFVERSION 0x300
-
-typedef struct {
-    EMR   emr;
-    INT   nBreakExtra;
-    INT   nBreakCount;
-} EMRSETTEXTJUSTIFICATION, *PEMRSETTEXTJUSTIFICATION;
-
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 
@@ -237,9 +222,6 @@ extern const struct gdi_dc_funcs font_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 
-/* enhmetafile.c */
-extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on_disk ) DECLSPEC_HIDDEN;
-
 /* font.c */
 
 struct font_gamma_ramp
@@ -410,28 +392,6 @@ extern BOOL set_map_mode( DC *dc, int mode ) DECLSPEC_HIDDEN;
 extern void combine_transform( XFORM *result, const XFORM *xform1,
                                const XFORM *xform2 ) DECLSPEC_HIDDEN;
 
-/* metafile.c */
-extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
-
-/* Format of comment record added by GetWinMetaFileBits */
-#include <pshpack2.h>
-typedef struct
-{
-    DWORD comment_id;   /* WMFC */
-    DWORD comment_type; /* Always 0x00000001 */
-    DWORD version;      /* Always 0x00010000 */
-    WORD checksum;
-    DWORD flags;        /* Always 0 */
-    DWORD num_chunks;
-    DWORD chunk_size;
-    DWORD remaining_size;
-    DWORD emf_size;
-    BYTE emf_data[1];
-} emf_in_wmf_comment;
-#include <poppack.h>
-
-#define WMFC_MAGIC 0x43464d57
-
 /* driver.c */
 extern BOOL is_display_device( LPCWSTR name ) DECLSPEC_HIDDEN;
 
@@ -565,9 +525,6 @@ static inline DC *get_physdev_dc( PHYSDEV dev )
         dev = dev->next;
     return get_nulldrv_dc( dev );
 }
-
-/* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal entries */
-#define DIB_PAL_MONO 2
 
 BOOL WINAPI FontIsLinked(HDC);
 

@@ -42,6 +42,35 @@ static inline DWORD gdi_handle_type( HGDIOBJ obj )
     return handle & NTGDI_HANDLE_TYPE_MASK;
 }
 
+/* metafile defines */
+
+#define META_EOF 0x0000
+
+#define METAFILE_MEMORY 1
+#define METAFILE_DISK   2
+
+#define MFVERSION 0x300
+
+/* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal entries */
+#define DIB_PAL_MONO 2
+
+/* Format of comment record added by GetWinMetaFileBits */
+#include <pshpack2.h>
+typedef struct
+{
+    DWORD comment_id;   /* WMFC */
+    DWORD comment_type; /* Always 0x00000001 */
+    DWORD version;      /* Always 0x00010000 */
+    WORD checksum;
+    DWORD flags;        /* Always 0 */
+    DWORD num_chunks;
+    DWORD chunk_size;
+    DWORD remaining_size;
+    DWORD emf_size;
+    BYTE emf_data[1];
+} emf_in_wmf_comment;
+#include <poppack.h>
+
 static inline BOOL is_meta_dc( HDC hdc )
 {
     return gdi_handle_type( hdc ) == NTGDI_OBJ_METADC;
@@ -124,7 +153,20 @@ extern INT  METADC_StretchDIBits( HDC hdc, INT x_dst, INT y_dst, INT width_dst, 
                                   INT x_src, INT y_src, INT width_src, INT height_src,
                                   const void *bits, const BITMAPINFO *info, UINT coloruse,
                                   DWORD rop ) DECLSPEC_HIDDEN;
+
+extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
+
 /* enhanced metafiles */
+
+#define WMFC_MAGIC 0x43464d57
+
+typedef struct
+{
+    EMR   emr;
+    INT   nBreakExtra;
+    INT   nBreakCount;
+} EMRSETTEXTJUSTIFICATION, *PEMRSETTEXTJUSTIFICATION;
+
 extern BOOL EMFDC_AbortPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_AlphaBlend( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                               HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
@@ -224,6 +266,9 @@ extern BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT wid
 extern BOOL EMFDC_StrokeAndFillPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StrokePath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_WidenPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+
+extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,
+                                             BOOL on_disk ) DECLSPEC_HIDDEN;
 
 extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
                                    UINT *usage ) DECLSPEC_HIDDEN;
