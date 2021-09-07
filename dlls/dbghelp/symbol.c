@@ -1720,32 +1720,6 @@ BOOL WINAPI SymGetSymPrev(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 }
 
 /******************************************************************
- *		copy_line_64_from_32 (internal)
- *
- */
-static void copy_line_64_from_32(IMAGEHLP_LINE64* l64, const IMAGEHLP_LINE* l32)
-
-{
-    l64->Key = l32->Key;
-    l64->LineNumber = l32->LineNumber;
-    l64->FileName = l32->FileName;
-    l64->Address = l32->Address;
-}
-
-/******************************************************************
- *		copy_line_32_from_64 (internal)
- *
- */
-static void copy_line_32_from_64(IMAGEHLP_LINE* l32, const IMAGEHLP_LINE64* l64)
-
-{
-    l32->Key = l64->Key;
-    l32->LineNumber = l64->LineNumber;
-    l32->FileName = l64->FileName;
-    l32->Address = l64->Address;
-}
-
-/******************************************************************
  *		SymGetLineFromAddr (DBGHELP.@)
  *
  */
@@ -1796,50 +1770,33 @@ BOOL WINAPI SymGetLineFromAddrW64(HANDLE hProcess, DWORD64 dwAddr,
     return internal_line_copy_toW64(&intl, Line);
 }
 
-/******************************************************************
- *		SymGetLinePrev64 (DBGHELP.@)
- *
- */
-BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
+static BOOL symt_get_func_line_prev(HANDLE hProcess, struct internal_line_t* intl, void* key, DWORD64 addr)
 {
     struct module_pair  pair;
     struct line_info*   li;
-    BOOL                in_search = FALSE;
-
-    TRACE("(%p %p)\n", hProcess, Line);
-
-    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    struct line_info*   srcli;
 
     pair.pcs = process_find_by_handle(hProcess);
     if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, Line->Address, DMT_UNKNOWN);
+    pair.requested = module_find_by_addr(pair.pcs, addr, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
 
-    if (Line->Key == 0) return FALSE;
-    li = Line->Key;
-    /* things are a bit complicated because when we encounter a DLIT_SOURCEFILE
-     * element we have to go back until we find the prev one to get the real
-     * source file name for the DLIT_OFFSET element just before 
-     * the first DLIT_SOURCEFILE
-     */
+    if (key == NULL) return FALSE;
+
+    li = key;
+
     while (!li->is_first)
     {
         li--;
         if (!li->is_source_file)
         {
-            Line->LineNumber = li->line_number;
-            Line->Address    = li->u.pc_offset;
-            Line->Key        = li;
-            if (!in_search) return TRUE;
-        }
-        else
-        {
-            if (in_search)
-            {
-                Line->FileName = (char*)source_get(pair.effective, li->u.source_file);
-                return TRUE;
-            }
-            in_search = TRUE;
+            intl->line_number = li->line_number;
+            intl->address     = li->u.pc_offset;
+            intl->key         = li;
+            /* search source file */
+            for (srcli = li; !srcli->is_source_file; srcli--);
+
+            return internal_line_set_nameA(pair.pcs, intl, (char*)source_get(pair.effective, srcli->u.source_file), FALSE);
         }
     }
     SetLastError(ERROR_NO_MORE_ITEMS); /* FIXME */
@@ -1847,18 +1804,51 @@ BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
 }
 
 /******************************************************************
- *		SymGetLinePrev (DBGHELP.@)
+ *             SymGetLinePrev64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
+{
+    struct internal_line_t intl;
+
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, FALSE);
+    if (!symt_get_func_line_prev(hProcess, &intl, Line->Key, Line->Address)) return FALSE;
+    return internal_line_copy_toA64(&intl, Line);
+}
+
+/******************************************************************
+ *             SymGetLinePrev (DBGHELP.@)
  *
  */
 BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
-    IMAGEHLP_LINE64     line64;
+    struct internal_line_t intl;
 
-    line64.SizeOfStruct = sizeof(line64);
-    copy_line_64_from_32(&line64, Line);
-    if (!SymGetLinePrev64(hProcess, &line64)) return FALSE;
-    copy_line_32_from_64(Line, &line64);
-    return TRUE;
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, FALSE);
+    if (!symt_get_func_line_prev(hProcess, &intl, Line->Key, Line->Address)) return FALSE;
+    return internal_line_copy_toA32(&intl, Line);
+}
+
+/******************************************************************
+ *             SymGetLinePrevW64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLinePrevW64(HANDLE hProcess, PIMAGEHLP_LINEW64 Line)
+{
+    struct internal_line_t intl;
+
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, TRUE);
+    if (!symt_get_func_line_prev(hProcess, &intl, Line->Key, Line->Address)) return FALSE;
+    return internal_line_copy_toW64(&intl, Line);
 }
 
 static BOOL symt_get_func_line_next(HANDLE hProcess, struct internal_line_t* intl, void* key, DWORD64 addr)
