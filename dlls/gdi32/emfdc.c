@@ -197,8 +197,15 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
             info_size = get_dib_info_size( info, usage );
 
             emr = HeapAlloc( GetProcessHeap(), 0,
-                             sizeof(EMRCREATEDIBPATTERNBRUSHPT)+info_size+info->bmiHeader.biSizeImage );
+                             sizeof(EMRCREATEDIBPATTERNBRUSHPT) + sizeof(DWORD) +
+                             info_size+info->bmiHeader.biSizeImage );
             if(!emr) break;
+
+            /* FIXME: There is an extra DWORD written by native before the BMI.
+             *        Not sure what it's meant to contain.
+             */
+            emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT ) + sizeof(DWORD);
+            *(DWORD *)(emr + 1) = 0x20000000;
 
             if (logbrush.lbStyle == BS_PATTERN && info->bmiHeader.biBitCount == 1)
             {
@@ -211,16 +218,11 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
                  */
                 emr->emr.iType = EMR_CREATEMONOBRUSH;
                 usage = DIB_PAL_MONO;
-                /* FIXME: There is an extra DWORD written by native before the BMI.
-                 *        Not sure what it's meant to contain.
-                 */
-                emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT ) + sizeof(DWORD);
                 emr->cbBmi = sizeof( BITMAPINFOHEADER );
             }
             else
             {
                 emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
-                emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT );
                 emr->cbBmi = info_size;
             }
             emr->ihBrush = index = emfdc_add_handle( emf, brush );
