@@ -38,8 +38,6 @@ static HFONT titleFont = NULL;
 INT_PTR CALLBACK
 AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR openW[] = {'o','p','e','n',0};
-    static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
     const char * (CDECL *wine_get_version)(void);
     HWND hWnd;
     HDC hDC;
@@ -73,7 +71,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case NM_CLICK:
         case NM_RETURN:
             if(wParam == IDC_ABT_WEB_LINK)
-                ShellExecuteW(NULL, openW, ((NMLINK *)lParam)->item.szUrl, NULL, NULL, SW_SHOW);
+                ShellExecuteW(NULL, L"open", ((NMLINK *)lParam)->item.szUrl, NULL, NULL, SW_SHOW);
             break;
         }
         break;
@@ -109,7 +107,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         /* prepare the title text */
         titleFont = CreateFontW( -MulDiv(24, GetDeviceCaps(hDC, LOGPIXELSY), 72),
-                                 0, 0, 0, 0, FALSE, 0, 0, 0, 0, 0, 0, 0, tahomaW );
+                                 0, 0, 0, 0, FALSE, 0, 0, 0, 0, 0, 0, 0, L"Tahoma" );
         SendDlgItemMessageW(hDlg, IDC_ABT_TITLE_TEXT, WM_SETFONT, (WPARAM)titleFont, TRUE);
 
         wine_get_version = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "wine_get_version" );

@@ -319,16 +319,14 @@ static BOOL list_contains_file(HWND listview, WCHAR *filename)
 
 static void on_add_app_click(HWND dialog)
 {
-  static const WCHAR filterW[] = {'%','s','%','c','*','.','e','x','e',';','*','.','e','x','e','.','s','o','%','c',0};
   WCHAR filetitle[MAX_PATH];
   WCHAR file[MAX_PATH];
   WCHAR programsFilter[100], filter[MAX_PATH];
   WCHAR selectExecutableStr[100];
-  static const WCHAR pathC[] = { 'c',':','\\',0 };
 
   OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
 		       dialog, /*hInst*/0, 0, NULL, 0, 0, NULL,
-		       0, NULL, 0, pathC, 0,
+		       0, NULL, 0, L"C:\\", 0,
 		       OFN_SHOWHELP | OFN_HIDEREADONLY | OFN_ENABLESIZING,
                        0, 0, NULL, 0, NULL };
 
@@ -336,7 +334,7 @@ static void on_add_app_click(HWND dialog)
       ARRAY_SIZE(selectExecutableStr));
   LoadStringW (GetModuleHandleW(NULL), IDS_EXECUTABLE_FILTER, programsFilter,
       ARRAY_SIZE(programsFilter));
-  swprintf( filter, MAX_PATH, filterW, programsFilter, 0, 0 );
+  swprintf( filter, MAX_PATH, L"%s%c*.exe;*.exe.so%c", programsFilter, 0, 0 );
 
   ofn.lpstrTitle = selectExecutableStr;
   ofn.lpstrFilter = filter;

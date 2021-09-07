@@ -226,7 +226,6 @@ static BOOL CALLBACK myEnumThemeProc (LPVOID lpReserved,
 /* Scan for themes */
 static void scan_theme_files(void)
 {
-    static const WCHAR themesSubdir[] = { '\\','T','h','e','m','e','s',0 };
     WCHAR themesPath[MAX_PATH];
 
     free_theme_files();
@@ -235,7 +234,7 @@ static void scan_theme_files(void)
         SHGFP_TYPE_CURRENT, themesPath))) return;
 
     themeFiles = DSA_Create (sizeof (ThemeFile), 1);
-    lstrcatW (themesPath, themesSubdir);
+    lstrcatW (themesPath, L"\\Themes");
 
     EnumThemes (themesPath, myEnumThemeProc, 0);
 }
@@ -561,9 +560,6 @@ static void set_color_from_theme(WCHAR *keyName, COLORREF color)
 
 static void do_parse_theme(WCHAR *file)
 {
-    static const WCHAR colorSect[] = {
-        'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
-        'C','o','l','o','r','s',0};
     WCHAR keyName[MAX_PATH], keyNameValue[MAX_PATH];
     WCHAR *keyNamePtr = NULL;
     char *keyNameValueA = NULL;
@@ -573,12 +569,12 @@ static void do_parse_theme(WCHAR *file)
 
     WINE_TRACE("%s\n", wine_dbgstr_w(file));
 
-    GetPrivateProfileStringW(colorSect, NULL, NULL, keyName,
+    GetPrivateProfileStringW(L"Control Panel\\Colors", NULL, NULL, keyName,
                              MAX_PATH, file);
 
     keyNamePtr = keyName;
     while (*keyNamePtr!=0) {
-        GetPrivateProfileStringW(colorSect, keyNamePtr, NULL, keyNameValue,
+        GetPrivateProfileStringW(L"Control Panel\\Colors", keyNamePtr, NULL, keyNameValue,
                                  MAX_PATH, file);
 
         keyNameValueSize = WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1,
@@ -604,18 +600,15 @@ static void do_parse_theme(WCHAR *file)
 
 static void on_theme_install(HWND dialog)
 {
-  static const WCHAR filterMask[] = {0,'*','.','m','s','s','t','y','l','e','s',';',
-      '*','.','t','h','e','m','e',0,0};
-  static const WCHAR themeExt[] = {'.','T','h','e','m','e',0};
-  const int filterMaskLen = ARRAY_SIZE(filterMask);
+  static const WCHAR filterMask[] = L"\0*.msstyles;*.theme\0";
   OPENFILENAMEW ofn;
   WCHAR filetitle[MAX_PATH];
   WCHAR file[MAX_PATH];
   WCHAR filter[100];
   WCHAR title[100];
 
-  LoadStringW(GetModuleHandleW(NULL), IDS_THEMEFILE, filter, ARRAY_SIZE(filter) - filterMaskLen);
-  memcpy(filter + lstrlenW (filter), filterMask, filterMaskLen * sizeof (WCHAR));
+  LoadStringW(GetModuleHandleW(NULL), IDS_THEMEFILE, filter, ARRAY_SIZE(filter) - ARRAY_SIZE(filterMask));
+  memcpy(filter + lstrlenW (filter), filterMask, sizeof(filterMask));
   LoadStringW(GetModuleHandleW(NULL), IDS_THEMEFILE_SELECT, title, ARRAY_SIZE(title));
 
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -643,15 +636,13 @@ static void on_theme_install(HWND dialog)
 
   if (GetOpenFileNameW(&ofn))
   {
-      static const WCHAR themesSubdir[] = { '\\','T','h','e','m','e','s',0 };
-      static const WCHAR backslash[] = { '\\',0 };
       WCHAR themeFilePath[MAX_PATH];
       SHFILEOPSTRUCTW shfop;
 
       if (FAILED (SHGetFolderPathW (NULL, CSIDL_RESOURCES|CSIDL_FLAG_CREATE, NULL, 
           SHGFP_TYPE_CURRENT, themeFilePath))) return;
 
-      if (lstrcmpiW(PathFindExtensionW(filetitle), themeExt)==0)
+      if (lstrcmpiW(PathFindExtensionW(filetitle), L".theme")==0)
       {
           do_parse_theme(file);
           SendMessageW(GetParent(dialog), PSM_CHANGED, 0, 0);
@@ -661,15 +652,14 @@ static void on_theme_install(HWND dialog)
       PathRemoveExtensionW (filetitle);
 
       /* Construct path into which the theme file goes */
-      lstrcatW (themeFilePath, themesSubdir);
-      lstrcatW (themeFilePath, backslash);
+      lstrcatW (themeFilePath, L"\\themes\\");
       lstrcatW (themeFilePath, filetitle);
 
       /* Create the directory */
       SHCreateDirectoryExW (dialog, themeFilePath, NULL);
 
       /* Append theme file name itself */
-      lstrcatW (themeFilePath, backslash);
+      lstrcatW (themeFilePath, L"\\");
       lstrcatW (themeFilePath, PathFindFileNameW (file));
       /* SHFileOperation() takes lists as input, so double-nullterminate */
       themeFilePath[lstrlenW (themeFilePath)+1] = 0;
@@ -728,8 +718,8 @@ static struct ShellFolderInfo *psfiSelected = NULL;
 static void init_shell_folder_listview_headers(HWND dialog) {
     LVCOLUMNW listColumn;
     RECT viewRect;
-    WCHAR szShellFolder[64] = {'S','h','e','l','l',' ','F','o','l','d','e','r',0};
-    WCHAR szLinksTo[64] = {'L','i','n','k','s',' ','t','o',0};
+    WCHAR szShellFolder[64] = L"Shell Folder";
+    WCHAR szLinksTo[64] = L"Links to";
     int width;
 
     LoadStringW(GetModuleHandleW(NULL), IDS_SHELL_FOLDER, szShellFolder, ARRAY_SIZE(szShellFolder));

@@ -561,9 +561,7 @@ static void on_edit_changed(HWND dialog, WORD id)
 
 BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath)
 {
-    static WCHAR wszUnixRootDisplayName[] = 
-        { ':',':','{','C','C','7','0','2','E','B','2','-','7','D','C','5','-','1','1','D','9','-',
-          'C','6','8','7','-','0','0','0','4','2','3','8','A','0','1','C','D','}', 0 };
+    static WCHAR wszUnixRootDisplayName[] = L"::{CC702EB2-7DC5-11D9-C687-0004238A01CD}";
     WCHAR pszChoosePath[FILENAME_MAX];
     BROWSEINFOW bi = {
         dialog,

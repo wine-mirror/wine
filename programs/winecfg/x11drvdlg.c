@@ -42,16 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define IDT_DPIEDIT 0x1234
 
-static const WCHAR logpixels_reg[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
-static const WCHAR def_logpixels_reg[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
-static const WCHAR logpixels[] = {'L','o','g','P','i','x','e','l','s',0};
-
-static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
-static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
-static const WCHAR explorerW[] = {'E','x','p','l','o','r','e','r',0};
-static const WCHAR explorer_desktopsW[] = {'E','x','p','l','o','r','e','r','\\',
-                                           'D','e','s','k','t','o','p','s',0};
-
 static const UINT dpi_values[] = { 96, 120, 144, 168, 192, 216, 240, 288, 336, 384, 432, 480 };
 
 static BOOL updating_ui;
@@ -71,12 +61,12 @@ static void convert_x11_desktop_key(void)
 static void update_gui_for_desktop_mode(HWND dialog)
 {
     WCHAR *buf, *bufindex;
-    const WCHAR *desktop_name = current_app ? current_app : defaultW;
+    const WCHAR *desktop_name = current_app ? current_app : L"Default";
 
     WINE_TRACE("\n");
     updating_ui = TRUE;
 
-    buf = get_reg_keyW(config_key, explorer_desktopsW, desktop_name, NULL);
+    buf = get_reg_keyW(config_key, L"Explorer\\Desktops", desktop_name, NULL);
     if (buf && (bufindex = wcschr(buf, 'x')))
     {
         *bufindex++ = 0;
@@ -175,50 +165,27 @@ static void init_dialog(HWND dialog)
 
 static void set_from_desktop_edits(HWND dialog)
 {
-    static const WCHAR x[] = {'x',0};
-    static const WCHAR def_width[]  = {'8','0','0',0};
-    static const WCHAR def_height[] = {'6','0','0',0};
-    static const WCHAR min_width[]  = {'6','4','0',0};
-    static const WCHAR min_height[] = {'4','8','0',0};
-    WCHAR *width, *height, *new;
-    const WCHAR *desktop_name = current_app ? current_app : defaultW;
+    WCHAR *width, *height;
+    int w = 800, h = 600;
+    WCHAR buffer[32];
+    const WCHAR *desktop_name = current_app ? current_app : L"Default";
 
     if (updating_ui) return;
-    
+
     WINE_TRACE("\n");
 
     width = get_textW(dialog, IDC_DESKTOP_WIDTH);
     height = get_textW(dialog, IDC_DESKTOP_HEIGHT);
 
-    if (!width || !width[0]) {
-        HeapFree(GetProcessHeap(), 0, width);
-        width = strdupW(def_width);
-    }
-    else if (wcstol(width, NULL, 10) < wcstol(min_width, NULL, 10))
-    {
-        HeapFree(GetProcessHeap(), 0, width);
-        width = strdupW(min_width);
-    }
-    if (!height || !height[0]) {
-        HeapFree(GetProcessHeap(), 0, height);
-        height = strdupW(def_height);
-    }
-    else if (wcstol(height, NULL, 10) < wcstol(min_height, NULL, 10))
-    {
-        HeapFree(GetProcessHeap(), 0, height);
-        height = strdupW(min_height);
-    }
+    if (width && width[0]) w = max( 640, wcstol(width, NULL, 10) );
+    if (height && height[0]) h = max( 480, wcstol(height, NULL, 10) );
 
-    new = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(width) + lstrlenW(height) + 2) * sizeof(WCHAR));
-    lstrcpyW( new, width );
-    lstrcatW( new, x );
-    lstrcatW( new, height );
-    set_reg_keyW(config_key, explorer_desktopsW, desktop_name, new);
-    set_reg_keyW(config_key, keypathW(explorerW), desktopW, desktop_name);
+    swprintf( buffer, ARRAY_SIZE(buffer), L"%ux%u", w, h );
+    set_reg_keyW(config_key, L"Explorer\\Desktops", desktop_name, buffer);
+    set_reg_keyW(config_key, keypathW(L"Explorer"), L"Desktop", desktop_name);
 
     HeapFree(GetProcessHeap(), 0, width);
     HeapFree(GetProcessHeap(), 0, height);
-    HeapFree(GetProcessHeap(), 0, new);
 }
 
 static void on_enable_desktop_clicked(HWND dialog) {
@@ -264,8 +231,8 @@ static void on_fullscreen_grab_clicked(HWND dialog)
 static INT read_logpixels_reg(void)
 {
     DWORD dwLogPixels;
-    WCHAR *buf = get_reg_keyW(HKEY_CURRENT_USER, logpixels_reg, logpixels, NULL);
-    if (!buf) buf = get_reg_keyW(HKEY_CURRENT_CONFIG, def_logpixels_reg, logpixels, NULL);
+    WCHAR *buf = get_reg_keyW(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", NULL);
+    if (!buf) buf = get_reg_keyW(HKEY_CURRENT_CONFIG, L"Software\\Fonts", L"LogPixels", NULL);
     dwLogPixels = buf ? *buf : DEFDPI;
     HeapFree(GetProcessHeap(), 0, buf);
     return dwLogPixels;
@@ -335,7 +302,7 @@ static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
     if (dpi >= MINDPI && dpi <= MAXDPI)
     {
         SendDlgItemMessageW(hDlg, IDC_RES_TRACKBAR, TBM_SETPOS, TRUE, get_trackbar_pos(dpi));
-        set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, dpi);
+        set_reg_key_dwordW(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", dpi);
     }
 
     updating_ui = FALSE;
@@ -455,7 +422,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
 		    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, dpi_values[i], TRUE);
 		    update_font_preview(hDlg);
-		    set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, dpi_values[i]);
+		    set_reg_key_dwordW(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", dpi_values[i]);
 		    break;
 		}
 	    }

@@ -619,10 +619,9 @@ BOOL reg_key_exists(HKEY root, const char *path, const char *name)
 
 static void process_setting(struct setting *s)
 {
-    static const WCHAR softwareW[] = {'S','o','f','t','w','a','r','e','\\'};
     HKEY key;
     BOOL needs_wow64 = (is_win64 && s->root == HKEY_LOCAL_MACHINE && s->path &&
-                        !wcsnicmp(s->path, softwareW, ARRAY_SIZE(softwareW)));
+                        !wcsnicmp(s->path, L"Software\\", wcslen(L"Software\\")));
 
     if (s->value)
     {
@@ -708,16 +707,15 @@ char *keypath(const char *section)
 
 WCHAR *keypathW(const WCHAR *section)
 {
-    static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
     static WCHAR *result = NULL;
 
     HeapFree(GetProcessHeap(), 0, result);
 
     if (current_app)
     {
-        DWORD len = sizeof(appdefaultsW) + (lstrlenW(current_app) + lstrlenW(section) + 1) * sizeof(WCHAR);
+        DWORD len = sizeof(L"AppDefaults\\") + (lstrlenW(current_app) + lstrlenW(section) + 1) * sizeof(WCHAR);
         result = HeapAlloc(GetProcessHeap(), 0, len );
-        lstrcpyW( result, appdefaultsW );
+        lstrcpyW( result, L"AppDefaults\\" );
         lstrcatW( result, current_app );
         if (section[0])
         {

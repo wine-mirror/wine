@@ -159,7 +159,7 @@ static DWORD get_drive_type( char letter )
 static void set_drive_label( char letter, const WCHAR *label )
 {
     static const WCHAR emptyW[1];
-    WCHAR device[] = {'a',':','\\',0};  /* SetVolumeLabel() requires a trailing slash */
+    WCHAR device[] = L"a:\\";  /* SetVolumeLabel() requires a trailing slash */
     device[0] = letter;
 
     if (!label) label = emptyW;
@@ -179,7 +179,7 @@ static void set_drive_label( char letter, const WCHAR *label )
 /* set the drive serial number via a .windows-serial file */
 static void set_drive_serial( WCHAR letter, DWORD serial )
 {
-    WCHAR filename[] = {'a',':','\\','.','w','i','n','d','o','w','s','-','s','e','r','i','a','l',0};
+    WCHAR filename[] = L"a:\\.windows-serial";
     HANDLE hFile;
 
     filename[0] = letter;
@@ -256,7 +256,7 @@ BOOL load_drives(void)
 {
     DWORD i, size = 1024;
     HANDLE mgr;
-    WCHAR root[] = {'A',':','\\',0};
+    WCHAR root[] = L"A:\\";
 
     if ((mgr = open_mountmgr()) == INVALID_HANDLE_VALUE) return FALSE;
 
