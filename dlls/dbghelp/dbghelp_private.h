@@ -772,10 +772,6 @@ extern struct symt_hierarchy_point*
                                             enum SymTagEnum point, 
                                             const struct location* loc,
                                             const char* name) DECLSPEC_HIDDEN;
-extern BOOL         symt_fill_func_line_info(const struct module* module,
-                                             const struct symt_function* func,
-                                             DWORD64 addr, IMAGEHLP_LINE64* line) DECLSPEC_HIDDEN;
-extern BOOL         symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE64 line) DECLSPEC_HIDDEN;
 extern struct symt_thunk*
                     symt_new_thunk(struct module* module, 
                                    struct symt_compiland* parent,

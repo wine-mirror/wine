@@ -1193,14 +1193,16 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
 {
     IMAGEHLP_LINE64     il;
     struct location     loc;
+    DWORD               disp;
 
     if (!func) return;
     symt_normalize_function(module, func);
     /* To define the debug-start of the function, we use the second line number.
      * Not 100% bullet proof, but better than nothing
      */
-    if (symt_fill_func_line_info(module, func, func->address, &il) &&
-        symt_get_func_line_next(module, &il))
+    il.SizeOfStruct = sizeof(il);
+    if (SymGetLineFromAddr64(module->process->handle, func->address, &disp, &il) &&
+        SymGetLineNext64(module->process->handle, &il))
     {
         loc.kind = loc_absolute;
         loc.offset = il.Address - func->address;

@@ -1521,8 +1521,8 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symb
  *
  * fills information about a file
  */
-BOOL symt_fill_func_line_info(const struct module* module, const struct symt_function* func,
-                              DWORD64 addr, IMAGEHLP_LINE64* line)
+static BOOL symt_fill_func_line_info(const struct module* module, const struct symt_function* func,
+                                     DWORD64 addr, IMAGEHLP_LINE64* line)
 {
     struct line_info*   dli = NULL;
     BOOL                found = FALSE;
@@ -1775,7 +1775,7 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
     return TRUE;
 }
 
-BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE64 line)
+static BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE64 line)
 {
     struct line_info*   li;
 
