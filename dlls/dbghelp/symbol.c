@@ -1516,19 +1516,129 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symb
     return TRUE;
 }
 
-/******************************************************************
- *		sym_fill_func_line_info
- *
- * fills information about a file
- */
-static BOOL symt_fill_func_line_info(const struct module* module, const struct symt_function* func,
-                                     DWORD64 addr, IMAGEHLP_LINE64* line)
+struct internal_line_t
 {
-    struct line_info*   dli = NULL;
-    BOOL                found = FALSE;
-    int                 i;
+    BOOL                        unicode;
+    PVOID                       key;
+    DWORD                       line_number;
+    union
+    {
+        CHAR*                   file_nameA;
+        WCHAR*                  file_nameW;
+    };
+    DWORD64                     address;
+};
 
-    assert(func->symt.tag == SymTagFunction);
+static void init_internal_line(struct internal_line_t* intl, BOOL unicode)
+{
+    intl->unicode = unicode;
+    intl->key = NULL;
+    intl->line_number = 0;
+    intl->file_nameA = NULL;
+    intl->address = 0;
+}
+
+static BOOL internal_line_copy_toA32(const struct internal_line_t* intl, IMAGEHLP_LINE* l32)
+{
+    if (intl->unicode) return FALSE;
+    l32->Key = intl->key;
+    l32->LineNumber = intl->line_number;
+    l32->FileName = intl->file_nameA;
+    l32->Address = intl->address;
+    return TRUE;
+}
+
+static BOOL internal_line_copy_toA64(const struct internal_line_t* intl, IMAGEHLP_LINE64* l64)
+{
+    if (intl->unicode) return FALSE;
+    l64->Key = intl->key;
+    l64->LineNumber = intl->line_number;
+    l64->FileName = intl->file_nameA;
+    l64->Address = intl->address;
+    return TRUE;
+}
+
+static BOOL internal_line_copy_toW64(const struct internal_line_t* intl, IMAGEHLP_LINEW64* l64)
+{
+    if (!intl->unicode) return FALSE;
+    l64->Key = intl->key;
+    l64->LineNumber = intl->line_number;
+    l64->FileName = intl->file_nameW;
+    l64->Address = intl->address;
+    return TRUE;
+}
+
+static BOOL internal_line_set_nameA(struct process* pcs, struct internal_line_t* intl, char* str, BOOL copy)
+{
+    DWORD len;
+
+    if (intl->unicode)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        if (!(intl->file_nameW = fetch_buffer(pcs, len * sizeof(WCHAR)))) return FALSE;
+        MultiByteToWideChar(CP_ACP, 0, str, -1, intl->file_nameW, len);
+    }
+    else
+    {
+        if (copy)
+        {
+            len = strlen(str) + 1;
+            if (!(intl->file_nameA = fetch_buffer(pcs, len))) return FALSE;
+            memcpy(intl->file_nameA, str, len);
+        }
+        else
+            intl->file_nameA = str;
+    }
+    return TRUE;
+}
+
+static BOOL internal_line_set_nameW(struct process* pcs, struct internal_line_t* intl, WCHAR* wstr, BOOL copy)
+{
+    DWORD len;
+
+    if (intl->unicode)
+    {
+        if (copy)
+        {
+            len = (lstrlenW(wstr) + 1) * sizeof(WCHAR);
+            if (!(intl->file_nameW = fetch_buffer(pcs, len))) return FALSE;
+            memcpy(intl->file_nameW, wstr, len);
+        }
+        else
+            intl->file_nameW = wstr;
+    }
+    else
+    {
+        DWORD len = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
+        if (!(intl->file_nameA = fetch_buffer(pcs, len))) return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, wstr, -1, intl->file_nameA, len, NULL, NULL);
+    }
+    return TRUE;
+}
+
+/******************************************************************
+ *		get_line_from_addr
+ *
+ * fills source file information from an address
+ */
+static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
+                               PDWORD pdwDisplacement, struct internal_line_t* intl)
+{
+    struct line_info*           dli = NULL;
+    BOOL                        found = FALSE;
+    int                         i;
+    struct module_pair          pair;
+    struct symt_ht*             symt;
+    struct symt_function*       func;
+
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, addr, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
+    if ((symt = symt_find_nearest(pair.effective, addr)) == NULL) return FALSE;
+
+    if (symt->symt.tag != SymTagFunction) return FALSE;
+    func = (struct symt_function*)symt;
 
     for (i=vector_length(&func->vlines)-1; i>=0; i--)
     {
@@ -1536,28 +1646,28 @@ static BOOL symt_fill_func_line_info(const struct module* module, const struct s
         if (!dli->is_source_file)
         {
             if (found || dli->u.pc_offset > addr) continue;
-            line->LineNumber = dli->line_number;
-            line->Address    = dli->u.pc_offset;
-            line->Key        = dli;
+            intl->line_number = dli->line_number;
+            intl->address     = dli->u.pc_offset;
+            intl->key         = dli;
             found = TRUE;
             continue;
         }
         if (found)
         {
+            BOOL ret;
             if (dbghelp_opt_native)
             {
                 /* Return native file paths when using winedbg */
-                line->FileName = (char*)source_get(module, dli->u.source_file);
+                ret = internal_line_set_nameA(pair.pcs, intl, (char*)source_get(pair.effective, dli->u.source_file), FALSE);
             }
             else
             {
-                WCHAR *dospath = wine_get_dos_file_name(source_get(module, dli->u.source_file));
-                DWORD len = WideCharToMultiByte(CP_ACP, 0, dospath, -1, NULL, 0, NULL, NULL);
-                line->FileName = fetch_buffer(module->process, len);
-                WideCharToMultiByte(CP_ACP, 0, dospath, -1, line->FileName, len, NULL, NULL);
+                WCHAR *dospath = wine_get_dos_file_name(source_get(pair.effective, dli->u.source_file));
+                ret = internal_line_set_nameW(pair.pcs, intl, dospath, TRUE);
                 HeapFree( GetProcessHeap(), 0, dospath );
             }
-            return TRUE;
+            if (ret) *pdwDisplacement = intl->address - func->address;
+            return ret;
         }
     }
     return FALSE;
@@ -1623,22 +1733,6 @@ static void copy_line_64_from_32(IMAGEHLP_LINE64* l64, const IMAGEHLP_LINE* l32)
 }
 
 /******************************************************************
- *		copy_line_W64_from_32 (internal)
- *
- */
-static void copy_line_W64_from_64(struct process* pcs, IMAGEHLP_LINEW64* l64w, const IMAGEHLP_LINE64* l64)
-{
-    unsigned len;
-
-    l64w->Key = l64->Key;
-    l64w->LineNumber = l64->LineNumber;
-    len = MultiByteToWideChar(CP_ACP, 0, l64->FileName, -1, NULL, 0);
-    if ((l64w->FileName = fetch_buffer(pcs, len * sizeof(WCHAR))))
-        MultiByteToWideChar(CP_ACP, 0, l64->FileName, -1, l64w->FileName, len);
-    l64w->Address = l64->Address;
-}
-
-/******************************************************************
  *		copy_line_32_from_64 (internal)
  *
  */
@@ -1658,13 +1752,14 @@ static void copy_line_32_from_64(IMAGEHLP_LINE* l32, const IMAGEHLP_LINE64* l64)
 BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
                                PDWORD pdwDisplacement, PIMAGEHLP_LINE Line)
 {
-    IMAGEHLP_LINE64     il64;
+    struct internal_line_t intl;
 
-    il64.SizeOfStruct = sizeof(il64);
-    if (!SymGetLineFromAddr64(hProcess, dwAddr, pdwDisplacement, &il64))
-        return FALSE;
-    copy_line_32_from_64(Line, &il64);
-    return TRUE;
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, FALSE);
+    if (!get_line_from_addr(hProcess, dwAddr, pdwDisplacement, &intl)) return FALSE;
+    return internal_line_copy_toA32(&intl, Line);
 }
 
 /******************************************************************
@@ -1674,24 +1769,14 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
 BOOL WINAPI SymGetLineFromAddr64(HANDLE hProcess, DWORD64 dwAddr, 
                                  PDWORD pdwDisplacement, PIMAGEHLP_LINE64 Line)
 {
-    struct module_pair  pair;
-    struct symt_ht*     symt;
+    struct internal_line_t intl;
 
-    TRACE("%p %s %p %p\n", hProcess, wine_dbgstr_longlong(dwAddr), pdwDisplacement, Line);
+    TRACE("(%p %p)\n", hProcess, Line);
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
-
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, dwAddr, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
-    if ((symt = symt_find_nearest(pair.effective, dwAddr)) == NULL) return FALSE;
-
-    if (symt->symt.tag != SymTagFunction) return FALSE;
-    if (!symt_fill_func_line_info(pair.effective, (struct symt_function*)symt,
-                                  dwAddr, Line)) return FALSE;
-    *pdwDisplacement = dwAddr - Line->Address;
-    return TRUE;
+    init_internal_line(&intl, FALSE);
+    if (!get_line_from_addr(hProcess, dwAddr, pdwDisplacement, &intl)) return FALSE;
+    return internal_line_copy_toA64(&intl, Line);
 }
 
 /******************************************************************
@@ -1701,13 +1786,14 @@ BOOL WINAPI SymGetLineFromAddr64(HANDLE hProcess, DWORD64 dwAddr,
 BOOL WINAPI SymGetLineFromAddrW64(HANDLE hProcess, DWORD64 dwAddr, 
                                   PDWORD pdwDisplacement, PIMAGEHLP_LINEW64 Line)
 {
-    IMAGEHLP_LINE64     il64;
+    struct internal_line_t intl;
 
-    il64.SizeOfStruct = sizeof(il64);
-    if (!SymGetLineFromAddr64(hProcess, dwAddr, pdwDisplacement, &il64))
-        return FALSE;
-    copy_line_W64_from_64(process_find_by_handle(hProcess), Line, &il64);
-    return TRUE;
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, TRUE);
+    if (!get_line_from_addr(hProcess, dwAddr, pdwDisplacement, &intl)) return FALSE;
+    return internal_line_copy_toW64(&intl, Line);
 }
 
 /******************************************************************
