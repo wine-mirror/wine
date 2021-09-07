@@ -92,7 +92,7 @@
 @ stdcall SymGetLineFromNameW64(long wstr wstr long ptr ptr)
 @ stdcall SymGetLineNext(long ptr)
 @ stdcall SymGetLineNext64(long ptr)
-@ stub SymGetLineNextW64
+@ stdcall SymGetLineNextW64(long ptr)
 @ stdcall SymGetLinePrev(long ptr)
 @ stdcall SymGetLinePrev64(long ptr)
 @ stub SymGetLinePrevW64

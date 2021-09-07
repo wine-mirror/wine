@@ -1861,24 +1861,35 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
     return TRUE;
 }
 
-static BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE64 line)
+static BOOL symt_get_func_line_next(HANDLE hProcess, struct internal_line_t* intl, void* key, DWORD64 addr)
 {
+    struct module_pair  pair;
     struct line_info*   li;
+    struct line_info*   srcli;
 
-    if (line->Key == 0) return FALSE;
-    li = line->Key;
+    if (key == NULL) return FALSE;
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, addr, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
+
+    /* search current source file */
+    for (srcli = key; !srcli->is_source_file; srcli--);
+
+    li = key;
     while (!li->is_last)
     {
         li++;
         if (!li->is_source_file)
         {
-            line->LineNumber = li->line_number;
-            line->Address    = li->u.pc_offset;
-            line->Key        = li;
-            return TRUE;
+            intl->line_number = li->line_number;
+            intl->address     = li->u.pc_offset;
+            intl->key         = li;
+            return internal_line_set_nameA(pair.pcs, intl, (char*)source_get(pair.effective, srcli->u.source_file), FALSE);
         }
-        line->FileName = (char*)source_get(module, li->u.source_file);
+        srcli = li;
     }
+    SetLastError(ERROR_NO_MORE_ITEMS); /* FIXME */
     return FALSE;
 }
 
@@ -1888,19 +1899,14 @@ static BOOL symt_get_func_line_next(const struct module* module, PIMAGEHLP_LINE6
  */
 BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
 {
-    struct module_pair  pair;
+    struct internal_line_t intl;
 
     TRACE("(%p %p)\n", hProcess, Line);
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, Line->Address, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
-
-    if (symt_get_func_line_next(pair.effective, Line)) return TRUE;
-    SetLastError(ERROR_NO_MORE_ITEMS); /* FIXME */
-    return FALSE;
+    init_internal_line(&intl, FALSE);
+    if (!symt_get_func_line_next(hProcess, &intl, Line->Key, Line->Address)) return FALSE;
+    return internal_line_copy_toA64(&intl, Line);
 }
 
 /******************************************************************
@@ -1909,13 +1915,30 @@ BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
  */
 BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
-    IMAGEHLP_LINE64     line64;
+    struct internal_line_t intl;
 
-    line64.SizeOfStruct = sizeof(line64);
-    copy_line_64_from_32(&line64, Line);
-    if (!SymGetLineNext64(hProcess, &line64)) return FALSE;
-    copy_line_32_from_64(Line, &line64);
-    return TRUE;
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, FALSE);
+    if (!symt_get_func_line_next(hProcess, &intl, Line->Key, Line->Address)) return FALSE;
+    return internal_line_copy_toA32(&intl, Line);
+}
+
+/******************************************************************
+ *		SymGetLineNextW64 (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymGetLineNextW64(HANDLE hProcess, PIMAGEHLP_LINEW64 Line)
+{
+    struct internal_line_t intl;
+
+    TRACE("(%p %p)\n", hProcess, Line);
+
+    if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
+    init_internal_line(&intl, TRUE);
+    if (!symt_get_func_line_next(hProcess, &intl, Line->Key, Line->Address)) return FALSE;
+    return internal_line_copy_toW64(&intl, Line);
 }
 
 /***********************************************************************
