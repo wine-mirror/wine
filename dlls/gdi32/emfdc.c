@@ -230,6 +230,8 @@ static DWORD emfdc_create_brush( struct emf *emf, HBRUSH brush )
             emr->cbBits = info->bmiHeader.biSizeImage;
             emr->emr.nSize = emr->offBits + emr->cbBits;
 
+            if (info->bmiHeader.biClrUsed == 1 << info->bmiHeader.biBitCount)
+                info->bmiHeader.biClrUsed = 0;
             memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
             get_brush_bitmap_info( brush, NULL, (char *)emr + emr->offBits, NULL );
 
