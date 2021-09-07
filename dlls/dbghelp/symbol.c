@@ -320,6 +320,8 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
                         unsigned source_idx, int line_num, ULONG_PTR offset)
 {
     struct line_info*   dli;
+    unsigned            vlen;
+    struct line_info*   prev;
     BOOL                last_matches = FALSE;
     int                 i;
 
@@ -340,19 +342,24 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
             break;
         }
     }
-
+    vlen = vector_length(&func->vlines);
+    prev = vlen ? vector_at(&func->vlines, vlen - 1) : NULL;
     if (!last_matches)
     {
         /* we shouldn't have line changes on first line of function */
         dli = vector_add(&func->vlines, &module->pool);
         dli->is_source_file = 1;
-        dli->is_first       = dli->is_last = 0;
+        dli->is_first       = (prev == NULL);
+        dli->is_last        = 0;
         dli->line_number    = 0;
         dli->u.source_file  = source_idx;
     }
+    /* clear previous last */
+    if (prev) prev->is_last = 0;
     dli = vector_add(&func->vlines, &module->pool);
     dli->is_source_file = 0;
-    dli->is_first       = dli->is_last = 0;
+    dli->is_first       = 0; /* only a source file can be first */
+    dli->is_last        = 1;
     dli->line_number    = line_num;
     dli->u.pc_offset    = func->address + offset;
 }
@@ -465,9 +472,6 @@ struct symt_hierarchy_point* symt_add_function_point(struct module* module,
 
 BOOL symt_normalize_function(struct module* module, const struct symt_function* func)
 {
-    unsigned            len;
-    struct line_info*   dli;
-
     assert(func);
     /* We aren't adding any more locals or line numbers to this function.
      * Free any spare memory that we might have allocated.
@@ -477,12 +481,6 @@ BOOL symt_normalize_function(struct module* module, const struct symt_function* 
 /* EPP     vector_pool_normalize(&func->vlines,    &module->pool); */
 /* EPP     vector_pool_normalize(&func->vchildren, &module->pool); */
 
-    len = vector_length(&func->vlines);
-    if (len--)
-    {
-        dli = vector_at(&func->vlines,   0);  dli->is_first = 1;
-        dli = vector_at(&func->vlines, len);  dli->is_last  = 1;
-    }
     return TRUE;
 }
 
