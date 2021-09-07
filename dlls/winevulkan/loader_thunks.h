@@ -402,6 +402,7 @@ struct unix_funcs
     void (WINAPI *p_vkResetQueryPoolEXT)(VkDevice, VkQueryPool, uint32_t, uint32_t);
     VkResult (WINAPI *p_vkSetDebugUtilsObjectNameEXT)(VkDevice, const VkDebugUtilsObjectNameInfoEXT *);
     VkResult (WINAPI *p_vkSetDebugUtilsObjectTagEXT)(VkDevice, const VkDebugUtilsObjectTagInfoEXT *);
+    void (WINAPI *p_vkSetDeviceMemoryPriorityEXT)(VkDevice, VkDeviceMemory, float);
     VkResult (WINAPI *p_vkSetEvent)(VkDevice, VkEvent);
     VkResult (WINAPI *p_vkSetPrivateDataEXT)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlotEXT, uint64_t);
     VkResult (WINAPI *p_vkSignalSemaphore)(VkDevice, const VkSemaphoreSignalInfo *);

@@ -1928,6 +1928,11 @@ VkResult WINAPI vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsO
     return unix_funcs->p_vkSetDebugUtilsObjectTagEXT(device, pTagInfo);
 }
 
+void WINAPI vkSetDeviceMemoryPriorityEXT(VkDevice device, VkDeviceMemory memory, float priority)
+{
+    unix_funcs->p_vkSetDeviceMemoryPriorityEXT(device, memory, priority);
+}
+
 VkResult WINAPI vkSetEvent(VkDevice device, VkEvent event)
 {
     return unix_funcs->p_vkSetEvent(device, event);
@@ -2344,6 +2349,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkResetQueryPoolEXT", &vkResetQueryPoolEXT},
     {"vkSetDebugUtilsObjectNameEXT", &vkSetDebugUtilsObjectNameEXT},
     {"vkSetDebugUtilsObjectTagEXT", &vkSetDebugUtilsObjectTagEXT},
+    {"vkSetDeviceMemoryPriorityEXT", &vkSetDeviceMemoryPriorityEXT},
     {"vkSetEvent", &vkSetEvent},
     {"vkSetPrivateDataEXT", &vkSetPrivateDataEXT},
     {"vkSignalSemaphore", &vkSignalSemaphore},
