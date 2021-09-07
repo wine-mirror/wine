@@ -470,20 +470,6 @@ struct symt_hierarchy_point* symt_add_function_point(struct module* module,
     return sym;
 }
 
-BOOL symt_normalize_function(struct module* module, const struct symt_function* func)
-{
-    assert(func);
-    /* We aren't adding any more locals or line numbers to this function.
-     * Free any spare memory that we might have allocated.
-     */
-    assert(func->symt.tag == SymTagFunction);
-
-/* EPP     vector_pool_normalize(&func->vlines,    &module->pool); */
-/* EPP     vector_pool_normalize(&func->vchildren, &module->pool); */
-
-    return TRUE;
-}
-
 struct symt_thunk* symt_new_thunk(struct module* module, 
                                   struct symt_compiland* compiland, 
                                   const char* name, THUNK_ORDINAL ord,

@@ -1827,7 +1827,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
             }
             else if (curr_func)
             {
-                symt_normalize_function(msc_dbg->module, curr_func);
                 curr_func = NULL;
             }
             break;
@@ -2034,8 +2033,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
             break;
         }
     }
-
-    if (curr_func) symt_normalize_function(msc_dbg->module, curr_func);
 
     return TRUE;
 }

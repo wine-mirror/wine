@@ -1196,7 +1196,6 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
     DWORD               disp;
 
     if (!func) return;
-    symt_normalize_function(module, func);
     /* To define the debug-start of the function, we use the second line number.
      * Not 100% bullet proof, but better than nothing
      */
