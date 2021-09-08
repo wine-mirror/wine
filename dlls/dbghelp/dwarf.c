@@ -167,6 +167,12 @@ typedef struct dwarf2_traverse_context_s
 #define sc_unknown      1
 #define sc_num          2
 
+typedef struct dwarf2_cuhead_s
+{
+    unsigned char               word_size; /* size of a word on target machine */
+    unsigned char               version;
+} dwarf2_cuhead_t;
+
 typedef struct dwarf2_parse_context_s
 {
     const dwarf2_section_t*     sections;
@@ -181,6 +187,7 @@ typedef struct dwarf2_parse_context_s
     ULONG_PTR                   ref_offset;
     struct symt*                symt_cache[sc_num]; /* void, unknown */
     char*                       cpp_name;
+    dwarf2_cuhead_t             head;
 } dwarf2_parse_context_t;
 
 /* stored in the dbghelp's module internal structure for later reuse */
@@ -2340,7 +2347,6 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     dwarf2_traverse_context_t cu_ctx;
     const unsigned char* comp_unit_start = mod_ctx->data;
     ULONG_PTR cu_length;
-    unsigned short cu_version;
     ULONG_PTR cu_abbrev_offset;
     BOOL ret = FALSE;
     /* FIXME this is a temporary configuration while adding support for dwarf3&4 bits */
@@ -2350,16 +2356,16 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     cu_ctx.data = mod_ctx->data;
     cu_ctx.end_data = mod_ctx->data + cu_length;
     mod_ctx->data += cu_length;
-    cu_version = dwarf2_parse_u2(&cu_ctx);
+    ctx.head.version = dwarf2_parse_u2(&cu_ctx);
     cu_abbrev_offset = dwarf2_parse_u4(&cu_ctx);
-    cu_ctx.word_size = dwarf2_parse_byte(&cu_ctx);
+    ctx.head.word_size = cu_ctx.word_size = dwarf2_parse_byte(&cu_ctx);
 
     TRACE("Compilation Unit Header found at 0x%x:\n",
           (int)(comp_unit_start - sections[section_debug].address));
     TRACE("- length:        %lu\n", cu_length);
-    TRACE("- version:       %u\n",  cu_version);
+    TRACE("- version:       %u\n",  ctx.head.version);
     TRACE("- abbrev_offset: %lu\n", cu_abbrev_offset);
-    TRACE("- word_size:     %u\n",  cu_ctx.word_size);
+    TRACE("- word_size:     %u\n",  ctx.head.word_size);
 
     if (max_supported_dwarf_version == 0)
     {
@@ -2368,14 +2374,14 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         max_supported_dwarf_version = (v >= 2 && v <= 4) ? v : 2;
     }
 
-    if (cu_version < 2 || cu_version > max_supported_dwarf_version)
+    if (ctx.head.version < 2 || ctx.head.version > max_supported_dwarf_version)
     {
         if (max_supported_dwarf_version > 2)
             WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2 up to %u.\n",
-                 cu_version, max_supported_dwarf_version);
+                 ctx.head.version, max_supported_dwarf_version);
         else
             WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2.\n",
-                 cu_version);
+                 ctx.head.version);
         return FALSE;
     }
 
