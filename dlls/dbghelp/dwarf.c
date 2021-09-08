@@ -451,6 +451,7 @@ static void dwarf2_parse_abbrev_set(dwarf2_traverse_context_t* abbrev_ctx,
 }
 
 static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
+                                     const dwarf2_cuhead_t* head,
                                      const dwarf2_abbrev_entry_attr_t* abbrev_attr)
 {
     unsigned    step;
@@ -461,7 +462,7 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     {
     case DW_FORM_flag_present: step = 0; break;
     case DW_FORM_ref_addr:
-    case DW_FORM_addr:   step = ctx->word_size; break;
+    case DW_FORM_addr:   step = head->word_size; break;
     case DW_FORM_flag:
     case DW_FORM_data1:
     case DW_FORM_ref1:   step = 1; break;
@@ -497,8 +498,7 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
     {
     case DW_FORM_ref_addr:
     case DW_FORM_addr:
-        attr->u.uvalue = dwarf2_get_addr(data,
-                                         ctx->module->format_info[DFI_DWARF]->u.dwarf2_info->word_size);
+        attr->u.uvalue = dwarf2_get_addr(data, ctx->head.word_size);
         TRACE("addr<0x%lx>\n", attr->u.uvalue);
         break;
 
@@ -1129,7 +1129,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
         for (i = 0, attr = abbrev->attrs; attr; i++, attr = attr->next)
         {
             di->data[i] = traverse->data;
-            dwarf2_swallow_attribute(traverse, attr);
+            dwarf2_swallow_attribute(traverse, &ctx->head, attr);
         }
     }
     else di->data = NULL;
