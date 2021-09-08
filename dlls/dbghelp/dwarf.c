@@ -351,11 +351,16 @@ static ULONG_PTR dwarf2_get_addr(const unsigned char* ptr, unsigned word_size)
     return ret;
 }
 
-static ULONG_PTR dwarf2_parse_addr(dwarf2_traverse_context_t* ctx)
+static inline ULONG_PTR dwarf2_parse_addr(dwarf2_traverse_context_t* ctx, unsigned word_size)
 {
-    ULONG_PTR ret = dwarf2_get_addr(ctx->data, ctx->word_size);
-    ctx->data += ctx->word_size;
+    ULONG_PTR ret = dwarf2_get_addr(ctx->data, word_size);
+    ctx->data += word_size;
     return ret;
+}
+
+static inline ULONG_PTR dwarf2_parse_addr_head(dwarf2_traverse_context_t* ctx, const dwarf2_cuhead_t* head)
+{
+    return dwarf2_parse_addr(ctx, head->word_size);
 }
 
 static const char* dwarf2_debug_traverse_ctx(const dwarf2_traverse_context_t* ctx) 
@@ -714,7 +719,7 @@ compute_location(const struct module *module, dwarf2_traverse_context_t* ctx, st
         else switch (op)
         {
         case DW_OP_nop:         break;
-        case DW_OP_addr:        stack[++stk] = dwarf2_parse_addr(ctx); break;
+        case DW_OP_addr:        stack[++stk] = dwarf2_parse_addr(ctx, ctx->word_size); break;
         case DW_OP_const1u:     stack[++stk] = dwarf2_parse_byte(ctx); break;
         case DW_OP_const1s:     stack[++stk] = dwarf2_parse_byte(ctx); break;
         case DW_OP_const2u:     stack[++stk] = dwarf2_parse_u2(ctx); break;
@@ -1050,10 +1055,10 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
 
         *plow  = ULONG_MAX;
         *phigh = 0;
-        while (traverse.data + 2 * traverse.word_size < traverse.end_data)
+        while (traverse.data + 2 * ctx->head.word_size < traverse.end_data)
         {
-            low = dwarf2_parse_addr(&traverse);
-            high = dwarf2_parse_addr(&traverse);
+            low = dwarf2_parse_addr_head(&traverse, &ctx->head);
+            high = dwarf2_parse_addr_head(&traverse, &ctx->head);
             if (low == 0 && high == 0) break;
             if (low == ULONG_MAX) FIXME("unsupported yet (base address selection)\n");
             if (low  < *plow)  *plow = low;
@@ -2303,7 +2308,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                         end_sequence = TRUE;
                         break;
                     case DW_LNE_set_address:
-                        address = ctx->load_offset + dwarf2_parse_addr(&traverse);
+                        address = ctx->load_offset + dwarf2_parse_addr_head(&traverse, &ctx->head);
                         break;
                     case DW_LNE_define_file:
                         FIXME("not handled define file %s\n", debugstr_a((char *)traverse.data));
@@ -2608,7 +2613,7 @@ static ULONG_PTR dwarf2_parse_augmentation_ptr(dwarf2_traverse_context_t* ctx, u
     switch (encoding & 0x0f)
     {
     case DW_EH_PE_native:
-        return base + dwarf2_parse_addr(ctx);
+        return base + dwarf2_parse_addr(ctx, ctx->word_size);
     case DW_EH_PE_leb128:
         return base + dwarf2_leb128_as_unsigned(ctx);
     case DW_EH_PE_data2:
@@ -3107,7 +3112,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
         else switch (opcode)
         {
         case DW_OP_nop:         break;
-        case DW_OP_addr:        stack[++sp] = dwarf2_parse_addr(&ctx); break;
+        case DW_OP_addr:        stack[++sp] = dwarf2_parse_addr(&ctx, ctx.word_size); break;
         case DW_OP_const1u:     stack[++sp] = dwarf2_parse_byte(&ctx); break;
         case DW_OP_const1s:     stack[++sp] = (signed char)dwarf2_parse_byte(&ctx); break;
         case DW_OP_const2u:     stack[++sp] = dwarf2_parse_u2(&ctx); break;
