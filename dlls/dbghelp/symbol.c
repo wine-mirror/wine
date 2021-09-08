@@ -210,6 +210,7 @@ struct symt_compiland* symt_new_compiland(struct module* module,
         sym->address   = address;
         sym->source    = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
+        sym->user      = NULL;
     }
     return sym;
 }

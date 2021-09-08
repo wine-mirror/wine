@@ -179,6 +179,7 @@ struct symt_compiland
     ULONG_PTR                   address;
     unsigned                    source;
     struct vector               vchildren;      /* global variables & functions */
+    void*                       user;           /* when debug info provider needs to store information */
 };
 
 struct symt_data

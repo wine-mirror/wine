@@ -193,6 +193,8 @@ typedef struct dwarf2_parse_context_s
 /* stored in the dbghelp's module internal structure for later reuse */
 struct dwarf2_module_info_s
 {
+    dwarf2_cuhead_t**           cuheads;
+    unsigned                    num_cuheads;
     dwarf2_section_t            debug_loc;
     dwarf2_section_t            debug_frame;
     dwarf2_section_t            eh_frame;
@@ -2335,6 +2337,26 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     return TRUE;
 }
 
+unsigned dwarf2_cache_cuhead(struct dwarf2_module_info_s* module, struct symt_compiland* c, const dwarf2_cuhead_t* head)
+{
+    dwarf2_cuhead_t* ah;
+    unsigned i;
+    for (i = 0; i < module->num_cuheads; ++i)
+    {
+        if (memcmp(module->cuheads[i], head, sizeof(*head)) == 0)
+        {
+            c->user = module->cuheads[i];
+            return TRUE;
+        }
+    }
+    if (!(ah = pool_alloc(&c->container->module->pool, sizeof(*head)))) return FALSE;
+    memcpy(ah, head, sizeof(*head));
+    module->cuheads = realloc(module->cuheads, ++module->num_cuheads * sizeof(head));
+    module->cuheads[module->num_cuheads - 1] = ah;
+    c->user = ah;
+    return TRUE;
+}
+
 static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
                                           struct module* module,
                                           const struct elf_thunk_area* thunks,
@@ -3475,6 +3497,7 @@ static void dwarf2_module_remove(struct process* pcs, struct module_format* modf
 {
     dwarf2_fini_section(&modfmt->u.dwarf2_info->debug_loc);
     dwarf2_fini_section(&modfmt->u.dwarf2_info->debug_frame);
+    free(modfmt->u.dwarf2_info->cuheads);
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
@@ -3541,6 +3564,8 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->debug_loc,   fmap, ".debug_loc",   ".zdebug_loc",   NULL);
     dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->debug_frame, fmap, ".debug_frame", ".zdebug_frame", NULL);
     dwarf2_modfmt->u.dwarf2_info->eh_frame = eh_frame;
+    dwarf2_modfmt->u.dwarf2_info->cuheads = NULL;
+    dwarf2_modfmt->u.dwarf2_info->num_cuheads = 0;
 
     while (mod_ctx.data < mod_ctx.end_data)
     {
