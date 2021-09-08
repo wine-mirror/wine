@@ -475,6 +475,7 @@ int wpp_parse( const char *input, FILE *output )
     }
     /* Clean if_stack, it could remain dirty on errors */
     while (pp_get_if_depth()) pp_pop_if();
+    ppy_lex_destroy();
     del_special_defines();
     del_cmdline_defines();
     pp_pop_define_state();
