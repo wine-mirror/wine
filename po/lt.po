@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-06-24 21:06+0300\n"
+"PO-Revision-Date: 2021-09-08 22:37+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10330,7 +10330,7 @@ msgstr "Šiaurės Azijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+07:00) Krasnoyarsk"
-msgstr ""
+msgstr "(UTC+07:00) Krasnojarskas"
 
 #: dlls/tzres/tzres.rc:168
 msgid "Georgian Standard Time"
@@ -10342,17 +10342,15 @@ msgstr "Gruzijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:170
 msgid "(UTC+04:00) Tbilisi"
-msgstr ""
+msgstr "(UTC+04:00) Tbilisis"
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:392
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC+12:00) Pasaulinis koordinuotasis laikas+12"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Nepal Standard Time"
@@ -10364,7 +10362,7 @@ msgstr "Nepalo vasaros laikas"
 
 #: dlls/tzres/tzres.rc:254
 msgid "(UTC+05:45) Kathmandu"
-msgstr ""
+msgstr "(UTC+05:45) Katmandu"
 
 #: dlls/tzres/tzres.rc:90
 msgid "Cape Verde Standard Time"
@@ -10376,7 +10374,7 @@ msgstr "Žaliojo Kyšulio vasaros laikas"
 
 #: dlls/tzres/tzres.rc:92
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) Žaliojo Kyšulio s."
 
 #: dlls/tzres/tzres.rc:183
 msgid "Haiti Standard Time"
@@ -10388,7 +10386,7 @@ msgstr "Haičio vasaros laikas"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) Haitis"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Central European Standard Time"
@@ -10412,29 +10410,23 @@ msgstr "Maroko vasaros laikas"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+01:00) Casablanca"
-msgstr ""
+msgstr "(UTC+01:00) Kasablanka"
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:401
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC-08:00) Pasaulinis koordinuotasis laikas-08"
 
 #: dlls/tzres/tzres.rc:39
-#, fuzzy
-#| msgid "Atlantic Standard Time"
 msgid "Altai Standard Time"
-msgstr "Atlanto vandenyno juostinis laikas"
+msgstr "Altajaus juostinis laikas"
 
 #: dlls/tzres/tzres.rc:40
-#, fuzzy
-#| msgid "Atlantic Daylight Time"
 msgid "Altai Daylight Time"
-msgstr "Atlanto vandenyno vasaros laikas"
+msgstr "Altajaus vasaros laikas"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
@@ -10462,7 +10454,7 @@ msgstr "Irano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:194
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) Teheranas"
 
 #: dlls/tzres/tzres.rc:318
 msgid "Saint Pierre Standard Time"
@@ -10473,26 +10465,20 @@ msgid "Saint Pierre Daylight Time"
 msgstr "Sen Pjero vasaros laikas"
 
 #: dlls/tzres/tzres.rc:320
-#, fuzzy
-#| msgid "Saint Pierre Standard Time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "Sen Pjero juostinis laikas"
+msgstr "(UTC-03:00) Sen Pjeras ir Mikelonas"
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Sao Tome Standard Time"
-msgstr "Samoa juostinis laikas"
+msgstr "San Tomė juostinis laikas"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Sao Tome Daylight Time"
-msgstr "Samoa vasaros laikas"
+msgstr "San Tomė vasaros laikas"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) San Tomė"
 
 #: dlls/tzres/tzres.rc:249
 msgid "Namibia Standard Time"
@@ -10504,7 +10490,7 @@ msgstr "Namibijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+02:00) Windhoek"
-msgstr ""
+msgstr "(UTC+02:00) Vindhukas"
 
 #: dlls/tzres/tzres.rc:366
 msgid "Tonga Standard Time"
@@ -10516,7 +10502,7 @@ msgstr "Tongos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC+13:00) Nuku'alofa"
-msgstr ""
+msgstr "(UTC+13:00) Nukualofa"
 
 #: dlls/tzres/tzres.rc:240
 msgid "Mountain Standard Time (Mexico)"
@@ -10552,7 +10538,7 @@ msgstr "Vidurio Azijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC+06:00) Astana"
-msgstr ""
+msgstr "(UTC+06:00) Astana"
 
 #: dlls/tzres/tzres.rc:213
 msgid "Lord Howe Standard Time"
@@ -10564,7 +10550,7 @@ msgstr "Lordo Hau vasaros laikas"
 
 #: dlls/tzres/tzres.rc:215
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr ""
+msgstr "(UTC+10:30) Lordo Hau sala"
 
 #: dlls/tzres/tzres.rc:48
 msgid "Arabic Standard Time"
@@ -10576,17 +10562,15 @@ msgstr "Arabų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:50
 msgid "(UTC+03:00) Baghdad"
-msgstr ""
+msgstr "(UTC+03:00) Bagdadas"
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:395
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC+13:00) Pasaulinis koordinuotasis laikas+13"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Magadan Standard Time"
@@ -10598,7 +10582,7 @@ msgstr "Magadano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+11:00) Magadan"
-msgstr ""
+msgstr "(UTC+11:00) Magadanas"
 
 #: dlls/tzres/tzres.rc:258
 msgid "Newfoundland Standard Time"
@@ -10610,23 +10594,19 @@ msgstr "Niufaundlando vasaros laikas"
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) Niufaundlandas"
 
 #: dlls/tzres/tzres.rc:345
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Sudan Standard Time"
-msgstr "Jordanijos juostinis laikas"
+msgstr "Sudano juostinis laikas"
 
 #: dlls/tzres/tzres.rc:346
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Sudan Daylight Time"
-msgstr "Jordanijos vasaros laikas"
+msgstr "Sudano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+02:00) Khartoum"
-msgstr ""
+msgstr "(UTC+02:00) Chartumas"
 
 #: dlls/tzres/tzres.rc:435
 msgid "West Pacific Standard Time"
@@ -10662,7 +10642,7 @@ msgstr "Azerbaidžano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC+04:00) Baku"
-msgstr ""
+msgstr "(UTC+04:00) Baku"
 
 #: dlls/tzres/tzres.rc:219
 msgid "Magallanes Standard Time"
@@ -10674,7 +10654,7 @@ msgstr "Magelano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:221
 msgid "(UTC-03:00) Punta Arenas"
-msgstr ""
+msgstr "(UTC-03:00) Punta Arenasas"
 
 #: dlls/tzres/tzres.rc:324
 msgid "Samoa Standard Time"
@@ -10686,7 +10666,7 @@ msgstr "Samoa vasaros laikas"
 
 #: dlls/tzres/tzres.rc:326
 msgid "(UTC+13:00) Samoa"
-msgstr ""
+msgstr "(UTC+13:00) Samoa"
 
 #: dlls/tzres/tzres.rc:201
 msgid "Kaliningrad Standard Time"
@@ -10698,7 +10678,7 @@ msgstr "Karaliaučiaus vasaros laikas"
 
 #: dlls/tzres/tzres.rc:203
 msgid "(UTC+02:00) Kaliningrad"
-msgstr ""
+msgstr "(UTC+02:00) Karaliaučius"
 
 #: dlls/tzres/tzres.rc:282
 msgid "Pacific Standard Time (Mexico)"
@@ -10710,7 +10690,7 @@ msgstr "Ramiojo vandenyno vasaros laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC-08:00) Baja California"
-msgstr ""
+msgstr "(UTC-08:00) Žemutinė Kalifornija"
 
 #: dlls/tzres/tzres.rc:228
 msgid "Middle East Standard Time"
@@ -10722,7 +10702,7 @@ msgstr "Vidurinių Rytų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+02:00) Beirut"
-msgstr ""
+msgstr "(UTC+02:00) Beirutas"
 
 #: dlls/tzres/tzres.rc:360
 msgid "Tokyo Standard Time"
@@ -10746,7 +10726,7 @@ msgstr "Linijinių salų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:212
 msgid "(UTC+14:00) Kiritimati Island"
-msgstr ""
+msgstr "(UTC+14:00) Kiritimatis"
 
 #: dlls/tzres/tzres.rc:129
 msgid "Cuba Standard Time"
@@ -10758,7 +10738,7 @@ msgstr "Kubos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-05:00) Havana"
-msgstr ""
+msgstr "(UTC-05:00) Havana"
 
 #: dlls/tzres/tzres.rc:198
 msgid "Jordan Standard Time"
@@ -10770,7 +10750,7 @@ msgstr "Jordanijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:200
 msgid "(UTC+02:00) Amman"
-msgstr ""
+msgstr "(UTC+02:00) Amanas"
 
 #: dlls/tzres/tzres.rc:117
 msgid "Central Standard Time"
@@ -10793,16 +10773,12 @@ msgid "(UTC+04:00) Izhevsk, Samara"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:414
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "Volgograd Standard Time"
-msgstr "Tongos juostinis laikas"
+msgstr "Volgogrado juostinis laikas"
 
 #: dlls/tzres/tzres.rc:415
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "Volgograd Daylight Time"
-msgstr "Tongos vasaros laikas"
+msgstr "Volgogrado vasaros laikas"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+04:00) Volgograd"
@@ -10834,13 +10810,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:407
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC-11:00) Pasaulinis koordinuotasis laikas-11"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Argentina Standard Time"
@@ -10855,16 +10829,12 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:375
-#, fuzzy
-#| msgid "Turkey Standard Time"
 msgid "Turks And Caicos Standard Time"
-msgstr "Turkijos juostinis laikas"
+msgstr "Terkso ir Kaikoso juostinis laikas"
 
 #: dlls/tzres/tzres.rc:376
-#, fuzzy
-#| msgid "Turkey Daylight Time"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Turkijos vasaros laikas"
+msgstr "Terkso ir Kaikoso vasaros laikas"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC-05:00) Turks and Caicos"
@@ -10899,10 +10869,8 @@ msgid "Coordinated Universal Time"
 msgstr "Pasaulinis koordinuotasis laikas"
 
 #: dlls/tzres/tzres.rc:389
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC) Coordinated Universal Time"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC) Pasaulinis koordinuotasis laikas"
 
 #: dlls/tzres/tzres.rc:189
 msgid "India Standard Time"
@@ -10941,16 +10909,12 @@ msgid "(UTC+03:00) Istanbul"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgid "Arabian Standard Time"
 msgid "Astrakhan Standard Time"
-msgstr "Arabų juostinis laikas"
+msgstr "Astrachanės juostinis laikas"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgid "Arabian Daylight Time"
 msgid "Astrakhan Daylight Time"
-msgstr "Arabų vasaros laikas"
+msgstr "Astrachanės vasaros laikas"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
@@ -10981,16 +10945,12 @@ msgid "(UTC-06:00) Saskatchewan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:441
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Yukon Standard Time"
-msgstr "Jakutsko juostinis laikas"
+msgstr "Jukono juostinis laikas"
 
 #: dlls/tzres/tzres.rc:442
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Yukon Daylight Time"
-msgstr "Jakutsko vasaros laikas"
+msgstr "Jukono vasaros laikas"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC-07:00) Yukon"
@@ -11045,16 +11005,12 @@ msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:363
-#, fuzzy
-#| msgid "Tokyo Standard Time"
 msgid "Tomsk Standard Time"
-msgstr "Tokijo juostinis laikas"
+msgstr "Tomsko juostinis laikas"
 
 #: dlls/tzres/tzres.rc:364
-#, fuzzy
-#| msgid "Tokyo Daylight Time"
 msgid "Tomsk Daylight Time"
-msgstr "Tokijo vasaros laikas"
+msgstr "Tomsko vasaros laikas"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+07:00) Tomsk"
@@ -11109,32 +11065,24 @@ msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:369
-#, fuzzy
-#| msgid "Tasmania Standard Time"
 msgid "Transbaikal Standard Time"
-msgstr "Tasmanijos juostinis laikas"
+msgstr "Užbaikalės juostinis laikas"
 
 #: dlls/tzres/tzres.rc:370
-#, fuzzy
-#| msgid "Tasmania Daylight Time"
 msgid "Transbaikal Daylight Time"
-msgstr "Tasmanijos vasaros laikas"
+msgstr "Užbaikalės vasaros laikas"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+09:00) Chita"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgid "E. Europe Standard Time"
-msgstr "Vakarinės Europos juostinis laikas"
+msgstr "R. Europos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "W. Europe Daylight Time"
 msgid "E. Europe Daylight Time"
-msgstr "Vakarinės Europos vasaros laikas"
+msgstr "R. Europos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
@@ -11153,16 +11101,12 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Saratov Standard Time"
-msgstr "Samoa juostinis laikas"
+msgstr "Saratovo juostinis laikas"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Saratov Daylight Time"
-msgstr "Samoa vasaros laikas"
+msgstr "Saratovo vasaros laikas"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
@@ -11205,16 +11149,12 @@ msgid "(UTC-05:00) Indiana (East)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "Alaskan Standard Time"
 msgid "Sakhalin Standard Time"
-msgstr "Aliaskos juostinis laikas"
+msgstr "Sachalino juostinis laikas"
 
 #: dlls/tzres/tzres.rc:322
-#, fuzzy
-#| msgid "Alaskan Daylight Time"
 msgid "Sakhalin Daylight Time"
-msgstr "Aliaskos vasaros laikas"
+msgstr "Sachalino vasaros laikas"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
@@ -11258,13 +11198,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:398
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC-02:00) Pasaulinis koordinuotasis laikas-02"
 
 #: dlls/tzres/tzres.rc:384
 msgid "US Mountain Standard Time"
@@ -11304,13 +11242,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:404
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr "Pasaulinis koordinuotasis laikas"
+msgstr "(UTC-09:00) Pasaulinis koordinuotasis laikas-09"
 
 #: dlls/tzres/tzres.rc:342
 msgid "Sri Lanka Standard Time"
@@ -11453,16 +11389,12 @@ msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:432
-#, fuzzy
-#| msgid "West Asia Standard Time"
 msgid "West Bank Standard Time"
-msgstr "Vakarų Azijos juostinis laikas"
+msgstr "Vakarų Kranto juostinis laikas"
 
 #: dlls/tzres/tzres.rc:433
-#, fuzzy
-#| msgid "West Asia Daylight Time"
 msgid "West Bank Daylight Time"
-msgstr "Vakarų Azijos vasaros laikas"
+msgstr "Vakarų Kranto vasaros laikas"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+02:00) Gaza, Hebron"
@@ -11517,16 +11449,12 @@ msgid "(UTC+08:00) Ulaanbaatar"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:261
-#, fuzzy
-#| msgid "Morocco Standard Time"
 msgid "Norfolk Standard Time"
-msgstr "Maroko juostinis laikas"
+msgstr "Norfolko juostinis laikas"
 
 #: dlls/tzres/tzres.rc:262
-#, fuzzy
-#| msgid "Morocco Daylight Time"
 msgid "Norfolk Daylight Time"
-msgstr "Maroko vasaros laikas"
+msgstr "Norfolko vasaros laikas"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC+11:00) Norfolk Island"
@@ -11689,32 +11617,24 @@ msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Qyzylorda Standard Time"
-msgstr "Jordanijos juostinis laikas"
+msgstr "Kyzylordos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Qyzylorda Daylight Time"
-msgstr "Jordanijos vasaros laikas"
+msgstr "Kyzylordos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:426
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "W. Mongolia Standard Time"
-msgstr "Tongos juostinis laikas"
+msgstr "V. Mongolijos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:427
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "W. Mongolia Daylight Time"
-msgstr "Tongos vasaros laikas"
+msgstr "V. Mongolijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+07:00) Hovd"
@@ -11745,16 +11665,12 @@ msgid "(UTC-10:00) Aleutian Islands"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Omsk Standard Time"
-msgstr "Jakutsko juostinis laikas"
+msgstr "Omsko juostinis laikas"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Omsk Daylight Time"
-msgstr "Jakutsko vasaros laikas"
+msgstr "Omsko vasaros laikas"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
