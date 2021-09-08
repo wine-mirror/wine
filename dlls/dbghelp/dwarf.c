@@ -2604,7 +2604,7 @@ struct frame_info
     struct frame_state state_stack[MAX_SAVED_STATES];
 };
 
-static ULONG_PTR dwarf2_parse_augmentation_ptr(dwarf2_traverse_context_t* ctx, unsigned char encoding)
+static ULONG_PTR dwarf2_parse_augmentation_ptr(dwarf2_traverse_context_t* ctx, unsigned char encoding, unsigned char word_size)
 {
     ULONG_PTR   base;
 
@@ -2626,7 +2626,7 @@ static ULONG_PTR dwarf2_parse_augmentation_ptr(dwarf2_traverse_context_t* ctx, u
     switch (encoding & 0x0f)
     {
     case DW_EH_PE_native:
-        return base + dwarf2_parse_addr(ctx, ctx->word_size);
+        return base + dwarf2_parse_addr(ctx, word_size);
     case DW_EH_PE_leb128:
         return base + dwarf2_leb128_as_unsigned(ctx);
     case DW_EH_PE_data2:
@@ -2649,7 +2649,7 @@ static ULONG_PTR dwarf2_parse_augmentation_ptr(dwarf2_traverse_context_t* ctx, u
     }
 }
 
-static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info* info)
+static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info* info, unsigned char word_size)
 {
     unsigned char version;
     const char* augmentation;
@@ -2706,7 +2706,7 @@ static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info*
             unsigned char encoding = dwarf2_parse_byte(ctx);
             /* throw away the indirect bit, as we don't care for the result */
             encoding &= ~DW_EH_PE_indirect;
-            dwarf2_parse_augmentation_ptr(ctx, encoding); /* handler */
+            dwarf2_parse_augmentation_ptr(ctx, encoding, word_size); /* handler */
             continue;
         }
         case 'R':
@@ -2735,6 +2735,7 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
     ULONG_PTR                   start, range;
     unsigned                    cie_id;
     const BYTE*                 start_data = fde_ctx->data;
+    unsigned char               word_size = module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
     cie_id = in_eh_frame ? 0 : DW_CIE_ID;
     /* skip 0-padding at beginning of section (alignment) */
@@ -2757,7 +2758,7 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
         {
             last_cie_ptr = fde_ctx->data - 8;
             /* we need some bits out of the CIE in order to parse all contents */
-            if (!parse_cie_details(fde_ctx, info)) return FALSE;
+            if (!parse_cie_details(fde_ctx, info, word_size)) return FALSE;
             cie_ctx->data = fde_ctx->data;
             cie_ctx->end_data = ptr_blk;
             cie_ctx->word_size = fde_ctx->word_size;
@@ -2778,10 +2779,10 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
                       (unsigned)(fde_ctx->data - start_data));
                 return FALSE;
             }
-            if (!parse_cie_details(cie_ctx, info)) return FALSE;
+            if (!parse_cie_details(cie_ctx, info, word_size)) return FALSE;
         }
-        start = delta + dwarf2_parse_augmentation_ptr(fde_ctx, info->fde_encoding);
-        range = dwarf2_parse_augmentation_ptr(fde_ctx, info->fde_encoding & 0x0F);
+        start = delta + dwarf2_parse_augmentation_ptr(fde_ctx, info->fde_encoding, word_size);
+        range = dwarf2_parse_augmentation_ptr(fde_ctx, info->fde_encoding & 0x0F, word_size);
 
         if (addr >= start && addr < start + range)
         {
@@ -2850,7 +2851,8 @@ static void execute_cfa_instructions(struct module* module, dwarf2_traverse_cont
             break;
         case DW_CFA_set_loc:
         {
-            ULONG_PTR loc = dwarf2_parse_augmentation_ptr(ctx, info->fde_encoding);
+            ULONG_PTR loc = dwarf2_parse_augmentation_ptr(ctx, info->fde_encoding,
+                                                          module->format_info[DFI_DWARF]->u.dwarf2_info->word_size);
             TRACE("%lx: DW_CFA_set_loc %lx\n", info->ip, loc);
             info->ip = loc;
             break;
@@ -3125,7 +3127,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
         else switch (opcode)
         {
         case DW_OP_nop:         break;
-        case DW_OP_addr:        stack[++sp] = dwarf2_parse_addr(&ctx, ctx.word_size); break;
+        case DW_OP_addr:        stack[++sp] = dwarf2_parse_addr(&ctx, module->format_info[DFI_DWARF]->u.dwarf2_info->word_size); break;
         case DW_OP_const1u:     stack[++sp] = dwarf2_parse_byte(&ctx); break;
         case DW_OP_const1s:     stack[++sp] = (signed char)dwarf2_parse_byte(&ctx); break;
         case DW_OP_const2u:     stack[++sp] = dwarf2_parse_u2(&ctx); break;
@@ -3138,7 +3140,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
         case DW_OP_consts:      stack[++sp] = dwarf2_leb128_as_signed(&ctx); break;
         case DW_OP_deref:
             tmp = 0;
-            if (!sw_read_mem(csw, stack[sp], &tmp, ctx.word_size))
+            if (!sw_read_mem(csw, stack[sp], &tmp, module->format_info[DFI_DWARF]->u.dwarf2_info->word_size))
             {
                 ERR("Couldn't read memory at %s\n", wine_dbgstr_longlong(stack[sp]));
                 tmp = 0;
@@ -3176,7 +3178,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
         case DW_OP_bra:         tmp = (short)dwarf2_parse_u2(&ctx); if (!stack[sp--]) ctx.data += tmp; break;
         case DW_OP_GNU_encoded_addr:
             tmp = dwarf2_parse_byte(&ctx);
-            stack[++sp] = dwarf2_parse_augmentation_ptr(&ctx, tmp);
+            stack[++sp] = dwarf2_parse_augmentation_ptr(&ctx, tmp, module->format_info[DFI_DWARF]->u.dwarf2_info->word_size);
             break;
         case DW_OP_regx:
             stack[++sp] = get_context_reg(module, csw, context, dwarf2_leb128_as_unsigned(&ctx));
@@ -3320,7 +3322,7 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
         end = fde_ctx.data + len;
     }
     else end = NULL;
-    dwarf2_parse_augmentation_ptr(&fde_ctx, info.lsda_encoding); /* handler_data */
+    dwarf2_parse_augmentation_ptr(&fde_ctx, info.lsda_encoding, modfmt->u.dwarf2_info->word_size); /* handler_data */
     if (end) fde_ctx.data = end;
 
     execute_cfa_instructions(pair.effective, &fde_ctx, ip, &info);
