@@ -2343,6 +2343,8 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     unsigned short cu_version;
     ULONG_PTR cu_abbrev_offset;
     BOOL ret = FALSE;
+    /* FIXME this is a temporary configuration while adding support for dwarf3&4 bits */
+    static LONG max_supported_dwarf_version = 0;
 
     cu_length = dwarf2_parse_u4(mod_ctx);
     cu_ctx.data = mod_ctx->data;
@@ -2359,10 +2361,21 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     TRACE("- abbrev_offset: %lu\n", cu_abbrev_offset);
     TRACE("- word_size:     %u\n",  cu_ctx.word_size);
 
-    if (cu_version != 2)
+    if (max_supported_dwarf_version == 0)
     {
-        WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2.\n",
-             cu_version);
+        char* env = getenv("DBGHELP_DWARF_VERSION");
+        LONG v = env ? atol(env) : 2;
+        max_supported_dwarf_version = (v >= 2 && v <= 4) ? v : 2;
+    }
+
+    if (cu_version < 2 || cu_version > max_supported_dwarf_version)
+    {
+        if (max_supported_dwarf_version > 2)
+            WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2 up to %u.\n",
+                 cu_version, max_supported_dwarf_version);
+        else
+            WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2.\n",
+                 cu_version);
         return FALSE;
     }
 
