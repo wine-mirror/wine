@@ -159,7 +159,6 @@ typedef struct dwarf2_traverse_context_s
 {
     const unsigned char*        data;
     const unsigned char*        end_data;
-    unsigned char               word_size;
 } dwarf2_traverse_context_t;
 
 /* symt_cache indexes */
@@ -934,7 +933,6 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
 
         lctx.data = xloc.u.block.ptr;
         lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
-        lctx.word_size = ctx->module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
         err = compute_location(ctx->module, &ctx->head, &lctx, loc, NULL, frame);
         if (err < 0)
@@ -1052,7 +1050,6 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
         traverse.data = ctx->sections[section_ranges].address + range.u.uvalue;
         traverse.end_data = ctx->sections[section_ranges].address +
             ctx->sections[section_ranges].size;
-        traverse.word_size = ctx->module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
         *plow  = ULONG_MAX;
         *phigh = 0;
@@ -2179,7 +2176,6 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     }
     traverse.data = sections[section_line].address + offset;
     traverse.end_data = traverse.data + 4;
-    traverse.word_size = ctx->module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
     length = dwarf2_parse_u4(&traverse);
     traverse.end_data = sections[section_line].address + offset + length;
@@ -2386,7 +2382,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     mod_ctx->data += cu_length;
     ctx.head.version = dwarf2_parse_u2(&cu_ctx);
     cu_abbrev_offset = dwarf2_parse_u4(&cu_ctx);
-    ctx.head.word_size = cu_ctx.word_size = dwarf2_parse_byte(&cu_ctx);
+    ctx.head.word_size = dwarf2_parse_byte(&cu_ctx);
 
     TRACE("Compilation Unit Header found at 0x%x:\n",
           (int)(comp_unit_start - sections[section_debug].address));
@@ -2413,8 +2409,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         return FALSE;
     }
 
-    module->format_info[DFI_DWARF]->u.dwarf2_info->word_size = cu_ctx.word_size;
-    mod_ctx->word_size = cu_ctx.word_size;
+    module->format_info[DFI_DWARF]->u.dwarf2_info->word_size = ctx.head.word_size;
 
     pool_init(&ctx.pool, 65536);
     ctx.sections = sections;
@@ -2430,7 +2425,6 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
 
     abbrev_ctx.data = sections[section_abbrev].address + cu_abbrev_offset;
     abbrev_ctx.end_data = sections[section_abbrev].address + sections[section_abbrev].size;
-    abbrev_ctx.word_size = cu_ctx.word_size;
     dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
 
     sparse_array_init(&ctx.debug_info_table, sizeof(dwarf2_debug_info_t), 128);
@@ -2495,7 +2489,6 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE
         {
             lctx->data = ptr;
             lctx->end_data = ptr + len;
-            lctx->word_size = modfmt->u.dwarf2_info->word_size;
             return TRUE;
         }
         ptr += len;
@@ -2761,7 +2754,6 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
             if (!parse_cie_details(fde_ctx, info, word_size)) return FALSE;
             cie_ctx->data = fde_ctx->data;
             cie_ctx->end_data = ptr_blk;
-            cie_ctx->word_size = fde_ctx->word_size;
             continue;
         }
         cie_ptr = (in_eh_frame) ? fde_ctx->data - id - 4 : start_data + id;
@@ -2769,7 +2761,6 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
         {
             last_cie_ptr = cie_ptr;
             cie_ctx->data = cie_ptr;
-            cie_ctx->word_size = fde_ctx->word_size;
             cie_ctx->end_data = cie_ptr + 4;
             cie_ctx->end_data = cie_ptr + 4 + dwarf2_parse_u4(cie_ctx);
             if (dwarf2_parse_u4(cie_ctx) != cie_id)
@@ -3111,7 +3102,6 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
     ctx.end_data = zp + 4;
     len = dwarf2_leb128_as_unsigned(&ctx);
     ctx.end_data = ctx.data + len;
-    ctx.word_size = module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
     while (ctx.data < ctx.end_data)
     {
@@ -3288,7 +3278,6 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
     memset(&info, 0, sizeof(info));
     fde_ctx.data = modfmt->u.dwarf2_info->eh_frame.address;
     fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->eh_frame.size;
-    fde_ctx.word_size = modfmt->u.dwarf2_info->word_size;
     /* let offsets relative to the eh_frame sections be correctly computed, as we'll map
      * in this process the IMAGE section at a different address as the one expected by
      * the image
@@ -3299,7 +3288,6 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
     {
         fde_ctx.data = modfmt->u.dwarf2_info->debug_frame.address;
         fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->debug_frame.size;
-        fde_ctx.word_size = modfmt->u.dwarf2_info->word_size;
         delta = pair.effective->reloc_delta;
         if (!dwarf2_get_cie(ip, pair.effective, delta, &fde_ctx, &cie_ctx, &info, FALSE))
         {
@@ -3374,7 +3362,6 @@ static void dwarf2_location_compute(struct process* pcs,
 
                     lctx.data = (const BYTE*)(ptr + 1);
                     lctx.end_data = lctx.data + *ptr;
-                    lctx.word_size = modfmt->u.dwarf2_info->word_size;
                 }
             do_compute:
                 /* now get the variable */
@@ -3563,7 +3550,6 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
 
     mod_ctx.data = section[section_debug].address;
     mod_ctx.end_data = mod_ctx.data + section[section_debug].size;
-    mod_ctx.word_size = 0; /* will be correctly set later on */
 
     dwarf2_modfmt = HeapAlloc(GetProcessHeap(), 0,
                               sizeof(*dwarf2_modfmt) + sizeof(*dwarf2_modfmt->u.dwarf2_info));
