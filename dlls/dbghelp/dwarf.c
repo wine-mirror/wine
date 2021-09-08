@@ -2409,8 +2409,6 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         return FALSE;
     }
 
-    module->format_info[DFI_DWARF]->u.dwarf2_info->word_size = ctx.head.word_size;
-
     pool_init(&ctx.pool, 65536);
     ctx.sections = sections;
     ctx.section = section_debug;
@@ -3570,7 +3568,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_modfmt->remove = dwarf2_module_remove;
     dwarf2_modfmt->loc_compute = dwarf2_location_compute;
     dwarf2_modfmt->u.dwarf2_info = (struct dwarf2_module_info_s*)(dwarf2_modfmt + 1);
-    dwarf2_modfmt->u.dwarf2_info->word_size = 0; /* will be correctly set later on */
+    dwarf2_modfmt->u.dwarf2_info->word_size = fmap->addr_size / 8; /* set the word_size for eh_frame parsing */
     dwarf2_modfmt->module->format_info[DFI_DWARF] = dwarf2_modfmt;
 
     /* As we'll need later some sections' content, we won't unmap these
@@ -3593,9 +3591,6 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_modfmt->module->module.TypeInfo = TRUE;
     dwarf2_modfmt->module->module.SourceIndexed = TRUE;
     dwarf2_modfmt->module->module.Publics = TRUE;
-
-    /* set the word_size for eh_frame parsing */
-    dwarf2_modfmt->u.dwarf2_info->word_size = fmap->addr_size / 8;
 
 leave:
     dwarf2_fini_section(&section[section_debug]);
