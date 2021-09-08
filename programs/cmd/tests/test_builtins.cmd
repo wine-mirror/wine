@@ -2360,6 +2360,7 @@ echo ------------ Testing attrib ------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
 mkdir foobar & cd foobar
 echo foo original contents> foo
+attrib
 attrib foo
 echo > bar
 echo --- read-only attribute
