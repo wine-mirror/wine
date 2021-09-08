@@ -662,7 +662,8 @@ static unsigned dwarf2_map_register(int regno, const struct module* module)
 }
 
 static enum location_error
-compute_location(const struct module *module, dwarf2_traverse_context_t* ctx, struct location* loc,
+compute_location(const struct module *module, const dwarf2_cuhead_t* head,
+                 dwarf2_traverse_context_t* ctx, struct location* loc,
                  HANDLE hproc, const struct location* frame)
 {
     DWORD_PTR tmp, stack[64];
@@ -719,7 +720,7 @@ compute_location(const struct module *module, dwarf2_traverse_context_t* ctx, st
         else switch (op)
         {
         case DW_OP_nop:         break;
-        case DW_OP_addr:        stack[++stk] = dwarf2_parse_addr(ctx, ctx->word_size); break;
+        case DW_OP_addr:        stack[++stk] = dwarf2_parse_addr_head(ctx, head); break;
         case DW_OP_const1u:     stack[++stk] = dwarf2_parse_byte(ctx); break;
         case DW_OP_const1s:     stack[++stk] = dwarf2_parse_byte(ctx); break;
         case DW_OP_const2u:     stack[++stk] = dwarf2_parse_u2(ctx); break;
@@ -828,7 +829,7 @@ compute_location(const struct module *module, dwarf2_traverse_context_t* ctx, st
                 DWORD_PTR addr = stack[stk--];
                 DWORD_PTR deref = 0;
 
-                if (!ReadProcessMemory(hproc, (void*)addr, &deref, ctx->word_size, NULL))
+                if (!ReadProcessMemory(hproc, (void*)addr, &deref, head->word_size, NULL))
                 {
                     WARN("Couldn't read memory at %lx\n", addr);
                     return loc_err_cant_read;
@@ -868,7 +869,7 @@ compute_location(const struct module *module, dwarf2_traverse_context_t* ctx, st
                    case 1: stack[++stk] = *(unsigned char*)&deref; break;
                    case 2: stack[++stk] = *(unsigned short*)&deref; break;
                    case 4: stack[++stk] = *(DWORD*)&deref; break;
-                   case 8: if (ctx->word_size >= derefsize) stack[++stk] = deref; break;
+                   case 8: if (head->word_size >= derefsize) stack[++stk] = deref; break;
                 }
             }
             else
@@ -935,7 +936,7 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
         lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
         lctx.word_size = ctx->module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
-        err = compute_location(ctx->module, &lctx, loc, NULL, frame);
+        err = compute_location(ctx->module, &ctx->head, &lctx, loc, NULL, frame);
         if (err < 0)
         {
             loc->kind = loc_error;
@@ -948,7 +949,7 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
             *ptr = xloc.u.block.size;
             memcpy(ptr + 1, xloc.u.block.ptr, xloc.u.block.size);
             loc->offset = (ULONG_PTR)ptr;
-            compute_location(ctx->module, &lctx, loc, NULL, frame);
+            compute_location(ctx->module, &ctx->head, &lctx, loc, NULL, frame);
         }
     }
     return TRUE;
@@ -2503,6 +2504,17 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE
     return FALSE;
 }
 
+static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* func)
+{
+    if (func && symt_check_tag(func->container, SymTagCompiland))
+    {
+        struct symt_compiland* c = (struct symt_compiland*)func->container;
+        return (const dwarf2_cuhead_t*)c->user;
+    }
+    FIXME("Should have a compilation unit head\n");
+    return NULL;
+}
+
 static enum location_error loc_compute_frame(struct process* pcs,
                                              const struct module_format* modfmt,
                                              const struct symt_function* func,
@@ -2534,7 +2546,8 @@ static enum location_error loc_compute_frame(struct process* pcs,
                                            modfmt->u.dwarf2_info->debug_loc.address + pframe->offset,
                                            ip, &lctx))
                     return loc_err_out_of_scope;
-                if ((err = compute_location(modfmt->module, &lctx, frame, pcs->handle, NULL)) < 0) return err;
+                if ((err = compute_location(modfmt->module, get_cuhead_from_func(func),
+                                            &lctx, frame, pcs->handle, NULL)) < 0) return err;
                 if (frame->kind >= loc_user)
                 {
                     WARN("Couldn't compute runtime frame location\n");
@@ -3363,7 +3376,8 @@ static void dwarf2_location_compute(struct process* pcs,
                 }
             do_compute:
                 /* now get the variable */
-                err = compute_location(modfmt->module, &lctx, loc, pcs->handle, &frame);
+                err = compute_location(modfmt->module, get_cuhead_from_func(func),
+                                       &lctx, loc, pcs->handle, &frame);
                 break;
             case loc_register:
             case loc_regrel:
