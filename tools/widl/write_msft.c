@@ -1221,7 +1221,8 @@ static void write_default_value(msft_typelib_t *typelib, type_t *type, expr_t *e
     int vt;
 
     if (expr->type == EXPR_STRLIT || expr->type == EXPR_WSTRLIT) {
-        if (get_type_vt(type) != VT_BSTR)
+        vt = get_type_vt(type);
+        if (vt != VT_BSTR && vt != VT_VARIANT)
             error("string default value applied to non-string type\n");
         chat("default value '%s'\n", expr->u.sval);
         write_string_value(typelib, out, expr->u.sval);
@@ -1251,6 +1252,20 @@ static void write_default_value(msft_typelib_t *typelib, type_t *type, expr_t *e
         case VT_UINT:
         case VT_HRESULT:
             break;
+        case VT_VARIANT: {
+            switch (expr->type) {
+            case EXPR_DOUBLE:
+                vt = VT_R4;
+                break;
+            case EXPR_NUM:
+                vt = VT_I4;
+                break;
+            default:
+                warning("can't write default VT_VARIANT value for expression type %d.\n", expr->type);
+                return;
+            }
+            break;
+        }
         default:
             warning("can't write value of type %d yet\n", vt);
             return;
