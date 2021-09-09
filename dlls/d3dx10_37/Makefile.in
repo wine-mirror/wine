@@ -1,4 +1,5 @@
 MODULE    = d3dx10_37.dll
+IMPORTLIB = d3dx10_37
 
 EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
