@@ -3698,18 +3698,25 @@ if (0)
     hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 0, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_Target"), "Unexpected semantic %s.\n", sign.SemanticName);
+todo_wine
+    ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     hr = ps->lpVtbl->GetOutputSignatureElementDesc(ps, 4, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(sign.SystemValueType == D3D10_NAME_POSITION, "Unexpected system value type %u.\n",
+            sign.SystemValueType);
 
     hr = ps->lpVtbl->GetInputSignatureElementDesc(ps, 0, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(sign.SystemValueType == D3D10_NAME_POSITION, "Unexpected system value type %u.\n",
+            sign.SystemValueType);
 
     hr = ps->lpVtbl->GetInputSignatureElementDesc(ps, 4, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     v = effect->lpVtbl->GetVariableByName(effect, "v");
     vs = v->lpVtbl->AsShader(v);
@@ -3717,18 +3724,24 @@ if (0)
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 0, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(sign.SystemValueType == D3D10_NAME_POSITION, "Unexpected system value type %u.\n",
+            sign.SystemValueType);
 
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 1, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(sign.SystemValueType == D3D10_NAME_POSITION, "Unexpected system value type %u.\n",
+            sign.SystemValueType);
 
     hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 0, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 1, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     /* NULL shader variable */
     v = effect->lpVtbl->GetVariableByName(effect, "v0");
@@ -3746,6 +3759,8 @@ if (0)
     hr = vs->lpVtbl->GetOutputSignatureElementDesc(vs, 3, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "SV_POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(sign.SystemValueType == D3D10_NAME_POSITION, "Unexpected system value type %u.\n",
+            sign.SystemValueType);
 
     hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 0, 0, &sign);
     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
@@ -3759,6 +3774,7 @@ if (0)
     hr = vs->lpVtbl->GetInputSignatureElementDesc(vs, 3, 0, &sign);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(sign.SemanticName, "POSITION"), "Unexpected semantic %s.\n", sign.SemanticName);
+    ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     effect->lpVtbl->Release(effect);
 
