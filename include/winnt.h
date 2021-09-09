@@ -123,10 +123,14 @@ extern "C" {
 #endif
 
 #ifndef NOP_FUNCTION
-# if defined(_MSC_VER) && (_MSC_VER >= 1210)
-#  define NOP_FUNCTION __noop
+# if defined(_MSC_VER)
+#  if (_MSC_VER >= 1210)
+#   define NOP_FUNCTION __noop
+#  else
+#   define NOP_FUNCTION (void)0
+#  endif
 # else
-#  define NOP_FUNCTION (void)0
+#  define NOP_FUNCTION(...)
 # endif
 #endif
 
