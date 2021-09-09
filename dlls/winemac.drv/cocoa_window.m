@@ -2358,7 +2358,11 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         if (causing_becomeKeyWindow == self) return YES;
         if (self.disabled || self.noActivate) return NO;
-        return [self isKeyWindow];
+        if ([self isKeyWindow]) return YES;
+
+        // If a window's collectionBehavior says it participates in cycling,
+        // it must return YES from this method to actually be eligible.
+        return ![self isExcludedFromWindowsMenu];
     }
 
     - (BOOL) canBecomeMainWindow
