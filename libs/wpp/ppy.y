@@ -327,6 +327,7 @@ allmargs: /* Empty */		{ $$ = 0; macro_args = NULL; nmacro_args = 0; }
 
 emargs	: margs			{ $$ = $1; }
 	| margs ',' tELLIPSIS	{ nmacro_args *= -1; }
+	| tELLIPSIS	{ macro_args = NULL; nmacro_args = 0; }
 	;
 
 margs	: margs ',' tIDENT	{ $$ = add_new_marg($3); }
