@@ -176,7 +176,7 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *reso
         ID3D10EffectPool *effect_pool, ID3DX10ThreadPump *pump, ID3D10Effect **effect,
         ID3D10Blob **errors, HRESULT *hresult)
 {
-    char *filename;
+    char *filename = NULL;
     HRSRC resinfo;
     void *data;
     DWORD size;
@@ -195,10 +195,13 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *reso
     if (FAILED(hr = get_resource_data(module, resinfo, &data, &size)))
         return hr;
 
-    len = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
-    if (!(filename = heap_alloc(len)))
-        return E_OUTOFMEMORY;
-    WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, len, NULL, NULL);
+    if (filenameW)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+        if (!(filename = heap_alloc(len)))
+            return E_OUTOFMEMORY;
+        WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, len, NULL, NULL);
+    }
 
     hr = D3DX10CreateEffectFromMemory(data, size, filename, defines, include, profile,
             shader_flags, effect_flags, device, effect_pool, pump, effect, errors, hresult);
