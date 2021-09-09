@@ -611,7 +611,8 @@ static void d3d10_effect_cleanup_so_decl(struct d3d10_effect_so_decl *so_decl)
 static HRESULT d3d10_effect_parse_stream_output_declaration(const char *decl,
         struct d3d10_effect_so_decl *so_decl)
 {
-    static const char * allmask = "xyzw";
+    static const char * xyzw = "xyzw";
+    static const char * rgba = "rgba";
     char *p, *ptr, *end, *next, *mask, *m, *slot;
     unsigned int len = strlen(decl);
     D3D10_SO_DECLARATION_ENTRY e;
@@ -665,13 +666,16 @@ static HRESULT d3d10_effect_parse_stream_output_declaration(const char *decl,
         {
             *mask = 0; mask++;
 
-            if (!(m = strstr(allmask, mask)))
+            if ((m = strstr(xyzw, mask)))
+                e.StartComponent = m - xyzw;
+            else if ((m = strstr(rgba, mask)))
+                e.StartComponent = m - rgba;
+            else
             {
                 WARN("Invalid component mask %s.\n", debugstr_a(mask));
                 goto failed;
             }
 
-            e.StartComponent = m - allmask;
             e.ComponentCount = strlen(mask);
         }
         else
