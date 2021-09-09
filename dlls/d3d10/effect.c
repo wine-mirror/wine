@@ -695,7 +695,7 @@ static HRESULT d3d10_effect_parse_stream_output_declaration(const char *decl,
             p[len] = 0;
         }
 
-        e.SemanticName = p;
+        e.SemanticName = stricmp(p, "$SKIP") ? p : NULL;
 
         if (!d3d_array_reserve((void **)&so_decl->entries, &so_decl->capacity, so_decl->count + 1,
                 sizeof(*so_decl->entries)))
