@@ -830,12 +830,16 @@ static BOOL parse_handle_nonclient_size (struct PARSENONCLIENTSTATE* state,
 
 static void parse_apply_nonclient (struct PARSENONCLIENTSTATE* state)
 {
+    DPI_AWARENESS_CONTEXT old_context;
+
     if (state->metricsDirty)
     {
+        old_context = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
         SystemParametersInfoW (SPI_SETNONCLIENTMETRICS, sizeof (state->metrics),
             &state->metrics, 0);
         SystemParametersInfoW (SPI_SETICONTITLELOGFONT, sizeof (state->iconTitleFont),
             &state->iconTitleFont, 0);
+        SetThreadDpiAwarenessContext(old_context);
     }
 }
 
