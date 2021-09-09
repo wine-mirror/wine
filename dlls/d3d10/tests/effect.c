@@ -56,30 +56,23 @@ static inline HRESULT create_effect(DWORD *data, UINT flags, ID3D10Device *devic
  * test_effect_constant_buffer_type
  */
 #if 0
-cbuffer cb
+cbuffer cb : register(b1)
 {
     float   f1 : SV_POSITION;
     float   f2 : COLOR0;
 };
 #endif
-static DWORD fx_test_ecbt[] = {
-0x43425844, 0xc92a4732, 0xbd0d68c0, 0x877f71ee,
-0x871fc277, 0x00000001, 0x0000010a, 0x00000001,
-0x00000024, 0x30315846, 0x000000de, 0xfeff1001,
-0x00000001, 0x00000002, 0x00000000, 0x00000000,
-0x00000000, 0x00000000, 0x00000000, 0x00000042,
-0x00000000, 0x00000000, 0x00000000, 0x00000000,
-0x00000000, 0x00000000, 0x00000000, 0x00000000,
-0x00000000, 0x00000000, 0x00000000, 0x66006263,
-0x74616f6c, 0x00000700, 0x00000100, 0x00000000,
-0x00000400, 0x00001000, 0x00000400, 0x00090900,
-0x00316600, 0x505f5653, 0x5449534f, 0x004e4f49,
-0x43003266, 0x524f4c4f, 0x00040030, 0x00100000,
-0x00000000, 0x00020000, 0xffff0000, 0x0000ffff,
-0x00290000, 0x000d0000, 0x002c0000, 0x00000000,
-0x00000000, 0x00000000, 0x00000000, 0x00380000,
-0x000d0000, 0x003b0000, 0x00040000, 0x00000000,
-0x00000000, 0x00000000, 0x52590000,
+static DWORD fx_test_ecbt[] =
+{
+    0x43425844, 0xa2e18995, 0x540597cc, 0x670b9d73, 0x777fe190, 0x00000001, 0x0000010a, 0x00000001,
+    0x00000024, 0x30315846, 0x000000de, 0xfeff1001, 0x00000001, 0x00000002, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000042, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00000700, 0x00000100, 0x00000000, 0x00000400, 0x00001000, 0x00000400, 0x00090900,
+    0x00316600, 0x505f5653, 0x5449534f, 0x004e4f49, 0x43003266, 0x524f4c4f, 0x00040030, 0x00100000,
+    0x00000000, 0x00020000, 0x00010000, 0x00000000, 0x00290000, 0x000d0000, 0x002c0000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00380000, 0x000d0000, 0x003b0000, 0x00040000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000,
 };
 
 static void test_effect_constant_buffer_type(void)
@@ -87,6 +80,7 @@ static void test_effect_constant_buffer_type(void)
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectType *type, *type2, *null_type;
+    D3D10_EFFECT_VARIABLE_DESC var_desc;
     D3D10_EFFECT_TYPE_DESC type_desc;
     D3D10_EFFECT_DESC desc;
     ID3D10Device *device;
@@ -119,6 +113,13 @@ static void test_effect_constant_buffer_type(void)
     ok(desc.Techniques == 0, "Unexpected techniques count %u.\n", desc.Techniques);
 
     constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+
+    hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT, "Unexpected variable flags %#x.\n", var_desc.Flags);
+todo_wine
+    ok(var_desc.ExplicitBindPoint == 1, "Unexpected bind point %#x.\n", var_desc.ExplicitBindPoint);
+
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
 
     hr = type->lpVtbl->GetDesc(type, &type_desc);

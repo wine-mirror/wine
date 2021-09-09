@@ -2502,6 +2502,9 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
             return hr;
     }
 
+    if (l->explicit_bind_point != ~0u)
+        l->flag |= D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT;
+
     return S_OK;
 }
 
