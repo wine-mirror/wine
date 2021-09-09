@@ -2233,7 +2233,7 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
                         return E_FAIL;
                     }
 
-                    if (FAILED(hr = create_state_object(v)))
+                    if (FAILED(hr = create_state_object(var)))
                         return hr;
                 }
             }
