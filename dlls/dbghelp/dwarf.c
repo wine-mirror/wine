@@ -2188,7 +2188,6 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     vector_init(&dirs, sizeof(const char*), 4);
     p = vector_add(&dirs, &ctx->pool);
     *p = compile_dir ? compile_dir : ".";
-    while (*traverse.data)
     while (traverse.data < traverse.end_data && *traverse.data)
     {
         const char*  rel = (const char*)traverse.data;
