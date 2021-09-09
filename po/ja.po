@@ -16759,7 +16759,7 @@ msgstr "選択したノードを展開または閉じます"
 msgid "Collapse"
 msgstr "閉じる"
 
-#: programs/regsvr32/regsvr32.rc:32
+#: programs/regsvr32/regsvr32.rc:33
 msgid ""
 "Wine DLL Registration Utility\n"
 "\n"
@@ -16771,7 +16771,7 @@ msgstr ""
 "DLLを登録するサービスを提供します。\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:40
+#: programs/regsvr32/regsvr32.rc:41
 msgid ""
 "Usage:\n"
 "  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllName\n"
@@ -16796,7 +16796,7 @@ msgstr ""
 "  [/n]  DllRegisterServerを呼び出しません。[/i]と一緒に使用してください。\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:41
+#: programs/regsvr32/regsvr32.rc:42
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
@@ -16804,43 +16804,43 @@ msgstr ""
 "regsvr32: 無効または認識できないスイッチです[%1]\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:42
+#: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: '%1' を読み込めませんでした\n"
 
-#: programs/regsvr32/regsvr32.rc:43
+#: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
 msgstr "regsvr32: '%1!S!'はDLL '%2'内で実装されていません\n"
 
-#: programs/regsvr32/regsvr32.rc:44
+#: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'の登録に失敗しました\n"
 
-#: programs/regsvr32/regsvr32.rc:45
+#: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'の登録に成功しました\n"
 
-#: programs/regsvr32/regsvr32.rc:46
+#: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'の登録消去に失敗しました\n"
 
-#: programs/regsvr32/regsvr32.rc:47
+#: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'の登録消去に成功しました\n"
 
-#: programs/regsvr32/regsvr32.rc:48
+#: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'のインストールに失敗しました\n"
 
-#: programs/regsvr32/regsvr32.rc:49
+#: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'のインストールに成功しました\n"
 
-#: programs/regsvr32/regsvr32.rc:50
+#: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'のアンインストールに失敗しました\n"
 
-#: programs/regsvr32/regsvr32.rc:51
+#: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'のアンインストールに成功しました\n"
 

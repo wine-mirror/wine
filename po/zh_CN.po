@@ -16363,7 +16363,7 @@ msgstr "展开或收起选定的节点"
 msgid "Collapse"
 msgstr "收起"
 
-#: programs/regsvr32/regsvr32.rc:32
+#: programs/regsvr32/regsvr32.rc:33
 msgid ""
 "Wine DLL Registration Utility\n"
 "\n"
@@ -16375,7 +16375,7 @@ msgstr ""
 "提供 DLL 注册服务。\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:40
+#: programs/regsvr32/regsvr32.rc:41
 msgid ""
 "Usage:\n"
 "  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllName\n"
@@ -16399,49 +16399,49 @@ msgstr ""
 "  [/n] 不要调用 DllRegisterServer。此选项必须与 [/i] 一起使用。\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:41
+#: programs/regsvr32/regsvr32.rc:42
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr "regsvr32: 无效或未知的开关 [%1]\n"
 
-#: programs/regsvr32/regsvr32.rc:42
+#: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: 无法加载 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:43
+#: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
 msgstr "regsvr32: \"%1!S!\" 并没有在 DLL \"%2\" 中实现\n"
 
-#: programs/regsvr32/regsvr32.rc:44
+#: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
 msgstr "regsvr32: 无法注册 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:45
+#: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
 msgstr "regsvr32: 成功注册了 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:46
+#: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
 msgstr "regsvr32: 无法解除注册 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:47
+#: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
 msgstr "regsvr32: 成功解除注册 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:48
+#: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
 msgstr "regsvr32: 无法安装 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:49
+#: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
 msgstr "regsvr32: 成功安装 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:50
+#: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
 msgstr "regsvr32: 无法卸载 DLL \"%1\"\n"
 
-#: programs/regsvr32/regsvr32.rc:51
+#: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: 成功卸载 DLL \"%1\"\n"
 

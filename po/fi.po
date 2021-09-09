@@ -16592,7 +16592,7 @@ msgstr "Laajentaa tai tiivistää valitun kohdan"
 msgid "Collapse"
 msgstr "Tiivistä"
 
-#: programs/regsvr32/regsvr32.rc:32
+#: programs/regsvr32/regsvr32.rc:33
 msgid ""
 "Wine DLL Registration Utility\n"
 "\n"
@@ -16604,7 +16604,7 @@ msgstr ""
 "Tuottaa DLL-rekisteröintipalvelut.\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:40
+#: programs/regsvr32/regsvr32.rc:41
 msgid ""
 "Usage:\n"
 "  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllName\n"
@@ -16628,7 +16628,7 @@ msgstr ""
 "  [/n]  Älä kutsu funktiota DllRegisterServer. Vaatii valitsimen [/i].\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:41
+#: programs/regsvr32/regsvr32.rc:42
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
@@ -16636,43 +16636,43 @@ msgstr ""
 "regsvr32: Virheellinen tai tuntematon valitsin [%1]\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:42
+#: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' lataaminen epäonnistui\n"
 
-#: programs/regsvr32/regsvr32.rc:43
+#: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
 msgstr "regsvr32: '%1!S!'-toteutusta ei ole DLL:ssä '%2'\n"
 
-#: programs/regsvr32/regsvr32.rc:44
+#: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' rekisteröinti epäonnistui\n"
 
-#: programs/regsvr32/regsvr32.rc:45
+#: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' rekisteröity\n"
 
-#: programs/regsvr32/regsvr32.rc:46
+#: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' rekisteröinnin purkaminen epäonnistui\n"
 
-#: programs/regsvr32/regsvr32.rc:47
+#: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' rekisteröinti purettu\n"
 
-#: programs/regsvr32/regsvr32.rc:48
+#: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' asennus epäonnistui\n"
 
-#: programs/regsvr32/regsvr32.rc:49
+#: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' asennettu\n"
 
-#: programs/regsvr32/regsvr32.rc:50
+#: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' asennuksen purku epäonnistui\n"
 
-#: programs/regsvr32/regsvr32.rc:51
+#: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' asennus purettu\n"
 

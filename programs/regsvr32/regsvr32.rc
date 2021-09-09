@@ -19,6 +19,7 @@
  */
 
 #include <windef.h>
+#include <winuser.h>
 #include "regsvr32.h"
 
 #pragma makedep po
@@ -51,6 +52,9 @@ Options:\n\
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: regsvr32.manifest */
+1 RT_MANIFEST regsvr32.manifest
 
 #define WINE_FILEDESCRIPTION_STR "Wine Register Server"
 #define WINE_FILENAME_STR "REGSVR32.EXE"

@@ -16728,7 +16728,7 @@ msgstr "Erweitert oder reduziert den ausgewählten Knoten"
 msgid "Collapse"
 msgstr "Reduzieren"
 
-#: programs/regsvr32/regsvr32.rc:32
+#: programs/regsvr32/regsvr32.rc:33
 msgid ""
 "Wine DLL Registration Utility\n"
 "\n"
@@ -16740,7 +16740,7 @@ msgstr ""
 "Stellt Dienste zur DLL-Registrierung bereit.\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:40
+#: programs/regsvr32/regsvr32.rc:41
 msgid ""
 "Usage:\n"
 "  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllName\n"
@@ -16765,7 +16765,7 @@ msgstr ""
 "\tbenutzt werden.\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:41
+#: programs/regsvr32/regsvr32.rc:42
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
@@ -16773,43 +16773,43 @@ msgstr ""
 "regsvr32: Ungültiges oder nicht erkanntes Argument [%1]\n"
 "\n"
 
-#: programs/regsvr32/regsvr32.rc:42
+#: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' konnte nicht geladen werden\n"
 
-#: programs/regsvr32/regsvr32.rc:43
+#: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
 msgstr "regsvr32: '%1!S!' nicht in DLL '%2' implementiert\n"
 
-#: programs/regsvr32/regsvr32.rc:44
+#: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' konnte nicht registriert werden\n"
 
-#: programs/regsvr32/regsvr32.rc:45
+#: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' erfolgreich registriert\n"
 
-#: programs/regsvr32/regsvr32.rc:46
+#: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
 msgstr "regsvr32: Registrierung von DLL '%1' konnte nicht aufgehoben werden\n"
 
-#: programs/regsvr32/regsvr32.rc:47
+#: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
 msgstr "regsvr32: Registrierung von DLL '%1' erfolgreich aufgehoben\n"
 
-#: programs/regsvr32/regsvr32.rc:48
+#: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' konnte nicht installiert werden\n"
 
-#: programs/regsvr32/regsvr32.rc:49
+#: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' erfolgreich installiert\n"
 
-#: programs/regsvr32/regsvr32.rc:50
+#: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' konnte nicht deinstalliert werden\n"
 
-#: programs/regsvr32/regsvr32.rc:51
+#: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' erfolgreich deinstalliert\n"
 
