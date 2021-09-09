@@ -5620,7 +5620,9 @@ static int wined3d_so_desc_compare(const void *key, const struct wine_rb_entry *
 
         if ((ret = (a->stream_idx - b->stream_idx)))
             return ret;
-        if ((ret = strcmp(a->semantic_name, b->semantic_name)))
+        if ((ret = (!a->semantic_name - !b->semantic_name)))
+            return ret;
+        if (a->semantic_name && (ret = strcmp(a->semantic_name, b->semantic_name)))
             return ret;
         if ((ret = (a->semantic_idx - b->semantic_idx)))
             return ret;
