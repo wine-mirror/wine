@@ -203,6 +203,9 @@ extern BOOL EMFDC_IntersectClipRect( DC_ATTR *dc_attr, INT left, INT top, INT ri
                                      INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_InvertRgn( DC_ATTR *dc_attr, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_MaskBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                           HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
+                           INT x_mask, INT y_mask, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_ModifyWorldTransform( DC_ATTR *dc_attr, const XFORM *xform,
                                         DWORD mode ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;

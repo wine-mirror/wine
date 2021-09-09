@@ -567,7 +567,7 @@ BOOL WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWOR
 
 
 /***********************************************************************
- *           BitBlt    (GDI32.@)
+ *           NtGdiBitBlt    (win32u.@)
  */
 BOOL WINAPI NtGdiBitBlt( HDC hdc_dst, INT x_dst, INT y_dst, INT width, INT height,
                          HDC hdc_src, INT x_src, INT y_src, DWORD rop, DWORD bk_color, FLONG fl )
@@ -638,12 +638,11 @@ BOOL WINAPI NtGdiStretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT h
 #define BKGND_ROP3(ROP4)	(ROP3Table[((ROP4)>>24) & 0xFF])
 
 /***********************************************************************
- *           MaskBlt [GDI32.@]
+ *           NtGdiMaskBlt    (win32u.@)
  */
-BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
-                        INT nWidth, INT nHeight, HDC hdcSrc,
-			INT nXSrc, INT nYSrc, HBITMAP hbmMask,
-			INT xMask, INT yMask, DWORD dwRop)
+BOOL WINAPI NtGdiMaskBlt( HDC hdcDest, INT nXDest, INT nYDest, INT nWidth, INT nHeight,
+                          HDC hdcSrc, INT nXSrc, INT nYSrc, HBITMAP hbmMask,
+                          INT xMask, INT yMask, DWORD dwRop, DWORD bk_color )
 {
     HBITMAP hBitmap1, hOldBitmap1, hBitmap2, hOldBitmap2;
     HDC hDC1, hDC2;
@@ -782,9 +781,10 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     };
 
     if (!hbmMask)
-	return BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop));
+        return NtGdiBitBlt( hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc,
+                            nXSrc, nYSrc, FRGND_ROP3(dwRop), bk_color, 0 );
 
-    hbrMask = CreatePatternBrush(hbmMask);
+    hbrMask = NtGdiCreatePatternBrushInternal( hbmMask, FALSE, FALSE );
     hbrDst = NtGdiSelectBrush( hdcDest, get_stock_object(NULL_BRUSH) );
 
     /* make bitmap */
@@ -793,9 +793,9 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     hOldBitmap1 = NtGdiSelectBitmap(hDC1, hBitmap1);
 
     /* draw using bkgnd rop */
-    BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY);
+    NtGdiBitBlt( hDC1, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY, 0, 0 );
     hbrTmp = NtGdiSelectBrush(hDC1, hbrDst);
-    BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, BKGND_ROP3(dwRop));
+    NtGdiBitBlt( hDC1, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, BKGND_ROP3(dwRop), 0, 0 );
     NtGdiSelectBrush(hDC1, hbrTmp);
 
     /* make bitmap */
@@ -804,18 +804,19 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     hOldBitmap2 = NtGdiSelectBitmap(hDC2, hBitmap2);
 
     /* draw using foregnd rop */
-    BitBlt(hDC2, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY);
+    NtGdiBitBlt( hDC2, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY, 0, 0 );
     hbrTmp = NtGdiSelectBrush(hDC2, hbrDst);
-    BitBlt(hDC2, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop));
+    NtGdiBitBlt( hDC2, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop), 0, 0 );
 
     /* combine both using the mask as a pattern brush */
     NtGdiSelectBrush(hDC2, hbrMask);
     SetBrushOrgEx(hDC2, -xMask, -yMask, NULL);
-    BitBlt(hDC2, 0, 0, nWidth, nHeight, hDC1, 0, 0, 0xac0744 ); /* (D & P) | (S & ~P) */ 
+    /* (D & P) | (S & ~P) */
+    NtGdiBitBlt(hDC2, 0, 0, nWidth, nHeight, hDC1, 0, 0, 0xac0744, 0, 0 );
     NtGdiSelectBrush(hDC2, hbrTmp);
 
     /* blit to dst */
-    BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hDC2, 0, 0, SRCCOPY);
+    NtGdiBitBlt( hdcDest, nXDest, nYDest, nWidth, nHeight, hDC2, 0, 0, SRCCOPY, bk_color, 0 );
 
     /* restore all objects */
     NtGdiSelectBrush(hdcDest, hbrDst);

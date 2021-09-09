@@ -1499,6 +1499,23 @@ BOOL WINAPI StretchBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height
                             height_src, rop, 0 /* FIXME */ );
 }
 
+/***********************************************************************
+ *           MaskBlt [GDI32.@]
+ */
+BOOL WINAPI MaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                     HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
+                     INT x_mask, INT y_mask, DWORD rop )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_MaskBlt( dc_attr, x_dst, y_dst, width_dst, height_dst,
+                                        hdc_src, x_src, y_src, mask, x_mask, y_mask, rop ))
+        return FALSE;
+    return NtGdiMaskBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src, x_src, y_src,
+                         mask, x_mask, y_mask, rop, 0 /* FIXME */ );
+}
+
 /******************************************************************************
  *           GdiAlphaBlend   (GDI32.@)
  */

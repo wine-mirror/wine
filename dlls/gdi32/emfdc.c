@@ -1388,6 +1388,102 @@ BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, IN
                               height_src, rop, EMR_STRETCHBLT );
 }
 
+BOOL EMFDC_MaskBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                    HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
+                    INT x_mask, INT y_mask, DWORD rop )
+{
+    unsigned char mask_info_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *mask_bits_info = (BITMAPINFO *)mask_info_buffer;
+    struct emf *emf = dc_attr->emf;
+    BITMAPINFO mask_info = {{ sizeof( mask_info.bmiHeader ) }};
+    BITMAPINFO src_info = {{ sizeof( src_info.bmiHeader ) }};
+    HBITMAP bitmap, blit_bitmap = NULL, mask_bitmap = NULL;
+    UINT bmi_size, size, mask_info_size = 0;
+    EMRMASKBLT *emr = NULL;
+    BITMAPINFO *bmi;
+    HDC blit_dc, mask_dc = NULL;
+    BOOL ret = FALSE;
+
+    if (!rop_uses_src( rop ))
+        return EMFDC_PatBlt( dc_attr, x_dst, y_dst, width_dst, height_dst, rop );
+
+    if (!(bitmap = GetCurrentObject( hdc_src, OBJ_BITMAP ))) return FALSE;
+    blit_dc = hdc_src;
+    blit_bitmap = bitmap;
+    if (!(bmi_size = get_bitmap_info( &blit_dc, &blit_bitmap, &src_info ))) return FALSE;
+
+    if (mask)
+    {
+        mask_dc = hdc_src;
+        mask_bitmap = mask;
+        if (!(mask_info_size = get_bitmap_info( &mask_dc, &mask_bitmap, &mask_info ))) goto err;
+        if (mask_info.bmiHeader.biBitCount == 1)
+            mask_info_size = sizeof(BITMAPINFOHEADER); /* don't include colors */
+    }
+    else mask_info.bmiHeader.biSizeImage = 0;
+
+    size = sizeof(*emr) + bmi_size + src_info.bmiHeader.biSizeImage +
+        mask_info_size + mask_info.bmiHeader.biSizeImage;
+
+    if (!(emr = HeapAlloc(GetProcessHeap(), 0, size))) goto err;
+
+    emr->emr.iType = EMR_MASKBLT;
+    emr->emr.nSize = size;
+    emr->rclBounds.left = x_dst;
+    emr->rclBounds.top = y_dst;
+    emr->rclBounds.right = x_dst + width_dst - 1;
+    emr->rclBounds.bottom = y_dst + height_dst - 1;
+    emr->xDest = x_dst;
+    emr->yDest = y_dst;
+    emr->cxDest = width_dst;
+    emr->cyDest = height_dst;
+    emr->dwRop = rop;
+    emr->xSrc = x_src;
+    emr->ySrc = y_src;
+    NtGdiGetTransform( hdc_src, 0x204, &emr->xformSrc );
+    emr->crBkColorSrc = GetBkColor( hdc_src );
+    emr->iUsageSrc = DIB_RGB_COLORS;
+    emr->offBmiSrc = sizeof(*emr);
+    emr->cbBmiSrc = bmi_size;
+    emr->offBitsSrc = emr->offBmiSrc + bmi_size;
+    emr->cbBitsSrc = src_info.bmiHeader.biSizeImage;
+    emr->xMask = x_mask;
+    emr->yMask = y_mask;
+    emr->iUsageMask = DIB_PAL_MONO;
+    emr->offBmiMask = mask_info_size ? emr->offBitsSrc + emr->cbBitsSrc : 0;
+    emr->cbBmiMask = mask_info_size;
+    emr->offBitsMask = emr->offBmiMask + emr->cbBmiMask;
+    emr->cbBitsMask = mask_info.bmiHeader.biSizeImage;
+
+    bmi = (BITMAPINFO *)((char *)emr + emr->offBmiSrc);
+    bmi->bmiHeader = src_info.bmiHeader;
+    ret = GetDIBits( blit_dc, blit_bitmap, 0, src_info.bmiHeader.biHeight,
+                     (char *)emr + emr->offBitsSrc, bmi, DIB_RGB_COLORS );
+    if (!ret) goto err;
+
+    if (mask_info_size)
+    {
+        mask_bits_info->bmiHeader = mask_info.bmiHeader;
+        ret = GetDIBits( blit_dc, mask_bitmap, 0, mask_info.bmiHeader.biHeight,
+                         (char *)emr + emr->offBitsMask, mask_bits_info, DIB_RGB_COLORS );
+        if (ret) memcpy( (char *)emr + emr->offBmiMask, mask_bits_info, mask_info_size );
+    }
+
+    if (ret)
+    {
+        ret = emfdc_record( emf, (EMR *)emr );
+        if (ret) emfdc_update_bounds( emf, &emr->rclBounds );
+    }
+
+err:
+    HeapFree( GetProcessHeap(), 0, emr );
+    if (mask_bitmap != mask) DeleteObject( mask_bitmap );
+    if (mask_dc != hdc_src) DeleteObject( mask_dc );
+    if (blit_bitmap != bitmap) DeleteObject( blit_bitmap );
+    if (blit_dc != hdc_src) DeleteDC( blit_dc );
+    return ret;
+}
+
 BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                           INT x_src, INT y_src, INT width_src, INT height_src, const void *bits,
                           const BITMAPINFO *info, UINT usage, DWORD rop )

@@ -344,6 +344,9 @@ BOOL     WINAPI NtGdiFontIsLinked( HDC hdc );
 INT      WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom );
 BOOL     WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn );
 BOOL     WINAPI NtGdiLineTo( HDC hdc, INT x, INT y );
+BOOL     WINAPI NtGdiMaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                              HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
+                              INT x_mask, INT y_mask, DWORD rop, DWORD bk_color );
 BOOL     WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode );
 BOOL     WINAPI NtGdiMoveTo( HDC hdc, INT x, INT y, POINT *pt );
 INT      WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y );
