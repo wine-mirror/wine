@@ -1014,12 +1014,11 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdcDst, int xDst, int yDst, int widthDst, int h
 }
 
 /*********************************************************************
- *      PlgBlt [GDI32.@]
- *
+ *           NtGdiPlgBlt    (win32u.@)
  */
-BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
-                        HDC hdcSrc, INT nXSrc, INT nYSrc, INT nWidth,
-                        INT nHeight, HBITMAP hbmMask, INT xMask, INT yMask)
+BOOL WINAPI NtGdiPlgBlt( HDC hdcDest, const POINT *lpPoint, HDC hdcSrc, INT nXSrc, INT nYSrc,
+                         INT nWidth, INT nHeight, HBITMAP hbmMask, INT xMask, INT yMask,
+                         DWORD bk_color )
 {
     DWORD prev_mode;
     /* parallelogram coords */
@@ -1071,20 +1070,18 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
                rect[2].x*(rect[0].y*plg[1].y - rect[1].y*plg[0].y)
                ) / det;
 
-    GetWorldTransform(hdcSrc,&SrcXf);
+    NtGdiGetTransform( hdcSrc, 0x203, &SrcXf );
     combine_transform( &xf, &xf, &SrcXf );
 
     /* save actual dest transform */
-    GetWorldTransform(hdcDest,&oldDestXf);
+    NtGdiGetTransform( hdcDest, 0x203, &oldDestXf );
 
-    SetWorldTransform(hdcDest,&xf);
+    NtGdiModifyWorldTransform( hdcDest, &xf, MWT_SET );
     /* now destination and source DCs use same coords */
-    MaskBlt(hdcDest,nXSrc,nYSrc,nWidth,nHeight,
-            hdcSrc, nXSrc,nYSrc,
-            hbmMask,xMask,yMask,
-            SRCCOPY);
+    NtGdiMaskBlt( hdcDest, nXSrc, nYSrc, nWidth, nHeight, hdcSrc, nXSrc, nYSrc,
+                  hbmMask, xMask, yMask, SRCCOPY, 0 );
     /* restore dest DC */
-    SetWorldTransform(hdcDest,&oldDestXf);
+    NtGdiModifyWorldTransform( hdcDest, &oldDestXf, MWT_SET );
     NtGdiGetAndSetDCDword( hdcDest, NtGdiSetGraphicsMode, prev_mode, NULL );
 
     return TRUE;

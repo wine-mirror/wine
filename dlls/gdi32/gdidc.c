@@ -1516,6 +1516,22 @@ BOOL WINAPI MaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_ds
                          mask, x_mask, y_mask, rop, 0 /* FIXME */ );
 }
 
+/***********************************************************************
+ *      PlgBlt    (GDI32.@)
+ */
+BOOL WINAPI PlgBlt( HDC hdc, const POINT *points, HDC hdc_src, INT x_src, INT y_src,
+                    INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_PlgBlt( dc_attr, points, hdc_src, x_src, y_src,
+                                       width, height, mask, x_mask, y_mask ))
+        return FALSE;
+    return NtGdiPlgBlt( hdc, points, hdc_src, x_src, y_src, width, height,
+                        mask, x_mask, y_mask, 0 /* FIXME */ );
+}
+
 /******************************************************************************
  *           GdiAlphaBlend   (GDI32.@)
  */

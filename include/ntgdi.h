@@ -353,6 +353,9 @@ INT      WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y );
 INT      WINAPI NtGdiOffsetRgn( HRGN hrgn, INT x, INT y );
 BOOL     WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop );
 HRGN     WINAPI NtGdiPathToRegion( HDC hdc );
+BOOL     WINAPI NtGdiPlgBlt( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
+                             INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask,
+                             DWORD bk_color );
 BOOL     WINAPI NtGdiPolyDraw(HDC hdc, const POINT *points, const BYTE *types, DWORD count );
 ULONG    WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts,
                                    DWORD count, UINT function );

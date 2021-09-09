@@ -212,6 +212,8 @@ extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_OffsetClipRgn( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PaintRgn( DC_ATTR *dc_attr, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PatBlt( DC_ATTR *dc_attr, INT left, INT top, INT width, INT height, DWORD rop );
+extern BOOL EMFDC_PlgBlt( DC_ATTR *dc_attr, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
+                          INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyBezier( DC_ATTR *dc_attr, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyBezierTo( DC_ATTR *dc_attr, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *points, const BYTE *types,
