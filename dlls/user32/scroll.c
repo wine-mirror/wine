@@ -195,7 +195,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
                                      INT *arrowSize, INT *thumbSize,
                                      INT *thumbPos )
 {
-    INT pixels;
+    INT pixels, min_thumb_size;
     BOOL vertical;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
@@ -265,7 +265,8 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         if (info->page)
         {
 	    *thumbSize = MulDiv(pixels,info->page,(info->maxVal-info->minVal+1));
-            if (*thumbSize < SCROLL_MIN_THUMB) *thumbSize = SCROLL_MIN_THUMB;
+            min_thumb_size = MulDiv(SCROLL_MIN_THUMB, GetDpiForWindow(hwnd), 96);
+            if (*thumbSize < min_thumb_size) *thumbSize = min_thumb_size;
         }
         else *thumbSize = GetSystemMetrics(SM_CXVSCROLL);
 
@@ -329,10 +330,10 @@ static void SCROLL_GetScrollBarDrawInfo( HWND hwnd, INT bar,
  * Compute the current scroll position based on the thumb position in pixels
  * from the top of the scroll-bar.
  */
-static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
-                                  BOOL vertical, INT pos )
+static UINT SCROLL_GetThumbVal( HWND hwnd, SCROLLBAR_INFO *infoPtr, RECT *rect, BOOL vertical,
+                                INT pos )
 {
-    INT thumbSize;
+    INT thumbSize, minThumbSize;
     INT pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
     INT range;
 
@@ -342,7 +343,8 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
     if (infoPtr->page)
     {
         thumbSize = MulDiv(pixels,infoPtr->page,(infoPtr->maxVal-infoPtr->minVal+1));
-        if (thumbSize < SCROLL_MIN_THUMB) thumbSize = SCROLL_MIN_THUMB;
+        minThumbSize = MulDiv(SCROLL_MIN_THUMB, GetDpiForWindow(hwnd), 96);
+        if (thumbSize < minThumbSize) thumbSize = minThumbSize;
     }
     else thumbSize = GetSystemMetrics(SM_CXVSCROLL);
 
@@ -938,7 +940,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
             g_tracking_info.win = hwnd;
             g_tracking_info.bar = nBar;
             g_tracking_info.thumb_pos = trackThumbPos + lastMousePos - lastClickPos;
-            g_tracking_info.thumb_val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+            g_tracking_info.thumb_val = SCROLL_GetThumbVal( hwnd, infoPtr, &rect, vertical,
                                                             g_tracking_info.thumb_pos );
             if (!SCROLL_MovingThumb)
             {
@@ -964,7 +966,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
             {
                 lastMousePos = pos;
                 g_tracking_info.thumb_pos = trackThumbPos + pos - lastClickPos;
-                g_tracking_info.thumb_val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+                g_tracking_info.thumb_val = SCROLL_GetThumbVal( hwnd, infoPtr, &rect, vertical,
                                                                 g_tracking_info.thumb_pos );
                 SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                               MAKEWPARAM( SB_THUMBTRACK, g_tracking_info.thumb_val ),
@@ -1012,7 +1014,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
 
         if (hittest == SCROLL_THUMB)
         {
-            UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+            UINT val = SCROLL_GetThumbVal( hwnd, infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
             SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBTRACK, val ), (LPARAM)hwndCtl );
@@ -1026,7 +1028,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
 
         if (hittest == SCROLL_THUMB)
         {
-            UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+            UINT val = SCROLL_GetThumbVal( hwnd, infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
             SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBPOSITION, val ), (LPARAM)hwndCtl );
