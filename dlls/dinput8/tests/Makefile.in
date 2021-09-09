@@ -1,6 +1,12 @@
 TESTDLL   = dinput8.dll
-IMPORTS   = dinput8 ole32 user32 advapi32
+IMPORTS   = dinput8 ole32 user32 hid advapi32 uuid crypt32 newdev setupapi wintrust
 
-C_SRCS = \
+driver_hid_IMPORTS = winecrt0 ntoskrnl hal hidclass
+driver_hid_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+
+SOURCES = \
 	device.c \
-	dinput.c
+	dinput.c \
+	driver_hid.c \
+	driver_hid.spec \
+	hid.c

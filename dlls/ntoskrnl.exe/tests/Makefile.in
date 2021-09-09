@@ -7,8 +7,6 @@ driver2_IMPORTS = winecrt0 ntoskrnl hal
 driver2_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver3_IMPORTS = winecrt0 ntoskrnl hal
 driver3_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
-driver_hid_IMPORTS = winecrt0 ntoskrnl hal hidclass
-driver_hid_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver_netio_IMPORTS = winecrt0 ntoskrnl hal netio
 driver_netio_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver_pnp_IMPORTS = winecrt0 ntoskrnl hal
@@ -21,8 +19,6 @@ SOURCES = \
 	driver2.spec \
 	driver3.c \
 	driver3.spec \
-	driver_hid.c \
-	driver_hid.spec \
 	driver_netio.c \
 	driver_netio.spec \
 	driver_pnp.c \

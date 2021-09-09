@@ -19,8 +19,10 @@
 #define DIRECTINPUT_VERSION 0x0800
 
 #define COBJMACROS
-#include <initguid.h>
 #include <windows.h>
+#include <objidl.h>
+
+#include <initguid.h>
 #include <dinput.h>
 #include <dinputd.h>
 
