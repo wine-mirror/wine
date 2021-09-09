@@ -467,7 +467,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pEndPage */
     NULL,                            /* pEndPath */
     NULL,                            /* pEnumFonts */
-    NULL,                            /* pEnumICMProfiles */
     NULL,                            /* pExtDeviceMode */
     NULL,                            /* pExtEscape */
     NULL,                            /* pExtFloodFill */

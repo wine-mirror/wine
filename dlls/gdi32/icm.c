@@ -76,19 +76,22 @@ INT WINAPI EnumICMProfilesA(HDC hdc, ICMENUMPROCA func, LPARAM lparam)
  */
 INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
 {
+    WCHAR profile[MAX_PATH];
+    DWORD size = ARRAYSIZE(profile);
     DC *dc;
-    INT ret = -1;
+    BOOL ret = FALSE;
 
-    TRACE("%p, %p, 0x%08lx\n", hdc, func, lparam);
+    TRACE( "%p, %p, 0x%08lx\n", hdc, func, lparam );
 
     if (!func) return -1;
     if ((dc = get_dc_ptr(hdc)))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEnumICMProfiles );
-        ret = physdev->funcs->pEnumICMProfiles( physdev, func, lparam );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetICMProfile );
+        ret = physdev->funcs->pGetICMProfile( physdev, FALSE, &size, profile );
         release_dc_ptr(dc);
     }
-    return ret;
+    /* FIXME: support multiple profiles */
+    return ret ? func( profile, lparam ) : -1;
 }
 
 /**********************************************************************
@@ -149,7 +152,7 @@ BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
     if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetICMProfile );
-        ret = physdev->funcs->pGetICMProfile( physdev, size, filename );
+        ret = physdev->funcs->pGetICMProfile( physdev, TRUE, size, filename );
         release_dc_ptr(dc);
     }
     return ret;

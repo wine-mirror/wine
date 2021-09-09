@@ -797,7 +797,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_EndPage,                      /* pEndPage */
     NULL,                               /* pEndPath */
     PSDRV_EnumFonts,                    /* pEnumFonts */
-    NULL,                               /* pEnumICMProfiles */
     PSDRV_ExtDeviceMode,                /* pExtDeviceMode */
     PSDRV_ExtEscape,                    /* pExtEscape */
     NULL,                               /* pExtFloodFill */

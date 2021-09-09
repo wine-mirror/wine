@@ -2046,7 +2046,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pEndPage */
     pathdrv_EndPath,                    /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */

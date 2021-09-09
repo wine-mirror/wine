@@ -283,7 +283,6 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pEndPage */
     NULL,                                   /* pEndPath */
     NULL,                                   /* pEnumFonts */
-    NULL,                                   /* pEnumICMProfiles */
     NULL,                                   /* pExtDeviceMode */
     NULL,                                   /* pExtEscape */
     NULL,                                   /* pExtFloodFill */

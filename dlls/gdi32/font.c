@@ -3854,7 +3854,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pEndPage */
     NULL,                           /* pEndPath */
     font_EnumFonts,                 /* pEnumFonts */
-    NULL,                           /* pEnumICMProfiles */
     NULL,                           /* pExtDeviceMode */
     NULL,                           /* pExtEscape */
     NULL,                           /* pExtFloodFill */

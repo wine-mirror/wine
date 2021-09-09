@@ -1639,7 +1639,7 @@ static const WCHAR color_path[] =
 /***********************************************************************
  *              GetICMProfile (X11DRV.@)
  */
-BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
+BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, LPWSTR filename )
 {
     static const WCHAR srgb[] =
         {'s','R','G','B',' ','C','o','l','o','r',' ','S','p','a','c','e',' ',
@@ -1691,6 +1691,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
         }
         HeapFree( GetProcessHeap(), 0, buffer );
     }
+    else if (!allow_default) return FALSE;
     else strcatW( fullname, srgb );
 
     required = strlenW( fullname ) + 1;
@@ -1708,59 +1709,4 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
     }
     *size = required;
     return TRUE;
-}
-
-/***********************************************************************
- *              EnumICMProfiles (X11DRV.@)
- */
-INT CDECL X11DRV_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW proc, LPARAM lparam )
-{
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    HKEY hkey;
-    DWORD len_sysdir, len_path, len, index = 0;
-    WCHAR sysdir[MAX_PATH], *profile;
-    LONG res;
-    INT ret;
-
-    TRACE("%p, %p, %ld\n", physDev, proc, lparam);
-
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, mntr_key, 0, KEY_ALL_ACCESS, &hkey ))
-        return -1;
-
-    len_sysdir = GetSystemDirectoryW( sysdir, MAX_PATH );
-    len_path = len_sysdir + ARRAY_SIZE( color_path ) - 1;
-    len = 64;
-    for (;;)
-    {
-        if (!(profile = HeapAlloc( GetProcessHeap(), 0, (len_path + len) * sizeof(WCHAR) )))
-        {
-            RegCloseKey( hkey );
-            return -1;
-        }
-        res = RegEnumValueW( hkey, index, profile + len_path, &len, NULL, NULL, NULL, NULL );
-        while (res == ERROR_MORE_DATA)
-        {
-            len *= 2;
-            HeapFree( GetProcessHeap(), 0, profile );
-            if (!(profile = HeapAlloc( GetProcessHeap(), 0, (len_path + len) * sizeof(WCHAR) )))
-            {
-                RegCloseKey( hkey );
-                return -1;
-            }
-            res = RegEnumValueW( hkey, index, profile + len_path, &len, NULL, NULL, NULL, NULL );
-        }
-        if (res != ERROR_SUCCESS)
-        {
-            HeapFree( GetProcessHeap(), 0, profile );
-            break;
-        }
-        memcpy( profile, sysdir, len_sysdir * sizeof(WCHAR) );
-        memcpy( profile + len_sysdir, color_path, sizeof(color_path) - sizeof(WCHAR) );
-        ret = proc( profile, lparam );
-        HeapFree( GetProcessHeap(), 0, profile );
-        if (!ret) break;
-        index++;
-    }
-    RegCloseKey( hkey );
-    return -1;
 }

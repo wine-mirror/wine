@@ -2174,7 +2174,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExtDeviceMode */
     xrenderdrv_ExtEscape,               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
