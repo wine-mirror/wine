@@ -278,6 +278,8 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,
 
 extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
                                    UINT *usage ) DECLSPEC_HIDDEN;
+extern BOOL get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size,
+                             WCHAR *filename ) DECLSPEC_HIDDEN;
 
 static inline int get_dib_stride( int width, int bpp )
 {
