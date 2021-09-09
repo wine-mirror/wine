@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-08 22:37+0300\n"
+"PO-Revision-Date: 2021-09-09 23:13+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 "X-Project-Style: default\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
@@ -10318,7 +10318,7 @@ msgstr "Kinijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
-msgstr ""
+msgstr "(UTC+08:00) Pekinas, Čongčingas, Honkongas, Urumčis"
 
 #: dlls/tzres/tzres.rc:267
 msgid "North Asia Standard Time"
@@ -10398,7 +10398,7 @@ msgstr "Vidurio Europos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:113
 msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
-msgstr ""
+msgstr "(UTC+01:00) Sarajevas, Skopjė, Varšuva, Zagrebas"
 
 #: dlls/tzres/tzres.rc:234
 msgid "Morocco Standard Time"
@@ -10430,7 +10430,7 @@ msgstr "Altajaus vasaros laikas"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
-msgstr ""
+msgstr "(UTC+07:00) Barnaulas, Gorno Altaiskas"
 
 #: dlls/tzres/tzres.rc:108
 msgid "Central Europe Standard Time"
@@ -10442,7 +10442,7 @@ msgstr "Vidurio Europos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:110
 msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
-msgstr ""
+msgstr "(UTC+01:00) Belgradas, Bratislava, Budapeštas, Liubliana, Praha"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Iran Standard Time"
@@ -10514,7 +10514,7 @@ msgstr "Kalnų vasaros laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
-msgstr ""
+msgstr "(UTC-07:00) Čihuahua, La Pasas, Masatlanas"
 
 #: dlls/tzres/tzres.rc:171
 msgid "GMT Standard Time"
@@ -10526,7 +10526,7 @@ msgstr "Grinvičo vasaros laikas"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
-msgstr ""
+msgstr "(UTC+00:00) Dublinas, Edinburgas, Lisabona, Londonas"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Central Asia Standard Time"
@@ -10618,7 +10618,7 @@ msgstr "Vakarų Ramiojo vandenyno vasaros laikas"
 
 #: dlls/tzres/tzres.rc:437
 msgid "(UTC+10:00) Guam, Port Moresby"
-msgstr ""
+msgstr "(UTC+10:00) Guam, Port Morsbis"
 
 #: dlls/tzres/tzres.rc:279
 msgid "Pacific Standard Time"
@@ -10714,7 +10714,7 @@ msgstr "Tokijo vasaros laikas"
 
 #: dlls/tzres/tzres.rc:362
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
-msgstr ""
+msgstr "(UTC+09:00) Osaka, Saporas, Tokijas"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Line Islands Standard Time"
@@ -10770,7 +10770,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:305
 msgid "(UTC+04:00) Izhevsk, Samara"
-msgstr ""
+msgstr "(UTC+04:00) Iževskas, Samara"
 
 #: dlls/tzres/tzres.rc:414
 msgid "Volgograd Standard Time"
@@ -10782,7 +10782,7 @@ msgstr "Volgogrado vasaros laikas"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+04:00) Volgograd"
-msgstr ""
+msgstr "(UTC+04:00) Volgogradas"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Azores Standard Time"
@@ -10794,7 +10794,7 @@ msgstr "Azorų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Azores"
-msgstr ""
+msgstr "(UTC-01:00) Azorai"
 
 #: dlls/tzres/tzres.rc:264
 msgid "North Asia East Standard Time"
@@ -10806,7 +10806,7 @@ msgstr "Šiaurės Azijos rytų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:266
 msgid "(UTC+08:00) Irkutsk"
-msgstr ""
+msgstr "(UTC+08:00) Irkutskas"
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-11"
@@ -10826,7 +10826,7 @@ msgstr "Argentinos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC-03:00) City of Buenos Aires"
-msgstr ""
+msgstr "(UTC-03:00) Buenos Airės"
 
 #: dlls/tzres/tzres.rc:375
 msgid "Turks And Caicos Standard Time"
@@ -10838,7 +10838,7 @@ msgstr "Terkso ir Kaikoso vasaros laikas"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) Terksas ir Kaikosas"
 
 #: dlls/tzres/tzres.rc:222
 msgid "Marquesas Standard Time"
@@ -10850,7 +10850,7 @@ msgstr "Markizo vasaros laikas"
 
 #: dlls/tzres/tzres.rc:224
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr ""
+msgstr "(UTC-09:30) Markizo salos"
 
 #: dlls/tzres/tzres.rc:243
 msgid "Myanmar Standard Time"
