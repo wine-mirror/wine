@@ -61,18 +61,25 @@ cbuffer cb : register(b1)
     float   f1 : SV_POSITION;
     float   f2 : COLOR0;
 };
+
+cbuffer cb2 : register(b0)
+{
+    float   f3 : packoffset(c2);
+};
 #endif
 static DWORD fx_test_ecbt[] =
 {
-    0x43425844, 0xa2e18995, 0x540597cc, 0x670b9d73, 0x777fe190, 0x00000001, 0x0000010a, 0x00000001,
-    0x00000024, 0x30315846, 0x000000de, 0xfeff1001, 0x00000001, 0x00000002, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000042, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x43425844, 0x7cfb8cde, 0x31ec2d95, 0x38500042, 0xa9330c67, 0x00000001, 0x00000145, 0x00000001,
+    0x00000024, 0x30315846, 0x00000119, 0xfeff1001, 0x00000002, 0x00000003, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000049, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x66006263,
     0x74616f6c, 0x00000700, 0x00000100, 0x00000000, 0x00000400, 0x00001000, 0x00000400, 0x00090900,
-    0x00316600, 0x505f5653, 0x5449534f, 0x004e4f49, 0x43003266, 0x524f4c4f, 0x00040030, 0x00100000,
-    0x00000000, 0x00020000, 0x00010000, 0x00000000, 0x00290000, 0x000d0000, 0x002c0000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00380000, 0x000d0000, 0x003b0000, 0x00040000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000,
+    0x00316600, 0x505f5653, 0x5449534f, 0x004e4f49, 0x43003266, 0x524f4c4f, 0x62630030, 0x33660032,
+    0x00000400, 0x00001000, 0x00000000, 0x00000200, 0x00000100, 0x00000000, 0x00002900, 0x00000d00,
+    0x00002c00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00003800, 0x00000d00, 0x00003b00,
+    0x00000400, 0x00000000, 0x00000000, 0x00000000, 0x00004200, 0x00003000, 0x00000000, 0x00000100,
+    0x00000000, 0x00000000, 0x00004600, 0x00000d00, 0x00000000, 0x00002000, 0x00000000, 0x00000400,
+    0x00000000, 0x00000000,
 };
 
 static void test_effect_constant_buffer_type(void)
@@ -82,6 +89,7 @@ static void test_effect_constant_buffer_type(void)
     ID3D10EffectType *type, *type2, *null_type;
     D3D10_EFFECT_VARIABLE_DESC var_desc;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectVariable *v;
     D3D10_EFFECT_DESC desc;
     ID3D10Device *device;
     ULONG refcount;
@@ -104,10 +112,10 @@ static void test_effect_constant_buffer_type(void)
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(SUCCEEDED(hr), "Failed to get effect description, hr %#x.\n", hr);
     ok(!desc.IsChildEffect, "Unexpected IsChildEffect.\n");
-    ok(desc.ConstantBuffers == 1, "Unexpected constant buffers count %u.\n", desc.ConstantBuffers);
+    ok(desc.ConstantBuffers == 2, "Unexpected constant buffers count %u.\n", desc.ConstantBuffers);
     ok(desc.SharedConstantBuffers == 0, "Unexpected shared constant buffers count %u.\n",
             desc.SharedConstantBuffers);
-    ok(desc.GlobalVariables == 2, "Unexpected global variables count %u.\n", desc.GlobalVariables);
+    ok(desc.GlobalVariables == 3, "Unexpected global variables count %u.\n", desc.GlobalVariables);
     ok(desc.SharedGlobalVariables == 0, "Unexpected shared global variables count %u.\n",
             desc.SharedGlobalVariables);
     ok(desc.Techniques == 0, "Unexpected techniques count %u.\n", desc.Techniques);
@@ -117,7 +125,6 @@ static void test_effect_constant_buffer_type(void)
     hr = constantbuffer->lpVtbl->GetDesc(constantbuffer, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT, "Unexpected variable flags %#x.\n", var_desc.Flags);
-todo_wine
     ok(var_desc.ExplicitBindPoint == 1, "Unexpected bind point %#x.\n", var_desc.ExplicitBindPoint);
 
     type = constantbuffer->lpVtbl->GetType(constantbuffer);
@@ -215,6 +222,15 @@ todo_wine
 
     string = type->lpVtbl->GetMemberSemantic(type, 3);
     ok(string == NULL, "GetMemberSemantic is \"%s\", expected \"NULL\"\n", string);
+
+    constantbuffer = effect->lpVtbl->GetConstantBufferByIndex(effect, 1);
+    v = constantbuffer->lpVtbl->GetMemberByIndex(constantbuffer, 0);
+    hr = v->lpVtbl->GetDesc(v, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(var_desc.Name, "f3"), "Unexpected name %s.\n", var_desc.Name);
+    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT, "Unexpected variable flags %#x.\n", var_desc.Flags);
+    ok(var_desc.BufferOffset == 0x20, "Unexpected buffer offset %#x.\n", var_desc.BufferOffset);
+    ok(var_desc.ExplicitBindPoint == 0x20, "Unexpected bind point %#x.\n", var_desc.ExplicitBindPoint);
 
     effect->lpVtbl->Release(effect);
 
