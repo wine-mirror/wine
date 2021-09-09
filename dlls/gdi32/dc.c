@@ -830,6 +830,7 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
 {
     PHYSDEV physdev;
     BOOL ret = TRUE;
+    DWORD prev;
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
@@ -837,36 +838,36 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
     switch (method)
     {
     case NtGdiSetMapMode:
-        *prev_value = dc->attr->map_mode;
+        prev = dc->attr->map_mode;
         ret = set_map_mode( dc, value );
         break;
 
     case NtGdiSetBkColor:
-        *prev_value = dc->attr->background_color;
+        prev = dc->attr->background_color;
         set_bk_color( dc, value );
         break;
 
     case NtGdiSetTextColor:
-        *prev_value = dc->attr->text_color;
+        prev = dc->attr->text_color;
         set_text_color( dc, value );
         break;
 
     case NtGdiSetDCBrushColor:
         physdev = GET_DC_PHYSDEV( dc, pSetDCBrushColor );
-        *prev_value = dc->attr->brush_color;
+        prev = dc->attr->brush_color;
         value = physdev->funcs->pSetDCBrushColor( physdev, value );
         if (value != CLR_INVALID) dc->attr->brush_color = value;
         break;
 
     case NtGdiSetDCPenColor:
         physdev = GET_DC_PHYSDEV( dc, pSetDCPenColor );
-        *prev_value = dc->attr->pen_color;
+        prev = dc->attr->pen_color;
         value = physdev->funcs->pSetDCPenColor( physdev, value );
         if (value != CLR_INVALID) dc->attr->pen_color = value;
         break;
 
     case NtGdiSetGraphicsMode:
-        if (prev_value) *prev_value = dc->attr->graphics_mode;
+        prev = dc->attr->graphics_mode;
         ret = set_graphics_mode( dc, value );
         break;
 
@@ -877,7 +878,9 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
     }
 
     release_dc_ptr( dc );
-    return ret;
+    if (!ret || !prev_value) return FALSE;
+    *prev_value = prev;
+    return TRUE;
 }
 
 
