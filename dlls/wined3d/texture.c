@@ -47,10 +47,18 @@ struct wined3d_rect_f
     float b;
 };
 
-static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
+BOOL wined3d_texture_can_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
 {
     if (!d3d_info->pbo || texture->resource.format->conv_byte_count
             || (texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED)))
+        return FALSE;
+
+    return TRUE;
+}
+
+static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
+{
+    if (!wined3d_texture_can_use_pbo(texture, d3d_info))
         return FALSE;
 
     /* Use a PBO for dynamic textures and read-only staging textures. */

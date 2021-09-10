@@ -2550,6 +2550,7 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         unsigned int row_pitch, slice_pitch;
         struct wined3d_context *context;
         struct wined3d_bo_address addr;
+        unsigned int location;
 
         if (op->flags & ~WINED3D_BLT_RAW)
         {
@@ -2582,11 +2583,16 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
 
         context = context_acquire(cs->c.device, NULL, 0);
 
+        location = src_texture->resource.map_binding;
+        if (location == WINED3D_LOCATION_SYSMEM
+                && wined3d_texture_can_use_pbo(src_texture, &context->device->adapter->d3d_info))
+            location = WINED3D_LOCATION_BUFFER;
+
         if (!wined3d_texture_load_location(src_texture, op->src_sub_resource_idx,
-                context, src_texture->resource.map_binding))
+                context, location))
         {
             ERR("Failed to load source sub-resource into %s.\n",
-                    wined3d_debug_location(src_texture->resource.map_binding));
+                    wined3d_debug_location(location));
             context_release(context);
             goto error;
         }
@@ -2607,7 +2613,7 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
             goto error;
         }
 
-        wined3d_texture_get_memory(src_texture, op->src_sub_resource_idx, &addr, src_texture->resource.map_binding);
+        wined3d_texture_get_memory(src_texture, op->src_sub_resource_idx, &addr, location);
         wined3d_texture_get_pitch(src_texture, op->src_sub_resource_idx % src_texture->level_count,
                 &row_pitch, &slice_pitch);
 
