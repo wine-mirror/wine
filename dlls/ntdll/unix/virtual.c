@@ -615,7 +615,7 @@ static void add_builtin_module( void *module, void *handle )
 /***********************************************************************
  *           release_builtin_module
  */
-static void release_builtin_module( void *module )
+void release_builtin_module( void *module )
 {
     struct builtin_module *builtin;
 
@@ -4328,21 +4328,6 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
         case MemoryMappedFilenameInformation:
             return get_memory_section_name( process, addr, buffer, len, res_len );
-
-        case MemoryWineImageInitFuncs:
-            if (process == GetCurrentProcess())
-            {
-                void *module = (void *)addr;
-                void *handle = get_builtin_so_handle( module );
-
-                if (handle)
-                {
-                    status = get_builtin_init_funcs( handle, buffer, len, res_len );
-                    release_builtin_module( module );
-                    return status;
-                }
-            }
-            return STATUS_INVALID_HANDLE;
 
         case MemoryWineUnixFuncs:
         case MemoryWineUnixWow64Funcs:

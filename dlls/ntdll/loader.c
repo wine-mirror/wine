@@ -1338,31 +1338,6 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
     }
 }
 
-
-/*************************************************************************
- *              init_builtin_dll
- */
-static void init_builtin_dll( HMODULE module )
-{
-    void *buffer[16];
-    void (**funcs)(int, char **, char **) = (void *)buffer;
-    SIZE_T i, size;
-    NTSTATUS status;
-
-    status = NtQueryVirtualMemory( GetCurrentProcess(), module, MemoryWineImageInitFuncs,
-                                   buffer, sizeof(buffer), &size );
-    if (status == STATUS_BUFFER_TOO_SMALL)
-    {
-        if (!(funcs = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return;
-        status = NtQueryVirtualMemory( GetCurrentProcess(), module, MemoryWineImageInitFuncs,
-                                       funcs, size, &size );
-    }
-    if (!status) for (i = 0; i < size / sizeof(*funcs); i++) funcs[i]( 0, NULL, NULL );
-
-    if ((void *)funcs != (void *)buffer) RtlFreeHeap( GetProcessHeap(), 0, funcs );
-}
-
-
 /*************************************************************************
  *              MODULE_InitDLL
  */
@@ -1379,7 +1354,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return STATUS_SUCCESS;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, reason );
     if (wm->ldr.Flags & LDR_WINE_INTERNAL && reason == DLL_PROCESS_ATTACH)
-        init_builtin_dll( wm->ldr.DllBase );
+        unix_funcs->init_builtin_dll( wm->ldr.DllBase );
     if (!entry) return STATUS_SUCCESS;
 
     if (TRACE_ON(relay))
@@ -3917,7 +3892,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         }
         release_address_space();
         if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
-        if (wm->ldr.Flags & LDR_WINE_INTERNAL) init_builtin_dll( wm->ldr.DllBase );
+        if (wm->ldr.Flags & LDR_WINE_INTERNAL) unix_funcs->init_builtin_dll( wm->ldr.DllBase );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
         process_breakpoint();
     }

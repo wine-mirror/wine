@@ -369,7 +369,6 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         break;
     }
 
-    case MemoryWineImageInitFuncs:
     case MemoryWineUnixWow64Funcs:
         return STATUS_INVALID_INFO_CLASS;
 

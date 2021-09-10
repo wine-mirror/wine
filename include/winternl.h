@@ -1919,8 +1919,7 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryBasicInformationCapped,
     MemoryPhysicalContiguityInformation,
 #ifdef __WINESRC__
-    MemoryWineImageInitFuncs = 1000,
-    MemoryWineUnixFuncs,
+    MemoryWineUnixFuncs = 1000,
     MemoryWineUnixWow64Funcs,
 #endif
 } MEMORY_INFORMATION_CLASS;

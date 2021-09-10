@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 125
+#define NTDLL_UNIXLIB_VERSION 126
 
 struct unix_funcs
 {
@@ -71,6 +71,7 @@ struct unix_funcs
 
     /* loader functions */
     NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );
+    void          (CDECL *init_builtin_dll)( void *module );
     NTSTATUS      (CDECL *init_unix_lib)( void *module, DWORD reason, const void *ptr_in, void *ptr_out );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );
