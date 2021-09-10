@@ -856,7 +856,7 @@ void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk, struct wined3d
     slab_vk->map_ptr = NULL;
 }
 
-static VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
+VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
 {
     VkAccessFlags flags = 0;
 
@@ -877,6 +877,33 @@ static VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
     if (usage & VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT)
         flags |= VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT
                 | VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT;
+    if (usage & VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+        flags |= VK_ACCESS_TRANSFER_READ_BIT;
+    if (usage & VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+        flags |= VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    return flags;
+}
+
+VkPipelineStageFlags vk_pipeline_stage_mask_from_buffer_usage(VkBufferUsageFlags usage)
+{
+    VkPipelineStageFlags flags = 0;
+
+    if (usage & (VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+        flags |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    if (usage & (VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT
+            | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT))
+        flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT
+                | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
+                | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+    if (usage & VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+        flags |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
+    if (usage & (VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT
+            | VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT))
+        flags |= VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
+    if (usage & (VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT))
+        flags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 
     return flags;
 }
