@@ -40,7 +40,6 @@
     SYSCALL_ENTRY( NtCancelIoFileEx ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
-    SYSCALL_ENTRY( NtClearPowerRequest ) \
     SYSCALL_ENTRY( NtClose ) \
     SYSCALL_ENTRY( NtCompleteConnectPort ) \
     SYSCALL_ENTRY( NtConnectPort ) \
@@ -60,7 +59,6 @@
     SYSCALL_ENTRY( NtCreateNamedPipeFile ) \
     SYSCALL_ENTRY( NtCreatePagingFile ) \
     SYSCALL_ENTRY( NtCreatePort ) \
-    SYSCALL_ENTRY( NtCreatePowerRequest ) \
     SYSCALL_ENTRY( NtCreateSection ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
@@ -210,7 +208,6 @@
     SYSCALL_ENTRY( NtSetIntervalProfile ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetLdtEntries ) \
-    SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetSecurityObject ) \
     SYSCALL_ENTRY( NtSetSystemInformation ) \
     SYSCALL_ENTRY( NtSetSystemTime ) \

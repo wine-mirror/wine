@@ -3480,36 +3480,6 @@ NTSTATUS WINAPI NtInitiatePowerAction( POWER_ACTION action, SYSTEM_POWER_STATE s
 
 
 /******************************************************************************
- *              NtCreatePowerRequest  (NTDLL.@)
- */
-NTSTATUS WINAPI NtCreatePowerRequest( HANDLE *handle, COUNTED_REASON_CONTEXT *context )
-{
-    FIXME( "(%p, %p): stub\n", handle, context );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/******************************************************************************
- *              NtSetPowerRequest  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetPowerRequest( HANDLE handle, POWER_REQUEST_TYPE type )
-{
-    FIXME( "(%p, %u): stub\n", handle, type );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/******************************************************************************
- *              NtClearPowerRequest  (NTDLL.@)
- */
-NTSTATUS WINAPI NtClearPowerRequest( HANDLE handle, POWER_REQUEST_TYPE type )
-{
-    FIXME( "(%p, %u): stub\n", handle, type );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/******************************************************************************
  *              NtSetThreadExecutionState  (NTDLL.@)
  */
 NTSTATUS WINAPI NtSetThreadExecutionState( EXECUTION_STATE new_state, EXECUTION_STATE *old_state )

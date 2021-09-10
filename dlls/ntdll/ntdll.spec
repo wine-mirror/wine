@@ -151,7 +151,6 @@
 @ stdcall -syscall NtCancelIoFileEx(long ptr ptr)
 @ stdcall -syscall NtCancelTimer(long ptr)
 @ stdcall -syscall NtClearEvent(long)
-@ stdcall -syscall NtClearPowerRequest(long long)
 @ stdcall -syscall NtClose(long)
 # @ stub NtCloseObjectAuditAlarm
 # @ stub NtCompactKeys
@@ -177,7 +176,6 @@
 @ stdcall -syscall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall -syscall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall -syscall NtCreatePort(ptr ptr long long ptr)
-@ stdcall -syscall NtCreatePowerRequest(ptr ptr)
 # @ stub NtCreateProcess
 # @ stub NtCreateProcessEx
 # @ stub NtCreateProfile
@@ -389,7 +387,6 @@
 # @ stub NtSetLowEventPair
 # @ stub NtSetLowWaitHighEventPair
 # @ stub NtSetLowWaitHighThread
-@ stdcall -syscall NtSetPowerRequest(long long)
 # @ stub NtSetQuotaInformationFile
 @ stdcall -syscall NtSetSecurityObject(long long ptr)
 # @ stub NtSetSystemEnvironmentValue
@@ -1175,7 +1172,6 @@
 @ stdcall -private -syscall ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall -private -syscall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
-@ stdcall -private -syscall ZwClearPowerRequest(long long) NtClearPowerRequest
 @ stdcall -private -syscall ZwClose(long) NtClose
 # @ stub ZwCloseObjectAuditAlarm
 # @ stub ZwCompactKeys
@@ -1201,7 +1197,6 @@
 @ stdcall -private -syscall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall -private -syscall ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
 @ stdcall -private -syscall ZwCreatePort(ptr ptr long long ptr) NtCreatePort
-@ stdcall -private -syscall ZwCreatePowerRequest(ptr ptr) NtCreatePowerRequest
 # @ stub ZwCreateProcess
 # @ stub ZwCreateProcessEx
 # @ stub ZwCreateProfile
@@ -1411,7 +1406,6 @@
 # @ stub ZwSetLowEventPair
 # @ stub ZwSetLowWaitHighEventPair
 # @ stub ZwSetLowWaitHighThread
-@ stdcall -private -syscall ZwSetPowerRequest(long long) NtSetPowerRequest
 # @ stub ZwSetQuotaInformationFile
 @ stdcall -private -syscall ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 # @ stub ZwSetSystemEnvironmentValue
