@@ -1347,6 +1347,7 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
     struct wined3d_so_statistics_query *so_statistics_query;
     struct wined3d_timestamp_query *timestamp_query;
     struct wined3d_occlusion_query *occlusion_query;
+    struct wined3d_context_gl *current;
     struct fbo_entry *entry, *entry2;
     struct wined3d_fence *fence;
     HGLRC restore_ctx;
@@ -1356,10 +1357,22 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
     restore_ctx = wglGetCurrentContext();
     restore_dc = wglGetCurrentDC();
 
-    if (restore_ctx == context_gl->gl_ctx)
-        restore_ctx = NULL;
-    else if (context_gl->valid)
+    if (context_gl->valid && context_gl->gl_ctx != restore_ctx)
+    {
+        /* Attempting to restore a GL context corresponding to a wined3d
+         * context is not particularly useful. Worse, when we're called from
+         * wined3d_context_gl_destroy(), we subsequently clear the "current
+         * D3D context" TLS value, which would cause
+         * wined3d_context_gl_enter() to consider the GL context a non-D3D
+         * context. */
+        if ((current = wined3d_context_gl_get_current()) && current->gl_ctx == restore_ctx)
+            restore_ctx = NULL;
         wined3d_context_gl_set_gl_context(context_gl);
+    }
+    else
+    {
+        restore_ctx = NULL;
+    }
 
     if (context_gl->valid)
     {
