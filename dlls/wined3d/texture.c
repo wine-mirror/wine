@@ -47,10 +47,9 @@ struct wined3d_rect_f
     float b;
 };
 
-static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
+static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
 {
-    if (!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
-            || texture->resource.format->conv_byte_count
+    if (!d3d_info->pbo || texture->resource.format->conv_byte_count
             || (texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED)))
         return FALSE;
 
@@ -1962,7 +1961,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, unsig
      * If the surface didn't use PBOs previously but could now, don't
      * change it - whatever made us not use PBOs might come back, e.g.
      * color keys. */
-    if (texture->resource.map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
+    if (texture->resource.map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, d3d_info))
         texture->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
     wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
@@ -3629,7 +3628,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_device_parent *device_parent = device->device_parent;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int sub_count, i, j, size, offset = 0;
     unsigned int pow2_width, pow2_height;
     const struct wined3d_format *format;
@@ -3837,11 +3835,11 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->pow2_matrix[15] = 1.0f;
     TRACE("x scale %.8e, y scale %.8e.\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
 
-    if (wined3d_texture_use_pbo(texture, gl_info))
+    if (wined3d_texture_use_pbo(texture, d3d_info))
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
     if (desc->resource_type != WINED3D_RTYPE_TEXTURE_3D
-            || !wined3d_texture_use_pbo(texture, gl_info))
+            || !wined3d_texture_use_pbo(texture, d3d_info))
     {
         if (!wined3d_resource_prepare_sysmem(&texture->resource))
         {

@@ -5132,6 +5132,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->clip_control = !!gl_info->supported[ARB_CLIP_CONTROL];
     d3d_info->full_ffp_varyings = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_FULL_FFP_VARYINGS);
     d3d_info->scaled_resolve = !!gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE_BLIT_SCALED];
+    d3d_info->pbo = !!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT];
     d3d_info->feature_level = feature_level_from_caps(gl_info, &shader_caps, &fragment_caps);
 
     if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
