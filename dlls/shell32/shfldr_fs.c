@@ -62,6 +62,7 @@ typedef struct {
     LONG ref;
     IShellFolder2 IShellFolder2_iface;
     IPersistFolder3 IPersistFolder3_iface;
+    IPersistPropertyBag IPersistPropertyBag_iface;
     IDropTarget IDropTarget_iface;
     ISFHelper ISFHelper_iface;
     IUnknown *outer_unk;
@@ -92,6 +93,11 @@ static inline IGenericSFImpl *impl_from_IPersistFolder3(IPersistFolder3 *iface)
     return CONTAINING_RECORD(iface, IGenericSFImpl, IPersistFolder3_iface);
 }
 
+static inline IGenericSFImpl *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
+{
+    return CONTAINING_RECORD(iface, IGenericSFImpl, IPersistPropertyBag_iface);
+}
+
 static inline IGenericSFImpl *impl_from_IDropTarget(IDropTarget *iface)
 {
     return CONTAINING_RECORD(iface, IGenericSFImpl, IDropTarget_iface);
@@ -120,6 +126,8 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(IUnknown *iface, REFIID riid, vo
     else if (IsEqualIID(riid, &IID_IPersist) || IsEqualIID(riid, &IID_IPersistFolder) ||
             IsEqualIID(riid, &IID_IPersistFolder2) || IsEqualIID(riid, &IID_IPersistFolder3))
         *ppvObj = &This->IPersistFolder3_iface;
+    else if (IsEqualIID(&IID_IPersistPropertyBag, riid))
+        *ppvObj = &This->IPersistPropertyBag_iface;
     else if (IsEqualIID (riid, &IID_ISFHelper))
         *ppvObj = &This->ISFHelper_iface;
     else if (IsEqualIID (riid, &IID_IDropTarget)) {
@@ -1508,6 +1516,90 @@ static const IPersistFolder3Vtbl pfvt =
 };
 
 /****************************************************************************
+ * IPersistPropertyBag implementation
+ */
+static HRESULT WINAPI PersistPropertyBag_QueryInterface(IPersistPropertyBag* iface,
+    REFIID riid, void** ppv)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+}
+
+static ULONG WINAPI PersistPropertyBag_AddRef(IPersistPropertyBag* iface)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+    return IUnknown_AddRef(This->outer_unk);
+}
+
+static ULONG WINAPI PersistPropertyBag_Release(IPersistPropertyBag* iface)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+    return IUnknown_Release(This->outer_unk);
+}
+
+static HRESULT WINAPI PersistPropertyBag_GetClassID(IPersistPropertyBag* iface, CLSID* pClassID)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+    return IPersistFolder3_GetClassID(&This->IPersistFolder3_iface, pClassID);
+}
+
+static HRESULT WINAPI PersistPropertyBag_InitNew(IPersistPropertyBag* iface)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *iface,
+    IPropertyBag *pPropertyBag, IErrorLog *pErrorLog)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+
+    static const WCHAR wszTarget[] = { 'T','a','r','g','e','t', 0 };
+    PERSIST_FOLDER_TARGET_INFO pftiTarget;
+    VARIANT var;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %p)\n", This, pPropertyBag, pErrorLog);
+
+    if (!pPropertyBag)
+        return E_POINTER;
+
+    /* Get 'Target' property from the property bag. */
+    V_VT(&var) = VT_BSTR;
+    hr = IPropertyBag_Read(pPropertyBag, wszTarget, &var, NULL);
+    if (FAILED(hr))
+        return E_FAIL;
+    lstrcpyW(pftiTarget.szTargetParsingName, V_BSTR(&var));
+    SysFreeString(V_BSTR(&var));
+
+    pftiTarget.pidlTargetFolder = NULL;
+    pftiTarget.szNetworkProvider[0] = 0;
+    pftiTarget.dwAttributes = -1;
+    pftiTarget.csidl = -1;
+
+    return IPersistFolder3_InitializeEx(&This->IPersistFolder3_iface, NULL, NULL, &pftiTarget);
+}
+
+static HRESULT WINAPI PersistPropertyBag_Save(IPersistPropertyBag *iface,
+    IPropertyBag *pPropertyBag, BOOL fClearDirty, BOOL fSaveAllProperties)
+{
+    IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static const IPersistPropertyBagVtbl ppbvt = {
+    PersistPropertyBag_QueryInterface,
+    PersistPropertyBag_AddRef,
+    PersistPropertyBag_Release,
+    PersistPropertyBag_GetClassID,
+    PersistPropertyBag_InitNew,
+    PersistPropertyBag_Load,
+    PersistPropertyBag_Save
+};
+
+/****************************************************************************
  * ISFDropTarget implementation
  */
 static HRESULT WINAPI ISFDropTarget_QueryInterface(IDropTarget *iface, REFIID riid, void **ppv)
@@ -1698,6 +1790,7 @@ HRESULT WINAPI IFSFolder_Constructor(IUnknown *outer_unk, REFIID riid, void **pp
     sf->IUnknown_inner.lpVtbl = &unkvt;
     sf->IShellFolder2_iface.lpVtbl = &sfvt;
     sf->IPersistFolder3_iface.lpVtbl = &pfvt;
+    sf->IPersistPropertyBag_iface.lpVtbl = &ppbvt;
     sf->IDropTarget_iface.lpVtbl = &dtvt;
     sf->ISFHelper_iface.lpVtbl = &shvt;
     sf->pclsid = (CLSID *) & CLSID_ShellFSFolder;
