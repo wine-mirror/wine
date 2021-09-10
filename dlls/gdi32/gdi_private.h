@@ -271,6 +271,9 @@ extern BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT wid
                                  UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StrokeAndFillPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_StrokePath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_TransparentBlt( DC_ATTR *dc_attr, int x_dst, int y_dst, int width_dst,
+                                  int height_dst, HDC hdc_src, int x_src, int y_src, int width_src,
+                                  int height_src, UINT color ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_WidenPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 
 extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,

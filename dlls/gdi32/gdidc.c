@@ -1533,6 +1533,23 @@ BOOL WINAPI PlgBlt( HDC hdc, const POINT *points, HDC hdc_src, INT x_src, INT y_
 }
 
 /******************************************************************************
+ *           GdiTransparentBlt    (GDI32.@)
+ */
+BOOL WINAPI GdiTransparentBlt( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
+                               HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
+                               UINT color )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_TransparentBlt( dc_attr, x_dst, y_dst, width_dst, height_dst, hdc_src,
+                                               x_src, y_src, width_src, height_src, color ))
+        return FALSE;
+    return NtGdiTransparentBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src, x_src, y_src,
+                                width_src, height_src, color );
+}
+
+/******************************************************************************
  *           GdiAlphaBlend   (GDI32.@)
  */
 BOOL WINAPI GdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,

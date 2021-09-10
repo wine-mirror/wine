@@ -1287,7 +1287,7 @@ static BOOL emfdrv_stretchblt( struct emf *emf, INT x_dst, INT y_dst, INT width_
     emr->cyDest = height_dst;
     emr->xSrc = x_src;
     emr->ySrc = y_src;
-    if (type == EMR_STRETCHBLT || type == EMR_ALPHABLEND)
+    if (type != EMR_BITBLT)
     {
         EMRSTRETCHBLT *emr_stretchblt = (EMRSTRETCHBLT *)emr;
         emr_stretchblt->cxSrc = width_src;
@@ -1386,6 +1386,15 @@ BOOL EMFDC_StretchBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, IN
     return emfdrv_stretchblt( dc_attr->emf, x_dst, y_dst, width_dst, height_dst,
                               hdc_src, x_src, y_src, width_src,
                               height_src, rop, EMR_STRETCHBLT );
+}
+
+BOOL EMFDC_TransparentBlt( DC_ATTR *dc_attr, int x_dst, int y_dst, int width_dst, int height_dst,
+                           HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
+                           UINT color )
+{
+    return emfdrv_stretchblt( dc_attr->emf, x_dst, y_dst, width_dst, height_dst,
+                              hdc_src, x_src, y_src, width_src,
+                              height_src, color, EMR_TRANSPARENTBLT );
 }
 
 BOOL EMFDC_MaskBlt( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,

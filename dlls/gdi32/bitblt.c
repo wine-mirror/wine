@@ -835,11 +835,11 @@ BOOL WINAPI NtGdiMaskBlt( HDC hdcDest, INT nXDest, INT nYDest, INT nWidth, INT n
 }
 
 /******************************************************************************
- *           GdiTransparentBlt [GDI32.@]
+ *           NtGdiTransparentBlt    (win32u.@)
  */
-BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest, int heightDest,
-                            HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
-                            UINT crTransparent )
+BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest, int heightDest,
+                                 HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
+                                 UINT crTransparent )
 {
     BOOL ret = FALSE;
     HDC hdcWork;
@@ -858,8 +858,8 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
         return FALSE;
     }
 
-    oldBackground = SetBkColor(hdcDest, RGB(255,255,255));
-    oldForeground = SetTextColor(hdcDest, RGB(0,0,0));
+    NtGdiGetAndSetDCDword( hdcDest, NtGdiSetBkColor, RGB(255,255,255), &oldBackground );
+    NtGdiGetAndSetDCDword( hdcDest, NtGdiSetTextColor, RGB(0,0,0), &oldForeground );
 
     /* Stretch bitmap */
     oldStretchMode = GetStretchBltMode(hdcSrc);
@@ -867,9 +867,9 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
     hdcWork = NtGdiCreateCompatibleDC( hdcDest );
     if ((GetObjectType( hdcDest ) != OBJ_MEMDC ||
-         GetObjectW( NtGdiGetDCObject( hdcDest, NTGDI_OBJ_SURF ),
-                     sizeof(dib), &dib ) == sizeof(BITMAP)) &&
-        GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
+         NtGdiExtGetObjectW( NtGdiGetDCObject( hdcDest, NTGDI_OBJ_SURF ),
+                             sizeof(dib), &dib ) == sizeof(BITMAP)) &&
+        NtGdiGetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
     {
         /* screen DCs or DDBs are not supposed to have an alpha channel, so use a 24-bpp bitmap as copy */
         BITMAPINFO info;
@@ -883,37 +883,43 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     }
     else bmpWork = NtGdiCreateCompatibleBitmap( hdcDest, widthDest, heightDest );
     oldWork = NtGdiSelectBitmap(hdcWork, bmpWork);
-    if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) {
+    if (!NtGdiStretchBlt( hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc,
+                          widthSrc, heightSrc, SRCCOPY, 0 ))
+    {
         TRACE("Failed to stretch\n");
         goto error;
     }
-    SetBkColor(hdcWork, crTransparent);
+    NtGdiGetAndSetDCDword( hdcWork, NtGdiSetBkColor, crTransparent, NULL );
 
     /* Create mask */
     hdcMask = NtGdiCreateCompatibleDC( hdcDest );
     bmpMask = NtGdiCreateCompatibleBitmap( hdcMask, widthDest, heightDest );
     oldMask = NtGdiSelectBitmap(hdcMask, bmpMask);
-    if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) {
+    if (!NtGdiBitBlt( hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY, 0, 0 ))
+    {
         TRACE("Failed to create mask\n");
         goto error;
     }
 
     /* Replace transparent color with black */
-    SetBkColor(hdcWork, RGB(0,0,0));
-    SetTextColor(hdcWork, RGB(255,255,255));
-    if(!BitBlt(hdcWork, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) {
+    NtGdiGetAndSetDCDword( hdcWork, NtGdiSetBkColor, RGB(0,0,0), NULL );
+    NtGdiGetAndSetDCDword( hdcWork, NtGdiSetTextColor, RGB(255,255,255), NULL );
+    if (!NtGdiBitBlt( hdcWork, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND, 0, 0 ))
+    {
         TRACE("Failed to mask out background\n");
         goto error;
     }
 
     /* Replace non-transparent area on destination with black */
-    if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) {
+    if (!NtGdiBitBlt( hdcDest, xDest, yDest, widthDest, heightDest, hdcMask, 0, 0, SRCAND, 0, 0 ))
+    {
         TRACE("Failed to clear destination area\n");
         goto error;
     }
 
     /* Draw the image */
-    if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcWork, 0, 0, SRCPAINT)) {
+    if (!NtGdiBitBlt( hdcDest, xDest, yDest, widthDest, heightDest, hdcWork, 0, 0, SRCPAINT, 0, 0 ))
+    {
         TRACE("Failed to paint image\n");
         goto error;
     }
@@ -921,8 +927,8 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     ret = TRUE;
 error:
     SetStretchBltMode(hdcSrc, oldStretchMode);
-    SetBkColor(hdcDest, oldBackground);
-    SetTextColor(hdcDest, oldForeground);
+    NtGdiGetAndSetDCDword( hdcDest, NtGdiSetBkColor, oldBackground, NULL );
+    NtGdiGetAndSetDCDword( hdcDest, NtGdiSetTextColor, oldForeground, NULL );
     if(hdcWork) {
         NtGdiSelectBitmap(hdcWork, oldWork);
         NtGdiDeleteObjectApp( hdcWork );

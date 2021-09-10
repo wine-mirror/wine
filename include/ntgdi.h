@@ -417,6 +417,9 @@ INT      WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT w
                                             HANDLE xform );
 BOOL     WINAPI NtGdiStrokePath( HDC hdc );
 BOOL     WINAPI NtGdiStrokeAndFillPath( HDC hdc );
+BOOL     WINAPI NtGdiTransparentBlt( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
+                                     HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
+                                     UINT color );
 BOOL     WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points_out,
                                       INT count, UINT mode );
 BOOL     WINAPI NtGdiUnrealizeObject( HGDIOBJ obj );
