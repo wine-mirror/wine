@@ -81,12 +81,3 @@ HRESULT WINAPI DECLSPEC_HOTPATCH OleRegEnumFormatEtc (
 
     return E_NOTIMPL;
 }
-
-/***********************************************************************
- *              CoGetCallerTID        [OLE32.@]
- */
-HRESULT WINAPI CoGetCallerTID(LPDWORD lpdwTID)
-{
-  FIXME("stub!\n");
-  return E_NOTIMPL;
-}
