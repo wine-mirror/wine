@@ -2471,8 +2471,8 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     return ret;
 }
 
-static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE* start,
-                                  ULONG_PTR ip, dwarf2_traverse_context_t* lctx)
+static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const dwarf2_cuhead_t* head,
+                                  const BYTE* start, ULONG_PTR ip, dwarf2_traverse_context_t* lctx)
 {
     DWORD_PTR                   beg, end;
     const BYTE*                 ptr = start;
@@ -2480,8 +2480,8 @@ static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE
 
     while (ptr < modfmt->u.dwarf2_info->debug_loc.address + modfmt->u.dwarf2_info->debug_loc.size)
     {
-        beg = dwarf2_get_addr(ptr, modfmt->u.dwarf2_info->word_size); ptr += modfmt->u.dwarf2_info->word_size;
-        end = dwarf2_get_addr(ptr, modfmt->u.dwarf2_info->word_size); ptr += modfmt->u.dwarf2_info->word_size;
+        beg = dwarf2_get_addr(ptr, head->word_size); ptr += head->word_size;
+        end = dwarf2_get_addr(ptr, head->word_size); ptr += head->word_size;
         if (!beg && !end) break;
         len = dwarf2_get_u2(ptr); ptr += 2;
 
@@ -2518,7 +2518,13 @@ static enum location_error loc_compute_frame(struct process* pcs,
     dwarf2_traverse_context_t   lctx;
     enum location_error         err;
     unsigned int                i;
+    const dwarf2_cuhead_t*      head = get_cuhead_from_func(func);
 
+    if (!head)
+    {
+        FIXME("Shouldn't happen\n");
+        return loc_err_internal;
+    }
     for (i=0; i<vector_length(&func->vchildren); i++)
     {
         psym = vector_at(&func->vchildren, i);
@@ -2535,11 +2541,11 @@ static enum location_error loc_compute_frame(struct process* pcs,
                 break;
             case loc_dwarf2_location_list:
                 WARN("Searching loclist for %s\n", debugstr_a(func->hash_elt.name));
-                if (!dwarf2_lookup_loclist(modfmt,
+                if (!dwarf2_lookup_loclist(modfmt, head,
                                            modfmt->u.dwarf2_info->debug_loc.address + pframe->offset,
                                            ip, &lctx))
                     return loc_err_out_of_scope;
-                if ((err = compute_location(modfmt->module, get_cuhead_from_func(func),
+                if ((err = compute_location(modfmt->module, head,
                                             &lctx, frame, pcs->handle, NULL)) < 0) return err;
                 if (frame->kind >= loc_user)
                 {
@@ -3332,10 +3338,12 @@ static void dwarf2_location_compute(struct process* pcs,
     DWORD_PTR                   ip;
     int                         err;
     dwarf2_traverse_context_t   lctx;
+    const dwarf2_cuhead_t*      head = get_cuhead_from_func(func);
 
-    if (!func || !symt_check_tag(func->container, SymTagCompiland))
+    if (!head)
     {
-        WARN("We'd expect function %s's container to exist and be a compiland\n", debugstr_a(func->hash_elt.name));
+        WARN("We'd expect function %s's container to be a valid compiland with dwarf inforamation\n",
+             debugstr_a(func->hash_elt.name));
         err = loc_err_internal;
     }
     else
@@ -3349,7 +3357,7 @@ static void dwarf2_location_compute(struct process* pcs,
             {
             case loc_dwarf2_location_list:
                 /* Then, if the variable has a location list, find it !! */
-                if (dwarf2_lookup_loclist(modfmt,
+                if (dwarf2_lookup_loclist(modfmt, head,
                                           modfmt->u.dwarf2_info->debug_loc.address + loc->offset,
                                           ip, &lctx))
                     goto do_compute;
@@ -3365,7 +3373,7 @@ static void dwarf2_location_compute(struct process* pcs,
                 }
             do_compute:
                 /* now get the variable */
-                err = compute_location(modfmt->module, get_cuhead_from_func(func),
+                err = compute_location(modfmt->module, head,
                                        &lctx, loc, pcs->handle, &frame);
                 break;
             case loc_register:
