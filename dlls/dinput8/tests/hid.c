@@ -2301,6 +2301,14 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
 #undef REPORT_ID_OR_USAGE_PAGE
 #include "pop_hid_macros.h"
 
+    static const HID_DEVICE_ATTRIBUTES attributes =
+    {
+        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+        .VendorID = 0x1209,
+        .ProductID = 0x0001,
+        .VersionNumber = 0x0100,
+    };
+
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     LSTATUS status;
     HKEY hkey;
@@ -2320,6 +2328,9 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)report_desc, sizeof(report_desc) );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+
+    status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled );

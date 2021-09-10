@@ -39,6 +39,7 @@
 static UNICODE_STRING control_symlink;
 
 static unsigned int got_start_device;
+static HID_DEVICE_ATTRIBUTES attributes;
 static char report_descriptor_buf[4096];
 static DWORD report_descriptor_len;
 static DWORD report_id;
@@ -228,25 +229,16 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
 
     case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
-    {
-        HID_DEVICE_ATTRIBUTES *attr = irp->UserBuffer;
-
         ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == sizeof(*attr), "got output size %u\n", out_size );
+        ok( out_size == sizeof(attributes), "got output size %u\n", out_size );
 
-        if (out_size == sizeof(*attr))
+        if (out_size == sizeof(attributes))
         {
-            ok( !attr->Size, "got size %u\n", attr->Size );
-
-            attr->Size = sizeof(*attr);
-            attr->VendorID = 0x1209;
-            attr->ProductID = 0x0001;
-            attr->VersionNumber = 0xface;
-            irp->IoStatus.Information = sizeof(*attr);
+            memcpy( irp->UserBuffer, &attributes, sizeof(attributes) );
+            irp->IoStatus.Information = sizeof(attributes);
         }
         ret = STATUS_SUCCESS;
         break;
-    }
 
     case IOCTL_HID_READ_REPORT:
     {
@@ -471,6 +463,12 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
     ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
     memcpy( report_descriptor_buf, buffer + info_size, size - info_size );
     report_descriptor_len = size - info_size;
+
+    RtlInitUnicodeString( &name_str, L"Attributes" );
+    size = info_size + sizeof(attributes);
+    ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
+    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    memcpy( &attributes, buffer + info_size, size - info_size );
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
