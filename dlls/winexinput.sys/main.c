@@ -82,6 +82,14 @@ struct func_device
 
     WCHAR instance_id[MAX_DEVICE_ID_LEN];
 
+    HIDP_VALUE_CAPS lx_caps;
+    HIDP_VALUE_CAPS ly_caps;
+    HIDP_VALUE_CAPS lt_caps;
+    HIDP_VALUE_CAPS rx_caps;
+    HIDP_VALUE_CAPS ry_caps;
+    HIDP_VALUE_CAPS rt_caps;
+    HIDP_DEVICE_DESC device_desc;
+
     /* everything below requires holding the cs */
     CRITICAL_SECTION cs;
     ULONG report_len;
@@ -442,13 +450,27 @@ static NTSTATUS sync_ioctl(DEVICE_OBJECT *device, DWORD code, void *in_buf, DWOR
     return io.Status;
 }
 
+static void check_value_caps(struct func_device *fdo, USHORT usage, HIDP_VALUE_CAPS *caps)
+{
+    switch (usage)
+    {
+    case HID_USAGE_GENERIC_X: fdo->lx_caps = *caps; break;
+    case HID_USAGE_GENERIC_Y: fdo->ly_caps = *caps; break;
+    case HID_USAGE_GENERIC_Z: fdo->lt_caps = *caps; break;
+    case HID_USAGE_GENERIC_RX: fdo->rx_caps = *caps; break;
+    case HID_USAGE_GENERIC_RY: fdo->ry_caps = *caps; break;
+    case HID_USAGE_GENERIC_RZ: fdo->rt_caps = *caps; break;
+    }
+}
+
 static NTSTATUS initialize_device(DEVICE_OBJECT *device)
 {
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
-    ULONG i, report_desc_len, report_count;
+    ULONG i, u, button_count, report_desc_len, report_count;
     PHIDP_REPORT_DESCRIPTOR report_desc;
     PHIDP_PREPARSED_DATA preparsed;
-    HIDP_DEVICE_DESC device_desc;
+    HIDP_BUTTON_CAPS *button_caps;
+    HIDP_VALUE_CAPS *value_caps;
     HIDP_REPORT_IDS *reports;
     HID_DESCRIPTOR hid_desc;
     NTSTATUS status;
@@ -461,16 +483,49 @@ static NTSTATUS initialize_device(DEVICE_OBJECT *device)
     if (!(report_desc = malloc(report_desc_len))) return STATUS_NO_MEMORY;
 
     status = sync_ioctl(fdo->bus_device, IOCTL_HID_GET_REPORT_DESCRIPTOR, NULL, 0, report_desc, report_desc_len);
-    if (!status) status = HidP_GetCollectionDescription(report_desc, report_desc_len, PagedPool, &device_desc);
+    if (!status) status = HidP_GetCollectionDescription(report_desc, report_desc_len, PagedPool, &fdo->device_desc);
     free(report_desc);
     if (status != HIDP_STATUS_SUCCESS) return status;
 
-    preparsed = device_desc.CollectionDesc->PreparsedData;
+    preparsed = fdo->device_desc.CollectionDesc->PreparsedData;
     status = HidP_GetCaps(preparsed, &caps);
     if (status != HIDP_STATUS_SUCCESS) return status;
 
-    reports = device_desc.ReportIDs;
-    report_count = device_desc.ReportIDsLength;
+    button_count = 0;
+    if (!(button_caps = malloc(sizeof(*button_caps) * caps.NumberInputButtonCaps))) return STATUS_NO_MEMORY;
+    status = HidP_GetButtonCaps(HidP_Input, button_caps, &caps.NumberInputButtonCaps, preparsed);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#x\n", status);
+    else for (i = 0; i < caps.NumberInputButtonCaps; i++)
+    {
+        if (button_caps[i].UsagePage != HID_USAGE_PAGE_BUTTON) continue;
+        if (button_caps[i].IsRange) button_count = max(button_count, button_caps[i].Range.UsageMax);
+        else button_count = max(button_count, button_caps[i].NotRange.Usage);
+    }
+    free(button_caps);
+    if (status != HIDP_STATUS_SUCCESS) return status;
+    if (button_count < 10) WARN("only %u buttons found\n", button_count);
+
+    if (!(value_caps = malloc(sizeof(*value_caps) * caps.NumberInputValueCaps))) return STATUS_NO_MEMORY;
+    status = HidP_GetValueCaps(HidP_Input, value_caps, &caps.NumberInputValueCaps, preparsed);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#x\n", status);
+    else for (i = 0; i < caps.NumberInputValueCaps; i++)
+    {
+        HIDP_VALUE_CAPS *caps = value_caps + i;
+        if (caps->UsagePage != HID_USAGE_PAGE_GENERIC) continue;
+        if (!caps->IsRange) check_value_caps(fdo, caps->NotRange.Usage, caps);
+        else for (u = caps->Range.UsageMin; u <=caps->Range.UsageMax; u++) check_value_caps(fdo, u, value_caps + i);
+    }
+    free(value_caps);
+    if (status != HIDP_STATUS_SUCCESS) return status;
+    if (!fdo->lx_caps.UsagePage) WARN("missing lx axis\n");
+    if (!fdo->ly_caps.UsagePage) WARN("missing ly axis\n");
+    if (!fdo->lt_caps.UsagePage) WARN("missing lt axis\n");
+    if (!fdo->rx_caps.UsagePage) WARN("missing rx axis\n");
+    if (!fdo->ry_caps.UsagePage) WARN("missing ry axis\n");
+    if (!fdo->rt_caps.UsagePage) WARN("missing rt axis\n");
+
+    reports = fdo->device_desc.ReportIDs;
+    report_count = fdo->device_desc.ReportIDsLength;
     for (i = 0; i < report_count; ++i) if (!reports[i].ReportID || reports[i].InputLength) break;
     if (i == report_count) i = 0; /* no input report?!, just use first ID */
 
@@ -478,7 +533,6 @@ static NTSTATUS initialize_device(DEVICE_OBJECT *device)
     if (!(fdo->report_buf = malloc(fdo->report_len))) return STATUS_NO_MEMORY;
     fdo->report_buf[0] = reports[i].ReportID;
 
-    HidP_FreeCollectionDescription(&device_desc);
     return STATUS_SUCCESS;
 }
 
@@ -556,6 +610,7 @@ static NTSTATUS WINAPI fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         status = IoCallDriver(fdo->bus_device, irp);
         IoDetachDevice(fdo->bus_device);
         RtlDeleteCriticalSection(&fdo->cs);
+        HidP_FreeCollectionDescription(&fdo->device_desc);
         free(fdo->report_buf);
         IoDeleteDevice(device);
         return status;
