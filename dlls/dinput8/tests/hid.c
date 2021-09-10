@@ -724,41 +724,8 @@ static BOOL sync_ioctl( HANDLE file, DWORD code, void *in_buf, DWORD in_len, voi
     return ret;
 }
 
-static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polled )
+static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polled, const HIDP_CAPS *expect_caps )
 {
-    const HIDP_CAPS expect_hidp_caps[] =
-    {
-        /* without report id */
-        {
-            .Usage = HID_USAGE_GENERIC_JOYSTICK,
-            .UsagePage = HID_USAGE_PAGE_GENERIC,
-            .InputReportByteLength = 26,
-            .OutputReportByteLength = 3,
-            .FeatureReportByteLength = 22,
-            .NumberLinkCollectionNodes = 10,
-            .NumberInputButtonCaps = 17,
-            .NumberInputValueCaps = 7,
-            .NumberInputDataIndices = 47,
-            .NumberFeatureButtonCaps = 1,
-            .NumberFeatureValueCaps = 6,
-            .NumberFeatureDataIndices = 8,
-        },
-        /* with report id */
-        {
-            .Usage = HID_USAGE_GENERIC_JOYSTICK,
-            .UsagePage = HID_USAGE_PAGE_GENERIC,
-            .InputReportByteLength = 25,
-            .OutputReportByteLength = 2,
-            .FeatureReportByteLength = 21,
-            .NumberLinkCollectionNodes = 10,
-            .NumberInputButtonCaps = 17,
-            .NumberInputValueCaps = 7,
-            .NumberInputDataIndices = 47,
-            .NumberFeatureButtonCaps = 1,
-            .NumberFeatureValueCaps = 6,
-            .NumberFeatureDataIndices = 8,
-        },
-    };
     const HIDP_BUTTON_CAPS expect_button_caps[] =
     {
         {
@@ -942,7 +909,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     ok( status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetCaps returned %#x\n", status );
     status = HidP_GetCaps( preparsed_data, &caps );
     ok( status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#x\n", status );
-    check_hidp_caps( &caps, &expect_hidp_caps[report_id] );
+    check_hidp_caps( &caps, expect_caps );
 
     collection_count = 0;
     status = HidP_GetLinkCollectionNodes( collections, &collection_count, preparsed_data );
@@ -1883,7 +1850,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     HidD_FreePreparsedData( preparsed_data );
 }
 
-static void test_hid_device( DWORD report_id, DWORD polled )
+static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps )
 {
     char buffer[FIELD_OFFSET( SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath[MAX_PATH] )];
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(SP_DEVICE_INTERFACE_DATA)};
@@ -2038,7 +2005,7 @@ static void test_hid_device( DWORD report_id, DWORD polled )
         ok( poll_freq == 500, "got poll_freq %u, expected 500\n", poll_freq );
     }
 
-    test_hidp( file, async_file, report_id, polled );
+    test_hidp( file, async_file, report_id, polled, expect_caps );
 
     CloseHandle( async_file );
     CloseHandle( file );
@@ -2308,6 +2275,21 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         .ProductID = 0x0001,
         .VersionNumber = 0x0100,
     };
+    const HIDP_CAPS caps =
+    {
+        .Usage = HID_USAGE_GENERIC_JOYSTICK,
+        .UsagePage = HID_USAGE_PAGE_GENERIC,
+        .InputReportByteLength = report_id ? 25 : 26,
+        .OutputReportByteLength = report_id ? 2 : 3,
+        .FeatureReportByteLength = report_id ? 21 : 22,
+        .NumberLinkCollectionNodes = 10,
+        .NumberInputButtonCaps = 17,
+        .NumberInputValueCaps = 7,
+        .NumberInputDataIndices = 47,
+        .NumberFeatureButtonCaps = 1,
+        .NumberFeatureValueCaps = 6,
+        .NumberFeatureDataIndices = 8,
+    };
 
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     LSTATUS status;
@@ -2333,7 +2315,10 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
-    if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled );
+    status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&caps, sizeof(caps) );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+
+    if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled, &caps );
 
     pnp_driver_stop();
     SetCurrentDirectoryW( cwd );

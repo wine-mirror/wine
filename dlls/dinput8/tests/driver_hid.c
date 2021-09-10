@@ -42,6 +42,7 @@ static unsigned int got_start_device;
 static HID_DEVICE_ATTRIBUTES attributes;
 static char report_descriptor_buf[4096];
 static DWORD report_descriptor_len;
+static HIDP_CAPS caps;
 static DWORD report_id;
 static DWORD polled;
 
@@ -242,7 +243,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     case IOCTL_HID_READ_REPORT:
     {
-        ULONG expected_size = 25;
+        ULONG expected_size = caps.InputReportByteLength - (report_id ? 0 : 1);
         ok( !in_size, "got input size %u\n", in_size );
         ok( out_size == expected_size, "got output size %u\n", out_size );
 
@@ -266,7 +267,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_WRITE_REPORT:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = 2;
+        ULONG expected_size = caps.OutputReportByteLength - (report_id ? 0 : 1);
 
         ok( in_size == sizeof(*packet), "got input size %u\n", in_size );
         ok( !out_size, "got output size %u\n", out_size );
@@ -284,7 +285,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_GET_INPUT_REPORT:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = 23;
+        ULONG expected_size = caps.InputReportByteLength - (report_id ? 0 : 1);
         ok( !in_size, "got input size %u\n", in_size );
         ok( out_size == sizeof(*packet), "got output size %u\n", out_size );
 
@@ -303,7 +304,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_SET_OUTPUT_REPORT:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = 2;
+        ULONG expected_size = caps.OutputReportByteLength - (report_id ? 0 : 1);
         ok( in_size == sizeof(*packet), "got input size %u\n", in_size );
         ok( !out_size, "got output size %u\n", out_size );
 
@@ -319,7 +320,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_GET_FEATURE:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = 17;
+        ULONG expected_size = caps.FeatureReportByteLength - (report_id ? 0 : 1);
         ok( !in_size, "got input size %u\n", in_size );
         ok( out_size == sizeof(*packet), "got output size %u\n", out_size );
 
@@ -337,7 +338,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_SET_FEATURE:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = 17;
+        ULONG expected_size = caps.FeatureReportByteLength - (report_id ? 0 : 1);
         ok( in_size == sizeof(*packet), "got input size %u\n", in_size );
         ok( !out_size, "got output size %u\n", out_size );
 
@@ -469,6 +470,12 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
     ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
     ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
     memcpy( &attributes, buffer + info_size, size - info_size );
+
+    RtlInitUnicodeString( &name_str, L"Caps" );
+    size = info_size + sizeof(caps);
+    ret = ZwQueryValueKey( hkey, &name_str, KeyValuePartialInformation, buffer, size, &size );
+    ok( !ret, "ZwQueryValueKey returned %#x\n", ret );
+    memcpy( &caps, buffer + info_size, size - info_size );
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
