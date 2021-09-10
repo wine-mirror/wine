@@ -568,6 +568,27 @@ static void wined3d_swapchain_gl_rotate(struct wined3d_swapchain *swapchain, str
     device_invalidate_state(swapchain->device, STATE_FRAMEBUFFER);
 }
 
+static bool swapchain_present_is_partial_copy(struct wined3d_swapchain *swapchain, const RECT *dst_rect)
+{
+    enum wined3d_swap_effect swap_effect = swapchain->state.desc.swap_effect;
+    RECT client_rect;
+    unsigned int t;
+
+    if (swap_effect != WINED3D_SWAP_EFFECT_COPY && swap_effect != WINED3D_SWAP_EFFECT_COPY_VSYNC)
+        return false;
+
+    GetClientRect(swapchain->win_handle, &client_rect);
+
+    t = client_rect.right - client_rect.left;
+    if ((dst_rect->left && dst_rect->right) || abs(dst_rect->right - dst_rect->left) != t)
+        return true;
+    t = client_rect.bottom - client_rect.top;
+    if ((dst_rect->top && dst_rect->bottom) || abs(dst_rect->bottom - dst_rect->top) != t)
+        return true;
+
+    return false;
+}
+
 static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, DWORD flags)
 {
@@ -588,7 +609,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
     TRACE("Presenting DC %p.\n", context_gl->dc);
 
-    if (context_gl->dc == swapchain_gl->backup_dc)
+    if (context_gl->dc == swapchain_gl->backup_dc || swapchain_present_is_partial_copy(swapchain, dst_rect))
     {
         swapchain_blit_gdi(swapchain, context, src_rect, dst_rect);
     }
@@ -1208,10 +1229,14 @@ static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT
 
     context_vk = wined3d_context_vk(context_acquire(swapchain->device, back_buffer, 0));
 
-    wined3d_texture_load_location(back_buffer, 0, &context_vk->c, back_buffer->resource.draw_binding);
-
-    if (swapchain_vk->vk_swapchain)
+    if (!swapchain_vk->vk_swapchain || swapchain_present_is_partial_copy(swapchain, dst_rect))
     {
+        swapchain_blit_gdi(swapchain, &context_vk->c, src_rect, dst_rect);
+    }
+    else
+    {
+        wined3d_texture_load_location(back_buffer, 0, &context_vk->c, back_buffer->resource.draw_binding);
+
         if ((vr = wined3d_swapchain_vk_blit(swapchain_vk, context_vk, src_rect, dst_rect, swap_interval)))
         {
             if (vr == VK_ERROR_OUT_OF_DATE_KHR || vr == VK_SUBOPTIMAL_KHR)
@@ -1227,10 +1252,6 @@ static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT
                 ERR("Failed to blit image, vr %s.\n", wined3d_debug_vkresult(vr));
             }
         }
-    }
-    else
-    {
-        swapchain_blit_gdi(swapchain, &context_vk->c, src_rect, dst_rect);
     }
 
     wined3d_swapchain_vk_rotate(swapchain, context_vk);
