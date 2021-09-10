@@ -929,7 +929,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
                                     struct symt_function* func, const struct vector* v)
 {
     struct symt*        lsym = NULL;
-    DWORD               pc = pair->pcs->ctx_frame.InstructionOffset;
+    DWORD_PTR           pc = pair->pcs->ctx_frame.InstructionOffset;
     unsigned int        i;
     WCHAR*              nameW;
     BOOL                ret;

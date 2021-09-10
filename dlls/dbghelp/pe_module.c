@@ -652,7 +652,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
     struct image_file_map*              fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     unsigned int 		        i;
     const IMAGE_EXPORT_DIRECTORY* 	exports;
-    DWORD			        base = module->module.BaseOfImage;
+    DWORD_PTR			        base = module->module.BaseOfImage;
     DWORD                               size;
     IMAGE_NT_HEADERS*                   nth;
     void*                               mapping;
@@ -716,7 +716,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
                     if ((ordinals[j] == i) && names[j]) break;
                 if (j < exports->NumberOfNames) continue;
                 snprintf(buffer, sizeof(buffer), "%d", i + exports->Base);
-                symt_new_public(module, NULL, buffer, FALSE, base + (DWORD)functions[i], 1);
+                symt_new_public(module, NULL, buffer, FALSE, base + functions[i], 1);
             }
         }
     }
@@ -906,7 +906,7 @@ struct module* pe_load_builtin_module(struct process* pcs, const WCHAR* name,
 PVOID WINAPI ImageDirectoryEntryToDataEx( PVOID base, BOOLEAN image, USHORT dir, PULONG size, PIMAGE_SECTION_HEADER *section )
 {
     const IMAGE_NT_HEADERS *nt;
-    DWORD addr;
+    DWORD_PTR addr;
 
     *size = 0;
     if (section) *section = NULL;

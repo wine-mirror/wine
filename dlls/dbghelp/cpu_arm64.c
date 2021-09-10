@@ -264,7 +264,7 @@ static BOOL arm64_fetch_minidump_thread(struct dump_context* dc, unsigned index,
     {
         /* FIXME: crop values across module boundaries, */
 #ifdef __aarch64__
-        ULONG base = ctx->Pc <= 0x80 ? 0 : ctx->Pc - 0x80;
+        ULONG64 base = ctx->Pc <= 0x80 ? 0 : ctx->Pc - 0x80;
         minidump_add_memory_block(dc, base, ctx->Pc + 0x80 - base, 0);
 #endif
     }
