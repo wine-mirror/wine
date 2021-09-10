@@ -35,6 +35,8 @@ typedef struct {
 
 HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS *details) DECLSPEC_HIDDEN;
 HRESULT shellfolder_map_column_to_scid(const shvheader *data, UINT column, SHCOLUMNID *scid) DECLSPEC_HIDDEN;
+HRESULT shellfolder_get_file_details(IShellFolder2 *iface, LPCITEMIDLIST pidl, const shvheader *header,
+                                     int column, SHELLDETAILS *psd) DECLSPEC_HIDDEN;
 
 #define GET_SHGDN_FOR(dwFlags)         ((DWORD)dwFlags & (DWORD)0x0000FF00)
 #define GET_SHGDN_RELATION(dwFlags)    ((DWORD)dwFlags & (DWORD)0x000000FF)

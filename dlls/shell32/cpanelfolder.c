@@ -760,40 +760,32 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 *iface, LPCI
 {
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
     PIDLCPanelStruct* pcpanel;
-    HRESULT hr;
 
     TRACE("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
 
     if (!psd || iColumn >= CONROLPANELSHELLVIEWCOLUMNS)
 	return E_INVALIDARG;
 
-    if (!pidl) {
-	psd->fmt = ControlPanelSFHeader[iColumn].fmt;
-	psd->cxChar = ControlPanelSFHeader[iColumn].cxChar;
-	psd->str.uType = STRRET_CSTR;
-	LoadStringA(shell32_hInstance, ControlPanelSFHeader[iColumn].colnameid, psd->str.u.cStr, MAX_PATH);
-	return S_OK;
-    } else {
-	psd->str.u.cStr[0] = 0x00;
-	psd->str.uType = STRRET_CSTR;
-	switch(iColumn) {
-	case 0:		/* name */
-	    hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
-	    break;
-	case 1:		/* comment */
-            pcpanel = _ILGetCPanelPointer(pidl);
+    if (!pidl)
+        return SHELL32_GetColumnDetails(ControlPanelSFHeader, iColumn, psd);
 
-            if (pcpanel)
-                lstrcpyA(psd->str.u.cStr, pcpanel->szName+pcpanel->offsComment);
-            else
-                _ILGetFileType(pidl, psd->str.u.cStr, MAX_PATH);
+    psd->str.u.cStr[0] = 0x00;
+    psd->str.uType = STRRET_CSTR;
+    switch(iColumn)
+    {
+    case 1:		/* comment */
+        pcpanel = _ILGetCPanelPointer(pidl);
 
-	    break;
-	}
-	hr = S_OK;
+        if (pcpanel)
+            lstrcpyA(psd->str.u.cStr, pcpanel->szName+pcpanel->offsComment);
+        else
+            _ILGetFileType(pidl, psd->str.u.cStr, MAX_PATH);
+        break;
+
+    default:
+        return shellfolder_get_file_details( iface, pidl, ControlPanelSFHeader, iColumn, psd );
     }
-
-    return hr;
+    return S_OK;
 }
 static HRESULT WINAPI ISF_ControlPanel_fnMapColumnToSCID(IShellFolder2 *iface, UINT column,
         SHCOLUMNID *pscid)

@@ -43,29 +43,20 @@
 #include "shell32_main.h"
 #include "xdg.h"
 #include "pidl.h"
+#include "shfldr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(recyclebin);
 
-typedef struct
+static const shvheader RecycleBinColumns[] =
 {
-    int column_name_id;
-    const GUID *fmtId;
-    DWORD pid;
-    int pcsFlags;
-    int fmt;
-    int cxChars;
-} columninfo;
-
-static const columninfo RecycleBinColumns[] =
-{
-    {IDS_SHV_COLUMN1,        &FMTID_Storage,   PID_STG_NAME,       SHCOLSTATE_TYPE_STR|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_LEFT,  30},
-    {IDS_SHV_COLUMN_DELFROM, &FMTID_Displaced, PID_DISPLACED_FROM, SHCOLSTATE_TYPE_STR|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_LEFT,  30},
-    {IDS_SHV_COLUMN_DELDATE, &FMTID_Displaced, PID_DISPLACED_DATE, SHCOLSTATE_TYPE_DATE|SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT,  20},
-    {IDS_SHV_COLUMN2,        &FMTID_Storage,   PID_STG_SIZE,       SHCOLSTATE_TYPE_INT|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 20},
-    {IDS_SHV_COLUMN3,        &FMTID_Storage,   PID_STG_STORAGETYPE,SHCOLSTATE_TYPE_INT|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_LEFT,  20},
-    {IDS_SHV_COLUMN4,        &FMTID_Storage,   PID_STG_WRITETIME,  SHCOLSTATE_TYPE_DATE|SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT,  20},
-/*    {"creation time",  &FMTID_Storage,   PID_STG_CREATETIME, SHCOLSTATE_TYPE_DATE,                        LVCFMT_LEFT,  20}, */
-/*    {"attribs",        &FMTID_Storage,   PID_STG_ATTRIBUTES, SHCOLSTATE_TYPE_STR,                         LVCFMT_LEFT,  20},       */
+    {&FMTID_Storage,   PID_STG_NAME,       IDS_SHV_COLUMN1,        SHCOLSTATE_TYPE_STR|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_LEFT,  30},
+    {&FMTID_Displaced, PID_DISPLACED_FROM, IDS_SHV_COLUMN_DELFROM, SHCOLSTATE_TYPE_STR|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_LEFT,  30},
+    {&FMTID_Displaced, PID_DISPLACED_DATE, IDS_SHV_COLUMN_DELDATE, SHCOLSTATE_TYPE_DATE|SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT,  20},
+    {&FMTID_Storage,   PID_STG_SIZE,       IDS_SHV_COLUMN2,        SHCOLSTATE_TYPE_INT|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 20},
+    {&FMTID_Storage,   PID_STG_STORAGETYPE,IDS_SHV_COLUMN3,        SHCOLSTATE_TYPE_INT|SHCOLSTATE_ONBYDEFAULT,  LVCFMT_LEFT,  20},
+    {&FMTID_Storage,   PID_STG_WRITETIME,  IDS_SHV_COLUMN4,        SHCOLSTATE_TYPE_DATE|SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT,  20},
+/*    {&FMTID_Storage,   PID_STG_CREATETIME, "creation time",  SHCOLSTATE_TYPE_DATE,                        LVCFMT_LEFT,  20}, */
+/*    {&FMTID_Storage,   PID_STG_ATTRIBUTES, "attribs",        SHCOLSTATE_TYPE_STR,                         LVCFMT_LEFT,  20},       */
 };
 
 #define COLUMN_NAME    0
@@ -613,14 +604,8 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     TRACE("(%p, %p, %d, %p)\n", This, pidl, iColumn, pDetails);
     if (iColumn >= COLUMNS_COUNT)
         return E_FAIL;
-    pDetails->fmt = RecycleBinColumns[iColumn].fmt;
-    pDetails->cxChar = RecycleBinColumns[iColumn].cxChars;
-    if (pidl == NULL)
-    {
-        pDetails->str.uType = STRRET_WSTR;
-        LoadStringW(shell32_hInstance, RecycleBinColumns[iColumn].column_name_id, buffer, MAX_PATH);
-        return SHStrDupW(buffer, &pDetails->str.u.pOleStr);
-    }
+
+    if (!pidl) return SHELL32_GetColumnDetails( RecycleBinColumns, iColumn, pDetails );
 
     if (iColumn == COLUMN_NAME)
         return RecycleBin_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL, &pDetails->str);
@@ -659,9 +644,8 @@ static HRESULT WINAPI RecycleBin_MapColumnToSCID(IShellFolder2 *iface, UINT iCol
     TRACE("(%p, %d, %p)\n", This, iColumn, pscid);
     if (iColumn>=COLUMNS_COUNT)
         return E_INVALIDARG;
-    pscid->fmtid = *RecycleBinColumns[iColumn].fmtId;
-    pscid->pid = RecycleBinColumns[iColumn].pid;
-    return S_OK;
+
+    return shellfolder_map_column_to_scid(RecycleBinColumns, iColumn, pscid);
 }
 
 static const IShellFolder2Vtbl recycleBinVtbl = 

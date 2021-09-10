@@ -965,46 +965,15 @@ IShellFolder_fnGetDetailsOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
                              UINT iColumn, SHELLDETAILS * psd)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-    HRESULT hr = E_FAIL;
 
     TRACE ("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
 
     if (!psd || iColumn >= GENERICSHELLVIEWCOLUMNS)
         return E_INVALIDARG;
 
-    if (!pidl) {
-        /* the header titles */
-        psd->fmt = GenericSFHeader[iColumn].fmt;
-        psd->cxChar = GenericSFHeader[iColumn].cxChar;
-        psd->str.uType = STRRET_CSTR;
-        LoadStringA (shell32_hInstance, GenericSFHeader[iColumn].colnameid,
-         psd->str.u.cStr, MAX_PATH);
-        return S_OK;
-    } else {
-        hr = S_OK;
-        psd->str.uType = STRRET_CSTR;
-        /* the data from the pidl */
-        switch (iColumn) {
-        case 0:                /* name */
-            hr = IShellFolder2_GetDisplayNameOf (iface, pidl,
-             SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
-            break;
-        case 1:                /* size */
-            _ILGetFileSize (pidl, psd->str.u.cStr, MAX_PATH);
-            break;
-        case 2:                /* type */
-            _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
-            break;
-        case 3:                /* date */
-            _ILGetFileDate (pidl, psd->str.u.cStr, MAX_PATH);
-            break;
-        case 4:                /* attributes */
-            _ILGetFileAttributes (pidl, psd->str.u.cStr, MAX_PATH);
-            break;
-        }
-    }
+    if (!pidl) return SHELL32_GetColumnDetails(GenericSFHeader, iColumn, psd);
 
-    return hr;
+    return shellfolder_get_file_details( iface, pidl, GenericSFHeader, iColumn, psd );
 }
 
 static HRESULT WINAPI

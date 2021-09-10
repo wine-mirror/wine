@@ -802,8 +802,6 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
 
-    HRESULT hr = S_OK;
-
     TRACE ("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
 
     if (!psd || iColumn >= ARRAY_SIZE(desktop_header))
@@ -812,29 +810,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
     if (!pidl)
         return SHELL32_GetColumnDetails(desktop_header, iColumn, psd);
 
-    /* the data from the pidl */
-    psd->str.uType = STRRET_CSTR;
-    switch (iColumn)
-    {
-    case 0:        /* name */
-        hr = IShellFolder2_GetDisplayNameOf(iface, pidl,
-                   SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
-        break;
-    case 1:        /* size */
-        _ILGetFileSize (pidl, psd->str.u.cStr, MAX_PATH);
-        break;
-    case 2:        /* type */
-        _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
-        break;
-    case 3:        /* date */
-        _ILGetFileDate (pidl, psd->str.u.cStr, MAX_PATH);
-        break;
-    case 4:        /* attributes */
-        _ILGetFileAttributes (pidl, psd->str.u.cStr, MAX_PATH);
-        break;
-    }
-
-    return hr;
+    return shellfolder_get_file_details( iface, pidl, desktop_header, iColumn, psd );
 }
 
 static HRESULT WINAPI ISF_Desktop_fnMapColumnToSCID(IShellFolder2 *iface, UINT column, SHCOLUMNID *scid)

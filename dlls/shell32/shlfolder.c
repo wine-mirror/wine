@@ -580,6 +580,30 @@ HRESULT shellfolder_map_column_to_scid(const shvheader *header, UINT column, SHC
     return S_OK;
 }
 
+HRESULT shellfolder_get_file_details(IShellFolder2 *iface, LPCITEMIDLIST pidl, const shvheader *header,
+                                     int column, SHELLDETAILS *psd)
+{
+    psd->str.uType = STRRET_CSTR;
+    switch (header[column].pid)
+    {
+    case PID_STG_NAME:
+        return IShellFolder2_GetDisplayNameOf( iface, pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str );
+    case PID_STG_SIZE:
+        _ILGetFileSize( pidl, psd->str.u.cStr, MAX_PATH );
+        break;
+    case PID_STG_STORAGETYPE:
+        _ILGetFileType( pidl, psd->str.u.cStr, MAX_PATH );
+        break;
+    case PID_STG_WRITETIME:
+        _ILGetFileDate( pidl, psd->str.u.cStr, MAX_PATH );
+        break;
+    case PID_STG_ATTRIBUTES:
+        _ILGetFileAttributes( pidl, psd->str.u.cStr, MAX_PATH );
+        break;
+    }
+    return S_OK;
+}
+
 /***********************************************************************
  *  SHCreateLinks
  *

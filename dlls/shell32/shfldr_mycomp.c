@@ -834,13 +834,6 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
 
     switch (iColumn)
     {
-        case 0:        /* name */
-            hr = IShellFolder2_GetDisplayNameOf (iface, pidl,
-                       SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
-            break;
-        case 1:        /* type */
-            _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
-            break;
         case 2:        /* total size */
             if (_ILIsDrive (pidl))
             {
@@ -857,6 +850,9 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 *iface,
                 StrFormatByteSizeA (ulBytes.u.LowPart, psd->str.u.cStr, MAX_PATH);
             }
             break;
+
+        default:
+            return shellfolder_get_file_details( iface, pidl, mycomputer_header, iColumn, psd );
     }
 
     return hr;

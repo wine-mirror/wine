@@ -1492,7 +1492,6 @@ static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
     struct passwd *pPasswd;
     struct group *pGroup;
     struct stat statItem;
-    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%p %d %p)\n", This, pidl, iColumn, psd);
     
@@ -1510,23 +1509,13 @@ static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
         if (stat(szPath, &statItem))
             return E_INVALIDARG;
     }
+    else return shellfolder_get_file_details( iface, pidl, unixfs_header, iColumn, psd );
 
     psd->str.u.cStr[0] = '\0';
     psd->str.uType = STRRET_CSTR;
 
-    switch (iColumn) {
-        case 0:
-            hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL|SHGDN_INFOLDER, &psd->str);
-            break;
-        case 1:
-            _ILGetFileSize(pidl, psd->str.u.cStr, MAX_PATH);
-            break;
-        case 2:
-            _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
-            break;
-        case 3:
-            _ILGetFileDate(pidl, psd->str.u.cStr, MAX_PATH);
-            break;
+    switch (iColumn)
+    {
         case 4:
             psd->str.u.cStr[0] = S_ISDIR(statItem.st_mode) ? 'd' : '-';
             psd->str.u.cStr[1] = (statItem.st_mode & S_IRUSR) ? 'r' : '-';
@@ -1549,8 +1538,7 @@ static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
             if (pGroup) strcpy(psd->str.u.cStr, pGroup->gr_name);
             break;
     }
-    
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellFolder2_MapColumnToSCID(IShellFolder2* iface, UINT column, SHCOLUMNID *scid)
