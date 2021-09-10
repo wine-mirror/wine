@@ -1083,7 +1083,7 @@ static int *kern_string( HDC hdc, const WCHAR *str, int len, int *kern_total )
     ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(*ret) );
     if (!ret) return NULL;
 
-    count = NtGdiGetKerningPairsW( hdc, 0, NULL );
+    count = NtGdiGetKerningPairs( hdc, 0, NULL );
     if (count)
     {
         kern = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*kern) );
@@ -1093,7 +1093,7 @@ static int *kern_string( HDC hdc, const WCHAR *str, int len, int *kern_total )
             return NULL;
         }
 
-        NtGdiGetKerningPairsW( hdc, count, kern );
+        NtGdiGetKerningPairs( hdc, count, kern );
     }
 
     for (i = 0; i < len - 1; i++)
@@ -1818,7 +1818,7 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metr
 DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
                                DWORD size, void *buffer, const MAT2 *mat2 )
 {
-    return NtGdiGetGlyphOutlineW( hdc, ch, format, metrics, size, buffer, mat2, FALSE );
+    return NtGdiGetGlyphOutline( hdc, ch, format, metrics, size, buffer, mat2, FALSE );
 }
 
 /*************************************************************************
@@ -1849,11 +1849,11 @@ DWORD WINAPI GetKerningPairsA( HDC hdc, DWORD count, KERNINGPAIR *kern_pairA )
         return 0;
     }
 
-    total_kern_pairs = NtGdiGetKerningPairsW( hdc, 0, NULL );
+    total_kern_pairs = NtGdiGetKerningPairs( hdc, 0, NULL );
     if (!total_kern_pairs) return 0;
 
     kern_pairW = HeapAlloc( GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pairW) );
-    NtGdiGetKerningPairsW( hdc, total_kern_pairs, kern_pairW );
+    NtGdiGetKerningPairs( hdc, total_kern_pairs, kern_pairW );
 
     for (i = 0; i < total_kern_pairs; i++)
     {
@@ -1922,7 +1922,7 @@ DWORD WINAPI GetFontLanguageInfo( HDC hdc )
     if (fontsig.fsCsb[0] & GCP_LIGATE_MASK)
         result |= GCP_LIGATE;
 
-    if (NtGdiGetKerningPairsW( hdc, 0, NULL ))
+    if (NtGdiGetKerningPairs( hdc, 0, NULL ))
         result |= GCP_USEKERNING;
 
     /* this might need a test for a HEBREW- or ARABIC_CHARSET as well */

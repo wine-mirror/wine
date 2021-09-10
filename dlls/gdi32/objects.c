@@ -546,7 +546,7 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
  */
 HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
-    return NtGdiCreateHatchBrush( style, color, FALSE );
+    return NtGdiCreateHatchBrushInternal( style, color, FALSE );
 }
 
 /***********************************************************************

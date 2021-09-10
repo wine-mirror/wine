@@ -309,7 +309,7 @@
 @ stdcall GetICMProfileW(long ptr ptr)
 @ stdcall GetKerningPairs(long long ptr) GetKerningPairsA
 @ stdcall GetKerningPairsA(long long ptr)
-@ stdcall GetKerningPairsW(long long ptr) NtGdiGetKerningPairsW
+@ stdcall GetKerningPairsW(long long ptr) NtGdiGetKerningPairs
 @ stdcall GetLayout(long)
 @ stdcall GetLogColorSpaceA(long ptr long)
 @ stdcall GetLogColorSpaceW(long ptr long)

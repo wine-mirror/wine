@@ -255,7 +255,7 @@ HDC      WINAPI NtGdiCreateCompatibleDC( HDC hdc );
 HBRUSH   WINAPI NtGdiCreateDIBBrush( const void *data, UINT coloruse, UINT size,
                                      BOOL is_8x8, BOOL pen, const void *client );
 HRGN     WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom );
-HBRUSH   WINAPI NtGdiCreateHatchBrush( INT style, COLORREF color, BOOL pen );
+HBRUSH   WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen );
 HBRUSH   WINAPI NtGdiCreatePatternBrushInternal( HBITMAP hbitmap, BOOL pen, BOOL is_8x8 );
 HPEN     WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush );
 HRGN     WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom );
@@ -264,6 +264,8 @@ HRGN     WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT botto
 HBRUSH   WINAPI NtGdiCreateSolidBrush( COLORREF color, HBRUSH brush );
 BOOL     WINAPI NtGdiDeleteClientObj( HGDIOBJ obj );
 BOOL     WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj );
+INT      WINAPI NtGdiDescribePixelFormat( HDC hdc, INT format, UINT size,
+                                          PIXELFORMATDESCRIPTOR *descr );
 LONG     WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                 DWORD func, BOOL inbound );
 INT      WINAPI NtGdiEndPage( HDC hdc );
@@ -288,6 +290,7 @@ BOOL     WINAPI NtGdiFrameRgn( HDC hdc, HRGN hrgn, HBRUSH brush,
 BOOL     WINAPI NtGdiFillPath( HDC hdc );
 BOOL     WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *result );
 INT      WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect );
+LONG     WINAPI NtGdiGetBitmapBits( HBITMAP bitmap, LONG count, void *bits );
 BOOL     WINAPI NtGdiGetBitmapDimension( HBITMAP bitmap, SIZE *size );
 UINT     WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags );
 BOOL     WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars,
@@ -312,10 +315,10 @@ BOOL     WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struc
 DWORD    WINAPI NtGdiGetFontUnicodeRanges( HDC hdc, GLYPHSET *lpgs );
 DWORD    WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
                                        WORD *indices, DWORD flags );
-DWORD    WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
-                                       DWORD size, void *buffer, const MAT2 *mat2,
-                                       BOOL ignore_rotation );
-DWORD    WINAPI NtGdiGetKerningPairsW( HDC hdc, DWORD count, KERNINGPAIR *kern_pair );
+DWORD    WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
+                                      DWORD size, void *buffer, const MAT2 *mat2,
+                                      BOOL ignore_rotation );
+DWORD    WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair );
 BOOL     WINAPI NtGdiGetMiterLimit( HDC hdc, FLOAT *limit );
 COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color );
 UINT     WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color );
@@ -417,6 +420,7 @@ INT      WINAPI NtGdiStretchDIBitsInternal( HDC hdc, INT x_dst, INT y_dst, INT w
                                             HANDLE xform );
 BOOL     WINAPI NtGdiStrokePath( HDC hdc );
 BOOL     WINAPI NtGdiStrokeAndFillPath( HDC hdc );
+BOOL     WINAPI NtGdiSwapBuffers( HDC hdc );
 BOOL     WINAPI NtGdiTransparentBlt( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
                                      HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                      UINT color );

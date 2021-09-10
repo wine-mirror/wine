@@ -5447,11 +5447,11 @@ BOOL WINAPI NtGdiGetCharABCWidthsW( HDC hdc, UINT first, UINT last, WCHAR *chars
 
 
 /***********************************************************************
- *           NtGdiGetGlyphOutlineW    (win32u.@)
+ *           NtGdiGetGlyphOutline    (win32u.@)
  */
-DWORD WINAPI NtGdiGetGlyphOutlineW( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
-                                    DWORD size, void *buffer, const MAT2 *mat2,
-                                    BOOL ignore_rotation )
+DWORD WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *metrics,
+                                   DWORD size, void *buffer, const MAT2 *mat2,
+                                   BOOL ignore_rotation )
 {
     DC *dc;
     DWORD ret;
@@ -5732,9 +5732,9 @@ done:
 }
 
 /*************************************************************************
- *             NtGdiGetKerningPairsW   (win32u.@)
+ *             NtGdiGetKerningPairs   (win32u.@)
  */
-DWORD WINAPI NtGdiGetKerningPairsW( HDC hdc, DWORD count, KERNINGPAIR *kern_pair )
+DWORD WINAPI NtGdiGetKerningPairs( HDC hdc, DWORD count, KERNINGPAIR *kern_pair )
 {
     DC *dc;
     DWORD ret;
