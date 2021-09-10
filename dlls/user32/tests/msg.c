@@ -137,7 +137,8 @@ typedef enum {
     optional=0x80,
     hook=0x100,
     winevent_hook=0x200,
-    kbd_hook=0x400
+    kbd_hook=0x400,
+    winevent_hook_todo=0x800
 } msg_flags_t;
 
 struct message {
@@ -2690,12 +2691,26 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
 	    expected++;
 	    actual++;
 	}
-	/* silently drop hook messages if there is no support for them */
+	/*
+         * silently drop hook messages if there is no support for them, mark
+         * winevent todo's.
+         */
 	else if ((expected->flags & optional) ||
                  ((expected->flags & hook) && !hCBT_hook) ||
                  ((expected->flags & winevent_hook) && !hEvent_hook) ||
-                 ((expected->flags & kbd_hook) && !hKBD_hook))
+                 ((expected->flags & kbd_hook) && !hKBD_hook) ||
+                 ((expected->flags & winevent_hook_todo) && !strcmp(winetest_platform, "wine")))
+        {
+            if ((expected->flags & winevent_hook_todo) && hEvent_hook)
+            {
+                todo_wine {
+                    ok_( file, line) (FALSE,
+                        "%s: %u: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+                        context, count, expected->message, actual->message);
+                }
+            }
 	    expected++;
+        }
 	else if (todo)
 	{
             failcount++;
@@ -2717,11 +2732,21 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
         count++;
     }
 
-    /* skip all optional trailing messages */
+    /* skip all optional trailing messages, check for winevent todo's. */
     while (expected->message && ((expected->flags & optional) ||
                                  ((expected->flags & hook) && !hCBT_hook) ||
-                                 ((expected->flags & winevent_hook) && !hEvent_hook)))
+                                 ((expected->flags & winevent_hook) && !hEvent_hook) ||
+                                 ((expected->flags & winevent_hook_todo) && !strcmp(winetest_platform, "wine"))))
+    {
+        if ((expected->flags & winevent_hook_todo) && hEvent_hook)
+        {
+            todo_wine {
+                ok_( file, line) (FALSE, "%s: %u: the msg sequence is not complete: expected 0x%04x - actual 0x%04x\n",
+                                context, count, expected->message, actual->message);
+            }
+        }
 	expected++;
+    }
 
     if (todo)
     {
@@ -16671,12 +16696,12 @@ static void test_WaitForInputIdle( char *argv0 )
 
 static const struct message WmSetParentSeq_1[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
-    { EVENT_OBJECT_PARENTCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_PARENTCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE },
     { WM_CHILDACTIVATE, sent },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOREDRAW|SWP_NOCLIENTSIZE },
     { WM_MOVE, sent|defwinproc|wparam, 0 },
-    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { 0 }
 };
@@ -16684,14 +16709,15 @@ static const struct message WmSetParentSeq_1[] = {
 static const struct message WmSetParentSeq_2[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE },
-    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { HCBT_SETFOCUS, hook|optional },
     { WM_NCACTIVATE, sent|wparam|optional, 0 },
     { WM_ACTIVATE, sent|wparam|optional, 0 },
     { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
-    { EVENT_OBJECT_PARENTCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_PARENTCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE },
     { HCBT_ACTIVATE, hook|optional },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|optional, 0, 0 },
@@ -16703,10 +16729,10 @@ static const struct message WmSetParentSeq_2[] = {
     { WM_SETFOCUS, sent|optional|defwinproc },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOREDRAW|SWP_NOSIZE|SWP_NOCLIENTSIZE },
     { WM_MOVE, sent|defwinproc|wparam, 0 },
-    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
@@ -17270,6 +17296,7 @@ end:
 static const struct message WmSetFocus_1[] = {
     { HCBT_SETFOCUS, hook }, /* child */
     { HCBT_ACTIVATE, hook }, /* parent */
+    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|parent|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|parent, 0, SWP_NOSIZE|SWP_NOMOVE },
     { WM_ACTIVATEAPP, sent|wparam|parent, 1 },
@@ -17278,14 +17305,17 @@ static const struct message WmSetFocus_1[] = {
     { WM_GETTEXT, sent|defwinproc|parent|optional },
     { WM_ACTIVATE, sent|wparam|parent, 1 },
     { HCBT_SETFOCUS, hook }, /* parent */
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|defwinproc|parent },
     { WM_KILLFOCUS, sent|parent },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent },
     { 0 }
 };
 static const struct message WmSetFocus_2[] = {
     { HCBT_SETFOCUS, hook }, /* parent */
     { WM_KILLFOCUS, sent },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|parent },
     { 0 }
 };
@@ -18283,6 +18313,11 @@ START_TEST(msg)
     if (!hCBT_hook) win_skip( "cannot set global hook, will skip hook tests\n" );
 
     test_winevents();
+    test_SendMessage_other_thread(1);
+    test_SendMessage_other_thread(2);
+    test_InSendMessage();
+    test_SetFocus();
+    test_SetParent();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18293,11 +18328,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_SendMessage_other_thread(1);
-    test_SendMessage_other_thread(2);
-    test_InSendMessage();
-    test_SetFocus();
-    test_SetParent();
     test_PostMessage();
     test_broadcast();
     test_ShowWindow();
