@@ -1139,6 +1139,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
 {
     const struct wined3d_format *format = wined3d_get_format(device->adapter, WINED3DFMT_R8_UNORM, desc->bind_flags);
     struct wined3d_resource *resource = &buffer->resource;
+    unsigned int access;
     HRESULT hr;
 
     TRACE("buffer %p, device %p, desc byte_width %u, usage %s, bind_flags %s, "
@@ -1164,8 +1165,12 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
         return E_INVALIDARG;
     }
 
+    access = desc->access;
+    if (desc->bind_flags & WINED3D_BIND_CONSTANT_BUFFER && wined3d_settings.cb_access_map_w)
+        access |= WINED3D_RESOURCE_ACCESS_MAP_W;
+
     if (FAILED(hr = resource_init(resource, device, WINED3D_RTYPE_BUFFER, format,
-            WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->bind_flags, desc->access,
+            WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->bind_flags, access,
             desc->byte_width, 1, 1, desc->byte_width, parent, parent_ops, &buffer_resource_ops)))
     {
         WARN("Failed to initialize resource, hr %#x.\n", hr);
@@ -1179,7 +1184,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
             buffer, buffer->resource.size, buffer->resource.usage, buffer->resource.heap_memory);
 
     if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING
-            || wined3d_resource_access_is_managed(desc->access))
+            || wined3d_resource_access_is_managed(access))
     {
         /* SWvp and managed buffers always return the same pointer in buffer
          * maps and retain data in DISCARD maps. Keep a system memory copy of

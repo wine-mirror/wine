@@ -482,6 +482,7 @@ struct wined3d_settings
     unsigned int max_sm_cs;
     enum wined3d_renderer renderer;
     enum wined3d_shader_backend shader_backend;
+    BOOL cb_access_map_w;
 };
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;

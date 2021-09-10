@@ -394,6 +394,11 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.renderer = WINED3D_RENDERER_NO3D;
             }
         }
+        if (!get_config_key_dword(hkey, appkey, "cb_access_map_w", &tmpvalue) && tmpvalue)
+        {
+            TRACE("Forcing all constant buffers to be write-mappable.\n");
+            wined3d_settings.cb_access_map_w = TRUE;
+        }
     }
 
     if (appkey) RegCloseKey( appkey );
