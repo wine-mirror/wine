@@ -2358,7 +2358,7 @@ static void wined3d_fixup_alpha(const struct wined3d_format *format, const uint8
     unsigned int x, y;
 
     byte_count = format->byte_count;
-    alpha_mask = ((1u << format->alpha_size) - 1) << format->alpha_offset;
+    alpha_mask = wined3d_mask_from_size(format->alpha_size) << format->alpha_offset;
 
     switch (byte_count)
     {
