@@ -278,12 +278,8 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportBufferLen--;
         }
 
-        if (!poll_interval)
-            call_minidriver( IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
-                             packet->reportBuffer, packet->reportBufferLen, &io );
-        else
-            call_minidriver( IOCTL_HID_GET_INPUT_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
-                             packet, sizeof(*packet), &io );
+        call_minidriver( IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
+                         packet->reportBuffer, packet->reportBufferLen, &io );
 
         if (io.Status == STATUS_SUCCESS)
         {
