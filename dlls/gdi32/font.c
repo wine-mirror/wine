@@ -5020,7 +5020,6 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
     SIZE sz;
     RECT rc;
     POINT *deltas = NULL, width = {0, 0};
-    DWORD type;
     DC * dc = get_dc_ptr( hdc );
     PHYSDEV physdev;
     INT breakRem;
@@ -5041,13 +5040,6 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
 
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pExtTextOut );
-    type = GetObjectType(hdc);
-    if(type == OBJ_METADC || type == OBJ_ENHMETADC)
-    {
-        ret = physdev->funcs->pExtTextOut( physdev, x, y, flags, lprect, str, count, lpDx );
-        release_dc_ptr( dc );
-        return ret;
-    }
 
     if (flags & ETO_RTLREADING) align |= TA_RTLREADING;
     if (layout & LAYOUT_RTL)
