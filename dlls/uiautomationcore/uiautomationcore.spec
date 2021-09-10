@@ -56,7 +56,7 @@
 @ stub UiaAddEvent
 @ stdcall UiaClientsAreListening()
 #@ stub UiaDisconnectAllProviders
-#@ stub UiaDisconnectProvider
+@ stdcall UiaDisconnectProvider(ptr)
 @ stub UiaEventAddWindow
 @ stub UiaEventRemoveWindow
 @ stub UiaFind

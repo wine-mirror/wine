@@ -89,3 +89,9 @@ HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **pr
     FIXME("(%p, %p): stub\n", hwnd, provider);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *provider)
+{
+    FIXME("(%p): stub\n", provider);
+    return E_NOTIMPL;
+}
