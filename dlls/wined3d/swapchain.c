@@ -532,7 +532,7 @@ static void wined3d_swapchain_gl_rotate(struct wined3d_swapchain *swapchain, str
     unsigned int i;
     static const DWORD supported_locations = WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_RB_MULTISAMPLE;
 
-    if (swapchain->state.desc.backbuffer_count < 2 || !swapchain->render_to_fbo)
+    if (swapchain->state.desc.backbuffer_count < 2 || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
         return;
 
     texture_prev = wined3d_texture_gl(swapchain->back_buffers[0]);
@@ -572,12 +572,10 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, DWORD flags)
 {
     struct wined3d_swapchain_gl *swapchain_gl = wined3d_swapchain_gl(swapchain);
-    const struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
-    BOOL render_to_fbo;
 
     context = context_acquire(swapchain->device, swapchain->front_buffer, 0);
     context_gl = wined3d_context_gl(context);
@@ -588,51 +586,30 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         return;
     }
 
-    gl_info = context_gl->gl_info;
-
-    swapchain_gl_set_swap_interval(swapchain, context_gl, swap_interval);
-
     TRACE("Presenting DC %p.\n", context_gl->dc);
 
     if (context_gl->dc == swapchain_gl->backup_dc)
-        swapchain_blit_gdi(swapchain, context, src_rect, dst_rect);
-
-    if (!(render_to_fbo = swapchain->render_to_fbo)
-            && (src_rect->left || src_rect->top
-            || src_rect->right != desc->backbuffer_width
-            || src_rect->bottom != desc->backbuffer_height
-            || dst_rect->left || dst_rect->top
-            || dst_rect->right != desc->backbuffer_width
-            || dst_rect->bottom != desc->backbuffer_height))
-        render_to_fbo = TRUE;
-
-    /* Rendering to a window of different size, presenting partial rectangles,
-     * or rendering to a different window needs help from FBO_blit or a textured
-     * draw. Render the swapchain to a FBO in the future.
-     *
-     * Note that FBO_blit from the backbuffer to the frontbuffer cannot solve
-     * all these issues - this fails if the window is smaller than the backbuffer.
-     */
-    if (!swapchain->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        wined3d_texture_load_location(back_buffer, 0, context, WINED3D_LOCATION_TEXTURE_RGB);
-        wined3d_texture_invalidate_location(back_buffer, 0, WINED3D_LOCATION_DRAWABLE);
-        swapchain->render_to_fbo = TRUE;
-        swapchain_update_draw_bindings(swapchain);
+        swapchain_blit_gdi(swapchain, context, src_rect, dst_rect);
     }
     else
     {
+        gl_info = context_gl->gl_info;
+
+        swapchain_gl_set_swap_interval(swapchain, context_gl, swap_interval);
+
         wined3d_texture_load_location(back_buffer, 0, context, back_buffer->resource.draw_binding);
+
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+            swapchain_blit(swapchain, context, src_rect, dst_rect);
+
+        if (swapchain_gl->context_count > 1)
+            gl_info->gl_ops.gl.p_glFinish();
+
+        /* call wglSwapBuffers through the gl table to avoid confusing the Steam overlay */
+        gl_info->gl_ops.wgl.p_wglSwapBuffers(context_gl->dc);
     }
 
-    if (swapchain->render_to_fbo)
-        swapchain_blit(swapchain, context, src_rect, dst_rect);
-
-    if (swapchain_gl->context_count > 1)
-        gl_info->gl_ops.gl.p_glFinish();
-
-    /* call wglSwapBuffers through the gl table to avoid confusing the Steam overlay */
-    gl_info->gl_ops.wgl.p_wglSwapBuffers(context_gl->dc);
     wined3d_context_gl_submit_command_fence(context_gl);
 
     wined3d_swapchain_gl_rotate(swapchain, context);
@@ -1350,22 +1327,6 @@ static const struct wined3d_swapchain_ops swapchain_no3d_ops =
     swapchain_gdi_frontbuffer_updated,
 };
 
-static void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
-{
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return;
-
-    if (!swapchain->state.desc.backbuffer_count)
-    {
-        TRACE("Single buffered rendering.\n");
-        swapchain->render_to_fbo = FALSE;
-        return;
-    }
-
-    TRACE("Rendering to FBO.\n");
-    swapchain->render_to_fbo = TRUE;
-}
-
 static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_swapchain *swapchain,
         enum wined3d_format_id format_id, enum wined3d_multisample_type *type, DWORD *quality)
 {
@@ -1528,7 +1489,6 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     swapchain->state.desc = *desc;
     wined3d_swapchain_apply_sample_count_override(swapchain, swapchain->state.desc.backbuffer_format,
             &swapchain->state.desc.multisample_type, &swapchain->state.desc.multisample_quality);
-    swapchain_update_render_to_fbo(swapchain);
 
     TRACE("Creating front buffer.\n");
 
@@ -2073,7 +2033,6 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
         }
     }
 
-    swapchain_update_render_to_fbo(swapchain);
     swapchain_update_draw_bindings(swapchain);
 
     return WINED3D_OK;

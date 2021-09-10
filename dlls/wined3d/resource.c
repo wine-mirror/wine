@@ -435,7 +435,7 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
 
     /* If the swapchain is rendered to an FBO, the backbuffer is
      * offscreen, otherwise onscreen */
-    return swapchain->render_to_fbo;
+    return wined3d_settings.offscreen_rendering_mode == ORM_FBO;
 }
 
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
