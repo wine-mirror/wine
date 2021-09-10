@@ -50,6 +50,75 @@ __ASM_STDCALL_FUNC(wrap_fastcall_func1, 8,
 #define call_fastcall_func1(func,a) func(a)
 #endif
 
+#include "psh_hid_macros.h"
+
+const BYTE xinput_report_desc[] =
+{
+    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+    USAGE(1, HID_USAGE_GENERIC_GAMEPAD),
+    COLLECTION(1, Application),
+        USAGE(1, 0),
+        COLLECTION(1, Physical),
+            USAGE(1, HID_USAGE_GENERIC_X),
+            USAGE(1, HID_USAGE_GENERIC_Y),
+            LOGICAL_MAXIMUM(2, 0xffff),
+            PHYSICAL_MAXIMUM(2, 0xffff),
+            REPORT_SIZE(1, 16),
+            REPORT_COUNT(1, 2),
+            INPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+
+        COLLECTION(1, Physical),
+            USAGE(1, HID_USAGE_GENERIC_RX),
+            USAGE(1, HID_USAGE_GENERIC_RY),
+            REPORT_COUNT(1, 2),
+            INPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+
+        COLLECTION(1, Physical),
+            USAGE(1, HID_USAGE_GENERIC_Z),
+            REPORT_COUNT(1, 1),
+            INPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+
+        USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+        USAGE_MINIMUM(1, 1),
+        USAGE_MAXIMUM(1, 10),
+        LOGICAL_MAXIMUM(1, 1),
+        PHYSICAL_MAXIMUM(1, 1),
+        REPORT_COUNT(1, 10),
+        REPORT_SIZE(1, 1),
+        INPUT(1, Data|Var|Abs),
+
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+        LOGICAL_MINIMUM(1, 1),
+        LOGICAL_MAXIMUM(1, 8),
+        PHYSICAL_MAXIMUM(2, 0x103b),
+        REPORT_SIZE(1, 4),
+        REPORT_COUNT(4, 1),
+        UNIT(1, 0x0e /* none */),
+        INPUT(1, Data|Var|Abs|Null),
+
+        REPORT_COUNT(1, 18),
+        REPORT_SIZE(1, 1),
+        INPUT(1, Cnst|Var|Abs),
+    END_COLLECTION,
+};
+
+#include "pop_hid_macros.h"
+
+struct xinput_state
+{
+    WORD lx_axis;
+    WORD ly_axis;
+    WORD rx_axis;
+    WORD ry_axis;
+    WORD trigger;
+    WORD buttons;
+    WORD padding;
+};
+
 struct device
 {
     BOOL is_fdo;
@@ -96,6 +165,7 @@ struct func_device
     char *report_buf;
     IRP *pending_read;
     BOOL pending_is_gamepad;
+    struct xinput_state xinput_state;
 };
 
 static inline struct func_device *fdo_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -103,6 +173,73 @@ static inline struct func_device *fdo_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
     struct device *impl = impl_from_DEVICE_OBJECT(device);
     if (impl->is_fdo) return CONTAINING_RECORD(impl, struct func_device, base);
     else return CONTAINING_RECORD(impl, struct phys_device, base)->fdo;
+}
+
+static LONG sign_extend(ULONG value, const HIDP_VALUE_CAPS *caps)
+{
+    UINT sign = 1 << (caps->BitSize - 1);
+    if (sign <= 1 || caps->LogicalMin >= 0) return value;
+    return value - ((value & sign) << 1);
+}
+
+static LONG scale_value(ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG max)
+{
+    LONG tmp = sign_extend(value, caps);
+    if (caps->LogicalMin > caps->LogicalMax) return 0;
+    if (caps->LogicalMin > tmp || caps->LogicalMax < tmp) return 0;
+    return min + MulDiv(tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin);
+}
+
+static void translate_report_to_xinput_state(struct func_device *fdo)
+{
+    ULONG lx = 0, ly = 0, rx = 0, ry = 0, lt = 0, rt = 0, hat = 0;
+    PHIDP_PREPARSED_DATA preparsed;
+    USAGE usages[10];
+    NTSTATUS status;
+    ULONG i, count;
+
+    preparsed = fdo->device_desc.CollectionDesc->PreparsedData;
+
+    count = ARRAY_SIZE(usages);
+    status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages,
+                            &count, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
+                                &hat, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue hat returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
+                                &lx, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue x returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y,
+                                &ly, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue y returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
+                                &lt, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue z returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX,
+                                &rx, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue rx returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
+                                &ry, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue ry returned %#x\n", status);
+    status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ,
+                                &rt, preparsed, fdo->report_buf, fdo->report_len);
+    if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue rz returned %#x\n", status);
+
+    if (hat < 1 || hat > 8) fdo->xinput_state.buttons = 0;
+    else fdo->xinput_state.buttons = hat << 10;
+    for (i = 0; i < count; i++)
+    {
+        if (usages[i] < 1 || usages[i] > 10) continue;
+        fdo->xinput_state.buttons |= (1 << (usages[i] - 1));
+    }
+    fdo->xinput_state.lx_axis = scale_value(lx, &fdo->lx_caps, 0, 65535);
+    fdo->xinput_state.ly_axis = scale_value(ly, &fdo->ly_caps, 0, 65535);
+    fdo->xinput_state.rx_axis = scale_value(rx, &fdo->rx_caps, 0, 65535);
+    fdo->xinput_state.ry_axis = scale_value(ry, &fdo->ry_caps, 0, 65535);
+    rt = scale_value(rt, &fdo->rt_caps, 0, 255);
+    lt = scale_value(lt, &fdo->lt_caps, 0, 255);
+    fdo->xinput_state.trigger = 0x8000 + (lt - rt) * 128;
 }
 
 static NTSTATUS WINAPI read_completion(DEVICE_OBJECT *device, IRP *xinput_irp, void *context)
@@ -121,7 +258,9 @@ static NTSTATUS WINAPI read_completion(DEVICE_OBJECT *device, IRP *xinput_irp, v
         RtlEnterCriticalSection(&fdo->cs);
         offset = fdo->report_buf[0] ? 0 : 1;
         memcpy(fdo->report_buf + offset, read_buf, read_len);
-        memcpy(gamepad_irp->UserBuffer, read_buf, read_len);
+        translate_report_to_xinput_state(fdo);
+        memcpy(gamepad_irp->UserBuffer, &fdo->xinput_state, sizeof(fdo->xinput_state));
+        gamepad_irp->IoStatus.Information = sizeof(fdo->xinput_state);
         RtlLeaveCriticalSection(&fdo->cs);
     }
 
@@ -178,6 +317,7 @@ static NTSTATUS try_complete_pending_read(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS WINAPI gamepad_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    ULONG output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     struct func_device *fdo = fdo_from_DEVICE_OBJECT(device);
 
@@ -185,19 +325,53 @@ static NTSTATUS WINAPI gamepad_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     switch (code)
     {
-    case IOCTL_HID_GET_INPUT_REPORT:
+    case IOCTL_HID_GET_DEVICE_DESCRIPTOR:
     {
-        HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
+        HID_DESCRIPTOR *descriptor = (HID_DESCRIPTOR *)irp->UserBuffer;
 
-        RtlEnterCriticalSection(&fdo->cs);
-        memcpy(packet->reportBuffer, fdo->report_buf, fdo->report_len);
-        irp->IoStatus.Information = fdo->report_len;
-        RtlLeaveCriticalSection(&fdo->cs);
+        irp->IoStatus.Information = sizeof(*descriptor);
+        if (output_len < sizeof(*descriptor))
+        {
+            irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+            IoCompleteRequest(irp, IO_NO_INCREMENT);
+            return STATUS_BUFFER_TOO_SMALL;
+        }
+
+        memset(descriptor, 0, sizeof(*descriptor));
+        descriptor->bLength = sizeof(*descriptor);
+        descriptor->bDescriptorType = HID_HID_DESCRIPTOR_TYPE;
+        descriptor->bcdHID = HID_REVISION;
+        descriptor->bCountry = 0;
+        descriptor->bNumDescriptors = 1;
+        descriptor->DescriptorList[0].bReportType = HID_REPORT_DESCRIPTOR_TYPE;
+        descriptor->DescriptorList[0].wReportLength = sizeof(xinput_report_desc);
 
         irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_SUCCESS;
     }
+
+    case IOCTL_HID_GET_REPORT_DESCRIPTOR:
+        irp->IoStatus.Information = sizeof(xinput_report_desc);
+        if (output_len < sizeof(xinput_report_desc))
+        {
+            irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+            IoCompleteRequest(irp, IO_NO_INCREMENT);
+            return STATUS_BUFFER_TOO_SMALL;
+        }
+
+        memcpy(irp->UserBuffer, xinput_report_desc, sizeof(xinput_report_desc));
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_SUCCESS;
+
+    case IOCTL_HID_GET_INPUT_REPORT:
+    case IOCTL_HID_SET_OUTPUT_REPORT:
+    case IOCTL_HID_GET_FEATURE:
+    case IOCTL_HID_SET_FEATURE:
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_INVALID_PARAMETER;
 
     default:
         IoSkipCurrentIrpStackLocation(irp);

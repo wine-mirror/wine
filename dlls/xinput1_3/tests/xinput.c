@@ -455,21 +455,15 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
 
     check_member(*hid_caps, expect_hid_caps, "%04x", Usage);
     check_member(*hid_caps, expect_hid_caps, "%04x", UsagePage);
-    todo_wine
     check_member(*hid_caps, expect_hid_caps, "%d", InputReportByteLength);
-    todo_wine_if(xi_caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     check_member(*hid_caps, expect_hid_caps, "%d", OutputReportByteLength);
     check_member(*hid_caps, expect_hid_caps, "%d", FeatureReportByteLength);
     check_member(*hid_caps, expect_hid_caps, "%d", NumberLinkCollectionNodes);
     check_member(*hid_caps, expect_hid_caps, "%d", NumberInputButtonCaps);
-    todo_wine
     check_member(*hid_caps, expect_hid_caps, "%d", NumberInputValueCaps);
-    todo_wine
     check_member(*hid_caps, expect_hid_caps, "%d", NumberInputDataIndices);
     check_member(*hid_caps, expect_hid_caps, "%d", NumberOutputButtonCaps);
-    todo_wine_if(xi_caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     check_member(*hid_caps, expect_hid_caps, "%d", NumberOutputValueCaps);
-    todo_wine_if(xi_caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     check_member(*hid_caps, expect_hid_caps, "%d", NumberOutputDataIndices);
     check_member(*hid_caps, expect_hid_caps, "%d", NumberFeatureButtonCaps);
     check_member(*hid_caps, expect_hid_caps, "%d", NumberFeatureValueCaps);
@@ -522,11 +516,8 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
         else if (button_caps[i].IsRange && expect_button_caps[i].IsRange)
         {
             check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMin);
-            todo_wine
             check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMax);
-            todo_wine
             check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMin);
-            todo_wine
             check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMax);
         }
 
@@ -551,7 +542,6 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     count = hid_caps->NumberInputValueCaps;
     status = HidP_GetValueCaps(HidP_Input, value_caps, &count, preparsed);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetValueCaps returned %#x\n", status);
-    todo_wine
     ok(count == ARRAY_SIZE(expect_value_caps), "got %d value caps\n", count);
 
     for (i = 0; i < min(count, ARRAY_SIZE(expect_value_caps)); ++i)
@@ -560,11 +550,8 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
         check_member(value_caps[i], expect_value_caps[i], "%04x", UsagePage);
         check_member(value_caps[i], expect_value_caps[i], "%d", ReportID);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsAlias);
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", BitField);
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkCollection);
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkUsage);
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkUsagePage);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsRange);
@@ -572,27 +559,19 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
         check_member(value_caps[i], expect_value_caps[i], "%d", IsDesignatorRange);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsAbsolute);
 
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", HasNull);
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", BitSize);
         check_member(value_caps[i], expect_value_caps[i], "%d", ReportCount);
         check_member(value_caps[i], expect_value_caps[i], "%d", UnitsExp);
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", Units);
-        todo_wine_if(i == 5)
         check_member(value_caps[i], expect_value_caps[i], "%d", LogicalMin);
-        todo_wine
         check_member(value_caps[i], expect_value_caps[i], "%d", LogicalMax);
         check_member(value_caps[i], expect_value_caps[i], "%d", PhysicalMin);
-        todo_wine
         check_member(value_caps[i], expect_value_caps[i], "%d", PhysicalMax);
 
         if (!value_caps[i].IsRange && !expect_value_caps[i].IsRange)
         {
-            todo_wine_if(i >= 4)
             check_member(value_caps[i], expect_value_caps[i], "%04x", NotRange.Usage);
-            todo_wine_if(i == 5)
             check_member(value_caps[i], expect_value_caps[i], "%d", NotRange.DataIndex);
         }
         else if (value_caps[i].IsRange && expect_value_caps[i].IsRange)
@@ -627,9 +606,7 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
     SetLastError(0xdeadbeef);
     memset(buffer, 0, sizeof(buffer));
     ret = HidD_GetInputReport(device, buffer, hid_caps->InputReportByteLength);
-    todo_wine
     ok(!ret, "HidD_GetInputReport succeeded\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "HidD_GetInputReport returned error %u\n", GetLastError());
 
     if (!winetest_interactive) skip("skipping interactive tests\n");
@@ -737,12 +714,10 @@ static void check_hid_caps(DWORD index, HANDLE device,  PHIDP_PREPARSED_DATA pre
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, preparsed, buffer, hid_caps->InputReportByteLength);
             ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-            todo_wine
             ok(value == 32768 + (state.Gamepad.bLeftTrigger - state.Gamepad.bRightTrigger) * 128, "got Z value %d (RT %d, LT %d)\n",
                value, state.Gamepad.bRightTrigger, state.Gamepad.bLeftTrigger);
             value = 0;
             status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, preparsed, buffer, hid_caps->InputReportByteLength);
-            todo_wine
             ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetUsageValue returned %#x\n", status);
         } while (ret && (state.Gamepad.bRightTrigger != 255 || state.Gamepad.bLeftTrigger != 255));
     }
