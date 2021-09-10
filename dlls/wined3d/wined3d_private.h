@@ -2847,6 +2847,7 @@ struct wined3d_pixel_format
     BOOL doubleBuffer;
     int auxBuffers;
     int numSamples;
+    int swap_method;
 };
 
 enum wined3d_pci_vendor

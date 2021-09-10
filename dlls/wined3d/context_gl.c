@@ -1663,7 +1663,7 @@ static void wined3d_context_gl_enter(struct wined3d_context_gl *context_gl)
 /* This function takes care of wined3d pixel format selection. */
 static int context_choose_pixel_format(const struct wined3d_device *device, HDC hdc,
         const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
-        BOOL auxBuffers)
+        bool aux_buffers, bool swap_effect_copy)
 {
     unsigned int cfg_count = wined3d_adapter_gl(device->adapter)->pixel_format_count;
     unsigned int current_value;
@@ -1671,9 +1671,9 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
     int iPixelFormat = 0;
     unsigned int i;
 
-    TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x.\n",
+    TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x, swap_effect_copy %#x.\n",
             device, hdc, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
-            auxBuffers);
+            aux_buffers, swap_effect_copy);
 
     current_value = 0;
     for (i = 0; i < cfg_count; ++i)
@@ -1705,21 +1705,23 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
             continue;
 
         value = 1;
+        if (swap_effect_copy && cfg->swap_method == WGL_SWAP_COPY_ARB)
+            value += 1;
         /* We try to locate a format which matches our requirements exactly. In case of
          * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
         if (cfg->depthSize == ds_format->depth_size)
-            value += 1;
-        if (cfg->stencilSize == ds_format->stencil_size)
             value += 2;
-        if (cfg->alphaSize == color_format->alpha_size)
+        if (cfg->stencilSize == ds_format->stencil_size)
             value += 4;
-        /* We like to have aux buffers in backbuffer mode */
-        if (auxBuffers && cfg->auxBuffers)
+        if (cfg->alphaSize == color_format->alpha_size)
             value += 8;
+        /* We like to have aux buffers in backbuffer mode */
+        if (aux_buffers && cfg->auxBuffers)
+            value += 16;
         if (cfg->redSize == color_format->red_size
                 && cfg->greenSize == color_format->green_size
                 && cfg->blueSize == color_format->blue_size)
-            value += 16;
+            value += 32;
 
         if (value > current_value)
         {
@@ -1898,6 +1900,7 @@ HGLRC context_create_wgl_attribs(const struct wined3d_gl_info *gl_info, HDC hdc,
 static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context_gl,
         struct wined3d_swapchain_gl *swapchain_gl)
 {
+    enum wined3d_swap_effect swap_effect = swapchain_gl->s.state.desc.swap_effect;
     const struct wined3d_format *colour_format, *ds_format;
     struct wined3d_context *context = &context_gl->c;
     const struct wined3d_gl_info *gl_info;
@@ -1905,6 +1908,7 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
     struct wined3d_adapter *adapter;
     unsigned int target_bind_flags;
     struct wined3d_device *device;
+    bool swap_effect_copy;
     HGLRC ctx, share_ctx;
     unsigned int i;
 
@@ -1914,6 +1918,8 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
 
     target = &context->current_rt.texture->resource;
     target_bind_flags = target->bind_flags;
+
+    swap_effect_copy = swap_effect == WINED3D_SWAP_EFFECT_COPY || swap_effect == WINED3D_SWAP_EFFECT_COPY_VSYNC;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
@@ -1951,7 +1957,7 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
             {
                 ds_format = wined3d_get_format(adapter, ds_formats[i], WINED3D_BIND_DEPTH_STENCIL);
                 if ((context_gl->pixel_format = context_choose_pixel_format(device,
-                        context_gl->dc, colour_format, ds_format, TRUE)))
+                        context_gl->dc, colour_format, ds_format, true, swap_effect_copy)))
                 {
                     swapchain_gl->s.ds_format = ds_format;
                     break;
@@ -1964,7 +1970,7 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
         else
         {
             context_gl->pixel_format = context_choose_pixel_format(device,
-                    context_gl->dc, colour_format, swapchain_gl->s.ds_format, TRUE);
+                    context_gl->dc, colour_format, swapchain_gl->s.ds_format, true, swap_effect_copy);
         }
     }
     else
@@ -1980,7 +1986,7 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
         colour_format = wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
         ds_format = wined3d_get_format(adapter, WINED3DFMT_UNKNOWN, WINED3D_BIND_DEPTH_STENCIL);
         context_gl->pixel_format = context_choose_pixel_format(device,
-                context_gl->dc, colour_format, ds_format, FALSE);
+                context_gl->dc, colour_format, ds_format, false, swap_effect_copy);
     }
 
     if (!context_gl->pixel_format)

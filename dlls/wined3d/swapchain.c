@@ -594,6 +594,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 {
     struct wined3d_swapchain_gl *swapchain_gl = wined3d_swapchain_gl(swapchain);
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
+    const struct wined3d_pixel_format *pixel_format;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
@@ -609,7 +610,9 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
     TRACE("Presenting DC %p.\n", context_gl->dc);
 
-    if (context_gl->dc == swapchain_gl->backup_dc || swapchain_present_is_partial_copy(swapchain, dst_rect))
+    pixel_format = &wined3d_adapter_gl(swapchain->device->adapter)->pixel_formats[context_gl->pixel_format];
+    if (context_gl->dc == swapchain_gl->backup_dc || (pixel_format->swap_method != WGL_SWAP_COPY_ARB
+            && swapchain_present_is_partial_copy(swapchain, dst_rect)))
     {
         swapchain_blit_gdi(swapchain, context, src_rect, dst_rect);
     }
