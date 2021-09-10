@@ -1839,6 +1839,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         ret = GetOverlappedResult( async_file, &overlapped, &value, FALSE );
         ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
         ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected 3\n", value );
+        todo_wine
         ok( memcmp( report, buffer + caps.InputReportByteLength, caps.InputReportByteLength ),
             "expected different report\n" );
         ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );

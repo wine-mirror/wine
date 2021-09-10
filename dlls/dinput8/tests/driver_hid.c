@@ -295,7 +295,6 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
         memset( packet->reportBuffer, 0xa5, 3 );
         if (report_id) ((char *)packet->reportBuffer)[0] = report_id;
-        ((char *)packet->reportBuffer)[1] = seq++;
         irp->IoStatus.Information = 3;
         ret = STATUS_SUCCESS;
         break;
