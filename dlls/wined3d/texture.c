@@ -859,6 +859,12 @@ static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture
     wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
 }
 
+static void wined3d_texture_unload_location(struct wined3d_texture *texture,
+        struct wined3d_context *context, unsigned int location)
+{
+    texture->texture_ops->texture_unload_location(texture, context, location);
+}
+
 static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
@@ -874,9 +880,10 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
         if (texture->sub_resources[i].locations == texture->resource.map_binding
                 && !wined3d_texture_load_location(texture, i, context, map_binding))
             ERR("Failed to load location %s.\n", wined3d_debug_location(map_binding));
-        if (texture->resource.map_binding == WINED3D_LOCATION_BUFFER)
-            wined3d_texture_remove_buffer_object(texture, i, wined3d_context_gl(context));
     }
+
+    if (texture->resource.map_binding == WINED3D_LOCATION_BUFFER)
+        wined3d_texture_unload_location(texture, context, WINED3D_LOCATION_BUFFER);
 
     context_release(context);
 
@@ -2108,12 +2115,6 @@ BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, unsigned int location)
 {
     return texture->texture_ops->texture_prepare_location(texture, sub_resource_idx, context, location);
-}
-
-static void wined3d_texture_unload_location(struct wined3d_texture *texture,
-        struct wined3d_context *context, unsigned int location)
-{
-    texture->texture_ops->texture_unload_location(texture, context, location);
 }
 
 static struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
