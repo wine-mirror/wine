@@ -2198,7 +2198,7 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->clip_control = true;
     d3d_info->full_ffp_varyings = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_FULL_FFP_VARYINGS);
     d3d_info->scaled_resolve = false;
-    d3d_info->pbo = false;
+    d3d_info->pbo = true;
     d3d_info->feature_level = feature_level_from_caps(&shader_caps);
 
     d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;

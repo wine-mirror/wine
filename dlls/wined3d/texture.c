@@ -850,7 +850,7 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
 static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl)
 {
-    struct wined3d_bo_gl *bo = &texture->sub_resources[sub_resource_idx].bo;
+    struct wined3d_bo_gl *bo = &texture->sub_resources[sub_resource_idx].bo.gl;
 
     TRACE("texture %p, sub_resource_idx %u, context_gl %p.\n", texture, sub_resource_idx, context_gl);
 
@@ -1986,7 +1986,7 @@ static void wined3d_texture_gl_prepare_buffer_object(struct wined3d_texture_gl *
     struct wined3d_bo_gl *bo;
 
     sub_resource = &texture_gl->t.sub_resources[sub_resource_idx];
-    bo = &sub_resource->bo;
+    bo = &sub_resource->bo.gl;
     if (bo->id)
         return;
 
@@ -3152,7 +3152,7 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
      * getting called. */
-    if (conversion && sub_resource->bo.id)
+    if (conversion && sub_resource->bo.gl.id)
     {
         TRACE("Removing the pbo attached to texture %p, %u.\n", texture_gl, sub_resource_idx);
 
@@ -3289,7 +3289,7 @@ static void wined3d_texture_gl_unload_location(struct wined3d_texture *texture,
             sub_count = texture->level_count * texture->layer_count;
             for (i = 0; i < sub_count; ++i)
             {
-                if (texture_gl->t.sub_resources[i].bo.id)
+                if (texture_gl->t.sub_resources[i].bo.gl.id)
                     wined3d_texture_remove_buffer_object(&texture_gl->t, i, context_gl);
             }
             break;
@@ -5033,14 +5033,14 @@ static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_v
     struct wined3d_box src_box;
 
     sub_resource = &texture_vk->t.sub_resources[sub_resource_idx];
-    if (!(sub_resource->locations & WINED3D_LOCATION_SYSMEM))
+    if (!(sub_resource->locations & wined3d_texture_sysmem_locations))
     {
         ERR("Unimplemented load from %s.\n", wined3d_debug_location(sub_resource->locations));
         return FALSE;
     }
 
     level = sub_resource_idx % texture_vk->t.level_count;
-    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data, WINED3D_LOCATION_SYSMEM);
+    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data, sub_resource->locations);
     wined3d_texture_get_level_box(&texture_vk->t, level, &src_box);
     wined3d_texture_get_pitch(&texture_vk->t, level, &row_pitch, &slice_pitch);
     wined3d_texture_vk_upload_data(context, wined3d_const_bo_address(&data), texture_vk->t.resource.format,
@@ -5051,7 +5051,7 @@ static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_v
 }
 
 static BOOL wined3d_texture_vk_load_sysmem(struct wined3d_texture_vk *texture_vk,
-        unsigned int sub_resource_idx, struct wined3d_context *context)
+        unsigned int sub_resource_idx, struct wined3d_context *context, unsigned int location)
 {
     struct wined3d_texture_sub_resource *sub_resource;
     unsigned int level, row_pitch, slice_pitch;
@@ -5066,7 +5066,7 @@ static BOOL wined3d_texture_vk_load_sysmem(struct wined3d_texture_vk *texture_vk
     }
 
     level = sub_resource_idx % texture_vk->t.level_count;
-    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data, WINED3D_LOCATION_SYSMEM);
+    wined3d_texture_get_memory(&texture_vk->t, sub_resource_idx, &data, location);
     wined3d_texture_get_level_box(&texture_vk->t, level, &src_box);
     wined3d_texture_get_pitch(&texture_vk->t, level, &row_pitch, &slice_pitch);
     wined3d_texture_vk_download_data(context, &texture_vk->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB,
@@ -5182,6 +5182,26 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
     return TRUE;
 }
 
+static BOOL wined3d_texture_vk_prepare_buffer_object(struct wined3d_texture_vk *texture_vk,
+        unsigned int sub_resource_idx, struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_texture_sub_resource *sub_resource;
+    struct wined3d_bo_vk *bo;
+
+    sub_resource = &texture_vk->t.sub_resources[sub_resource_idx];
+    bo = &sub_resource->bo.vk;
+    if (bo->vk_buffer)
+        return TRUE;
+
+    if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
+        return FALSE;
+
+    TRACE("Created buffer object %p for texture %p, sub-resource %u.\n", bo, texture_vk, sub_resource_idx);
+    return TRUE;
+}
+
 static BOOL wined3d_texture_vk_prepare_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, unsigned int location)
 {
@@ -5193,6 +5213,10 @@ static BOOL wined3d_texture_vk_prepare_location(struct wined3d_texture *texture,
 
         case WINED3D_LOCATION_TEXTURE_RGB:
             return wined3d_texture_vk_prepare_texture(wined3d_texture_vk(texture), wined3d_context_vk(context));
+
+        case WINED3D_LOCATION_BUFFER:
+            return wined3d_texture_vk_prepare_buffer_object(wined3d_texture_vk(texture), sub_resource_idx,
+                    wined3d_context_vk(context));
 
         default:
             FIXME("Unhandled location %s.\n", wined3d_debug_location(location));
@@ -5212,7 +5236,8 @@ static BOOL wined3d_texture_vk_load_location(struct wined3d_texture *texture,
             return wined3d_texture_vk_load_texture(wined3d_texture_vk(texture), sub_resource_idx, context);
 
         case WINED3D_LOCATION_SYSMEM:
-            return wined3d_texture_vk_load_sysmem(wined3d_texture_vk(texture), sub_resource_idx, context);
+        case WINED3D_LOCATION_BUFFER:
+            return wined3d_texture_vk_load_sysmem(wined3d_texture_vk(texture), sub_resource_idx, context, location);
 
         default:
             FIXME("Unimplemented location %s.\n", wined3d_debug_location(location));
@@ -5225,6 +5250,7 @@ static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
 {
     struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture);
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+    unsigned int i, sub_count;
 
     TRACE("texture %p, context %p, location %s.\n", texture, context, wined3d_debug_location(location));
 
@@ -5243,6 +5269,17 @@ static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
             break;
 
         case WINED3D_LOCATION_BUFFER:
+            sub_count = texture->level_count * texture->layer_count;
+            for (i = 0; i < sub_count; ++i)
+            {
+                if (texture->sub_resources[i].bo.vk.vk_buffer)
+                {
+                    wined3d_context_vk_destroy_bo(context_vk, &texture->sub_resources[i].bo.vk);
+                    texture->sub_resources[i].bo.vk.vk_buffer = VK_NULL_HANDLE;
+                }
+            }
+            break;
+
         case WINED3D_LOCATION_TEXTURE_SRGB:
         case WINED3D_LOCATION_RB_MULTISAMPLE:
         case WINED3D_LOCATION_RB_RESOLVED:

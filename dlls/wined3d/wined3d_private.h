@@ -4296,7 +4296,11 @@ struct wined3d_texture
         unsigned int map_count;
         uint32_t map_flags;
         DWORD locations;
-        struct wined3d_bo_gl bo;
+        union
+        {
+            struct wined3d_bo_gl gl;
+            struct wined3d_bo_vk vk;
+        } bo;
 
         void *user_memory;
     } *sub_resources;
