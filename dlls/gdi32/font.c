@@ -3760,9 +3760,9 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     {
         LOGFONTW lf;
         FMAT2 dcmat;
-        BOOL can_use_bitmap = !!(GetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_RA_ABLE);
+        BOOL can_use_bitmap = !!(NtGdiGetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_RA_ABLE);
 
-        GetObjectW( hfont, sizeof(lf), &lf );
+        NtGdiExtGetObjectW( hfont, sizeof(lf), &lf );
         switch (lf.lfQuality)
         {
         case NONANTIALIASED_QUALITY:
@@ -4218,7 +4218,7 @@ static void update_font_code_page( DC *dc, HANDLE font )
     {
         LOGFONTW lf;
 
-        GetObjectW( font, sizeof(lf), &lf );
+        NtGdiExtGetObjectW( font, sizeof(lf), &lf );
         if (!(lf.lfClipPrecision & CLIP_DFA_DISABLE))
             charset = DEFAULT_CHARSET;
     }
@@ -4515,8 +4515,8 @@ BOOL WINAPI NtGdiGetTextMetricsW( HDC hdc, TEXTMETRICW *metrics, ULONG flags )
     /* device layer returns values in device units
      * therefore we have to convert them to logical */
 
-        metrics->tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
-        metrics->tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
+        metrics->tmDigitizedAspectX = NtGdiGetDeviceCaps(hdc, LOGPIXELSX);
+        metrics->tmDigitizedAspectY = NtGdiGetDeviceCaps(hdc, LOGPIXELSY);
         metrics->tmHeight           = height_to_LP( dc, metrics->tmHeight );
         metrics->tmAscent           = height_to_LP( dc, metrics->tmAscent );
         metrics->tmDescent          = height_to_LP( dc, metrics->tmDescent );
@@ -4578,8 +4578,8 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
 
     if (lpOTM && ret)
     {
-        output->otmTextMetrics.tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
-        output->otmTextMetrics.tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
+        output->otmTextMetrics.tmDigitizedAspectX = NtGdiGetDeviceCaps(hdc, LOGPIXELSX);
+        output->otmTextMetrics.tmDigitizedAspectY = NtGdiGetDeviceCaps(hdc, LOGPIXELSY);
         output->otmTextMetrics.tmHeight           = height_to_LP( dc, output->otmTextMetrics.tmHeight );
         output->otmTextMetrics.tmAscent           = height_to_LP( dc, output->otmTextMetrics.tmAscent );
         output->otmTextMetrics.tmDescent          = height_to_LP( dc, output->otmTextMetrics.tmDescent );
@@ -4700,7 +4700,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
     for (i = 0; i < ARRAY_SIZE( indices ); i++)
     {
         index = indices[i];
-        ret = GetGlyphOutlineW( hdc, index, aa_flags, metrics, 0, NULL, &identity );
+        ret = NtGdiGetGlyphOutline( hdc, index, aa_flags, metrics, 0, NULL, &identity, FALSE );
         if (ret != GDI_ERROR) break;
     }
 
@@ -4722,7 +4722,8 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
     image->is_copy = TRUE;
     image->free = free_heap_bits;
 
-    ret = GetGlyphOutlineW( hdc, index, aa_flags, metrics, size, image->ptr, &identity );
+    ret = NtGdiGetGlyphOutline( hdc, index, aa_flags, metrics, size, image->ptr,
+                                &identity, FALSE );
     if (ret == GDI_ERROR)
     {
         HeapFree( GetProcessHeap(), 0, image->ptr );
@@ -4811,7 +4812,11 @@ static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *
     }
     assert( count <= max_count );
     dp_to_lp( dc, pts, count );
-    for (i = 0; i < count; i += 2) Polyline( dc->hSelf, pts + i, 2 );
+    for (i = 0; i < count; i += 2)
+    {
+        const UINT pts_count = 2;
+        NtGdiPolyPolyDraw( dc->hSelf, pts + i, &pts_count, 1, NtGdiPolyPolyline );
+    }
     HeapFree( GetProcessHeap(), 0, pts );
 }
 
@@ -4830,7 +4835,8 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     if (flags & ETO_OPAQUE)
     {
         RECT rc = *rect;
-        HBRUSH brush = CreateSolidBrush( NtGdiGetNearestColor( dev->hdc, dc->attr->background_color ));
+        COLORREF brush_color = NtGdiGetNearestColor( dev->hdc, dc->attr->background_color );
+        HBRUSH brush = NtGdiCreateSolidBrush( brush_color, NULL);
 
         if (brush)
         {
@@ -4922,7 +4928,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
         }
     }
 
-    pen = CreatePen( PS_SOLID, 1, dc->attr->text_color );
+    pen = NtGdiCreatePen( PS_SOLID, 1, dc->attr->text_color, NULL );
     orig = NtGdiSelectPen( dev->hdc, pen );
 
     for (i = 0; i < count; i++)
@@ -5062,8 +5068,8 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         y = pt.y;
     }
 
-    GetTextMetricsW(hdc, &tm);
-    GetObjectW(dc->hFont, sizeof(lf), &lf);
+    NtGdiGetTextMetricsW( hdc, &tm, 0 );
+    NtGdiExtGetObjectW( dc->hFont, sizeof(lf), &lf );
 
     if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
         lf.lfEscapement = 0;
@@ -5107,8 +5113,8 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
     x = pt.x;
     y = pt.y;
 
-    char_extra = GetTextCharacterExtra(hdc);
-    if (char_extra && lpDx && GetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASPRINTER)
+    char_extra = dc->attr->char_extra;
+    if (char_extra && lpDx && NtGdiGetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASPRINTER)
         char_extra = 0; /* Printer drivers don't add char_extra if lpDx is supplied */
 
     if(char_extra || dc->breakExtra || breakRem || lpDx || lf.lfEscapement != 0)
@@ -5185,10 +5191,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
     {
         POINT desired[2];
 
-        if(flags & ETO_GLYPH_INDEX)
-            GetTextExtentPointI(hdc, str, count, &sz);
-        else
-            GetTextExtentPointW(hdc, str, count, &sz);
+        NtGdiGetTextExtentExW( hdc, str, count, 0, NULL, NULL, &sz, !!(flags & ETO_GLYPH_INDEX) );
         desired[0].x = desired[0].y = 0;
         desired[1].x = sz.cx;
         desired[1].y = 0;
@@ -5216,7 +5219,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
             pt.x = x + width.x;
             pt.y = y + width.y;
             dp_to_lp(dc, &pt, 1);
-            MoveToEx(hdc, pt.x, pt.y, NULL);
+            NtGdiMoveTo( hdc, pt.x, pt.y, NULL );
         }
         break;
 
@@ -5233,7 +5236,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
             pt.x = x;
             pt.y = y;
             dp_to_lp(dc, &pt, 1);
-            MoveToEx(hdc, pt.x, pt.y, NULL);
+            NtGdiMoveTo( hdc, pt.x, pt.y, NULL );
         }
         break;
     }
@@ -5289,7 +5292,7 @@ done:
         OUTLINETEXTMETRICW* otm = NULL;
         POINT pts[5];
         HPEN hpen = NtGdiSelectPen( hdc, get_stock_object(NULL_PEN) );
-        HBRUSH hbrush = CreateSolidBrush( dc->attr->text_color );
+        HBRUSH hbrush = NtGdiCreateSolidBrush( dc->attr->text_color, NULL );
 
         hbrush = NtGdiSelectBrush(hdc, hbrush);
 
@@ -5821,7 +5824,7 @@ static BOOL CALLBACK load_enumed_resource(HMODULE hModule, LPCWSTR type, LPWSTR 
     DWORD num_in_res;
 
     TRACE("Found resource %s - trying to load\n", wine_dbgstr_w(type));
-    if (!AddFontMemResourceEx(pMem, SizeofResource(hModule, rsrc), NULL, &num_in_res))
+    if (!NtGdiAddFontMemResourceEx( pMem, SizeofResource(hModule, rsrc), NULL, 0, &num_in_res ))
     {
         ERR("Failed to load PE font resource mod=%p ptr=%p\n", hModule, hMem);
         return FALSE;
