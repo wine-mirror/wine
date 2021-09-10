@@ -4845,12 +4845,16 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     struct wined3d_texture_sub_resource *sub_resource;
     unsigned int src_row_pitch, src_slice_pitch;
     struct wined3d_bo_address staging_bo_addr;
+    VkPipelineStageFlags bo_stage_flags = 0;
     const struct wined3d_vk_info *vk_info;
     VkCommandBuffer vk_command_buffer;
     VkImageSubresourceRange vk_range;
+    VkBufferMemoryBarrier vk_barrier;
     struct wined3d_bo_vk staging_bo;
     VkImageAspectFlags aspect_mask;
+    struct wined3d_bo_vk *dst_bo;
     VkBufferImageCopy region;
+    size_t dst_offset = 0;
     void *map_ptr;
 
     TRACE("context %p, src_texture %p, src_sub_resource_idx %u, src_location %s, src_box %s, dst_bo_addr %s, "
@@ -4873,12 +4877,6 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             || src_box->front || src_box->back != src_depth)
     {
         FIXME("Unhandled source box %s.\n", debug_box(src_box));
-        return;
-    }
-
-    if (dst_bo_addr->buffer_object)
-    {
-        FIXME("Unhandled buffer object %#lx.\n", dst_bo_addr->buffer_object);
         return;
     }
 
@@ -4923,11 +4921,37 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         return;
     }
 
-    if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo))
+    /* We need to be outside of a render pass for vkCmdPipelineBarrier() and vkCmdCopyBufferToImage() calls below. */
+    wined3d_context_vk_end_current_render_pass(context_vk);
+
+    if (!(dst_bo = (struct wined3d_bo_vk *)dst_bo_addr->buffer_object))
     {
-        ERR("Failed to create staging bo.\n");
-        return;
+        if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo))
+        {
+            ERR("Failed to create staging bo.\n");
+            return;
+        }
+
+        dst_bo = &staging_bo;
+    }
+    else
+    {
+        vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        vk_barrier.pNext = NULL;
+        vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(dst_bo->usage);
+        vk_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        vk_barrier.buffer = dst_bo->vk_buffer;
+        vk_barrier.offset = dst_bo->buffer_offset + (size_t)dst_bo_addr->addr;
+        vk_barrier.size = sub_resource->size;
+
+        bo_stage_flags = vk_pipeline_stage_mask_from_buffer_usage(dst_bo->usage);
+        dst_offset = (size_t)dst_bo_addr->addr;
+
+        VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, bo_stage_flags,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
     }
 
     vk_range.aspectMask = aspect_mask;
@@ -4943,7 +4967,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             src_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             src_texture_vk->image.vk_image, &vk_range);
 
-    region.bufferOffset = staging_bo.buffer_offset;
+    region.bufferOffset = dst_bo->buffer_offset + dst_offset;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
     region.imageSubresource.aspectMask = vk_range.aspectMask;
@@ -4958,7 +4982,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     region.imageExtent.depth = src_depth;
 
     VK_CALL(vkCmdCopyImageToBuffer(vk_command_buffer, src_texture_vk->image.vk_image,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, staging_bo.vk_buffer, 1, &region));
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_bo->vk_buffer, 1, &region));
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -4968,26 +4992,38 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             src_texture_vk->image.vk_image, &vk_range);
 
     wined3d_context_vk_reference_texture(context_vk, src_texture_vk);
-    wined3d_context_vk_reference_bo(context_vk, &staging_bo);
-    wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
-    wined3d_context_vk_wait_command_buffer(context_vk, src_texture_vk->image.command_buffer_id);
+    wined3d_context_vk_reference_bo(context_vk, dst_bo);
 
-    staging_bo_addr.buffer_object = (uintptr_t)&staging_bo;
-    staging_bo_addr.addr = NULL;
-    if (!(map_ptr = wined3d_context_map_bo_address(context, &staging_bo_addr,
-            sub_resource->size, WINED3D_MAP_READ)))
+    if (dst_bo == &staging_bo)
     {
-        ERR("Failed to map staging bo.\n");
+        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
+        wined3d_context_vk_wait_command_buffer(context_vk, src_texture_vk->image.command_buffer_id);
+
+        staging_bo_addr.buffer_object = (uintptr_t)&staging_bo;
+        staging_bo_addr.addr = NULL;
+        if (!(map_ptr = wined3d_context_map_bo_address(context, &staging_bo_addr,
+                sub_resource->size, WINED3D_MAP_READ)))
+        {
+            ERR("Failed to map staging bo.\n");
+            wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
+            return;
+        }
+
+        wined3d_format_copy_data(dst_format, map_ptr, src_row_pitch, src_slice_pitch,
+                dst_bo_addr->addr, dst_row_pitch, dst_slice_pitch, src_box->right - src_box->left,
+                src_box->bottom - src_box->top, src_box->back - src_box->front);
+
+        wined3d_context_unmap_bo_address(context, &staging_bo_addr, 0, NULL);
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
-        return;
     }
+    else
+    {
+        vk_barrier.dstAccessMask = vk_barrier.srcAccessMask;
+        vk_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-    wined3d_format_copy_data(dst_format, map_ptr, src_row_pitch, src_slice_pitch,
-            dst_bo_addr->addr, dst_row_pitch, dst_slice_pitch, src_box->right - src_box->left,
-            src_box->bottom - src_box->top, src_box->back - src_box->front);
-
-    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 0, NULL);
-    wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
+        VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                bo_stage_flags, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+    }
 }
 
 static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_vk,
