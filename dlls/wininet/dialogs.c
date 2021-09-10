@@ -514,11 +514,17 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
         }
         break;
     }
+
+    case ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED:
+        if(!req)
+            return ERROR_INVALID_PARAMETER;
+        /* fall through */
     case ERROR_INTERNET_SEC_CERT_ERRORS:
     case ERROR_INTERNET_SEC_CERT_CN_INVALID:
     case ERROR_INTERNET_SEC_CERT_DATE_INVALID:
     case ERROR_INTERNET_INVALID_CA:
     case ERROR_INTERNET_SEC_CERT_REV_FAILED:
+    case ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE:
         if( dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI ) {
             res = ERROR_CANCELLED;
             break;
@@ -530,13 +536,51 @@ DWORD WINAPI InternetErrorDlg(HWND hWnd, HINTERNET hRequest,
         res = DialogBoxParamW( WININET_hModule, MAKEINTRESOURCEW( IDD_INVCERTDLG ),
                                hWnd, WININET_InvalidCertificateDialog, (LPARAM) &params );
         break;
+
+    case ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION:
+        if(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI) {
+            res = ERROR_HTTP_COOKIE_DECLINED;
+            break;
+        }
+        FIXME("Need to display dialog for error %d\n", dwError);
+        res = ERROR_CANCELLED;
+        break;
+
+    case ERROR_INTERNET_INSERT_CDROM:
+        if(!req)
+            return ERROR_INVALID_PARAMETER;
+        /* fall through */
+    case ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION:
+    case ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT:
+    case ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT:
+    case ERROR_INTERNET_MIXED_SECURITY:
+    case ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR:
+        if(!(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI))
+            FIXME("Need to display dialog for error %d\n", dwError);
+        res = ERROR_CANCELLED;
+        break;
+
+    case ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR:
+    case ERROR_INTERNET_CHG_POST_IS_NON_SECURE:
+        if(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI) {
+            res = ERROR_SUCCESS;
+            break;
+        }
+        FIXME("Need to display dialog for error %d\n", dwError);
+        res = ERROR_CANCELLED;
+        break;
+
     case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
     case ERROR_INTERNET_POST_IS_NON_SECURE:
-        FIXME("Need to display dialog for error %d\n", dwError);
+        if (!(dwFlags & FLAGS_ERROR_UI_FLAGS_NO_UI))
+            FIXME("Need to display dialog for error %d\n", dwError);
         res = ERROR_SUCCESS;
         break;
+
     default:
-        res = ERROR_CANCELLED;
+        if(!(dwFlags & FLAGS_ERROR_UI_FILTER_FOR_ERRORS))
+            res = ERROR_CANCELLED;
+        break;
     }
 
     if(req)

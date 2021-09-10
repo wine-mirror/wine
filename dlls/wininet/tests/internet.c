@@ -1566,29 +1566,14 @@ static void test_InternetErrorDlg(void)
             break;
         }
 
-        todo_wine_if(i == ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION ||
-                     i == ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR ||
-                     i == ERROR_INTERNET_CHG_POST_IS_NON_SECURE)
-            ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+        ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
 
         /* Same thing with NULL hwnd */
         res = InternetErrorDlg(NULL, req, i, FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-        todo_wine_if(i == ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION ||
-                     i == ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR ||
-                     i == ERROR_INTERNET_CHG_POST_IS_NON_SECURE)
-            ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+        ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
 
         res = InternetErrorDlg(NULL, req, i, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-        todo_wine_if(i != ERROR_INTERNET_INCORRECT_PASSWORD && i != ERROR_INTERNET_SEC_CERT_DATE_INVALID &&
-                     i != ERROR_INTERNET_SEC_CERT_CN_INVALID && i != ERROR_INTERNET_INVALID_CA &&
-                     i != ERROR_INTERNET_SEC_CERT_ERRORS && i != ERROR_INTERNET_SEC_CERT_REV_FAILED &&
-                     i != ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR && i != ERROR_INTERNET_POST_IS_NON_SECURE &&
-                     i != ERROR_INTERNET_MIXED_SECURITY &&
-                     i != ERROR_INTERNET_POST_IS_NON_SECURE && i != ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED &&
-                     i != ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR && i != ERROR_INTERNET_INSERT_CDROM &&
-                     i != ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE && i != ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT &&
-                     i != ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT && i != ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION)
-            ok(res == expected2, "Got %d, expected %d (%d)\n", res, expected2, i);
+        ok(res == expected2, "Got %d, expected %d (%d)\n", res, expected2, i);
 
         /* With a null req */
         if(test_flags & FLAG_NEEDREQ)
@@ -1598,31 +1583,16 @@ static void test_InternetErrorDlg(void)
         }
 
         res = InternetErrorDlg(hwnd, NULL, i, FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-        todo_wine_if(i == ERROR_HTTP_COOKIE_NEEDS_CONFIRMATION ||
-                     i == ERROR_INTERNET_INSERT_CDROM ||
-                     i == ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED ||
-                     i == ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR ||
-                     i == ERROR_INTERNET_CHG_POST_IS_NON_SECURE)
-            ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
+        ok(res == expected, "Got %d, expected %d (%d)\n", res, expected, i);
 
         res = InternetErrorDlg(NULL, NULL, i, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-        todo_wine_if(i != ERROR_INTERNET_SEC_CERT_DATE_INVALID && i != ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR &&
-                     i != ERROR_INTERNET_SEC_CERT_CN_INVALID && i != ERROR_INTERNET_INVALID_CA &&
-                     i != ERROR_INTERNET_SEC_CERT_ERRORS && i != ERROR_INTERNET_SEC_CERT_REV_FAILED &&
-                     i != ERROR_INTERNET_MIXED_SECURITY && i != ERROR_INTERNET_POST_IS_NON_SECURE &&
-                     i != ERROR_INTERNET_HTTPS_HTTP_SUBMIT_REDIR && i != ERROR_INTERNET_INCORRECT_PASSWORD &&
-                     i != ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE && i != ERROR_INTERNET_BAD_AUTO_PROXY_SCRIPT &&
-                     i != ERROR_INTERNET_UNABLE_TO_DOWNLOAD_SCRIPT &&
-                     i != ERROR_HTTP_REDIRECT_NEEDS_CONFIRMATION)
-            ok(res == expected2, "Got %d, expected %d (%d)\n", res, expected2, i);
+        ok(res == expected2, "Got %d, expected %d (%d)\n", res, expected2, i);
     }
 
     res = InternetErrorDlg(NULL, req, 0xdeadbeef, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-todo_wine
     ok(res == ERROR_SUCCESS, "Got %d, expected ERROR_SUCCESS\n", res);
 
     res = InternetErrorDlg(NULL, NULL, 0xdeadbeef, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_NO_UI, NULL);
-todo_wine
     ok(res == ERROR_SUCCESS, "Got %d, expected ERROR_SUCCESS\n", res);
 
     res = InternetCloseHandle(req);
