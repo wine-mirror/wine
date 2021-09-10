@@ -19,8 +19,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -28,7 +26,6 @@
 #include "winternl.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(powermgnt);
 
@@ -147,35 +144,10 @@ EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
  */
 HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
 {
-    COUNTED_REASON_CONTEXT nt_context;
-    HANDLE handle;
-    NTSTATUS status;
-    WCHAR module_name[MAX_PATH];
+    FIXME("(%p): stub\n", context);
 
-    TRACE( "(%p)\n", context );
-
-    nt_context.Version = context->Version;
-    nt_context.Flags = context->Flags;
-    if (context->Flags & POWER_REQUEST_CONTEXT_SIMPLE_STRING)
-        RtlInitUnicodeString( &nt_context.u.SimpleString, context->Reason.SimpleReasonString );
-    else if (context->Flags & POWER_REQUEST_CONTEXT_DETAILED_STRING)
-    {
-        int i;
-
-        GetModuleFileNameW( context->Reason.Detailed.LocalizedReasonModule, module_name, ARRAY_SIZE(module_name) );
-        RtlInitUnicodeString( &nt_context.u.s.ResourceFileName, module_name );
-        nt_context.u.s.ResourceReasonId = context->Reason.Detailed.LocalizedReasonId;
-        nt_context.u.s.StringCount = context->Reason.Detailed.ReasonStringCount;
-        nt_context.u.s.ReasonStrings = heap_alloc( nt_context.u.s.StringCount * sizeof(UNICODE_STRING) );
-        for (i = 0; i < nt_context.u.s.StringCount; i++)
-            RtlInitUnicodeString( &nt_context.u.s.ReasonStrings[i], context->Reason.Detailed.ReasonStrings[i] );
-    }
-
-    status = NtCreatePowerRequest( &handle, &nt_context );
-    if (nt_context.Flags & POWER_REQUEST_CONTEXT_DETAILED_STRING)
-        heap_free( nt_context.u.s.ReasonStrings );
-    if (!set_ntstatus( status )) return INVALID_HANDLE_VALUE;
-    return handle;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE;
 }
 
 /***********************************************************************
@@ -183,7 +155,10 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
  */
 BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
 {
-    return set_ntstatus( NtSetPowerRequest( request, type ));
+    FIXME("(%p, %u): stub\n", request, type);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }
 
 /***********************************************************************
@@ -191,5 +166,8 @@ BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
  */
 BOOL WINAPI PowerClearRequest(HANDLE request, POWER_REQUEST_TYPE type)
 {
-    return set_ntstatus( NtClearPowerRequest( request, type ));
+    FIXME("(%p, %u): stub\n", request, type);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }
