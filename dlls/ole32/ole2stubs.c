@@ -2,7 +2,7 @@
  * Temporary place for ole2 stubs.
  *
  * Copyright (C) 1999 Corel Corporation
- * Move these functions to dlls/ole32/ole2impl.c when you implement them.
+ * Move these functions to dlls/ole32/ole2.c when you implement them.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
