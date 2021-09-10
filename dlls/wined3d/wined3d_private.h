@@ -1627,6 +1627,7 @@ struct wined3d_bo_vk
 
     struct list users;
     uint64_t command_buffer_id;
+    bool host_synced;
 };
 
 struct wined3d_bo_slab_vk_key

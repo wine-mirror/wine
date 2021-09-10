@@ -934,9 +934,11 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     {
         if (wined3d_context_vk_create_bo(context_vk, bo->size, bo->usage, bo->memory_type, &tmp))
         {
+            bool host_synced = bo->host_synced;
             list_move_head(&tmp.users, &bo->users);
             wined3d_context_vk_destroy_bo(context_vk, bo);
             *bo = tmp;
+            bo->host_synced = host_synced;
             list_init(&bo->users);
             list_move_head(&bo->users, &tmp.users);
             LIST_FOR_EACH_ENTRY(bo_user, &bo->users, struct wined3d_bo_user, entry)
@@ -952,25 +954,30 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
 
     if (map_flags & WINED3D_MAP_READ)
     {
-        if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+        if (!bo->host_synced)
         {
-            ERR("Failed to get command buffer.\n");
-            return NULL;
+            if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+            {
+                ERR("Failed to get command buffer.\n");
+                return NULL;
+            }
+
+            wined3d_context_vk_end_current_render_pass(context_vk);
+
+            vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+            vk_barrier.pNext = NULL;
+            vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(bo->usage);
+            vk_barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+            vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            vk_barrier.buffer = bo->vk_buffer;
+            vk_barrier.offset = bo->buffer_offset + (uintptr_t)data->addr;
+            vk_barrier.size = size;
+            VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                    VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+
+            wined3d_context_vk_reference_bo(context_vk, bo);
         }
-
-        wined3d_context_vk_end_current_render_pass(context_vk);
-
-        vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-        vk_barrier.pNext = NULL;
-        vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(bo->usage);
-        vk_barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-        vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        vk_barrier.buffer = bo->vk_buffer;
-        vk_barrier.offset = bo->buffer_offset + (uintptr_t)data->addr;
-        vk_barrier.size = size;
-        VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
 
         if (!(bo->memory_type & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
         {
@@ -981,8 +988,6 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
             range.size = size;
             VK_CALL(vkInvalidateMappedMemoryRanges(device_vk->vk_device, 1, &range));
         }
-
-        wined3d_context_vk_reference_bo(context_vk, bo);
     }
 
     if (bo->command_buffer_id == context_vk->current_command_buffer.id)

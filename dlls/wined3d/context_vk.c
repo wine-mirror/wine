@@ -415,6 +415,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
     bo->size = size;
     list_init(&bo->users);
     bo->command_buffer_id = 0;
+    bo->host_synced = false;
 
     TRACE("Using buffer 0x%s, memory 0x%s, offset 0x%s for bo %p.\n",
             wine_dbgstr_longlong(bo->vk_buffer), wine_dbgstr_longlong(bo->vk_memory),
@@ -494,6 +495,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     list_init(&bo->users);
     bo->command_buffer_id = 0;
     bo->slab = NULL;
+    bo->host_synced = false;
 
     TRACE("Created buffer 0x%s, memory 0x%s for bo %p.\n",
             wine_dbgstr_longlong(bo->vk_buffer), wine_dbgstr_longlong(bo->vk_memory), bo);

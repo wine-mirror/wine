@@ -5019,6 +5019,12 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         vk_barrier.dstAccessMask = vk_barrier.srcAccessMask;
         vk_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
+        if (dst_bo->host_synced)
+        {
+            vk_barrier.srcAccessMask |= VK_ACCESS_HOST_READ_BIT;
+            bo_stage_flags |= VK_PIPELINE_STAGE_HOST_BIT;
+        }
+
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
                 bo_stage_flags, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
     }
@@ -5198,6 +5204,9 @@ static BOOL wined3d_texture_vk_prepare_buffer_object(struct wined3d_texture_vk *
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
         return FALSE;
 
+    /* Texture buffer objects receive a barrier to HOST_READ in wined3d_texture_vk_download_data(),
+     * so they don't need it when they are mapped for reading. */
+    bo->host_synced = true;
     TRACE("Created buffer object %p for texture %p, sub-resource %u.\n", bo, texture_vk, sub_resource_idx);
     return TRUE;
 }
