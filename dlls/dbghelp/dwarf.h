@@ -504,6 +504,7 @@ enum dwarf_calling_convention
 #define DW_LNE_hi_user                  0xff
 
 #define DW_CIE_ID                       ~(0x0U)
+#define DW64_CIE_ID                     ~((ULONG64)0x0)
 
 enum dwarf_call_frame_info
 {

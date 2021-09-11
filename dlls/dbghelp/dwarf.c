@@ -170,6 +170,7 @@ typedef struct dwarf2_cuhead_s
 {
     unsigned char               word_size; /* size of a word on target machine */
     unsigned char               version;
+    unsigned char               offset_size; /* size of offset inside DWARF */
 } dwarf2_cuhead_t;
 
 typedef struct dwarf2_parse_context_s
@@ -360,6 +361,25 @@ static inline ULONG_PTR dwarf2_parse_addr(dwarf2_traverse_context_t* ctx, unsign
 static inline ULONG_PTR dwarf2_parse_addr_head(dwarf2_traverse_context_t* ctx, const dwarf2_cuhead_t* head)
 {
     return dwarf2_parse_addr(ctx, head->word_size);
+}
+
+static ULONG_PTR dwarf2_parse_offset(dwarf2_traverse_context_t* ctx, unsigned char offset_size)
+{
+    ULONG_PTR ret = dwarf2_get_addr(ctx->data, offset_size);
+    ctx->data += offset_size;
+    return ret;
+}
+
+static ULONG_PTR dwarf2_parse_3264(dwarf2_traverse_context_t* ctx, unsigned char* ofsz)
+{
+    ULONG_PTR ret = dwarf2_parse_u4(ctx);
+    if (ret == 0xffffffff)
+    {
+        ret = dwarf2_parse_u8(ctx);
+        *ofsz = 8;
+    }
+    else *ofsz = 4;
+    return ret;
 }
 
 static const char* dwarf2_debug_traverse_ctx(const dwarf2_traverse_context_t* ctx) 
@@ -2159,6 +2179,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     unsigned                    insn_size, default_stmt;
     unsigned                    line_range, opcode_base;
     int                         line_base;
+    unsigned char               offset_size;
     const unsigned char*        opcode_len;
     struct vector               dirs;
     struct vector               files;
@@ -2174,18 +2195,23 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
         return FALSE;
     }
     traverse.data = sections[section_line].address + offset;
-    traverse.end_data = traverse.data + 4;
+    traverse.end_data = sections[section_line].address + sections[section_line].size;
 
-    length = dwarf2_parse_u4(&traverse);
-    traverse.end_data = sections[section_line].address + offset + length;
+    length = dwarf2_parse_3264(&traverse, &offset_size);
+    if (offset_size != ctx->head.offset_size)
+    {
+        WARN("Mismatch in 32/64 bit format\n");
+        return FALSE;
+    }
+    traverse.end_data = traverse.data + length;
 
-    if (offset + 4 + length > sections[section_line].size)
+    if (traverse.end_data > sections[section_line].address + sections[section_line].size)
     {
         WARN("out of bounds header\n");
         return FALSE;
     }
     dwarf2_parse_u2(&traverse); /* version */
-    dwarf2_parse_u4(&traverse); /* header_len */
+    dwarf2_parse_offset(&traverse, offset_size); /* header_len */
     insn_size = dwarf2_parse_byte(&traverse);
     default_stmt = dwarf2_parse_byte(&traverse);
     line_base = (signed char)dwarf2_parse_byte(&traverse);
@@ -2375,12 +2401,13 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     /* FIXME this is a temporary configuration while adding support for dwarf3&4 bits */
     static LONG max_supported_dwarf_version = 0;
 
-    cu_length = dwarf2_parse_u4(mod_ctx);
+    cu_length = dwarf2_parse_3264(mod_ctx, &ctx.head.offset_size);
+
     cu_ctx.data = mod_ctx->data;
     cu_ctx.end_data = mod_ctx->data + cu_length;
     mod_ctx->data += cu_length;
     ctx.head.version = dwarf2_parse_u2(&cu_ctx);
-    cu_abbrev_offset = dwarf2_parse_u4(&cu_ctx);
+    cu_abbrev_offset = dwarf2_parse_offset(&cu_ctx, ctx.head.offset_size);
     ctx.head.word_size = dwarf2_parse_byte(&cu_ctx);
 
     TRACE("Compilation Unit Header found at 0x%x:\n",
@@ -2389,6 +2416,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     TRACE("- version:       %u\n",  ctx.head.version);
     TRACE("- abbrev_offset: %lu\n", cu_abbrev_offset);
     TRACE("- word_size:     %u\n",  ctx.head.word_size);
+    TRACE("- offset_size:   %u\n",  ctx.head.offset_size);
 
     if (max_supported_dwarf_version == 0)
     {
@@ -2727,13 +2755,13 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
     const unsigned char*        ptr_blk;
     const unsigned char*        cie_ptr;
     const unsigned char*        last_cie_ptr = (const unsigned char*)~0;
-    unsigned                    len, id;
+    ULONG_PTR                   len, id;
     ULONG_PTR                   start, range;
-    unsigned                    cie_id;
+    ULONG_PTR                   cie_id;
     const BYTE*                 start_data = fde_ctx->data;
     unsigned char               word_size = module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
+    unsigned char               offset_size;
 
-    cie_id = in_eh_frame ? 0 : DW_CIE_ID;
     /* skip 0-padding at beginning of section (alignment) */
     while (fde_ctx->data + 2 * 4 < fde_ctx->end_data)
     {
@@ -2745,14 +2773,15 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
     }
     for (; fde_ctx->data + 2 * 4 < fde_ctx->end_data; fde_ctx->data = ptr_blk)
     {
+        const unsigned char* st = fde_ctx->data;
         /* find the FDE for address addr (skip CIE) */
-        len = dwarf2_parse_u4(fde_ctx);
-        if (len == 0xffffffff) FIXME("Unsupported yet 64-bit CIEs\n");
+        len = dwarf2_parse_3264(fde_ctx, &offset_size);
+        cie_id = in_eh_frame ? 0 : (offset_size == 4 ? DW_CIE_ID : (ULONG_PTR)DW64_CIE_ID);
         ptr_blk = fde_ctx->data + len;
-        id  = dwarf2_parse_u4(fde_ctx);
+        id = dwarf2_parse_offset(fde_ctx, offset_size);
         if (id == cie_id)
         {
-            last_cie_ptr = fde_ctx->data - 8;
+            last_cie_ptr = st;
             /* we need some bits out of the CIE in order to parse all contents */
             if (!parse_cie_details(fde_ctx, info, word_size)) return FALSE;
             cie_ctx->data = fde_ctx->data;
@@ -2764,9 +2793,10 @@ static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delt
         {
             last_cie_ptr = cie_ptr;
             cie_ctx->data = cie_ptr;
-            cie_ctx->end_data = cie_ptr + 4;
-            cie_ctx->end_data = cie_ptr + 4 + dwarf2_parse_u4(cie_ctx);
-            if (dwarf2_parse_u4(cie_ctx) != cie_id)
+            cie_ctx->end_data = cie_ptr + (offset_size == 4 ? 4 : 4 + 8);
+            cie_ctx->end_data += dwarf2_parse_3264(cie_ctx, &offset_size);
+
+            if (dwarf2_parse_offset(cie_ctx, in_eh_frame ? word_size : offset_size) != cie_id)
             {
                 FIXME("wrong CIE pointer at %x from FDE %x\n",
                       (unsigned)(cie_ptr - start_data),
