@@ -489,7 +489,6 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     case DW_FORM_ref2:   step = 2; break;
     case DW_FORM_data4:
     case DW_FORM_ref4:   step = 4; break;
-    case DW_FORM_strp:   step = head->offset_size; break;
     case DW_FORM_data8:
     case DW_FORM_ref8:   step = 8; break;
     case DW_FORM_sdata:
@@ -500,6 +499,8 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     case DW_FORM_block1: step = dwarf2_parse_byte(ctx); break;
     case DW_FORM_block2: step = dwarf2_parse_u2(ctx); break;
     case DW_FORM_block4: step = dwarf2_parse_u4(ctx); break;
+    case DW_FORM_sec_offset:
+    case DW_FORM_strp:   step = head->offset_size; break;
     default:
         FIXME("Unhandled attribute form %lx\n", abbrev_attr->form);
         return;
@@ -623,6 +624,11 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         attr->u.block.size = dwarf2_get_u4(data);
         attr->u.block.ptr  = data + 4;
         TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
+        break;
+
+    case DW_FORM_sec_offset:
+        attr->u.lluvalue = dwarf2_get_addr(data, ctx->head.offset_size);
+        TRACE("sec_offset<%s>\n", wine_dbgstr_longlong(attr->u.lluvalue));
         break;
 
     default:
@@ -935,10 +941,15 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
         loc->reg = 0;
         loc->offset = xloc.u.uvalue;
         return TRUE;
-    case DW_FORM_data4: case DW_FORM_data8:
+    case DW_FORM_data4:
         loc->kind = loc_dwarf2_location_list;
         loc->reg = Wine_DW_no_register;
         loc->offset = xloc.u.uvalue;
+        return TRUE;
+    case DW_FORM_data8: case DW_FORM_sec_offset:
+        loc->kind = loc_dwarf2_location_list;
+        loc->reg = Wine_DW_no_register;
+        loc->offset = xloc.u.lluvalue;
         return TRUE;
     case DW_FORM_block:
     case DW_FORM_block1:
@@ -1662,6 +1673,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             break;
 
         case DW_FORM_data8:
+        case DW_FORM_sec_offset:
             v.n1.n2.vt = VT_UI8;
             v.n1.n2.n3.llVal = value.u.lluvalue;
             break;
