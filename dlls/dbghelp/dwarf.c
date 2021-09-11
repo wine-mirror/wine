@@ -495,6 +495,7 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     case DW_FORM_ref_udata:
     case DW_FORM_udata:  step = dwarf2_leb128_length(ctx); break;
     case DW_FORM_string: step = strlen((const char*)ctx->data) + 1; break;
+    case DW_FORM_exprloc:
     case DW_FORM_block:  step = dwarf2_leb128_as_unsigned(ctx); break;
     case DW_FORM_block1: step = dwarf2_parse_byte(ctx); break;
     case DW_FORM_block2: step = dwarf2_parse_u2(ctx); break;
@@ -604,6 +605,7 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_block:
+    case DW_FORM_exprloc:
         attr->u.block.size = dwarf2_get_leb128_as_unsigned(data, &attr->u.block.ptr);
         TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
         break;
@@ -955,6 +957,7 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
     case DW_FORM_block1:
     case DW_FORM_block2:
     case DW_FORM_block4:
+    case DW_FORM_exprloc:
         break;
     default: FIXME("Unsupported yet form %lx\n", xloc.form);
         return FALSE;
@@ -1696,6 +1699,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         case DW_FORM_block1:
         case DW_FORM_block2:
         case DW_FORM_block4:
+        case DW_FORM_exprloc:
             v.n1.n2.vt = VT_I4;
             switch (value.u.block.size)
             {
