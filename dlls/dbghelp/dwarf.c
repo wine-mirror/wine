@@ -601,9 +601,19 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_strp:
-        attr->u.string = (const char*)ctx->sections[section_string].address +
-            dwarf2_get_addr(data, ctx->head.offset_size);
-        TRACE("strp<%s>\n", debugstr_a(attr->u.string));
+        {
+            ULONG_PTR ofs = dwarf2_get_addr(data, ctx->head.offset_size);
+            if (ofs >= ctx->sections[section_string].size)
+            {
+                ERR("Out of bounds string offset (%08lx)\n", ofs);
+                attr->u.string = "<<outofbounds-strp>>";
+            }
+            else
+            {
+                attr->u.string = (const char*)ctx->sections[section_string].address + ofs;
+                TRACE("strp<%s>\n", debugstr_a(attr->u.string));
+            }
+        }
         break;
 
     case DW_FORM_block:
