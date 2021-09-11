@@ -480,7 +480,7 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     switch (abbrev_attr->form)
     {
     case DW_FORM_flag_present: step = 0; break;
-    case DW_FORM_ref_addr:
+    case DW_FORM_ref_addr: step = (head->version >= 3) ? head->offset_size : head->word_size; break;
     case DW_FORM_addr:   step = head->word_size; break;
     case DW_FORM_flag:
     case DW_FORM_data1:
@@ -488,8 +488,8 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     case DW_FORM_data2:
     case DW_FORM_ref2:   step = 2; break;
     case DW_FORM_data4:
-    case DW_FORM_ref4:
-    case DW_FORM_strp:   step = 4; break;
+    case DW_FORM_ref4:   step = 4; break;
+    case DW_FORM_strp:   step = head->offset_size; break;
     case DW_FORM_data8:
     case DW_FORM_ref8:   step = 8; break;
     case DW_FORM_sdata:
@@ -516,6 +516,13 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
     switch (attr->form)
     {
     case DW_FORM_ref_addr:
+        if (ctx->head.version >= 3)
+            attr->u.uvalue = dwarf2_get_addr(data, ctx->head.offset_size);
+        else
+            attr->u.uvalue = dwarf2_get_addr(data, ctx->head.word_size);
+        TRACE("addr<0x%lx>\n", attr->u.uvalue);
+        break;
+
     case DW_FORM_addr:
         attr->u.uvalue = dwarf2_get_addr(data, ctx->head.word_size);
         TRACE("addr<0x%lx>\n", attr->u.uvalue);
@@ -590,13 +597,11 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_strp:
-    {
-        ULONG_PTR offset = dwarf2_get_u4(data);
-        attr->u.string = (const char*)ctx->sections[section_string].address + offset;
-    }
-    TRACE("strp<%s>\n", debugstr_a(attr->u.string));
-    break;
-        
+        attr->u.string = (const char*)ctx->sections[section_string].address +
+            dwarf2_get_addr(data, ctx->head.offset_size);
+        TRACE("strp<%s>\n", debugstr_a(attr->u.string));
+        break;
+
     case DW_FORM_block:
         attr->u.block.size = dwarf2_get_leb128_as_unsigned(data, &attr->u.block.ptr);
         TRACE("block<%p,%u>\n", attr->u.block.ptr, attr->u.block.size);
