@@ -501,6 +501,8 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     case DW_FORM_block2: step = dwarf2_parse_u2(ctx); break;
     case DW_FORM_block4: step = dwarf2_parse_u4(ctx); break;
     case DW_FORM_sec_offset:
+    case DW_FORM_GNU_ref_alt:
+    case DW_FORM_GNU_strp_alt:
     case DW_FORM_strp:   step = head->offset_size; break;
     default:
         FIXME("Unhandled attribute form %lx\n", abbrev_attr->form);
@@ -633,6 +635,14 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         TRACE("sec_offset<%s>\n", wine_dbgstr_longlong(attr->u.lluvalue));
         break;
 
+    case DW_FORM_GNU_ref_alt:
+        FIXME("Unhandled FORM_GNU_ref_alt\n");
+        attr->u.uvalue = 0;
+        return FALSE;
+    case DW_FORM_GNU_strp_alt:
+        FIXME("Unhandled FORM_GNU_strp_alt\n");
+        attr->u.string = NULL;
+        return FALSE;
     default:
         FIXME("Unhandled attribute form %lx\n", abbrev_attr->form);
         break;
