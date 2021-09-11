@@ -3904,7 +3904,7 @@ static void process_pending_messages( HWND hdlg )
 static UINT dialog_run_message_loop( msi_dialog *dialog )
 {
     DWORD style;
-    HWND hwnd;
+    HWND hwnd, parent;
 
     if( uiThreadId != GetCurrentThreadId() )
         return SendMessageW( hMsiHiddenWindow, WM_MSI_DIALOG_CREATE, 0, (LPARAM) dialog );
@@ -3917,9 +3917,11 @@ static UINT dialog_run_message_loop( msi_dialog *dialog )
     if (dialog->parent == NULL && (dialog->attributes & msidbDialogAttributesMinimize))
         style |= WS_MINIMIZEBOX;
 
+    parent = dialog->parent ? dialog->parent->hwnd : 0;
+
     hwnd = CreateWindowW( L"MsiDialogCloseClass", dialog->name, style,
                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                     NULL, NULL, NULL, dialog );
+                     parent, NULL, NULL, dialog );
     if( !hwnd )
     {
         ERR("Failed to create dialog %s\n", debugstr_w( dialog->name ));
