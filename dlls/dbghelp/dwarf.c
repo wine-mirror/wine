@@ -1025,6 +1025,11 @@ static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
         FIXME("Unable to find back reference to type %lx\n", attr.u.uvalue);
         return ctx->symt_cache[sc_unknown];
     }
+    if (type == di)
+    {
+        FIXME("Reference to itself\n");
+        return ctx->symt_cache[sc_unknown];
+    }
     if (!type->symt)
     {
         /* load the debug info entity */
