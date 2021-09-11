@@ -509,7 +509,7 @@ static void dwarf2_swallow_attribute(dwarf2_traverse_context_t* ctx,
     ctx->data += step;
 }
 
-static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
+static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
                              const dwarf2_abbrev_entry_attr_t* abbrev_attr,
                              const unsigned char* data,
                              struct attribute* attr)
@@ -637,6 +637,7 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         FIXME("Unhandled attribute form %lx\n", abbrev_attr->form);
         break;
     }
+    return TRUE;
 }
 
 static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
@@ -655,8 +656,7 @@ static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
         {
             if (abbrev_attr->attribute == at)
             {
-                dwarf2_fill_attr(ctx, abbrev_attr, di->data[i], attr);
-                return TRUE;
+                return dwarf2_fill_attr(ctx, abbrev_attr, di->data[i], attr);
             }
             if ((abbrev_attr->attribute == DW_AT_abstract_origin ||
                  abbrev_attr->attribute == DW_AT_specification) &&
@@ -671,8 +671,8 @@ static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
             }
         }
         /* do we have either an abstract origin or a specification debug entry to look into ? */
-        if (!ref_abbrev_attr) break;
-        dwarf2_fill_attr(ctx, ref_abbrev_attr, di->data[refidx], attr);
+        if (!ref_abbrev_attr || !dwarf2_fill_attr(ctx, ref_abbrev_attr, di->data[refidx], attr))
+            break;
         if (!(di = sparse_array_find(&ctx->debug_info_table, attr->u.uvalue)))
             FIXME("Should have found the debug info entry\n");
     }
