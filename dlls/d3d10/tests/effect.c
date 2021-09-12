@@ -6638,6 +6638,117 @@ todo_wine
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#if 0
+float4 f4 = {1,2,3,4};
+float2 f2 = {1,2};
+float1 f1 = {1};
+int i = 10;
+int i2[2] = {9,12};
+float f = 0.2f;
+#endif
+static DWORD fx_test_default_variable_value[] =
+{
+    0x43425844, 0xe57b41f2, 0x98392802, 0xed3d94b4, 0xc4074c4f, 0x00000001, 0x00000248, 0x00000001,
+    0x00000024, 0x30315846, 0x0000021c, 0xfeff1001, 0x00000001, 0x00000006, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000110, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6f6c4724,
+    0x736c6162, 0x6f6c6600, 0x00347461, 0x0000000d, 0x00000001, 0x00000000, 0x00000010, 0x00000010,
+    0x00000010, 0x0000210a, 0x00003466, 0x003f8000, 0x00400000, 0x00404000, 0x66408000, 0x74616f6c,
+    0x00430032, 0x00010000, 0x00000000, 0x00080000, 0x00100000, 0x00080000, 0x110a0000, 0x32660000,
+    0x80000000, 0x0000003f, 0x6f6c6640, 0x00317461, 0x00000071, 0x00000001, 0x00000000, 0x00000004,
+    0x00000010, 0x00000004, 0x0000090a, 0x00003166, 0x693f8000, 0x9b00746e, 0x01000000, 0x00000000,
+    0x04000000, 0x10000000, 0x04000000, 0x11000000, 0x69000009, 0x00000a00, 0x00009b00, 0x00000100,
+    0x00000200, 0x00001400, 0x00001000, 0x00000800, 0x00091100, 0x00326900, 0x00000009, 0x0000000c,
+    0x616f6c66, 0x00e80074, 0x00010000, 0x00000000, 0x00040000, 0x00100000, 0x00040000, 0x09090000,
+    0x00660000, 0x3e4ccccd, 0x00000004, 0x00000040, 0x00000000, 0x00000006, 0xffffffff, 0x00000000,
+    0x00000030, 0x00000014, 0x00000000, 0x00000000, 0x00000033, 0x00000000, 0x00000000, 0x00000066,
+    0x0000004a, 0x00000000, 0x00000010, 0x00000069, 0x00000000, 0x00000000, 0x00000094, 0x00000078,
+    0x00000000, 0x00000018, 0x00000097, 0x00000000, 0x00000000, 0x000000bb, 0x0000009f, 0x00000000,
+    0x0000001c, 0x000000bd, 0x00000000, 0x00000000, 0x000000dd, 0x000000c1, 0x00000000, 0x00000020,
+    0x000000e0, 0x00000000, 0x00000000, 0x0000010a, 0x000000ee, 0x00000000, 0x00000034, 0x0000010c,
+    0x00000000, 0x00000000,
+};
+
+static void test_effect_default_variable_value(void)
+{
+    ID3D10EffectVectorVariable *vector;
+    ID3D10EffectScalarVariable *scalar;
+    float float_v[4], float_s;
+    ID3D10EffectVariable *v;
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    int int_v[2], int_s;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_default_variable_value, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
+
+    memset(float_v, 0, sizeof(float_v));
+    v = effect->lpVtbl->GetVariableByName(effect, "f4");
+    vector = v->lpVtbl->AsVector(v);
+    hr = vector->lpVtbl->GetFloatVector(vector, float_v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(float_v[0] == 1.0f && float_v[1] == 2.0f && float_v[2] == 3.0f && float_v[3] == 4.0f,
+            "Unexpected vector {%.8e,%.8e,%.8e,%.8e}\n", float_v[0], float_v[1], float_v[2], float_v[3]);
+
+    memset(float_v, 0, sizeof(float_v));
+    float_v[2] = float_v[3] = 5.0f;
+    v = effect->lpVtbl->GetVariableByName(effect, "f2");
+    vector = v->lpVtbl->AsVector(v);
+    hr = vector->lpVtbl->GetFloatVector(vector, float_v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(float_v[0] == 1.0f && float_v[1] == 2.0f && float_v[2] == 5.0f && float_v[3] == 5.0f,
+            "Unexpected vector {%.8e,%.8e,%.8e,%.8e}\n", float_v[0], float_v[1], float_v[2], float_v[3]);
+
+    memset(float_v, 0, sizeof(float_v));
+    float_v[1] = float_v[2] = float_v[3] = 5.0f;
+    v = effect->lpVtbl->GetVariableByName(effect, "f1");
+    vector = v->lpVtbl->AsVector(v);
+    hr = vector->lpVtbl->GetFloatVector(vector, float_v);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(float_v[0] == 1.0f && float_v[1] == 5.0f && float_v[2] == 5.0f && float_v[3] == 5.0f,
+            "Unexpected vector {%.8e,%.8e,%.8e,%.8e}\n", float_v[0], float_v[1], float_v[2], float_v[3]);
+
+    int_s = 0;
+    v = effect->lpVtbl->GetVariableByName(effect, "i");
+    scalar = v->lpVtbl->AsScalar(v);
+    hr = scalar->lpVtbl->GetInt(scalar, &int_s);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(int_s == 10, "Unexpected value %d.\n", int_s);
+
+    memset(int_v, 0, sizeof(int_v));
+    v = effect->lpVtbl->GetVariableByName(effect, "i2");
+    scalar = v->lpVtbl->AsScalar(v);
+    hr = scalar->lpVtbl->GetIntArray(scalar, int_v, 0, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(int_v[0] == 9 && int_v[1] == 12, "Unexpected vector {%d,%d}\n", int_v[0], int_v[1]);
+
+    float_s = 0.0f;
+    v = effect->lpVtbl->GetVariableByName(effect, "f");
+    scalar = v->lpVtbl->AsScalar(v);
+    hr = scalar->lpVtbl->GetFloat(scalar, &float_s);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(float_s == 0.2f, "Unexpected value %.8e.\n", float_s);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -6658,4 +6769,5 @@ START_TEST(effect)
     test_effect_shader_description();
     test_effect_shader_object();
     test_effect_pool();
+    test_effect_default_variable_value();
 }
