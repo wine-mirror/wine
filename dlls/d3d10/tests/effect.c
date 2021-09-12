@@ -5996,6 +5996,8 @@ static void test_effect_optimize(void)
 {
     D3D10_EFFECT_SHADER_DESC shaderdesc;
     ID3D10EffectShaderVariable *gs;
+    D3D10_TECHNIQUE_DESC tech_desc;
+    ID3D10EffectTechnique *tech;
     ID3D10EffectVariable *v;
     ID3D10Effect *effect;
     ID3D10Device *device;
@@ -6010,6 +6012,11 @@ static void test_effect_optimize(void)
 
     hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "Failed to create an effect.\n");
+
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    hr = tech->lpVtbl->GetDesc(tech, &tech_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(tech_desc.Name, "Render"), "Unexpected technique name %s.\n", tech_desc.Name);
 
     v = effect->lpVtbl->GetVariableByName(effect, "g_so");
 
@@ -6037,6 +6044,16 @@ static void test_effect_optimize(void)
     ok(!shaderdesc.SODecl, "Unexpected stream output declaration %p.\n", shaderdesc.SODecl);
     ok(!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
     ok(!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
+
+    hr = tech->lpVtbl->GetDesc(tech, &tech_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!tech_desc.Name, "Unexpected technique name %p.\n", tech_desc.Name);
+
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    ok(tech->lpVtbl->IsValid(tech), "Unexpected valid technique.\n");
+
+    tech = effect->lpVtbl->GetTechniqueByName(effect, "Render");
+    ok(!tech->lpVtbl->IsValid(tech), "Unexpected valid technique.\n");
 
     effect->lpVtbl->Release(effect);
 

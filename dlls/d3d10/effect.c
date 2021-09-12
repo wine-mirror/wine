@@ -3435,6 +3435,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
         v->u.shader.stream_output_declaration = NULL;
     }
 
+    for (i = 0; i < effect->technique_count; ++i)
+    {
+        heap_free(effect->techniques[i].name);
+        effect->techniques[i].name = NULL;
+    }
+
     return S_OK;
 }
 
