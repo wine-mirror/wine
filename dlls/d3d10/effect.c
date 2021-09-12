@@ -29,9 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
-#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
-#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
-#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
 
 #define D3D10_FX10_TYPE_COLUMN_SHIFT    11
 #define D3D10_FX10_TYPE_COLUMN_MASK     (0x7 << D3D10_FX10_TYPE_COLUMN_SHIFT)
