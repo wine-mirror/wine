@@ -729,7 +729,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
         todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
-        todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+        ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
     else
     {
@@ -753,7 +753,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+        ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
     }
     else
     {
@@ -781,7 +781,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
         todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
-        todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+        ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
     else
     {
@@ -813,7 +813,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
         todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(file, 0);
-        todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+        ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
     else
     {
@@ -849,7 +849,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
             todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
             ret = WaitForSingleObject(event, 0);
-            todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+            ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
         }
         else
         {
@@ -932,8 +932,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = SleepEx(0, TRUE);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(!ret, "got %d\n", ret);
-        todo_wine ok(!got_return_status_apc, "got %u APC calls\n", got_return_status_apc);
+        ok(!ret, "got %d\n", ret);
+        ok(!got_return_status_apc, "got %u APC calls\n", got_return_status_apc);
     }
     else
     {

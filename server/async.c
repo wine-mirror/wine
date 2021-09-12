@@ -465,25 +465,32 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         async->terminated = 1;
         if (async->iosb) async->iosb->status = status;
 
-        if (async->data.apc)
+        /* don't signal completion if the async failed synchronously
+         * this can happen if the initial status was unknown (i.e. for device files)
+         * note that we check the IOSB status here, not the initial status */
+        if (async->pending || !NT_ERROR( status ))
         {
-            apc_call_t data;
-            memset( &data, 0, sizeof(data) );
-            data.type         = APC_USER;
-            data.user.func    = async->data.apc;
-            data.user.args[0] = async->data.apc_context;
-            data.user.args[1] = async->data.iosb;
-            data.user.args[2] = 0;
-            thread_queue_apc( NULL, async->thread, NULL, &data );
-        }
-        else if (async->data.apc_context && (async->pending ||
-                 !(async->comp_flags & FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)))
-        {
-            add_async_completion( async, async->data.apc_context, status, total );
+            if (async->data.apc)
+            {
+                apc_call_t data;
+                memset( &data, 0, sizeof(data) );
+                data.type         = APC_USER;
+                data.user.func    = async->data.apc;
+                data.user.args[0] = async->data.apc_context;
+                data.user.args[1] = async->data.iosb;
+                data.user.args[2] = 0;
+                thread_queue_apc( NULL, async->thread, NULL, &data );
+            }
+            else if (async->data.apc_context && (async->pending ||
+                     !(async->comp_flags & FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)))
+            {
+                add_async_completion( async, async->data.apc_context, status, total );
+            }
+
+            if (async->event) set_event( async->event );
+            else if (async->fd) set_fd_signaled( async->fd, 1 );
         }
 
-        if (async->event) set_event( async->event );
-        else if (async->fd) set_fd_signaled( async->fd, 1 );
         if (!async->signaled)
         {
             async->signaled = 1;
