@@ -159,6 +159,7 @@ static void nsiproxy_get_parameter( IRP *irp )
 static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    NTSTATUS status;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -185,8 +186,9 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
     }
 
+    status = irp->IoStatus.u.Status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 static int add_device( DRIVER_OBJECT *driver )
