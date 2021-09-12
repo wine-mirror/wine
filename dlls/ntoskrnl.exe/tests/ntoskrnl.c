@@ -882,8 +882,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         }
         else
         {
-            todo_wine_if (params->ret_status != STATUS_PENDING)
-                ok(!ret, "got %#x\n", ret);
+            ok(!ret, "got %#x\n", ret);
         }
         if (!ret)
         {

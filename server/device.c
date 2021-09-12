@@ -954,7 +954,7 @@ DECL_HANDLER(get_next_device_request)
 
         if (irp->async)
         {
-            if (req->status == STATUS_PENDING)
+            if (req->pending)
                 set_async_pending( irp->async );
             async_set_initial_status( irp->async, req->status );
 

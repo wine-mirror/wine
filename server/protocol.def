@@ -3368,6 +3368,7 @@ struct handle_info
     obj_handle_t prev;            /* handle to the previous irp */
     unsigned int status;          /* status of the previous irp */
     client_ptr_t user_ptr;        /* user pointer of the previous irp */
+    int          pending;         /* was the previous irp marked pending? */
     unsigned int iosb_status;     /* IOSB status of the previous irp */
     data_size_t  result;          /* IOSB result of the previous irp */
     VARARG(data,bytes);           /* output data of the previous irp */

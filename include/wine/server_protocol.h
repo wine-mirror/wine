@@ -4801,9 +4801,11 @@ struct get_next_device_request_request
     obj_handle_t prev;
     unsigned int status;
     client_ptr_t user_ptr;
+    int          pending;
     unsigned int iosb_status;
     data_size_t  result;
     /* VARARG(data,bytes); */
+    char __pad_44[4];
 };
 struct get_next_device_request_reply
 {
@@ -6255,7 +6257,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 728
+#define SERVER_PROTOCOL_VERSION 729
 
 /* ### protocol_version end ### */
 

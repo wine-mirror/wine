@@ -949,10 +949,15 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                         out_buff = NULL;  /* do not transfer back input buffer */
 
                     req->prev        = wine_server_obj_handle( context.irp_data->handle );
+                    req->pending     = irp->PendingReturned;
                     req->iosb_status = irp->IoStatus.u.Status;
                     req->result      = irp->IoStatus.Information;
                     if (!NT_ERROR(irp->IoStatus.u.Status) && out_buff)
                         wine_server_add_data( req, out_buff, irp->IoStatus.Information );
+                }
+                else
+                {
+                    req->pending     = 1;
                 }
             }
             else
