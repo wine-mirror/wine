@@ -663,19 +663,16 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     size = 0xdeadf00d;
     SetLastError(0xdeadf00d);
     ret = DeviceIoControl(device, ioctl, params, sizeof(*params), buffer, sizeof(buffer), &size, NULL);
-    todo_wine_if ((params->iosb_status != STATUS_PENDING && NT_SUCCESS(expect_status) != NT_SUCCESS(params->iosb_status))
-            || (params->iosb_status == STATUS_PENDING && NT_SUCCESS(expect_status)))
+    todo_wine_if (params->ret_status == STATUS_PENDING && params->iosb_status == STATUS_PENDING)
         ok(ret == NT_SUCCESS(expect_status), "got %d\n", ret);
     if (NT_SUCCESS(expect_status))
     {
-        todo_wine_if (!NT_SUCCESS(params->iosb_status) || params->iosb_status == STATUS_PENDING)
+        todo_wine_if (params->ret_status == STATUS_PENDING && params->iosb_status == STATUS_PENDING)
             ok(GetLastError() == 0xdeadf00d, "got error %u\n", GetLastError());
     }
     else
     {
-        todo_wine_if (RtlNtStatusToDosError(expect_status) != RtlNtStatusToDosError(params->iosb_status)
-                || NT_SUCCESS(params->iosb_status))
-            ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %u\n", GetLastError());
+        ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %u\n", GetLastError());
     }
     if (NT_ERROR(expect_status))
         todo_wine ok(size == 0xdeadf00d, "got size %u\n", size);
@@ -690,8 +687,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     io.Information = 0xdeadf00d;
     ret = NtDeviceIoControlFile(device, NULL, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
-    todo_wine_if (params->ret_status != params->iosb_status && params->ret_status != STATUS_PENDING)
-        ok(ret == expect_status, "got %#x\n", ret);
+    ok(ret == expect_status, "got %#x\n", ret);
     if (NT_ERROR(params->iosb_status))
     {
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
@@ -725,10 +721,9 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     io.Information = 0xdeadf00d;
     ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
-    todo_wine_if (params->ret_status != params->iosb_status)
-        ok(ret == params->ret_status
-                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
-                "got %#x\n", ret);
+    ok(ret == params->ret_status
+            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
@@ -778,10 +773,9 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     io.Information = 0xdeadf00d;
     ret = NtDeviceIoControlFile(file, event, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
-    todo_wine_if (params->ret_status != params->iosb_status)
-        ok(ret == params->ret_status
-                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
-                "got %#x\n", ret);
+    ok(ret == params->ret_status
+            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
@@ -811,10 +805,9 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     io.Information = 0xdeadf00d;
     ret = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
-    todo_wine_if (params->ret_status != params->iosb_status)
-        ok(ret == params->ret_status
-                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
-                "got %#x\n", ret);
+    ok(ret == params->ret_status
+            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
@@ -848,10 +841,9 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         io.Information = 0xdeadf00d;
         ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
                 ioctl, params, sizeof(*params), buffer, sizeof(buffer));
-        todo_wine_if (params->ret_status != params->iosb_status)
-            ok(ret == params->ret_status
-                    || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
-                    "got %#x\n", ret);
+        ok(ret == params->ret_status
+                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                "got %#x\n", ret);
         if (!params->pending && NT_ERROR(params->iosb_status))
         {
             todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
@@ -890,14 +882,16 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         }
         else
         {
-            todo_wine ok(!ret, "got %#x\n", ret);
+            todo_wine_if (params->ret_status != STATUS_PENDING)
+                ok(!ret, "got %#x\n", ret);
         }
         if (!ret)
         {
             ok(key == 123, "got key %Iu\n", key);
             ok(value == 456, "got value %Iu\n", value);
             ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
-            ok(io.Information == 3, "got information %Iu\n", io.Information);
+            todo_wine_if (params->iosb_status == STATUS_PENDING)
+                ok(io.Information == 3, "got information %Iu\n", io.Information);
         }
     }
 
@@ -919,8 +913,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     io.Information = 0xdeadf00d;
     ret = NtDeviceIoControlFile(file, NULL, return_status_apc, (void *)456, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
-    todo_wine_if (params->ret_status != params->iosb_status)
-        ok(ret == params->ret_status, "got %#x\n", ret);
+    ok(ret == params->ret_status, "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
         todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);

@@ -952,18 +952,31 @@ DECL_HANDLER(get_next_device_request)
         irp = manager->current_call;
         irp->user_ptr = req->user_ptr;
 
-        if (req->prev)
+        if (irp->async)
         {
-            set_irp_result( irp, req->status, get_req_data(), get_req_data_size(), req->result );
-            close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
+            if (req->status == STATUS_PENDING)
+                set_async_pending( irp->async );
+            async_set_initial_status( irp->async, req->status );
+
+            if (req->prev)
+            {
+                set_irp_result( irp, req->iosb_status, get_req_data(), get_req_data_size(), req->result );
+                close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
+            }
+            else
+            {
+                async_wake_obj( irp->async );
+                if (irp->canceled)
+                {
+                    /* if it was canceled during dispatch, we couldn't queue cancel
+                     * call without client pointer, so we need to do it now */
+                    cancel_irp_call( irp );
+                }
+            }
         }
-        else if (irp->async)
+        else
         {
-            set_async_pending( irp->async );
-            if (irp->canceled)
-                /* if it was canceled during dispatch, we couldn't queue cancel call without client pointer,
-                 * so we need to do it now */
-                cancel_irp_call( irp );
+            set_irp_result( irp, req->status, NULL, 0, 0 );
         }
 
         free_irp_params( irp );

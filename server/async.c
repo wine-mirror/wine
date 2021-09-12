@@ -48,6 +48,7 @@ struct async
     async_data_t         data;            /* data for async I/O call */
     struct iosb         *iosb;            /* I/O status block */
     obj_handle_t         wait_handle;     /* pre-allocated wait handle */
+    unsigned int         initial_status;  /* status returned from initial request */
     unsigned int         signaled :1;
     unsigned int         pending :1;      /* request successfully queued, but pending */
     unsigned int         direct_result :1;/* a flag if we're passing result directly from request instead of APC  */
@@ -125,7 +126,10 @@ static void async_satisfied( struct object *obj, struct wait_queue_entry *entry 
         async->direct_result = 0;
     }
 
-    set_wait_status( entry, async->iosb->status );
+    if (async->initial_status == STATUS_PENDING && async->blocking)
+        set_wait_status( entry, async->iosb->status );
+    else
+        set_wait_status( entry, async->initial_status );
 
     /* close wait handle here to avoid extra server round trip */
     if (async->wait_handle)
@@ -255,6 +259,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->timeout       = NULL;
     async->queue         = NULL;
     async->fd            = (struct fd *)grab_object( fd );
+    async->initial_status = STATUS_PENDING;
     async->signaled      = 0;
     async->pending       = 1;
     async->wait_handle   = 0;
@@ -285,17 +290,31 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     return async;
 }
 
+/* set the initial status of an async whose status was previously unknown
+ * the initial status may be STATUS_PENDING */
+void async_set_initial_status( struct async *async, unsigned int status )
+{
+    assert( async->unknown_status );
+    if (!async->terminated)
+    {
+        async->initial_status = status;
+        async->unknown_status = 0;
+    }
+}
+
 void set_async_pending( struct async *async )
 {
     if (!async->terminated)
-    {
         async->pending = 1;
-        async->unknown_status = 0;
-        if (!async->blocking && !async->signaled)
-        {
-            async->signaled = 1;
-            wake_up( &async->obj, 0 );
-        }
+}
+
+void async_wake_obj( struct async *async )
+{
+    assert( !async->unknown_status );
+    if (!async->blocking)
+    {
+        async->signaled = 1;
+        wake_up( &async->obj, 0 );
     }
 }
 
@@ -310,6 +329,8 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
         set_error( STATUS_PENDING );
         return async->wait_handle;
     }
+
+    async->initial_status = get_error();
 
     if (!async->pending && NT_ERROR( get_error() ))
     {
@@ -348,6 +369,7 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
             async->wait_handle = 0;
         }
     }
+    async->initial_status = async->iosb->status;
     set_error( async->iosb->status );
     return async->wait_handle;
 }

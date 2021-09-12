@@ -492,6 +492,7 @@ static NTSTATUS dispatch_irp( DEVICE_OBJECT *device, IRP *irp, struct dispatch_c
 {
     struct irp_data *irp_data;
     LARGE_INTEGER count;
+    NTSTATUS status;
 
     if (!(irp_data = malloc( sizeof(*irp_data) )))
         return STATUS_NO_MEMORY;
@@ -508,11 +509,14 @@ static NTSTATUS dispatch_irp( DEVICE_OBJECT *device, IRP *irp, struct dispatch_c
 
     device->CurrentIrp = irp;
     KeEnterCriticalRegion();
-    IoCallDriver( device, irp );
+    status = IoCallDriver( device, irp );
     KeLeaveCriticalRegion();
     device->CurrentIrp = NULL;
 
-    return STATUS_SUCCESS;
+    if (status != STATUS_PENDING && !irp_data->complete)
+        ERR( "dispatch routine returned %#x but didn't complete the IRP\n", status );
+
+    return status;
 }
 
 /* process a create request for a given file */
@@ -934,6 +938,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 IRP *irp = context.irp_data->irp;
 
                 req->user_ptr = wine_server_client_ptr( irp );
+                req->status   = status;
 
                 if (context.irp_data->complete)
                 {
@@ -943,18 +948,11 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                     if (irp->Flags & IRP_WRITE_OPERATION)
                         out_buff = NULL;  /* do not transfer back input buffer */
 
-                    req->prev      = wine_server_obj_handle( context.irp_data->handle );
-                    req->status    = irp->IoStatus.u.Status;
-                    req->result    = irp->IoStatus.Information;
+                    req->prev        = wine_server_obj_handle( context.irp_data->handle );
+                    req->iosb_status = irp->IoStatus.u.Status;
+                    req->result      = irp->IoStatus.Information;
                     if (!NT_ERROR(irp->IoStatus.u.Status) && out_buff)
                         wine_server_add_data( req, out_buff, irp->IoStatus.Information );
-                }
-                else
-                {
-                    if (status == STATUS_SUCCESS)
-                        status = STATUS_PENDING;
-
-                    req->status    = status;
                 }
             }
             else
