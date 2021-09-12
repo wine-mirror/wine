@@ -338,6 +338,7 @@ SOURCES = \
 	icftypes.idl \
 	icm.h \
 	icmpapi.h \
+	icodecapi.idl \
 	idispids.h \
 	ieautomation.idl \
 	iextag.idl \
