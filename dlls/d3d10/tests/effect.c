@@ -5998,7 +5998,9 @@ static void test_effect_optimize(void)
     ID3D10EffectShaderVariable *gs;
     D3D10_TECHNIQUE_DESC tech_desc;
     ID3D10EffectTechnique *tech;
+    D3D10_PASS_DESC pass_desc;
     ID3D10EffectVariable *v;
+    ID3D10EffectPass *pass;
     ID3D10Effect *effect;
     ID3D10Device *device;
     ULONG refcount;
@@ -6017,6 +6019,11 @@ static void test_effect_optimize(void)
     hr = tech->lpVtbl->GetDesc(tech, &tech_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(tech_desc.Name, "Render"), "Unexpected technique name %s.\n", tech_desc.Name);
+
+    pass = tech->lpVtbl->GetPassByIndex(tech, 0);
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(pass_desc.Name, "P0"), "Unexpected pass name %s.\n", pass_desc.Name);
 
     v = effect->lpVtbl->GetVariableByName(effect, "g_so");
 
@@ -6048,6 +6055,13 @@ static void test_effect_optimize(void)
     hr = tech->lpVtbl->GetDesc(tech, &tech_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!tech_desc.Name, "Unexpected technique name %p.\n", tech_desc.Name);
+
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!pass_desc.Name, "Unexpected pass name %p.\n", pass_desc.Name);
+
+    pass = tech->lpVtbl->GetPassByName(tech, "P0");
+    ok(!pass->lpVtbl->IsValid(pass), "Unexpected valid pass.\n");
 
     tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
     ok(tech->lpVtbl->IsValid(tech), "Unexpected valid technique.\n");

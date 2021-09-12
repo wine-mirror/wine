@@ -3413,7 +3413,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
 {
     struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
     struct d3d10_effect_variable *v;
-    unsigned int i;
+    unsigned int i, j;
 
     FIXME("iface %p semi-stub!\n", iface);
 
@@ -3437,6 +3437,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
 
     for (i = 0; i < effect->technique_count; ++i)
     {
+        for (j = 0; j < effect->techniques[i].pass_count; ++j)
+        {
+            heap_free(effect->techniques[i].passes[j].name);
+            effect->techniques[i].passes[j].name = NULL;
+        }
+
         heap_free(effect->techniques[i].name);
         effect->techniques[i].name = NULL;
     }
