@@ -1035,6 +1035,65 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
     set_hid_expect( file, NULL, 0 );
 }
 
+static void test_write_file( HANDLE file, int report_id, ULONG report_len )
+{
+    struct hid_expect expect =
+    {
+        .code = IOCTL_HID_WRITE_REPORT,
+        .report_id = report_id,
+        .todo_report_len = report_id == 0,
+        .report_len = report_len - (report_id ? 0 : 1),
+        .report_buf = {report_id ? report_id : 0xcd,0xcd,0xcd,0xcd,0xcd},
+        .ret_length = 3,
+        .ret_status = STATUS_SUCCESS,
+    };
+
+    char report[200];
+    ULONG length;
+    BOOL ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = WriteFile( file, report, 0, &length, NULL );
+    ok( !ret, "WriteFile succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "WriteFile returned error %u\n", GetLastError() );
+    ok( length == 0, "WriteFile returned %x\n", length );
+    SetLastError( 0xdeadbeef );
+    ret = WriteFile( file, report, report_len - 1, &length, NULL );
+    ok( !ret, "WriteFile succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_USER_BUFFER,
+        "WriteFile returned error %u\n", GetLastError() );
+    ok( length == 0, "WriteFile returned %x\n", length );
+
+    set_hid_expect( file, &expect, sizeof(expect) );
+
+    memset( report, 0xcd, sizeof(report) );
+    report[0] = 0xa5;
+    SetLastError( 0xdeadbeef );
+    ret = WriteFile( file, report, report_len * 2, &length, NULL );
+    if (report_id || broken( !ret ) /* w7u */)
+    {
+        ok( !ret, "WriteFile succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "WriteFile returned error %u\n", GetLastError() );
+        ok( length == 0, "WriteFile wrote %u\n", length );
+        SetLastError( 0xdeadbeef );
+        report[0] = report_id;
+        ret = WriteFile( file, report, report_len, &length, NULL );
+    }
+
+    if (report_id)
+    {
+        ok( ret, "WriteFile failed, last error %u\n", GetLastError() );
+        ok( length == 2, "WriteFile wrote %u\n", length );
+    }
+    else
+    {
+        ok( ret, "WriteFile failed, last error %u\n", GetLastError() );
+        ok( length == 3, "WriteFile wrote %u\n", length );
+    }
+
+    set_hid_expect( file, NULL, 0 );
+}
+
 static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polled, const HIDP_CAPS *expect_caps )
 {
     const HIDP_BUTTON_CAPS expect_button_caps[] =
@@ -1924,43 +1983,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     test_hidp_get_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
     test_hidp_set_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
     test_hidp_set_output( file, report_id, caps.OutputReportByteLength, preparsed_data );
-
-    SetLastError( 0xdeadbeef );
-    ret = WriteFile( file, report, 0, &value, NULL );
-    ok( !ret, "WriteFile succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "WriteFile returned error %u\n", GetLastError() );
-    ok( value == 0, "WriteFile returned %x\n", value );
-    SetLastError( 0xdeadbeef );
-    ret = WriteFile( file, report, caps.OutputReportByteLength - 1, &value, NULL );
-    ok( !ret, "WriteFile succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_USER_BUFFER,
-        "WriteFile returned error %u\n", GetLastError() );
-    ok( value == 0, "WriteFile returned %x\n", value );
-
-    memset( report, 0xcd, sizeof(report) );
-    report[0] = 0xa5;
-    SetLastError( 0xdeadbeef );
-    ret = WriteFile( file, report, caps.OutputReportByteLength * 2, &value, NULL );
-    if (report_id || broken( !ret ) /* w7u */)
-    {
-        ok( !ret, "WriteFile succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "WriteFile returned error %u\n", GetLastError() );
-        ok( value == 0, "WriteFile wrote %u\n", value );
-        SetLastError( 0xdeadbeef );
-        report[0] = report_id;
-        ret = WriteFile( file, report, caps.OutputReportByteLength, &value, NULL );
-    }
-
-    if (report_id)
-    {
-        ok( ret, "WriteFile failed, last error %u\n", GetLastError() );
-        ok( value == 2, "WriteFile wrote %u\n", value );
-    }
-    else
-    {
-        ok( ret, "WriteFile failed, last error %u\n", GetLastError() );
-        ok( value == 3, "WriteFile wrote %u\n", value );
-    }
+    test_write_file( file, report_id, caps.OutputReportByteLength );
 
     memset( report, 0xcd, sizeof(report) );
     SetLastError( 0xdeadbeef );
