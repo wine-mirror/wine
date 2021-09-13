@@ -187,6 +187,7 @@ typedef struct
 
     /* entry points */
     DWORD (WINAPI *pDrvDeviceCapabilities)(HANDLE, const WCHAR *, WORD, void *, const DEVMODEW *);
+    INT   (WINAPI *pDrvDocumentProperties)(HWND, const WCHAR *, DEVMODEW *, DEVMODEW *, DWORD);
 
     WCHAR name[1];
 } config_module_t;
@@ -623,6 +624,7 @@ static config_module_t *get_config_module(const WCHAR *device, BOOL grab)
     ret->ref = 2; /* one for config_module and one for the caller */
     ret->module = driver_module;
     ret->pDrvDeviceCapabilities = (void *)GetProcAddress(driver_module, "DrvDeviceCapabilities");
+    ret->pDrvDocumentProperties = (void *)GetProcAddress(driver_module, "DrvDocumentProperties");
     lstrcpyW(ret->name, device);
 
     wine_rb_put(&config_modules, ret->name, &ret->entry);
@@ -1878,36 +1880,6 @@ static job_t *get_job(HANDLE hprn, DWORD JobId)
     return NULL;
 }
 
-/***********************************************************
- *      DEVMODEcpyAtoW
- */
-static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
-{
-    BOOL Formname;
-    ptrdiff_t off_formname = (const char *)dmA->dmFormName - (const char *)dmA;
-    DWORD size;
-
-    Formname = (dmA->dmSize > off_formname);
-    size = dmA->dmSize + CCHDEVICENAME + (Formname ? CCHFORMNAME : 0);
-    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dmA->dmDeviceName, -1,
-                        dmW->dmDeviceName, CCHDEVICENAME);
-    if(!Formname) {
-      memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
-	     dmA->dmSize - CCHDEVICENAME);
-    } else {
-      memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
-	     off_formname - CCHDEVICENAME);
-      MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dmA->dmFormName, -1,
-                          dmW->dmFormName, CCHFORMNAME);
-      memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize -
-	     (off_formname + CCHFORMNAME));
-    }
-    dmW->dmSize = size;
-    memcpy((char *)dmW + dmW->dmSize, (const char *)dmA + dmA->dmSize,
-	   dmA->dmDriverExtra);
-    return dmW;
-}
-
 /******************************************************************
  * convert_printerinfo_W_to_A [internal]
  *
@@ -2587,39 +2559,36 @@ end:
 
 /*****************************************************************************
  *          DocumentPropertiesW (WINSPOOL.@)
- *
- * FIXME: implement DocumentPropertiesA via DocumentPropertiesW, not vice versa
  */
 LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 				LPWSTR pDeviceName,
 				LPDEVMODEW pDevModeOutput,
 				LPDEVMODEW pDevModeInput, DWORD fMode)
 {
-
-    LPSTR pDeviceNameA = strdupWtoA(pDeviceName);
-    LPDEVMODEA pDevModeInputA;
-    LPDEVMODEA pDevModeOutputA = NULL;
+    config_module_t *config = NULL;
+    const WCHAR *device = NULL;
     LONG ret;
 
     TRACE("(%p,%p,%s,%p,%p,%d)\n",
-          hWnd,hPrinter,debugstr_w(pDeviceName),pDevModeOutput,pDevModeInput,
-	  fMode);
-    if(pDevModeOutput) {
-        ret = DocumentPropertiesA(hWnd, hPrinter, pDeviceNameA, NULL, NULL, 0);
-	if(ret < 0) return ret;
-	pDevModeOutputA = HeapAlloc(GetProcessHeap(), 0, ret);
+          hWnd, hPrinter, debugstr_w(pDeviceName), pDevModeOutput, pDevModeInput, fMode);
+
+    device = pDeviceName && pDeviceName[0] ? pDeviceName : get_opened_printer_name(hPrinter);
+    if (!device) {
+        ERR("no device name\n");
+        return -1;
     }
-    pDevModeInputA = (fMode & DM_IN_BUFFER) ? DEVMODEdupWtoA(pDevModeInput) : NULL;
-    ret = DocumentPropertiesA(hWnd, hPrinter, pDeviceNameA, pDevModeOutputA,
-			      pDevModeInputA, fMode);
-    if(pDevModeOutput) {
-        DEVMODEcpyAtoW(pDevModeOutput, pDevModeOutputA);
-	HeapFree(GetProcessHeap(),0,pDevModeOutputA);
+
+    config = get_config_module(device, TRUE);
+    if (!config) {
+        ERR("Could not load config module for %s\n", debugstr_w(device));
+        return -1;
     }
-    if(fMode == 0 && ret > 0)
-        ret += (CCHDEVICENAME + CCHFORMNAME);
-    HeapFree(GetProcessHeap(),0,pDevModeInputA);
-    HeapFree(GetProcessHeap(),0,pDeviceNameA);
+
+    /* FIXME: This uses Wine-specific config file entry point.
+     * We should use DrvDevicePropertySheets instead (requires CPSUI support first).
+     */
+    ret = config->pDrvDocumentProperties(hWnd, device, pDevModeOutput, pDevModeInput, fMode);
+    release_config_module(config);
     return ret;
 }
 
