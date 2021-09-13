@@ -71,13 +71,7 @@ static NTSTATUS mouse_get_report_descriptor(struct unix_device *iface, BYTE *buf
 
 static NTSTATUS mouse_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','m','o','u','s','e',0};
-    if (index != HID_STRING_ID_IPRODUCT)
-        return STATUS_NOT_IMPLEMENTED;
-    if (length < ARRAY_SIZE(nameW))
-        return STATUS_BUFFER_TOO_SMALL;
-    lstrcpyW(buffer, nameW);
-    return STATUS_SUCCESS;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static void mouse_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -120,6 +114,7 @@ static const struct device_desc mouse_device_desc =
     .input = -1,
     .serial = {'0','0','0','0',0},
     .manufacturer = {"The Wine Project"},
+    .product = {"Wine HID mouse"},
 };
 static struct unix_device mouse_device = {.vtbl = &mouse_vtbl};
 
@@ -165,13 +160,7 @@ static NTSTATUS keyboard_get_report_descriptor(struct unix_device *iface, BYTE *
 
 static NTSTATUS keyboard_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','k','e','y','b','o','a','r','d',0};
-    if (index != HID_STRING_ID_IPRODUCT)
-        return STATUS_NOT_IMPLEMENTED;
-    if (length < ARRAY_SIZE(nameW))
-        return STATUS_BUFFER_TOO_SMALL;
-    lstrcpyW(buffer, nameW);
-    return STATUS_SUCCESS;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static void keyboard_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -214,6 +203,7 @@ static const struct device_desc keyboard_device_desc =
     .input = -1,
     .serial = {'0','0','0','0',0},
     .manufacturer = {"The Wine Project"},
+    .product = {"Wine HID keyboard"},
 };
 static struct unix_device keyboard_device = {.vtbl = &keyboard_vtbl};
 

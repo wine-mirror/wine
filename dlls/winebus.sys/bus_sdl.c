@@ -517,17 +517,10 @@ static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE 
 
 static NTSTATUS sdl_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct platform_private *ext = impl_from_unix_device(iface);
     const char* str = NULL;
 
     switch (index)
     {
-        case HID_STRING_ID_IPRODUCT:
-            if (ext->sdl_controller)
-                str = pSDL_GameControllerName(ext->sdl_controller);
-            else
-                str = pSDL_JoystickName(ext->sdl_joystick);
-            break;
         case HID_STRING_ID_ISERIALNUMBER:
             str = "000000";
             break;
@@ -754,6 +747,9 @@ static void sdl_add_device(unsigned int index)
 
     if (options.map_controllers && pSDL_IsGameController(index))
         controller = pSDL_GameControllerOpen(index);
+
+    if (controller) lstrcpynA(desc.product, pSDL_GameControllerName(controller), sizeof(desc.product));
+    else lstrcpynA(desc.product, pSDL_JoystickName(joystick), sizeof(desc.product));
 
     id = pSDL_JoystickInstanceID(joystick);
 

@@ -44,6 +44,7 @@ struct device_desc
     BOOL is_gamepad;
 
     char manufacturer[MAX_PATH];
+    char product[MAX_PATH];
 };
 
 struct sdl_bus_options

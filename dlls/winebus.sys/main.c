@@ -112,6 +112,7 @@ struct device_extension
     DWORD index;
 
     WCHAR manufacturer[MAX_PATH];
+    WCHAR product[MAX_PATH];
 
     BYTE *last_report;
     DWORD last_report_size;
@@ -367,6 +368,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
     ext->unix_device        = unix_device;
 
     MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.manufacturer, -1, ext->manufacturer, MAX_PATH);
+    MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.product, -1, ext->product, MAX_PATH);
 
     InitializeListHead(&ext->irp_queue);
     InitializeCriticalSection(&ext->cs);
@@ -830,6 +832,11 @@ static NTSTATUS hid_get_device_string(DEVICE_OBJECT *device, DWORD index, WCHAR 
         len = (strlenW(ext->manufacturer) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
         else memcpy(buffer, ext->manufacturer, len);
+        return STATUS_SUCCESS;
+    case HID_STRING_ID_IPRODUCT:
+        len = (strlenW(ext->product) + 1) * sizeof(WCHAR);
+        if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
+        else memcpy(buffer, ext->product, len);
         return STATUS_SUCCESS;
     }
 
