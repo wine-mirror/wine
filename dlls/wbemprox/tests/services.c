@@ -247,11 +247,50 @@ todo_wine
     IWbemContext_Release( context );
 }
 
+static void test_namespaces(void)
+{
+    static const struct
+    {
+        const WCHAR *path;
+        BOOL broken;
+    }
+    tests[] =
+    {
+        {L"ROOT\\CIMV2"},
+        {L"ROOT\\Microsoft\\Windows\\Storage", TRUE /* Before Win8. */},
+    };
+    IWbemLocator *locator;
+    IWbemServices *services;
+    unsigned int i;
+    BSTR resource;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (void **)&locator );
+    if (hr != S_OK)
+    {
+        win_skip( "can't create instance of WbemLocator.\n" );
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE( tests ); i++)
+    {
+        resource = SysAllocString( tests[i].path );
+        hr = IWbemLocator_ConnectServer( locator, resource, NULL, NULL, NULL, 0, NULL, NULL, &services );
+        ok( hr == S_OK || broken( tests[i].broken && hr == WBEM_E_INVALID_NAMESPACE ), "%u: got %08x\n", i, hr );
+        SysFreeString( resource );
+        if (hr == S_OK)
+            IWbemServices_Release( services );
+    }
+
+    IWbemLocator_Release( locator );
+}
+
 START_TEST(services)
 {
     CoInitialize( NULL );
     test_IClientSecurity();
     test_IWbemLocator();
     test_IWbemContext();
+    test_namespaces();
     CoUninitialize();
 }
