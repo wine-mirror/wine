@@ -2454,11 +2454,16 @@ int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
         LPWSTR p;
 
         lstrcpyW(lpwstrTemp, lpszTemp);
-        p = PathFindNextComponentW(lpwstrTemp);
-
-        if (!p) break; /* end of path */
-
-        *p = 0;
+        if (lpszTemp == lpstrPathAndFile && (p = PathSkipRootW(lpwstrTemp)))
+        {
+            *p = 0;
+        }
+        else
+        {
+            p = PathFindNextComponentW(lpwstrTemp);
+            if (!p) break; /* end of path */
+            *p = 0;
+        }
         lpszTemp = lpszTemp + lstrlenW(lpwstrTemp);
 
         /* There are no wildcards when OFN_NOVALIDATE is set */
