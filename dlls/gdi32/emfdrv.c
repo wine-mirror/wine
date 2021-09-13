@@ -461,13 +461,11 @@ static const struct gdi_dc_funcs emfdrv_driver =
     NULL,                            /* pCreateDC */
     EMFDRV_DeleteDC,                 /* pDeleteDC */
     NULL,                            /* pDeleteObject */
-    NULL,                            /* pDeviceCapabilities */
     EMFDRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
     NULL,                            /* pEndPath */
     NULL,                            /* pEnumFonts */
-    NULL,                            /* pExtDeviceMode */
     NULL,                            /* pExtEscape */
     NULL,                            /* pExtFloodFill */
     EMFDRV_ExtTextOut,               /* pExtTextOut */

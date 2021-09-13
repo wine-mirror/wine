@@ -356,13 +356,11 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_CreateDC,                    /* pCreateDC */
     X11DRV_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
     X11DRV_Ellipse,                     /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtDeviceMode */
     X11DRV_ExtEscape,                   /* pExtEscape */
     X11DRV_ExtFloodFill,                /* pExtFloodFill */
     NULL,                               /* pExtTextOut */

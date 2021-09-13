@@ -297,13 +297,11 @@ static const struct gdi_dc_funcs android_drv_funcs =
     ANDROID_CreateDC,                   /* pCreateDC */
     ANDROID_DeleteDC,                   /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
     NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtTextOut */

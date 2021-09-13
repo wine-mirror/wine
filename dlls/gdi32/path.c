@@ -2040,13 +2040,11 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_CreateDC,                   /* pCreateDC */
     pathdrv_DeleteDC,                   /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
     pathdrv_Ellipse,                    /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     pathdrv_EndPath,                    /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     pathdrv_ExtTextOut,                 /* pExtTextOut */

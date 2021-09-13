@@ -2168,13 +2168,11 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_CreateDC,                /* pCreateDC */
     xrenderdrv_DeleteDC,                /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
     NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtDeviceMode */
     xrenderdrv_ExtEscape,               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     xrenderdrv_ExtTextOut,              /* pExtTextOut */

@@ -3848,13 +3848,11 @@ const struct gdi_dc_funcs font_driver =
     font_CreateDC,                  /* pCreateDC */
     font_DeleteDC,                  /* pDeleteDC */
     NULL,                           /* pDeleteObject */
-    NULL,                           /* pDeviceCapabilities */
     NULL,                           /* pEllipse */
     NULL,                           /* pEndDoc */
     NULL,                           /* pEndPage */
     NULL,                           /* pEndPath */
     font_EnumFonts,                 /* pEnumFonts */
-    NULL,                           /* pExtDeviceMode */
     NULL,                           /* pExtEscape */
     NULL,                           /* pExtFloodFill */
     NULL,                           /* pExtTextOut */

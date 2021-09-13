@@ -791,13 +791,11 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_CreateDC,                     /* pCreateDC */
     PSDRV_DeleteDC,                     /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    PSDRV_DeviceCapabilities,           /* pDeviceCapabilities */
     PSDRV_Ellipse,                      /* pEllipse */
     PSDRV_EndDoc,                       /* pEndDoc */
     PSDRV_EndPage,                      /* pEndPage */
     NULL,                               /* pEndPath */
     PSDRV_EnumFonts,                    /* pEnumFonts */
-    PSDRV_ExtDeviceMode,                /* pExtDeviceMode */
     PSDRV_ExtEscape,                    /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     PSDRV_ExtTextOut,                   /* pExtTextOut */

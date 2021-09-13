@@ -311,12 +311,6 @@ static BOOL CDECL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
     return TRUE;
 }
 
-static DWORD CDECL nulldrv_DeviceCapabilities( LPSTR buffer, LPCSTR device, LPCSTR port,
-                                               WORD cap, LPSTR output, DEVMODEA *devmode )
-{
-    return -1;
-}
-
 static BOOL CDECL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return TRUE;
@@ -335,12 +329,6 @@ static INT CDECL nulldrv_EndPage( PHYSDEV dev )
 static BOOL CDECL nulldrv_EnumFonts( PHYSDEV dev, LOGFONTW *logfont, FONTENUMPROCW proc, LPARAM lParam )
 {
     return TRUE;
-}
-
-static INT CDECL nulldrv_ExtDeviceMode( LPSTR buffer, HWND hwnd, DEVMODEA *output, LPSTR device,
-                                        LPSTR port, DEVMODEA *input, LPSTR profile, DWORD mode )
-{
-    return -1;
 }
 
 static INT CDECL nulldrv_ExtEscape( PHYSDEV dev, INT escape, INT in_size, const void *in_data,
@@ -817,13 +805,11 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_CreateDC,                   /* pCreateDC */
     nulldrv_DeleteDC,                   /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
-    nulldrv_DeviceCapabilities,         /* pDeviceCapabilities */
     nulldrv_Ellipse,                    /* pEllipse */
     nulldrv_EndDoc,                     /* pEndDoc */
     nulldrv_EndPage,                    /* pEndPage */
     nulldrv_EndPath,                    /* pEndPath */
     nulldrv_EnumFonts,                  /* pEnumFonts */
-    nulldrv_ExtDeviceMode,              /* pExtDeviceMode */
     nulldrv_ExtEscape,                  /* pExtEscape */
     nulldrv_ExtFloodFill,               /* pExtFloodFill */
     nulldrv_ExtTextOut,                 /* pExtTextOut */

@@ -81,13 +81,11 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
     BOOL     (CDECL *pDeleteDC)(PHYSDEV);
     BOOL     (CDECL *pDeleteObject)(PHYSDEV,HGDIOBJ);
-    DWORD    (CDECL *pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (CDECL *pEllipse)(PHYSDEV,INT,INT,INT,INT);
     INT      (CDECL *pEndDoc)(PHYSDEV);
     INT      (CDECL *pEndPage)(PHYSDEV);
     BOOL     (CDECL *pEndPath)(PHYSDEV);
     BOOL     (CDECL *pEnumFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
-    INT      (CDECL *pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
     INT      (CDECL *pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
     BOOL     (CDECL *pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
     BOOL     (CDECL *pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
@@ -168,7 +166,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 67
+#define WINE_GDI_DRIVER_VERSION 68
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

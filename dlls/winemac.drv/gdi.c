@@ -277,13 +277,11 @@ static const struct gdi_dc_funcs macdrv_funcs =
     macdrv_CreateDC,                        /* pCreateDC */
     macdrv_DeleteDC,                        /* pDeleteDC */
     NULL,                                   /* pDeleteObject */
-    NULL,                                   /* pDeviceCapabilities */
     NULL,                                   /* pEllipse */
     NULL,                                   /* pEndDoc */
     NULL,                                   /* pEndPage */
     NULL,                                   /* pEndPath */
     NULL,                                   /* pEnumFonts */
-    NULL,                                   /* pExtDeviceMode */
     NULL,                                   /* pExtEscape */
     NULL,                                   /* pExtFloodFill */
     NULL,                                   /* pExtTextOut */

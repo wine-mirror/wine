@@ -636,13 +636,11 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_CreateDC,                    /* pCreateDC */
     dibdrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
     dibdrv_Ellipse,                     /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     dibdrv_ExtFloodFill,                /* pExtFloodFill */
     dibdrv_ExtTextOut,                  /* pExtTextOut */
@@ -1201,13 +1199,11 @@ static const struct gdi_dc_funcs window_driver =
     windrv_CreateDC,                    /* pCreateDC */
     windrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDeviceCapabilities */
     windrv_Ellipse,                     /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumFonts */
-    NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     windrv_ExtFloodFill,                /* pExtFloodFill */
     windrv_ExtTextOut,                  /* pExtTextOut */

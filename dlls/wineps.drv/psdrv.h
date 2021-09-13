@@ -425,15 +425,10 @@ extern BOOL CDECL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bott
                              INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
-                                            WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_EndDoc( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_EndPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp ) DECLSPEC_HIDDEN;
-extern INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
-                                     LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
-                                     LPSTR lpszProfile, DWORD dwMode) DECLSPEC_HIDDEN;
 extern INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
                             INT cbOutput, LPVOID out_data ) DECLSPEC_HIDDEN;
 extern BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
