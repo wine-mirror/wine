@@ -39,6 +39,21 @@
 
 DEFINE_GUID(control_class,0xdeadbeef,0x29ef,0x4538,0xa5,0xfd,0xb6,0x95,0x73,0xa3,0x62,0xc0);
 
+#define IOCTL_WINETEST_HID_SET_EXPECT    CTL_CODE(FILE_DEVICE_KEYBOARD, 0x800, METHOD_IN_DIRECT, FILE_ANY_ACCESS)
+
+struct hid_expect
+{
+    DWORD code;
+    DWORD ret_length;
+    DWORD ret_status;
+    BYTE broken; /* missing on some win versions */
+    BYTE report_id;
+    BYTE todo_report_len;
+    BYTE report_len;
+    BYTE report_buf[128];
+    char context[64];
+};
+
 /* kernel/user shared data */
 struct winetest_shared_data
 {
