@@ -119,6 +119,7 @@ static const struct device_desc mouse_device_desc =
     .busid = mouse_bus_id,
     .input = -1,
     .serial = {'0','0','0','0',0},
+    .manufacturer = {"The Wine Project"},
 };
 static struct unix_device mouse_device = {.vtbl = &mouse_vtbl};
 
@@ -212,6 +213,7 @@ static const struct device_desc keyboard_device_desc =
     .busid = keyboard_bus_id,
     .input = -1,
     .serial = {'0','0','0','0',0},
+    .manufacturer = {"The Wine Project"},
 };
 static struct unix_device keyboard_device = {.vtbl = &keyboard_vtbl};
 
