@@ -435,19 +435,6 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
 static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEW);
 static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
 
-static PRINTERINFO *PSDRV_FindPrinterInfoA(LPCSTR name)
-{
-    int len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
-    WCHAR *nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    PRINTERINFO *pi;
-
-    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
-    pi = PSDRV_FindPrinterInfo( nameW );
-    HeapFree( GetProcessHeap(), 0, nameW );
-
-    return pi;
-}
-
 /***********************************************************
  *      DEVMODEdupWtoA
  *
@@ -489,26 +476,11 @@ static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
     return dmA;
 }
 
- /******************************************************************
- *         PSDRV_ExtDeviceMode
+/******************************************************************************
+ *           DrvDocumentProperties    (wineps.drv.@)
  *
  *  Retrieves or modifies device-initialization information for the PostScript
  *  driver, or displays a driver-supplied dialog box for configuring the driver.
- *
- * PARAMETERS
- *  lpszDriver  -- Driver name
- *  hwnd        -- Parent window for the dialog box
- *  lpdmOutput  -- Address of a DEVMODE structure for writing initialization information
- *  lpszDevice  -- Device name
- *  lpszPort    -- Port name
- *  lpdmInput   -- Address of a DEVMODE structure for reading initialization information
- *  lpProfile   -- Name of initialization file, defaults to WIN.INI if NULL
- *  wMode      -- Operation to perform.  Can be a combination if > 0.
- *      (0)             -- Returns number of bytes required by DEVMODE structure
- *      DM_UPDATE (1)   -- Write current settings to environment and initialization file
- *      DM_COPY (2)     -- Write current settings to lpdmOutput
- *      DM_PROMPT (4)   -- Presents the driver's modal dialog box (USER.240)
- *      DM_MODIFY (8)   -- Changes current settings according to lpdmInput before any other operation
  *
  * RETURNS
  *  Returns size of DEVMODE structure if wMode is 0.  Otherwise, IDOK is returned for success
@@ -519,31 +491,29 @@ static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
  *
  * Just returns default devmode at the moment.  No use of initialization file.
  */
-INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
-                              LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
-                              LPSTR lpszProfile, DWORD dwMode)
+INT WINAPI DrvDocumentProperties(HWND hwnd, const WCHAR *device, DEVMODEW *output,
+                                 DEVMODEW *input, DWORD mode)
 {
-  PRINTERINFO *pi = PSDRV_FindPrinterInfoA(lpszDevice);
-  if(!pi) return -1;
+  PRINTERINFO *pi;
 
-  TRACE("(Driver=%s, hwnd=%p, devOut=%p, Device='%s', Port='%s', devIn=%p, Profile='%s', Mode=%04x)\n",
-  lpszDriver, hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, debugstr_a(lpszProfile), dwMode);
+  TRACE("(hwnd=%p, Device='%s', devOut=%p, devIn=%p, Mode=%04x)\n",
+        hwnd, debugstr_w(device), output, input, mode);
 
-  /* If dwMode == 0, return size of DEVMODE structure */
-  if(!dwMode)
-      return pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra - CCHDEVICENAME - CCHFORMNAME;
+  if (!(pi = PSDRV_FindPrinterInfo(device))) return -1;
+
+  /* If mode == 0, return size of DEVMODE structure */
+  if (!mode)
+      return pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra;
 
   /* If DM_MODIFY is set, change settings in accordance with lpdmInput */
-  if((dwMode & DM_MODIFY) && lpdmInput)
+  if ((mode & DM_MODIFY) && input)
   {
-    DEVMODEW *dmW = GdiConvertToDevmodeW( lpdmInput );
-    TRACE("DM_MODIFY set. devIn->dmFields = %08x\n", lpdmInput->dmFields);
-    if (dmW) PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODE *)dmW, pi);
-    HeapFree( GetProcessHeap(), 0, dmW );
+    TRACE("DM_MODIFY set. devIn->dmFields = %08x\n", input->dmFields);
+    PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODE *)input, pi);
   }
 
   /* If DM_PROMPT is set, present modal dialog box */
-  if(dwMode & DM_PROMPT) {
+  if (mode & DM_PROMPT) {
     HINSTANCE hinstComctl32;
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETPAGEW psp;
@@ -581,22 +551,58 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
   }
   
   /* If DM_UPDATE is set, should write settings to environment and initialization file */
-  if(dwMode & DM_UPDATE)
+  if (mode & DM_UPDATE)
     FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
 
   /* If DM_COPY is set, should write settings to lpdmOutput */
-  if((dwMode & DM_COPY) || (dwMode & DM_UPDATE)) {
-    if (lpdmOutput)
-    {
-        DEVMODEA *dmA = DEVMODEdupWtoA( &pi->Devmode->dmPublic );
+  if (output && (mode & (DM_COPY | DM_UPDATE)))
+    memcpy( output, &pi->Devmode->dmPublic,
+            pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
+  return IDOK;
+}
+
+INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
+                              LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
+                              LPSTR lpszProfile, DWORD dwMode)
+{
+    DEVMODEW *outputW = NULL, *inputW = NULL;
+    WCHAR *device = NULL;
+    unsigned int len;
+    int ret;
+
+    len = MultiByteToWideChar(CP_ACP, 0, lpszDevice, -1, NULL, 0);
+    if (len) {
+        device = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszDevice, -1, device, len);
+    }
+
+    if (lpdmOutput && (dwMode & (DM_COPY | DM_UPDATE))) {
+        ret = DrvDocumentProperties(hwnd, device, NULL, NULL, 0);
+        if (ret <= 0) {
+            HeapFree(GetProcessHeap(), 0, device);
+            return -1;
+        }
+        outputW = HeapAlloc(GetProcessHeap(), 0, ret);
+    }
+
+    if (lpdmInput) inputW = GdiConvertToDevmodeW( lpdmInput );
+
+    ret = DrvDocumentProperties(hwnd, device, outputW, inputW, dwMode);
+
+    if (ret >= 0 && outputW && (dwMode & (DM_COPY | DM_UPDATE))) {
+        DEVMODEA *dmA = DEVMODEdupWtoA( outputW );
         if (dmA) memcpy( lpdmOutput, dmA, dmA->dmSize + dmA->dmDriverExtra );
         HeapFree( GetProcessHeap(), 0, dmA );
     }
-    else
-        FIXME("lpdmOutput is NULL what should we do??\n");
-  }
-  return IDOK;
+
+    HeapFree(GetProcessHeap(), 0, device);
+    HeapFree(GetProcessHeap(), 0, inputW);
+    HeapFree(GetProcessHeap(), 0, outputW);
+
+    if (!dwMode && ret > 0) ret -= CCHDEVICENAME + CCHFORMNAME;
+    return ret;
 }
+
 /***********************************************************************
  *	PSDRV_DeviceCapabilities	
  *
