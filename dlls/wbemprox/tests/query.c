@@ -2061,6 +2061,33 @@ static void test_Win32_LogicalDisk( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_empty_namespace( IWbemLocator *locator )
+{
+    BSTR path = SysAllocString( L"ROOT" );
+    BSTR wql = SysAllocString( L"wql" );
+    IEnumWbemClassObject *result;
+    IWbemServices *services;
+    BSTR query;
+    HRESULT hr;
+
+    hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
+    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+
+    query = SysAllocString( L"SELECT * FROM __ASSOCIATORS" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == WBEM_E_INVALID_CLASS, "Query failed: %08x\n", hr );
+    SysFreeString( query );
+
+    query = SysAllocString( L"SELECT * FROM Win32_OperatingSystem" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == WBEM_E_INVALID_CLASS, "got %08x\n", hr );
+    SysFreeString( query );
+
+    SysFreeString( wql );
+    SysFreeString( path );
+    IWbemServices_Release( services );
+}
+
 START_TEST(query)
 {
     BSTR path = SysAllocString( L"ROOT\\CIMV2" );
@@ -2138,6 +2165,7 @@ START_TEST(query)
     test_Win32_VideoController( services );
     test_Win32_WinSAT( services );
     test_SystemRestore( services );
+    test_empty_namespace( locator );
 
     SysFreeString( path );
     IWbemServices_Release( services );
