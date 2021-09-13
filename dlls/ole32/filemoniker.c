@@ -57,6 +57,15 @@ static inline FileMonikerImpl *impl_from_IROTData(IROTData *iface)
     return CONTAINING_RECORD(iface, FileMonikerImpl, IROTData_iface);
 }
 
+static const IMonikerVtbl VT_FileMonikerImpl;
+
+static FileMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface)
+{
+    if (iface->lpVtbl != &VT_FileMonikerImpl)
+        return NULL;
+    return CONTAINING_RECORD(iface, FileMonikerImpl, IMoniker_iface);
+}
+
 /* Local function used by filemoniker implementation */
 static HRESULT FileMonikerImpl_Construct(FileMonikerImpl* iface, LPCOLESTR lpszPathName);
 
@@ -735,40 +744,20 @@ FileMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker
     return S_OK;
 }
 
-/******************************************************************************
- *        FileMoniker_IsEqual
- */
-static HRESULT WINAPI
-FileMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+static HRESULT WINAPI FileMonikerImpl_IsEqual(IMoniker *iface, IMoniker *other)
 {
-    FileMonikerImpl *This = impl_from_IMoniker(iface);
-    CLSID clsid;
-    LPOLESTR filePath;
-    IBindCtx* bind;
-    HRESULT res;
+    FileMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
 
-    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
+    TRACE("%p, %p.\n", iface, other);
 
-    if (pmkOtherMoniker==NULL)
+    if (!other)
+        return E_INVALIDARG;
+
+    other_moniker = unsafe_impl_from_IMoniker(other);
+    if (!other_moniker)
         return S_FALSE;
 
-    IMoniker_GetClassID(pmkOtherMoniker,&clsid);
-
-    if (!IsEqualCLSID(&clsid,&CLSID_FileMoniker))
-        return S_FALSE;
-
-    res = CreateBindCtx(0,&bind);
-    if (FAILED(res)) return res;
-
-    res = S_FALSE;
-    if (SUCCEEDED(IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&filePath))) {
-	if (!lstrcmpiW(filePath, This->filePathName))
-            res = S_OK;
-	CoTaskMemFree(filePath);
-    }
-
-    IBindCtx_Release(bind);
-    return res;
+    return !wcsicmp(moniker->filePathName, other_moniker->filePathName) ? S_OK : S_FALSE;
 }
 
 /******************************************************************************

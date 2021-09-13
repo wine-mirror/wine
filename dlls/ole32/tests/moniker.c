@@ -1981,8 +1981,8 @@ static void test_file_monikers(void)
         {0x20ac, 0x2020, 0x100, 0x101, 0x102, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108, 0x109, 0x10a, 0x10b, 0x10c,  0},
         };
     WCHAR filename[MAX_PATH], path[MAX_PATH];
+    IMoniker *moniker, *moniker2;
     BIND_OPTS bind_opts;
-    IMoniker *moniker;
     IStorage *storage;
     IBindCtx *bindctx;
     STATSTG statstg;
@@ -2057,6 +2057,22 @@ static void test_file_monikers(void)
     IMoniker_Release(moniker);
 
     DeleteFileW(filename);
+
+    /* IsEqual() */
+    hr = CreateFileMoniker(L"test.bmp", &moniker);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = CreateFileMoniker(L"TEST.bmp", &moniker2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    IMoniker_Release(moniker2);
+    IMoniker_Release(moniker);
 }
 
 static void test_item_moniker(void)
