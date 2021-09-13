@@ -197,9 +197,6 @@ static opened_printer_t **printer_handles;
 static UINT nb_printer_handles;
 static LONG next_job_id = 1;
 
-static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
-                                                     WORD fwCapability, LPSTR lpszOutput,
-                                                     LPDEVMODEA lpdm );
 static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
                                               LPSTR lpszDevice, LPSTR lpszPort,
                                               LPDEVMODEA lpdmInput, LPSTR lpszProfile,
@@ -2464,34 +2461,56 @@ static void free_printer_info( void *data, DWORD level )
  *              DeviceCapabilitiesA    [WINSPOOL.@]
  *
  */
-INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,
-			       LPSTR pOutput, LPDEVMODEA lpdm)
+INT WINAPI DeviceCapabilitiesA(const char *device, const char *portA, WORD cap,
+                               char *output, DEVMODEA *devmodeA)
 {
-    INT ret;
+    WCHAR *device_name = NULL, *port = NULL;
+    DEVMODEW *devmode = NULL;
+    DWORD ret, len;
 
-    TRACE("%s,%s,%u,%p,%p\n", debugstr_a(pDevice), debugstr_a(pPort), cap, pOutput, lpdm);
-
-    if (!GDI_CallDeviceCapabilities16)
-    {
-        GDI_CallDeviceCapabilities16 = (void*)GetProcAddress( GetModuleHandleA("gdi32"),
-                                                              (LPCSTR)104 );
-        if (!GDI_CallDeviceCapabilities16) return -1;
+    len = MultiByteToWideChar(CP_ACP, 0, device, -1, NULL, 0);
+    if (len) {
+        device_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, device, -1, device_name, len);
     }
-    ret = GDI_CallDeviceCapabilities16(pDevice, pPort, cap, pOutput, lpdm);
 
-    /* If DC_PAPERSIZE map POINT16s to POINTs */
-    if(ret != -1 && cap == DC_PAPERSIZE && pOutput) {
-        POINT16 *tmp = HeapAlloc( GetProcessHeap(), 0, ret * sizeof(POINT16) );
-        POINT *pt = (POINT *)pOutput;
-	INT i;
-	memcpy(tmp, pOutput, ret * sizeof(POINT16));
-	for(i = 0; i < ret; i++, pt++)
-        {
-            pt->x = tmp[i].x;
-            pt->y = tmp[i].y;
+    len = MultiByteToWideChar(CP_ACP, 0, portA, -1, NULL, 0);
+    if (len) {
+        port = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, portA, -1, port, len);
+    }
+
+    if (devmodeA) devmode = GdiConvertToDevmodeW( devmodeA );
+
+    if (output && (cap == DC_BINNAMES || cap == DC_FILEDEPENDENCIES || cap == DC_PAPERNAMES)) {
+        /* These need A -> W translation */
+        unsigned int size = 0, i;
+        WCHAR *outputW;
+
+        ret = DeviceCapabilitiesW(device_name, port, cap, NULL, devmode);
+        if (ret == -1) return ret;
+
+        switch (cap) {
+        case DC_BINNAMES:
+            size = 24;
+            break;
+        case DC_PAPERNAMES:
+        case DC_FILEDEPENDENCIES:
+            size = 64;
+            break;
         }
-	HeapFree( GetProcessHeap(), 0, tmp );
+        outputW = HeapAlloc(GetProcessHeap(), 0, size * ret * sizeof(WCHAR));
+        ret = DeviceCapabilitiesW(device_name, port, cap, outputW, devmode);
+        for (i = 0; i < ret; i++)
+            WideCharToMultiByte(CP_ACP, 0, outputW + (i * size), -1,
+                                output + (i * size), size, NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, outputW);
+    } else {
+        ret = DeviceCapabilitiesW(device_name, port, cap, (WCHAR *)output, devmode);
     }
+    HeapFree(GetProcessHeap(), 0, device_name);
+    HeapFree(GetProcessHeap(), 0, devmode);
+    HeapFree(GetProcessHeap(), 0, port);
     return ret;
 }
 
