@@ -107,7 +107,7 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
 }
 
 static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_PACKET *packet,
-                               LONG *index, struct hid_expect *expect )
+                               LONG *index, struct hid_expect *expect, BOOL compare_buf )
 {
     struct hid_expect *missing, *missing_end, *tmp;
     ULONG len = packet->reportBufferLen;
@@ -125,7 +125,7 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     {
         if (!tmp->broken || running_under_wine) break;
         if (tmp->code == code && tmp->report_id == id && tmp->report_len == len &&
-            RtlCompareMemory( tmp->report_buf, buf, len ) == len)
+            (!compare_buf || RtlCompareMemory( tmp->report_buf, buf, len ) == len))
             break;
         *missing_end++ = *tmp++;
     }
@@ -439,10 +439,16 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
-        memset( packet->reportBuffer, 0xa5, 3 );
-        if (report_id) ((char *)packet->reportBuffer)[0] = report_id;
-        irp->IoStatus.Information = 3;
-        ret = STATUS_SUCCESS;
+        expect_queue_next( &expect_queue, code, packet, &index, &expect, FALSE );
+        winetest_push_context( "%s expect[%d]", expect.context, index );
+        ok( expect.code == code, "got %#x, expected %#x\n", expect.code, code );
+        ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
+        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        winetest_pop_context();
+
+        memcpy( packet->reportBuffer, expect.report_buf, expect.ret_length );
+        irp->IoStatus.Information = expect.ret_length;
+        ret = expect.ret_status;
         break;
     }
 
@@ -457,7 +463,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
-        expect_queue_next( &expect_queue, code, packet, &index, &expect );
+        expect_queue_next( &expect_queue, code, packet, &index, &expect, TRUE );
         winetest_push_context( "%s expect[%d]", expect.context, index );
         ok( expect.code == code, "got %#x, expected %#x\n", expect.code, code );
         ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );

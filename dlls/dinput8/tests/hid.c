@@ -743,6 +743,100 @@ static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, D
     ok( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
 }
 
+static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
+{
+    struct hid_expect expect[] =
+    {
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = report_id,
+            .report_len = report_len - (report_id ? 0 : 1),
+            .report_buf = {report_id ? report_id : 0xa5,0xa5,0xa5},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        },
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = report_id,
+            .report_len = 2 * report_len - (report_id ? 0 : 1),
+            .report_buf = {report_id ? report_id : 0xa5,0xa5,0xa5},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        },
+    };
+
+    char buffer[200], report[200];
+    NTSTATUS status;
+    ULONG length;
+    BOOL ret;
+
+    memset( report, 0xcd, sizeof(report) );
+    status = HidP_InitializeReportForID( HidP_Feature, report_id, preparsed, report, report_len );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetFeature( file, report, 0 );
+    ok( !ret, "HidD_GetFeature succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetFeature returned error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetFeature( file, report, report_len - 1 );
+    ok( !ret, "HidD_GetFeature succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
+        "HidD_GetFeature returned error %u\n", GetLastError() );
+
+    if (!report_id)
+    {
+        struct hid_expect broken_expect =
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .broken = TRUE,
+            .report_len = report_len - 1,
+            .report_buf =
+            {
+                0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
+                0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
+                0x5a,0x5a,0x5a,0x5a,0x5a,
+            },
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        };
+
+        set_hid_expect( file, &broken_expect, sizeof(broken_expect) );
+    }
+
+    SetLastError( 0xdeadbeef );
+    memset( buffer, 0x5a, sizeof(buffer) );
+    ret = HidD_GetFeature( file, buffer, report_len );
+    if (report_id || broken( !ret ))
+    {
+        ok( !ret, "HidD_GetFeature succeeded, last error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
+            "HidD_GetFeature returned error %u\n", GetLastError() );
+    }
+    else
+    {
+        ok( ret, "HidD_GetFeature failed, last error %u\n", GetLastError() );
+        ok( buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0] );
+    }
+
+    set_hid_expect( file, expect, sizeof(expect) );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetFeature( file, report, report_len );
+    ok( ret, "HidD_GetFeature failed, last error %u\n", GetLastError() );
+    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
+
+    length = report_len * 2;
+    SetLastError( 0xdeadbeef );
+    ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &length );
+    ok( ret, "IOCTL_HID_GET_FEATURE failed, last error %u\n", GetLastError() );
+    ok( length == 3, "got length %u, expected 3\n", length );
+    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
+
+    set_hid_expect( file, NULL, 0 );
+}
+
 static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
 {
     struct hid_expect expect[] =
@@ -1731,49 +1825,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     ok( value == 3, "got length %u, expected 3\n", value );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
 
-    memset( report, 0xcd, sizeof(report) );
-    status = HidP_InitializeReportForID( HidP_Feature, report_id, preparsed_data, report,
-                                         caps.FeatureReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_GetFeature( file, report, 0 );
-    ok( !ret, "HidD_GetFeature succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetFeature returned error %u\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_GetFeature( file, report, caps.FeatureReportByteLength - 1 );
-    ok( !ret, "HidD_GetFeature succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_GetFeature returned error %u\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    memset( buffer, 0x5a, sizeof(buffer) );
-    ret = HidD_GetFeature( file, buffer, caps.FeatureReportByteLength );
-    if (report_id || broken( !ret ))
-    {
-        ok( !ret, "HidD_GetFeature succeeded, last error %u\n", GetLastError() );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_GetFeature returned error %u\n", GetLastError() );
-    }
-    else
-    {
-        ok( ret, "HidD_GetFeature failed, last error %u\n", GetLastError() );
-        ok( buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0] );
-    }
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_GetFeature( file, report, caps.FeatureReportByteLength );
-    ok( ret, "HidD_GetFeature failed, last error %u\n", GetLastError() );
-    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
-
-    value = caps.FeatureReportByteLength * 2;
-    SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &value );
-    ok( ret, "IOCTL_HID_GET_FEATURE failed, last error %u\n", GetLastError() );
-    ok( value == 3, "got length %u, expected 3\n", value );
-    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
-
+    test_hidp_get_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
     test_hidp_set_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
 
     memset( report, 0xcd, sizeof(report) );
