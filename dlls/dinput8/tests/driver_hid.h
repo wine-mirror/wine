@@ -326,7 +326,7 @@ static inline void winetest_vskip( const char *msg, __ms_va_list args )
 {
     if (winetest_add_line() < winetest_mute_threshold)
     {
-        winetest_print_context( "Tests skipped: " );
+        winetest_print_context( "Driver tests skipped: " );
         kvprintf( msg, args );
         InterlockedIncrement( &skipped );
     }
@@ -347,7 +347,7 @@ static inline void WINAPIV winetest_win_skip( const char *msg, ... )
 {
     __ms_va_list args;
     __ms_va_start( args, msg );
-    if (running_under_wine) winetest_vskip( msg, args );
+    if (!running_under_wine) winetest_vskip( msg, args );
     else winetest_vok( 0, msg, args );
     __ms_va_end( args );
 }
