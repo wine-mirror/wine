@@ -139,7 +139,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     if (!(*namespace = heap_alloc( (len + 1) * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
     else
     {
-        memcpy( *namespace, p, len * sizeof(WCHAR) );
+        memcpy( *namespace, q, len * sizeof(WCHAR) );
         (*namespace)[len] = 0;
         hr = S_OK;
     }
