@@ -743,6 +743,100 @@ static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, D
     ok( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
 }
 
+static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
+{
+    struct hid_expect expect[] =
+    {
+        {
+            .code = IOCTL_HID_GET_INPUT_REPORT,
+            .report_id = report_id,
+            .report_len = report_len - (report_id ? 0 : 1),
+            .report_buf = {report_id ? report_id : 0xa5,0xa5,2},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        },
+        {
+            .code = IOCTL_HID_GET_INPUT_REPORT,
+            .report_id = report_id,
+            .report_len = 2 * report_len - (report_id ? 0 : 1),
+            .report_buf = {report_id ? report_id : 0xa5,0xa5,1},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        },
+    };
+
+    char buffer[200], report[200];
+    NTSTATUS status;
+    ULONG length;
+    BOOL ret;
+
+    memset( report, 0xcd, sizeof(report) );
+    status = HidP_InitializeReportForID( HidP_Input, report_id, preparsed, report, report_len );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetInputReport( file, report, 0 );
+    ok( !ret, "HidD_GetInputReport succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetInputReport returned error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetInputReport( file, report, report_len - 1 );
+    ok( !ret, "HidD_GetInputReport succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
+        "HidD_GetInputReport returned error %u\n", GetLastError() );
+
+    if (!report_id)
+    {
+        struct hid_expect broken_expect =
+        {
+            .code = IOCTL_HID_GET_INPUT_REPORT,
+            .broken = TRUE,
+            .report_len = report_len - 1,
+            .report_buf =
+            {
+                0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
+                0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
+                0x5a,0x5a,0x5a,0x5a,0x5a,
+            },
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        };
+
+        set_hid_expect( file, &broken_expect, sizeof(broken_expect) );
+    }
+
+    SetLastError( 0xdeadbeef );
+    memset( buffer, 0x5a, sizeof(buffer) );
+    ret = HidD_GetInputReport( file, buffer, report_len );
+    if (report_id || broken( !ret ) /* w7u */)
+    {
+        ok( !ret, "HidD_GetInputReport succeeded, last error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
+            "HidD_GetInputReport returned error %u\n", GetLastError() );
+    }
+    else
+    {
+        ok( ret, "HidD_GetInputReport failed, last error %u\n", GetLastError() );
+        ok( buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0] );
+    }
+
+    set_hid_expect( file, expect, sizeof(expect) );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetInputReport( file, report, report_len );
+    ok( ret, "HidD_GetInputReport failed, last error %u\n", GetLastError() );
+    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
+
+    SetLastError( 0xdeadbeef );
+    length = report_len * 2;
+    ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &length );
+    ok( ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %u\n", GetLastError() );
+    ok( length == 3, "got length %u, expected 3\n", length );
+    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
+
+    set_hid_expect( file, NULL, 0 );
+}
+
 static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
 {
     struct hid_expect expect[] =
@@ -1938,48 +2032,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status );
     ok( value == 0xfffffd0b, "got value %x, expected %#x\n", value, 0xfffffd0b );
 
-    memset( report, 0xcd, sizeof(report) );
-    status = HidP_InitializeReportForID( HidP_Input, report_id, preparsed_data, report, caps.InputReportByteLength );
-    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status );
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_GetInputReport( file, report, 0 );
-    ok( !ret, "HidD_GetInputReport succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_GetInputReport returned error %u\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_GetInputReport( file, report, caps.InputReportByteLength - 1 );
-    ok( !ret, "HidD_GetInputReport succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_GetInputReport returned error %u\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    memset( buffer, 0x5a, sizeof(buffer) );
-    ret = HidD_GetInputReport( file, buffer, caps.InputReportByteLength );
-    if (report_id || broken( !ret ) /* w7u */)
-    {
-        ok( !ret, "HidD_GetInputReport succeeded, last error %u\n", GetLastError() );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_GetInputReport returned error %u\n", GetLastError() );
-    }
-    else
-    {
-        ok( ret, "HidD_GetInputReport failed, last error %u\n", GetLastError() );
-        ok( buffer[0] == 0x5a, "got buffer[0] %x, expected 0x5a\n", (BYTE)buffer[0] );
-    }
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_GetInputReport( file, report, caps.InputReportByteLength );
-    ok( ret, "HidD_GetInputReport failed, last error %u\n", GetLastError() );
-    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
-
-    SetLastError( 0xdeadbeef );
-    value = caps.InputReportByteLength * 2;
-    ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &value );
-    ok( ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %u\n", GetLastError() );
-    ok( value == 3, "got length %u, expected 3\n", value );
-    ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
-
+    test_hidp_get_input( file, report_id, caps.InputReportByteLength, preparsed_data );
     test_hidp_get_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
     test_hidp_set_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
     test_hidp_set_output( file, report_id, caps.OutputReportByteLength, preparsed_data );
