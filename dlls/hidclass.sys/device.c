@@ -365,7 +365,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
     HIDP_REPORT_IDS *reports = ext->u.pdo.device_desc.ReportIDs;
     ULONG report_count = ext->u.pdo.device_desc.ReportIDsLength;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
-    ULONG i, report_len = 0, buffer_len = 0;
+    ULONG i, offset = 0, report_len = 0, buffer_len = 0;
     HID_XFER_PACKET packet;
     BYTE *buffer = NULL;
 
@@ -402,6 +402,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
         return;
     }
+    if (!reports[i].ReportID) offset = 1;
 
     switch (code)
     {
@@ -423,26 +424,20 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         return;
     }
 
-    packet.reportId = buffer[0];
-    packet.reportBuffer = buffer;
-    packet.reportBufferLen = buffer_len;
-
-    if (!reports[i].ReportID)
-    {
-        packet.reportId = 0;
-        packet.reportBuffer++;
-        packet.reportBufferLen--;
-    }
+    packet.reportId = reports[i].ReportID;
+    packet.reportBuffer = buffer + offset;
 
     switch (code)
     {
     case IOCTL_HID_GET_FEATURE:
     case IOCTL_HID_GET_INPUT_REPORT:
+        packet.reportBufferLen = buffer_len - offset;
         call_minidriver( code, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet), &irp->IoStatus );
         break;
     case IOCTL_HID_SET_FEATURE:
     case IOCTL_HID_SET_OUTPUT_REPORT:
     case IOCTL_HID_WRITE_REPORT:
+        packet.reportBufferLen = report_len - offset;
         call_minidriver( code, ext->u.pdo.parent_fdo, NULL, sizeof(packet), &packet, 0, &irp->IoStatus );
         if (code == IOCTL_HID_WRITE_REPORT && packet.reportId) irp->IoStatus.Information--;
         break;

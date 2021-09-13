@@ -48,7 +48,6 @@ struct hid_expect
     DWORD ret_status;
     BYTE broken; /* missing on some win versions */
     BYTE report_id;
-    BYTE todo_report_len;
     BYTE report_len;
     BYTE report_buf[128];
     char context[64];

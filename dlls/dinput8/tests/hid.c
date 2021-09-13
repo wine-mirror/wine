@@ -946,7 +946,6 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
         {
             .code = IOCTL_HID_SET_FEATURE,
             .report_id = report_id,
-            .todo_report_len = TRUE,
             .report_len = report_len - (report_id ? 0 : 1),
             .report_buf =
             {
@@ -1048,7 +1047,6 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
         {
             .code = IOCTL_HID_SET_OUTPUT_REPORT,
             .report_id = report_id,
-            .todo_report_len = TRUE,
             .report_len = report_len - (report_id ? 0 : 1),
             .report_buf = {report_id,0,0xcd,0xcd,0xcd},
             .ret_length = 3,
@@ -1135,7 +1133,6 @@ static void test_write_file( HANDLE file, int report_id, ULONG report_len )
     {
         .code = IOCTL_HID_WRITE_REPORT,
         .report_id = report_id,
-        .todo_report_len = report_id == 0,
         .report_len = report_len - (report_id ? 0 : 1),
         .report_buf = {report_id ? report_id : 0xcd,0xcd,0xcd,0xcd,0xcd},
         .ret_length = 3,
