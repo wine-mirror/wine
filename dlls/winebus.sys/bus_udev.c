@@ -554,28 +554,6 @@ static BOOL set_report_from_event(struct wine_input_private *ext, struct input_e
 }
 #endif
 
-static inline WCHAR *strdupAtoW(const char *src)
-{
-    WCHAR *dst;
-    DWORD len;
-    if (!src) return NULL;
-    len = MultiByteToWideChar(CP_UNIXCP, 0, src, -1, NULL, 0);
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-        MultiByteToWideChar(CP_UNIXCP, 0, src, -1, dst, len);
-    return dst;
-}
-
-static WCHAR *get_sysattr_string(struct udev_device *dev, const char *sysattr)
-{
-    const char *attr = udev_device_get_sysattr_value(dev, sysattr);
-    if (!attr)
-    {
-        WARN("Could not get %s from device\n", sysattr);
-        return NULL;
-    }
-    return strdupAtoW(attr);
-}
-
 static void hidraw_device_destroy(struct unix_device *iface)
 {
     struct platform_private *private = impl_from_unix_device(iface);
@@ -674,9 +652,6 @@ static NTSTATUS hidraw_device_get_string(struct unix_device *iface, DWORD index,
     {
         switch (index)
         {
-            case HID_STRING_ID_ISERIALNUMBER:
-                str = get_sysattr_string(usbdev, "serial");
-                break;
             default:
                 ERR("Unhandled string index %08x\n", index);
                 return STATUS_NOT_IMPLEMENTED;
@@ -687,8 +662,6 @@ static NTSTATUS hidraw_device_get_string(struct unix_device *iface, DWORD index,
 #ifdef HAVE_LINUX_HIDRAW_H
         switch (index)
         {
-            case HID_STRING_ID_ISERIALNUMBER:
-                break;
             default:
                 ERR("Unhandled string index %08x\n", index);
                 return STATUS_NOT_IMPLEMENTED;
@@ -943,15 +916,11 @@ static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BY
 
 static NTSTATUS lnxev_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct wine_input_private *ext = input_impl_from_unix_device(iface);
     char str[255];
 
     str[0] = 0;
     switch (index)
     {
-        case HID_STRING_ID_ISERIALNUMBER:
-            ioctl(ext->base.device_fd, EVIOCGUNIQ(sizeof(str)), str);
-            break;
         default:
             ERR("Unhandled string index %i\n", index);
     }
@@ -1027,7 +996,6 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 {
     struct udev_device *parent = NULL;
     const char *ptr, *next, *tmp;
-    char buffer[256];
     DWORD bus = 0;
 
     if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, subsystem, NULL))) return;
@@ -1042,8 +1010,8 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 
             if (!strncmp(ptr, "HID_UNIQ=", 9))
             {
-                if (sscanf(ptr, "HID_UNIQ=%256s\n", buffer) != 1 || !*buffer) continue;
-                if (!desc->serial[0]) MultiByteToWideChar(CP_UNIXCP, 0, buffer, -1, desc->serial, ARRAY_SIZE(desc->serial));
+                if (desc->serialnumber[0]) continue;
+                sscanf(ptr, "HID_UNIQ=%256s\n", desc->serialnumber);
             }
             if (!strncmp(ptr, "HID_PHYS=", 9) || !strncmp(ptr, "PHYS=\"", 6))
             {
@@ -1071,11 +1039,13 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 
     if (!desc->product[0] && (tmp = udev_device_get_sysattr_value(dev, "product")))
         lstrcpynA(desc->product, tmp, sizeof(desc->product));
+
+    if (!desc->serialnumber[0] && (tmp = udev_device_get_sysattr_value(dev, "serial")))
+        lstrcpynA(desc->serialnumber, tmp, sizeof(desc->serialnumber));
 }
 
 static void udev_add_device(struct udev_device *dev)
 {
-    static const WCHAR base_serial[] = {'0','0','0','0',0};
     struct device_desc desc =
     {
         .input = -1,
@@ -1127,7 +1097,6 @@ static void udev_add_device(struct udev_device *dev)
     else if (!strcmp(subsystem, "input"))
     {
         struct input_id device_id = {0};
-        char device_uid[255];
 
         desc.busid = lnxev_busidW;
 
@@ -1140,18 +1109,17 @@ static void udev_add_device(struct udev_device *dev)
             desc.version = device_id.version;
         }
 
-        device_uid[0] = 0;
-        if (ioctl(fd, EVIOCGUNIQ(254), device_uid) >= 0 && device_uid[0])
-            MultiByteToWideChar(CP_UNIXCP, 0, device_uid, -1, desc.serial, ARRAY_SIZE(desc.serial));
-
         if (!desc.manufacturer[0]) strcpy(desc.manufacturer, "evdev");
 
         if (!desc.product[0] && ioctl(fd, EVIOCGNAME(sizeof(desc.product) - 1), desc.product) <= 0)
             desc.product[0] = 0;
+
+        if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(desc.serialnumber)), desc.serialnumber) < 0)
+            desc.serialnumber[0] = 0;
     }
 #endif
 
-    if (!desc.serial[0]) lstrcpyW(desc.serial, base_serial);
+    if (!desc.serialnumber[0]) strcpy(desc.serialnumber, "0000");
 
     if (is_xbox_gamepad(desc.vid, desc.pid))
         desc.is_gamepad = TRUE;

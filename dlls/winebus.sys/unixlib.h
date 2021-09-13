@@ -40,11 +40,11 @@ struct device_desc
     DWORD version;
     DWORD input;
     DWORD uid;
-    WCHAR serial[256];
     BOOL is_gamepad;
 
     char manufacturer[MAX_PATH];
     char product[MAX_PATH];
+    char serialnumber[MAX_PATH];
 };
 
 struct sdl_bus_options
@@ -161,9 +161,9 @@ extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {
     if (!desc) return "(null)";
-    return wine_dbg_sprintf("{busid %s, vid %04x, pid %04x, version %04x, input %d, uid %08x, serial %s, is_gamepad %u}",
+    return wine_dbg_sprintf("{busid %s, vid %04x, pid %04x, version %04x, input %d, uid %08x, is_gamepad %u}",
                             debugstr_w(desc->busid), desc->vid, desc->pid, desc->version,
-                            desc->input, desc->uid, debugstr_w(desc->serial), desc->is_gamepad);
+                            desc->input, desc->uid, desc->is_gamepad);
 }
 
 #endif /* __WINEBUS_UNIXLIB_H */

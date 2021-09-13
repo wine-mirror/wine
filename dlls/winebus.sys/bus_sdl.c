@@ -521,9 +521,6 @@ static NTSTATUS sdl_device_get_string(struct unix_device *iface, DWORD index, WC
 
     switch (index)
     {
-        case HID_STRING_ID_ISERIALNUMBER:
-            str = "000000";
-            break;
         default:
             ERR("Unhandled string index %i\n", index);
     }
@@ -728,11 +725,10 @@ static void sdl_add_device(unsigned int index)
     {
         .busid = sdl_busidW,
         .input = -1,
-        .serial = {'0','0','0','0',0},
         .manufacturer = {"SDL"},
+        .serialnumber = {"0000"},
     };
     struct platform_private *private;
-    char guid_str[34];
 
     SDL_Joystick* joystick;
     SDL_JoystickID id;
@@ -766,8 +762,7 @@ static void sdl_add_device(unsigned int index)
     }
 
     guid = pSDL_JoystickGetGUID(joystick);
-    pSDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
-    MultiByteToWideChar(CP_ACP, 0, guid_str, -1, desc.serial, sizeof(guid_str));
+    pSDL_JoystickGetGUIDString(guid, desc.serialnumber, sizeof(desc.serialnumber));
 
     if (controller) desc.is_gamepad = TRUE;
     else

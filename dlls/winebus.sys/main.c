@@ -113,6 +113,7 @@ struct device_extension
 
     WCHAR manufacturer[MAX_PATH];
     WCHAR product[MAX_PATH];
+    WCHAR serialnumber[MAX_PATH];
 
     BYTE *last_report;
     DWORD last_report_size;
@@ -253,11 +254,11 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
     static const WCHAR formatW[] =  {'%','i','&','%','s','&','%','x','&','%','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD len = strlenW(ext->desc.serial) + 33;
+    DWORD len = strlenW(ext->serialnumber) + 33;
     WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
-        sprintfW(dst, formatW, ext->desc.version, ext->desc.serial, ext->desc.uid, ext->index);
+        sprintfW(dst, formatW, ext->desc.version, ext->serialnumber, ext->desc.uid, ext->index);
 
     return dst;
 }
@@ -369,6 +370,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
 
     MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.manufacturer, -1, ext->manufacturer, MAX_PATH);
     MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.product, -1, ext->product, MAX_PATH);
+    MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.serialnumber, -1, ext->serialnumber, MAX_PATH);
 
     InitializeListHead(&ext->irp_queue);
     InitializeCriticalSection(&ext->cs);
@@ -837,6 +839,11 @@ static NTSTATUS hid_get_device_string(DEVICE_OBJECT *device, DWORD index, WCHAR 
         len = (strlenW(ext->product) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
         else memcpy(buffer, ext->product, len);
+        return STATUS_SUCCESS;
+    case HID_STRING_ID_ISERIALNUMBER:
+        len = (strlenW(ext->serialnumber) + 1) * sizeof(WCHAR);
+        if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
+        else memcpy(buffer, ext->serialnumber, len);
         return STATUS_SUCCESS;
     }
 
