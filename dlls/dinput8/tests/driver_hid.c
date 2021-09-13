@@ -423,8 +423,18 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( packet->reportBufferLen >= expected_size, "got len %u\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
-        irp->IoStatus.Information = 3;
-        ret = STATUS_SUCCESS;
+        expect_queue_next( &expect_queue, code, packet, &index, &expect, TRUE );
+        winetest_push_context( "%s expect[%d]", expect.context, index );
+        ok( expect.code == code, "got %#x, expected %#x\n", expect.code, code );
+        ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
+        todo_wine_if( expect.todo_report_len )
+        ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
+        ok( RtlCompareMemory( packet->reportBuffer, expect.report_buf, expect.report_len ) == expect.report_len,
+            "unexpected data\n" );
+        winetest_pop_context();
+
+        irp->IoStatus.Information = expect.ret_length;
+        ret = expect.ret_status;
         break;
     }
 

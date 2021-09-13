@@ -939,6 +939,102 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
     set_hid_expect( file, NULL, 0 );
 }
 
+static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
+{
+    struct hid_expect expect[] =
+    {
+        {
+            .code = IOCTL_HID_SET_OUTPUT_REPORT,
+            .report_id = report_id,
+            .report_len = report_len - (report_id ? 0 : 1),
+            .report_buf = {report_id},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        },
+        {
+            .code = IOCTL_HID_SET_OUTPUT_REPORT,
+            .report_id = report_id,
+            .todo_report_len = TRUE,
+            .report_len = report_len - (report_id ? 0 : 1),
+            .report_buf = {report_id,0,0xcd,0xcd,0xcd},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        },
+    };
+
+    char buffer[200], report[200];
+    NTSTATUS status;
+    ULONG length;
+    BOOL ret;
+
+    memset( report, 0xcd, sizeof(report) );
+    status = HidP_InitializeReportForID( HidP_Output, report_id, preparsed, report, report_len );
+    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status );
+    memset( report, 0, report_len );
+    report[0] = report_id;
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_SetOutputReport( file, report, 0 );
+    ok( !ret, "HidD_SetOutputReport succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %u\n",
+        GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_SetOutputReport( file, report, report_len - 1 );
+    ok( !ret, "HidD_SetOutputReport succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
+        "HidD_SetOutputReport returned error %u\n", GetLastError() );
+
+    if (!report_id)
+    {
+        struct hid_expect broken_expect =
+        {
+            .code = IOCTL_HID_SET_OUTPUT_REPORT,
+            .broken = TRUE,
+            .report_len = report_len - 1,
+            .report_buf = {0x5a,0x5a},
+            .ret_length = 3,
+            .ret_status = STATUS_SUCCESS,
+        };
+
+        set_hid_expect( file, &broken_expect, sizeof(broken_expect) );
+    }
+
+    SetLastError( 0xdeadbeef );
+    memset( buffer, 0x5a, sizeof(buffer) );
+    ret = HidD_SetOutputReport( file, buffer, report_len );
+    if (report_id || broken( !ret ))
+    {
+        ok( !ret, "HidD_SetOutputReport succeeded, last error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
+            "HidD_SetOutputReport returned error %u\n", GetLastError() );
+    }
+    else
+    {
+        ok( ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError() );
+    }
+
+    set_hid_expect( file, expect, sizeof(expect) );
+
+    SetLastError( 0xdeadbeef );
+    ret = HidD_SetOutputReport( file, report, report_len );
+    ok( ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError() );
+
+    length = report_len * 2;
+    SetLastError( 0xdeadbeef );
+    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &length );
+    ok( !ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_USER_BUFFER,
+        "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError() );
+    length = 0;
+    SetLastError( 0xdeadbeef );
+    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, report_len * 2, NULL, &length );
+    ok( ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %u\n", GetLastError() );
+    ok( length == 3, "got length %u, expected 3\n", length );
+
+    set_hid_expect( file, NULL, 0 );
+}
+
 static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polled, const HIDP_CAPS *expect_caps )
 {
     const HIDP_BUTTON_CAPS expect_button_caps[] =
@@ -1827,54 +1923,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     test_hidp_get_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
     test_hidp_set_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
-
-    memset( report, 0xcd, sizeof(report) );
-    status = HidP_InitializeReportForID( HidP_Output, report_id, preparsed_data, report, caps.OutputReportByteLength );
-    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status );
-    memset( report, 0, caps.OutputReportByteLength );
-    report[0] = report_id;
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_SetOutputReport( file, report, 0 );
-    ok( !ret, "HidD_SetOutputReport succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %u\n",
-        GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_SetOutputReport( file, report, caps.OutputReportByteLength - 1 );
-    ok( !ret, "HidD_SetOutputReport succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-        "HidD_SetOutputReport returned error %u\n", GetLastError() );
-
-    SetLastError( 0xdeadbeef );
-    memset( buffer, 0x5a, sizeof(buffer) );
-    ret = HidD_SetOutputReport( file, buffer, caps.OutputReportByteLength );
-    if (report_id || broken( !ret ))
-    {
-        ok( !ret, "HidD_SetOutputReport succeeded, last error %u\n", GetLastError() );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken( GetLastError() == ERROR_CRC ),
-            "HidD_SetOutputReport returned error %u\n", GetLastError() );
-    }
-    else
-    {
-        ok( ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError() );
-    }
-
-    SetLastError( 0xdeadbeef );
-    ret = HidD_SetOutputReport( file, report, caps.OutputReportByteLength );
-    ok( ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError() );
-
-    value = caps.OutputReportByteLength * 2;
-    SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &value );
-    ok( !ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_USER_BUFFER,
-        "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError() );
-    value = 0;
-    SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, caps.OutputReportByteLength * 2, NULL, &value );
-    ok( ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %u\n", GetLastError() );
-    ok( value == 3, "got length %u, expected 3\n", value );
+    test_hidp_set_output( file, report_id, caps.OutputReportByteLength, preparsed_data );
 
     SetLastError( 0xdeadbeef );
     ret = WriteFile( file, report, 0, &value, NULL );
