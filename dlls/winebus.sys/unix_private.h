@@ -35,7 +35,6 @@ struct unix_device_vtbl
     int (*compare)(struct unix_device *iface, void *platform_dev);
     NTSTATUS (*start)(struct unix_device *iface, DEVICE_OBJECT *device);
     NTSTATUS (*get_report_descriptor)(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *out_length);
-    NTSTATUS (*get_string)(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length);
     void (*set_output_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
     void (*get_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
     void (*set_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);

@@ -515,24 +515,6 @@ static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS sdl_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
-{
-    const char* str = NULL;
-
-    switch (index)
-    {
-        default:
-            ERR("Unhandled string index %i\n", index);
-    }
-
-    if (str && str[0])
-        MultiByteToWideChar(CP_ACP, 0, str, -1, buffer, length);
-    else
-        buffer[0] = 0;
-
-    return STATUS_SUCCESS;
-}
-
 static void sdl_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct platform_private *ext = impl_from_unix_device(iface);
@@ -598,7 +580,6 @@ static const struct unix_device_vtbl sdl_device_vtbl =
     sdl_device_compare,
     sdl_device_start,
     sdl_device_get_reportdescriptor,
-    sdl_device_get_string,
     sdl_device_set_output_report,
     sdl_device_get_feature_report,
     sdl_device_set_feature_report,

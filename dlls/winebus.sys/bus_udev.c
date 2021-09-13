@@ -641,54 +641,6 @@ static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, B
 #endif
 }
 
-static NTSTATUS hidraw_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
-{
-    struct udev_device *usbdev;
-    struct platform_private *private = impl_from_unix_device(iface);
-    WCHAR *str = NULL;
-
-    usbdev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "usb", "usb_device");
-    if (usbdev)
-    {
-        switch (index)
-        {
-            default:
-                ERR("Unhandled string index %08x\n", index);
-                return STATUS_NOT_IMPLEMENTED;
-        }
-    }
-    else
-    {
-#ifdef HAVE_LINUX_HIDRAW_H
-        switch (index)
-        {
-            default:
-                ERR("Unhandled string index %08x\n", index);
-                return STATUS_NOT_IMPLEMENTED;
-        }
-#else
-        return STATUS_NOT_IMPLEMENTED;
-#endif
-    }
-
-    if (!str)
-    {
-        if (!length) return STATUS_BUFFER_TOO_SMALL;
-        buffer[0] = 0;
-        return STATUS_SUCCESS;
-    }
-
-    if (length <= strlenW(str))
-    {
-        HeapFree(GetProcessHeap(), 0, str);
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-
-    strcpyW(buffer, str);
-    HeapFree(GetProcessHeap(), 0, str);
-    return STATUS_SUCCESS;
-}
-
 static DWORD CALLBACK device_report_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
@@ -829,7 +781,6 @@ static const struct unix_device_vtbl hidraw_device_vtbl =
     udev_device_compare,
     hidraw_device_start,
     hidraw_device_get_report_descriptor,
-    hidraw_device_get_string,
     hidraw_device_set_output_report,
     hidraw_device_get_feature_report,
     hidraw_device_set_feature_report,
@@ -914,21 +865,6 @@ static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BY
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS lnxev_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
-{
-    char str[255];
-
-    str[0] = 0;
-    switch (index)
-    {
-        default:
-            ERR("Unhandled string index %i\n", index);
-    }
-
-    MultiByteToWideChar(CP_ACP, 0, str, -1, buffer, length);
-    return STATUS_SUCCESS;
-}
-
 static DWORD CALLBACK lnxev_device_report_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
@@ -985,7 +921,6 @@ static const struct unix_device_vtbl lnxev_device_vtbl =
     udev_device_compare,
     lnxev_device_start,
     lnxev_device_get_report_descriptor,
-    lnxev_device_get_string,
     lnxev_device_set_output_report,
     lnxev_device_get_feature_report,
     lnxev_device_set_feature_report,

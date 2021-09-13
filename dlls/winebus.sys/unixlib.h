@@ -118,14 +118,6 @@ struct device_descriptor_params
     DWORD *out_length;
 };
 
-struct device_string_params
-{
-    struct unix_device *iface;
-    DWORD index;
-    WCHAR *buffer;
-    DWORD length;
-};
-
 struct device_report_params
 {
     struct unix_device *iface;
@@ -150,7 +142,6 @@ enum unix_funcs
     device_compare,
     device_start,
     device_get_report_descriptor,
-    device_get_string,
     device_set_output_report,
     device_get_feature_report,
     device_set_feature_report,

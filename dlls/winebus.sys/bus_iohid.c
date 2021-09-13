@@ -184,32 +184,6 @@ static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BY
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS iohid_device_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
-{
-    struct platform_private *private = impl_from_unix_device(iface);
-    CFStringRef str;
-    switch (index)
-    {
-        default:
-            ERR("Unknown string index\n");
-            return STATUS_NOT_IMPLEMENTED;
-    }
-
-    if (str)
-    {
-        if (length < CFStringGetLength(str) + 1)
-            return STATUS_BUFFER_TOO_SMALL;
-        CFStringToWSTR(str, buffer, length);
-    }
-    else
-    {
-        if (!length) return STATUS_BUFFER_TOO_SMALL;
-        buffer[0] = 0;
-    }
-
-    return STATUS_SUCCESS;
-}
-
 static void iohid_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     IOReturn result;
@@ -273,7 +247,6 @@ static const struct unix_device_vtbl iohid_device_vtbl =
     iohid_device_compare,
     iohid_device_start,
     iohid_device_get_report_descriptor,
-    iohid_device_get_string,
     iohid_device_set_output_report,
     iohid_device_get_feature_report,
     iohid_device_set_feature_report,

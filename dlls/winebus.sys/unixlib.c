@@ -69,11 +69,6 @@ static NTSTATUS mouse_get_report_descriptor(struct unix_device *iface, BYTE *buf
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS mouse_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static void mouse_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
@@ -101,7 +96,6 @@ static const struct unix_device_vtbl mouse_vtbl =
     mouse_compare,
     mouse_start,
     mouse_get_report_descriptor,
-    mouse_get_string,
     mouse_set_output_report,
     mouse_get_feature_report,
     mouse_set_feature_report,
@@ -158,11 +152,6 @@ static NTSTATUS keyboard_get_report_descriptor(struct unix_device *iface, BYTE *
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS keyboard_get_string(struct unix_device *iface, DWORD index, WCHAR *buffer, DWORD length)
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static void keyboard_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     FIXME("id %u, stub!\n", packet->reportId);
@@ -190,7 +179,6 @@ static const struct unix_device_vtbl keyboard_vtbl =
     keyboard_compare,
     keyboard_start,
     keyboard_get_report_descriptor,
-    keyboard_get_string,
     keyboard_set_output_report,
     keyboard_get_feature_report,
     keyboard_set_feature_report,
@@ -243,13 +231,6 @@ static NTSTATUS unix_device_get_report_descriptor(void *args)
     return iface->vtbl->get_report_descriptor(iface, params->buffer, params->length, params->out_length);
 }
 
-static NTSTATUS unix_device_get_string(void *args)
-{
-    struct device_string_params *params = args;
-    struct unix_device *iface = params->iface;
-    return iface->vtbl->get_string(iface, params->index, params->buffer, params->length);
-}
-
 static NTSTATUS unix_device_set_output_report(void *args)
 {
     struct device_report_params *params = args;
@@ -291,7 +272,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     unix_device_compare,
     unix_device_start,
     unix_device_get_report_descriptor,
-    unix_device_get_string,
     unix_device_set_output_report,
     unix_device_get_feature_report,
     unix_device_set_feature_report,
