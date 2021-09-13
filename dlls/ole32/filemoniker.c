@@ -59,7 +59,6 @@ static inline FileMonikerImpl *impl_from_IROTData(IROTData *iface)
 
 /* Local function used by filemoniker implementation */
 static HRESULT FileMonikerImpl_Construct(FileMonikerImpl* iface, LPCOLESTR lpszPathName);
-static HRESULT FileMonikerImpl_Destroy(FileMonikerImpl* iface);
 
 /*******************************************************************************
  *        FileMoniker_QueryInterface
@@ -116,21 +115,19 @@ FileMonikerImpl_AddRef(IMoniker* iface)
     return InterlockedIncrement(&This->ref);
 }
 
-/******************************************************************************
- *        FileMoniker_Release
- */
-static ULONG WINAPI
-FileMonikerImpl_Release(IMoniker* iface)
+static ULONG WINAPI FileMonikerImpl_Release(IMoniker* iface)
 {
-    FileMonikerImpl *This = impl_from_IMoniker(iface);
-    ULONG ref;
+    FileMonikerImpl *moniker = impl_from_IMoniker(iface);
+    ULONG ref = InterlockedDecrement(&moniker->ref);
 
-    TRACE("(%p)\n",iface);
+    TRACE("(%p, refcount %d)\n", iface, ref);
 
-    ref = InterlockedDecrement(&This->ref);
-
-    /* destroy the object if there are no more references to it */
-    if (ref == 0) FileMonikerImpl_Destroy(This);
+    if (!ref)
+    {
+        if (moniker->pMarshal) IUnknown_Release(moniker->pMarshal);
+        HeapFree(GetProcessHeap(), 0, moniker->filePathName);
+        HeapFree(GetProcessHeap(), 0, moniker);
+    }
 
     return ref;
 }
@@ -448,20 +445,6 @@ FileMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize)
      */
     pcbSize->u.LowPart  = 0x38 + 4 * lstrlenW(This->filePathName);
     pcbSize->u.HighPart = 0;
-
-    return S_OK;
-}
-
-/******************************************************************************
- *        FileMoniker_Destroy (local function)
- *******************************************************************************/
-HRESULT FileMonikerImpl_Destroy(FileMonikerImpl* This)
-{
-    TRACE("(%p)\n",This);
-
-    if (This->pMarshal) IUnknown_Release(This->pMarshal);
-    HeapFree(GetProcessHeap(),0,This->filePathName);
-    HeapFree(GetProcessHeap(),0,This);
 
     return S_OK;
 }
