@@ -198,11 +198,6 @@ static opened_printer_t **printer_handles;
 static UINT nb_printer_handles;
 static LONG next_job_id = 1;
 
-static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
-                                              LPSTR lpszDevice, LPSTR lpszPort,
-                                              LPDEVMODEA lpdmInput, LPSTR lpszProfile,
-                                              DWORD fwMode );
-
 static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
                                   'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                   'c','o','n','t','r','o','l','\\',
@@ -391,18 +386,6 @@ static LPWSTR strdupW(LPCWSTR p)
     len = (strlenW(p) + 1) * sizeof(WCHAR);
     ret = HeapAlloc(GetProcessHeap(), 0, len);
     memcpy(ret, p, len);
-    return ret;
-}
-
-static LPSTR strdupWtoA( LPCWSTR str )
-{
-    LPSTR ret;
-    INT len;
-
-    if (!str) return NULL;
-    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-    ret = HeapAlloc( GetProcessHeap(), 0, len );
-    if(ret) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     return ret;
 }
 
@@ -2513,46 +2496,47 @@ INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
 
 /******************************************************************
  *              DocumentPropertiesA   [WINSPOOL.@]
- *
- * FIXME: implement DocumentPropertiesA via DocumentPropertiesW, not vice versa
  */
-LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
-                                LPSTR pDeviceName, LPDEVMODEA pDevModeOutput,
-				LPDEVMODEA pDevModeInput,DWORD fMode )
+LONG WINAPI DocumentPropertiesA(HWND hwnd, HANDLE printer, char *device_name, DEVMODEA *output,
+				DEVMODEA *input, DWORD mode)
 {
-    LPSTR lpName = pDeviceName, dupname = NULL;
-    static CHAR port[] = "LPT1:";
-    LONG ret;
+    DEVMODEW *outputW = NULL, *inputW = NULL;
+    WCHAR *device = NULL;
+    unsigned int len;
+    int ret;
 
-    TRACE("(%p,%p,%s,%p,%p,%d)\n",
-	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
-    );
+    TRACE("(%p,%p,%s,%p,%p,%d)\n", hwnd, printer, debugstr_a(device_name), output, input, mode);
 
-    if(!pDeviceName || !*pDeviceName) {
-        LPCWSTR lpNameW = get_opened_printer_name(hPrinter);
-        if(!lpNameW) {
-		ERR("no name from hPrinter?\n");
-                SetLastError(ERROR_INVALID_HANDLE);
-		return -1;
-	}
-	lpName = dupname = strdupWtoA(lpNameW);
+    len = MultiByteToWideChar(CP_ACP, 0, device_name, -1, NULL, 0);
+    if (len) {
+        device = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, device_name, -1, device, len);
     }
 
-    if (!GDI_CallExtDeviceMode16)
-    {
-        GDI_CallExtDeviceMode16 = (void*)GetProcAddress( GetModuleHandleA("gdi32"),
-                                                         (LPCSTR)102 );
-        if (!GDI_CallExtDeviceMode16) {
-		ERR("No CallExtDeviceMode16?\n");
-		ret = -1;
-		goto end;
-	}
+    if (output && (mode & (DM_COPY | DM_UPDATE))) {
+        ret = DocumentPropertiesW(hwnd, printer, device, NULL, NULL, 0);
+        if (ret <= 0) {
+            HeapFree(GetProcessHeap(), 0, device);
+            return -1;
+        }
+        outputW = HeapAlloc(GetProcessHeap(), 0, ret);
     }
-    ret = GDI_CallExtDeviceMode16(hWnd, pDevModeOutput, lpName, port,
-				  pDevModeInput, NULL, fMode);
 
-end:
-    HeapFree(GetProcessHeap(), 0, dupname);
+    if (input) inputW = GdiConvertToDevmodeW(input);
+
+    ret = DocumentPropertiesW(hwnd, printer, device, outputW, inputW, mode);
+
+    if (ret >= 0 && outputW && (mode & (DM_COPY | DM_UPDATE))) {
+        DEVMODEA *dmA = DEVMODEdupWtoA( outputW );
+        if (dmA) memcpy(output, dmA, dmA->dmSize + dmA->dmDriverExtra);
+        HeapFree(GetProcessHeap(), 0, dmA);
+    }
+
+    HeapFree(GetProcessHeap(), 0, device);
+    HeapFree(GetProcessHeap(), 0, inputW);
+    HeapFree(GetProcessHeap(), 0, outputW);
+
+    if (!mode && ret > 0) ret -= CCHDEVICENAME + CCHFORMNAME;
     return ret;
 }
 
