@@ -34,6 +34,7 @@ struct qualifier_set
 {
     IWbemQualifierSet IWbemQualifierSet_iface;
     LONG refs;
+    enum wbm_namespace ns;
     WCHAR *class;
     WCHAR *member;
 };
@@ -89,8 +90,8 @@ static HRESULT WINAPI qualifier_set_QueryInterface(
     return S_OK;
 }
 
-static HRESULT create_qualifier_enum( const WCHAR *class, const WCHAR *member, const WCHAR *name,
-                                      IEnumWbemClassObject **iter )
+static HRESULT create_qualifier_enum( enum wbm_namespace ns, const WCHAR *class, const WCHAR *member,
+                                      const WCHAR *name, IEnumWbemClassObject **iter )
 {
     static const WCHAR fmtW[] = L"SELECT * FROM __QUALIFIERS WHERE Class='%s' AND Member='%s' AND Name='%s'";
     static const WCHAR fmt2W[] = L"SELECT * FROM __QUALIFIERS WHERE Class='%s' AND Member='%s'";
@@ -118,12 +119,12 @@ static HRESULT create_qualifier_enum( const WCHAR *class, const WCHAR *member, c
         swprintf( query, len, fmt3W, class );
     }
 
-    hr = exec_query( query, iter );
+    hr = exec_query( ns, query, iter );
     heap_free( query );
     return hr;
 }
 
-static HRESULT get_qualifier_value( const WCHAR *class, const WCHAR *member, const WCHAR *name,
+static HRESULT get_qualifier_value( enum wbm_namespace ns, const WCHAR *class, const WCHAR *member, const WCHAR *name,
                                     VARIANT *val, LONG *flavor )
 {
     IEnumWbemClassObject *iter;
@@ -131,10 +132,10 @@ static HRESULT get_qualifier_value( const WCHAR *class, const WCHAR *member, con
     VARIANT var;
     HRESULT hr;
 
-    hr = create_qualifier_enum( class, member, name, &iter );
+    hr = create_qualifier_enum( ns, class, member, name, &iter );
     if (FAILED( hr )) return hr;
 
-    hr = create_class_object( NULL, iter, 0, NULL, &obj );
+    hr = create_class_object( ns, NULL, iter, 0, NULL, &obj );
     IEnumWbemClassObject_Release( iter );
     if (FAILED( hr )) return hr;
 
@@ -182,7 +183,7 @@ static HRESULT WINAPI qualifier_set_Get(
         FIXME("flags %08x not supported\n", lFlags);
         return E_NOTIMPL;
     }
-    return get_qualifier_value( set->class, set->member, wszName, pVal, plFlavor );
+    return get_qualifier_value( set->ns, set->class, set->member, wszName, pVal, plFlavor );
 }
 
 static HRESULT WINAPI qualifier_set_Put(
@@ -220,10 +221,10 @@ static HRESULT WINAPI qualifier_set_GetNames(
         return E_NOTIMPL;
     }
 
-    hr = create_qualifier_enum( set->class, set->member, NULL, &iter );
+    hr = create_qualifier_enum( set->ns, set->class, set->member, NULL, &iter );
     if (FAILED( hr )) return hr;
 
-    hr = create_class_object( NULL, iter, 0, NULL, &obj );
+    hr = create_class_object( set->ns, NULL, iter, 0, NULL, &obj );
     IEnumWbemClassObject_Release( iter );
     if (FAILED( hr )) return hr;
 
@@ -272,7 +273,7 @@ static const IWbemQualifierSetVtbl qualifier_set_vtbl =
     qualifier_set_EndEnumeration
 };
 
-HRESULT WbemQualifierSet_create( const WCHAR *class, const WCHAR *member, LPVOID *ppObj )
+HRESULT WbemQualifierSet_create( enum wbm_namespace ns, const WCHAR *class, const WCHAR *member, LPVOID *ppObj )
 {
     struct qualifier_set *set;
 
@@ -293,6 +294,7 @@ HRESULT WbemQualifierSet_create( const WCHAR *class, const WCHAR *member, LPVOID
         heap_free( set );
         return E_OUTOFMEMORY;
     }
+    set->ns = ns;
     set->refs = 1;
 
     *ppObj = &set->IWbemQualifierSet_iface;

@@ -87,7 +87,7 @@ HRESULT service_pause_service( IWbemClassObject *obj, IWbemContext *context, IWb
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"Win32_Service", L"PauseService", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Service", L"PauseService", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -132,7 +132,7 @@ HRESULT service_resume_service( IWbemClassObject *obj, IWbemContext *context, IW
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"Win32_Service", L"ResumeService", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Service", L"ResumeService", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -201,7 +201,7 @@ HRESULT service_start_service( IWbemClassObject *obj, IWbemContext *context, IWb
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"Win32_Service", L"StartService", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Service", L"StartService", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -246,7 +246,7 @@ HRESULT service_stop_service( IWbemClassObject *obj, IWbemContext *context, IWbe
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"Win32_Service", L"StopService", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Service", L"StopService", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );

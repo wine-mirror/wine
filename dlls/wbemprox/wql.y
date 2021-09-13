@@ -38,6 +38,7 @@ struct parser
     HRESULT error;
     struct view **view;
     struct list *mem;
+    enum wbm_namespace ns;
 };
 
 struct string
@@ -289,7 +290,7 @@ associatorsof:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( VIEW_TYPE_ASSOCIATORS, $3, NULL, NULL, NULL, NULL, &view );
+            hr = create_view( VIEW_TYPE_ASSOCIATORS, ctx->ns, $3, NULL, NULL, NULL, NULL, &view );
             if (hr != S_OK)
             {
                 ctx->error = hr;
@@ -304,7 +305,7 @@ associatorsof:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( VIEW_TYPE_ASSOCIATORS, $3, $5, NULL, NULL, NULL, &view );
+            hr = create_view( VIEW_TYPE_ASSOCIATORS, ctx->ns, $3, $5, NULL, NULL, NULL, &view );
             if (hr != S_OK)
             {
                 ctx->error = hr;
@@ -322,7 +323,7 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $3, NULL, NULL, &view );
+            hr = create_view( VIEW_TYPE_SELECT, ctx->ns, NULL, NULL, $3, NULL, NULL, &view );
             if (hr != S_OK)
             {
                 ctx->error = hr;
@@ -337,7 +338,7 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $4, $2, NULL, &view );
+            hr = create_view( VIEW_TYPE_SELECT, ctx->ns, NULL, NULL, $4, $2, NULL, &view );
             if (hr != S_OK)
             {
                 ctx->error = hr;
@@ -352,7 +353,7 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $4, $2, $6, &view );
+            hr = create_view( VIEW_TYPE_SELECT, ctx->ns, NULL, NULL, $4, $2, $6, &view );
             if (hr != S_OK)
             {
                 ctx->error = hr;
@@ -594,7 +595,7 @@ const_val:
 
 %%
 
-HRESULT parse_query( const WCHAR *str, struct view **view, struct list *mem )
+HRESULT parse_query( enum wbm_namespace ns, const WCHAR *str, struct view **view, struct list *mem )
 {
     struct parser parser;
     int ret;
@@ -607,6 +608,7 @@ HRESULT parse_query( const WCHAR *str, struct view **view, struct list *mem )
     parser.error = WBEM_E_INVALID_QUERY;
     parser.view  = view;
     parser.mem   = mem;
+    parser.ns    = ns;
 
     ret = wql_parse( &parser );
     TRACE("wql_parse returned %d\n", ret);

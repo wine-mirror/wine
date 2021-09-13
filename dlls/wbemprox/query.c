@@ -38,8 +38,8 @@ static HRESULT append_table( struct view *view, struct table *table )
     return S_OK;
 }
 
-HRESULT create_view( enum view_type type, const WCHAR *path, const struct keyword *keywordlist, const WCHAR *class,
-                     const struct property *proplist, const struct expr *cond, struct view **ret )
+HRESULT create_view( enum view_type type, enum wbm_namespace ns, const WCHAR *path, const struct keyword *keywordlist,
+                     const WCHAR *class, const struct property *proplist, const struct expr *cond, struct view **ret )
 {
     struct view *view = heap_alloc_zero( sizeof(*view) );
 
@@ -54,7 +54,7 @@ HRESULT create_view( enum view_type type, const WCHAR *path, const struct keywor
 
     case VIEW_TYPE_SELECT:
     {
-        struct table *table = grab_table( class );
+        struct table *table = grab_table( ns, class );
         HRESULT hr;
 
         if (table && (hr = append_table( view, table )) != S_OK)
@@ -73,6 +73,7 @@ HRESULT create_view( enum view_type type, const WCHAR *path, const struct keywor
     }
 
     view->type = type;
+    view->ns = ns;
     *ret = view;
     return S_OK;
 }
@@ -480,13 +481,14 @@ static WCHAR *build_assoc_query( const WCHAR *class, UINT class_len )
     return ret;
 }
 
-static HRESULT create_assoc_enum( const WCHAR *class, UINT class_len, IEnumWbemClassObject **iter )
+static HRESULT create_assoc_enum( enum wbm_namespace ns, const WCHAR *class, UINT class_len,
+                                  IEnumWbemClassObject **iter )
 {
     WCHAR *query;
     HRESULT hr;
 
     if (!(query = build_assoc_query( class, class_len ))) return E_OUTOFMEMORY;
-    hr = exec_query( query, iter );
+    hr = exec_query( ns, query, iter );
     heap_free( query );
     return hr;
 }
@@ -547,7 +549,7 @@ static WCHAR *build_canonical_path( const WCHAR *relpath )
     return ret;
 }
 
-static HRESULT get_antecedent( const WCHAR *assocclass, const WCHAR *dependent, BSTR *ret )
+static HRESULT get_antecedent( enum wbm_namespace ns, const WCHAR *assocclass, const WCHAR *dependent, BSTR *ret )
 {
     WCHAR *fullpath, *str;
     IEnumWbemClassObject *iter = NULL;
@@ -558,7 +560,7 @@ static HRESULT get_antecedent( const WCHAR *assocclass, const WCHAR *dependent, 
 
     if (!(fullpath = build_canonical_path( dependent ))) return E_OUTOFMEMORY;
     if (!(str = build_antecedent_query( assocclass, fullpath ))) goto done;
-    if ((hr = exec_query( str, &iter )) != S_OK) goto done;
+    if ((hr = exec_query( ns, str, &iter )) != S_OK) goto done;
 
     IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &obj, &count );
     if (!count)
@@ -579,13 +581,13 @@ done:
     return hr;
 }
 
-static HRESULT do_query( const WCHAR *str, struct query **ret_query )
+static HRESULT do_query( enum wbm_namespace ns, const WCHAR *str, struct query **ret_query )
 {
     struct query *query;
     HRESULT hr;
 
-    if (!(query = create_query())) return E_OUTOFMEMORY;
-    if ((hr = parse_query( str, &query->view, &query->mem )) != S_OK || (hr = execute_view( query->view )) != S_OK)
+    if (!(query = create_query( ns ))) return E_OUTOFMEMORY;
+    if ((hr = parse_query( ns, str, &query->view, &query->mem )) != S_OK || (hr = execute_view( query->view )) != S_OK)
     {
         release_query( query );
         return hr;
@@ -594,7 +596,8 @@ static HRESULT do_query( const WCHAR *str, struct query **ret_query )
     return S_OK;
 }
 
-static HRESULT get_antecedent_table( const WCHAR *assocclass, const WCHAR *dependent, struct table **table )
+static HRESULT get_antecedent_table( enum wbm_namespace ns, const WCHAR *assocclass, const WCHAR *dependent,
+                                     struct table **table )
 {
     BSTR antecedent = NULL;
     struct path *path = NULL;
@@ -602,7 +605,7 @@ static HRESULT get_antecedent_table( const WCHAR *assocclass, const WCHAR *depen
     struct query *query = NULL;
     HRESULT hr;
 
-    if ((hr = get_antecedent( assocclass, dependent, &antecedent )) != S_OK) return hr;
+    if ((hr = get_antecedent( ns, assocclass, dependent, &antecedent )) != S_OK) return hr;
     if (!antecedent)
     {
         *table = NULL;
@@ -615,7 +618,7 @@ static HRESULT get_antecedent_table( const WCHAR *assocclass, const WCHAR *depen
         goto done;
     }
 
-    if ((hr = do_query( str, &query )) != S_OK) goto done;
+    if ((hr = do_query( ns, str, &query )) != S_OK) goto done;
     if (query->view->table_count) *table = addref_table( query->view->table[0] );
     else *table = NULL;
 
@@ -636,7 +639,7 @@ static HRESULT exec_assoc_view( struct view *view )
     if (view->keywordlist) FIXME( "ignoring keywords\n" );
     if ((hr = parse_path( view->path, &path )) != S_OK) return hr;
 
-    if ((hr = create_assoc_enum( path->class, path->class_len, &iter )) != S_OK) goto done;
+    if ((hr = create_assoc_enum( view->ns, path->class, path->class_len, &iter )) != S_OK) goto done;
     for (;;)
     {
         ULONG count;
@@ -654,7 +657,7 @@ static HRESULT exec_assoc_view( struct view *view )
         }
         IWbemClassObject_Release( obj );
 
-        hr = get_antecedent_table( V_BSTR(&var), view->path, &table );
+        hr = get_antecedent_table( view->ns, V_BSTR(&var), view->path, &table );
         VariantClear( &var );
         if (hr != S_OK) goto done;
 
@@ -735,12 +738,13 @@ HRESULT execute_view( struct view *view )
     }
 }
 
-struct query *create_query(void)
+struct query *create_query( enum wbm_namespace ns )
 {
     struct query *query;
 
     if (!(query = heap_alloc( sizeof(*query) ))) return NULL;
     list_init( &query->mem );
+    query->ns = ns;
     query->refs = 1;
     return query;
 }
@@ -766,14 +770,14 @@ void release_query( struct query *query )
     if (!InterlockedDecrement( &query->refs )) free_query( query );
 }
 
-HRESULT exec_query( const WCHAR *str, IEnumWbemClassObject **result )
+HRESULT exec_query( enum wbm_namespace ns, const WCHAR *str, IEnumWbemClassObject **result )
 {
     HRESULT hr;
     struct query *query;
 
     *result = NULL;
-    if (!(query = create_query())) return E_OUTOFMEMORY;
-    hr = parse_query( str, &query->view, &query->mem );
+    if (!(query = create_query( ns ))) return E_OUTOFMEMORY;
+    hr = parse_query( ns, str, &query->view, &query->mem );
     if (hr != S_OK) goto done;
     hr = execute_view( query->view );
     if (hr != S_OK) goto done;

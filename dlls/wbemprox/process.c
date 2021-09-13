@@ -70,7 +70,7 @@ HRESULT process_get_owner( IWbemClassObject *obj, IWbemContext *context, IWbemCl
 
     TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
-    hr = create_signature( L"Win32_Process", L"GetOwner", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Process", L"GetOwner", PARAM_OUT, &sig );
     if (hr != S_OK) return hr;
 
     if (out)
@@ -127,7 +127,7 @@ HRESULT process_create( IWbemClassObject *obj, IWbemContext *context, IWbemClass
 
     *out = NULL;
 
-    if ((hr = create_signature( L"Win32_Process", L"Create", PARAM_OUT, &sig ))) return hr;
+    if ((hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"Win32_Process", L"Create", PARAM_OUT, &sig ))) return hr;
 
     VariantInit( &command_line );
     VariantInit( &current_directory );

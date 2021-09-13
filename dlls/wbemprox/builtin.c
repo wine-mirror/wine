@@ -2284,12 +2284,14 @@ static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
     HRESULT hr;
     UINT i;
 
-    if (!(query = create_query())) return NULL;
-    if ((hr = parse_query( L"SELECT * FROM Win32_DiskDrive", &query->view, &query->mem )) != S_OK) goto done;
+    if (!(query = create_query( WBEMPROX_NAMESPACE_CIMV2 ))) return NULL;
+    if ((hr = parse_query( WBEMPROX_NAMESPACE_CIMV2, L"SELECT * FROM Win32_DiskDrive",
+                           &query->view, &query->mem )) != S_OK) goto done;
     if ((hr = execute_view( query->view )) != S_OK) goto done;
 
-    if (!(query2 = create_query())) return FALSE;
-    if ((hr = parse_query( L"SELECT * FROM Win32_DiskPartition", &query2->view, &query2->mem )) != S_OK) goto done;
+    if (!(query2 = create_query( WBEMPROX_NAMESPACE_CIMV2 ))) return FALSE;
+    if ((hr = parse_query( WBEMPROX_NAMESPACE_CIMV2, L"SELECT * FROM Win32_DiskPartition",
+                           &query2->view, &query2->mem )) != S_OK) goto done;
     if ((hr = execute_view( query2->view )) != S_OK) goto done;
 
     if (!(ret = heap_alloc_zero( query->view->result_count * sizeof(*ret) ))) goto done;
@@ -2570,12 +2572,14 @@ static struct association *get_logicaldisktopartition_pairs( UINT *count )
     HRESULT hr;
     UINT i;
 
-    if (!(query = create_query())) return NULL;
-    if ((hr = parse_query( L"SELECT * FROM Win32_DiskPartition", &query->view, &query->mem )) != S_OK) goto done;
+    if (!(query = create_query( WBEMPROX_NAMESPACE_CIMV2 ))) return NULL;
+    if ((hr = parse_query( WBEMPROX_NAMESPACE_CIMV2, L"SELECT * FROM Win32_DiskPartition",
+                           &query->view, &query->mem )) != S_OK) goto done;
     if ((hr = execute_view( query->view )) != S_OK) goto done;
 
-    if (!(query2 = create_query())) return FALSE;
-    if ((hr = parse_query( L"SELECT * FROM Win32_LogicalDisk WHERE DriveType=2 OR DriveType=3", &query2->view,
+    if (!(query2 = create_query( WBEMPROX_NAMESPACE_CIMV2 ))) return FALSE;
+    if ((hr = parse_query( WBEMPROX_NAMESPACE_CIMV2,
+                           L"SELECT * FROM Win32_LogicalDisk WHERE DriveType=2 OR DriveType=3", &query2->view,
                            &query2->mem )) != S_OK) goto done;
     if ((hr = execute_view( query2->view )) != S_OK) goto done;
 
@@ -4070,7 +4074,7 @@ static enum fill_status fill_sounddevice( struct table *table, const struct expr
 
 #define C(c) sizeof(c)/sizeof(c[0]), c
 #define D(d) sizeof(d)/sizeof(d[0]), 0, (BYTE *)d
-static struct table builtin_classes[] =
+static struct table cimv2_builtin_classes[] =
 {
     { L"__ASSOCIATORS", C(col_associator), D(data_associator) },
     { L"__PARAMETERS", C(col_param), D(data_param) },
@@ -4115,11 +4119,39 @@ static struct table builtin_classes[] =
 #undef C
 #undef D
 
+static const struct
+{
+    const WCHAR *name;
+    struct table *classes;
+    unsigned int table_count;
+}
+builtin_namespaces[WBEMPROX_NAMESPACE_LAST] =
+{
+    {L"cimv2", cimv2_builtin_classes, ARRAY_SIZE(cimv2_builtin_classes)},
+};
+
 void init_table_list( void )
 {
-    static struct list tables = LIST_INIT( tables );
-    UINT i;
+    static struct list tables[WBEMPROX_NAMESPACE_LAST];
+    UINT ns, i;
 
-    for (i = 0; i < ARRAY_SIZE(builtin_classes); i++) list_add_tail( &tables, &builtin_classes[i].entry );
-    table_list = &tables;
+    for (ns = 0; ns < ARRAY_SIZE(builtin_namespaces); ns++)
+    {
+        list_init( &tables[ns] );
+        for (i = 0; i < builtin_namespaces[ns].table_count; i++)
+            list_add_tail( &tables[ns], &builtin_namespaces[ns].classes[i].entry );
+        table_list[ns] = &tables[ns];
+    }
+}
+
+enum wbm_namespace get_namespace_from_string( const WCHAR *namespace )
+{
+    unsigned int i;
+
+    if (!wcsicmp( namespace, L"default" )) return WBEMPROX_NAMESPACE_CIMV2;
+
+    for (i = 0; i < WBEMPROX_NAMESPACE_LAST; ++i)
+        if (!wcsicmp( namespace, builtin_namespaces[i].name )) return i;
+
+    return WBEMPROX_NAMESPACE_LAST;
 }

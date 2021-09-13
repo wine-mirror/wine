@@ -129,7 +129,7 @@ HRESULT reg_create_key( IWbemClassObject *obj, IWbemContext *context, IWbemClass
     hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"StdRegProv", L"CreateKey", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"CreateKey", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );
@@ -228,7 +228,7 @@ HRESULT reg_enum_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassOb
     hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"StdRegProv", L"EnumKey", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"EnumKey", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );
@@ -339,7 +339,7 @@ HRESULT reg_enum_values( IWbemClassObject *obj, IWbemContext *context, IWbemClas
     hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"StdRegProv", L"EnumValues", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"EnumValues", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );
@@ -436,7 +436,7 @@ HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbem
         return hr;
     }
 
-    hr = create_signature( L"StdRegProv", L"GetStringValue", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"GetStringValue", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -525,7 +525,7 @@ HRESULT reg_set_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbem
         return hr;
     }
 
-    hr = create_signature( L"StdRegProv", L"SetStringValue", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"SetStringValue", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -608,7 +608,7 @@ HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemContext *context, IWbemC
         return hr;
     }
 
-    hr = create_signature( L"StdRegProv", L"SetDWORDValue", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"SetDWORDValue", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -665,7 +665,7 @@ HRESULT reg_delete_key( IWbemClassObject *obj, IWbemContext *context, IWbemClass
     hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( L"StdRegProv", L"DeleteKey", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"StdRegProv", L"DeleteKey", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );

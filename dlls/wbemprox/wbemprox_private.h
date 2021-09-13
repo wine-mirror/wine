@@ -20,8 +20,14 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 
+enum wbm_namespace
+{
+    WBEMPROX_NAMESPACE_CIMV2,
+    WBEMPROX_NAMESPACE_LAST,
+};
+
 extern IClientSecurity client_security DECLSPEC_HIDDEN;
-extern struct list *table_list DECLSPEC_HIDDEN;
+extern struct list *table_list[WBEMPROX_NAMESPACE_LAST] DECLSPEC_HIDDEN;
 
 enum param_direction
 {
@@ -162,6 +168,7 @@ enum view_type
 
 struct view
 {
+    enum wbm_namespace ns;
     enum view_type type;
     const WCHAR *path;                      /* ASSOCIATORS OF query */
     const struct keyword *keywordlist;
@@ -176,6 +183,7 @@ struct view
 struct query
 {
     LONG refs;
+    enum wbm_namespace ns;
     struct view *view;
     struct list mem;
 };
@@ -192,24 +200,25 @@ HRESULT parse_path( const WCHAR *, struct path ** ) DECLSPEC_HIDDEN;
 void free_path( struct path * ) DECLSPEC_HIDDEN;
 WCHAR *query_from_path( const struct path * ) DECLSPEC_HIDDEN;
 
-struct query *create_query(void) DECLSPEC_HIDDEN;
+struct query *create_query( enum wbm_namespace ) DECLSPEC_HIDDEN;
 void free_query( struct query * ) DECLSPEC_HIDDEN;
 struct query *addref_query( struct query * ) DECLSPEC_HIDDEN;
 void release_query( struct query *query ) DECLSPEC_HIDDEN;
-HRESULT exec_query( const WCHAR *, IEnumWbemClassObject ** ) DECLSPEC_HIDDEN;
-HRESULT parse_query( const WCHAR *, struct view **, struct list * ) DECLSPEC_HIDDEN;
-HRESULT create_view( enum view_type, const WCHAR *, const struct keyword *, const WCHAR *, const struct property *,
-                     const struct expr *, struct view ** ) DECLSPEC_HIDDEN;
+HRESULT exec_query( enum wbm_namespace, const WCHAR *, IEnumWbemClassObject ** ) DECLSPEC_HIDDEN;
+HRESULT parse_query( enum wbm_namespace, const WCHAR *, struct view **, struct list * ) DECLSPEC_HIDDEN;
+HRESULT create_view( enum view_type, enum wbm_namespace, const WCHAR *, const struct keyword *, const WCHAR *,
+                     const struct property *, const struct expr *, struct view ** ) DECLSPEC_HIDDEN;
 void destroy_view( struct view * ) DECLSPEC_HIDDEN;
 HRESULT execute_view( struct view * ) DECLSPEC_HIDDEN;
 struct table *get_view_table( const struct view *, UINT ) DECLSPEC_HIDDEN;
 void init_table_list( void ) DECLSPEC_HIDDEN;
-struct table *grab_table( const WCHAR * ) DECLSPEC_HIDDEN;
+enum wbm_namespace get_namespace_from_string( const WCHAR *namespace ) DECLSPEC_HIDDEN;
+struct table *grab_table( enum wbm_namespace, const WCHAR * ) DECLSPEC_HIDDEN;
 struct table *addref_table( struct table * ) DECLSPEC_HIDDEN;
 void release_table( struct table * ) DECLSPEC_HIDDEN;
 struct table *create_table( const WCHAR *, UINT, const struct column *, UINT, UINT, BYTE *,
                             enum fill_status (*)(struct table *, const struct expr *) ) DECLSPEC_HIDDEN;
-BOOL add_table( struct table * ) DECLSPEC_HIDDEN;
+BOOL add_table( enum wbm_namespace, struct table * ) DECLSPEC_HIDDEN;
 void free_columns( struct column *, UINT ) DECLSPEC_HIDDEN;
 void free_row_values( const struct table *, UINT ) DECLSPEC_HIDDEN;
 void clear_table( struct table * ) DECLSPEC_HIDDEN;
@@ -230,19 +239,19 @@ VARTYPE to_vartype( CIMTYPE ) DECLSPEC_HIDDEN;
 void destroy_array( struct array *, CIMTYPE ) DECLSPEC_HIDDEN;
 BOOL is_result_prop( const struct view *, const WCHAR * ) DECLSPEC_HIDDEN;
 HRESULT get_properties( const struct view *, UINT, LONG, SAFEARRAY ** ) DECLSPEC_HIDDEN;
-HRESULT get_object( const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
-BSTR get_method_name( const WCHAR *, UINT ) DECLSPEC_HIDDEN;
+HRESULT get_object( enum wbm_namespace ns, const WCHAR *, IWbemClassObject ** ) DECLSPEC_HIDDEN;
+BSTR get_method_name( enum wbm_namespace ns, const WCHAR *, UINT ) DECLSPEC_HIDDEN;
 void set_variant( VARTYPE, LONGLONG, void *, VARIANT * ) DECLSPEC_HIDDEN;
-HRESULT create_signature( const WCHAR *, const WCHAR *, enum param_direction,
+HRESULT create_signature( enum wbm_namespace ns, const WCHAR *, const WCHAR *, enum param_direction,
                           IWbemClassObject ** ) DECLSPEC_HIDDEN;
 
 HRESULT WbemLocator_create(LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(const WCHAR *, IWbemContext *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT WbemContext_create(void **) DECLSPEC_HIDDEN;
-HRESULT create_class_object(const WCHAR *, IEnumWbemClassObject *, UINT,
+HRESULT create_class_object(enum wbm_namespace ns, const WCHAR *, IEnumWbemClassObject *, UINT,
                             struct record *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(struct query *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemQualifierSet_create(const WCHAR *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemQualifierSet_create(enum wbm_namespace, const WCHAR *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
 
 HRESULT process_get_owner(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT process_create(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;

@@ -352,11 +352,13 @@ struct table *addref_table( struct table *table )
     return table;
 }
 
-struct table *grab_table( const WCHAR *name )
+struct table *grab_table( enum wbm_namespace ns, const WCHAR *name )
 {
     struct table *table;
 
-    LIST_FOR_EACH_ENTRY( table, table_list, struct table, entry )
+    if (ns == WBEMPROX_NAMESPACE_LAST) return NULL;
+
+    LIST_FOR_EACH_ENTRY( table, table_list[ns], struct table, entry )
     {
         if (name && !wcsicmp( table->name, name ))
         {
@@ -387,11 +389,13 @@ struct table *create_table( const WCHAR *name, UINT num_cols, const struct colum
     return table;
 }
 
-BOOL add_table( struct table *table )
+BOOL add_table( enum wbm_namespace ns, struct table *table )
 {
     struct table *iter;
 
-    LIST_FOR_EACH_ENTRY( iter, table_list, struct table, entry )
+    if (ns == WBEMPROX_NAMESPACE_LAST) return FALSE;
+
+    LIST_FOR_EACH_ENTRY( iter, table_list[ns], struct table, entry )
     {
         if (!wcsicmp( iter->name, table->name ))
         {
@@ -399,18 +403,18 @@ BOOL add_table( struct table *table )
             return FALSE;
         }
     }
-    list_add_tail( table_list, &table->entry );
+    list_add_tail( table_list[ns], &table->entry );
     TRACE("added %p\n", table);
     return TRUE;
 }
 
-BSTR get_method_name( const WCHAR *class, UINT index )
+BSTR get_method_name( enum wbm_namespace ns, const WCHAR *class, UINT index )
 {
     struct table *table;
     UINT i, count = 0;
     BSTR ret;
 
-    if (!(table = grab_table( class ))) return NULL;
+    if (!(table = grab_table( ns, class ))) return NULL;
 
     for (i = 0; i < table->num_cols; i++)
     {

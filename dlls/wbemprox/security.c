@@ -140,7 +140,7 @@ HRESULT security_get_sd( IWbemClassObject *obj, IWbemContext *context, IWbemClas
 
     TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
-    hr = create_signature( L"__SystemSecurity", L"GetSD", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"__SystemSecurity", L"GetSD", PARAM_OUT, &sig );
 
     if (SUCCEEDED(hr))
     {
@@ -193,7 +193,7 @@ HRESULT security_set_sd( IWbemClassObject *obj, IWbemContext *context, IWbemClas
 
     FIXME("stub\n");
 
-    hr = create_signature( L"__SystemSecurity", L"SetSD", PARAM_OUT, &sig );
+    hr = create_signature( WBEMPROX_NAMESPACE_CIMV2, L"__SystemSecurity", L"SetSD", PARAM_OUT, &sig );
 
     if (SUCCEEDED(hr))
     {
