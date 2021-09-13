@@ -40,6 +40,7 @@ extern "C" {
 
 #define PRINTER_EVENT_FLAG_NO_UI 1
 
+DWORD WINAPI DrvDeviceCapabilities(HANDLE, WCHAR *, WORD, void *, DEVMODEW *);
 BOOL WINAPI DrvDriverEvent(DWORD, DWORD, LPBYTE, LPARAM);
 BOOL WINAPI DrvPrinterEvent(LPWSTR, INT, DWORD, LPARAM);
 

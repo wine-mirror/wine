@@ -29,6 +29,7 @@
 
 #include "wine/debug.h"
 #include "psdrv.h"
+#include "ddk/winddiui.h"
 
 #include "winuser.h"
 #include "wine/wingdi16.h"
@@ -612,40 +613,87 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
  * Returns
  *      Result depends on the setting of fwCapability.  -1 indicates failure.
  */
-DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
-                                     WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode)
+DWORD CDECL PSDRV_DeviceCapabilities(char *driver, const char *device, const char *port,
+                                     WORD capability, char *output, DEVMODEA *devmodeA)
+{
+    WCHAR *device_name = NULL;
+    DEVMODEW *devmode = NULL;
+    DWORD ret, len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, device, -1, NULL, 0);
+    if (len) {
+        device_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, device, -1, device_name, len);
+    }
+
+    if (devmodeA) devmode = GdiConvertToDevmodeW( devmodeA );
+
+    if (output && (capability == DC_BINNAMES ||
+                   capability == DC_FILEDEPENDENCIES ||
+                   capability == DC_PAPERNAMES)) {
+        /* These need A -> W translation */
+        unsigned int size = 0, i;
+        WCHAR *outputW;
+
+        ret = DrvDeviceCapabilities(NULL, device_name, capability, NULL, devmode);
+        if (ret == -1) return ret;
+
+        switch (capability) {
+        case DC_BINNAMES:
+            size = 24;
+            break;
+        case DC_PAPERNAMES:
+        case DC_FILEDEPENDENCIES:
+            size = 64;
+            break;
+        }
+        outputW = HeapAlloc(GetProcessHeap(), 0, size * ret * sizeof(WCHAR));
+        ret = DrvDeviceCapabilities(NULL, device_name, capability, outputW, devmode);
+        for (i = 0; i < ret; i++)
+            WideCharToMultiByte(CP_ACP, 0, outputW + (i * size), -1,
+                                output + (i * size), size, NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, outputW);
+    } else {
+        ret = DrvDeviceCapabilities(NULL, device_name, capability, output, devmode);
+    }
+    HeapFree(GetProcessHeap(), 0, device_name);
+    HeapFree(GetProcessHeap(), 0, devmode);
+    return ret;
+}
+
+/******************************************************************************
+ *           DrvDeviceCapabilities    (wineps.drv.@)
+ */
+DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capability,
+                                   void *output, DEVMODEW *devmode)
 {
   PRINTERINFO *pi;
   DEVMODEW *lpdm;
   DWORD ret;
-  pi = PSDRV_FindPrinterInfoA(lpszDevice);
 
-  TRACE("%s %s %s, %u, %p, %p\n", debugstr_a(lpszDriver), debugstr_a(lpszDevice),
-        debugstr_a(lpszPort), fwCapability, lpszOutput, lpDevMode);
+  TRACE("%s %u, %p, %p\n", debugstr_w(device_name), capability, output, devmode);
 
-  if (!pi) {
-      ERR("no printer info for %s %s, return 0!\n",
-          debugstr_a(lpszDriver), debugstr_a(lpszDevice));
+  if (!(pi = PSDRV_FindPrinterInfo(device_name))) {
+      ERR("no printer info for %s, return 0!\n", debugstr_w(device_name));
       return 0;
   }
 
   lpdm = &pi->Devmode->dmPublic;
-  if (lpDevMode) lpdm = GdiConvertToDevmodeW( lpDevMode );
+  if (devmode) lpdm = devmode;
 
-  switch(fwCapability) {
+  switch(capability) {
 
   case DC_PAPERS:
     {
       PAGESIZE *ps;
-      WORD *wp = (WORD *)lpszOutput;
+      WORD *wp = output;
       int i = 0;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
         TRACE("DC_PAPERS: %u\n", ps->WinPage);
         i++;
-	if(lpszOutput != NULL)
-	  *wp++ = ps->WinPage;
+        if (output != NULL) *wp++ = ps->WinPage;
       }
       ret = i;
       break;
@@ -654,14 +702,14 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
   case DC_PAPERSIZE:
     {
       PAGESIZE *ps;
-      POINT16 *pt = (POINT16 *)lpszOutput;
+      POINT16 *pt = output;
       int i = 0;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
         TRACE("DC_PAPERSIZE: %f x %f\n", ps->PaperDimension->x, ps->PaperDimension->y);
         i++;
-	if(lpszOutput != NULL) {
+        if (output != NULL) {
           pt->x = paper_size_from_points( ps->PaperDimension->x );
           pt->y = paper_size_from_points( ps->PaperDimension->y );
 	  pt++;
@@ -674,15 +722,15 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
   case DC_PAPERNAMES:
     {
       PAGESIZE *ps;
-      char *cp = lpszOutput;
+      WCHAR *cp = output;
       int i = 0;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
         TRACE("DC_PAPERNAMES: %s\n", debugstr_a(ps->FullName));
         i++;
-	if(lpszOutput != NULL) {
-	  lstrcpynA(cp, ps->FullName, 64);
+        if (output != NULL) {
+          MultiByteToWideChar(CP_ACP, 0, ps->FullName, -1, cp, 64);
 	  cp += 64;
 	}
       }
@@ -697,13 +745,13 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
   case DC_BINS:
     {
       INPUTSLOT *slot;
-      WORD *wp = (WORD *)lpszOutput;
+      WORD *wp = output;
       int i = 0;
 
       LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
       {
           i++;
-          if (lpszOutput != NULL)
+          if (output != NULL)
               *wp++ = slot->WinBin;
       }
       ret = i;
@@ -713,15 +761,15 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
   case DC_BINNAMES:
     {
       INPUTSLOT *slot;
-      char *cp = lpszOutput;
+      WCHAR *cp = output;
       int i = 0;
 
       LIST_FOR_EACH_ENTRY( slot, &pi->ppd->InputSlots, INPUTSLOT, entry )
       {
           i++;
-          if (lpszOutput != NULL)
+          if (output != NULL)
           {
-              lstrcpynA( cp, slot->FullName, 24 );
+              MultiByteToWideChar(CP_ACP, 0, slot->FullName, -1, cp, 24);
               cp += 24;
           }
       }
@@ -737,13 +785,13 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
   case DC_ENUMRESOLUTIONS:
     {
         RESOLUTION *res;
-        LONG *lp = (LONG *)lpszOutput;
+        LONG *lp = output;
         int i = 0;
 
         LIST_FOR_EACH_ENTRY(res, &pi->ppd->Resolutions, RESOLUTION, entry)
         {
             i++;
-            if (lpszOutput != NULL)
+            if (output != NULL)
             {
                 lp[0] = res->resx;
                 lp[1] = res->resy;
@@ -936,11 +984,10 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
     break;
 
   default:
-    FIXME("Unsupported capability %d\n", fwCapability);
+    FIXME("Unsupported capability %d\n", capability);
     ret = -1;
   }
 
-  if (lpDevMode) HeapFree( GetProcessHeap(), 0, lpdm );
   return ret;
 }
 
