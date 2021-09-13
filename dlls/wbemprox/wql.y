@@ -291,7 +291,10 @@ associatorsof:
 
             hr = create_view( VIEW_TYPE_ASSOCIATORS, $3, NULL, NULL, NULL, NULL, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -303,7 +306,10 @@ associatorsof:
 
             hr = create_view( VIEW_TYPE_ASSOCIATORS, $3, $5, NULL, NULL, NULL, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -318,7 +324,10 @@ select:
 
             hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $3, NULL, NULL, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -330,7 +339,10 @@ select:
 
             hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $4, $2, NULL, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
@@ -342,7 +354,10 @@ select:
 
             hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $4, $2, $6, &view );
             if (hr != S_OK)
+            {
+                ctx->error = hr;
                 YYABORT;
+            }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
         }
