@@ -583,41 +583,37 @@ FileMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft
  */
 static HRESULT WINAPI
 FileMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
-                              REFIID riid, VOID** ppvObject)
+                              REFIID riid, void **object)
 {
-    LPOLESTR filePath=0;
-    IStorage *pstg=0;
-    HRESULT res;
+    FileMonikerImpl *moniker = impl_from_IMoniker(iface);
+    BIND_OPTS bind_opts;
+    HRESULT hr;
 
-    TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvObject);
+    TRACE("(%p,%p,%p,%s,%p)\n", iface, pbc, pmkToLeft, debugstr_guid(riid), object);
 
-    if (pmkToLeft==NULL){
+    if (!pbc)
+        return E_INVALIDARG;
 
-        if (IsEqualIID(&IID_IStorage, riid)){
+    bind_opts.cbStruct = sizeof(bind_opts);
+    hr = IBindCtx_GetBindOptions(pbc, &bind_opts);
+    if (FAILED(hr))
+        return hr;
 
-            /* get the file name */
-            IMoniker_GetDisplayName(iface,pbc,pmkToLeft,&filePath);
-
-            res=StgOpenStorage(filePath,NULL,STGM_READWRITE|STGM_SHARE_DENY_WRITE,NULL,0,&pstg);
-
-            if (SUCCEEDED(res))
-                *ppvObject=pstg;
-
-            CoTaskMemFree(filePath);
+    if (!pmkToLeft)
+    {
+        if (IsEqualIID(&IID_IStorage, riid))
+        {
+            return StgOpenStorage(moniker->filePathName, NULL, bind_opts.grfMode, NULL, 0, (IStorage **)object);
         }
+        else if ((IsEqualIID(&IID_IStream, riid)) || (IsEqualIID(&IID_ILockBytes, riid)))
+            return E_FAIL;
         else
-            if ( (IsEqualIID(&IID_IStream, riid)) || (IsEqualIID(&IID_ILockBytes, riid)) )
-                return E_FAIL;
-            else
-                return E_NOINTERFACE;
+            return E_NOINTERFACE;
     }
-    else {
 
-        FIXME("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvObject);
+    FIXME("(%p,%p,%p,%s,%p)\n", iface, pbc, pmkToLeft, debugstr_guid(riid), object);
 
-        return E_NOTIMPL;
-    }
-    return res;
+    return E_NOTIMPL;
 }
 
 /******************************************************************************

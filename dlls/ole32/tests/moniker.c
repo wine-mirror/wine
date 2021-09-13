@@ -1980,7 +1980,13 @@ static void test_file_monikers(void)
          */ 
         {0x20ac, 0x2020, 0x100, 0x101, 0x102, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108, 0x109, 0x10a, 0x10b, 0x10c,  0},
         };
-
+    WCHAR filename[MAX_PATH], path[MAX_PATH];
+    BIND_OPTS bind_opts;
+    IMoniker *moniker;
+    IStorage *storage;
+    IBindCtx *bindctx;
+    STATSTG statstg;
+    HRESULT hr;
     int i; 
 
     trace("ACP is %u\n", GetACP());
@@ -2004,6 +2010,53 @@ static void test_file_monikers(void)
             test_file_moniker(wszFile[i]);
         }
     }
+
+    /* BindToStorage() */
+    GetTempPathW(MAX_PATH, path);
+    GetTempFileNameW(path, L"stg", 1, filename);
+
+    hr = StgCreateStorageEx(filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, STGFMT_STORAGE,
+            0, NULL, NULL, &IID_IStorage, (void **)&storage);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IStorage_Release(storage);
+
+    hr = CreateFileMoniker(filename, &moniker);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IStorage, (void **)&storage);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IStorage, (void **)&storage);
+    ok(hr == STG_E_INVALIDFLAG, "Unexpected hr %#x.\n", hr);
+
+    bind_opts.cbStruct = sizeof(bind_opts);
+    bind_opts.grfMode = STGM_READWRITE | STGM_SHARE_DENY_WRITE;
+    hr = IBindCtx_SetBindOptions(bindctx, &bind_opts);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IStorage, (void **)&storage);
+    ok(hr == STG_E_INVALIDFLAG, "Unexpected hr %#x.\n", hr);
+
+    bind_opts.grfMode = STGM_READ | STGM_SHARE_DENY_WRITE;
+    hr = IBindCtx_SetBindOptions(bindctx, &bind_opts);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IStorage, (void **)&storage);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&statstg, 0, sizeof(statstg));
+    hr = IStorage_Stat(storage, &statstg, STATFLAG_NONAME);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(statstg.grfMode == (STGM_READ | STGM_SHARE_DENY_WRITE), "Unexpected mode %#x.\n", statstg.grfMode);
+
+    IStorage_Release(storage);
+    IBindCtx_Release(bindctx);
+    IMoniker_Release(moniker);
+
+    DeleteFileW(filename);
 }
 
 static void test_item_moniker(void)
