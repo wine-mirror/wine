@@ -743,6 +743,25 @@ static void set_hid_expect_( int line, HANDLE file, struct hid_expect *expect, D
     ok( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %u\n", GetLastError() );
 }
 
+#define send_hid_input( a, b, c ) send_hid_input_( __LINE__, a, b, c )
+static void send_hid_input_( int line, HANDLE file, struct hid_expect *expect, DWORD expect_size )
+{
+    const char *source_file;
+    BOOL ret;
+    int i;
+
+    source_file = strrchr( __FILE__, '/' );
+    if (!source_file) source_file = strrchr( __FILE__, '\\' );
+    if (!source_file) source_file = __FILE__;
+    else source_file++;
+
+    for (i = 0; i < expect_size / sizeof(struct hid_expect); ++i)
+        snprintf( expect[i].context, ARRAY_SIZE(expect[i].context), "%s:%d", source_file, line );
+
+    ret = sync_ioctl( file, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0 );
+    ok( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %u\n", GetLastError() );
+}
+
 static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
 {
     struct hid_expect expect[] =
@@ -2049,6 +2068,26 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
     if (polled)
     {
+        struct hid_expect expect[] =
+        {
+            {
+                .code = IOCTL_HID_READ_REPORT,
+                .report_len = caps.InputReportByteLength - (report_id ? 0 : 1),
+                .report_buf = {report_id ? report_id : 0x5a,0x5a,0},
+                .ret_length = 3,
+                .ret_status = STATUS_SUCCESS,
+            },
+            {
+                .code = IOCTL_HID_READ_REPORT,
+                .report_len = caps.InputReportByteLength - (report_id ? 0 : 1),
+                .report_buf = {report_id ? report_id : 0x5a,0x5a,1},
+                .ret_length = 3,
+                .ret_status = STATUS_SUCCESS,
+            },
+        };
+
+        send_hid_input( file, expect, sizeof(expect) );
+
         memset( report, 0xcd, sizeof(report) );
         SetLastError( 0xdeadbeef );
         ret = ReadFile( file, report, caps.InputReportByteLength, &value, NULL );
@@ -2541,6 +2580,14 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         .NumberFeatureValueCaps = 6,
         .NumberFeatureDataIndices = 8,
     };
+    const struct hid_expect expect_in =
+    {
+        .code = IOCTL_HID_READ_REPORT,
+        .report_len = caps.InputReportByteLength - (report_id ? 0 : 1),
+        .report_buf = {report_id ? report_id : 0x5a,0x5a,0x5a},
+        .ret_length = 3,
+        .ret_status = STATUS_SUCCESS,
+    };
 
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     LSTATUS status;
@@ -2570,6 +2617,9 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+
+    status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, (void *)&expect_in, polled ? sizeof(expect_in) : 0 );
     ok( !status, "RegSetValueExW returned %#x\n", status );
 
     if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled, &caps );
