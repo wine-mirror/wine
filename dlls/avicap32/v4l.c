@@ -119,14 +119,14 @@ static NTSTATUS get_device_desc(void *args)
             v4l_umbstowcs(version, ret, params->version, ARRAY_SIZE(params->version));
         }
         close(fd);
-        return is_capture_device;
+        return is_capture_device ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
     }
 
     /* errno 515 is used by some webcam drivers for unknown IOCTL commands. */
     ERR("Failed to get capabilities for %s: %s\n", device, strerror(errno));
 
     close(fd);
-    return FALSE;
+    return STATUS_UNSUCCESSFUL;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
