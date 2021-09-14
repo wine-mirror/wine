@@ -40,13 +40,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 BOOL CDECL nulldrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep )
 {
+    DC *dc = get_physdev_dc( dev );
     INT x1 = GDI_ROUND( x + cos( start * M_PI / 180 ) * radius );
     INT y1 = GDI_ROUND( y - sin( start * M_PI / 180 ) * radius );
     INT x2 = GDI_ROUND( x + cos( (start + sweep) * M_PI / 180) * radius );
     INT y2 = GDI_ROUND( y - sin( (start + sweep) * M_PI / 180) * radius );
-    INT arcdir = SetArcDirection( dev->hdc, sweep >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE );
-    BOOL ret = ArcTo( dev->hdc, x - radius, y - radius, x + radius, y + radius, x1, y1, x2, y2 );
-    SetArcDirection( dev->hdc, arcdir );
+    INT arcdir = dc->attr->arc_direction;
+    BOOL ret;
+    dc->attr->arc_direction = sweep >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE;
+    ret = NtGdiArcInternal( NtGdiArcTo, dev->hdc, x - radius, y - radius, x + radius, y + radius,
+                            x1, y1, x2, y2 );
+    dc->attr->arc_direction = arcdir;
     return ret;
 }
 
@@ -64,9 +68,10 @@ BOOL CDECL nulldrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     if (!height || !width) return FALSE;
     /* draw a line from the current position to the starting point of the arc, then draw the arc */
     angle = atan2( (ystart - ycenter) / height, (xstart - xcenter) / width );
-    LineTo( dev->hdc, GDI_ROUND( xcenter + cos(angle) * xradius ),
-            GDI_ROUND( ycenter + sin(angle) * yradius ));
-    return Arc( dev->hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+    NtGdiLineTo( dev->hdc, GDI_ROUND( xcenter + cos(angle) * xradius ),
+                 GDI_ROUND( ycenter + sin(angle) * yradius ));
+    return NtGdiArcInternal( NtGdiArc, dev->hdc, left, top, right, bottom,
+                             xstart, ystart, xend, yend );
 }
 
 BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush )
@@ -99,9 +104,12 @@ BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT
 
 BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn )
 {
-    INT prev_rop = SetROP2( dev->hdc, R2_NOT );
-    BOOL ret = NtGdiFillRgn( dev->hdc, rgn, get_stock_object(BLACK_BRUSH) );
-    SetROP2( dev->hdc, prev_rop );
+    DC *dc = get_physdev_dc( dev );
+    INT prev_rop = dc->attr->rop_mode;
+    BOOL ret;
+    dc->attr->rop_mode = R2_NOT;
+    ret = NtGdiFillRgn( dev->hdc, rgn, get_stock_object(BLACK_BRUSH) );
+    dc->attr->rop_mode = prev_rop;
     return ret;
 }
 
