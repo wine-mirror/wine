@@ -693,8 +693,8 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
     dc->attr->vis_rect.left   = 0;
     dc->attr->vis_rect.top    = 0;
-    dc->attr->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
-    dc->attr->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+    dc->attr->vis_rect.right  = NtGdiGetDeviceCaps( hdc, DESKTOPHORZRES );
+    dc->attr->vis_rect.bottom = NtGdiGetDeviceCaps( hdc, DESKTOPVERTRES );
 
     DC_InitDC( dc );
     release_dc_ptr( dc );
@@ -775,8 +775,8 @@ BOOL WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
             dc->dirty = 0;
             dc->attr->vis_rect.left   = 0;
             dc->attr->vis_rect.top    = 0;
-            dc->attr->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
-            dc->attr->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+            dc->attr->vis_rect.right  = NtGdiGetDeviceCaps( hdc, DESKTOPHORZRES );
+            dc->attr->vis_rect.bottom = NtGdiGetDeviceCaps( hdc, DESKTOPVERTRES );
             if (dc->hVisRgn) NtGdiDeleteObjectApp( dc->hVisRgn );
             dc->hVisRgn = 0;
             update_dc_clipping( dc );

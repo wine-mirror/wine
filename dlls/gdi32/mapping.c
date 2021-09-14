@@ -35,8 +35,8 @@ static SIZE get_dc_virtual_size( DC *dc )
 
     if (!ret.cx)
     {
-        ret.cx = GetDeviceCaps( dc->hSelf, HORZSIZE );
-        ret.cy = GetDeviceCaps( dc->hSelf, VERTSIZE );
+        ret.cx = NtGdiGetDeviceCaps( dc->hSelf, HORZSIZE );
+        ret.cy = NtGdiGetDeviceCaps( dc->hSelf, VERTSIZE );
     }
     return ret;
 }
@@ -47,8 +47,8 @@ static SIZE get_dc_virtual_res( DC *dc )
 
     if (!ret.cx)
     {
-        ret.cx = GetDeviceCaps( dc->hSelf, HORZRES );
-        ret.cy = GetDeviceCaps( dc->hSelf, VERTRES );
+        ret.cx = NtGdiGetDeviceCaps( dc->hSelf, HORZRES );
+        ret.cy = NtGdiGetDeviceCaps( dc->hSelf, VERTRES );
     }
     return ret;
 }
@@ -387,11 +387,11 @@ BOOL WINAPI NtGdiModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
  *    FALSE if any (but not all) of the last four params are zero.
  *
  * NOTES
- *    This doesn't change the values returned by GetDeviceCaps, just the
+ *    This doesn't change the values returned by NtGdiGetDeviceCaps, just the
  *    scaling of the mapping modes.
  *
  *    Calling with the last four params equal to zero sets the values
- *    back to their defaults obtained by calls to GetDeviceCaps.
+ *    back to their defaults obtained by calls to NtGdiGetDeviceCaps.
  */
 BOOL WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,
                                        DWORD horz_size, DWORD vert_size )

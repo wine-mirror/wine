@@ -382,10 +382,10 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     {
     case DRIVERVERSION:   return 0x4000;
     case TECHNOLOGY:      return DT_RASDISPLAY;
-    case HORZSIZE:        return MulDiv( GetDeviceCaps( dev->hdc, HORZRES ), 254,
-                                         GetDeviceCaps( dev->hdc, LOGPIXELSX ) * 10 );
-    case VERTSIZE:        return MulDiv( GetDeviceCaps( dev->hdc, VERTRES ), 254,
-                                         GetDeviceCaps( dev->hdc, LOGPIXELSY ) * 10 );
+    case HORZSIZE:        return MulDiv( NtGdiGetDeviceCaps( dev->hdc, HORZRES ), 254,
+                                         NtGdiGetDeviceCaps( dev->hdc, LOGPIXELSX ) * 10 );
+    case VERTSIZE:        return MulDiv( NtGdiGetDeviceCaps( dev->hdc, VERTRES ), 254,
+                                         NtGdiGetDeviceCaps( dev->hdc, LOGPIXELSY ) * 10 );
     case HORZRES:
     {
         DC *dc = get_nulldrv_dc( dev );
@@ -424,7 +424,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
         WCHAR *display;
         DC *dc;
 
-        if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pEnumDisplaySettingsW)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pEnumDisplaySettingsW)
         {
             dc = get_nulldrv_dc( dev );
             display = dc->display[0] ? dc->display : NULL;
@@ -454,11 +454,11 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case CLIPCAPS:        return CP_RECTANGLE;
     case RASTERCAPS:      return (RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT | RC_DI_BITMAP | RC_DIBTODEV |
                                   RC_BIGFONT | RC_STRETCHBLT | RC_FLOODFILL | RC_STRETCHDIB | RC_DEVBITS |
-                                  (GetDeviceCaps( dev->hdc, SIZEPALETTE ) ? RC_PALETTE : 0));
+                                  (NtGdiGetDeviceCaps( dev->hdc, SIZEPALETTE ) ? RC_PALETTE : 0));
     case ASPECTX:         return 36;
     case ASPECTY:         return 36;
-    case ASPECTXY:        return (int)(hypot( GetDeviceCaps( dev->hdc, ASPECTX ),
-                                              GetDeviceCaps( dev->hdc, ASPECTY )) + 0.5);
+    case ASPECTXY:        return (int)(hypot( NtGdiGetDeviceCaps( dev->hdc, ASPECTX ),
+                                              NtGdiGetDeviceCaps( dev->hdc, ASPECTY )) + 0.5);
     case CAPS1:           return 0;
     case SIZEPALETTE:     return 0;
     case NUMRESERVED:     return 20;
@@ -474,7 +474,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
         WCHAR *display;
         DC *dc;
 
-        if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) != DT_RASDISPLAY)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) != DT_RASDISPLAY)
             return 0;
 
         if (pEnumDisplaySettingsW)
@@ -491,7 +491,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
         return 1;
     }
     case DESKTOPHORZRES:
-        if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
         {
             DPI_AWARENESS_CONTEXT context;
             UINT ret;
@@ -500,9 +500,9 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
             pSetThreadDpiAwarenessContext( context );
             return ret;
         }
-        return GetDeviceCaps( dev->hdc, HORZRES );
+        return NtGdiGetDeviceCaps( dev->hdc, HORZRES );
     case DESKTOPVERTRES:
-        if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
         {
             DPI_AWARENESS_CONTEXT context;
             UINT ret;
@@ -511,14 +511,14 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
             pSetThreadDpiAwarenessContext( context );
             return ret;
         }
-        return GetDeviceCaps( dev->hdc, VERTRES );
+        return NtGdiGetDeviceCaps( dev->hdc, VERTRES );
     case BLTALIGNMENT:    return 0;
     case SHADEBLENDCAPS:  return 0;
     case COLORMGMTCAPS:   return 0;
     case LOGPIXELSX:
     case LOGPIXELSY:      return get_system_dpi();
     case NUMCOLORS:
-        bpp = GetDeviceCaps( dev->hdc, BITSPIXEL );
+        bpp = NtGdiGetDeviceCaps( dev->hdc, BITSPIXEL );
         return (bpp > 8) ? -1 : (1 << bpp);
     case COLORRES:
         /* The observed correspondence between BITSPIXEL and COLORRES is:
@@ -526,7 +526,7 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
          * BITSPIXEL: 16 -> COLORRES: 16
          * BITSPIXEL: 24 -> COLORRES: 24
          * BITSPIXEL: 32 -> COLORRES: 24 */
-        bpp = GetDeviceCaps( dev->hdc, BITSPIXEL );
+        bpp = NtGdiGetDeviceCaps( dev->hdc, BITSPIXEL );
         return (bpp <= 8) ? 18 : min( 24, bpp );
     default:
         FIXME("(%p): unsupported capability %d, will return 0\n", dev->hdc, cap );

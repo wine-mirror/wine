@@ -397,7 +397,7 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
 
     if (!is_bitmapobj_dib( bitmap ) &&
         bitmap->dib.dsBm.bmBitsPixel != 1 &&
-        bitmap->dib.dsBm.bmBitsPixel != GetDeviceCaps( hdc, BITSPIXEL ))
+        bitmap->dib.dsBm.bmBitsPixel != NtGdiGetDeviceCaps( hdc, BITSPIXEL ))
     {
         WARN( "Wrong format bitmap %u bpp\n", bitmap->dib.dsBm.bmBitsPixel );
         GDI_ReleaseObj( handle );

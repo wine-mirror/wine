@@ -130,8 +130,8 @@ static inline void create_default_clip_region( DC * dc )
     {
         rect.left = 0;
         rect.top = 0;
-        rect.right = GetDeviceCaps( dc->hSelf, DESKTOPHORZRES );
-        rect.bottom = GetDeviceCaps( dc->hSelf, DESKTOPVERTRES );
+        rect.right = NtGdiGetDeviceCaps( dc->hSelf, DESKTOPHORZRES );
+        rect.bottom = NtGdiGetDeviceCaps( dc->hSelf, DESKTOPVERTRES );
     }
     dc->hClipRgn = CreateRectRgnIndirect( &rect );
 }
