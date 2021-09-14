@@ -34,6 +34,7 @@ static void source_add_class(parser_ctx_t*,class_decl_t*);
 
 static void *new_expression(parser_ctx_t*,expression_type_t,size_t);
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
+static expression_t *new_date_expression(parser_ctx_t*,DATE);
 static expression_t *new_string_expression(parser_ctx_t*,const WCHAR*);
 static expression_t *new_long_expression(parser_ctx_t*,expression_type_t,LONG);
 static expression_t *new_double_expression(parser_ctx_t*,double);
@@ -107,6 +108,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
     LONG integer;
     BOOL boolean;
     double dbl;
+    DATE date;
 }
 
 %token tEXPRESSION tNL tEMPTYBRACKETS tEXPRLBRACKET
@@ -129,6 +131,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tDEFAULT tERROR tEXPLICIT tPROPERTY tSTEP
 %token <integer> tInt
 %token <dbl> tDouble
+%token <date> tDate
 
 %type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt BodyStatements IfStatement Else_opt
 %type <statement> GlobalDimDeclaration
@@ -416,6 +419,7 @@ LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
     | tFALSE                        { $$ = new_bool_expression(ctx, VARIANT_FALSE); CHECK_ERROR; }
     | tString                       { $$ = new_string_expression(ctx, $1); CHECK_ERROR; }
+    | tDate                         { $$ = new_date_expression(ctx, $1); CHECK_ERROR; }
     | NumericLiteralExpression      { $$ = $1; }
     | tEMPTY                        { $$ = new_expression(ctx, EXPR_EMPTY, 0); CHECK_ERROR; }
     | tNULL                         { $$ = new_expression(ctx, EXPR_NULL, 0); CHECK_ERROR; }
@@ -587,6 +591,18 @@ static expression_t *new_string_expression(parser_ctx_t *ctx, const WCHAR *value
     string_expression_t *expr;
 
     expr = new_expression(ctx, EXPR_STRING, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->value = value;
+    return &expr->expr;
+}
+
+static expression_t *new_date_expression(parser_ctx_t *ctx, DATE value)
+{
+    date_expression_t *expr;
+
+    expr = new_expression(ctx, EXPR_DATE, sizeof(*expr));
     if(!expr)
         return NULL;
 

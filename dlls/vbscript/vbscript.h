@@ -212,7 +212,8 @@ typedef enum {
     ARG_INT,
     ARG_UINT,
     ARG_ADDR,
-    ARG_DOUBLE
+    ARG_DOUBLE,
+    ARG_DATE
 } instr_arg_type_t;
 
 #define OP_LIST                                   \
@@ -225,6 +226,7 @@ typedef enum {
     X(case,           0, ARG_ADDR,    0)          \
     X(concat,         1, 0,           0)          \
     X(const,          1, ARG_BSTR,    0)          \
+    X(date,           1, ARG_DATE,    0)          \
     X(deref,          1, 0,           0)          \
     X(dim,            1, ARG_BSTR,    ARG_UINT)   \
     X(div,            1, 0,           0)          \
@@ -293,6 +295,7 @@ typedef union {
     unsigned uint;
     LONG lng;
     double *dbl;
+    DATE *date;
 } instr_arg_t;
 
 typedef struct {
