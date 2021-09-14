@@ -83,9 +83,6 @@
 /* Define to 1 if you have the `F3DAudioInitialize8' function. */
 #undef HAVE_F3DAUDIOINITIALIZE8
 
-/* Define to 1 if you have the `fallocate' function. */
-#undef HAVE_FALLOCATE
-
 /* Define to 1 if you have the `FAudioCreateReverb9WithCustomAllocatorEXT'
    function. */
 #undef HAVE_FAUDIOCREATEREVERB9WITHCUSTOMALLOCATOREXT
@@ -506,6 +503,9 @@
 
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
+
+/* Define to 1 if you have the `posix_fallocate' function. */
+#undef HAVE_POSIX_FALLOCATE
 
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL

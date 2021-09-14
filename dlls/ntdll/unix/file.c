@@ -4494,14 +4494,15 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 status = STATUS_INVALID_PARAMETER;
             else
             {
-#ifdef HAVE_FALLOCATE
-                if (fallocate( fd, 0, 0, (off_t)info->ValidDataLength.QuadPart ) == -1)
+#ifdef HAVE_POSIX_FALLOCATE
+                int err;
+                if ((err = posix_fallocate( fd, 0, (off_t)info->ValidDataLength.QuadPart )) != 0)
                 {
-                    if (errno == EOPNOTSUPP) WARN( "fallocate not supported on this filesystem\n" );
-                    else status = errno_to_status( errno );
+                    if (err == EOPNOTSUPP) WARN( "posix_fallocate not supported on this filesystem\n" );
+                    else status = errno_to_status( err );
                 }
 #else
-                FIXME( "setting valid data length not supported\n" );
+                WARN( "setting valid data length not supported\n" );
 #endif
             }
             if (needs_close) close( fd );
