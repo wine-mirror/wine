@@ -568,9 +568,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
 
     case IOCTL_HID_GET_STRING:
-        ok( !in_size, "got input size %u\n", in_size );
-        ok( out_size == 128, "got output size %u\n", out_size );
-
+        todo_wine
+        ok( 0, "unexpected IOCTL_HID_GET_STRING\n" );
         memcpy( irp->UserBuffer, L"Wine Test", sizeof(L"Wine Test") );
         irp->IoStatus.Information = sizeof(L"Wine Test");
         ret = STATUS_SUCCESS;
