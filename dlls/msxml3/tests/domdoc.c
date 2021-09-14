@@ -13644,11 +13644,11 @@ todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
     ok(b == VARIANT_TRUE, "got %d\n", b);
     ok(qi_count == 0, "got %d QI calls\n", qi_count);
-    SysFreeString(V_BSTR(&var));
 
     IXMLDOMDocument2_Release(doc);
 
     DeleteFileA(path);
+    free_bstrs();
 }
 
 START_TEST(domdoc)
