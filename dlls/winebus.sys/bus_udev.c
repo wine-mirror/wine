@@ -560,8 +560,6 @@ static void hidraw_device_destroy(struct unix_device *iface)
 
     close(private->device_fd);
     udev_device_unref(private->udev_device);
-
-    unix_device_destroy(iface);
 }
 
 static int udev_device_compare(struct unix_device *iface, void *platform_dev)
@@ -814,8 +812,6 @@ static void lnxev_device_destroy(struct unix_device *iface)
 
     close(ext->base.device_fd);
     udev_device_unref(ext->base.udev_device);
-
-    unix_device_destroy(iface);
 }
 
 static DWORD CALLBACK lnxev_device_report_thread(void *args);

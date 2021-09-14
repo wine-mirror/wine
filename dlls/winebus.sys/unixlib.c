@@ -49,7 +49,6 @@ static void mouse_destroy(struct unix_device *iface)
 {
     struct mouse_device *impl = mouse_from_unix_device(iface);
     hid_descriptor_free(&impl->desc);
-    unix_device_destroy(iface);
 }
 
 static int mouse_compare(struct unix_device *iface, void *context)
@@ -154,7 +153,6 @@ static void keyboard_destroy(struct unix_device *iface)
 {
     struct keyboard_device *impl = keyboard_from_unix_device(iface);
     hid_descriptor_free(&impl->desc);
-    unix_device_destroy(iface);
 }
 
 static int keyboard_compare(struct unix_device *iface, void *context)
@@ -254,16 +252,12 @@ void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size)
     return iface;
 }
 
-void unix_device_destroy(struct unix_device *iface)
-{
-    HeapFree(GetProcessHeap(), 0, iface);
-}
-
 static NTSTATUS unix_device_remove(void *args)
 {
     struct unix_device *iface = args;
     iface->vtbl->stop(iface);
     iface->vtbl->destroy(iface);
+    HeapFree(GetProcessHeap(), 0, iface);
     return STATUS_SUCCESS;
 }
 

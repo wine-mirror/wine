@@ -139,7 +139,6 @@ static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
 
 static void iohid_device_destroy(struct unix_device *iface)
 {
-    unix_device_destroy(iface);
 }
 
 static int iohid_device_compare(struct unix_device *iface, void *context)

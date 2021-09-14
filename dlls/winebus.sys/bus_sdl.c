@@ -480,7 +480,6 @@ failed:
 
 static void sdl_device_destroy(struct unix_device *iface)
 {
-    unix_device_destroy(iface);
 }
 
 static int sdl_device_compare(struct unix_device *iface, void *context)
