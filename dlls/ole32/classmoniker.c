@@ -57,6 +57,15 @@ static inline ClassMoniker *impl_from_IROTData(IROTData *iface)
     return CONTAINING_RECORD(iface, ClassMoniker, IROTData_iface);
 }
 
+static const IMonikerVtbl ClassMonikerVtbl;
+
+static ClassMoniker *unsafe_impl_from_IMoniker(IMoniker *iface)
+{
+    if (iface->lpVtbl != &ClassMonikerVtbl)
+        return NULL;
+    return CONTAINING_RECORD(iface, ClassMoniker, IMoniker_iface);
+}
+
 /*******************************************************************************
  *        ClassMoniker_QueryInterface
  *******************************************************************************/
@@ -373,37 +382,20 @@ static HRESULT WINAPI ClassMoniker_Enum(IMoniker* iface,BOOL fForward, IEnumMoni
     return S_OK;
 }
 
-/******************************************************************************
- *        ClassMoniker_IsEqual
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+static HRESULT WINAPI ClassMoniker_IsEqual(IMoniker *iface, IMoniker *other)
 {
+    ClassMoniker *moniker = impl_from_IMoniker(iface), *other_moniker;
 
-    CLSID clsid;
-    LPOLESTR dispName1,dispName2;
-    IBindCtx* bind;
-    HRESULT res = S_FALSE;
+    TRACE("%p, %p.\n", iface, other);
 
-    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
+    if (!other)
+        return E_INVALIDARG;
 
-    if (!pmkOtherMoniker) return S_FALSE;
+    other_moniker = unsafe_impl_from_IMoniker(other);
+    if (!other_moniker)
+        return S_FALSE;
 
-
-    /* check if both are ClassMoniker */
-    if(FAILED (IMoniker_GetClassID(pmkOtherMoniker,&clsid))) return S_FALSE;
-    if(!IsEqualCLSID(&clsid,&CLSID_ClassMoniker)) return S_FALSE;
-
-    /* check if both displaynames are the same */
-    if(SUCCEEDED ((res = CreateBindCtx(0,&bind)))) {
-        if(SUCCEEDED (IMoniker_GetDisplayName(iface,bind,NULL,&dispName1))) {
-	    if(SUCCEEDED (IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&dispName2))) {
-                if(wcscmp(dispName1,dispName2)==0) res = S_OK;
-                CoTaskMemFree(dispName2);
-            }
-            CoTaskMemFree(dispName1);
-	}
-    }
-    return res;
+    return IsEqualGUID(&moniker->clsid, &other_moniker->clsid) ? S_OK : S_FALSE;
 }
 
 /******************************************************************************
@@ -627,9 +619,6 @@ static HRESULT WINAPI ClassMonikerROTData_GetComparisonData(IROTData* iface,
     return S_OK;
 }
 
-/********************************************************************************/
-/* Virtual function table for the ClassMoniker class which  include IPersist,*/
-/* IPersistStream and IMoniker functions.                                       */
 static const IMonikerVtbl ClassMonikerVtbl =
 {
     ClassMoniker_QueryInterface,
