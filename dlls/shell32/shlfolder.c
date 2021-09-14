@@ -427,9 +427,9 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder2 *psf, LPCITEMIDLIST pidl, LPDWO
     } else if (has_guid && HCR_GetFolderAttributes(pidl, &dwAttributes)) {
 	*pdwAttributes = dwAttributes;
     } else if (_ILGetDataPointer (pidl)) {
-	dwAttributes = _ILGetFileAttributes (pidl, NULL, 0);
+	DWORD file_attr = _ILGetFileAttributes (pidl, NULL, 0);
 
-        if (!dwAttributes && has_guid) {
+        if (!file_attr && has_guid) {
 	    WCHAR path[MAX_PATH];
 	    STRRET strret;
 
@@ -441,25 +441,28 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder2 *psf, LPCITEMIDLIST pidl, LPDWO
 
 		/* call GetFileAttributes() only for file system paths, not for parsing names like "::{...}" */
 		if (SUCCEEDED(hr) && path[0]!=':')
-		    dwAttributes = GetFileAttributesW(path);
+		    file_attr = GetFileAttributesW(path);
 	    }
 	}
 
         /* Set common attributes */
-        *pdwAttributes |= SFGAO_FILESYSTEM | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANDELETE | 
+        *pdwAttributes |= SFGAO_FILESYSTEM | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANDELETE |
                           SFGAO_CANRENAME | SFGAO_CANLINK | SFGAO_CANMOVE | SFGAO_CANCOPY;
 
-	if (dwAttributes & FILE_ATTRIBUTE_DIRECTORY)
-	    *pdwAttributes |=  (SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR);
+	if (file_attr & FILE_ATTRIBUTE_DIRECTORY)
+	    *pdwAttributes |=  (SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR | SFGAO_STORAGEANCESTOR | SFGAO_STORAGE);
 	else
-	    *pdwAttributes &= ~(SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR);
+        {
+	    *pdwAttributes &= ~(SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR | SFGAO_STORAGEANCESTOR | SFGAO_STORAGE);
+	    *pdwAttributes |= SFGAO_STREAM;
+        }
 
-	if (dwAttributes & FILE_ATTRIBUTE_HIDDEN)
+	if (file_attr & FILE_ATTRIBUTE_HIDDEN)
 	    *pdwAttributes |=  SFGAO_HIDDEN;
 	else
 	    *pdwAttributes &= ~SFGAO_HIDDEN;
 
-	if (dwAttributes & FILE_ATTRIBUTE_READONLY)
+	if (file_attr & FILE_ATTRIBUTE_READONLY)
 	    *pdwAttributes |=  SFGAO_READONLY;
 	else
 	    *pdwAttributes &= ~SFGAO_READONLY;
