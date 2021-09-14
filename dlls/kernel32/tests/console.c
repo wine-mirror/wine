@@ -4444,7 +4444,7 @@ static void test_AllocConsole(void)
     if (skip_nt) return;
 
     winetest_get_mainargs(&argv);
-    sprintf(buf, "\"%s\" console alloc_console", argv[0], GetCurrentProcessId());
+    sprintf(buf, "\"%s\" console alloc_console", argv[0]);
     res = CreateProcessA(NULL, buf, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &info);
     ok(res, "CreateProcess failed: %u\n", GetLastError());
     CloseHandle(info.hThread);
