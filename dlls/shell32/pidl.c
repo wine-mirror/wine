@@ -1708,8 +1708,7 @@ LPITEMIDLIST _ILCreateGuidFromStrW(LPCWSTR szGUID)
 
 LPITEMIDLIST _ILCreateFromFindDataW( const WIN32_FIND_DATAW *wfd )
 {
-    char    buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
-    DWORD   len, len1, wlen, alen;
+    DWORD   wlen, alen;
     LPITEMIDLIST pidl;
     PIDLTYPE type;
 
@@ -1718,13 +1717,9 @@ LPITEMIDLIST _ILCreateFromFindDataW( const WIN32_FIND_DATAW *wfd )
 
     TRACE("(%s, %s)\n",debugstr_w(wfd->cAlternateFileName), debugstr_w(wfd->cFileName));
 
-    /* prepare buffer with both names */
-    len = WideCharToMultiByte(CP_ACP,0,wfd->cFileName,-1,buff,MAX_PATH,NULL,NULL);
-    len1 = WideCharToMultiByte(CP_ACP,0,wfd->cAlternateFileName,-1, buff+len, sizeof(buff)-len, NULL, NULL);
-    alen = len + len1;
-
     type = (wfd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? PT_FOLDER : PT_VALUE;
 
+    alen = WideCharToMultiByte( CP_ACP, 0, wfd->cFileName, -1, NULL, 0, NULL, NULL );
     wlen = lstrlenW(wfd->cFileName) + 1;
     pidl = _ILAlloc(type, FIELD_OFFSET(FileStruct, szNames[alen + (alen & 1)]) +
                     FIELD_OFFSET(FileStructW, wszName[wlen]) + sizeof(WORD));
@@ -1738,7 +1733,7 @@ LPITEMIDLIST _ILCreateFromFindDataW( const WIN32_FIND_DATAW *wfd )
         FileTimeToDosDateTime( &wfd->ftLastWriteTime, &fs->uFileDate, &fs->uFileTime);
         fs->dwFileSize = wfd->nFileSizeLow;
         fs->uFileAttribs = wfd->dwFileAttributes;
-        memcpy(fs->szNames, buff, alen);
+        WideCharToMultiByte( CP_ACP, 0, wfd->cFileName, -1, fs->szNames, alen, NULL, NULL );
 
         fsw = (FileStructW*)(pData->u.file.szNames + alen + (alen & 0x1));
         fsw->cbLen = FIELD_OFFSET(FileStructW, wszName[wlen]) + sizeof(WORD);
