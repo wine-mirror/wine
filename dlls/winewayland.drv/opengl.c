@@ -25,6 +25,7 @@
 #include "config.h"
 
 #include <dlfcn.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "waylanddrv.h"
@@ -45,18 +46,79 @@ static void *egl_handle;
 static struct opengl_funcs opengl_funcs;
 static EGLDisplay egl_display;
 static char wgl_extensions[4096];
+static EGLConfig *egl_configs;
+static int num_egl_configs;
 
 #define USE_GL_FUNC(name) #name,
 static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 #undef USE_GL_FUNC
 
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
+DECL_FUNCPTR(eglChooseConfig);
+DECL_FUNCPTR(eglGetConfigAttrib);
 DECL_FUNCPTR(eglGetError);
 DECL_FUNCPTR(eglGetPlatformDisplay);
 DECL_FUNCPTR(eglGetProcAddress);
 DECL_FUNCPTR(eglInitialize);
 DECL_FUNCPTR(eglQueryString);
 #undef DECL_FUNCPTR
+
+static BOOL has_opengl(void);
+
+static int wayland_wglDescribePixelFormat(HDC hdc, int fmt, UINT size,
+                                          PIXELFORMATDESCRIPTOR *pfd)
+{
+    EGLint val;
+    EGLConfig config;
+
+    if (!has_opengl()) return 0;
+    if (!pfd) return num_egl_configs;
+    if (size < sizeof(*pfd)) return 0;
+    if (fmt <= 0 || fmt > num_egl_configs) return 0;
+
+    config = egl_configs[fmt - 1];
+
+    memset(pfd, 0, sizeof(*pfd));
+    pfd->nSize = sizeof(*pfd);
+    pfd->nVersion = 1;
+    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER |
+                   PFD_SUPPORT_COMPOSITION;
+    pfd->iPixelType = PFD_TYPE_RGBA;
+    pfd->iLayerType = PFD_MAIN_PLANE;
+
+    /* Although the documentation describes cColorBits as excluding alpha, real
+     * drivers tend to return the full pixel size, so do the same. */
+    p_eglGetConfigAttrib(egl_display, config, EGL_BUFFER_SIZE, &val);
+    pfd->cColorBits = val;
+    p_eglGetConfigAttrib(egl_display, config, EGL_RED_SIZE, &val);
+    pfd->cRedBits = val;
+    p_eglGetConfigAttrib(egl_display, config, EGL_GREEN_SIZE, &val);
+    pfd->cGreenBits = val;
+    p_eglGetConfigAttrib(egl_display, config, EGL_BLUE_SIZE, &val);
+    pfd->cBlueBits = val;
+    p_eglGetConfigAttrib(egl_display, config, EGL_ALPHA_SIZE, &val);
+    pfd->cAlphaBits = val;
+    p_eglGetConfigAttrib(egl_display, config, EGL_DEPTH_SIZE, &val);
+    pfd->cDepthBits = val;
+    p_eglGetConfigAttrib(egl_display, config, EGL_STENCIL_SIZE, &val);
+    pfd->cStencilBits = val;
+
+    /* Although we don't get information from EGL about the component shifts
+     * or the native format, the 0xARGB order is the most common. */
+    pfd->cBlueShift = 0;
+    pfd->cGreenShift = pfd->cBlueBits;
+    pfd->cRedShift = pfd->cGreenBits + pfd->cBlueBits;
+    if (pfd->cAlphaBits)
+        pfd->cAlphaShift = pfd->cRedBits + pfd->cGreenBits + pfd->cBlueBits;
+    else
+        pfd->cAlphaShift = 0;
+
+    TRACE("fmt %u color %u %u/%u/%u/%u depth %u stencil %u\n",
+          fmt, pfd->cColorBits, pfd->cRedBits, pfd->cGreenBits, pfd->cBlueBits,
+          pfd->cAlphaBits, pfd->cDepthBits, pfd->cStencilBits);
+
+    return num_egl_configs;
+}
 
 static const char *wayland_wglGetExtensionsStringARB(HDC hdc)
 {
@@ -120,6 +182,60 @@ static BOOL init_opengl_funcs(void)
     return TRUE;
 }
 
+static BOOL init_egl_configs(void)
+{
+    EGLint i;
+    const EGLint attribs[] =
+    {
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_NONE
+    };
+
+    p_eglChooseConfig(egl_display, attribs, NULL, 0, &num_egl_configs);
+    if (!(egl_configs = malloc(num_egl_configs * sizeof(*egl_configs))))
+    {
+        ERR("Failed to allocate memory for EGL configs\n");
+        return FALSE;
+    }
+    if (!p_eglChooseConfig(egl_display, attribs, egl_configs, num_egl_configs,
+                           &num_egl_configs) ||
+        !num_egl_configs)
+    {
+        free(egl_configs);
+        egl_configs = NULL;
+        num_egl_configs = 0;
+        ERR("Failed to get any configs from eglChooseConfig\n");
+        return FALSE;
+    }
+
+    if (TRACE_ON(waylanddrv))
+    {
+        for (i = 0; i < num_egl_configs; i++)
+        {
+            EGLint id, type, visual_id, native, render, color, r, g, b, a, d, s;
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_NATIVE_VISUAL_ID, &visual_id);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_SURFACE_TYPE, &type);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_RENDERABLE_TYPE, &render);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_CONFIG_ID, &id);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_NATIVE_RENDERABLE, &native);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_COLOR_BUFFER_TYPE, &color);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_RED_SIZE, &r);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_GREEN_SIZE, &g);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_BLUE_SIZE, &b);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_ALPHA_SIZE, &a);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_DEPTH_SIZE, &d);
+            p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_STENCIL_SIZE, &s);
+            TRACE("%u: config %d id %d type %x visual %d native %d render %x "
+                  "colortype %d rgba %d,%d,%d,%d depth %u stencil %d\n",
+                  num_egl_configs, i, id, type, visual_id, native, render,
+                  color, r, g, b, a, d, s);
+        }
+    }
+
+    return TRUE;
+}
+
 static void init_opengl(void)
 {
     EGLint egl_version[2];
@@ -156,6 +272,8 @@ static void init_opengl(void)
         if (!(p_##func = (void *)p_eglGetProcAddress(#func))) \
             { ERR("Failed to load symbol %s\n", #func); goto err; } \
     } while(0)
+    LOAD_FUNCPTR_EGL(eglChooseConfig);
+    LOAD_FUNCPTR_EGL(eglGetConfigAttrib);
     LOAD_FUNCPTR_EGL(eglGetError);
     LOAD_FUNCPTR_EGL(eglGetPlatformDisplay);
     LOAD_FUNCPTR_EGL(eglInitialize);
@@ -177,6 +295,7 @@ static void init_opengl(void)
     TRACE("EGL version %u.%u\n", egl_version[0], egl_version[1]);
 
     if (!init_opengl_funcs()) goto err;
+    if (!init_egl_configs()) goto err;
 
     return;
 
@@ -196,6 +315,7 @@ static struct opengl_funcs opengl_funcs =
 {
     .wgl =
     {
+        .p_wglDescribePixelFormat = wayland_wglDescribePixelFormat,
         .p_wglGetProcAddress = wayland_wglGetProcAddress,
     }
 };
