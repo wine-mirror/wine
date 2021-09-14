@@ -654,106 +654,95 @@ static const IROTDataVtbl ROTDataVtbl =
     ClassMonikerROTData_GetComparisonData
 };
 
-/******************************************************************************
- *        CreateClassMoniker	[OLE32.@]
- ******************************************************************************/
-HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker **moniker)
+static HRESULT create_class_moniker(const CLSID *clsid, const WCHAR *data,
+        unsigned int data_len, IMoniker **moniker)
 {
     ClassMoniker *object;
 
-    TRACE("%s, %p\n", debugstr_guid(rclsid), moniker);
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMoniker_iface.lpVtbl = &ClassMonikerVtbl;
     object->IROTData_iface.lpVtbl = &ROTDataVtbl;
     object->ref = 1;
-    object->header.clsid = *rclsid;
+    object->header.clsid = *clsid;
+    if (data_len)
+    {
+        object->header.data_len = (data_len + 1) * sizeof(WCHAR);
+
+        if (!(object->data = heap_alloc(object->header.data_len)))
+        {
+            IMoniker_Release(&object->IMoniker_iface);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(object->data, data, data_len * sizeof(WCHAR));
+        object->data[data_len] = 0;
+    }
 
     *moniker = &object->IMoniker_iface;
 
     return S_OK;
 }
 
-HRESULT ClassMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName, LPDWORD pchEaten,
-                                           IMoniker **ppmk)
+/******************************************************************************
+ *        CreateClassMoniker	[OLE32.@]
+ ******************************************************************************/
+HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker **moniker)
 {
-    HRESULT hr;
-    LPCWSTR s = wcschr(szDisplayName, ':');
-    LPCWSTR end;
-    CLSID clsid;
-    BYTE table[256];
-    int i;
+    TRACE("%s, %p\n", debugstr_guid(rclsid), moniker);
 
-    if (!s)
+    return create_class_moniker(rclsid, NULL, 0, moniker);
+}
+
+HRESULT ClassMoniker_CreateFromDisplayName(LPBC pbc, const WCHAR *display_name,
+        DWORD *eaten, IMoniker **moniker)
+{
+    const WCHAR *end, *s;
+    BOOL has_braces;
+    WCHAR uuid[37];
+    CLSID clsid;
+    HRESULT hr;
+    int len;
+
+    s = display_name;
+
+    /* Skip prefix */
+    if (wcsnicmp(s, L"clsid:", 6)) return MK_E_SYNTAX;
+    s += 6;
+
+    /* Terminating marker is optional */
+    if (!(end = wcschr(s, ':')))
+        end = s + lstrlenW(s);
+
+    len = end - s;
+    if (len < 36)
         return MK_E_SYNTAX;
 
-    s++;
+    if ((has_braces = *s == '{')) s++;
 
-    for (end = s; *end && (*end != ':'); end++)
-        ;
+    memcpy(uuid, s, 36 * sizeof(WCHAR));
+    uuid[36] = 0;
 
-    TRACE("parsing %s\n", debugstr_wn(s, end - s));
-
-    /* validate the CLSID string */
-    if (s[0] == '{')
+    if (UuidFromStringW(uuid, &clsid))
     {
-        if ((end - s != 38) || (s[37] != '}'))
-            return MK_E_SYNTAX;
+        WARN("Failed to parse clsid string.\n");
+        return MK_E_SYNTAX;
+    }
+
+    s += 36;
+    if (has_braces)
+    {
+        if (*s != '}') return MK_E_SYNTAX;
         s++;
     }
-    else
-    {
-        if (end - s != 36)
-            return MK_E_SYNTAX;
-    }
 
-    for (i=0; i<36; i++)
-    {
-        if ((i == 8)||(i == 13)||(i == 18)||(i == 23))
-        {
-            if (s[i] != '-')
-                return MK_E_SYNTAX;
-            continue;
-        }
-        if (!(((s[i] >= '0') && (s[i] <= '9'))  ||
-              ((s[i] >= 'a') && (s[i] <= 'f'))  ||
-              ((s[i] >= 'A') && (s[i] <= 'F'))))
-            return MK_E_SYNTAX;
-    }
+    /* Consume terminal marker */
+    len = end - s;
+    if (*end == ':') end++;
 
-    /* quick lookup table */
-    memset(table, 0, 256);
-
-    for (i = 0; i < 10; i++)
-        table['0' + i] = i;
-    for (i = 0; i < 6; i++)
-    {
-        table['A' + i] = i+10;
-        table['a' + i] = i+10;
-    }
-
-    /* in form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX */
-
-    clsid.Data1 = (table[s[0]] << 28 | table[s[1]] << 24 | table[s[2]] << 20 | table[s[3]] << 16 |
-                   table[s[4]] << 12 | table[s[5]] << 8  | table[s[6]] << 4  | table[s[7]]);
-    clsid.Data2 = table[s[9]] << 12  | table[s[10]] << 8 | table[s[11]] << 4 | table[s[12]];
-    clsid.Data3 = table[s[14]] << 12 | table[s[15]] << 8 | table[s[16]] << 4 | table[s[17]];
-
-    /* these are just sequential bytes */
-    clsid.Data4[0] = table[s[19]] << 4 | table[s[20]];
-    clsid.Data4[1] = table[s[21]] << 4 | table[s[22]];
-    clsid.Data4[2] = table[s[24]] << 4 | table[s[25]];
-    clsid.Data4[3] = table[s[26]] << 4 | table[s[27]];
-    clsid.Data4[4] = table[s[28]] << 4 | table[s[29]];
-    clsid.Data4[5] = table[s[30]] << 4 | table[s[31]];
-    clsid.Data4[6] = table[s[32]] << 4 | table[s[33]];
-    clsid.Data4[7] = table[s[34]] << 4 | table[s[35]];
-
-    hr = CreateClassMoniker(&clsid, ppmk);
+    hr = create_class_moniker(&clsid, len ? s : NULL, len, moniker);
     if (SUCCEEDED(hr))
-        *pchEaten = (*end == ':' ? end + 1 : end) - szDisplayName;
+        *eaten = end - display_name;
     return hr;
 }
 

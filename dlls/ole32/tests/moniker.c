@@ -1767,6 +1767,22 @@ todo_wine_if(moniker_type == MKSYS_GENERICCOMPOSITE)
 
 static void test_class_moniker(void)
 {
+    static const struct parse_test
+    {
+        const WCHAR *name;
+        ULONG eaten;
+        HRESULT hr;
+    }
+    tests[] =
+    {
+        { L"clsid:11111111-0000-0000-2222-444444444444;extra data:", 54 },
+        { L"clsid:11111111-0000-0000-2222-444444444444extra data", 52 },
+        { L"clsid:11111111-0000-0000-2222-444444444444:", 43 },
+        { L"clsid:11111111-0000-0000-2222-444444444444", 42 },
+        { L"clsid:{11111111-0000-0000-2222-444444444444}", 44 },
+        { L"clsid:{11111111-0000-0000-2222-444444444444", 0, MK_E_SYNTAX },
+        { L"clsid:11111111-0000-0000-2222-444444444444}", 43 },
+    };
     IMoniker *moniker, *moniker2, *inverse, *reduced, *anti;
     IEnumMoniker *enummoniker;
     ULONG length, eaten;
@@ -1780,38 +1796,51 @@ static void test_class_moniker(void)
     FILETIME filetime;
     IStream *stream;
     BYTE buffer[100];
+    HGLOBAL hglobal;
+    unsigned int i;
+    DWORD *data;
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        eaten = 0xdeadbeef;
+        hr = MkParseDisplayName(bindctx, tests[i].name, &eaten, &moniker);
+    todo_wine_if(i == 5)
+        ok(hr == tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+        ok(eaten == tests[i].eaten, "%u: unexpected eaten length %u, expected %u.\n", i, eaten, tests[i].eaten);
+        if (SUCCEEDED(hr))
+        {
+            TEST_MONIKER_TYPE(moniker, MKSYS_CLASSMONIKER);
+            IMoniker_Release(moniker);
+        }
+    }
+
     /* Extended syntax, handled by class moniker directly, only CLSID is meaningful for equality. */
     hr = MkParseDisplayName(bindctx, L"clsid:11111111-0000-0000-2222-444444444444;extra data:", &eaten, &moniker);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(eaten == 54, "Unexpected length %u.\n", eaten);
+    ok(eaten == 54, "Unexpected length %u.\n", eaten);
 
-        hr = MkParseDisplayName(bindctx, L"clsid:11111111-0000-0000-2222-444444444444;different extra data:", &eaten, &moniker2);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = MkParseDisplayName(bindctx, L"clsid:11111111-0000-0000-2222-444444444444;different extra data:", &eaten, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-        TEST_DISPLAY_NAME(moniker, L"clsid:11111111-0000-0000-2222-444444444444;extra data:");
-        TEST_MONIKER_TYPE(moniker, MKSYS_CLASSMONIKER);
-        hr = IMoniker_GetSizeMax(moniker, &size);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-        ok(size.LowPart == 44, "Unexpected size %u.\n", size.LowPart);
+    TEST_DISPLAY_NAME(moniker, L"clsid:11111111-0000-0000-2222-444444444444;extra data:");
+    TEST_MONIKER_TYPE(moniker, MKSYS_CLASSMONIKER);
+    hr = IMoniker_GetSizeMax(moniker, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.LowPart == 44, "Unexpected size %u.\n", size.LowPart);
 
-        TEST_MONIKER_TYPE(moniker2, MKSYS_CLASSMONIKER);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_CLASSMONIKER);
 
-        hr = IMoniker_IsEqual(moniker, moniker2);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker, moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-        hr = IMoniker_IsEqual(moniker2, moniker);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker2, moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-        IMoniker_Release(moniker2);
-        IMoniker_Release(moniker);
-    }
+    IMoniker_Release(moniker2);
+    IMoniker_Release(moniker);
 
     /* From persistent state */
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
@@ -1842,6 +1871,27 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(size.QuadPart == 30, "Unexpected size %u.\n", size.LowPart);
     TEST_DISPLAY_NAME(moniker, L"clsid:0002E005-0000-0000-C000-000000000046data:");
+    IStream_Release(stream);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Save(moniker, stream, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    length = GlobalSize(hglobal);
+    data = GlobalLock(hglobal);
+    ok(length == 30, "Unexpected stream size %u.\n", length);
+    ok(IsEqualGUID((CLSID *)data, &CLSID_StdComponentCategoriesMgr), "Unexpected clsid.\n");
+    data += sizeof(CLSID) / sizeof(*data);
+    ok(*data == 10, "Unexpected data length %u.\n", *data);
+    data++;
+    ok(!lstrcmpW((WCHAR *)data, L"data"), "Unexpected data.\n");
+
+    IStream_Release(stream);
 
     /* Extra data does not affect comparison */
     hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
@@ -1852,7 +1902,6 @@ todo_wine
     ok(!memcmp(buffer, expected_class_moniker_comparison_data, length), "Unexpected data.\n");
     IROTData_Release(rotdata);
 
-    IStream_Release(stream);
     IMoniker_Release(moniker);
 
     hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);

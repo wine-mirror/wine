@@ -827,7 +827,6 @@ HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
 				LPDWORD pchEaten, LPMONIKER *ppmk)
 {
     HRESULT hr = MK_E_SYNTAX;
-    static const WCHAR wszClsidColon[] = {'c','l','s','i','d',':'};
     IMoniker *moniker;
     DWORD chEaten;
 
@@ -845,7 +844,7 @@ HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
     *pchEaten = 0;
     *ppmk = NULL;
 
-    if (!wcsnicmp(szDisplayName, wszClsidColon, ARRAY_SIZE(wszClsidColon)))
+    if (!wcsnicmp(szDisplayName, L"clsid:", 6))
     {
         hr = ClassMoniker_CreateFromDisplayName(pbc, szDisplayName, &chEaten, &moniker);
         if (FAILED(hr) && (hr != MK_E_SYNTAX))
