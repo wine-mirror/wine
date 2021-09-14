@@ -1165,14 +1165,14 @@ FILE* CDECL _popen(const char* command, const char* mode)
   if (!(cmdW = msvcrt_wstrdupa(command))) return NULL;
   if (!(modeW = msvcrt_wstrdupa(mode)))
   {
-    HeapFree(GetProcessHeap(), 0, cmdW);
+    free(cmdW);
     return NULL;
   }
 
   ret = _wpopen(cmdW, modeW);
 
-  HeapFree(GetProcessHeap(), 0, cmdW);
-  HeapFree(GetProcessHeap(), 0, modeW);
+  free(cmdW);
+  free(modeW);
   return ret;
 }
 
@@ -1274,7 +1274,7 @@ int CDECL system(const char* cmd)
   if ((cmdW = msvcrt_wstrdupa(cmd)))
   {
     res = _wsystem(cmdW);
-    HeapFree(GetProcessHeap(), 0, cmdW);
+    free(cmdW);
   }
   return res;
 }
