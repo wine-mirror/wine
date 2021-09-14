@@ -246,7 +246,8 @@ static DWORD CALLBACK hid_device_thread(void *args)
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     HIDP_REPORT_IDS *reports = ext->u.pdo.device_desc.ReportIDs;
     ULONG report_count = ext->u.pdo.device_desc.ReportIDsLength;
-    ULONG i, report_id = 0, poll_interval = 0;
+    BOOL polled = ext->u.pdo.information.Polled;
+    ULONG i, report_id = 0, timeout = 0;
     HID_XFER_PACKET *packet;
     IO_STATUS_BLOCK io;
     BYTE *buffer;
@@ -256,7 +257,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
     buffer = (BYTE *)(packet + 1);
     packet->reportBuffer = buffer;
 
-    if (ext->u.pdo.information.Polled) poll_interval = ext->u.pdo.poll_interval;
+    if (polled) timeout = ext->u.pdo.poll_interval;
 
     for (i = 0; i < report_count; ++i)
     {
@@ -288,10 +289,11 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportBuffer = buffer;
             packet->reportBufferLen = io.Information;
 
-            hid_device_queue_input( device, packet );
+            if (polled || io.Information == desc->InputLength)
+                hid_device_queue_input( device, packet );
         }
 
-        res = WaitForSingleObject(ext->u.pdo.halt_event, poll_interval);
+        res = WaitForSingleObject(ext->u.pdo.halt_event, timeout);
     } while (res == WAIT_TIMEOUT);
 
     TRACE("device thread exiting, res %#x\n", res);

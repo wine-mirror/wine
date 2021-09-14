@@ -2187,7 +2187,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         /* first read should be completed */
         ret = GetOverlappedResult( async_file, &overlapped, &value, TRUE );
         ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        todo_wine
         ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
         /* second read should still be pending */
         Sleep( 50 );
@@ -2206,13 +2205,11 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
         ret = GetOverlappedResult( async_file, &overlapped2, &value, TRUE );
         ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
-        todo_wine
         ok( value == caps.InputReportByteLength, "got length %u, expected %u\n", value, caps.InputReportByteLength );
 
         off = report_id ? 0 : 1;
         todo_wine
         ok( memcmp( report, buffer, caps.InputReportByteLength ), "expected different report\n" );
-        todo_wine
         ok( !memcmp( report + off, report + caps.InputReportByteLength, caps.InputReportByteLength - off ),
             "expected identical reports\n" );
         todo_wine
