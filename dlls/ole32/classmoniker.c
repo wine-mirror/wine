@@ -452,39 +452,27 @@ static HRESULT WINAPI ClassMoniker_Inverse(IMoniker* iface,IMoniker** ppmk)
     return CreateAntiMoniker(ppmk);
 }
 
-/******************************************************************************
- *        ClassMoniker_CommonPrefixWith
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** ppmkPrefix)
+static HRESULT WINAPI ClassMoniker_CommonPrefixWith(IMoniker *iface, IMoniker *other, IMoniker **prefix)
 {
-    DWORD mkSys;
-    
-    TRACE("(%p, %p)\n", pmkOther, ppmkPrefix);
+    ClassMoniker *moniker = impl_from_IMoniker(iface), *other_moniker;
 
-    *ppmkPrefix = NULL;
+    TRACE("%p, %p, %p\n", iface, other, prefix);
 
-    IMoniker_IsSystemMoniker(pmkOther, &mkSys);
+    *prefix = NULL;
 
-    /* If the other moniker is an class moniker that is equal to this moniker, this method sets *ppmkPrefix */
-    /* to this moniker and returns MK_S_US */
+    other_moniker = unsafe_impl_from_IMoniker(other);
 
-    if (mkSys == MKSYS_CLASSMONIKER)
+    if (other_moniker)
     {
-        if (IMoniker_IsEqual(iface, pmkOther) == S_OK)
-        {
-            *ppmkPrefix = iface;
+        if (!IsEqualGUID(&moniker->clsid, &other_moniker->clsid)) return MK_E_NOPREFIX;
 
-            IMoniker_AddRef(iface);
+        *prefix = iface;
+        IMoniker_AddRef(iface);
 
-            return MK_S_US;
-        }
-        else
-            return MK_E_NOPREFIX;
+        return MK_S_US;
     }
-    else
-        /* otherwise, the method calls the MonikerCommonPrefixWith function. This function correctly handles */
-        /* the case where the other moniker is a generic composite. */
-        return MonikerCommonPrefixWith(iface, pmkOther, ppmkPrefix);
+
+    return MonikerCommonPrefixWith(iface, other, prefix);
 }
 
 /******************************************************************************
