@@ -1637,6 +1637,19 @@ static HRESULT interp_string(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_date(exec_ctx_t *ctx)
+{
+    const DATE *d = ctx->instr->arg1.date;
+    VARIANT v;
+
+    TRACE("%lf\n",*d);
+
+    V_VT(&v) = VT_DATE;
+    V_DATE(&v) = *d;
+
+    return stack_push(ctx, &v);
+}
+
 static HRESULT interp_int(exec_ctx_t *ctx)
 {
     const LONG arg = ctx->instr->arg1.lng;

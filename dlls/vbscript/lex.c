@@ -204,6 +204,48 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
     return tString;
 }
 
+static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
+{
+    const WCHAR *ptr = ++ctx->ptr;
+    WCHAR *rptr;
+    int len = 0;
+    HRESULT res;
+
+    while(ctx->ptr < ctx->end) {
+        if(*ctx->ptr == '\n' || *ctx->ptr == '\r') {
+            FIXME("newline inside date literal\n");
+            return 0;
+        }
+
+       if(*ctx->ptr == '#')
+            break;
+       ctx->ptr++;
+    }
+
+    if(ctx->ptr == ctx->end) {
+        FIXME("unterminated date literal\n");
+        return 0;
+    }
+
+    len += ctx->ptr-ptr;
+
+    rptr = heap_alloc((len+1)*sizeof(WCHAR));
+    if(!rptr)
+        return 0;
+
+    memcpy( rptr, ptr, len * sizeof(WCHAR));
+    rptr[len] = 0;
+    res = VarDateFromStr(rptr, ctx->lcid, 0, ret);
+    heap_free(rptr);
+    if (!SUCCEEDED(res)) {
+        FIXME("Invalid date literal\n");
+        return 0;
+    }
+
+    ctx->ptr++;
+    return tDate;
+}
+
 static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
 {
     BOOL use_int = TRUE;
@@ -429,6 +471,8 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         return tEXPRLBRACKET;
     case '"':
         return parse_string_literal(ctx, lval);
+    case '#':
+        return parse_date_literal(ctx, lval);
     case '&':
         if(*++ctx->ptr == 'h' || *ctx->ptr == 'H')
             return parse_hex_literal(ctx, lval);

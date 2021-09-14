@@ -92,6 +92,7 @@ static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
     case ARG_ADDR:
         TRACE_(vbscript_disas)("\t%u", arg->uint);
         break;
+    case ARG_DATE:
     case ARG_DOUBLE:
         TRACE_(vbscript_disas)("\t%lf", *arg->dbl);
         break;
@@ -235,6 +236,24 @@ static HRESULT push_instr_double(compile_ctx_t *ctx, vbsop_t op, double arg)
 
     *d = arg;
     instr_ptr(ctx, instr)->arg1.dbl = d;
+    return S_OK;
+}
+
+static HRESULT push_instr_date(compile_ctx_t *ctx, vbsop_t op, DATE arg)
+{
+    unsigned instr;
+    DATE *d;
+
+    d = compiler_alloc(ctx->code, sizeof(DATE));
+    if(!d)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(!instr)
+        return E_OUTOFMEMORY;
+
+    *d = arg;
+    instr_ptr(ctx, instr)->arg1.date = d;
     return S_OK;
 }
 
@@ -530,6 +549,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_call_expression(ctx, (call_expression_t*)expr, TRUE);
     case EXPR_CONCAT:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_concat);
+    case EXPR_DATE:
+        return push_instr_date(ctx, OP_date, ((date_expression_t*)expr)->value);
     case EXPR_DIV:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_div);
     case EXPR_DOT:
@@ -1962,6 +1983,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
         item->ref++;
     }
 
+    ctx.parser.lcid = script->lcid;
     hres = parse_script(&ctx.parser, code->source, delimiter, flags);
     if(FAILED(hres)) {
         if(ctx.parser.error_loc != -1)

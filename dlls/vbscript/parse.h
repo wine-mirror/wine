@@ -23,6 +23,7 @@ typedef enum {
     EXPR_BRACKETS,
     EXPR_CALL,
     EXPR_CONCAT,
+    EXPR_DATE,
     EXPR_DIV,
     EXPR_DOT,
     EXPR_DOUBLE,
@@ -69,6 +70,11 @@ typedef struct {
     expression_t expr;
     LONG value;
 } int_expression_t;
+
+typedef struct {
+    expression_t expr;
+    DATE value;
+} date_expression_t;
 
 typedef struct {
     expression_t expr;
@@ -287,6 +293,7 @@ typedef struct {
     BOOL is_html;
     HRESULT hres;
     int error_loc;
+    LCID lcid;
 
     int last_token;
     unsigned last_nl;
