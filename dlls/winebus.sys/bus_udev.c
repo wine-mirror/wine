@@ -558,19 +558,6 @@ static void hidraw_device_destroy(struct unix_device *iface)
 {
     struct platform_private *private = impl_from_unix_device(iface);
 
-    EnterCriticalSection(&udev_cs);
-    list_remove(&private->unix_device.entry);
-    LeaveCriticalSection(&udev_cs);
-
-    if (private->report_thread)
-    {
-        write(private->control_pipe[1], "q", 1);
-        WaitForSingleObject(private->report_thread, INFINITE);
-        close(private->control_pipe[0]);
-        close(private->control_pipe[1]);
-        CloseHandle(private->report_thread);
-    }
-
     close(private->device_fd);
     udev_device_unref(private->udev_device);
 
@@ -606,6 +593,24 @@ static NTSTATUS hidraw_device_start(struct unix_device *iface, DEVICE_OBJECT *de
     }
 
     return STATUS_SUCCESS;
+}
+
+static void hidraw_device_stop(struct unix_device *iface)
+{
+    struct platform_private *private = impl_from_unix_device(iface);
+
+    EnterCriticalSection(&udev_cs);
+    list_remove(&private->unix_device.entry);
+    LeaveCriticalSection(&udev_cs);
+
+    if (private->report_thread)
+    {
+        write(private->control_pipe[1], "q", 1);
+        WaitForSingleObject(private->report_thread, INFINITE);
+        close(private->control_pipe[0]);
+        close(private->control_pipe[1]);
+        CloseHandle(private->report_thread);
+    }
 }
 
 static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -780,6 +785,7 @@ static const struct unix_device_vtbl hidraw_device_vtbl =
     hidraw_device_destroy,
     udev_device_compare,
     hidraw_device_start,
+    hidraw_device_stop,
     hidraw_device_get_report_descriptor,
     hidraw_device_set_output_report,
     hidraw_device_get_feature_report,
@@ -801,19 +807,6 @@ static inline struct wine_input_private *input_impl_from_DEVICE_OBJECT(DEVICE_OB
 static void lnxev_device_destroy(struct unix_device *iface)
 {
     struct wine_input_private *ext = input_impl_from_unix_device(iface);
-
-    EnterCriticalSection(&udev_cs);
-    list_remove(&ext->base.unix_device.entry);
-    LeaveCriticalSection(&udev_cs);
-
-    if (ext->base.report_thread)
-    {
-        write(ext->base.control_pipe[1], "q", 1);
-        WaitForSingleObject(ext->base.report_thread, INFINITE);
-        close(ext->base.control_pipe[0]);
-        close(ext->base.control_pipe[1]);
-        CloseHandle(ext->base.report_thread);
-    }
 
     HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
     HeapFree(GetProcessHeap(), 0, ext->last_report_buffer);
@@ -851,6 +844,24 @@ static NTSTATUS lnxev_device_start(struct unix_device *iface, DEVICE_OBJECT *dev
     }
 
     return STATUS_SUCCESS;
+}
+
+static void lnxev_device_stop(struct unix_device *iface)
+{
+    struct wine_input_private *ext = input_impl_from_unix_device(iface);
+
+    EnterCriticalSection(&udev_cs);
+    list_remove(&ext->base.unix_device.entry);
+    LeaveCriticalSection(&udev_cs);
+
+    if (ext->base.report_thread)
+    {
+        write(ext->base.control_pipe[1], "q", 1);
+        WaitForSingleObject(ext->base.report_thread, INFINITE);
+        close(ext->base.control_pipe[0]);
+        close(ext->base.control_pipe[1]);
+        CloseHandle(ext->base.report_thread);
+    }
 }
 
 static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -920,6 +931,7 @@ static const struct unix_device_vtbl lnxev_device_vtbl =
     lnxev_device_destroy,
     udev_device_compare,
     lnxev_device_start,
+    lnxev_device_stop,
     lnxev_device_get_report_descriptor,
     lnxev_device_set_output_report,
     lnxev_device_get_feature_report,

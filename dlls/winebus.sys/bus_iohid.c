@@ -167,6 +167,13 @@ static NTSTATUS iohid_device_start(struct unix_device *iface, DEVICE_OBJECT *dev
     return STATUS_SUCCESS;
 }
 
+static void iohid_device_stop(struct unix_device *iface)
+{
+    struct platform_private *private = impl_from_unix_device(iface);
+
+    IOHIDDeviceRegisterInputReportCallback(private->device, NULL, 0, NULL, NULL);
+}
+
 static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
                                                    DWORD length, DWORD *out_length)
 {
@@ -246,6 +253,7 @@ static const struct unix_device_vtbl iohid_device_vtbl =
     iohid_device_destroy,
     iohid_device_compare,
     iohid_device_start,
+    iohid_device_stop,
     iohid_device_get_report_descriptor,
     iohid_device_set_output_report,
     iohid_device_get_feature_report,

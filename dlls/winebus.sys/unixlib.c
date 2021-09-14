@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 static struct hid_descriptor mouse_desc;
 static struct hid_descriptor keyboard_desc;
 
-static void mouse_remove(struct unix_device *iface)
+static void mouse_destroy(struct unix_device *iface)
 {
 }
 
@@ -56,6 +56,10 @@ static NTSTATUS mouse_start(struct unix_device *iface, DEVICE_OBJECT *device)
         return STATUS_NO_MEMORY;
 
     return STATUS_SUCCESS;
+}
+
+static void mouse_stop(struct unix_device *iface)
+{
 }
 
 static NTSTATUS mouse_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
@@ -92,9 +96,10 @@ static void mouse_set_feature_report(struct unix_device *iface, HID_XFER_PACKET 
 
 static const struct unix_device_vtbl mouse_vtbl =
 {
-    mouse_remove,
+    mouse_destroy,
     mouse_compare,
     mouse_start,
+    mouse_stop,
     mouse_get_report_descriptor,
     mouse_set_output_report,
     mouse_get_feature_report,
@@ -120,7 +125,7 @@ static NTSTATUS mouse_device_create(void *args)
     return STATUS_SUCCESS;
 }
 
-static void keyboard_remove(struct unix_device *iface)
+static void keyboard_destroy(struct unix_device *iface)
 {
 }
 
@@ -139,6 +144,10 @@ static NTSTATUS keyboard_start(struct unix_device *iface, DEVICE_OBJECT *device)
         return STATUS_NO_MEMORY;
 
     return STATUS_SUCCESS;
+}
+
+static void keyboard_stop(struct unix_device *iface)
+{
 }
 
 static NTSTATUS keyboard_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
@@ -175,9 +184,10 @@ static void keyboard_set_feature_report(struct unix_device *iface, HID_XFER_PACK
 
 static const struct unix_device_vtbl keyboard_vtbl =
 {
-    keyboard_remove,
+    keyboard_destroy,
     keyboard_compare,
     keyboard_start,
+    keyboard_stop,
     keyboard_get_report_descriptor,
     keyboard_set_output_report,
     keyboard_get_feature_report,
@@ -206,6 +216,7 @@ static NTSTATUS keyboard_device_create(void *args)
 static NTSTATUS unix_device_remove(void *args)
 {
     struct unix_device *iface = args;
+    iface->vtbl->stop(iface);
     iface->vtbl->destroy(iface);
     return STATUS_SUCCESS;
 }

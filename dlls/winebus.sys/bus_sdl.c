@@ -482,12 +482,6 @@ static void sdl_device_destroy(struct unix_device *iface)
 {
     struct platform_private *ext = impl_from_unix_device(iface);
 
-    pSDL_JoystickClose(ext->sdl_joystick);
-    if (ext->sdl_controller)
-        pSDL_GameControllerClose(ext->sdl_controller);
-    if (ext->sdl_haptic)
-        pSDL_HapticClose(ext->sdl_haptic);
-
     HeapFree(GetProcessHeap(), 0, ext);
 }
 
@@ -501,6 +495,15 @@ static NTSTATUS sdl_device_start(struct unix_device *iface, DEVICE_OBJECT *devic
     struct platform_private *ext = impl_from_unix_device(iface);
     if (ext->sdl_controller) return build_mapped_report_descriptor(ext);
     return build_report_descriptor(ext);
+}
+
+static void sdl_device_stop(struct unix_device *iface)
+{
+    struct platform_private *private = impl_from_unix_device(iface);
+
+    pSDL_JoystickClose(private->sdl_joystick);
+    if (private->sdl_controller) pSDL_GameControllerClose(private->sdl_controller);
+    if (private->sdl_haptic) pSDL_HapticClose(private->sdl_haptic);
 }
 
 static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE *buffer,
@@ -579,6 +582,7 @@ static const struct unix_device_vtbl sdl_device_vtbl =
     sdl_device_destroy,
     sdl_device_compare,
     sdl_device_start,
+    sdl_device_stop,
     sdl_device_get_reportdescriptor,
     sdl_device_set_output_report,
     sdl_device_get_feature_report,
