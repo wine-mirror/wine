@@ -26,6 +26,12 @@
 
 #include "wine/test.h"
 
+#if !defined(__WINE_USE_MSVCRT) || defined(__MINGW32__)
+#define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#else
+#define __WINE_PRINTF_ATTR(fmt,args)
+#endif
+
 static SERVICE_STATUS_HANDLE (WINAPI *pRegisterServiceCtrlHandlerExA)(LPCSTR,LPHANDLER_FUNCTION_EX,LPVOID);
 
 static HANDLE pipe_handle = INVALID_HANDLE_VALUE;
@@ -56,6 +62,7 @@ static inline void service_event(const char *event)
     send_msg("EVENT", event);
 }
 
+static void WINAPIV service_ok(int cnd, const char *msg, ...) __WINE_PRINTF_ATTR(2,3);
 static void WINAPIV service_ok(int cnd, const char *msg, ...)
 {
     __ms_va_list valist;
@@ -135,7 +142,7 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPAR
     BOOL r;
     MONITORINFOEXA mi;
 
-    service_ok(hmon != NULL, "Unexpected hmon=%#x\n", hmon);
+    service_ok(hmon != NULL, "Unexpected hmon %p\n", hmon);
 
     monitor_count++;
 
