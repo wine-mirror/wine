@@ -816,6 +816,11 @@ void *free_gdi_handle( HGDIOBJ handle )
     return object;
 }
 
+DWORD get_gdi_object_type( HGDIOBJ obj )
+{
+    GDI_HANDLE_ENTRY *entry = handle_entry( obj );
+    return entry ? entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT : 0;
+}
 
 /***********************************************************************
  *           get_any_obj_ptr

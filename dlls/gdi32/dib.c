@@ -1689,8 +1689,8 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY 
 
     TRACE("dc %p, bitmap %p.\n", desc->hDc, desc->hBitmap);
 
-    if (GetObjectType( desc->hDc ) != OBJ_MEMDC ||
-        GetObjectType( desc->hBitmap ) != OBJ_BITMAP) return STATUS_INVALID_PARAMETER;
+    if (get_gdi_object_type( desc->hDc ) != NTGDI_OBJ_MEMDC ||
+        get_gdi_object_type( desc->hBitmap ) != NTGDI_OBJ_BITMAP) return STATUS_INVALID_PARAMETER;
     NtGdiDeleteObjectApp( desc->hBitmap );
     NtGdiDeleteObjectApp( desc->hDc );
 

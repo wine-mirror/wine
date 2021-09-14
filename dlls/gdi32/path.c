@@ -1627,14 +1627,16 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
     elp = HeapAlloc( GetProcessHeap(), 0, size );
     GetObjectW( dc->hPen, size, elp );
 
-    obj_type = GetObjectType(dc->hPen);
-    if(obj_type == OBJ_PEN) {
+    obj_type = get_gdi_object_type(dc->hPen);
+    switch (obj_type)
+    {
+    case NTGDI_OBJ_PEN:
         penStyle = ((LOGPEN*)elp)->lopnStyle;
-    }
-    else if(obj_type == OBJ_EXTPEN) {
+        break;
+    case NTGDI_OBJ_EXTPEN:
         penStyle = elp->elpPenStyle;
-    }
-    else {
+        break;
+    default:
         SetLastError(ERROR_CAN_NOT_COMPLETE);
         HeapFree( GetProcessHeap(), 0, elp );
         return NULL;

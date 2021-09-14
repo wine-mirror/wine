@@ -375,7 +375,7 @@ void DC_UpdateXforms( DC *dc )
     /* Reselect the font and pen back into the dc so that the size
        gets updated. */
     if (linear_xform_cmp( &oldworld2vport, &dc->xformWorld2Vport ) &&
-        GetObjectType( dc->hSelf ) != OBJ_METADC)
+        get_gdi_object_type( dc->hSelf ) != NTGDI_OBJ_METADC)
     {
         NtGdiSelectFont(dc->hSelf, dc->hFont);
         NtGdiSelectPen(dc->hSelf, dc->hPen);
@@ -1012,7 +1012,7 @@ BOOL WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr )
     TRACE("%p, %p\n", hdc, ptr);
     if( dc )
     {
-        if (GetObjectType( hdc ) != OBJ_MEMDC)
+        if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC)
         {
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
             ret = physdev->funcs->pGetDeviceGammaRamp( physdev, ptr );
@@ -1112,7 +1112,7 @@ BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
     TRACE( "%p, %p\n", hdc, ptr );
     if( dc )
     {
-        if (GetObjectType( hdc ) != OBJ_MEMDC)
+        if (get_gdi_object_type( hdc ) != NTGDI_OBJ_MEMDC)
         {
             PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
 

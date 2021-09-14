@@ -518,7 +518,7 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
 
     TRACE("%p %p\n", hdc, hpal );
 
-    if (GetObjectType(hpal) != OBJ_PAL)
+    if (get_gdi_object_type(hpal) != NTGDI_OBJ_PAL)
     {
       WARN("invalid selected palette %p\n",hpal);
       return 0;

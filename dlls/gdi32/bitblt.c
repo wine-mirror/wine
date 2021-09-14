@@ -866,7 +866,7 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
     hdcWork = NtGdiCreateCompatibleDC( hdcDest );
-    if ((GetObjectType( hdcDest ) != OBJ_MEMDC ||
+    if ((get_gdi_object_type( hdcDest ) != NTGDI_OBJ_MEMDC ||
          NtGdiExtGetObjectW( NtGdiGetDCObject( hdcDest, NTGDI_OBJ_SURF ),
                              sizeof(dib), &dib ) == sizeof(BITMAP)) &&
         NtGdiGetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
