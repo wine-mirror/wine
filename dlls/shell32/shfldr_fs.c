@@ -261,7 +261,7 @@ LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
         IFileSystemBindData_Release( fsbd );
     }
     IUnknown_Release( unk );
-    
+
     return pidl;
 }
 
@@ -300,10 +300,11 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
-    HRESULT hr = E_INVALIDARG;
+    HRESULT hr = S_OK;
     LPCWSTR szNext = NULL;
-    WCHAR szElement[MAX_PATH];
     WCHAR szPath[MAX_PATH];
+    WIN32_FIND_DATAW find_data = { 0 };
+    IFileSystemBindData *fsbd = NULL;
     LPITEMIDLIST pidlTemp = NULL;
     DWORD len;
 
@@ -317,31 +318,55 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     if (pchEaten)
         *pchEaten = 0; /* strange but like the original */
 
-    pidlTemp = SHELL32_CreatePidlFromBindCtx(pbc, lpszDisplayName);
-    if (!pidlTemp && *lpszDisplayName)
+    if (pbc)
     {
-        /* get the next element */
-        szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
+        static WCHAR dataW[] = {'F','i','l','e',' ','S','y','s','t','e','m',' ',
+                                'B','i','n','d',' ','D','a','t','a',0 };
+        IUnknown *unk;
 
+        /* see if the caller bound File System Bind Data */
+        if (SUCCEEDED( IBindCtx_GetObjectParam( pbc, dataW, &unk )))
+        {
+            IUnknown_QueryInterface( unk, &IID_IFileSystemBindData, (void**)&fsbd );
+            IUnknown_Release( unk );
+        }
+    }
+
+    if (*lpszDisplayName)
+    {
         /* build the full pathname to the element */
         lstrcpynW(szPath, This->sPathTarget, MAX_PATH - 1);
         PathAddBackslashW(szPath);
         len = lstrlenW(szPath);
-        lstrcpynW(szPath + len, szElement, MAX_PATH - len);
+        /* get the next element */
+        szNext = GetNextElementW( lpszDisplayName, szPath + len, MAX_PATH - len );
 
-        /* get the pidl */
-        hr = _ILCreateFromPathW(szPath, &pidlTemp);
-
-        if (SUCCEEDED(hr)) {
-            if (szNext && *szNext) {
-                /* try to analyse the next element */
-                hr = SHELL32_ParseNextElement (iface, hwndOwner, pbc,
-                 &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
-            } else {
-                /* it's the last element */
-                if (pdwAttributes && *pdwAttributes)
-                    hr = SHELL32_GetItemAttributes(&This->IShellFolder2_iface, pidlTemp, pdwAttributes);
+        if (szNext && *szNext)
+        {
+            hr = _ILCreateFromPathW( szPath, &pidlTemp );
+            if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) && fsbd)
+            {
+                find_data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+                strcpyW( find_data.cFileName, szPath + len );
+                pidlTemp = _ILCreateFromFindDataW( &find_data );
             }
+            if (pidlTemp) /* try to analyse the next element */
+                hr = SHELL32_ParseNextElement( iface, hwndOwner, pbc, &pidlTemp,
+                                               (WCHAR *)szNext, pchEaten, pdwAttributes );
+        }
+        else  /* it's the last element */
+        {
+            if (fsbd)
+            {
+                if (FAILED( IFileSystemBindData_GetFindData( fsbd, &find_data )))
+                    find_data.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+                strcpyW( find_data.cFileName, szPath + len );
+                pidlTemp = _ILCreateFromFindDataW( &find_data );
+            }
+            else hr = _ILCreateFromPathW(szPath, &pidlTemp);
+
+            if (pidlTemp && pdwAttributes && *pdwAttributes)
+                hr = SHELL32_GetItemAttributes(&This->IShellFolder2_iface, pidlTemp, pdwAttributes);
         }
     }
 
@@ -352,6 +377,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 
     TRACE ("(%p)->(-- pidl=%p ret=0x%08x)\n", This, *ppidl, hr);
 
+    if (fsbd) IFileSystemBindData_Release( fsbd );
     return hr;
 }
 
