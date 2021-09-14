@@ -561,7 +561,7 @@ static void hidraw_device_destroy(struct unix_device *iface)
     close(private->device_fd);
     udev_device_unref(private->udev_device);
 
-    HeapFree(GetProcessHeap(), 0, private);
+    unix_device_destroy(iface);
 }
 
 static int udev_device_compare(struct unix_device *iface, void *platform_dev)
@@ -815,7 +815,7 @@ static void lnxev_device_destroy(struct unix_device *iface)
     close(ext->base.device_fd);
     udev_device_unref(ext->base.udev_device);
 
-    HeapFree(GetProcessHeap(), 0, ext);
+    unix_device_destroy(iface);
 }
 
 static DWORD CALLBACK lnxev_device_report_thread(void *args);
@@ -1084,9 +1084,7 @@ static void udev_add_device(struct udev_device *dev)
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
-            return;
-        private->unix_device.vtbl = &hidraw_device_vtbl;
+        if (!(private = unix_device_create(&hidraw_device_vtbl, sizeof(struct platform_private)))) return;
         EnterCriticalSection(&udev_cs);
         list_add_tail(&device_list, &private->unix_device.entry);
         LeaveCriticalSection(&udev_cs);
@@ -1098,9 +1096,7 @@ static void udev_add_device(struct udev_device *dev)
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
-        if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct wine_input_private))))
-            return;
-        private->unix_device.vtbl = &lnxev_device_vtbl;
+        if (!(private = unix_device_create(&lnxev_device_vtbl, sizeof(struct wine_input_private)))) return;
         EnterCriticalSection(&udev_cs);
         list_add_tail(&device_list, &private->unix_device.entry);
         LeaveCriticalSection(&udev_cs);

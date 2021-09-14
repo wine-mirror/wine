@@ -213,6 +213,21 @@ static NTSTATUS keyboard_device_create(void *args)
     return STATUS_SUCCESS;
 }
 
+void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size)
+{
+    struct unix_device *iface;
+
+    if (!(iface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size))) return NULL;
+    iface->vtbl = vtbl;
+
+    return iface;
+}
+
+void unix_device_destroy(struct unix_device *iface)
+{
+    HeapFree(GetProcessHeap(), 0, iface);
+}
+
 static NTSTATUS unix_device_remove(void *args)
 {
     struct unix_device *iface = args;

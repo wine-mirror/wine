@@ -480,9 +480,7 @@ failed:
 
 static void sdl_device_destroy(struct unix_device *iface)
 {
-    struct platform_private *ext = impl_from_unix_device(iface);
-
-    HeapFree(GetProcessHeap(), 0, ext);
+    unix_device_destroy(iface);
 }
 
 static int sdl_device_compare(struct unix_device *iface, void *context)
@@ -761,9 +759,7 @@ static void sdl_add_device(unsigned int index)
 
     TRACE("%s id %d, desc %s.\n", controller ? "controller" : "joystick", id, debugstr_device_desc(&desc));
 
-    if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*private))))
-        return;
-    private->unix_device.vtbl = &sdl_device_vtbl;
+    if (!(private = unix_device_create(&sdl_device_vtbl, sizeof(struct platform_private)))) return;
     private->sdl_joystick = joystick;
     private->sdl_controller = controller;
     private->id = id;

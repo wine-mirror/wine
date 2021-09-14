@@ -139,8 +139,7 @@ static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
 
 static void iohid_device_destroy(struct unix_device *iface)
 {
-    struct platform_private *private = impl_from_unix_device(iface);
-    HeapFree(GetProcessHeap(), 0, private);
+    unix_device_destroy(iface);
 }
 
 static int iohid_device_compare(struct unix_device *iface, void *context)
@@ -337,9 +336,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
 
     TRACE("dev %p, desc %s.\n", IOHIDDevice, debugstr_device_desc(&desc));
 
-    if (!(private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct platform_private))))
-        return;
-    private->unix_device.vtbl = &iohid_device_vtbl;
+    if (!(private = unix_device_create(&iohid_device_vtbl, sizeof(struct platform_private)))) return;
     private->device = IOHIDDevice;
     private->buffer = NULL;
 
