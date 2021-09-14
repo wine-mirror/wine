@@ -562,28 +562,27 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
     return status;
 }
 
-static NTSTATUS async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_recv_ioctl *async = user;
     int fd, needs_close;
 
-    TRACE( "%#x\n", status );
+    TRACE( "%#x\n", *status );
 
-    if (status == STATUS_ALERTED)
+    if (*status == STATUS_ALERTED)
     {
-        if ((status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
-            return status;
+        if ((*status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
+            return TRUE;
 
-        status = try_recv( fd, async, info );
-        TRACE( "got status %#x, %#lx bytes read\n", status, *info );
-
-        if (status == STATUS_DEVICE_NOT_READY)
-            status = STATUS_PENDING;
-
+        *status = try_recv( fd, async, info );
+        TRACE( "got status %#x, %#lx bytes read\n", *status, *info );
         if (needs_close) close( fd );
+
+        if (*status == STATUS_DEVICE_NOT_READY)
+            return FALSE;
     }
-    if (status != STATUS_PENDING) release_fileio( &async->io );
-    return status;
+    release_fileio( &async->io );
+    return TRUE;
 }
 
 static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
@@ -696,29 +695,26 @@ static ULONG_PTR fill_poll_output( struct async_poll_ioctl *async, NTSTATUS stat
     return offsetof( struct afd_poll_params, sockets[count] );
 }
 
-static NTSTATUS async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_poll_ioctl *async = user;
 
-    if (status == STATUS_ALERTED)
+    if (*status == STATUS_ALERTED)
     {
         SERVER_START_REQ( get_async_result )
         {
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->sockets, async->count * sizeof(async->sockets[0]) );
-            status = wine_server_call( req );
+            *status = wine_server_call( req );
         }
         SERVER_END_REQ;
 
-        *info = fill_poll_output( async, status );
+        *info = fill_poll_output( async, *status );
     }
 
-    if (status != STATUS_PENDING)
-    {
-        free( async->input );
-        release_fileio( &async->io );
-    }
-    return status;
+    free( async->input );
+    release_fileio( &async->io );
+    return TRUE;
 }
 
 
@@ -877,32 +873,29 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS async_send_proc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL async_send_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_send_ioctl *async = user;
     int fd, needs_close;
 
-    TRACE( "%#x\n", status );
+    TRACE( "%#x\n", *status );
 
-    if (status == STATUS_ALERTED)
+    if (*status == STATUS_ALERTED)
     {
-        if ((status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
-            return status;
+        if ((*status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
+            return TRUE;
 
-        status = try_send( fd, async );
-        TRACE( "got status %#x\n", status );
-
-        if (status == STATUS_DEVICE_NOT_READY)
-            status = STATUS_PENDING;
+        *status = try_send( fd, async );
+        TRACE( "got status %#x\n", *status );
 
         if (needs_close) close( fd );
+
+        if (*status == STATUS_DEVICE_NOT_READY)
+            return FALSE;
     }
-    if (status != STATUS_PENDING)
-    {
-        *info = async->sent_len;
-        release_fileio( &async->io );
-    }
-    return status;
+    *info = async->sent_len;
+    release_fileio( &async->io );
+    return TRUE;
 }
 
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
@@ -1040,39 +1033,36 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS async_transmit_proc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL async_transmit_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     int sock_fd, file_fd = -1, sock_needs_close = FALSE, file_needs_close = FALSE;
     struct async_transmit_ioctl *async = user;
 
-    TRACE( "%#x\n", status );
+    TRACE( "%#x\n", *status );
 
-    if (status == STATUS_ALERTED)
+    if (*status == STATUS_ALERTED)
     {
-        if ((status = server_get_unix_fd( async->io.handle, 0, &sock_fd, &sock_needs_close, NULL, NULL )))
-            return status;
+        if ((*status = server_get_unix_fd( async->io.handle, 0, &sock_fd, &sock_needs_close, NULL, NULL )))
+            return TRUE;
 
-        if (async->file && (status = server_get_unix_fd( async->file, 0, &file_fd, &file_needs_close, NULL, NULL )))
+        if (async->file && (*status = server_get_unix_fd( async->file, 0, &file_fd, &file_needs_close, NULL, NULL )))
         {
             if (sock_needs_close) close( sock_fd );
-            return status;
+            return TRUE;
         }
 
-        status = try_transmit( sock_fd, file_fd, async );
-        TRACE( "got status %#x\n", status );
-
-        if (status == STATUS_DEVICE_NOT_READY)
-            status = STATUS_PENDING;
+        *status = try_transmit( sock_fd, file_fd, async );
+        TRACE( "got status %#x\n", *status );
 
         if (sock_needs_close) close( sock_fd );
         if (file_needs_close) close( file_fd );
+
+        if (*status == STATUS_DEVICE_NOT_READY)
+            return FALSE;
     }
-    if (status != STATUS_PENDING)
-    {
-        *info = async->head_cursor + async->file_cursor + async->tail_cursor;
-        release_fileio( &async->io );
-    }
-    return status;
+    *info = async->head_cursor + async->file_cursor + async->tail_cursor;
+    release_fileio( &async->io );
+    return TRUE;
 }
 
 static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,

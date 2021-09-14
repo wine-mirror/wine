@@ -379,11 +379,13 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
     {
         struct async_fileio *user = wine_server_get_ptr( call->async_io.user );
         ULONG_PTR info = call->async_io.result;
+        NTSTATUS status;
 
         result->type = call->type;
-        result->async_io.status = user->callback( user, &info, call->async_io.status );
-        if (result->async_io.status != STATUS_PENDING)
+        status = call->async_io.status;
+        if (user->callback( user, &info, &status ))
         {
+            result->async_io.status = status;
             result->async_io.total = info;
             /* the server will pass us NULL if a call failed synchronously */
             set_async_iosb( call->async_io.sb, result->async_io.status, info );

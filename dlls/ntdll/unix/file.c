@@ -4679,34 +4679,34 @@ struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE
 }
 
 /* callback for irp async I/O completion */
-static NTSTATUS irp_completion( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL irp_completion( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_irp *async = user;
 
-    if (status == STATUS_ALERTED)
+    if (*status == STATUS_ALERTED)
     {
         SERVER_START_REQ( get_async_result )
         {
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
-            status = virtual_locked_server_call( req );
+            *status = virtual_locked_server_call( req );
         }
         SERVER_END_REQ;
     }
-    if (status != STATUS_PENDING) release_fileio( &async->io );
-    return status;
+    release_fileio( &async->io );
+    return TRUE;
 }
 
-static NTSTATUS async_read_proc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL async_read_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_fileio_read *fileio = user;
     int fd, needs_close, result;
 
-    switch (status)
+    switch (*status)
     {
     case STATUS_ALERTED: /* got some new data */
         /* check to see if the data is ready (non-blocking) */
-        if ((status = server_get_unix_fd( fileio->io.handle, FILE_READ_DATA, &fd,
+        if ((*status = server_get_unix_fd( fileio->io.handle, FILE_READ_DATA, &fd,
                                           &needs_close, NULL, NULL )))
             break;
 
@@ -4716,48 +4716,48 @@ static NTSTATUS async_read_proc( void *user, ULONG_PTR *info, NTSTATUS status )
         if (result < 0)
         {
             if (errno == EAGAIN || errno == EINTR)
-                status = STATUS_PENDING;
-            else /* check to see if the transfer is complete */
-                status = errno_to_status( errno );
+                return FALSE;
+
+            /* check to see if the transfer is complete */
+            *status = errno_to_status( errno );
         }
         else if (result == 0)
         {
-            status = fileio->already ? STATUS_SUCCESS : STATUS_PIPE_BROKEN;
+            *status = fileio->already ? STATUS_SUCCESS : STATUS_PIPE_BROKEN;
         }
         else
         {
             fileio->already += result;
-            if (fileio->already >= fileio->count || fileio->avail_mode)
-                status = STATUS_SUCCESS;
-            else
-                status = STATUS_PENDING;
+
+            if (fileio->already < fileio->count && !fileio->avail_mode)
+                return FALSE;
+
+            *status = STATUS_SUCCESS;
         }
         break;
 
     case STATUS_TIMEOUT:
     case STATUS_IO_TIMEOUT:
-        if (fileio->already) status = STATUS_SUCCESS;
+        if (fileio->already) *status = STATUS_SUCCESS;
         break;
     }
-    if (status != STATUS_PENDING)
-    {
-        *info = fileio->already;
-        release_fileio( &fileio->io );
-    }
-    return status;
+
+    *info = fileio->already;
+    release_fileio( &fileio->io );
+    return TRUE;
 }
 
-static NTSTATUS async_write_proc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL async_write_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_fileio_write *fileio = user;
     int result, fd, needs_close;
     enum server_fd_type type;
 
-    switch (status)
+    switch (*status)
     {
     case STATUS_ALERTED:
         /* write some data (non-blocking) */
-        if ((status = server_get_unix_fd( fileio->io.handle, FILE_WRITE_DATA, &fd,
+        if ((*status = server_get_unix_fd( fileio->io.handle, FILE_WRITE_DATA, &fd,
                                           &needs_close, &type, NULL )))
             break;
 
@@ -4770,27 +4770,26 @@ static NTSTATUS async_write_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 
         if (result < 0)
         {
-            if (errno == EAGAIN || errno == EINTR) status = STATUS_PENDING;
-            else status = errno_to_status( errno );
+            if (errno == EAGAIN || errno == EINTR) return FALSE;
+            *status = errno_to_status( errno );
         }
         else
         {
             fileio->already += result;
-            status = (fileio->already < fileio->count) ? STATUS_PENDING : STATUS_SUCCESS;
+            if (fileio->already < fileio->count) return FALSE;
+            *status = STATUS_SUCCESS;
         }
         break;
 
     case STATUS_TIMEOUT:
     case STATUS_IO_TIMEOUT:
-        if (fileio->already) status = STATUS_SUCCESS;
+        if (fileio->already) *status = STATUS_SUCCESS;
         break;
     }
-    if (status != STATUS_PENDING)
-    {
-        *info = fileio->already;
-        release_fileio( &fileio->io );
-    }
-    return status;
+
+    *info = fileio->already;
+    release_fileio( &fileio->io );
+    return TRUE;
 }
 
 /* do a read call through the server */
@@ -6054,23 +6053,23 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_I
 }
 
 
-static NTSTATUS read_changes_apc( void *user, ULONG_PTR *info, NTSTATUS status )
+static BOOL read_changes_apc( void *user, ULONG_PTR *info, NTSTATUS *status )
 {
     struct async_fileio_read_changes *fileio = user;
     int size = 0;
 
-    if (status == STATUS_ALERTED)
+    if (*status == STATUS_ALERTED)
     {
         SERVER_START_REQ( read_change )
         {
             req->handle = wine_server_obj_handle( fileio->io.handle );
             wine_server_set_reply( req, fileio->data, fileio->data_size );
-            status = wine_server_call( req );
+            *status = wine_server_call( req );
             size = wine_server_reply_size( reply );
         }
         SERVER_END_REQ;
 
-        if (status == STATUS_SUCCESS && fileio->buffer)
+        if (*status == STATUS_SUCCESS && fileio->buffer)
         {
             FILE_NOTIFY_INFORMATION *pfni = fileio->buffer;
             int i, left = fileio->buffer_size;
@@ -6105,7 +6104,7 @@ static NTSTATUS read_changes_apc( void *user, ULONG_PTR *info, NTSTATUS status )
 
             if (size)
             {
-                status = STATUS_NOTIFY_ENUM_DIR;
+                *status = STATUS_NOTIFY_ENUM_DIR;
                 size = 0;
             }
             else
@@ -6116,17 +6115,14 @@ static NTSTATUS read_changes_apc( void *user, ULONG_PTR *info, NTSTATUS status )
         }
         else
         {
-            status = STATUS_NOTIFY_ENUM_DIR;
+            *status = STATUS_NOTIFY_ENUM_DIR;
             size = 0;
         }
     }
 
-    if (status != STATUS_PENDING)
-    {
-        *info = size;
-        release_fileio( &fileio->io );
-    }
-    return status;
+    *info = size;
+    release_fileio( &fileio->io );
+    return TRUE;
 }
 
 #define FILE_NOTIFY_ALL        (  \

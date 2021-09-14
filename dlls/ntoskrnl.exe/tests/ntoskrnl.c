@@ -677,7 +677,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     if (NT_ERROR(expect_status))
         ok(size == 0xdeadf00d, "got size %u\n", size);
     else if (!NT_ERROR(params->iosb_status))
-        todo_wine_if (params->iosb_status == STATUS_PENDING) ok(size == 3, "got size %u\n", size);
+        ok(size == 3, "got size %u\n", size);
     /* size is garbage if !NT_ERROR(expect_status) && NT_ERROR(iosb_status) */
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
@@ -694,11 +694,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
     else
     {
-        todo_wine_if (params->iosb_status == STATUS_PENDING)
-        {
-            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
-            ok(io.Information == 3, "got size %Iu\n", io.Information);
-        }
+        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
     }
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
@@ -731,11 +728,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
     else
     {
-        todo_wine_if (params->iosb_status == STATUS_PENDING)
-        {
-            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
-            ok(io.Information == 3, "got size %Iu\n", io.Information);
-        }
+        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(!ret, "got %d\n", ret);
     }
@@ -758,8 +752,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ok(key == 123, "got key %Iu\n", key);
         ok(value == 456, "got value %Iu\n", value);
         ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
-        todo_wine_if (params->iosb_status == STATUS_PENDING)
-            ok(io.Information == 3, "got information %Iu\n", io.Information);
+        ok(io.Information == 3, "got information %Iu\n", io.Information);
     }
 
     /* As above, but set the event first, to show that the event is always
@@ -782,11 +775,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
     else
     {
-        todo_wine_if (params->iosb_status == STATUS_PENDING)
-        {
-            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
-            ok(io.Information == 3, "got size %Iu\n", io.Information);
-        }
+        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(!ret, "got %d\n", ret);
     }
@@ -813,11 +803,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
     else
     {
-        todo_wine_if (params->iosb_status == STATUS_PENDING)
-        {
-            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
-            ok(io.Information == 3, "got size %Iu\n", io.Information);
-        }
+        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(file, 0);
         ok(!ret, "got %d\n", ret);
     }
@@ -848,11 +835,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         }
         else
         {
-            todo_wine_if (params->iosb_status == STATUS_PENDING)
-            {
-                ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
-                ok(io.Information == 3, "got size %Iu\n", io.Information);
-            }
+            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+            ok(io.Information == 3, "got size %Iu\n", io.Information);
             ret = WaitForSingleObject(event, 0);
             ok(!ret, "got %d\n", ret);
         }
@@ -883,8 +867,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             ok(key == 123, "got key %Iu\n", key);
             ok(value == 456, "got value %Iu\n", value);
             ok(io.Status == params->iosb_status, "got iosb status %#x\n", io.Status);
-            todo_wine_if (params->iosb_status == STATUS_PENDING)
-                ok(io.Information == 3, "got information %Iu\n", io.Information);
+            ok(io.Information == 3, "got information %Iu\n", io.Information);
         }
     }
 
@@ -914,11 +897,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
     else
     {
-        todo_wine_if (params->iosb_status == STATUS_PENDING)
-        {
-            ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
-            ok(io.Information == 3, "got size %Iu\n", io.Information);
-        }
+        ok(io.Status == params->iosb_status, "got %#x\n", io.Status);
+        ok(io.Information == 3, "got size %Iu\n", io.Information);
     }
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
