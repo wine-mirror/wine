@@ -378,7 +378,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
     case APC_ASYNC_IO:
     {
         struct async_fileio *user = wine_server_get_ptr( call->async_io.user );
-        ULONG_PTR info = 0;
+        ULONG_PTR info = call->async_io.result;
 
         result->type = call->type;
         result->async_io.status = user->callback( user, &info, call->async_io.status );

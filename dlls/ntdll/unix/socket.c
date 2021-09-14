@@ -565,7 +565,6 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
 static NTSTATUS async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_recv_ioctl *async = user;
-    ULONG_PTR information = 0;
     int fd, needs_close;
 
     TRACE( "%#x\n", status );
@@ -575,19 +574,15 @@ static NTSTATUS async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS status )
         if ((status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
             return status;
 
-        status = try_recv( fd, async, &information );
-        TRACE( "got status %#x, %#lx bytes read\n", status, information );
+        status = try_recv( fd, async, info );
+        TRACE( "got status %#x, %#lx bytes read\n", status, *info );
 
         if (status == STATUS_DEVICE_NOT_READY)
             status = STATUS_PENDING;
 
         if (needs_close) close( fd );
     }
-    if (status != STATUS_PENDING)
-    {
-        *info = information;
-        release_fileio( &async->io );
-    }
+    if (status != STATUS_PENDING) release_fileio( &async->io );
     return status;
 }
 
@@ -704,7 +699,6 @@ static ULONG_PTR fill_poll_output( struct async_poll_ioctl *async, NTSTATUS stat
 static NTSTATUS async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_poll_ioctl *async = user;
-    ULONG_PTR information = 0;
 
     if (status == STATUS_ALERTED)
     {
@@ -716,12 +710,11 @@ static NTSTATUS async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS status )
         }
         SERVER_END_REQ;
 
-        information = fill_poll_output( async, status );
+        *info = fill_poll_output( async, status );
     }
 
     if (status != STATUS_PENDING)
     {
-        *info = information;
         free( async->input );
         release_fileio( &async->io );
     }

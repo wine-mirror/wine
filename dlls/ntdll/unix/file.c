@@ -4690,7 +4690,6 @@ static NTSTATUS irp_completion( void *user, ULONG_PTR *info, NTSTATUS status )
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
             status = virtual_locked_server_call( req );
-            *info = reply->size;
         }
         SERVER_END_REQ;
     }

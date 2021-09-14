@@ -508,6 +508,7 @@ typedef union
         unsigned int     status;   /* I/O status */
         client_ptr_t     user;     /* user pointer */
         client_ptr_t     sb;       /* status block */
+        data_size_t      result;   /* result size */
     } async_io;
     struct
     {
@@ -2156,7 +2157,6 @@ enum message_type
 @REQ(get_async_result)
     client_ptr_t   user_arg;      /* user arg used to identify async */
 @REPLY
-    data_size_t    size;          /* result size (input or output depending on the operation) */
     VARARG(out_data,bytes);       /* iosb output data */
 @END
 

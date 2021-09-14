@@ -185,11 +185,11 @@ void async_terminate( struct async *async, unsigned int status )
         data.type            = APC_ASYNC_IO;
         data.async_io.user   = async->data.user;
         data.async_io.sb     = async->data.iosb;
+        data.async_io.result = iosb ? iosb->result : 0;
 
-        /* if the result is nonzero or there is output data, the client needs to
-         * make an extra request to retrieve them; use STATUS_ALERTED to signal
-         * this case */
-        if (iosb && (iosb->result || iosb->out_data))
+        /* if there is output data, the client needs to make an extra request
+         * to retrieve it; use STATUS_ALERTED to signal this case */
+        if (iosb && iosb->out_data)
             data.async_io.status = STATUS_ALERTED;
         else
             data.async_io.status = status;
@@ -719,6 +719,5 @@ DECL_HANDLER(get_async_result)
             iosb->out_data = NULL;
         }
     }
-    reply->size = iosb->result;
     set_error( iosb->status );
 }

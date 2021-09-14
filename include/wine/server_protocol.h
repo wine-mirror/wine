@@ -492,6 +492,7 @@ typedef union
         unsigned int     status;
         client_ptr_t     user;
         client_ptr_t     sb;
+        data_size_t      result;
     } async_io;
     struct
     {
@@ -2896,9 +2897,7 @@ struct get_async_result_request
 struct get_async_result_reply
 {
     struct reply_header __header;
-    data_size_t    size;
     /* VARARG(out_data,bytes); */
-    char __pad_12[4];
 };
 
 
@@ -6257,7 +6256,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 729
+#define SERVER_PROTOCOL_VERSION 730
 
 /* ### protocol_version end ### */
 

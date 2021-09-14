@@ -181,7 +181,7 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
     case APC_ASYNC_IO:
         dump_uint64( "APC_ASYNC_IO,user=", &call->async_io.user );
         dump_uint64( ",sb=", &call->async_io.sb );
-        fprintf( stderr, ",status=%s", get_status_name(call->async_io.status) );
+        fprintf( stderr, ",status=%s,result=%u", get_status_name(call->async_io.status), call->async_io.result );
         break;
     case APC_VIRTUAL_ALLOC:
         dump_uint64( "APC_VIRTUAL_ALLOC,addr==", &call->virtual_alloc.addr );
@@ -2845,8 +2845,7 @@ static void dump_get_async_result_request( const struct get_async_result_request
 
 static void dump_get_async_result_reply( const struct get_async_result_reply *req )
 {
-    fprintf( stderr, " size=%u", req->size );
-    dump_varargs_bytes( ", out_data=", cur_size );
+    dump_varargs_bytes( " out_data=", cur_size );
 }
 
 static void dump_read_request( const struct read_request *req )
