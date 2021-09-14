@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "ole2.h"
 #include "moniker.h"
 
@@ -49,6 +50,7 @@ typedef struct ClassMoniker
         CLSID clsid;
         DWORD data_len;
     } header;
+    WCHAR *data;
 
     IUnknown *pMarshal; /* custom marshaler */
 } ClassMoniker;
@@ -126,23 +128,18 @@ static ULONG WINAPI ClassMoniker_AddRef(IMoniker* iface)
     return InterlockedIncrement(&This->ref);
 }
 
-/******************************************************************************
- *        ClassMoniker_Release
- ******************************************************************************/
 static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
 {
-    ClassMoniker *This = impl_from_IMoniker(iface);
-    ULONG ref;
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
+    ULONG ref = InterlockedDecrement(&moniker->ref);
 
-    TRACE("(%p)\n",This);
+    TRACE("%p refcount %d\n", iface, ref);
 
-    ref = InterlockedDecrement(&This->ref);
-
-    /* destroy the object if there are no more references to it */
-    if (ref == 0)
+    if (!ref)
     {
-        if (This->pMarshal) IUnknown_Release(This->pMarshal);
-        HeapFree(GetProcessHeap(),0,This);
+        if (moniker->pMarshal) IUnknown_Release(moniker->pMarshal);
+        heap_free(moniker->data);
+        heap_free(moniker);
     }
 
     return ref;
@@ -190,8 +187,15 @@ static HRESULT WINAPI ClassMoniker_Load(IMoniker *iface, IStream *stream)
 
     if (moniker->header.data_len)
     {
-        FIXME("Moniker data of length %u was ignored.\n", moniker->header.data_len);
-        moniker->header.data_len = 0;
+        heap_free(moniker->data);
+        if (!(moniker->data = heap_alloc(moniker->header.data_len)))
+        {
+            WARN("Failed to allocate moniker data of size %u.\n", moniker->header.data_len);
+            moniker->header.data_len = 0;
+            return E_OUTOFMEMORY;
+        }
+        hr = IStream_Read(stream, moniker->data, moniker->header.data_len, &length);
+        if (hr != S_OK || length != moniker->header.data_len) return STG_E_READFAULT;
     }
 
     return S_OK;
@@ -200,21 +204,25 @@ static HRESULT WINAPI ClassMoniker_Load(IMoniker *iface, IStream *stream)
 static HRESULT WINAPI ClassMoniker_Save(IMoniker *iface, IStream *stream, BOOL clear_dirty)
 {
     ClassMoniker *moniker = impl_from_IMoniker(iface);
+    HRESULT hr;
 
     TRACE("%p, %p, %d\n", iface, stream, clear_dirty);
 
-    return IStream_Write(stream, &moniker->header, sizeof(moniker->header), NULL);
+    hr = IStream_Write(stream, &moniker->header, sizeof(moniker->header), NULL);
+
+    if (SUCCEEDED(hr) && moniker->header.data_len)
+        hr = IStream_Write(stream, moniker->data, moniker->header.data_len, NULL);
+
+    return hr;
 }
 
-/******************************************************************************
- *        ClassMoniker_GetSizeMax
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_GetSizeMax(IMoniker* iface,
-                                          ULARGE_INTEGER* pcbSize)/* Pointer to size of stream needed to save object */
+static HRESULT WINAPI ClassMoniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *size)
 {
-    TRACE("(%p)\n", pcbSize);
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
 
-    pcbSize->QuadPart = sizeof(CLSID) + sizeof(DWORD);
+    TRACE("%p, %p\n", iface, size);
+
+    size->QuadPart = sizeof(moniker->header) + moniker->header.data_len;
 
     return S_OK;
 }
@@ -500,12 +508,16 @@ static HRESULT WINAPI ClassMoniker_GetDisplayName(IMoniker *iface,
     if (pmkToLeft)
         return E_INVALIDARG;
 
-    if (!(*name = CoTaskMemAlloc(name_len * sizeof(WCHAR))))
+    if (!(*name = CoTaskMemAlloc(name_len * sizeof(WCHAR) + moniker->header.data_len)))
         return E_OUTOFMEMORY;
 
-    swprintf(*name, name_len, L"clsid:%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X:",
+    swprintf(*name, name_len, L"clsid:%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
             guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
             guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+
+    if (moniker->header.data_len)
+        lstrcatW(*name, moniker->data);
+    lstrcatW(*name, L":");
 
     TRACE("Returning %s\n", debugstr_w(*name));
 

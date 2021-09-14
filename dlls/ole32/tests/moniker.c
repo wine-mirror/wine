@@ -1769,12 +1769,17 @@ static void test_class_moniker(void)
 {
     IMoniker *moniker, *moniker2, *inverse, *reduced, *anti;
     IEnumMoniker *enummoniker;
+    ULONG length, eaten;
+    ULARGE_INTEGER size;
+    LARGE_INTEGER pos;
+    IROTData *rotdata;
     HRESULT hr;
     DWORD hash;
     IBindCtx *bindctx;
     IUnknown *unknown;
     FILETIME filetime;
-    ULONG eaten;
+    IStream *stream;
+    BYTE buffer[100];
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1792,6 +1797,9 @@ todo_wine
 
         TEST_DISPLAY_NAME(moniker, L"clsid:11111111-0000-0000-2222-444444444444;extra data:");
         TEST_MONIKER_TYPE(moniker, MKSYS_CLASSMONIKER);
+        hr = IMoniker_GetSizeMax(moniker, &size);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(size.LowPart == 44, "Unexpected size %u.\n", size.LowPart);
 
         TEST_MONIKER_TYPE(moniker2, MKSYS_CLASSMONIKER);
 
@@ -1805,8 +1813,54 @@ todo_wine
         IMoniker_Release(moniker);
     }
 
+    /* From persistent state */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateClassMoniker(&GUID_NULL, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetSizeMax(moniker, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.QuadPart == 20, "Unexpected size %u.\n", size.LowPart);
+
+    hr = IStream_Write(stream, &CLSID_StdComponentCategoriesMgr, sizeof(CLSID), NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    length = 5 * sizeof(WCHAR);
+    hr = IStream_Write(stream, &length, sizeof(length), NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IStream_Write(stream, L"data", length, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Load(moniker, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetSizeMax(moniker, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.QuadPart == 30, "Unexpected size %u.\n", size.LowPart);
+    TEST_DISPLAY_NAME(moniker, L"clsid:0002E005-0000-0000-C000-000000000046data:");
+
+    /* Extra data does not affect comparison */
+    hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IROTData_GetComparisonData(rotdata, buffer, sizeof(buffer), &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(length == sizeof(expected_class_moniker_comparison_data), "Unexpected comparison data length %u.\n", length);
+    ok(!memcmp(buffer, expected_class_moniker_comparison_data, length), "Unexpected data.\n");
+    IROTData_Release(rotdata);
+
+    IStream_Release(stream);
+    IMoniker_Release(moniker);
+
     hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
     ok_ole_success(hr, CreateClassMoniker);
+
+    hr = IMoniker_GetSizeMax(moniker, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.LowPart == 20, "Unexpected size %u.\n", size.LowPart);
 
     hr = IMoniker_QueryInterface(moniker, &CLSID_ClassMoniker, (void **)&unknown);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
