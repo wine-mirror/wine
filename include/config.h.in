@@ -132,6 +132,9 @@
 /* Define to 1 if you have the `unwind' library (-lunwind). */
 #undef HAVE_LIBUNWIND
 
+/* Define if we have the wayland-egl development environment */
+#undef HAVE_LIBWAYLAND_EGL
+
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 

@@ -702,6 +702,8 @@ INOTIFY_LIBS
 INOTIFY_CFLAGS
 PCSCLITE_LIBS
 PCAP_LIBS
+WAYLAND_EGL_LIBS
+WAYLAND_EGL_CFLAGS
 EGL_LIBS
 EGL_CFLAGS
 XKBREGISTRY_LIBS
@@ -1807,6 +1809,8 @@ XKBREGISTRY_CFLAGS
 XKBREGISTRY_LIBS
 EGL_CFLAGS
 EGL_LIBS
+WAYLAND_EGL_CFLAGS
+WAYLAND_EGL_LIBS
 INOTIFY_CFLAGS
 INOTIFY_LIBS
 DBUS_CFLAGS
@@ -2635,6 +2639,10 @@ Some influential environment variables:
               Linker flags for xkbregistry, overriding pkg-config
   EGL_CFLAGS  C compiler flags for egl, overriding pkg-config
   EGL_LIBS    Linker flags for egl, overriding pkg-config
+  WAYLAND_EGL_CFLAGS
+              C compiler flags for wayland-egl, overriding pkg-config
+  WAYLAND_EGL_LIBS
+              Linker flags for wayland-egl, overriding pkg-config
   INOTIFY_CFLAGS
               C compiler flags for libinotify, overriding pkg-config
   INOTIFY_LIBS
@@ -16268,9 +16276,87 @@ fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
 
+        rm -f conftest.err
+if ${WAYLAND_EGL_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  WAYLAND_EGL_CFLAGS=`$PKG_CONFIG --cflags wayland-egl 2>conftest.err`
+fi
+fi
+
+if ${WAYLAND_EGL_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  WAYLAND_EGL_LIBS=`$PKG_CONFIG --libs wayland-egl 2>/dev/null`
+fi
+fi
+
+
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: wayland-egl cflags: $WAYLAND_EGL_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: wayland-egl libs: $WAYLAND_EGL_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: wayland-egl errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $WAYLAND_EGL_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "wayland-egl.h" "ac_cv_header_wayland_egl_h" "$ac_includes_default"
+if test "x$ac_cv_header_wayland_egl_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for wl_egl_window_create in -lwayland-egl" >&5
+printf %s "checking for wl_egl_window_create in -lwayland-egl... " >&6; }
+if test ${ac_cv_lib_wayland_egl_wl_egl_window_create+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lwayland-egl $WAYLAND_EGL_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char wl_egl_window_create ();
+int
+main (void)
+{
+return wl_egl_window_create ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_wayland_egl_wl_egl_window_create=yes
+else $as_nop
+  ac_cv_lib_wayland_egl_wl_egl_window_create=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_wayland_egl_wl_egl_window_create" >&5
+printf "%s\n" "$ac_cv_lib_wayland_egl_wl_egl_window_create" >&6; }
+if test "x$ac_cv_lib_wayland_egl_wl_egl_window_create" = xyes
+then :
+
+printf "%s\n" "#define HAVE_LIBWAYLAND_EGL 1" >>confdefs.h
+
+else $as_nop
+  WAYLAND_EGL_LIBS=""
+fi
+
+fi
+
+CPPFLAGS=$ac_save_CPPFLAGS
+
         if test "x$with_wayland" != "x"
         then
-            if test -z "$ac_cv_lib_soname_EGL"
+            if test -z "$ac_cv_lib_soname_EGL" -o -z "$HAVE_LIBWAYLAND_EGL"
 then :
   case "x$with_opengl" in
   x)   as_fn_append wine_notices "|EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL" ;;
@@ -23914,6 +24000,8 @@ XKBREGISTRY_CFLAGS = $XKBREGISTRY_CFLAGS
 XKBREGISTRY_LIBS = $XKBREGISTRY_LIBS
 EGL_CFLAGS = $EGL_CFLAGS
 EGL_LIBS = $EGL_LIBS
+WAYLAND_EGL_CFLAGS = $WAYLAND_EGL_CFLAGS
+WAYLAND_EGL_LIBS = $WAYLAND_EGL_LIBS
 PCAP_LIBS = $PCAP_LIBS
 PCSCLITE_LIBS = $PCSCLITE_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS

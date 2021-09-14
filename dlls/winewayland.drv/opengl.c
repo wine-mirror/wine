@@ -31,11 +31,11 @@
 #include "waylanddrv.h"
 #include "wine/debug.h"
 
-#if defined(SONAME_LIBEGL)
+#if defined(SONAME_LIBEGL) && defined(HAVE_LIBWAYLAND_EGL)
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-#define WL_EGL_PLATFORM 1
+#include <wayland-egl.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -55,6 +55,8 @@ static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
 DECL_FUNCPTR(eglChooseConfig);
+DECL_FUNCPTR(eglCreateWindowSurface);
+DECL_FUNCPTR(eglDestroySurface);
 DECL_FUNCPTR(eglGetConfigAttrib);
 DECL_FUNCPTR(eglGetError);
 DECL_FUNCPTR(eglGetPlatformDisplay);
@@ -62,6 +64,156 @@ DECL_FUNCPTR(eglGetProcAddress);
 DECL_FUNCPTR(eglInitialize);
 DECL_FUNCPTR(eglQueryString);
 #undef DECL_FUNCPTR
+
+static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct list gl_drawables = LIST_INIT(gl_drawables);
+
+struct wayland_gl_drawable
+{
+    struct list entry;
+    LONG ref;
+    HWND hwnd;
+    struct wayland_client_surface *client;
+    struct wl_egl_window *wl_egl_window;
+    EGLSurface surface;
+};
+
+/* lookup the existing drawable for a window, gl_object_mutex must be held */
+static struct wayland_gl_drawable *find_drawable_for_hwnd(HWND hwnd)
+{
+    struct wayland_gl_drawable *gl;
+    LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
+        if (gl->hwnd == hwnd) return gl;
+    return NULL;
+}
+
+static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
+{
+    if (InterlockedDecrement(&gl->ref)) return;
+    if (gl->surface) p_eglDestroySurface(egl_display, gl->surface);
+    if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
+    if (gl->client)
+    {
+        HWND hwnd = wl_surface_get_user_data(gl->client->wl_surface);
+        struct wayland_surface *wayland_surface = wayland_surface_lock_hwnd(hwnd);
+
+        if (wayland_client_surface_release(gl->client) && wayland_surface)
+            wayland_surface->client = NULL;
+
+        if (wayland_surface) pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+
+    free(gl);
+}
+
+static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int format)
+{
+    struct wayland_gl_drawable *gl;
+    struct wayland_surface *wayland_surface;
+    int client_width = 0, client_height = 0;
+
+    TRACE("hwnd=%p format=%d\n", hwnd, format);
+
+    gl = calloc(1, sizeof(*gl));
+    if (!gl) return NULL;
+
+    gl->ref = 1;
+    gl->hwnd = hwnd;
+
+    /* Get the client surface for the HWND. If don't have a wayland surface
+     * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
+     * target render surface. */
+    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        gl->client = wayland_surface_get_client(wayland_surface);
+        client_width = wayland_surface->window.client_rect.right -
+                       wayland_surface->window.client_rect.left;
+        client_height = wayland_surface->window.client_rect.bottom -
+                        wayland_surface->window.client_rect.top;
+        if (client_width == 0 || client_height == 0)
+            client_width = client_height = 1;
+        pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+    else if ((wayland_surface = wayland_surface_create(0)))
+    {
+        gl->client = wayland_surface_get_client(wayland_surface);
+        client_width = client_height = 1;
+        /* It's fine to destroy the wayland surface, the client surface
+         * can safely outlive it. */
+        wayland_surface_destroy(wayland_surface);
+    }
+    if (!gl->client) goto err;
+
+    gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface,
+                                             client_width, client_height);
+    if (!gl->wl_egl_window)
+    {
+        ERR("Failed to create wl_egl_window\n");
+        goto err;
+    }
+
+    gl->surface = p_eglCreateWindowSurface(egl_display, egl_configs[format - 1],
+                                           gl->wl_egl_window, NULL);
+    if (!gl->surface)
+    {
+        ERR("Failed to create EGL surface\n");
+        goto err;
+    }
+
+    TRACE("hwnd=%p egl_surface=%p\n", gl->hwnd, gl->surface);
+
+    return gl;
+
+err:
+    wayland_gl_drawable_release(gl);
+    return NULL;
+}
+
+static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *new)
+{
+    struct wayland_gl_drawable *old;
+
+    pthread_mutex_lock(&gl_object_mutex);
+
+    if ((old = find_drawable_for_hwnd(hwnd))) list_remove(&old->entry);
+    if (new) list_add_head(&gl_drawables, &new->entry);
+
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    if (old) wayland_gl_drawable_release(old);
+}
+
+static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
+{
+    HWND hwnd = NtUserWindowFromDC(hdc);
+    struct wayland_gl_drawable *gl;
+    int prev = 0;
+
+    if (!hwnd || hwnd == NtUserGetDesktopWindow())
+    {
+        WARN("not a proper window DC %p/%p\n", hdc, hwnd);
+        return FALSE;
+    }
+    if (format < 0 || format >= num_egl_configs)
+    {
+        WARN("Invalid format %d\n", format);
+        return FALSE;
+    }
+    TRACE("%p/%p format %d\n", hdc, hwnd, format);
+
+    /* Even for internal pixel format fail setting it if the app has already set a
+     * different pixel format. Let wined3d create a backup GL context instead.
+     * Switching pixel format involves drawable recreation and is much more expensive
+     * than blitting from backup context. */
+    if ((prev = win32u_get_window_pixel_format(hwnd)))
+        return prev == format;
+
+    if (!(gl = wayland_gl_drawable_create(hwnd, format))) return FALSE;
+    wayland_update_gl_drawable(hwnd, gl);
+    win32u_set_window_pixel_format(hwnd, format, internal);
+
+    return TRUE;
+}
 
 static BOOL has_opengl(void);
 
@@ -138,6 +290,17 @@ static PROC wayland_wglGetProcAddress(LPCSTR name)
     return (PROC)p_eglGetProcAddress(name);
 }
 
+static BOOL wayland_wglSetPixelFormat(HDC hdc, int format,
+                                      const PIXELFORMATDESCRIPTOR *pfd)
+{
+    return set_pixel_format(hdc, format, FALSE);
+}
+
+static BOOL wayland_wglSetPixelFormatWINE(HDC hdc, int format)
+{
+    return set_pixel_format(hdc, format, TRUE);
+}
+
 static BOOL has_extension(const char *list, const char *ext)
 {
     size_t len = strlen(ext);
@@ -178,6 +341,9 @@ static BOOL init_opengl_funcs(void)
 
     register_extension("WGL_EXT_extensions_string");
     opengl_funcs.ext.p_wglGetExtensionsStringEXT = wayland_wglGetExtensionsStringEXT;
+
+    register_extension("WGL_WINE_pixel_format_passthrough");
+    opengl_funcs.ext.p_wglSetPixelFormatWINE = wayland_wglSetPixelFormatWINE;
 
     return TRUE;
 }
@@ -273,6 +439,8 @@ static void init_opengl(void)
             { ERR("Failed to load symbol %s\n", #func); goto err; } \
     } while(0)
     LOAD_FUNCPTR_EGL(eglChooseConfig);
+    LOAD_FUNCPTR_EGL(eglCreateWindowSurface);
+    LOAD_FUNCPTR_EGL(eglDestroySurface);
     LOAD_FUNCPTR_EGL(eglGetConfigAttrib);
     LOAD_FUNCPTR_EGL(eglGetError);
     LOAD_FUNCPTR_EGL(eglGetPlatformDisplay);
@@ -317,6 +485,7 @@ static struct opengl_funcs opengl_funcs =
     {
         .p_wglDescribePixelFormat = wayland_wglDescribePixelFormat,
         .p_wglGetProcAddress = wayland_wglGetProcAddress,
+        .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
     }
 };
 
@@ -335,11 +504,23 @@ struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
     return &opengl_funcs;
 }
 
+/**********************************************************************
+ *           wayland_destroy_gl_drawable
+ */
+void wayland_destroy_gl_drawable(HWND hwnd)
+{
+    wayland_update_gl_drawable(hwnd, NULL);
+}
+
 #else /* No GL */
 
 struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
 {
     return NULL;
+}
+
+void wayland_destroy_gl_drawable(HWND hwnd)
+{
 }
 
 #endif

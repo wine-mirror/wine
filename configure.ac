@@ -1385,9 +1385,14 @@ then
         WINE_PACKAGE_FLAGS(EGL,[egl],[-lEGL],,,
             [AC_CHECK_HEADER([EGL/egl.h],
                [WINE_CHECK_SONAME(EGL,eglGetProcAddress,,,[$EGL_LIBS])])])
+        WINE_PACKAGE_FLAGS(WAYLAND_EGL,[wayland-egl],,,,
+            [AC_CHECK_HEADER([wayland-egl.h],
+               [AC_CHECK_LIB(wayland-egl,wl_egl_window_create,
+                  [AC_DEFINE(HAVE_LIBWAYLAND_EGL, 1, [Define if we have the wayland-egl development environment])],
+                  [WAYLAND_EGL_LIBS=""],[$WAYLAND_EGL_LIBS])])])
         if test "x$with_wayland" != "x"
         then
-            WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL"],
+            WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL" -o -z "$HAVE_LIBWAYLAND_EGL"],
                 [EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL])
         fi
     fi

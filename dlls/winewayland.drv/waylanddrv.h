@@ -293,6 +293,12 @@ void wayland_pointer_deinit(void);
 void wayland_pointer_clear_constraint(void);
 
 /**********************************************************************
+ *          OpenGL
+ */
+
+void wayland_destroy_gl_drawable(HWND hwnd);
+
+/**********************************************************************
  *          Helpers
  */
 
