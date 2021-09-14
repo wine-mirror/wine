@@ -883,6 +883,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
                                                 DWORD dwFlags,
                                                 LPITEMIDLIST * pPidlOut)
 {
+    static const WCHAR invalid_chars[] = { '\\','/',':','*','?','"','<','>','|',0 };
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
     WCHAR szSrc[MAX_PATH + 1], szDest[MAX_PATH + 1];
     LPWSTR ptr;
@@ -891,20 +892,20 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
     TRACE ("(%p)->(%p,pidl=%p,%s,%u,%p)\n", This, hwndOwner, pidl,
      debugstr_w (lpName), dwFlags, pPidlOut);
 
+    /* pidl has to contain a single non-empty SHITEMID */
+    if (_ILIsDesktop(pidl) || !_ILIsPidlSimple(pidl) || !_ILGetTextPointer(pidl)) return E_INVALIDARG;
+
+    if (strpbrkW( lpName, invalid_chars )) return HRESULT_FROM_WIN32(ERROR_CANCELLED);
+
     /* build source path */
     lstrcpynW(szSrc, This->sPathTarget, MAX_PATH);
     ptr = PathAddBackslashW (szSrc);
-    if (ptr)
-        _ILSimpleGetTextW (pidl, ptr, MAX_PATH + 1 - (ptr - szSrc));
+    _ILSimpleGetTextW (pidl, ptr, MAX_PATH + 1 - (ptr - szSrc));
 
     /* build destination path */
-    if (dwFlags == SHGDN_NORMAL || dwFlags & SHGDN_INFOLDER) {
-        lstrcpynW(szDest, This->sPathTarget, MAX_PATH);
-        ptr = PathAddBackslashW (szDest);
-        if (ptr)
-            lstrcpynW(ptr, lpName, MAX_PATH + 1 - (ptr - szDest));
-    } else
-        lstrcpynW(szDest, lpName, MAX_PATH);
+    lstrcpynW(szDest, This->sPathTarget, MAX_PATH);
+    ptr = PathAddBackslashW (szDest);
+    lstrcpynW(ptr, lpName, MAX_PATH + 1 - (ptr - szDest));
 
     if(!(dwFlags & SHGDN_FORPARSING) && SHELL_FS_HideExtension(szSrc)) {
         WCHAR *ext = PathFindExtensionW(szSrc);
