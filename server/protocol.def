@@ -3696,6 +3696,7 @@ struct handle_info
 @REPLY
     int total_processes;          /* total count of processes */
     int active_processes;         /* count of running processes */
+    VARARG(pids,uints);           /* list of active pids */
 @END
 
 

@@ -5357,6 +5357,7 @@ struct get_job_info_reply
     struct reply_header __header;
     int total_processes;
     int active_processes;
+    /* VARARG(pids,uints); */
 };
 
 
@@ -6256,7 +6257,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 730
+#define SERVER_PROTOCOL_VERSION 731
 
 /* ### protocol_version end ### */
 

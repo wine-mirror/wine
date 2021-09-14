@@ -4525,6 +4525,7 @@ static void dump_get_job_info_reply( const struct get_job_info_reply *req )
 {
     fprintf( stderr, " total_processes=%d", req->total_processes );
     fprintf( stderr, ", active_processes=%d", req->active_processes );
+    dump_varargs_uints( ", pids=", cur_size );
 }
 
 static void dump_terminate_job_request( const struct terminate_job_request *req )

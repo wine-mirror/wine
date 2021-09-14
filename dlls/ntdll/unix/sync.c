@@ -791,11 +791,40 @@ NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS c
     case JobObjectBasicProcessIdList:
     {
         JOBOBJECT_BASIC_PROCESS_ID_LIST *process = info;
+        DWORD count, i;
 
         if (len < sizeof(*process)) return STATUS_INFO_LENGTH_MISMATCH;
-        memset( process, 0, sizeof(*process) );
-        if (ret_len) *ret_len = sizeof(*process);
-        return STATUS_SUCCESS;
+
+        count  = len - offsetof( JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList );
+        count /= sizeof(process->ProcessIdList[0]);
+
+        SERVER_START_REQ( get_job_info )
+        {
+            req->handle = wine_server_user_handle(handle);
+            wine_server_set_reply(req, process->ProcessIdList, count * sizeof(process_id_t));
+            if (!(ret = wine_server_call(req)))
+            {
+                process->NumberOfAssignedProcesses = reply->active_processes;
+                process->NumberOfProcessIdsInList = min(count, reply->active_processes);
+            }
+        }
+        SERVER_END_REQ;
+
+        if (ret != STATUS_SUCCESS) return ret;
+
+        if (sizeof(process_id_t) < sizeof(process->ProcessIdList[0]))
+        {
+            /* start from the end to not overwrite */
+            for (i = process->NumberOfProcessIdsInList; i--;)
+            {
+                ULONG_PTR id = ((process_id_t *)process->ProcessIdList)[i];
+                process->ProcessIdList[i] = id;
+            }
+        }
+
+        if (ret_len)
+            *ret_len = offsetof( JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[process->NumberOfProcessIdsInList] );
+        return count < process->NumberOfAssignedProcesses ? STATUS_MORE_ENTRIES : STATUS_SUCCESS;
     }
     case JobObjectExtendedLimitInformation:
     {
