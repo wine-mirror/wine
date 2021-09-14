@@ -192,11 +192,11 @@ static void write_namespace_end(FILE *header, struct namespace *namespace)
 {
     if(is_global_namespace(namespace)) {
         if(use_abi_namespace)
-            write_line(header, -1, "}", namespace->name);
+            write_line(header, -1, "}");
         return;
     }
 
-    write_line(header, -1, "}", namespace->name);
+    write_line(header, -1, "}");
     write_namespace_end(header, namespace->parent);
 }
 
