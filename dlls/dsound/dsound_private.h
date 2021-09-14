@@ -43,7 +43,7 @@ typedef struct IDirectSoundBufferImpl        IDirectSoundBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
 
 /* dsound_convert.h */
-typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD);
+typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, BYTE *, DWORD);
 typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD, float);
 extern const bitsgetfunc getbpp[5] DECLSPEC_HIDDEN;
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
@@ -153,7 +153,12 @@ struct IDirectSoundBufferImpl
     LONG64                      freqAccNum;
     /* used for mixing */
     DWORD                       sec_mixpos;
-
+    /* Holds a copy of the next 'writelead' bytes, to be used for mixing. This makes it
+     * so that these bytes get played once even if this region of the buffer gets overwritten,
+     * which is more in-line with native DirectSound behavior. */
+    BOOL                        use_committed;
+    LPVOID                      committedbuff;
+    DWORD                       committed_mixpos;
     /* IDirectSoundNotify fields */
     LPDSBPOSITIONNOTIFY         notifies;
     int                         nrofnotifies;
@@ -171,7 +176,7 @@ struct IDirectSoundBufferImpl
     struct list entry;
 };
 
-float get_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel) DECLSPEC_HIDDEN;
+float get_mono(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel) DECLSPEC_HIDDEN;
 void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_mono2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_stereo2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;

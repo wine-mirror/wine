@@ -101,6 +101,27 @@ static int __cdecl notify_compar(const void *l, const void *r)
     return 1;
 }
 
+static void commit_next_chunk(IDirectSoundBufferImpl *dsb)
+{
+    void *dstbuff = dsb->committedbuff, *srcbuff = dsb->buffer->memory;
+    DWORD srcoff = dsb->sec_mixpos, srcsize = dsb->buflen, cpysize = dsb->writelead;
+
+    if(dsb->state != STATE_PLAYING)
+        return;
+
+    if(cpysize > srcsize - srcoff) {
+        DWORD overflow = cpysize - (srcsize - srcoff);
+        memcpy(dstbuff, (BYTE*)srcbuff + srcoff, srcsize - srcoff);
+        memcpy((BYTE*)dstbuff + (srcsize - srcoff), srcbuff, overflow);
+    }else{
+        memcpy(dstbuff, (BYTE*)srcbuff + srcoff, cpysize);
+    }
+
+    dsb->use_committed = TRUE;
+    dsb->committed_mixpos = 0;
+    TRACE("committing %u bytes from offset %u\n", dsb->writelead, dsb->sec_mixpos);
+}
+
 static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSoundNotify *iface,
         DWORD howmuch, const DSBPOSITIONNOTIFY *notify)
 {
@@ -244,6 +265,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(IDirectSoundBuffer8 *i
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	DWORD oldFreq;
+	void *newcommitted;
 
 	TRACE("(%p,%d)\n",This,freq);
 
@@ -274,6 +296,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(IDirectSoundBuffer8 *i
 		This->freqAdjustDen = This->device->pwfx->nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
+
+		newcommitted = HeapReAlloc(GetProcessHeap(), 0, This->committedbuff, This->writelead);
+		if(!newcommitted) {
+			ReleaseSRWLockExclusive(&This->lock);
+			return DSERR_OUTOFMEMORY;
+		}
+		This->committedbuff = newcommitted;
 	}
 
 	ReleaseSRWLockExclusive(&This->lock);
@@ -319,6 +348,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(IDirectSoundBuffer8 *iface)
 	if (This->state == STATE_PLAYING || This->state == STATE_STARTING)
 	{
 		This->state = STATE_STOPPED;
+		This->use_committed = FALSE;
+		This->committed_mixpos = 0;
 		DSOUND_CheckEvent(This, 0, 0);
 	}
 
@@ -503,8 +534,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
 
 	if (writecursor+writebytes <= This->buflen) {
 		*(LPBYTE*)lplpaudioptr1 = This->buffer->memory+writecursor;
-		if (This->sec_mixpos >= writecursor && This->sec_mixpos < writecursor + writebytes && This->state == STATE_PLAYING)
+		if (This->sec_mixpos >= writecursor && This->sec_mixpos < writecursor + writebytes && This->state == STATE_PLAYING) {
 			WARN("Overwriting mixing position, case 1\n");
+			commit_next_chunk(This);
+		}
 		*audiobytes1 = writebytes;
 		if (lplpaudioptr2)
 			*(LPBYTE*)lplpaudioptr2 = NULL;
@@ -519,16 +552,20 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
 		*(LPBYTE*)lplpaudioptr1 = This->buffer->memory+writecursor;
 		*audiobytes1 = This->buflen-writecursor;
 		This->buffer->lockedbytes += *audiobytes1;
-		if (This->sec_mixpos >= writecursor && This->sec_mixpos < writecursor + writebytes && This->state == STATE_PLAYING)
+		if (This->sec_mixpos >= writecursor && This->sec_mixpos < writecursor + writebytes && This->state == STATE_PLAYING) {
 			WARN("Overwriting mixing position, case 2\n");
+			commit_next_chunk(This);
+		}
 		if (lplpaudioptr2)
 			*(LPBYTE*)lplpaudioptr2 = This->buffer->memory;
 		if (audiobytes2) {
 			*audiobytes2 = writebytes-(This->buflen-writecursor);
 			This->buffer->lockedbytes += *audiobytes2;
 		}
-		if (audiobytes2 && This->sec_mixpos < remainder && This->state == STATE_PLAYING)
+		if (audiobytes2 && This->sec_mixpos < remainder && This->state == STATE_PLAYING) {
 			WARN("Overwriting mixing position, case 3\n");
+			commit_next_chunk(This);
+		}
 		TRACE("Locked %p(%i bytes) and %p(%i bytes) writecursor=%d\n", *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
 	}
 
@@ -551,6 +588,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(IDirectSoundBuff
 	newpos %= This->buflen;
 	newpos -= newpos%This->pwfx->nBlockAlign;
 	This->sec_mixpos = newpos;
+
+	This->use_committed = FALSE;
+	This->committed_mixpos = 0;
 
 	/* at this point, do not attempt to reset buffers, mess with primary mix position,
            or anything like that to reduce latency. The data already prebuffered cannot be changed */
@@ -1081,6 +1121,12 @@ HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *ds
 	/* calculate fragment size and write lead */
 	DSOUND_RecalcFormat(dsb);
 
+	dsb->committedbuff = HeapAlloc(GetProcessHeap(), 0, dsb->writelead);
+	if(!dsb->committedbuff) {
+		IDirectSoundBuffer8_Release(&dsb->IDirectSoundBuffer8_iface);
+		return DSERR_OUTOFMEMORY;
+	}
+
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRL3D) {
 		dsb->ds3db_ds3db.dwSize = sizeof(DS3DBUFFER);
 		dsb->ds3db_ds3db.vPosition.x = 0.0;
@@ -1135,6 +1181,7 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
 
     HeapFree(GetProcessHeap(), 0, This->notifies);
     HeapFree(GetProcessHeap(), 0, This->pwfx);
+    HeapFree(GetProcessHeap(), 0, This->committedbuff);
 
     if (This->filters) {
         int i;
@@ -1157,11 +1204,19 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
 {
     IDirectSoundBufferImpl *dsb;
     HRESULT hres = DS_OK;
+    VOID *committedbuff;
     TRACE("(%p,%p,%p)\n", device, ppdsb, pdsb);
 
     dsb = HeapAlloc(GetProcessHeap(),0,sizeof(*dsb));
     if (dsb == NULL) {
         WARN("out of memory\n");
+        *ppdsb = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
+
+    committedbuff = HeapAlloc(GetProcessHeap(),0,pdsb->writelead);
+    if (committedbuff == NULL) {
+        HeapFree(GetProcessHeap(),0,dsb);
         *ppdsb = NULL;
         return DSERR_OUTOFMEMORY;
     }
@@ -1175,6 +1230,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     ReleaseSRWLockShared(&pdsb->lock);
 
     if (dsb->pwfx == NULL) {
+        HeapFree(GetProcessHeap(),0,committedbuff);
         HeapFree(GetProcessHeap(),0,dsb);
         *ppdsb = NULL;
         return DSERR_OUTOFMEMORY;
@@ -1192,6 +1248,9 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->notifies = NULL;
     dsb->nrofnotifies = 0;
     dsb->device = device;
+    dsb->committedbuff = committedbuff;
+    dsb->use_committed = FALSE;
+    dsb->committed_mixpos = 0;
     DSOUND_RecalcFormat(dsb);
 
     InitializeSRWLock(&dsb->lock);
@@ -1202,6 +1261,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
         list_remove(&dsb->entry);
         dsb->buffer->ref--;
         HeapFree(GetProcessHeap(),0,dsb->pwfx);
+        HeapFree(GetProcessHeap(),0,dsb->committedbuff);
         HeapFree(GetProcessHeap(),0,dsb);
         dsb = NULL;
     }else
