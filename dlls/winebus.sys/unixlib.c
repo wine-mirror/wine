@@ -34,11 +34,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
-static struct hid_descriptor mouse_desc;
-static struct hid_descriptor keyboard_desc;
+struct mouse_device
+{
+    struct unix_device unix_device;
+    struct hid_descriptor desc;
+};
+
+static inline struct mouse_device *mouse_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(iface, struct mouse_device, unix_device);
+}
 
 static void mouse_destroy(struct unix_device *iface)
 {
+    struct mouse_device *impl = mouse_from_unix_device(iface);
+    hid_descriptor_free(&impl->desc);
+    unix_device_destroy(iface);
 }
 
 static int mouse_compare(struct unix_device *iface, void *context)
@@ -48,11 +59,13 @@ static int mouse_compare(struct unix_device *iface, void *context)
 
 static NTSTATUS mouse_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
-    if (!hid_descriptor_begin(&mouse_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
+    struct mouse_device *impl = mouse_from_unix_device(iface);
+
+    if (!hid_descriptor_begin(&impl->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_add_buttons(&mouse_desc, HID_USAGE_PAGE_BUTTON, 1, 3))
+    if (!hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_BUTTON, 1, 3))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_end(&mouse_desc))
+    if (!hid_descriptor_end(&impl->desc))
         return STATUS_NO_MEMORY;
 
     return STATUS_SUCCESS;
@@ -64,12 +77,14 @@ static void mouse_stop(struct unix_device *iface)
 
 static NTSTATUS mouse_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
+    struct mouse_device *impl = mouse_from_unix_device(iface);
+
     TRACE("buffer %p, length %u.\n", buffer, length);
 
-    *ret_length = mouse_desc.size;
-    if (length < mouse_desc.size) return STATUS_BUFFER_TOO_SMALL;
+    *ret_length = impl->desc.size;
+    if (length < impl->desc.size) return STATUS_BUFFER_TOO_SMALL;
 
-    memcpy(buffer, mouse_desc.data, mouse_desc.size);
+    memcpy(buffer, impl->desc.data, impl->desc.size);
     return STATUS_SUCCESS;
 }
 
@@ -115,18 +130,31 @@ static const struct device_desc mouse_device_desc =
     .product = {"Wine HID mouse"},
     .serialnumber = {"0000"},
 };
-static struct unix_device mouse_device = {.vtbl = &mouse_vtbl};
 
 static NTSTATUS mouse_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = mouse_device_desc;
-    params->device = &mouse_device;
+    params->device = unix_device_create(&mouse_vtbl, sizeof(struct mouse_device));
     return STATUS_SUCCESS;
+}
+
+struct keyboard_device
+{
+    struct unix_device unix_device;
+    struct hid_descriptor desc;
+};
+
+static inline struct keyboard_device *keyboard_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(iface, struct keyboard_device, unix_device);
 }
 
 static void keyboard_destroy(struct unix_device *iface)
 {
+    struct keyboard_device *impl = keyboard_from_unix_device(iface);
+    hid_descriptor_free(&impl->desc);
+    unix_device_destroy(iface);
 }
 
 static int keyboard_compare(struct unix_device *iface, void *context)
@@ -136,11 +164,13 @@ static int keyboard_compare(struct unix_device *iface, void *context)
 
 static NTSTATUS keyboard_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
-    if (!hid_descriptor_begin(&keyboard_desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
+    struct keyboard_device *impl = keyboard_from_unix_device(iface);
+
+    if (!hid_descriptor_begin(&impl->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_add_buttons(&keyboard_desc, HID_USAGE_PAGE_KEYBOARD, 0, 101))
+    if (!hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_KEYBOARD, 0, 101))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_end(&keyboard_desc))
+    if (!hid_descriptor_end(&impl->desc))
         return STATUS_NO_MEMORY;
 
     return STATUS_SUCCESS;
@@ -152,12 +182,14 @@ static void keyboard_stop(struct unix_device *iface)
 
 static NTSTATUS keyboard_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
+    struct keyboard_device *impl = keyboard_from_unix_device(iface);
+
     TRACE("buffer %p, length %u.\n", buffer, length);
 
-    *ret_length = keyboard_desc.size;
-    if (length < keyboard_desc.size) return STATUS_BUFFER_TOO_SMALL;
+    *ret_length = impl->desc.size;
+    if (length < impl->desc.size) return STATUS_BUFFER_TOO_SMALL;
 
-    memcpy(buffer, keyboard_desc.data, keyboard_desc.size);
+    memcpy(buffer, impl->desc.data, impl->desc.size);
     return STATUS_SUCCESS;
 }
 
@@ -203,13 +235,12 @@ static const struct device_desc keyboard_device_desc =
     .product = {"Wine HID keyboard"},
     .serialnumber = {"0000"},
 };
-static struct unix_device keyboard_device = {.vtbl = &keyboard_vtbl};
 
 static NTSTATUS keyboard_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = keyboard_device_desc;
-    params->device = &keyboard_device;
+    params->device = unix_device_create(&keyboard_vtbl, sizeof(struct keyboard_device));
     return STATUS_SUCCESS;
 }
 
