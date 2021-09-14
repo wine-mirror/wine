@@ -30,8 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
-extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
-
 static const struct osmesa_funcs *osmesa_funcs;
 
 static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
@@ -564,7 +562,7 @@ static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 static BOOL WINAPI dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
 {
     if (fmt <= 0 || fmt > ARRAY_SIZE( pixel_formats )) return FALSE;
-    return GdiSetPixelFormat( hdc, fmt, descr );
+    return NtGdiSetPixelFormat( hdc, fmt );
 }
 
 /***********************************************************************

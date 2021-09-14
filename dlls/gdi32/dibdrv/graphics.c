@@ -558,7 +558,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
     struct cached_font font, *ptr, *last_unused = NULL;
     UINT i = 0, j, k;
 
-    GetObjectW( hfont, sizeof(font.lf), &font.lf );
+    NtGdiExtGetObjectW( hfont, sizeof(font.lf), &font.lf );
     font.xform = dc->xformWorld2Vport;
     font.xform.eDx = font.xform.eDy = 0;  /* unused, would break hashing */
     if (dc->attr->graphics_mode == GM_COMPATIBLE)
@@ -761,7 +761,8 @@ static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font
     for (i = 0; i < ARRAY_SIZE( indices ); i++)
     {
         index = indices[i];
-        ret = GetGlyphOutlineW( dc->hSelf, index, ggo_flags, &metrics, 0, NULL, &identity );
+        ret = NtGdiGetGlyphOutline( dc->hSelf, index, ggo_flags, &metrics, 0, NULL,
+                                    &identity, FALSE );
         if (ret != GDI_ERROR) break;
     }
     if (ret == GDI_ERROR) return NULL;
@@ -776,7 +777,8 @@ static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font
 
     if (bit_count == 8) pad = padding[ metrics.gmBlackBoxX % 4 ];
 
-    ret = GetGlyphOutlineW( dc->hSelf, index, ggo_flags, &metrics, size, glyph->bits, &identity );
+    ret = NtGdiGetGlyphOutline( dc->hSelf, index, ggo_flags, &metrics, size, glyph->bits,
+                                &identity, FALSE );
     if (ret == GDI_ERROR)
     {
         HeapFree( GetProcessHeap(), 0, glyph );
@@ -1421,7 +1423,7 @@ BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bott
     {
         if (pdev->brush.style != BS_NULL)
         {
-            HRGN interior = CreateRectRgnIndirect( &rect );
+            HRGN interior = NtGdiCreateRectRgn( rect.left, rect.top, rect.right, rect.bottom );
 
             NtGdiCombineRgn( interior, interior, outline, RGN_DIFF );
             brush_region( pdev, interior );
