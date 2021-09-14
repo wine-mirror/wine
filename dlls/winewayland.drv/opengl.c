@@ -54,8 +54,11 @@ static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 #undef USE_GL_FUNC
 
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
+DECL_FUNCPTR(eglBindAPI);
 DECL_FUNCPTR(eglChooseConfig);
+DECL_FUNCPTR(eglCreateContext);
 DECL_FUNCPTR(eglCreateWindowSurface);
+DECL_FUNCPTR(eglDestroyContext);
 DECL_FUNCPTR(eglDestroySurface);
 DECL_FUNCPTR(eglGetConfigAttrib);
 DECL_FUNCPTR(eglGetError);
@@ -67,6 +70,7 @@ DECL_FUNCPTR(eglQueryString);
 
 static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct list gl_drawables = LIST_INIT(gl_drawables);
+static struct list gl_contexts = LIST_INIT(gl_contexts);
 
 struct wayland_gl_drawable
 {
@@ -78,6 +82,13 @@ struct wayland_gl_drawable
     EGLSurface surface;
 };
 
+struct wgl_context
+{
+    struct list entry;
+    EGLConfig config;
+    EGLContext context;
+};
+
 /* lookup the existing drawable for a window, gl_object_mutex must be held */
 static struct wayland_gl_drawable *find_drawable_for_hwnd(HWND hwnd)
 {
@@ -85,6 +96,24 @@ static struct wayland_gl_drawable *find_drawable_for_hwnd(HWND hwnd)
     LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
         if (gl->hwnd == hwnd) return gl;
     return NULL;
+}
+
+static struct wayland_gl_drawable *wayland_gl_drawable_acquire(struct wayland_gl_drawable *gl)
+{
+    InterlockedIncrement(&gl->ref);
+    return gl;
+}
+
+static struct wayland_gl_drawable *wayland_gl_drawable_get(HWND hwnd)
+{
+    struct wayland_gl_drawable *ret;
+
+    pthread_mutex_lock(&gl_object_mutex);
+    if ((ret = find_drawable_for_hwnd(hwnd)))
+        ret = wayland_gl_drawable_acquire(ret);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    return ret;
 }
 
 static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
@@ -212,6 +241,57 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
     wayland_update_gl_drawable(hwnd, gl);
     win32u_set_window_pixel_format(hwnd, format, internal);
 
+    return TRUE;
+}
+
+static struct wgl_context *create_context(HDC hdc)
+{
+    struct wayland_gl_drawable *gl;
+    struct wgl_context *ctx;
+
+    if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc)))) return NULL;
+
+    if (!(ctx = calloc(1, sizeof(*ctx))))
+    {
+        ERR("Failed to allocate memory for GL context\n");
+        goto out;
+    }
+
+    ctx->context = p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR,
+                                      EGL_NO_CONTEXT, NULL);
+
+    pthread_mutex_lock(&gl_object_mutex);
+    list_add_head(&gl_contexts, &ctx->entry);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    TRACE("ctx=%p egl_context=%p\n", ctx, ctx->context);
+
+out:
+    wayland_gl_drawable_release(gl);
+    return ctx;
+}
+
+static BOOL wayland_wglCopyContext(struct wgl_context *src,
+                                   struct wgl_context *dst, UINT mask)
+{
+    FIXME("%p -> %p mask %#x unsupported\n", src, dst, mask);
+    return FALSE;
+}
+
+static struct wgl_context *wayland_wglCreateContext(HDC hdc)
+{
+    TRACE("hdc=%p\n", hdc);
+    p_eglBindAPI(EGL_OPENGL_API);
+    return create_context(hdc);
+}
+
+static BOOL wayland_wglDeleteContext(struct wgl_context *ctx)
+{
+    pthread_mutex_lock(&gl_object_mutex);
+    list_remove(&ctx->entry);
+    pthread_mutex_unlock(&gl_object_mutex);
+    p_eglDestroyContext(egl_display, ctx->context);
+    free(ctx);
     return TRUE;
 }
 
@@ -405,7 +485,7 @@ static BOOL init_egl_configs(void)
 static void init_opengl(void)
 {
     EGLint egl_version[2];
-    const char *egl_client_exts;
+    const char *egl_client_exts, *egl_exts;
 
     if (!(egl_handle = dlopen(SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL)))
     {
@@ -438,8 +518,11 @@ static void init_opengl(void)
         if (!(p_##func = (void *)p_eglGetProcAddress(#func))) \
             { ERR("Failed to load symbol %s\n", #func); goto err; } \
     } while(0)
+    LOAD_FUNCPTR_EGL(eglBindAPI);
     LOAD_FUNCPTR_EGL(eglChooseConfig);
+    LOAD_FUNCPTR_EGL(eglCreateContext);
     LOAD_FUNCPTR_EGL(eglCreateWindowSurface);
+    LOAD_FUNCPTR_EGL(eglDestroyContext);
     LOAD_FUNCPTR_EGL(eglDestroySurface);
     LOAD_FUNCPTR_EGL(eglGetConfigAttrib);
     LOAD_FUNCPTR_EGL(eglGetError);
@@ -462,6 +545,15 @@ static void init_opengl(void)
     }
     TRACE("EGL version %u.%u\n", egl_version[0], egl_version[1]);
 
+    egl_exts = p_eglQueryString(egl_display, EGL_EXTENSIONS);
+#define REQUIRE_EXT(ext) \
+    do { \
+        if (!has_extension(egl_exts, #ext)) \
+            { ERR("Failed to find required extension %s\n", #ext); goto err; } \
+    } while(0)
+    REQUIRE_EXT(EGL_KHR_no_config_context);
+#undef REQUIRE_EXT
+
     if (!init_opengl_funcs()) goto err;
     if (!init_egl_configs()) goto err;
 
@@ -483,6 +575,9 @@ static struct opengl_funcs opengl_funcs =
 {
     .wgl =
     {
+        .p_wglCopyContext = wayland_wglCopyContext,
+        .p_wglCreateContext = wayland_wglCreateContext,
+        .p_wglDeleteContext = wayland_wglDeleteContext,
         .p_wglDescribePixelFormat = wayland_wglDescribePixelFormat,
         .p_wglGetProcAddress = wayland_wglGetProcAddress,
         .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
