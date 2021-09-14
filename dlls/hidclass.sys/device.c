@@ -182,6 +182,7 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
+    const BOOL polled = ext->u.pdo.information.Polled;
     struct hid_report *last_report, *report;
     struct hid_report_queue *queue;
     RAWINPUT *rawinput;
@@ -223,8 +224,9 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     hid_report_queue_push( queue, last_report );
     KeReleaseSpinLock( &ext->u.pdo.report_queues_lock, irql );
 
-    while ((irp = pop_irp_from_queue( ext )))
+    do
     {
+        if (!(irp = pop_irp_from_queue( ext ))) break;
         queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
 
         if (!(report = hid_report_queue_pop( queue ))) hid_report_incref( (report = last_report) );
@@ -235,6 +237,7 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
 
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
+    while (polled);
 
     hid_report_decref( last_report );
 }
