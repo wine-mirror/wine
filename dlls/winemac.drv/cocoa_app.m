@@ -1747,14 +1747,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
         WineWindow* windowBroughtForward = nil;
         BOOL process = FALSE;
 
-        if (!useDragNotifications &&
-            type == NSEventTypeLeftMouseUp &&
-            [windowsBeingDragged count] &&
-            [window isKindOfClass:[WineWindow class]])
-        {
-            [self handleWindowDrag:window begin:NO];
-        }
-
         if ([window isKindOfClass:[WineWindow class]] &&
             type == NSEventTypeLeftMouseDown &&
             ![theEvent wine_commandKeyDown])
