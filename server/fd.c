@@ -1742,7 +1742,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->nt_namelen = 0;
     fd->unix_fd    = -1;
     fd->cacheable  = 0;
-    fd->signaled   = 0;
+    fd->signaled   = 1;
     fd->fs_locks   = 0;
     fd->poll_index = -1;
     fd->completion = NULL;

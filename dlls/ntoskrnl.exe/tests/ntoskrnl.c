@@ -711,7 +711,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ok(port != NULL, "failed to create port, error %u\n", GetLastError());
 
     ret = WaitForSingleObject(file, 0);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     ResetEvent(event);
     strcpy(buffer, "abcdef");
