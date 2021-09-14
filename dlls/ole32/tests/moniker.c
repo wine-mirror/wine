@@ -1774,6 +1774,36 @@ static void test_class_moniker(void)
     IBindCtx *bindctx;
     IUnknown *unknown;
     FILETIME filetime;
+    ULONG eaten;
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Extended syntax, handled by class moniker directly, only CLSID is meaningful for equality. */
+    hr = MkParseDisplayName(bindctx, L"clsid:11111111-0000-0000-2222-444444444444;extra data:", &eaten, &moniker);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(eaten == 54, "Unexpected length %u.\n", eaten);
+
+        hr = MkParseDisplayName(bindctx, L"clsid:11111111-0000-0000-2222-444444444444;different extra data:", &eaten, &moniker2);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        TEST_DISPLAY_NAME(moniker, L"clsid:11111111-0000-0000-2222-444444444444;extra data:");
+        TEST_MONIKER_TYPE(moniker, MKSYS_CLASSMONIKER);
+
+        TEST_MONIKER_TYPE(moniker2, MKSYS_CLASSMONIKER);
+
+        hr = IMoniker_IsEqual(moniker, moniker2);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMoniker_IsEqual(moniker2, moniker);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        IMoniker_Release(moniker2);
+        IMoniker_Release(moniker);
+    }
 
     hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
     ok_ole_success(hr, CreateClassMoniker);
@@ -1800,9 +1830,6 @@ static void test_class_moniker(void)
 
     /* IsSystemMoniker test */
     TEST_MONIKER_TYPE(moniker, MKSYS_CLASSMONIKER);
-
-    hr = CreateBindCtx(0, &bindctx);
-    ok_ole_success(hr, CreateBindCtx);
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);

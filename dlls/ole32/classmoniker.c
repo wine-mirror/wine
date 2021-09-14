@@ -43,7 +43,13 @@ typedef struct ClassMoniker
     IMoniker IMoniker_iface;
     IROTData IROTData_iface;
     LONG ref;
-    CLSID clsid; /* clsid identified by this moniker */
+
+    struct
+    {
+        CLSID clsid;
+        DWORD data_len;
+    } header;
+
     IUnknown *pMarshal; /* custom marshaler */
 } ClassMoniker;
 
@@ -171,41 +177,33 @@ static HRESULT WINAPI ClassMoniker_IsDirty(IMoniker* iface)
     return S_FALSE;
 }
 
-/******************************************************************************
- *        ClassMoniker_Load
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_Load(IMoniker* iface,IStream* pStm)
+static HRESULT WINAPI ClassMoniker_Load(IMoniker *iface, IStream *stream)
 {
-    ClassMoniker *This = impl_from_IMoniker(iface);
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
+    ULONG length;
     HRESULT hr;
-    DWORD zero;
 
-    TRACE("(%p)\n", pStm);
+    TRACE("%p, %p\n", iface, stream);
 
-    hr = IStream_Read(pStm, &This->clsid, sizeof(This->clsid), NULL);
-    if (hr != S_OK) return STG_E_READFAULT;
+    hr = IStream_Read(stream, &moniker->header, sizeof(moniker->header), &length);
+    if (hr != S_OK || length != sizeof(moniker->header)) return STG_E_READFAULT;
 
-    hr = IStream_Read(pStm, &zero, sizeof(zero), NULL);
-    if ((hr != S_OK) || (zero != 0)) return STG_E_READFAULT;
+    if (moniker->header.data_len)
+    {
+        FIXME("Moniker data of length %u was ignored.\n", moniker->header.data_len);
+        moniker->header.data_len = 0;
+    }
 
     return S_OK;
 }
 
-/******************************************************************************
- *        ClassMoniker_Save
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty)
+static HRESULT WINAPI ClassMoniker_Save(IMoniker *iface, IStream *stream, BOOL clear_dirty)
 {
-    ClassMoniker *This = impl_from_IMoniker(iface);
-    HRESULT hr;
-    DWORD zero = 0;
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
 
-    TRACE("(%p, %s)\n", pStm, fClearDirty ? "TRUE" : "FALSE");
+    TRACE("%p, %p, %d\n", iface, stream, clear_dirty);
 
-    hr = IStream_Write(pStm, &This->clsid, sizeof(This->clsid), NULL);
-    if (FAILED(hr)) return hr;
-
-    return IStream_Write(pStm, &zero, sizeof(zero), NULL);
+    return IStream_Write(stream, &moniker->header, sizeof(moniker->header), NULL);
 }
 
 /******************************************************************************
@@ -230,7 +228,7 @@ static HRESULT WINAPI ClassMoniker_BindToObject(IMoniker* iface,
                                             REFIID riid,
                                             VOID** ppvResult)
 {
-    ClassMoniker *This = impl_from_IMoniker(iface);
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
     BIND_OPTS2 bindopts;
     IClassActivator *pActivator;
     HRESULT hr;
@@ -241,7 +239,7 @@ static HRESULT WINAPI ClassMoniker_BindToObject(IMoniker* iface,
     IBindCtx_GetBindOptions(pbc, (BIND_OPTS *)&bindopts);
 
     if (!pmkToLeft)
-        return CoGetClassObject(&This->clsid, bindopts.dwClassContext, NULL,
+        return CoGetClassObject(&moniker->header.clsid, bindopts.dwClassContext, NULL,
                                 riid, ppvResult);
     else
     {
@@ -249,7 +247,7 @@ static HRESULT WINAPI ClassMoniker_BindToObject(IMoniker* iface,
                                    (void **)&pActivator);
         if (FAILED(hr)) return hr;
 
-        hr = IClassActivator_GetClassObject(pActivator, &This->clsid,
+        hr = IClassActivator_GetClassObject(pActivator, &moniker->header.clsid,
                                             bindopts.dwClassContext,
                                             bindopts.locale, riid, ppvResult);
 
@@ -395,19 +393,16 @@ static HRESULT WINAPI ClassMoniker_IsEqual(IMoniker *iface, IMoniker *other)
     if (!other_moniker)
         return S_FALSE;
 
-    return IsEqualGUID(&moniker->clsid, &other_moniker->clsid) ? S_OK : S_FALSE;
+    return IsEqualGUID(&moniker->header.clsid, &other_moniker->header.clsid) ? S_OK : S_FALSE;
 }
 
-/******************************************************************************
- *        ClassMoniker_Hash
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_Hash(IMoniker* iface,DWORD* pdwHash)
+static HRESULT WINAPI ClassMoniker_Hash(IMoniker *iface, DWORD *hash)
 {
-    ClassMoniker *This = impl_from_IMoniker(iface);
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
 
-    TRACE("(%p)\n", pdwHash);
+    TRACE("%p, %p\n", iface, hash);
 
-    *pdwHash = This->clsid.Data1;
+    *hash = moniker->header.clsid.Data1;
 
     return S_OK;
 }
@@ -464,7 +459,7 @@ static HRESULT WINAPI ClassMoniker_CommonPrefixWith(IMoniker *iface, IMoniker *o
 
     if (other_moniker)
     {
-        if (!IsEqualGUID(&moniker->clsid, &other_moniker->clsid)) return MK_E_NOPREFIX;
+        if (!IsEqualGUID(&moniker->header.clsid, &other_moniker->header.clsid)) return MK_E_NOPREFIX;
 
         *prefix = iface;
         IMoniker_AddRef(iface);
@@ -495,7 +490,7 @@ static HRESULT WINAPI ClassMoniker_GetDisplayName(IMoniker *iface,
 {
     ClassMoniker *moniker = impl_from_IMoniker(iface);
     static const int name_len = CHARS_IN_GUID + 5 /* prefix */;
-    const GUID *guid = &moniker->clsid;
+    const GUID *guid = &moniker->header.clsid;
 
     TRACE("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, name);
 
@@ -602,7 +597,7 @@ static HRESULT WINAPI ClassMonikerROTData_GetComparisonData(IROTData* iface,
     /* write CLSID of the moniker */
     memcpy(pbData, &CLSID_ClassMoniker, sizeof(CLSID));
     /* write CLSID the moniker represents */
-    memcpy(pbData+sizeof(CLSID), &This->clsid, sizeof(CLSID));
+    memcpy(pbData+sizeof(CLSID), &This->header.clsid, sizeof(CLSID));
 
     return S_OK;
 }
@@ -659,7 +654,7 @@ HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker **moniker)
     object->IMoniker_iface.lpVtbl = &ClassMonikerVtbl;
     object->IROTData_iface.lpVtbl = &ROTDataVtbl;
     object->ref = 1;
-    object->clsid = *rclsid;
+    object->header.clsid = *rclsid;
 
     *moniker = &object->IMoniker_iface;
 
