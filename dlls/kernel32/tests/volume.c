@@ -1641,8 +1641,8 @@ static void test_mountmgr_query_points(void)
     status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
             IOCTL_MOUNTMGR_QUERY_POINTS, NULL, 0, NULL, 0 );
     ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
-    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
-    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
 
     memset( input, 0, sizeof(*input) );
 
@@ -1651,16 +1651,16 @@ static void test_mountmgr_query_points(void)
     status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
             IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input) - 1, NULL, 0 );
     ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
-    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
-    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
 
     io.Status = 0xdeadf00d;
     io.Information = 0xdeadf00d;
     status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
             IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), NULL, 0 );
     ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
-    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
-    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
 
     io.Status = 0xdeadf00d;
     io.Information = 0xdeadf00d;
@@ -1668,8 +1668,8 @@ static void test_mountmgr_query_points(void)
     status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
             IOCTL_MOUNTMGR_QUERY_POINTS, input, sizeof(*input), output, sizeof(*output) - 1 );
     ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
-    todo_wine ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
-    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    ok(io.Status == 0xdeadf00d, "got status %#x\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
     ok(output->Size == 0xcccccccc, "got size %u\n", output->Size);
     ok(output->NumberOfMountPoints == 0xcccccccc, "got count %u\n", output->NumberOfMountPoints);
 

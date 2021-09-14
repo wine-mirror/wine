@@ -690,8 +690,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ok(ret == expect_status, "got %#x\n", ret);
     if (NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
-        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
     }
     else
     {
@@ -726,8 +726,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
-        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
@@ -778,8 +778,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
-        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(event, 0);
         ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
@@ -810,8 +810,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
-        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
         ret = WaitForSingleObject(file, 0);
         ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     }
@@ -846,8 +846,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
                 "got %#x\n", ret);
         if (!params->pending && NT_ERROR(params->iosb_status))
         {
-            todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
-            todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+            ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+            ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
             ret = WaitForSingleObject(event, 0);
             ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
         }
@@ -915,8 +915,8 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ok(ret == params->ret_status, "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
-        todo_wine ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
-        todo_wine ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
+        ok(io.Status == 0xdeadf00d, "got %#x\n", io.Status);
+        ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
     }
     else
     {
@@ -1151,8 +1151,8 @@ static void test_blocking_irp(void)
     io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
     ok(status == STATUS_DEVICE_NOT_READY, "got %#x\n", status);
-    todo_wine ok(io.Status == 0xdeadf00d, "got iosb status %#x\n", io.Status);
-    todo_wine ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    ok(io.Status == 0xdeadf00d, "got iosb status %#x\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
 

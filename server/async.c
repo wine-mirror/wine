@@ -184,8 +184,16 @@ void async_terminate( struct async *async, unsigned int status )
         memset( &data, 0, sizeof(data) );
         data.type            = APC_ASYNC_IO;
         data.async_io.user   = async->data.user;
-        data.async_io.sb     = async->data.iosb;
         data.async_io.result = iosb ? iosb->result : 0;
+
+        /* this can happen if the initial status was unknown (i.e. for device
+         * files). the client should not fill the IOSB in this case; pass it as
+         * NULL to communicate that.
+         * note that we check the IOSB status and not the initial status */
+        if (NT_ERROR( status ) && (!is_fd_overlapped( async->fd ) || !async->pending))
+            data.async_io.sb = 0;
+        else
+            data.async_io.sb = async->data.iosb;
 
         /* if there is output data, the client needs to make an extra request
          * to retrieve it; use STATUS_ALERTED to signal this case */
