@@ -657,47 +657,25 @@ static const IROTDataVtbl ROTDataVtbl =
 };
 
 /******************************************************************************
- *         ClassMoniker_Construct (local function)
- *******************************************************************************/
-static HRESULT ClassMoniker_Construct(ClassMoniker* This, REFCLSID rclsid)
-{
-    TRACE("(%p,%s)\n",This,debugstr_guid(rclsid));
-
-    /* Initialize the virtual function table. */
-    This->IMoniker_iface.lpVtbl = &ClassMonikerVtbl;
-    This->IROTData_iface.lpVtbl = &ROTDataVtbl;
-    This->ref           = 0;
-    This->clsid         = *rclsid;
-    This->pMarshal      = NULL;
-
-    return S_OK;
-}
-
-/******************************************************************************
  *        CreateClassMoniker	[OLE32.@]
  ******************************************************************************/
-HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker **ppmk)
+HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker **moniker)
 {
-    ClassMoniker* newClassMoniker;
-    HRESULT       hr;
+    ClassMoniker *object;
 
-    TRACE("(%s,%p)\n", debugstr_guid(rclsid), ppmk);
+    TRACE("%s, %p\n", debugstr_guid(rclsid), moniker);
 
-    newClassMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(ClassMoniker));
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    if (!newClassMoniker)
-        return STG_E_INSUFFICIENTMEMORY;
+    object->IMoniker_iface.lpVtbl = &ClassMonikerVtbl;
+    object->IROTData_iface.lpVtbl = &ROTDataVtbl;
+    object->ref = 1;
+    object->clsid = *rclsid;
 
-    hr = ClassMoniker_Construct(newClassMoniker, rclsid);
+    *moniker = &object->IMoniker_iface;
 
-    if (FAILED(hr))
-    {
-        HeapFree(GetProcessHeap(), 0, newClassMoniker);
-        return hr;
-    }
-
-    return ClassMoniker_QueryInterface(&newClassMoniker->IMoniker_iface, &IID_IMoniker,
-                                       (void**)ppmk);
+    return S_OK;
 }
 
 HRESULT ClassMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName, LPDWORD pchEaten,
