@@ -675,7 +675,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %u\n", GetLastError());
     }
     if (NT_ERROR(expect_status))
-        todo_wine ok(size == 0xdeadf00d, "got size %u\n", size);
+        ok(size == 0xdeadf00d, "got size %u\n", size);
     else if (!NT_ERROR(params->iosb_status))
         todo_wine_if (params->iosb_status == STATUS_PENDING) ok(size == 3, "got size %u\n", size);
     /* size is garbage if !NT_ERROR(expect_status) && NT_ERROR(iosb_status) */
