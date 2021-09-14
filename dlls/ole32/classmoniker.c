@@ -512,18 +512,21 @@ static HRESULT WINAPI ClassMoniker_GetDisplayName(IMoniker *iface,
     return S_OK;
 }
 
-/******************************************************************************
- *        ClassMoniker_ParseDisplayName
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_ParseDisplayName(IMoniker* iface,
-                                                IBindCtx* pbc,
-                                                IMoniker* pmkToLeft,
-                                                LPOLESTR pszDisplayName,
-                                                ULONG* pchEaten,
-                                                IMoniker** ppmkOut)
+static HRESULT WINAPI ClassMoniker_ParseDisplayName(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, LPOLESTR display_name, ULONG *eaten, IMoniker **result)
 {
-    FIXME("(%p, %p, %s, %p, %p)\n", pbc, pmkToLeft, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
-    return E_NOTIMPL;
+    IParseDisplayName *parser;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p, %s, %p, %p\n", iface, pbc, pmkToLeft, debugstr_w(display_name), eaten, result);
+
+    if (SUCCEEDED(hr = IMoniker_BindToObject(iface, pbc, pmkToLeft, &IID_IParseDisplayName, (void **)&parser)))
+    {
+        hr = IParseDisplayName_ParseDisplayName(parser, pbc, display_name, eaten, result);
+        IParseDisplayName_Release(parser);
+    }
+
+    return hr;
 }
 
 /******************************************************************************
