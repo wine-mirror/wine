@@ -440,15 +440,43 @@ static void free_dispatch_irp( struct irp_data *irp_data )
     free( irp_data );
 }
 
+static ULONG get_irp_output_size( IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetNextIrpStackLocation( irp );
+
+    if (!irp->UserBuffer || (irp->Flags & IRP_WRITE_OPERATION))
+        return 0;
+
+    /* For IRPs not using buffered I/O, the driver is supposed to have direct
+     * access to the user's output buffer, either via an MDL (direct I/O) or
+     * with the raw user VA (neither). We can't fully support this, but we
+     * should at least copy the entire buffer back to the caller. */
+    switch (stack->MajorFunction)
+    {
+        case IRP_MJ_FILE_SYSTEM_CONTROL:
+        case IRP_MJ_DEVICE_CONTROL:
+        case IRP_MJ_INTERNAL_DEVICE_CONTROL:
+            if ((stack->Parameters.DeviceIoControl.IoControlCode & 3) != METHOD_BUFFERED)
+                return stack->Parameters.DeviceIoControl.OutputBufferLength;
+            break;
+
+        case IRP_MJ_READ:
+            /* FIXME: Handle non-buffered reads. */
+        default:
+            break;
+    }
+
+    if (NT_ERROR(irp->IoStatus.u.Status))
+        return 0;
+    return irp->IoStatus.Information;
+}
+
 /* transfer result of IRP back to wineserver */
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
     struct irp_data *irp_data = context;
-    void *out_buff = irp->UserBuffer;
     NTSTATUS status;
-
-    if (irp->Flags & IRP_WRITE_OPERATION)
-        out_buff = NULL;  /* do not transfer back input buffer */
+    ULONG out_size;
 
     EnterCriticalSection( &irp_completion_cs );
 
@@ -460,15 +488,14 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
         return STATUS_MORE_PROCESSING_REQUIRED;
     }
 
+    out_size = get_irp_output_size( irp );
+
     SERVER_START_REQ( set_irp_result )
     {
         req->handle   = wine_server_obj_handle( irp_data->handle );
         req->status   = irp->IoStatus.u.Status;
         req->size     = irp->IoStatus.Information;
-        if (!NT_ERROR(irp->IoStatus.u.Status))
-        {
-            if (out_buff) wine_server_add_data( req, out_buff, irp->IoStatus.Information );
-        }
+        if (out_size) wine_server_add_data( req, irp->UserBuffer, out_size );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -943,17 +970,13 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 if (context.irp_data->complete)
                 {
                     /* IRP completed even before we got here; we can report completion now */
-                    void *out_buff = irp->UserBuffer;
-
-                    if (irp->Flags & IRP_WRITE_OPERATION)
-                        out_buff = NULL;  /* do not transfer back input buffer */
+                    unsigned int out_size = get_irp_output_size( irp );
 
                     req->prev        = wine_server_obj_handle( context.irp_data->handle );
                     req->pending     = irp->PendingReturned;
                     req->iosb_status = irp->IoStatus.u.Status;
                     req->result      = irp->IoStatus.Information;
-                    if (!NT_ERROR(irp->IoStatus.u.Status) && out_buff)
-                        wine_server_add_data( req, out_buff, irp->IoStatus.Information );
+                    if (out_size) wine_server_add_data( req, irp->UserBuffer, out_size );
                 }
                 else
                 {

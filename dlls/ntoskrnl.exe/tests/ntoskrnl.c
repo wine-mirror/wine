@@ -679,8 +679,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     else if (!NT_ERROR(params->iosb_status))
         todo_wine_if (params->iosb_status == STATUS_PENDING) ok(size == 3, "got size %u\n", size);
     /* size is garbage if !NT_ERROR(expect_status) && NT_ERROR(iosb_status) */
-    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     strcpy(buffer, "abcdef");
     io.Status = 0xdeadf00d;
@@ -701,8 +700,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             ok(io.Information == 3, "got size %Iu\n", io.Information);
         }
     }
-    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     /* Test the overlapped case. */
 
@@ -741,8 +739,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ret = WaitForSingleObject(event, 0);
         ok(!ret, "got %d\n", ret);
     }
-    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     ret = WaitForSingleObject(file, 0);
     ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
@@ -793,8 +790,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ret = WaitForSingleObject(event, 0);
         ok(!ret, "got %d\n", ret);
     }
-    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     /* As above, but use the file handle instead of an event. */
     ret = WaitForSingleObject(file, 0);
@@ -825,8 +821,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ret = WaitForSingleObject(file, 0);
         ok(!ret, "got %d\n", ret);
     }
-    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     /* Test FILE_SKIP_COMPLETION_PORT_ON_SUCCESS. */
 
@@ -861,8 +856,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             ret = WaitForSingleObject(event, 0);
             ok(!ret, "got %d\n", ret);
         }
-        todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-            ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
         key = 0xdeadf00d;
         value = 0xdeadf00d;
@@ -926,8 +920,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
             ok(io.Information == 3, "got size %Iu\n", io.Information);
         }
     }
-    todo_wine_if (ioctl != IOCTL_WINETEST_RETURN_STATUS_BUFFERED)
-        ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
     ret = SleepEx(0, TRUE);
     if (!params->pending && NT_ERROR(params->iosb_status))
