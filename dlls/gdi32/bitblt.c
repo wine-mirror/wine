@@ -810,7 +810,7 @@ BOOL WINAPI NtGdiMaskBlt( HDC hdcDest, INT nXDest, INT nYDest, INT nWidth, INT n
 
     /* combine both using the mask as a pattern brush */
     NtGdiSelectBrush(hDC2, hbrMask);
-    SetBrushOrgEx(hDC2, -xMask, -yMask, NULL);
+    NtGdiSetBrushOrg( hDC2, -xMask, -yMask, NULL );
     /* (D & P) | (S & ~P) */
     NtGdiBitBlt(hDC2, 0, 0, nWidth, nHeight, hDC1, 0, 0, 0xac0744, 0, 0 );
     NtGdiSelectBrush(hDC2, hbrTmp);

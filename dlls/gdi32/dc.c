@@ -885,6 +885,22 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
 
 
 /***********************************************************************
+ *           NtGdiSetBrushOrg    (win32u.@)
+ */
+BOOL WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *oldorg )
+{
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (oldorg) *oldorg = dc->attr->brush_org;
+    dc->attr->brush_org.x = x;
+    dc->attr->brush_org.y = y;
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           NtGdiGetTransform    (win32u.@)
  *
  * Undocumented
