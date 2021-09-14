@@ -510,37 +510,30 @@ static HRESULT WINAPI ClassMoniker_RelativePathTo(IMoniker* iface,IMoniker* pmOt
     return MK_E_NOTBINDABLE;
 }
 
-/******************************************************************************
- *        ClassMoniker_GetDisplayName
- ******************************************************************************/
-static HRESULT WINAPI ClassMoniker_GetDisplayName(IMoniker* iface,
-                                              IBindCtx* pbc,
-                                              IMoniker* pmkToLeft,
-                                              LPOLESTR *ppszDisplayName)
+static HRESULT WINAPI ClassMoniker_GetDisplayName(IMoniker *iface,
+        IBindCtx *pbc, IMoniker *pmkToLeft, LPOLESTR *name)
 {
-    ClassMoniker *This = impl_from_IMoniker(iface);
-    static const WCHAR wszClsidPrefix[] = L"clsid:";
+    ClassMoniker *moniker = impl_from_IMoniker(iface);
+    static const int name_len = CHARS_IN_GUID + 5 /* prefix */;
+    const GUID *guid = &moniker->clsid;
 
-    TRACE("(%p, %p, %p)\n", pbc, pmkToLeft, ppszDisplayName);
+    TRACE("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, name);
 
-    if (!ppszDisplayName)
+    if (!name)
         return E_POINTER;
 
     if (pmkToLeft)
         return E_INVALIDARG;
 
-    *ppszDisplayName = CoTaskMemAlloc(sizeof(wszClsidPrefix) + (CHARS_IN_GUID-2) * sizeof(WCHAR));
+    if (!(*name = CoTaskMemAlloc(name_len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
 
-    StringFromGUID2(&This->clsid, *ppszDisplayName+ARRAY_SIZE(wszClsidPrefix)-2, CHARS_IN_GUID);
+    swprintf(*name, name_len, L"clsid:%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X:",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
+            guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 
-    /* note: this overwrites the opening curly bracket of the CLSID string generated above */
-    memcpy(*ppszDisplayName, wszClsidPrefix, sizeof(wszClsidPrefix)-sizeof(WCHAR));
+    TRACE("Returning %s\n", debugstr_w(*name));
 
-    /* note: this overwrites the closing curly bracket of the CLSID string generated above */
-    (*ppszDisplayName)[ARRAY_SIZE(wszClsidPrefix)-2+CHARS_IN_GUID-2] = ':';
-    (*ppszDisplayName)[ARRAY_SIZE(wszClsidPrefix)-2+CHARS_IN_GUID-1] = '\0';
-
-    TRACE("string is %s\n", debugstr_w(*ppszDisplayName));
     return S_OK;
 }
 
