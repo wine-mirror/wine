@@ -109,6 +109,8 @@ static const WCHAR monitor_hardware_idW[] = {
     'M','O','N','I','T','O','R','\\',
     'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 static const WCHAR driver_date_fmtW[] = {'%','u','-','%','u','-','%','u',0};
+static const WCHAR edidW[] = {'E','D','I','D',0};
+static const WCHAR bad_edidW[] = {'B','A','D','_','E','D','I','D',0};
 
 static struct x11drv_display_device_handler host_handler;
 struct x11drv_display_device_handler desktop_handler;
@@ -257,7 +259,7 @@ RECT get_host_primary_monitor_rect(void)
 
     if (gpus) host_handler.free_gpus(gpus);
     if (adapters) host_handler.free_adapters(adapters);
-    if (monitors) host_handler.free_monitors(monitors);
+    if (monitors) host_handler.free_monitors(monitors, monitor_count);
     return rect;
 }
 
@@ -611,6 +613,13 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
                                    DEVPROP_TYPE_UINT32, (const BYTE *)&output_id, sizeof(output_id), 0))
         goto done;
 
+    hkey = SetupDiCreateDevRegKeyW(devinfo, &device_data, DICS_FLAG_GLOBAL, 0, DIREG_DEV, NULL, NULL);
+    if (monitor->edid)
+        RegSetValueExW(hkey, edidW, 0, REG_BINARY, monitor->edid, monitor->edid_len);
+    else
+        RegSetValueExW(hkey, bad_edidW, 0, REG_BINARY, NULL, 0);
+    RegCloseKey(hkey);
+
     /* Create driver key */
     hkey = SetupDiCreateDevRegKeyW(devinfo, &device_data, DICS_FLAG_GLOBAL, 0, DIREG_DRV, NULL, NULL);
     RegCloseKey(hkey);
@@ -768,7 +777,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
                     goto done;
             }
 
-            handler->free_monitors(monitors);
+            handler->free_monitors(monitors, monitor_count);
             monitors = NULL;
             video_index++;
         }
@@ -788,5 +797,5 @@ done:
     if (adapters)
         handler->free_adapters(adapters);
     if (monitors)
-        handler->free_monitors(monitors);
+        handler->free_monitors(monitors, monitor_count);
 }

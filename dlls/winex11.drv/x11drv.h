@@ -413,6 +413,7 @@ enum x11drv_atoms
     FIRST_XATOM = XA_LAST_PREDEFINED + 1,
     XATOM_CLIPBOARD = FIRST_XATOM,
     XATOM_COMPOUND_TEXT,
+    XATOM_EDID,
     XATOM_INCR,
     XATOM_MANAGER,
     XATOM_MULTIPLE,
@@ -751,6 +752,9 @@ struct x11drv_monitor
     RECT rc_work;
     /* StateFlags in DISPLAY_DEVICE struct */
     DWORD state_flags;
+    /* Extended Device Identification Data */
+    unsigned long edid_len;
+    unsigned char *edid;
 };
 
 /* Required functions for display device registry initialization */
@@ -786,7 +790,7 @@ struct x11drv_display_device_handler
     void (*free_adapters)(struct x11drv_adapter *adapters);
 
     /* free_monitors will be called to free a monitor list from get_monitors */
-    void (*free_monitors)(struct x11drv_monitor *monitors);
+    void (*free_monitors)(struct x11drv_monitor *monitors, int count);
 
     /* register_event_handlers will be called to register event handlers.
      * This function pointer is optional and can be NULL when driver doesn't support it */
