@@ -4635,6 +4635,7 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
         return S_OK;
     }
 
+    V_VT(&varLeft) = V_VT(&varRight) = VT_EMPTY;
     VariantInit(&tempLeft);
     VariantInit(&tempRight);
 
@@ -4653,8 +4654,6 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
     }
 
     /* Copy our inputs so we don't disturb anything */
-    V_VT(&varLeft) = V_VT(&varRight) = VT_EMPTY;
-
     hRet = VariantCopy(&varLeft, pVarLeft);
     if (FAILED(hRet))
         goto VarXor_Exit;
