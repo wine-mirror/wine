@@ -69,6 +69,7 @@ enum bus_event_type
     BUS_EVENT_TYPE_NONE,
     BUS_EVENT_TYPE_DEVICE_REMOVED,
     BUS_EVENT_TYPE_DEVICE_CREATED,
+    BUS_EVENT_TYPE_INPUT_REPORT,
 };
 
 struct bus_event
@@ -89,6 +90,13 @@ struct bus_event
             struct unix_device *device;
             struct device_desc desc;
         } device_created;
+
+        struct
+        {
+            struct unix_device *device;
+            USHORT length;
+            BYTE buffer[1];
+        } input_report;
     };
 };
 

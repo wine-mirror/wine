@@ -248,16 +248,30 @@ void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size)
 
     if (!(iface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size))) return NULL;
     iface->vtbl = vtbl;
+    iface->ref = 1;
 
     return iface;
+}
+
+static void unix_device_decref(struct unix_device *iface)
+{
+    if (!InterlockedDecrement(&iface->ref))
+    {
+        iface->vtbl->destroy(iface);
+        HeapFree(GetProcessHeap(), 0, iface);
+    }
+}
+
+static ULONG unix_device_incref(struct unix_device *iface)
+{
+    return InterlockedIncrement(&iface->ref);
 }
 
 static NTSTATUS unix_device_remove(void *args)
 {
     struct unix_device *iface = args;
     iface->vtbl->stop(iface);
-    iface->vtbl->destroy(iface);
-    HeapFree(GetProcessHeap(), 0, iface);
+    unix_device_decref(iface);
     return STATUS_SUCCESS;
 }
 
@@ -328,12 +342,21 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     unix_device_set_feature_report,
 };
 
+void bus_event_cleanup(struct bus_event *event)
+{
+    if (event->type == BUS_EVENT_TYPE_INPUT_REPORT)
+        unix_device_decref(event->input_report.device);
+}
+
 void bus_event_queue_destroy(struct list *queue)
 {
     struct bus_event *event, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE(event, next, queue, struct bus_event, entry)
+    {
+        bus_event_cleanup(event);
         HeapFree(GetProcessHeap(), 0, event);
+    }
 }
 
 BOOL bus_event_queue_device_removed(struct list *queue, const WCHAR *bus_id, void *context)
@@ -364,17 +387,38 @@ BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *devi
     return TRUE;
 }
 
+BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device, BYTE *report, USHORT length)
+{
+    ULONG size = offsetof(struct bus_event, input_report.buffer[length]);
+    struct bus_event *event = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!event) return FALSE;
+
+    if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
+
+    event->type = BUS_EVENT_TYPE_INPUT_REPORT;
+    event->input_report.device = device;
+    event->input_report.length = length;
+    memcpy(event->input_report.buffer, report, length);
+    list_add_tail(queue, &event->entry);
+
+    return TRUE;
+}
+
 BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
 {
     struct list *entry = list_head(queue);
     struct bus_event *tmp;
+    ULONG size;
 
     if (!entry) return FALSE;
 
     tmp = LIST_ENTRY(entry, struct bus_event, entry);
     list_remove(entry);
 
-    memcpy(event, tmp, sizeof(*event));
+    if (event->type != BUS_EVENT_TYPE_INPUT_REPORT) size = sizeof(*event);
+    else size = offsetof(struct bus_event, input_report.buffer[event->input_report.length]);
+
+    memcpy(event, tmp, size);
     HeapFree(GetProcessHeap(), 0, tmp);
 
     return TRUE;

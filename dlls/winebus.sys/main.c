@@ -393,6 +393,25 @@ DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev)
     return ret;
 }
 
+static DEVICE_OBJECT *bus_find_unix_device(struct unix_device *unix_device)
+{
+    struct device_extension *ext;
+    DEVICE_OBJECT *ret = NULL;
+
+    EnterCriticalSection(&device_list_cs);
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
+    {
+        if (ext->unix_device == unix_device)
+        {
+            ret = ext->device;
+            break;
+        }
+    }
+    LeaveCriticalSection(&device_list_cs);
+
+    return ret;
+}
+
 static void bus_unlink_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
@@ -635,6 +654,13 @@ static DWORD CALLBACK bus_main_thread(void *args)
                 winebus_call(device_remove, event->device_created.device);
             }
             break;
+        case BUS_EVENT_TYPE_INPUT_REPORT:
+            EnterCriticalSection(&device_list_cs);
+            device = bus_find_unix_device(event->input_report.device);
+            if (!device) WARN("could not find device for %s bus device %p\n", debugstr_w(bus.name), event->input_report.device);
+            else process_hid_report(device, event->input_report.buffer, event->input_report.length);
+            LeaveCriticalSection(&device_list_cs);
+            break;
         }
     }
 
@@ -646,7 +672,7 @@ static DWORD CALLBACK bus_main_thread(void *args)
 
 static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
 {
-    DWORD i = bus_count++;
+    DWORD i = bus_count++, max_size;
 
     if (!(bus->init_done = CreateEventW(NULL, FALSE, FALSE, NULL)))
     {
@@ -655,7 +681,8 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
         return STATUS_UNSUCCESSFUL;
     }
 
-    if (!(bus->bus_event = HeapAlloc(GetProcessHeap(), 0, sizeof(struct bus_event))))
+    max_size = offsetof(struct bus_event, input_report.buffer[0x10000]);
+    if (!(bus->bus_event = HeapAlloc(GetProcessHeap(), 0, max_size)))
     {
         ERR("failed to allocate %s bus event.\n", debugstr_w(bus->name));
         CloseHandle(bus->init_done);
