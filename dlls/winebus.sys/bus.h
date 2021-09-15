@@ -27,8 +27,6 @@
 
 #include "unixlib.h"
 
-struct unix_device *get_unix_device(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
-
 /* General Bus Functions */
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 
