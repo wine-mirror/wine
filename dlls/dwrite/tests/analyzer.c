@@ -1083,7 +1083,8 @@ struct linebreaks_test {
     DWRITE_LINE_BREAKPOINT bp[BREAKPOINT_COUNT];
 };
 
-static struct linebreaks_test linebreaks_tests[] = {
+static const struct linebreaks_test linebreaks_tests[] =
+{
     { {'A','-','B',' ','C',0x58a,'D',0x2010,'E',0x2012,'F',0x2013,'\t',0xc,0xb,0x2028,0x2029,0x200b,0},
       {
           { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
@@ -1122,6 +1123,14 @@ static struct linebreaks_test linebreaks_tests[] = {
           { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
           { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
           { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
+      }
+    },
+    /* LB30 changes in Unicode 13 regarding East Asian parentheses */
+    { {0x5f35,'G',0x300c,0},
+      {
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK     },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK     },
       }
     },
     { { 0 } }
