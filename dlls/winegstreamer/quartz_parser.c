@@ -785,6 +785,11 @@ static DWORD CALLBACK stream_thread(void *arg)
 static DWORD CALLBACK read_thread(void *arg)
 {
     struct parser *filter = arg;
+    LONGLONG file_size, unused;
+    uint32_t buffer_size = 0;
+    void *data = NULL;
+
+    IAsyncReader_Length(filter->reader, &file_size, &unused);
 
     TRACE("Starting read thread for filter %p.\n", filter);
 
@@ -793,14 +798,29 @@ static DWORD CALLBACK read_thread(void *arg)
         uint64_t offset;
         uint32_t size;
         HRESULT hr;
-        void *data;
 
-        if (!unix_funcs->wg_parser_get_read_request(filter->wg_parser, &data, &offset, &size))
+        if (!unix_funcs->wg_parser_get_next_read_offset(filter->wg_parser, &offset, &size))
             continue;
+
+        if (offset >= file_size)
+            size = 0;
+        else if (offset + size >= file_size)
+            size = file_size - offset;
+
+        if (size > buffer_size)
+        {
+            buffer_size = size;
+            data = realloc(data, size);
+        }
+
         hr = IAsyncReader_SyncRead(filter->reader, offset, size, data);
-        unix_funcs->wg_parser_complete_read_request(filter->wg_parser, SUCCEEDED(hr));
+        if (FAILED(hr))
+            ERR("Failed to read %u bytes at offset %I64u, hr %#x.\n", size, offset, hr);
+
+        unix_funcs->wg_parser_push_data(filter->wg_parser, SUCCEEDED(hr) ? data : NULL, size);
     }
 
+    free(data);
     TRACE("Streaming stopped; exiting.\n");
     return 0;
 }

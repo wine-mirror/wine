@@ -530,6 +530,11 @@ static DWORD CALLBACK read_thread(void *arg)
 {
     struct media_source *source = arg;
     IMFByteStream *byte_stream = source->byte_stream;
+    uint32_t buffer_size = 0;
+    uint64_t file_size;
+    void *data = NULL;
+
+    IMFByteStream_GetLength(byte_stream, &file_size);
 
     TRACE("Starting read thread for media source %p.\n", source);
 
@@ -539,18 +544,33 @@ static DWORD CALLBACK read_thread(void *arg)
         ULONG ret_size;
         uint32_t size;
         HRESULT hr;
-        void *data;
 
-        if (!unix_funcs->wg_parser_get_read_request(source->wg_parser, &data, &offset, &size))
+        if (!unix_funcs->wg_parser_get_next_read_offset(source->wg_parser, &offset, &size))
             continue;
+
+        if (offset >= file_size)
+            size = 0;
+        else if (offset + size >= file_size)
+            size = file_size - offset;
+
+        if (size > buffer_size)
+        {
+            buffer_size = size;
+            data = realloc(data, size);
+        }
+
+        ret_size = 0;
 
         if (SUCCEEDED(hr = IMFByteStream_SetCurrentPosition(byte_stream, offset)))
             hr = IMFByteStream_Read(byte_stream, data, size, &ret_size);
-        if (SUCCEEDED(hr) && ret_size != size)
+        if (FAILED(hr))
+            ERR("Failed to read %u bytes at offset %I64u, hr %#x.\n", size, offset, hr);
+        else if (ret_size != size)
             ERR("Unexpected short read: requested %u bytes, got %u.\n", size, ret_size);
-        unix_funcs->wg_parser_complete_read_request(source->wg_parser, SUCCEEDED(hr));
+        unix_funcs->wg_parser_push_data(source->wg_parser, SUCCEEDED(hr) ? data : NULL, ret_size);
     }
 
+    free(data);
     TRACE("Media source is shutting down; exiting.\n");
     return 0;
 }
