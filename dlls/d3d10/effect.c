@@ -836,6 +836,7 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object, D
                 *flags = D3D10_EOT_FLAG_GS_SO;
                 return D3D10_SVT_GEOMETRYSHADER;
 
+            case  9: return D3D10_SVT_TEXTURE;
             case 10: return D3D10_SVT_TEXTURE1D;
             case 11: return D3D10_SVT_TEXTURE1DARRAY;
             case 12: return D3D10_SVT_TEXTURE2D;
@@ -1158,6 +1159,7 @@ static void set_variable_vtbl(struct d3d10_effect_variable *v)
                     *vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl;
                     break;
 
+                case D3D10_SVT_TEXTURE:
                 case D3D10_SVT_TEXTURE1D:
                 case D3D10_SVT_TEXTURE1DARRAY:
                 case D3D10_SVT_TEXTURE2D:
@@ -2119,6 +2121,7 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
 
     switch (v->type->basetype)
     {
+        case D3D10_SVT_TEXTURE:
         case D3D10_SVT_TEXTURE1D:
         case D3D10_SVT_TEXTURE1DARRAY:
         case D3D10_SVT_TEXTURE2D:
