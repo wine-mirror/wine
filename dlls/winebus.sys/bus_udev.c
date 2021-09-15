@@ -100,7 +100,6 @@ static CRITICAL_SECTION udev_cs = { &udev_cs_debug, -1, 0, 0, 0, 0 };
 static struct udev *udev_context = NULL;
 static struct udev_monitor *udev_monitor;
 static int deviceloop_control[2];
-static int udev_monitor_fd;
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
 
@@ -111,12 +110,10 @@ static struct udev_bus_options options;
 struct platform_private
 {
     struct unix_device unix_device;
+    void (*read_report)(struct unix_device *iface);
 
     struct udev_device *udev_device;
     int device_fd;
-
-    HANDLE report_thread;
-    int control_pipe[2];
 };
 
 static inline struct platform_private *impl_from_unix_device(struct unix_device *iface)
@@ -124,9 +121,60 @@ static inline struct platform_private *impl_from_unix_device(struct unix_device 
     return CONTAINING_RECORD(iface, struct platform_private, unix_device);
 }
 
-static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
+#define MAX_DEVICES 128
+static int close_fds[MAX_DEVICES];
+static struct pollfd poll_fds[MAX_DEVICES];
+static struct platform_private *poll_devs[MAX_DEVICES];
+static int close_count, poll_count;
+
+static void stop_polling_device(struct unix_device *iface)
 {
-    return impl_from_unix_device(get_unix_device(device));
+    struct platform_private *private = impl_from_unix_device(iface);
+    int i;
+
+    if (private->device_fd == -1) return; /* already removed */
+
+    for (i = 2; i < poll_count; ++i)
+        if (poll_fds[i].fd == private->device_fd) break;
+
+    if (i == poll_count)
+        ERR("could not find poll entry matching device %p fd\n", iface);
+    else
+    {
+        poll_count--;
+        poll_fds[i] = poll_fds[poll_count];
+        poll_devs[i] = poll_devs[poll_count];
+        close_fds[close_count++] = private->device_fd;
+        private->device_fd = -1;
+    }
+}
+
+static void start_polling_device(struct unix_device *iface)
+{
+    struct platform_private *private = impl_from_unix_device(iface);
+
+    if (poll_count >= ARRAY_SIZE(poll_fds))
+        ERR("could not start polling device %p, too many fds\n", iface);
+    else
+    {
+        poll_devs[poll_count] = private;
+        poll_fds[poll_count].fd = private->device_fd;
+        poll_fds[poll_count].events = POLLIN;
+        poll_fds[poll_count].revents = 0;
+        poll_count++;
+
+        write(deviceloop_control[1], "u", 1);
+    }
+}
+
+static struct platform_private *find_device_from_fd(int fd)
+{
+    int i;
+
+    for (i = 2; i < poll_count; ++i) if (poll_fds[i].fd == fd) break;
+    if (i < poll_count) return  poll_devs[i];
+
+    return NULL;
 }
 
 static const char *get_device_syspath(struct udev_device *dev)
@@ -558,7 +606,6 @@ static void hidraw_device_destroy(struct unix_device *iface)
 {
     struct platform_private *private = impl_from_unix_device(iface);
 
-    close(private->device_fd);
     udev_device_unref(private->udev_device);
 }
 
@@ -569,27 +616,11 @@ static int udev_device_compare(struct unix_device *iface, void *platform_dev)
     return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
 }
 
-static DWORD CALLBACK device_report_thread(void *args);
-
 static NTSTATUS hidraw_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
-    struct platform_private *private = impl_from_unix_device(iface);
-
-    if (pipe(private->control_pipe) != 0)
-    {
-        ERR("Control pipe creation failed\n");
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    private->report_thread = CreateThread(NULL, 0, device_report_thread, device, 0, NULL);
-    if (!private->report_thread)
-    {
-        ERR("Unable to create device report thread\n");
-        close(private->control_pipe[0]);
-        close(private->control_pipe[1]);
-        return STATUS_UNSUCCESSFUL;
-    }
-
+    EnterCriticalSection(&udev_cs);
+    start_polling_device(iface);
+    LeaveCriticalSection(&udev_cs);
     return STATUS_SUCCESS;
 }
 
@@ -598,17 +629,9 @@ static void hidraw_device_stop(struct unix_device *iface)
     struct platform_private *private = impl_from_unix_device(iface);
 
     EnterCriticalSection(&udev_cs);
+    stop_polling_device(iface);
     list_remove(&private->unix_device.entry);
     LeaveCriticalSection(&udev_cs);
-
-    if (private->report_thread)
-    {
-        write(private->control_pipe[1], "q", 1);
-        WaitForSingleObject(private->report_thread, INFINITE);
-        close(private->control_pipe[0]);
-        close(private->control_pipe[1]);
-        CloseHandle(private->report_thread);
-    }
 }
 
 static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -644,41 +667,18 @@ static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, B
 #endif
 }
 
-static DWORD CALLBACK device_report_thread(void *args)
+static void hidraw_device_read_report(struct unix_device *iface)
 {
-    DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
-    struct unix_device *iface = &private->unix_device;
-    struct pollfd plfds[2];
+    struct platform_private* private = impl_from_unix_device(iface);
+    BYTE report_buffer[1024];
 
-    plfds[0].fd = private->device_fd;
-    plfds[0].events = POLLIN;
-    plfds[0].revents = 0;
-    plfds[1].fd = private->control_pipe[0];
-    plfds[1].events = POLLIN;
-    plfds[1].revents = 0;
-
-    while (1)
-    {
-        int size;
-        BYTE report_buffer[1024];
-
-        if (poll(plfds, 2, -1) <= 0) continue;
-        if (plfds[1].revents)
-            break;
-        size = read(plfds[0].fd, report_buffer, sizeof(report_buffer));
-        if (size == -1)
-            TRACE_(hid_report)("Read failed. Likely an unplugged device %d %s\n", errno, strerror(errno));
-        else if (size == 0)
-            TRACE_(hid_report)("Failed to read report\n");
-        else
-        {
-            EnterCriticalSection(&udev_cs);
-            bus_event_queue_input_report(&event_queue, iface, report_buffer, size);
-            LeaveCriticalSection(&udev_cs);
-        }
-    }
-    return 0;
+    int size = read(private->device_fd, report_buffer, sizeof(report_buffer));
+    if (size == -1)
+        TRACE_(hid_report)("Read failed. Likely an unplugged device %d %s\n", errno, strerror(errno));
+    else if (size == 0)
+        TRACE_(hid_report)("Failed to read report\n");
+    else
+        bus_event_queue_input_report(&event_queue, iface, report_buffer, size);
 }
 
 static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -802,11 +802,6 @@ static inline struct wine_input_private *input_impl_from_unix_device(struct unix
     return CONTAINING_RECORD(impl_from_unix_device(iface), struct wine_input_private, base);
 }
 
-static inline struct wine_input_private *input_impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
-{
-    return CONTAINING_RECORD(impl_from_DEVICE_OBJECT(device), struct wine_input_private, base);
-}
-
 static void lnxev_device_destroy(struct unix_device *iface)
 {
     struct wine_input_private *ext = input_impl_from_unix_device(iface);
@@ -815,11 +810,8 @@ static void lnxev_device_destroy(struct unix_device *iface)
     HeapFree(GetProcessHeap(), 0, ext->last_report_buffer);
     hid_descriptor_free(&ext->desc);
 
-    close(ext->base.device_fd);
     udev_device_unref(ext->base.udev_device);
 }
-
-static DWORD CALLBACK lnxev_device_report_thread(void *args);
 
 static NTSTATUS lnxev_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
 {
@@ -829,21 +821,9 @@ static NTSTATUS lnxev_device_start(struct unix_device *iface, DEVICE_OBJECT *dev
     if ((status = build_report_descriptor(ext, ext->base.udev_device)))
         return status;
 
-    if (pipe(ext->base.control_pipe) != 0)
-    {
-        ERR("Control pipe creation failed\n");
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    ext->base.report_thread = CreateThread(NULL, 0, lnxev_device_report_thread, device, 0, NULL);
-    if (!ext->base.report_thread)
-    {
-        ERR("Unable to create device report thread\n");
-        close(ext->base.control_pipe[0]);
-        close(ext->base.control_pipe[1]);
-        return STATUS_UNSUCCESSFUL;
-    }
-
+    EnterCriticalSection(&udev_cs);
+    start_polling_device(iface);
+    LeaveCriticalSection(&udev_cs);
     return STATUS_SUCCESS;
 }
 
@@ -852,17 +832,9 @@ static void lnxev_device_stop(struct unix_device *iface)
     struct wine_input_private *ext = input_impl_from_unix_device(iface);
 
     EnterCriticalSection(&udev_cs);
+    stop_polling_device(iface);
     list_remove(&ext->base.unix_device.entry);
     LeaveCriticalSection(&udev_cs);
-
-    if (ext->base.report_thread)
-    {
-        write(ext->base.control_pipe[1], "q", 1);
-        WaitForSingleObject(ext->base.report_thread, INFINITE);
-        close(ext->base.control_pipe[0]);
-        close(ext->base.control_pipe[1]);
-        CloseHandle(ext->base.report_thread);
-    }
 }
 
 static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -877,41 +849,22 @@ static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BY
     return STATUS_SUCCESS;
 }
 
-static DWORD CALLBACK lnxev_device_report_thread(void *args)
+static void lnxev_device_read_report(struct unix_device *iface)
 {
-    DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-    struct wine_input_private *private = input_impl_from_DEVICE_OBJECT(device);
-    struct unix_device *iface = &private->base.unix_device;
-    struct pollfd plfds[2];
+    struct wine_input_private *private = input_impl_from_unix_device(iface);
+    struct input_event ie;
+    int size;
 
-    plfds[0].fd = private->base.device_fd;
-    plfds[0].events = POLLIN;
-    plfds[0].revents = 0;
-    plfds[1].fd = private->base.control_pipe[0];
-    plfds[1].events = POLLIN;
-    plfds[1].revents = 0;
+    if (!private->current_report_buffer || private->buffer_length == 0)
+        return;
 
-    while (1)
-    {
-        int size;
-        struct input_event ie;
-
-        if (poll(plfds, 2, -1) <= 0) continue;
-        if (plfds[1].revents || !private->current_report_buffer || private->buffer_length == 0)
-            break;
-        size = read(plfds[0].fd, &ie, sizeof(ie));
-        if (size == -1)
-            TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
-        else if (size == 0)
-            TRACE_(hid_report)("Failed to read report\n");
-        else if (set_report_from_event(private, &ie))
-        {
-            EnterCriticalSection(&udev_cs);
-            bus_event_queue_input_report(&event_queue, iface, private->current_report_buffer, private->buffer_length);
-            LeaveCriticalSection(&udev_cs);
-        }
-    }
-    return 0;
+    size = read(private->base.device_fd, &ie, sizeof(ie));
+    if (size == -1)
+        TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
+    else if (size == 0)
+        TRACE_(hid_report)("Failed to read report\n");
+    else if (set_report_from_event(private, &ie))
+        bus_event_queue_input_report(&event_queue, iface, private->current_report_buffer, private->buffer_length);
 }
 
 static void lnxev_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -1020,10 +973,7 @@ static void udev_add_device(struct udev_device *dev)
     TRACE("udev %s syspath %s\n", debugstr_a(devnode), udev_device_get_syspath(dev));
 
 #ifdef HAS_PROPER_INPUT_HEADER
-    EnterCriticalSection(&udev_cs);
-    private = find_device_from_syspath(get_device_syspath(dev));
-    LeaveCriticalSection(&udev_cs);
-    if (private)
+    if ((private = find_device_from_syspath(get_device_syspath(dev))))
     {
         TRACE("duplicate device found, not adding the new one\n");
         close(fd);
@@ -1091,9 +1041,8 @@ static void udev_add_device(struct udev_device *dev)
     if (strcmp(subsystem, "hidraw") == 0)
     {
         if (!(private = unix_device_create(&hidraw_device_vtbl, sizeof(struct platform_private)))) return;
-        EnterCriticalSection(&udev_cs);
         list_add_tail(&device_list, &private->unix_device.entry);
-        LeaveCriticalSection(&udev_cs);
+        private->read_report = hidraw_device_read_report;
         private->udev_device = udev_device_ref(dev);
         private->device_fd = fd;
 
@@ -1103,9 +1052,8 @@ static void udev_add_device(struct udev_device *dev)
     else if (strcmp(subsystem, "input") == 0)
     {
         if (!(private = unix_device_create(&lnxev_device_vtbl, sizeof(struct wine_input_private)))) return;
-        EnterCriticalSection(&udev_cs);
         list_add_tail(&device_list, &private->unix_device.entry);
-        LeaveCriticalSection(&udev_cs);
+        private->read_report = lnxev_device_read_report;
         private->udev_device = udev_device_ref(dev);
         private->device_fd = fd;
 
@@ -1241,6 +1189,8 @@ static void process_monitor_event(struct udev_monitor *monitor)
 
 NTSTATUS udev_bus_init(void *args)
 {
+    int monitor_fd;
+
     TRACE("args %p\n", args);
 
     options = *(struct udev_bus_options *)args;
@@ -1257,11 +1207,19 @@ NTSTATUS udev_bus_init(void *args)
         goto error;
     }
 
-    if (!(udev_monitor = create_monitor(&udev_monitor_fd)))
+    if (!(udev_monitor = create_monitor(&monitor_fd)))
     {
         ERR("UDEV monitor creation failed\n");
         goto error;
     }
+
+    poll_fds[0].fd = monitor_fd;
+    poll_fds[0].events = POLLIN;
+    poll_fds[0].revents = 0;
+    poll_fds[1].fd = deviceloop_control[0];
+    poll_fds[1].events = POLLIN;
+    poll_fds[1].revents = 0;
+    poll_count = 2;
 
     build_initial_deviceset();
     return STATUS_SUCCESS;
@@ -1276,37 +1234,42 @@ error:
 
 NTSTATUS udev_bus_wait(void *args)
 {
+    struct platform_private *device;
     struct bus_event *result = args;
-    struct pollfd pfd[2];
-
-    pfd[0].fd = udev_monitor_fd;
-    pfd[0].events = POLLIN;
-    pfd[0].revents = 0;
-    pfd[1].fd = deviceloop_control[0];
-    pfd[1].events = POLLIN;
-    pfd[1].revents = 0;
+    struct pollfd pfd[MAX_DEVICES];
+    char ctrl = 0;
+    int i, count;
 
     /* cleanup previously returned event */
     bus_event_cleanup(result);
 
-    while (1)
+    while (ctrl != 'q')
     {
+        if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
+
         EnterCriticalSection(&udev_cs);
-        if (bus_event_queue_pop(&event_queue, result))
+        while (close_count--) close(close_fds[close_count]);
+        memcpy(pfd, poll_fds, poll_count * sizeof(*pfd));
+        count = poll_count;
+        close_count = 0;
+        LeaveCriticalSection(&udev_cs);
+
+        while (poll(pfd, count, -1) <= 0) {}
+
+        EnterCriticalSection(&udev_cs);
+        if (pfd[0].revents) process_monitor_event(udev_monitor);
+        if (pfd[1].revents) read(deviceloop_control[0], &ctrl, 1);
+        for (i = 2; i < count; ++i)
         {
-            LeaveCriticalSection(&udev_cs);
-            return STATUS_PENDING;
+            if (!pfd[i].revents) continue;
+            device = find_device_from_fd(pfd[i].fd);
+            if (device) device->read_report(&device->unix_device);
         }
         LeaveCriticalSection(&udev_cs);
-        if (poll(pfd, 2, -1) <= 0) continue;
-        if (pfd[1].revents) break;
-        process_monitor_event(udev_monitor);
     }
 
     TRACE("UDEV main loop exiting\n");
-    EnterCriticalSection(&udev_cs);
     bus_event_queue_destroy(&event_queue);
-    LeaveCriticalSection(&udev_cs);
     udev_monitor_unref(udev_monitor);
     udev_unref(udev_context);
     udev_context = NULL;
