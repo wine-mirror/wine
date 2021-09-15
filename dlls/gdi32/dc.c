@@ -125,7 +125,7 @@ DC *alloc_dc_ptr( DWORD magic )
     if (!(dc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc) ))) return NULL;
     if (!(dc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc->attr))))
     {
-        HeapFree( GetProcessHeap(), 0, dc->attr );
+        HeapFree( GetProcessHeap(), 0, dc );
         return NULL;
     }
 
