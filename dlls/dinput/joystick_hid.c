@@ -1043,8 +1043,7 @@ static HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTAN
     if (version >= 0x0800 && type != DI8DEVCLASS_ALL && type != DI8DEVCLASS_GAMECTRL)
         return S_FALSE;
 
-    if (device_disabled_registry( "HID", TRUE ))
-        return DIERR_DEVICENOTREG;
+    if (device_instance_is_disabled( instance, FALSE )) return DIERR_DEVICENOTREG;
 
     TRACE( "found device %s, usage %04x:%04x, product %s, instance %s, name %s\n", debugstr_w(device_path),
            instance->wUsagePage, instance->wUsage, debugstr_guid( &instance->guidProduct ),

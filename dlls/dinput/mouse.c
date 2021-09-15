@@ -140,10 +140,13 @@ static HRESULT mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEIN
 
 static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseImpl **out )
 {
+    static const WCHAR mouse_wrap_override_w[] = {'M','o','u','s','e','W','a','r','p','O','v','e','r','r','i','d','e',0};
+    static const WCHAR disable_w[] = {'d','i','s','a','b','l','e',0};
+    static const WCHAR force_w[] = {'f','o','r','c','e',0};
     SysMouseImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     unsigned i;
-    char buffer[20];
+    WCHAR buffer[20];
     HKEY hkey, appkey;
     HRESULT hr;
 
@@ -155,11 +158,11 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     get_app_key(&hkey, &appkey);
-    if (!get_config_key(hkey, appkey, "MouseWarpOverride", buffer, sizeof(buffer)))
+    if (!get_config_key(hkey, appkey, mouse_wrap_override_w, buffer, sizeof(buffer)))
     {
-        if (!_strnicmp(buffer, "disable", -1))
+        if (!strncmpiW(buffer, disable_w, -1))
             newDevice->warp_override = WARP_DISABLE;
-        else if (!_strnicmp(buffer, "force", -1))
+        else if (!strncmpiW(buffer, force_w, -1))
             newDevice->warp_override = WARP_FORCE_ON;
     }
     if (appkey) RegCloseKey(appkey);

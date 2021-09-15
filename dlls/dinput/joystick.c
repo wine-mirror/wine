@@ -273,10 +273,18 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
 
 BOOL device_disabled_registry(const char* name, BOOL disable)
 {
-    static const char disabled_str[] = "disabled";
-    static const char enabled_str[] = "enabled";
-    static const char joystick_key[] = "Joysticks";
-    char buffer[MAX_PATH];
+    DIDEVICEINSTANCEW instance;
+
+    MultiByteToWideChar( CP_ACP, 0, name, -1, instance.tszInstanceName, MAX_PATH );
+    return device_instance_is_disabled( &instance, disable );
+}
+
+BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL disable )
+{
+    static const WCHAR disabled_str[] = {'d', 'i', 's', 'a', 'b', 'l', 'e', 'd', 0};
+    static const WCHAR enabled_str[] = {'e', 'n', 'a', 'b', 'l', 'e', 'd', 0};
+    static const WCHAR joystick_key[] = {'J', 'o', 'y', 's', 't', 'i', 'c', 'k', 's', 0};
+    WCHAR buffer[MAX_PATH];
     HKEY hkey, appkey, temp;
 
     get_app_key(&hkey, &appkey);
@@ -284,28 +292,29 @@ BOOL device_disabled_registry(const char* name, BOOL disable)
     /* Joystick settings are in the 'joysticks' subkey */
     if (appkey)
     {
-        if (RegOpenKeyA(appkey, joystick_key, &temp)) temp = 0;
+        if (RegOpenKeyW( appkey, joystick_key, &temp )) temp = 0;
         RegCloseKey(appkey);
         appkey = temp;
     }
+
     if (hkey)
     {
-        if (RegOpenKeyA(hkey, joystick_key, &temp)) temp = 0;
+        if (RegOpenKeyW( hkey, joystick_key, &temp )) temp = 0;
         RegCloseKey(hkey);
         hkey = temp;
     }
 
     /* Look for the "controllername"="disabled" key */
-    if (!get_config_key(hkey, appkey, name, buffer, sizeof(buffer)))
+    if (!get_config_key( hkey, appkey, instance->tszInstanceName, buffer, sizeof(buffer) ))
     {
-        if (!disable && !strcmp(disabled_str, buffer))
+        if (!disable && !strcmpW( disabled_str, buffer ))
         {
-            TRACE("Disabling joystick '%s' based on registry key.\n", name);
+            TRACE( "Disabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
             disable = TRUE;
         }
-        else if (disable && !strcmp(enabled_str, buffer))
+        else if (disable && !strcmpW( enabled_str, buffer ))
         {
-            TRACE("Enabling joystick '%s' based on registry key.\n", name);
+            TRACE( "Enabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
             disable = FALSE;
         }
     }
@@ -854,6 +863,15 @@ DWORD joystick_map_pov(const POINTL *p)
         return p->y < 0 ?     0 : !p->y ?    -1 : 18000;
 }
 
+static DWORD get_config_key_a( HKEY defkey, HKEY appkey, const char *name, char *buffer, DWORD size )
+{
+    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE)buffer, &size )) return 0;
+
+    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE)buffer, &size )) return 0;
+
+    return ERROR_FILE_NOT_FOUND;
+}
+
 /*
  * Setup the dinput options.
  */
@@ -870,7 +888,7 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_
 
     /* get options */
 
-    if (!get_config_key(hkey, appkey, "DefaultDeadZone", buffer, sizeof(buffer)))
+    if (!get_config_key_a( hkey, appkey, "DefaultDeadZone", buffer, sizeof(buffer) ))
     {
         This->deadzone = atoi(buffer);
         TRACE("setting default deadzone to: \"%s\" %d\n", buffer, This->deadzone);
@@ -879,7 +897,7 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_
     This->axis_map = HeapAlloc(GetProcessHeap(), 0, This->device_axis_count * sizeof(int));
     if (!This->axis_map) return DIERR_OUTOFMEMORY;
 
-    if (!get_config_key(hkey, appkey, This->name, buffer, sizeof(buffer)))
+    if (!get_config_key_a( hkey, appkey, This->name, buffer, sizeof(buffer) ))
     {
         static const char *axis_names[] = {"X", "Y", "Z", "Rx", "Ry", "Rz",
                                            "Slider1", "Slider2",

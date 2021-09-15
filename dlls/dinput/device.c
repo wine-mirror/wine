@@ -305,14 +305,11 @@ BOOL get_app_key(HKEY *defkey, HKEY *appkey)
 /******************************************************************************
  * Get a config key from either the app-specific or the default config
  */
-DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
-                             char *buffer, DWORD size )
+DWORD get_config_key( HKEY defkey, HKEY appkey, const WCHAR *name, WCHAR *buffer, DWORD size )
 {
-    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE)buffer, &size ))
-        return 0;
+    if (appkey && !RegQueryValueExW( appkey, name, 0, NULL, (LPBYTE)buffer, &size )) return 0;
 
-    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE)buffer, &size ))
-        return 0;
+    if (defkey && !RegQueryValueExW( defkey, name, 0, NULL, (LPBYTE)buffer, &size )) return 0;
 
     return ERROR_FILE_NOT_FOUND;
 }
