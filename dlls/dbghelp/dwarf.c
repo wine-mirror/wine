@@ -1044,8 +1044,21 @@ static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
         return ctx->module_ctx->symt_cache[sc_void];
     if (!(type = sparse_array_find(&ctx->debug_info_table, attr.u.uvalue)))
     {
-        FIXME("Unable to find back reference to type %lx\n", attr.u.uvalue);
-        return ctx->module_ctx->symt_cache[sc_unknown];
+        if (attr.form == DW_FORM_ref_addr)
+        {
+            dwarf2_parse_context_t* ref_ctx = dwarf2_locate_cu(ctx->module_ctx, attr.u.uvalue);
+            /* ensure CU is fully loaded */
+            if (ref_ctx && dwarf2_parse_compilation_unit(ref_ctx))
+            {
+                type = sparse_array_find(&ref_ctx->debug_info_table, attr.u.uvalue);
+                if (type) TRACE("Found type ref %lx in another CU %s\n", attr.u.uvalue, dwarf2_debug_ctx(ref_ctx));
+            }
+        }
+        if (!type)
+        {
+            FIXME("Unable to find back reference to type 0x%lx (form=0x%lx)\n", attr.u.uvalue, attr.form);
+            return ctx->module_ctx->symt_cache[sc_unknown];
+        }
     }
     if (type == di)
     {
@@ -2454,7 +2467,7 @@ unsigned dwarf2_cache_cuhead(struct dwarf2_module_info_s* module, struct symt_co
     return TRUE;
 }
 
-static inline dwarf2_parse_context_t* dwarf2_locate_cu(dwarf2_parse_module_context_t* module_ctx, ULONG_PTR ref)
+static dwarf2_parse_context_t* dwarf2_locate_cu(dwarf2_parse_module_context_t* module_ctx, ULONG_PTR ref)
 {
     unsigned i;
     dwarf2_parse_context_t* ctx;
