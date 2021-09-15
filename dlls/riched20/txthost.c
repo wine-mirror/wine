@@ -1639,7 +1639,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     case DLL_PROCESS_ATTACH:
         dll_instance = instance;
         DisableThreadLibraryCalls( instance );
-        me_heap = HeapCreate( 0, 0x10000, 0 );
         if (!register_classes( instance )) return FALSE;
         LookupInit();
         break;
@@ -1653,7 +1652,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
         if (listbox_registered) UnregisterClassW( L"REListBox20W", 0 );
         if (combobox_registered) UnregisterClassW( L"REComboBox20W", 0 );
         LookupCleanup();
-        HeapDestroy( me_heap );
         release_typelib();
         break;
     }

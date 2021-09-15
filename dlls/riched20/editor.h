@@ -23,7 +23,6 @@
 struct _RTF_Info;
 
 extern HINSTANCE dll_instance DECLSPEC_HIDDEN;
-extern HANDLE me_heap DECLSPEC_HIDDEN;
 
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)

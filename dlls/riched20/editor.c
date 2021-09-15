@@ -246,7 +246,6 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, ME_Cursor *start, int 
 
 HINSTANCE dll_instance = NULL;
 BOOL me_debug = FALSE;
-HANDLE me_heap = NULL;
 
 static ME_TextBuffer *ME_MakeText(void) {
   ME_TextBuffer *buf = heap_alloc(sizeof(*buf));
