@@ -365,7 +365,7 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
 
     if (!providerTable)
     {
-        if (!(providerTable = malloc(sizeof(*ret))))
+        if (!(providerTable = malloc(sizeof(*providerTable))))
         {
             LeaveCriticalSection(&cs);
             return NULL;
