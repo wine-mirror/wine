@@ -137,10 +137,21 @@ static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
         case 'S' | ('T' << 8) | ('A' << 16) | ('B' << 24):
             return "Stabs";
         case 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24):
+            /* previous versions of dbghelp used to report this... */
             return "Dwarf";
         default:
+            if ((mi->CVSig & 0x00FFFFFF) == ('D' | ('W' << 8) | ('F' << 16)))
+            {
+                static char tmp[64];
+                DWORD versbit = mi->CVSig >> 24;
+                strcpy(tmp, "Dwarf");
+                if (versbit & 1) strcat(tmp, "-2");
+                if (versbit & 2) strcat(tmp, "-3");
+                if (versbit & 4) strcat(tmp, "-4");
+                if (versbit & 8) strcat(tmp, "-5");
+                return tmp;
+            }
             return "DIA";
-
         }
     }
 }

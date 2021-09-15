@@ -182,6 +182,7 @@ typedef struct dwarf2_parse_module_context_s
     const struct elf_thunk_area*thunks;
     struct symt*                symt_cache[sc_num]; /* void, unknown */
     struct vector               unit_contexts;
+    DWORD                       cu_versions;
 } dwarf2_parse_module_context_t;
 
 enum unit_status
@@ -2517,6 +2518,8 @@ static BOOL dwarf2_parse_compilation_unit_head(dwarf2_parse_context_t* ctx,
     TRACE("- word_size:     %u\n",  ctx->head.word_size);
     TRACE("- offset_size:   %u\n",  ctx->head.offset_size);
 
+    if (ctx->head.version >= 2)
+        ctx->module_ctx->cu_versions |= 1 << (ctx->head.version - 2);
     if (max_supported_dwarf_version == 0)
     {
         char* env = getenv("DBGHELP_DWARF_VERSION");
@@ -3732,6 +3735,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     module_ctx.symt_cache[sc_void] = &symt_new_basic(module_ctx.module, btVoid, "void", 0)->symt;
     module_ctx.symt_cache[sc_unknown] = &symt_new_basic(module_ctx.module, btNoType, "# unknown", 0)->symt;
     vector_init(&module_ctx.unit_contexts, sizeof(dwarf2_parse_context_t), 16);
+    module_ctx.cu_versions = 0;
 
     /* phase I: parse all CU heads */
     mod_ctx.data = section[section_debug].address;
@@ -3749,7 +3753,11 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
         dwarf2_parse_compilation_unit((dwarf2_parse_context_t*)vector_at(&module_ctx.unit_contexts, i));
 
     dwarf2_modfmt->module->module.SymType = SymDia;
-    dwarf2_modfmt->module->module.CVSig = 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24);
+    /* hide dwarf versions in CVSig
+     * bits 24-31 will be set according to found dwarf version
+     * different CU can have different dwarf version, so use a bit per version (version 2 => b24)
+     */
+    dwarf2_modfmt->module->module.CVSig = 'D' | ('W' << 8) | ('F' << 16) | ((module_ctx.cu_versions & 0xFF) << 24);
     /* FIXME: we could have a finer grain here */
     dwarf2_modfmt->module->module.GlobalSymbols = TRUE;
     dwarf2_modfmt->module->module.TypeInfo = TRUE;
