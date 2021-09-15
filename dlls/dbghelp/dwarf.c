@@ -179,6 +179,7 @@ typedef struct dwarf2_parse_module_context_s
     const dwarf2_section_t*     sections;
     struct module*              module;
     const struct elf_thunk_area*thunks;
+    struct symt*                symt_cache[sc_num]; /* void, unknown */
 } dwarf2_parse_module_context_t;
 
 /* this is the context used for parsing a compilation unit
@@ -193,7 +194,6 @@ typedef struct dwarf2_parse_context_s
     struct sparse_array         abbrev_table;
     struct sparse_array         debug_info_table;
     ULONG_PTR                   ref_offset;
-    struct symt*                symt_cache[sc_num]; /* void, unknown */
     char*                       cpp_name;
     dwarf2_cuhead_t             head;
 } dwarf2_parse_context_t;
@@ -1027,16 +1027,16 @@ static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
 
     if (!dwarf2_find_attribute(ctx, di, DW_AT_type, &attr))
         /* this is only valid if current language of CU is C or C++ */
-        return ctx->symt_cache[sc_void];
+        return ctx->module_ctx->symt_cache[sc_void];
     if (!(type = sparse_array_find(&ctx->debug_info_table, attr.u.uvalue)))
     {
         FIXME("Unable to find back reference to type %lx\n", attr.u.uvalue);
-        return ctx->symt_cache[sc_unknown];
+        return ctx->module_ctx->symt_cache[sc_unknown];
     }
     if (type == di)
     {
         FIXME("Reference to itself\n");
-        return ctx->symt_cache[sc_unknown];
+        return ctx->module_ctx->symt_cache[sc_unknown];
     }
     if (!type->symt)
     {
@@ -1045,7 +1045,7 @@ static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
         if (!type->symt)
         {
             FIXME("Unable to load forward reference for tag %lx\n", type->abbrev->tag);
-            return ctx->symt_cache[sc_unknown];
+            return ctx->module_ctx->symt_cache[sc_unknown];
         }
     }
     return type->symt;
@@ -1339,6 +1339,7 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
     else for (i = 0; i < vector_length(children); i++)
     {
         child = *(dwarf2_debug_info_t**)vector_at(children, i);
+        if (child->symt == ctx->module_ctx->symt_cache[sc_unknown]) continue;
         switch (child->abbrev->tag)
         {
         case DW_TAG_subrange_type:
@@ -2121,7 +2122,7 @@ static void dwarf2_parse_namespace(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    di->symt = ctx->symt_cache[sc_void];
+    di->symt = ctx->module_ctx->symt_cache[sc_void];
 
     children = dwarf2_get_di_children(ctx, di);
     if (children) for (i = 0; i < vector_length(children); i++)
@@ -2491,9 +2492,6 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_module_context_t* module_
     pool_init(&ctx.pool, 65536);
     ctx.section = section_debug;
     ctx.ref_offset = comp_unit_start - module_ctx->sections[section_debug].address;
-    memset(ctx.symt_cache, 0, sizeof(ctx.symt_cache));
-    ctx.symt_cache[sc_void] = &symt_new_basic(module_ctx->module, btVoid, "void", 0)->symt;
-    ctx.symt_cache[sc_unknown] = &symt_new_basic(module_ctx->module, btNoType, "# unknown", 0)->symt;
     ctx.cpp_name = NULL;
     ctx.module_ctx = module_ctx;
 
@@ -3666,6 +3664,9 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     module_ctx.module = dwarf2_modfmt->module;
     module_ctx.thunks = thunks;
     module_ctx.load_offset = load_offset;
+    memset(module_ctx.symt_cache, 0, sizeof(module_ctx.symt_cache));
+    module_ctx.symt_cache[sc_void] = &symt_new_basic(module_ctx.module, btVoid, "void", 0)->symt;
+    module_ctx.symt_cache[sc_unknown] = &symt_new_basic(module_ctx.module, btNoType, "# unknown", 0)->symt;
 
     while (mod_ctx.data < mod_ctx.end_data)
     {
