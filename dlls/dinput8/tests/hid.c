@@ -3389,6 +3389,43 @@ static void test_simple_joystick(void)
     hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
     ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
 
+    hr = IDirectInputDevice8_GetDeviceInfo( device, NULL );
+    ok( hr == E_POINTER, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW) + 1;
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+
+    devinst.dwSize = sizeof(DIDEVICEINSTANCE_DX3W);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+    todo_wine
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine
+    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszProductName );
+
+    memset( &devinst, 0, sizeof(devinst) );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+    check_member( devinst, expect_devinst, "%d", dwSize );
+    todo_wine
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine
+    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszProductName );
+    check_member_guid( devinst, expect_devinst, guidFFDriver );
+    check_member( devinst, expect_devinst, "%04x", wUsagePage );
+    check_member( devinst, expect_devinst, "%04x", wUsage );
+
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
 
