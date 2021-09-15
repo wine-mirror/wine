@@ -13405,9 +13405,10 @@ static const struct message WmRestore_3[] = {
     { HCBT_ACTIVATE, hook|optional }, /* win2003 doesn't send it */
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2003 doesn't send it */
+    { WM_WINDOWPOSCHANGED, sent|optional }, /* Win8+ sometimes sends this. */
     { HCBT_SETFOCUS, hook|optional }, /* win2003 doesn't send it */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGED, sent|optional },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
     { HCBT_SETFOCUS, hook|optional }, /* win2003 sends it */
