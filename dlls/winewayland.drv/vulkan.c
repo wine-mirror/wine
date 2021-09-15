@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 #ifdef SONAME_LIBVULKAN
 
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
+static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 
 static void *vulkan_handle;
@@ -116,6 +117,17 @@ static VkResult wayland_vkCreateInstance(const VkInstanceCreateInfo *create_info
     return res;
 }
 
+static void wayland_vkDestroyInstance(VkInstance instance,
+                                      const VkAllocationCallbacks *allocator)
+{
+    TRACE("%p %p\n", instance, allocator);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    pvkDestroyInstance(instance, NULL /* allocator */);
+}
+
 static VkResult wayland_vkEnumerateInstanceExtensionProperties(const char *layer_name,
                                                                uint32_t *count,
                                                                VkExtensionProperties* properties)
@@ -168,6 +180,7 @@ static void wine_vk_init(void)
 
 #define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
     LOAD_FUNCPTR(vkCreateInstance);
+    LOAD_FUNCPTR(vkDestroyInstance);
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
 #undef LOAD_FUNCPTR
 
@@ -181,6 +194,7 @@ fail:
 static const struct vulkan_funcs vulkan_funcs =
 {
     .p_vkCreateInstance = wayland_vkCreateInstance,
+    .p_vkDestroyInstance = wayland_vkDestroyInstance,
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
 };
 
