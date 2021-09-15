@@ -1020,7 +1020,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceA( SC_HANDLE service, DWORD argc, cons
     BOOL r;
 
     if (argc)
-        argvW = heap_alloc( argc * sizeof(WCHAR) );
+        argvW = heap_alloc( argc * sizeof(*argvW) );
 
     for (i = 0; i < argc; i++)
         argvW[i] = heap_strdupAtoW( argv[i] );
