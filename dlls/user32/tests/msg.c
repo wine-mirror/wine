@@ -1108,8 +1108,8 @@ static const struct message WmShowPopupExtremeLocationSeq[] = {
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { HCBT_SETFOCUS, hook },
     { WM_SETFOCUS, sent|defwinproc },
-    { WM_NCPAINT, sent|wparam, 1 },
-    { WM_ERASEBKGND, sent },
+    { WM_NCPAINT, sent|wparam|optional, 1 }, /* Not always sent on Win8+ */
+    { WM_ERASEBKGND, sent|optional }, /* Not always sent on Win8+ */
     { WM_WINDOWPOSCHANGED, sent },
     /* occasionally received on test machines */
     { WM_NCPAINT, sent|optional },
