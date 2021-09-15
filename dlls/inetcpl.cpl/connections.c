@@ -62,7 +62,7 @@ static DWORD create_connection_settings(BOOL manual_proxy, const WCHAR *proxy_se
     DWORD pac_url_len;
 
     size += sizeof(DWORD);
-    if(L"ProxyServer")
+    if(proxy_server)
     {
         proxy_server_len = WideCharToMultiByte(CP_UTF8, 0, proxy_server, -1,
                 NULL, 0, NULL, NULL);
