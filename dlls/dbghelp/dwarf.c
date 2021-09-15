@@ -1244,6 +1244,12 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
     if (dwarf2_find_attribute(ctx, di, DW_AT_sibling, &sibling) &&
         traverse->data != ctx->module_ctx->sections[ctx->section].address + sibling.u.uvalue)
     {
+        if (sibling.u.uvalue >= ctx->module_ctx->sections[ctx->section].size)
+        {
+            FIXME("cursor sibling after section end %s: 0x%lx 0x%x\n",
+                  dwarf2_debug_ctx(ctx), sibling.u.uvalue, ctx->module_ctx->sections[ctx->section].size);
+            return FALSE;
+        }
         WARN("setting cursor for %s to next sibling <0x%lx>\n",
              dwarf2_debug_traverse_ctx(traverse), sibling.u.uvalue);
         traverse->data = ctx->module_ctx->sections[ctx->section].address + sibling.u.uvalue;
