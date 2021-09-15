@@ -1736,7 +1736,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
         DWORD idx = id - DISPID_DYNPROP_0;
         dynamic_prop_t *prop;
 
-        if(!get_dynamic_data(This) || idx > This->dynamic_data->prop_cnt)
+        if(!get_dynamic_data(This) || idx >= This->dynamic_data->prop_cnt)
             return S_OK;
 
         prop = This->dynamic_data->props + idx;
