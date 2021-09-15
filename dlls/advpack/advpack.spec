@@ -11,7 +11,6 @@
 @ stdcall DelNodeRunDLL32A(ptr ptr str long)
 @ stdcall DelNodeRunDLL32W(ptr ptr wstr long)
 @ stdcall DelNodeW(wstr long)
-@ stdcall -private DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
 @ stdcall ExecuteCab(ptr ptr ptr) ExecuteCabA
 @ stdcall ExecuteCabA(ptr ptr ptr)
