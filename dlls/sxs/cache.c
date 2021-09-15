@@ -57,19 +57,17 @@ static inline struct cache *impl_from_IAssemblyCache(IAssemblyCache *iface)
 static HRESULT WINAPI cache_QueryInterface(
     IAssemblyCache *iface,
     REFIID riid,
-    void **obj )
+    void **ret_iface )
 {
-    struct cache *cache = impl_from_IAssemblyCache(iface);
+    TRACE("%p, %s, %p\n", iface, debugstr_guid(riid), ret_iface);
 
-    TRACE("%p, %s, %p\n", cache, debugstr_guid(riid), obj);
-
-    *obj = NULL;
+    *ret_iface = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IAssemblyCache))
     {
         IAssemblyCache_AddRef( iface );
-        *obj = cache;
+        *ret_iface = iface;
         return S_OK;
     }
 
