@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define DIRECTINPUT_VERSION 0x0800
+
 #include <stdarg.h>
 #include <stddef.h>
 
@@ -40,17 +42,28 @@
 
 #include "objbase.h"
 
+#define COBJMACROS
+#include "wingdi.h"
+#include "dinput.h"
+
 #include "initguid.h"
 #include "ddk/wdm.h"
 #include "ddk/hidclass.h"
 #include "ddk/hidsdi.h"
 #include "ddk/hidpi.h"
 #include "ddk/hidport.h"
+#include "devguid.h"
 
 #include "wine/test.h"
 #include "wine/mssign.h"
 
 #include "driver_hid.h"
+
+static HINSTANCE instance;
+
+#define EXPECT_VIDPID MAKELONG( 0x1209, 0x0001 )
+static const WCHAR expect_vidpid_str[] = L"VID_1209&PID_0001";
+static const GUID expect_guid_product = {EXPECT_VIDPID,0x0000,0x0000,{0x00,0x00,'P','I','D','V','I','D'}};
 
 static struct winetest_shared_data *test_data;
 static HANDLE okfile;
@@ -573,6 +586,18 @@ static BOOL pnp_driver_start( const WCHAR *resource )
                       (val).member, (exp).member)
 #define check_member( val, exp, fmt, member )                                                      \
     check_member_( __FILE__, __LINE__, val, exp, fmt, member )
+
+#define check_member_guid_( file, line, val, exp, member )                                              \
+    ok_( file, line )(IsEqualGUID( &(val).member, &(exp).member ), "got " #member " %s, expected %s\n", \
+                      debugstr_guid( &(val).member ), debugstr_guid( &(exp).member ))
+#define check_member_guid( val, exp, member )                                                      \
+    check_member_guid_( __FILE__, __LINE__, val, exp, member )
+
+#define check_member_wstr_( file, line, val, exp, member )                                         \
+    ok_( file, line )(!wcscmp( (val).member, (exp).member ), "got " #member " %s, expected %s\n",  \
+                      debugstr_w((val).member), debugstr_w((exp).member))
+#define check_member_wstr( val, exp, member )                                                      \
+    check_member_wstr_( __FILE__, __LINE__, val, exp, member )
 
 #define check_hidp_caps( a, b ) check_hidp_caps_( __LINE__, a, b )
 static inline void check_hidp_caps_( int line, HIDP_CAPS *caps, const HIDP_CAPS *exp )
@@ -3179,11 +3204,209 @@ done:
     SetCurrentDirectoryW( cwd );
 }
 
+static void cleanup_registry_keys(void)
+{
+    static const WCHAR joystick_oem_path[] = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
+                                              "PrivateProperties\\Joystick\\OEM";
+    static const WCHAR dinput_path[] = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
+                                       "PrivateProperties\\DirectInput";
+    HKEY root_key;
+
+    /* These keys are automatically created by DInput and they store the
+       list of supported force-feedback effects. OEM drivers are supposed
+       to provide a list in HKLM for the vendor-specific force-feedback
+       support.
+
+       We need to clean them up, or DInput will not refresh the list of
+       effects from the PID report changes.
+    */
+    RegCreateKeyExW( HKEY_CURRENT_USER, joystick_oem_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+
+    RegCreateKeyExW( HKEY_CURRENT_USER, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, joystick_oem_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
+    RegDeleteTreeW( root_key, expect_vidpid_str );
+    RegCloseKey( root_key );
+}
+
+static BOOL dinput_driver_start( const BYTE *desc_buf, ULONG desc_len, const HIDP_CAPS *caps )
+{
+    static const HID_DEVICE_ATTRIBUTES attributes =
+    {
+        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+        .VendorID = LOWORD( EXPECT_VIDPID ),
+        .ProductID = HIWORD( EXPECT_VIDPID ),
+        .VersionNumber = 0x0100,
+    };
+    DWORD report_id = 1;
+    DWORD polled = 0;
+    LSTATUS status;
+    HKEY hkey;
+
+    status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
+                              0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
+    ok( !status, "RegCreateKeyExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)desc_buf, desc_len );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)caps, sizeof(*caps) );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+    status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
+    ok( !status, "RegSetValueExW returned %#x\n", status );
+
+    return pnp_driver_start( L"driver_hid.dll" );
+}
+
+static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *context )
+{
+    if (IsEqualGUID( &devinst->guidProduct, &expect_guid_product ))
+        *(DIDEVICEINSTANCEW *)context = *devinst;
+    return DIENUM_CONTINUE;
+}
+
+static void test_simple_joystick(void)
+{
+#include "psh_hid_macros.h"
+    static const unsigned char report_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 1),
+
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0xe7),
+                LOGICAL_MAXIMUM(1, 0x38),
+                PHYSICAL_MINIMUM(1, 0xe7),
+                PHYSICAL_MAXIMUM(1, 0x38),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 4),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 2),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 4),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+#undef REPORT_ID_OR_USAGE_PAGE
+#include "pop_hid_macros.h"
+
+    static const HIDP_CAPS hid_caps =
+    {
+        .InputReportByteLength = 4,
+    };
+
+    const DIDEVICEINSTANCEW expect_devinst =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = expect_guid_product,
+        .guidProduct = expect_guid_product,
+        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .tszInstanceName = L"Wine test root driver",
+        .tszProductName = L"Wine test root driver",
+        .guidFFDriver = GUID_NULL,
+        .wUsagePage = HID_USAGE_PAGE_GENERIC,
+        .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+    };
+
+    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    DIDEVICEINSTANCEW devinst = {0};
+    IDirectInputDevice8W *device;
+    IDirectInput8W *di;
+    HRESULT hr;
+    ULONG ref;
+
+    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
+    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
+    SetCurrentDirectoryW( tempdir );
+
+    cleanup_registry_keys();
+    if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps )) goto done;
+
+    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
+    if (FAILED(hr))
+    {
+        win_skip( "DirectInput8Create returned %#x\n", hr );
+        goto done;
+    }
+
+    hr = IDirectInput8_EnumDevices( di, DI8DEVCLASS_ALL, find_test_device, &devinst, DIEDFL_ALLDEVICES );
+    ok( hr == DI_OK, "IDirectInput8_EnumDevices returned: %#x\n", hr );
+    if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
+    {
+        win_skip( "device not found, skipping tests\n" );
+        IDirectInput8_Release( di );
+        goto done;
+    }
+
+    check_member( devinst, expect_devinst, "%d", dwSize );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine
+    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszProductName );
+    check_member_guid( devinst, expect_devinst, guidFFDriver );
+    check_member( devinst, expect_devinst, "%04x", wUsagePage );
+    check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
+    ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
+
+    ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
+
+    ref = IDirectInput8_Release( di );
+    ok( ref == 0, "IDirectInput8_Release returned %d\n", ref );
+
+done:
+    pnp_driver_stop();
+    cleanup_registry_keys();
+    SetCurrentDirectoryW( cwd );
+}
+
 START_TEST( hid )
 {
     HANDLE mapping;
     BOOL is_wow64;
 
+    instance = GetModuleHandleW( NULL );
     pSignerSign = (void *)GetProcAddress( LoadLibraryW( L"mssign32" ), "SignerSign" );
 
     if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
@@ -3215,6 +3438,10 @@ START_TEST( hid )
     test_hid_driver( 1, FALSE );
     test_hid_driver( 0, TRUE );
     test_hid_driver( 1, TRUE );
+
+    CoInitialize( NULL );
+    test_simple_joystick();
+    CoUninitialize();
 
     UnmapViewOfFile( test_data );
     CloseHandle( mapping );
