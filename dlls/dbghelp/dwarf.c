@@ -188,6 +188,8 @@ enum unit_status
     UNIT_ERROR,
     UNIT_NOTLOADED,
     UNIT_LOADED,
+    UNIT_LOADED_FAIL,
+    UNIT_BEINGLOADED,
 };
 
 /* this is the context used for parsing a compilation unit
@@ -224,6 +226,8 @@ struct dwarf2_module_info_s
 
 /* forward declarations */
 static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_debug_info_t* entry);
+static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx);
+static dwarf2_parse_context_t* dwarf2_locate_cu(dwarf2_parse_module_context_t* module_ctx, ULONG_PTR ref);
 
 static unsigned char dwarf2_get_byte(const unsigned char* ptr)
 {
@@ -2450,6 +2454,22 @@ unsigned dwarf2_cache_cuhead(struct dwarf2_module_info_s* module, struct symt_co
     return TRUE;
 }
 
+static inline dwarf2_parse_context_t* dwarf2_locate_cu(dwarf2_parse_module_context_t* module_ctx, ULONG_PTR ref)
+{
+    unsigned i;
+    dwarf2_parse_context_t* ctx;
+    const BYTE* where;
+    for (i = 0; i < module_ctx->unit_contexts.num_elts; ++i)
+    {
+        ctx = vector_at(&module_ctx->unit_contexts, i);
+        where = module_ctx->sections[ctx->section].address + ref;
+        if (where >= ctx->traverse_DIE.data && where < ctx->traverse_DIE.end_data)
+            return ctx;
+    }
+    FIXME("Couldn't find ref 0x%lx inside sect\n", ref);
+    return NULL;
+}
+
 static BOOL dwarf2_parse_compilation_unit_head(dwarf2_parse_context_t* ctx,
                                                dwarf2_traverse_context_t* mod_ctx)
 {
@@ -2516,8 +2536,19 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
     dwarf2_traverse_context_t cu_ctx = ctx->traverse_DIE;
     BOOL ret = FALSE;
 
-    if (ctx->status == UNIT_ERROR) return FALSE;
+    switch (ctx->status)
+    {
+    case UNIT_ERROR: return FALSE;
+    case UNIT_BEINGLOADED:
+        FIXME("Circular deps on CU\n");
+        /* fall through */
+    case UNIT_LOADED:
+    case UNIT_LOADED_FAIL:
+        return TRUE;
+    case UNIT_NOTLOADED: break;
+    }
 
+    ctx->status = UNIT_BEINGLOADED;
     if (dwarf2_read_one_debug_info(ctx, &cu_ctx, NULL, &di))
     {
         if (di->abbrev->tag == DW_TAG_compile_unit)
@@ -2558,6 +2589,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
         }
         else FIXME("Should have a compilation unit here\n");
     }
+    if (ctx->status == UNIT_BEINGLOADED) ctx->status = UNIT_LOADED_FAIL;
     return ret;
 }
 
