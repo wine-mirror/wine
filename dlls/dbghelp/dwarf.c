@@ -180,7 +180,15 @@ typedef struct dwarf2_parse_module_context_s
     struct module*              module;
     const struct elf_thunk_area*thunks;
     struct symt*                symt_cache[sc_num]; /* void, unknown */
+    struct vector               unit_contexts;
 } dwarf2_parse_module_context_t;
+
+enum unit_status
+{
+    UNIT_ERROR,
+    UNIT_NOTLOADED,
+    UNIT_LOADED,
+};
 
 /* this is the context used for parsing a compilation unit
  * inside an ELF/PE section (likely .debug_info)
@@ -196,6 +204,7 @@ typedef struct dwarf2_parse_context_s
     ULONG_PTR                   ref_offset;
     char*                       cpp_name;
     dwarf2_cuhead_t             head;
+    enum unit_status            status;
 } dwarf2_parse_context_t;
 
 /* stored in the dbghelp's module internal structure for later reuse */
@@ -2440,10 +2449,9 @@ unsigned dwarf2_cache_cuhead(struct dwarf2_module_info_s* module, struct symt_co
     return TRUE;
 }
 
-static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_module_context_t* module_ctx,
+static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx,
                                           dwarf2_traverse_context_t* mod_ctx)
 {
-    dwarf2_parse_context_t ctx;
     dwarf2_traverse_context_t abbrev_ctx;
     dwarf2_debug_info_t* di;
     dwarf2_traverse_context_t cu_ctx;
@@ -2454,22 +2462,23 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_module_context_t* module_
     /* FIXME this is a temporary configuration while adding support for dwarf3&4 bits */
     static LONG max_supported_dwarf_version = 0;
 
-    cu_length = dwarf2_parse_3264(mod_ctx, &ctx.head.offset_size);
+    cu_length = dwarf2_parse_3264(mod_ctx, &ctx->head.offset_size);
 
     cu_ctx.data = mod_ctx->data;
     cu_ctx.end_data = mod_ctx->data + cu_length;
     mod_ctx->data += cu_length;
-    ctx.head.version = dwarf2_parse_u2(&cu_ctx);
-    cu_abbrev_offset = dwarf2_parse_offset(&cu_ctx, ctx.head.offset_size);
-    ctx.head.word_size = dwarf2_parse_byte(&cu_ctx);
+    ctx->head.version = dwarf2_parse_u2(&cu_ctx);
+    cu_abbrev_offset = dwarf2_parse_offset(&cu_ctx, ctx->head.offset_size);
+    ctx->head.word_size = dwarf2_parse_byte(&cu_ctx);
+    ctx->status = UNIT_ERROR;
 
     TRACE("Compilation Unit Header found at 0x%x:\n",
-          (int)(comp_unit_start - module_ctx->sections[section_debug].address));
+          (int)(comp_unit_start - ctx->module_ctx->sections[section_debug].address));
     TRACE("- length:        %lu\n", cu_length);
-    TRACE("- version:       %u\n",  ctx.head.version);
+    TRACE("- version:       %u\n",  ctx->head.version);
     TRACE("- abbrev_offset: %lu\n", cu_abbrev_offset);
-    TRACE("- word_size:     %u\n",  ctx.head.word_size);
-    TRACE("- offset_size:   %u\n",  ctx.head.offset_size);
+    TRACE("- word_size:     %u\n",  ctx->head.word_size);
+    TRACE("- offset_size:   %u\n",  ctx->head.offset_size);
 
     if (max_supported_dwarf_version == 0)
     {
@@ -2478,30 +2487,30 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_module_context_t* module_
         max_supported_dwarf_version = (v >= 2 && v <= 4) ? v : 2;
     }
 
-    if (ctx.head.version < 2 || ctx.head.version > max_supported_dwarf_version)
+    if (ctx->head.version < 2 || ctx->head.version > max_supported_dwarf_version)
     {
         if (max_supported_dwarf_version > 2)
             WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2 up to %u.\n",
-                 ctx.head.version, max_supported_dwarf_version);
+                 ctx->head.version, max_supported_dwarf_version);
         else
             WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2.\n",
-                 ctx.head.version);
+                 ctx->head.version);
         return FALSE;
     }
 
-    pool_init(&ctx.pool, 65536);
-    ctx.section = section_debug;
-    ctx.ref_offset = comp_unit_start - module_ctx->sections[section_debug].address;
-    ctx.cpp_name = NULL;
-    ctx.module_ctx = module_ctx;
+    pool_init(&ctx->pool, 65536);
+    ctx->section = section_debug;
+    ctx->ref_offset = comp_unit_start - ctx->module_ctx->sections[section_debug].address;
+    ctx->cpp_name = NULL;
+    ctx->status = UNIT_NOTLOADED;
 
-    abbrev_ctx.data = module_ctx->sections[section_abbrev].address + cu_abbrev_offset;
-    abbrev_ctx.end_data = module_ctx->sections[section_abbrev].address + module_ctx->sections[section_abbrev].size;
-    dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
+    abbrev_ctx.data = ctx->module_ctx->sections[section_abbrev].address + cu_abbrev_offset;
+    abbrev_ctx.end_data = ctx->module_ctx->sections[section_abbrev].address + ctx->module_ctx->sections[section_abbrev].size;
+    dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx->abbrev_table, &ctx->pool);
 
-    sparse_array_init(&ctx.debug_info_table, sizeof(dwarf2_debug_info_t), 128);
+    sparse_array_init(&ctx->debug_info_table, sizeof(dwarf2_debug_info_t), 128);
 
-    if (dwarf2_read_one_debug_info(&ctx, &cu_ctx, NULL, &di))
+    if (dwarf2_read_one_debug_info(ctx, &cu_ctx, NULL, &di))
     {
         if (di->abbrev->tag == DW_TAG_compile_unit)
         {
@@ -2512,37 +2521,35 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_module_context_t* module_
             struct attribute            stmt_list, low_pc;
             struct attribute            comp_dir;
 
-            if (!dwarf2_find_attribute(&ctx, di, DW_AT_name, &name))
+            if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
                 name.u.string = NULL;
 
             /* get working directory of current compilation unit */
-            if (!dwarf2_find_attribute(&ctx, di, DW_AT_comp_dir, &comp_dir))
+            if (!dwarf2_find_attribute(ctx, di, DW_AT_comp_dir, &comp_dir))
                 comp_dir.u.string = NULL;
 
-            if (!dwarf2_find_attribute(&ctx, di, DW_AT_low_pc, &low_pc))
+            if (!dwarf2_find_attribute(ctx, di, DW_AT_low_pc, &low_pc))
                 low_pc.u.uvalue = 0;
-
-            ctx.compiland = symt_new_compiland(module_ctx->module, module_ctx->load_offset + low_pc.u.uvalue,
-                                               source_new(module_ctx->module, comp_dir.u.string, name.u.string));
-            dwarf2_cache_cuhead(module_ctx->module->format_info[DFI_DWARF]->u.dwarf2_info, ctx.compiland, &ctx.head);
-
-            di->symt = &ctx.compiland->symt;
-            children = dwarf2_get_di_children(&ctx, di);
+            ctx->compiland = symt_new_compiland(ctx->module_ctx->module, ctx->module_ctx->load_offset + low_pc.u.uvalue,
+                                                source_new(ctx->module_ctx->module, comp_dir.u.string, name.u.string));
+            dwarf2_cache_cuhead(ctx->module_ctx->module->format_info[DFI_DWARF]->u.dwarf2_info, ctx->compiland, &ctx->head);
+            di->symt = &ctx->compiland->symt;
+            children = dwarf2_get_di_children(ctx, di);
             if (children) for (i = 0; i < vector_length(children); i++)
             {
                 child = *(dwarf2_debug_info_t**)vector_at(children, i);
-                dwarf2_load_one_entry(&ctx, child);
+                dwarf2_load_one_entry(ctx, child);
             }
-            if (dwarf2_find_attribute(&ctx, di, DW_AT_stmt_list, &stmt_list))
+            if (dwarf2_find_attribute(ctx, di, DW_AT_stmt_list, &stmt_list))
             {
-                if (dwarf2_parse_line_numbers(&ctx, comp_dir.u.string, stmt_list.u.uvalue))
-                    module_ctx->module->module.LineNumbers = TRUE;
+                if (dwarf2_parse_line_numbers(ctx, comp_dir.u.string, stmt_list.u.uvalue))
+                    ctx->module_ctx->module->module.LineNumbers = TRUE;
             }
+            ctx->status = UNIT_LOADED;
             ret = TRUE;
         }
         else FIXME("Should have a compilation unit here\n");
     }
-    pool_destroy(&ctx.pool);
     return ret;
 }
 
@@ -3605,6 +3612,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     BOOL                ret = TRUE;
     struct module_format* dwarf2_modfmt;
     dwarf2_parse_module_context_t module_ctx;
+    unsigned i;
 
     if (!dwarf2_init_section(&eh_frame,                fmap, ".eh_frame",     NULL,             &eh_frame_sect))
         /* lld produces .eh_fram to avoid generating a long name */
@@ -3667,10 +3675,14 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     memset(module_ctx.symt_cache, 0, sizeof(module_ctx.symt_cache));
     module_ctx.symt_cache[sc_void] = &symt_new_basic(module_ctx.module, btVoid, "void", 0)->symt;
     module_ctx.symt_cache[sc_unknown] = &symt_new_basic(module_ctx.module, btNoType, "# unknown", 0)->symt;
+    vector_init(&module_ctx.unit_contexts, sizeof(dwarf2_parse_context_t), 16);
 
     while (mod_ctx.data < mod_ctx.end_data)
     {
-        dwarf2_parse_compilation_unit(&module_ctx, &mod_ctx);
+        dwarf2_parse_context_t* unit_ctx = vector_add(&module_ctx.unit_contexts, &module_ctx.module->pool);
+
+        unit_ctx->module_ctx = &module_ctx;
+        dwarf2_parse_compilation_unit(unit_ctx, &mod_ctx);
     }
     dwarf2_modfmt->module->module.SymType = SymDia;
     dwarf2_modfmt->module->module.CVSig = 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24);
@@ -3679,6 +3691,13 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_modfmt->module->module.TypeInfo = TRUE;
     dwarf2_modfmt->module->module.SourceIndexed = TRUE;
     dwarf2_modfmt->module->module.Publics = TRUE;
+
+    for (i = 0; i < module_ctx.unit_contexts.num_elts; ++i)
+    {
+        dwarf2_parse_context_t* unit = vector_at(&module_ctx.unit_contexts, i);
+        if (unit->status != UNIT_ERROR)
+            pool_destroy(&unit->pool);
+    }
 
 leave:
     dwarf2_fini_section(&section[section_debug]);
