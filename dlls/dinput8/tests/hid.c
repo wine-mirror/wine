@@ -3330,6 +3330,15 @@ static void test_simple_joystick(void)
     {
         .InputReportByteLength = 4,
     };
+    static const DIDEVCAPS expect_caps =
+    {
+        .dwSize = sizeof(DIDEVCAPS),
+        .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
+        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .dwAxes = 2,
+        .dwPOVs = 1,
+        .dwButtons = 2,
+    };
 
     const DIDEVICEINSTANCEW expect_devinst =
     {
@@ -3347,6 +3356,7 @@ static void test_simple_joystick(void)
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEINSTANCEW devinst = {0};
     IDirectInputDevice8W *device;
+    DIDEVCAPS caps = {0};
     IDirectInput8W *di;
     HRESULT hr;
     ULONG ref;
@@ -3425,6 +3435,27 @@ static void test_simple_joystick(void)
     check_member_guid( devinst, expect_devinst, guidFFDriver );
     check_member( devinst, expect_devinst, "%04x", wUsagePage );
     check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    hr = IDirectInputDevice8_GetCapabilities( device, NULL );
+    ok( hr == E_POINTER, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetCapabilities( device, &caps );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
+    caps.dwSize = sizeof(DIDEVCAPS);
+    hr = IDirectInputDevice8_GetCapabilities( device, &caps );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
+    check_member( caps, expect_caps, "%d", dwSize );
+    check_member( caps, expect_caps, "%#x", dwFlags );
+    todo_wine
+    check_member( caps, expect_caps, "%#x", dwDevType );
+    check_member( caps, expect_caps, "%d", dwAxes );
+    check_member( caps, expect_caps, "%d", dwButtons );
+    check_member( caps, expect_caps, "%d", dwPOVs );
+    check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
+    check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
+    check_member( caps, expect_caps, "%d", dwFirmwareRevision );
+    check_member( caps, expect_caps, "%d", dwHardwareRevision );
+    check_member( caps, expect_caps, "%d", dwFFDriverVersion );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
