@@ -442,6 +442,68 @@ static DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value)
     return default_value;
 }
 
+static NTSTATUS deliver_last_report(struct device_extension *ext, DWORD buffer_length, BYTE* buffer, ULONG_PTR *out_length)
+{
+    if (buffer_length < ext->last_report_size)
+    {
+        *out_length = 0;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    else
+    {
+        if (ext->last_report)
+            memcpy(buffer, ext->last_report, ext->last_report_size);
+        *out_length = ext->last_report_size;
+        return STATUS_SUCCESS;
+    }
+}
+
+void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
+{
+    struct device_extension *ext = (struct device_extension*)device->DeviceExtension;
+    IRP *irp;
+    LIST_ENTRY *entry;
+
+    if (!length || !report)
+        return;
+
+    EnterCriticalSection(&ext->cs);
+    if (length > ext->buffer_size)
+    {
+        HeapFree(GetProcessHeap(), 0, ext->last_report);
+        ext->last_report = HeapAlloc(GetProcessHeap(), 0, length);
+        if (!ext->last_report)
+        {
+            ERR_(hid_report)("Failed to alloc last report\n");
+            ext->buffer_size = 0;
+            ext->last_report_size = 0;
+            ext->last_report_read = TRUE;
+            LeaveCriticalSection(&ext->cs);
+            return;
+        }
+        else
+            ext->buffer_size = length;
+    }
+
+    memcpy(ext->last_report, report, length);
+    ext->last_report_size = length;
+    ext->last_report_read = FALSE;
+
+    while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+    {
+        IO_STACK_LOCATION *irpsp;
+        TRACE_(hid_report)("Processing Request\n");
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irpsp = IoGetCurrentIrpStackLocation(irp);
+        irp->IoStatus.Status = deliver_last_report(ext,
+            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+            irp->UserBuffer, &irp->IoStatus.Information);
+        ext->last_report_read = TRUE;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+    LeaveCriticalSection(&ext->cs);
+}
+
 static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.Status;
@@ -794,22 +856,6 @@ static NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     return pdo_pnp_dispatch(device, irp);
 }
 
-static NTSTATUS deliver_last_report(struct device_extension *ext, DWORD buffer_length, BYTE* buffer, ULONG_PTR *out_length)
-{
-    if (buffer_length < ext->last_report_size)
-    {
-        *out_length = 0;
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-    else
-    {
-        if (ext->last_report)
-            memcpy(buffer, ext->last_report, ext->last_report_size);
-        *out_length = ext->last_report_size;
-        return STATUS_SUCCESS;
-    }
-}
-
 static NTSTATUS hid_get_device_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD buffer_len)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
@@ -994,52 +1040,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
     if (status != STATUS_PENDING) IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
-}
-
-void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
-{
-    struct device_extension *ext = (struct device_extension*)device->DeviceExtension;
-    IRP *irp;
-    LIST_ENTRY *entry;
-
-    if (!length || !report)
-        return;
-
-    EnterCriticalSection(&ext->cs);
-    if (length > ext->buffer_size)
-    {
-        HeapFree(GetProcessHeap(), 0, ext->last_report);
-        ext->last_report = HeapAlloc(GetProcessHeap(), 0, length);
-        if (!ext->last_report)
-        {
-            ERR_(hid_report)("Failed to alloc last report\n");
-            ext->buffer_size = 0;
-            ext->last_report_size = 0;
-            ext->last_report_read = TRUE;
-            LeaveCriticalSection(&ext->cs);
-            return;
-        }
-        else
-            ext->buffer_size = length;
-    }
-
-    memcpy(ext->last_report, report, length);
-    ext->last_report_size = length;
-    ext->last_report_read = FALSE;
-
-    while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
-    {
-        IO_STACK_LOCATION *irpsp;
-        TRACE_(hid_report)("Processing Request\n");
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
-        irpsp = IoGetCurrentIrpStackLocation(irp);
-        irp->IoStatus.Status = deliver_last_report(ext,
-            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-            irp->UserBuffer, &irp->IoStatus.Information);
-        ext->last_report_read = TRUE;
-        IoCompleteRequest(irp, IO_NO_INCREMENT);
-    }
-    LeaveCriticalSection(&ext->cs);
 }
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid)
