@@ -492,6 +492,13 @@ typedef [hidden] enum SPFILEMODE
     SPFM_NUM_MODES
 } SPFILEMODE;
 
+typedef [restricted, hidden] struct SPAUDIOBUFFERINFO
+{
+    ULONG ulMsMinNotification;
+    ULONG ulMsBufferSize;
+    ULONG ulMsEventBias;
+} SPAUDIOBUFFERINFO;
+
 cpp_quote("#if defined(__GNUC__)")
 
 cpp_quote("#define SPCAT_AUDIOOUT (const WCHAR []){ 'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','O','u','t','p','u','t',0 }")
@@ -993,6 +1000,28 @@ interface ISpStreamFormat : IStream
 {
     HRESULT GetFormat(GUID *format, WAVEFORMATEX **wave);
 }
+
+[
+    object,
+    uuid(c05c768f-fae8-4ec2-8e07-338321c12452),
+    pointer_default(unique),
+    local,
+    restricted
+]
+interface ISpAudio : ISpStreamFormat
+{
+    HRESULT SetState([in] SPAUDIOSTATE state, [in] ULONGLONG reserved);
+    HRESULT SetFormat([in] REFGUID guid, [in] const WAVEFORMATEX *wave);
+    HRESULT GetStatus([out] SPAUDIOSTATUS *status);
+    HRESULT SetBufferInfo([in] const SPAUDIOBUFFERINFO *buffer);
+    HRESULT GetBufferInfo([out] SPAUDIOBUFFERINFO *buffer);
+    HRESULT GetDefaultFormat([out] GUID *guid, [out] WAVEFORMATEX **wave);
+    HANDLE  EventHandle();
+    HRESULT GetVolumeLevel([out] ULONG *level);
+    HRESULT SetVolumeLevel([in] ULONG level);
+    HRESULT GetBufferNotifySize([out] ULONG *size);
+    HRESULT SetBufferNotifySize([in] ULONG size);
+};
 
 [
     object,
