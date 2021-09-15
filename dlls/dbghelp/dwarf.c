@@ -205,6 +205,7 @@ typedef struct dwarf2_parse_context_s
     char*                       cpp_name;
     dwarf2_cuhead_t             head;
     enum unit_status            status;
+    dwarf2_traverse_context_t   traverse_DIE;
 } dwarf2_parse_context_t;
 
 /* stored in the dbghelp's module internal structure for later reuse */
@@ -2449,27 +2450,24 @@ unsigned dwarf2_cache_cuhead(struct dwarf2_module_info_s* module, struct symt_co
     return TRUE;
 }
 
-static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx,
-                                          dwarf2_traverse_context_t* mod_ctx)
+static BOOL dwarf2_parse_compilation_unit_head(dwarf2_parse_context_t* ctx,
+                                               dwarf2_traverse_context_t* mod_ctx)
 {
     dwarf2_traverse_context_t abbrev_ctx;
-    dwarf2_debug_info_t* di;
-    dwarf2_traverse_context_t cu_ctx;
     const unsigned char* comp_unit_start = mod_ctx->data;
     ULONG_PTR cu_length;
     ULONG_PTR cu_abbrev_offset;
-    BOOL ret = FALSE;
     /* FIXME this is a temporary configuration while adding support for dwarf3&4 bits */
     static LONG max_supported_dwarf_version = 0;
 
     cu_length = dwarf2_parse_3264(mod_ctx, &ctx->head.offset_size);
 
-    cu_ctx.data = mod_ctx->data;
-    cu_ctx.end_data = mod_ctx->data + cu_length;
+    ctx->traverse_DIE.data = mod_ctx->data;
+    ctx->traverse_DIE.end_data = mod_ctx->data + cu_length;
     mod_ctx->data += cu_length;
-    ctx->head.version = dwarf2_parse_u2(&cu_ctx);
-    cu_abbrev_offset = dwarf2_parse_offset(&cu_ctx, ctx->head.offset_size);
-    ctx->head.word_size = dwarf2_parse_byte(&cu_ctx);
+    ctx->head.version = dwarf2_parse_u2(&ctx->traverse_DIE);
+    cu_abbrev_offset = dwarf2_parse_offset(&ctx->traverse_DIE, ctx->head.offset_size);
+    ctx->head.word_size = dwarf2_parse_byte(&ctx->traverse_DIE);
     ctx->status = UNIT_ERROR;
 
     TRACE("Compilation Unit Header found at 0x%x:\n",
@@ -2509,6 +2507,16 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx,
     dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx->abbrev_table, &ctx->pool);
 
     sparse_array_init(&ctx->debug_info_table, sizeof(dwarf2_debug_info_t), 128);
+    return TRUE;
+}
+
+static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
+{
+    dwarf2_debug_info_t* di;
+    dwarf2_traverse_context_t cu_ctx = ctx->traverse_DIE;
+    BOOL ret = FALSE;
+
+    if (ctx->status == UNIT_ERROR) return FALSE;
 
     if (dwarf2_read_one_debug_info(ctx, &cu_ctx, NULL, &di))
     {
@@ -3642,9 +3650,6 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
 
     TRACE("Loading Dwarf2 information for %s\n", debugstr_w(module->modulename));
 
-    mod_ctx.data = section[section_debug].address;
-    mod_ctx.end_data = mod_ctx.data + section[section_debug].size;
-
     dwarf2_modfmt = HeapAlloc(GetProcessHeap(), 0,
                               sizeof(*dwarf2_modfmt) + sizeof(*dwarf2_modfmt->u.dwarf2_info));
     if (!dwarf2_modfmt)
@@ -3677,13 +3682,21 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     module_ctx.symt_cache[sc_unknown] = &symt_new_basic(module_ctx.module, btNoType, "# unknown", 0)->symt;
     vector_init(&module_ctx.unit_contexts, sizeof(dwarf2_parse_context_t), 16);
 
+    /* phase I: parse all CU heads */
+    mod_ctx.data = section[section_debug].address;
+    mod_ctx.end_data = mod_ctx.data + section[section_debug].size;
     while (mod_ctx.data < mod_ctx.end_data)
     {
         dwarf2_parse_context_t* unit_ctx = vector_add(&module_ctx.unit_contexts, &module_ctx.module->pool);
 
         unit_ctx->module_ctx = &module_ctx;
-        dwarf2_parse_compilation_unit(unit_ctx, &mod_ctx);
+        dwarf2_parse_compilation_unit_head(unit_ctx, &mod_ctx);
     }
+
+    /* phase2: load content of all CU */
+    for (i = 0; i < module_ctx.unit_contexts.num_elts; ++i)
+        dwarf2_parse_compilation_unit((dwarf2_parse_context_t*)vector_at(&module_ctx.unit_contexts, i));
+
     dwarf2_modfmt->module->module.SymType = SymDia;
     dwarf2_modfmt->module->module.CVSig = 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24);
     /* FIXME: we could have a finer grain here */
