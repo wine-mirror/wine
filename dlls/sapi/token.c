@@ -942,7 +942,10 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
     hr = parse_cat_id( token_id, &root, &subkey );
     if (hr != S_OK) return SPERR_NOT_FOUND;
 
-    res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
+    if (create)
+        res = RegCreateKeyExW( root, subkey, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
+    else
+        res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
     if (res) return SPERR_NOT_FOUND;
 
     This->token_key = key;
