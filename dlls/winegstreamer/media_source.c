@@ -733,6 +733,12 @@ static HRESULT new_media_stream(struct media_source *source,
     object->IMFMediaStream_iface.lpVtbl = &media_stream_vtbl;
     object->ref = 1;
 
+    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+    {
+        free(object);
+        return hr;
+    }
+
     IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
     object->parent_source = source;
     object->stream_id = stream_id;
@@ -741,20 +747,11 @@ static HRESULT new_media_stream(struct media_source *source,
     object->eos = FALSE;
     object->wg_stream = wg_stream;
 
-    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
-        goto fail;
-
     TRACE("Created stream object %p.\n", object);
 
     *out_stream = object;
 
     return S_OK;
-
-fail:
-    WARN("Failed to construct media stream, hr %#x.\n", hr);
-
-    IMFMediaStream_Release(&object->IMFMediaStream_iface);
-    return hr;
 }
 
 static HRESULT media_stream_init_desc(struct media_stream *stream)
@@ -847,10 +844,16 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
         goto done;
 
     if (FAILED(hr = IMFStreamDescriptor_GetMediaTypeHandler(stream->descriptor, &type_handler)))
+    {
+        IMFStreamDescriptor_Release(stream->descriptor);
         goto done;
+    }
 
     if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, stream_types[0])))
+    {
+        IMFStreamDescriptor_Release(stream->descriptor);
         goto done;
+    }
 
 done:
     if (type_handler)
@@ -1213,19 +1216,13 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
     unix_funcs->wg_parser_disconnect(source->wg_parser);
 
-    if (source->read_thread)
-    {
-        source->read_thread_shutdown = true;
-        WaitForSingleObject(source->read_thread, INFINITE);
-        CloseHandle(source->read_thread);
-    }
+    source->read_thread_shutdown = true;
+    WaitForSingleObject(source->read_thread, INFINITE);
+    CloseHandle(source->read_thread);
 
-    if (source->pres_desc)
-        IMFPresentationDescriptor_Release(source->pres_desc);
-    if (source->event_queue)
-        IMFMediaEventQueue_Shutdown(source->event_queue);
-    if (source->byte_stream)
-        IMFByteStream_Release(source->byte_stream);
+    IMFPresentationDescriptor_Release(source->pres_desc);
+    IMFMediaEventQueue_Shutdown(source->event_queue);
+    IMFByteStream_Release(source->byte_stream);
 
     for (i = 0; i < source->stream_count; i++)
     {
@@ -1233,23 +1230,18 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
         stream->state = STREAM_SHUTDOWN;
 
-        if (stream->event_queue)
-            IMFMediaEventQueue_Shutdown(stream->event_queue);
-        if (stream->descriptor)
-            IMFStreamDescriptor_Release(stream->descriptor);
-        if (stream->parent_source)
-            IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
+        IMFMediaEventQueue_Shutdown(stream->event_queue);
+        IMFStreamDescriptor_Release(stream->descriptor);
+        IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
 
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
 
     unix_funcs->wg_parser_destroy(source->wg_parser);
 
-    if (source->stream_count)
-        free(source->streams);
+    free(source->streams);
 
-    if (source->async_commands_queue)
-        MFUnlockWorkQueue(source->async_commands_queue);
+    MFUnlockWorkQueue(source->async_commands_queue);
 
     return S_OK;
 }
@@ -1274,6 +1266,7 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
 static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
 {
     IMFStreamDescriptor **descriptors = NULL;
+    unsigned int stream_count = UINT_MAX;
     struct media_source *object;
     UINT64 total_pres_time = 0;
     struct wg_parser *parser;
@@ -1337,15 +1330,15 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
      * leak occurs with native. */
     unix_funcs->wg_parser_set_unlimited_buffering(parser);
 
-    object->stream_count = unix_funcs->wg_parser_get_stream_count(parser);
+    stream_count = unix_funcs->wg_parser_get_stream_count(parser);
 
-    if (!(object->streams = calloc(object->stream_count, sizeof(*object->streams))))
+    if (!(object->streams = calloc(stream_count, sizeof(*object->streams))))
     {
         hr = E_OUTOFMEMORY;
         goto fail;
     }
 
-    for (i = 0; i < object->stream_count; ++i)
+    for (i = 0; i < stream_count; ++i)
     {
         if (FAILED(hr = new_media_stream(object, unix_funcs->wg_parser_get_stream(parser, i), i, &object->streams[i])))
             goto fail;
@@ -1353,9 +1346,13 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         if (FAILED(hr = media_stream_init_desc(object->streams[i])))
         {
             ERR("Failed to finish initialization of media stream %p, hr %x.\n", object->streams[i], hr);
-            IMFMediaStream_Release(&object->streams[i]->IMFMediaStream_iface);
+            IMFMediaSource_Release(&object->streams[i]->parent_source->IMFMediaSource_iface);
+            IMFMediaEventQueue_Release(object->streams[i]->event_queue);
+            free(object->streams[i]);
             goto fail;
         }
+
+        object->stream_count++;
     }
 
     /* init presentation descriptor */
@@ -1392,8 +1389,39 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     fail:
     WARN("Failed to construct MFMediaSource, hr %#x.\n", hr);
 
-    free(descriptors);
-    IMFMediaSource_Release(&object->IMFMediaSource_iface);
+    if (descriptors)
+    {
+        for (i = 0; i < object->stream_count; i++)
+            IMFStreamDescriptor_Release(descriptors[i]);
+        free(descriptors);
+    }
+    for (i = 0; i < object->stream_count; i++)
+    {
+        struct media_stream *stream = object->streams[i];
+
+        IMFMediaEventQueue_Release(stream->event_queue);
+        IMFStreamDescriptor_Release(stream->descriptor);
+        IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
+
+        free(stream);
+    }
+    free(object->streams);
+    if (stream_count != UINT_MAX)
+        unix_funcs->wg_parser_disconnect(object->wg_parser);
+    if (object->read_thread)
+    {
+        object->read_thread_shutdown = true;
+        WaitForSingleObject(object->read_thread, INFINITE);
+        CloseHandle(object->read_thread);
+    }
+    if (object->wg_parser)
+        unix_funcs->wg_parser_destroy(object->wg_parser);
+    if (object->async_commands_queue)
+        MFUnlockWorkQueue(object->async_commands_queue);
+    if (object->event_queue)
+        IMFMediaEventQueue_Release(object->event_queue);
+    IMFByteStream_Release(object->byte_stream);
+    free(object);
     return hr;
 }
 

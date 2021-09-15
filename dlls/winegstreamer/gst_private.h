@@ -22,6 +22,7 @@
 #define __GST_PRIVATE_INCLUDED__
 
 #include <assert.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
