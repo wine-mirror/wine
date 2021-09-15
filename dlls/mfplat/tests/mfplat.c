@@ -877,8 +877,6 @@ todo_wine
     for (i = 0; i < sample_count; ++i)
     {
         hr = IMFMediaStream_RequestSample(video_stream, NULL);
-        if (i == sample_count)
-            break;
         ok(hr == S_OK, "Failed to request sample %u, hr %#x.\n", i + 1, hr);
         if (hr != S_OK)
             break;
