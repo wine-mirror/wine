@@ -1034,6 +1034,30 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
     return stream;
 }
 
+static void free_stream(struct wg_parser_stream *stream)
+{
+    if (stream->their_src)
+    {
+        if (stream->post_sink)
+        {
+            gst_pad_unlink(stream->their_src, stream->post_sink);
+            gst_pad_unlink(stream->post_src, stream->my_sink);
+            gst_object_unref(stream->post_src);
+            gst_object_unref(stream->post_sink);
+            stream->post_src = stream->post_sink = NULL;
+        }
+        else
+            gst_pad_unlink(stream->their_src, stream->my_sink);
+        gst_object_unref(stream->their_src);
+    }
+    gst_object_unref(stream->my_sink);
+
+    pthread_cond_destroy(&stream->event_cond);
+    pthread_cond_destroy(&stream->event_empty_cond);
+
+    free(stream);
+}
+
 static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 {
     struct wg_parser *parser = user;
@@ -1520,14 +1544,14 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     parser->error = false;
 
     if (!parser->init_gst(parser))
-        return E_FAIL;
+        goto out;
 
     gst_element_set_state(parser->container, GST_STATE_PAUSED);
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         GST_ERROR("Failed to play stream.\n");
-        return E_FAIL;
+        goto out;
     }
 
     pthread_mutex_lock(&parser->mutex);
@@ -1537,7 +1561,7 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     if (parser->error)
     {
         pthread_mutex_unlock(&parser->mutex);
-        return E_FAIL;
+        goto out;
     }
 
     for (i = 0; i < parser->stream_count; ++i)
@@ -1577,7 +1601,7 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
             if (parser->error)
             {
                 pthread_mutex_unlock(&parser->mutex);
-                return E_FAIL;
+                goto out;
             }
             if (gst_pad_query_duration(stream->their_src, GST_FORMAT_TIME, &duration))
             {
@@ -1614,30 +1638,36 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
 
     parser->next_offset = 0;
     return S_OK;
-}
 
-static void free_stream(struct wg_parser_stream *stream)
-{
-    if (stream->their_src)
+out:
+    if (parser->container)
+        gst_element_set_state(parser->container, GST_STATE_NULL);
+    if (parser->their_sink)
     {
-        if (stream->post_sink)
-        {
-            gst_pad_unlink(stream->their_src, stream->post_sink);
-            gst_pad_unlink(stream->post_src, stream->my_sink);
-            gst_object_unref(stream->post_src);
-            gst_object_unref(stream->post_sink);
-            stream->post_src = stream->post_sink = NULL;
-        }
-        else
-            gst_pad_unlink(stream->their_src, stream->my_sink);
-        gst_object_unref(stream->their_src);
+        gst_pad_unlink(parser->my_src, parser->their_sink);
+        gst_object_unref(parser->their_sink);
+        parser->my_src = parser->their_sink = NULL;
     }
-    gst_object_unref(stream->my_sink);
 
-    pthread_cond_destroy(&stream->event_cond);
-    pthread_cond_destroy(&stream->event_empty_cond);
+    for (i = 0; i < parser->stream_count; ++i)
+        free_stream(parser->streams[i]);
+    parser->stream_count = 0;
+    free(parser->streams);
+    parser->streams = NULL;
 
-    free(stream);
+    if (parser->container)
+    {
+        gst_element_set_bus(parser->container, NULL);
+        gst_object_unref(parser->container);
+        parser->container = NULL;
+    }
+
+    pthread_mutex_lock(&parser->mutex);
+    parser->sink_connected = false;
+    pthread_mutex_unlock(&parser->mutex);
+    pthread_cond_signal(&parser->read_cond);
+
+    return E_FAIL;
 }
 
 static void CDECL wg_parser_disconnect(struct wg_parser *parser)
