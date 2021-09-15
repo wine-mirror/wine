@@ -416,9 +416,10 @@ static HRESULT WINAPI token_category_SetId( ISpObjectTokenCategory *iface,
     hr = parse_cat_id( id, &root, &subkey );
     if (hr != S_OK) return SPERR_INVALID_REGISTRY_KEY;
 
-    if (create) FIXME( "Ignoring create\n" );
-
-    res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
+    if (create)
+        res = RegCreateKeyExW( root, subkey, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+    else
+        res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
     if (res) return SPERR_INVALID_REGISTRY_KEY;
 
     hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_ALL,
