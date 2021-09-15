@@ -370,7 +370,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
     return device;
 }
 
-DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev)
+static DEVICE_OBJECT *bus_find_hid_device(const WCHAR *bus_id, void *platform_dev)
 {
     struct device_extension *ext;
     DEVICE_OBJECT *ret = NULL;
@@ -477,7 +477,7 @@ static NTSTATUS deliver_last_report(struct device_extension *ext, DWORD buffer_l
     }
 }
 
-void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
+static void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
 {
     struct device_extension *ext = (struct device_extension*)device->DeviceExtension;
     IRP *irp;

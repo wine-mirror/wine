@@ -133,8 +133,8 @@ static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
         IOReturn result, void *sender, IOHIDReportType type,
         uint32_t reportID, uint8_t *report, CFIndex report_length)
 {
-    DEVICE_OBJECT *device = (DEVICE_OBJECT*)context;
-    process_hid_report(device, report, report_length);
+    struct unix_device *iface = (struct unix_device *)context;
+    bus_event_queue_input_report(&event_queue, iface, report, report_length);
 }
 
 static void iohid_device_destroy(struct unix_device *iface)
@@ -161,7 +161,7 @@ static NTSTATUS iohid_device_start(struct unix_device *iface, DEVICE_OBJECT *dev
     length = CFNumberToDWORD(num);
     private->buffer = HeapAlloc(GetProcessHeap(), 0, length);
 
-    IOHIDDeviceRegisterInputReportCallback(private->device, private->buffer, length, handle_IOHIDDeviceIOHIDReportCallback, device);
+    IOHIDDeviceRegisterInputReportCallback(private->device, private->buffer, length, handle_IOHIDDeviceIOHIDReportCallback, iface);
     return STATUS_SUCCESS;
 }
 
@@ -377,6 +377,9 @@ NTSTATUS iohid_bus_init(void *args)
 NTSTATUS iohid_bus_wait(void *args)
 {
     struct bus_event *result = args;
+
+    /* cleanup previously returned event */
+    bus_event_cleanup(result);
 
     do
     {
