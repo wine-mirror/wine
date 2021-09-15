@@ -40,7 +40,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #ifdef SONAME_LIBVULKAN
 
+#define VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR 1000006000
+
+typedef struct VkWaylandSurfaceCreateInfoKHR
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkWaylandSurfaceCreateFlagsKHR flags;
+    struct wl_display *display;
+    struct wl_surface *surface;
+} VkWaylandSurfaceCreateInfoKHR;
+
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
+static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
@@ -48,6 +60,23 @@ static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 
 static void *vulkan_handle;
 static const struct vulkan_funcs vulkan_funcs;
+
+struct wine_vk_surface
+{
+    struct wl_surface *client;
+    VkSurfaceKHR native;
+};
+
+static struct wine_vk_surface *wine_vk_surface_from_handle(VkSurfaceKHR handle)
+{
+    return (struct wine_vk_surface *)(uintptr_t)handle;
+}
+
+static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
+{
+    if (wine_vk_surface->client) wl_surface_destroy(wine_vk_surface->client);
+    free(wine_vk_surface);
+}
 
 /* Helper function for converting between win32 and Wayland compatible VkInstanceCreateInfo.
  * Caller is responsible for allocation and cleanup of 'dst'. */
@@ -92,6 +121,14 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     return VK_SUCCESS;
 }
 
+static const char *wine_vk_native_fn_name(const char *name)
+{
+    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
+        return "vkCreateWaylandSurfaceKHR";
+
+    return name;
+}
+
 static VkResult wayland_vkCreateInstance(const VkInstanceCreateInfo *create_info,
                                          const VkAllocationCallbacks *allocator,
                                          VkInstance *instance)
@@ -117,6 +154,62 @@ static VkResult wayland_vkCreateInstance(const VkInstanceCreateInfo *create_info
     res = pvkCreateInstance(&create_info_host, NULL /* allocator */, instance);
 
     free((void *)create_info_host.ppEnabledExtensionNames);
+    return res;
+}
+
+static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
+                                                const VkWin32SurfaceCreateInfoKHR *create_info,
+                                                const VkAllocationCallbacks *allocator,
+                                                VkSurfaceKHR *vk_surface)
+{
+    VkResult res;
+    VkWaylandSurfaceCreateInfoKHR create_info_host;
+    struct wine_vk_surface *wine_vk_surface;
+
+    TRACE("%p %p %p %p\n", instance, create_info, allocator, vk_surface);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    wine_vk_surface = calloc(1, sizeof(*wine_vk_surface));
+    if (!wine_vk_surface)
+    {
+        ERR("Failed to allocate memory for wayland vulkan surface\n");
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto err;
+    }
+
+    wine_vk_surface->client = wl_compositor_create_surface(process_wayland.wl_compositor);
+    if (!wine_vk_surface->client)
+    {
+        ERR("Failed to create client surface for hwnd=%p\n", create_info->hwnd);
+        /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto err;
+    }
+
+    create_info_host.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+    create_info_host.pNext = NULL;
+    create_info_host.flags = 0; /* reserved */
+    create_info_host.display = process_wayland.wl_display;
+    create_info_host.surface = wine_vk_surface->client;
+
+    res = pvkCreateWaylandSurfaceKHR(instance, &create_info_host,
+                                     NULL /* allocator */,
+                                     &wine_vk_surface->native);
+    if (res != VK_SUCCESS)
+    {
+        ERR("Failed to create vulkan wayland surface, res=%d\n", res);
+        goto err;
+    }
+
+    *vk_surface = (uintptr_t)wine_vk_surface;
+
+    TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*vk_surface));
+    return VK_SUCCESS;
+
+err:
+    if (wine_vk_surface) wine_vk_surface_destroy(wine_vk_surface);
     return res;
 }
 
@@ -179,6 +272,11 @@ static void *wayland_vkGetDeviceProcAddr(VkDevice device, const char *name)
 
     TRACE("%p, %s\n", device, debugstr_a(name));
 
+    /* Do not return the driver function if the corresponding native function
+     * is not available. */
+    if (!pvkGetDeviceProcAddr(device, wine_vk_native_fn_name(name)))
+        return NULL;
+
     if ((proc_addr = get_vulkan_driver_device_proc_addr(&vulkan_funcs, name)))
         return proc_addr;
 
@@ -191,10 +289,20 @@ static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name
 
     TRACE("%p, %s\n", instance, debugstr_a(name));
 
+    /* Do not return the driver function if the corresponding native function
+     * is not available. */
+    if (!pvkGetInstanceProcAddr(instance, wine_vk_native_fn_name(name)))
+        return NULL;
+
     if ((proc_addr = get_vulkan_driver_instance_proc_addr(&vulkan_funcs, instance, name)))
         return proc_addr;
 
     return pvkGetInstanceProcAddr(instance, name);
+}
+
+static VkSurfaceKHR wayland_wine_get_native_surface(VkSurfaceKHR surface)
+{
+    return wine_vk_surface_from_handle(surface)->native;
 }
 
 static void wine_vk_init(void)
@@ -207,6 +315,7 @@ static void wine_vk_init(void)
 
 #define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
     LOAD_FUNCPTR(vkCreateInstance);
+    LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
     LOAD_FUNCPTR(vkDestroyInstance);
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
@@ -223,10 +332,12 @@ fail:
 static const struct vulkan_funcs vulkan_funcs =
 {
     .p_vkCreateInstance = wayland_vkCreateInstance,
+    .p_vkCreateWin32SurfaceKHR = wayland_vkCreateWin32SurfaceKHR,
     .p_vkDestroyInstance = wayland_vkDestroyInstance,
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
+    .p_wine_get_native_surface = wayland_wine_get_native_surface,
 };
 
 /**********************************************************************
