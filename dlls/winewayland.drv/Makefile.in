@@ -8,6 +8,7 @@ SOURCES = \
 	dllmain.c \
 	version.rc \
 	viewporter.xml \
+	vulkan.c \
 	wayland.c \
 	wayland_keyboard.c \
 	wayland_output.c \

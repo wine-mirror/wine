@@ -38,7 +38,8 @@ static const struct user_driver_funcs waylanddrv_funcs =
     .pUpdateDisplayDevices = WAYLAND_UpdateDisplayDevices,
     .pWindowMessage = WAYLAND_WindowMessage,
     .pWindowPosChanged = WAYLAND_WindowPosChanged,
-    .pWindowPosChanging = WAYLAND_WindowPosChanging
+    .pWindowPosChanging = WAYLAND_WindowPosChanging,
+    .pwine_get_vulkan_driver = WAYLAND_wine_get_vulkan_driver,
 };
 
 static NTSTATUS waylanddrv_unix_init(void *arg)
