@@ -425,8 +425,7 @@ IShellFolder_fnBindToObject (IShellFolder2 * iface, LPCITEMIDLIST pidl,
     TRACE ("(%p)->(pidl=%p,%p,%s,%p)\n", This, pidl, pbc,
      shdebugstr_guid (riid), ppvOut);
 
-    return SHELL32_BindToChild (This->pidlRoot, This->sPathTarget, pidl, riid,
-     ppvOut);
+    return SHELL32_BindToChild (This->pidlRoot, This->pclsid, This->sPathTarget, pidl, riid, ppvOut);
 }
 
 /**************************************************************************

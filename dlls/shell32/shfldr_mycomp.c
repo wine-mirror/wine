@@ -379,7 +379,7 @@ static HRESULT WINAPI ISF_MyComputer_fnBindToObject (IShellFolder2 *iface,
     TRACE("(%p)->(pidl=%p,%p,%s,%p)\n", This,
           pidl, pbcReserved, shdebugstr_guid (riid), ppvOut);
 
-    return SHELL32_BindToChild (This->pidlRoot, NULL, pidl, riid, ppvOut);
+    return SHELL32_BindToChild (This->pidlRoot, &CLSID_ShellFSFolder, NULL, pidl, riid, ppvOut);
 }
 
 /**************************************************************************
