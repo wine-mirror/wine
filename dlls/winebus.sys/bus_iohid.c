@@ -151,7 +151,7 @@ static int iohid_device_compare(struct unix_device *iface, void *context)
         return 0;
 }
 
-static NTSTATUS iohid_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
+static NTSTATUS iohid_device_start(struct unix_device *iface)
 {
     DWORD length;
     struct platform_private *private = impl_from_unix_device(iface);

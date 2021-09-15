@@ -502,7 +502,7 @@ static int sdl_device_compare(struct unix_device *iface, void *context)
     return impl_from_unix_device(iface)->id - PtrToUlong(context);
 }
 
-static NTSTATUS sdl_device_start(struct unix_device *iface, DEVICE_OBJECT *device)
+static NTSTATUS sdl_device_start(struct unix_device *iface)
 {
     struct platform_private *ext = impl_from_unix_device(iface);
     if (ext->sdl_controller) return build_mapped_report_descriptor(ext);

@@ -24,7 +24,6 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winternl.h>
-#include <ddk/wdm.h>
 #include <ddk/hidclass.h>
 #include <hidusage.h>
 
@@ -110,12 +109,6 @@ struct device_compare_params
 {
     struct unix_device *iface;
     void *context;
-};
-
-struct device_start_params
-{
-    struct unix_device *iface;
-    DEVICE_OBJECT *device;
 };
 
 struct device_descriptor_params

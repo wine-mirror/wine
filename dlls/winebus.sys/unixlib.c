@@ -56,7 +56,7 @@ static int mouse_compare(struct unix_device *iface, void *context)
     return 0;
 }
 
-static NTSTATUS mouse_start(struct unix_device *iface, DEVICE_OBJECT *device)
+static NTSTATUS mouse_start(struct unix_device *iface)
 {
     struct mouse_device *impl = mouse_from_unix_device(iface);
 
@@ -160,7 +160,7 @@ static int keyboard_compare(struct unix_device *iface, void *context)
     return 0;
 }
 
-static NTSTATUS keyboard_start(struct unix_device *iface, DEVICE_OBJECT *device)
+static NTSTATUS keyboard_start(struct unix_device *iface)
 {
     struct keyboard_device *impl = keyboard_from_unix_device(iface);
 
@@ -284,9 +284,8 @@ static NTSTATUS unix_device_compare(void *args)
 
 static NTSTATUS unix_device_start(void *args)
 {
-    struct device_start_params *params = args;
-    struct unix_device *iface = params->iface;
-    return iface->vtbl->start(iface, params->device);
+    struct unix_device *iface = args;
+    return iface->vtbl->start(iface);
 }
 
 static NTSTATUS unix_device_get_report_descriptor(void *args)
