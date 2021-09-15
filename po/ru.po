@@ -100,8 +100,8 @@ msgstr "Сведения о поддержке"
 #: dlls/mshtml/mshtml.rc:47 dlls/mshtml/mshtml.rc:57 dlls/msvfw32/msvfw32.rc:36
 #: dlls/oledlg/oledlg.rc:62 dlls/oledlg/oledlg.rc:94
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
-#: dlls/shell32/shell32.rc:276 dlls/shell32/shell32.rc:300
-#: dlls/shell32/shell32.rc:322 dlls/shell32/shell32.rc:341
+#: dlls/shell32/shell32.rc:274 dlls/shell32/shell32.rc:298
+#: dlls/shell32/shell32.rc:320 dlls/shell32/shell32.rc:339
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
@@ -207,9 +207,9 @@ msgstr "&Установить"
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
 #: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
-#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:277
-#: dlls/shell32/shell32.rc:301 dlls/shell32/shell32.rc:312
-#: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
+#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:275
+#: dlls/shell32/shell32.rc:299 dlls/shell32/shell32.rc:310
+#: dlls/shell32/shell32.rc:340 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
 #: dlls/winspool.drv/winspool.rc:43 programs/conhost/conhost.rc:127
@@ -282,7 +282,7 @@ msgid "Not specified"
 msgstr "Отсутствует"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
-#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:241
+#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:239
 #: programs/regedit/regedit.rc:147 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "Имя"
@@ -304,7 +304,7 @@ msgid "Programs (*.exe)"
 msgstr "Программы (*.exe)"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
-#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:199
+#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:197
 #: programs/notepad/notepad.rc:76 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:225
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
@@ -505,12 +505,12 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Нет"
 
-#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:309
+#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:307
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:79
 msgid "&Yes"
 msgstr "&Да"
 
-#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:311
+#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:309
 #: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:80
 msgid "&No"
 msgstr "&Нет"
@@ -544,7 +544,7 @@ msgstr "Текущая дата"
 
 #: dlls/comdlg32/comdlg32.rc:158 dlls/comdlg32/comdlg32.rc:171
 #: dlls/comdlg32/comdlg32.rc:462 dlls/comdlg32/comdlg32.rc:487
-#: dlls/comdlg32/comdlg32.rc:514 dlls/shell32/shell32.rc:167
+#: dlls/comdlg32/comdlg32.rc:514 dlls/shell32/shell32.rc:165
 #: programs/oleview/oleview.rc:101
 msgid "Open"
 msgstr "Открыть"
@@ -566,7 +566,7 @@ msgid "Dri&ves:"
 msgstr "&Диски:"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
-#: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
+#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
 msgstr "&Только для чтения"
@@ -2238,8 +2238,8 @@ msgid "Notice Text="
 msgstr "Текст уведомления="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
-#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:348
-#: dlls/shell32/shell32.rc:377
+#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:346
+#: dlls/shell32/shell32.rc:375
 msgid "General"
 msgstr "Общие"
 
@@ -2740,7 +2740,7 @@ msgstr "Расширенное использование ключа (свойс
 msgid "Friendly name"
 msgstr "Понятное имя"
 
-#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:242
+#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:240
 #: programs/ipconfig/ipconfig.rc:44
 msgid "Description"
 msgstr "Описание"
@@ -3129,7 +3129,7 @@ msgstr "Примечание: закрытый ключ этого сертиф�
 msgid "Intended Use"
 msgstr "Предназначение"
 
-#: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:152
+#: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:150
 msgid "Location"
 msgstr "Размещение"
 
@@ -8192,7 +8192,7 @@ msgstr "функции из:"
 msgid "choose which folder contains %s"
 msgstr "выберите каталог, содержащий %s"
 
-#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:238
+#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:236
 msgid "New Folder"
 msgstr "Новая папка"
 
@@ -9393,7 +9393,7 @@ msgstr ""
 "Добавление объекта из файла в документ. Работать с объектом можно будет в "
 "создавшей его программе."
 
-#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:197
+#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:195
 msgid "Browse"
 msgstr "Обзор"
 
@@ -9864,26 +9864,26 @@ msgid "&w&bPage &p"
 msgstr "&w&bСтраница &p"
 
 #: dlls/shell32/shell32.rc:30 dlls/shell32/shell32.rc:45
-#: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:162
+#: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:160
 #: programs/taskmgr/taskmgr.rc:65 programs/taskmgr/taskmgr.rc:110
 #: programs/taskmgr/taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "&Крупные значки"
 
 #: dlls/shell32/shell32.rc:31 dlls/shell32/shell32.rc:46
-#: dlls/shell32/shell32.rc:123 dlls/shell32/shell32.rc:163
+#: dlls/shell32/shell32.rc:123 dlls/shell32/shell32.rc:161
 #: programs/taskmgr/taskmgr.rc:66 programs/taskmgr/taskmgr.rc:111
 #: programs/taskmgr/taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "&Мелкие значки"
 
 #: dlls/shell32/shell32.rc:32 dlls/shell32/shell32.rc:47
-#: dlls/shell32/shell32.rc:124 dlls/shell32/shell32.rc:164
+#: dlls/shell32/shell32.rc:124 dlls/shell32/shell32.rc:162
 msgid "&List"
 msgstr "&Список"
 
 #: dlls/shell32/shell32.rc:33 dlls/shell32/shell32.rc:48
-#: dlls/shell32/shell32.rc:125 dlls/shell32/shell32.rc:165
+#: dlls/shell32/shell32.rc:125 dlls/shell32/shell32.rc:163
 #: programs/taskmgr/taskmgr.rc:67 programs/taskmgr/taskmgr.rc:112
 #: programs/taskmgr/taskmgr.rc:254
 msgid "&Details"
@@ -9975,47 +9975,47 @@ msgstr "В&ыйти"
 msgid "&About Control Panel"
 msgstr "&О Панели Управления"
 
-#: dlls/shell32/shell32.rc:273 dlls/shell32/shell32.rc:288
+#: dlls/shell32/shell32.rc:271 dlls/shell32/shell32.rc:286
 msgid "Browse for Folder"
 msgstr "Обзор"
 
-#: dlls/shell32/shell32.rc:293
+#: dlls/shell32/shell32.rc:291
 msgid "Folder:"
 msgstr "Папка:"
 
-#: dlls/shell32/shell32.rc:299
+#: dlls/shell32/shell32.rc:297
 msgid "&Make New Folder"
 msgstr "Создать &новую папку"
 
-#: dlls/shell32/shell32.rc:306
+#: dlls/shell32/shell32.rc:304
 msgid "Message"
 msgstr "Сообщение"
 
-#: dlls/shell32/shell32.rc:310
+#: dlls/shell32/shell32.rc:308
 msgid "Yes to &all"
 msgstr "Да для &всех"
 
-#: dlls/shell32/shell32.rc:319
+#: dlls/shell32/shell32.rc:317
 msgid "About %s"
 msgstr "О %s"
 
-#: dlls/shell32/shell32.rc:323
+#: dlls/shell32/shell32.rc:321
 msgid "Wine &license"
 msgstr "&Лицензия Wine"
 
-#: dlls/shell32/shell32.rc:328
+#: dlls/shell32/shell32.rc:326
 msgid "Running on %s"
 msgstr "Версия Wine %s"
 
-#: dlls/shell32/shell32.rc:329
+#: dlls/shell32/shell32.rc:327
 msgid "Wine was brought to you by:"
 msgstr "Разработчики Wine:"
 
-#: dlls/shell32/shell32.rc:334
+#: dlls/shell32/shell32.rc:332
 msgid "Run"
 msgstr "Запустить"
 
-#: dlls/shell32/shell32.rc:338
+#: dlls/shell32/shell32.rc:336
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -10023,61 +10023,61 @@ msgstr ""
 "Введите имя программы, папки, документа или ресурс Интернета, и Wine откроет "
 "их."
 
-#: dlls/shell32/shell32.rc:339
+#: dlls/shell32/shell32.rc:337
 msgid "&Open:"
 msgstr "&Открыть:"
 
-#: dlls/shell32/shell32.rc:343 programs/progman/progman.rc:182
+#: dlls/shell32/shell32.rc:341 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
 #: programs/winecfg/winecfg.rc:241 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "&Обзор..."
 
-#: dlls/shell32/shell32.rc:355 dlls/shell32/shell32.rc:384
+#: dlls/shell32/shell32.rc:353 dlls/shell32/shell32.rc:382
 msgid "File type:"
 msgstr "Тип файла:"
 
-#: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
+#: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "Путь:"
 
-#: dlls/shell32/shell32.rc:361 dlls/shell32/shell32.rc:394
+#: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
 msgstr "Размер:"
 
-#: dlls/shell32/shell32.rc:365 dlls/shell32/shell32.rc:398
+#: dlls/shell32/shell32.rc:363 dlls/shell32/shell32.rc:396
 msgid "Creation date:"
 msgstr "Дата создания:"
 
-#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
+#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
 msgid "Attributes:"
 msgstr "Атрибуты:"
 
-#: dlls/shell32/shell32.rc:371 dlls/shell32/shell32.rc:408
+#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
 #: programs/winefile/winefile.rc:173
 msgid "H&idden"
 msgstr "С&крытый"
 
-#: dlls/shell32/shell32.rc:372 dlls/shell32/shell32.rc:409
+#: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
 msgstr "&Архивный"
 
-#: dlls/shell32/shell32.rc:386
+#: dlls/shell32/shell32.rc:384
 msgid "Open with:"
 msgstr "Открывать в:"
 
-#: dlls/shell32/shell32.rc:389
+#: dlls/shell32/shell32.rc:387
 msgid "&Change..."
 msgstr "&Изменить..."
 
-#: dlls/shell32/shell32.rc:400
+#: dlls/shell32/shell32.rc:398
 msgid "Last modified:"
 msgstr "Изменён:"
 
-#: dlls/shell32/shell32.rc:402
+#: dlls/shell32/shell32.rc:400
 msgid "Last accessed:"
 msgstr "Открыт:"
 
@@ -10108,210 +10108,202 @@ msgid "Comments"
 msgstr "Комментарий"
 
 #: dlls/shell32/shell32.rc:146
-msgid "Owner"
-msgstr "Владелец"
-
-#: dlls/shell32/shell32.rc:147
-msgid "Group"
-msgstr "Группа"
-
-#: dlls/shell32/shell32.rc:148
 msgid "Original location"
 msgstr "Исходное местонахождение"
 
-#: dlls/shell32/shell32.rc:149
+#: dlls/shell32/shell32.rc:147
 msgid "Date deleted"
 msgstr "Время удаления"
 
-#: dlls/shell32/shell32.rc:156 programs/winecfg/winecfg.rc:100
+#: dlls/shell32/shell32.rc:154 programs/winecfg/winecfg.rc:100
 #: programs/winefile/winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Рабочий стол"
 
-#: dlls/shell32/shell32.rc:157 programs/regedit/regedit.rc:238
+#: dlls/shell32/shell32.rc:155 programs/regedit/regedit.rc:238
 msgid "My Computer"
 msgstr "Мой компьютер"
 
-#: dlls/shell32/shell32.rc:159
+#: dlls/shell32/shell32.rc:157
 msgid "Control Panel"
 msgstr "Панель Управления"
 
-#: dlls/shell32/shell32.rc:166
+#: dlls/shell32/shell32.rc:164
 msgid "Select"
 msgstr "&Выбрать"
 
-#: dlls/shell32/shell32.rc:189
+#: dlls/shell32/shell32.rc:187
 msgid "Restart"
 msgstr "Перезагрузить"
 
-#: dlls/shell32/shell32.rc:190
+#: dlls/shell32/shell32.rc:188
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Вы хотите симулировать перезапуск Windows?"
 
-#: dlls/shell32/shell32.rc:191
+#: dlls/shell32/shell32.rc:189
 msgid "Shutdown"
 msgstr "Выключить питание"
 
-#: dlls/shell32/shell32.rc:192
+#: dlls/shell32/shell32.rc:190
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Закончить работу с Wine?"
 
-#: dlls/shell32/shell32.rc:203 programs/progman/progman.rc:83
+#: dlls/shell32/shell32.rc:201 programs/progman/progman.rc:83
 msgid "Programs"
 msgstr "Программы"
 
-#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
-#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+#: dlls/shell32/shell32.rc:202 dlls/shell32/shell32.rc:217
+#: dlls/shell32/shell32.rc:148 dlls/shell32/shell32.rc:233
 msgid "Documents"
 msgstr "Документы"
 
-#: dlls/shell32/shell32.rc:205
+#: dlls/shell32/shell32.rc:203
 msgid "Favorites"
 msgstr "Избранное"
 
-#: dlls/shell32/shell32.rc:206
+#: dlls/shell32/shell32.rc:204
 msgid "StartUp"
 msgstr "Автозагрузка"
 
-#: dlls/shell32/shell32.rc:207
+#: dlls/shell32/shell32.rc:205
 msgid "Start Menu"
 msgstr "Главное меню"
 
-#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+#: dlls/shell32/shell32.rc:206 dlls/shell32/shell32.rc:219
 msgid "Music"
 msgstr "Музыка"
 
-#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+#: dlls/shell32/shell32.rc:207 dlls/shell32/shell32.rc:221
 msgid "Videos"
 msgstr "Видео"
 
-#: dlls/shell32/shell32.rc:210
+#: dlls/shell32/shell32.rc:208
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Рабочий стол"
 
-#: dlls/shell32/shell32.rc:211
+#: dlls/shell32/shell32.rc:209
 msgid "NetHood"
 msgstr "Сетевое окружение"
 
-#: dlls/shell32/shell32.rc:212
+#: dlls/shell32/shell32.rc:210
 msgid "Templates"
 msgstr "Шаблоны"
 
-#: dlls/shell32/shell32.rc:213
+#: dlls/shell32/shell32.rc:211
 msgid "PrintHood"
 msgstr "Принтеры"
 
-#: dlls/shell32/shell32.rc:214 programs/winhlp32/winhlp32.rc:49
+#: dlls/shell32/shell32.rc:212 programs/winhlp32/winhlp32.rc:49
 msgid "History"
 msgstr "История"
 
-#: dlls/shell32/shell32.rc:215
+#: dlls/shell32/shell32.rc:213
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+#: dlls/shell32/shell32.rc:215 dlls/shell32/shell32.rc:220
 msgid "Pictures"
 msgstr "Рисунки"
 
-#: dlls/shell32/shell32.rc:218
+#: dlls/shell32/shell32.rc:216
 msgid "Common Files"
 msgstr "Common Files"
 
-#: dlls/shell32/shell32.rc:220
+#: dlls/shell32/shell32.rc:218
 msgid "Administrative Tools"
 msgstr "Администрирование"
 
-#: dlls/shell32/shell32.rc:216
+#: dlls/shell32/shell32.rc:214
 msgid "Program Files (x86)"
 msgstr "Program Files (x86)"
 
-#: dlls/shell32/shell32.rc:224
+#: dlls/shell32/shell32.rc:222
 msgid "Contacts"
 msgstr "Контакты"
 
-#: dlls/shell32/shell32.rc:225 programs/winefile/winefile.rc:112
+#: dlls/shell32/shell32.rc:223 programs/winefile/winefile.rc:112
 msgid "Links"
 msgstr "Ссылки"
 
-#: dlls/shell32/shell32.rc:226
+#: dlls/shell32/shell32.rc:224
 msgid "Slide Shows"
 msgstr "Слайд-шоу"
 
-#: dlls/shell32/shell32.rc:227
+#: dlls/shell32/shell32.rc:225
 msgid "Playlists"
 msgstr "Списки воспроизведения"
 
-#: dlls/shell32/shell32.rc:151 programs/taskmgr/taskmgr.rc:326
+#: dlls/shell32/shell32.rc:149 programs/taskmgr/taskmgr.rc:326
 msgid "Status"
 msgstr "Состояние"
 
-#: dlls/shell32/shell32.rc:153
+#: dlls/shell32/shell32.rc:151
 msgid "Model"
 msgstr "Модель"
 
-#: dlls/shell32/shell32.rc:228
+#: dlls/shell32/shell32.rc:226
 msgid "Sample Music"
 msgstr "Образцы музыки"
 
-#: dlls/shell32/shell32.rc:229
+#: dlls/shell32/shell32.rc:227
 msgid "Sample Pictures"
 msgstr "Образцы изображений"
 
-#: dlls/shell32/shell32.rc:230
+#: dlls/shell32/shell32.rc:228
 msgid "Sample Playlists"
 msgstr "Образцы списков воспроизведения"
 
-#: dlls/shell32/shell32.rc:231
+#: dlls/shell32/shell32.rc:229
 msgid "Sample Videos"
 msgstr "Образцы видео"
 
-#: dlls/shell32/shell32.rc:232
+#: dlls/shell32/shell32.rc:230
 msgid "Saved Games"
 msgstr "Сохранённые игры"
 
-#: dlls/shell32/shell32.rc:233
+#: dlls/shell32/shell32.rc:231
 msgid "Searches"
 msgstr "Поиски"
 
-#: dlls/shell32/shell32.rc:234
+#: dlls/shell32/shell32.rc:232
 msgid "Users"
 msgstr "Пользователи"
 
-#: dlls/shell32/shell32.rc:236
+#: dlls/shell32/shell32.rc:234
 msgid "Downloads"
 msgstr "Загрузки"
 
-#: dlls/shell32/shell32.rc:169
+#: dlls/shell32/shell32.rc:167
 msgid "Unable to create new Folder: Permission denied."
 msgstr "Невозможно создать папку - нет полномочий."
 
-#: dlls/shell32/shell32.rc:170
+#: dlls/shell32/shell32.rc:168
 msgid "Error during creation of a new folder"
 msgstr "Ошибка во время создания папки"
 
-#: dlls/shell32/shell32.rc:171
+#: dlls/shell32/shell32.rc:169
 msgid "Confirm file deletion"
 msgstr "Подтверждение удаления файла"
 
-#: dlls/shell32/shell32.rc:172
+#: dlls/shell32/shell32.rc:170
 msgid "Confirm folder deletion"
 msgstr "Подтверждение удаления папки"
 
-#: dlls/shell32/shell32.rc:173
+#: dlls/shell32/shell32.rc:171
 msgid "Are you sure you want to delete '%1'?"
 msgstr "Удалить «%1»?"
 
-#: dlls/shell32/shell32.rc:174
+#: dlls/shell32/shell32.rc:172
 msgid "Are you sure you want to delete these %1 items?"
 msgstr "Удалить эти объекты (%1)?"
 
-#: dlls/shell32/shell32.rc:181
+#: dlls/shell32/shell32.rc:179
 msgid "Confirm file overwrite"
 msgstr "Подтверждение замены файла"
 
-#: dlls/shell32/shell32.rc:180
+#: dlls/shell32/shell32.rc:178
 msgid ""
 "This folder already contains a file called '%1'.\n"
 "\n"
@@ -10321,28 +10313,28 @@ msgstr ""
 "\n"
 "Вы хотите заменить его?"
 
-#: dlls/shell32/shell32.rc:175
+#: dlls/shell32/shell32.rc:173
 msgid "Are you sure you want to delete the selected item(s)?"
 msgstr "Удалить выбранные объекты?"
 
-#: dlls/shell32/shell32.rc:177
+#: dlls/shell32/shell32.rc:175
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr "Переместить папку «%1» и всё её содержимое в корзину?"
 
-#: dlls/shell32/shell32.rc:176
+#: dlls/shell32/shell32.rc:174
 msgid "Are you sure that you want to send '%1' to the Trash?"
 msgstr "Переместить «%1» в корзину?"
 
-#: dlls/shell32/shell32.rc:178
+#: dlls/shell32/shell32.rc:176
 msgid "Are you sure that you want to send these %1 items to the Trash?"
 msgstr "Переместить объекты (%1) в корзину?"
 
-#: dlls/shell32/shell32.rc:179
+#: dlls/shell32/shell32.rc:177
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr "Объект «%1» нельзя отправить в корзину. Вы хотите его удалить?"
 
-#: dlls/shell32/shell32.rc:186
+#: dlls/shell32/shell32.rc:184
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -10356,39 +10348,39 @@ msgstr ""
 "папке, они будут заменены. Вы всё ещё хотите переместить или скопировать\n"
 "папку?"
 
-#: dlls/shell32/shell32.rc:240
+#: dlls/shell32/shell32.rc:238
 msgid "Wine Control Panel"
 msgstr "Панель Управления Wine"
 
-#: dlls/shell32/shell32.rc:195
+#: dlls/shell32/shell32.rc:193
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "Не удалось отобразить диалог запуска программ (внутренняя ошибка)"
 
-#: dlls/shell32/shell32.rc:196
+#: dlls/shell32/shell32.rc:194
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "Невозможно отобразить диалог Обзор (внутренняя ошибка)"
 
-#: dlls/shell32/shell32.rc:198
+#: dlls/shell32/shell32.rc:196
 msgid "Executable files (*.exe)"
 msgstr "Исполняемые файлы (*.exe)"
 
-#: dlls/shell32/shell32.rc:244
+#: dlls/shell32/shell32.rc:242
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Программы для открытия файлов этого типа не сконфигурировано."
 
-#: dlls/shell32/shell32.rc:246
+#: dlls/shell32/shell32.rc:244
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Вы действительно хотите удалить «%1»?"
 
-#: dlls/shell32/shell32.rc:247
+#: dlls/shell32/shell32.rc:245
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Вы действительно хотите навсегда удалить эти объекты (%1)?"
 
-#: dlls/shell32/shell32.rc:248
+#: dlls/shell32/shell32.rc:246
 msgid "Confirm deletion"
 msgstr "Подтверждение удаления"
 
-#: dlls/shell32/shell32.rc:249
+#: dlls/shell32/shell32.rc:247
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -10398,7 +10390,7 @@ msgstr ""
 "\n"
 "Вы хотите заменить его?"
 
-#: dlls/shell32/shell32.rc:250
+#: dlls/shell32/shell32.rc:248
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -10408,11 +10400,11 @@ msgstr ""
 "\n"
 "Вы хотите заменить её?"
 
-#: dlls/shell32/shell32.rc:251
+#: dlls/shell32/shell32.rc:249
 msgid "Confirm overwrite"
 msgstr "Подтверждение замены"
 
-#: dlls/shell32/shell32.rc:268
+#: dlls/shell32/shell32.rc:266
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -10441,11 +10433,11 @@ msgstr ""
 "так, обратитесь в Free Software Foundation, Inc., 51 Franklin St, Fifth "
 "Floor, Boston, MA 02110-1301, USA."
 
-#: dlls/shell32/shell32.rc:256
+#: dlls/shell32/shell32.rc:254
 msgid "Wine License"
 msgstr "Лицензия Wine"
 
-#: dlls/shell32/shell32.rc:158
+#: dlls/shell32/shell32.rc:156
 msgid "Trash"
 msgstr "Корзина"
 

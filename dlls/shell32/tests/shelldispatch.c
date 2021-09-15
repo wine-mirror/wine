@@ -702,11 +702,8 @@ static void test_items(void)
             variant_set_string(&str_index2, cstr);
             item2 = (FolderItem*)0xdeadbeef;
             r = FolderItems_Item(items, str_index2, &item2);
-       todo_wine {
             ok(r == S_FALSE, "file_defs[%d]: expected S_FALSE, got %08x\n", i, r);
             ok(!item2, "file_defs[%d]: item is not null\n", i);
-       }
-            if (item2) FolderItem_Release(item2);
             VariantClear(&str_index2);
 
             /* remove the directory */

@@ -153,6 +153,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
                 HWND hwndOwner, LPBC pbc, LPOLESTR lpszDisplayName,
                 DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
+    static const WCHAR unix_root[] = {'\\','\\','?','\\','u','n','i','x','\\',0};
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
     WCHAR szElement[MAX_PATH];
     LPCWSTR szNext = NULL;
@@ -185,10 +186,12 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
     else if (PathGetDriveNumberW (lpszDisplayName) >= 0)
     {
         /* it's a filesystem path with a drive. Let MyComputer/UnixDosFolder parse it */
-        if (UNIXFS_is_rooted_at_desktop()) 
-            pidlTemp = _ILCreateGuid(PT_GUID, &CLSID_UnixDosFolder);
-        else
-            pidlTemp = _ILCreateMyComputer ();
+        pidlTemp = _ILCreateMyComputer ();
+        szNext = lpszDisplayName;
+    }
+    else if (!strncmpW( lpszDisplayName, unix_root, 9 ))
+    {
+        pidlTemp = _ILCreateGuid(PT_GUID, &CLSID_UnixDosFolder);
         szNext = lpszDisplayName;
     }
     else if (PathIsUNCW(lpszDisplayName))

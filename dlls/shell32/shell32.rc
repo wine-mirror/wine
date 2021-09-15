@@ -142,8 +142,6 @@ STRINGTABLE
 	IDS_SHV_COLUMN7		"Size available"
 	IDS_SHV_COLUMN8		"Name"
 	IDS_SHV_COLUMN9		"Comments"
-	IDS_SHV_COLUMN10	"Owner"
-	IDS_SHV_COLUMN11	"Group"
 	IDS_SHV_COLUMN_DELFROM	"Original location"
 	IDS_SHV_COLUMN_DELDATE	"Date deleted"
 	IDS_SHV_COL_DOCS	"Documents"

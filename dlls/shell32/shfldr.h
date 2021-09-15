@@ -56,8 +56,6 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot, const CLSID *clsidChild,
 HRESULT SHELL32_CompareIDs(IShellFolder2 *iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) DECLSPEC_HIDDEN;
 LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path) DECLSPEC_HIDDEN;
 
-HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface, LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppvOut) DECLSPEC_HIDDEN;
-
 static inline int SHELL32_GUIDToStringA (REFGUID guid, LPSTR str)
 {
     return sprintf(str, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
@@ -80,7 +78,6 @@ static inline int SHELL32_GUIDToStringW (REFGUID guid, LPWSTR str)
 }
 
 void SHELL_FS_ProcessDisplayFilename(LPWSTR szPath, DWORD dwFlags) DECLSPEC_HIDDEN;
-BOOL SHELL_FS_HideExtension(LPCWSTR pwszPath) DECLSPEC_HIDDEN;
 
 DEFINE_GUID( CLSID_UnixFolder, 0xcc702eb2, 0x7dc5, 0x11d9, 0xc6, 0x87, 0x00, 0x04, 0x23, 0x8a, 0x01, 0xcd );
 DEFINE_GUID( CLSID_UnixDosFolder, 0x9d20aae8, 0x0625, 0x44b0, 0x9c, 0xa7, 0x71, 0x88, 0x9c, 0x22, 0x54, 0xd9 );
