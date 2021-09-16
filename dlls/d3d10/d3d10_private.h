@@ -264,6 +264,7 @@ struct d3d10_effect
     LONG refcount;
 
     ID3D10Device *device;
+    ID3D10Effect *pool;
     DWORD version;
     DWORD local_buffer_count;
     DWORD variable_count;

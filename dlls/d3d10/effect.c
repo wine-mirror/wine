@@ -3104,6 +3104,8 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
 
         wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
 
+        if (This->pool)
+            This->pool->lpVtbl->Release(This->pool);
         ID3D10Device_Release(This->device);
         heap_free(This);
     }
@@ -3144,26 +3146,32 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3
 static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDesc(ID3D10Effect *iface, D3D10_EFFECT_DESC *desc)
 {
     struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
+    D3D10_EFFECT_DESC pool_desc = { 0 };
     unsigned int i;
+    HRESULT hr;
 
-    FIXME("iface %p, desc %p.\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc)
         return E_INVALIDARG;
 
-    /* FIXME */
-    desc->IsChildEffect = FALSE;
-    desc->SharedConstantBuffers = 0;
-    desc->SharedGlobalVariables = 0;
+    if (effect->pool && FAILED(hr = effect->pool->lpVtbl->GetDesc(effect->pool, &pool_desc)))
+    {
+        WARN("Failed to get pool description, hr %#x.\n", hr);
+        return hr;
+    }
 
+    desc->IsChildEffect = !!effect->pool;
     desc->ConstantBuffers = effect->local_buffer_count;
-    desc->Techniques = effect->technique_count;
+    desc->SharedConstantBuffers = pool_desc.ConstantBuffers;
     desc->GlobalVariables = effect->local_variable_count;
     for (i = 0; i < effect->local_buffer_count; ++i)
     {
         struct d3d10_effect_variable *l = &effect->local_buffers[i];
         desc->GlobalVariables += l->type->member_count;
     }
+    desc->SharedGlobalVariables = pool_desc.GlobalVariables;
+    desc->Techniques = effect->technique_count;
 
     return S_OK;
 }
@@ -8406,7 +8414,7 @@ static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry
 }
 
 static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *device,
-        const ID3D10EffectVtbl *vtbl, struct d3d10_effect **effect)
+        ID3D10Effect *pool, const ID3D10EffectVtbl *vtbl, struct d3d10_effect **effect)
 {
     struct d3d10_effect *object;
     HRESULT hr;
@@ -8420,6 +8428,8 @@ static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *d
     object->refcount = 1;
     ID3D10Device_AddRef(device);
     object->device = device;
+    object->pool = pool;
+    if (pool) pool->lpVtbl->AddRef(pool);
 
     hr = d3d10_effect_parse(object, data, data_size);
     if (FAILED(hr))
@@ -8438,6 +8448,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
         ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
 {
     struct d3d10_effect *object;
+    ID3D10Effect *pool = NULL;
     HRESULT hr;
 
     FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
@@ -8446,7 +8457,17 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
     if (!(flags & D3D10_EFFECT_COMPILE_CHILD_EFFECT) != !effect_pool)
         return E_INVALIDARG;
 
-    if (FAILED(hr = d3d10_create_effect(data, data_size, device, &d3d10_effect_vtbl, &object)))
+    if (effect_pool)
+    {
+        pool = effect_pool->lpVtbl->AsEffect(effect_pool);
+        if (pool->lpVtbl != &d3d10_effect_pool_effect_vtbl)
+        {
+            WARN("External pool implementations are not supported.\n");
+            return E_INVALIDARG;
+        }
+    }
+
+    if (FAILED(hr = d3d10_create_effect(data, data_size, device, pool, &d3d10_effect_vtbl, &object)))
     {
         WARN("Failed to create an effect, hr %#x.\n", hr);
     }
@@ -8499,8 +8520,8 @@ HRESULT WINAPI D3D10CreateEffectPoolFromMemory(void *data, SIZE_T data_size, UIN
     TRACE("data %p, data_size %lu, fx_flags %#x, device %p, effect_pool %p.\n",
             data, data_size, fx_flags, device, effect_pool);
 
-    if (FAILED(hr = d3d10_create_effect(data, data_size, device, &d3d10_effect_pool_effect_vtbl,
-            &object)))
+    if (FAILED(hr = d3d10_create_effect(data, data_size, device, NULL,
+            &d3d10_effect_pool_effect_vtbl, &object)))
     {
         WARN("Failed to create an effect, hr %#x.\n", hr);
         return hr;

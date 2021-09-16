@@ -6574,19 +6574,15 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     refcount = get_refcount(pool);
-todo_wine
     ok(refcount == 2, "Unexpected refcount %u.\n", refcount);
 
     hr = child_effect->lpVtbl->GetDesc(child_effect, &desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(desc.IsChildEffect, "Unexpected child flag.\n");
     ok(desc.ConstantBuffers == 2, "Unexpected buffer count %u.\n", desc.ConstantBuffers);
-todo_wine
     ok(desc.SharedConstantBuffers == 1, "Unexpected shared buffer count %u.\n",
             desc.SharedConstantBuffers);
     ok(desc.GlobalVariables == 2, "Unexpected variables count %u.\n", desc.GlobalVariables);
-todo_wine
     ok(desc.SharedGlobalVariables == 5, "Unexpected shared variables count %u.\n",
             desc.SharedGlobalVariables);
 
