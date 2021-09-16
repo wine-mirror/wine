@@ -982,7 +982,10 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
         goto err;
 
     if (!filter->init_gst(filter))
+    {
+        hr = E_FAIL;
         goto err;
+    }
 
     for (i = 0; i < filter->source_count; ++i)
     {
