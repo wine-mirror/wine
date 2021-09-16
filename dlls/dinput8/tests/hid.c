@@ -3443,6 +3443,26 @@ static void test_simple_joystick(void)
     check_member( devinst, expect_devinst, "%04x", wUsagePage );
     check_member( devinst, expect_devinst, "%04x", wUsage );
 
+    hr = IDirectInput8_CreateDevice( di, &devinst.guidInstance, NULL, NULL );
+    ok( hr == E_POINTER, "IDirectInput8_CreateDevice returned %#x\n", hr );
+    hr = IDirectInput8_CreateDevice( di, NULL, &device, NULL );
+    ok( hr == E_POINTER, "IDirectInput8_CreateDevice returned %#x\n", hr );
+    hr = IDirectInput8_CreateDevice( di, &GUID_NULL, &device, NULL );
+    ok( hr == DIERR_DEVICENOTREG, "IDirectInput8_CreateDevice returned %#x\n", hr );
+    hr = IDirectInput8_CreateDevice( di, &devinst.guidInstance, &device, NULL );
+    ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_VIDPID returned %#x\n", hr );
+    /* Wine may get the wrong device here, because the test driver creates another instance of
+       hidclass.sys, and gets duplicate rawinput handles, which we use in the guidInstance */
+    todo_wine_if( prop_dword.dwData != EXPECT_VIDPID )
+    ok( prop_dword.dwData == EXPECT_VIDPID, "got %#x expected %#x\n", prop_dword.dwData, EXPECT_VIDPID );
+
+    ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
+
     hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
     ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
 
