@@ -3710,7 +3710,7 @@ static void dwarf2_module_remove(struct process* pcs, struct module_format* modf
 
 static BOOL dwarf2_load_CU_module(dwarf2_parse_module_context_t* module_ctx, struct module* module,
                                   dwarf2_section_t* sections, ULONG_PTR load_offset,
-                                  const struct elf_thunk_area* thunks)
+                                  const struct elf_thunk_area* thunks, BOOL is_dwz)
 {
     dwarf2_traverse_context_t   mod_ctx;
     unsigned i;
@@ -3736,9 +3736,14 @@ static BOOL dwarf2_load_CU_module(dwarf2_parse_module_context_t* module_ctx, str
         dwarf2_parse_compilation_unit_head(unit_ctx, &mod_ctx);
     }
 
-    /* phase2: load content of all CU */
-    for (i = 0; i < module_ctx->unit_contexts.num_elts; ++i)
-        dwarf2_parse_compilation_unit((dwarf2_parse_context_t*)vector_at(&module_ctx->unit_contexts, i));
+    /* phase2: load content of all CU
+     * If this is a DWZ alternate module, don't load all debug_info at once
+     * wait for main module to ask for them (it's likely it won't need them all)
+     * Doing this can lead to a huge performance improvement.
+     */
+    if (!is_dwz)
+        for (i = 0; i < module_ctx->unit_contexts.num_elts; ++i)
+            dwarf2_parse_compilation_unit((dwarf2_parse_context_t*)vector_at(&module_ctx->unit_contexts, i));
 
     return TRUE;
 }
@@ -3765,7 +3770,7 @@ static dwarf2_dwz_alternate_t* dwarf2_load_dwz(struct image_file_map* fmap, stru
     dwarf2_init_section(&dwz->sections[section_ranges], fmap_dwz, ".debug_ranges", ".zdebug_ranges", &dwz->sectmap[section_ranges]);
 
     dwz->module_ctx.dwz = NULL;
-    dwarf2_load_CU_module(&dwz->module_ctx, module, dwz->sections, 0/*FIXME*/, NULL);
+    dwarf2_load_CU_module(&dwz->module_ctx, module, dwz->sections, 0/*FIXME*/, NULL, TRUE);
     return dwz;
 }
 
@@ -3864,7 +3869,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_modfmt->u.dwarf2_info->num_cuheads = 0;
 
     module_ctx.dwz = dwarf2_load_dwz(fmap, module);
-    dwarf2_load_CU_module(&module_ctx, module, section, load_offset, thunks);
+    dwarf2_load_CU_module(&module_ctx, module, section, load_offset, thunks, FALSE);
 
     dwarf2_modfmt->module->module.SymType = SymDia;
     /* hide dwarf versions in CVSig
