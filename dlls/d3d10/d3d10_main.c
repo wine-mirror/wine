@@ -230,50 +230,6 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
     return S_OK;
 }
 
-static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry *entry)
-{
-    const struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, const struct d3d10_effect_type, entry);
-    const DWORD *id = key;
-
-    return *id - t->id;
-}
-
-HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
-        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
-{
-    struct d3d10_effect *object;
-    HRESULT hr;
-
-    FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
-            data, data_size, flags, device, effect_pool, effect);
-
-    if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        ERR("Failed to allocate D3D10 effect object memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    wine_rb_init(&object->types, d3d10_effect_type_compare);
-    object->ID3D10Effect_iface.lpVtbl = &d3d10_effect_vtbl;
-    object->refcount = 1;
-    ID3D10Device_AddRef(device);
-    object->device = device;
-
-    hr = d3d10_effect_parse(object, data, data_size);
-    if (FAILED(hr))
-    {
-        ERR("Failed to parse effect\n");
-        IUnknown_Release(&object->ID3D10Effect_iface);
-        return hr;
-    }
-
-    *effect = &object->ID3D10Effect_iface;
-
-    TRACE("Created ID3D10Effect %p\n", object);
-
-    return S_OK;
-}
-
 HRESULT WINAPI D3D10CompileEffectFromMemory(void *data, SIZE_T data_size, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, UINT hlsl_flags, UINT fx_flags,
         ID3D10Blob **effect, ID3D10Blob **errors)
@@ -285,15 +241,6 @@ HRESULT WINAPI D3D10CompileEffectFromMemory(void *data, SIZE_T data_size, const 
 
     return D3DCompile(data, data_size, filename, defines, include,
             NULL, "fx_4_0", hlsl_flags, fx_flags, effect, errors);
-}
-
-HRESULT WINAPI D3D10CreateEffectPoolFromMemory(void *data, SIZE_T data_size, UINT fx_flags,
-        ID3D10Device *device, ID3D10EffectPool **effect_pool)
-{
-    FIXME("data %p, data_size %lu, fx_flags %#x, device %p, effect_pool %p stub.\n",
-            data, data_size, fx_flags, device, effect_pool);
-
-    return E_NOTIMPL;
 }
 
 const char * WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device)
