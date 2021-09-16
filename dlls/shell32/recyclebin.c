@@ -68,6 +68,13 @@ static const shvheader RecycleBinColumns[] =
 
 #define COLUMNS_COUNT  6
 
+static const WIN32_FIND_DATAW *get_trash_item_data( LPCITEMIDLIST id )
+{
+    if (id->mkid.cb < 2 + 1 + sizeof(WIN32_FIND_DATAW) + 2) return NULL;
+    if (id->mkid.abID[0] != 0) return NULL;
+    return (const WIN32_FIND_DATAW *)(id->mkid.abID + 1);
+}
+
 static HRESULT FormatDateTime(LPWSTR buffer, int size, FILETIME ft)
 {
     FILETIME lft;
@@ -183,11 +190,11 @@ static void DoRestore(RecycleBinMenu *This)
     UINT i;
     for(i=0;i<This->cidl;i++)
     {
-        WIN32_FIND_DATAW data;
-        TRASH_UnpackItemID(&((This->apidl[i])->mkid),&data);
-        if(PathFileExistsW(data.cFileName))
+        const WIN32_FIND_DATAW *data = get_trash_item_data( This->apidl[i] );
+
+        if(PathFileExistsW(data->cFileName))
         {
-            PIDLIST_ABSOLUTE dest_pidl = ILCreateFromPathW(data.cFileName);
+            PIDLIST_ABSOLUTE dest_pidl = ILCreateFromPathW(data->cFileName);
             WCHAR message[100];
             WCHAR caption[50];
             if(_ILIsFolder(ILFindLastID(dest_pidl)))
@@ -198,14 +205,14 @@ static void DoRestore(RecycleBinMenu *This)
 
             if(ShellMessageBoxW(shell32_hInstance,GetActiveWindow(),message,
                                 caption,MB_YESNO|MB_ICONEXCLAMATION,
-                                data.cFileName)!=IDYES)
+                                data->cFileName)!=IDYES)
                 continue;
         }
         if(SUCCEEDED(TRASH_RestoreItem(This->apidl[i])))
         {
             IPersistFolder2 *persist;
             LPITEMIDLIST root_pidl;
-            PIDLIST_ABSOLUTE dest_pidl = ILCreateFromPathW(data.cFileName);
+            PIDLIST_ABSOLUTE dest_pidl = ILCreateFromPathW(data->cFileName);
             BOOL is_folder = _ILIsFolder(ILFindLastID(dest_pidl));
             IShellFolder2_QueryInterface(This->folder,&IID_IPersistFolder2,
                                          (void**)&persist);
@@ -513,12 +520,11 @@ static HRESULT WINAPI RecycleBin_GetUIObjectOf(IShellFolder2 *iface, HWND hwndOw
 
 static HRESULT WINAPI RecycleBin_GetDisplayNameOf(IShellFolder2 *This, LPCITEMIDLIST pidl, SHGDNF uFlags, STRRET *pName)
 {
-    WIN32_FIND_DATAW data;
+    const WIN32_FIND_DATAW *data = get_trash_item_data( pidl );
 
     TRACE("(%p, %p, %x, %p)\n", This, pidl, uFlags, pName);
-    TRASH_UnpackItemID(&pidl->mkid, &data);
     pName->uType = STRRET_WSTR;
-    return SHStrDupW(PathFindFileNameW(data.cFileName), &pName->u.pOleStr);
+    return SHStrDupW(PathFindFileNameW(data->cFileName), &pName->u.pOleStr);
 }
 
 static HRESULT WINAPI RecycleBin_SetNameOf(IShellFolder2 *This, HWND hwnd, LPCITEMIDLIST pidl, LPCOLESTR pszName,
@@ -598,7 +604,7 @@ static HRESULT WINAPI RecycleBin_GetDetailsEx(IShellFolder2 *iface, LPCITEMIDLIS
 static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIST pidl, UINT iColumn, LPSHELLDETAILS pDetails)
 {
     RecycleBin *This = impl_from_IShellFolder2(iface);
-    WIN32_FIND_DATAW data;
+    const WIN32_FIND_DATAW *data;
     WCHAR buffer[MAX_PATH];
 
     TRACE("(%p, %p, %d, %p)\n", This, pidl, iColumn, pDetails);
@@ -610,21 +616,21 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     if (iColumn == COLUMN_NAME)
         return RecycleBin_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL, &pDetails->str);
 
-    TRASH_UnpackItemID(&pidl->mkid, &data);
+    data = get_trash_item_data( pidl );
     switch (iColumn)
     {
         case COLUMN_DATEDEL:
-            FormatDateTime(buffer, MAX_PATH, data.ftLastAccessTime);
+            FormatDateTime(buffer, MAX_PATH, data->ftLastAccessTime);
             break;
         case COLUMN_DELFROM:
-            lstrcpyW(buffer, data.cFileName);
+            lstrcpyW(buffer, data->cFileName);
             PathRemoveFileSpecW(buffer);
             break;
         case COLUMN_SIZE:
-            StrFormatKBSizeW(((LONGLONG)data.nFileSizeHigh<<32)|data.nFileSizeLow, buffer, MAX_PATH);
+            StrFormatKBSizeW(((LONGLONG)data->nFileSizeHigh<<32)|data->nFileSizeLow, buffer, MAX_PATH);
             break;
         case COLUMN_MTIME:
-            FormatDateTime(buffer, MAX_PATH, data.ftLastWriteTime);
+            FormatDateTime(buffer, MAX_PATH, data->ftLastWriteTime);
             break;
         case COLUMN_TYPE:
             /* TODO */
@@ -767,9 +773,8 @@ static HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, B
             return S_OK;
         case 1:
             {
-                WIN32_FIND_DATAW data;
-                TRASH_UnpackItemID(&((*apidl)->mkid),&data);
-                lstrcpynW(arg,data.cFileName,MAX_PATH);
+                const WIN32_FIND_DATAW *data = get_trash_item_data( apidl[0] );
+                lstrcpynW(arg,data->cFileName,MAX_PATH);
                 LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_ERASEITEM, message, ARRAY_SIZE(message));
                 break;
             }
@@ -847,9 +852,8 @@ HRESULT WINAPI SHQueryRecycleBinW(LPCWSTR pszRootPath, LPSHQUERYRBINFO pSHQueryR
     pSHQueryRBInfo->i64Size = 0;
     for (; i<cidl; i++)
     {
-        WIN32_FIND_DATAW data;
-        TRASH_UnpackItemID(&((apidl[i])->mkid),&data);
-        pSHQueryRBInfo->i64Size += ((DWORDLONG)data.nFileSizeHigh << 32) + data.nFileSizeLow;
+        const WIN32_FIND_DATAW *data = get_trash_item_data( apidl[i] );
+        pSHQueryRBInfo->i64Size += ((DWORDLONG)data->nFileSizeHigh << 32) + data->nFileSizeLow;
         ILFree(apidl[i]);
     }
     SHFree(apidl);
