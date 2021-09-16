@@ -494,6 +494,13 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
     if (!link_device(instanceW, &GUID_DEVINTERFACE_DISPLAY_ADAPTER))
         goto done;
 
+    /* Register GUID_DISPLAY_DEVICE_ARRIVAL */
+    if (!SetupDiCreateDeviceInterfaceW(devinfo, &device_data, &GUID_DISPLAY_DEVICE_ARRIVAL, NULL, 0, NULL))
+        goto done;
+
+    if (!link_device(instanceW, &GUID_DISPLAY_DEVICE_ARRIVAL))
+        goto done;
+
     /* Write HardwareID registry property, REG_MULTI_SZ */
     written = sprintfW(bufferW, gpu_hardware_id_fmtW, gpu->vendor_id, gpu->device_id);
     bufferW[written + 1] = 0;
