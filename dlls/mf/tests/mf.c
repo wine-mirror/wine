@@ -4559,6 +4559,12 @@ todo_wine
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFMediaSink_GetStreamSinkCount(sink, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
     hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_FORWARD, FALSE, &rate);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 

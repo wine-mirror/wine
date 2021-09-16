@@ -1291,9 +1291,6 @@ static HRESULT WINAPI video_renderer_sink_GetStreamSinkCount(IMFMediaSink *iface
 
     TRACE("%p, %p.\n", iface, count);
 
-    if (!count)
-        return E_POINTER;
-
     EnterCriticalSection(&renderer->cs);
     if (renderer->flags & EVR_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
