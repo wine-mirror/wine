@@ -6486,9 +6486,7 @@ todo_wine
 
     /* Create standalone effect from the same blob used for pool,  */
     hr = create_effect(fx_test_pool, D3D10_EFFECT_COMPILE_CHILD_EFFECT, device, NULL, &child_effect);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr)) child_effect->lpVtbl->Release(child_effect);
 
     hr = create_effect(fx_test_pool, 0, device, NULL, &effect2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -6564,14 +6562,10 @@ todo_wine
 
     /* When pool is specified, corresponding flag has to be set. */
     hr = create_effect(fx_test_pool_child, 0, device, pool, &child_effect);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr)) child_effect->lpVtbl->Release(child_effect);
 
     hr = create_effect(fx_test_pool_child, D3D10_EFFECT_COMPILE_CHILD_EFFECT, device, NULL, &child_effect);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr)) child_effect->lpVtbl->Release(child_effect);
 
     refcount = get_refcount(pool);
     ok(refcount == 1, "Unexpected refcount %u.\n", refcount);

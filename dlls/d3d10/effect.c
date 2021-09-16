@@ -8443,6 +8443,9 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
     FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
             data, data_size, flags, device, effect_pool, effect);
 
+    if (!(flags & D3D10_EFFECT_COMPILE_CHILD_EFFECT) != !effect_pool)
+        return E_INVALIDARG;
+
     if (FAILED(hr = d3d10_create_effect(data, data_size, device, &d3d10_effect_vtbl, &object)))
     {
         WARN("Failed to create an effect, hr %#x.\n", hr);
