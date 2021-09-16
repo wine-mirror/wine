@@ -3401,6 +3401,7 @@ static void test_simple_joystick(void)
     };
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEINSTANCEW devinst = {0};
+    DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
@@ -3675,6 +3676,20 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
     todo_wine
     ok( hr == DIERR_NOTINITIALIZED, "IDirectInputDevice8_GetProperty DIPROP_APPDATA returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, NULL );
+    ok( hr == E_POINTER, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
+    dataformat.dwSize = sizeof(DIDATAFORMAT);
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
+    dataformat.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
