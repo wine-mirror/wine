@@ -1375,6 +1375,33 @@ static HRESULT parse_fx10_annotation(const char *data, size_t data_size,
     return S_OK;
 }
 
+static HRESULT parse_fx10_annotations(const char *data, size_t data_size, const char **ptr,
+        struct d3d10_effect *effect, unsigned int annotation_count,
+        struct d3d10_effect_variable **annotations)
+{
+    unsigned int i;
+    HRESULT hr;
+
+    if (!(*annotations = heap_calloc(annotation_count, sizeof(**annotations))))
+    {
+        ERR("Failed to allocate annotations memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < annotation_count; ++i)
+    {
+        struct d3d10_effect_variable *a = &(*annotations)[i];
+
+        a->effect = effect;
+        a->buffer = &null_local_buffer;
+
+        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
+            return hr;
+    }
+
+    return hr;
+}
+
 static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_effect_anonymous_shader *s,
     enum d3d10_effect_object_type otype)
 {
@@ -1904,21 +1931,11 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
     read_dword(ptr, &p->annotation_count);
     TRACE("Pass has %u annotations.\n", p->annotation_count);
 
-    if (!(p->annotations = heap_calloc(p->annotation_count, sizeof(*p->annotations))))
+    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, p->technique->effect,
+            p->annotation_count, &p->annotations)))
     {
-        ERR("Failed to allocate pass annotations memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < p->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &p->annotations[i];
-
-        a->effect = p->technique->effect;
-        a->buffer = &null_local_buffer;
-
-        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
-            return hr;
+        ERR("Failed to parse pass annotations, hr %#x.\n", hr);
+        return hr;
     }
 
     if (!(p->objects = heap_calloc(p->object_count, sizeof(*p->objects))))
@@ -1967,21 +1984,11 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
     read_dword(ptr, &t->annotation_count);
     TRACE("Technique has %u annotations.\n", t->annotation_count);
 
-    if (!(t->annotations = heap_calloc(t->annotation_count, sizeof(*t->annotations))))
+    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, t->effect,
+            t->annotation_count, &t->annotations)))
     {
-        ERR("Failed to allocate technique annotations memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < t->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &t->annotations[i];
-
-        a->effect = t->effect;
-        a->buffer = &null_local_buffer;
-
-        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
-            return hr;
+        ERR("Failed to parse technique annotations, hr %#x.\n", hr);
+        return hr;
     }
 
     if (!(t->passes = heap_calloc(t->pass_count, sizeof(*t->passes))))
@@ -2008,7 +2015,6 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
         const char **ptr, struct d3d10_effect_variable *v)
 {
     DWORD offset, default_value_offset;
-    unsigned int i;
     HRESULT hr;
 
     if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, v)))
@@ -2038,21 +2044,11 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
 
-    if (!(v->annotations = heap_calloc(v->annotation_count, sizeof(*v->annotations))))
+    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, v->effect,
+            v->annotation_count, &v->annotations)))
     {
-        ERR("Failed to allocate variable annotations memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < v->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &v->annotations[i];
-
-        a->effect = v->effect;
-        a->buffer = &null_local_buffer;
-
-        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
-            return hr;
+        ERR("Failed to parse variable annotations, hr %#x.\n", hr);
+        return hr;
     }
 
     if (v->flag & D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
@@ -2254,21 +2250,11 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
 
-    if (!(v->annotations = heap_calloc(v->annotation_count, sizeof(*v->annotations))))
+    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, v->effect,
+            v->annotation_count, &v->annotations)))
     {
-        ERR("Failed to allocate variable annotations memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < v->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &v->annotations[i];
-
-        a->effect = v->effect;
-        a->buffer = &null_local_buffer;
-
-        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
-            return hr;
+        ERR("Failed to parse variable annotations, hr %#x.\n", hr);
+        return hr;
     }
 
     return S_OK;
@@ -2392,21 +2378,11 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     read_dword(ptr, &l->annotation_count);
     TRACE("Local buffer has %u annotations.\n", l->annotation_count);
 
-    if (!(l->annotations = heap_calloc(l->annotation_count, sizeof(*l->annotations))))
+    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, l->effect,
+            l->annotation_count, &l->annotations)))
     {
-        ERR("Failed to allocate local buffer annotations memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < l->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &l->annotations[i];
-
-        a->effect = l->effect;
-        a->buffer = &null_local_buffer;
-
-        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
-            return hr;
+        ERR("Failed to parse buffer annotations, hr %#x.\n", hr);
+        return hr;
     }
 
     if (!(l->members = heap_calloc(l->type->member_count, sizeof(*l->members))))
