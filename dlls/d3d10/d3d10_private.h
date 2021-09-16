@@ -257,10 +257,10 @@ struct d3d10_effect_anonymous_shader
 };
 
 /* ID3D10Effect */
-extern const struct ID3D10EffectVtbl d3d10_effect_vtbl DECLSPEC_HIDDEN;
 struct d3d10_effect
 {
     ID3D10Effect ID3D10Effect_iface;
+    ID3D10EffectPool ID3D10EffectPool_iface;
     LONG refcount;
 
     ID3D10Device *device;

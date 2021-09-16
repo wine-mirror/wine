@@ -44,6 +44,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
 #define D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK 0x4000
 
+static inline struct d3d10_effect *impl_from_ID3D10EffectPool(ID3D10EffectPool *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect, ID3D10EffectPool_iface);
+}
+
+static const struct ID3D10EffectVtbl d3d10_effect_pool_effect_vtbl;
+
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
 static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
@@ -3139,9 +3146,11 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_IsValid(ID3D10Effect *iface)
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_IsPool(ID3D10Effect *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
 
-    return FALSE;
+    TRACE("iface %p.\n", iface);
+
+    return effect->ID3D10Effect_iface.lpVtbl == &d3d10_effect_pool_effect_vtbl;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3D10Device **device)
@@ -8361,6 +8370,57 @@ static const struct ID3D10EffectTypeVtbl d3d10_effect_type_vtbl =
     d3d10_effect_type_GetMemberSemantic,
 };
 
+static HRESULT STDMETHODCALLTYPE d3d10_effect_pool_QueryInterface(ID3D10EffectPool *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D10EffectPool) ||
+            IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_effect_pool_AddRef(ID3D10EffectPool *iface)
+{
+    struct d3d10_effect *effect = impl_from_ID3D10EffectPool(iface);
+    return d3d10_effect_AddRef(&effect->ID3D10Effect_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_effect_pool_Release(ID3D10EffectPool *iface)
+{
+    struct d3d10_effect *effect = impl_from_ID3D10EffectPool(iface);
+    return d3d10_effect_Release(&effect->ID3D10Effect_iface);
+}
+
+static ID3D10Effect * STDMETHODCALLTYPE d3d10_effect_pool_AsEffect(ID3D10EffectPool *iface)
+{
+    struct d3d10_effect *effect = impl_from_ID3D10EffectPool(iface);
+
+    TRACE("%p.\n", iface);
+
+    return &effect->ID3D10Effect_iface;
+}
+
+const struct ID3D10EffectPoolVtbl d3d10_effect_pool_vtbl =
+{
+    /* IUnknown methods */
+    d3d10_effect_pool_QueryInterface,
+    d3d10_effect_pool_AddRef,
+    d3d10_effect_pool_Release,
+    /* ID3D10EffectPool methods */
+    d3d10_effect_pool_AsEffect,
+};
+
+
 static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, const struct d3d10_effect_type, entry);
@@ -8369,23 +8429,18 @@ static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry
     return *id - t->id;
 }
 
-HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
-        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
+static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *device,
+        const ID3D10EffectVtbl *vtbl, struct d3d10_effect **effect)
 {
     struct d3d10_effect *object;
     HRESULT hr;
 
-    FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
-            data, data_size, flags, device, effect_pool, effect);
-
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        ERR("Failed to allocate D3D10 effect object memory\n");
         return E_OUTOFMEMORY;
-    }
 
     wine_rb_init(&object->types, d3d10_effect_type_compare);
-    object->ID3D10Effect_iface.lpVtbl = &d3d10_effect_vtbl;
+    object->ID3D10Effect_iface.lpVtbl = vtbl;
+    object->ID3D10EffectPool_iface.lpVtbl = &d3d10_effect_pool_vtbl;
     object->refcount = 1;
     ID3D10Device_AddRef(device);
     object->device = device;
@@ -8398,18 +8453,83 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
         return hr;
     }
 
-    *effect = &object->ID3D10Effect_iface;
-
-    TRACE("Created effect %p\n", object);
+    *effect = object;
 
     return S_OK;
 }
 
+HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
+        ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
+{
+    struct d3d10_effect *object;
+    HRESULT hr;
+
+    FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
+            data, data_size, flags, device, effect_pool, effect);
+
+    if (FAILED(hr = d3d10_create_effect(data, data_size, device, &d3d10_effect_vtbl, &object)))
+    {
+        WARN("Failed to create an effect, hr %#x.\n", hr);
+    }
+
+    *effect = &object->ID3D10Effect_iface;
+
+    TRACE("Created effect %p\n", object);
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_pool_effect_QueryInterface(ID3D10Effect *iface,
+        REFIID riid, void **object)
+{
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
+
+    TRACE("iface %p, riid %s, obj %p.\n", iface, debugstr_guid(riid), object);
+
+    return IUnknown_QueryInterface(&effect->ID3D10EffectPool_iface, riid, object);
+}
+
+static const struct ID3D10EffectVtbl d3d10_effect_pool_effect_vtbl =
+{
+    /* IUnknown methods */
+    d3d10_effect_pool_effect_QueryInterface,
+    d3d10_effect_AddRef,
+    d3d10_effect_Release,
+    /* ID3D10Effect methods */
+    d3d10_effect_IsValid,
+    d3d10_effect_IsPool,
+    d3d10_effect_GetDevice,
+    d3d10_effect_GetDesc,
+    d3d10_effect_GetConstantBufferByIndex,
+    d3d10_effect_GetConstantBufferByName,
+    d3d10_effect_GetVariableByIndex,
+    d3d10_effect_GetVariableByName,
+    d3d10_effect_GetVariableBySemantic,
+    d3d10_effect_GetTechniqueByIndex,
+    d3d10_effect_GetTechniqueByName,
+    d3d10_effect_Optimize,
+    d3d10_effect_IsOptimized,
+};
+
 HRESULT WINAPI D3D10CreateEffectPoolFromMemory(void *data, SIZE_T data_size, UINT fx_flags,
         ID3D10Device *device, ID3D10EffectPool **effect_pool)
 {
-    FIXME("data %p, data_size %lu, fx_flags %#x, device %p, effect_pool %p stub.\n",
+    struct d3d10_effect *object;
+    HRESULT hr;
+
+    TRACE("data %p, data_size %lu, fx_flags %#x, device %p, effect_pool %p.\n",
             data, data_size, fx_flags, device, effect_pool);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = d3d10_create_effect(data, data_size, device, &d3d10_effect_pool_effect_vtbl,
+            &object)))
+    {
+        WARN("Failed to create an effect, hr %#x.\n", hr);
+        return hr;
+    }
+
+    *effect_pool = &object->ID3D10EffectPool_iface;
+
+    TRACE("Created effect pool %p.\n", object);
+
+    return hr;
 }

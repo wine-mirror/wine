@@ -6377,6 +6377,7 @@ static void test_effect_pool(void)
     D3D10_EFFECT_DESC desc;
     ID3D10Buffer *buffer;
     ULONG refcount;
+    IUnknown *unk;
     HRESULT hr;
     BOOL ret;
 
@@ -6394,13 +6395,7 @@ todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = create_effect_pool(fx_test_pool, device, &pool);
-todo_wine
     ok(hr == S_OK, "Failed to create effect pool, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        ID3D10Device_Release(device);
-        return;
-    }
 
     refcount = get_refcount(pool);
     ok(refcount == 1, "Unexpected refcount %u.\n", refcount);
@@ -6411,6 +6406,27 @@ todo_wine
     refcount = get_refcount(pool);
     ok(refcount == 2, "Unexpected refcount %u.\n", refcount);
     effect->lpVtbl->Release(effect);
+
+    hr = pool->lpVtbl->QueryInterface(pool, &IID_IUnknown, (void **)&unk);
+todo_wine
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
+
+    hr = pool->lpVtbl->QueryInterface(pool, &IID_ID3D10Effect, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = pool->lpVtbl->QueryInterface(pool, &IID_ID3D10EffectPool, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == (IUnknown *)pool, "Unexpected pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = effect->lpVtbl->QueryInterface(effect, &IID_IUnknown, (void **)&unk);
+todo_wine
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
+
+    hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3D10Effect, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3D10EffectPool, (void **)&pool2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -6434,24 +6450,28 @@ todo_wine
     hr = cb->lpVtbl->GetDesc(cb, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = effect->lpVtbl->GetVariableByName(effect, "s_blendstate");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_blendstate"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = effect->lpVtbl->GetVariableByName(effect, "s_texture");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_texture"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ps");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "ps"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
@@ -6466,10 +6486,30 @@ todo_wine
 
     /* Create standalone effect from the same blob used for pool,  */
     hr = create_effect(fx_test_pool, D3D10_EFFECT_COMPILE_CHILD_EFFECT, device, NULL, &child_effect);
+todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) child_effect->lpVtbl->Release(child_effect);
 
     hr = create_effect(fx_test_pool, 0, device, NULL, &effect2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = effect2->lpVtbl->QueryInterface(effect2, &IID_IUnknown, (void **)&unk);
+todo_wine
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
+
+    hr = effect2->lpVtbl->QueryInterface(effect2, &IID_ID3D10Effect, (void **)&unk);
+todo_wine
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
+
+    /* For regular effects querying for ID3D10EffectPool is broken */
+    hr = effect2->lpVtbl->QueryInterface(effect2, &IID_ID3D10EffectPool, (void **)&unk);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == (IUnknown *)effect2, "Unexpected pointer.\n");
+}
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
 
     ret = effect2->lpVtbl->IsPool(effect2);
     ok(!ret, "Unexpected pool.\n");
@@ -6505,24 +6545,33 @@ todo_wine
     ID3D10Device_Release(device3);
 
     cb = child_effect->lpVtbl->GetConstantBufferByName(child_effect, "s_cb");
+todo_wine
     ok(cb->lpVtbl->IsValid(cb), "Expected valid constant buffer.\n");
 
     hr = cb->lpVtbl->GetConstantBuffer(cb, &buffer);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ID3D10Buffer_GetDevice(buffer, &device3);
-    ok(device3 == device2, "Unexpected device.\n");
-    ID3D10Device_Release(device3);
-    ID3D10Buffer_Release(buffer);
+    if (SUCCEEDED(hr))
+    {
+        ID3D10Buffer_GetDevice(buffer, &device3);
+        ok(device3 == device2, "Unexpected device.\n");
+        ID3D10Device_Release(device3);
+        ID3D10Buffer_Release(buffer);
+    }
 
     child_effect->lpVtbl->Release(child_effect);
     pool2->lpVtbl->Release(pool2);
 
     /* When pool is specified, corresponding flag has to be set. */
     hr = create_effect(fx_test_pool_child, 0, device, pool, &child_effect);
+todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) child_effect->lpVtbl->Release(child_effect);
 
     hr = create_effect(fx_test_pool_child, D3D10_EFFECT_COMPILE_CHILD_EFFECT, device, NULL, &child_effect);
+todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) child_effect->lpVtbl->Release(child_effect);
 
     refcount = get_refcount(pool);
     ok(refcount == 1, "Unexpected refcount %u.\n", refcount);
@@ -6531,15 +6580,19 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     refcount = get_refcount(pool);
+todo_wine
     ok(refcount == 2, "Unexpected refcount %u.\n", refcount);
 
     hr = child_effect->lpVtbl->GetDesc(child_effect, &desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
     ok(desc.IsChildEffect, "Unexpected child flag.\n");
     ok(desc.ConstantBuffers == 2, "Unexpected buffer count %u.\n", desc.ConstantBuffers);
+todo_wine
     ok(desc.SharedConstantBuffers == 1, "Unexpected shared buffer count %u.\n",
             desc.SharedConstantBuffers);
     ok(desc.GlobalVariables == 2, "Unexpected variables count %u.\n", desc.GlobalVariables);
+todo_wine
     ok(desc.SharedGlobalVariables == 5, "Unexpected shared variables count %u.\n",
             desc.SharedGlobalVariables);
 
@@ -6564,12 +6617,17 @@ todo_wine
 
     cb = child_effect->lpVtbl->GetConstantBufferByIndex(child_effect, 2);
     ret = cb->lpVtbl->IsValid(cb);
+todo_wine
     ok(ret, "Unexpected invalid variable.\n");
 
     hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
-    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    if (SUCCEEDED(hr))
+    {
+        ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
+        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    }
 
     /* Pool techniques are not accessible */
     t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
@@ -6593,27 +6651,43 @@ todo_wine
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 2);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!strcmp(var_desc.Name, "f1"), "Unexpected name %s.\n", var_desc.Name);
-    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    if (SUCCEEDED(hr))
+    {
+        ok(!strcmp(var_desc.Name, "f1"), "Unexpected name %s.\n", var_desc.Name);
+        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    }
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 3);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
-    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    if (SUCCEEDED(hr))
+    {
+        ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
+        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    }
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 4);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!strcmp(var_desc.Name, "s_blendstate"), "Unexpected name %s.\n", var_desc.Name);
-    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    if (SUCCEEDED(hr))
+    {
+        ok(!strcmp(var_desc.Name, "s_blendstate"), "Unexpected name %s.\n", var_desc.Name);
+        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    }
 
     v = child_effect->lpVtbl->GetVariableByName(child_effect, "s_texture");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!strcmp(var_desc.Name, "s_texture"), "Unexpected name %s.\n", var_desc.Name);
-    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    if (SUCCEEDED(hr))
+    {
+        ok(!strcmp(var_desc.Name, "s_texture"), "Unexpected name %s.\n", var_desc.Name);
+        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    }
 
     v = child_effect->lpVtbl->GetVariableBySemantic(child_effect, "COLOR0");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
@@ -6623,9 +6697,13 @@ todo_wine
 
     v = child_effect->lpVtbl->GetVariableBySemantic(child_effect, "COLOR1");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
-    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    if (SUCCEEDED(hr))
+    {
+        ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
+        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    }
 
     child_effect->lpVtbl->Release(child_effect);
 
