@@ -680,9 +680,16 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_GNU_ref_alt:
-        FIXME("Unhandled FORM_GNU_ref_alt\n");
-        attr->u.uvalue = 0;
-        return FALSE;
+        if (!ctx->module_ctx->dwz)
+        {
+            ERR("No DWZ file present for GNU_ref_alt in %s\n", debugstr_w(ctx->module_ctx->module->modulename));
+            attr->u.uvalue = 0;
+            return FALSE;
+        }
+        attr->u.uvalue = dwarf2_get_addr(data, ctx->head.offset_size);
+        TRACE("ref_alt<0x%lx>\n", attr->u.uvalue);
+        break;
+
     case DW_FORM_GNU_strp_alt:
         if (ctx->module_ctx->dwz)
         {
@@ -766,6 +773,10 @@ static dwarf2_debug_info_t* dwarf2_jump_to_debug_info(struct attribute* attr)
     {
     case DW_FORM_ref_addr:
         ref_ctx = dwarf2_locate_cu(attr->debug_info->unit_ctx->module_ctx, attr->u.uvalue);
+        break;
+    case DW_FORM_GNU_ref_alt:
+        if (attr->debug_info->unit_ctx->module_ctx->dwz)
+            ref_ctx = dwarf2_locate_cu(&attr->debug_info->unit_ctx->module_ctx->dwz->module_ctx, attr->u.uvalue);
         break;
     default:
         with_other = FALSE;
