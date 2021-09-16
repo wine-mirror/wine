@@ -44,6 +44,4 @@ HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count) DEC
 HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl) DECLSPEC_HIDDEN;
 HRESULT TRASH_EraseItem(LPCITEMIDLIST pidl) DECLSPEC_HIDDEN;
 
-HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_dirs, char *** out_ptr) DECLSPEC_HIDDEN;
-
 #endif /* ndef __XDG_H__ */

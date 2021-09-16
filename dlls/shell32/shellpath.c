@@ -49,7 +49,6 @@
 #include "pidl.h"
 #include "wine/unicode.h"
 #include "shlwapi.h"
-#include "xdg.h"
 #include "sddl.h"
 #include "knownfolders.h"
 #include "initguid.h"
@@ -4042,52 +4041,111 @@ end:
     return hr;
 }
 
-/*************************************************************************
- * _SHGetXDGUserDirs  [Internal]
- *
- * Get XDG directories paths from XDG configuration.
- *
- * PARAMS
- *  xdg_dirs    [I] Array of XDG directories to look for.
- *  num_dirs    [I] Number of elements in xdg_dirs.
- *  xdg_results [O] An array of the XDG directories paths.
- */
-static inline void _SHGetXDGUserDirs(const char * const *xdg_dirs, const unsigned int num_dirs, char *** xdg_results) {
-    HRESULT hr;
+static char *xdg_config;
+static DWORD xdg_config_len;
 
-    hr = XDG_UserDirLookup(xdg_dirs, num_dirs, xdg_results);
-    if (FAILED(hr)) *xdg_results = NULL;
-}
-
-/*************************************************************************
- * _SHFreeXDGUserDirs  [Internal]
- *
- * Free resources allocated by XDG_UserDirLookup().
- *
- * PARAMS
- *  num_dirs    [I] Number of elements in xdg_results.
- *  xdg_results [I] An array of the XDG directories paths.
- */
-static inline void _SHFreeXDGUserDirs(const unsigned int num_dirs, char ** xdg_results) {
-    UINT i;
-
-    if (xdg_results)
-    {
-        for (i = 0; i < num_dirs; i++)
-            heap_free(xdg_results[i]);
-        heap_free(xdg_results);
-    }
-}
-
-
-static inline void build_path( char *dest, const char *base, const char *dir )
+static BOOL WINAPI init_xdg_dirs( INIT_ONCE *once, void *param, void **context )
 {
-    int len;
+    static const WCHAR configW[] = {'X','D','G','_','C','O','N','F','I','G','_','H','O','M','E',0};
+    static const WCHAR homedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
+    static const WCHAR home_fmtW[] = {'%','s','/','.','c','o','n','f','i','g','/','u','s','e','r','-','d','i','r','s','.','d','i','r','s',0};
+    static const WCHAR config_fmtW[] = {'\\','?','?','\\','u','n','i','x','%','s','/','u','s','e','r','-','d','i','r','s','.','d','i','r','s',0};
+    const WCHAR *fmt = config_fmtW;
+    char *p;
+    WCHAR *name, *ptr;
+    HANDLE file;
+    DWORD len;
+    WCHAR var[MAX_PATH];
 
-    lstrcpynA( dest, base, FILENAME_MAX );
-    len = strlen( dest );
-    if (!len || dest[len - 1] != '/') dest[len++] = '/';
-    lstrcpynA( dest + len, dir, FILENAME_MAX - len );
+    if (!GetEnvironmentVariableW( configW, var, MAX_PATH ) || !var[0])
+    {
+        if (!GetEnvironmentVariableW( homedirW, var, MAX_PATH )) return TRUE;
+        fmt = home_fmtW;
+    }
+    name = heap_alloc( (strlenW(var) + strlenW(fmt)) * sizeof(WCHAR) );
+    sprintfW( name, fmt, var );
+    name[1] = '\\';  /* change \??\ to \\?\ */
+    for (ptr = name; *ptr; ptr++) if (*ptr == '/') *ptr = '\\';
+
+    file = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    heap_free( name );
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        len = GetFileSize( file, NULL );
+        if (!(xdg_config = heap_alloc( len + 1 ))) return TRUE;
+        if (!ReadFile( file, xdg_config, len, &xdg_config_len, NULL ))
+        {
+            heap_free( xdg_config );
+            xdg_config = NULL;
+        }
+        else
+        {
+            for (p = xdg_config; p < xdg_config + xdg_config_len; p++) if (*p == '\n') *p = 0;
+            *p = 0;  /* append null to simplify string parsing */
+        }
+        CloseHandle( file );
+    }
+    return TRUE;
+}
+
+static char *get_xdg_path( const char *var )
+{
+    static INIT_ONCE once;
+    char *p, *ret = NULL;
+    int i;
+
+    InitOnceExecuteOnce( &once, init_xdg_dirs, NULL, NULL );
+    if (!xdg_config) return NULL;
+
+    for (p = xdg_config; p < xdg_config + xdg_config_len; p += strlen(p) + 1)
+    {
+        while (*p == ' ' || *p == '\t') p++;
+        if (strncmp( p, var, strlen(var) )) continue;
+        p += strlen(var);
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p != '=') continue;
+        p++;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p != '"') continue;
+        p++;
+        if (*p != '/' && strncmp( p, "$HOME/", 6 )) continue;
+
+        if (!(ret = heap_alloc( strlen(p) + 1 ))) break;
+        for (i = 0; *p && *p != '"'; i++, p++)
+        {
+            if (*p == '\\' && p[1]) p++;
+            ret[i] = *p;
+        }
+        ret[i] = 0;
+        if (*p != '"')
+        {
+            heap_free( ret );
+            ret = NULL;
+        }
+        break;
+    }
+    return ret;
+}
+
+static BOOL link_folder( const char *target, const char *link )
+{
+    struct stat st;
+    char *dir = NULL;
+    BOOL ret;
+
+    if (!strcmp( target, "$HOME" ) || !strncmp( target, "$HOME/", 6 ))
+    {
+        const char *home = getenv( "HOME" );
+
+        target += 5;
+        dir = heap_alloc( strlen(home) + strlen(target) + 1 );
+        strcpy( dir, home );
+        strcat( dir, target );
+        target = dir;
+    }
+    if ((ret = !stat( target, &st ) && S_ISDIR( st.st_mode ))) symlink( target, link );
+    heap_free( dir );
+    return ret;
 }
 
 /******************************************************************************
@@ -4098,47 +4156,22 @@ static inline void build_path( char *dest, const char *base, const char *dir )
  */
 static void create_link( const WCHAR *path, const char *xdg_name, const char *default_name )
 {
-    char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
-    struct stat statFolder;
-    const char *pszHome;
-    char ** xdg_results;
+    char *target, *link;
 
-    _SHGetXDGUserDirs(&xdg_name, 1, &xdg_results);
+    if (!(link = wine_get_unix_file_name( path ))) return;
 
-    pszHome = getenv("HOME");
-
-    while (1)
+    if ((target = get_xdg_path( xdg_name )))
     {
-        pszMyStuff = wine_get_unix_file_name( path );
-        if (!pszMyStuff) break;
-
-        while (1)
-        {
-            /* Try the XDG_XXX_DIR folder */
-            if (xdg_results && xdg_results[0])
-            {
-                strcpy(szMyStuffTarget, xdg_results[0]);
-                break;
-            }
-
-            /* Or the OS X folder (these are never localized) */
-            if (pszHome)
-            {
-                build_path( szMyStuffTarget, pszHome, default_name );
-                if (!stat(szMyStuffTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
-                    break;
-            }
-
-            /* As a last resort point to $HOME. */
-            strcpy(szMyStuffTarget, pszHome);
-            break;
-        }
-        symlink(szMyStuffTarget, pszMyStuff);
-        heap_free(pszMyStuff);
-        break;
+        if (link_folder( target, link )) goto done;
     }
+    if (link_folder( default_name, link )) goto done;
 
-    _SHFreeXDGUserDirs(1, xdg_results);
+    /* fall back to HOME */
+    link_folder( "$HOME", link );
+
+done:
+    heap_free( target );
+    heap_free( link );
 }
 
 /******************************************************************************
@@ -4156,25 +4189,25 @@ static void _SHCreateSymbolicLink(int nFolder, const WCHAR *path)
 
     switch (folder) {
         case CSIDL_PERSONAL:
-            create_link( path, "DOCUMENTS", "Documents" );
+            create_link( path, "XDG_DOCUMENTS_DIR", "$HOME/Documents" );
             break;
         case CSIDL_DESKTOPDIRECTORY:
-            create_link( path, "DESKTOP", "Desktop" );
+            create_link( path, "XDG_DESKTOP_DIR", "$HOME/Desktop" );
             break;
         case CSIDL_MYPICTURES:
-            create_link( path, "PICTURES", "Pictures" );
+            create_link( path, "XDG_PICTURES_DIR", "$HOME/Pictures" );
             break;
         case CSIDL_MYVIDEO:
-            create_link( path, "VIDEOS", "Movies" );
+            create_link( path, "XDG_VIDEOS_DIR", "$HOME/Movies" );
             break;
         case CSIDL_MYMUSIC:
-            create_link( path, "MUSIC", "Music" );
+            create_link( path, "XDG_MUSIC_DIR", "$HOME/Music" );
             break;
         case CSIDL_DOWNLOADS:
-            create_link( path, "DOWNLOAD", "Downloads" );
+            create_link( path, "XDG_DOWNLOAD_DIR", "$HOME/Downloads" );
             break;
         case CSIDL_TEMPLATES:
-            create_link( path, "TEMPLATES", "Templates" );
+            create_link( path, "XDG_TEMPLATES_DIR", "$HOME/Templates" );
             break;
     }
 }
