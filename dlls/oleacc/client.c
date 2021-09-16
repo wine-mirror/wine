@@ -227,6 +227,7 @@ static HRESULT WINAPI Client_get_accRole(IAccessible *iface, VARIANT varID, VARI
 static HRESULT WINAPI Client_get_accState(IAccessible *iface, VARIANT varID, VARIANT *pvarState)
 {
     Client *This = impl_from_Client(iface);
+    GUITHREADINFO info;
     LONG style;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pvarState);
@@ -244,7 +245,9 @@ static HRESULT WINAPI Client_get_accState(IAccessible *iface, VARIANT varID, VAR
         V_I4(pvarState) |= STATE_SYSTEM_UNAVAILABLE;
     else if(IsWindow(This->hwnd))
         V_I4(pvarState) |= STATE_SYSTEM_FOCUSABLE;
-    if(GetFocus() == This->hwnd)
+
+    info.cbSize = sizeof(info);
+    if(GetGUIThreadInfo(0, &info) && info.hwndFocus == This->hwnd)
         V_I4(pvarState) |= STATE_SYSTEM_FOCUSED;
     if(!(style & WS_VISIBLE))
         V_I4(pvarState) |= STATE_SYSTEM_INVISIBLE;
