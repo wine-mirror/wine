@@ -711,8 +711,7 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
     return TRUE;
 }
 
-static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
-                                  const dwarf2_debug_info_t* di,
+static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
                                   unsigned at, struct attribute* attr)
 {
     unsigned                    i, refidx = 0;
@@ -727,7 +726,7 @@ static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
         {
             if (abbrev_attr->attribute == at)
             {
-                return dwarf2_fill_attr(ctx, abbrev_attr, di->data[i], attr);
+                return dwarf2_fill_attr(di->unit_ctx, abbrev_attr, di->data[i], attr);
             }
             if ((abbrev_attr->attribute == DW_AT_abstract_origin ||
                  abbrev_attr->attribute == DW_AT_specification) &&
@@ -742,9 +741,9 @@ static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
             }
         }
         /* do we have either an abstract origin or a specification debug entry to look into ? */
-        if (!ref_abbrev_attr || !dwarf2_fill_attr(ctx, ref_abbrev_attr, di->data[refidx], attr))
+        if (!ref_abbrev_attr || !dwarf2_fill_attr(di->unit_ctx, ref_abbrev_attr, di->data[refidx], attr))
             break;
-        if (!(di = sparse_array_find(&ctx->debug_info_table, attr->u.uvalue)))
+        if (!(di = sparse_array_find(&di->unit_ctx->debug_info_table, attr->u.uvalue)))
             FIXME("Should have found the debug info entry\n");
     }
     return FALSE;
@@ -1004,7 +1003,7 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
 {
     struct attribute xloc;
 
-    if (!dwarf2_find_attribute(ctx, di, dw, &xloc)) return FALSE;
+    if (!dwarf2_find_attribute(di, dw, &xloc)) return FALSE;
 
     switch (xloc.form)
     {
@@ -1067,7 +1066,7 @@ static struct symt* dwarf2_lookup_type(const dwarf2_debug_info_t* di)
     struct attribute attr;
     dwarf2_debug_info_t* type;
 
-    if (!dwarf2_find_attribute(di->unit_ctx, di, DW_AT_type, &attr))
+    if (!dwarf2_find_attribute(di, DW_AT_type, &attr))
         /* this is only valid if current language of CU is C or C++ */
         return di->unit_ctx->module_ctx->symt_cache[sc_void];
     if (!(type = sparse_array_find(&di->unit_ctx->debug_info_table, attr.u.uvalue)))
@@ -1121,7 +1120,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
     /* if the di is a definition, but has also a (previous) declaration, then scope must
      * be gotten from declaration not definition
      */
-    if (dwarf2_find_attribute(ctx, di, DW_AT_specification, &spec) && spec.gotten_from == attr_direct)
+    if (dwarf2_find_attribute(di, DW_AT_specification, &spec) && spec.gotten_from == attr_direct)
     {
         di = sparse_array_find(&ctx->debug_info_table, spec.u.uvalue);
         if (!di)
@@ -1140,7 +1139,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
         case DW_TAG_class_type:
         case DW_TAG_interface_type:
         case DW_TAG_union_type:
-            if (dwarf2_find_attribute(ctx, di, DW_AT_name, &diname))
+            if (dwarf2_find_attribute(di, DW_AT_name, &diname))
             {
                 size_t  len = strlen(diname.u.string);
                 last -= 2 + len;
@@ -1168,7 +1167,7 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
 {
     struct attribute            range;
 
-    if (dwarf2_find_attribute(ctx, di, DW_AT_ranges, &range))
+    if (dwarf2_find_attribute(di, DW_AT_ranges, &range))
     {
         dwarf2_traverse_context_t   traverse;
         ULONG_PTR                   low, high;
@@ -1198,8 +1197,8 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
         struct attribute            low_pc;
         struct attribute            high_pc;
 
-        if (!dwarf2_find_attribute(ctx, di, DW_AT_low_pc, &low_pc) ||
-            !dwarf2_find_attribute(ctx, di, DW_AT_high_pc, &high_pc))
+        if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc) ||
+            !dwarf2_find_attribute(di, DW_AT_high_pc, &high_pc))
             return FALSE;
         *plow = low_pc.u.uvalue;
         *phigh = high_pc.u.uvalue;
@@ -1270,7 +1269,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
             *where = child;
         }
     }
-    if (dwarf2_find_attribute(ctx, di, DW_AT_sibling, &sibling) &&
+    if (dwarf2_find_attribute(di, DW_AT_sibling, &sibling) &&
         traverse->data != ctx->module_ctx->sections[ctx->section].address + sibling.u.uvalue)
     {
         if (sibling.u.uvalue >= ctx->module_ctx->sections[ctx->section].size)
@@ -1295,7 +1294,7 @@ static struct vector* dwarf2_get_di_children(dwarf2_debug_info_t* di)
     {
         if (di->abbrev->have_child)
             return &di->children;
-        if (!dwarf2_find_attribute(di->unit_ctx, di, DW_AT_specification, &spec)) break;
+        if (!dwarf2_find_attribute(di, DW_AT_specification, &spec)) break;
         if (!(di = sparse_array_find(&di->unit_ctx->debug_info_table, spec.u.uvalue)))
             FIXME("Should have found the debug info entry\n");
     }
@@ -1313,10 +1312,10 @@ static struct symt* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = NULL;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_encoding, &encoding)) encoding.u.uvalue = DW_ATE_void;
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_encoding, &encoding)) encoding.u.uvalue = DW_ATE_void;
 
     switch (encoding.u.uvalue)
     {
@@ -1347,7 +1346,7 @@ static struct symt* dwarf2_parse_typedef(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
     ref_type = dwarf2_lookup_type(di);
 
     if (name.u.string)
@@ -1366,7 +1365,7 @@ static struct symt* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = sizeof(void *);
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = sizeof(void *);
     ref_type = dwarf2_lookup_type(di);
     di->symt = &symt_new_pointer(ctx->module_ctx->module, ref_type, size.u.uvalue)->symt;
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1405,11 +1404,11 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
         {
         case DW_TAG_subrange_type:
             idx_type = dwarf2_lookup_type(child);
-            if (!dwarf2_find_attribute(ctx, child, DW_AT_lower_bound, &min))
+            if (!dwarf2_find_attribute(child, DW_AT_lower_bound, &min))
                 min.u.uvalue = 0;
-            if (dwarf2_find_attribute(ctx, child, DW_AT_upper_bound, &max))
+            if (dwarf2_find_attribute(child, DW_AT_upper_bound, &max))
                 cnt.u.uvalue = max.u.uvalue + 1 - min.u.uvalue;
-            else if (!dwarf2_find_attribute(ctx, child, DW_AT_count, &cnt))
+            else if (!dwarf2_find_attribute(child, DW_AT_count, &cnt))
                 cnt.u.uvalue = 0;
             break;
         default:
@@ -1465,7 +1464,7 @@ static struct symt* dwarf2_parse_unspecified_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = "void";
     size.u.uvalue = sizeof(void *);
 
@@ -1508,7 +1507,7 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
     elt_type = dwarf2_lookup_type(di);
     if (dwarf2_compute_location_attr(ctx, di, DW_AT_data_member_location, &loc, NULL))
     {
@@ -1523,15 +1522,15 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
     }
     else
         loc.offset = 0;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_bit_size, &bit_size))
+    if (!dwarf2_find_attribute(di, DW_AT_bit_size, &bit_size))
         bit_size.u.uvalue = 0;
-    if (dwarf2_find_attribute(ctx, di, DW_AT_bit_offset, &bit_offset))
+    if (dwarf2_find_attribute(di, DW_AT_bit_offset, &bit_offset))
     {
         /* FIXME: we should only do this when implementation is LSB (which is
          * the case on i386 processors)
          */
         struct attribute nbytes;
-        if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &nbytes))
+        if (!dwarf2_find_attribute(di, DW_AT_byte_size, &nbytes))
         {
             DWORD64     size;
             nbytes.u.uvalue = symt_get_info(ctx->module_ctx->module, elt_type, TI_GET_LENGTH, &size) ?
@@ -1565,9 +1564,9 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
     /* quirk... FIXME provide real support for anonymous UDTs */
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = "zz_anon_zz";
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
 
     di->symt = &symt_new_udt(ctx->module_ctx->module, dwarf2_get_cpp_name(ctx, di, name.u.string),
                              size.u.uvalue, udt)->symt;
@@ -1630,8 +1629,8 @@ static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) return;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_const_value, &value)) value.u.svalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) return;
+    if (!dwarf2_find_attribute(di, DW_AT_const_value, &value)) value.u.svalue = 0;
     symt_add_enum_element(ctx->module_ctx->module, parent, name.u.string, value.u.svalue);
 
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1651,8 +1650,8 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
+    if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
 
     switch (size.u.uvalue) /* FIXME: that's wrong */
     {
@@ -1712,7 +1711,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     is_pmt = !block && di->abbrev->tag == DW_TAG_formal_parameter;
     param_type = dwarf2_lookup_type(di);
         
-    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_name, &name)) {
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) {
 	/* cannot do much without the name, the functions below won't like it. */
         return;
     }
@@ -1732,7 +1731,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         case loc_absolute:
             /* it's a global variable */
             /* FIXME: we don't handle its scope yet */
-            if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_external, &ext))
+            if (!dwarf2_find_attribute(di, DW_AT_external, &ext))
                 ext.u.uvalue = 0;
             loc.offset += subpgm->ctx->module_ctx->load_offset;
             symt_new_global_variable(subpgm->ctx->module_ctx->module, subpgm->ctx->compiland,
@@ -1754,7 +1753,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             break;
         }
     }
-    else if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_const_value, &value))
+    else if (dwarf2_find_attribute(di, DW_AT_const_value, &value))
     {
         VARIANT v;
         if (subpgm->func) WARN("Unsupported constant %s in function\n", debugstr_a(name.u.string));
@@ -1849,8 +1848,8 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_low_pc, &low_pc)) low_pc.u.uvalue = 0;
-    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_name, &name))
+    if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.u.uvalue = 0;
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = NULL;
 
     loc.kind = loc_absolute;
@@ -2020,7 +2019,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name))
     {
         WARN("No name for function... dropping function\n");
         return NULL;
@@ -2028,7 +2027,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     /* if it's an abstract representation of an inline function, there should be
      * a concrete object that we'll handle
      */
-    if (dwarf2_find_attribute(ctx, di, DW_AT_inline, &inline_flags) &&
+    if (dwarf2_find_attribute(di, DW_AT_inline, &inline_flags) &&
         inline_flags.u.uvalue != DW_INL_not_inlined)
     {
         TRACE("Function %s declared as inlined (%ld)... skipping\n",
@@ -2036,7 +2035,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         return NULL;
     }
 
-    if (dwarf2_find_attribute(ctx, di, DW_AT_declaration, &is_decl) &&
+    if (dwarf2_find_attribute(di, DW_AT_declaration, &is_decl) &&
         is_decl.u.uvalue && is_decl.gotten_from == attr_direct)
     {
         /* it's a real declaration, skip it */
@@ -2609,14 +2608,14 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
             struct attribute            stmt_list, low_pc;
             struct attribute            comp_dir;
 
-            if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+            if (!dwarf2_find_attribute(di, DW_AT_name, &name))
                 name.u.string = NULL;
 
             /* get working directory of current compilation unit */
-            if (!dwarf2_find_attribute(ctx, di, DW_AT_comp_dir, &comp_dir))
+            if (!dwarf2_find_attribute(di, DW_AT_comp_dir, &comp_dir))
                 comp_dir.u.string = NULL;
 
-            if (!dwarf2_find_attribute(ctx, di, DW_AT_low_pc, &low_pc))
+            if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc))
                 low_pc.u.uvalue = 0;
             ctx->compiland = symt_new_compiland(ctx->module_ctx->module, ctx->module_ctx->load_offset + low_pc.u.uvalue,
                                                 source_new(ctx->module_ctx->module, comp_dir.u.string, name.u.string));
@@ -2628,7 +2627,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
                 child = *(dwarf2_debug_info_t**)vector_at(children, i);
                 dwarf2_load_one_entry(ctx, child);
             }
-            if (dwarf2_find_attribute(ctx, di, DW_AT_stmt_list, &stmt_list))
+            if (dwarf2_find_attribute(di, DW_AT_stmt_list, &stmt_list))
             {
                 if (dwarf2_parse_line_numbers(ctx, comp_dir.u.string, stmt_list.u.uvalue))
                     ctx->module_ctx->module->module.LineNumbers = TRUE;
