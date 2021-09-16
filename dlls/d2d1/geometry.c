@@ -2061,6 +2061,13 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
         }
     }
 
+    if (vertex_count < 3)
+    {
+        WARN("Geometry has %lu vertices after eliminating duplicates.\n", (long)vertex_count);
+        heap_free(vertices);
+        return S_OK;
+    }
+
     geometry->fill.vertices = vertices;
     geometry->fill.vertex_count = vertex_count;
 
