@@ -729,6 +729,38 @@ static void test_AccessibleChildren(IAccessible *acc)
     ok(V_VT(children+2) == VT_EMPTY, "V_VT(children+2) = %d\n", V_VT(children+2));
 }
 
+#define check_acc_state(acc, state) _check_acc_state(__LINE__, acc, state)
+static void _check_acc_state(unsigned line, IAccessible *acc, INT state)
+{
+    VARIANT vid, v;
+    HRESULT hr;
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
+    hr = IAccessible_get_accState(acc, vid, &v);
+    ok_(__FILE__, line)(hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line)(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok_(__FILE__, line)(V_I4(&v) == state, "V_I4(&v) = %x\n", V_I4(&v));
+}
+
+static DWORD WINAPI default_client_thread(LPVOID param)
+{
+    IAccessible *acc = param;
+    IOleWindow *ow;
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
+    ok(hr == S_OK, "got %x\n", hr);
+    hr = IOleWindow_GetWindow(ow, &hwnd);
+    ok(hr == S_OK, "got %x\n", hr);
+    IOleWindow_Release(ow);
+
+    ShowWindow(hwnd, SW_SHOW);
+    check_acc_state(acc, STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_FOCUSED);
+    return 0;
+}
+
 static void test_default_client_accessible_object(void)
 {
     IAccessible *acc;
@@ -743,6 +775,7 @@ static void test_default_client_accessible_object(void)
     RECT rect;
     LONG l, left, top, width, height;
     ULONG fetched;
+    HANDLE thread;
 
     hwnd = CreateWindowA("oleacc_test", "wnd &t &junk", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
@@ -893,13 +926,18 @@ static void test_default_client_accessible_object(void)
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %d\n", V_I4(&v));
 
-    V_VT(&v) = VT_DISPATCH;
-    V_DISPATCH(&v) = (void*)0xdeadbeef;
-    hr = IAccessible_get_accState(acc, vid, &v);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_INVISIBLE),
-            "V_I4(&v) = %x\n", V_I4(&v));
+    check_acc_state(acc, STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_INVISIBLE);
+    SetFocus(hwnd);
+    if (GetForegroundWindow() != hwnd)
+    {
+        todo_wine ok(0, "incorrect foreground window\n");
+        SetForegroundWindow(hwnd);
+    }
+    check_acc_state(acc, STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_INVISIBLE |
+            STATE_SYSTEM_FOCUSED);
+    ShowWindow(hwnd, SW_SHOW);
+    check_acc_state(acc, STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_FOCUSED);
+    ShowWindow(hwnd, SW_HIDE);
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accHelp(acc, vid, &str);
@@ -925,7 +963,7 @@ static void test_default_client_accessible_object(void)
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
 
-    ShowWindow(hwnd, TRUE);
+    ShowWindow(hwnd, SW_SHOW);
     pt.x = pt.y = 60;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
@@ -941,7 +979,7 @@ static void test_default_client_accessible_object(void)
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
     VariantClear(&v);
 
-    ShowWindow(chld, FALSE);
+    ShowWindow(chld, SW_HIDE);
     pt.x = pt.y = 25;
     ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
     hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
@@ -969,6 +1007,18 @@ static void test_default_client_accessible_object(void)
     ok(top == rect.top, "top = %d, expected %d\n", top, rect.top);
     ok(width == pt.x-rect.left, "width = %d, expected %d\n", width, pt.x-rect.left);
     ok(height == pt.y-rect.top, "height = %d, expected %d\n", height, pt.y-rect.top);
+
+    thread = CreateThread(NULL, 0, default_client_thread, (void *)acc, 0, NULL);
+    while(MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        MSG msg;
+        while(PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
 
     DestroyWindow(hwnd);
 
