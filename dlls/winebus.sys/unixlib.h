@@ -49,6 +49,9 @@ struct device_desc
 struct sdl_bus_options
 {
     BOOL map_controllers;
+    /* freed after bus_init */
+    DWORD mappings_count;
+    char **mappings;
 };
 
 struct udev_bus_options

@@ -34,7 +34,6 @@
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
-#include "bus.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
@@ -66,7 +65,7 @@ static DEVICE_OBJECT *keyboard_obj;
 static DEVICE_OBJECT *bus_pdo;
 static DEVICE_OBJECT *bus_fdo;
 
-HANDLE driver_key;
+static HANDLE driver_key;
 
 enum device_state
 {
@@ -630,6 +629,85 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
     return STATUS_SUCCESS;
 }
 
+static void sdl_bus_free_mappings(struct sdl_bus_options *options)
+{
+    DWORD count = options->mappings_count;
+    char **mappings = options->mappings;
+
+    while (count) HeapFree(GetProcessHeap(), 0, mappings[--count]);
+    HeapFree(GetProcessHeap(), 0, mappings);
+}
+
+static void sdl_bus_load_mappings(struct sdl_bus_options *options)
+{
+    static const WCHAR szPath[] = {'m','a','p',0};
+
+    ULONG idx = 0, len, count = 0, capacity, info_size, info_max_size;
+    KEY_VALUE_FULL_INFORMATION *info;
+    OBJECT_ATTRIBUTES attr = {0};
+    char **mappings = NULL;
+    UNICODE_STRING path;
+    NTSTATUS status;
+    HANDLE key;
+
+    options->mappings_count = 0;
+    options->mappings = NULL;
+
+    RtlInitUnicodeString(&path, szPath);
+    InitializeObjectAttributes(&attr, &path, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, driver_key, NULL);
+    status = NtOpenKey(&key, KEY_ALL_ACCESS, &attr);
+    if (status) return;
+
+    capacity = 1024;
+    mappings = HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(*mappings));
+    info_max_size = offsetof(KEY_VALUE_FULL_INFORMATION, Name) + 512;
+    info = HeapAlloc(GetProcessHeap(), 0, info_max_size);
+
+    while (!status && info && mappings)
+    {
+        status = NtEnumerateValueKey(key, idx, KeyValueFullInformation, info, info_max_size, &info_size);
+        while (status == STATUS_BUFFER_OVERFLOW)
+        {
+            info_max_size = info_size;
+            if (!(info = HeapReAlloc(GetProcessHeap(), 0, info, info_max_size))) break;
+            status = NtEnumerateValueKey(key, idx, KeyValueFullInformation, info, info_max_size, &info_size);
+        }
+
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
+            options->mappings_count = count;
+            options->mappings = mappings;
+            goto done;
+        }
+
+        idx++;
+        if (status) break;
+        if (info->Type != REG_SZ) continue;
+
+        RtlUnicodeToMultiByteSize(&len, (WCHAR *)((char *)info + info->DataOffset), info_size - info->DataOffset);
+        if (!len) continue;
+
+        if (!(mappings[count++] = HeapAlloc(GetProcessHeap(), 0, len + 1))) break;
+        if (count > capacity)
+        {
+            capacity = capacity * 3 / 2;
+            if (!(mappings = HeapReAlloc(GetProcessHeap(), 0, mappings, capacity * sizeof(*mappings))))
+                break;
+        }
+
+        RtlUnicodeToMultiByteN(mappings[count], len, NULL, (WCHAR *)((char *)info + info->DataOffset),
+                               info_size - info->DataOffset);
+        if (mappings[len - 1]) mappings[len] = 0;
+    }
+
+    if (mappings) while (count) HeapFree(GetProcessHeap(), 0, mappings[--count]);
+    HeapFree(GetProcessHeap(), 0, mappings);
+
+done:
+    HeapFree(GetProcessHeap(), 0, info);
+    NtClose(key);
+}
+
 static NTSTATUS sdl_driver_init(void)
 {
     static const WCHAR bus_name[] = {'S','D','L',0};
@@ -643,11 +721,15 @@ static NTSTATUS sdl_driver_init(void)
         .init_code = sdl_init,
         .wait_code = sdl_wait,
     };
+    NTSTATUS status;
 
     bus_options.map_controllers = check_bus_option(&controller_mode, 1);
     if (!bus_options.map_controllers) TRACE("SDL controller to XInput HID gamepad mapping disabled\n");
+    sdl_bus_load_mappings(&bus_options);
 
-    return bus_main_thread_start(&bus);
+    status = bus_main_thread_start(&bus);
+    sdl_bus_free_mappings(&bus_options);
+    return status;
 }
 
 static NTSTATUS udev_driver_init(void)
