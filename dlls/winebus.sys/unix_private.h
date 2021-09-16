@@ -32,7 +32,6 @@
 struct unix_device_vtbl
 {
     void (*destroy)(struct unix_device *iface);
-    int (*compare)(struct unix_device *iface, void *platform_dev);
     NTSTATUS (*start)(struct unix_device *iface);
     void (*stop)(struct unix_device *iface);
     NTSTATUS (*get_report_descriptor)(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *out_length);

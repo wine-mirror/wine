@@ -51,11 +51,6 @@ static void mouse_destroy(struct unix_device *iface)
     hid_descriptor_free(&impl->desc);
 }
 
-static int mouse_compare(struct unix_device *iface, void *context)
-{
-    return 0;
-}
-
 static NTSTATUS mouse_start(struct unix_device *iface)
 {
     struct mouse_device *impl = mouse_from_unix_device(iface);
@@ -111,7 +106,6 @@ static void mouse_set_feature_report(struct unix_device *iface, HID_XFER_PACKET 
 static const struct unix_device_vtbl mouse_vtbl =
 {
     mouse_destroy,
-    mouse_compare,
     mouse_start,
     mouse_stop,
     mouse_get_report_descriptor,
@@ -153,11 +147,6 @@ static void keyboard_destroy(struct unix_device *iface)
 {
     struct keyboard_device *impl = keyboard_from_unix_device(iface);
     hid_descriptor_free(&impl->desc);
-}
-
-static int keyboard_compare(struct unix_device *iface, void *context)
-{
-    return 0;
 }
 
 static NTSTATUS keyboard_start(struct unix_device *iface)
@@ -215,7 +204,6 @@ static void keyboard_set_feature_report(struct unix_device *iface, HID_XFER_PACK
 static const struct unix_device_vtbl keyboard_vtbl =
 {
     keyboard_destroy,
-    keyboard_compare,
     keyboard_start,
     keyboard_stop,
     keyboard_get_report_descriptor,
@@ -275,13 +263,6 @@ static NTSTATUS unix_device_remove(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS unix_device_compare(void *args)
-{
-    struct device_compare_params *params = args;
-    struct unix_device *iface = params->iface;
-    return iface->vtbl->compare(iface, params->context);
-}
-
 static NTSTATUS unix_device_start(void *args)
 {
     struct unix_device *iface = args;
@@ -333,7 +314,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     mouse_device_create,
     keyboard_device_create,
     unix_device_remove,
-    unix_device_compare,
     unix_device_start,
     unix_device_get_report_descriptor,
     unix_device_set_output_report,

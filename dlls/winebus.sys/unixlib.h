@@ -98,12 +98,6 @@ struct device_create_params
     struct unix_device *device;
 };
 
-struct device_compare_params
-{
-    struct unix_device *iface;
-    void *context;
-};
-
 struct device_descriptor_params
 {
     struct unix_device *iface;
@@ -133,7 +127,6 @@ enum unix_funcs
     mouse_create,
     keyboard_create,
     device_remove,
-    device_compare,
     device_start,
     device_get_report_descriptor,
     device_set_output_report,

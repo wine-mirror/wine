@@ -497,11 +497,6 @@ static void sdl_device_destroy(struct unix_device *iface)
 {
 }
 
-static int sdl_device_compare(struct unix_device *iface, void *context)
-{
-    return impl_from_unix_device(iface)->id - PtrToUlong(context);
-}
-
 static NTSTATUS sdl_device_start(struct unix_device *iface)
 {
     struct platform_private *ext = impl_from_unix_device(iface);
@@ -596,7 +591,6 @@ static void sdl_device_set_feature_report(struct unix_device *iface, HID_XFER_PA
 static const struct unix_device_vtbl sdl_device_vtbl =
 {
     sdl_device_destroy,
-    sdl_device_compare,
     sdl_device_start,
     sdl_device_stop,
     sdl_device_get_reportdescriptor,

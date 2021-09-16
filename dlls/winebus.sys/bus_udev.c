@@ -619,13 +619,6 @@ static void hidraw_device_destroy(struct unix_device *iface)
     udev_device_unref(private->udev_device);
 }
 
-static int udev_device_compare(struct unix_device *iface, void *platform_dev)
-{
-    struct udev_device *dev1 = impl_from_unix_device(iface)->udev_device;
-    struct udev_device *dev2 = platform_dev;
-    return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
-}
-
 static NTSTATUS hidraw_device_start(struct unix_device *iface)
 {
     EnterCriticalSection(&udev_cs);
@@ -796,7 +789,6 @@ static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER
 static const struct unix_device_vtbl hidraw_device_vtbl =
 {
     hidraw_device_destroy,
-    udev_device_compare,
     hidraw_device_start,
     hidraw_device_stop,
     hidraw_device_get_report_descriptor,
@@ -898,7 +890,6 @@ static void lnxev_device_set_feature_report(struct unix_device *iface, HID_XFER_
 static const struct unix_device_vtbl lnxev_device_vtbl =
 {
     lnxev_device_destroy,
-    udev_device_compare,
     lnxev_device_start,
     lnxev_device_stop,
     lnxev_device_get_report_descriptor,

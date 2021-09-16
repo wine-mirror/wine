@@ -161,16 +161,6 @@ static void iohid_device_destroy(struct unix_device *iface)
 {
 }
 
-static int iohid_device_compare(struct unix_device *iface, void *context)
-{
-    struct platform_private *private = impl_from_unix_device(iface);
-    IOHIDDeviceRef dev2 = (IOHIDDeviceRef)context;
-    if (private->device != dev2)
-        return 1;
-    else
-        return 0;
-}
-
 static NTSTATUS iohid_device_start(struct unix_device *iface)
 {
     DWORD length;
@@ -273,7 +263,6 @@ static void iohid_device_set_feature_report(struct unix_device *iface, HID_XFER_
 static const struct unix_device_vtbl iohid_device_vtbl =
 {
     iohid_device_destroy,
-    iohid_device_compare,
     iohid_device_start,
     iohid_device_stop,
     iohid_device_get_report_descriptor,
