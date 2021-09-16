@@ -2736,7 +2736,7 @@ static DWORD receive_response( struct request *request, BOOL async )
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_AUTHENTICATION) break;
 
-            if ((ret = handle_authorization( request, status ))) break;
+            if (handle_authorization( request, status )) break;
 
             /* recurse synchronously */
             if (!(ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) continue;
