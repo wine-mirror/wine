@@ -665,6 +665,13 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
     if (!SetupDiRegisterDeviceInfo(devinfo, &device_data, 0, NULL, NULL, NULL))
         goto done;
 
+    /* Register GUID_DEVINTERFACE_MONITOR */
+    if (!SetupDiCreateDeviceInterfaceW(devinfo, &device_data, &GUID_DEVINTERFACE_MONITOR, NULL, 0, NULL))
+        goto done;
+
+    if (!link_device(bufferW, &GUID_DEVINTERFACE_MONITOR))
+        goto done;
+
     /* Write HardwareID registry property */
     if (!SetupDiSetDeviceRegistryPropertyW(devinfo, &device_data, SPDRP_HARDWAREID,
                                            (const BYTE *)monitor_hardware_idW, sizeof(monitor_hardware_idW)))
