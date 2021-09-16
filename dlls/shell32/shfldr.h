@@ -56,6 +56,9 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot, const CLSID *clsidChild,
 HRESULT SHELL32_CompareIDs(IShellFolder2 *iface, LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) DECLSPEC_HIDDEN;
 LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path) DECLSPEC_HIDDEN;
 
+BOOL is_trash_available(void) DECLSPEC_HIDDEN;
+BOOL trash_file( const WCHAR *path ) DECLSPEC_HIDDEN;
+
 static inline int SHELL32_GUIDToStringA (REFGUID guid, LPSTR str)
 {
     return sprintf(str, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",

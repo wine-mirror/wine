@@ -27,6 +27,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
@@ -42,9 +43,9 @@
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "shell32_main.h"
+#include "shfldr.h"
 #include "undocshell.h"
 #include "wine/debug.h"
-#include "xdg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -1345,8 +1346,7 @@ static int delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
         return ERROR_SUCCESS;
 
     /* Windows also checks only the first item */
-    bTrash = (lpFileOp->fFlags & FOF_ALLOWUNDO)
-        && TRASH_CanTrashFile(flFrom->feFiles[0].szFullPath);
+    bTrash = (lpFileOp->fFlags & FOF_ALLOWUNDO) && is_trash_available();
 
     if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (!bTrash && lpFileOp->fFlags & FOF_WANTNUKEWARNING))
         if (!confirm_delete_list(lpFileOp->hwnd, lpFileOp->fFlags, bTrash, flFrom))
@@ -1366,7 +1366,7 @@ static int delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
         if (bTrash)
         {
             BOOL bDelete;
-            if (TRASH_TrashFile(fileEntry->szFullPath))
+            if (trash_file(fileEntry->szFullPath))
                 continue;
 
             /* Note: Windows silently deletes the file in such a situation, we show a dialog */

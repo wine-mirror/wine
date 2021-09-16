@@ -49,9 +49,7 @@ C_SRCS = \
 	shlview.c \
 	shlview_cmenu.c \
 	shpolicy.c \
-	systray.c \
-	trash.c \
-	xdg.c
+	systray.c
 
 RC_SRCS = shell32.rc
 
