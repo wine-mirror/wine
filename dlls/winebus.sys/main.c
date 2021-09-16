@@ -294,7 +294,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
         return NULL;
     }
 
-    EnterCriticalSection(&device_list_cs);
+    RtlEnterCriticalSection(&device_list_cs);
 
     /* fill out device_extension struct */
     ext = (struct device_extension *)device->DeviceExtension;
@@ -318,7 +318,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
     /* add to list of pnp devices */
     list_add_tail(&device_list, &ext->entry);
 
-    LeaveCriticalSection(&device_list_cs);
+    RtlLeaveCriticalSection(&device_list_cs);
     return device;
 }
 
@@ -327,7 +327,7 @@ static DEVICE_OBJECT *bus_find_unix_device(struct unix_device *unix_device)
     struct device_extension *ext;
     DEVICE_OBJECT *ret = NULL;
 
-    EnterCriticalSection(&device_list_cs);
+    RtlEnterCriticalSection(&device_list_cs);
     LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
     {
         if (ext->unix_device == unix_device)
@@ -336,7 +336,7 @@ static DEVICE_OBJECT *bus_find_unix_device(struct unix_device *unix_device)
             break;
         }
     }
-    LeaveCriticalSection(&device_list_cs);
+    RtlLeaveCriticalSection(&device_list_cs);
 
     return ret;
 }
@@ -345,9 +345,9 @@ static void bus_unlink_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
 
-    EnterCriticalSection(&device_list_cs);
+    RtlEnterCriticalSection(&device_list_cs);
     list_remove(&ext->entry);
-    LeaveCriticalSection(&device_list_cs);
+    RtlLeaveCriticalSection(&device_list_cs);
 }
 
 static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
@@ -355,12 +355,12 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
     struct device_extension *ext;
     int i;
 
-    EnterCriticalSection(&device_list_cs);
+    RtlEnterCriticalSection(&device_list_cs);
     *devices = ExAllocatePool(PagedPool, offsetof(DEVICE_RELATIONS, Objects[list_count(&device_list)]));
 
     if (!*devices)
     {
-        LeaveCriticalSection(&device_list_cs);
+        RtlLeaveCriticalSection(&device_list_cs);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -371,7 +371,7 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
         call_fastcall_func1(ObfReferenceObject, ext->device);
         i++;
     }
-    LeaveCriticalSection(&device_list_cs);
+    RtlLeaveCriticalSection(&device_list_cs);
     (*devices)->Count = i;
     return STATUS_SUCCESS;
 }
@@ -415,7 +415,7 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length
     if (!length || !report)
         return;
 
-    EnterCriticalSection(&ext->cs);
+    RtlEnterCriticalSection(&ext->cs);
     if (length > ext->buffer_size)
     {
         RtlFreeHeap(GetProcessHeap(), 0, ext->last_report);
@@ -426,7 +426,7 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length
             ext->buffer_size = 0;
             ext->last_report_size = 0;
             ext->last_report_read = TRUE;
-            LeaveCriticalSection(&ext->cs);
+            RtlLeaveCriticalSection(&ext->cs);
             return;
         }
         else
@@ -449,7 +449,7 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length
         ext->last_report_read = TRUE;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
-    LeaveCriticalSection(&ext->cs);
+    RtlLeaveCriticalSection(&ext->cs);
 }
 
 static NTSTATUS handle_IRP_MN_QUERY_DEVICE_RELATIONS(IRP *irp)
@@ -564,11 +564,11 @@ static DWORD CALLBACK bus_main_thread(void *args)
         {
         case BUS_EVENT_TYPE_NONE: break;
         case BUS_EVENT_TYPE_DEVICE_REMOVED:
-            EnterCriticalSection(&device_list_cs);
+            RtlEnterCriticalSection(&device_list_cs);
             device = bus_find_unix_device(event->device);
             if (!device) WARN("could not find device for %s bus device %p\n", debugstr_w(bus.name), event->device);
             else bus_unlink_hid_device(device);
-            LeaveCriticalSection(&device_list_cs);
+            RtlLeaveCriticalSection(&device_list_cs);
             IoInvalidateDeviceRelations(bus_pdo, BusRelations);
             break;
         case BUS_EVENT_TYPE_DEVICE_CREATED:
@@ -581,11 +581,11 @@ static DWORD CALLBACK bus_main_thread(void *args)
             }
             break;
         case BUS_EVENT_TYPE_INPUT_REPORT:
-            EnterCriticalSection(&device_list_cs);
+            RtlEnterCriticalSection(&device_list_cs);
             device = bus_find_unix_device(event->device);
             if (!device) WARN("could not find device for %s bus device %p\n", debugstr_w(bus.name), event->device);
             else process_hid_report(device, event->input_report.buffer, event->input_report.length);
-            LeaveCriticalSection(&device_list_cs);
+            RtlLeaveCriticalSection(&device_list_cs);
             break;
         }
     }
@@ -839,19 +839,19 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
 
         case IRP_MN_START_DEVICE:
-            EnterCriticalSection(&ext->cs);
+            RtlEnterCriticalSection(&ext->cs);
             if (ext->state != DEVICE_STATE_STOPPED) status = STATUS_SUCCESS;
             else if (ext->state == DEVICE_STATE_REMOVED) status = STATUS_DELETE_PENDING;
             else if (!(status = unix_device_start(device))) ext->state = DEVICE_STATE_STARTED;
             else ERR("failed to start device %p, status %#x\n", device, status);
-            LeaveCriticalSection(&ext->cs);
+            RtlLeaveCriticalSection(&ext->cs);
             break;
 
         case IRP_MN_SURPRISE_REMOVAL:
-            EnterCriticalSection(&ext->cs);
+            RtlEnterCriticalSection(&ext->cs);
             remove_pending_irps(device);
             ext->state = DEVICE_STATE_REMOVED;
-            LeaveCriticalSection(&ext->cs);
+            RtlLeaveCriticalSection(&ext->cs);
             status = STATUS_SUCCESS;
             break;
 
@@ -934,11 +934,11 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         return IoCallDriver(bus_pdo, irp);
     }
 
-    EnterCriticalSection(&ext->cs);
+    RtlEnterCriticalSection(&ext->cs);
 
     if (ext->state == DEVICE_STATE_REMOVED)
     {
-        LeaveCriticalSection(&ext->cs);
+        RtlLeaveCriticalSection(&ext->cs);
         irp->IoStatus.Status = STATUS_DELETE_PENDING;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_DELETE_PENDING;
@@ -1072,7 +1072,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
     }
 
     status = irp->IoStatus.Status;
-    LeaveCriticalSection(&ext->cs);
+    RtlLeaveCriticalSection(&ext->cs);
 
     if (status != STATUS_PENDING) IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;

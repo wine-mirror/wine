@@ -180,9 +180,9 @@ static void iohid_device_stop(struct unix_device *iface)
 
     IOHIDDeviceRegisterInputReportCallback(private->device, NULL, 0, NULL, NULL);
 
-    EnterCriticalSection(&iohid_cs);
+    RtlEnterCriticalSection(&iohid_cs);
     list_remove(&private->unix_device.entry);
-    LeaveCriticalSection(&iohid_cs);
+    RtlLeaveCriticalSection(&iohid_cs);
 }
 
 static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -403,9 +403,9 @@ NTSTATUS iohid_bus_wait(void *args)
     do
     {
         if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
-        EnterCriticalSection(&iohid_cs);
+        RtlEnterCriticalSection(&iohid_cs);
         ret = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, TRUE);
-        LeaveCriticalSection(&iohid_cs);
+        RtlLeaveCriticalSection(&iohid_cs);
     } while (ret != kCFRunLoopRunStopped);
 
     TRACE("IOHID main loop exiting\n");

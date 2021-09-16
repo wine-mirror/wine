@@ -511,9 +511,9 @@ static void sdl_device_stop(struct unix_device *iface)
     if (private->sdl_controller) pSDL_GameControllerClose(private->sdl_controller);
     if (private->sdl_haptic) pSDL_HapticClose(private->sdl_haptic);
 
-    EnterCriticalSection(&sdl_cs);
+    RtlEnterCriticalSection(&sdl_cs);
     list_remove(&private->unix_device.entry);
-    LeaveCriticalSection(&sdl_cs);
+    RtlLeaveCriticalSection(&sdl_cs);
 }
 
 static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE *buffer,
@@ -785,7 +785,7 @@ static void process_device_event(SDL_Event *event)
 
     TRACE_(hid_report)("Received action %x\n", event->type);
 
-    EnterCriticalSection(&sdl_cs);
+    RtlEnterCriticalSection(&sdl_cs);
 
     if (event->type == SDL_JOYDEVICEADDED)
         sdl_add_device(((SDL_JoyDeviceEvent *)event)->which);
@@ -811,7 +811,7 @@ static void process_device_event(SDL_Event *event)
         else WARN("failed to find device with id %d\n", id);
     }
 
-    LeaveCriticalSection(&sdl_cs);
+    RtlLeaveCriticalSection(&sdl_cs);
 }
 
 NTSTATUS sdl_bus_init(void *args)
