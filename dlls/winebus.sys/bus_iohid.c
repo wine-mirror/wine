@@ -95,9 +95,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 #ifdef HAVE_IOHIDMANAGERCREATE
 
+static CRITICAL_SECTION iohid_cs;
+static CRITICAL_SECTION_DEBUG iohid_cs_debug =
+{
+    0, 0, &iohid_cs,
+    { &iohid_cs_debug.ProcessLocksList, &iohid_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": iohid_cs") }
+};
+static CRITICAL_SECTION iohid_cs = { &iohid_cs_debug, -1, 0, 0, 0, 0 };
+
 static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 static struct list event_queue = LIST_INIT(event_queue);
+static struct list device_list = LIST_INIT(device_list);
 
 static const WCHAR busidW[] = {'I','O','H','I','D',0};
 static struct iohid_bus_options options;
@@ -112,6 +122,16 @@ struct platform_private
 static inline struct platform_private *impl_from_unix_device(struct unix_device *iface)
 {
     return CONTAINING_RECORD(iface, struct platform_private, unix_device);
+}
+
+static struct platform_private *find_device_from_iohid(IOHIDDeviceRef IOHIDDevice)
+{
+    struct platform_private *private;
+
+    LIST_FOR_EACH_ENTRY(private, &device_list, struct platform_private, unix_device.entry)
+        if (!private->device == IOHIDDevice) return private;
+
+    return NULL;
 }
 
 static void CFStringToWSTR(CFStringRef cstr, LPWSTR wstr, int length)
@@ -170,6 +190,10 @@ static void iohid_device_stop(struct unix_device *iface)
     struct platform_private *private = impl_from_unix_device(iface);
 
     IOHIDDeviceRegisterInputReportCallback(private->device, NULL, 0, NULL, NULL);
+
+    EnterCriticalSection(&iohid_cs);
+    list_remove(&private->unix_device.entry);
+    LeaveCriticalSection(&iohid_cs);
 }
 
 static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -336,6 +360,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     TRACE("dev %p, desc %s.\n", IOHIDDevice, debugstr_device_desc(&desc));
 
     if (!(private = unix_device_create(&iohid_device_vtbl, sizeof(struct platform_private)))) return;
+    list_add_tail(&device_list, &private->unix_device.entry);
     private->device = IOHIDDevice;
     private->buffer = NULL;
 
@@ -344,13 +369,18 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
 
 static void handle_RemovalCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
 {
+    struct platform_private *device;
+
     TRACE("OS/X IOHID Device Removed %p\n", IOHIDDevice);
     IOHIDDeviceRegisterInputReportCallback(IOHIDDevice, NULL, 0, NULL, NULL);
     /* Note: Yes, we leak the buffer. But according to research there is no
              safe way to deallocate that buffer. */
     IOHIDDeviceUnscheduleFromRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     IOHIDDeviceClose(IOHIDDevice, 0);
-    bus_event_queue_device_removed(&event_queue, busidW, IOHIDDevice);
+
+    device = find_device_from_iohid(IOHIDDevice);
+    if (device) bus_event_queue_device_removed(&event_queue, &device->unix_device);
+    else WARN("failed to find device for iohid device %p\n", IOHIDDevice);
 }
 
 NTSTATUS iohid_bus_init(void *args)
@@ -377,6 +407,7 @@ NTSTATUS iohid_bus_init(void *args)
 NTSTATUS iohid_bus_wait(void *args)
 {
     struct bus_event *result = args;
+    CFRunLoopRunResult ret;
 
     /* cleanup previously returned event */
     bus_event_cleanup(result);
@@ -384,7 +415,10 @@ NTSTATUS iohid_bus_wait(void *args)
     do
     {
         if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
-    } while (CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, TRUE) != kCFRunLoopRunStopped);
+        EnterCriticalSection(&iohid_cs);
+        ret = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, TRUE);
+        LeaveCriticalSection(&iohid_cs);
+    } while (ret != kCFRunLoopRunStopped);
 
     TRACE("IOHID main loop exiting\n");
     bus_event_queue_destroy(&event_queue);

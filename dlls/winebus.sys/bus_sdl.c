@@ -799,7 +799,9 @@ static void process_device_event(SDL_Event *event)
     else if (event->type == SDL_JOYDEVICEREMOVED)
     {
         id = ((SDL_JoyDeviceEvent *)event)->which;
-        bus_event_queue_device_removed(&event_queue, sdl_busidW, ULongToPtr(id));
+        device = find_device_from_id(id);
+        if (device) bus_event_queue_device_removed(&event_queue, &device->unix_device);
+        else WARN("failed to find device with id %d\n", id);
     }
     else if (event->type >= SDL_JOYAXISMOTION && event->type <= SDL_JOYBUTTONUP)
     {

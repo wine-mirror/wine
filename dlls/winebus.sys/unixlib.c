@@ -343,8 +343,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 void bus_event_cleanup(struct bus_event *event)
 {
-    if (event->type == BUS_EVENT_TYPE_INPUT_REPORT)
-        unix_device_decref(event->input_report.device);
+    if (event->type == BUS_EVENT_TYPE_NONE) return;
+    unix_device_decref(event->device);
 }
 
 void bus_event_queue_destroy(struct list *queue)
@@ -358,15 +358,16 @@ void bus_event_queue_destroy(struct list *queue)
     }
 }
 
-BOOL bus_event_queue_device_removed(struct list *queue, const WCHAR *bus_id, void *context)
+BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *device)
 {
     ULONG size = sizeof(struct bus_event);
     struct bus_event *event = HeapAlloc(GetProcessHeap(), 0, size);
     if (!event) return FALSE;
 
+    if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
+
     event->type = BUS_EVENT_TYPE_DEVICE_REMOVED;
-    event->device_removed.bus_id = bus_id;
-    event->device_removed.context = context;
+    event->device = device;
     list_add_tail(queue, &event->entry);
 
     return TRUE;
@@ -378,8 +379,10 @@ BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *devi
     struct bus_event *event = HeapAlloc(GetProcessHeap(), 0, size);
     if (!event) return FALSE;
 
+    if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
+
     event->type = BUS_EVENT_TYPE_DEVICE_CREATED;
-    event->device_created.device = device;
+    event->device = device;
     event->device_created.desc = *desc;
     list_add_tail(queue, &event->entry);
 
@@ -395,7 +398,7 @@ BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device
     if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
 
     event->type = BUS_EVENT_TYPE_INPUT_REPORT;
-    event->input_report.device = device;
+    event->device = device;
     event->input_report.length = length;
     memcpy(event->input_report.buffer, report, length);
     list_add_tail(queue, &event->entry);

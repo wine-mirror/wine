@@ -200,6 +200,16 @@ static struct platform_private *find_device_from_syspath(const char *path)
     return NULL;
 }
 
+static struct platform_private *find_device_from_udev(struct udev_device *dev)
+{
+    struct platform_private *device;
+
+    LIST_FOR_EACH_ENTRY(device, &device_list, struct platform_private, unix_device.entry)
+        if (device->udev_device == dev) return device;
+
+    return NULL;
+}
+
 #ifdef HAS_PROPER_INPUT_HEADER
 
 static const BYTE ABS_TO_HID_MAP[][2] = {
@@ -1062,14 +1072,6 @@ static void udev_add_device(struct udev_device *dev)
 #endif
 }
 
-static void try_remove_device(struct udev_device *dev)
-{
-    bus_event_queue_device_removed(&event_queue, hidraw_busidW, dev);
-#ifdef HAS_PROPER_INPUT_HEADER
-    bus_event_queue_device_removed(&event_queue, lnxev_busidW, dev);
-#endif
-}
-
 static void build_initial_deviceset(void)
 {
     struct udev_enumerate *enumerate;
@@ -1161,6 +1163,7 @@ error:
 
 static void process_monitor_event(struct udev_monitor *monitor)
 {
+    struct platform_private *device;
     struct udev_device *dev;
     const char *action;
 
@@ -1180,7 +1183,11 @@ static void process_monitor_event(struct udev_monitor *monitor)
     else if (strcmp(action, "add") == 0)
         udev_add_device(dev);
     else if (strcmp(action, "remove") == 0)
-        try_remove_device(dev);
+    {
+        device = find_device_from_udev(dev);
+        if (device) bus_event_queue_device_removed(&event_queue, &device->unix_device);
+        else WARN("failed to find device for udev device %p\n", dev);
+    }
     else
         WARN("Unhandled action %s\n", debugstr_a(action));
 
