@@ -27,7 +27,4 @@
 
 #include "unixlib.h"
 
-/* General Bus Functions */
-BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
-
 extern HANDLE driver_key DECLSPEC_HIDDEN;

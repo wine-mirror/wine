@@ -89,4 +89,6 @@ extern BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USA
 
 extern BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
 
+BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
+
 #endif /* __WINEBUS_UNIX_PRIVATE_H */

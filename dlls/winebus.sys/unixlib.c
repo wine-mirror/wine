@@ -34,6 +34,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
+BOOL is_xbox_gamepad(WORD vid, WORD pid)
+{
+    if (vid != 0x045e) return FALSE;
+    if (pid == 0x0202) return TRUE; /* Xbox Controller */
+    if (pid == 0x0285) return TRUE; /* Xbox Controller S */
+    if (pid == 0x0289) return TRUE; /* Xbox Controller S */
+    if (pid == 0x028e) return TRUE; /* Xbox360 Controller */
+    if (pid == 0x028f) return TRUE; /* Xbox360 Wireless Controller */
+    if (pid == 0x02d1) return TRUE; /* Xbox One Controller */
+    if (pid == 0x02dd) return TRUE; /* Xbox One Controller (Covert Forces/Firmware 2015) */
+    if (pid == 0x02e0) return TRUE; /* Xbox One X Controller */
+    if (pid == 0x02e3) return TRUE; /* Xbox One Elite Controller */
+    if (pid == 0x02e6) return TRUE; /* Wireless XBox Controller Dongle */
+    if (pid == 0x02ea) return TRUE; /* Xbox One S Controller */
+    if (pid == 0x02fd) return TRUE; /* Xbox One S Controller (Firmware 2017) */
+    if (pid == 0x0719) return TRUE; /* Xbox 360 Wireless Adapter */
+    return FALSE;
+}
+
 struct mouse_device
 {
     struct unix_device unix_device;

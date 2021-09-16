@@ -57,31 +57,6 @@ __ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
 
 #endif
 
-struct product_desc
-{
-    WORD vid;
-    WORD pid;
-};
-
-#define VID_MICROSOFT 0x045e
-
-static const struct product_desc XBOX_CONTROLLERS[] =
-{
-    {VID_MICROSOFT, 0x0202}, /* Xbox Controller */
-    {VID_MICROSOFT, 0x0285}, /* Xbox Controller S */
-    {VID_MICROSOFT, 0x0289}, /* Xbox Controller S */
-    {VID_MICROSOFT, 0x028e}, /* Xbox360 Controller */
-    {VID_MICROSOFT, 0x028f}, /* Xbox360 Wireless Controller */
-    {VID_MICROSOFT, 0x02d1}, /* Xbox One Controller */
-    {VID_MICROSOFT, 0x02dd}, /* Xbox One Controller (Covert Forces/Firmware 2015) */
-    {VID_MICROSOFT, 0x02e0}, /* Xbox One X Controller */
-    {VID_MICROSOFT, 0x02e3}, /* Xbox One Elite Controller */
-    {VID_MICROSOFT, 0x02e6}, /* Wireless XBox Controller Dongle */
-    {VID_MICROSOFT, 0x02ea}, /* Xbox One S Controller */
-    {VID_MICROSOFT, 0x02fd}, /* Xbox One S Controller (Firmware 2017) */
-    {VID_MICROSOFT, 0x0719}, /* Xbox 360 Wireless Adapter */
-};
-
 static DRIVER_OBJECT *driver_obj;
 
 static DEVICE_OBJECT *mouse_obj;
@@ -1019,19 +994,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
     if (status != STATUS_PENDING) IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
-}
-
-BOOL is_xbox_gamepad(WORD vid, WORD pid)
-{
-    int i;
-
-    if (vid != VID_MICROSOFT)
-        return FALSE;
-
-    for (i = 0; i < ARRAY_SIZE(XBOX_CONTROLLERS); i++)
-        if (pid == XBOX_CONTROLLERS[i].pid) return TRUE;
-
-    return FALSE;
 }
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
