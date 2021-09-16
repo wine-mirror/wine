@@ -1105,16 +1105,16 @@ static struct symt* dwarf2_lookup_type(const dwarf2_debug_info_t* di)
     return type->symt;
 }
 
-static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug_info_t* di, const char* name)
+static const char* dwarf2_get_cpp_name(dwarf2_debug_info_t* di, const char* name)
 {
     char* last;
     struct attribute diname;
     struct attribute spec;
 
     if (di->abbrev->tag == DW_TAG_compile_unit) return name;
-    if (!ctx->cpp_name)
-        ctx->cpp_name = pool_alloc(&ctx->pool, MAX_SYM_NAME);
-    last = ctx->cpp_name + MAX_SYM_NAME - strlen(name) - 1;
+    if (!di->unit_ctx->cpp_name)
+        di->unit_ctx->cpp_name = pool_alloc(&di->unit_ctx->pool, MAX_SYM_NAME);
+    last = di->unit_ctx->cpp_name + MAX_SYM_NAME - strlen(name) - 1;
     strcpy(last, name);
 
     /* if the di is a definition, but has also a (previous) declaration, then scope must
@@ -1122,7 +1122,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
      */
     if (dwarf2_find_attribute(di, DW_AT_specification, &spec) && spec.gotten_from == attr_direct)
     {
-        di = sparse_array_find(&ctx->debug_info_table, spec.u.uvalue);
+        di = sparse_array_find(&di->unit_ctx->debug_info_table, spec.u.uvalue);
         if (!di)
         {
             FIXME("Should have found the debug info entry\n");
@@ -1143,7 +1143,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
             {
                 size_t  len = strlen(diname.u.string);
                 last -= 2 + len;
-                if (last < ctx->cpp_name) return NULL;
+                if (last < di->unit_ctx->cpp_name) return NULL;
                 memcpy(last, diname.u.string, len);
                 last[len] = last[len + 1] = ':';
             }
@@ -1568,7 +1568,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
         name.u.string = "zz_anon_zz";
     if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
 
-    di->symt = &symt_new_udt(ctx->module_ctx->module, dwarf2_get_cpp_name(ctx, di, name.u.string),
+    di->symt = &symt_new_udt(ctx->module_ctx->module, dwarf2_get_cpp_name(di, name.u.string),
                              size.u.uvalue, udt)->symt;
 
     children = dwarf2_get_di_children(di);
@@ -1735,7 +1735,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                 ext.u.uvalue = 0;
             loc.offset += subpgm->ctx->module_ctx->load_offset;
             symt_new_global_variable(subpgm->ctx->module_ctx->module, subpgm->ctx->compiland,
-                                     dwarf2_get_cpp_name(subpgm->ctx, di, name.u.string), !ext.u.uvalue,
+                                     dwarf2_get_cpp_name(di, name.u.string), !ext.u.uvalue,
                                      loc, 0, param_type);
             break;
         default:
@@ -2057,7 +2057,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     /* FIXME: assuming C source code */
     sig_type = symt_new_function_signature(ctx->module_ctx->module, ret_type, CV_CALL_FAR_C);
     subpgm.func = symt_new_function(ctx->module_ctx->module, ctx->compiland,
-                                    dwarf2_get_cpp_name(ctx, di, name.u.string),
+                                    dwarf2_get_cpp_name(di, name.u.string),
                                     ctx->module_ctx->load_offset + low_pc, high_pc - low_pc,
                                     &sig_type->symt);
     di->symt = &subpgm.func->symt;
