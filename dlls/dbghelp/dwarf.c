@@ -191,6 +191,7 @@ typedef struct dwarf2_dwz_alternate_s
     struct image_file_map*      fmap;
     dwarf2_section_t            sections[section_max];
     struct image_section_map    sectmap[section_max];
+    dwarf2_parse_module_context_t module_ctx;
 } dwarf2_dwz_alternate_t;
 
 enum unit_status
@@ -3689,6 +3690,41 @@ static void dwarf2_module_remove(struct process* pcs, struct module_format* modf
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
+static BOOL dwarf2_load_CU_module(dwarf2_parse_module_context_t* module_ctx, struct module* module,
+                                  dwarf2_section_t* sections, ULONG_PTR load_offset,
+                                  const struct elf_thunk_area* thunks)
+{
+    dwarf2_traverse_context_t   mod_ctx;
+    unsigned i;
+
+    module_ctx->sections = sections;
+    module_ctx->module = module;
+    module_ctx->thunks = thunks;
+    module_ctx->load_offset = load_offset;
+    memset(module_ctx->symt_cache, 0, sizeof(module_ctx->symt_cache));
+    module_ctx->symt_cache[sc_void] = &symt_new_basic(module_ctx->module, btVoid, "void", 0)->symt;
+    module_ctx->symt_cache[sc_unknown] = &symt_new_basic(module_ctx->module, btNoType, "# unknown", 0)->symt;
+    vector_init(&module_ctx->unit_contexts, sizeof(dwarf2_parse_context_t), 16);
+    module_ctx->cu_versions = 0;
+
+    /* phase I: parse all CU heads */
+    mod_ctx.data = sections[section_debug].address;
+    mod_ctx.end_data = mod_ctx.data + sections[section_debug].size;
+    while (mod_ctx.data < mod_ctx.end_data)
+    {
+        dwarf2_parse_context_t* unit_ctx = vector_add(&module_ctx->unit_contexts, &module_ctx->module->pool);
+
+        unit_ctx->module_ctx = module_ctx;
+        dwarf2_parse_compilation_unit_head(unit_ctx, &mod_ctx);
+    }
+
+    /* phase2: load content of all CU */
+    for (i = 0; i < module_ctx->unit_contexts.num_elts; ++i)
+        dwarf2_parse_compilation_unit((dwarf2_parse_context_t*)vector_at(&module_ctx->unit_contexts, i));
+
+    return TRUE;
+}
+
 static dwarf2_dwz_alternate_t* dwarf2_load_dwz(struct image_file_map* fmap, struct module* module)
 {
     struct image_file_map* fmap_dwz;
@@ -3710,6 +3746,8 @@ static dwarf2_dwz_alternate_t* dwarf2_load_dwz(struct image_file_map* fmap, stru
     dwarf2_init_section(&dwz->sections[section_line],   fmap_dwz, ".debug_line",   ".zdebug_line",   &dwz->sectmap[section_line]);
     dwarf2_init_section(&dwz->sections[section_ranges], fmap_dwz, ".debug_ranges", ".zdebug_ranges", &dwz->sectmap[section_ranges]);
 
+    dwz->module_ctx.dwz = NULL;
+    dwarf2_load_CU_module(&dwz->module_ctx, module, dwz->sections, 0/*FIXME*/, NULL);
     return dwz;
 }
 
@@ -3732,20 +3770,29 @@ static void dwarf2_unload_dwz(dwarf2_dwz_alternate_t* dwz)
     HeapFree(GetProcessHeap(), 0, dwz);
 }
 
+static BOOL dwarf2_unload_CU_module(dwarf2_parse_module_context_t* module_ctx)
+{
+    unsigned i;
+    for (i = 0; i < module_ctx->unit_contexts.num_elts; ++i)
+    {
+        dwarf2_parse_context_t* unit = vector_at(&module_ctx->unit_contexts, i);
+        if (unit->status != UNIT_ERROR)
+            pool_destroy(&unit->pool);
+    }
+    dwarf2_unload_dwz(module_ctx->dwz);
+    return TRUE;
+}
+
 BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
                   const struct elf_thunk_area* thunks,
                   struct image_file_map* fmap)
 {
     dwarf2_section_t    eh_frame, section[section_max];
-    dwarf2_traverse_context_t   mod_ctx;
     struct image_section_map    debug_sect, debug_str_sect, debug_abbrev_sect,
                                 debug_line_sect, debug_ranges_sect, eh_frame_sect;
     BOOL                ret = TRUE;
     struct module_format* dwarf2_modfmt;
     dwarf2_parse_module_context_t module_ctx;
-    unsigned i;
-
-    module_ctx.dwz = dwarf2_load_dwz(fmap, module);
 
     if (!dwarf2_init_section(&eh_frame,                fmap, ".eh_frame",     NULL,             &eh_frame_sect))
         /* lld produces .eh_fram to avoid generating a long name */
@@ -3798,30 +3845,8 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_modfmt->u.dwarf2_info->cuheads = NULL;
     dwarf2_modfmt->u.dwarf2_info->num_cuheads = 0;
 
-    module_ctx.sections = section;
-    module_ctx.module = dwarf2_modfmt->module;
-    module_ctx.thunks = thunks;
-    module_ctx.load_offset = load_offset;
-    memset(module_ctx.symt_cache, 0, sizeof(module_ctx.symt_cache));
-    module_ctx.symt_cache[sc_void] = &symt_new_basic(module_ctx.module, btVoid, "void", 0)->symt;
-    module_ctx.symt_cache[sc_unknown] = &symt_new_basic(module_ctx.module, btNoType, "# unknown", 0)->symt;
-    vector_init(&module_ctx.unit_contexts, sizeof(dwarf2_parse_context_t), 16);
-    module_ctx.cu_versions = 0;
-
-    /* phase I: parse all CU heads */
-    mod_ctx.data = section[section_debug].address;
-    mod_ctx.end_data = mod_ctx.data + section[section_debug].size;
-    while (mod_ctx.data < mod_ctx.end_data)
-    {
-        dwarf2_parse_context_t* unit_ctx = vector_add(&module_ctx.unit_contexts, &module_ctx.module->pool);
-
-        unit_ctx->module_ctx = &module_ctx;
-        dwarf2_parse_compilation_unit_head(unit_ctx, &mod_ctx);
-    }
-
-    /* phase2: load content of all CU */
-    for (i = 0; i < module_ctx.unit_contexts.num_elts; ++i)
-        dwarf2_parse_compilation_unit((dwarf2_parse_context_t*)vector_at(&module_ctx.unit_contexts, i));
+    module_ctx.dwz = dwarf2_load_dwz(fmap, module);
+    dwarf2_load_CU_module(&module_ctx, module, section, load_offset, thunks);
 
     dwarf2_modfmt->module->module.SymType = SymDia;
     /* hide dwarf versions in CVSig
@@ -3835,15 +3860,8 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     dwarf2_modfmt->module->module.SourceIndexed = TRUE;
     dwarf2_modfmt->module->module.Publics = TRUE;
 
-    for (i = 0; i < module_ctx.unit_contexts.num_elts; ++i)
-    {
-        dwarf2_parse_context_t* unit = vector_at(&module_ctx.unit_contexts, i);
-        if (unit->status != UNIT_ERROR)
-            pool_destroy(&unit->pool);
-    }
-
+    dwarf2_unload_CU_module(&module_ctx);
 leave:
-    dwarf2_unload_dwz(module_ctx.dwz);
 
     dwarf2_fini_section(&section[section_debug]);
     dwarf2_fini_section(&section[section_abbrev]);
