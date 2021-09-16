@@ -3405,6 +3405,7 @@ static void test_simple_joystick(void)
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
+    HANDLE event;
     HRESULT hr;
     WCHAR *tmp;
     ULONG ref;
@@ -3691,8 +3692,18 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
     ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
 
+    hr = IDirectInputDevice8_SetEventNotification( device, (HANDLE)0xdeadbeef );
+    todo_wine
+    ok( hr == E_HANDLE, "IDirectInputDevice8_SetEventNotification returned: %#x\n", hr );
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( event != NULL, "CreateEventW failed, last error %u\n", GetLastError() );
+    hr = IDirectInputDevice8_SetEventNotification( device, event );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetEventNotification returned: %#x\n", hr );
+
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
+
+    CloseHandle( event );
 
     ref = IDirectInput8_Release( di );
     ok( ref == 0, "IDirectInput8_Release returned %d\n", ref );
