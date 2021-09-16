@@ -182,8 +182,16 @@ typedef struct dwarf2_parse_module_context_s
     const struct elf_thunk_area*thunks;
     struct symt*                symt_cache[sc_num]; /* void, unknown */
     struct vector               unit_contexts;
+    struct dwarf2_dwz_alternate_s* dwz;
     DWORD                       cu_versions;
 } dwarf2_parse_module_context_t;
+
+typedef struct dwarf2_dwz_alternate_s
+{
+    struct image_file_map*      fmap;
+    dwarf2_section_t            sections[section_max];
+    struct image_section_map    sectmap[section_max];
+} dwarf2_dwz_alternate_t;
 
 enum unit_status
 {
@@ -3663,6 +3671,49 @@ static void dwarf2_module_remove(struct process* pcs, struct module_format* modf
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
+static dwarf2_dwz_alternate_t* dwarf2_load_dwz(struct image_file_map* fmap, struct module* module)
+{
+    struct image_file_map* fmap_dwz;
+    dwarf2_dwz_alternate_t* dwz;
+
+    fmap_dwz = image_load_debugaltlink(fmap, module);
+    if (!fmap_dwz) return NULL;
+    if (!(dwz = HeapAlloc(GetProcessHeap(), 0, sizeof(*dwz))))
+    {
+        image_unmap_file(fmap_dwz);
+        HeapFree(GetProcessHeap(), 0, fmap_dwz);
+        return NULL;
+    }
+
+    dwz->fmap = fmap_dwz;
+    dwarf2_init_section(&dwz->sections[section_debug],  fmap_dwz, ".debug_info",   ".zdebug_info",   &dwz->sectmap[section_debug]);
+    dwarf2_init_section(&dwz->sections[section_abbrev], fmap_dwz, ".debug_abbrev", ".zdebug_abbrev", &dwz->sectmap[section_abbrev]);
+    dwarf2_init_section(&dwz->sections[section_string], fmap_dwz, ".debug_str",    ".zdebug_str",    &dwz->sectmap[section_string]);
+    dwarf2_init_section(&dwz->sections[section_line],   fmap_dwz, ".debug_line",   ".zdebug_line",   &dwz->sectmap[section_line]);
+    dwarf2_init_section(&dwz->sections[section_ranges], fmap_dwz, ".debug_ranges", ".zdebug_ranges", &dwz->sectmap[section_ranges]);
+
+    return dwz;
+}
+
+static void dwarf2_unload_dwz(dwarf2_dwz_alternate_t* dwz)
+{
+    if (!dwz) return;
+    dwarf2_fini_section(&dwz->sections[section_debug]);
+    dwarf2_fini_section(&dwz->sections[section_abbrev]);
+    dwarf2_fini_section(&dwz->sections[section_string]);
+    dwarf2_fini_section(&dwz->sections[section_line]);
+    dwarf2_fini_section(&dwz->sections[section_ranges]);
+
+    image_unmap_section(&dwz->sectmap[section_debug]);
+    image_unmap_section(&dwz->sectmap[section_abbrev]);
+    image_unmap_section(&dwz->sectmap[section_string]);
+    image_unmap_section(&dwz->sectmap[section_line]);
+    image_unmap_section(&dwz->sectmap[section_ranges]);
+
+    image_unmap_file(dwz->fmap);
+    HeapFree(GetProcessHeap(), 0, dwz);
+}
+
 BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
                   const struct elf_thunk_area* thunks,
                   struct image_file_map* fmap)
@@ -3675,6 +3726,8 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     struct module_format* dwarf2_modfmt;
     dwarf2_parse_module_context_t module_ctx;
     unsigned i;
+
+    module_ctx.dwz = dwarf2_load_dwz(fmap, module);
 
     if (!dwarf2_init_section(&eh_frame,                fmap, ".eh_frame",     NULL,             &eh_frame_sect))
         /* lld produces .eh_fram to avoid generating a long name */
@@ -3772,6 +3825,8 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     }
 
 leave:
+    dwarf2_unload_dwz(module_ctx.dwz);
+
     dwarf2_fini_section(&section[section_debug]);
     dwarf2_fini_section(&section[section_abbrev]);
     dwarf2_fini_section(&section[section_string]);
