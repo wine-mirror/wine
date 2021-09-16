@@ -26,9 +26,11 @@
 #include "winreg.h"
 #include "ddrawi.h"
 #include "rpc.h"
+#include "cfgmgr32.h"
 #include "initguid.h"
 #include "devguid.h"
 #include "devpkey.h"
+#include "ntddvdeo.h"
 #include "setupapi.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
@@ -1441,6 +1443,63 @@ void macdrv_displays_changed(const macdrv_event *event)
 }
 
 /***********************************************************************
+ *              link_device
+ *
+ * Set device interface link state to enabled. The link state should be set via
+ * IoSetDeviceInterfaceState(). However, IoSetDeviceInterfaceState() requires a PnP driver, which
+ * currently doesn't exist for display devices.
+ *
+ * Return FALSE on failure and TRUE on success.
+ */
+static BOOL link_device(const WCHAR *instance, const GUID *guid)
+{
+    static const WCHAR device_instanceW[] = {'D','e','v','i','c','e','I','n','s','t','a','n','c','e',0};
+    static const WCHAR hash_controlW[] = {'#','\\','C','o','n','t','r','o','l',0};
+    static const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
+    static const DWORD enabled = 1;
+    WCHAR device_key_name[MAX_PATH], device_instance[MAX_PATH];
+    HKEY iface_key, device_key, control_key;
+    DWORD length, index = 0;
+    BOOL ret = FALSE;
+    LSTATUS lr;
+
+    iface_key = SetupDiOpenClassRegKeyExW(guid, KEY_ALL_ACCESS, DIOCR_INTERFACE, NULL, NULL);
+    while (1)
+    {
+        length = ARRAY_SIZE(device_key_name);
+        lr = RegEnumKeyExW(iface_key, index++, device_key_name, &length, NULL, NULL, NULL, NULL);
+        if (lr)
+            break;
+
+        lr = RegOpenKeyExW(iface_key, device_key_name, 0, KEY_ALL_ACCESS, &device_key);
+        if (lr)
+            continue;
+
+        length = ARRAY_SIZE(device_instance);
+        lr = RegQueryValueExW(device_key, device_instanceW, NULL, NULL, (BYTE *)device_instance, &length);
+        if (lr || lstrcmpiW(device_instance, instance))
+        {
+            RegCloseKey(device_key);
+            continue;
+        }
+
+        lr = RegCreateKeyExW(device_key, hash_controlW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &control_key, NULL);
+        RegCloseKey(device_key);
+        if (lr)
+            break;
+
+        lr = RegSetValueExW(control_key, linkedW, 0, REG_DWORD, (const BYTE *)&enabled, sizeof(enabled));
+        if (!lr)
+            ret = TRUE;
+
+        RegCloseKey(control_key);
+        break;
+    }
+    RegCloseKey(iface_key);
+    return ret;
+}
+
+/***********************************************************************
  *              macdrv_init_gpu
  *
  * Initialize a GPU instance.
@@ -1473,6 +1532,13 @@ static BOOL macdrv_init_gpu(HDEVINFO devinfo, const struct macdrv_gpu *gpu, int 
         if (!SetupDiRegisterDeviceInfo(devinfo, &device_data, 0, NULL, NULL, NULL))
             goto done;
     }
+
+    /* Register GUID_DEVINTERFACE_DISPLAY_ADAPTER */
+    if (!SetupDiCreateDeviceInterfaceW(devinfo, &device_data, &GUID_DEVINTERFACE_DISPLAY_ADAPTER, NULL, 0, NULL))
+        goto done;
+
+    if (!link_device(instanceW, &GUID_DEVINTERFACE_DISPLAY_ADAPTER))
+        goto done;
 
     /* Write HardwareID registry property, REG_MULTI_SZ */
     written = sprintfW(bufferW, gpu_hardware_id_fmtW, gpu->vendor_id, gpu->device_id);
