@@ -420,7 +420,7 @@ static const char* dwarf2_debug_traverse_ctx(const dwarf2_traverse_context_t* ct
     return wine_dbg_sprintf("ctx(%p)", ctx->data); 
 }
 
-static const char* dwarf2_debug_ctx(const dwarf2_parse_context_t* ctx)
+static const char* dwarf2_debug_unit_ctx(const dwarf2_parse_context_t* ctx)
 {
     return wine_dbg_sprintf("ctx(%p,%s)",
                             ctx, debugstr_w(ctx->module_ctx->module->modulename));
@@ -428,8 +428,8 @@ static const char* dwarf2_debug_ctx(const dwarf2_parse_context_t* ctx)
 
 static const char* dwarf2_debug_di(const dwarf2_debug_info_t* di)
 {
-    return wine_dbg_sprintf("debug_info(abbrev:%p,symt:%p)",
-                            di->abbrev, di->symt);
+    return wine_dbg_sprintf("debug_info(abbrev:%p,symt:%p) in %s",
+                            di->abbrev, di->symt, dwarf2_debug_unit_ctx(di->unit_ctx));
 }
 
 static dwarf2_abbrev_entry_t*
@@ -1078,7 +1078,7 @@ static struct symt* dwarf2_lookup_type(const dwarf2_debug_info_t* di)
             if (ref_ctx && dwarf2_parse_compilation_unit(ref_ctx))
             {
                 type = sparse_array_find(&ref_ctx->debug_info_table, attr.u.uvalue);
-                if (type) TRACE("Found type ref %lx in another CU %s\n", attr.u.uvalue, dwarf2_debug_ctx(ref_ctx));
+                if (type) TRACE("Found type ref %lx in another CU %s\n", attr.u.uvalue, dwarf2_debug_unit_ctx(ref_ctx));
             }
         }
         if (!type)
@@ -1275,7 +1275,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
         if (sibling.u.uvalue >= ctx->module_ctx->sections[ctx->section].size)
         {
             FIXME("cursor sibling after section end %s: 0x%lx 0x%x\n",
-                  dwarf2_debug_ctx(ctx), sibling.u.uvalue, ctx->module_ctx->sections[ctx->section].size);
+                  dwarf2_debug_unit_ctx(ctx), sibling.u.uvalue, ctx->module_ctx->sections[ctx->section].size);
             return FALSE;
         }
         WARN("setting cursor for %s to next sibling <0x%lx>\n",
@@ -1310,7 +1310,7 @@ static struct symt* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx,
     enum BasicType bt;
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
         name.u.string = NULL;
@@ -1344,7 +1344,7 @@ static struct symt* dwarf2_parse_typedef(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
     ref_type = dwarf2_lookup_type(di);
@@ -1363,7 +1363,7 @@ static struct symt* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = sizeof(void *);
     ref_type = dwarf2_lookup_type(di);
@@ -1384,7 +1384,7 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     ref_type = dwarf2_lookup_type(di);
 
@@ -1412,8 +1412,8 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
                 cnt.u.uvalue = 0;
             break;
         default:
-            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                  child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            FIXME("Unhandled Tag type 0x%lx at %s\n",
+                  child->abbrev->tag, dwarf2_debug_di(di));
             break;
         }
     }
@@ -1428,7 +1428,7 @@ static struct symt* dwarf2_parse_const_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     ref_type = dwarf2_lookup_type(di);
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1444,7 +1444,7 @@ static struct symt* dwarf2_parse_volatile_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     ref_type = dwarf2_lookup_type(di);
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1460,7 +1460,7 @@ static struct symt* dwarf2_parse_unspecified_type(dwarf2_parse_context_t* ctx,
     struct attribute size;
     struct symt_basic *basic;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (di->symt) return di->symt;
 
@@ -1482,7 +1482,7 @@ static struct symt* dwarf2_parse_reference_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     ref_type = dwarf2_lookup_type(di);
     /* FIXME: for now, we hard-wire C++ references to pointers */
@@ -1505,7 +1505,7 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 
     assert(parent);
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
     elt_type = dwarf2_lookup_type(di);
@@ -1518,7 +1518,7 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
         }
         else
             TRACE("found member_location at %s -> %lu\n",
-                  dwarf2_debug_ctx(ctx), loc.offset);
+                  dwarf2_debug_di(di), loc.offset);
     }
     else
         loc.offset = 0;
@@ -1561,7 +1561,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     /* quirk... FIXME provide real support for anonymous UDTs */
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
@@ -1611,8 +1611,8 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
             /* FIXME: some C++ related stuff */
             break;
         default:
-            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                  child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            FIXME("Unhandled Tag type 0x%lx at %s\n",
+                  child->abbrev->tag, dwarf2_debug_di(di));
             break;
         }
     }
@@ -1627,7 +1627,7 @@ static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx,
     struct attribute    name;
     struct attribute    value;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) return;
     if (!dwarf2_find_attribute(di, DW_AT_const_value, &value)) value.u.svalue = 0;
@@ -1648,7 +1648,7 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
     if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
@@ -1676,8 +1676,8 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
                 dwarf2_parse_enumerator(ctx, child, (struct symt_enum*)di->symt);
             break;
         default:
-            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                  di->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            FIXME("Unhandled Tag type 0x%lx at %s\n",
+                  di->abbrev->tag, dwarf2_debug_di(di));
 	}
     }
     return di->symt;
@@ -1706,7 +1706,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     struct location     loc;
     BOOL                is_pmt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     is_pmt = !block && di->abbrev->tag == DW_TAG_formal_parameter;
     param_type = dwarf2_lookup_type(di);
@@ -1722,7 +1722,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
 
 	TRACE("found parameter %s (kind=%d, offset=%ld, reg=%d) at %s\n",
               debugstr_a(name.u.string), loc.kind, loc.offset, loc.reg,
-              dwarf2_debug_ctx(subpgm->ctx));
+              dwarf2_debug_unit_ctx(subpgm->ctx));
 
         switch (loc.kind)
         {
@@ -1846,7 +1846,7 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
     struct attribute    low_pc;
     struct location     loc;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_low_pc, &low_pc)) low_pc.u.uvalue = 0;
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
@@ -1875,7 +1875,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
     dwarf2_debug_info_t*child;
     unsigned int        i;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_read_range(subpgm->ctx, di, &low_pc, &high_pc))
     {
@@ -1911,9 +1911,8 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
             /* this isn't properly supported by dbghelp interface. skip it for now */
             break;
         default:
-            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                  child->abbrev->tag, dwarf2_debug_ctx(subpgm->ctx),
-                  dwarf2_debug_di(di));
+            FIXME("Unhandled Tag type 0x%lx at %s\n",
+                  child->abbrev->tag, dwarf2_debug_di(di));
         }
     }
     symt_close_func_block(subpgm->ctx->module_ctx->module, subpgm->func, block, 0);
@@ -1929,7 +1928,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
     dwarf2_debug_info_t*child;
     unsigned int        i;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_read_range(subpgm->ctx, di, &low_pc, &high_pc))
     {
@@ -1993,8 +1992,8 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
             /* the type referred to will be loaded when we need it, so skip it */
             break;
         default:
-            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                  child->abbrev->tag, dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
+            FIXME("Unhandled Tag type 0x%lx at %s\n",
+                  child->abbrev->tag, dwarf2_debug_di(di));
         }
     }
 
@@ -2017,7 +2016,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
     {
@@ -2119,8 +2118,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
             /* FIXME: no support in dbghelp's internals so far */
             break;
         default:
-            FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
-                  child->abbrev->tag, dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+            FIXME("Unhandled Tag type 0x%lx at %s\n",
+                  child->abbrev->tag, dwarf2_debug_di(di));
 	}
     }
 
@@ -2144,7 +2143,7 @@ static struct symt* dwarf2_parse_subroutine_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     ret_type = dwarf2_lookup_type(di);
 
@@ -2180,7 +2179,7 @@ static void dwarf2_parse_namespace(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
+    TRACE("%s\n", dwarf2_debug_di(di));
 
     di->symt = ctx->module_ctx->symt_cache[sc_void];
 
@@ -2260,8 +2259,8 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     case DW_TAG_ptr_to_member_type:
         break;
     default:
-        FIXME("Unhandled Tag type 0x%lx at %s, for %lu\n",
-              di->abbrev->tag, dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
+        FIXME("Unhandled Tag type 0x%lx at %s\n",
+              di->abbrev->tag, dwarf2_debug_di(di));
     }
 }
 
