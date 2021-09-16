@@ -2872,21 +2872,25 @@ static inline void memset_aligned_32(unsigned char *d, uint64_t v, size_t n)
  */
 void *__cdecl memset(void *dst, int c, size_t n)
 {
+    typedef uint64_t DECLSPEC_ALIGN(1) unaligned_ui64;
+    typedef uint32_t DECLSPEC_ALIGN(1) unaligned_ui32;
+    typedef uint16_t DECLSPEC_ALIGN(1) unaligned_ui16;
+
     uint64_t v = 0x101010101010101ull * (unsigned char)c;
     unsigned char *d = (unsigned char *)dst;
     size_t a = 0x20 - ((uintptr_t)d & 0x1f);
 
     if (n >= 16)
     {
-        *(uint64_t *)(d + 0) = v;
-        *(uint64_t *)(d + 8) = v;
-        *(uint64_t *)(d + n - 16) = v;
-        *(uint64_t *)(d + n - 8) = v;
+        *(unaligned_ui64 *)(d + 0) = v;
+        *(unaligned_ui64 *)(d + 8) = v;
+        *(unaligned_ui64 *)(d + n - 16) = v;
+        *(unaligned_ui64 *)(d + n - 8) = v;
         if (n <= 32) return dst;
-        *(uint64_t *)(d + 16) = v;
-        *(uint64_t *)(d + 24) = v;
-        *(uint64_t *)(d + n - 32) = v;
-        *(uint64_t *)(d + n - 24) = v;
+        *(unaligned_ui64 *)(d + 16) = v;
+        *(unaligned_ui64 *)(d + 24) = v;
+        *(unaligned_ui64 *)(d + n - 32) = v;
+        *(unaligned_ui64 *)(d + n - 24) = v;
         if (n <= 64) return dst;
 
         n = (n - a) & ~0x1f;
@@ -2895,20 +2899,20 @@ void *__cdecl memset(void *dst, int c, size_t n)
     }
     if (n >= 8)
     {
-        *(uint64_t *)d = v;
-        *(uint64_t *)(d + n - 8) = v;
+        *(unaligned_ui64 *)d = v;
+        *(unaligned_ui64 *)(d + n - 8) = v;
         return dst;
     }
     if (n >= 4)
     {
-        *(uint32_t *)d = v;
-        *(uint32_t *)(d + n - 4) = v;
+        *(unaligned_ui32 *)d = v;
+        *(unaligned_ui32 *)(d + n - 4) = v;
         return dst;
     }
     if (n >= 2)
     {
-        *(uint16_t *)d = v;
-        *(uint16_t *)(d + n - 2) = v;
+        *(unaligned_ui16 *)d = v;
+        *(unaligned_ui16 *)(d + n - 2) = v;
         return dst;
     }
     if (n >= 1)
