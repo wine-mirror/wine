@@ -1884,7 +1884,6 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
     IMFMediaEvent *session_event;
     MFP_MEDIAPLAYER_STATE state;
     HRESULT hr, event_status;
-    IMFPMediaItem *item = NULL;
     IMFTopology *topology;
     unsigned int status;
     PROPVARIANT value;
@@ -1963,9 +1962,6 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
         default:
             ;
     }
-
-    if (item)
-        IMFPMediaItem_Release(item);
 
     if (event)
     {
