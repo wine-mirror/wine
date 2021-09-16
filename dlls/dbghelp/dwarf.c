@@ -682,9 +682,27 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         attr->u.uvalue = 0;
         return FALSE;
     case DW_FORM_GNU_strp_alt:
-        FIXME("Unhandled FORM_GNU_strp_alt\n");
-        attr->u.string = NULL;
-        return FALSE;
+        if (ctx->module_ctx->dwz)
+        {
+            ULONG_PTR ofs = dwarf2_get_addr(data, ctx->head.offset_size);
+            if (ofs < ctx->module_ctx->dwz->sections[section_string].size)
+            {
+                attr->u.string = (const char*)ctx->module_ctx->dwz->sections[section_string].address + ofs;
+                TRACE("strp_alt<%s>\n", debugstr_a(attr->u.string));
+            }
+            else
+            {
+                ERR("out of bounds strp_alt: 0x%lx 0x%x (%u)\n", ofs, ctx->module_ctx->dwz->sections[section_string].size, ctx->head.offset_size);
+                attr->u.string = "<<outofbounds-strpalt>>";
+            }
+        }
+        else
+        {
+            ERR("No DWZ file present for GNU_strp_alt in %s\n", debugstr_w(ctx->module_ctx->module->modulename));
+            attr->u.string = "<<noDWZ-strpalt>>";
+        }
+        break;
+
     default:
         FIXME("Unhandled attribute form %lx\n", abbrev_attr->form);
         break;
