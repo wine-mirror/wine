@@ -3409,6 +3409,7 @@ static void test_simple_joystick(void)
     HRESULT hr;
     WCHAR *tmp;
     ULONG ref;
+    HWND hwnd;
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
     GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
@@ -3699,6 +3700,31 @@ static void test_simple_joystick(void)
     ok( event != NULL, "CreateEventW failed, last error %u\n", GetLastError() );
     hr = IDirectInputDevice8_SetEventNotification( device, event );
     ok( hr == DI_OK, "IDirectInputDevice8_SetEventNotification returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, 0 );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND | DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+
+    hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
+                          NULL, NULL, NULL, NULL );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
+    DestroyWindow( hwnd );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
