@@ -105,21 +105,6 @@ static int get_bitmap_stride(int width, int bpp)
     return ((width * bpp + 15) >> 3) & ~1;
 }
 
-static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
-                                       LPARAM lparam)
-{
-    MONITORINFOEXA mi;
-    char *primary = (char *)lparam;
-
-    mi.cbSize = sizeof(mi);
-
-    ok(GetMonitorInfoA(hmon, (MONITORINFO*)&mi), "GetMonitorInfo failed\n");
-    if (mi.dwFlags & MONITORINFOF_PRIMARY)
-        strcpy(primary, mi.szDevice);
-
-    return TRUE;
-}
-
 static int adapter_count = 0;
 static int monitor_count = 0;
 
@@ -150,11 +135,6 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
        *device->DeviceString, "#%d: expect DeviceString not empty\n", index);
 
     /* StateFlags */
-    if (index == 0)
-        ok(device->StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE, "#%d: adapter should be primary\n", index);
-    else
-        ok(!(device->StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE), "#%d: adapter should not be primary\n", index);
-
     if (device->StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
     {
         /* Test creating DC */
@@ -180,7 +160,7 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
     }
 }
 
-static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index, const char *adapter_name,
+static void test_enumdisplaydevices_monitor(int monitor_index, const char *adapter_name,
                                             DISPLAY_DEVICEA *device, DWORD flags)
 {
     static const char device_key_prefix[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class"
@@ -200,11 +180,8 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
     ok(*device->DeviceString, "#%d: expect DeviceString not empty\n", monitor_index);
 
     /* StateFlags */
-    if (adapter_index == 0 && monitor_index == 0)
-        ok(device->StateFlags & DISPLAY_DEVICE_ATTACHED, "#%d expect to have a primary monitor attached\n", monitor_index);
-    else
-        ok(device->StateFlags <= (DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE), "#%d wrong state %#x\n", monitor_index,
-           device->StateFlags);
+    ok(device->StateFlags <= (DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE),
+       "#%d wrong state %#x\n", monitor_index, device->StateFlags);
 
     /* DeviceID */
     CharLowerA(device->DeviceID);
@@ -236,8 +213,6 @@ static void test_enumdisplaydevices(void)
 {
     static const DWORD flags[] = {0, EDD_GET_DEVICE_INTERFACE_NAME};
     DISPLAY_DEVICEA dd;
-    char primary_device_name[32];
-    char primary_monitor_device_name[32];
     char adapter_name[32];
     int number;
     int flag_index;
@@ -266,23 +241,12 @@ static void test_enumdisplaydevices(void)
 
             for (monitor_index = 0; EnumDisplayDevicesA(adapter_name, monitor_index, &dd, flags[flag_index]);
                  monitor_index++)
-                test_enumdisplaydevices_monitor(adapter_index, monitor_index, adapter_name, &dd, flags[flag_index]);
+                test_enumdisplaydevices_monitor(monitor_index, adapter_name, &dd, flags[flag_index]);
         }
 
     ok(adapter_count > 0, "Expect at least one adapter found\n");
     /* XP on Testbot doesn't report a monitor, whereas XP on real machine does */
     ok(broken(monitor_count == 0) || monitor_count > 0, "Expect at least one monitor found\n");
-
-    ret = EnumDisplayDevicesA(NULL, 0, &dd, 0);
-    ok(ret, "Expect success\n");
-    lstrcpyA(primary_device_name, dd.DeviceName);
-
-    primary_monitor_device_name[0] = 0;
-    ret = EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)primary_monitor_device_name);
-    ok(ret, "EnumDisplayMonitors failed\n");
-    ok(!strcmp(primary_monitor_device_name, primary_device_name),
-       "monitor device name %s, device name %s\n", primary_monitor_device_name,
-       primary_device_name);
 }
 
 struct vid_mode
