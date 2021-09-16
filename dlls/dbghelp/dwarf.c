@@ -134,6 +134,7 @@ struct attribute
         const char*                     string;
         struct dwarf2_block             block;
     } u;
+    const struct dwarf2_debug_info_s*   debug_info;
 };
 
 typedef struct dwarf2_debug_info_s
@@ -711,6 +712,8 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
     return TRUE;
 }
 
+static dwarf2_debug_info_t* dwarf2_jump_to_debug_info(struct attribute* attr);
+
 static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
                                   unsigned at, struct attribute* attr)
 {
@@ -722,6 +725,7 @@ static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
     while (di)
     {
         ref_abbrev_attr = NULL;
+        attr->debug_info = di;
         for (i = 0, abbrev_attr = di->abbrev->attrs; abbrev_attr; i++, abbrev_attr = abbrev_attr->next)
         {
             if (abbrev_attr->attribute == at)
@@ -743,10 +747,47 @@ static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
         /* do we have either an abstract origin or a specification debug entry to look into ? */
         if (!ref_abbrev_attr || !dwarf2_fill_attr(di->unit_ctx, ref_abbrev_attr, di->data[refidx], attr))
             break;
-        if (!(di = sparse_array_find(&di->unit_ctx->debug_info_table, attr->u.uvalue)))
+        if (!(di = dwarf2_jump_to_debug_info(attr)))
+        {
             FIXME("Should have found the debug info entry\n");
+            break;
+        }
     }
     return FALSE;
+}
+
+static dwarf2_debug_info_t* dwarf2_jump_to_debug_info(struct attribute* attr)
+{
+    dwarf2_parse_context_t* ref_ctx = NULL;
+    BOOL with_other = TRUE;
+    dwarf2_debug_info_t* ret;
+
+    switch (attr->form)
+    {
+    case DW_FORM_ref_addr:
+        ref_ctx = dwarf2_locate_cu(attr->debug_info->unit_ctx->module_ctx, attr->u.uvalue);
+        break;
+    default:
+        with_other = FALSE;
+        ref_ctx = attr->debug_info->unit_ctx;
+        break;
+    }
+    if (!ref_ctx) return FALSE;
+    /* There are cases where we end up with a circular reference between two (or more)
+     * compilation units. Before this happens, try to see if we can refer to an already
+     * loaded debug_info in the target compilation unit (even if all the debug_info
+     * haven't been loaded yet).
+     */
+    if (ref_ctx->status == UNIT_BEINGLOADED &&
+        (ret = sparse_array_find(&ref_ctx->debug_info_table, attr->u.uvalue)))
+        return ret;
+    if (with_other)
+    {
+        /* ensure CU is fully loaded */
+        if (ref_ctx != attr->debug_info->unit_ctx && !dwarf2_parse_compilation_unit(ref_ctx))
+            return NULL;
+    }
+    return sparse_array_find(&ref_ctx->debug_info_table, attr->u.uvalue);
 }
 
 static void dwarf2_load_one_entry(dwarf2_debug_info_t*);
@@ -1069,24 +1110,9 @@ static struct symt* dwarf2_lookup_type(const dwarf2_debug_info_t* di)
     if (!dwarf2_find_attribute(di, DW_AT_type, &attr))
         /* this is only valid if current language of CU is C or C++ */
         return di->unit_ctx->module_ctx->symt_cache[sc_void];
-    if (!(type = sparse_array_find(&di->unit_ctx->debug_info_table, attr.u.uvalue)))
-    {
-        if (attr.form == DW_FORM_ref_addr)
-        {
-            dwarf2_parse_context_t* ref_ctx = dwarf2_locate_cu(di->unit_ctx->module_ctx, attr.u.uvalue);
-            /* ensure CU is fully loaded */
-            if (ref_ctx && dwarf2_parse_compilation_unit(ref_ctx))
-            {
-                type = sparse_array_find(&ref_ctx->debug_info_table, attr.u.uvalue);
-                if (type) TRACE("Found type ref %lx in another CU %s\n", attr.u.uvalue, dwarf2_debug_unit_ctx(ref_ctx));
-            }
-        }
-        if (!type)
-        {
-            FIXME("Unable to find back reference to type 0x%lx (form=0x%lx)\n", attr.u.uvalue, attr.form);
-            return di->unit_ctx->module_ctx->symt_cache[sc_unknown];
-        }
-    }
+    if (!(type = dwarf2_jump_to_debug_info(&attr)))
+        return di->unit_ctx->module_ctx->symt_cache[sc_unknown];
+
     if (type == di)
     {
         FIXME("Reference to itself\n");
@@ -1112,23 +1138,24 @@ static const char* dwarf2_get_cpp_name(dwarf2_debug_info_t* di, const char* name
     struct attribute spec;
 
     if (di->abbrev->tag == DW_TAG_compile_unit) return name;
-    if (!di->unit_ctx->cpp_name)
-        di->unit_ctx->cpp_name = pool_alloc(&di->unit_ctx->pool, MAX_SYM_NAME);
-    last = di->unit_ctx->cpp_name + MAX_SYM_NAME - strlen(name) - 1;
-    strcpy(last, name);
 
     /* if the di is a definition, but has also a (previous) declaration, then scope must
      * be gotten from declaration not definition
      */
     if (dwarf2_find_attribute(di, DW_AT_specification, &spec) && spec.gotten_from == attr_direct)
     {
-        di = sparse_array_find(&di->unit_ctx->debug_info_table, spec.u.uvalue);
+        di = dwarf2_jump_to_debug_info(&spec);
         if (!di)
         {
             FIXME("Should have found the debug info entry\n");
             return NULL;
         }
     }
+
+    if (!di->unit_ctx->cpp_name)
+        di->unit_ctx->cpp_name = pool_alloc(&di->unit_ctx->pool, MAX_SYM_NAME);
+    last = di->unit_ctx->cpp_name + MAX_SYM_NAME - strlen(name) - 1;
+    strcpy(last, name);
 
     for (di = di->parent; di; di = di->parent)
     {
@@ -1295,7 +1322,7 @@ static struct vector* dwarf2_get_di_children(dwarf2_debug_info_t* di)
         if (di->abbrev->have_child)
             return &di->children;
         if (!dwarf2_find_attribute(di, DW_AT_specification, &spec)) break;
-        if (!(di = sparse_array_find(&di->unit_ctx->debug_info_table, spec.u.uvalue)))
+        if (!(di = dwarf2_jump_to_debug_info(&spec)))
             FIXME("Should have found the debug info entry\n");
     }
     return NULL;
