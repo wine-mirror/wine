@@ -53,6 +53,10 @@
 DEFINE_EXPECT(Accessible_QI_IEnumVARIANT);
 DEFINE_EXPECT(Accessible_get_accChildCount);
 DEFINE_EXPECT(Accessible_get_accChild);
+DEFINE_EXPECT(Accessible_get_accName);
+DEFINE_EXPECT(Accessible_get_accParent);
+DEFINE_EXPECT(Accessible_child_get_accName);
+DEFINE_EXPECT(Accessible_child_get_accParent);
 
 static HANDLE (WINAPI *pGetProcessHandleFromHwnd)(HWND);
 
@@ -69,16 +73,39 @@ static BOOL init(void)
     return TRUE;
 }
 
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+
+    if(iface1 == iface2)
+        return TRUE;
+
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_Release(unk1);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
+    IUnknown_Release(unk2);
+    return unk1 == unk2;
+}
+
+static IAccessible Accessible_child;
+
 static HRESULT WINAPI Accessible_QueryInterface(
         IAccessible *iface, REFIID riid, void **ppvObject)
 {
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+            IsEqualIID(riid, &IID_IDispatch) ||
+            IsEqualIID(riid, &IID_IAccessible)) {
+        IAccessible_AddRef(iface);
+        *ppvObject = iface;
+        return S_OK;
+    }
+
     if(IsEqualIID(riid, &IID_IEnumVARIANT)) {
         CHECK_EXPECT(Accessible_QI_IEnumVARIANT);
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected QI call: %s\n", wine_dbgstr_guid(riid));
-    return E_NOTIMPL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI Accessible_AddRef(IAccessible *iface)
@@ -123,7 +150,11 @@ static HRESULT WINAPI Accessible_Invoke(IAccessible *iface, DISPID dispIdMember,
 static HRESULT WINAPI Accessible_get_accParent(
         IAccessible *iface, IDispatch **ppdispParent)
 {
-    ok(0, "unexpected call\n");
+    if(iface == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_get_accParent);
+    else
+        CHECK_EXPECT(Accessible_get_accParent);
+
     return E_NOTIMPL;
 }
 
@@ -140,17 +171,38 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface,
 {
     CHECK_EXPECT(Accessible_get_accChild);
     ok(V_VT(&varChildID) == VT_I4, "V_VT(&varChildID) = %d\n", V_VT(&varChildID));
-    ok(V_I4(&varChildID) == 1, "V_I4(&varChildID) = %d\n", V_I4(&varChildID));
 
-    *ppdispChild = NULL;
-    return S_OK;
+    switch(V_I4(&varChildID))
+    {
+    case 1:
+        *ppdispChild = NULL;
+        return S_OK;
+    case 2:
+        *ppdispChild = NULL;
+        return S_FALSE;
+    case 3:
+        *ppdispChild = (IDispatch*)&Accessible_child;
+        return S_OK;
+    case 4:
+        *ppdispChild = (IDispatch*)&Accessible_child;
+        return S_FALSE;
+    default:
+        ok(0, "unexpected call\n");
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT WINAPI Accessible_get_accName(IAccessible *iface,
         VARIANT varID, BSTR *pszName)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+
+    if(iface == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_get_accName);
+    else
+        CHECK_EXPECT(Accessible_get_accName);
+
+    ok(!pszName, "pszName != NULL\n");
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI Accessible_get_accValue(IAccessible *iface,
@@ -303,6 +355,7 @@ static IAccessibleVtbl AccessibleVtbl = {
 };
 
 static IAccessible Accessible = {&AccessibleVtbl};
+static IAccessible Accessible_child = {&AccessibleVtbl};
 
 static void test_getroletext(void)
 {
@@ -490,6 +543,8 @@ static HRESULT WINAPI Object_QueryInterface(IUnknown *iface, REFIID riid, void *
         IUnknown_AddRef(iface);
         return S_OK;
     }
+    /* on Win7 AccessibleObjectFromEvent doesn't check return value */
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -567,6 +622,8 @@ static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
             return LresultFromObject(&IID_IUnknown, wparam, &Object);
         if(lparam == (DWORD)OBJID_WINDOW)
             return 0;
+        if(lparam == 1)
+            return LresultFromObject(&IID_IUnknown, wparam, (IUnknown*)&Accessible);
 
         ok(0, "unexpected (%ld)\n", lparam);
         return 0;
@@ -617,6 +674,102 @@ static void test_AccessibleObjectFromWindow(void)
     ok(hr == S_OK, "got %x\n", hr);
     ok(Object_ref == 2, "Object_ref = %d\n", Object_ref);
     IUnknown_Release(unk);
+
+    DestroyWindow(hwnd);
+}
+
+static void test_AccessibleObjectFromEvent(void)
+{
+    IAccessible *acc;
+    VARIANT cid;
+    HRESULT hr;
+    HWND hwnd;
+
+    hwnd = CreateWindowA("oleacc_test", "test", WS_OVERLAPPEDWINDOW,
+            0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+
+    hr = AccessibleObjectFromEvent(NULL, OBJID_CLIENT, CHILDID_SELF, &acc, &cid);
+    ok(hr == E_FAIL, "got %#x\n", hr);
+
+    hr = AccessibleObjectFromEvent(hwnd, OBJID_CLIENT, CHILDID_SELF, NULL, &cid);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    acc = (IAccessible*)0xdeadbeef;
+    V_VT(&cid) = VT_UNKNOWN;
+    V_UNKNOWN(&cid) = (IUnknown*)0xdeadbeef;
+    hr = AccessibleObjectFromEvent(hwnd, OBJID_CLIENT, CHILDID_SELF, &acc, &cid);
+    ok(hr == E_NOINTERFACE || broken(hr == S_OK), "got %#x\n", hr);
+    if (hr == S_OK)
+        IAccessible_Release(acc);
+    else
+    {
+        ok(acc == NULL, "Unexpected acc %p\n", acc);
+        ok(V_VT(&cid) == VT_EMPTY, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    }
+
+    hr = AccessibleObjectFromEvent(hwnd, OBJID_CURSOR, CHILDID_SELF, &acc, &cid);
+    ok(hr == E_UNEXPECTED, "got %#x\n", hr);
+
+    SET_EXPECT(Accessible_get_accChild);
+    hr = AccessibleObjectFromEvent(hwnd, 1, 1, &acc, &cid);
+    CHECK_CALLED(Accessible_get_accChild);
+    ok(hr == S_OK, "got %#x\n", hr);
+    todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
+    ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    ok(V_I4(&cid) == 1, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    SET_EXPECT(Accessible_get_accParent);
+    SET_EXPECT(Accessible_get_accName);
+    V_I4(&cid) = 0;
+    hr = IAccessible_get_accName(acc, cid, NULL);
+    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    todo_wine CHECK_CALLED(Accessible_get_accParent);
+    CHECK_CALLED(Accessible_get_accName);
+    IAccessible_Release(acc);
+
+    SET_EXPECT(Accessible_get_accChild);
+    hr = AccessibleObjectFromEvent(hwnd, 1, 2, &acc, &cid);
+    CHECK_CALLED(Accessible_get_accChild);
+    ok(hr == S_OK, "got %#x\n", hr);
+    todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
+    ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    ok(V_I4(&cid) == 2, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    SET_EXPECT(Accessible_get_accParent);
+    SET_EXPECT(Accessible_get_accName);
+    V_I4(&cid) = 0;
+    hr = IAccessible_get_accName(acc, cid, NULL);
+    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    todo_wine CHECK_CALLED(Accessible_get_accParent);
+    CHECK_CALLED(Accessible_get_accName);
+    IAccessible_Release(acc);
+
+    SET_EXPECT(Accessible_get_accChild);
+    hr = AccessibleObjectFromEvent(hwnd, 1, 3, &acc, &cid);
+    CHECK_CALLED(Accessible_get_accChild);
+    ok(hr == S_OK, "got %#x\n", hr);
+    todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible_child), "acc == &Accessible_child\n");
+    ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    ok(V_I4(&cid) == 0, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    SET_EXPECT(Accessible_child_get_accParent);
+    SET_EXPECT(Accessible_child_get_accName);
+    hr = IAccessible_get_accName(acc, cid, NULL);
+    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    CHECK_CALLED(Accessible_child_get_accName);
+    IAccessible_Release(acc);
+
+    SET_EXPECT(Accessible_get_accChild);
+    hr = AccessibleObjectFromEvent(hwnd, 1, 4, &acc, &cid);
+    CHECK_CALLED(Accessible_get_accChild);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(acc == &Accessible_child, "acc != &Accessible_child\n");
+    ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
+    ok(V_I4(&cid) == 0, "got %#x, expected %#x\n", V_I4(&cid), CHILDID_SELF);
+    SET_EXPECT(Accessible_child_get_accName);
+    hr = IAccessible_get_accName(acc, cid, NULL);
+    ok(hr == E_INVALIDARG, "get_accName returned %x\n", hr);
+    CHECK_CALLED(Accessible_child_get_accName);
+    IAccessible_Release(acc);
 
     DestroyWindow(hwnd);
 }
@@ -1111,6 +1264,7 @@ START_TEST(main)
     test_GetProcessHandleFromHwnd();
     test_default_client_accessible_object();
     test_AccessibleChildren(&Accessible);
+    test_AccessibleObjectFromEvent();
 
     unregister_window_class();
     CoUninitialize();
