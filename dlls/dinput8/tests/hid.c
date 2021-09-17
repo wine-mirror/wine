@@ -3378,6 +3378,26 @@ static void test_simple_joystick(void)
         {.lX = 0, .lY = 0, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
         {.lX = 32767, .lY = 5594, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
     };
+    static const struct DIJOYSTATE2 expect_state_abs[] =
+    {
+        {.lX = -9000, .lY = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -9000, .lY = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -4000, .lY = 51000, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = -10667, .lY = 12905, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -10667, .lY = 12905, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -14000, .lY = 1000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = -9000, .lY = 1000, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
+    };
+    static const struct DIJOYSTATE2 expect_state_rel[] =
+    {
+        {.lX = 0, .lY = 0, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80, 0}},
+        {.lX = 9016, .lY = -984, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 40, .lY = 40, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = -55, .lY = -55, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 0, .lY = 0, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -129, .lY = -129, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = 144, .lY = 110, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
+    };
     static const DIDEVICEOBJECTDATA expect_objdata[] =
     {
         {.dwOfs = 0x4, .dwData = 0xffff, .dwSequence = 0xa},
@@ -3965,6 +3985,377 @@ static void test_simple_joystick(void)
         ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
         winetest_pop_context();
     }
+
+    send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+    todo_wine
+    check_member( state, expect_state[3], "%d", lX );
+    todo_wine
+    check_member( state, expect_state[3], "%d", lY );
+    check_member( state, expect_state[3], "%d", lZ );
+    check_member( state, expect_state[3], "%d", rgdwPOV[0] );
+    check_member( state, expect_state[3], "%d", rgdwPOV[1] );
+    check_member( state, expect_state[3], "%#x", rgbButtons[0] );
+    check_member( state, expect_state[3], "%#x", rgbButtons[1] );
+    check_member( state, expect_state[3], "%#x", rgbButtons[2] );
+
+    prop_range.diph.dwHow = DIPH_DEVICE;
+    prop_range.diph.dwObj = 0;
+    prop_range.lMin = 1000;
+    prop_range.lMax = 51000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_RANGE returned %#x\n", hr );
+    prop_range.diph.dwHow = DIPH_BYUSAGE;
+    prop_range.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    prop_range.lMin = -4000;
+    prop_range.lMax = -14000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_RANGE returned %#x\n", hr );
+    prop_range.lMin = -14000;
+    prop_range.lMax = -4000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_RANGE returned %#x\n", hr );
+
+    prop_range.diph.dwHow = DIPH_DEVICE;
+    prop_range.diph.dwObj = 0;
+    prop_range.lMin = 0xdeadbeef;
+    prop_range.lMax = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
+    prop_range.diph.dwHow = DIPH_BYUSAGE;
+    prop_range.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    prop_range.lMin = 0xdeadbeef;
+    prop_range.lMax = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
+    todo_wine
+    ok( prop_range.lMin == -14000, "got %d expected %d\n", prop_range.lMin, -14000 );
+    todo_wine
+    ok( prop_range.lMax == -4000, "got %d expected %d\n", prop_range.lMax, -4000 );
+    prop_range.diph.dwHow = DIPH_BYUSAGE;
+    prop_range.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_Y, HID_USAGE_PAGE_GENERIC );
+    prop_range.lMin = 0xdeadbeef;
+    prop_range.lMax = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
+    todo_wine
+    ok( prop_range.lMin == 1000, "got %d expected %d\n", prop_range.lMin, 1000 );
+    todo_wine
+    ok( prop_range.lMax == 51000, "got %d expected %d\n", prop_range.lMax, 51000 );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+    todo_wine
+    check_member( state, expect_state_abs[1], "%d", lX );
+    todo_wine
+    check_member( state, expect_state_abs[1], "%d", lY );
+    check_member( state, expect_state_abs[1], "%d", lZ );
+    check_member( state, expect_state_abs[1], "%d", rgdwPOV[0] );
+    check_member( state, expect_state_abs[1], "%d", rgdwPOV[1] );
+    check_member( state, expect_state_abs[1], "%#x", rgbButtons[0] );
+    check_member( state, expect_state_abs[1], "%#x", rgbButtons[1] );
+    check_member( state, expect_state_abs[1], "%#x", rgbButtons[2] );
+
+    hr = IDirectInputDevice8_SetProperty( device, NULL, NULL );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, &GUID_NULL, NULL );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, NULL );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_VIDPID returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
+    todo_wine
+    ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+
+    prop_string.diph.dwHow = DIPH_DEVICE;
+    prop_string.diph.dwObj = 0;
+    wcscpy( prop_string.wsz, L"instance name" );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_INSTANCENAME, &prop_string.diph );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_SetProperty DIPROP_INSTANCENAME returned %#x\n", hr );
+
+    wcscpy( prop_string.wsz, L"product name" );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_PRODUCTNAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_PRODUCTNAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_PRODUCTNAME, &prop_string.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_PRODUCTNAME returned %#x\n", hr );
+    todo_wine
+    ok( !wcscmp( prop_string.wsz, expect_devinst.tszProductName ), "got product %s\n",
+        debugstr_w(prop_string.wsz) );
+
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_TYPENAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_USERNAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_USERNAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_JOYSTICKID returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_APPDATA returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 10001;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
+    prop_dword.dwData = 1000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    prop_dword.dwData = 6000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_BYUSAGE;
+    prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    prop_dword.dwData = 2000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    ok( prop_dword.dwData == 2000, "got %u expected %u\n", prop_dword.dwData, 2000 );
+    prop_dword.dwData = 7000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_BYUSAGE;
+    prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 2000, "got %u expected %u\n", prop_dword.dwData, 2000 );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 7000, "got %u expected %u\n", prop_dword.dwData, 7000 );
+
+    prop_dword.diph.dwHow = DIPH_BYUSAGE;
+    prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_Y, HID_USAGE_PAGE_GENERIC );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 1000, "got %u expected %u\n", prop_dword.dwData, 1000 );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 6000, "got %u expected %u\n", prop_dword.dwData, 6000 );
+
+    for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
+    {
+        winetest_push_context( "state[%d]", i );
+        hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+        ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+        if (broken( state.lX == -10750 )) win_skip( "Ignoring 32-bit rounding\n" );
+        else
+        {
+            todo_wine
+            check_member( state, expect_state_abs[i], "%d", lX );
+            todo_wine_if( i != 2 )
+            check_member( state, expect_state_abs[i], "%d", lY );
+        }
+        check_member( state, expect_state_abs[i], "%d", lZ );
+        check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );
+        check_member( state, expect_state_abs[i], "%d", rgdwPOV[1] );
+        check_member( state, expect_state_abs[i], "%#x", rgbButtons[0] );
+        check_member( state, expect_state_abs[i], "%#x", rgbButtons[1] );
+        check_member( state, expect_state_abs[i], "%#x", rgbButtons[2] );
+
+        send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+
+        res = WaitForSingleObject( event, 100 );
+        if (i == 0 || i == 3) todo_wine_if( i == 0 )
+        ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" ); ResetEvent( event );
+        winetest_pop_context();
+    }
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+    winetest_push_context( "state[%d]", i );
+    todo_wine
+    check_member( state, expect_state_abs[i], "%d", lX );
+    todo_wine
+    check_member( state, expect_state_abs[i], "%d", lY );
+    check_member( state, expect_state_abs[i], "%d", lZ );
+    check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );
+    check_member( state, expect_state_abs[i], "%d", rgdwPOV[1] );
+    check_member( state, expect_state_abs[i], "%#x", rgbButtons[0] );
+    check_member( state, expect_state_abs[i], "%#x", rgbButtons[1] );
+    check_member( state, expect_state_abs[i], "%#x", rgbButtons[2] );
+    winetest_pop_context();
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_SetProperty DIPROP_JOYSTICKID returned %#x\n", hr );
+    prop_dword.dwData = 0x1000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    prop_dword.dwData = DIPROPAUTOCENTER_ON;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    prop_pointer.uData = 0xfeedcafe;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_APPDATA returned %#x\n", hr );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    prop_dword.dwData = DIPROPAXISMODE_REL;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_AXISMODE returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == DIPROPAXISMODE_REL, "got %u expected %u\n", prop_dword.dwData, DIPROPAXISMODE_REL );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    ok( prop_dword.dwData == 0x1000, "got %#x expected %#x\n", prop_dword.dwData, 0x1000 );
+
+    prop_pointer.diph.dwHow = DIPH_BYUSAGE;
+    prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_APPDATA returned %#x\n", hr );
+    ok( prop_pointer.uData == 0xfeedcafe, "got %p expected %p\n", (void *)prop_pointer.uData, (void *)0xfeedcafe );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    prop_dword.dwData = 1000;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_FFGAIN returned %#x\n", hr );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_CALIBRATION returned %#x\n", hr );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
+
+    for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
+    {
+        winetest_push_context( "state[%d]", i );
+        hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+        ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+        todo_wine
+        check_member( state, expect_state_rel[i], "%d", lX );
+        todo_wine
+        check_member( state, expect_state_rel[i], "%d", lY );
+        check_member( state, expect_state_rel[i], "%d", lZ );
+        check_member( state, expect_state_rel[i], "%d", rgdwPOV[0] );
+        check_member( state, expect_state_rel[i], "%d", rgdwPOV[1] );
+        check_member( state, expect_state_rel[i], "%#x", rgbButtons[0] );
+        check_member( state, expect_state_rel[i], "%#x", rgbButtons[1] );
+        check_member( state, expect_state_rel[i], "%#x", rgbButtons[2] );
+
+        send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+
+        res = WaitForSingleObject( event, 100 );
+        if (i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+        ResetEvent( event );
+        winetest_pop_context();
+    }
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+    winetest_push_context( "state[%d]", i );
+    todo_wine
+    check_member( state, expect_state_rel[i], "%d", lX );
+    todo_wine
+    check_member( state, expect_state_rel[i], "%d", lY );
+    check_member( state, expect_state_rel[i], "%d", lZ );
+    check_member( state, expect_state_rel[i], "%d", rgdwPOV[0] );
+    check_member( state, expect_state_rel[i], "%d", rgdwPOV[1] );
+    check_member( state, expect_state_rel[i], "%#x", rgbButtons[0] );
+    check_member( state, expect_state_rel[i], "%#x", rgbButtons[1] );
+    check_member( state, expect_state_rel[i], "%#x", rgbButtons[2] );
+    winetest_pop_context();
 
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
