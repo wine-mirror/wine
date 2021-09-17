@@ -935,7 +935,7 @@ HRESULT WINAPI ISF_Desktop_Constructor (
     {
         IDesktopFolderImpl *sf;
 
-        if (!SHGetSpecialFolderPathW( 0, szMyPath, CSIDL_DESKTOPDIRECTORY, TRUE ))
+        if (!SHGetSpecialFolderPathW( 0, szMyPath, CSIDL_DESKTOPDIRECTORY, FALSE ))
             return E_UNEXPECTED;
 
         sf = LocalAlloc( LMEM_ZEROINIT, sizeof (IDesktopFolderImpl) );

@@ -40,6 +40,9 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winioctl.h"
+#define WINE_MOUNTMGR_EXTENSIONS
+#include "ddk/mountmgr.h"
 
 #include "shlobj.h"
 #include "shtypes.h"
@@ -4127,24 +4130,22 @@ static char *get_xdg_path( const char *var )
     return ret;
 }
 
-static BOOL link_folder( const char *target, const char *link )
+static BOOL link_folder( HANDLE mgr, const UNICODE_STRING *path, const char *link )
 {
-    struct stat st;
-    char *dir = NULL;
+    struct mountmgr_shell_folder *ioctl;
+    DWORD len = sizeof(*ioctl) + path->Length + strlen(link) + 1;
     BOOL ret;
 
-    if (!strcmp( target, "$HOME" ) || !strncmp( target, "$HOME/", 6 ))
-    {
-        const char *home = getenv( "HOME" );
+    if (!(ioctl = heap_alloc( len ))) return FALSE;
+    ioctl->create_backup = FALSE;
+    ioctl->folder_offset = sizeof(*ioctl);
+    ioctl->folder_size = path->Length;
+    memcpy( (char *)ioctl + ioctl->folder_offset, path->Buffer, ioctl->folder_size );
+    ioctl->symlink_offset = ioctl->folder_offset + ioctl->folder_size;
+    strcpy( (char *)ioctl + ioctl->symlink_offset, link );
 
-        target += 5;
-        dir = heap_alloc( strlen(home) + strlen(target) + 1 );
-        strcpy( dir, home );
-        strcat( dir, target );
-        target = dir;
-    }
-    if ((ret = !stat( target, &st ) && S_ISDIR( st.st_mode ))) symlink( target, link );
-    heap_free( dir );
+    ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_DEFINE_SHELL_FOLDER, ioctl, len, NULL, 0, NULL, NULL );
+    heap_free( ioctl );
     return ret;
 }
 
@@ -4156,22 +4157,34 @@ static BOOL link_folder( const char *target, const char *link )
  */
 static void create_link( const WCHAR *path, const char *xdg_name, const char *default_name )
 {
-    char *target, *link;
+    UNICODE_STRING nt_name;
+    char *target = NULL;
+    HANDLE mgr;
 
-    if (!(link = wine_get_unix_file_name( path ))) return;
+    if ((mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ | GENERIC_WRITE,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                            0, 0 )) == INVALID_HANDLE_VALUE)
+    {
+        FIXME( "failed to connect to mount manager\n" );
+        return;
+    }
+
+    nt_name.Buffer = NULL;
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL )) goto done;
 
     if ((target = get_xdg_path( xdg_name )))
     {
-        if (link_folder( target, link )) goto done;
+        if (link_folder( mgr, &nt_name, target )) goto done;
     }
-    if (link_folder( default_name, link )) goto done;
+    if (link_folder( mgr, &nt_name, default_name )) goto done;
 
     /* fall back to HOME */
-    link_folder( "$HOME", link );
+    link_folder( mgr, &nt_name, "$HOME" );
 
 done:
+    RtlFreeUnicodeString( &nt_name );
     heap_free( target );
-    heap_free( link );
+    CloseHandle( mgr );
 }
 
 /******************************************************************************
