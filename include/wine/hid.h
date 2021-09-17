@@ -52,7 +52,6 @@ struct hid_value_caps
     USHORT  report_count;
     UCHAR   start_bit;
     USHORT  start_byte;
-    ULONG   start_index;
     LONG    logical_min;
     LONG    logical_max;
     LONG    physical_min;
@@ -61,6 +60,8 @@ struct hid_value_caps
     ULONG   units_exp;
 };
 
+/* named array continues on next caps */
+#define HID_VALUE_CAPS_ARRAY_HAS_MORE       0x01
 #define HID_VALUE_CAPS_IS_RANGE             0x10
 #define HID_VALUE_CAPS_IS_STRING_RANGE      0x40
 #define HID_VALUE_CAPS_IS_DESIGNATOR_RANGE  0x80
