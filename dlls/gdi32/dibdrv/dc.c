@@ -470,21 +470,6 @@ static BOOL WINAPI dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_co
 }
 
 /***********************************************************************
- *		dibdrv_wglCreateContext
- */
-static struct wgl_context * WINAPI dibdrv_wglCreateContext( HDC hdc )
-{
-    PIXELFORMATDESCRIPTOR descr;
-    int format = GetPixelFormat( hdc );
-
-    if (!format) format = 1;
-    if (!DescribePixelFormat( hdc, format, sizeof(descr), &descr )) return NULL;
-
-    if (!osmesa_funcs) return NULL;
-    return osmesa_funcs->create_context( hdc, &descr );
-}
-
-/***********************************************************************
  *		dibdrv_wglDeleteContext
  */
 static BOOL WINAPI dibdrv_wglDeleteContext( struct wgl_context *context )
@@ -507,6 +492,21 @@ static int WINAPI dibdrv_wglGetPixelFormat( HDC hdc )
         release_dc_ptr( dc );
     }
     return ret;
+}
+
+/***********************************************************************
+ *		dibdrv_wglCreateContext
+ */
+static struct wgl_context * WINAPI dibdrv_wglCreateContext( HDC hdc )
+{
+    PIXELFORMATDESCRIPTOR descr;
+    int format = dibdrv_wglGetPixelFormat( hdc );
+
+    if (!format) format = 1;
+    if (!dibdrv_wglDescribePixelFormat( hdc, format, sizeof(descr), &descr )) return NULL;
+
+    if (!osmesa_funcs) return NULL;
+    return osmesa_funcs->create_context( hdc, &descr );
 }
 
 /***********************************************************************
