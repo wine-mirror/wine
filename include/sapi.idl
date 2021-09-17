@@ -517,6 +517,7 @@ interface ISpEventSource;
 interface ISpRecoContext;
 interface ISpRecognizer;
 interface ISpStreamFormat;
+interface ISpVoice;
 
 [
     object,
@@ -839,69 +840,6 @@ interface ISpNotifySink : IUnknown
 
 [
     object,
-    uuid(6c44df74-72b9-4992-a1ec-ef996e0422d4),
-    pointer_default(unique),
-    restricted
-]
-interface ISpVoice : ISpEventSource
-{
-    HRESULT SetOutput([in] IUnknown *unk, [in] BOOL changes);
-    HRESULT GetOutputObjectToken([out] ISpObjectToken **token);
-    HRESULT GetOutputStream([out] ISpStreamFormat **stream);
-
-    HRESULT Pause(void);
-    HRESULT Resume(void);
-
-    HRESULT SetVoice([in] ISpObjectToken *token);
-    HRESULT GetVoice([out] ISpObjectToken **token);
-
-    HRESULT Speak([in, string] const WCHAR *pwcs,
-                [in] DWORD flags,
-                [out] ULONG *number);
-    HRESULT SpeakStream([in] IStream *stream,
-                [in] DWORD flags,
-                [out] ULONG *number);
-
-    HRESULT GetStatus(
-                [out] SPVOICESTATUS *status,
-                [out, string] WCHAR **bookmark);
-
-    HRESULT Skip([in,string] const WCHAR *type, [in] long items, [out] ULONG *skipped);
-
-    HRESULT SetPriority([in] SPVPRIORITY priority);
-    HRESULT GetPriority([out] SPVPRIORITY* priority);
-
-    HRESULT SetAlertBoundary([in] SPEVENTENUM boundary);
-    HRESULT GetAlertBoundary([out] SPEVENTENUM* boundary);
-
-    HRESULT SetRate([in] long adjust);
-    HRESULT GetRate([out] long *adjust);
-
-    HRESULT SetVolume([in] USHORT volume);
-    HRESULT GetVolume([out] USHORT *volume);
-
-    HRESULT WaitUntilDone([in] ULONG timeout);
-
-    HRESULT SetSyncSpeakTimeout([in] ULONG timeout);
-    HRESULT GetSyncSpeakTimeout([out] ULONG *timeout);
-
-    [local] HANDLE SpeakCompleteEvent();
-
-    [local] HRESULT IsUISupported(
-                [in] const WCHAR *type,
-                [in] void * extra,
-                [in] ULONG count,
-                [out] BOOL *supported);
-    [local] HRESULT DisplayUI(
-                [in] HWND parent,
-                [in] const WCHAR *title,
-                [in] const WCHAR *type,
-                [in] void *extra,
-                [in] ULONG count);
-};
-
-[
-    object,
     uuid(5eff4aef-8487-11d2-961c-00c04f8ee628),
     pointer_default(unique),
     restricted
@@ -980,6 +918,69 @@ interface ISpRecoContext : ISpEventSource
 
     HRESULT SetContextState([in] SPCONTEXTSTATE state);
     HRESULT GetContextState([in] SPCONTEXTSTATE *state);
+};
+
+[
+    object,
+    uuid(6c44df74-72b9-4992-a1ec-ef996e0422d4),
+    pointer_default(unique),
+    restricted
+]
+interface ISpVoice : ISpEventSource
+{
+    HRESULT SetOutput([in] IUnknown *unk, [in] BOOL changes);
+    HRESULT GetOutputObjectToken([out] ISpObjectToken **token);
+    HRESULT GetOutputStream([out] ISpStreamFormat **stream);
+
+    HRESULT Pause(void);
+    HRESULT Resume(void);
+
+    HRESULT SetVoice([in] ISpObjectToken *token);
+    HRESULT GetVoice([out] ISpObjectToken **token);
+
+    HRESULT Speak([in, string] const WCHAR *pwcs,
+                [in] DWORD flags,
+                [out] ULONG *number);
+    HRESULT SpeakStream([in] IStream *stream,
+                [in] DWORD flags,
+                [out] ULONG *number);
+
+    HRESULT GetStatus(
+                [out] SPVOICESTATUS *status,
+                [out, string] WCHAR **bookmark);
+
+    HRESULT Skip([in,string] const WCHAR *type, [in] long items, [out] ULONG *skipped);
+
+    HRESULT SetPriority([in] SPVPRIORITY priority);
+    HRESULT GetPriority([out] SPVPRIORITY* priority);
+
+    HRESULT SetAlertBoundary([in] SPEVENTENUM boundary);
+    HRESULT GetAlertBoundary([out] SPEVENTENUM* boundary);
+
+    HRESULT SetRate([in] long adjust);
+    HRESULT GetRate([out] long *adjust);
+
+    HRESULT SetVolume([in] USHORT volume);
+    HRESULT GetVolume([out] USHORT *volume);
+
+    HRESULT WaitUntilDone([in] ULONG timeout);
+
+    HRESULT SetSyncSpeakTimeout([in] ULONG timeout);
+    HRESULT GetSyncSpeakTimeout([out] ULONG *timeout);
+
+    [local] HANDLE SpeakCompleteEvent();
+
+    [local] HRESULT IsUISupported(
+                [in] const WCHAR *type,
+                [in] void * extra,
+                [in] ULONG count,
+                [out] BOOL *supported);
+    [local] HRESULT DisplayUI(
+                [in] HWND parent,
+                [in] const WCHAR *title,
+                [in] const WCHAR *type,
+                [in] void *extra,
+                [in] ULONG count);
 };
 
 [
