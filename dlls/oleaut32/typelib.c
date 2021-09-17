@@ -7269,7 +7269,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	case FUNC_VIRTUAL: {
             void *buffer = heap_alloc_zero(INVBUF_ELEMENT_SIZE * func_desc->cParams);
             VARIANT varresult;
-            VARIANT retval; /* pointer for storing byref retvals in */
+            VARIANT retval = {{{0}}}; /* pointer for storing byref retvals in */
             VARIANTARG **prgpvarg = INVBUF_GET_ARG_PTR_ARRAY(buffer, func_desc->cParams);
             VARIANTARG *rgvarg = INVBUF_GET_ARG_ARRAY(buffer, func_desc->cParams);
             VARTYPE *rgvt = INVBUF_GET_ARG_TYPE_ARRAY(buffer, func_desc->cParams);
@@ -7315,10 +7315,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
                 if (wParamFlags & PARAMFLAG_FLCID)
                 {
-                    VARIANTARG *arg;
-                    arg = prgpvarg[i] = &rgvarg[i];
-                    V_VT(arg) = VT_I4;
-                    V_I4(arg) = This->pTypeLib->lcid;
+                    prgpvarg[i] = &rgvarg[i];
+                    V_VT(prgpvarg[i]) = VT_I4;
+                    V_I4(prgpvarg[i]) = This->pTypeLib->lcid;
                     continue;
                 }
 
@@ -7359,11 +7358,9 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                      * native does */
                     if (i == func_desc->cParams - 1)
                     {
-                        VARIANTARG *arg;
-                        arg = prgpvarg[i] = &rgvarg[i];
-                        V_VT(arg) = rgvt[i];
-                        memset(&retval, 0, sizeof(retval));
-                        V_BYREF(arg) = &retval;
+                        prgpvarg[i] = &rgvarg[i];
+                        V_BYREF(prgpvarg[i]) = &retval;
+                        V_VT(prgpvarg[i]) = rgvt[i];
                     }
                     else
                     {
