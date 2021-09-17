@@ -56,6 +56,7 @@ static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKH
 static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
+static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
@@ -366,6 +367,18 @@ static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surfac
     wine_vk_surface_destroy(wine_vk_surface);
 }
 
+static void wayland_vkDestroySwapchainKHR(VkDevice device,
+                                          VkSwapchainKHR swapchain,
+                                          const VkAllocationCallbacks *allocator)
+{
+    TRACE("%p, 0x%s %p\n", device, wine_dbgstr_longlong(swapchain), allocator);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    pvkDestroySwapchainKHR(device, swapchain, NULL /* allocator */);
+}
+
 static VkResult wayland_vkEnumerateInstanceExtensionProperties(const char *layer_name,
                                                                uint32_t *count,
                                                                VkExtensionProperties* properties)
@@ -602,6 +615,7 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
     LOAD_FUNCPTR(vkDestroyInstance);
     LOAD_FUNCPTR(vkDestroySurfaceKHR);
+    LOAD_FUNCPTR(vkDestroySwapchainKHR);
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
@@ -627,6 +641,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkCreateWin32SurfaceKHR = wayland_vkCreateWin32SurfaceKHR,
     .p_vkDestroyInstance = wayland_vkDestroyInstance,
     .p_vkDestroySurfaceKHR = wayland_vkDestroySurfaceKHR,
+    .p_vkDestroySwapchainKHR = wayland_vkDestroySwapchainKHR,
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
