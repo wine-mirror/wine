@@ -7361,7 +7361,6 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     {
                         VARIANTARG *arg;
                         arg = prgpvarg[i] = &rgvarg[i];
-                        memset(arg, 0, sizeof(*arg));
                         V_VT(arg) = rgvt[i];
                         memset(&retval, 0, sizeof(retval));
                         V_BYREF(arg) = &retval;
