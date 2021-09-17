@@ -132,13 +132,6 @@ static struct platform_private *find_device_from_iohid(IOHIDDeviceRef IOHIDDevic
     return NULL;
 }
 
-static void CFStringToWSTR(CFStringRef cstr, LPWSTR wstr, int length)
-{
-    int len = min(CFStringGetLength(cstr), length-1);
-    CFStringGetCharacters(cstr, CFRangeMake(0, len), (UniChar*)wstr);
-    wstr[len] = 0;
-}
-
 static DWORD CFNumberToDWORD(CFNumberRef num)
 {
     int dwNum = 0;
