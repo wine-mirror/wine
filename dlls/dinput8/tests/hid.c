@@ -3341,6 +3341,43 @@ static void test_simple_joystick(void)
         .dwPOVs = 1,
         .dwButtons = 2,
     };
+    struct hid_expect injected_input[] =
+    {
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0x10,0},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x38,0x38,0xf8},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x01,0x01,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x01,0x01,0x00},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x80,0x80,0xff},
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x10,0xee,0x54},
+        },
+    };
+    static const struct DIJOYSTATE2 expect_state[] =
+    {
+        {.lX = 32767, .lY = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 32767, .lY = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 65535, .lY = 65535, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = 20779, .lY = 20779, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 20779, .lY = 20779, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 0, .lY = 0, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = 32767, .lY = 5594, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
+    };
 
     const DIDEVICEINSTANCEW expect_devinst =
     {
@@ -3405,10 +3442,11 @@ static void test_simple_joystick(void)
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
-    HANDLE event;
+    HANDLE event, file;
+    DIJOYSTATE2 state;
+    ULONG i, res, ref;
     HRESULT hr;
     WCHAR *tmp;
-    ULONG ref;
     HWND hwnd;
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
@@ -3701,6 +3739,10 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetEventNotification( device, event );
     ok( hr == DI_OK, "IDirectInputDevice8_SetEventNotification returned: %#x\n", hr );
 
+    file = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError() );
+
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, 0 );
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND );
@@ -3737,8 +3779,64 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
     ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
 
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    todo_wine
+    ok( hr == DIERR_NOTACQUIRED, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_Poll( device );
+    ok( hr == DIERR_NOTACQUIRED, "IDirectInputDevice8_Poll returned: %#x\n", hr );
+
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Acquire returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_Poll( device );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "IDirectInputDevice8_Poll returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2) + 1, &state );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+
+    for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
+    {
+        winetest_push_context( "state[%d]", i );
+        hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+        ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+        todo_wine_if( i != 2 )
+        check_member( state, expect_state[i], "%d", lX );
+        todo_wine_if( i != 2 )
+        check_member( state, expect_state[i], "%d", lY );
+        check_member( state, expect_state[i], "%d", lZ );
+        todo_wine_if( i == 0 )
+        check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
+        check_member( state, expect_state[i], "%#x", rgdwPOV[1] );
+        check_member( state, expect_state[i], "%#x", rgbButtons[0] );
+        check_member( state, expect_state[i], "%#x", rgbButtons[1] );
+        check_member( state, expect_state[i], "%#x", rgbButtons[2] );
+
+        send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+
+        res = WaitForSingleObject( event, 100 );
+        if (i == 0 || i == 3) todo_wine_if( i == 0 )
+        ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" ); ResetEvent( event );
+        winetest_pop_context();
+    }
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
+    winetest_push_context( "state[%d]", i );
+    todo_wine
+    check_member( state, expect_state[i], "%d", lX );
+    todo_wine
+    check_member( state, expect_state[i], "%d", lY );
+    check_member( state, expect_state[i], "%d", lZ );
+    check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
+    check_member( state, expect_state[i], "%#x", rgdwPOV[1] );
+    check_member( state, expect_state[i], "%#x", rgbButtons[0] );
+    check_member( state, expect_state[i], "%#x", rgbButtons[1] );
+    check_member( state, expect_state[i], "%#x", rgbButtons[2] );
+    winetest_pop_context();
 
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
@@ -3750,6 +3848,7 @@ static void test_simple_joystick(void)
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
 
     CloseHandle( event );
+    CloseHandle( file );
 
     ref = IDirectInput8_Release( di );
     ok( ref == 0, "IDirectInput8_Release returned %d\n", ref );
