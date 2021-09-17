@@ -127,7 +127,7 @@ static struct platform_private *find_device_from_iohid(IOHIDDeviceRef IOHIDDevic
     struct platform_private *private;
 
     LIST_FOR_EACH_ENTRY(private, &device_list, struct platform_private, unix_device.entry)
-        if (!private->device == IOHIDDevice) return private;
+        if (private->device == IOHIDDevice) return private;
 
     return NULL;
 }
