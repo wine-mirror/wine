@@ -225,11 +225,15 @@ static void input_queue_cleanup( struct input_queue *queue )
 
 static BOOL input_queue_read_locked( struct input_queue *queue, IRP *irp )
 {
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    ULONG out_size = stack->Parameters.DeviceIoControl.OutputBufferLength;
     struct hid_expect *tmp = queue->pos;
-    if (tmp >= queue->end) return FALSE;
 
-    memcpy( irp->UserBuffer, tmp->report_buf, tmp->ret_length );
-    irp->IoStatus.Information = tmp->ret_length;
+    if (tmp >= queue->end) return FALSE;
+    if (tmp->ret_length) out_size = tmp->ret_length;
+
+    memcpy( irp->UserBuffer, tmp->report_buf, out_size );
+    irp->IoStatus.Information = out_size;
     irp->IoStatus.Status = tmp->ret_status;
     if (tmp < queue->end) queue->pos = tmp + 1;
 
@@ -464,7 +468,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
             "unexpected data\n" );
         winetest_pop_context();
 
-        irp->IoStatus.Information = expect.ret_length;
+        irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         ret = expect.ret_status;
         break;
     }
@@ -487,8 +491,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
         winetest_pop_context();
 
-        memcpy( packet->reportBuffer, expect.report_buf, expect.ret_length );
-        irp->IoStatus.Information = expect.ret_length;
+        irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
+        memcpy( packet->reportBuffer, expect.report_buf, irp->IoStatus.Information );
         ret = expect.ret_status;
         break;
     }
@@ -513,7 +517,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
             "unexpected data\n" );
         winetest_pop_context();
 
-        irp->IoStatus.Information = expect.ret_length;
+        irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         ret = expect.ret_status;
         break;
     }
@@ -536,8 +540,8 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         ok( packet->reportBufferLen == expect.report_len, "got len %u\n", packet->reportBufferLen );
         winetest_pop_context();
 
-        memcpy( packet->reportBuffer, expect.report_buf, expect.ret_length );
-        irp->IoStatus.Information = expect.ret_length;
+        irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
+        memcpy( packet->reportBuffer, expect.report_buf, irp->IoStatus.Information );
         ret = expect.ret_status;
         break;
     }
@@ -562,7 +566,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
             "unexpected data\n" );
         winetest_pop_context();
 
-        irp->IoStatus.Information = expect.ret_length;
+        irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         ret = expect.ret_status;
         break;
     }
