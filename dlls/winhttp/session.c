@@ -1049,6 +1049,15 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
         FIXME("WINHTTP_OPTION_MAX_RESPONSE_DRAIN_SIZE\n");
         return TRUE;
 
+    case WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL:
+        if (buflen == sizeof(DWORD))
+        {
+            FIXME("WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL %08x\n", *(DWORD *)buffer);
+            return TRUE;
+        }
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+
     default:
         FIXME("unimplemented option %u\n", option);
         SetLastError( ERROR_WINHTTP_INVALID_OPTION );
