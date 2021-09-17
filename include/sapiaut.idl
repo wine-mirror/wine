@@ -463,7 +463,7 @@ interface ISpeechObjectToken : IDispatch
                                 [out,retval] BSTR* path);
 
     [hidden, id(DISPID_SOTRemoveStorageFileName)]
-    HRESULT RemoveStorageFileName([in] BSTR clsid, [in]BSTR key, [in] VARIANT_BOOL delete);
+    HRESULT RemoveStorageFileName([in] BSTR clsid, [in]BSTR key, [in] VARIANT_BOOL remove);
 
     [hidden, id(DISPID_SOTIsUISupported)]
     HRESULT IsUISupported( [in]const BSTR type, [in, defaultvalue(NULL)] const VARIANT *data,
