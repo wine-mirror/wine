@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -1184,7 +1188,7 @@ static void process_monitor_event(struct udev_monitor *monitor)
     udev_device_unref(dev);
 }
 
-NTSTATUS udev_bus_init(void *args)
+NTSTATUS WINAPI udev_bus_init(void *args)
 {
     int monitor_fd;
 
@@ -1229,7 +1233,7 @@ error:
     return STATUS_UNSUCCESSFUL;
 }
 
-NTSTATUS udev_bus_wait(void *args)
+NTSTATUS WINAPI udev_bus_wait(void *args)
 {
     struct platform_private *device;
     struct bus_event *result = args;
@@ -1275,7 +1279,7 @@ NTSTATUS udev_bus_wait(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS udev_bus_stop(void *args)
+NTSTATUS WINAPI udev_bus_stop(void *args)
 {
     if (!udev_context) return STATUS_SUCCESS;
     write(deviceloop_control[1], "q", 1);
@@ -1284,19 +1288,19 @@ NTSTATUS udev_bus_stop(void *args)
 
 #else
 
-NTSTATUS udev_bus_init(void *args)
+NTSTATUS WINAPI udev_bus_init(void *args)
 {
     WARN("UDEV support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS udev_bus_wait(void *args)
+NTSTATUS WINAPI udev_bus_wait(void *args)
 {
     WARN("UDEV support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS udev_bus_stop(void *args)
+NTSTATUS WINAPI udev_bus_stop(void *args)
 {
     WARN("UDEV support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;

@@ -17,11 +17,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "config.h"
+
 #include <stdarg.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "hidusage.h"
@@ -30,7 +33,6 @@
 #include "ddk/hidtypes.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
@@ -109,9 +111,12 @@ static CRITICAL_SECTION device_list_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static struct list device_list = LIST_INIT(device_list);
 
+static HMODULE instance;
+static const unix_entry_point *unix_funcs;
+
 static NTSTATUS winebus_call(unsigned int code, void *args)
 {
-    return __wine_unix_call_funcs[code]( args );
+    return unix_funcs[code]( args );
 }
 
 static void unix_device_remove(DEVICE_OBJECT *device)
@@ -193,11 +198,11 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
     static const WCHAR formatW[] =  {'%','i','&','%','s','&','%','x','&','%','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD len = strlenW(ext->serialnumber) + 33;
+    DWORD len = wcslen(ext->serialnumber) + 33;
     WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
-        sprintfW(dst, formatW, ext->desc.version, ext->serialnumber, ext->desc.uid, ext->index);
+        swprintf(dst, len, formatW, ext->desc.version, ext->serialnumber, ext->desc.uid, ext->index);
 
     return dst;
 }
@@ -208,13 +213,13 @@ static WCHAR *get_device_id(DEVICE_OBJECT *device)
     static const WCHAR formatW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
             '&','p','i','d','_','%','0','4','x',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD len = strlenW(ext->desc.busid) + 34;
-    WCHAR *dst, *tmp;
+    DWORD pos = 0, len = wcslen(ext->desc.busid) + 34;
+    WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
-        tmp = dst + sprintfW(dst, formatW, ext->desc.busid, ext->desc.vid, ext->desc.pid);
-        if (ext->desc.input != -1) sprintfW(tmp, input_formatW, ext->desc.input);
+        pos += swprintf(dst + pos, len - pos, formatW, ext->desc.busid, ext->desc.vid, ext->desc.pid);
+        if (ext->desc.input != -1) pos += swprintf(dst + pos, len - pos, input_formatW, ext->desc.input);
     }
 
     return dst;
@@ -225,10 +230,10 @@ static WCHAR *get_hardware_ids(DEVICE_OBJECT *device)
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     WCHAR *dst;
 
-    if ((dst = ExAllocatePool(PagedPool, (strlenW(ext->desc.busid) + 2) * sizeof(WCHAR))))
+    if ((dst = ExAllocatePool(PagedPool, (wcslen(ext->desc.busid) + 2) * sizeof(WCHAR))))
     {
-        strcpyW(dst, ext->desc.busid);
-        dst[strlenW(dst) + 1] = 0;
+        wcscpy(dst, ext->desc.busid);
+        dst[wcslen(dst) + 1] = 0;
     }
 
     return dst;
@@ -285,7 +290,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
 
     TRACE("desc %s, unix_device %p\n", debugstr_device_desc(desc), unix_device);
 
-    sprintfW(dev_name, device_name_fmtW, desc->busid, unix_device);
+    swprintf(dev_name, ARRAY_SIZE(dev_name), device_name_fmtW, desc->busid, unix_device);
     RtlInitUnicodeString(&nameW, dev_name);
     status = IoCreateDevice(driver_obj, sizeof(struct device_extension), &nameW, 0, 0, FALSE, &device);
     if (status)
@@ -900,17 +905,17 @@ static NTSTATUS hid_get_device_string(DEVICE_OBJECT *device, DWORD index, WCHAR 
     switch (index)
     {
     case HID_STRING_ID_IMANUFACTURER:
-        len = (strlenW(ext->manufacturer) + 1) * sizeof(WCHAR);
+        len = (wcslen(ext->manufacturer) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
         else memcpy(buffer, ext->manufacturer, len);
         return STATUS_SUCCESS;
     case HID_STRING_ID_IPRODUCT:
-        len = (strlenW(ext->product) + 1) * sizeof(WCHAR);
+        len = (wcslen(ext->product) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
         else memcpy(buffer, ext->product, len);
         return STATUS_SUCCESS;
     case HID_STRING_ID_ISERIALNUMBER:
-        len = (strlenW(ext->serialnumber) + 1) * sizeof(WCHAR);
+        len = (wcslen(ext->serialnumber) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
         else memcpy(buffer, ext->serialnumber, len);
         return STATUS_SUCCESS;
@@ -1012,7 +1017,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
             irp->IoStatus.Status = hid_get_device_string(device, index, (WCHAR *)irp->UserBuffer, buffer_len);
             if (irp->IoStatus.Status == STATUS_SUCCESS)
-                irp->IoStatus.Information = (strlenW((WCHAR *)irp->UserBuffer) + 1) * sizeof(WCHAR);
+                irp->IoStatus.Information = (wcslen((WCHAR *)irp->UserBuffer) + 1) * sizeof(WCHAR);
             break;
         }
         case IOCTL_HID_GET_INPUT_REPORT:
@@ -1109,6 +1114,10 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     NTSTATUS ret;
 
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
+
+    RtlPcToFileHeader(&DriverEntry, (void *)&instance);
+    if ((ret = __wine_init_unix_lib(instance, DLL_PROCESS_ATTACH, NULL, &unix_funcs)))
+        return ret;
 
     attr.Length = sizeof(attr);
     attr.ObjectName = path;

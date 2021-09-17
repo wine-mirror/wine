@@ -17,6 +17,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -371,7 +375,7 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
     else WARN("failed to find device for iohid device %p\n", IOHIDDevice);
 }
 
-NTSTATUS iohid_bus_init(void *args)
+NTSTATUS WINAPI iohid_bus_init(void *args)
 {
     TRACE("args %p\n", args);
 
@@ -392,7 +396,7 @@ NTSTATUS iohid_bus_init(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS iohid_bus_wait(void *args)
+NTSTATUS WINAPI iohid_bus_wait(void *args)
 {
     struct bus_event *result = args;
     CFRunLoopRunResult ret;
@@ -416,7 +420,7 @@ NTSTATUS iohid_bus_wait(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS iohid_bus_stop(void *args)
+NTSTATUS WINAPI iohid_bus_stop(void *args)
 {
     if (!run_loop) return STATUS_SUCCESS;
 
@@ -427,19 +431,19 @@ NTSTATUS iohid_bus_stop(void *args)
 
 #else
 
-NTSTATUS iohid_bus_init(void *args)
+NTSTATUS WINAPI iohid_bus_init(void *args)
 {
     WARN("IOHID support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS iohid_bus_wait(void *args)
+NTSTATUS WINAPI iohid_bus_wait(void *args)
 {
     WARN("IOHID support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS iohid_bus_stop(void *args)
+NTSTATUS WINAPI iohid_bus_stop(void *args)
 {
     WARN("IOHID support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;

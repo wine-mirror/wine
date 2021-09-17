@@ -29,7 +29,6 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unixlib.h"
 
 struct device_desc
 {
@@ -137,7 +136,7 @@ enum unix_funcs
     device_set_feature_report,
 };
 
-extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
+typedef NTSTATUS (WINAPI *unix_entry_point)(void *);
 
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {

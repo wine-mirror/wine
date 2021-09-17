@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <stdarg.h>
@@ -143,7 +147,7 @@ static const struct device_desc mouse_device_desc =
     .serialnumber = {"0000"},
 };
 
-static NTSTATUS mouse_device_create(void *args)
+static NTSTATUS WINAPI mouse_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = mouse_device_desc;
@@ -241,7 +245,7 @@ static const struct device_desc keyboard_device_desc =
     .serialnumber = {"0000"},
 };
 
-static NTSTATUS keyboard_device_create(void *args)
+static NTSTATUS WINAPI keyboard_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = keyboard_device_desc;
@@ -274,7 +278,7 @@ static ULONG unix_device_incref(struct unix_device *iface)
     return InterlockedIncrement(&iface->ref);
 }
 
-static NTSTATUS unix_device_remove(void *args)
+static NTSTATUS WINAPI unix_device_remove(void *args)
 {
     struct unix_device *iface = args;
     iface->vtbl->stop(iface);
@@ -282,20 +286,20 @@ static NTSTATUS unix_device_remove(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS unix_device_start(void *args)
+static NTSTATUS WINAPI unix_device_start(void *args)
 {
     struct unix_device *iface = args;
     return iface->vtbl->start(iface);
 }
 
-static NTSTATUS unix_device_get_report_descriptor(void *args)
+static NTSTATUS WINAPI unix_device_get_report_descriptor(void *args)
 {
     struct device_descriptor_params *params = args;
     struct unix_device *iface = params->iface;
     return iface->vtbl->get_report_descriptor(iface, params->buffer, params->length, params->out_length);
 }
 
-static NTSTATUS unix_device_set_output_report(void *args)
+static NTSTATUS WINAPI unix_device_set_output_report(void *args)
 {
     struct device_report_params *params = args;
     struct unix_device *iface = params->iface;
@@ -303,7 +307,7 @@ static NTSTATUS unix_device_set_output_report(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS unix_device_get_feature_report(void *args)
+static NTSTATUS WINAPI unix_device_get_feature_report(void *args)
 {
     struct device_report_params *params = args;
     struct unix_device *iface = params->iface;
@@ -311,7 +315,7 @@ static NTSTATUS unix_device_get_feature_report(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS unix_device_set_feature_report(void *args)
+static NTSTATUS WINAPI unix_device_set_feature_report(void *args)
 {
     struct device_report_params *params = args;
     struct unix_device *iface = params->iface;
@@ -319,7 +323,7 @@ static NTSTATUS unix_device_set_feature_report(void *args)
     return STATUS_SUCCESS;
 }
 
-const unixlib_entry_t __wine_unix_call_funcs[] =
+static const unix_entry_point unix_funcs[] =
 {
     sdl_bus_init,
     sdl_bus_wait,
@@ -423,4 +427,11 @@ BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
     RtlFreeHeap(GetProcessHeap(), 0, tmp);
 
     return TRUE;
+}
+
+NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+    *(const unix_entry_point **)ptr_out = unix_funcs;
+    return STATUS_SUCCESS;
 }

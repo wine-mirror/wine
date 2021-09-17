@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 #include <errno.h>
@@ -814,7 +818,7 @@ static void process_device_event(SDL_Event *event)
     RtlLeaveCriticalSection(&sdl_cs);
 }
 
-NTSTATUS sdl_bus_init(void *args)
+NTSTATUS WINAPI sdl_bus_init(void *args)
 {
     const char *mapping;
     int i;
@@ -917,7 +921,7 @@ failed:
     return STATUS_UNSUCCESSFUL;
 }
 
-NTSTATUS sdl_bus_wait(void *args)
+NTSTATUS WINAPI sdl_bus_wait(void *args)
 {
     struct bus_event *result = args;
     SDL_Event event;
@@ -939,7 +943,7 @@ NTSTATUS sdl_bus_wait(void *args)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS sdl_bus_stop(void *args)
+NTSTATUS WINAPI sdl_bus_stop(void *args)
 {
     SDL_Event event;
 
@@ -957,19 +961,19 @@ NTSTATUS sdl_bus_stop(void *args)
 
 #else
 
-NTSTATUS sdl_bus_init(void *args)
+NTSTATUS WINAPI sdl_bus_init(void *args)
 {
     WARN("SDL support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS sdl_bus_wait(void *args)
+NTSTATUS WINAPI sdl_bus_wait(void *args)
 {
     WARN("SDL support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS sdl_bus_stop(void *args)
+NTSTATUS WINAPI sdl_bus_stop(void *args)
 {
     WARN("SDL support not compiled in!\n");
     return STATUS_NOT_IMPLEMENTED;
