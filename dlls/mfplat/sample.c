@@ -1305,20 +1305,18 @@ static void sample_allocator_release_surface_service(struct sample_allocator *al
 }
 
 static HRESULT sample_allocator_allocate_sample(struct sample_allocator *allocator, const struct surface_service *service,
-        IMFSample **sample)
+        struct queued_sample **queued_sample)
 {
-    struct queued_sample *queued_sample = malloc(sizeof(*queued_sample));
     IMFTrackedSample *tracked_sample;
     IMFMediaBuffer *buffer;
+    IMFSample *sample;
     unsigned int i;
     HRESULT hr;
 
     if (FAILED(hr = MFCreateTrackedSample(&tracked_sample)))
-    {
         return hr;
-    }
 
-    IMFTrackedSample_QueryInterface(tracked_sample, &IID_IMFSample, (void **)sample);
+    IMFTrackedSample_QueryInterface(tracked_sample, &IID_IMFSample, (void **)&sample);
     IMFTrackedSample_Release(tracked_sample);
 
     for (i = 0; i < allocator->frame_desc.buffer_count; ++i)
@@ -1369,10 +1367,23 @@ static HRESULT sample_allocator_allocate_sample(struct sample_allocator *allocat
 
         if (SUCCEEDED(hr))
         {
-            hr = IMFSample_AddBuffer(*sample, buffer);
+            hr = IMFSample_AddBuffer(sample, buffer);
             IMFMediaBuffer_Release(buffer);
         }
     }
+
+    if (FAILED(hr))
+    {
+        IMFSample_Release(sample);
+        return hr;
+    }
+
+    if (!(*queued_sample = malloc(sizeof(**queued_sample))))
+    {
+        IMFSample_Release(sample);
+        return E_OUTOFMEMORY;
+    }
+    (*queued_sample)->sample = sample;
 
     return hr;
 }
@@ -1381,11 +1392,11 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
         unsigned int max_sample_count, IMFAttributes *attributes, IMFMediaType *media_type)
 {
     struct surface_service service;
+    struct queued_sample *sample;
     DXGI_FORMAT dxgi_format;
     unsigned int i, value;
     GUID major, subtype;
     UINT64 frame_size;
-    IMFSample *sample;
     D3D11_USAGE usage;
     HRESULT hr;
 
@@ -1458,13 +1469,9 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
 
     for (i = 0; i < sample_count; ++i)
     {
-        struct queued_sample *queued_sample;
-
         if (SUCCEEDED(hr = sample_allocator_allocate_sample(allocator, &service, &sample)))
         {
-            queued_sample = malloc(sizeof(*queued_sample));
-            queued_sample->sample = sample;
-            list_add_tail(&allocator->free_samples, &queued_sample->entry);
+            list_add_tail(&allocator->free_samples, &sample->entry);
             allocator->free_sample_count++;
         }
     }
@@ -1512,7 +1519,7 @@ static HRESULT sample_allocator_track_sample(struct sample_allocator *allocator,
 static HRESULT WINAPI sample_allocator_AllocateSample(IMFVideoSampleAllocatorEx *iface, IMFSample **out)
 {
     struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
-    IMFSample *sample;
+    struct queued_sample *sample;
     HRESULT hr;
 
     TRACE("%p, %p.\n", iface, out);
@@ -1527,9 +1534,9 @@ static HRESULT WINAPI sample_allocator_AllocateSample(IMFVideoSampleAllocatorEx 
     {
         struct list *head = list_head(&allocator->free_samples);
 
-        sample = LIST_ENTRY(head, struct queued_sample, entry)->sample;
+        sample = LIST_ENTRY(head, struct queued_sample, entry);
 
-        if (SUCCEEDED(hr = sample_allocator_track_sample(allocator, sample)))
+        if (SUCCEEDED(hr = sample_allocator_track_sample(allocator, sample->sample)))
         {
             list_remove(head);
             list_add_tail(&allocator->used_samples, head);
@@ -1538,7 +1545,7 @@ static HRESULT WINAPI sample_allocator_AllocateSample(IMFVideoSampleAllocatorEx 
             /* Reference counter is not increased when sample is returned, so next release could trigger
                tracking condition. This is balanced by incremented reference counter when sample is returned
                back to the free list. */
-            *out = sample;
+            *out = sample->sample;
         }
     }
     else /* allocator->cold_sample_count != 0 */
@@ -1549,15 +1556,17 @@ static HRESULT WINAPI sample_allocator_AllocateSample(IMFVideoSampleAllocatorEx 
         {
             if (SUCCEEDED(hr = sample_allocator_allocate_sample(allocator, &service, &sample)))
             {
-                if (SUCCEEDED(hr = sample_allocator_track_sample(allocator, sample)))
+                if (SUCCEEDED(hr = sample_allocator_track_sample(allocator, sample->sample)))
                 {
-                    struct queued_sample *queued_sample = malloc(sizeof(*queued_sample));
-
-                    queued_sample->sample = sample;
-                    list_add_tail(&allocator->used_samples, &queued_sample->entry);
+                    list_add_tail(&allocator->used_samples, &sample->entry);
                     allocator->cold_sample_count--;
 
-                    *out = queued_sample->sample;
+                    *out = sample->sample;
+                }
+                else
+                {
+                    IMFSample_Release(sample->sample);
+                    free(sample);
                 }
             }
 
