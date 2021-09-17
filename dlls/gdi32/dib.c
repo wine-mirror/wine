@@ -1531,12 +1531,10 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
 
     if (section)
     {
-        SYSTEM_INFO SystemInfo;
         DWORD mapOffset;
         INT mapSize;
 
-        GetSystemInfo( &SystemInfo );
-        mapOffset = offset - (offset % SystemInfo.dwAllocationGranularity);
+        mapOffset = offset - (offset % system_info.AllocationGranularity);
         mapSize = bmp->dib.dsBmih.biSizeImage + (offset - mapOffset);
         mapBits = MapViewOfFile( section, FILE_MAP_ALL_ACCESS, 0, mapOffset, mapSize );
         if (mapBits) bmp->dib.dsBm.bmBits = (char *)mapBits + (offset - mapOffset);
@@ -1741,10 +1739,8 @@ static BOOL DIB_DeleteObject( HGDIOBJ handle )
 
     if (bmp->dib.dshSection)
     {
-        SYSTEM_INFO SystemInfo;
-        GetSystemInfo( &SystemInfo );
         UnmapViewOfFile( (char *)bmp->dib.dsBm.bmBits -
-                         (bmp->dib.dsOffset % SystemInfo.dwAllocationGranularity) );
+                         (bmp->dib.dsOffset % system_info.AllocationGranularity) );
     }
     else VirtualFree( bmp->dib.dsBm.bmBits, 0, MEM_RELEASE );
 

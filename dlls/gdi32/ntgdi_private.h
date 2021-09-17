@@ -648,5 +648,6 @@ extern void CDECL free_heap_bits( struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 void set_gdi_client_ptr( HGDIOBJ handle, void *ptr ) DECLSPEC_HIDDEN;
 
 extern HMODULE gdi32_module DECLSPEC_HIDDEN;
+extern SYSTEM_BASIC_INFORMATION system_info DECLSPEC_HIDDEN;
 
 #endif /* __WINE_NTGDI_PRIVATE_H */

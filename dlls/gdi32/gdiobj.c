@@ -43,6 +43,7 @@ static GDI_HANDLE_ENTRY *next_free;
 static GDI_HANDLE_ENTRY *next_unused = gdi_shared.Handles + FIRST_GDI_HANDLE;
 static LONG debug_count;
 HMODULE gdi32_module = 0;
+SYSTEM_BASIC_INFORMATION system_info;
 
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
@@ -702,6 +703,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     gdi32_module = inst;
     DisableThreadLibraryCalls( inst );
+    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
     set_gdi_shared();
     font_init();
     init_stock_objects();
