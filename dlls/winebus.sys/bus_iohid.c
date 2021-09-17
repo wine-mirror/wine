@@ -83,6 +83,8 @@
 #undef PAGE_SHIFT
 #endif /* HAVE_IOKIT_HID_IOHIDLIB_H */
 
+#include <pthread.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -98,14 +100,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 #ifdef HAVE_IOHIDMANAGERCREATE
 
-static CRITICAL_SECTION iohid_cs;
-static CRITICAL_SECTION_DEBUG iohid_cs_debug =
-{
-    0, 0, &iohid_cs,
-    { &iohid_cs_debug.ProcessLocksList, &iohid_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": iohid_cs") }
-};
-static CRITICAL_SECTION iohid_cs = { &iohid_cs_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t iohid_cs = PTHREAD_MUTEX_INITIALIZER;
 
 static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
@@ -184,9 +179,9 @@ static void iohid_device_stop(struct unix_device *iface)
 
     IOHIDDeviceRegisterInputReportCallback(private->device, NULL, 0, NULL, NULL);
 
-    RtlEnterCriticalSection(&iohid_cs);
+    pthread_mutex_lock(&iohid_cs);
     list_remove(&private->unix_device.entry);
-    RtlLeaveCriticalSection(&iohid_cs);
+    pthread_mutex_unlock(&iohid_cs);
 }
 
 static NTSTATUS iohid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -407,9 +402,9 @@ NTSTATUS WINAPI iohid_bus_wait(void *args)
     do
     {
         if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
-        RtlEnterCriticalSection(&iohid_cs);
+        pthread_mutex_lock(&iohid_cs);
         ret = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, TRUE);
-        RtlLeaveCriticalSection(&iohid_cs);
+        pthread_mutex_unlock(&iohid_cs);
     } while (ret != kCFRunLoopRunStopped);
 
     TRACE("IOHID main loop exiting\n");

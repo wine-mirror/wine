@@ -35,6 +35,8 @@
 # include <SDL.h>
 #endif
 
+#include <pthread.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -62,15 +64,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
-static CRITICAL_SECTION sdl_cs;
-static CRITICAL_SECTION_DEBUG sdl_cs_debug =
-{
-    0, 0, &sdl_cs,
-    { &sdl_cs_debug.ProcessLocksList, &sdl_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": sdl_cs") }
-};
-static CRITICAL_SECTION sdl_cs = { &sdl_cs_debug, -1, 0, 0, 0, 0 };
-
+static pthread_mutex_t sdl_cs = PTHREAD_MUTEX_INITIALIZER;
 static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
 static struct sdl_bus_options options;
 
@@ -513,9 +507,9 @@ static void sdl_device_stop(struct unix_device *iface)
     if (private->sdl_controller) pSDL_GameControllerClose(private->sdl_controller);
     if (private->sdl_haptic) pSDL_HapticClose(private->sdl_haptic);
 
-    RtlEnterCriticalSection(&sdl_cs);
+    pthread_mutex_lock(&sdl_cs);
     list_remove(&private->unix_device.entry);
-    RtlLeaveCriticalSection(&sdl_cs);
+    pthread_mutex_unlock(&sdl_cs);
 }
 
 static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE *buffer,
@@ -787,7 +781,7 @@ static void process_device_event(SDL_Event *event)
 
     TRACE_(hid_report)("Received action %x\n", event->type);
 
-    RtlEnterCriticalSection(&sdl_cs);
+    pthread_mutex_lock(&sdl_cs);
 
     if (event->type == SDL_JOYDEVICEADDED)
         sdl_add_device(((SDL_JoyDeviceEvent *)event)->which);
@@ -813,7 +807,7 @@ static void process_device_event(SDL_Event *event)
         else WARN("failed to find device with id %d\n", id);
     }
 
-    RtlLeaveCriticalSection(&sdl_cs);
+    pthread_mutex_unlock(&sdl_cs);
 }
 
 NTSTATUS WINAPI sdl_bus_init(void *args)

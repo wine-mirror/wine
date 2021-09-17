@@ -58,6 +58,8 @@
 # endif
 #endif
 
+#include <pthread.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -91,14 +93,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
-static CRITICAL_SECTION udev_cs;
-static CRITICAL_SECTION_DEBUG udev_cs_debug =
-{
-    0, 0, &udev_cs,
-    { &udev_cs_debug.ProcessLocksList, &udev_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": udev_cs") }
-};
-static CRITICAL_SECTION udev_cs = { &udev_cs_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t udev_cs = PTHREAD_MUTEX_INITIALIZER;
 
 static struct udev *udev_context = NULL;
 static struct udev_monitor *udev_monitor;
@@ -622,9 +617,9 @@ static void hidraw_device_destroy(struct unix_device *iface)
 
 static NTSTATUS hidraw_device_start(struct unix_device *iface)
 {
-    RtlEnterCriticalSection(&udev_cs);
+    pthread_mutex_lock(&udev_cs);
     start_polling_device(iface);
-    RtlLeaveCriticalSection(&udev_cs);
+    pthread_mutex_unlock(&udev_cs);
     return STATUS_SUCCESS;
 }
 
@@ -632,10 +627,10 @@ static void hidraw_device_stop(struct unix_device *iface)
 {
     struct platform_private *private = impl_from_unix_device(iface);
 
-    RtlEnterCriticalSection(&udev_cs);
+    pthread_mutex_lock(&udev_cs);
     stop_polling_device(iface);
     list_remove(&private->unix_device.entry);
-    RtlLeaveCriticalSection(&udev_cs);
+    pthread_mutex_unlock(&udev_cs);
 }
 
 static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -824,9 +819,9 @@ static NTSTATUS lnxev_device_start(struct unix_device *iface)
     if ((status = build_report_descriptor(ext, ext->base.udev_device)))
         return status;
 
-    RtlEnterCriticalSection(&udev_cs);
+    pthread_mutex_lock(&udev_cs);
     start_polling_device(iface);
-    RtlLeaveCriticalSection(&udev_cs);
+    pthread_mutex_unlock(&udev_cs);
     return STATUS_SUCCESS;
 }
 
@@ -834,10 +829,10 @@ static void lnxev_device_stop(struct unix_device *iface)
 {
     struct wine_input_private *ext = input_impl_from_unix_device(iface);
 
-    RtlEnterCriticalSection(&udev_cs);
+    pthread_mutex_lock(&udev_cs);
     stop_polling_device(iface);
     list_remove(&ext->base.unix_device.entry);
-    RtlLeaveCriticalSection(&udev_cs);
+    pthread_mutex_unlock(&udev_cs);
 }
 
 static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
@@ -1246,16 +1241,16 @@ NTSTATUS WINAPI udev_bus_wait(void *args)
     {
         if (bus_event_queue_pop(&event_queue, result)) return STATUS_PENDING;
 
-        RtlEnterCriticalSection(&udev_cs);
+        pthread_mutex_lock(&udev_cs);
         while (close_count--) close(close_fds[close_count]);
         memcpy(pfd, poll_fds, poll_count * sizeof(*pfd));
         count = poll_count;
         close_count = 0;
-        RtlLeaveCriticalSection(&udev_cs);
+        pthread_mutex_unlock(&udev_cs);
 
         while (poll(pfd, count, -1) <= 0) {}
 
-        RtlEnterCriticalSection(&udev_cs);
+        pthread_mutex_lock(&udev_cs);
         if (pfd[0].revents) process_monitor_event(udev_monitor);
         if (pfd[1].revents) read(deviceloop_control[0], &ctrl, 1);
         for (i = 2; i < count; ++i)
@@ -1264,7 +1259,7 @@ NTSTATUS WINAPI udev_bus_wait(void *args)
             device = find_device_from_fd(pfd[i].fd);
             if (device) device->read_report(&device->unix_device);
         }
-        RtlLeaveCriticalSection(&udev_cs);
+        pthread_mutex_unlock(&udev_cs);
     }
 
     TRACE("UDEV main loop exiting\n");
