@@ -362,6 +362,7 @@ void set_shell_folder( const WCHAR *path, const char *dest )
     if (dest) len += strlen(dest) + 1;
 
     if (!(ioctl = HeapAlloc( GetProcessHeap(), 0, len ))) return;
+    ioctl->create_backup = TRUE;
     ioctl->folder_offset = sizeof(*ioctl);
     ioctl->folder_size = nt_name.Length;
     memcpy( (char *)ioctl + ioctl->folder_offset, nt_name.Buffer, nt_name.Length );

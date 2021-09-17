@@ -80,6 +80,7 @@ struct mountmgr_unix_drive
 
 struct mountmgr_shell_folder
 {
+    BOOL     create_backup;
     ULONG    folder_offset;
     ULONG    folder_size;
     ULONG    symlink_offset;

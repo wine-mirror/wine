@@ -335,13 +335,16 @@ static NTSTATUS define_shell_folder( const void *in_buff, SIZE_T insize )
         if (status != STATUS_BUFFER_TOO_SMALL) return status;
     }
 
-    if (!(backup = HeapAlloc( GetProcessHeap(), 0, strlen(buffer) + sizeof(".backup" ) )))
+    if (input->create_backup)
     {
-        status = STATUS_NO_MEMORY;
-        goto done;
+        if (!(backup = HeapAlloc( GetProcessHeap(), 0, strlen(buffer) + sizeof(".backup" ) )))
+        {
+            status = STATUS_NO_MEMORY;
+            goto done;
+        }
+        strcpy( backup, buffer );
+        strcat( backup, ".backup" );
     }
-    strcpy( backup, buffer );
-    strcat( backup, ".backup" );
 
     if (!lstat( buffer, &st )) /* move old folder/link out of the way */
     {
