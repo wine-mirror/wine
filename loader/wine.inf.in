@@ -26,11 +26,29 @@
 [version]
 signature="$CHICAGO$"
 
+[PreInstall]
+WineFakeDlls=FakeDllsPreInstall
+
 [PreInstall.ntamd64]
+WineFakeDlls=FakeDllsPreInstall
 AddReg=Wow64
 
 [PreInstall.ntarm64]
+WineFakeDlls=FakeDllsPreInstall
 AddReg=Wow64
+
+[PreInstall.Services]
+AddService=MountMgr,0x800,MountMgrService
+
+[PreInstall.ntamd64.Services]
+AddService=MountMgr,0x800,MountMgrService
+
+[PreInstall.ntarm64.Services]
+AddService=MountMgr,0x800,MountMgrService
+
+[FakeDllsPreInstall]
+11,,winedevice.exe
+12,,mountmgr.sys
 
 [DefaultInstall]
 RegisterDlls=RegisterDllsSection
@@ -156,7 +174,6 @@ AddService=BITS,0,BITSService
 AddService=EventLog,0,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
-AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -176,7 +193,6 @@ AddService=BITS,0,BITSService
 AddService=EventLog,0,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
-AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -196,7 +212,6 @@ AddService=BITS,0,BITSService
 AddService=EventLog,0,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
-AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
@@ -216,7 +231,6 @@ AddService=BITS,0,BITSService
 AddService=EventLog,0,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
-AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
