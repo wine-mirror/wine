@@ -1316,7 +1316,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
     return STATUS_SUCCESS;
 }
 
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
 
 static void copy_smbios_string( char **buffer, const char *s, size_t len )
 {
@@ -1505,6 +1505,10 @@ static NTSTATUS create_smbios_tables( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, U
 
     return STATUS_SUCCESS;
 }
+
+#endif
+
+#ifdef linux
 
 static size_t get_smbios_string( const char *path, char *str, size_t size )
 {
@@ -1698,6 +1702,112 @@ static NTSTATUS get_smbios_from_iokit( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, 
     return STATUS_SUCCESS;
 }
 
+static size_t cf_to_string( CFTypeRef type_ref, char *buffer, size_t buffer_size )
+{
+    size_t length = 0;
+
+    if (!type_ref)
+        return 0;
+
+    if (CFGetTypeID(type_ref) == CFDataGetTypeID())
+    {
+        length = MIN(CFDataGetLength(type_ref), buffer_size);
+        CFDataGetBytes(type_ref, CFRangeMake(0, length), (UInt8*)buffer);
+        buffer[length] = 0;
+        length = strlen(buffer);
+    }
+    else if (CFGetTypeID(type_ref) == CFStringGetTypeID())
+    {
+        if (CFStringGetCString(type_ref, buffer, buffer_size, kCFStringEncodingASCII))
+            length = strlen(buffer);
+    }
+
+    CFRelease(type_ref);
+    return length;
+}
+
+static NTSTATUS generate_smbios( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
+                                 ULONG *required_len )
+{
+    /* Apple Silicon Macs don't have SMBIOS, we need to generate it.
+     * Use strings and data from IOKit when available.
+     */
+    io_service_t platform_expert;
+    CFDataRef cf_manufacturer, cf_model;
+    CFStringRef cf_serial_number, cf_uuid_string;
+    char manufacturer[128], model[128], serial_number[128];
+    size_t manufacturer_len = 0, model_len = 0, serial_number_len = 0;
+    GUID system_uuid = {0};
+    struct smbios_bios_args bios_args;
+    struct smbios_system_args system_args;
+    struct smbios_board_args board_args;
+    struct smbios_chassis_args chassis_args;
+
+    platform_expert = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+    if (!platform_expert)
+        return STATUS_NO_MEMORY;
+
+    cf_manufacturer = IORegistryEntryCreateCFProperty(platform_expert, CFSTR("manufacturer"), kCFAllocatorDefault, 0);
+    cf_model = IORegistryEntryCreateCFProperty(platform_expert, CFSTR("model"), kCFAllocatorDefault, 0);
+    cf_serial_number = IORegistryEntryCreateCFProperty(platform_expert, CFSTR(kIOPlatformSerialNumberKey), kCFAllocatorDefault, 0);
+    cf_uuid_string = IORegistryEntryCreateCFProperty(platform_expert, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
+
+    manufacturer_len = cf_to_string(cf_manufacturer, manufacturer, sizeof(manufacturer));
+    model_len = cf_to_string(cf_model, model, sizeof(model));
+    serial_number_len = cf_to_string(cf_serial_number, serial_number, sizeof(serial_number));
+
+    if (cf_uuid_string)
+    {
+        CFUUIDRef cf_uuid;
+        CFUUIDBytes bytes;
+
+        cf_uuid = CFUUIDCreateFromString(kCFAllocatorDefault, cf_uuid_string);
+        bytes = CFUUIDGetUUIDBytes(cf_uuid);
+
+        system_uuid.Data1 = (bytes.byte0 << 24) | (bytes.byte1 << 16) | (bytes.byte2 << 8) | bytes.byte3;
+        system_uuid.Data2 = (bytes.byte4 << 8) | bytes.byte5;
+        system_uuid.Data3 = (bytes.byte6 << 8) | bytes.byte7;
+        memcpy(&system_uuid.Data4, &bytes.byte8, sizeof(system_uuid.Data4));
+
+        CFRelease(cf_uuid);
+        CFRelease(cf_uuid_string);
+    }
+
+    IOObjectRelease(platform_expert);
+
+#define S(s, t) { s ## _len = t ## _len; s = t; }
+#define STR(s, t) { s ## _len = sizeof(t)-1; s = t; }
+    S(bios_args.vendor, manufacturer);
+    /* BIOS version and date are both required */
+    STR(bios_args.version, "1.0");
+    STR(bios_args.date, "01/01/2021");
+
+    S(system_args.vendor, manufacturer);
+    S(system_args.product, model);
+    STR(system_args.version, "1.0");
+    S(system_args.serial, serial_number);
+    system_args.uuid = system_uuid;
+    system_args.sku_len = 0;
+    S(system_args.family, model);
+
+    S(board_args.vendor, manufacturer);
+    S(board_args.product, model);
+    S(board_args.version, model);
+    S(board_args.serial, serial_number);
+    board_args.asset_tag_len = 0;
+
+    S(chassis_args.vendor, manufacturer);
+    chassis_args.type = 2; /* unknown */
+    chassis_args.version_len = 0;
+    S(chassis_args.serial, serial_number);
+    chassis_args.asset_tag_len = 0;
+#undef STR
+#undef S
+
+    return create_smbios_tables( sfti, available_len, required_len,
+                                 &bios_args, &system_args, &board_args, &chassis_args );
+}
+
 static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
                                    ULONG *required_len )
 {
@@ -1707,6 +1817,8 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
     {
         NTSTATUS ret;
         ret = get_smbios_from_iokit(sfti, available_len, required_len);
+        if (ret == STATUS_NO_MEMORY)
+            ret = generate_smbios(sfti, available_len, required_len);
         return ret;
     }
     default:
