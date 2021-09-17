@@ -52,6 +52,7 @@
 #include "ddk/hidsdi.h"
 #include "ddk/hidpi.h"
 #include "ddk/hidport.h"
+#include "hidusage.h"
 #include "devguid.h"
 
 #include "wine/test.h"
@@ -60,6 +61,7 @@
 #include "driver_hid.h"
 
 static HINSTANCE instance;
+static BOOL localized; /* object names get translated */
 
 #define EXPECT_VIDPID MAKELONG( 0x1209, 0x0001 )
 static const WCHAR expect_vidpid_str[] = L"VID_1209&PID_0001";
@@ -3281,6 +3283,65 @@ static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *c
     return DIENUM_CONTINUE;
 }
 
+struct check_objects_todos
+{
+    BOOL ofs;
+    BOOL type;
+    BOOL collection_number;
+};
+
+struct check_objects_params
+{
+    UINT index;
+    UINT expect_count;
+    const DIDEVICEOBJECTINSTANCEW *expect_objs;
+    const struct check_objects_todos *todo_objs;
+};
+
+static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    static const DIDEVICEOBJECTINSTANCEW unexpected_obj = {0};
+    struct check_objects_params *params = args;
+    const DIDEVICEOBJECTINSTANCEW *exp = params->expect_objs + params->index;
+    const struct check_objects_todos *todo = params->todo_objs + params->index;
+
+    winetest_push_context( "obj[%d]", params->index );
+
+    ok( params->index < params->expect_count, "unexpected extra object\n" );
+    if (params->index >= params->expect_count) exp = &unexpected_obj;
+
+    check_member( *obj, *exp, "%u", dwSize );
+    check_member_guid( *obj, *exp, guidType );
+    todo_wine_if( todo->ofs )
+    check_member( *obj, *exp, "%#x", dwOfs );
+    todo_wine_if( todo->type )
+    check_member( *obj, *exp, "%#x", dwType );
+    check_member( *obj, *exp, "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
+    check_member( *obj, *exp, "%u", dwFFMaxForce );
+    check_member( *obj, *exp, "%u", dwFFForceResolution );
+    todo_wine_if( todo->collection_number )
+    check_member( *obj, *exp, "%u", wCollectionNumber );
+    check_member( *obj, *exp, "%u", wDesignatorIndex );
+    check_member( *obj, *exp, "%#04x", wUsagePage );
+    check_member( *obj, *exp, "%#04x", wUsage );
+    check_member( *obj, *exp, "%#04x", dwDimension );
+    check_member( *obj, *exp, "%#04x", wExponent );
+    check_member( *obj, *exp, "%u", wReportId );
+
+    winetest_pop_context();
+
+    params->index++;
+    return DIENUM_CONTINUE;
+}
+
+static BOOL CALLBACK check_object_count( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    DWORD *count = args;
+    *count = *count + 1;
+    return DIENUM_CONTINUE;
+}
+
 static void test_simple_joystick(void)
 {
 #include "psh_hid_macros.h"
@@ -3428,7 +3489,98 @@ static void test_simple_joystick(void)
         .wUsagePage = HID_USAGE_PAGE_GENERIC,
         .wUsage = HID_USAGE_GENERIC_JOYSTICK,
     };
+    const DIDEVICEOBJECTINSTANCEW expect_objects[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_YAxis,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(1),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Y Axis",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_Y,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_XAxis,
+            .dwOfs = 0x4,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(0),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"X Axis",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_X,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_POV,
+            .dwOfs = 0x8,
+            .dwType = DIDFT_POV|DIDFT_MAKEINSTANCE(0),
+            .tszName = L"Hat Switch",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_HATSWITCH,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0xc,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0),
+            .tszName = L"Button 0",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_BUTTON,
+            .wUsage = 0x1,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0xd,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1),
+            .tszName = L"Button 1",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_BUTTON,
+            .wUsage = 0x2,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(0),
+            .tszName = L"Collection 0 - Joystick",
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(1),
+            .tszName = L"Collection 1 - Joystick",
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+    };
+    const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
+    {
+        {.ofs = TRUE, .type = TRUE, .collection_number = TRUE},
+        {.ofs = TRUE, .type = TRUE, .collection_number = TRUE},
+        {.ofs = TRUE, .collection_number = TRUE},
+        {.ofs = TRUE, .collection_number = TRUE},
+        {.ofs = TRUE, .collection_number = TRUE},
+        {},
+        {.type = TRUE},
+    };
 
+    struct check_objects_params check_objects_params =
+    {
+        .expect_count = ARRAY_SIZE(expect_objects),
+        .expect_objs = expect_objects,
+        .todo_objs = objects_todos,
+    };
     DIPROPGUIDANDPATH prop_guid_path =
     {
         .diph =
@@ -3754,6 +3906,20 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_APPDATA, &prop_pointer.diph );
     todo_wine
     ok( hr == DIERR_NOTINITIALIZED, "IDirectInputDevice8_GetProperty DIPROP_APPDATA returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_EnumObjects( device, NULL, NULL, DIDFT_ALL );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
+    hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, 0x20 );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
+    res = 0;
+    hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
+    ok( res == 4, "got %u expected %u\n", res, 4 );
+    hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
+    ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
+        check_objects_params.expect_count - check_objects_params.index );
 
     hr = IDirectInputDevice8_SetDataFormat( device, NULL );
     ok( hr == E_POINTER, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
@@ -4384,6 +4550,7 @@ START_TEST( hid )
     BOOL is_wow64;
 
     instance = GetModuleHandleW( NULL );
+    localized = GetUserDefaultLCID() != MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
     pSignerSign = (void *)GetProcAddress( LoadLibraryW( L"mssign32" ), "SignerSign" );
 
     if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
