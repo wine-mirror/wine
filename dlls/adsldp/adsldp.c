@@ -990,7 +990,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
             err = DsGetDcNameW(NULL, NULL, NULL, NULL, DS_RETURN_DNS_NAME, &dcinfo);
             if (err != ERROR_SUCCESS)
             {
-                hr = HRESULT_FROM_WIN32(LdapGetLastError());
+                hr = HRESULT_FROM_WIN32(err);
                 goto fail;
             }
 
