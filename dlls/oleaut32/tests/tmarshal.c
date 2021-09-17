@@ -30,9 +30,6 @@
 
 #include "tmarshal.h"
 
-static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
-
-
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 static inline void release_iface_(unsigned int line, void *iface)
 {
@@ -3747,8 +3744,6 @@ static void test_marshal_dispinterface(void)
 START_TEST(tmarshal)
 {
     HRESULT hr;
-    HANDLE hOleaut32 = GetModuleHandleA("oleaut32.dll");
-    pVarAdd = (void*)GetProcAddress(hOleaut32, "VarAdd");
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
