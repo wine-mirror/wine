@@ -608,7 +608,7 @@ static INT CDECL nulldrv_GetTextFace( PHYSDEV dev, INT size, LPWSTR name )
     LOGFONTW font;
     DC *dc = get_nulldrv_dc( dev );
 
-    if (GetObjectW( dc->hFont, sizeof(font), &font ))
+    if (NtGdiExtGetObjectW( dc->hFont, sizeof(font), &font ))
     {
         ret = lstrlenW( font.lfFaceName ) + 1;
         if (name)

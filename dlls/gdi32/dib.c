@@ -936,8 +936,8 @@ UINT set_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries, const RGBQUAD
 
         if (result)  /* update colors of selected objects */
         {
-            SetTextColor( hdc, dc->attr->text_color );
-            SetBkColor( hdc, dc->attr->background_color );
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, dc->attr->text_color, NULL );
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, dc->attr->background_color, NULL );
             NtGdiSelectPen( hdc, dc->hPen );
             NtGdiSelectBrush( hdc, dc->hBrush );
         }

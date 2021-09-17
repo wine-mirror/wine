@@ -133,7 +133,7 @@ static inline void create_default_clip_region( DC * dc )
         rect.right = NtGdiGetDeviceCaps( dc->hSelf, DESKTOPHORZRES );
         rect.bottom = NtGdiGetDeviceCaps( dc->hSelf, DESKTOPVERTRES );
     }
-    dc->hClipRgn = CreateRectRgnIndirect( &rect );
+    dc->hClipRgn = NtGdiCreateRectRgn( rect.left, rect.top, rect.right, rect.bottom );
 }
 
 
@@ -265,7 +265,7 @@ INT WINAPI NtGdiExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bott
 
     rect = get_clip_rect( dc, left, top, right, bottom );
 
-    if ((rgn = CreateRectRgnIndirect( &rect )))
+    if ((rgn = NtGdiCreateRectRgn( rect.left, rect.top, rect.right, rect.bottom )))
     {
         if (!dc->hClipRgn) create_default_clip_region( dc );
         ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
@@ -293,10 +293,10 @@ INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bo
     rect = get_clip_rect( dc, left, top, right, bottom );
     if (!dc->hClipRgn)
     {
-        if ((dc->hClipRgn = CreateRectRgnIndirect( &rect )))
+        if ((dc->hClipRgn = NtGdiCreateRectRgn( rect.left, rect.top, rect.right, rect.bottom )))
             ret = SIMPLEREGION;
     }
-    else if ((rgn = CreateRectRgnIndirect( &rect )))
+    else if ((rgn = NtGdiCreateRectRgn( rect.left, rect.top, rect.right, rect.bottom )))
     {
         ret = NtGdiCombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
         NtGdiDeleteObjectApp( rgn );

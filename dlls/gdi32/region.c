@@ -927,7 +927,7 @@ HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA
             pt[3].y = pCurRect->bottom;
 
             translate( pt, 4, xform );
-            poly_hrgn = CreatePolyPolygonRgn( pt, &count, 1, WINDING );
+            poly_hrgn = create_polypolygon_region( pt, &count, 1, WINDING, NULL );
             NtGdiCombineRgn( hrgn, hrgn, poly_hrgn, RGN_OR );
             NtGdiDeleteObjectApp( poly_hrgn );
         }

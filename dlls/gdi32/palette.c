@@ -158,7 +158,7 @@ HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc )
         pal->palPalEntry[i].peBlue  = entries[i].rgbBlue;
         pal->palPalEntry[i].peFlags = 0;
     }
-    return CreatePalette( pal );
+    return NtGdiCreatePaletteInternal( pal, pal->palNumEntries );
 }
 
 
