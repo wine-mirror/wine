@@ -62,11 +62,12 @@ struct hid_value_caps
 
 /* named array continues on next caps */
 #define HID_VALUE_CAPS_ARRAY_HAS_MORE       0x01
+#define HID_VALUE_CAPS_IS_CONSTANT          0x02
+#define HID_VALUE_CAPS_IS_ABSOLUTE          0x08
 #define HID_VALUE_CAPS_IS_RANGE             0x10
 #define HID_VALUE_CAPS_IS_STRING_RANGE      0x40
 #define HID_VALUE_CAPS_IS_DESIGNATOR_RANGE  0x80
 
-#define HID_VALUE_CAPS_IS_ABSOLUTE(x) (((x)->bit_field & 0x04) == 0)
 #define HID_VALUE_CAPS_HAS_NULL(x) (((x)->bit_field & 0x40) != 0)
 #define HID_VALUE_CAPS_IS_ARRAY(c) (((c)->bit_field & 2) == 0)
 #define HID_VALUE_CAPS_IS_BUTTON(c) ((c)->bit_size == 1 || HID_VALUE_CAPS_IS_ARRAY(c))

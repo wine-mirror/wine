@@ -647,7 +647,7 @@ static NTSTATUS get_button_caps( const struct hid_value_caps *caps, void *user )
     dst->LinkUsage = caps->link_usage;
     dst->BitField = caps->bit_field;
     dst->IsAlias = FALSE;
-    dst->IsAbsolute = HID_VALUE_CAPS_IS_ABSOLUTE( caps );
+    dst->IsAbsolute = (caps->flags & HID_VALUE_CAPS_IS_ABSOLUTE) ? 1 : 0;
     dst->IsRange = (caps->flags & HID_VALUE_CAPS_IS_RANGE) ? 1 : 0;
     if (!dst->IsRange)
     {
@@ -704,7 +704,7 @@ static NTSTATUS get_value_caps( const struct hid_value_caps *caps, void *user )
     dst->LinkUsage = caps->link_usage;
     dst->BitField = caps->bit_field;
     dst->IsAlias = FALSE;
-    dst->IsAbsolute = HID_VALUE_CAPS_IS_ABSOLUTE( caps );
+    dst->IsAbsolute = (caps->flags & HID_VALUE_CAPS_IS_ABSOLUTE) ? 1 : 0;
     dst->HasNull = HID_VALUE_CAPS_HAS_NULL( caps );
     dst->BitSize = caps->bit_size;
     dst->UnitsExp = caps->units_exp;

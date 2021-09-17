@@ -357,6 +357,9 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     if (!(is_array = HID_VALUE_CAPS_IS_ARRAY( &state->items ))) state->items.report_count -= usages_size - 1;
     else start_bit -= state->items.report_count * state->items.bit_size;
 
+    if (!(state->items.bit_field & INPUT_ABS_REL)) state->items.flags |= HID_VALUE_CAPS_IS_ABSOLUTE;
+    if (state->items.bit_field & INPUT_DATA_CONST) state->items.flags |= HID_VALUE_CAPS_IS_CONSTANT;
+
     while (usages_size--)
     {
         if (!is_array) start_bit -= state->items.report_count * state->items.bit_size;
