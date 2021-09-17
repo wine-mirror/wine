@@ -359,6 +359,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
 
     if (!(state->items.bit_field & INPUT_ABS_REL)) state->items.flags |= HID_VALUE_CAPS_IS_ABSOLUTE;
     if (state->items.bit_field & INPUT_DATA_CONST) state->items.flags |= HID_VALUE_CAPS_IS_CONSTANT;
+    if (state->items.bit_size == 1 || is_array) state->items.flags |= HID_VALUE_CAPS_IS_BUTTON;
 
     while (usages_size--)
     {
@@ -437,7 +438,7 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     for (i = 0, button = 0, filler = 0; i < data->caps.NumberInputValueCaps; ++i)
     {
         if (!caps[i].usage_min && !caps[i].usage_max) filler++;
-        else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
+        else if (caps[i].flags & HID_VALUE_CAPS_IS_BUTTON) button++;
     }
     data->caps.NumberInputButtonCaps = button;
     data->caps.NumberInputValueCaps -= filler + button;
@@ -447,7 +448,7 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     for (i = 0, button = 0, filler = 0; i < data->caps.NumberOutputValueCaps; ++i)
     {
         if (!caps[i].usage_min && !caps[i].usage_max) filler++;
-        else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
+        else if (caps[i].flags & HID_VALUE_CAPS_IS_BUTTON) button++;
     }
     caps += data->caps.NumberOutputValueCaps;
     data->caps.NumberOutputButtonCaps = button;
@@ -458,7 +459,7 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     for (i = 0, button = 0, filler = 0; i < data->caps.NumberFeatureValueCaps; ++i)
     {
         if (!caps[i].usage_min && !caps[i].usage_max) filler++;
-        else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
+        else if (caps[i].flags & HID_VALUE_CAPS_IS_BUTTON) button++;
     }
     caps += data->caps.NumberFeatureValueCaps;
     data->caps.NumberFeatureButtonCaps = button;

@@ -80,8 +80,8 @@ struct caps_filter
 static BOOL match_value_caps( const struct hid_value_caps *caps, const struct caps_filter *filter )
 {
     if (!caps->usage_min && !caps->usage_max) return FALSE;
-    if (filter->buttons && !HID_VALUE_CAPS_IS_BUTTON( caps )) return FALSE;
-    if (filter->values && HID_VALUE_CAPS_IS_BUTTON( caps )) return FALSE;
+    if (filter->buttons && !(caps->flags & HID_VALUE_CAPS_IS_BUTTON)) return FALSE;
+    if (filter->values && (caps->flags & HID_VALUE_CAPS_IS_BUTTON)) return FALSE;
     if (filter->usage_page && filter->usage_page != caps->usage_page) return FALSE;
     if (filter->collection && filter->collection != caps->link_collection) return FALSE;
     if (!filter->usage) return TRUE;
@@ -836,8 +836,9 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
 
 static NTSTATUS count_data( const struct hid_value_caps *caps, void *user )
 {
+    BOOL is_button = caps->flags & HID_VALUE_CAPS_IS_BUTTON;
     BOOL is_range = caps->flags & HID_VALUE_CAPS_IS_RANGE;
-    if (is_range || HID_VALUE_CAPS_IS_BUTTON( caps )) *(ULONG *)user += caps->report_count;
+    if (is_range || is_button) *(ULONG *)user += caps->report_count;
     else *(ULONG *)user += 1;
     return HIDP_STATUS_SUCCESS;
 }
@@ -892,7 +893,7 @@ static NTSTATUS find_all_data( const struct hid_value_caps *caps, void *user )
             data++;
         }
     }
-    else if (HID_VALUE_CAPS_IS_BUTTON( caps ))
+    else if (caps->flags & HID_VALUE_CAPS_IS_BUTTON)
     {
         for (bit = caps->start_bit, last = bit + caps->usage_max - caps->usage_min; bit <= last; bit++)
         {
