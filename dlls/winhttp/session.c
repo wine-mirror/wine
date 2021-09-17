@@ -822,6 +822,12 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         *buflen = sizeof(DWORD);
         return TRUE;
 
+    case WINHTTP_OPTION_HTTP_PROTOCOL_USED:
+        FIXME("WINHTTP_OPTION_HTTP_PROTOCOL_USED\n");
+        *(DWORD *)buffer = 0;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+
     default:
         FIXME("unimplemented option %u\n", option);
         SetLastError( ERROR_INVALID_PARAMETER );
