@@ -192,10 +192,13 @@ static NTSTATUS get_scaled_usage_value( const struct hid_value_caps *caps, void 
     struct usage_value_params *params = user;
     ULONG unsigned_value = 0, bit_count = caps->bit_size * caps->report_count;
     LONG signed_value, *value = params->value_buf;
+    unsigned char *report_buf;
 
     if ((bit_count + 7) / 8 > sizeof(unsigned_value)) return HIDP_STATUS_BUFFER_TOO_SMALL;
     if (sizeof(LONG) > params->value_len) return HIDP_STATUS_BUFFER_TOO_SMALL;
-    copy_bits( (unsigned char *)&unsigned_value, params->report_buf, bit_count, -caps->start_bit );
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
+    copy_bits( (unsigned char *)&unsigned_value, report_buf, bit_count, -caps->start_bit );
     signed_value = sign_extend( unsigned_value, caps );
 
     if (caps->logical_min > caps->logical_max || caps->physical_min > caps->physical_max)
@@ -232,9 +235,14 @@ static NTSTATUS get_usage_value( const struct hid_value_caps *caps, void *user )
 {
     struct usage_value_params *params = user;
     ULONG bit_count = caps->bit_size * caps->report_count;
+    unsigned char *report_buf;
+
     if ((bit_count + 7) / 8 > params->value_len) return HIDP_STATUS_BUFFER_TOO_SMALL;
     memset( params->value_buf, 0, params->value_len );
-    copy_bits( params->value_buf, params->report_buf, bit_count, -caps->start_bit );
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
+    copy_bits( params->value_buf, report_buf, bit_count, -caps->start_bit );
+
     return HIDP_STATUS_NULL;
 }
 
@@ -285,14 +293,17 @@ struct get_usage_params
 static NTSTATUS get_usage( const struct hid_value_caps *caps, void *user )
 {
     struct get_usage_params *params = user;
+    unsigned char *report_buf;
     ULONG bit, last;
     BYTE index;
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
 
     if (HID_VALUE_CAPS_IS_ARRAY( caps ))
     {
         for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
         {
-            if (!(index = params->report_buf[bit / 8])) continue;
+            if (!(index = report_buf[bit / 8])) continue;
             if (params->usages < params->usages_end) *params->usages = caps->usage_min + index - caps->start_index;
             params->usages++;
         }
@@ -301,7 +312,7 @@ static NTSTATUS get_usage( const struct hid_value_caps *caps, void *user )
 
     for (bit = caps->start_bit, last = bit + caps->usage_max - caps->usage_min; bit <= last; ++bit)
     {
-        if (!(params->report_buf[bit / 8] & (1 << (bit % 8)))) continue;
+        if (!(report_buf[bit / 8] & (1 << (bit % 8)))) continue;
         if (params->usages < params->usages_end) *params->usages = caps->usage_min + bit - caps->start_bit;
         params->usages++;
     }
@@ -384,6 +395,7 @@ static NTSTATUS set_scaled_usage_value( const struct hid_value_caps *caps, void 
 {
     ULONG bit_count = caps->bit_size * caps->report_count;
     struct usage_value_params *params = user;
+    unsigned char *report_buf;
     LONG value, log_range, phy_range;
 
     if (caps->logical_min > caps->logical_max) return HIDP_STATUS_BAD_LOG_PHY_VALUES;
@@ -404,7 +416,8 @@ static NTSTATUS set_scaled_usage_value( const struct hid_value_caps *caps, void 
         value = caps->logical_min + value;
     }
 
-    copy_bits( params->report_buf, (unsigned char *)&value, bit_count, caps->start_bit );
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
+    copy_bits( report_buf, (unsigned char *)&value, bit_count, caps->start_bit );
 
     return HIDP_STATUS_NULL;
 }
@@ -431,8 +444,13 @@ static NTSTATUS set_usage_value( const struct hid_value_caps *caps, void *user )
 {
     struct usage_value_params *params = user;
     ULONG bit_count = caps->bit_size * caps->report_count;
+    unsigned char *report_buf;
+
     if ((bit_count + 7) / 8 > params->value_len) return HIDP_STATUS_BUFFER_TOO_SMALL;
-    copy_bits( params->report_buf, params->value_buf, bit_count, caps->start_bit );
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
+    copy_bits( report_buf, params->value_buf, bit_count, caps->start_bit );
+
     return HIDP_STATUS_NULL;
 }
 
@@ -481,14 +499,17 @@ struct set_usage_params
 static NTSTATUS set_usage( const struct hid_value_caps *caps, void *user )
 {
     struct set_usage_params *params = user;
+    unsigned char *report_buf;
     ULONG bit, last;
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
 
     if (HID_VALUE_CAPS_IS_ARRAY( caps ))
     {
         for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
         {
-            if (params->report_buf[bit / 8]) continue;
-            params->report_buf[bit / 8] = caps->start_index + params->usage - caps->usage_min;
+            if (report_buf[bit / 8]) continue;
+            report_buf[bit / 8] = caps->start_index + params->usage - caps->usage_min;
             break;
         }
 
@@ -497,7 +518,7 @@ static NTSTATUS set_usage( const struct hid_value_caps *caps, void *user )
     }
 
     bit = caps->start_bit + params->usage - caps->usage_min;
-    params->report_buf[bit / 8] |= (1 << (bit % 8));
+    report_buf[bit / 8] |= (1 << (bit % 8));
     return HIDP_STATUS_NULL;
 }
 
@@ -538,15 +559,18 @@ struct unset_usage_params
 static NTSTATUS unset_usage( const struct hid_value_caps *caps, void *user )
 {
     struct unset_usage_params *params = user;
+    unsigned char *report_buf;
     ULONG bit, index, last;
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
 
     if (HID_VALUE_CAPS_IS_ARRAY( caps ))
     {
         for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
         {
             index = caps->start_index + params->usage - caps->usage_min;
-            if (params->report_buf[bit / 8] != index) continue;
-            params->report_buf[bit / 8] = 0;
+            if (report_buf[bit / 8] != index) continue;
+            report_buf[bit / 8] = 0;
             params->found = TRUE;
             break;
         }
@@ -555,8 +579,8 @@ static NTSTATUS unset_usage( const struct hid_value_caps *caps, void *user )
     }
 
     bit = caps->start_bit + params->usage - caps->usage_min;
-    if (params->report_buf[bit / 8] & (1 << (bit % 8))) params->found = TRUE;
-    params->report_buf[bit / 8] &= ~(1 << (bit % 8));
+    if (report_buf[bit / 8] & (1 << (bit % 8))) params->found = TRUE;
+    report_buf[bit / 8] &= ~(1 << (bit % 8));
     return HIDP_STATUS_NULL;
 }
 
@@ -726,14 +750,17 @@ struct get_usage_and_page_params
 static NTSTATUS get_usage_and_page( const struct hid_value_caps *caps, void *user )
 {
     struct get_usage_and_page_params *params = user;
+    unsigned char *report_buf;
     ULONG bit, last;
     BYTE index;
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
 
     if (HID_VALUE_CAPS_IS_ARRAY( caps ))
     {
         for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
         {
-            if (!(index = params->report_buf[bit / 8])) continue;
+            if (!(index = report_buf[bit / 8])) continue;
             if (params->usages < params->usages_end)
             {
                 params->usages->UsagePage = caps->usage_page;
@@ -746,7 +773,7 @@ static NTSTATUS get_usage_and_page( const struct hid_value_caps *caps, void *use
 
     for (bit = caps->start_bit, last = bit + caps->usage_max - caps->usage_min; bit <= last; bit++)
     {
-        if (!(params->report_buf[bit / 8] & (1 << (bit % 8)))) continue;
+        if (!(report_buf[bit / 8] & (1 << (bit % 8)))) continue;
         if (params->usages < params->usages_end)
         {
             params->usages->UsagePage = caps->usage_page;
@@ -813,10 +840,12 @@ static NTSTATUS find_all_data( const struct hid_value_caps *caps, void *user )
     struct find_all_data_params *params = user;
     HIDP_DATA *data = params->data, *data_end = params->data_end;
     ULONG bit, last, bit_count = caps->bit_size * caps->report_count;
-    char *report_buf = params->report_buf;
+    unsigned char *report_buf;
     BYTE index;
 
     if (!caps->bit_size) return HIDP_STATUS_SUCCESS;
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
 
     if (HID_VALUE_CAPS_IS_ARRAY( caps ))
     {
@@ -851,7 +880,7 @@ static NTSTATUS find_all_data( const struct hid_value_caps *caps, void *user )
             data->DataIndex = caps->data_index_min;
             data->RawValue = 0;
             if ((bit_count + 7) / 8 > sizeof(data->RawValue)) return HIDP_STATUS_BUFFER_TOO_SMALL;
-            copy_bits( (void *)&data->RawValue, (void *)report_buf, bit_count, -caps->start_bit );
+            copy_bits( (void *)&data->RawValue, report_buf, bit_count, -caps->start_bit );
         }
         data++;
     }

@@ -333,13 +333,13 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     USHORT *byte_size = state->byte_size[type];
     USHORT *value_idx = state->value_idx[type];
     USHORT *data_idx = state->data_idx[type];
-    ULONG *bit_size = &state->bit_size[type][state->items.report_id];
+    ULONG start_bit, *bit_size = &state->bit_size[type][state->items.report_id];
     BOOL is_array;
 
     if (!*bit_size) *bit_size = 8;
     *bit_size += state->items.bit_size * state->items.report_count;
     *byte_size = max( *byte_size, (*bit_size + 7) / 8 );
-    state->items.start_bit = *bit_size;
+    start_bit = *bit_size;
 
     if (!state->items.report_count)
     {
@@ -356,11 +356,13 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
 
     state->items.start_index = usages_size;
     if (!(is_array = HID_VALUE_CAPS_IS_ARRAY( &state->items ))) state->items.report_count -= usages_size - 1;
-    else state->items.start_bit -= state->items.report_count * state->items.bit_size;
+    else start_bit -= state->items.report_count * state->items.bit_size;
 
     while (usages_size--)
     {
-        if (!is_array) state->items.start_bit -= state->items.report_count * state->items.bit_size;
+        if (!is_array) start_bit -= state->items.report_count * state->items.bit_size;
+        state->items.start_byte = start_bit / 8;
+        state->items.start_bit = start_bit % 8;
         state->items.usage_page = state->usages_page[usages_size];
         state->items.usage_min = state->usages_min[usages_size];
         state->items.usage_max = state->usages_max[usages_size];
@@ -652,7 +654,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     caps_end = caps + preparsed->value_caps_count[HidP_Input];
     for (; caps != caps_end; ++caps)
     {
-        len = caps->start_bit + caps->bit_size * caps->report_count;
+        len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
         if (!input_len[caps->report_id]) report_count++;
         input_len[caps->report_id] = max(input_len[caps->report_id], len);
     }
@@ -661,7 +663,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     caps_end = caps + preparsed->value_caps_count[HidP_Output];
     for (; caps != caps_end; ++caps)
     {
-        len = caps->start_bit + caps->bit_size * caps->report_count;
+        len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
         if (!input_len[caps->report_id] && !output_len[caps->report_id]) report_count++;
         output_len[caps->report_id] = max(output_len[caps->report_id], len);
     }
@@ -670,7 +672,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     caps_end = caps + preparsed->value_caps_count[HidP_Feature];
     for (; caps != caps_end; ++caps)
     {
-        len = caps->start_bit + caps->bit_size * caps->report_count;
+        len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
         if (!input_len[caps->report_id] && !output_len[caps->report_id] && !feature_len[caps->report_id]) report_count++;
         feature_len[caps->report_id] = max(feature_len[caps->report_id], len);
     }
