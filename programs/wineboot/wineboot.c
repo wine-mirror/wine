@@ -1327,7 +1327,7 @@ static HWND show_wait_window(void)
     return hwnd;
 }
 
-static HANDLE start_rundll32( const WCHAR *inf_path, WORD machine )
+static HANDLE start_rundll32( const WCHAR *inf_path, const WCHAR *install, WORD machine )
 {
     WCHAR app[MAX_PATH + ARRAY_SIZE(L"\\rundll32.exe" )];
     STARTUPINFOW si;
@@ -1345,12 +1345,7 @@ static HANDLE start_rundll32( const WCHAR *inf_path, WORD machine )
     len = lstrlenW(app) + ARRAY_SIZE(L" setupapi,InstallHinfSection DefaultInstall 128 ") + lstrlenW(inf_path);
 
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
-
-    lstrcpyW( buffer, app );
-    lstrcatW( buffer, L" setupapi,InstallHinfSection" );
-    lstrcatW( buffer, machine != IMAGE_FILE_MACHINE_TARGET_HOST ? L" Wow64Install" : L" DefaultInstall" );
-    lstrcatW( buffer, L" 128 " );
-    lstrcatW( buffer, inf_path );
+    swprintf( buffer, len, L"%s setupapi,InstallHinfSection %s 128 %s", app, install, inf_path );
 
     if (CreateProcessW( app, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
         CloseHandle( pi.hThread );
@@ -1480,7 +1475,7 @@ static void update_wineprefix( BOOL force )
         if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                         machines, sizeof(machines), NULL )) machines[0] = 0;
 
-        if ((process = start_rundll32( inf_path, IMAGE_FILE_MACHINE_TARGET_HOST )))
+        if ((process = start_rundll32( inf_path, L"PreInstall", IMAGE_FILE_MACHINE_TARGET_HOST )))
         {
             HWND hwnd = show_wait_window();
             for (;;)
@@ -1490,9 +1485,13 @@ static void update_wineprefix( BOOL force )
                 if (res == WAIT_OBJECT_0)
                 {
                     CloseHandle( process );
-                    if (HIWORD(machines[count]) & 4 /* native machine */) count++;
                     if (!machines[count]) break;
-                    if (!(process = start_rundll32( inf_path, LOWORD(machines[count++]) ))) break;
+                    if (HIWORD(machines[count]) & 4 /* native machine */)
+                        process = start_rundll32( inf_path, L"DefaultInstall", IMAGE_FILE_MACHINE_TARGET_HOST );
+                    else
+                        process = start_rundll32( inf_path, L"Wow64Install", LOWORD(machines[count]) );
+                    count++;
+                    if (!process) break;
                 }
                 else while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
             }

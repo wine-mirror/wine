@@ -1076,15 +1076,6 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
     BOOL ret;
     int i;
 
-    if (flags & SPINST_REGISTRY)
-    {
-        struct registry_callback_info info;
-
-        info.default_root = key_root;
-        info.delete = FALSE;
-        if (!iterate_section_fields( hinf, section, L"WinePreInstall", registry_callback, &info ))
-            return FALSE;
-    }
     if (flags & SPINST_REGSVR)
     {
         if (iterate_section_fields( hinf, section, L"WineFakeDlls", fake_dlls_callback, NULL ))

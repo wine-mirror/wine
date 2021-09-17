@@ -26,6 +26,12 @@
 [version]
 signature="$CHICAGO$"
 
+[PreInstall.ntamd64]
+AddReg=Wow64
+
+[PreInstall.ntarm64]
+AddReg=Wow64
+
 [DefaultInstall]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
@@ -78,7 +84,6 @@ AddReg=\
 [DefaultInstall.ntamd64]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
-WinePreInstall=Wow64
 UpdateInis=SystemIni
 CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
@@ -105,7 +110,6 @@ AddReg=\
 [DefaultInstall.ntarm64]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
-WinePreInstall=Wow64
 UpdateInis=SystemIni
 CopyFiles=ColorFiles,EtcFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
