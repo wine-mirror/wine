@@ -803,6 +803,8 @@ struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface
         ERR("Failed to create client wl_subsurface\n");
         goto err;
     }
+    /* Present contents independently of the parent surface. */
+    wl_subsurface_set_desync(surface->client->wl_subsurface);
 
     if (process_wayland.wp_viewporter)
     {

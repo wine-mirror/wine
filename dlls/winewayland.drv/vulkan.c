@@ -68,6 +68,7 @@ static VkResult (*pvkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, 
 static VkResult (*pvkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
+static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
 static void *vulkan_handle;
 static const struct vulkan_funcs vulkan_funcs;
@@ -633,6 +634,13 @@ static VkResult wayland_vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR 
     return pvkGetSwapchainImagesKHR(device, swapchain, count, images);
 }
 
+static VkResult wayland_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
+{
+    TRACE("%p, %p\n", queue, present_info);
+
+    return pvkQueuePresentKHR(queue, present_info);
+}
+
 static VkSurfaceKHR wayland_wine_get_native_surface(VkSurfaceKHR surface)
 {
     return wine_vk_surface_from_handle(surface)->native;
@@ -665,6 +673,7 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
+    LOAD_FUNCPTR(vkQueuePresentKHR);
 #undef LOAD_FUNCPTR
 #undef LOAD_OPTIONAL_FUNCPTR
 
@@ -694,6 +703,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceSurfaceSupportKHR = wayland_vkGetPhysicalDeviceSurfaceSupportKHR,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
+    .p_vkQueuePresentKHR = wayland_vkQueuePresentKHR,
     .p_wine_get_native_surface = wayland_wine_get_native_surface,
 };
 
