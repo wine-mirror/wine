@@ -172,7 +172,7 @@ static NTSTATUS iohid_device_start(struct unix_device *iface)
 
     num = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDMaxInputReportSizeKey));
     length = CFNumberToDWORD(num);
-    private->buffer = RtlAllocateHeap(GetProcessHeap(), 0, length);
+    private->buffer = malloc(length);
 
     IOHIDDeviceRegisterInputReportCallback(private->device, private->buffer, length, handle_IOHIDDeviceIOHIDReportCallback, iface);
     return STATUS_SUCCESS;

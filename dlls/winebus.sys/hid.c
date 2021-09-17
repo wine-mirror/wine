@@ -23,6 +23,7 @@
 #endif
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -40,13 +41,12 @@ static BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffe
     if (desc->size + size > desc->max_size)
     {
         desc->max_size = max(desc->max_size * 3 / 2, desc->size + size);
-        if (!desc->data) desc->data = RtlAllocateHeap(GetProcessHeap(), 0, desc->max_size);
-        else desc->data = RtlReAllocateHeap(GetProcessHeap(), 0, tmp, desc->max_size);
+        desc->data = realloc(tmp, desc->max_size);
     }
 
     if (!desc->data)
     {
-        RtlFreeHeap(GetProcessHeap(), 0, tmp);
+        free(tmp);
         return FALSE;
     }
 
@@ -93,7 +93,7 @@ BOOL hid_descriptor_end(struct hid_descriptor *desc)
 
 void hid_descriptor_free(struct hid_descriptor *desc)
 {
-    RtlFreeHeap(GetProcessHeap(), 0, desc->data);
+    free(desc->data);
 }
 
 BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,

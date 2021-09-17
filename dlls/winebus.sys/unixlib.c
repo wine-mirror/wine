@@ -23,6 +23,8 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -257,7 +259,7 @@ void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size)
 {
     struct unix_device *iface;
 
-    if (!(iface = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, size))) return NULL;
+    if (!(iface = calloc(1, size))) return NULL;
     iface->vtbl = vtbl;
     iface->ref = 1;
 
@@ -269,7 +271,7 @@ static void unix_device_decref(struct unix_device *iface)
     if (!InterlockedDecrement(&iface->ref))
     {
         iface->vtbl->destroy(iface);
-        RtlFreeHeap(GetProcessHeap(), 0, iface);
+        free(iface);
     }
 }
 
@@ -357,14 +359,14 @@ void bus_event_queue_destroy(struct list *queue)
     LIST_FOR_EACH_ENTRY_SAFE(event, next, queue, struct bus_event, entry)
     {
         bus_event_cleanup(event);
-        RtlFreeHeap(GetProcessHeap(), 0, event);
+        free(event);
     }
 }
 
 BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *device)
 {
     ULONG size = sizeof(struct bus_event);
-    struct bus_event *event = RtlAllocateHeap(GetProcessHeap(), 0, size);
+    struct bus_event *event = malloc(size);
     if (!event) return FALSE;
 
     if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
@@ -379,7 +381,7 @@ BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *devi
 BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *device, struct device_desc *desc)
 {
     ULONG size = sizeof(struct bus_event);
-    struct bus_event *event = RtlAllocateHeap(GetProcessHeap(), 0, size);
+    struct bus_event *event = malloc(size);
     if (!event) return FALSE;
 
     if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
@@ -395,7 +397,7 @@ BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *devi
 BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device, BYTE *report, USHORT length)
 {
     ULONG size = offsetof(struct bus_event, input_report.buffer[length]);
-    struct bus_event *event = RtlAllocateHeap(GetProcessHeap(), 0, size);
+    struct bus_event *event = malloc(size);
     if (!event) return FALSE;
 
     if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
@@ -424,7 +426,7 @@ BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
     else size = offsetof(struct bus_event, input_report.buffer[event->input_report.length]);
 
     memcpy(event, tmp, size);
-    RtlFreeHeap(GetProcessHeap(), 0, tmp);
+    free(tmp);
 
     return TRUE;
 }
