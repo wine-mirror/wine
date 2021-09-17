@@ -79,47 +79,56 @@ static WCHAR *trash_dir;
 static WCHAR *trash_info_dir;
 static ULONG random_seed;
 
+extern void CDECL wine_get_host_version( const char **sysname, const char **release );
+
+static BOOL is_macos(void)
+{
+    const char *sysname;
+
+    wine_get_host_version( &sysname, NULL );
+    return !strcmp( sysname, "Darwin" );
+}
+
 static BOOL WINAPI init_trash_dirs( INIT_ONCE *once, void *param, void **context )
 {
-    static const WCHAR homedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
-    WCHAR var[MAX_PATH], *info = NULL, *files = NULL;
-
-#ifdef __APPLE__
-    static const WCHAR trashW[] = {'\\','.','T','r','a','s','h',0};
-
-    if (!GetEnvironmentVariableW( homedirW, var, MAX_PATH )) return TRUE;
-    files = heap_alloc( (lstrlenW(var) + lstrlenW(trashW) + 1) * sizeof(WCHAR) );
-    lstrcpyW( files, var );
-    lstrcatW( files, trashW );
-    files[1] = '\\';  /* change \??\ to \\?\ */
-#else
-    static const WCHAR dataW[] = {'X','D','G','_','D','A','T','A','_','H','O','M','E',0};
-    static const WCHAR infoW[] = {'\\','i','n','f','o',0};
-    static const WCHAR filesW[] = {'\\','f','i','l','e','s',0};
-    static const WCHAR home_fmtW[] = {'%','s','/','.','l','o','c','a','l','/','s','h','a','r','e','/','T','r','a','s','h',0};
-    static const WCHAR config_fmtW[] = {'\\','?','?','\\','u','n','i','x','%','s','/','T','r','a','s','h',0};
-    const WCHAR *fmt = config_fmtW;
-    WCHAR *p;
+    const WCHAR *home = _wgetenv( L"WINEHOMEDIR" );
+    WCHAR *info = NULL, *files = NULL;
     ULONG len;
 
-    if (!GetEnvironmentVariableW( dataW, var + 8, MAX_PATH - 8 ) || !var[8])
+    if (!home) return TRUE;
+    if (is_macos())
     {
-        if (!GetEnvironmentVariableW( homedirW, var, MAX_PATH )) return TRUE;
-        fmt = home_fmtW;
+        static const WCHAR trashW[] = {'\\','.','T','r','a','s','h',0};
+
+        files = heap_alloc( (lstrlenW(home) + lstrlenW(trashW) + 1) * sizeof(WCHAR) );
+        lstrcpyW( files, home );
+        lstrcatW( files, trashW );
+        files[1] = '\\';  /* change \??\ to \\?\ */
     }
-    len = lstrlenW(var) + lstrlenW(fmt) + lstrlenW(filesW) + 1;
-    files = heap_alloc( len * sizeof(WCHAR) );
-    swprintf( files, len, fmt, var );
-    files[1] = '\\';  /* change \??\ to \\?\ */
-    for (p = files; *p; p++) if (*p == '/') *p = '\\';
-    CreateDirectoryW( files, NULL );
-    info = heap_alloc( len * sizeof(WCHAR) );
-    lstrcpyW( info, files );
-    lstrcatW( files, filesW );
-    lstrcatW( info, infoW );
-    if (!CreateDirectoryW( info, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
-    trash_info_dir = info;
-#endif
+    else
+    {
+        const WCHAR *data_home = _wgetenv( L"XDG_DATA_HOME" );
+        const WCHAR *fmt = L"%s/.local/share/Trash";
+        WCHAR *p;
+
+        if (data_home && data_home[0] == '/')
+        {
+            home = data_home;
+            fmt = L"\\??\\unix%s/Trash";
+        }
+        len = lstrlenW(home) + lstrlenW(fmt) + 7;
+        files = heap_alloc( len * sizeof(WCHAR) );
+        swprintf( files, len, fmt, home );
+        files[1] = '\\';  /* change \??\ to \\?\ */
+        for (p = files; *p; p++) if (*p == '/') *p = '\\';
+        CreateDirectoryW( files, NULL );
+        info = heap_alloc( len * sizeof(WCHAR) );
+        lstrcpyW( info, files );
+        lstrcatW( files, L"\\files" );
+        lstrcatW( info, L"\\info" );
+        if (!CreateDirectoryW( info, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
+        trash_info_dir = info;
+    }
 
     if (!CreateDirectoryW( files, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
     trash_dir = files;
