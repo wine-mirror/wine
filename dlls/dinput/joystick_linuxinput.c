@@ -806,8 +806,11 @@ static void joy_polldev( IDirectInputDevice8W *iface )
 	    break;
 	}
         if (inst_id >= 0)
+        {
             queue_event(iface, inst_id,
                         value, GetCurrentTime(), This->generic.base.dinput->evsequence++);
+            if (This->generic.base.hEvent) SetEvent( This->generic.base.hEvent );
+        }
     }
 }
 

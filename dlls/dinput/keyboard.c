@@ -127,6 +127,7 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
     EnterCriticalSection(&This->base.crit);
     queue_event(iface, DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON,
                 new_diks, GetCurrentTime(), This->base.dinput->evsequence++);
+    if (This->base.hEvent) SetEvent( This->base.hEvent );
     LeaveCriticalSection(&This->base.crit);
 
     return ret;

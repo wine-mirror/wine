@@ -908,6 +908,8 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
 
             enum_value_objects( impl, &filter, DIDFT_ALL, read_device_state_value, &params );
             enum_button_objects( impl, &filter, DIDFT_ALL, check_device_state_button, &params );
+            if (memcmp( &params.old_state, &impl->state, sizeof(impl->state) ) && impl->base.hEvent)
+                SetEvent( impl->base.hEvent );
         }
 
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );

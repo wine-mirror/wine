@@ -986,9 +986,6 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
     int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
     ULONGLONG time_ms = GetTickCount64();
 
-    /* Event is being set regardless of the queue state */
-    if (This->hEvent) SetEvent(This->hEvent);
-
     if (time_ms - notify_ms > 1000)
     {
         PostMessageW(GetDesktopWindow(), WM_WINE_NOTIFY_ACTIVITY, 0, 0);

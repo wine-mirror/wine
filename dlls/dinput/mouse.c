@@ -234,6 +234,7 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     POINT rel, pt;
     DWORD seq;
     int i, wdata = 0;
+    BOOL notify = FALSE;
 
     static const USHORT mouse_button_flags[] =
     {
@@ -277,12 +278,18 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     }
 
     if (rel.x)
+    {
         queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS,
                      pt.x, GetCurrentTime(), seq );
+        notify = TRUE;
+    }
 
     if (rel.y)
+    {
         queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS,
                      pt.y, GetCurrentTime(), seq );
+        notify = TRUE;
+    }
 
     if (rel.x || rel.y)
     {
@@ -296,6 +303,7 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
         This->m_state.lZ += (wdata = (SHORT)ri->data.mouse.usButtonData);
         queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS,
                      wdata, GetCurrentTime(), seq );
+        notify = TRUE;
     }
 
     for (i = 0; i < ARRAY_SIZE(mouse_button_flags); ++i)
@@ -305,9 +313,11 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
             This->m_state.rgbButtons[i / 2] = 0x80 - (i % 2) * 0x80;
             queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE +(i / 2) ) | DIDFT_PSHBUTTON,
                          This->m_state.rgbButtons[i / 2], GetCurrentTime(), seq );
+            notify = TRUE;
         }
     }
 
+    if (notify && This->base.hEvent) SetEvent( This->base.hEvent );
     LeaveCriticalSection( &This->base.crit );
 }
 
@@ -317,6 +327,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
     int wdata = 0, inst_id = -1, ret = 0;
+    BOOL notify = FALSE;
 
     TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);
 
@@ -347,8 +358,11 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
             {
                 /* Already have X, need to queue it */
                 if (inst_id != -1)
+                {
                     queue_event(iface, inst_id,
                                 wdata, GetCurrentTime(), This->base.dinput->evsequence);
+                    notify = TRUE;
+                }
                 inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS;
                 wdata = pt1.y;
             }
@@ -408,8 +422,10 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
         _dump_mouse_state(&This->m_state);
         queue_event(iface, inst_id,
                     wdata, GetCurrentTime(), This->base.dinput->evsequence++);
+        notify = TRUE;
     }
 
+    if (notify && This->base.hEvent) SetEvent( This->base.hEvent );
     LeaveCriticalSection(&This->base.crit);
     return ret;
 }
