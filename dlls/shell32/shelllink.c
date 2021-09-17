@@ -309,15 +309,15 @@ BOOL run_winemenubuilder( const WCHAR *args )
     void *redir;
 
     GetSystemDirectoryW( app, MAX_PATH - ARRAY_SIZE(menubuilder) );
-    strcatW( app, menubuilder );
+    lstrcatW( app, menubuilder );
 
-    len = (strlenW( app ) + strlenW( args ) + 1) * sizeof(WCHAR);
+    len = (lstrlenW( app ) + lstrlenW( args ) + 1) * sizeof(WCHAR);
     buffer = heap_alloc( len );
     if( !buffer )
         return FALSE;
 
-    strcpyW( buffer, app );
-    strcatW( buffer, args );
+    lstrcpyW( buffer, app );
+    lstrcatW( buffer, args );
 
     TRACE("starting %s\n",debugstr_w(buffer));
 
@@ -422,10 +422,10 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *f
         return S_FALSE;
     }
 
-    *filename = CoTaskMemAlloc((strlenW(This->filepath) + 1) * sizeof(WCHAR));
+    *filename = CoTaskMemAlloc((lstrlenW(This->filepath) + 1) * sizeof(WCHAR));
     if (!*filename) return E_OUTOFMEMORY;
 
-    strcpyW(*filename, This->filepath);
+    lstrcpyW(*filename, This->filepath);
 
     return S_OK;
 }
@@ -1946,7 +1946,7 @@ static HRESULT WINAPI IShellLinkW_fnSetIconLocation(IShellLinkW * iface, const W
     heap_free(This->sIcoPath);
     if (path)
     {
-        size_t len = (strlenW(path) + 1) * sizeof(WCHAR);
+        size_t len = (lstrlenW(path) + 1) * sizeof(WCHAR);
         This->sIcoPath = heap_alloc(len);
         if (!This->sIcoPath)
             return E_OUTOFMEMORY;
@@ -2027,7 +2027,7 @@ static LPWSTR ShellLink_GetAdvertisedArg(LPCWSTR str)
     if( !str )
         return NULL;
 
-    p = strchrW( str, ':' );
+    p = wcschr( str, ':' );
     if( !p )
         return NULL;
     len = p - str;
@@ -2059,7 +2059,7 @@ static HRESULT ShellLink_SetAdvertiseInfo(IShellLinkImpl *This, LPCWSTR str)
         str += 2;
 
         /* there must be a colon straight after a guid */
-        p = strchrW( str, ':' );
+        p = wcschr( str, ':' );
         if( !p )
             return E_FAIL;
         len = p - str;
@@ -2083,7 +2083,7 @@ static HRESULT ShellLink_SetAdvertiseInfo(IShellLinkImpl *This, LPCWSTR str)
             return E_FAIL;
 
         /* skip to the next field */
-        str = strchrW( str, ':' );
+        str = wcschr( str, ':' );
         if( !str )
             return E_FAIL;
     }
@@ -2137,7 +2137,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
     }
 
     /* any other quote marks are invalid */
-    if (strchrW(pszFile, '"'))
+    if (wcschr(pszFile, '"'))
     {
         heap_free(unquoted);
         return S_FALSE;
@@ -2443,7 +2443,7 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
     mii.cbSize = sizeof mii;
     mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
     mii.dwTypeData = szOpen;
-    mii.cch = strlenW( mii.dwTypeData );
+    mii.cch = lstrlenW( mii.dwTypeData );
     mii.wID = idCmdFirst + id++;
     mii.fState = MFS_DEFAULT | MFS_ENABLED;
     mii.fType = MFT_STRING;

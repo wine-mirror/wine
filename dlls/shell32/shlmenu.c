@@ -331,9 +331,9 @@ static BOOL FileMenu_AppendItemW(
 
 	if (lpText != FM_SEPARATOR)
 	{
-	  int len = strlenW (lpText);
+	  int len = lstrlenW (lpText);
           myItem = SHAlloc(sizeof(FMITEM) + len*sizeof(WCHAR));
-	  strcpyW (myItem->szItemText, lpText);
+	  lstrcpyW (myItem->szItemText, lpText);
 	  myItem->cchItemText = len;
 	  myItem->iIconIndex = icon;
 	  myItem->hMenu = hMenu;

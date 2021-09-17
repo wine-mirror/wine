@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -121,7 +118,7 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
     WCHAR *dest, *result, *result_end=NULL;
     static const WCHAR dotexeW[] = {'.','e','x','e',0};
 
-    result = heap_alloc(sizeof(WCHAR)*(strlenW(cmdline)+5));
+    result = heap_alloc(sizeof(WCHAR)*(lstrlenW(cmdline)+5));
 
     src = cmdline;
     dest = result;
@@ -139,12 +136,12 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
     else {
         while (*src)
         {
-            if (isspaceW(*src))
+            if (iswspace(*src))
             {
                 *dest = 0;
                 if (INVALID_FILE_ATTRIBUTES != GetFileAttributesW(result))
                     break;
-                strcatW(dest, dotexeW);
+                lstrcatW(dest, dotexeW);
                 if (INVALID_FILE_ATTRIBUTES != GetFileAttributesW(result))
                     break;
             }
@@ -267,7 +264,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER_EXE, filter_exe, 256);
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER_ALL, filter_all, 256);
                     LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_CAPTION, szCaption, MAX_PATH);
-                    snprintfW( filter, MAX_PATH, filterW, filter_exe, 0, 0, filter_all, 0, 0 );
+                    swprintf( filter, MAX_PATH, filterW, filter_exe, 0, 0, filter_all, 0, 0 );
 
                     ZeroMemory(&ofn, sizeof(ofn));
                     ofn.lStructSize = sizeof(OPENFILENAMEW);

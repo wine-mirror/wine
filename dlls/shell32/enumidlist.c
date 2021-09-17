@@ -25,7 +25,6 @@
 #define COBJMACROS
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -77,9 +76,9 @@ BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags
 
     if(!lpszPath || !lpszPath[0]) return FALSE;
 
-    strcpyW(szPath, lpszPath);
+    lstrcpyW(szPath, lpszPath);
     PathAddBackslashW(szPath);
-    strcatW(szPath,stars);
+    lstrcatW(szPath,stars);
 
     hFile = FindFirstFileW(szPath,&stffile);
     if ( hFile != INVALID_HANDLE_VALUE )
@@ -93,7 +92,7 @@ BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags
             {
                 if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
                  dwFlags & SHCONTF_FOLDERS &&
-                 strcmpW(stffile.cFileName, dot) && strcmpW(stffile.cFileName, dotdot))
+                 wcscmp(stffile.cFileName, dot) && wcscmp(stffile.cFileName, dotdot))
                 {
                     pidl = _ILCreateFromFindDataW(&stffile);
                     succeeded = succeeded && AddToEnumList(list, pidl);

@@ -47,7 +47,6 @@
 #include "shell32_main.h"
 #include "shlwapi.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -74,12 +73,12 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 
 	SHGetPathFromIDListW(pidlRoot, wszRootPath);
 	PathAddBackslashW(wszRootPath);
-	rootlen = strlenW(wszRootPath);
+	rootlen = lstrlenW(wszRootPath);
 
 	for (i=0; i<cidl;i++)
 	{
 	  _ILSimpleGetTextW(apidl[i], wszFileName, MAX_PATH);
-	  size += (rootlen + strlenW(wszFileName) + 1) * sizeof(WCHAR);
+	  size += (rootlen + lstrlenW(wszFileName) + 1) * sizeof(WCHAR);
 	}
 
 	size += sizeof(WCHAR);
@@ -93,14 +92,14 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
         pDropFiles->pFiles = offset * sizeof(WCHAR);
         pDropFiles->fWide = TRUE;
 
-	strcpyW(wszFileName, wszRootPath);
+	lstrcpyW(wszFileName, wszRootPath);
 
 	for (i=0; i<cidl;i++)
 	{
 
 	  _ILSimpleGetTextW(apidl[i], wszFileName + rootlen, MAX_PATH - rootlen);
-	  strcpyW(((WCHAR*)pDropFiles)+offset, wszFileName);
-	  offset += strlenW(wszFileName) + 1;
+	  lstrcpyW(((WCHAR*)pDropFiles)+offset, wszFileName);
+	  offset += lstrlenW(wszFileName) + 1;
 	}
 
 	((WCHAR*)pDropFiles)[offset] = 0;
@@ -203,7 +202,7 @@ HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	if (!bSuccess)
 		return 0;
 
-	size = (strlenW(szTemp)+1) * sizeof(WCHAR);
+	size = (lstrlenW(szTemp)+1) * sizeof(WCHAR);
 
 	/* fill the structure */
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);

@@ -74,7 +74,7 @@ static inline int SHELL32_GUIDToStringW (REFGUID guid, LPWSTR str)
      '%','0','2','x','%','0','2','x','-',
      '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',
      '%','0','2','x','%','0','2','x','}',0 };
-    return sprintfW(str, fmtW,
+    return swprintf(str, CHARS_IN_GUID, fmtW,
             guid->Data1, guid->Data2, guid->Data3,
             guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);

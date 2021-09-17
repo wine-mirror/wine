@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -51,7 +49,6 @@
 #include "shfldr.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -290,7 +287,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         else
         {
             if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                strcatW (psfi->szTypeName, szFolder);
+                lstrcatW (psfi->szTypeName, szFolder);
             else 
             {
                 WCHAR sTemp[64];
@@ -307,7 +304,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                     if (sTemp[0])
                     {
                         lstrcpynW (psfi->szTypeName, sTemp, 64);
-                        strcatW (psfi->szTypeName, szSpaceFile);
+                        lstrcatW (psfi->szTypeName, szSpaceFile);
                     }
                     else
                     {
@@ -361,12 +358,12 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
                      HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &psfi->iIcon))
                 {
-                    if (lstrcmpW(p1W, sTemp))
-                        strcpyW(psfi->szDisplayName, sTemp);
+                    if (wcscmp(p1W, sTemp))
+                        lstrcpyW(psfi->szDisplayName, sTemp);
                     else
                     {
                         /* the icon is in the file */
-                        strcpyW(psfi->szDisplayName, szFullPath);
+                        lstrcpyW(psfi->szDisplayName, szFullPath);
                     }
                 }
                 else
@@ -420,8 +417,8 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
                      HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &icon_idx))
                 {
-                    if (!lstrcmpW(p1W,sTemp))            /* icon is in the file */
-                        strcpyW(sTemp, szFullPath);
+                    if (!wcscmp(p1W,sTemp))            /* icon is in the file */
+                        lstrcpyW(sTemp, szFullPath);
 
                     psfi->iIcon = SIC_GetIconIndex(sTemp, icon_idx, 0);
                     if (psfi->iIcon == -1)
@@ -891,12 +888,12 @@ static void add_authors( HWND list )
     MultiByteToWideChar( CP_UTF8, 0, strA, sizeA, strW, sizeW );
     strW[sizeW - 1] = 0;
 
-    start = strpbrkW( strW, eol );  /* skip the header line */
+    start = wcspbrk( strW, eol );  /* skip the header line */
     while (start)
     {
-        while (*start && strchrW( eol, *start )) start++;
+        while (*start && wcschr( eol, *start )) start++;
         if (!*start) break;
-        end = strpbrkW( start, eol );
+        end = wcspbrk( start, eol );
         if (end) *end++ = 0;
         SendMessageW( list, LB_ADDSTRING, -1, (LPARAM)start );
         start = end;
@@ -928,7 +925,7 @@ static INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                                                             "wine_get_build_id");
                 SendDlgItemMessageW(hWnd, stc1, STM_SETICON,(WPARAM)info->hIcon, 0);
                 GetWindowTextW( hWnd, template, ARRAY_SIZE(template) );
-                sprintfW( buffer, template, info->szApp );
+                swprintf( buffer, ARRAY_SIZE(buffer), template, info->szApp );
                 SetWindowTextW( hWnd, buffer );
                 SetWindowTextW( GetDlgItem(hWnd, IDC_ABOUT_STATIC_TEXT1), info->szApp );
                 SetWindowTextW( GetDlgItem(hWnd, IDC_ABOUT_STATIC_TEXT2), info->szOtherStuff );
@@ -937,7 +934,7 @@ static INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                 if (wine_get_build_id)
                 {
                     MultiByteToWideChar( CP_UTF8, 0, wine_get_build_id(), -1, version, ARRAY_SIZE(version) );
-                    sprintfW( buffer, template, version );
+                    swprintf( buffer, ARRAY_SIZE(buffer), template, version );
                     SetWindowTextW( GetDlgItem(hWnd, IDC_ABOUT_STATIC_TEXT3), buffer );
                 }
                 hWndCtl = GetDlgItem(hWnd, IDC_ABOUT_LISTBOX);

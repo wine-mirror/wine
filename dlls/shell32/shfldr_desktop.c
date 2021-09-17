@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -189,7 +186,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
         pidlTemp = _ILCreateMyComputer ();
         szNext = lpszDisplayName;
     }
-    else if (!strncmpW( lpszDisplayName, unix_root, 9 ))
+    else if (!wcsncmp( lpszDisplayName, unix_root, 9 ))
     {
         pidlTemp = _ILCreateGuid(PT_GUID, &CLSID_UnixDosFolder);
         szNext = lpszDisplayName;
@@ -303,7 +300,7 @@ static void add_shell_namespace_extensions(IEnumIDListImpl *list, HKEY root)
         DWORD attributes, value_size = sizeof(attributes);
 
         /* Check if extension is configured as nonenumerable */
-        sprintfW(clsidkeyW, clsidfmtW, guid);
+        swprintf(clsidkeyW, ARRAY_SIZE(clsidkeyW), clsidfmtW, guid);
         RegGetValueW(HKEY_CLASSES_ROOT, clsidkeyW, attributesW, RRF_RT_REG_DWORD | RRF_ZEROONFAILURE,
             NULL, &attributes, &value_size);
 
@@ -603,7 +600,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
     {
         if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
             (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING))
-            strcpyW(pszPath, This->sPathTarget);
+            lstrcpyW(pszPath, This->sPathTarget);
         else
             HCR_GetClassNameW(&CLSID_ShellDesktop, pszPath, MAX_PATH);
     }

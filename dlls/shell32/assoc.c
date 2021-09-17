@@ -30,7 +30,6 @@
 #include "shobjidl.h"
 #include "shell32_main.h"
 #include "ver.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -395,7 +394,7 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   if (pszCommand[0] == '"')
   {
     pszStart = pszCommand + 1;
-    pszEnd = strchrW(pszStart, '"');
+    pszEnd = wcschr(pszStart, '"');
     if (pszEnd)
       *pszEnd = 0;
     *len = SearchPathW(NULL, pszStart, NULL, pathlen, path, NULL);
@@ -403,7 +402,7 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   else
   {
     pszStart = pszCommand;
-    for (pszEnd = pszStart; (pszEnd = strchrW(pszEnd, ' ')); pszEnd++)
+    for (pszEnd = pszStart; (pszEnd = wcschr(pszEnd, ' ')); pszEnd++)
     {
       WCHAR c = *pszEnd;
       *pszEnd = 0;
@@ -529,7 +528,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       hr = ASSOC_GetCommand(This, pszExtra, &command);
       if (SUCCEEDED(hr))
       {
-        hr = ASSOC_ReturnString(flags, pszOut, pcchOut, command, strlenW(command) + 1);
+        hr = ASSOC_ReturnString(flags, pszOut, pcchOut, command, lstrlenW(command) + 1);
         heap_free(command);
       }
       return hr;
@@ -553,7 +552,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
           /* hKeyProgID is NULL or there is no default value, so fail */
           return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
       }
-      hr = ASSOC_ReturnString(flags, pszOut, pcchOut, docName, strlenW(docName) + 1);
+      hr = ASSOC_ReturnString(flags, pszOut, pcchOut, docName, lstrlenW(docName) + 1);
       heap_free(docName);
       return hr;
     }
@@ -593,12 +592,12 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
         DWORD *langCodeDesc = (DWORD *)bufW;
         for (i = 0; i < flen / sizeof(DWORD); i++)
         {
-          sprintfW(fileDescW, fileDescFmtW, LOWORD(langCodeDesc[i]),
+          swprintf(fileDescW, ARRAY_SIZE(fileDescW), fileDescFmtW, LOWORD(langCodeDesc[i]),
                    HIWORD(langCodeDesc[i]));
           if (VerQueryValueW(verinfoW, fileDescW, (LPVOID *)&bufW, &flen))
           {
-            /* Does strlenW(bufW) == 0 mean we use the filename? */
-            len = strlenW(bufW) + 1;
+            /* Does lstrlenW(bufW) == 0 mean we use the filename? */
+            len = lstrlenW(bufW) + 1;
             TRACE("found FileDescription: %s\n", debugstr_w(bufW));
             hr = ASSOC_ReturnString(flags, pszOut, pcchOut, bufW, len);
             heap_free(verinfoW);
@@ -610,7 +609,7 @@ get_friendly_name_fail:
       PathRemoveExtensionW(path);
       PathStripPathW(path);
       TRACE("using filename: %s\n", debugstr_w(path));
-      hr = ASSOC_ReturnString(flags, pszOut, pcchOut, path, strlenW(path) + 1);
+      hr = ASSOC_ReturnString(flags, pszOut, pcchOut, path, lstrlenW(path) + 1);
       heap_free(verinfoW);
       return hr;
     }
@@ -631,7 +630,7 @@ get_friendly_name_fail:
       {
         ret = RegGetValueW(This->hkeySource, NULL, Content_TypeW, RRF_RT_REG_SZ, NULL, contentType, &size);
         if (ret == ERROR_SUCCESS)
-          hr = ASSOC_ReturnString(flags, pszOut, pcchOut, contentType, strlenW(contentType) + 1);
+          hr = ASSOC_ReturnString(flags, pszOut, pcchOut, contentType, lstrlenW(contentType) + 1);
         else
           hr = HRESULT_FROM_WIN32(ret);
         heap_free(contentType);
@@ -657,7 +656,7 @@ get_friendly_name_fail:
         {
           ret = RegGetValueW(This->hkeyProgID, DefaultIconW, NULL, RRF_RT_REG_SZ, NULL, icon, &size);
           if (ret == ERROR_SUCCESS)
-            hr = ASSOC_ReturnString(flags, pszOut, pcchOut, icon, strlenW(icon) + 1);
+            hr = ASSOC_ReturnString(flags, pszOut, pcchOut, icon, lstrlenW(icon) + 1);
           else
             hr = HRESULT_FROM_WIN32(ret);
           heap_free(icon);
@@ -667,7 +666,7 @@ get_friendly_name_fail:
       } else {
           /* there is no DefaultIcon subkey or hkeyProgID is NULL, so return the default document icon */
           if (This->hkeyProgID == NULL)
-              hr = ASSOC_ReturnString(flags, pszOut, pcchOut, documentIcon, strlenW(documentIcon) + 1);
+              hr = ASSOC_ReturnString(flags, pszOut, pcchOut, documentIcon, lstrlenW(documentIcon) + 1);
           else
               return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
       }
@@ -685,8 +684,8 @@ get_friendly_name_fail:
         hr = CLSIDFromString(pszExtra, &clsid);
         if (FAILED(hr)) return hr;
 
-        strcpyW(keypath, shellexW);
-        strcatW(keypath, pszExtra);
+        lstrcpyW(keypath, shellexW);
+        lstrcatW(keypath, pszExtra);
         ret = RegOpenKeyExW(This->hkeySource, keypath, 0, KEY_READ, &hkey);
         if (ret) return HRESULT_FROM_WIN32(ret);
 

@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -346,16 +343,16 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
             lstrcpynW( szPath + len, lpszDisplayName + 1, MAX_PATH - len );
             for (p = szPath + len; *p; p++) if (*p == '/') *p = '\\';
         }
-        else if (!strncmpiW( lpszDisplayName, unix_root, 9 ))
+        else if (!wcsnicmp( lpszDisplayName, unix_root, 9 ))
         {
             lstrcpynW( szPath + len, lpszDisplayName + 9, MAX_PATH - len );
-            if ((p = strchrW( szPath + len, '\\' )))
+            if ((p = wcschr( szPath + len, '\\' )))
                 while (*p == '\\') *p++ = 0;
             szNext = p;
         }
 
         /* Special case for the root folder. */
-        if (!strcmpiW( szPath, unix_root ))
+        if (!wcsicmp( szPath, unix_root ))
         {
             *ppidl = SHAlloc(sizeof(USHORT));
             if (!*ppidl) return E_FAIL;
@@ -371,7 +368,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
             if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) && fsbd)
             {
                 find_data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-                strcpyW( find_data.cFileName, szPath + len );
+                lstrcpyW( find_data.cFileName, szPath + len );
                 pidlTemp = _ILCreateFromFindDataW( &find_data );
             }
             if (pidlTemp) /* try to analyse the next element */
@@ -384,7 +381,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
             {
                 if (FAILED( IFileSystemBindData_GetFindData( fsbd, &find_data )))
                     find_data.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-                strcpyW( find_data.cFileName, szPath + len );
+                lstrcpyW( find_data.cFileName, szPath + len );
                 pidlTemp = _ILCreateFromFindDataW( &find_data );
             }
             else hr = _ILCreateFromPathW(szPath, &pidlTemp);
@@ -623,7 +620,7 @@ static HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
 
     MultiByteToWideChar(CP_ACP, 0, extensionA, -1, extensionW, 20);
 
-    sprintfW(buf, formatW, extensionW, riid->Data1, riid->Data2, riid->Data3,
+    swprintf(buf, ARRAY_SIZE(buf), formatW, extensionW, riid->Data1, riid->Data2, riid->Data3,
             riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
             riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
@@ -832,7 +829,7 @@ static void get_display_name( WCHAR dest[MAX_PATH], const WCHAR *path, LPCITEMID
     lstrcpynW( dest, path, MAX_PATH );
 
     /* try to get a better path than the \\?\unix one */
-    if (!strncmpiW( path, unix_root, 9 ))
+    if (!wcsnicmp( path, unix_root, 9 ))
     {
         if (!is_unix)
         {
@@ -964,7 +961,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
     /* pidl has to contain a single non-empty SHITEMID */
     if (_ILIsDesktop(pidl) || !_ILIsPidlSimple(pidl) || !_ILGetTextPointer(pidl)) return E_INVALIDARG;
 
-    if (strpbrkW( lpName, invalid_chars )) return HRESULT_FROM_WIN32(ERROR_CANCELLED);
+    if (wcspbrk( lpName, invalid_chars )) return HRESULT_FROM_WIN32(ERROR_CANCELLED);
 
     /* build source path */
     lstrcpynW(szSrc, This->sPathTarget, MAX_PATH);
@@ -979,7 +976,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
     if(!(dwFlags & SHGDN_FORPARSING) && SHELL_FS_HideExtension(szSrc)) {
         WCHAR *ext = PathFindExtensionW(szSrc);
         if(*ext != '\0') {
-            INT len = strlenW(szDest);
+            INT len = lstrlenW(szDest);
             lstrcpynW(szDest + len, ext, MAX_PATH - len);
         }
     }
@@ -1168,7 +1165,7 @@ next:
          dwFetched) {
             _ILSimpleGetTextW (pidl, wszText, MAX_PATH);
             if (0 == lstrcmpiW (wszText, pwszName)) {
-                snprintfW (pwszName, uLen, wszFormat, wszNewFolder, i++);
+                swprintf (pwszName, uLen, wszFormat, wszNewFolder, i++);
                 if (i > 99) {
                     hr = E_FAIL;
                     break;
@@ -1242,7 +1239,7 @@ ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCWSTR pwszName,
         /* Cannot Create folder because of permissions */
         LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_DENIED, wszTempText, ARRAY_SIZE(wszTempText));
         LoadStringW (shell32_hInstance, IDS_CREATEFOLDER_CAPTION, wszCaption, ARRAY_SIZE(wszCaption));
-        sprintfW (wszText, wszTempText, wszNewDir);
+        swprintf (wszText, ARRAY_SIZE(wszText), wszTempText, wszNewDir);
         MessageBoxW (hwnd, wszText, wszCaption, MB_OK | MB_ICONEXCLAMATION);
     }
 
@@ -1500,12 +1497,12 @@ IFSFldr_PersistFolder3_Initialize (IPersistFolder3 * iface, LPCITEMIDLIST pidl)
         else
         {
             static const WCHAR unix_root[] = {'\\','\\','?','\\','u','n','i','x','\\',0};
-            strcpyW( wszTemp, unix_root );
+            lstrcpyW( wszTemp, unix_root );
         }
     }
     else SHGetPathFromIDListW( pidl, wszTemp );
 
-    if ((len = strlenW(wszTemp)))
+    if ((len = lstrlenW(wszTemp)))
     {
         This->sPathTarget = SHAlloc((len + 1) * sizeof(WCHAR));
         if (!This->sPathTarget) return E_OUTOFMEMORY;
@@ -1581,14 +1578,14 @@ IFSFldr_PersistFolder3_InitializeEx (IPersistFolder3 * iface,
         if (ppfti->csidl != -1) {
             if (SHGetSpecialFolderPathW (0, wszTemp, ppfti->csidl,
              ppfti->csidl & CSIDL_FLAG_CREATE)) {
-                int len = strlenW(wszTemp);
+                int len = lstrlenW(wszTemp);
                 This->sPathTarget = SHAlloc((len + 1) * sizeof(WCHAR));
                 if (!This->sPathTarget)
                     return E_OUTOFMEMORY;
                 memcpy(This->sPathTarget, wszTemp, (len + 1) * sizeof(WCHAR));
             }
         } else if (ppfti->szTargetParsingName[0]) {
-            int len = strlenW(ppfti->szTargetParsingName);
+            int len = lstrlenW(ppfti->szTargetParsingName);
             This->sPathTarget = SHAlloc((len + 1) * sizeof(WCHAR));
             if (!This->sPathTarget)
                 return E_OUTOFMEMORY;
@@ -1596,7 +1593,7 @@ IFSFldr_PersistFolder3_InitializeEx (IPersistFolder3 * iface,
                    (len + 1) * sizeof(WCHAR));
         } else if (ppfti->pidlTargetFolder) {
             if (SHGetPathFromIDListW(ppfti->pidlTargetFolder, wszTemp)) {
-                int len = strlenW(wszTemp);
+                int len = lstrlenW(wszTemp);
                 This->sPathTarget = SHAlloc((len + 1) * sizeof(WCHAR));
                 if (!This->sPathTarget)
                     return E_OUTOFMEMORY;

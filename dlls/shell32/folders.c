@@ -17,9 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -148,7 +145,7 @@ static HRESULT getIconLocationForFolder(IExtractIconWImpl *This, UINT uFlags, LP
         WCHAR wszIconIndex[10];
         SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, iconIndex,
             wszIconIndex, 10);
-        *piIndex = atoiW(wszIconIndex);
+        *piIndex = wcstol(wszIconIndex, NULL, 10);
     }
     else if (SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, clsid,
         wszCLSIDValue, CHARS_IN_GUID) &&
@@ -218,7 +215,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
        '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0 };
 	  WCHAR xriid[50];
 
-	  sprintfW(xriid, fmt,
+	  swprintf(xriid, ARRAY_SIZE(xriid), fmt,
 	          riid->Data1, riid->Data2, riid->Data3,
 	          riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
 	          riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);

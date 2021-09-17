@@ -19,7 +19,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "config.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -2012,7 +2011,7 @@ BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
     if (GetFileAttributesW(pszLinkTo) == INVALID_FILE_ATTRIBUTES)
         return FALSE;
 
-    basename = strrchrW(pszLinkTo, '\\');
+    basename = wcsrchr(pszLinkTo, '\\');
     if (basename)
         basename = basename+1;
     else
@@ -2022,13 +2021,13 @@ BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
     if (!PathAddBackslashW(pszName))
         return FALSE;
 
-    dst_basename = pszName + strlenW(pszName);
+    dst_basename = pszName + lstrlenW(pszName);
 
-    snprintfW(dst_basename, pszName + MAX_PATH - dst_basename, lnkformat, basename);
+    swprintf(dst_basename, pszName + MAX_PATH - dst_basename, lnkformat, basename);
 
     while (GetFileAttributesW(pszName) != INVALID_FILE_ATTRIBUTES)
     {
-        snprintfW(dst_basename, pszName + MAX_PATH - dst_basename, lnkformatnum, basename, i);
+        swprintf(dst_basename, pszName + MAX_PATH - dst_basename, lnkformatnum, basename, i);
         i++;
     }
 

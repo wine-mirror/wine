@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -155,12 +153,8 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
  */
 HRESULT WINAPI SHCreateSessionKey(REGSAM access, HKEY *hkey)
 {
-    static const WCHAR session_format[] = {
-                'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                'E','x','p','l','o','r','e','r','\\','S','e','s','s','i','o','n','I','n','f','o','\\','%','u',0};
     DWORD session, ret;
-    WCHAR str[ARRAY_SIZE(session_format) + 16];
+    WCHAR str[ARRAY_SIZE(L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SessionInfo\\") + 16];
 
     if (hkey)
         *hkey = NULL;
@@ -171,7 +165,8 @@ HRESULT WINAPI SHCreateSessionKey(REGSAM access, HKEY *hkey)
     if (!ProcessIdToSessionId(GetCurrentProcessId(), &session))
         return E_INVALIDARG;
 
-    sprintfW(str, session_format, session);
+    swprintf(str, ARRAY_SIZE(str),
+             L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SessionInfo\\%u", session);
     TRACE("using session key %s\n", debugstr_w(str));
 
     ret = RegCreateKeyExW(HKEY_CURRENT_USER, str, 0, NULL, REG_OPTION_VOLATILE, access, NULL, hkey, NULL);

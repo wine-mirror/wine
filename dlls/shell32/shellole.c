@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +40,6 @@
 #include "winerror.h"
 
 #include "undocshell.h"
-#include "wine/unicode.h"
 #include "shell32_main.h"
 
 #include "wine/debug.h"
@@ -668,7 +665,7 @@ UINT WINAPI DragQueryFileW(
 	  }
 	}
 
-	i = strlenW(lpwDrop);
+	i = lstrlenW(lpwDrop);
 	if ( !lpszwFile) goto end;   /* needed buffer size */
 	lstrcpynW (lpszwFile, lpwDrop, lLength);
 end:

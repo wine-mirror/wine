@@ -31,7 +31,6 @@
 #include "winreg.h"
 #include "wine/debug.h"
 #include "cpl.h"
-#include "wine/unicode.h"
 #include "commctrl.h"
 
 #define NO_SHLWAPI_REG
@@ -680,7 +679,7 @@ static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 
     /* first add .cpl files in the system directory */
     GetSystemDirectoryW( buffer, MAX_PATH );
-    p = buffer + strlenW(buffer);
+    p = buffer + lstrlenW(buffer);
     *p++ = '\\';
     lstrcpyW(p, wszAllCpl);
 
@@ -732,7 +731,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
             *end = '\0';
             if (beg) {
                 if (*beg == '@') {
-                    sp = atoiW(beg + 1);
+                    sp = wcstol(beg + 1, NULL, 10);
                 } else if (*beg == '\0') {
                     sp = -1;
                 } else {
@@ -780,7 +779,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
 
     /* Now check if there had been a numerical value in the extra params */
     if ((extraPmts) && (*extraPmts == '@') && (sp == -1)) {
-        sp = atoiW(extraPmts + 1);
+        sp = wcstol(extraPmts + 1, NULL, 10);
     }
 
     TRACE("cmd %s, extra %s, sp %d\n", debugstr_w(buffer), debugstr_w(extraPmts), sp);

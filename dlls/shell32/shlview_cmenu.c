@@ -389,7 +389,7 @@ static BOOL get_program_description(WCHAR *path, WCHAR *buffer, DWORD size)
 
     for (i = 0; i < llen / sizeof(DWORD); i++)
     {
-        sprintfW(fileDescW, fileDescFmtW, LOWORD(lang[i]), HIWORD(lang[i]));
+        swprintf(fileDescW, ARRAY_SIZE(fileDescW), fileDescFmtW, LOWORD(lang[i]), HIWORD(lang[i]));
         if (VerQueryValueW(data, fileDescW, (LPVOID *)&desc, &dlen))
         {
             if (dlen > size - 1) dlen = size - 1;
@@ -476,7 +476,7 @@ static void init_file_properties_dlg(HWND hwndDlg, struct file_properties_info *
         SetDlgItemTextW(hwndDlg, IDC_FPROP_PROG_NAME, buffer2);
     else
     {
-        WCHAR *p = strrchrW(buffer, '\\');
+        WCHAR *p = wcsrchr(buffer, '\\');
         SetDlgItemTextW(hwndDlg, IDC_FPROP_PROG_NAME, p ? ++p : buffer);
     }
 }
@@ -538,22 +538,22 @@ static INT_PTR CALLBACK file_properties_proc(HWND hwndDlg, UINT uMsg, WPARAM wPa
 
                     /* Update filename if it was changed */
                     if (GetDlgItemTextW(hwndDlg, IDC_FPROP_PATH, newname, ARRAY_SIZE(newname)) &&
-                        strcmpW(props->filename, newname) &&
-                        strlenW(props->dir) + strlenW(newname) + 2 < ARRAY_SIZE(newpath))
+                        wcscmp(props->filename, newname) &&
+                        lstrlenW(props->dir) + lstrlenW(newname) + 2 < ARRAY_SIZE(newpath))
                     {
                         static const WCHAR slash[] = {'\\', 0};
-                        strcpyW(newpath, props->dir);
-                        strcatW(newpath, slash);
-                        strcatW(newpath, newname);
+                        lstrcpyW(newpath, props->dir);
+                        lstrcatW(newpath, slash);
+                        lstrcatW(newpath, newname);
 
                         if (!MoveFileW(props->path, newpath))
                             ERR("failed to move file %s to %s\n", debugstr_w(props->path), debugstr_w(newpath));
                         else
                         {
                             WCHAR *p;
-                            strcpyW(props->path, newpath);
-                            strcpyW(props->dir, newpath);
-                            if ((p = strrchrW(props->dir, '\\')))
+                            lstrcpyW(props->path, newpath);
+                            lstrcpyW(props->dir, newpath);
+                            if ((p = wcsrchr(props->dir, '\\')))
                             {
                                 *p = 0;
                                 props->filename = p + 1;
@@ -619,8 +619,8 @@ static void init_file_properties_pages(IDataObject *dataobject, LPFNADDPROPSHEET
     if (props->attrib == INVALID_FILE_ATTRIBUTES)
         goto error;
 
-    strcpyW(props->dir, props->path);
-    if ((p = strrchrW(props->dir, '\\')))
+    lstrcpyW(props->dir, props->path);
+    if ((p = wcsrchr(props->dir, '\\')))
     {
         *p = 0;
         props->filename = p + 1;

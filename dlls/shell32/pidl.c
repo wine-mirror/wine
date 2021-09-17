@@ -22,9 +22,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -1783,7 +1780,7 @@ LPITEMIDLIST _ILCreateDrive(LPCWSTR lpszNew)
         if (pszDest)
         {
             strcpy(pszDest, "x:\\");
-            pszDest[0]=toupperW(lpszNew[0]);
+            pszDest[0]=towupper(lpszNew[0]);
             TRACE("-- create Drive: %s\n", debugstr_a(pszDest));
         }
     }

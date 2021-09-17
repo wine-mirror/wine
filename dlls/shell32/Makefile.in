@@ -6,6 +6,8 @@ DELAYIMPORTS = ole32 oleaut32 shdocvw version comctl32 gdiplus
 # AUTHORS file is in the top-level directory
 EXTRAINCL = -I$(top_srcdir)
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	appbar.c \
 	assoc.c \

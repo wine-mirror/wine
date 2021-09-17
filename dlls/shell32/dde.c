@@ -32,7 +32,6 @@
 #include "shell32_main.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -124,7 +123,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
             do
             {
                 if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-                    lstrcmpW(finddata.cFileName, dotW) && lstrcmpW(finddata.cFileName, dotdotW))
+                    wcscmp(finddata.cFileName, dotW) && wcscmp(finddata.cFileName, dotdotW))
                 {
                     len += lstrlenW(finddata.cFileName) + 2;
                     groups_data = heap_realloc(groups_data, len * sizeof(WCHAR));
@@ -173,7 +172,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
     static WCHAR *last_group;
 
-    if (!strcmpiW(command, create_groupW))
+    if (!wcsicmp(command, create_groupW))
     {
         WCHAR *path;
 
@@ -187,7 +186,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         heap_free(last_group);
         last_group = path;
     }
-    else if (!strcmpiW(command, delete_groupW))
+    else if (!wcsicmp(command, delete_groupW))
     {
         WCHAR *path, *path2;
         SHFILEOPSTRUCTW shfos = {0};
@@ -197,9 +196,9 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         path = get_programs_path(argv[0]);
 
-        path2 = heap_alloc((strlenW(path) + 2) * sizeof(*path));
-        strcpyW(path2, path);
-        path2[strlenW(path) + 1] = 0;
+        path2 = heap_alloc((lstrlenW(path) + 2) * sizeof(*path));
+        lstrcpyW(path2, path);
+        path2[lstrlenW(path) + 1] = 0;
 
         shfos.wFunc = FO_DELETE;
         shfos.pFrom = path2;
@@ -212,7 +211,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (ret || shfos.fAnyOperationsAborted) return DDE_FNOTPROCESSED;
     }
-    else if (!strcmpiW(command, show_groupW))
+    else if (!wcsicmp(command, show_groupW))
     {
         WCHAR *path;
 
@@ -227,7 +226,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         heap_free(last_group);
         last_group = path;
     }
-    else if (!strcmpiW(command, add_itemW))
+    else if (!wcsicmp(command, add_itemW))
     {
         WCHAR *path, *name;
         DWORD len;
@@ -253,13 +252,13 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         heap_free(path);
 
         if (argc >= 2) IShellLinkW_SetDescription(link, argv[1]);
-        if (argc >= 4) IShellLinkW_SetIconLocation(link, argv[2], atoiW(argv[3]));
+        if (argc >= 4) IShellLinkW_SetIconLocation(link, argv[2], wcstol(argv[3], NULL, 10));
         if (argc >= 7) IShellLinkW_SetWorkingDirectory(link, argv[6]);
-        if (argc >= 8) IShellLinkW_SetHotkey(link, atoiW(argv[7]));
+        if (argc >= 8) IShellLinkW_SetHotkey(link, wcstol(argv[7], NULL, 10));
         if (argc >= 9)
         {
-            if (atoiW(argv[8]) == 0) IShellLinkW_SetShowCmd(link, SW_SHOWMINNOACTIVE);
-            else if (atoiW(argv[8]) == 1) IShellLinkW_SetShowCmd(link, SW_SHOWNORMAL);
+            if (wcstol(argv[8], NULL, 10) == 0) IShellLinkW_SetShowCmd(link, SW_SHOWMINNOACTIVE);
+            else if (wcstol(argv[8], NULL, 10) == 1) IShellLinkW_SetShowCmd(link, SW_SHOWNORMAL);
         }
 
         hres = IShellLinkW_QueryInterface(link, &IID_IPersistFile, (void **)&file);
@@ -270,7 +269,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         }
         if (argc >= 2)
         {
-            name = heap_alloc((strlenW(last_group) + 1 + strlenW(argv[1]) + 5) * sizeof(*name));
+            name = heap_alloc((lstrlenW(last_group) + 1 + lstrlenW(argv[1]) + 5) * sizeof(*name));
             lstrcpyW(name, last_group);
             lstrcatW(name, slashW);
             lstrcatW(name, argv[1]);
@@ -280,10 +279,10 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         {
             const WCHAR *filename = PathFindFileNameW(argv[0]);
             int len = PathFindExtensionW(filename) - filename;
-            name = heap_alloc((strlenW(last_group) + 1 + len + 5) * sizeof(*name));
+            name = heap_alloc((lstrlenW(last_group) + 1 + len + 5) * sizeof(*name));
             lstrcpyW(name, last_group);
             lstrcatW(name, slashW);
-            lstrcpynW(name+strlenW(name), filename, len + 1);
+            lstrcpynW(name+lstrlenW(name), filename, len + 1);
             lstrcatW(name, dotlnkW);
         }
         hres = IPersistFile_Save(file, name, TRUE);
@@ -294,14 +293,14 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (FAILED(hres)) return DDE_FNOTPROCESSED;
     }
-    else if (!strcmpiW(command, delete_itemW) || !strcmpiW(command, replace_itemW))
+    else if (!wcsicmp(command, delete_itemW) || !wcsicmp(command, replace_itemW))
     {
         WCHAR *name;
         BOOL ret;
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        name = heap_alloc((strlenW(last_group) + 1 + strlenW(argv[0]) + 5) * sizeof(*name));
+        name = heap_alloc((lstrlenW(last_group) + 1 + lstrlenW(argv[0]) + 5) * sizeof(*name));
         lstrcpyW(name, last_group);
         lstrcatW(name, slashW);
         lstrcatW(name, argv[0]);
@@ -313,7 +312,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (!ret) return DDE_FNOTPROCESSED;
     }
-    else if (!strcmpiW(command, exit_progmanW))
+    else if (!wcsicmp(command, exit_progmanW))
     {
         /* do nothing */
     }
@@ -345,7 +344,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
 
         command++;
         while (*command == ' ') command++;
-        if (!(p = strpbrkW(command, opcode_end))) goto error;
+        if (!(p = wcspbrk(command, opcode_end))) goto error;
 
         opcode = strndupW(command, p - command);
 
@@ -361,11 +360,11 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
                 if (*command == '"')
                 {
                     command++;
-                    if (!(p = strchrW(command, '"'))) goto error;
+                    if (!(p = wcschr(command, '"'))) goto error;
                 }
                 else
                 {
-                    if (!(p = strpbrkW(command, param_end))) goto error;
+                    if (!(p = wcspbrk(command, param_end))) goto error;
                     while (p[-1] == ' ') p--;
                 }
 

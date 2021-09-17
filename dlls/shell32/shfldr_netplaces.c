@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -40,7 +37,6 @@
 #include "shell32_main.h"
 #include "shresdef.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "debughlp.h"
 #include "shfldr.h"
 
@@ -196,8 +192,8 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnParseDisplayName (IShellFolder2 * ifac
     *ppidl = NULL;
 
     szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
-    len = strlenW(szElement);
-    if (len == ARRAY_SIZE(wszEntireNetwork) && !strncmpiW(szElement, wszEntireNetwork, ARRAY_SIZE(wszEntireNetwork)))
+    len = lstrlenW(szElement);
+    if (len == ARRAY_SIZE(wszEntireNetwork) && !wcsnicmp(szElement, wszEntireNetwork, ARRAY_SIZE(wszEntireNetwork)))
     {
         pidlTemp = _ILCreateEntireNetwork();
         if (pidlTemp)

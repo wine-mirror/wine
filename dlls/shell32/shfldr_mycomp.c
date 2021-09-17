@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -699,10 +696,10 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
 
                 GetVolumeInformationW (pszPath, wszDrive, ARRAY_SIZE(wszDrive) - 5, NULL, NULL,
                         NULL, NULL, 0);
-                strcatW (wszDrive, wszOpenBracket);
-                lstrcpynW (wszDrive + strlenW(wszDrive), pszPath, 3);
-                strcatW (wszDrive, wszCloseBracket);
-                strcpyW (pszPath, wszDrive);
+                lstrcatW (wszDrive, wszOpenBracket);
+                lstrcpynW (wszDrive + lstrlenW(wszDrive), pszPath, 3);
+                lstrcatW (wszDrive, wszCloseBracket);
+                lstrcpyW (pszPath, wszDrive);
             }
         }
         else 

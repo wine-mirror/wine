@@ -18,15 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #define COBJMACROS
 
@@ -103,7 +97,7 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 	    (e1->dwFlags & GIL_FORSHORTCUT) != (e2->dwFlags & GIL_FORSHORTCUT)) 
 	  return 1;
 
-	if (strcmpiW(e1->sSourceFile,e2->sSourceFile))
+	if (wcsicmp(e1->sSourceFile,e2->sSourceFile))
 	  return 1;
 
 	return 0;
@@ -129,7 +123,7 @@ HRESULT SIC_get_location( int list_idx, WCHAR *file, DWORD *size, int *res_idx )
     if (dpa_idx != -1)
     {
         found = DPA_GetPtr( sic_hdpa, dpa_idx );
-        needed = (strlenW( found->sSourceFile ) + 1) * sizeof(WCHAR);
+        needed = (lstrlenW( found->sSourceFile ) + 1) * sizeof(WCHAR);
         if (needed <= *size)
         {
             memcpy( file, found->sSourceFile, needed );
@@ -311,8 +305,8 @@ static INT SIC_IconAppend (const WCHAR *sourcefile, INT src_index, HICON *hicons
     entry = SHAlloc(sizeof(*entry));
 
     GetFullPathNameW(sourcefile, MAX_PATH, path, NULL);
-    entry->sSourceFile = heap_alloc( (strlenW(path)+1)*sizeof(WCHAR) );
-    strcpyW( entry->sSourceFile, path );
+    entry->sSourceFile = heap_alloc( (lstrlenW(path)+1)*sizeof(WCHAR) );
+    lstrcpyW( entry->sSourceFile, path );
 
     entry->dwSourceIndex = src_index;
     entry->dwFlags = flags;
@@ -422,7 +416,7 @@ static int get_shell_icon_size(void)
         if (!RegQueryValueExW( key, ShellIconSize, NULL, &type, (BYTE *)buf, &size ) && type == REG_SZ)
         {
             if (size == sizeof(buf)) buf[size / sizeof(WCHAR) - 1] = 0;
-            value = atoiW( buf );
+            value = wcstol( buf, NULL, 10 );
         }
         RegCloseKey( key );
     }
@@ -579,7 +573,7 @@ INT SIC_GetIconIndex (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags )
  */
 static int SIC_LoadOverlayIcon(int icon_idx)
 {
-	WCHAR buffer[1024], wszIdx[8];
+	WCHAR buffer[1024], wszIdx[12];
 	HKEY hKeyShellIcons;
 	LPCWSTR iconPath;
 	int iconIdx;
@@ -598,12 +592,12 @@ static int SIC_LoadOverlayIcon(int icon_idx)
 	{
 	    DWORD count = sizeof(buffer);
 
-	    sprintfW(wszIdx, wszNumFmt, icon_idx);
+	    swprintf(wszIdx, ARRAY_SIZE(wszIdx), wszNumFmt, icon_idx);
 
 	    /* read icon path and index */
 	    if (RegQueryValueExW(hKeyShellIcons, wszIdx, NULL, NULL, (LPBYTE)buffer, &count) == ERROR_SUCCESS)
 	    {
-		LPWSTR p = strchrW(buffer, ',');
+		LPWSTR p = wcschr(buffer, ',');
 
 		if (!p)
 		{
@@ -613,7 +607,7 @@ static int SIC_LoadOverlayIcon(int icon_idx)
 		}
 		*p++ = 0;
 		iconPath = buffer;
-		iconIdx = atoiW(p);
+		iconIdx = wcstol(p, NULL, 10);
 	    }
 
 	    RegCloseKey(hKeyShellIcons);

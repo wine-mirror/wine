@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #define COBJMACROS
 #define NONAMELESSUNION
 
@@ -30,6 +28,7 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "shlwapi.h"
@@ -89,9 +88,9 @@ static BOOL WINAPI init_trash_dirs( INIT_ONCE *once, void *param, void **context
     static const WCHAR trashW[] = {'\\','.','T','r','a','s','h',0};
 
     if (!GetEnvironmentVariableW( homedirW, var, MAX_PATH )) return TRUE;
-    files = heap_alloc( (strlenW(var) + strlenW(trashW) + 1) * sizeof(WCHAR) );
-    strcpyW( files, var );
-    strcatW( files, trashW );
+    files = heap_alloc( (lstrlenW(var) + lstrlenW(trashW) + 1) * sizeof(WCHAR) );
+    lstrcpyW( files, var );
+    lstrcatW( files, trashW );
     files[1] = '\\';  /* change \??\ to \\?\ */
 #else
     static const WCHAR dataW[] = {'X','D','G','_','D','A','T','A','_','H','O','M','E',0};
@@ -101,21 +100,23 @@ static BOOL WINAPI init_trash_dirs( INIT_ONCE *once, void *param, void **context
     static const WCHAR config_fmtW[] = {'\\','?','?','\\','u','n','i','x','%','s','/','T','r','a','s','h',0};
     const WCHAR *fmt = config_fmtW;
     WCHAR *p;
+    ULONG len;
 
     if (!GetEnvironmentVariableW( dataW, var + 8, MAX_PATH - 8 ) || !var[8])
     {
         if (!GetEnvironmentVariableW( homedirW, var, MAX_PATH )) return TRUE;
         fmt = home_fmtW;
     }
-    files = heap_alloc( (strlenW(var) + strlenW(fmt) + strlenW(filesW) + 1) * sizeof(WCHAR) );
-    sprintfW( files, fmt, var );
+    len = lstrlenW(var) + lstrlenW(fmt) + lstrlenW(filesW) + 1;
+    files = heap_alloc( len * sizeof(WCHAR) );
+    swprintf( files, len, fmt, var );
     files[1] = '\\';  /* change \??\ to \\?\ */
     for (p = files; *p; p++) if (*p == '/') *p = '\\';
     CreateDirectoryW( files, NULL );
-    info = heap_alloc( (strlenW(var) + strlenW(fmt) + strlenW(infoW) + 1) * sizeof(WCHAR) );
-    strcpyW( info, files );
-    strcatW( files, filesW );
-    strcatW( info, infoW );
+    info = heap_alloc( len * sizeof(WCHAR) );
+    lstrcpyW( info, files );
+    lstrcatW( files, filesW );
+    lstrcatW( info, infoW );
     if (!CreateDirectoryW( info, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
     trash_info_dir = info;
 #endif
@@ -265,34 +266,36 @@ BOOL trash_file( const WCHAR *path )
 {
     WCHAR *dest = NULL, *file = PathFindFileNameW( path );
     BOOL ret = TRUE;
-    ULONG i;
+    ULONG i, len;
 
     InitOnceExecuteOnce( &trash_dir_once, init_trash_dirs, NULL, NULL );
     if (!trash_dir) return FALSE;
 
-    dest = heap_alloc( (strlenW(trash_dir) + strlenW(file) + 11) * sizeof(WCHAR) );
+    len = lstrlenW(trash_dir) + lstrlenW(file) + 11;
+    dest = heap_alloc( len * sizeof(WCHAR) );
 
     if (trash_info_dir)
     {
         static const WCHAR fmt[] = {'%','s','\\','%','s','.','t','r','a','s','h','i','n','f','o',0};
         static const WCHAR fmt2[] = {'%','s','\\','%','s','-','%','0','8','x','.','t','r','a','s','h','i','n','f','o',0};
         HANDLE handle;
-        WCHAR *info = heap_alloc( (strlenW(trash_info_dir) + strlenW(file) + 21) * sizeof(WCHAR) );
+        ULONG infolen = lstrlenW(trash_info_dir) + lstrlenW(file) + 21;
+        WCHAR *info = heap_alloc( infolen * sizeof(WCHAR) );
 
-        sprintfW( info, fmt, trash_info_dir, file );
+        swprintf( info, infolen, fmt, trash_info_dir, file );
         for (i = 0; i < 1000; i++)
         {
             handle = CreateFileW( info, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0 );
             if (handle != INVALID_HANDLE_VALUE) break;
-            sprintfW( info, fmt2, trash_info_dir, file, RtlRandom( &random_seed ));
+            swprintf( info, infolen, fmt2, trash_info_dir, file, RtlRandom( &random_seed ));
         }
         if (handle != INVALID_HANDLE_VALUE)
         {
             if ((ret = write_trashinfo_file( handle, path )))
             {
                 static const WCHAR fmt[] = {'%','s','%','.','*','s',0};
-                ULONG len = strlenW(info) - strlenW(trash_info_dir) - 10 /* .trashinfo */;
-                sprintfW( dest, fmt, trash_dir, len, info + strlenW(trash_info_dir) );
+                ULONG namelen = lstrlenW(info) - lstrlenW(trash_info_dir) - 10 /* .trashinfo */;
+                swprintf( dest, len, fmt, trash_dir, namelen, info + lstrlenW(trash_info_dir) );
                 ret = MoveFileW( path, dest );
             }
             CloseHandle( handle );
@@ -304,12 +307,12 @@ BOOL trash_file( const WCHAR *path )
         static const WCHAR fmt[] = {'%','s','\\','%','s',0};
         static const WCHAR fmt2[] = {'%','s','\\','%','s','-','%','0','8','x',0};
 
-        sprintfW( dest, fmt, trash_dir, file );
+        swprintf( dest, len, fmt, trash_dir, file );
         for (i = 0; i < 1000; i++)
         {
             ret = MoveFileW( path, dest );
             if (ret || GetLastError() != ERROR_ALREADY_EXISTS) break;
-            sprintfW( dest, fmt2, trash_dir, file, RtlRandom( &random_seed ));
+            swprintf( dest, len, fmt2, trash_dir, file, RtlRandom( &random_seed ));
         }
     }
     if (ret) TRACE( "%s -> %s\n", debugstr_w(path), debugstr_w(dest) );
@@ -323,18 +326,19 @@ static BOOL get_trash_item_info( const WCHAR *filename, WIN32_FIND_DATAW *data )
     {
         static const WCHAR dsstoreW[] = {'.','D','S','_','S','t','o','r','e',0};
 
-        return !!strcmpW( filename, dsstoreW );
+        return !!wcscmp( filename, dsstoreW );
     }
     else
     {
         static const WCHAR fmt[] = {'%','s','\\','%','s','.','t','r','a','s','h','i','n','f','o',0};
         HANDLE handle;
-        WCHAR *info = heap_alloc( (strlenW(trash_info_dir) + strlenW(filename) + 12) * sizeof(WCHAR) );
+        ULONG len = lstrlenW(trash_info_dir) + lstrlenW(filename) + 12;
+        WCHAR *info = heap_alloc( len * sizeof(WCHAR) );
 
-        sprintfW( info, fmt, trash_info_dir, filename );
+        swprintf( info, len, fmt, trash_info_dir, filename );
         handle = CreateFileW( info, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         heap_free( info );
-        if (handle != INVALID_HANDLE_VALUE) return FALSE;
+        if (handle == INVALID_HANDLE_VALUE) return FALSE;
         read_trashinfo_file( handle, data );
         CloseHandle( handle );
         return TRUE;
@@ -347,14 +351,14 @@ static HRESULT add_trash_item( WIN32_FIND_DATAW *orig_data, LPITEMIDLIST **pidls
     ITEMIDLIST *pidl;
     WIN32_FIND_DATAW *data;
     const WCHAR *filename = orig_data->cFileName;
-    ULONG len = offsetof( ITEMIDLIST, mkid.abID[1 + sizeof(*data) + (strlenW(filename)+1) * sizeof(WCHAR)]);
+    ULONG len = offsetof( ITEMIDLIST, mkid.abID[1 + sizeof(*data) + (lstrlenW(filename)+1) * sizeof(WCHAR)]);
 
     if (!(pidl = SHAlloc( len + 2 ))) return E_OUTOFMEMORY;
     pidl->mkid.cb = len;
     pidl->mkid.abID[0] = 0;
     data = (WIN32_FIND_DATAW *)(pidl->mkid.abID + 1);
     memcpy( data, orig_data, sizeof(*data) );
-    strcpyW( (WCHAR *)(data + 1), filename );
+    lstrcpyW( (WCHAR *)(data + 1), filename );
     *(USHORT *)((char *)pidl + len) = 0;
 
     if (get_trash_item_info( filename, data ))
@@ -391,9 +395,9 @@ static HRESULT enum_trash_items( LPITEMIDLIST **pidls, int *ret_count )
     InitOnceExecuteOnce( &trash_dir_once, init_trash_dirs, NULL, NULL );
     if (!trash_dir) return E_FAIL;
 
-    file = heap_alloc( (strlenW(trash_dir) + strlenW(wildcardW) + 1) * sizeof(WCHAR) );
-    strcpyW( file, trash_dir );
-    strcatW( file, wildcardW );
+    file = heap_alloc( (lstrlenW(trash_dir) + lstrlenW(wildcardW) + 1) * sizeof(WCHAR) );
+    lstrcpyW( file, trash_dir );
+    lstrcatW( file, wildcardW );
     handle = FindFirstFileW( file, &data );
     if (handle != INVALID_HANDLE_VALUE)
     {
@@ -402,8 +406,8 @@ static HRESULT enum_trash_items( LPITEMIDLIST **pidls, int *ret_count )
             static const WCHAR dotW[] = {'.',0};
             static const WCHAR dotdotW[] = {'.','.',0};
 
-            if (!strcmpW( data.cFileName, dotW )) continue;
-            if (!strcmpW( data.cFileName, dotdotW )) continue;
+            if (!wcscmp( data.cFileName, dotW )) continue;
+            if (!wcscmp( data.cFileName, dotdotW )) continue;
             hr = add_trash_item( &data, &ret, &count, &size );
         } while (hr == S_OK && FindNextFileW( handle, &data ));
         FindClose( handle );
@@ -422,29 +426,31 @@ static HRESULT enum_trash_items( LPITEMIDLIST **pidls, int *ret_count )
 
 static void remove_trashinfo( const WCHAR *filename )
 {
-    static const WCHAR fmt[] = {'%','s','\\','%','s','.','t','r','a','s','h','i','n','f','o',0};
     WCHAR *info;
+    ULONG len;
 
     if (!trash_info_dir) return;
-    info = heap_alloc( (strlenW(trash_info_dir) + strlenW(filename) + 12) * sizeof(WCHAR) );
-    sprintfW( info, fmt, trash_info_dir, filename );
+    len = lstrlenW(trash_info_dir) + lstrlenW(filename) + 12;
+    info = heap_alloc( len * sizeof(WCHAR) );
+    swprintf( info, len, L"%s\\%s.trashinfo", trash_info_dir, filename );
     DeleteFileW( info );
     heap_free( info );
 }
 
 static HRESULT restore_trash_item( LPCITEMIDLIST pidl )
 {
-    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
     const WIN32_FIND_DATAW *data = get_trash_item_data( pidl );
     WCHAR *from, *filename = (WCHAR *)(data + 1);
+    ULONG len;
 
-    if (!strchrW( data->cFileName, '\\' ))
+    if (!wcschr( data->cFileName, '\\' ))
     {
         FIXME( "original name for %s not available\n", debugstr_w(data->cFileName) );
         return E_NOTIMPL;
     }
-    from = heap_alloc( (strlenW(trash_dir) + strlenW(filename) + 2) * sizeof(WCHAR) );
-    sprintfW( from, fmt, trash_dir, filename );
+    len = lstrlenW(trash_dir) + lstrlenW(filename) + 2;
+    from = heap_alloc( len * sizeof(WCHAR) );
+    swprintf( from, len, L"%s\\%s", trash_dir, filename );
     if (MoveFileW( from, data->cFileName )) remove_trashinfo( filename );
     else WARN( "failed to restore %s to %s\n", debugstr_w(from), debugstr_w(data->cFileName) );
     heap_free( from );
@@ -453,12 +459,12 @@ static HRESULT restore_trash_item( LPCITEMIDLIST pidl )
 
 static HRESULT erase_trash_item( LPCITEMIDLIST pidl )
 {
-    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
     const WIN32_FIND_DATAW *data = get_trash_item_data( pidl );
     WCHAR *from, *filename = (WCHAR *)(data + 1);
+    ULONG len = lstrlenW(trash_dir) + lstrlenW(filename) + 2;
 
-    from = heap_alloc( (strlenW(trash_dir) + strlenW(filename) + 2) * sizeof(WCHAR) );
-    sprintfW( from, fmt, trash_dir, filename );
+    from = heap_alloc( len * sizeof(WCHAR) );
+    swprintf( from, len, L"%s\\%s", trash_dir, filename );
     if (DeleteFileW( from )) remove_trashinfo( filename );
     heap_free( from );
     return S_OK;
@@ -1170,9 +1176,8 @@ static HRESULT erase_items(HWND parent,const LPCITEMIDLIST * apidl, UINT cidl, B
             }
         default:
             {
-                static const WCHAR format[]={'%','u','\0'};
                 LoadStringW(shell32_hInstance, IDS_RECYCLEBIN_ERASEMULTIPLE, message, ARRAY_SIZE(message));
-                sprintfW(arg,format,cidl);
+                swprintf(arg, ARRAY_SIZE(arg), L"%u", cidl);
                 break;
             }
 

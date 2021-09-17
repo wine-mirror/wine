@@ -36,7 +36,6 @@
 #include "shlobj.h"
 #include "shellapi.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 /*******************************************

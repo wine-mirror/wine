@@ -592,11 +592,11 @@ static LRESULT BrsFolder_Treeview_Rename(browse_info *info, NMTVDISPINFOW *pnmtv
     item_data = (LPTV_ITEMDATA)item.lParam;
 
     SHGetPathFromIDListW(item_data->lpifq, old_path);
-    if(!(p = strrchrW(old_path, '\\')))
+    if(!(p = wcsrchr(old_path, '\\')))
         return 0;
     p = new_path+(p-old_path+1);
     memcpy(new_path, old_path, (p-new_path)*sizeof(WCHAR));
-    strcpyW(p, pnmtv->item.pszText);
+    lstrcpyW(p, pnmtv->item.pszText);
 
     if(!MoveFileW(old_path, new_path))
         return 0;
@@ -824,7 +824,7 @@ static HRESULT BrsFolder_NewFolder(browse_info *info)
         goto cleanup;
     }
 
-    len = strlenW(name);
+    len = lstrlenW(name);
     if(len<MAX_PATH)
         name[len++] = '\\';
     hr = ISFHelper_GetUniqueName(sfhelper, &name[len], MAX_PATH-len);
