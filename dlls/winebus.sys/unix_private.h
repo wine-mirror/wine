@@ -49,17 +49,17 @@ struct unix_device
 
 extern void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
 
-extern NTSTATUS WINAPI sdl_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI sdl_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI sdl_bus_stop(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS sdl_bus_init(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS sdl_bus_wait(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS sdl_bus_stop(void *) DECLSPEC_HIDDEN;
 
-extern NTSTATUS WINAPI udev_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI udev_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI udev_bus_stop(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS udev_bus_init(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS udev_bus_wait(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS udev_bus_stop(void *) DECLSPEC_HIDDEN;
 
-extern NTSTATUS WINAPI iohid_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI iohid_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI iohid_bus_stop(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS iohid_bus_init(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS iohid_bus_wait(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS iohid_bus_stop(void *) DECLSPEC_HIDDEN;
 
 extern void bus_event_cleanup(struct bus_event *event) DECLSPEC_HIDDEN;
 extern void bus_event_queue_destroy(struct list *queue) DECLSPEC_HIDDEN;

@@ -136,8 +136,6 @@ enum unix_funcs
     device_set_feature_report,
 };
 
-typedef NTSTATUS (WINAPI *unix_entry_point)(void *);
-
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {
     if (!desc) return "(null)";
