@@ -852,19 +852,22 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     COLORREF oldForeground;
     int oldStretchMode;
     DIBSECTION dib;
+    DC *dc_src;
 
     if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
         TRACE("Cannot mirror\n");
         return FALSE;
     }
 
+    if (!(dc_src = get_dc_ptr( hdcSrc ))) return FALSE;
+
     NtGdiGetAndSetDCDword( hdcDest, NtGdiSetBkColor, RGB(255,255,255), &oldBackground );
     NtGdiGetAndSetDCDword( hdcDest, NtGdiSetTextColor, RGB(0,0,0), &oldForeground );
 
     /* Stretch bitmap */
-    oldStretchMode = GetStretchBltMode(hdcSrc);
-    if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
-        SetStretchBltMode(hdcSrc, COLORONCOLOR);
+    oldStretchMode = dc_src->attr->stretch_blt_mode;
+    if (oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
+        dc_src->attr->stretch_blt_mode = COLORONCOLOR;
     hdcWork = NtGdiCreateCompatibleDC( hdcDest );
     if ((get_gdi_object_type( hdcDest ) != NTGDI_OBJ_MEMDC ||
          NtGdiExtGetObjectW( NtGdiGetDCObject( hdcDest, NTGDI_OBJ_SURF ),
@@ -926,7 +929,8 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
 
     ret = TRUE;
 error:
-    SetStretchBltMode(hdcSrc, oldStretchMode);
+    dc_src->attr->stretch_blt_mode = oldStretchMode;
+    release_dc_ptr( dc_src );
     NtGdiGetAndSetDCDword( hdcDest, NtGdiSetBkColor, oldBackground, NULL );
     NtGdiGetAndSetDCDword( hdcDest, NtGdiSetTextColor, oldForeground, NULL );
     if(hdcWork) {
