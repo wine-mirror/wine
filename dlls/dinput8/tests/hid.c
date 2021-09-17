@@ -3378,6 +3378,23 @@ static void test_simple_joystick(void)
         {.lX = 0, .lY = 0, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
         {.lX = 32767, .lY = 5594, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
     };
+    static const DIDEVICEOBJECTDATA expect_objdata[] =
+    {
+        {.dwOfs = 0x4, .dwData = 0xffff, .dwSequence = 0xa},
+        {.dwOfs = 0x4, .dwData = 0xffff, .dwSequence = 0xa},
+        {.dwOfs = 0, .dwData = 0xffff, .dwSequence = 0xa},
+        {.dwOfs = 0x20, .dwData = 31500, .dwSequence = 0xa},
+        {.dwOfs = 0x30, .dwData = 0x80, .dwSequence = 0xa},
+        {.dwOfs = 0x4, .dwData = 0x512b, .dwSequence = 0xd},
+        {.dwOfs = 0, .dwData = 0x512b, .dwSequence = 0xd},
+        {.dwOfs = 0x20, .dwData = -1, .dwSequence = 0xd},
+        {.dwOfs = 0x30, .dwData = 0, .dwSequence = 0xd},
+        {.dwOfs = 0x31, .dwData = 0, .dwSequence = 0xd},
+        {.dwOfs = 0x4, .dwData = 0, .dwSequence = 0xf},
+        {.dwOfs = 0, .dwData = 0, .dwSequence = 0xf},
+        {.dwOfs = 0x30, .dwData = 0x80, .dwSequence = 0xf},
+        {.dwOfs = 0x31, .dwData = 0x80, .dwSequence = 0xf},
+    };
 
     const DIDEVICEINSTANCEW expect_devinst =
     {
@@ -3437,6 +3454,7 @@ static void test_simple_joystick(void)
             },
     };
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    DIDEVICEOBJECTDATA objdata[32] = {{0}};
     DIDEVICEINSTANCEW devinst = {0};
     DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
@@ -3837,6 +3855,116 @@ static void test_simple_joystick(void)
     check_member( state, expect_state[i], "%#x", rgbButtons[1] );
     check_member( state, expect_state[i], "%#x", rgbButtons[2] );
     winetest_pop_context();
+
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA) - 1, objdata, &res, DIGDD_PEEK );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    ok( hr == DIERR_NOTBUFFERED, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 1;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+
+    send_hid_input( file, &injected_input[0], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    ok( hr == DI_BUFFEROVERFLOW, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 10;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+
+    send_hid_input( file, &injected_input[1], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, DIGDD_PEEK );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 1, "got %u expected %u\n", res, 1 );
+    check_member( objdata[0], expect_objdata[0], "%#x", dwOfs );
+    check_member( objdata[0], expect_objdata[0], "%#x", dwData );
+    todo_wine
+    check_member( objdata[0], expect_objdata[0], "%#x", dwSequence );
+    ok( objdata[0].uAppData == -1, "got %p, expected %p\n", (void *)objdata[0].uAppData, (void *)-1 );
+    res = 4;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 4, "got %u expected %u\n", res, 4 );
+    for (i = 0; i < 4; ++i)
+    {
+        winetest_push_context( "objdata[%d]", i );
+        check_member( objdata[i], expect_objdata[1 + i], "%#x", dwOfs );
+        check_member( objdata[i], expect_objdata[1 + i], "%#x", dwData );
+        todo_wine
+        check_member( objdata[i], expect_objdata[1 + i], "%#x", dwSequence );
+        ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
+        winetest_pop_context();
+    }
+
+    send_hid_input( file, &injected_input[2], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+    send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    res = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    ok( hr == DI_BUFFEROVERFLOW, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 1, "got %u expected %u\n", res, 1 );
+    todo_wine
+    check_member( objdata[0], expect_objdata[5], "%#x", dwOfs );
+    todo_wine
+    check_member( objdata[0], expect_objdata[5], "%#x", dwData );
+    ok( objdata[0].uAppData == -1, "got %p, expected %p\n", (void *)objdata[0].uAppData, (void *)-1 );
+    res = ARRAY_SIZE(objdata);
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceData returned %#x\n", hr );
+    ok( res == 8, "got %u expected %u\n", res, 8 );
+    for (i = 0; i < 8; ++i)
+    {
+        winetest_push_context( "objdata[%d]", i );
+        todo_wine
+        check_member( objdata[i], expect_objdata[6 + i], "%#x", dwOfs );
+        todo_wine_if( i != 3 && i != 4 && i != 7 )
+        check_member( objdata[i], expect_objdata[6 + i], "%#x", dwData );
+        ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
+        winetest_pop_context();
+    }
 
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
