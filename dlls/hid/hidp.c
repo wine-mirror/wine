@@ -95,16 +95,17 @@ static NTSTATUS enum_value_caps( struct hid_preparsed_data *preparsed, HIDP_REPO
                                  enum_value_caps_callback callback, void *user, USHORT *count )
 {
     const struct hid_value_caps *caps, *caps_end;
-    NTSTATUS status;
-    BOOL incompatible = FALSE;
+    BOOL is_range, incompatible = FALSE;
     LONG remaining = *count;
+    NTSTATUS status;
 
     for (status = get_value_caps_range( preparsed, report_type, report_len, &caps, &caps_end );
          status == HIDP_STATUS_SUCCESS && caps != caps_end; caps++)
     {
+        is_range = caps->flags & HID_VALUE_CAPS_IS_RANGE;
         if (!match_value_caps( caps, filter )) continue;
         if (filter->report_id && caps->report_id != filter->report_id) incompatible = TRUE;
-        else if (filter->array && (caps->is_range || caps->report_count <= 1)) return HIDP_STATUS_NOT_VALUE_ARRAY;
+        else if (filter->array && (is_range || caps->report_count <= 1)) return HIDP_STATUS_NOT_VALUE_ARRAY;
         else if (remaining-- > 0) status = callback( caps, user );
     }
 
@@ -634,7 +635,8 @@ static NTSTATUS get_button_caps( const struct hid_value_caps *caps, void *user )
     dst->BitField = caps->bit_field;
     dst->IsAlias = FALSE;
     dst->IsAbsolute = HID_VALUE_CAPS_IS_ABSOLUTE( caps );
-    if (!(dst->IsRange = caps->is_range))
+    dst->IsRange = (caps->flags & HID_VALUE_CAPS_IS_RANGE) ? 1 : 0;
+    if (!dst->IsRange)
     {
         dst->NotRange.Usage = caps->usage_min;
         dst->NotRange.DataIndex = caps->data_index_min;
@@ -646,14 +648,16 @@ static NTSTATUS get_button_caps( const struct hid_value_caps *caps, void *user )
         dst->Range.DataIndexMin = caps->data_index_min;
         dst->Range.DataIndexMax = caps->data_index_max;
     }
-    if (!(dst->IsStringRange = caps->is_string_range))
+    dst->IsStringRange = (caps->flags & HID_VALUE_CAPS_IS_STRING_RANGE) ? 1 : 0;
+    if (!dst->IsStringRange)
         dst->NotRange.StringIndex = caps->string_min;
     else
     {
         dst->Range.StringMin = caps->string_min;
         dst->Range.StringMax = caps->string_max;
     }
-    if ((dst->IsDesignatorRange = caps->is_designator_range))
+    dst->IsDesignatorRange = (caps->flags & HID_VALUE_CAPS_IS_DESIGNATOR_RANGE) ? 1 : 0;
+    if (!dst->IsDesignatorRange)
         dst->NotRange.DesignatorIndex = caps->designator_min;
     else
     {
@@ -690,33 +694,37 @@ static NTSTATUS get_value_caps( const struct hid_value_caps *caps, void *user )
     dst->IsAbsolute = HID_VALUE_CAPS_IS_ABSOLUTE( caps );
     dst->HasNull = HID_VALUE_CAPS_HAS_NULL( caps );
     dst->BitSize = caps->bit_size;
-    dst->ReportCount = caps->is_range ? 1 : caps->report_count;
     dst->UnitsExp = caps->units_exp;
     dst->Units = caps->units;
     dst->LogicalMin = caps->logical_min;
     dst->LogicalMax = caps->logical_max;
     dst->PhysicalMin = caps->physical_min;
     dst->PhysicalMax = caps->physical_max;
-    if (!(dst->IsRange = caps->is_range))
+    dst->IsRange = (caps->flags & HID_VALUE_CAPS_IS_RANGE) ? 1 : 0;
+    if (!dst->IsRange)
     {
+        dst->ReportCount = caps->report_count;
         dst->NotRange.Usage = caps->usage_min;
         dst->NotRange.DataIndex = caps->data_index_min;
     }
     else
     {
+        dst->ReportCount = 1;
         dst->Range.UsageMin = caps->usage_min;
         dst->Range.UsageMax = caps->usage_max;
         dst->Range.DataIndexMin = caps->data_index_min;
         dst->Range.DataIndexMax = caps->data_index_max;
     }
-    if (!(dst->IsStringRange = caps->is_string_range))
+    dst->IsStringRange = (caps->flags & HID_VALUE_CAPS_IS_STRING_RANGE) ? 1 : 0;
+    if (!dst->IsStringRange)
         dst->NotRange.StringIndex = caps->string_min;
     else
     {
         dst->Range.StringMin = caps->string_min;
         dst->Range.StringMax = caps->string_max;
     }
-    if ((dst->IsDesignatorRange = caps->is_designator_range))
+    dst->IsDesignatorRange = (caps->flags & HID_VALUE_CAPS_IS_DESIGNATOR_RANGE) ? 1 : 0;
+    if (!dst->IsDesignatorRange)
         dst->NotRange.DesignatorIndex = caps->designator_min;
     else
     {
@@ -810,7 +818,8 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
 
 static NTSTATUS count_data( const struct hid_value_caps *caps, void *user )
 {
-    if (caps->is_range || HID_VALUE_CAPS_IS_BUTTON( caps )) *(ULONG *)user += caps->report_count;
+    BOOL is_range = caps->flags & HID_VALUE_CAPS_IS_RANGE;
+    if (is_range || HID_VALUE_CAPS_IS_BUTTON( caps )) *(ULONG *)user += caps->report_count;
     else *(ULONG *)user += 1;
     return HIDP_STATUS_SUCCESS;
 }

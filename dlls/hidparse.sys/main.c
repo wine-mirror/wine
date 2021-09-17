@@ -102,11 +102,11 @@ enum
 static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
 {
     if (!caps) return "(null)";
-    return wine_dbg_sprintf( "RId %d, Usg %02x:%02x-%02x Dat %02x-%02x (%d), Str %d-%d (%d), Des %d-%d (%d), "
-                             "Bits %02x, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
-                             caps->report_id, caps->usage_page, caps->usage_min, caps->usage_max, caps->data_index_min, caps->data_index_max, caps->is_range,
-                             caps->string_min, caps->string_max, caps->is_string_range, caps->designator_min, caps->designator_max, caps->is_designator_range,
-                             caps->bit_field, caps->link_collection, caps->link_usage_page, caps->link_usage, caps->bit_size, caps->report_count,
+    return wine_dbg_sprintf( "RId %d, Usg %02x:%02x-%02x Dat %02x-%02x, Str %d-%d, Des %d-%d, "
+                             "Bits %02x Flags %#x, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
+                             caps->report_id, caps->usage_page, caps->usage_min, caps->usage_max, caps->data_index_min, caps->data_index_max,
+                             caps->string_min, caps->string_max, caps->designator_min, caps->designator_max, caps->bit_field, caps->flags,
+                             caps->link_collection, caps->link_usage_page, caps->link_usage, caps->bit_size, caps->report_count,
                              caps->units, caps->units_exp, caps->logical_min, caps->logical_max, caps->physical_min, caps->physical_max );
 }
 
@@ -243,13 +243,13 @@ static BOOL parse_global_pop( struct hid_parser_state *state )
 static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage_page, USAGE usage )
 {
     if (!usage_page) usage_page = state->items.usage_page;
-    if (state->items.is_range) state->usages_size = 0;
+    if (state->items.flags & HID_VALUE_CAPS_IS_RANGE) state->usages_size = 0;
     state->usages_page[state->usages_size] = usage_page;
     state->usages_min[state->usages_size] = usage;
     state->usages_max[state->usages_size] = usage;
     state->items.usage_min = usage;
     state->items.usage_max = usage;
-    state->items.is_range = FALSE;
+    state->items.flags &= ~HID_VALUE_CAPS_IS_RANGE;
     if (state->usages_size++ == 255) ERR( "HID parser usages stack overflow!\n" );
     return state->usages_size <= 255;
 }
@@ -257,22 +257,22 @@ static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage_page,
 static void parse_local_usage_min( struct hid_parser_state *state, USAGE usage_page, USAGE usage )
 {
     if (!usage_page) usage_page = state->items.usage_page;
-    if (!state->items.is_range) state->usages_max[0] = 0;
+    if (!(state->items.flags & HID_VALUE_CAPS_IS_RANGE)) state->usages_max[0] = 0;
     state->usages_page[0] = usage_page;
     state->usages_min[0] = usage;
     state->items.usage_min = usage;
-    state->items.is_range = TRUE;
+    state->items.flags |= HID_VALUE_CAPS_IS_RANGE;
     state->usages_size = 1;
 }
 
 static void parse_local_usage_max( struct hid_parser_state *state, USAGE usage_page, USAGE usage )
 {
     if (!usage_page) usage_page = state->items.usage_page;
-    if (!state->items.is_range) state->usages_min[0] = 0;
+    if (!(state->items.flags & HID_VALUE_CAPS_IS_RANGE)) state->usages_min[0] = 0;
     state->usages_page[0] = usage_page;
     state->usages_max[0] = usage;
     state->items.usage_max = usage;
-    state->items.is_range = TRUE;
+    state->items.flags |= HID_VALUE_CAPS_IS_RANGE;
     state->usages_size = 1;
 }
 
@@ -579,27 +579,27 @@ struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int leng
             break;
         case SHORT_ITEM( TAG_LOCAL_DESIGNATOR_INDEX, TAG_TYPE_LOCAL ):
             state->items.designator_min = state->items.designator_max = value;
-            state->items.is_designator_range = FALSE;
+            state->items.flags &= ~HID_VALUE_CAPS_IS_DESIGNATOR_RANGE;
             break;
         case SHORT_ITEM( TAG_LOCAL_DESIGNATOR_MINIMUM, TAG_TYPE_LOCAL ):
             state->items.designator_min = value;
-            state->items.is_designator_range = TRUE;
+            state->items.flags |= HID_VALUE_CAPS_IS_DESIGNATOR_RANGE;
             break;
         case SHORT_ITEM( TAG_LOCAL_DESIGNATOR_MAXIMUM, TAG_TYPE_LOCAL ):
             state->items.designator_max = value;
-            state->items.is_designator_range = TRUE;
+            state->items.flags |= HID_VALUE_CAPS_IS_DESIGNATOR_RANGE;
             break;
         case SHORT_ITEM( TAG_LOCAL_STRING_INDEX, TAG_TYPE_LOCAL ):
             state->items.string_min = state->items.string_max = value;
-            state->items.is_string_range = FALSE;
+            state->items.flags &= ~HID_VALUE_CAPS_IS_STRING_RANGE;
             break;
         case SHORT_ITEM( TAG_LOCAL_STRING_MINIMUM, TAG_TYPE_LOCAL ):
             state->items.string_min = value;
-            state->items.is_string_range = TRUE;
+            state->items.flags |= HID_VALUE_CAPS_IS_STRING_RANGE;
             break;
         case SHORT_ITEM( TAG_LOCAL_STRING_MAXIMUM, TAG_TYPE_LOCAL ):
             state->items.string_max = value;
-            state->items.is_string_range = TRUE;
+            state->items.flags |= HID_VALUE_CAPS_IS_STRING_RANGE;
             break;
         case SHORT_ITEM( TAG_LOCAL_DELIMITER, TAG_TYPE_LOCAL ):
             FIXME( "delimiter %d not implemented!\n", value );

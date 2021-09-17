@@ -42,9 +42,7 @@ struct hid_value_caps
     USHORT  string_max;
     USHORT  designator_min;
     USHORT  designator_max;
-    BOOLEAN is_range;
-    BOOLEAN is_string_range;
-    BOOLEAN is_designator_range;
+    ULONG   flags;
     UCHAR   report_id;
     USHORT  link_collection;
     USAGE   link_usage_page;
@@ -62,6 +60,10 @@ struct hid_value_caps
     ULONG   units;
     ULONG   units_exp;
 };
+
+#define HID_VALUE_CAPS_IS_RANGE             0x10
+#define HID_VALUE_CAPS_IS_STRING_RANGE      0x40
+#define HID_VALUE_CAPS_IS_DESIGNATOR_RANGE  0x80
 
 #define HID_VALUE_CAPS_IS_ABSOLUTE(x) (((x)->bit_field & 0x04) == 0)
 #define HID_VALUE_CAPS_HAS_NULL(x) (((x)->bit_field & 0x40) != 0)
