@@ -1531,33 +1531,40 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
 
     if (section)
     {
-        DWORD mapOffset;
-        INT mapSize;
+        LARGE_INTEGER map_offset;
+        SIZE_T map_size;
 
-        mapOffset = offset - (offset % system_info.AllocationGranularity);
-        mapSize = bmp->dib.dsBmih.biSizeImage + (offset - mapOffset);
-        mapBits = MapViewOfFile( section, FILE_MAP_ALL_ACCESS, 0, mapOffset, mapSize );
-        if (mapBits) bmp->dib.dsBm.bmBits = (char *)mapBits + (offset - mapOffset);
+        map_offset.QuadPart = offset - (offset % system_info.AllocationGranularity);
+        map_size = bmp->dib.dsBmih.biSizeImage + (offset - map_offset.QuadPart);
+        if (NtMapViewOfSection( section, GetCurrentProcess(), &mapBits, 0, 0, &map_offset,
+                                &map_size, ViewShare, 0, PAGE_READWRITE ))
+            goto error;
+        bmp->dib.dsBm.bmBits = (char *)mapBits + (offset - map_offset.QuadPart);
     }
     else
     {
+        SIZE_T size = bmp->dib.dsBmih.biSizeImage;
         offset = 0;
-        bmp->dib.dsBm.bmBits = VirtualAlloc( NULL, bmp->dib.dsBmih.biSizeImage,
-                                             MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, 0, &size,
+                                     MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE ))
+            goto error;
     }
     bmp->dib.dshSection = section;
     bmp->dib.dsOffset = offset;
 
-    if (!bmp->dib.dsBm.bmBits) goto error;
+    if ((ret = alloc_gdi_handle( &bmp->obj, NTGDI_OBJ_BITMAP, &dib_funcs )))
+    {
+        if (bits) *bits = bmp->dib.dsBm.bmBits;
+        return ret;
+    }
 
-    if (!(ret = alloc_gdi_handle( &bmp->obj, NTGDI_OBJ_BITMAP, &dib_funcs ))) goto error;
-
-    if (bits) *bits = bmp->dib.dsBm.bmBits;
-    return ret;
-
+    if (section) NtUnmapViewOfSection( GetCurrentProcess(), mapBits );
+    else
+    {
+        SIZE_T size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, &size, MEM_RELEASE );
+    }
 error:
-    if (section) UnmapViewOfFile( mapBits );
-    else VirtualFree( bmp->dib.dsBm.bmBits, 0, MEM_RELEASE );
     HeapFree( GetProcessHeap(), 0, bmp->color_table );
     HeapFree( GetProcessHeap(), 0, bmp );
     return 0;
@@ -1739,10 +1746,14 @@ static BOOL DIB_DeleteObject( HGDIOBJ handle )
 
     if (bmp->dib.dshSection)
     {
-        UnmapViewOfFile( (char *)bmp->dib.dsBm.bmBits -
-                         (bmp->dib.dsOffset % system_info.AllocationGranularity) );
+        NtUnmapViewOfSection( GetCurrentProcess(), (char *)bmp->dib.dsBm.bmBits -
+                              (bmp->dib.dsOffset % system_info.AllocationGranularity) );
     }
-    else VirtualFree( bmp->dib.dsBm.bmBits, 0, MEM_RELEASE );
+    else
+    {
+        SIZE_T size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, &size, MEM_RELEASE );
+    }
 
     HeapFree(GetProcessHeap(), 0, bmp->color_table);
     HeapFree( GetProcessHeap(), 0, bmp );
