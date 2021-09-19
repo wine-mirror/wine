@@ -3389,6 +3389,7 @@ static const struct message WmCreateMDIchildVisibleMaxSeq3[] = {
     { 0x0093, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 }, /* MDI child */
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* MDI client, not sent on Win7. */
+    { 0x0093, sent|optional }, /* Win8+ sends an extra. */
     { WM_NCCALCSIZE, sent|wparam|optional, 1 }, /* XP sends it to MDI frame */
     { 0x0093, sent|defwinproc|optional },
     { 0x0093, sent|defwinproc|optional },
@@ -3617,6 +3618,7 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq1[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 }, /* MDI child */
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 }, /* MDI client */
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* MDI frame */
+    { 0x0093, sent|optional }, /* Win8+ sends an extra. */
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* XP sends a duplicate */
 
      /* in MDI frame */
@@ -3626,6 +3628,7 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq1[] = {
     { 0x0093, sent|defwinproc|optional },
     { 0x0093, sent|defwinproc|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0x0093, sent|optional }, /* Win8+ sends an extra. */
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 }, /* MDI frame */
     { 0x0093, sent|optional },
 
@@ -18483,6 +18486,7 @@ START_TEST(msg)
     test_setwindowpos();
     test_showwindow();
     invisible_parent_tests();
+    test_mdi_messages();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18493,7 +18497,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_mdi_messages();
     test_button_messages();
     test_button_bm_get_set_image();
     test_button_style();
