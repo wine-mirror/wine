@@ -58,6 +58,7 @@ static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocation
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
+static VkResult (*pvkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
 
 static void *vulkan_handle;
 static const struct vulkan_funcs vulkan_funcs;
@@ -73,11 +74,16 @@ static struct wine_vk_surface *wine_vk_surface_from_handle(VkSurfaceKHR handle)
     return (struct wine_vk_surface *)(uintptr_t)handle;
 }
 
+static HWND wine_vk_surface_get_hwnd(struct wine_vk_surface *wine_vk_surface)
+{
+    return wl_surface_get_user_data(wine_vk_surface->client->wl_surface);
+}
+
 static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
 {
     if (wine_vk_surface->client)
     {
-        HWND hwnd = wl_surface_get_user_data(wine_vk_surface->client->wl_surface);
+        HWND hwnd = wine_vk_surface_get_hwnd(wine_vk_surface);
         struct wayland_surface *wayland_surface = wayland_surface_lock_hwnd(hwnd);
 
         if (wayland_client_surface_release(wine_vk_surface->client) &&
@@ -90,6 +96,20 @@ static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
     }
 
     free(wine_vk_surface);
+}
+
+static BOOL wine_vk_surface_is_valid(struct wine_vk_surface *wine_vk_surface)
+{
+    HWND hwnd = wine_vk_surface_get_hwnd(wine_vk_surface);
+    struct wayland_surface *wayland_surface;
+
+    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        pthread_mutex_unlock(&wayland_surface->mutex);
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /* Helper function for converting between win32 and Wayland compatible VkInstanceCreateInfo.
@@ -343,6 +363,22 @@ static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name
     return pvkGetInstanceProcAddr(instance, name);
 }
 
+static VkResult wayland_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice phys_dev,
+                                                             uint32_t index,
+                                                             VkSurfaceKHR surface,
+                                                             VkBool32 *supported)
+{
+    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
+
+    TRACE("%p, %u, 0x%s, %p\n", phys_dev, index, wine_dbgstr_longlong(surface), supported);
+
+    if (!wine_vk_surface_is_valid(wine_vk_surface))
+        return VK_ERROR_SURFACE_LOST_KHR;
+
+    return pvkGetPhysicalDeviceSurfaceSupportKHR(phys_dev, index, wine_vk_surface->native,
+                                                 supported);
+}
+
 static VkSurfaceKHR wayland_wine_get_native_surface(VkSurfaceKHR surface)
 {
     return wine_vk_surface_from_handle(surface)->native;
@@ -364,6 +400,7 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR);
 #undef LOAD_FUNCPTR
 
     return;
@@ -382,6 +419,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
+    .p_vkGetPhysicalDeviceSurfaceSupportKHR = wayland_vkGetPhysicalDeviceSurfaceSupportKHR,
     .p_wine_get_native_surface = wayland_wine_get_native_surface,
 };
 
