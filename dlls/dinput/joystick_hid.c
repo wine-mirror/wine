@@ -652,11 +652,11 @@ static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, D
         instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
         return DIERR_INVALIDPARAM;
 
-    ret = enum_value_objects( impl, &filter, DIDFT_ALL, get_object_info, NULL );
+    ret = enum_value_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
     if (ret != DIENUM_CONTINUE) return S_OK;
-    ret = enum_button_objects( impl, &filter, DIDFT_ALL, get_object_info, NULL );
+    ret = enum_button_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
     if (ret != DIENUM_CONTINUE) return S_OK;
-    enum_collections_objects( impl, &filter, DIDFT_ALL, get_object_info, NULL );
+    enum_collections_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
 
     return S_OK;
 }
