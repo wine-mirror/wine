@@ -896,6 +896,21 @@ static void _check_acc_state(unsigned line, IAccessible *acc, INT state)
     ok_(__FILE__, line)(V_I4(&v) == state, "V_I4(&v) = %x\n", V_I4(&v));
 }
 
+#define check_acc_hwnd(unk, hwnd) _check_acc_hwnd(__LINE__, unk, hwnd)
+static void _check_acc_hwnd(unsigned line, IUnknown *unk, HWND exp)
+{
+    IOleWindow *ow;
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = IUnknown_QueryInterface(unk, &IID_IOleWindow, (void**)&ow);
+    ok_(__FILE__, line)(hr == S_OK, "got %x\n", hr);
+    hr = IOleWindow_GetWindow(ow, &hwnd);
+    ok_(__FILE__, line)(hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line)(hwnd == exp, "hwnd = %p, expected %p\n", hwnd, exp);
+    IOleWindow_Release(ow);
+}
+
 static DWORD WINAPI default_client_thread(LPVOID param)
 {
     IAccessible *acc = param;
@@ -918,7 +933,6 @@ static void test_default_client_accessible_object(void)
 {
     IAccessible *acc, *win;
     IDispatch *disp;
-    IOleWindow *ow;
     IEnumVARIANT *ev;
     HWND chld, chld2, btn, hwnd, hwnd2;
     HRESULT hr;
@@ -989,15 +1003,10 @@ static void test_default_client_accessible_object(void)
     hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
     ok(hr == S_OK, "got %x\n", hr);
 
-    hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
-    ok(hr == S_OK, "got %x\n", hr);
-    hr = IOleWindow_GetWindow(ow, &hwnd2);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(hwnd == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, hwnd);
+    check_acc_hwnd((IUnknown*)acc, hwnd);
     hr = WindowFromAccessibleObject(acc, &hwnd2);
     ok(hr == S_OK, "got %x\n", hr);
     ok(hwnd == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, hwnd);
-    IOleWindow_Release(ow);
 
     hr = IAccessible_get_accChildCount(acc, &l);
     ok(hr == S_OK, "got %x\n", hr);
@@ -1035,13 +1044,7 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_OK, "hr %#x\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
-
-    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
-    ok(hr == S_OK, "got %x\n", hr);
-    hr = IOleWindow_GetWindow(ow, &hwnd2);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(btn == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, btn);
-    IOleWindow_Release(ow);
+    check_acc_hwnd((IUnknown*)V_DISPATCH(&v), btn);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
     ok(hr == S_OK, "got %x\n", hr);
@@ -1060,13 +1063,7 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_OK, "hr %#x\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
-
-    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
-    ok(hr == S_OK, "got %x\n", hr);
-    hr = IOleWindow_GetWindow(ow, &hwnd2);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(chld == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld);
-    IOleWindow_Release(ow);
+    check_acc_hwnd((IUnknown*)V_DISPATCH(&v), chld);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
     ok(hr == S_OK, "got %x\n", hr);
@@ -1084,13 +1081,7 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_OK, "hr %#x\n", hr);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
-
-    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
-    ok(hr == S_OK, "got %x\n", hr);
-    hr = IOleWindow_GetWindow(ow, &hwnd2);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(chld2 == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld2);
-    IOleWindow_Release(ow);
+    check_acc_hwnd((IUnknown*)V_DISPATCH(&v), chld2);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
     ok(hr == S_OK, "got %x\n", hr);
