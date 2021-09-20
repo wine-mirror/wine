@@ -817,226 +817,6 @@ VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
             PathSetDlgItemPathA(hDlg, id, pszPath);
 }
 
-static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
-static const WCHAR szAttributes[] = {'A','t','t','r','i','b','u','t','e','s',0};
-static const WCHAR szName[] = {'N','a','m','e',0};
-static const WCHAR szParsingName[] = {'P','a','r','s','i','n','g','N','a','m','e',0};
-static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','t','h',0};
-static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','e','r',0};
-
-static const WCHAR szCurrentVersion[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0'};
-static const WCHAR AddNewProgramsFolderW[] = {'A','d','d','N','e','w','P','r','o','g','r','a','m','s','F','o','l','d','e','r',0};
-static const WCHAR AppUpdatesFolderW[] = {'A','p','p','U','p','d','a','t','e','s','F','o','l','d','e','r',0};
-static const WCHAR Administrative_ToolsW[] = {'A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
-static const WCHAR AppDataW[] = {'A','p','p','D','a','t','a','\0'};
-static const WCHAR AppData_RoamingW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\0'};
-static const WCHAR AppData_LocalLowW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','L','o','w','\0'};
-static const WCHAR AppData_LocalW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','\0'};
-static const WCHAR CacheW[] = {'C','a','c','h','e','\0'};
-static const WCHAR CD_BurningW[] = {'C','D',' ','B','u','r','n','i','n','g','\0'};
-static const WCHAR ChangeRemoveProgramsFolderW[] = {'C','h','a','n','g','e','R','e','m','o','v','e','P','r','o','g','r','a','m','s','F','o','l','d','e','r',0};
-static const WCHAR CommonW[] = {'C','o','m','m','o','n',0};
-static const WCHAR Common_Administrative_ToolsW[] = {'C','o','m','m','o','n',' ','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
-static const WCHAR Common_AppDataW[] = {'C','o','m','m','o','n',' ','A','p','p','D','a','t','a','\0'};
-static const WCHAR Common_DesktopW[] = {'C','o','m','m','o','n',' ','D','e','s','k','t','o','p','\0'};
-static const WCHAR Common_DocumentsW[] = {'C','o','m','m','o','n',' ','D','o','c','u','m','e','n','t','s','\0'};
-static const WCHAR CommonDownloadsW[] = {'C','o','m','m','o','n','D','o','w','n','l','o','a','d','s',0};
-static const WCHAR Common_FavoritesW[] = {'C','o','m','m','o','n',' ','F','a','v','o','r','i','t','e','s','\0'};
-static const WCHAR CommonFilesDirW[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r','\0'};
-static const WCHAR CommonFilesDirX86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
-static const WCHAR CommonMusicW[] = {'C','o','m','m','o','n','M','u','s','i','c','\0'};
-static const WCHAR CommonPicturesW[] = {'C','o','m','m','o','n','P','i','c','t','u','r','e','s','\0'};
-static const WCHAR Common_ProgramsW[] = {'C','o','m','m','o','n',' ','P','r','o','g','r','a','m','s','\0'};
-static const WCHAR CommonRingtonesW[] = {'C','o','m','m','o','n','R','i','n','g','t','o','n','e','s',0};
-static const WCHAR Common_StartUpW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t','U','p','\0'};
-static const WCHAR Common_StartupW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t','u','p','\0'};
-static const WCHAR Common_Start_MenuW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t',' ','M','e','n','u','\0'};
-static const WCHAR Common_TemplatesW[] = {'C','o','m','m','o','n',' ','T','e','m','p','l','a','t','e','s','\0'};
-static const WCHAR CommonVideoW[] = {'C','o','m','m','o','n','V','i','d','e','o','\0'};
-static const WCHAR ConflictFolderW[] = {'C','o','n','f','l','i','c','t','F','o','l','d','e','r',0};
-static const WCHAR ConnectionsFolderW[] = {'C','o','n','n','e','c','t','i','o','n','s','F','o','l','d','e','r',0};
-static const WCHAR ContactsW[] = {'C','o','n','t','a','c','t','s','\0'};
-static const WCHAR ControlPanelFolderW[] = {'C','o','n','t','r','o','l','P','a','n','e','l','F','o','l','d','e','r',0};
-static const WCHAR CookiesW[] = {'C','o','o','k','i','e','s','\0'};
-static const WCHAR CSCFolderW[] = {'C','S','C','F','o','l','d','e','r',0};
-static const WCHAR Default_GadgetsW[] = {'D','e','f','a','u','l','t',' ','G','a','d','g','e','t','s',0};
-static const WCHAR DesktopW[] = {'D','e','s','k','t','o','p','\0'};
-static const WCHAR Device_Metadata_StoreW[] = {'D','e','v','i','c','e',' ','M','e','t','a','d','a','t','a',' ','S','t','o','r','e',0};
-static const WCHAR DocumentsW[] = {'D','o','c','u','m','e','n','t','s','\0'};
-static const WCHAR DocumentsLibraryW[] = {'D','o','c','u','m','e','n','t','s','L','i','b','r','a','r','y','\0'};
-static const WCHAR Documents_librarymsW[] = {'D','o','c','u','m','e','n','t','s','.','l','i','b','r','a','r','y','-','m','s',0};
-static const WCHAR DownloadsW[] = {'D','o','w','n','l','o','a','d','s','\0'};
-static const WCHAR FavoritesW[] = {'F','a','v','o','r','i','t','e','s','\0'};
-static const WCHAR FontsW[] = {'F','o','n','t','s','\0'};
-static const WCHAR GadgetsW[] = {'G','a','d','g','e','t','s',0};
-static const WCHAR GamesW[] = {'G','a','m','e','s',0};
-static const WCHAR GameTasksW[] = {'G','a','m','e','T','a','s','k','s',0};
-static const WCHAR HistoryW[] = {'H','i','s','t','o','r','y','\0'};
-static const WCHAR HomeGroupFolderW[] = {'H','o','m','e','G','r','o','u','p','F','o','l','d','e','r',0};
-static const WCHAR ImplicitAppShortcutsW[] = {'I','m','p','l','i','c','i','t','A','p','p','S','h','o','r','t','c','u','t','s',0};
-static const WCHAR InternetFolderW[] = {'I','n','t','e','r','n','e','t','F','o','l','d','e','r',0};
-static const WCHAR LibrariesW[] = {'L','i','b','r','a','r','i','e','s',0};
-static const WCHAR LinksW[] = {'L','i','n','k','s','\0'};
-static const WCHAR Local_AppDataW[] = {'L','o','c','a','l',' ','A','p','p','D','a','t','a','\0'};
-static const WCHAR LocalAppDataLowW[] = {'L','o','c','a','l','A','p','p','D','a','t','a','L','o','w',0};
-static const WCHAR LocalizedResourcesDirW[] = {'L','o','c','a','l','i','z','e','d','R','e','s','o','u','r','c','e','s','D','i','r',0};
-static const WCHAR MAPIFolderW[] = {'M','A','P','I','F','o','l','d','e','r',0};
-static const WCHAR Microsoft_Internet_Explorer_Quick_LaunchW[] = {'M','i','c','r','o','s','o','f','t','\\','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\','Q','u','i','c','k',' ','L','a','u','n','c','h',0};
-static const WCHAR Microsoft_Windows_Burn_BurnW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','B','u','r','n','\\','B','u','r','n',0};
-static const WCHAR Microsoft_Windows_GameExplorerW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p','l','o','r','e','r','\0'};
-static const WCHAR Microsoft_Windows_DeviceMetadataStoreW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','D','e','v','i','c','e','M','e','t','a','d','a','t','a','S','t','o','r','e',0};
-static const WCHAR Microsoft_Windows_HistoryW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','H','i','s','t','o','r','y',0};
-static const WCHAR Microsoft_Windows_INetCacheW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','I','N','e','t','C','a','c','h','e',0};
-static const WCHAR Microsoft_Windows_INetCookiesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','I','N','e','t','C','o','o','k','i','e','s',0};
-static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
-static const WCHAR Microsoft_Windows_Network_ShortcutsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','N','e','t','w','o','r','k',' ','S','h','o','r','t','c','u','t','s',0};
-static const WCHAR Microsoft_Windows_Photo_Gallery_Original_ImagesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','P','h','o','t','o',' ','G','a','l','l','e','r','y','\\','O','r','i','g','i','n','a','l',' ','I','m','a','g','e','s',0};
-static const WCHAR Microsoft_Windows_Printer_ShortcutsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','P','r','i','n','t','e','r',' ','S','h','o','r','t','c','u','t','s',0};
-static const WCHAR Microsoft_Windows_RecentW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','e','c','e','n','t','\0'};
-static const WCHAR Microsoft_Windows_RingtonesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','i','n','g','t','o','n','e','s','\0'};
-static const WCHAR Microsoft_Windows_SendToW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','e','n','d','T','o',0};
-static const WCHAR Microsoft_Windows_Sidebar_GadgetsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','S','i','d','e','b','a','r','\\','G','a','d','g','e','t','s',0};
-static const WCHAR Microsoft_Windows_Start_MenuW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u',0};
-static const WCHAR Microsoft_Windows_TemplatesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','l','a','t','e','s',0};
-static const WCHAR Microsoft_Windows_ThemesW[] =  {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','h','e','m','e','s',0};
-static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
-static const WCHAR MusicLibraryW[] = {'M','u','s','i','c','L','i','b','r','a','r','y',0};
-static const WCHAR Music_librarymsW[] = {'M','u','s','i','c','.','l','i','b','r','a','r','y','-','m','s',0};
-static const WCHAR My_MusicW[] = {'M','y',' ','M','u','s','i','c','\0'};
-static const WCHAR My_PicturesW[] = {'M','y',' ','P','i','c','t','u','r','e','s','\0'};
-static const WCHAR My_VideosW[] = {'M','y',' ','V','i','d','e','o','s','\0'};
-static const WCHAR My_VideoW[] = {'M','y',' ','V','i','d','e','o','\0'};
-static const WCHAR MyComputerFolderW[] = {'M','y','C','o','m','p','u','t','e','r','F','o','l','d','e','r',0};
-static const WCHAR NetHoodW[] = {'N','e','t','H','o','o','d','\0'};
-static const WCHAR NetworkPlacesFolderW[] = {'N','e','t','w','o','r','k','P','l','a','c','e','s','F','o','l','d','e','r',0};
-static const WCHAR OEM_LinksW[] = {'O','E','M',' ','L','i','n','k','s','\0'};
-static const WCHAR Original_ImagesW[] = {'O','r','i','g','i','n','a','l',' ','I','m','a','g','e','s',0};
-static const WCHAR PersonalW[] = {'P','e','r','s','o','n','a','l','\0'};
-static const WCHAR PhotoAlbumsW[] = {'P','h','o','t','o','A','l','b','u','m','s',0};
-static const WCHAR PicturesW[] = {'P','i','c','t','u','r','e','s','\0'};
-static const WCHAR PicturesLibraryW[] = {'P','i','c','t','u','r','e','s','L','i','b','r','a','r','y',0};
-static const WCHAR Pictures_librarymsW[] = {'P','i','c','t','u','r','e','s','.','l','i','b','r','a','r','y','-','m','s',0};
-static const WCHAR PlaylistsW[] = {'P','l','a','y','l','i','s','t','s',0};
-static const WCHAR PrintersFolderW[] = {'P','r','i','n','t','e','r','s','F','o','l','d','e','r',0};
-static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
-static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
-static const WCHAR ProgramDataW[] = {'P','r','o','g','r','a','m','D','a','t','a','\0'};
-static const WCHAR Program_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\0'};
-static const WCHAR ProgramFilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','\0'};
-static const WCHAR ProgramFilesX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','X','8','6','\0'};
-static const WCHAR ProgramFilesX64W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','X','6','4','\0'};
-static const WCHAR Program_Files_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
-static const WCHAR Program_Files_x86W[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\0'};
-static const WCHAR Program_Files_x86_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
-static const WCHAR ProgramFilesCommonW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n',0};
-static const WCHAR ProgramFilesCommonX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n','X','8','6',0};
-static const WCHAR ProgramFilesCommonX64W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n','X','6','4',0};
-static const WCHAR ProgramFilesDirW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r','\0'};
-static const WCHAR ProgramFilesDirX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
-static const WCHAR ProgramsW[] = {'P','r','o','g','r','a','m','s','\0'};
-static const WCHAR PublicW[] = {'P','u','b','l','i','c',0};
-static const WCHAR PublicGameTasksW[] = {'P','u','b','l','i','c','G','a','m','e','T','a','s','k','s',0};
-static const WCHAR PublicLibrariesW[] = {'P','u','b','l','i','c','L','i','b','r','a','r','i','e','s',0};
-static const WCHAR Quick_LaunchW[] = {'Q','u','i','c','k',' ','L','a','u','n','c','h',0};
-static const WCHAR RecentW[] = {'R','e','c','e','n','t','\0'};
-static const WCHAR RecordedTVLibraryW[] = {'R','e','c','o','r','d','e','d','T','V','L','i','b','r','a','r','y',0};
-static const WCHAR RecordedTV_librarymsW[] = {'R','e','c','o','r','d','e','d','T','V','.','l','i','b','r','a','r','y','-','m','s',0};
-static const WCHAR RecycleBinFolderW[] = {'R','e','c','y','c','l','e','B','i','n','F','o','l','d','e','r',0};
-static const WCHAR ResourceDirW[] = {'R','e','s','o','u','r','c','e','D','i','r','\0'};
-static const WCHAR ResourcesW[] = {'R','e','s','o','u','r','c','e','s','\0'};
-static const WCHAR RingtonesW[] = {'R','i','n','g','t','o','n','e','s',0};
-static const WCHAR SampleMusicW[] = {'S','a','m','p','l','e','M','u','s','i','c',0};
-static const WCHAR Sample_MusicW[] = {'S','a','m','p','l','e',' ','M','u','s','i','c',0};
-static const WCHAR SamplePicturesW[] = {'S','a','m','p','l','e','P','i','c','t','u','r','e','s',0};
-static const WCHAR Sample_PicturesW[] = {'S','a','m','p','l','e',' ','P','i','c','t','u','r','e','s',0};
-static const WCHAR SamplePlaylistsW[] = {'S','a','m','p','l','e','P','l','a','y','l','i','s','t','s',0};
-static const WCHAR Sample_PlaylistsW[] = {'S','a','m','p','l','e',' ','P','l','a','y','l','i','s','t','s',0};
-static const WCHAR Sample_VideosW[] = {'S','a','m','p','l','e',' ','V','i','d','e','o','s',0};
-static const WCHAR SampleVideosW[] = {'S','a','m','p','l','e','V','i','d','e','o','s',0};
-static const WCHAR Saved_GamesW[] = {'S','a','v','e','d',' ','G','a','m','e','s','\0'};
-static const WCHAR SavedGamesW[] = {'S','a','v','e','d','G','a','m','e','s','\0'};
-static const WCHAR SearchesW[] = {'S','e','a','r','c','h','e','s','\0'};
-static const WCHAR SearchHomeFolderW[] = {'S','e','a','r','c','h','H','o','m','e','F','o','l','d','e','r',0};
-static const WCHAR SendToW[] = {'S','e','n','d','T','o','\0'};
-static const WCHAR Slide_ShowsW[] = {'S','l','i','d','e',' ','S','h','o','w','s',0};
-static const WCHAR StartUpW[] = {'S','t','a','r','t','U','p','\0'};
-static const WCHAR StartupW[] = {'S','t','a','r','t','u','p','\0'};
-static const WCHAR Start_MenuW[] = {'S','t','a','r','t',' ','M','e','n','u','\0'};
-static const WCHAR SyncCenterFolderW[] = {'S','y','n','c','C','e','n','t','e','r','F','o','l','d','e','r',0};
-static const WCHAR SyncResultsFolderW[] = {'S','y','n','c','R','e','s','u','l','t','s','F','o','l','d','e','r',0};
-static const WCHAR SyncSetupFolderW[] = {'S','y','n','c','S','e','t','u','p','F','o','l','d','e','r',0};
-static const WCHAR SystemW[] = {'S','y','s','t','e','m',0};
-static const WCHAR SystemX86W[] = {'S','y','s','t','e','m','X','8','6',0};
-static const WCHAR TemplatesW[] = {'T','e','m','p','l','a','t','e','s','\0'};
-static const WCHAR User_PinnedW[] = {'U','s','e','r',' ','P','i','n','n','e','d',0};
-static const WCHAR UsersW[] = {'U','s','e','r','s','\0'};
-static const WCHAR UsersFilesFolderW[] = {'U','s','e','r','s','F','i','l','e','s','F','o','l','d','e','r',0};
-static const WCHAR UsersLibrariesFolderW[] = {'U','s','e','r','s','L','i','b','r','a','r','i','e','s','F','o','l','d','e','r',0};
-static const WCHAR UserProfilesW[] = {'U','s','e','r','P','r','o','f','i','l','e','s',0};
-static const WCHAR UserProgramFilesW[] = {'U','s','e','r','P','r','o','g','r','a','m','F','i','l','e','s',0};
-static const WCHAR UserProgramFilesCommonW[] = {'U','s','e','r','P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n',0};
-static const WCHAR UsersPublicW[] = {'u','s','e','r','s','\\','P','u','b','l','i','c','\0'};
-static const WCHAR VideosW[] = {'V','i','d','e','o','s','\0'};
-static const WCHAR VideosLibraryW[] = {'V','i','d','e','o','s','L','i','b','r','a','r','y',0};
-static const WCHAR Videos_librarymsW[] = {'V','i','d','e','o','s','.','l','i','b','r','a','r','y','-','m','s',0};
-static const WCHAR WindowsW[] = {'W','i','n','d','o','w','s',0};
-static const WCHAR Windows_Sidebar_GadgetsW[] = {'W','i','n','d','o','w','s',' ','S','i','d','e','b','a','r','\\','G','a','d','g','e','t','s',0};
-static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t','\0'};
-static const WCHAR AllUsersProfileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%','\0'};
-static const WCHAR PublicProfileW[] = {'%','P','U','B','L','I','C','%',0};
-static const WCHAR UserProfileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%','\0'};
-static const WCHAR ProgramDataVarW[] = {'%','P','r','o','g','r','a','m','D','a','t','a','%','\0'};
-static const WCHAR SystemDriveW[] = {'%','S','y','s','t','e','m','D','r','i','v','e','%','\0'};
-static const WCHAR ProfileListW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','P','r','o','f','i','l','e','L','i','s','t',0};
-static const WCHAR ProfilesDirectoryW[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
-static const WCHAR szSHFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
-static const WCHAR szSHUserFolders[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s','\0'};
-static const WCHAR szDefaultProfileDirW[] = {'u','s','e','r','s',0};
-static const WCHAR szKnownFolderDescriptions[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','F','o','l','d','e','r','D','e','s','c','r','i','p','t','i','o','n','s','\0'};
-static const WCHAR szKnownFolderRedirections[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s',0};
-
-#define CHANGEREMOVEPROGRAMS_PARSING_GUID '{','7','b','8','1','b','e','6','a','-','c','e','2','b','-','4','6','7','6','-','a','2','9','e','-','e','b','9','0','7','a','5','1','2','6','c','5','}'
-#define SYNCMANAGER_PARSING_GUID '{','9','C','7','3','F','5','E','5','-','7','A','E','7','-','4','E','3','2','-','A','8','E','8','-','8','D','2','3','B','8','5','2','5','5','B','F','}'
-#define SYSTEMFOLDERS_PARSING_GUID '{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}'
-#define USERFOLDERS_PARSING_GUID '{','5','9','0','3','1','a','4','7','-','3','f','7','2','-','4','4','a','7','-','8','9','c','5','-','5','5','9','5','f','e','6','b','3','0','e','e','}'
-#define USERSLIBRARIES_PARSING_GUID '{','0','3','1','E','4','8','2','5','-','7','B','9','4','-','4','d','c','3','-','B','1','3','1','-','E','9','4','6','B','4','4','C','8','D','D','5','}'
-
-static const WCHAR ComputerFolderParsingNameW[] = {':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
-static const WCHAR ControlPanelFolderParsingNameW[] = {':',':','{','2','6','E','E','0','6','6','8','-','A','0','0','A','-','4','4','D','7','-','9','3','7','1','-','B','E','B','0','6','4','C','9','8','6','8','3','}','\\','0',0};
-static const WCHAR ControlPanelFolderRelativePathW[] = {':',':','{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
-static const WCHAR GamesParsingNameW[] = {':',':','{','E','D','2','2','8','F','D','F','-','9','E','A','8','-','4','8','7','0','-','8','3','b','1','-','9','6','b','0','2','C','F','E','0','D','5','2','}',0};
-static const WCHAR HomeGroupParsingNameW[] = {':',':','{','B','4','F','B','3','F','9','8','-','C','1','E','A','-','4','2','8','d','-','A','7','8','A','-','D','1','F','5','6','5','9','C','B','A','9','3','}',0};
-static const WCHAR InternetFolderParsingNameW[] = {':',':','{','8','7','1','C','5','3','8','0','-','4','2','A','0','-','1','0','6','9','-','A','2','E','A','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
-static const WCHAR NetworkFolderParsingNameW[] = {':',':','{','F','0','2','C','1','A','0','D','-','B','E','2','1','-','4','3','5','0','-','8','8','B','0','-','7','3','6','7','F','C','9','6','E','F','3','C','}',0};
-static const WCHAR PublicParsingNameW[] = {':',':','{','4','3','3','6','a','5','4','d','-','0','3','8','b','-','4','6','8','5','-','a','b','0','2','-','9','9','b','b','5','2','d','3','f','b','8','b','}',0};
-static const WCHAR RecycleBinFolderParsingNameW[] = {':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-','1','0','1','B','-','9','F','0','8','-','0','0','A','A','0','0','2','F','9','5','4','E','}',0};
-static const WCHAR SearchHomeParsingNameW[] = {':',':','{','9','3','4','3','8','1','2','e','-','1','c','3','7','-','4','a','4','9','-','a','1','2','e','-','4','b','2','d','8','1','0','d','9','5','6','b','}',0};
-static const WCHAR SEARCH_CSCParsingNameW[] = {'s','h','e','l','l',':',':',':','{','B','D','7','A','2','E','7','B','-','2','1','C','B','-','4','1','b','2','-','A','0','8','6','-','B','3','0','9','6','8','0','C','6','B','7','E','}','\\','*',0};
-static const WCHAR SEARCH_MAPIParsingNameW[] = {'s','h','e','l','l',':',':',':','{','8','9','D','8','3','5','7','6','-','6','B','D','1','-','4','C','8','6','-','9','4','5','4','-','B','E','B','0','4','E','9','4','C','8','1','9','}','\\','*',0};
-static const WCHAR UsersFilesParsingNameW[] = {':',':','{','5','9','0','3','1','a','4','7','-','3','f','7','2','-','4','4','a','7','-','8','9','c','5','-','5','5','9','5','f','e','6','b','3','0','e','e','}',0};
-static const WCHAR UsersLibrariesParsingNameW[] = {':',':','{','0','3','1','E','4','8','2','5','-','7','B','9','4','-','4','d','c','3','-','B','1','3','1','-','E','9','4','6','B','4','4','C','8','D','D','5','}',0};
-static const WCHAR AddNewProgramsParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','1','5','e','a','e','9','2','e','-','f','1','7','a','-','4','4','3','1','-','9','f','2','8','-','8','0','5','e','4','8','2','d','a','f','d','4','}',0};
-static const WCHAR ConnectionsFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','7','0','0','7','A','C','C','7','-','3','2','0','2','-','1','1','D','1','-','A','A','D','2','-','0','0','8','0','5','F','C','1','2','7','0','E','}',0};
-static const WCHAR PrintersFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','2','2','2','7','A','2','8','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','E','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
-static const WCHAR ChangeRemoveProgramsParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, 0};
-static const WCHAR AppUpdatesParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, '\\',':',':','{','d','4','5','0','a','8','a','1','-','9','5','6','8','-','4','5','c','7','-','9','c','0','e','-','b','4','f','9','f','b','4','5','3','7','b','d','}',0};
-static const WCHAR SyncManagerFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', SYNCMANAGER_PARSING_GUID, 0};
-static const WCHAR ConflictFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', SYNCMANAGER_PARSING_GUID, '\\',':',':','{','E','4','1','3','D','0','4','0','-','6','7','8','8','-','4','C','2','2','-','9','5','7','E','-','1','7','5','D','1','C','5','1','3','A','3','4','}',',',0};
-static const WCHAR SyncResultsFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', SYNCMANAGER_PARSING_GUID, '\\',':',':','{','B','C','4','8','B','3','2','F','-','5','9','1','0','-','4','7','F','5','-','8','5','7','0','-','5','0','7','4','A','8','A','5','6','3','6','A','}',',',0};
-static const WCHAR SyncSetupFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', SYNCMANAGER_PARSING_GUID, '\\',':',':','{','F','1','3','9','0','A','9','A','-','A','3','F','4','-','4','E','5','D','-','9','C','5','F','-','9','8','F','3','B','D','8','D','9','3','5','C','}',',',0};
-static const WCHAR ContactsParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','5','6','7','8','4','8','5','4','-','C','6','C','B','-','4','6','2','B','-','8','1','6','9','-','8','8','E','3','5','0','A','C','B','8','8','2','}',0};
-static const WCHAR DocumentsParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','F','D','D','3','9','A','D','0','-','2','3','8','F','-','4','6','A','F','-','A','D','B','4','-','6','C','8','5','4','8','0','3','6','9','C','7','}',0};
-static const WCHAR LinksParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','b','f','b','9','d','5','e','0','-','c','6','a','9','-','4','0','4','c','-','b','2','b','2','-','a','e','6','d','b','6','a','f','4','9','6','8','}',0};
-static const WCHAR MusicParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','4','B','D','8','D','5','7','1','-','6','D','1','9','-','4','8','D','3','-','B','E','9','7','-','4','2','2','2','2','0','0','8','0','E','4','3','}',0};
-static const WCHAR PicturesParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','3','3','E','2','8','1','3','0','-','4','E','1','E','-','4','6','7','6','-','8','3','5','A','-','9','8','3','9','5','C','3','B','C','3','B','B','}',0};
-static const WCHAR SavedGamesParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','4','C','5','C','3','2','F','F','-','B','B','9','D','-','4','3','b','0','-','B','5','B','4','-','2','D','7','2','E','5','4','E','A','A','A','4','}',0};
-static const WCHAR SavedSearchesParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','7','d','1','d','3','a','0','4','-','d','e','b','b','-','4','1','1','5','-','9','5','c','f','-','2','f','2','9','d','a','2','9','2','0','d','a','}',0};
-static const WCHAR VideosParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','1','8','9','8','9','B','1','D','-','9','9','B','5','-','4','5','5','B','-','8','4','1','C','-','A','B','7','C','7','4','E','4','D','D','F','C','}',0};
-static const WCHAR DocumentsLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','7','b','0','d','b','1','7','d','-','9','c','d','2','-','4','a','9','3','-','9','7','3','3','-','4','6','c','c','8','9','0','2','2','e','7','c','}',0};
-static const WCHAR MusicLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','2','1','1','2','A','B','0','A','-','C','8','6','A','-','4','f','f','e','-','A','3','6','8','-','0','D','E','9','6','E','4','7','0','1','2','E','}',0};
-static const WCHAR PicturesLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','A','9','9','0','A','E','9','F','-','A','0','3','B','-','4','e','8','0','-','9','4','B','C','-','9','9','1','2','D','7','5','0','4','1','0','4','}',0};
-static const WCHAR VideosLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','4','9','1','E','9','2','2','F','-','5','6','4','3','-','4','a','f','4','-','A','7','E','B','-','4','E','7','A','1','3','8','D','8','1','7','4','}',0};
-
 typedef enum _CSIDL_Type {
     CSIDL_Type_User,
     CSIDL_Type_AllUsers,
@@ -1291,2184 +1071,1005 @@ typedef struct
 {
     const KNOWNFOLDERID *id;
     CSIDL_Type type;
-    LPCWSTR    szValueName;
-    LPCWSTR    szDefaultPath; /* fallback string or resource ID */
-
-    /* KNOWNFOLDER_DEFINITION fields */
+    const WCHAR *value;
+    const WCHAR *def_path; /* fallback string or resource ID */
     KF_CATEGORY category;
-    const WCHAR *pszName;
-    const WCHAR *pszDescription;
-    const KNOWNFOLDERID *fidParent;
-    const WCHAR *pszRelativePath;
-    const WCHAR *pszParsingName;
-    const WCHAR *pszTooltip;
-    const WCHAR *pszLocalizedName;
-    const WCHAR *pszIcon;
-    const WCHAR *pszSecurity;
-    DWORD dwAttributes;
-    KF_DEFINITION_FLAGS kfdFlags;
-    const FOLDERTYPEID *ftidType;
+    const WCHAR *name;
+    const KNOWNFOLDERID *parent;
+    const WCHAR *path;
+    const WCHAR *parsing;
+    DWORD attributes;
+    KF_DEFINITION_FLAGS flags;
+    const FOLDERTYPEID *typeid;
 } CSIDL_DATA;
 
 static const CSIDL_DATA CSIDL_Data[] =
 {
     { /* 0x00 - CSIDL_DESKTOP */
-        &FOLDERID_Desktop,
-        CSIDL_Type_User,
-        DesktopW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        DesktopW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        DesktopW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Desktop,
+        .type       = CSIDL_Type_User,
+        .value      = L"Desktop",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Desktop",
+        .path       = L"Desktop",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x01 - CSIDL_INTERNET */
-        &FOLDERID_InternetFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        InternetFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        InternetFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_InternetFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"InternetFolder",
+        .parsing    = L"::{871C5380-42A0-1069-A2EA-08002B30309D}",
     },
     { /* 0x02 - CSIDL_PROGRAMS */
-        &FOLDERID_Programs,
-        CSIDL_Type_User,
-        ProgramsW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        ProgramsW, /* name */
-        NULL, /* description */
-        &FOLDERID_StartMenu, /* parent */
-        ProgramsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Programs,
+        .type       = CSIDL_Type_User,
+        .value      = L"Programs",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Programs",
+        .parent     = &FOLDERID_StartMenu,
+        .path       = L"Programs",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x03 - CSIDL_CONTROLS (.CPL files) */
-        &FOLDERID_ControlPanelFolder,
-        CSIDL_Type_SystemPath,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        ControlPanelFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        ControlPanelFolderRelativePathW, /* relative path */
-        ControlPanelFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ControlPanelFolder,
+        .type       = CSIDL_Type_SystemPath,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"ControlPanelFolder",
+        .path       = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}",
+        .parsing    = L"::{26EE0668-A00A-44D7-9371-BEB064C98683}\\0",
     },
     { /* 0x04 - CSIDL_PRINTERS */
-        &FOLDERID_PrintersFolder,
-        CSIDL_Type_SystemPath,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        PrintersFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        PrintersFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PrintersFolder,
+        .type       = CSIDL_Type_SystemPath,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"PrintersFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{2227A280-3AEA-1069-A2DE-08002B30309D}",
     },
     { /* 0x05 - CSIDL_PERSONAL */
-        &FOLDERID_Documents,
-        CSIDL_Type_User,
-        PersonalW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        PersonalW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        DocumentsW, /* relative path */
-        DocumentsParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Documents,
+        .type       = CSIDL_Type_User,
+        .value      = L"Personal",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Personal",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Documents",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{FDD39AD0-238F-46AF-ADB4-6C85480369C7}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE,
     },
     { /* 0x06 - CSIDL_FAVORITES */
-        &FOLDERID_Favorites,
-        CSIDL_Type_User,
-        FavoritesW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        FavoritesW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        FavoritesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Favorites,
+        .type       = CSIDL_Type_User,
+        .value      = L"Favorites",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Favorites",
+        .path       = L"Favorites",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x07 - CSIDL_STARTUP */
-        &FOLDERID_Startup,
-        CSIDL_Type_User,
-        StartUpW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        StartupW, /* name */
-        NULL, /* description */
-        &FOLDERID_Programs, /* parent */
-        StartUpW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Startup,
+        .type       = CSIDL_Type_User,
+        .value      = L"StartUp",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Startup",
+        .parent     = &FOLDERID_Programs,
+        .path       = L"StartUp",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x08 - CSIDL_RECENT */
-        &FOLDERID_Recent,
-        CSIDL_Type_User,
-        RecentW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        RecentW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_RecentW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Recent,
+        .type       = CSIDL_Type_User,
+        .value      = L"Recent",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Recent",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\Recent",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x09 - CSIDL_SENDTO */
-        &FOLDERID_SendTo,
-        CSIDL_Type_User,
-        SendToW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        SendToW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_SendToW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SendTo,
+        .type       = CSIDL_Type_User,
+        .value      = L"SendTo",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"SendTo",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\SendTo",
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x0a - CSIDL_BITBUCKET - Recycle Bin */
-        &FOLDERID_RecycleBinFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        RecycleBinFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        RecycleBinFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_RecycleBinFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"RecycleBinFolder",
+        .parsing    = L"::{645FF040-5081-101B-9F08-00AA002F954E}",
     },
     { /* 0x0b - CSIDL_STARTMENU */
-        &FOLDERID_StartMenu,
-        CSIDL_Type_User,
-        Start_MenuW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        Start_MenuW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_Start_MenuW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_StartMenu,
+        .type       = CSIDL_Type_User,
+        .value      = L"Start Menu",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Start Menu",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\Start Menu",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x0c - CSIDL_MYDOCUMENTS */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed, /* matches WinXP--can't get its path */
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed, /* matches WinXP--can't get its path */
     },
     { /* 0x0d - CSIDL_MYMUSIC */
-        &FOLDERID_Music,
-        CSIDL_Type_User,
-        My_MusicW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        My_MusicW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        MusicW, /* relative path */
-        MusicParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Music,
+        .type       = CSIDL_Type_User,
+        .value      = L"My Music",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"My Music",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Music",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{4BD8D571-6D19-48D3-BE97-422220080E43}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE,
     },
     { /* 0x0e - CSIDL_MYVIDEO */
-        &FOLDERID_Videos,
-        CSIDL_Type_User,
-        My_VideosW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        My_VideoW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        VideosW, /* relative path */
-        VideosParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Videos,
+        .type       = CSIDL_Type_User,
+        .value      = L"My Videos",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"My Video",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Videos",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{18989B1D-99B5-455B-841C-AB7C74E4DDFC}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE,
     },
     { /* 0x0f - unassigned */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed,
     },
     { /* 0x10 - CSIDL_DESKTOPDIRECTORY */
-        &FOLDERID_Desktop,
-        CSIDL_Type_User,
-        DesktopW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        DesktopW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        DesktopW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Desktop,
+        .type       = CSIDL_Type_User,
+        .value      = L"Desktop",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Desktop",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Desktop",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x11 - CSIDL_DRIVES */
-        &FOLDERID_ComputerFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        MyComputerFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        ComputerFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ComputerFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"MyComputerFolder",
+        .parsing    = L"::{20D04FE0-3AEA-1069-A2D8-08002B30309D}",
     },
     { /* 0x12 - CSIDL_NETWORK */
-        &FOLDERID_NetworkFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        NetworkPlacesFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NetworkFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_NetworkFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"NetworkPlacesFolder",
+        .parsing    = L"::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}",
     },
     { /* 0x13 - CSIDL_NETHOOD */
-        &FOLDERID_NetHood,
-        CSIDL_Type_User,
-        NetHoodW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        NetHoodW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_Network_ShortcutsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_NetHood,
+        .type       = CSIDL_Type_User,
+        .value      = L"NetHood",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"NetHood",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\Network Shortcuts",
     },
     { /* 0x14 - CSIDL_FONTS */
-        &FOLDERID_Fonts,
-        CSIDL_Type_WindowsPath,
-        FontsW,
-        FontsW,
-
-        KF_CATEGORY_FIXED, /* category */
-        FontsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Windows, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &FOLDERID_Windows/* typeid */
+        .id         = &FOLDERID_Fonts,
+        .type       = CSIDL_Type_WindowsPath,
+        .value      = L"Fonts",
+        .def_path   = L"Fonts",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"Fonts",
+        .parent     = &FOLDERID_Windows,
+        .typeid     = &FOLDERID_Windows
     },
     { /* 0x15 - CSIDL_TEMPLATES */
-        &FOLDERID_Templates,
-        CSIDL_Type_User,
-        TemplatesW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        TemplatesW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_TemplatesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Templates,
+        .type       = CSIDL_Type_User,
+        .value      = L"Templates",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Templates",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\Templates",
     },
     { /* 0x16 - CSIDL_COMMON_STARTMENU */
-        &FOLDERID_CommonStartMenu,
-        CSIDL_Type_ProgramData,
-        Common_Start_MenuW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_Start_MenuW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramData, /* parent */
-        Microsoft_Windows_Start_MenuW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CommonStartMenu,
+        .type       = CSIDL_Type_ProgramData,
+        .value      = L"Common Start Menu",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Start Menu",
+        .parent     = &FOLDERID_ProgramData,
+        .path       = L"Microsoft\\Windows\\Start Menu",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x17 - CSIDL_COMMON_PROGRAMS */
-        &FOLDERID_CommonPrograms,
-        CSIDL_Type_ProgramData,
-        Common_ProgramsW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_ProgramsW, /* name */
-        NULL, /* description */
-        &FOLDERID_CommonStartMenu, /* parent */
-        ProgramsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CommonPrograms,
+        .type       = CSIDL_Type_ProgramData,
+        .value      = L"Common Programs",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Programs",
+        .parent     = &FOLDERID_CommonStartMenu,
+        .path       = L"Programs",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x18 - CSIDL_COMMON_STARTUP */
-        &FOLDERID_CommonStartup,
-        CSIDL_Type_ProgramData,
-        Common_StartUpW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_StartupW, /* name */
-        NULL, /* description */
-        &FOLDERID_CommonPrograms, /* parent */
-        StartUpW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CommonStartup,
+        .type       = CSIDL_Type_ProgramData,
+        .value      = L"Common StartUp",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Startup",
+        .parent     = &FOLDERID_CommonPrograms,
+        .path       = L"StartUp",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x19 - CSIDL_COMMON_DESKTOPDIRECTORY */
-        &FOLDERID_PublicDesktop,
-        CSIDL_Type_AllUsers,
-        Common_DesktopW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_DesktopW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        DesktopW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicDesktop,
+        .type       = CSIDL_Type_AllUsers,
+        .value      = L"Common Desktop",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Desktop",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Desktop",
+        .attributes = FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x1a - CSIDL_APPDATA */
-        &FOLDERID_RoamingAppData,
-        CSIDL_Type_User,
-        AppDataW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        AppDataW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        AppData_RoamingW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_RoamingAppData,
+        .type       = CSIDL_Type_User,
+        .value      = L"AppData",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"AppData",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"AppData\\Roaming",
     },
     { /* 0x1b - CSIDL_PRINTHOOD */
-        &FOLDERID_PrintHood,
-        CSIDL_Type_User,
-        PrintHoodW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        PrintHoodW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_Printer_ShortcutsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PrintHood,
+        .type       = CSIDL_Type_User,
+        .value      = L"PrintHood",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"PrintHood",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\Printer Shortcuts",
     },
     { /* 0x1c - CSIDL_LOCAL_APPDATA */
-        &FOLDERID_LocalAppData,
-        CSIDL_Type_User,
-        Local_AppDataW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        Local_AppDataW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        AppData_LocalW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_LocalAppData,
+        .type       = CSIDL_Type_User,
+        .value      = L"Local AppData",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Local AppData",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"AppData\\Local",
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x1d - CSIDL_ALTSTARTUP */
-        &GUID_NULL,
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_NonExistent,
     },
     { /* 0x1e - CSIDL_COMMON_ALTSTARTUP */
-        &GUID_NULL,
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_NonExistent,
     },
     { /* 0x1f - CSIDL_COMMON_FAVORITES */
-        &FOLDERID_Favorites,
-        CSIDL_Type_AllUsers,
-        Common_FavoritesW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        FavoritesW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        FavoritesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Favorites,
+        .type       = CSIDL_Type_AllUsers,
+        .value      = L"Common Favorites",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Favorites",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Favorites",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x20 - CSIDL_INTERNET_CACHE */
-        &FOLDERID_InternetCache,
-        CSIDL_Type_User,
-        CacheW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        CacheW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_INetCacheW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_InternetCache,
+        .type       = CSIDL_Type_User,
+        .value      = L"Cache",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Cache",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows\\INetCache",
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY,
     },
     { /* 0x21 - CSIDL_COOKIES */
-        &FOLDERID_Cookies,
-        CSIDL_Type_User,
-        CookiesW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        CookiesW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_INetCookiesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Cookies,
+        .type       = CSIDL_Type_User,
+        .value      = L"Cookies",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Cookies",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows\\INetCookies",
     },
     { /* 0x22 - CSIDL_HISTORY */
-        &FOLDERID_History,
-        CSIDL_Type_User,
-        HistoryW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        HistoryW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_HistoryW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_History,
+        .type       = CSIDL_Type_User,
+        .value      = L"History",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"History",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows\\History",
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY,
     },
     { /* 0x23 - CSIDL_COMMON_APPDATA */
-        &FOLDERID_ProgramData,
-        CSIDL_Type_ProgramData,
-        Common_AppDataW,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        Common_AppDataW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ProgramData,
+        .type       = CSIDL_Type_ProgramData,
+        .value      = L"Common AppData",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"Common AppData",
     },
     { /* 0x24 - CSIDL_WINDOWS */
-        &FOLDERID_Windows,
-        CSIDL_Type_WindowsPath,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        WindowsW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Windows,
+        .type       = CSIDL_Type_WindowsPath,
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"Windows",
     },
     { /* 0x25 - CSIDL_SYSTEM */
-        &FOLDERID_System,
-        CSIDL_Type_SystemPath,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        SystemW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_System,
+        .type       = CSIDL_Type_SystemPath,
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"System",
     },
     { /* 0x26 - CSIDL_PROGRAM_FILES */
-        &FOLDERID_ProgramFiles,
-        CSIDL_Type_CurrVer,
-        ProgramFilesDirW,
-        Program_FilesW,
-
-        KF_CATEGORY_FIXED, /* category */
-        ProgramFilesW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ProgramFiles,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"ProgramFilesDir",
+        .def_path   = L"Program Files",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ProgramFiles",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x27 - CSIDL_MYPICTURES */
-        &FOLDERID_Pictures,
-        CSIDL_Type_User,
-        My_PicturesW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        My_PicturesW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        PicturesW, /* relative path */
-        PicturesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Pictures,
+        .type       = CSIDL_Type_User,
+        .value      = L"My Pictures",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"My Pictures",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Pictures",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{33E28130-4E1E-4676-835A-98395C3BC3BB}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE,
     },
     { /* 0x28 - CSIDL_PROFILE */
-        &FOLDERID_Profile,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        ProfileW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Profile,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"Profile",
     },
     { /* 0x29 - CSIDL_SYSTEMX86 */
-        &FOLDERID_SystemX86,
-        CSIDL_Type_SystemX86Path,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        SystemX86W, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SystemX86,
+        .type       = CSIDL_Type_SystemX86Path,
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"SystemX86",
     },
     { /* 0x2a - CSIDL_PROGRAM_FILESX86 */
-        &FOLDERID_ProgramFilesX86,
-        CSIDL_Type_CurrVer,
-        ProgramFilesDirX86W,
-        Program_Files_x86W,
-
-        KF_CATEGORY_FIXED, /* category */
-        ProgramFilesX86W, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ProgramFilesX86,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"ProgramFilesDir (x86)",
+        .def_path   = L"Program Files (x86)",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ProgramFilesX86",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x2b - CSIDL_PROGRAM_FILES_COMMON */
-        &FOLDERID_ProgramFilesCommon,
-        CSIDL_Type_CurrVer,
-        CommonFilesDirW,
-        Program_Files_Common_FilesW,
-
-        KF_CATEGORY_FIXED, /* category */
-        ProgramFilesCommonW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ProgramFilesCommon,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"CommonFilesDir",
+        .def_path   = L"Program Files\\Common Files",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ProgramFilesCommon",
     },
     { /* 0x2c - CSIDL_PROGRAM_FILES_COMMONX86 */
-        &FOLDERID_ProgramFilesCommonX86,
-        CSIDL_Type_CurrVer,
-        CommonFilesDirX86W,
-        Program_Files_x86_Common_FilesW,
-
-        KF_CATEGORY_FIXED, /* category */
-        ProgramFilesCommonX86W, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ProgramFilesCommonX86,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"CommonFilesDir (x86)",
+        .def_path   = L"Program Files (x86)\\Common Files",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ProgramFilesCommonX86",
     },
     { /* 0x2d - CSIDL_COMMON_TEMPLATES */
-        &FOLDERID_CommonTemplates,
-        CSIDL_Type_ProgramData,
-        Common_TemplatesW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_TemplatesW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramData, /* parent */
-        Microsoft_Windows_TemplatesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CommonTemplates,
+        .type       = CSIDL_Type_ProgramData,
+        .value      = L"Common Templates",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Templates",
+        .parent     = &FOLDERID_ProgramData,
+        .path       = L"Microsoft\\Windows\\Templates",
     },
     { /* 0x2e - CSIDL_COMMON_DOCUMENTS */
-        &FOLDERID_PublicDocuments,
-        CSIDL_Type_AllUsers,
-        Common_DocumentsW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_DocumentsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        DocumentsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicDocuments,
+        .type       = CSIDL_Type_AllUsers,
+        .value      = L"Common Documents",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Documents",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Documents",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x2f - CSIDL_COMMON_ADMINTOOLS */
-        &FOLDERID_CommonAdminTools,
-        CSIDL_Type_ProgramData,
-        Common_Administrative_ToolsW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Common_Administrative_ToolsW, /* name */
-        NULL, /* description */
-        &FOLDERID_CommonPrograms, /* parent */
-        Administrative_ToolsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CommonAdminTools,
+        .type       = CSIDL_Type_ProgramData,
+        .value      = L"Common Administrative Tools",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Common Administrative Tools",
+        .parent     = &FOLDERID_CommonPrograms,
+        .path       = L"Administrative Tools",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x30 - CSIDL_ADMINTOOLS */
-        &FOLDERID_AdminTools,
-        CSIDL_Type_User,
-        Administrative_ToolsW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        Administrative_ToolsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Programs, /* parent */
-        Administrative_ToolsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_AdminTools,
+        .type       = CSIDL_Type_User,
+        .value      = L"Administrative Tools",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Administrative Tools",
+        .parent     = &FOLDERID_Programs,
+        .path       = L"Administrative Tools",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x31 - CSIDL_CONNECTIONS */
-        &FOLDERID_ConnectionsFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        ConnectionsFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        Administrative_ToolsW, /* relative path */
-        ConnectionsFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ConnectionsFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"ConnectionsFolder",
+        .path       = L"Administrative Tools",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{7007ACC7-3202-11D1-AAD2-00805FC1270E}",
     },
     { /* 0x32 - unassigned */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed,
     },
     { /* 0x33 - unassigned */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed,
     },
     { /* 0x34 - unassigned */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed,
     },
     { /* 0x35 - CSIDL_COMMON_MUSIC */
-        &FOLDERID_PublicMusic,
-        CSIDL_Type_AllUsers,
-        CommonMusicW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        CommonMusicW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        MusicW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicMusic,
+        .type       = CSIDL_Type_AllUsers,
+        .value      = L"CommonMusic",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"CommonMusic",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Music",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x36 - CSIDL_COMMON_PICTURES */
-        &FOLDERID_PublicPictures,
-        CSIDL_Type_AllUsers,
-        CommonPicturesW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        CommonPicturesW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        PicturesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicPictures,
+        .type       = CSIDL_Type_AllUsers,
+        .value      = L"CommonPictures",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"CommonPictures",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Pictures",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x37 - CSIDL_COMMON_VIDEO */
-        &FOLDERID_PublicVideos,
-        CSIDL_Type_AllUsers,
-        CommonVideoW,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        CommonVideoW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        VideosW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicVideos,
+        .type       = CSIDL_Type_AllUsers,
+        .value      = L"CommonVideo",
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"CommonVideo",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Videos",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x38 - CSIDL_RESOURCES */
-        &FOLDERID_ResourceDir,
-        CSIDL_Type_WindowsPath,
-        NULL,
-        ResourcesW,
-
-        KF_CATEGORY_FIXED, /* category */
-        ResourceDirW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ResourceDir,
+        .type       = CSIDL_Type_WindowsPath,
+        .def_path   = L"Resources",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ResourceDir",
     },
     { /* 0x39 - CSIDL_RESOURCES_LOCALIZED */
-        &FOLDERID_LocalizedResourcesDir,
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        LocalizedResourcesDirW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_LocalizedResourcesDir,
+        .type       = CSIDL_Type_NonExistent,
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"LocalizedResourcesDir",
     },
     { /* 0x3a - CSIDL_COMMON_OEM_LINKS */
-        &FOLDERID_CommonOEMLinks,
-        CSIDL_Type_ProgramData,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        OEM_LinksW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramData, /* parent */
-        OEM_LinksW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CommonOEMLinks,
+        .type       = CSIDL_Type_ProgramData,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"OEM Links",
+        .parent     = &FOLDERID_ProgramData,
+        .path       = L"OEM Links",
     },
     { /* 0x3b - CSIDL_CDBURN_AREA */
-        &FOLDERID_CDBurning,
-        CSIDL_Type_User,
-        CD_BurningW,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        CD_BurningW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_Burn_BurnW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_CDBurning,
+        .type       = CSIDL_Type_User,
+        .value      = L"CD Burning",
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"CD Burning",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows\\Burn\\Burn",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY,
     },
     { /* 0x3c unassigned */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed,
     },
     { /* 0x3d - CSIDL_COMPUTERSNEARME */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
     },
     { /* 0x3e - CSIDL_PROFILES */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed, /* oddly, this matches WinXP */
-        NULL,
-        NULL
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed, /* oddly, this matches WinXP */
     },
     { /* 0x3f */
-        &FOLDERID_AddNewPrograms,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        AddNewProgramsFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        AddNewProgramsParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_AddNewPrograms,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"AddNewProgramsFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{15eae92e-f17a-4431-9f28-805e482dafd4}",
     },
     { /* 0x40 */
-        &FOLDERID_AppUpdates,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        AppUpdatesFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        AppUpdatesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_AppUpdates,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"AppUpdatesFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{7b81be6a-ce2b-4676-a29e-eb907a5126c5}\\::{d450a8a1-9568-45c7-9c0e-b4f9fb4537bd}",
     },
     { /* 0x41 */
-        &FOLDERID_ChangeRemovePrograms,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        ChangeRemoveProgramsFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        ChangeRemoveProgramsParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ChangeRemovePrograms,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"ChangeRemoveProgramsFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{7b81be6a-ce2b-4676-a29e-eb907a5126c5}",
     },
     { /* 0x42 */
-        &FOLDERID_ConflictFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        ConflictFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        ConflictFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ConflictFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"ConflictFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{9C73F5E5-7AE7-4E32-A8E8-8D23B85255BF}\\::{E413D040-6788-4C22-957E-175D1C513A34},",
     },
     { /* 0x43 - CSIDL_CONTACTS */
-        &FOLDERID_Contacts,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        ContactsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        ContactsW, /* relative path */
-        ContactsParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Contacts,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Contacts",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Contacts",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{56784854-C6CB-462B-8169-88E350ACB882}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x44 */
-        &FOLDERID_DeviceMetadataStore,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Device_Metadata_StoreW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramData, /* parent */
-        Microsoft_Windows_DeviceMetadataStoreW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_DeviceMetadataStore,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Device Metadata Store",
+        .parent     = &FOLDERID_ProgramData,
+        .path       = L"Microsoft\\Windows\\DeviceMetadataStore",
     },
     { /* 0x45 */
-        &GUID_NULL,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
+        .id         = &GUID_NULL,
+        .type       = CSIDL_Type_Disallowed,
     },
     { /* 0x46 */
-        &FOLDERID_DocumentsLibrary,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        DocumentsLibraryW, /* name */
-        NULL, /* description */
-        &FOLDERID_Libraries, /* parent */
-        Documents_librarymsW, /* relative path */
-        DocumentsLibraryParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE | KFDF_STREAM, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_DocumentsLibrary,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"DocumentsLibrary",
+        .parent     = &FOLDERID_Libraries,
+        .path       = L"Documents.library-ms",
+        .parsing    = L"::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{7b0db17d-9cd2-4a93-9733-46cc89022e7c}",
+        .flags      = KFDF_PRECREATE | KFDF_STREAM,
     },
     { /* 0x47 - CSIDL_DOWNLOADS */
-        &FOLDERID_Downloads,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        DownloadsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        DownloadsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Downloads,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Downloads",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Downloads",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x48 */
-        &FOLDERID_Games,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        GamesW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        GamesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Games,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"Games",
+        .parsing    = L"::{ED228FDF-9EA8-4870-83b1-96b02CFE0D52}",
     },
     { /* 0x49 */
-        &FOLDERID_GameTasks,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        GameTasksW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_GameExplorerW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_GameTasks,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"GameTasks",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows\\GameExplorer",
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY,
     },
     { /* 0x4a */
-        &FOLDERID_HomeGroup,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        HomeGroupFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        HomeGroupParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_HomeGroup,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"HomeGroupFolder",
+        .parsing    = L"::{B4FB3F98-C1EA-428d-A78A-D1F5659CBA93}",
     },
     { /* 0x4b */
-        &FOLDERID_ImplicitAppShortcuts,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        ImplicitAppShortcutsW, /* name */
-        NULL, /* description */
-        &FOLDERID_UserPinned, /* parent */
-        ImplicitAppShortcutsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_ImplicitAppShortcuts,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"ImplicitAppShortcuts",
+        .parent     = &FOLDERID_UserPinned,
+        .path       = L"ImplicitAppShortcuts",
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x4c */
-        &FOLDERID_Libraries,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        LibrariesW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_LibrariesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Libraries,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Libraries",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Windows\\Libraries",
+        .flags      = KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x4d - CSIDL_LINKS */
-        &FOLDERID_Links,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        LinksW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        LinksW, /* relative path */
-        LinksParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Links,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Links",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Links",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{bfb9d5e0-c6a9-404c-b2b2-ae6db6af4968}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x4e - CSIDL_APPDATA_LOCALLOW */
-        &FOLDERID_LocalAppDataLow,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        LocalAppDataLowW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        AppData_LocalLowW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_LocalAppDataLow,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"LocalAppDataLow",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"AppData\\LocalLow",
+        .attributes = FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x4f */
-        &FOLDERID_MusicLibrary,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        MusicLibraryW, /* name */
-        NULL, /* description */
-        &FOLDERID_Libraries, /* parent */
-        Music_librarymsW, /* relative path */
-        MusicLibraryParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE | KFDF_STREAM, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_MusicLibrary,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"MusicLibrary",
+        .parent     = &FOLDERID_Libraries,
+        .path       = L"Music.library-ms",
+        .parsing    = L"::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{2112AB0A-C86A-4ffe-A368-0DE96E47012E}",
+        .flags      = KFDF_PRECREATE | KFDF_STREAM,
     },
     { /* 0x50 */
-        &FOLDERID_OriginalImages,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        Original_ImagesW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_Photo_Gallery_Original_ImagesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_OriginalImages,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Original Images",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows Photo Gallery\\Original Images",
     },
     { /* 0x51 */
-        &FOLDERID_PhotoAlbums,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        PhotoAlbumsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Pictures, /* parent */
-        Slide_ShowsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PhotoAlbums,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"PhotoAlbums",
+        .parent     = &FOLDERID_Pictures,
+        .path       = L"Slide Shows",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x52 */
-        &FOLDERID_PicturesLibrary,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        PicturesLibraryW, /* name */
-        NULL, /* description */
-        &FOLDERID_Libraries, /* parent */
-        Pictures_librarymsW, /* relative path */
-        PicturesLibraryParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE | KFDF_STREAM, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PicturesLibrary,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"PicturesLibrary",
+        .parent     = &FOLDERID_Libraries,
+        .path       = L"Pictures.library-ms",
+        .parsing    = L"::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{A990AE9F-A03B-4e80-94BC-9912D7504104}",
+        .flags      = KFDF_PRECREATE | KFDF_STREAM,
     },
     { /* 0x53 */
-        &FOLDERID_Playlists,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        PlaylistsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Music, /* parent */
-        PlaylistsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Playlists,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Playlists",
+        .parent     = &FOLDERID_Music,
+        .path       = L"Playlists",
+        .attributes = FILE_ATTRIBUTE_READONLY,
     },
     { /* 0x54 */
-        &FOLDERID_ProgramFilesX64,
+        .id         = &FOLDERID_ProgramFilesX64,
 #ifdef _WIN64
-        CSIDL_Type_CurrVer,
-        ProgramFilesDirW,
-        Program_FilesW,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"ProgramFilesDir",
+        .def_path   = L"Program Files",
 #else
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL,
+        .type       = CSIDL_Type_NonExistent,
 #endif
-
-        KF_CATEGORY_FIXED, /* category */
-        ProgramFilesX64W, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ProgramFilesX64",
     },
     { /* 0x55 */
-        &FOLDERID_ProgramFilesCommonX64,
+        .id         = &FOLDERID_ProgramFilesCommonX64,
 #ifdef _WIN64
-        CSIDL_Type_CurrVer,
-        ProgramFilesCommonX64W,
-        Program_Files_Common_FilesW,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"ProgramFilesCommonX64",
+        .def_path   = L"Program Files\\Common Files",
 #else
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL,
+        .type       = CSIDL_Type_NonExistent,
 #endif
-
-        KF_CATEGORY_FIXED, /* category */
-        ProgramFilesCommonX64W, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"ProgramFilesCommonX64",
     },
     { /* 0x56 */
-        &FOLDERID_Public,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_FIXED, /* category */
-        PublicW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        PublicParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Public,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"Public",
+        .parsing    = L"::{4336a54d-038b-4685-ab02-99bb52d3fb8b}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x57 */
-        &FOLDERID_PublicDownloads,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        CommonDownloadsW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        DownloadsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicDownloads,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"CommonDownloads",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Downloads",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x58 */
-        &FOLDERID_PublicGameTasks,
-        CSIDL_Type_ProgramData,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        PublicGameTasksW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramData, /* parent */
-        Microsoft_Windows_GameExplorerW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicGameTasks,
+        .type       = CSIDL_Type_ProgramData,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"PublicGameTasks",
+        .parent     = &FOLDERID_ProgramData,
+        .path       = L"Microsoft\\Windows\\GameExplorer",
+        .flags      = KFDF_LOCAL_REDIRECT_ONLY,
     },
     { /* 0x59 */
-        &FOLDERID_PublicLibraries,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        PublicLibrariesW, /* name */
-        NULL, /* description */
-        &FOLDERID_Public, /* parent */
-        LibrariesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicLibraries,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"PublicLibraries",
+        .parent     = &FOLDERID_Public,
+        .path       = L"Libraries",
+        .attributes = FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x5a */
-        &FOLDERID_PublicRingtones,
-        CSIDL_Type_ProgramData,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        CommonRingtonesW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramData, /* parent */
-        Microsoft_Windows_RingtonesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_PublicRingtones,
+        .type       = CSIDL_Type_ProgramData,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"CommonRingtones",
+        .parent     = &FOLDERID_ProgramData,
+        .path       = L"Microsoft\\Windows\\Ringtones",
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x5b */
-        &FOLDERID_QuickLaunch,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        Quick_LaunchW, /* name */
-        NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Internet_Explorer_Quick_LaunchW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_QuickLaunch,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Quick Launch",
+        .parent     = &FOLDERID_RoamingAppData,
+        .path       = L"Microsoft\\Internet Explorer\\Quick Launch",
     },
     { /* 0x5c */
-        &FOLDERID_RecordedTVLibrary,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        RecordedTVLibraryW, /* name */
-        NULL, /* description */
-        &FOLDERID_PublicLibraries, /* parent */
-        RecordedTV_librarymsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE | KFDF_STREAM, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_RecordedTVLibrary,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"RecordedTVLibrary",
+        .parent     = &FOLDERID_PublicLibraries,
+        .path       = L"RecordedTV.library-ms",
+        .flags      = KFDF_PRECREATE | KFDF_STREAM,
     },
     { /* 0x5d */
-        &FOLDERID_Ringtones,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        RingtonesW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_RingtonesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_Ringtones,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Ringtones",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows\\Ringtones",
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x5e */
-        &FOLDERID_SampleMusic,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        SampleMusicW, /* name */
-        NULL, /* description */
-        &FOLDERID_PublicMusic, /* parent */
-        Sample_MusicW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SampleMusic,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"SampleMusic",
+        .parent     = &FOLDERID_PublicMusic,
+        .path       = L"Sample Music",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x5f */
-        &FOLDERID_SamplePictures,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        SamplePicturesW, /* name */
-        NULL, /* description */
-        &FOLDERID_PublicPictures, /* parent */
-        Sample_PicturesW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SamplePictures,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"SamplePictures",
+        .parent     = &FOLDERID_PublicPictures,
+        .path       = L"Sample Pictures",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x60 */
-        &FOLDERID_SamplePlaylists,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        SamplePlaylistsW, /* name */
-        NULL, /* description */
-        &FOLDERID_PublicMusic, /* parent */
-        Sample_PlaylistsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SamplePlaylists,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"SamplePlaylists",
+        .parent     = &FOLDERID_PublicMusic,
+        .path       = L"Sample Playlists",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x61 */
-        &FOLDERID_SampleVideos,
-        CSIDL_Type_AllUsers,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        SampleVideosW, /* name */
-        NULL, /* description */
-        &FOLDERID_PublicVideos, /* parent */
-        Sample_VideosW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SampleVideos,
+        .type       = CSIDL_Type_AllUsers,
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"SampleVideos",
+        .parent     = &FOLDERID_PublicVideos,
+        .path       = L"Sample Videos",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x62 - CSIDL_SAVED_GAMES */
-        &FOLDERID_SavedGames,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        SavedGamesW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        Saved_GamesW, /* relative path */
-        SavedGamesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SavedGames,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"SavedGames",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Saved Games",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{4C5C32FF-BB9D-43b0-B5B4-2D72E54EAAA4}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x63 - CSIDL_SEARCHES */
-        &FOLDERID_SavedSearches,
-        CSIDL_Type_User,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        SearchesW, /* name */
-        NULL, /* description */
-        &FOLDERID_Profile, /* parent */
-        SearchesW, /* relative path */
-        SavedSearchesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SavedSearches,
+        .type       = CSIDL_Type_User,
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Searches",
+        .parent     = &FOLDERID_Profile,
+        .path       = L"Searches",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{7d1d3a04-debb-4115-95cf-2f29da2920da}",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH,
     },
     { /* 0x64 */
-        &FOLDERID_SEARCH_CSC,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        CSCFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        SEARCH_CSCParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SEARCH_CSC,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"CSCFolder",
+        .parsing    = L"shell:::{BD7A2E7B-21CB-41b2-A086-B309680C6B7E}\\*",
     },
     { /* 0x65 */
-        &FOLDERID_SEARCH_MAPI,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        MAPIFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        SEARCH_MAPIParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SEARCH_MAPI,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"MAPIFolder",
+        .parsing    = L"shell:::{89D83576-6BD1-4C86-9454-BEB04E94C819}\\*",
     },
     { /* 0x66 */
-        &FOLDERID_SearchHome,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        SearchHomeFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        SearchHomeParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SearchHome,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"SearchHomeFolder",
+        .parsing    = L"::{9343812e-1c37-4a49-a12e-4b2d810d956b}",
     },
     { /* 0x67 */
-        &FOLDERID_SidebarDefaultParts,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_COMMON, /* category */
-        Default_GadgetsW, /* name */
-        NULL, /* description */
-        &FOLDERID_ProgramFiles, /* parent */
-        Windows_Sidebar_GadgetsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SidebarDefaultParts,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_COMMON,
+        .name       = L"Default Gadgets",
+        .parent     = &FOLDERID_ProgramFiles,
+        .path       = L"Windows Sidebar\\Gadgets",
     },
     { /* 0x68 */
-        &FOLDERID_SidebarParts,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        GadgetsW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_Sidebar_GadgetsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SidebarParts,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"Gadgets",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Microsoft\\Windows Sidebar\\Gadgets",
     },
     { /* 0x69 */
-        &FOLDERID_SyncManagerFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        SyncCenterFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        SyncManagerFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SyncManagerFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"SyncCenterFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{9C73F5E5-7AE7-4E32-A8E8-8D23B85255BF}",
     },
     { /* 0x6a */
-        &FOLDERID_SyncResultsFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        SyncResultsFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        SyncResultsFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SyncResultsFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"SyncResultsFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{9C73F5E5-7AE7-4E32-A8E8-8D23B85255BF}\\::{BC48B32F-5910-47F5-8570-5074A8A5636A},",
     },
     { /* 0x6b */
-        &FOLDERID_SyncSetupFolder,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        SyncSetupFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        SyncSetupFolderParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_SyncSetupFolder,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"SyncSetupFolder",
+        .parsing    = L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}\\::{9C73F5E5-7AE7-4E32-A8E8-8D23B85255BF}\\::{F1390A9A-A3F4-4E5D-9C5F-98F3BD8D935C},",
     },
     { /* 0x6c */
-        &FOLDERID_UserPinned,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        User_PinnedW, /* name */
-        NULL, /* description */
-        &FOLDERID_QuickLaunch, /* parent */
-        User_PinnedW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_HIDDEN, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_UserPinned,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"User Pinned",
+        .parent     = &FOLDERID_QuickLaunch,
+        .path       = L"User Pinned",
+        .attributes = FILE_ATTRIBUTE_HIDDEN,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x6d */
-        &FOLDERID_UserProfiles,
-        CSIDL_Type_CurrVer,
-        UsersW,
-        UsersW,
-
-        KF_CATEGORY_FIXED, /* category */
-        UserProfilesW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        FILE_ATTRIBUTE_READONLY, /* attributes */
-        KFDF_PRECREATE, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_UserProfiles,
+        .type       = CSIDL_Type_CurrVer,
+        .value      = L"Users",
+        .def_path   = L"Users",
+        .category   = KF_CATEGORY_FIXED,
+        .name       = L"UserProfiles",
+        .attributes = FILE_ATTRIBUTE_READONLY,
+        .flags      = KFDF_PRECREATE,
     },
     { /* 0x6e */
-        &FOLDERID_UserProgramFiles,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        UserProgramFilesW, /* name */
-        NULL, /* description */
-        &FOLDERID_LocalAppData, /* parent */
-        ProgramsW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_UserProgramFiles,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"UserProgramFiles",
+        .parent     = &FOLDERID_LocalAppData,
+        .path       = L"Programs",
     },
     { /* 0x6f */
-        &FOLDERID_UserProgramFilesCommon,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        UserProgramFilesCommonW, /* name */
-        NULL, /* description */
-        &FOLDERID_UserProgramFiles, /* parent */
-        CommonW, /* relative path */
-        NULL, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_UserProgramFilesCommon,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"UserProgramFilesCommon",
+        .parent     = &FOLDERID_UserProgramFiles,
+        .path       = L"Common",
     },
     { /* 0x70 */
-        &FOLDERID_UsersFiles,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        UsersFilesFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        UsersFilesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_UsersFiles,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"UsersFilesFolder",
+        .parsing    = L"::{59031a47-3f72-44a7-89c5-5595fe6b30ee}",
     },
     { /* 0x71 */
-        &FOLDERID_UsersLibraries,
-        CSIDL_Type_Disallowed,
-        NULL,
-        NULL,
-
-        KF_CATEGORY_VIRTUAL, /* category */
-        UsersLibrariesFolderW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        NULL, /* relative path */
-        UsersLibrariesParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_UsersLibraries,
+        .type       = CSIDL_Type_Disallowed,
+        .category   = KF_CATEGORY_VIRTUAL,
+        .name       = L"UsersLibrariesFolder",
+        .parsing    = L"::{031E4825-7B94-4dc3-B131-E946B44C8DD5}",
     },
     { /* 0x72 */
-        &FOLDERID_VideosLibrary,
-        CSIDL_Type_Disallowed, /* FIXME */
-        NULL,
-        NULL,
-
-        KF_CATEGORY_PERUSER, /* category */
-        VideosLibraryW, /* name */
-        NULL, /* description */
-        &GUID_NULL, /* parent */
-        Videos_librarymsW, /* relative path */
-        VideosLibraryParsingNameW, /* parsing */
-        NULL, /* tooltip */
-        NULL, /* localized */
-        NULL, /* icon */
-        NULL, /* security */
-        0, /* attributes */
-        0, /* flags */
-        &GUID_NULL /* typeid */
+        .id         = &FOLDERID_VideosLibrary,
+        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .category   = KF_CATEGORY_PERUSER,
+        .name       = L"VideosLibrary",
+        .path       = L"Videos.library-ms",
+        .parsing    = L"::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{491E922F-5643-4af4-A7EB-4E7A138D8174}",
     }
 };
 
@@ -3507,17 +2108,17 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
     {
         lstrcpyW(shellFolderPath, userPrefix);
         PathAddBackslashW(shellFolderPath);
-        lstrcatW(shellFolderPath, szSHFolders);
+        lstrcatW(shellFolderPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders");
         pShellFolderPath = shellFolderPath;
         lstrcpyW(userShellFolderPath, userPrefix);
         PathAddBackslashW(userShellFolderPath);
-        lstrcatW(userShellFolderPath, szSHUserFolders);
+        lstrcatW(userShellFolderPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders");
         pUserShellFolderPath = userShellFolderPath;
     }
     else
     {
-        pUserShellFolderPath = szSHUserFolders;
-        pShellFolderPath = szSHFolders;
+        pUserShellFolderPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+        pShellFolderPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
     }
 
     if (RegCreateKeyW(rootKey, pShellFolderPath, &shellFolderKey))
@@ -3564,15 +2165,15 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
 
 static void append_relative_path(BYTE folder, WCHAR *pszPath)
 {
-    if (CSIDL_Data[folder].pszRelativePath)
+    if (CSIDL_Data[folder].path)
     {
         PathAddBackslashW(pszPath);
-        lstrcatW(pszPath, CSIDL_Data[folder].pszRelativePath);
+        lstrcatW(pszPath, CSIDL_Data[folder].path);
     }
-    else if (CSIDL_Data[folder].szDefaultPath)
+    else if (CSIDL_Data[folder].def_path)
     {
         PathAddBackslashW(pszPath);
-        lstrcatW(pszPath, CSIDL_Data[folder].szDefaultPath);
+        lstrcatW(pszPath, CSIDL_Data[folder].def_path);
     }
 }
 
@@ -3618,22 +2219,22 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
         }
     }
 
-    if (IsEqualGUID(CSIDL_Data[folder].fidParent, &GUID_NULL))
+    if (!CSIDL_Data[folder].parent)
     {
         /* hit the root, sub in env var */
         switch (CSIDL_Data[folder].type)
         {
             case CSIDL_Type_User:
-                lstrcpyW(pszPath, UserProfileW);
+                lstrcpyW(pszPath, L"%USERPROFILE%");
                 break;
             case CSIDL_Type_AllUsers:
-                lstrcpyW(pszPath, PublicProfileW);
+                lstrcpyW(pszPath, L"%PUBLIC%");
                 break;
             case CSIDL_Type_ProgramData:
-                lstrcpyW(pszPath, ProgramDataVarW);
+                lstrcpyW(pszPath, L"%ProgramData%");
                 break;
             case CSIDL_Type_CurrVer:
-                lstrcpyW(pszPath, SystemDriveW);
+                lstrcpyW(pszPath, L"%SystemDrive%");
                 break;
             default:
                 ; /* no corresponding env. var, do nothing */
@@ -3641,7 +2242,7 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
         hr = S_OK;
     }else{
         /* prepend with parent */
-        hr = _SHGetDefaultValue(csidl_from_id(CSIDL_Data[folder].fidParent), pszPath);
+        hr = _SHGetDefaultValue(csidl_from_id(CSIDL_Data[folder].parent), pszPath);
     }
 
     if (SUCCEEDED(hr))
@@ -3653,7 +2254,7 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
 
 /* Gets the (unexpanded) value of the folder with index folder into pszPath.
  * The folder's type is assumed to be CSIDL_Type_CurrVer.  Its default value
- * can be overridden in the HKLM\\szCurrentVersion key.
+ * can be overridden in the HKLM\\Software\\Microsoft\\Windows\\CurrentVersion key.
  * If dwFlags has SHGFP_TYPE_DEFAULT set or if the value isn't overridden in
  * the registry, uses _SHGetDefaultValue to get the value.
  */
@@ -3677,13 +2278,13 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
     {
         HKEY hKey;
 
-        if (RegCreateKeyW(HKEY_LOCAL_MACHINE, szCurrentVersion, &hKey))
+        if (RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion", &hKey))
             hr = E_FAIL;
         else
         {
             DWORD dwType, dwPathLen = MAX_PATH * sizeof(WCHAR);
 
-            if (RegQueryValueExW(hKey, CSIDL_Data[folder].szValueName, NULL,
+            if (RegQueryValueExW(hKey, CSIDL_Data[folder].value, NULL,
              &dwType, (LPBYTE)pszPath, &dwPathLen) ||
              (dwType != REG_SZ && dwType != REG_EXPAND_SZ))
             {
@@ -3702,7 +2303,7 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
                     }
                     /* fall through */
                 default:
-                    RegSetValueExW(hKey, CSIDL_Data[folder].szValueName, 0, dwType,
+                    RegSetValueExW(hKey, CSIDL_Data[folder].value, 0, dwType,
                                    (LPBYTE)pszPath, (lstrlenW(pszPath)+1)*sizeof(WCHAR));
                 }
             }
@@ -3786,6 +2387,7 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
     }
     else
     {
+        static const WCHAR DefaultW[] = L".Default";
         LPCWSTR userPrefix = NULL;
         HKEY hRootKey;
 
@@ -3808,7 +2410,7 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
         }
 
         /* For CSIDL_Type_User we also use the GUID if no szValueName is provided */
-        szValueName = CSIDL_Data[folder].szValueName;
+        szValueName = CSIDL_Data[folder].value;
         if (!szValueName)
         {
             StringFromGUID2( CSIDL_Data[folder].id, buffer, 39 );
@@ -3852,7 +2454,7 @@ static HRESULT _SHGetAllUsersProfilePath(DWORD dwFlags, BYTE folder,
     else
     {
         hr = _SHGetUserShellFolderPath(HKEY_LOCAL_MACHINE, NULL,
-         CSIDL_Data[folder].szValueName, pszPath);
+         CSIDL_Data[folder].value, pszPath);
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
     }
@@ -3865,7 +2467,7 @@ static HRESULT _SHOpenProfilesKey(PHKEY pKey)
     LONG lRet;
     DWORD disp;
 
-    lRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, ProfileListW, 0, NULL, 0,
+    lRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList", 0, NULL, 0,
      KEY_ALL_ACCESS, NULL, pKey, &disp);
     return HRESULT_FROM_WIN32(lRet);
 }
@@ -3948,47 +2550,47 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
 
         /* get the system drive */
         GetSystemDirectoryW(def_val, MAX_PATH);
-        lstrcpyW( def_val + 3, szDefaultProfileDirW );
+        lstrcpyW( def_val + 3, L"users" );
 
-        hr = _SHGetProfilesValue(key, ProfilesDirectoryW, szProfilesPrefix, def_val );
+        hr = _SHGetProfilesValue(key, L"ProfilesDirectory", szProfilesPrefix, def_val );
     }
 
     *szDest = 0;
     lstrcpyW(szTemp, szSrc);
     while (SUCCEEDED(hr) && szTemp[0] == '%')
     {
-        if (!wcsnicmp(szTemp, AllUsersProfileW, lstrlenW(AllUsersProfileW)))
+        if (!wcsnicmp(szTemp, L"%ALLUSERSPROFILE%", lstrlenW(L"%ALLUSERSPROFILE%")))
         {
             WCHAR szAllUsers[MAX_PATH], def_val[MAX_PATH];
 
             GetSystemDirectoryW(def_val, MAX_PATH);
-            lstrcpyW( def_val + 3, UsersPublicW );
+            lstrcpyW( def_val + 3, L"users\\Public" );
 
-            hr = _SHGetProfilesValue(key, PublicW, szAllUsers, def_val);
+            hr = _SHGetProfilesValue(key, L"Public", szAllUsers, def_val);
             PathAppendW(szDest, szAllUsers);
-            PathAppendW(szDest, szTemp + lstrlenW(AllUsersProfileW));
+            PathAppendW(szDest, szTemp + lstrlenW(L"%ALLUSERSPROFILE%"));
         }
-        else if (!wcsnicmp(szTemp, PublicProfileW, lstrlenW(PublicProfileW)))
+        else if (!wcsnicmp(szTemp, L"%PUBLIC%", lstrlenW(L"%PUBLIC%")))
         {
             WCHAR szAllUsers[MAX_PATH], def_val[MAX_PATH];
 
             GetSystemDirectoryW(def_val, MAX_PATH);
-            lstrcpyW( def_val + 3, UsersPublicW );
+            lstrcpyW( def_val + 3, L"users\\Public" );
 
-            hr = _SHGetProfilesValue(key, PublicW, szAllUsers, def_val);
+            hr = _SHGetProfilesValue(key, L"Public", szAllUsers, def_val);
             PathAppendW(szDest, szAllUsers);
-            PathAppendW(szDest, szTemp + lstrlenW(PublicProfileW));
+            PathAppendW(szDest, szTemp + lstrlenW(L"%PUBLIC%"));
         }
-        else if (!wcsnicmp(szTemp, ProgramDataVarW, lstrlenW(ProgramDataVarW)))
+        else if (!wcsnicmp(szTemp, L"%ProgramData%", lstrlenW(L"%ProgramData%")))
         {
             WCHAR szProgramData[MAX_PATH], def_val[MAX_PATH];
             HKEY shellFolderKey;
             DWORD dwType, dwPathLen = sizeof(def_val);
             BOOL in_registry = FALSE;
 
-            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, szSHFolders, &shellFolderKey))
+            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &shellFolderKey))
             {
-                if (!RegQueryValueExW(shellFolderKey, Common_AppDataW, NULL, &dwType,
+                if (!RegQueryValueExW(shellFolderKey, L"Common AppData", NULL, &dwType,
                     (LPBYTE)def_val, &dwPathLen) && (dwType == REG_EXPAND_SZ || dwType == REG_SZ))
                     in_registry = TRUE;
 
@@ -3998,14 +2600,14 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             if (!in_registry)
             {
                 GetSystemDirectoryW(def_val, MAX_PATH);
-                lstrcpyW( def_val + 3, ProgramDataW );
+                lstrcpyW( def_val + 3, L"ProgramData" );
             }
 
-            hr = _SHGetProfilesValue(key, ProgramDataW, szProgramData, def_val);
+            hr = _SHGetProfilesValue(key, L"ProgramData", szProgramData, def_val);
             PathAppendW(szDest, szProgramData);
-            PathAppendW(szDest, szTemp + lstrlenW(ProgramDataVarW));
+            PathAppendW(szDest, szTemp + lstrlenW(L"%ProgramData%"));
         }
-        else if (!wcsnicmp(szTemp, UserProfileW, lstrlenW(UserProfileW)))
+        else if (!wcsnicmp(szTemp, L"%USERPROFILE%", lstrlenW(L"%USERPROFILE%")))
         {
             WCHAR userName[MAX_PATH];
             DWORD userLen = MAX_PATH;
@@ -4013,12 +2615,12 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             lstrcpyW(szDest, szProfilesPrefix);
             GetUserNameW(userName, &userLen);
             PathAppendW(szDest, userName);
-            PathAppendW(szDest, szTemp + lstrlenW(UserProfileW));
+            PathAppendW(szDest, szTemp + lstrlenW(L"%USERPROFILE%"));
         }
-        else if (!wcsnicmp(szTemp, SystemDriveW, lstrlenW(SystemDriveW)))
+        else if (!wcsnicmp(szTemp, L"%SystemDrive%", lstrlenW(L"%SystemDrive%")))
         {
             GetSystemDirectoryW(szDest, MAX_PATH);
-            lstrcpyW(szDest + 3, szTemp + lstrlenW(SystemDriveW) + 1);
+            lstrcpyW(szDest + 3, szTemp + lstrlenW(L"%SystemDrive%") + 1);
         }
         else
         {
@@ -4494,7 +3096,7 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
         dwPathLen = MAX_PATH * sizeof(WCHAR);
 
         /* For CSIDL_Type_User we also use the GUID if no szValueName is provided */
-        szValueName = CSIDL_Data[folders[i]].szValueName;
+        szValueName = CSIDL_Data[folders[i]].value;
         if (!szValueName && CSIDL_Data[folders[i]].type == CSIDL_Type_User)
         {
             StringFromGUID2( CSIDL_Data[folders[i]].id, buffer, 39 );
@@ -4595,21 +3197,21 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
     {
         hToken = (HANDLE)-1;
         hRootKey = HKEY_USERS;
-        lstrcpyW(userShellFolderPath, DefaultW);
+        lstrcpyW(userShellFolderPath, L".Default");
         PathAddBackslashW(userShellFolderPath);
-        lstrcatW(userShellFolderPath, szSHUserFolders);
+        lstrcatW(userShellFolderPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders");
         pUserShellFolderPath = userShellFolderPath;
-        lstrcpyW(shellFolderPath, DefaultW);
+        lstrcpyW(shellFolderPath, L".Default");
         PathAddBackslashW(shellFolderPath);
-        lstrcatW(shellFolderPath, szSHFolders);
+        lstrcatW(shellFolderPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders");
         pShellFolderPath = shellFolderPath;
     }
     else
     {
         hToken = NULL;
         hRootKey = HKEY_CURRENT_USER;
-        pUserShellFolderPath = szSHUserFolders;
-        pShellFolderPath = szSHFolders;
+        pUserShellFolderPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+        pShellFolderPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
     }
 
     hr = _SHRegisterFolders(hRootKey, hToken, pUserShellFolderPath,
@@ -4637,8 +3239,10 @@ static HRESULT _SHRegisterCommonShellFolders(void)
     HRESULT hr;
 
     TRACE("\n");
-    hr = _SHRegisterFolders(HKEY_LOCAL_MACHINE, NULL, szSHUserFolders,
-     szSHFolders, folders, ARRAY_SIZE(folders));
+    hr = _SHRegisterFolders(HKEY_LOCAL_MACHINE, NULL,
+                            L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                            L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",
+                            folders, ARRAY_SIZE(folders));
     TRACE("returning 0x%08x\n", hr);
     return hr;
 }
@@ -4685,7 +3289,7 @@ static HRESULT create_extra_folders(void)
     if (SUCCEEDED(hr))
     {
         hr = SHGetFolderPathAndSubDirW(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL,
-                                       SHGFP_TYPE_DEFAULT, Microsoft_Windows_ThemesW, path);
+                                       SHGFP_TYPE_DEFAULT, L"Microsoft\\Windows\\Themes", path);
     }
     return hr;
 }
@@ -4750,7 +3354,7 @@ static HRESULT set_folder_attributes(void)
         if (folders[i].hideasdel)
             res = RegSetValueExW( hkey, hideasdeleteW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
         if (folders[i].attr)
-            res = RegSetValueExW( hkey, szAttributes, 0, REG_DWORD,
+            res = RegSetValueExW( hkey, L"Attributes", 0, REG_DWORD,
                                   (const BYTE *)&folders[i].attr, sizeof(DWORD));
         if (folders[i].call_for_attr)
             res = RegSetValueExW( hkey, cfattributesW, 0, REG_DWORD,
@@ -5023,14 +3627,14 @@ static HRESULT get_known_folder_registry_path(
     else
         lstrcpyW(sGuid, lpStringGuid);
 
-    length = lstrlenW(szKnownFolderDescriptions)+51;
+    length = lstrlenW(L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FolderDescriptions")+51;
     *lpPath = heap_alloc(length*sizeof(WCHAR));
     if(!(*lpPath))
         hr = E_OUTOFMEMORY;
 
     if(SUCCEEDED(hr))
     {
-        lstrcpyW(*lpPath, szKnownFolderDescriptions);
+        lstrcpyW(*lpPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FolderDescriptions");
         lstrcatW(*lpPath, sBackslash);
         lstrcatW(*lpPath, sGuid);
     }
@@ -5075,8 +3679,6 @@ static HRESULT get_known_folder_dword(const WCHAR *registryPath, const WCHAR *va
  *  rfid            [I] pointer to known folder identifier (may be NULL)
  *  rootKey         [O] root key where the redirection information are stored
  *                      It can be HKLM for COMMON folders, and HKCU for PERUSER folders.
- *                      However, besides root key, path is always that same, and is stored
- *                      as "szKnownFolderRedirections" constant
  */
 static HRESULT get_known_folder_redirection_place(
     REFKNOWNFOLDERID rfid,
@@ -5090,7 +3692,7 @@ static HRESULT get_known_folder_redirection_place(
     hr = get_known_folder_registry_path(rfid, NULL, &lpRegistryPath);
 
     if(SUCCEEDED(hr))
-        hr = get_known_folder_dword(lpRegistryPath, szCategory, &category);
+        hr = get_known_folder_dword(lpRegistryPath, L"Category", &category);
 
     if(SUCCEEDED(hr))
     {
@@ -5144,7 +3746,7 @@ static HRESULT redirect_known_folder(
 
     /* write redirection information */
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(rootKey, szKnownFolderRedirections, 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL));
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(rootKey, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders", 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL));
 
     if(SUCCEEDED(hr))
     {
@@ -5326,7 +3928,7 @@ static HRESULT WINAPI knownfolder_GetCategory(
         hr = E_FAIL;
 
     if(SUCCEEDED(hr))
-        hr = get_known_folder_dword(knownfolder->registryPath, szCategory, pCategory);
+        hr = get_known_folder_dword(knownfolder->registryPath, L"Category", pCategory);
 
     return hr;
 }
@@ -5361,7 +3963,7 @@ static HRESULT get_known_folder_path(
 
     /* check if folder has parent */
     dwSize = sizeof(parentGuid);
-    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szParentFolder, RRF_RT_REG_SZ, &dwType, parentGuid, &dwSize));
+    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, L"ParentFolder", RRF_RT_REG_SZ, &dwType, parentGuid, &dwSize));
     if(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) hr = S_FALSE;
 
     if(hr == S_OK)
@@ -5385,7 +3987,7 @@ static HRESULT get_known_folder_path(
 
     /* check, if folder was redirected */
     if(SUCCEEDED(hr))
-        hr = get_known_folder_dword(registryPath, szCategory, &category);
+        hr = get_known_folder_dword(registryPath, L"Category", &category);
 
     if(SUCCEEDED(hr))
     {
@@ -5396,7 +3998,7 @@ static HRESULT get_known_folder_path(
 
         if(hRedirectionRootKey)
         {
-            hr = HRESULT_FROM_WIN32(RegGetValueW(hRedirectionRootKey, szKnownFolderRedirections, sFolderId, RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+            hr = HRESULT_FROM_WIN32(RegGetValueW(hRedirectionRootKey, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders", sFolderId, RRF_RT_REG_SZ, NULL, NULL, &dwSize));
 
             if(SUCCEEDED(hr))
             {
@@ -5407,14 +4009,14 @@ static HRESULT get_known_folder_path(
             if(SUCCEEDED(hr))
             {
                 lstrcpyW(*ppszPath, path);
-                hr = HRESULT_FROM_WIN32(RegGetValueW(hRedirectionRootKey, szKnownFolderRedirections, sFolderId, RRF_RT_REG_SZ, NULL, *ppszPath + lstrlenW(path), &dwSize));
+                hr = HRESULT_FROM_WIN32(RegGetValueW(hRedirectionRootKey, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders", sFolderId, RRF_RT_REG_SZ, NULL, *ppszPath + lstrlenW(path), &dwSize));
             }
         }
 
         if(!*ppszPath)
         {
             /* no redirection, use previous way - read the relative path from folder definition */
-            hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
+            hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, L"RelativePath", RRF_RT_REG_SZ, &dwType, NULL, &dwSize));
 
             if(SUCCEEDED(hr))
             {
@@ -5425,7 +4027,7 @@ static HRESULT get_known_folder_path(
             if(SUCCEEDED(hr))
             {
                 lstrcpyW(*ppszPath, path);
-                hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szRelativePath, RRF_RT_REG_SZ, &dwType, *ppszPath + lstrlenW(path), &dwSize));
+                hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, L"RelativePath", RRF_RT_REG_SZ, &dwType, *ppszPath + lstrlenW(path), &dwSize));
             }
         }
     }
@@ -5547,17 +4149,17 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
     ZeroMemory(pKFD, sizeof(*pKFD));
 
     /* required fields */
-    hr = get_known_folder_dword(knownfolder->registryPath, szCategory, &pKFD->category);
+    hr = get_known_folder_dword(knownfolder->registryPath, L"Category", &pKFD->category);
     if(FAILED(hr))
         return hr;
 
-    hr = get_known_folder_wstr(knownfolder->registryPath, szName, &pKFD->pszName);
+    hr = get_known_folder_wstr(knownfolder->registryPath, L"Name", &pKFD->pszName);
     if(FAILED(hr))
         return hr;
 
     /* optional fields */
     dwSize = sizeof(parentGuid);
-    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szParentFolder,
+    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, L"ParentFolder",
                 RRF_RT_REG_SZ, NULL, parentGuid, &dwSize));
     if(SUCCEEDED(hr))
     {
@@ -5566,11 +4168,11 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
             return hr;
     }
 
-    get_known_folder_dword(knownfolder->registryPath, szAttributes, &pKFD->dwAttributes);
+    get_known_folder_dword(knownfolder->registryPath, L"Attributes", &pKFD->dwAttributes);
 
-    get_known_folder_wstr(knownfolder->registryPath, szRelativePath, &pKFD->pszRelativePath);
+    get_known_folder_wstr(knownfolder->registryPath, L"RelativePath", &pKFD->pszRelativePath);
 
-    get_known_folder_wstr(knownfolder->registryPath, szParsingName, &pKFD->pszParsingName);
+    get_known_folder_wstr(knownfolder->registryPath, L"ParsingName", &pKFD->pszParsingName);
 
     return S_OK;
 }
@@ -5789,7 +4391,7 @@ static HRESULT WINAPI foldermanager_GetFolderByName(
         hr = get_known_folder_registry_path( &fm->ids[i], NULL, &path );
         if (FAILED( hr )) return hr;
 
-        hr = get_known_folder_wstr( path, szName, &name );
+        hr = get_known_folder_wstr( path, L"Name", &name );
         heap_free( path );
         if (FAILED( hr )) return hr;
 
@@ -5835,16 +4437,16 @@ static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFI
 
     if(SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szCategory, 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"Category", 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
 
         if(SUCCEEDED(hr) && pKFD->dwAttributes != 0)
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szAttributes, 0, REG_DWORD, (LPBYTE)&pKFD->dwAttributes, sizeof(pKFD->dwAttributes)));
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"Attributes", 0, REG_DWORD, (LPBYTE)&pKFD->dwAttributes, sizeof(pKFD->dwAttributes)));
 
         if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szName, 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"Name", 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
 
         if(SUCCEEDED(hr) && pKFD->pszParsingName)
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szParsingName, 0, REG_SZ, (LPBYTE)pKFD->pszParsingName, (lstrlenW(pKFD->pszParsingName)+1)*sizeof(WCHAR) ));
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"ParsingName", 0, REG_SZ, (LPBYTE)pKFD->pszParsingName, (lstrlenW(pKFD->pszParsingName)+1)*sizeof(WCHAR) ));
 
         if(SUCCEEDED(hr) && !IsEqualGUID(&pKFD->fidParent, &GUID_NULL))
         {
@@ -5852,11 +4454,11 @@ static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFI
             StringFromGUID2(&pKFD->fidParent, sParentGuid, ARRAY_SIZE(sParentGuid));
 
             /* this known folder has parent folder */
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szParentFolder, 0, REG_SZ, (LPBYTE)sParentGuid, sizeof(sParentGuid)));
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"ParentFolder", 0, REG_SZ, (LPBYTE)sParentGuid, sizeof(sParentGuid)));
         }
 
         if(SUCCEEDED(hr) && pKFD->category != KF_CATEGORY_VIRTUAL && pKFD->pszRelativePath)
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"RelativePath", 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
 
         RegCloseKey(hKey);
 
@@ -6065,25 +4667,24 @@ static void register_system_knownfolders(void)
     for (i = 0; i < ARRAY_SIZE(CSIDL_Data); ++i)
     {
         const CSIDL_DATA *folder = &CSIDL_Data[i];
-        if(folder->pszName){
+        if(folder->name){
             KNOWNFOLDER_DEFINITION kfd;
 
             /* register_folder won't modify kfd, so cast away const instead of
              * reallocating */
-            kfd.category = folder->category;
-            kfd.pszName = (WCHAR*)folder->pszName;
-            kfd.pszDescription = (WCHAR*)folder->pszDescription;
-            memcpy(&kfd.fidParent, folder->fidParent, sizeof(KNOWNFOLDERID));
-            kfd.pszRelativePath = (WCHAR*)folder->pszRelativePath;
-            kfd.pszParsingName = (WCHAR*)folder->pszParsingName;
-            kfd.pszTooltip = (WCHAR*)folder->pszTooltip;
-            kfd.pszLocalizedName = (WCHAR*)folder->pszLocalizedName;
-            kfd.pszIcon = (WCHAR*)folder->pszIcon;
-            kfd.pszSecurity = (WCHAR*)folder->pszSecurity;
-            kfd.dwAttributes = folder->dwAttributes;
-            kfd.kfdFlags = folder->kfdFlags;
-            memcpy(&kfd.ftidType, folder->ftidType, sizeof(FOLDERTYPEID));
-
+            kfd.category         = folder->category;
+            kfd.pszName          = (WCHAR *)folder->name;
+            kfd.pszDescription   = NULL;
+            kfd.fidParent        = folder->parent ? *folder->parent : GUID_NULL;
+            kfd.pszRelativePath  = (WCHAR *)folder->path;
+            kfd.pszParsingName   = (WCHAR *)folder->parsing;
+            kfd.pszTooltip       = NULL;
+            kfd.pszLocalizedName = NULL;
+            kfd.pszIcon          = NULL;
+            kfd.pszSecurity      = NULL;
+            kfd.dwAttributes     = folder->attributes;
+            kfd.kfdFlags         = folder->flags;
+            kfd.ftidType         = folder->typeid ? *folder->typeid : GUID_NULL;
             register_folder(folder->id, &kfd);
         }
     }
