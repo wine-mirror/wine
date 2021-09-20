@@ -2143,6 +2143,8 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     if(args != buf)
         heap_free(args);
 
+    if(FAILED(hres))
+        return hres;
     if(!r)
         return S_OK;
 
