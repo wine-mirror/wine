@@ -945,18 +945,18 @@ INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, int driver_id, INT escape, IN
 /******************************************************************************
  *           NtGdiDdDDIOpenAdapterFromHdc    (win32u.@)
  */
-NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( void *pData )
+NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc )
 {
-    FIXME("(%p): stub\n", pData);
+    FIXME( "(%p): stub\n", desc );
     return STATUS_NO_MEMORY;
 }
 
 /******************************************************************************
  *           NtGdiDdDDIEscape    (win32u.@)
  */
-NTSTATUS WINAPI NtGdiDdDDIEscape( const void *pData )
+NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
 {
-    FIXME("(%p): stub\n", pData);
+    FIXME( "(%p): stub\n", desc );
     return STATUS_NO_MEMORY;
 }
 

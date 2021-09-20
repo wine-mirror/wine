@@ -140,4 +140,17 @@ typedef enum _D3DDDIFORMAT
 
 typedef UINT D3DDDI_VIDEO_PRESENT_SOURCE_ID;
 
+typedef struct _D3DDDI_ESCAPEFLAGS
+{
+    union
+    {
+        struct
+        {
+            UINT HardwareAccess :1;
+            UINT Reserved       :31;
+        };
+        UINT Value;
+    };
+} D3DDDI_ESCAPEFLAGS;
+
 #endif /* __WINE_D3DUKMDT_H */
