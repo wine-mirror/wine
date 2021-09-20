@@ -3240,6 +3240,7 @@ static void test_pointer_moniker(void)
 
 static void test_bind_context(void)
 {
+    IRunningObjectTable *rot, *rot2;
     HRESULT hr;
     IBindCtx *pBindCtx;
     IEnumString *pEnumString;
@@ -3259,6 +3260,18 @@ static void test_bind_context(void)
 
     hr = CreateBindCtx(0, &pBindCtx);
     ok_ole_success(hr, "CreateBindCtx");
+
+    hr = IBindCtx_GetRunningObjectTable(pBindCtx, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = IBindCtx_GetRunningObjectTable(pBindCtx, &rot);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = GetRunningObjectTable(0, &rot2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rot == rot2, "Unexpected ROT instance.\n");
+    IRunningObjectTable_Release(rot);
+    IRunningObjectTable_Release(rot2);
 
     bind_opts.cbStruct = -1;
     hr = IBindCtx_GetBindOptions(pBindCtx, (BIND_OPTS *)&bind_opts);
