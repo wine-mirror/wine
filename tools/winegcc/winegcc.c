@@ -1517,6 +1517,8 @@ static void build(struct options* opts)
         strarray_free(tool);
     }
 
+    if (opts->unix_lib) return;
+
     if (opts->out_implib && !is_pe)
     {
         if (!spec_file)
