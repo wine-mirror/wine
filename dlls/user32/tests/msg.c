@@ -6405,6 +6405,8 @@ static const struct message WmLButtonUpAutoSeq[] =
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|optional, 0, 0 },
     { BM_SETCHECK, sent|defwinproc },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|defwinproc, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|defwinproc, 0 },
     { 0 }
@@ -6434,6 +6436,7 @@ static const struct message WmSetFontStaticSeq[] =
 static const struct message WmSetTextButtonSeq[] =
 {
     { WM_SETTEXT, sent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_COMMAND, sent|parent|optional },
@@ -6443,6 +6446,7 @@ static const struct message WmSetTextButtonSeq[] =
 static const struct message WmSetTextStaticSeq[] =
 {
     { WM_SETTEXT, sent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { WM_CTLCOLORSTATIC, sent|parent },
     { 0 }
@@ -6451,6 +6455,7 @@ static const struct message WmSetTextGroupSeq[] =
 {
     { WM_SETTEXT, sent },
     { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent|optional }, /* FIXME: Missing in Wine */
     { WM_CTLCOLORSTATIC, sent|parent|optional }, /* FIXME: Missing in Wine */
     { 0 }
@@ -6458,11 +6463,13 @@ static const struct message WmSetTextGroupSeq[] =
 static const struct message WmSetTextInvisibleSeq[] =
 {
     { WM_SETTEXT, sent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { 0 }
 };
 static const struct message WmSetStyleButtonSeq[] =
 {
     { BM_SETSTYLE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -6473,6 +6480,7 @@ static const struct message WmSetStyleButtonSeq[] =
 static const struct message WmSetStyleStaticSeq[] =
 {
     { BM_SETSTYLE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -6483,6 +6491,7 @@ static const struct message WmSetStyleStaticSeq[] =
 static const struct message WmSetStyleUserSeq[] =
 {
     { BM_SETSTYLE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -6494,6 +6503,7 @@ static const struct message WmSetStyleUserSeq[] =
 static const struct message WmSetStyleOwnerdrawSeq[] =
 {
     { BM_SETSTYLE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -6507,6 +6517,7 @@ static const struct message WmSetStateButtonSeq[] =
 {
     { BM_SETSTATE, sent },
     { WM_CTLCOLORBTN, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -6514,6 +6525,7 @@ static const struct message WmSetStateStaticSeq[] =
 {
     { BM_SETSTATE, sent },
     { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -6522,6 +6534,7 @@ static const struct message WmSetStateUserSeq[] =
     { BM_SETSTATE, sent },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_HILITE) },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -6530,6 +6543,7 @@ static const struct message WmSetStateOwnerdrawSeq[] =
     { BM_SETSTATE, sent },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_BUTTON, 0x000120e4 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -6538,21 +6552,26 @@ static const struct message WmClearStateButtonSeq[] =
     { BM_SETSTATE, sent },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_UNHILITE) },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
 static const struct message WmDisableButtonSeq[] =
 {
     { WM_LBUTTONDOWN, sent },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { BM_SETSTATE, sent|defwinproc },
     { WM_CTLCOLORSTATIC, sent|defwinproc|optional },
     { WM_CTLCOLORBTN, sent|optional },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_LBUTTONUP, sent },
     { BM_SETSTATE, sent|defwinproc },
     { WM_CTLCOLORBTN, sent|defwinproc|optional },
     { WM_CTLCOLORSTATIC, sent|defwinproc|optional },
     { BM_SETCHECK, sent|defwinproc|optional },
     { WM_CTLCOLORBTN, sent|optional },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|defwinproc|optional },
     { WM_CAPTURECHANGED, sent|defwinproc },
     { WM_COMMAND, sent },
@@ -6563,6 +6582,7 @@ static const struct message WmClearStateOwnerdrawSeq[] =
     { BM_SETSTATE, sent },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_BUTTON, 0x000020e4 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -6576,6 +6596,7 @@ static const struct message WmSetCheckStaticSeq[] =
 {
     { BM_SETCHECK, sent },
     { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
