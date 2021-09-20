@@ -303,11 +303,37 @@ static HRESULT WINAPI Client_get_accKeyboardShortcut(IAccessible *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI Client_get_accFocus(IAccessible *iface, VARIANT *pvarID)
+static HRESULT WINAPI Client_get_accFocus(IAccessible *iface, VARIANT *focus)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%p)\n", This, pvarID);
-    return E_NOTIMPL;
+    GUITHREADINFO info;
+
+    TRACE("(%p)->(%p)\n", This, focus);
+
+    V_VT(focus) = VT_EMPTY;
+    info.cbSize = sizeof(info);
+    if(GetGUIThreadInfo(0, &info) && info.hwndFocus) {
+        if(info.hwndFocus == This->hwnd) {
+            V_VT(focus) = VT_I4;
+            V_I4(focus) = CHILDID_SELF;
+        }
+        else if(IsChild(This->hwnd, info.hwndFocus)) {
+            IDispatch *disp;
+            HRESULT hr;
+
+            hr = AccessibleObjectFromWindow(info.hwndFocus, OBJID_WINDOW,
+                    &IID_IDispatch, (void**)&disp);
+            if(FAILED(hr))
+                return hr;
+            if(!disp)
+                return E_FAIL;
+
+            V_VT(focus) = VT_DISPATCH;
+            V_DISPATCH(focus) = disp;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_get_accSelection(IAccessible *iface, VARIANT *pvarID)
