@@ -4661,6 +4661,342 @@ done:
     SetCurrentDirectoryW( cwd );
 }
 
+struct device_desc
+{
+    const BYTE *report_desc_buf;
+    ULONG report_desc_len;
+    HIDP_CAPS hid_caps;
+};
+
+static void test_device_types( void )
+{
+#include "psh_hid_macros.h"
+    static const unsigned char unknown_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 6),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    static const unsigned char limited_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 6),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    static const unsigned char gamepad_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_GAMEPAD),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_GAMEPAD),
+            COLLECTION(1, Physical),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 6),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    static const unsigned char joystick_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                USAGE(1, HID_USAGE_GENERIC_Z),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 127),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 3),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs|Null),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 5),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+#include "pop_hid_macros.h"
+
+    static struct device_desc device_desc[] =
+    {
+        {
+            .report_desc_buf = unknown_desc,
+            .report_desc_len = sizeof(unknown_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 1,
+            },
+        },
+        {
+            .report_desc_buf = limited_desc,
+            .report_desc_len = sizeof(limited_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 3,
+            },
+        },
+        {
+            .report_desc_buf = gamepad_desc,
+            .report_desc_len = sizeof(gamepad_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 3,
+            },
+        },
+        {
+            .report_desc_buf = joystick_desc,
+            .report_desc_len = sizeof(joystick_desc),
+            .hid_caps =
+            {
+                .InputReportByteLength = 5,
+            },
+        },
+    };
+    static const DIDEVCAPS expect_caps[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8)|DI8DEVTYPE_SUPPLEMENTAL,
+            .dwButtons = 6,
+        },
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_LIMITED << 8)|DI8DEVTYPE_JOYSTICK,
+            .dwAxes = 2,
+            .dwButtons = 6,
+        },
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEGAMEPAD_STANDARD << 8)|DI8DEVTYPE_GAMEPAD,
+            .dwAxes = 2,
+            .dwButtons = 6,
+        },
+        {
+            .dwSize = sizeof(DIDEVCAPS),
+            .dwFlags = DIDC_ATTACHED|DIDC_EMULATED,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK,
+            .dwAxes = 3,
+            .dwPOVs = 1,
+            .dwButtons = 5,
+        },
+    };
+
+    const DIDEVICEINSTANCEW expect_devinst[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8)|DI8DEVTYPE_SUPPLEMENTAL,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_LIMITED << 8)|DI8DEVTYPE_JOYSTICK,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEGAMEPAD_STANDARD << 8)|DI8DEVTYPE_GAMEPAD,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_GAMEPAD,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEINSTANCEW),
+            .guidInstance = expect_guid_product,
+            .guidProduct = expect_guid_product,
+            .dwDevType = DIDEVTYPE_HID|(DI8DEVTYPEJOYSTICK_STANDARD << 8)|DI8DEVTYPE_JOYSTICK,
+            .tszInstanceName = L"Wine test root driver",
+            .tszProductName = L"Wine test root driver",
+            .guidFFDriver = GUID_NULL,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+    };
+
+    DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    IDirectInputDevice8W *device;
+    IDirectInput8W *di;
+    ULONG i, ref;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(device_desc); ++i)
+    {
+        winetest_push_context( "desc[%d]", i );
+        GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
+        GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
+        SetCurrentDirectoryW( tempdir );
+
+        cleanup_registry_keys();
+        if (!dinput_driver_start( device_desc[i].report_desc_buf, device_desc[i].report_desc_len,
+                                  &device_desc[i].hid_caps ))
+        {
+            i = ARRAY_SIZE(device_desc);
+            goto done;
+        }
+
+        hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
+        if (FAILED(hr))
+        {
+            win_skip( "DirectInput8Create returned %#x\n", hr );
+            i = ARRAY_SIZE(device_desc);
+            goto done;
+        }
+
+        hr = IDirectInput8_EnumDevices( di, DI8DEVCLASS_ALL, find_test_device, &devinst, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "IDirectInput8_EnumDevices returned: %#x\n", hr );
+        if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
+        {
+            win_skip( "device not found, skipping tests\n" );
+            IDirectInput8_Release( di );
+            i = ARRAY_SIZE(device_desc);
+            goto done;
+        }
+
+        hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
+        ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
+
+        hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+        ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+        check_member( devinst, expect_devinst[i], "%d", dwSize );
+        todo_wine
+        check_member_guid( devinst, expect_devinst[i], guidInstance );
+        check_member_guid( devinst, expect_devinst[i], guidProduct );
+        todo_wine_if( i < 2 )
+        check_member( devinst, expect_devinst[i], "%#x", dwDevType );
+        todo_wine
+        check_member_wstr( devinst, expect_devinst[i], tszInstanceName );
+        todo_wine
+        check_member_wstr( devinst, expect_devinst[i], tszProductName );
+        check_member_guid( devinst, expect_devinst[i], guidFFDriver );
+        check_member( devinst, expect_devinst[i], "%04x", wUsagePage );
+        check_member( devinst, expect_devinst[i], "%04x", wUsage );
+
+        hr = IDirectInputDevice8_GetCapabilities( device, &caps );
+        ok( hr == DI_OK, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
+        check_member( caps, expect_caps[i], "%d", dwSize );
+        check_member( caps, expect_caps[i], "%#x", dwFlags );
+        todo_wine_if( i < 2 )
+        check_member( caps, expect_caps[i], "%#x", dwDevType );
+        check_member( caps, expect_caps[i], "%d", dwAxes );
+        check_member( caps, expect_caps[i], "%d", dwButtons );
+        check_member( caps, expect_caps[i], "%d", dwPOVs );
+        check_member( caps, expect_caps[i], "%d", dwFFSamplePeriod );
+        check_member( caps, expect_caps[i], "%d", dwFFMinTimeResolution );
+        check_member( caps, expect_caps[i], "%d", dwFirmwareRevision );
+        check_member( caps, expect_caps[i], "%d", dwHardwareRevision );
+        check_member( caps, expect_caps[i], "%d", dwFFDriverVersion );
+
+        ref = IDirectInputDevice8_Release( device );
+        ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
+
+        ref = IDirectInput8_Release( di );
+        ok( ref == 0, "IDirectInput8_Release returned %d\n", ref );
+
+    done:
+        pnp_driver_stop();
+        cleanup_registry_keys();
+        SetCurrentDirectoryW( cwd );
+        winetest_pop_context();
+    }
+}
+
 START_TEST( hid )
 {
     HANDLE mapping;
@@ -4701,6 +5037,7 @@ START_TEST( hid )
     test_hid_driver( 1, TRUE );
 
     CoInitialize( NULL );
+    test_device_types();
     test_simple_joystick();
     CoUninitialize();
 
