@@ -43,8 +43,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
+static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
+static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 
 static void *vulkan_handle;
+static const struct vulkan_funcs vulkan_funcs;
 
 /* Helper function for converting between win32 and Wayland compatible VkInstanceCreateInfo.
  * Caller is responsible for allocation and cleanup of 'dst'. */
@@ -170,6 +173,30 @@ static VkResult wayland_vkEnumerateInstanceExtensionProperties(const char *layer
     return res;
 }
 
+static void *wayland_vkGetDeviceProcAddr(VkDevice device, const char *name)
+{
+    void *proc_addr;
+
+    TRACE("%p, %s\n", device, debugstr_a(name));
+
+    if ((proc_addr = get_vulkan_driver_device_proc_addr(&vulkan_funcs, name)))
+        return proc_addr;
+
+    return pvkGetDeviceProcAddr(device, name);
+}
+
+static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name)
+{
+    void *proc_addr;
+
+    TRACE("%p, %s\n", instance, debugstr_a(name));
+
+    if ((proc_addr = get_vulkan_driver_instance_proc_addr(&vulkan_funcs, instance, name)))
+        return proc_addr;
+
+    return pvkGetInstanceProcAddr(instance, name);
+}
+
 static void wine_vk_init(void)
 {
     if (!(vulkan_handle = dlopen(SONAME_LIBVULKAN, RTLD_NOW)))
@@ -182,6 +209,8 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkCreateInstance);
     LOAD_FUNCPTR(vkDestroyInstance);
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
+    LOAD_FUNCPTR(vkGetDeviceProcAddr);
+    LOAD_FUNCPTR(vkGetInstanceProcAddr);
 #undef LOAD_FUNCPTR
 
     return;
@@ -196,6 +225,8 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkCreateInstance = wayland_vkCreateInstance,
     .p_vkDestroyInstance = wayland_vkDestroyInstance,
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
+    .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
+    .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
 };
 
 /**********************************************************************
