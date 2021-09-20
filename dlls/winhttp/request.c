@@ -2825,6 +2825,11 @@ static DWORD query_data_ready( struct request *request )
     return count;
 }
 
+static BOOL skip_async_queue( struct request *request )
+{
+    return request->hdr.recursion_count < 3 && (end_of_read_data( request ) || query_data_ready( request ));
+}
+
 static DWORD query_data_available( struct request *request, DWORD *available, BOOL async )
 {
     DWORD ret = ERROR_SUCCESS, count = 0;
@@ -2889,8 +2894,7 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         return FALSE;
     }
 
-    if ((async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) && !end_of_read_data( request )
-                                                                   && !query_data_ready( request ))
+    if ((async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) && !skip_async_queue( request ))
     {
         struct query_data *q;
 
@@ -2947,8 +2951,7 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
         return FALSE;
     }
 
-    if ((async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) && !end_of_read_data( request )
-                                                                   && !query_data_ready( request ))
+    if ((async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) && !skip_async_queue( request ))
     {
         struct read_data *r;
 

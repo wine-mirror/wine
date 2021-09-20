@@ -48,8 +48,10 @@ void send_callback( struct object_header *hdr, DWORD status, void *info, DWORD b
 {
     if (hdr->callback && (hdr->notify_mask & status))
     {
-        TRACE("%p, 0x%08x, %p, %u\n", hdr, status, info, buflen);
+        TRACE("%p, 0x%08x, %p, %u, %u\n", hdr, status, info, buflen, hdr->recursion_count);
+        InterlockedIncrement( &hdr->recursion_count );
         hdr->callback( hdr->handle, hdr->context, status, info, buflen );
+        InterlockedDecrement( &hdr->recursion_count );
         TRACE("returning from 0x%08x callback\n", status);
     }
 }
