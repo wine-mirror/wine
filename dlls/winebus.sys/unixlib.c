@@ -143,6 +143,8 @@ static const WCHAR mouse_bus_id[] = {'W','I','N','E','M','O','U','S','E',0};
 static const struct device_desc mouse_device_desc =
 {
     .busid = mouse_bus_id,
+    .vid = 0x845e,
+    .pid = 0x0001,
     .input = -1,
     .manufacturer = {"The Wine Project"},
     .product = {"Wine HID mouse"},
@@ -241,6 +243,8 @@ static const WCHAR keyboard_bus_id[] = {'W','I','N','E','K','E','Y','B','O','A',
 static const struct device_desc keyboard_device_desc =
 {
     .busid = keyboard_bus_id,
+    .vid = 0x845e,
+    .pid = 0x0002,
     .input = -1,
     .manufacturer = {"The Wine Project"},
     .product = {"Wine HID keyboard"},
