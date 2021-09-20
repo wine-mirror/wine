@@ -31,6 +31,8 @@ typedef struct {
     IEnumVARIANT IEnumVARIANT_iface;
 
     LONG ref;
+
+    HWND hwnd;
 } Window;
 
 static inline Window* impl_from_Window(IAccessible *iface)
@@ -327,11 +329,14 @@ static ULONG WINAPI Window_OleWindow_Release(IOleWindow *iface)
     return IAccessible_Release(&This->IAccessible_iface);
 }
 
-static HRESULT WINAPI Window_OleWindow_GetWindow(IOleWindow *iface, HWND *phwnd)
+static HRESULT WINAPI Window_OleWindow_GetWindow(IOleWindow *iface, HWND *hwnd)
 {
     Window *This = impl_from_Window_OleWindow(iface);
-    FIXME("(%p)->(%p)\n", This, phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, hwnd);
+
+    *hwnd = This->hwnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI Window_OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMode)
@@ -427,6 +432,7 @@ HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
     window->IOleWindow_iface.lpVtbl = &WindowOleWindowVtbl;
     window->IEnumVARIANT_iface.lpVtbl = &WindowEnumVARIANTVtbl;
     window->ref = 1;
+    window->hwnd = hwnd;
 
     hres = IAccessible_QueryInterface(&window->IAccessible_iface, iid, obj);
     IAccessible_Release(&window->IAccessible_iface);

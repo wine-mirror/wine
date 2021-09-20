@@ -1039,8 +1039,8 @@ static void test_default_client_accessible_object(void)
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
     ok(hr == S_OK, "got %x\n", hr);
     hr = IOleWindow_GetWindow(ow, &hwnd2);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
-    todo_wine ok(btn == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, btn);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(btn == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, btn);
     IOleWindow_Release(ow);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
@@ -1064,8 +1064,8 @@ static void test_default_client_accessible_object(void)
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
     ok(hr == S_OK, "got %x\n", hr);
     hr = IOleWindow_GetWindow(ow, &hwnd2);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
-    todo_wine ok(chld == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(chld == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld);
     IOleWindow_Release(ow);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
@@ -1088,8 +1088,8 @@ static void test_default_client_accessible_object(void)
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
     ok(hr == S_OK, "got %x\n", hr);
     hr = IOleWindow_GetWindow(ow, &hwnd2);
-    todo_wine ok(hr == S_OK, "got %x\n", hr);
-    todo_wine ok(chld2 == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld2);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(chld2 == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld2);
     IOleWindow_Release(ow);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
