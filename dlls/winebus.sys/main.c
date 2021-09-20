@@ -41,23 +41,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
-#if defined(__i386__) && !defined(_WIN32)
-
-extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
-__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
-                   "popl %ecx\n\t"
-                   "popl %eax\n\t"
-                   "xchgl (%esp),%ecx\n\t"
-                   "jmp *%eax" );
-
-#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
-
-#else
-
-#define call_fastcall_func1(func,a) func(a)
-
-#endif
-
 static DRIVER_OBJECT *driver_obj;
 
 static DEVICE_OBJECT *mouse_obj;
@@ -358,6 +341,18 @@ static void bus_unlink_hid_device(DEVICE_OBJECT *device)
     list_remove(&ext->entry);
     RtlLeaveCriticalSection(&device_list_cs);
 }
+
+#if defined(__i386__) && !defined(_WIN32)
+extern void * WINAPI wrap_fastcall_func1(void *func, const void *a);
+__ASM_STDCALL_FUNC(wrap_fastcall_func1, 8,
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
+                   "xchgl (%esp),%ecx\n\t"
+                   "jmp *%eax");
+#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
+#else
+#define call_fastcall_func1(func,a) func(a)
+#endif
 
 static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
 {
