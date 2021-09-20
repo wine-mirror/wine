@@ -3638,6 +3638,7 @@ static void test_simple_joystick(void)
     ULONG i, res, ref;
     HRESULT hr;
     WCHAR *tmp;
+    GUID guid;
     HWND hwnd;
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
@@ -3697,6 +3698,31 @@ static void test_simple_joystick(void)
 
     hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
     ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, 0x0700, &GUID_NULL );
+    todo_wine
+    ok( hr == DIERR_BETADIRECTINPUTVERSION, "IDirectInputDevice8_Initialize returned %#x\n", hr );
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "IDirectInputDevice8_Initialize returned %#x\n", hr );
+    hr = IDirectInputDevice8_Initialize( device, NULL, DIRECTINPUT_VERSION, &GUID_NULL );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_Initialize returned %#x\n", hr );
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_NULL );
+    todo_wine
+    ok( hr == REGDB_E_CLASSNOTREG, "IDirectInputDevice8_Initialize returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &devinst.guidInstance );
+    ok( hr == DI_OK, "IDirectInputDevice8_Initialize returned %#x\n", hr );
+    guid = devinst.guidInstance;
+    memset( &devinst, 0, sizeof(devinst) );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+    ok( IsEqualGUID( &guid, &devinst.guidInstance ), "got %s expected %s\n", debugstr_guid( &guid ),
+        debugstr_guid( &devinst.guidInstance ) );
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &devinst.guidProduct );
+    ok( hr == DI_OK, "IDirectInputDevice8_Initialize returned %#x\n", hr );
 
     hr = IDirectInputDevice8_GetDeviceInfo( device, NULL );
     ok( hr == E_POINTER, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
