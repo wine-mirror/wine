@@ -209,15 +209,19 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 static WCHAR *get_device_id(DEVICE_OBJECT *device)
 {
     static const WCHAR input_format[] = L"&MI_%02u";
-    static const WCHAR format[] = L"%s\\vid_%04x&pid_%04x";
+    static const WCHAR winebus_format[] = L"WINEBUS\\VID_%04X&PID_%04X";
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD pos = 0, len = wcslen(ext->desc.busid) + 34;
+    DWORD pos = 0, len = 0, input_len = 0, winebus_len = 25;
     WCHAR *dst;
+
+    if (ext->desc.input != -1) input_len = 14;
+
+    len += winebus_len + input_len + 1;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
     {
-        pos += swprintf(dst + pos, len - pos, format, ext->desc.busid, ext->desc.vid, ext->desc.pid);
-        if (ext->desc.input != -1) pos += swprintf(dst + pos, len - pos, input_format, ext->desc.input);
+        pos += swprintf(dst + pos, len - pos, winebus_format, ext->desc.vid, ext->desc.pid);
+        if (input_len) pos += swprintf(dst + pos, len - pos, input_format, ext->desc.input);
     }
 
     return dst;
