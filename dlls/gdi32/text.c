@@ -54,6 +54,7 @@
 #include "usp10.h"
 #include "wine/debug.h"
 #include "gdi_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
@@ -2037,6 +2038,29 @@ BOOL WINAPI GdiRealizationInfo( HDC hdc, struct realization_info *info )
     return TRUE;
 }
 
+static void load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
+{
+    HRSRC rsrc;
+    HGLOBAL hMem;
+    WCHAR *p;
+    int i;
+
+    id += IDS_FIRST_SCRIPT;
+    buffer[0] = 0;
+    rsrc = FindResourceW( gdi32_module, (LPCWSTR)(ULONG_PTR)((id >> 4) + 1), (LPCWSTR)6 /*RT_STRING*/ );
+    if (!rsrc) return;
+    hMem = LoadResource( gdi32_module, rsrc );
+    if (!hMem) return;
+
+    p = LockResource( hMem );
+    id &= 0x000f;
+    while (id--) p += *p + 1;
+
+    i = min( LF_FACESIZE - 1, *p );
+    memcpy( buffer, p + 1, i * sizeof(WCHAR) );
+    buffer[i] = 0;
+}
+
 /***********************************************************************
  *           EnumFontFamiliesExW    (GDI32.@)
  */
@@ -2072,6 +2096,7 @@ INT WINAPI EnumFontFamiliesExW( HDC hdc, LOGFONTW *lf, FONTENUMPROCW efproc,
     count /= sizeof(*entries);
     for (i = 0; ret && i < count; i++)
     {
+        load_script_name( entries[i].lf.elfScript[0], entries[i].lf.elfScript );
         ret = efproc( (const LOGFONTW *)&entries[i].lf, (const TEXTMETRICW *)&entries[i].tm,
                       entries[i].type, lparam );
     }

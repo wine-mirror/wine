@@ -32,7 +32,6 @@
 #include "winternl.h"
 #include "winreg.h"
 #include "ntgdi_private.h"
-#include "resource.h"
 #include "wine/exception.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"
@@ -2589,29 +2588,6 @@ struct enum_charset
     DWORD script;
 };
 
-static int load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
-{
-    HRSRC rsrc;
-    HGLOBAL hMem;
-    WCHAR *p;
-    int i;
-
-    id += IDS_FIRST_SCRIPT;
-    rsrc = FindResourceW( gdi32_module, (LPCWSTR)(ULONG_PTR)((id >> 4) + 1), (LPCWSTR)6 /*RT_STRING*/ );
-    if (!rsrc) return 0;
-    hMem = LoadResource( gdi32_module, rsrc );
-    if (!hMem) return 0;
-
-    p = LockResource( hMem );
-    id &= 0x000f;
-    while (id--) p += *p + 1;
-
-    i = min(LF_FACESIZE - 1, *p);
-    memcpy(buffer, p + 1, i * sizeof(WCHAR));
-    buffer[i] = 0;
-    return i;
-}
-
 static BOOL is_complex_script_ansi_cp( UINT ansi_cp )
 {
     return (ansi_cp == 874 /* Thai */
@@ -2678,7 +2654,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset *list)
         {
             list->mask    = ~mask;
             list->charset = DEFAULT_CHARSET;
-            list->script  = IDS_OTHER - IDS_FIRST_SCRIPT;
+            list->script  = 33; /* other */
             list++;
         }
     }
@@ -2834,7 +2810,7 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
         if (face->fs.fsCsb[0] == 0)  /* OEM */
         {
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
-            load_script_name( IDS_OEM_DOS - IDS_FIRST_SCRIPT, elf.elfScript );
+            elf.elfScript[0] = 32;
             i = count; /* break out of loop after enumeration */
         }
         else
@@ -2843,8 +2819,8 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
             /* use the DEFAULT_CHARSET case only if no other charset is present */
             if (list[i].charset == DEFAULT_CHARSET && (face->fs.fsCsb[0] & ~list[i].mask)) continue;
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = list[i].charset;
-            load_script_name( list[i].script, elf.elfScript );
-            if (!elf.elfScript[0]) FIXME("Unknown elfscript for id %u\n", list[i].script);
+            /* caller may fill elfScript with the actual string, see load_script_name */
+            elf.elfScript[0] = list[i].script;
         }
         TRACE( "face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
                debugstr_w(elf.elfLogFont.lfFaceName), debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
