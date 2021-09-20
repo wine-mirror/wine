@@ -6405,9 +6405,10 @@ static const struct message WmLButtonUpAutoSeq[] =
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|optional, 0, 0 },
     { BM_SETCHECK, sent|defwinproc },
+    { WM_CTLCOLORSTATIC, sent|defwinproc|optional, 0, 0 }, /* Sent here on Win7. */
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
-    { WM_CTLCOLORSTATIC, sent|defwinproc, 0, 0 },
+    { WM_CTLCOLORSTATIC, sent|defwinproc|optional, 0, 0 }, /* Sent here on Win8+. */
     { WM_CAPTURECHANGED, sent|wparam|defwinproc, 0 },
     { 0 }
 };
@@ -18508,6 +18509,9 @@ START_TEST(msg)
     test_showwindow();
     invisible_parent_tests();
     test_mdi_messages();
+    test_button_messages();
+    test_button_bm_get_set_image();
+    test_button_style();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18518,9 +18522,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_button_messages();
-    test_button_bm_get_set_image();
-    test_button_style();
     test_autoradio_BM_CLICK();
     test_autoradio_kbd_move();
     test_static_messages();
