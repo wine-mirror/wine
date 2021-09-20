@@ -66,6 +66,7 @@ static VkResult (*pvkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, cons
 static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkPresentModeKHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
+static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 
 static void *vulkan_handle;
 static const struct vulkan_funcs vulkan_funcs;
@@ -166,6 +167,8 @@ static const char *wine_vk_native_fn_name(const char *name)
 {
     if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
         return "vkCreateWaylandSurfaceKHR";
+    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+        return "vkGetPhysicalDeviceWaylandPresentationSupportKHR";
 
     return name;
 }
@@ -612,6 +615,15 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice ph
                                                  supported);
 }
 
+static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
+                                                                       uint32_t index)
+{
+    TRACE("%p %u\n", phys_dev, index);
+
+    return pvkGetPhysicalDeviceWaylandPresentationSupportKHR(phys_dev, index,
+                                                             process_wayland.wl_display);
+}
+
 static VkSurfaceKHR wayland_wine_get_native_surface(VkSurfaceKHR surface)
 {
     return wine_vk_surface_from_handle(surface)->native;
@@ -642,6 +654,7 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
 #undef LOAD_FUNCPTR
 #undef LOAD_OPTIONAL_FUNCPTR
 
@@ -669,6 +682,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceSurfaceFormatsKHR = wayland_vkGetPhysicalDeviceSurfaceFormatsKHR,
     .p_vkGetPhysicalDeviceSurfacePresentModesKHR = wayland_vkGetPhysicalDeviceSurfacePresentModesKHR,
     .p_vkGetPhysicalDeviceSurfaceSupportKHR = wayland_vkGetPhysicalDeviceSurfaceSupportKHR,
+    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_wine_get_native_surface = wayland_wine_get_native_surface,
 };
 
