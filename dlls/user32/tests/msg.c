@@ -7127,26 +7127,26 @@ static const struct message auto_radio_button_BM_CLICK[] =
 {
     { BM_CLICK, sent|wparam|lparam, 0, 0 },
     { WM_LBUTTONDOWN, sent|wparam|lparam|defwinproc, 0, 0 },
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO2 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_LBUTTONUP, sent|wparam|lparam|defwinproc, 0, 0 },
     { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO2 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO2, 0 },
     { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO2 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO1, 0 },
     { BM_SETCHECK, sent|wparam|lparam|defwinproc, 0, ID_RADIO1 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO3, 0 },
     { BM_SETCHECK, sent|wparam|lparam|defwinproc, 0, ID_RADIO3 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_TEXT, 0 },
-    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO2, BN_CLICKED) },
     { WM_NCHITTEST, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
@@ -7217,7 +7217,7 @@ static const struct message auto_radio_button_VK_DOWN_dialog[] =
     { WM_KILLFOCUS, sent, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO3, BN_KILLFOCUS) },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO1, BN_SETFOCUS) },
@@ -7228,28 +7228,28 @@ static const struct message auto_radio_button_VK_DOWN_dialog[] =
     { BM_GETCHECK, sent|wparam|lparam, 0, ID_RADIO1 },
     { BM_CLICK, sent|wparam|lparam, 1, 0 },
     { WM_LBUTTONDOWN, sent|wparam|lparam|defwinproc, 0, 0 },
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO1 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_LBUTTONUP, sent|wparam|lparam|defwinproc, 0, 0 },
     { BM_SETSTATE, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO1 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO1, 0 },
     { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_CHECKED, ID_RADIO1 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO3, 0 },
     { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO3 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_TEXT, 0 },
     { WM_GETDLGCODE, sent|wparam|lparam|defwinproc, ID_RADIO2, 0 },
     { BM_SETCHECK, sent|wparam|lparam|defwinproc, BST_UNCHECKED, ID_RADIO2 },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO1, BN_CLICKED) },
     { WM_NCHITTEST, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
@@ -18512,6 +18512,9 @@ START_TEST(msg)
     test_button_messages();
     test_button_bm_get_set_image();
     test_button_style();
+    test_autoradio_BM_CLICK();
+    test_autoradio_kbd_move();
+    test_static_messages();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18522,9 +18525,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_autoradio_BM_CLICK();
-    test_autoradio_kbd_move();
-    test_static_messages();
     test_listbox_messages();
     test_combobox_messages();
     test_wmime_keydown_message();
