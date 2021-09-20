@@ -36,8 +36,6 @@
 #include "wine/test.h"
 #include "wine/heap.h"
 
-#define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
-#define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %d\n", cLocks)
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
 #define CHECK_EXPECTED_METHOD(method_name) \
@@ -138,18 +136,6 @@ static IMoniker *create_antimoniker(DWORD level)
     return moniker;
 }
 
-static LONG cLocks;
-
-static void LockModule(void)
-{
-    InterlockedIncrement(&cLocks);
-}
-
-static void UnlockModule(void)
-{
-    InterlockedDecrement(&cLocks);
-}
-
 static SIZE_T round_global_size(SIZE_T size)
 {
     static SIZE_T global_size_alignment = -1;
@@ -163,7 +149,23 @@ static SIZE_T round_global_size(SIZE_T size)
     return ((size + global_size_alignment - 1) & ~(global_size_alignment - 1));
 }
 
-static DWORD external_connections;
+struct test_factory
+{
+    IClassFactory IClassFactory_iface;
+    IExternalConnection IExternalConnection_iface;
+    LONG refcount;
+    unsigned int external_connections;
+};
+
+static struct test_factory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_factory, IClassFactory_iface);
+}
+
+static struct test_factory *impl_from_IExternalConnection(IExternalConnection *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_factory, IExternalConnection_iface);
+}
 
 static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
 {
@@ -174,28 +176,31 @@ static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *ifa
 
 static ULONG WINAPI ExternalConnection_AddRef(IExternalConnection *iface)
 {
-    return 2;
+    struct test_factory *factory = impl_from_IExternalConnection(iface);
+    return IClassFactory_AddRef(&factory->IClassFactory_iface);
 }
 
 static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
 {
-    return 1;
+    struct test_factory *factory = impl_from_IExternalConnection(iface);
+    return IClassFactory_Release(&factory->IClassFactory_iface);
 }
 
 static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
 {
-    ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
+    struct test_factory *factory = impl_from_IExternalConnection(iface);
+    ok(extconn == EXTCONN_STRONG, "Unexpected connection type %d\n", extconn);
     ok(!reserved, "reserved = %x\n", reserved);
-    return ++external_connections;
+    return ++factory->external_connections;
 }
 
 static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
         DWORD reserved, BOOL fLastReleaseCloses)
 {
-    ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
+    struct test_factory *factory = impl_from_IExternalConnection(iface);
+    ok(extconn == EXTCONN_STRONG, "Unexpected connection type %d\n", extconn);
     ok(!reserved, "reserved = %x\n", reserved);
-
-    return --external_connections;
+    return --factory->external_connections;
 }
 
 static const IExternalConnectionVtbl ExternalConnectionVtbl = {
@@ -206,70 +211,70 @@ static const IExternalConnectionVtbl ExternalConnectionVtbl = {
     ExternalConnection_ReleaseConnection
 };
 
-static IExternalConnection ExternalConnection = { &ExternalConnectionVtbl };
-
-static HRESULT WINAPI Test_IClassFactory_QueryInterface(
-    LPCLASSFACTORY iface,
-    REFIID riid,
-    LPVOID *ppvObj)
+static HRESULT WINAPI test_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
 {
-    if (ppvObj == NULL) return E_POINTER;
+    struct test_factory *factory = impl_from_IClassFactory(iface);
+
+    if (!obj) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
     {
-        *ppvObj = iface;
-        IClassFactory_AddRef(iface);
-        return S_OK;
+        *obj = iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IExternalConnection))
+    {
+        *obj = &factory->IExternalConnection_iface;
+    }
+    else
+    {
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    if(IsEqualGUID(riid, &IID_IExternalConnection)) {
-        *ppvObj = &ExternalConnection;
-        return S_OK;
-    }
-
-    *ppvObj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
 }
 
-static ULONG WINAPI Test_IClassFactory_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI test_factory_AddRef(IClassFactory *iface)
 {
-    LockModule();
-    return 2; /* non-heap-based object */
+    struct test_factory *factory = impl_from_IClassFactory(iface);
+    return InterlockedIncrement(&factory->refcount);
 }
 
-static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI test_factory_Release(IClassFactory *iface)
 {
-    UnlockModule();
-    return 1; /* non-heap-based object */
+    struct test_factory *factory = impl_from_IClassFactory(iface);
+    return InterlockedDecrement(&factory->refcount);
 }
 
-static HRESULT WINAPI Test_IClassFactory_CreateInstance(
-    LPCLASSFACTORY iface,
-    LPUNKNOWN pUnkOuter,
-    REFIID riid,
-    LPVOID *ppvObj)
+static HRESULT WINAPI test_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **obj)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Test_IClassFactory_LockServer(
-    LPCLASSFACTORY iface,
-    BOOL fLock)
+static HRESULT WINAPI test_factory_LockServer(IClassFactory *iface, BOOL lock)
 {
     return S_OK;
 }
 
-static const IClassFactoryVtbl TestClassFactory_Vtbl =
+static const IClassFactoryVtbl test_factory_vtbl =
 {
-    Test_IClassFactory_QueryInterface,
-    Test_IClassFactory_AddRef,
-    Test_IClassFactory_Release,
-    Test_IClassFactory_CreateInstance,
-    Test_IClassFactory_LockServer
+    test_factory_QueryInterface,
+    test_factory_AddRef,
+    test_factory_Release,
+    test_factory_CreateInstance,
+    test_factory_LockServer
 };
 
-static IClassFactory Test_ClassFactory = { &TestClassFactory_Vtbl };
+static void test_factory_init(struct test_factory *factory)
+{
+    factory->IClassFactory_iface.lpVtbl = &test_factory_vtbl;
+    factory->IExternalConnection_iface.lpVtbl = &ExternalConnectionVtbl;
+    factory->refcount = 1;
+    factory->external_connections = 0;
+}
 
 typedef struct
 {
@@ -796,6 +801,7 @@ static void test_ROT(void)
     IMoniker *pMoniker = NULL;
     struct test_moniker *test_moniker;
     IRunningObjectTable *pROT = NULL;
+    struct test_factory factory;
     DWORD dwCookie;
     static const char *methods_register_no_ROTData[] =
     {
@@ -830,7 +836,7 @@ static void test_ROT(void)
         NULL
     };
 
-    cLocks = 0;
+    test_factory_init(&factory);
 
     hr = GetRunningObjectTable(0, &pROT);
     ok_ole_success(hr, GetRunningObjectTable);
@@ -839,15 +845,13 @@ static void test_ROT(void)
     test_moniker->no_IROTData = TRUE;
 
     expected_method_list = methods_register_no_ROTData;
-    external_connections = 0;
     /* try with our own moniker that doesn't support IROTData */
-    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&Test_ClassFactory,
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&factory.IClassFactory_iface,
             &test_moniker->IMoniker_iface, &dwCookie);
     ok(hr == S_OK, "Failed to register interface, hr %#x.\n", hr);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
-    ok(external_connections == 1, "external_connections = %d\n", external_connections);
-
-    ok_more_than_one_lock();
+    ok(factory.external_connections == 1, "external_connections = %d\n", factory.external_connections);
+    ok(factory.refcount > 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     expected_method_list = methods_isrunning_no_ROTData;
     hr = IRunningObjectTable_IsRunning(pROT, &test_moniker->IMoniker_iface);
@@ -856,19 +860,17 @@ static void test_ROT(void)
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Revoke);
-    ok(external_connections == 0, "external_connections = %d\n", external_connections);
-
-    ok_no_locks();
+    ok(!factory.external_connections, "external_connections = %d\n", factory.external_connections);
+    ok(factory.refcount == 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     expected_method_list = methods_register;
     /* try with our own moniker */
     test_moniker->no_IROTData = FALSE;
-    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
-        (IUnknown *)&Test_ClassFactory, &test_moniker->IMoniker_iface, &dwCookie);
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&factory.IClassFactory_iface,
+            &test_moniker->IMoniker_iface, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
-
-    ok_more_than_one_lock();
+    ok(factory.refcount > 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     expected_method_list = methods_isrunning;
     hr = IRunningObjectTable_IsRunning(pROT, &test_moniker->IMoniker_iface);
@@ -877,50 +879,47 @@ static void test_ROT(void)
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Revoke);
-
-    ok_no_locks();
+    ok(factory.refcount == 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     hr = CreateFileMoniker(wszFileName, &pMoniker);
     ok_ole_success(hr, CreateClassMoniker);
 
     /* test flags: 0 */
-    external_connections = 0;
-    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown*)&Test_ClassFactory,
-                                      pMoniker, &dwCookie);
+    factory.external_connections = 0;
+    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown *)&factory.IClassFactory_iface, pMoniker, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
-    ok(external_connections == 0, "external_connections = %d\n", external_connections);
-
-    ok_more_than_one_lock();
+    ok(!factory.external_connections, "external_connections = %d\n", factory.external_connections);
+    ok(factory.refcount > 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Revoke);
-
-    ok_no_locks();
+    ok(factory.refcount == 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     /* test flags: ROTFLAGS_REGISTRATIONKEEPSALIVE */
-    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
-        (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&factory.IClassFactory_iface,
+            pMoniker, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
-
-    ok_more_than_one_lock();
+    ok(factory.refcount > 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Revoke);
-
-    ok_no_locks();
+    ok(factory.refcount == 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     /* test flags: ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT */
     /* only succeeds when process is started by SCM and has LocalService
      * or RunAs AppId values */
-    hr = IRunningObjectTable_Register(pROT,
-        ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT,
-        (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE | ROTFLAGS_ALLOWANYCLIENT,
+            (IUnknown *)&factory.IClassFactory_iface, pMoniker, &dwCookie);
     todo_wine {
     ok(hr == CO_E_WRONG_SERVER_IDENTITY, "Unexpected hr %#x.\n", hr);
     }
+    if (SUCCEEDED(hr))
+    {
+        hr = IRunningObjectTable_Revoke(pROT, dwCookie);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    }
 
-    hr = IRunningObjectTable_Register(pROT, 0xdeadbeef,
-        (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    hr = IRunningObjectTable_Register(pROT, 0xdeadbeef, (IUnknown *)&factory.IClassFactory_iface, pMoniker, &dwCookie);
     ok(hr == E_INVALIDARG, "IRunningObjectTable_Register should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     IMoniker_Release(pMoniker);
@@ -938,6 +937,9 @@ static void test_ROT_multiple_entries(void)
     IUnknown *pObject = NULL;
     static const WCHAR moniker_path[] =
         {'\\', 'w','i','n','d','o','w','s','\\','s','y','s','t','e','m','\\','t','e','s','t','1','.','d','o','c',0};
+    struct test_factory factory;
+
+    test_factory_init(&factory);
 
     hr = GetRunningObjectTable(0, &pROT);
     ok_ole_success(hr, GetRunningObjectTable);
@@ -945,10 +947,10 @@ static void test_ROT_multiple_entries(void)
     hr = CreateFileMoniker(moniker_path, &pMoniker);
     ok_ole_success(hr, CreateFileMoniker);
 
-    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown *)&Test_ClassFactory, pMoniker, &dwCookie1);
+    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown *)&factory.IClassFactory_iface, pMoniker, &dwCookie1);
     ok_ole_success(hr, IRunningObjectTable_Register);
 
-    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown *)&Test_ClassFactory, pMoniker, &dwCookie2);
+    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown *)&factory.IClassFactory_iface, pMoniker, &dwCookie2);
     ok(hr == MK_S_MONIKERALREADYREGISTERED, "IRunningObjectTable_Register should have returned MK_S_MONIKERALREADYREGISTERED instead of 0x%08x\n", hr);
 
     ok(dwCookie1 != dwCookie2, "cookie returned for registering duplicate object shouldn't match cookie of original object (0x%x)\n", dwCookie1);
@@ -1103,6 +1105,9 @@ static void test_MkParseDisplayName(void)
         {&pbc,  wszEmpty, &eaten, NULL},
         {&pbc,  wszEmpty, &eaten, &pmk},
     };
+    struct test_factory factory;
+
+    test_factory_init(&factory);
 
     hr = CreateBindCtx(0, &pbc);
     ok_ole_success(hr, CreateBindCtx);
@@ -1143,7 +1148,7 @@ todo_wine
     ok_ole_success(hr, CreateFileMoniker);
     hr = IBindCtx_GetRunningObjectTable(pbc, &pprot);
     ok_ole_success(hr, IBindCtx_GetRunningObjectTable);
-    hr = IRunningObjectTable_Register(pprot, 0, (IUnknown *)&Test_ClassFactory, pmk, &pdwReg1);
+    hr = IRunningObjectTable_Register(pprot, 0, (IUnknown *)&factory.IClassFactory_iface, pmk, &pdwReg1);
     ok_ole_success(hr, IRunningObjectTable_Register);
     IMoniker_Release(pmk);
     pmk = NULL;
@@ -1164,7 +1169,7 @@ todo_wine
     ok_ole_success(hr, CreateFileMoniker);
     hr = IBindCtx_GetRunningObjectTable(pbc, &pprot);
     ok_ole_success(hr, IBindCtx_GetRunningObjectTable);
-    hr = IRunningObjectTable_Register(pprot, 0, (IUnknown *)&Test_ClassFactory, pmk, &pdwReg1);
+    hr = IRunningObjectTable_Register(pprot, 0, (IUnknown *)&factory.IClassFactory_iface, pmk, &pdwReg1);
     ok_ole_success(hr, IRunningObjectTable_Register);
     IMoniker_Release(pmk);
     pmk = NULL;
@@ -3032,6 +3037,7 @@ todo_wine
 static void test_pointer_moniker(void)
 {
     IMoniker *moniker, *moniker2, *prefix, *inverse, *anti;
+    struct test_factory factory;
     IEnumMoniker *enummoniker;
     DWORD hash, size;
     HRESULT hr;
@@ -3045,13 +3051,13 @@ static void test_pointer_moniker(void)
     LARGE_INTEGER pos;
     CLSID clsid;
 
-    cLocks = 0;
+    test_factory_init(&factory);
 
-    hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, NULL);
-    ok(hr == E_INVALIDARG, "CreatePointerMoniker(x, NULL) should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+    hr = CreatePointerMoniker((IUnknown *)&factory.IClassFactory_iface, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker);
-    ok_ole_success(hr, CreatePointerMoniker);
+    hr = CreatePointerMoniker((IUnknown *)&factory.IClassFactory_iface, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_QueryInterface(moniker, &IID_IMoniker, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -3089,7 +3095,7 @@ static void test_pointer_moniker(void)
 
     IMarshal_Release(marshal);
 
-    ok_more_than_one_lock();
+    ok(factory.refcount > 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     /* Display Name */
 
@@ -3122,9 +3128,7 @@ static void test_pointer_moniker(void)
     /* Hashing */
     hr = IMoniker_Hash(moniker, &hash);
     ok_ole_success(hr, IMoniker_Hash);
-    ok(hash == PtrToUlong(&Test_ClassFactory),
-        "Hash value should have been 0x%08x, instead of 0x%08x\n",
-        PtrToUlong(&Test_ClassFactory), hash);
+    ok(hash == PtrToUlong(&factory.IClassFactory_iface), "Unexpected hash value %#x.\n", hash);
 
     /* IsSystemMoniker test */
     TEST_MONIKER_TYPE(moniker, MKSYS_POINTERMONIKER);
@@ -3154,8 +3158,7 @@ static void test_pointer_moniker(void)
 
     IMoniker_Release(moniker);
 
-todo_wine
-    ok(cLocks == 0, "Number of locks should be 0, but actually is %d.\n", cLocks);
+    ok(factory.refcount == 1, "Unexpected factory refcount %u.\n", factory.refcount);
 
     hr = CreatePointerMoniker(NULL, &moniker);
     ok_ole_success(hr, CreatePointerMoniker);
@@ -3178,10 +3181,10 @@ todo_wine
     IMoniker_Release(moniker);
 
     /* CommonPrefixWith() */
-    hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker);
+    hr = CreatePointerMoniker((IUnknown *)&factory.IClassFactory_iface, &moniker);
     ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
 
-    hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker2);
+    hr = CreatePointerMoniker((IUnknown *)&factory.IClassFactory_iface, &moniker2);
     ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, NULL);
