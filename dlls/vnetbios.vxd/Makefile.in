@@ -1,7 +1,5 @@
 MODULE    = vnetbios.vxd
 IMPORTS   = netapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	vnetbios.c

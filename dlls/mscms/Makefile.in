@@ -4,8 +4,6 @@ IMPORTS   = shlwapi advapi32
 EXTRAINCL = $(LCMS2_CFLAGS)
 EXTRALIBS = $(LCMS2_LIBS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	handle.c \
 	icc.c \

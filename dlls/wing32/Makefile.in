@@ -1,6 +1,4 @@
 MODULE    = wing32.dll
 IMPORTS   = user32 gdi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = wing32.c

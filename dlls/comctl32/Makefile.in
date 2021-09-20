@@ -4,8 +4,6 @@ IMPORTLIB = comctl32
 IMPORTS   = uuid user32 gdi32 advapi32 usp10 imm32 kernelbase
 DELAYIMPORTS = winmm uxtheme
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	animate.c \
 	button.c \

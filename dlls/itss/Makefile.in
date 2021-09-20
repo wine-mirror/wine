@@ -1,8 +1,6 @@
 MODULE    = itss.dll
 IMPORTS   = uuid urlmon shlwapi ole32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	chm_lib.c \
 	itss.c \

@@ -1,6 +1,4 @@
 MODULE    = ktmw32.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	ktmw32_main.c

@@ -2,7 +2,5 @@ MODULE    = rtworkq.dll
 IMPORTLIB = rtworkq
 IMPORTS   = ole32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	queue.c

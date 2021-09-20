@@ -1,7 +1,7 @@
 MODULE    = progman.exe
 IMPORTS   = shell32 comdlg32 user32 gdi32
 
-EXTRADLLFLAGS = -mwindows -mno-cygwin
+EXTRADLLFLAGS = -mwindows
 
 C_SRCS = \
 	dialog.c \

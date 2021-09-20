@@ -3,8 +3,6 @@ IMPORTLIB = wininet
 IMPORTS   = mpr shlwapi shell32 user32 ws2_32 advapi32
 DELAYIMPORTS = secur32 crypt32 cryptui dhcpcsvc iphlpapi
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	cookie.c \
 	dialogs.c \

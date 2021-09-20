@@ -1,7 +1,7 @@
 MODULE    = vbscript.dll
 IMPORTS   = oleaut32 ole32 user32
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	compile.c \

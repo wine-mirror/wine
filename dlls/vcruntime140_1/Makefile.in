@@ -1,6 +1,4 @@
 MODULE = vcruntime140_1.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	except_x86_64.c

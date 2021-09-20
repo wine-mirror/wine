@@ -1,8 +1,6 @@
 MODULE    = dispex.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	usrmarshal.c
 

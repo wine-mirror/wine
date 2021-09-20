@@ -1,8 +1,6 @@
 MODULE    = dxdiagn.dll
 IMPORTS   = strmiids dxguid uuid d3d9 ddraw dsound version ole32 oleaut32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	container.c \
 	dxdiag_main.c \

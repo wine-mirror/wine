@@ -1,8 +1,6 @@
 MODULE    = qmgrprxy.dll
 IMPORTS   = rpcrt4
 
-EXTRADLLFLAGS = -mno-cygwin
-
 IDL_SRCS = qmgrprxy.idl
 
 dlldata_EXTRADEFS = -DWINE_REGISTER_DLL

@@ -1,6 +1,4 @@
 MODULE    = vcruntime140.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	misc.c

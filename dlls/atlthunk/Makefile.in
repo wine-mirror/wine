@@ -1,7 +1,5 @@
 MODULE    = atlthunk.dll
 IMPORTLIB = atlthunk
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	atlthunk.c

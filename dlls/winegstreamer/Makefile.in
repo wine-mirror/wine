@@ -4,8 +4,6 @@ DELAYIMPORTS = mfplat
 EXTRAINCL = $(GSTREAMER_CFLAGS)
 EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	audioconvert.c \
 	main.c \

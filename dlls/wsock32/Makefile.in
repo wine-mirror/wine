@@ -2,8 +2,6 @@ MODULE    = wsock32.dll
 IMPORTLIB = wsock32
 IMPORTS   = mswsock ws2_32 iphlpapi
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	protocol.c \
 	service.c \

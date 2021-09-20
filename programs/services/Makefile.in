@@ -1,7 +1,7 @@
 MODULE    = services.exe
 IMPORTS   = rpcrt4 advapi32 userenv setupapi
 
-EXTRADLLFLAGS = -mconsole -mno-cygwin
+EXTRADLLFLAGS = -mconsole
 
 C_SRCS = \
 	rpc.c \

@@ -4,7 +4,6 @@ IMPORTLIB = msvcrtd
 IMPORTS   = ntdll
 PARENTSRC = ../msvcrt
 DELAYIMPORTS = advapi32 user32
-EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	console.c \

@@ -1,7 +1,5 @@
 MODULE    = ifsmgr.vxd
 IMPORTS   = kernel
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	ifsmgr.c

@@ -2,8 +2,6 @@ MODULE    = msdaps.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
 EXTRAIDLFLAGS = --win32-align=2
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	main.c \
 	row_server.c \

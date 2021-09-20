@@ -1,7 +1,4 @@
 MODULE    = vcomp110.dll
-
-EXTRADLLFLAGS = -mno-cygwin
-
 PARENTSRC = ../vcomp
 
 C_SRCS = \

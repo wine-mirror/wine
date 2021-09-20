@@ -3224,30 +3224,6 @@ static const struct
 
 
 /*******************************************************************
- *         has_object_file
- */
-static int has_object_file( struct makefile *make )
-{
-    struct incl_file *source;
-    int i;
-
-    LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
-    {
-        char *ext = get_extension( source->name );
-
-        if (!ext) fatal_error( "unsupported file type %s\n", source->name );
-        ext++;
-
-        for (i = 0; output_source_funcs[i].ext; i++)
-            if (!strcmp( ext, output_source_funcs[i].ext )) break;
-
-        if (!output_source_funcs[i].ext) return 1;  /* default extension builds to an object file */
-    }
-    return 0;
-}
-
-
-/*******************************************************************
  *         get_unix_lib_name
  */
 static char *get_unix_lib_name( struct makefile *make )
@@ -4253,15 +4229,14 @@ static void load_sources( struct makefile *make )
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
-    make->is_win16 = strarray_exists( &make->extradllflags, "-m16" );
-    if ((make->module && make->staticlib) || make->testdll || make->is_win16)
-        strarray_add_uniq( &make->extradllflags, "-mno-cygwin" );
-
-    strarray_addall( &make->extradllflags, get_expanded_make_var_array( make, "APPMODE" ));
     make->disabled   = make->obj_dir && strarray_exists( &disabled_dirs, make->obj_dir );
-    make->use_msvcrt = strarray_exists( &make->extradllflags, "-mno-cygwin" );
+    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
+    make->use_msvcrt = (make->module || make->testdll || make->is_win16) &&
+                       !strarray_exists( &make->extradllflags, "-mcygwin" );
     make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
                        strarray_exists( &make->extradllflags, "-mwindows" );
+
+    if (make->use_msvcrt) strarray_add_uniq( &make->extradllflags, "-mno-cygwin" );
 
     if (make->module && !make->install_lib.count && !make->install_dev.count)
     {
@@ -4302,12 +4277,6 @@ static void load_sources( struct makefile *make )
 
     add_generated_sources( make );
     make->unixlib = get_unix_lib_name( make );
-
-    if (!make->use_msvcrt && !has_object_file( make ))
-    {
-        strarray_add( &make->extradllflags, "-mno-cygwin" );
-        make->use_msvcrt = 1;
-    }
 
     if (make->use_msvcrt) add_crt_import( make, &make->imports, &make->define_args );
 

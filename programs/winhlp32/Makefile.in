@@ -2,7 +2,7 @@ MODULE    = winhlp32.exe
 IMPORTS   = user32 gdi32
 DELAYIMPORTS = shell32 comctl32 comdlg32
 
-EXTRADLLFLAGS = -mwindows -mno-cygwin
+EXTRADLLFLAGS = -mwindows
 
 C_SRCS = \
 	callback.c \

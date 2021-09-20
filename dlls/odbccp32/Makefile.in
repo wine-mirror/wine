@@ -2,7 +2,5 @@ MODULE    = odbccp32.dll
 IMPORTLIB = odbccp32
 IMPORTS   = uuid advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	odbccp32.c

@@ -1,7 +1,7 @@
 MODULE    = whoami.exe
 IMPORTS   = secur32
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = \
 	main.c

@@ -2,8 +2,6 @@ MODULE    = ieframe.dll
 IMPORTLIB = ieframe
 IMPORTS   = uuid urlmon shell32 comctl32 shlwapi oleaut32 ole32 user32 gdi32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	classinfo.c \
 	client.c \

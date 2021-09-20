@@ -1,6 +1,6 @@
 MODULE    = cacls.exe
 
-EXTRADLLFLAGS = -mconsole -mno-cygwin
+EXTRADLLFLAGS = -mconsole
 
 C_SRCS = \
 	cacls_main.c

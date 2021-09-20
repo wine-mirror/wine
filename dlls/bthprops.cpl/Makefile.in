@@ -1,6 +1,4 @@
 MODULE    = bthprops.cpl
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	main.c

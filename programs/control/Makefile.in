@@ -1,7 +1,7 @@
 MODULE    = control.exe
 IMPORTS   = shell32 user32 comctl32
 
-EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
+EXTRADLLFLAGS = -mwindows -municode
 
 C_SRCS = control.c
 

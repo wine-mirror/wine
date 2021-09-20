@@ -3,7 +3,7 @@ IMPORTLIB = evr
 IMPORTS   = mfuuid strmiids strmbase uuid dxguid ole32 oleaut32 user32 d3d9 dxva2
 DELAYIMPORTS = mfplat
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	evr.c \

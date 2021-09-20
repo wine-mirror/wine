@@ -2,7 +2,7 @@ MODULE    = winemine.exe
 IMPORTS   = user32 gdi32 advapi32 comctl32
 DELAYIMPORTS = shell32
 
-EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
+EXTRADLLFLAGS = -mwindows -municode
 
 C_SRCS = \
 	dialog.c \

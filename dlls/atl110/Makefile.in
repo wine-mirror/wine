@@ -3,8 +3,6 @@ IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32 uuid shlwapi
 EXTRADEFS = -D_ATL_VER=_ATL_VER_110
 PARENTSRC = ../atl
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	atl.c \
 	atl_ax.c \

@@ -1,8 +1,6 @@
 MODULE    = twain_32.dll
 IMPORTS   = user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	dsm_ctrl.c \
 	twain32_main.c

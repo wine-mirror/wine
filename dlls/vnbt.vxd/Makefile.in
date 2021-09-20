@@ -1,7 +1,5 @@
 MODULE    = vnbt.vxd
 IMPORTS   = iphlpapi ws2_32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	vnbt.c

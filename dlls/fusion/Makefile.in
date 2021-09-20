@@ -1,8 +1,6 @@
 MODULE    = fusion.dll
 IMPORTS   = bcrypt dbghelp shlwapi version user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	asmcache.c \
 	asmenum.c \

@@ -1,7 +1,7 @@
 MODULE    = msvcm90.dll
 PARENTSRC = ../msvcm80
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	msvcm_main.c

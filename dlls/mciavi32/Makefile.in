@@ -1,8 +1,6 @@
 MODULE    = mciavi32.dll
 IMPORTS   = msvfw32 winmm user32 gdi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	info.c \
 	mciavi.c \

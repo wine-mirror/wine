@@ -2,7 +2,8 @@ MODULE    = winebus.sys
 IMPORTS   = ntoskrnl advapi32
 EXTRALIBS = $(IOKIT_LIBS) $(UDEV_LIBS) $(PTHREAD_LIBS) -Wl,--subsystem,unixlib
 EXTRAINCL = $(UDEV_CFLAGS) $(SDL2_CFLAGS)
-EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	bus_iohid.c \

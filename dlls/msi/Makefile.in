@@ -4,8 +4,6 @@ IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 
 
 EXTRAIDLFLAGS = --prefix-server=s_
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	action.c \
 	alter.c \

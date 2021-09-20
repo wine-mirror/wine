@@ -2,8 +2,6 @@ MODULE = msvcp140.dll
 EXTRADEFS = -D_MSVCP_VER=140
 PARENTSRC = ../msvcp90
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	details.c \
 	exception.c \

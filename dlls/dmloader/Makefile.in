@@ -1,8 +1,6 @@
 MODULE    = dmloader.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	container.c \
 	debug.c \

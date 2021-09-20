@@ -1,7 +1,7 @@
 MODULE    = spoolsv.exe
 IMPORTS   = advapi32
 
-EXTRADLLFLAGS = -mconsole -mno-cygwin
+EXTRADLLFLAGS = -mconsole
 
 C_SRCS = \
 	main.c

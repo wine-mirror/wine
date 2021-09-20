@@ -4,7 +4,8 @@ IMPORTLIB = ntdll
 IMPORTS   = winecrt0
 EXTRAINCL = $(UNWIND_CFLAGS)
 EXTRALIBS = -lwinecrt0 -Wl,--subsystem,unixlib $(IOKIT_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(UNWIND_LIBS) $(I386_LIBS) $(PROCSTAT_LIBS)
-EXTRADLLFLAGS = -mno-cygwin -nodefaultlibs -Wl,--image-base,0x7bc00000
+
+EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 
 C_SRCS = \
 	actctx.c \

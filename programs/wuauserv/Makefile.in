@@ -1,6 +1,7 @@
 MODULE    = wuauserv.exe
-APPMODE   = -mconsole -mno-cygwin
 IMPORTS   = advapi32
+
+EXTRADLLFLAGS = -mconsole
 
 C_SRCS = \
 	main.c

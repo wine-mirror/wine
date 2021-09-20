@@ -1,6 +1,6 @@
 MODULE    = lodctr.exe
 IMPORTS   = loadperf
 
-EXTRADLLFLAGS = -mconsole -mno-cygwin
+EXTRADLLFLAGS = -mconsole
 
 C_SRCS = lodctr_main.c

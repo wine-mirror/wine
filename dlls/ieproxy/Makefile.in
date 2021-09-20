@@ -1,8 +1,6 @@
 MODULE = ieproxy.dll
 IMPORTS = uuid ole32 rpcrt4
 
-EXTRADLLFLAGS = -mno-cygwin
-
 IDL_SRCS = \
 	ieproxy_ieautomation.idl \
 	ieproxy_perhist.idl

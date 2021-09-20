@@ -1,7 +1,8 @@
 MODULE    = riched20.dll
 IMPORTLIB = riched20
 IMPORTS   = uuid usp10 ole32 oleaut32 imm32 user32 gdi32
-EXTRADLLFLAGS = -mno-cygwin -Wl,--image-base,0x7ac00000
+
+EXTRADLLFLAGS = -Wl,--image-base,0x7ac00000
 
 C_SRCS = \
 	caret.c \

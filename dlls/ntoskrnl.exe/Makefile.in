@@ -3,8 +3,6 @@ IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal msvcrt
 DELAYIMPORTS = rpcrt4 setupapi
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	instr.c \
 	ntoskrnl.c \

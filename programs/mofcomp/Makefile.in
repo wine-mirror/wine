@@ -1,5 +1,5 @@
 MODULE    = mofcomp.exe
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = mofcomp.c

@@ -3,8 +3,6 @@ EXTRADEFS = -D_MSVCIRT
 PARENTSRC = ../msvcp90
 IMPORTS   = msvcrt
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	exception.c \
 	msvcirt.c

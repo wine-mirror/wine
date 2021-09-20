@@ -1,8 +1,6 @@
 MODULE    = dmscript.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	dmobject.c \
 	dmscript_main.c \

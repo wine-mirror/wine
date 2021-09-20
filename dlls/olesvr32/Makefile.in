@@ -1,7 +1,5 @@
 MODULE    = olesvr32.dll
 IMPORTLIB = olesvr32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	olesvr_main.c

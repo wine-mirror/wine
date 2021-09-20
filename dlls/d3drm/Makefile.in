@@ -2,7 +2,7 @@ MODULE    = d3drm.dll
 IMPORTLIB = d3drm
 IMPORTS   = d3dxof ddraw
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	d3drm.c \

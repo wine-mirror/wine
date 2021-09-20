@@ -3,7 +3,7 @@ EXTRADEFS = -D_MSVCP_VER=60
 PARENTSRC = ../msvcp90
 IMPORTS   = msvcrt
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	exception.c \

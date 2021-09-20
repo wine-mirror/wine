@@ -3,7 +3,6 @@ MODULE    = crtdll.dll
 IMPORTS   = ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
-EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	console.c \

@@ -2,8 +2,6 @@ MODULE    = dplayx.dll
 IMPORTLIB = dplayx
 IMPORTS   = dxguid uuid winmm ole32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	dpclassfactory.c \
 	dplay.c \

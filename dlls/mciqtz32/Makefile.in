@@ -1,8 +1,6 @@
 MODULE    = mciqtz32.dll
 IMPORTS   = strmiids oleaut32 ole32 winmm user32 gdi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	mciqtz.c
 

@@ -1,5 +1,3 @@
 MODULE    = ksproxy.ax
 
-EXTRADLLFLAGS = -mno-cygwin
-
 RC_SRCS = version.rc

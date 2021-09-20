@@ -1,7 +1,5 @@
 MODULE    = dpnhpast.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	main.c
 

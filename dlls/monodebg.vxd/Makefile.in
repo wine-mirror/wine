@@ -1,6 +1,4 @@
 MODULE    = monodebg.vxd
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	monodebg.c

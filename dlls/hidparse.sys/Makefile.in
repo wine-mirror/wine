@@ -1,7 +1,6 @@
 MODULE = hidparse.sys
 IMPORTLIB = hidparse
 IMPORTS = ntoskrnl
-EXTRADLLFLAGS = -mno-cygwin
 PARENTSRC = ../hid
 
 C_SRCS = \

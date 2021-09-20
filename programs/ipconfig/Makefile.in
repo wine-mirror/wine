@@ -1,7 +1,7 @@
 MODULE    = ipconfig.exe
 IMPORTS   = iphlpapi ws2_32 user32
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = ipconfig.c
 

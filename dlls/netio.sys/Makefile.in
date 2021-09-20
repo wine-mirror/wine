@@ -1,7 +1,8 @@
 MODULE    = netio.sys
 IMPORTLIB = netio
 IMPORTS   = ntoskrnl ws2_32
-EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	netio.c

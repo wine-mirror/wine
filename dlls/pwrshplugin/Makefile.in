@@ -1,5 +1,3 @@
 MODULE    = pwrshplugin.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
 RC_SRCS = version.rc

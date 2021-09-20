@@ -1,6 +1,4 @@
 MODULE    = msadp32.acm
 IMPORTS   = winmm user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = msadp32.c

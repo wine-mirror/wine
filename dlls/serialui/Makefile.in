@@ -1,8 +1,6 @@
 MODULE    = serialui.dll
 IMPORTS   = user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	confdlg.c
 

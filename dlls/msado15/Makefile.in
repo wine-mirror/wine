@@ -1,8 +1,6 @@
 MODULE    = msado15.dll
 IMPORTS   = oleaut32 ole32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	command.c \
 	connection.c \

@@ -3,8 +3,6 @@ IMPORTLIB = ws2_32
 DELAYIMPORTS = advapi32 iphlpapi user32
 EXTRALIBS = $(POLL_LIBS) -Wl,--subsystem,unixlib
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	async.c \
 	protocol.c \

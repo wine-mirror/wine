@@ -1,6 +1,5 @@
 MODULE = concrt140.dll
 PARENTSRC = ../msvcrt
-EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	concrt140.c \

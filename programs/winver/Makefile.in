@@ -1,7 +1,7 @@
 MODULE    = winver.exe
 IMPORTS   = shell32 comctl32
 
-EXTRADLLFLAGS = -mwindows -mno-cygwin
+EXTRADLLFLAGS = -mwindows
 
 C_SRCS = winver.c
 

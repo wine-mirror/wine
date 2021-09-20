@@ -1,8 +1,6 @@
 MODULE    = xmllite.dll
 IMPORTLIB = xmllite
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	reader.c \
 	writer.c

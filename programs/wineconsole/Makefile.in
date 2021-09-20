@@ -1,9 +1,8 @@
 MODULE    = wineconsole.exe
-APPMODE   = -mwindows
 IMPORTS   = advapi32
 DELAYIMPORTS = comctl32 user32 gdi32
 
-EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
+EXTRADLLFLAGS = -mwindows -municode
 
 C_SRCS = \
 	wineconsole.c

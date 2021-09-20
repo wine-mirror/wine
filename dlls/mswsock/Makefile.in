@@ -2,8 +2,6 @@ MODULE    = mswsock.dll
 IMPORTLIB = mswsock
 IMPORTS   = ws2_32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	mswsock.c
 

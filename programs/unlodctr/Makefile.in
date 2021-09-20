@@ -1,6 +1,6 @@
 MODULE    = unlodctr.exe
 IMPORTS   = loadperf
 
-EXTRADLLFLAGS = -mconsole -mno-cygwin
+EXTRADLLFLAGS = -mconsole
 
 C_SRCS = unlodctr_main.c

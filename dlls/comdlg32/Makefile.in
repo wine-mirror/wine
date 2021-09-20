@@ -3,8 +3,6 @@ IMPORTLIB = comdlg32
 IMPORTS   = uuid shell32 shlwapi comctl32 winspool user32 gdi32 advapi32
 DELAYIMPORTS = ole32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	cdlg32.c \
 	colordlg.c \

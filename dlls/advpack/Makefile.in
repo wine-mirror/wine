@@ -2,8 +2,6 @@ MODULE    = advpack.dll
 IMPORTLIB = advpack
 IMPORTS   = ole32 setupapi version advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	advpack.c \
 	files.c \

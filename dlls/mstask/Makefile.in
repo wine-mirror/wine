@@ -1,8 +1,6 @@
 MODULE    = mstask.dll
 IMPORTS   = rpcrt4 ole32 oleaut32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	factory.c \
 	mstask_main.c \

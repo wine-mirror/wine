@@ -4,8 +4,6 @@ IMPORTLIB = setupapi
 IMPORTS   = uuid version advapi32 rpcrt4 kernelbase
 DELAYIMPORTS = cabinet shell32 wintrust ole32 comdlg32 user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	devinst.c \
 	dialog.c \

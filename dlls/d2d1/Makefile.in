@@ -3,8 +3,6 @@ IMPORTLIB = d2d1
 IMPORTS   = d3d10_1 dxguid uuid gdi32 user32 advapi32
 DELAYIMPORTS = dwrite
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	bitmap.c \
 	bitmap_render_target.c \

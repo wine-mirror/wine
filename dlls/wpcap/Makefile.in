@@ -2,8 +2,6 @@ MODULE    = wpcap.dll
 DELAYIMPORTS = ws2_32
 EXTRALIBS = $(PCAP_LIBS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	unixlib.c \
 	wpcap.c

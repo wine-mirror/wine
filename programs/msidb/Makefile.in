@@ -1,6 +1,6 @@
 MODULE    = msidb.exe
 IMPORTS   = msi shlwapi
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = main.c

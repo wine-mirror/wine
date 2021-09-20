@@ -1,5 +1,5 @@
 MODULE    = fltmgr.sys
-EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
+EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	main.c

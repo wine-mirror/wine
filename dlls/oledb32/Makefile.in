@@ -1,8 +1,6 @@
 MODULE    = oledb32.dll
 IMPORTS   = uuid oleaut32 ole32 comctl32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	convert.c \
 	datainit.c \

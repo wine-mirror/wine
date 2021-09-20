@@ -2,7 +2,7 @@ MODULE    = aclui.dll
 IMPORTLIB = aclui
 IMPORTS   = comctl32 user32 advapi32 gdi32
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = aclui_main.c
 

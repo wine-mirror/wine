@@ -3,8 +3,6 @@ IMPORTLIB = odbc32
 IMPORTS   = advapi32
 EXTRALIBS = -Wl,--subsystem,unixlib
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	proxyodbc.c \
 	unixlib.c

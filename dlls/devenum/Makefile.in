@@ -2,8 +2,6 @@ MODULE    = devenum.dll
 IMPORTS   = dmoguids strmiids uuid ole32 oleaut32 avicap32 winmm user32 advapi32 dsound msdmo
 DELAYIMPORTS = msvfw32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	createdevenum.c \
 	devenum_main.c \

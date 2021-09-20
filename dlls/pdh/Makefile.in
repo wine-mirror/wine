@@ -1,7 +1,7 @@
 MODULE    = pdh.dll
 IMPORTLIB = pdh
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	pdh_main.c

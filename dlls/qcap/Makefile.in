@@ -2,8 +2,6 @@ MODULE    = qcap.dll
 IMPORTS   = strmbase strmiids uuid ole32 oleaut32
 DELAYIMPORTS = msvfw32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	audiorecord.c \
 	avico.c \

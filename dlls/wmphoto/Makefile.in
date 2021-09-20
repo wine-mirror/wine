@@ -1,9 +1,9 @@
 MODULE = wmphoto.dll
 IMPORTS = windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi
 PARENTSRC = ../windowscodecs
-
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 EXTRAINCL = $(JXRLIB_CFLAGS)
+
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
 	decoder.c \

@@ -1,8 +1,6 @@
 MODULE    = kerberos.dll
 EXTRAINCL = $(KRB5_CFLAGS) $(GSSAPI_CFLAGS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	krb5_ap.c \
 	unixlib.c

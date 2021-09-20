@@ -1,7 +1,7 @@
 MODULE    = plugplay.exe
 IMPORTS   = advapi32 rpcrt4 user32
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = \
 	main.c

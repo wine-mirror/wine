@@ -1,6 +1,4 @@
 MODULE    = msg711.acm
 IMPORTS   = winmm user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = msg711.c

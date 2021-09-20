@@ -3,8 +3,6 @@ IMPORTLIB = gdiplus
 IMPORTS   = uuid shlwapi ole32 user32 gdi32
 DELAYIMPORTS = windowscodecs
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	brush.c \
 	customlinecap.c \

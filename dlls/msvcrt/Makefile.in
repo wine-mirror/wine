@@ -3,7 +3,6 @@ MODULE    = msvcrt.dll
 IMPORTLIB = msvcrt
 IMPORTS   = ntdll
 DELAYIMPORTS = advapi32 user32
-EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	concurrency.c \

@@ -1,6 +1,4 @@
 MODULE    = msisys.ocx
 IMPORTS   = uuid
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = msisys.c

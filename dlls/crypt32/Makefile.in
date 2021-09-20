@@ -6,8 +6,6 @@ DELAYIMPORTS = cryptnet
 EXTRALIBS = $(SECURITY_LIBS)
 EXTRAINCL = $(GNUTLS_CFLAGS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	base64.c \
 	cert.c \

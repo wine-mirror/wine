@@ -1,6 +1,6 @@
 MODULE    = dpvsetup.exe
 
-EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
+EXTRADLLFLAGS = -mwindows -municode
 
 C_SRCS = \
 	main.c

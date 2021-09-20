@@ -2,8 +2,6 @@ MODULE    = hal.dll
 IMPORTLIB = hal
 IMPORTS   = ntoskrnl
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	hal.c
 

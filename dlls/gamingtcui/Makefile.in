@@ -1,6 +1,4 @@
 MODULE = gamingtcui.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	gamingtcui_main.c

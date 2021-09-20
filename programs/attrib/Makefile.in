@@ -1,7 +1,7 @@
 MODULE    = attrib.exe
 IMPORTS   = user32
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = attrib.c
 

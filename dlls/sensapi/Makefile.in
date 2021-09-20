@@ -1,7 +1,5 @@
 MODULE    = sensapi.dll
 IMPORTLIB = sensapi
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	sensapi.c

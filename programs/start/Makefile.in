@@ -1,7 +1,7 @@
 MODULE    = start.exe
 IMPORTS   = shell32 user32
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = start.c
 

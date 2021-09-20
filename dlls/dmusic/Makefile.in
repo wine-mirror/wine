@@ -1,8 +1,6 @@
 MODULE    = dmusic.dll
 IMPORTS   = dxguid uuid ole32 advapi32 dsound user32 winmm
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	buffer.c \
 	clock.c \

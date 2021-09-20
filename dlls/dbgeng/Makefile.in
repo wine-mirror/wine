@@ -2,6 +2,4 @@ MODULE    = dbgeng.dll
 IMPORTLIB = dbgeng
 DELAYIMPORTS = version
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = dbgeng.c

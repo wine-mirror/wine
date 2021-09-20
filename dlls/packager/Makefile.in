@@ -1,8 +1,6 @@
 MODULE = packager.dll
 IMPORTS = uuid shell32 shlwapi user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	packager_main.c
 

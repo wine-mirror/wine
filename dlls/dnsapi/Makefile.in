@@ -3,8 +3,6 @@ IMPORTLIB = dnsapi
 DELAYIMPORTS = netapi32
 EXTRALIBS = $(RESOLV_LIBS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	libresolv.c \
 	main.c \

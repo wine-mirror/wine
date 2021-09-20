@@ -3,8 +3,6 @@ IMPORTLIB = hlink
 IMPORTS   = uuid shell32 ole32 advapi32
 DELAYIMPORTS = urlmon
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	browse_ctx.c \
 	extserv.c \

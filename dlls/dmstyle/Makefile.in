@@ -1,8 +1,6 @@
 MODULE    = dmstyle.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	auditiontrack.c \
 	chordtrack.c \

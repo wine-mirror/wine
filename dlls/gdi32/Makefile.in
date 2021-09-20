@@ -6,8 +6,6 @@ EXTRAINCL = $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS)
 EXTRALIBS = $(CARBON_LIBS) $(APPKIT_LIBS)
 DELAYIMPORTS = setupapi
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	bitblt.c \
 	bitmap.c \

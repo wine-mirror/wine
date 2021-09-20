@@ -1,7 +1,5 @@
 MODULE    = mciwave.dll
 IMPORTS   = winmm user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	mciwave.c

@@ -1,6 +1,4 @@
 MODULE    = dciman32.dll
 IMPORTLIB = dciman32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = dciman_main.c

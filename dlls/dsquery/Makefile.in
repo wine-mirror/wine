@@ -1,8 +1,6 @@
 MODULE = dsquery.dll
 IMPORTS = uuid
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	main.c
 

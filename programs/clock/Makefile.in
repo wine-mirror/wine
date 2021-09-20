@@ -1,7 +1,7 @@
 MODULE    = clock.exe
 IMPORTS   = comdlg32 shell32 user32 gdi32 comctl32
 
-EXTRADLLFLAGS = -mwindows -mno-cygwin
+EXTRADLLFLAGS = -mwindows
 
 C_SRCS = \
 	main.c \

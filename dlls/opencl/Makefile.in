@@ -1,8 +1,6 @@
 MODULE    = opencl.dll
 EXTRALIBS = $(OPENCL_LIBS)
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	pe_thunks.c \
 	pe_wrappers.c \

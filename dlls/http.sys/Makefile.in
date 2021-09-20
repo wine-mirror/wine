@@ -1,6 +1,7 @@
 MODULE    = http.sys
 IMPORTS   = ntoskrnl ws2_32
-EXTRADLLFLAGS = -Wl,--subsystem,native -mno-cygwin
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	http.c

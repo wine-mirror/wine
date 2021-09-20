@@ -1,6 +1,6 @@
 MODULE    = hh.exe
 
-EXTRADLLFLAGS = -mwindows -mno-cygwin
+EXTRADLLFLAGS = -mwindows
 
 C_SRCS = \
 	main.c

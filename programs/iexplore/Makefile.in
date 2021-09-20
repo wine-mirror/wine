@@ -2,7 +2,7 @@ MODULE    = iexplore.exe
 IMPORTS   = ieframe
 DELAYIMPORTS = advpack version user32
 
-EXTRADLLFLAGS = -mwindows -municode -mno-cygwin -Wl,--large-address-aware
+EXTRADLLFLAGS = -mwindows -municode -Wl,--large-address-aware
 
 C_SRCS = \
 	main.c

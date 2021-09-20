@@ -2,8 +2,6 @@ MODULE    = mapi32.dll
 IMPORTLIB = mapi32
 IMPORTS   = uuid shlwapi shell32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	imalloc.c \
 	mapi32_main.c \

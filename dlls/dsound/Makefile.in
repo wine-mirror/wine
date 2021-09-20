@@ -2,8 +2,6 @@ MODULE    = dsound.dll
 IMPORTLIB = dsound
 IMPORTS   = dxguid uuid winmm ole32 advapi32 user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	buffer.c \
 	capture.c \

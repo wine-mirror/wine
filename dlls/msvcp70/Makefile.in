@@ -3,8 +3,6 @@ IMPORTS = msvcr70
 EXTRADEFS = -D_MSVCP_VER=70
 PARENTSRC = ../msvcp90
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	exception.c \
 	ios.c \

@@ -1,8 +1,6 @@
 MODULE    = msvidc32.dll
 IMPORTS   = user32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	msvideo1.c
 

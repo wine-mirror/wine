@@ -1,8 +1,6 @@
 MODULE    = qasf.dll
 IMPORTS   = strmbase dmoguids strmiids uuid ole32 oleaut32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	asfreader.c \
 	dmowrapper.c \

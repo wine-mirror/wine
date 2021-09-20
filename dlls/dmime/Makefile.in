@@ -1,8 +1,6 @@
 MODULE    = dmime.dll
 IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	audiopath.c \
 	dmime_main.c \

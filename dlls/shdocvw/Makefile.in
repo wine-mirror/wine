@@ -4,8 +4,6 @@ IMPORTLIB = shdocvw
 IMPORTS   = uuid shlwapi advapi32
 DELAYIMPORTS = version ole32 oleaut32 ieframe
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	shdocvw_main.c \
 	shlinstobj.c

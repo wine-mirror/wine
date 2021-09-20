@@ -1,6 +1,6 @@
 MODULE    = icinfo.exe
 IMPORTS   = msvfw32
 
-EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = icinfo.c

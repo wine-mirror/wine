@@ -1,5 +1,5 @@
 MODULE    = msnet32.dll
 
-EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = msnet_main.c

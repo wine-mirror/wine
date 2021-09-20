@@ -2,8 +2,6 @@ MODULE    = oledlg.dll
 IMPORTLIB = oledlg
 IMPORTS   = ole32 comdlg32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	insobjdlg.c \
 	oledlg_main.c \

@@ -2,8 +2,6 @@ MODULE    = version.dll
 IMPORTLIB = version
 IMPORTS   = kernelbase
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	version.c
 

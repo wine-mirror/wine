@@ -2,8 +2,6 @@ MODULE    = webservices.dll
 IMPORTLIB = webservices
 IMPORTS   = winhttp rpcrt4 user32 ws2_32
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	channel.c \
 	error.c \

@@ -3,8 +3,6 @@ IMPORTLIB = dbghelp
 EXTRADEFS = -D_IMAGEHLP_SOURCE_
 DELAYIMPORTS = version
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	coff.c \
 	cpu_arm.c \
