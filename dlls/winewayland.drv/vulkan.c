@@ -67,6 +67,7 @@ static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSur
 static VkResult (*pvkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkPresentModeKHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
+static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 
 static void *vulkan_handle;
 static const struct vulkan_funcs vulkan_funcs;
@@ -624,6 +625,14 @@ static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysica
                                                              process_wayland.wl_display);
 }
 
+static VkResult wayland_vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain,
+                                                uint32_t *count, VkImage *images)
+{
+    TRACE("%p, 0x%s %p %p\n", device, wine_dbgstr_longlong(swapchain), count, images);
+
+    return pvkGetSwapchainImagesKHR(device, swapchain, count, images);
+}
+
 static VkSurfaceKHR wayland_wine_get_native_surface(VkSurfaceKHR surface)
 {
     return wine_vk_surface_from_handle(surface)->native;
@@ -655,6 +664,7 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
+    LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
 #undef LOAD_FUNCPTR
 #undef LOAD_OPTIONAL_FUNCPTR
 
@@ -683,6 +693,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceSurfacePresentModesKHR = wayland_vkGetPhysicalDeviceSurfacePresentModesKHR,
     .p_vkGetPhysicalDeviceSurfaceSupportKHR = wayland_vkGetPhysicalDeviceSurfaceSupportKHR,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
     .p_wine_get_native_surface = wayland_wine_get_native_surface,
 };
 
