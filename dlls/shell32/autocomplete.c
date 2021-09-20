@@ -87,9 +87,7 @@ enum prefix_filtering
     prefix_filtering_all        /* filter all common prefixes (protocol & www. ) */
 };
 
-static const WCHAR autocomplete_propertyW[] = {'W','i','n','e',' ','A','u','t','o',
-                                               'c','o','m','p','l','e','t','e',' ',
-                                               'c','o','n','t','r','o','l',0};
+static const WCHAR autocomplete_propertyW[] = L"Wine Autocomplete control";
 
 static inline IAutoCompleteImpl *impl_from_IAutoComplete2(IAutoComplete2 *iface)
 {
@@ -111,11 +109,9 @@ static void set_text_and_selection(IAutoCompleteImpl *ac, HWND hwnd, WCHAR *text
 
 static inline WCHAR *filter_protocol(WCHAR *str)
 {
-    static const WCHAR http[] = {'h','t','t','p'};
-
-    if (!wcsncmp(str, http, ARRAY_SIZE(http)))
+    if (!wcsncmp(str, L"http", 4))
     {
-        str += ARRAY_SIZE(http);
+        str += 4;
         str += (*str == 's');    /* https */
         if (str[0] == ':' && str[1] == '/' && str[2] == '/')
             return str + 3;
@@ -125,10 +121,7 @@ static inline WCHAR *filter_protocol(WCHAR *str)
 
 static inline WCHAR *filter_www(WCHAR *str)
 {
-    static const WCHAR www[] = {'w','w','w','.'};
-
-    if (!wcsncmp(str, www, ARRAY_SIZE(www)))
-        return str + ARRAY_SIZE(www);
+    if (!wcsncmp(str, L"www.", 4)) return str + 4;
     return NULL;
 }
 
@@ -477,17 +470,13 @@ static BOOL aclist_expand(IAutoCompleteImpl *ac, WCHAR *txt)
 {
     /* call IACList::Expand only when needed, if the
        new txt and old_txt require different expansions */
-    static const WCHAR empty[] = { 0 };
 
     const WCHAR *old_txt = ac->txtbackup;
     WCHAR c, *p, *last_delim;
     size_t i = 0;
 
-    /* '/' is allowed as a delim for unix paths */
-    static const WCHAR delims[] = { '\\', '/', 0 };
-
     /* always expand if the enumerator was reset */
-    if (!ac->enum_strs) old_txt = empty;
+    if (!ac->enum_strs) old_txt = L"";
 
     /* skip the shared prefix */
     while ((c = towlower(txt[i])) == towlower(old_txt[i]))
@@ -497,16 +486,16 @@ static BOOL aclist_expand(IAutoCompleteImpl *ac, WCHAR *txt)
     }
 
     /* they differ at this point, check for a delim further in txt */
-    for (last_delim = NULL, p = &txt[i]; (p = wcspbrk(p, delims)) != NULL; p++)
+    for (last_delim = NULL, p = &txt[i]; (p = wcspbrk(p, L"\\/")) != NULL; p++)
         last_delim = p;
     if (last_delim) return do_aclist_expand(ac, txt, last_delim);
 
     /* txt has no delim after i, check for a delim further in old_txt */
-    if (wcspbrk(&old_txt[i], delims))
+    if (wcspbrk(&old_txt[i], L"\\/"))
     {
         /* scan backwards to find the first delim before txt[i] (if any) */
         while (i--)
-            if (wcschr(delims, txt[i]))
+            if (wcschr(L"\\/", txt[i]))
                 return do_aclist_expand(ac, txt, &txt[i]);
 
         /* Windows doesn't expand without a delim, but it does reset */

@@ -118,10 +118,7 @@ HRESULT WINAPI SHCoCreateInstance(
 	IID	iid;
 	const	CLSID * myclsid = clsid;
 	WCHAR	sKeyName[MAX_PATH];
-	static const WCHAR sCLSID[] = {'C','L','S','I','D','\\','\0'};
 	WCHAR	sClassID[60];
-	static const WCHAR sInProcServer32[] = {'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2','\0'};
-	static const WCHAR sLoadWithoutCOM[] = {'L','o','a','d','W','i','t','h','o','u','t','C','O','M','\0'};
 	WCHAR	sDllPath[MAX_PATH];
 	HKEY	hKey = 0;
 	DWORD	dwSize;
@@ -150,15 +147,13 @@ HRESULT WINAPI SHCoCreateInstance(
 
 	/* we look up the dll path in the registry */
         SHStringFromGUIDW(myclsid, sClassID, ARRAY_SIZE(sClassID));
-	lstrcpyW(sKeyName, sCLSID);
-	lstrcatW(sKeyName, sClassID);
-	lstrcatW(sKeyName, sInProcServer32);
+        swprintf( sKeyName, ARRAY_SIZE(sKeyName), L"CLSID\\%s\\InprocServer32", sClassID );
 
 	if (RegOpenKeyExW(HKEY_CLASSES_ROOT, sKeyName, 0, KEY_READ, &hKey))
             return E_ACCESSDENIED;
 
         /* if a special registry key is set, we load a shell extension without help of OLE32 */
-        if (!SHQueryValueExW(hKey, sLoadWithoutCOM, 0, 0, 0, 0))
+        if (!SHQueryValueExW(hKey, L"LoadWithoutCOM", 0, 0, 0, 0))
         {
 	    /* load an external dll without ole32 */
 	    HANDLE hLibrary;

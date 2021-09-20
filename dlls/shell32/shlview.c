@@ -66,8 +66,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-static const WCHAR SV_CLASS_NAME[] = {'S','H','E','L','L','D','L','L','_','D','e','f','V','i','e','w',0};
-
 typedef struct
 {   BOOL    bIsAscending;
     INT     nHeaderID;
@@ -670,7 +668,6 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
 static LRESULT ShellView_OnCreate(IShellViewImpl *This)
 {
     IShellView3 *iface = &This->IShellView3_iface;
-    static const WCHAR accel_nameW[] = {'s','h','v','_','a','c','c','e','l',0};
     IPersistFolder2 *ppf2;
     IDropTarget* pdt;
     HRESULT hr;
@@ -723,7 +720,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl *This)
         IPersistFolder2_Release(ppf2);
     }
 
-    This->hAccel = LoadAcceleratorsW(shell32_hInstance, accel_nameW);
+    This->hAccel = LoadAcceleratorsW(shell32_hInstance, L"shv_accel");
 
     return S_OK;
 }
@@ -780,7 +777,6 @@ static void ShellView_MergeFileMenu(IShellViewImpl *This, HMENU hSubMenu)
 {
      if (hSubMenu)
      {
-         static const WCHAR dummyW[] = {'d','u','m','m','y','4','5',0};
          MENUITEMINFOW mii;
 
          /* insert This item at the beginning of the menu */
@@ -793,7 +789,7 @@ static void ShellView_MergeFileMenu(IShellViewImpl *This, HMENU hSubMenu)
 
          mii.cbSize = sizeof(mii);
          mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-         mii.dwTypeData = (LPWSTR)dummyW;
+         mii.dwTypeData = (LPWSTR)L"dummy45";
          mii.fState = MFS_ENABLED;
          mii.wID = IDM_MYFILEITEM;
          mii.fType = MFT_STRING;
@@ -812,8 +808,6 @@ static void ShellView_MergeViewMenu(IShellViewImpl *This, HMENU hSubMenu)
     /* add a separator at the correct position in the menu */
     if (hSubMenu)
     {
-        static const WCHAR menuW[] = {'M','E','N','U','_','0','0','1',0};
-	static const WCHAR viewW[] = {'V','i','e','w',0};
         MENUITEMINFOW mii;
 
         memset(&mii, 0, sizeof(mii));
@@ -826,8 +820,8 @@ static void ShellView_MergeViewMenu(IShellViewImpl *This, HMENU hSubMenu)
         mii.cbSize = sizeof(mii);
         mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;
         mii.fType = MFT_STRING;
-        mii.dwTypeData = (LPWSTR)viewW;
-        mii.hSubMenu = LoadMenuW(shell32_hInstance, menuW);
+        mii.dwTypeData = (LPWSTR)L"View";
+        mii.hSubMenu = LoadMenuW(shell32_hInstance, L"MENU_001");
         InsertMenuItemW(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
     }
 }
@@ -1140,8 +1134,6 @@ static LRESULT ShellView_OnActivate(IShellViewImpl *This, UINT uState)
 
         if (This->hMenu)
 	{
-            static const WCHAR dummyW[] = {'d','u','m','m','y',' ','3','1',0};
-
             IShellBrowser_InsertMenusSB(This->pShellBrowser, This->hMenu, &omw);
 	    TRACE("-- after fnInsertMenusSB\n");
 
@@ -1155,7 +1147,7 @@ static LRESULT ShellView_OnActivate(IShellViewImpl *This, UINT uState)
             mii.hbmpUnchecked = NULL;
             mii.dwItemData = 0;
             /* build the top level menu get the menu item's text */
-            mii.dwTypeData = (LPWSTR)dummyW;
+            mii.dwTypeData = (LPWSTR)L"dummy 31";
             mii.cch = 0;
             mii.hbmpItem = NULL;
 
@@ -2111,7 +2103,7 @@ static HRESULT WINAPI IShellView3_fnCreateViewWindow3(IShellView3 *iface, IShell
         TRACE("-- CommDlgBrowser %p\n", This->pCommDlgBrowser);
 
     /* If our window class has not been registered, then do so */
-    if (!GetClassInfoW(shell32_hInstance, SV_CLASS_NAME, &wc))
+    if (!GetClassInfoW(shell32_hInstance, L"SHELLDLL_DefView", &wc))
     {
         wc.style            = CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc      = ShellView_WndProc;
@@ -2122,12 +2114,12 @@ static HRESULT WINAPI IShellView3_fnCreateViewWindow3(IShellView3 *iface, IShell
         wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
         wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW + 1);
         wc.lpszMenuName     = NULL;
-        wc.lpszClassName    = SV_CLASS_NAME;
+        wc.lpszClassName    = L"SHELLDLL_DefView";
 
         if (!RegisterClassW(&wc)) return E_FAIL;
     }
 
-    wnd = CreateWindowExW(0, SV_CLASS_NAME, NULL, WS_CHILD | WS_TABSTOP,
+    wnd = CreateWindowExW(0, L"SHELLDLL_DefView", NULL, WS_CHILD | WS_TABSTOP,
             rect->left, rect->top,
             rect->right - rect->left,
             rect->bottom - rect->top,

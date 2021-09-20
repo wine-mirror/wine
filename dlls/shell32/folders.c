@@ -133,27 +133,22 @@ static HRESULT getIconLocationForFolder(IExtractIconWImpl *This, UINT uFlags, LP
     int icon_idx;
     WCHAR wszPath[MAX_PATH];
     WCHAR wszCLSIDValue[CHARS_IN_GUID];
-    static const WCHAR shellClassInfo[] = { '.','S','h','e','l','l','C','l','a','s','s','I','n','f','o',0 };
-    static const WCHAR iconFile[] = { 'I','c','o','n','F','i','l','e',0 };
-    static const WCHAR clsid[] = { 'C','L','S','I','D',0 };
-    static const WCHAR clsid2[] = { 'C','L','S','I','D','2',0 };
-    static const WCHAR iconIndex[] = { 'I','c','o','n','I','n','d','e','x',0 };
 
-    if (SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, iconFile,
+    if (SHELL32_GetCustomFolderAttribute(This->pidl, L".ShellClassInfo", L"IconFile",
         wszPath, MAX_PATH))
     {
         WCHAR wszIconIndex[10];
-        SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, iconIndex,
+        SHELL32_GetCustomFolderAttribute(This->pidl, L".ShellClassInfo", L"IconIndex",
             wszIconIndex, 10);
         *piIndex = wcstol(wszIconIndex, NULL, 10);
     }
-    else if (SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, clsid,
+    else if (SHELL32_GetCustomFolderAttribute(This->pidl, L".ShellClassInfo", L"CLSID",
         wszCLSIDValue, CHARS_IN_GUID) &&
         HCR_GetDefaultIconW(wszCLSIDValue, szIconFile, cchMax, &icon_idx))
     {
        *piIndex = icon_idx;
     }
-    else if (SHELL32_GetCustomFolderAttribute(This->pidl, shellClassInfo, clsid2,
+    else if (SHELL32_GetCustomFolderAttribute(This->pidl, L".ShellClassInfo", L"CLSID2",
         wszCLSIDValue, CHARS_IN_GUID) &&
         HCR_GetDefaultIconW(wszCLSIDValue, szIconFile, cchMax, &icon_idx))
     {
@@ -161,9 +156,7 @@ static HRESULT getIconLocationForFolder(IExtractIconWImpl *This, UINT uFlags, LP
     }
     else
     {
-        static const WCHAR folder[] = { 'F','o','l','d','e','r',0 };
-
-        if (!HCR_GetDefaultIconW(folder, szIconFile, cchMax, &icon_idx))
+        if (!HCR_GetDefaultIconW(L"Folder", szIconFile, cchMax, &icon_idx))
         {
             lstrcpynW(szIconFile, swShell32Name, cchMax);
             icon_idx = -IDI_SHELL_FOLDER;
@@ -209,13 +202,9 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 	/* my computer and other shell extensions */
 	else if ((riid = _ILGetGUIDPointer(pSimplePidl)))
 	{
-	  static const WCHAR fmt[] = { 'C','L','S','I','D','\\',
-       '{','%','0','8','l','x','-','%','0','4','x','-','%','0','4','x','-',
-       '%','0','2','x','%','0','2','x','-','%','0','2','x', '%','0','2','x',
-       '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0 };
 	  WCHAR xriid[50];
 
-	  swprintf(xriid, ARRAY_SIZE(xriid), fmt,
+	  swprintf(xriid, ARRAY_SIZE(xriid), L"CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 	          riid->Data1, riid->Data2, riid->Data3,
 	          riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
 	          riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
@@ -243,8 +232,6 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 
 	else if (_ILIsDrive (pSimplePidl))
 	{
-	  static const WCHAR drive[] = { 'D','r','i','v','e',0 };
-
 	  icon_idx = -1;
 
 	  if (_ILGetDrive(pSimplePidl, sTemp, MAX_PATH))
@@ -265,7 +252,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 	  }
 	  else
 	  {
-		if (HCR_GetDefaultIconW(drive, szIconFile, cchMax, &icon_idx))
+		if (HCR_GetDefaultIconW(L"Drive", szIconFile, cchMax, &icon_idx))
 		{
 		  *piIndex = icon_idx;
 		}

@@ -704,9 +704,8 @@ static void initialize_navpane(ExplorerBrowserImpl *This, HWND hwnd_parent, RECT
     WNDCLASSW wc;
     HWND splitter;
     int splitter_width = MulDiv(SPLITTER_WIDTH, This->dpix, USER_DEFAULT_SCREEN_DPI);
-    static const WCHAR navpane_classname[] = {'e','b','_','n','a','v','p','a','n','e',0};
 
-    if( !GetClassInfoW(shell32_hInstance, navpane_classname, &wc) )
+    if( !GetClassInfoW(shell32_hInstance, L"eb_navpane", &wc) )
     {
         wc.style            = CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc      = navpane_wndproc;
@@ -717,12 +716,12 @@ static void initialize_navpane(ExplorerBrowserImpl *This, HWND hwnd_parent, RECT
         wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_SIZEWE);
         wc.hbrBackground    = (HBRUSH)(COLOR_3DFACE + 1);
         wc.lpszMenuName     = NULL;
-        wc.lpszClassName    = navpane_classname;
+        wc.lpszClassName    = L"eb_navpane";
 
         if (!RegisterClassW(&wc)) return;
     }
 
-    splitter = CreateWindowExW(0, navpane_classname, NULL,
+    splitter = CreateWindowExW(0, L"eb_navpane", NULL,
                                WS_CHILD | WS_TABSTOP | WS_VISIBLE,
                                rc->right - splitter_width, rc->top,
                                splitter_width, rc->bottom - rc->top,
@@ -861,8 +860,6 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
     WNDCLASSW wc;
     LONG style;
     HDC parent_dc;
-    static const WCHAR EB_CLASS_NAME[] =
-        {'E','x','p','l','o','r','e','r','B','r','o','w','s','e','r','C','o','n','t','r','o','l',0};
 
     TRACE("%p (%p, %p, %p)\n", This, hwndParent, prc, pfs);
 
@@ -872,7 +869,7 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
     if(!hwndParent)
         return E_INVALIDARG;
 
-    if( !GetClassInfoW(shell32_hInstance, EB_CLASS_NAME, &wc) )
+    if( !GetClassInfoW(shell32_hInstance, L"ExplorerBrowserControl", &wc) )
     {
         wc.style            = CS_HREDRAW | CS_VREDRAW;
         wc.lpfnWndProc      = main_wndproc;
@@ -883,7 +880,7 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
         wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
         wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW + 1);
         wc.lpszMenuName     = NULL;
-        wc.lpszClassName    = EB_CLASS_NAME;
+        wc.lpszClassName    = L"ExplorerBrowserControl";
 
         if (!RegisterClassW(&wc)) return E_FAIL;
     }
@@ -897,7 +894,7 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
     style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
     if (!(This->eb_options & EBO_NOBORDER))
         style |= WS_BORDER;
-    This->hwnd_main = CreateWindowExW(WS_EX_CONTROLPARENT, EB_CLASS_NAME, NULL, style,
+    This->hwnd_main = CreateWindowExW(WS_EX_CONTROLPARENT, L"ExplorerBrowserControl", NULL, style,
                                       prc->left, prc->top,
                                       prc->right - prc->left, prc->bottom - prc->top,
                                       hwndParent, 0, shell32_hInstance, This);

@@ -48,9 +48,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
-static const WCHAR wszDotShellClassInfo[] = {
-    '.','S','h','e','l','l','C','l','a','s','s','I','n','f','o',0};
-
 /***************************************************************************
  *  SHELL32_GetCustomFolderAttribute (internal function)
  *
@@ -72,14 +69,9 @@ static inline BOOL SHELL32_GetCustomFolderAttributeFromPath(
     LPWSTR pwszFolderPath, LPCWSTR pwszHeading, LPCWSTR pwszAttribute,
     LPWSTR pwszValue, DWORD cchValue)
 {
-    static const WCHAR wszDesktopIni[] =
-            {'d','e','s','k','t','o','p','.','i','n','i',0};
-    static const WCHAR wszDefault[] = {0};
-
     PathAddBackslashW(pwszFolderPath);
-    PathAppendW(pwszFolderPath, wszDesktopIni);
-    return GetPrivateProfileStringW(pwszHeading, pwszAttribute, wszDefault, 
-                                    pwszValue, cchValue, pwszFolderPath);
+    PathAppendW(pwszFolderPath, L"desktop.ini");
+    return GetPrivateProfileStringW(pwszHeading, pwszAttribute, L"", pwszValue, cchValue, pwszFolderPath);
 }
 
 BOOL SHELL32_GetCustomFolderAttribute(
@@ -283,7 +275,6 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot, const CLSID *clsidChild,
     } else {
         /* file system folder */
         CLSID clsidFolder = *clsidChild;
-        static const WCHAR wszCLSID[] = {'C','L','S','I','D',0};
         WCHAR wszCLSIDValue[CHARS_IN_GUID], wszFolderPath[MAX_PATH], *pwszPathTail = wszFolderPath;
 
         /* see if folder CLSID should be overridden by desktop.ini file */
@@ -295,7 +286,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot, const CLSID *clsidChild,
         _ILSimpleGetTextW(pidlChild,pwszPathTail,MAX_PATH - (int)(pwszPathTail - wszFolderPath));
 
         if (SHELL32_GetCustomFolderAttributeFromPath (wszFolderPath,
-            wszDotShellClassInfo, wszCLSID, wszCLSIDValue, CHARS_IN_GUID))
+            L".ShellClassInfo", L"CLSID", wszCLSIDValue, CHARS_IN_GUID))
             CLSIDFromString (wszCLSIDValue, &clsidFolder);
 
         hr = SHELL32_CoCreateInitSF (pidlRoot, pathRoot, pidlChild,
@@ -635,8 +626,6 @@ HRESULT WINAPI SHOpenFolderAndSelectItems( PCIDLIST_ABSOLUTE pidlFolder, UINT ci
  */
 HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, PCWSTR path, DWORD flag )
 {
-    static const WCHAR iconresourceW[] = {'I','c','o','n','R','e','s','o','u','r','c','e',0};
-    static const WCHAR desktop_iniW[] = {'D','e','s','k','t','o','p','.','i','n','i',0};
     WCHAR bufferW[MAX_PATH];
     HRESULT hr;
 
@@ -652,9 +641,9 @@ HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, PCWST
         {
             lstrcpyW(bufferW, path);
             PathAddBackslashW(bufferW);
-            lstrcatW(bufferW, desktop_iniW);
+            lstrcatW(bufferW, L"desktop.ini");
 
-            if (WritePrivateProfileStringW(wszDotShellClassInfo, iconresourceW, fcs->pszIconFile, bufferW))
+            if (WritePrivateProfileStringW(L".ShellClassInfo", L"IconResource", fcs->pszIconFile, bufferW))
             {
                 TRACE("Wrote an iconresource entry %s into %s\n", debugstr_w(fcs->pszIconFile), debugstr_w(bufferW));
                 hr = S_OK;

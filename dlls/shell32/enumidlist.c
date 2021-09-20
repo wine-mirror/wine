@@ -68,9 +68,6 @@ BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags
     HANDLE hFile;
     WCHAR  szPath[MAX_PATH];
     BOOL succeeded = TRUE;
-    static const WCHAR stars[] = { '*','.','*',0 };
-    static const WCHAR dot[] = { '.',0 };
-    static const WCHAR dotdot[] = { '.','.',0 };
 
     TRACE("(%p)->(path=%s flags=0x%08x)\n", list, debugstr_w(lpszPath), dwFlags);
 
@@ -78,7 +75,7 @@ BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags
 
     lstrcpyW(szPath, lpszPath);
     PathAddBackslashW(szPath);
-    lstrcatW(szPath,stars);
+    lstrcatW(szPath,L"*");
 
     hFile = FindFirstFileW(szPath,&stffile);
     if ( hFile != INVALID_HANDLE_VALUE )
@@ -92,7 +89,7 @@ BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags
             {
                 if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
                  dwFlags & SHCONTF_FOLDERS &&
-                 wcscmp(stffile.cFileName, dot) && wcscmp(stffile.cFileName, dotdot))
+                 wcscmp(stffile.cFileName, L".") && wcscmp(stffile.cFileName, L".."))
                 {
                     pidl = _ILCreateFromFindDataW(&stffile);
                     succeeded = succeeded && AddToEnumList(list, pidl);

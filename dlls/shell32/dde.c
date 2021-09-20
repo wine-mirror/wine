@@ -81,7 +81,6 @@ static inline BOOL Dde_OnWildConnect(HSZ hszTopic, HSZ hszService)
 /* Returned string must be freed by caller */
 static WCHAR *get_programs_path(const WCHAR *name)
 {
-    static const WCHAR slashW[] = {'/',0};
     WCHAR *programs, *path;
     int len;
 
@@ -90,7 +89,7 @@ static WCHAR *get_programs_path(const WCHAR *name)
     len = lstrlenW(programs) + 1 + lstrlenW(name);
     path = heap_alloc((len + 1) * sizeof(*path));
     lstrcpyW(path, programs);
-    lstrcatW(path, slashW);
+    lstrcatW(path, L"/");
     lstrcatW(path, name);
 
     CoTaskMemFree(programs);
@@ -103,10 +102,6 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
 {
     if (hszTopic == hszProgmanTopic && hszItem == hszGroups && uFmt == CF_TEXT)
     {
-        static const WCHAR asteriskW[] = {'*',0};
-        static const WCHAR newlineW[] = {'\r','\n',0};
-        static const WCHAR dotW[] = {'.',0};
-        static const WCHAR dotdotW[] = {'.','.',0};
         WCHAR *programs;
         WIN32_FIND_DATAW finddata;
         HANDLE hfind;
@@ -116,19 +111,19 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
         HDDEDATA ret;
 
         groups_data[0] = 0;
-        programs = get_programs_path(asteriskW);
+        programs = get_programs_path(L"*");
         hfind = FindFirstFileW(programs, &finddata);
         if (hfind)
         {
             do
             {
                 if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-                    wcscmp(finddata.cFileName, dotW) && wcscmp(finddata.cFileName, dotdotW))
+                    wcscmp(finddata.cFileName, L".") && wcscmp(finddata.cFileName, L".."))
                 {
                     len += lstrlenW(finddata.cFileName) + 2;
                     groups_data = heap_realloc(groups_data, len * sizeof(WCHAR));
                     lstrcatW(groups_data, finddata.cFileName);
-                    lstrcatW(groups_data, newlineW);
+                    lstrcatW(groups_data, L"\r\n");
                 }
             } while (FindNextFileW(hfind, &finddata));
             FindClose(hfind);
@@ -158,21 +153,10 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
 
 static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 {
-    static const WCHAR create_groupW[] = {'C','r','e','a','t','e','G','r','o','u','p',0};
-    static const WCHAR delete_groupW[] = {'D','e','l','e','t','e','G','r','o','u','p',0};
-    static const WCHAR show_groupW[] = {'S','h','o','w','G','r','o','u','p',0};
-    static const WCHAR add_itemW[] = {'A','d','d','I','t','e','m',0};
-    static const WCHAR delete_itemW[] = {'D','e','l','e','t','e','I','t','e','m',0};
-    static const WCHAR replace_itemW[] = {'R','e','p','l','a','c','e','I','t','e','m',0};
-    static const WCHAR exit_progmanW[] = {'E','x','i','t','P','r','o','g','m','a','n',0};
-
-    static const WCHAR dotexeW[] = {'.','e','x','e',0};
-    static const WCHAR dotlnkW[] = {'.','l','n','k',0};
-    static const WCHAR slashW[] = {'/',0};
-
     static WCHAR *last_group;
+    DWORD len;
 
-    if (!wcsicmp(command, create_groupW))
+    if (!wcsicmp(command, L"CreateGroup"))
     {
         WCHAR *path;
 
@@ -186,7 +170,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         heap_free(last_group);
         last_group = path;
     }
-    else if (!wcsicmp(command, delete_groupW))
+    else if (!wcsicmp(command, L"DeleteGroup"))
     {
         WCHAR *path, *path2;
         SHFILEOPSTRUCTW shfos = {0};
@@ -211,7 +195,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (ret || shfos.fAnyOperationsAborted) return DDE_FNOTPROCESSED;
     }
-    else if (!wcsicmp(command, show_groupW))
+    else if (!wcsicmp(command, L"ShowGroup"))
     {
         WCHAR *path;
 
@@ -226,10 +210,9 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         heap_free(last_group);
         last_group = path;
     }
-    else if (!wcsicmp(command, add_itemW))
+    else if (!wcsicmp(command, L"AddItem"))
     {
         WCHAR *path, *name;
-        DWORD len;
         IShellLinkW *link;
         IPersistFile *file;
         HRESULT hres;
@@ -240,14 +223,14 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
                                 &IID_IShellLinkW, (void **)&link);
         if (FAILED(hres)) return DDE_FNOTPROCESSED;
 
-        len = SearchPathW(NULL, argv[0], dotexeW, 0, NULL, NULL);
+        len = SearchPathW(NULL, argv[0], L".exe", 0, NULL, NULL);
         if (len == 0)
         {
             IShellLinkW_Release(link);
             return DDE_FNOTPROCESSED;
         }
         path = heap_alloc(len * sizeof(WCHAR));
-        SearchPathW(NULL, argv[0], dotexeW, len, path, NULL);
+        SearchPathW(NULL, argv[0], L".exe", len, path, NULL);
         IShellLinkW_SetPath(link, path);
         heap_free(path);
 
@@ -269,21 +252,16 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         }
         if (argc >= 2)
         {
-            name = heap_alloc((lstrlenW(last_group) + 1 + lstrlenW(argv[1]) + 5) * sizeof(*name));
-            lstrcpyW(name, last_group);
-            lstrcatW(name, slashW);
-            lstrcatW(name, argv[1]);
-            lstrcatW(name, dotlnkW);
+            len = lstrlenW(last_group) + 1 + lstrlenW(argv[1]) + 5;
+            name = heap_alloc(len * sizeof(*name));
+            swprintf( name, len, L"%s/%s.lnk", last_group, argv[1] );
         }
         else
         {
             const WCHAR *filename = PathFindFileNameW(argv[0]);
-            int len = PathFindExtensionW(filename) - filename;
+            len = PathFindExtensionW(filename) - filename;
             name = heap_alloc((lstrlenW(last_group) + 1 + len + 5) * sizeof(*name));
-            lstrcpyW(name, last_group);
-            lstrcatW(name, slashW);
-            lstrcpynW(name+lstrlenW(name), filename, len + 1);
-            lstrcatW(name, dotlnkW);
+            swprintf( name, lstrlenW(last_group) + 1 + len + 5, L"%s/%.*s.lnk", last_group, len, filename );
         }
         hres = IPersistFile_Save(file, name, TRUE);
 
@@ -293,18 +271,16 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (FAILED(hres)) return DDE_FNOTPROCESSED;
     }
-    else if (!wcsicmp(command, delete_itemW) || !wcsicmp(command, replace_itemW))
+    else if (!wcsicmp(command, L"DeleteItem") || !wcsicmp(command, L"ReplaceItem"))
     {
         WCHAR *name;
         BOOL ret;
 
         if (argc < 1) return DDE_FNOTPROCESSED;
 
-        name = heap_alloc((lstrlenW(last_group) + 1 + lstrlenW(argv[0]) + 5) * sizeof(*name));
-        lstrcpyW(name, last_group);
-        lstrcatW(name, slashW);
-        lstrcatW(name, argv[0]);
-        lstrcatW(name, dotlnkW);
+        len = lstrlenW(last_group) + 1 + lstrlenW(argv[0]) + 5;
+        name = heap_alloc(len * sizeof(*name));
+        swprintf( name, len, L"%s/%s.lnk", last_group, argv[0]);
 
         ret = DeleteFileW(name);
 
@@ -312,7 +288,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (!ret) return DDE_FNOTPROCESSED;
     }
-    else if (!wcsicmp(command, exit_progmanW))
+    else if (!wcsicmp(command, L"ExitProgman"))
     {
         /* do nothing */
     }
@@ -326,9 +302,6 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
 static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
 {
-    static const WCHAR opcode_end[] = {' ',',','(',')','[',']','"',0};
-    static const WCHAR param_end[] = {',','(',')','[',']',0};
-
     WCHAR *original = command;
     WCHAR *opcode = NULL, **argv = NULL, *p;
     int argc = 0, i;
@@ -344,7 +317,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
 
         command++;
         while (*command == ' ') command++;
-        if (!(p = wcspbrk(command, opcode_end))) goto error;
+        if (!(p = wcspbrk(command, L" ,()[]\""))) goto error;
 
         opcode = strndupW(command, p - command);
 
@@ -364,7 +337,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
                 }
                 else
                 {
-                    if (!(p = wcspbrk(command, param_end))) goto error;
+                    if (!(p = wcspbrk(command, L",()[]"))) goto error;
                     while (p[-1] == ' ') p--;
                 }
 
@@ -485,23 +458,15 @@ void WINAPI ShellDDEInit(BOOL bInit)
 
     if (bInit)
     {
-        static const WCHAR wszProgman[] = {'P','r','o','g','m','a','n',0};
-        static const WCHAR wszAsterisk[] = {'*',0};
-        static const WCHAR wszShell[] = {'S','h','e','l','l',0};
-        static const WCHAR wszAppProperties[] =
-            {'A','p','p','P','r','o','p','e','r','t','i','e','s',0};
-        static const WCHAR wszFolders[] = {'F','o','l','d','e','r','s',0};
-        static const WCHAR wszGroups[] = {'G','r','o','u','p','s',0};
-
         DdeInitializeW(&dwDDEInst, DdeCallback, CBF_FAIL_ADVISES | CBF_FAIL_POKES, 0);
 
-        hszProgmanTopic = DdeCreateStringHandleW(dwDDEInst, wszProgman, CP_WINUNICODE);
-        hszProgmanService = DdeCreateStringHandleW(dwDDEInst, wszProgman, CP_WINUNICODE);
-        hszAsterisk = DdeCreateStringHandleW(dwDDEInst, wszAsterisk, CP_WINUNICODE);
-        hszShell = DdeCreateStringHandleW(dwDDEInst, wszShell, CP_WINUNICODE);
-        hszAppProperties = DdeCreateStringHandleW(dwDDEInst, wszAppProperties, CP_WINUNICODE);
-        hszFolders = DdeCreateStringHandleW(dwDDEInst, wszFolders, CP_WINUNICODE);
-        hszGroups = DdeCreateStringHandleW(dwDDEInst, wszGroups, CP_WINUNICODE);
+        hszProgmanTopic = DdeCreateStringHandleW(dwDDEInst, L"Progman", CP_WINUNICODE);
+        hszProgmanService = DdeCreateStringHandleW(dwDDEInst, L"Progman", CP_WINUNICODE);
+        hszAsterisk = DdeCreateStringHandleW(dwDDEInst, L"*", CP_WINUNICODE);
+        hszShell = DdeCreateStringHandleW(dwDDEInst, L"Shell", CP_WINUNICODE);
+        hszAppProperties = DdeCreateStringHandleW(dwDDEInst, L"AppProperties", CP_WINUNICODE);
+        hszFolders = DdeCreateStringHandleW(dwDDEInst, L"Folders", CP_WINUNICODE);
+        hszGroups = DdeCreateStringHandleW(dwDDEInst, L"Groups", CP_WINUNICODE);
 
         DdeNameService(dwDDEInst, hszFolders, 0, DNS_REGISTER);
         DdeNameService(dwDDEInst, hszProgmanService, 0, DNS_REGISTER);

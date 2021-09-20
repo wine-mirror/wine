@@ -1183,17 +1183,6 @@ BOOL WINAPI DAD_ShowDragImage(BOOL bShow)
     return FALSE;
 }
 
-static const WCHAR szwCabLocation[] = {
-  'S','o','f','t','w','a','r','e','\\',
-  'M','i','c','r','o','s','o','f','t','\\',
-  'W','i','n','d','o','w','s','\\',
-  'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-  'E','x','p','l','o','r','e','r','\\',
-  'C','a','b','i','n','e','t','S','t','a','t','e',0
-};
-
-static const WCHAR szwSettings[] = { 'S','e','t','t','i','n','g','s',0 };
-
 /*************************************************************************
  * ReadCabinetState				[SHELL32.651] NT 4.0
  *
@@ -1208,12 +1197,11 @@ BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
 	if( (cs == NULL) || (length < (int)sizeof(*cs))  )
 		return FALSE;
 
-	r = RegOpenKeyW( HKEY_CURRENT_USER, szwCabLocation, &hkey );
+	r = RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState", &hkey );
 	if( r == ERROR_SUCCESS )
 	{
 		type = REG_BINARY;
-		r = RegQueryValueExW( hkey, szwSettings, 
-			NULL, &type, (LPBYTE)cs, (LPDWORD)&length );
+		r = RegQueryValueExW( hkey, L"Settings", NULL, &type, (LPBYTE)cs, (LPDWORD)&length );
 		RegCloseKey( hkey );
 			
 	}
@@ -1255,13 +1243,11 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *cs)
 	if( cs == NULL )
 		return FALSE;
 
-	r = RegCreateKeyExW( HKEY_CURRENT_USER, szwCabLocation, 0,
+	r = RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState", 0,
 		 NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
 	if( r == ERROR_SUCCESS )
 	{
-		r = RegSetValueExW( hkey, szwSettings, 0, 
-			REG_BINARY, (LPBYTE) cs, cs->cLength);
-
+		r = RegSetValueExW( hkey, L"Settings", 0, REG_BINARY, (LPBYTE) cs, cs->cLength);
 		RegCloseKey( hkey );
 	}
 
@@ -1700,7 +1686,6 @@ HPSXA WINAPI SHCreatePropSheetExtArray(HKEY hKey, LPCWSTR pszSubKey, UINT max_if
  */
 HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_iface, LPDATAOBJECT pDataObj)
 {
-    static const WCHAR szPropSheetSubKey[] = {'s','h','e','l','l','e','x','\\','P','r','o','p','e','r','t','y','S','h','e','e','t','H','a','n','d','l','e','r','s',0};
     WCHAR szHandler[64];
     DWORD dwHandlerLen;
     WCHAR szClsidHandler[39];
@@ -1723,7 +1708,7 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
     if (lRet != ERROR_SUCCESS)
         return NULL;
 
-    lRet = RegOpenKeyExW(hkBase, szPropSheetSubKey, 0, KEY_ENUMERATE_SUB_KEYS, &hkPropSheetHandlers);
+    lRet = RegOpenKeyExW(hkBase, L"shellex\\PropertySheetHandlers", 0, KEY_ENUMERATE_SUB_KEYS, &hkPropSheetHandlers);
     RegCloseKey(hkBase);
     if (lRet == ERROR_SUCCESS)
     {
@@ -1990,8 +1975,6 @@ BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
     const WCHAR *basename;
     WCHAR *dst_basename;
     int i=2;
-    static const WCHAR lnkformat[] = {'%','s','.','l','n','k',0};
-    static const WCHAR lnkformatnum[] = {'%','s',' ','(','%','d',')','.','l','n','k',0};
 
     TRACE("(%s, %s, %p, %p, 0x%08x)\n", debugstr_w(pszLinkTo), debugstr_w(pszDir),
           pszName, pfMustCopy, uFlags);
@@ -2023,11 +2006,11 @@ BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
 
     dst_basename = pszName + lstrlenW(pszName);
 
-    swprintf(dst_basename, pszName + MAX_PATH - dst_basename, lnkformat, basename);
+    swprintf(dst_basename, pszName + MAX_PATH - dst_basename, L"%s.lnk", basename);
 
     while (GetFileAttributesW(pszName) != INVALID_FILE_ATTRIBUTES)
     {
-        swprintf(dst_basename, pszName + MAX_PATH - dst_basename, lnkformatnum, basename, i);
+        swprintf(dst_basename, pszName + MAX_PATH - dst_basename, L"%s (%d).lnk", basename, i);
         i++;
     }
 

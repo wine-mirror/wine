@@ -67,10 +67,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION SHELL32_SicCS = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
-static const WCHAR WindowMetrics[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
-                                      'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
-static const WCHAR ShellIconSize[] = {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
-
 #define SIC_COMPARE_LISTINDEX 1
 
 /*****************************************************************************
@@ -411,9 +407,9 @@ static int get_shell_icon_size(void)
     DWORD value = 32, size = sizeof(buf), type;
     HKEY key;
 
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, WindowMetrics, &key ))
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Control Panel\\Desktop\\WindowMetrics", &key ))
     {
-        if (!RegQueryValueExW( key, ShellIconSize, NULL, &type, (BYTE *)buf, &size ) && type == REG_SZ)
+        if (!RegQueryValueExW( key, L"Shell Icon Size", NULL, &type, (BYTE *)buf, &size ) && type == REG_SZ)
         {
             if (size == sizeof(buf)) buf[size / sizeof(WCHAR) - 1] = 0;
             value = wcstol( buf, NULL, 10 );
@@ -578,21 +574,15 @@ static int SIC_LoadOverlayIcon(int icon_idx)
 	LPCWSTR iconPath;
 	int iconIdx;
 
-	static const WCHAR wszShellIcons[] = {
-	    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-	    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-	    'E','x','p','l','o','r','e','r','\\','S','h','e','l','l',' ','I','c','o','n','s',0
-	}; 
-	static const WCHAR wszNumFmt[] = {'%','d',0};
-
 	iconPath = swShell32Name;	/* default: load icon from shell32.dll */
 	iconIdx = icon_idx;
 
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, wszShellIcons, 0, KEY_READ, &hKeyShellIcons) == ERROR_SUCCESS)
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Icons",
+                          0, KEY_READ, &hKeyShellIcons) == ERROR_SUCCESS)
 	{
 	    DWORD count = sizeof(buffer);
 
-	    swprintf(wszIdx, ARRAY_SIZE(wszIdx), wszNumFmt, icon_idx);
+	    swprintf(wszIdx, ARRAY_SIZE(wszIdx), L"%d", icon_idx);
 
 	    /* read icon path and index */
 	    if (RegQueryValueExW(hKeyShellIcons, wszIdx, NULL, NULL, (LPBYTE)buffer, &count) == ERROR_SUCCESS)
@@ -601,7 +591,7 @@ static int SIC_LoadOverlayIcon(int icon_idx)
 
 		if (!p)
 		{
-		    ERR("Icon index in %s/%s corrupted, no comma.\n", debugstr_w(wszShellIcons),debugstr_w(wszIdx));
+		    ERR("Icon index in Shell Icons/%s corrupted, no comma.\n", debugstr_w(wszIdx));
 		    RegCloseKey(hKeyShellIcons);
 		    return -1;
 		}
@@ -1001,8 +991,6 @@ INT WINAPI SHGetIconOverlayIndexW(LPCWSTR pszIconPath, INT iIconIndex)
  */
 HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO *sii)
 {
-    static const WCHAR shell32dll[] = {'\\','s','h','e','l','l','3','2','.','d','l','l',0};
-
     FIXME("(%d, 0x%x, %p) semi-stub\n", id, flags, sii);
     if ((id < 0) || (id >= SIID_MAX_ICONS) || !sii || (sii->cbSize != sizeof(SHSTOCKICONINFO))) {
         return E_INVALIDARG;
@@ -1012,7 +1000,7 @@ HRESULT WINAPI SHGetStockIconInfo(SHSTOCKICONID id, UINT flags, SHSTOCKICONINFO 
 
     /* no icons defined: use default */
     sii->iIcon = -IDI_SHELL_FILE;
-    lstrcatW(sii->szPath, shell32dll);
+    lstrcatW(sii->szPath, L"\\shell32.dll");
 
     if (flags)
         FIXME("flags 0x%x not implemented\n", flags);

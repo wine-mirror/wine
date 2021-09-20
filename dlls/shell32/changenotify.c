@@ -416,9 +416,8 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
 
     if (wEventId & SHCNE_ASSOCCHANGED)
     {
-        static const WCHAR args[] = {' ','-','a',0 };
         TRACE("refreshing file type associations\n");
-        run_winemenubuilder( args );
+        run_winemenubuilder( L" -a" );
     }
 }
 

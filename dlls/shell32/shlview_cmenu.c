@@ -360,15 +360,6 @@ static BOOL format_date(FILETIME *time, WCHAR *buffer, DWORD size)
 
 static BOOL get_program_description(WCHAR *path, WCHAR *buffer, DWORD size)
 {
-    static const WCHAR translationW[] = {
-        '\\','V','a','r','F','i','l','e','I','n','f','o',
-        '\\','T','r','a','n','s','l','a','t','i','o','n',0
-    };
-    static const WCHAR fileDescFmtW[] = {
-        '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
-        '\\','%','0','4','x','%','0','4','x',
-        '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0
-    };
     WCHAR fileDescW[41], *desc;
     DWORD versize, *lang;
     UINT dlen, llen, i;
@@ -384,12 +375,13 @@ static BOOL get_program_description(WCHAR *path, WCHAR *buffer, DWORD size)
     if (!GetFileVersionInfoW(path, 0, versize, data))
         goto out;
 
-    if (!VerQueryValueW(data, translationW, (LPVOID *)&lang, &llen))
+    if (!VerQueryValueW(data, L"\\VarFileInfo\\Translation", (LPVOID *)&lang, &llen))
         goto out;
 
     for (i = 0; i < llen / sizeof(DWORD); i++)
     {
-        swprintf(fileDescW, ARRAY_SIZE(fileDescW), fileDescFmtW, LOWORD(lang[i]), HIWORD(lang[i]));
+        swprintf(fileDescW, ARRAY_SIZE(fileDescW), L"\\StringFileInfo\\%04x%04x\\FileDescription",
+                 LOWORD(lang[i]), HIWORD(lang[i]));
         if (VerQueryValueW(data, fileDescW, (LPVOID *)&desc, &dlen))
         {
             if (dlen > size - 1) dlen = size - 1;
@@ -448,9 +440,7 @@ static void init_file_properties_dlg(HWND hwndDlg, struct file_properties_info *
 
     if (exinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
     {
-        static const WCHAR unknownW[] = {'(','u','n','k','n','o','w','n',')',0};
-        SetDlgItemTextW(hwndDlg, IDC_FPROP_SIZE, unknownW);
-
+        SetDlgItemTextW(hwndDlg, IDC_FPROP_SIZE, L"(unknown)");
         /* TODO: Implement counting for directories */
         return;
     }
@@ -541,9 +531,8 @@ static INT_PTR CALLBACK file_properties_proc(HWND hwndDlg, UINT uMsg, WPARAM wPa
                         wcscmp(props->filename, newname) &&
                         lstrlenW(props->dir) + lstrlenW(newname) + 2 < ARRAY_SIZE(newpath))
                     {
-                        static const WCHAR slash[] = {'\\', 0};
                         lstrcpyW(newpath, props->dir);
-                        lstrcatW(newpath, slash);
+                        lstrcatW(newpath, L"\\");
                         lstrcatW(newpath, newname);
 
                         if (!MoveFileW(props->path, newpath))
@@ -653,8 +642,6 @@ error:
 
 static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 {
-	static const WCHAR wszFolder[] = {'F','o','l','d','e','r', 0};
-	static const WCHAR wszFiletypeAll[] = {'*',0};
 	LPSHELLFOLDER lpDesktopSF;
 	LPSHELLFOLDER lpSF;
 	LPDATAOBJECT lpDo;
@@ -695,14 +682,13 @@ static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 	}
 	else if (_ILIsFolder(This->apidl[0]))
 	{
-	    lstrcpynW(wszFiletype, wszFolder, 64);
+	    lstrcpynW(wszFiletype, L"Folder", 64);
 	}
 	else if (_ILIsSpecialFolder(This->apidl[0]))
 	{
 	    LPGUID folderGUID;
-	    static const WCHAR wszclsid[] = {'C','L','S','I','D','\\', 0};
 	    folderGUID = _ILGetGUIDPointer(This->apidl[0]);
-	    lstrcpyW(wszFiletype, wszclsid);
+	    lstrcpyW(wszFiletype, L"CLSID\\");
 	    StringFromGUID2(folderGUID, &wszFiletype[6], MAX_PATH - 6);
 	}
 	else
@@ -738,7 +724,7 @@ static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 		SHAddFromPropSheetExtArray(hpsxa, Properties_AddPropSheetCallback, (LPARAM)&psh);
 		SHDestroyPropSheetExtArray(hpsxa);
 	    }
-	    hpsxa = SHCreatePropSheetExtArrayEx(HKEY_CLASSES_ROOT, wszFiletypeAll, MAX_PROP_PAGES - psh.nPages, lpDo);
+	    hpsxa = SHCreatePropSheetExtArrayEx(HKEY_CLASSES_ROOT, L"*", MAX_PROP_PAGES - psh.nPages, lpDo);
 	    if (hpsxa != NULL)
 	    {
 		SHAddFromPropSheetExtArray(hpsxa, Properties_AddPropSheetCallback, (LPARAM)&psh);
@@ -845,14 +831,6 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
 static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR cmdid, UINT flags,
     UINT *reserved, LPSTR name, UINT maxlen)
 {
-    static const WCHAR openW[] = {'o','p','e','n',0};
-    static const WCHAR exploreW[] = {'e','x','p','l','o','r','e',0};
-    static const WCHAR cutW[] = {'c','u','t',0};
-    static const WCHAR copyW[] = {'c','o','p','y',0};
-    static const WCHAR linkW[] = {'l','i','n','k',0};
-    static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
-    static const WCHAR propertiesW[] = {'p','r','o','p','e','r','t','i','e','s',0};
-    static const WCHAR renameW[] = {'r','e','n','a','m','e',0};
     ContextMenu *This = impl_from_IContextMenu3(iface);
     const WCHAR *cmdW = NULL;
     HRESULT hr = S_OK;
@@ -871,28 +849,28 @@ static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR c
         switch (cmdid + FCIDM_BASE)
         {
         case FCIDM_SHVIEW_OPEN:
-            cmdW = openW;
+            cmdW = L"open";
             break;
         case FCIDM_SHVIEW_EXPLORE:
-            cmdW = exploreW;
+            cmdW = L"explore";
             break;
         case FCIDM_SHVIEW_CUT:
-            cmdW = cutW;
+            cmdW = L"cut";
             break;
         case FCIDM_SHVIEW_COPY:
-            cmdW = copyW;
+            cmdW = L"copy";
             break;
         case FCIDM_SHVIEW_CREATELINK:
-            cmdW = linkW;
+            cmdW = L"link";
             break;
         case FCIDM_SHVIEW_DELETE:
-            cmdW = deleteW;
+            cmdW = L"delete";
             break;
         case FCIDM_SHVIEW_PROPERTIES:
-            cmdW = propertiesW;
+            cmdW = L"properties";
             break;
         case FCIDM_SHVIEW_RENAME:
-            cmdW = renameW;
+            cmdW = L"rename";
             break;
         }
 
@@ -1385,8 +1363,6 @@ static HRESULT WINAPI BackgroundMenu_GetCommandString(
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-    static const WCHAR pasteW[] = {'p','a','s','t','e',0};
-    static const WCHAR propertiesW[] = {'p','r','o','p','e','r','t','i','e','s',0};
     ContextMenu *This = impl_from_IContextMenu3(iface);
     const WCHAR *cmdW = NULL;
     HRESULT hr = E_FAIL;
@@ -1405,10 +1381,10 @@ static HRESULT WINAPI BackgroundMenu_GetCommandString(
         switch (idCommand + FCIDM_BASE)
         {
         case FCIDM_SHVIEW_INSERT:
-            cmdW = pasteW;
+            cmdW = L"paste";
             break;
         case FCIDM_SHVIEW_PROPERTIES:
-            cmdW = propertiesW;
+            cmdW = L"properties";
             break;
         }
 

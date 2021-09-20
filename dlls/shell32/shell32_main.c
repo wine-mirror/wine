@@ -273,10 +273,6 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     /* get the type name */
     if (SUCCEEDED(hr) && (flags & SHGFI_TYPENAME))
     {
-        static const WCHAR szFolder[] = { 'F','o','l','d','e','r',0 };
-        static const WCHAR szFile[] = { 'F','i','l','e',0 };
-        static const WCHAR szSpaceFile[] = { ' ','f','i','l','e',0 };
-
         if (!(flags & SHGFI_USEFILEATTRIBUTES) || (flags & SHGFI_PIDL))
         {
             char ftype[80];
@@ -287,7 +283,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         else
         {
             if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                lstrcatW (psfi->szTypeName, szFolder);
+                lstrcatW (psfi->szTypeName, L"Folder");
             else 
             {
                 WCHAR sTemp[64];
@@ -296,7 +292,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 if (sTemp[0] == 0 || (sTemp[0] == '.' && sTemp[1] == 0))
                 {
                     /* "name" or "name." => "File" */
-                    lstrcpynW (psfi->szTypeName, szFile, 64);
+                    lstrcpynW (psfi->szTypeName, L"File", 64);
                 }
                 else if (!( HCR_MapTypeToValueW(sTemp, sTemp, 64, TRUE) &&
                     HCR_MapTypeToValueW(sTemp, psfi->szTypeName, 80, FALSE )))
@@ -304,11 +300,11 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                     if (sTemp[0])
                     {
                         lstrcpynW (psfi->szTypeName, sTemp, 64);
-                        lstrcatW (psfi->szTypeName, szSpaceFile);
+                        lstrcatW (psfi->szTypeName, L" file");
                     }
                     else
                     {
-                        lstrcpynW (psfi->szTypeName, szFile, 64);
+                        lstrcpynW (psfi->szTypeName, L"File", 64);
                     }
                 }
             }
@@ -349,7 +345,6 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
             else
             {
                 WCHAR* szExt;
-                static const WCHAR p1W[] = {'%','1',0};
                 WCHAR sTemp [MAX_PATH];
 
                 szExt = PathFindExtensionW(szFullPath);
@@ -358,7 +353,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
                      HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &psfi->iIcon))
                 {
-                    if (wcscmp(p1W, sTemp))
+                    if (wcscmp(L"%1", sTemp))
                         lstrcpyW(psfi->szDisplayName, sTemp);
                     else
                     {
@@ -404,7 +399,6 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 psfi->iIcon = SIC_GetIconIndex(swShell32Name, -IDI_SHELL_FOLDER, 0);
             else
             {
-                static const WCHAR p1W[] = {'%','1',0};
                 WCHAR sTemp[MAX_PATH];
                 WCHAR *szExt;
                 int icon_idx = 0;
@@ -417,7 +411,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                      HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE) &&
                      HCR_GetDefaultIconW(sTemp, sTemp, MAX_PATH, &icon_idx))
                 {
-                    if (!wcscmp(p1W,sTemp))            /* icon is in the file */
+                    if (!wcscmp(L"%1",sTemp))            /* icon is in the file */
                         lstrcpyW(sTemp, szFullPath);
 
                     psfi->iIcon = SIC_GetIconIndex(sTemp, icon_idx, 0);
@@ -875,10 +869,8 @@ HRESULT WINAPI SHLoadInProc (REFCLSID rclsid)
 
 static void add_authors( HWND list )
 {
-    static const WCHAR eol[] = {'\r','\n',0};
-    static const WCHAR authors[] = {'A','U','T','H','O','R','S',0};
     WCHAR *strW, *start, *end;
-    HRSRC rsrc = FindResourceW( shell32_hInstance, authors, (LPCWSTR)RT_RCDATA );
+    HRSRC rsrc = FindResourceW( shell32_hInstance, L"AUTHORS", (LPCWSTR)RT_RCDATA );
     char *strA = LockResource( LoadResource( shell32_hInstance, rsrc ));
     DWORD sizeW, sizeA = SizeofResource( shell32_hInstance, rsrc );
 
@@ -888,12 +880,12 @@ static void add_authors( HWND list )
     MultiByteToWideChar( CP_UTF8, 0, strA, sizeA, strW, sizeW );
     strW[sizeW - 1] = 0;
 
-    start = wcspbrk( strW, eol );  /* skip the header line */
+    start = wcspbrk( strW, L"\r\n" );  /* skip the header line */
     while (start)
     {
-        while (*start && wcschr( eol, *start )) start++;
+        while (*start && wcschr( L"\r\n", *start )) start++;
         if (!*start) break;
-        end = wcspbrk( start, eol );
+        end = wcspbrk( start, L"\r\n" );
         if (end) *end++ = 0;
         SendMessageW( list, LB_ADDSTRING, -1, (LPARAM)start );
         start = end;
@@ -1026,8 +1018,6 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     ABOUT_INFO info;
     LOGFONTW logFont;
     BOOL bRet;
-    static const WCHAR wszSHELL_ABOUT_MSGBOX[] =
-        {'S','H','E','L','L','_','A','B','O','U','T','_','M','S','G','B','O','X',0};
 
     TRACE("\n");
 
@@ -1039,7 +1029,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &logFont, 0 );
     info.hFont = CreateFontIndirectW( &logFont );
 
-    bRet = DialogBoxParamW( shell32_hInstance, wszSHELL_ABOUT_MSGBOX, hWnd, AboutDlgProc, (LPARAM)&info );
+    bRet = DialogBoxParamW( shell32_hInstance, L"SHELL_ABOUT_MSGBOX", hWnd, AboutDlgProc, (LPARAM)&info );
     DeleteObject(info.hFont);
     return bRet;
 }

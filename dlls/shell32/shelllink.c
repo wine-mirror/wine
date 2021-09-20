@@ -299,7 +299,6 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
 
 BOOL run_winemenubuilder( const WCHAR *args )
 {
-    static const WCHAR menubuilder[] = {'\\','w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',0};
     LONG len;
     LPWSTR buffer;
     STARTUPINFOW si;
@@ -308,8 +307,8 @@ BOOL run_winemenubuilder( const WCHAR *args )
     WCHAR app[MAX_PATH];
     void *redir;
 
-    GetSystemDirectoryW( app, MAX_PATH - ARRAY_SIZE(menubuilder) );
-    lstrcatW( app, menubuilder );
+    GetSystemDirectoryW( app, MAX_PATH );
+    lstrcatW( app, L"\\winemenubuilder.exe" );
 
     len = (lstrlenW( app ) + lstrlenW( args ) + 1) * sizeof(WCHAR);
     buffer = heap_alloc( len );
@@ -341,17 +340,16 @@ BOOL run_winemenubuilder( const WCHAR *args )
 
 static BOOL StartLinkProcessor( LPCOLESTR szLink )
 {
-    static const WCHAR szFormat[] = {' ','-','w',' ','"','%','s','"',0 };
     LONG len;
     LPWSTR buffer;
     BOOL ret;
 
-    len = sizeof(szFormat) + lstrlenW( szLink ) * sizeof(WCHAR);
+    len = (lstrlenW( szLink ) + 7) * sizeof(WCHAR);
     buffer = heap_alloc( len );
     if( !buffer )
         return FALSE;
 
-    wsprintfW( buffer, szFormat, szLink );
+    swprintf( buffer, len, L" -w \"%s\"", szLink );
     ret = run_winemenubuilder( buffer );
     heap_free( buffer );
     return ret;
@@ -2429,7 +2427,6 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
                             UINT idCmdFirst, UINT idCmdLast, UINT uFlags )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
-    static WCHAR szOpen[] = { 'O','p','e','n',0 };
     MENUITEMINFOW mii;
     int id = 1;
 
@@ -2442,7 +2439,7 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
     memset( &mii, 0, sizeof mii );
     mii.cbSize = sizeof mii;
     mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
-    mii.dwTypeData = szOpen;
+    mii.dwTypeData = (LPWSTR)L"Open";
     mii.cch = lstrlenW( mii.dwTypeData );
     mii.wID = idCmdFirst + id++;
     mii.fState = MFS_DEFAULT | MFS_ENABLED;
@@ -2482,7 +2479,6 @@ static HRESULT WINAPI
 ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
 {
     IShellLinkImpl *This = impl_from_IContextMenu(iface);
-    static const WCHAR szOpen[] = { 'O','p','e','n',0 };
     SHELLEXECUTEINFOW sei;
     HWND hwnd = NULL; /* FIXME: get using interface set from IObjectWithSite */
     LPWSTR args = NULL;
@@ -2530,8 +2526,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
             lstrcatW( args, This->sArgs );
         if ( iciex->lpParametersW && iciex->lpParametersW[0] )
         {
-            static const WCHAR space[] = { ' ', 0 };
-            lstrcatW( args, space );
+            lstrcatW( args, L" " );
             lstrcatW( args, iciex->lpParametersW );
         }
     }
@@ -2544,7 +2539,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
     sei.lpIDList = This->pPidl;
     sei.lpDirectory = This->sWorkDir;
     sei.lpParameters = args;
-    sei.lpVerb = szOpen;
+    sei.lpVerb = L"Open";
 
     if( ShellExecuteExW( &sei ) )
         r = S_OK;

@@ -389,9 +389,7 @@ static BOOL PathIsExeW (LPCWSTR lpszPath)
 	LPCWSTR lpszExtension = PathGetExtensionW(lpszPath);
         int i;
         static const WCHAR lpszExtensions[][4] =
-            {{'e','x','e','\0'}, {'c','o','m','\0'}, {'p','i','f','\0'},
-             {'c','m','d','\0'}, {'b','a','t','\0'}, {'s','c','f','\0'},
-             {'s','c','r','\0'}, {'\0'} };
+            {L"exe", L"com", L"pif",L"cmd", L"bat", L"scf",L"scr",L"" };
 
 	TRACE("path=%s\n",debugstr_w(lpszPath));
 
@@ -2647,21 +2645,16 @@ static DWORD xdg_config_len;
 
 static BOOL WINAPI init_xdg_dirs( INIT_ONCE *once, void *param, void **context )
 {
-    static const WCHAR configW[] = {'X','D','G','_','C','O','N','F','I','G','_','H','O','M','E',0};
-    static const WCHAR homedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
-    static const WCHAR home_fmtW[] = {'%','s','/','.','c','o','n','f','i','g','/','u','s','e','r','-','d','i','r','s','.','d','i','r','s',0};
-    static const WCHAR config_fmtW[] = {'\\','?','?','\\','u','n','i','x','%','s','/','u','s','e','r','-','d','i','r','s','.','d','i','r','s',0};
-    const WCHAR *fmt = config_fmtW;
+    const WCHAR *var, *fmt = L"\\??\\unix%s/user-dirs.dirs";
     char *p;
     WCHAR *name, *ptr;
     HANDLE file;
     DWORD len;
-    WCHAR var[MAX_PATH];
 
-    if (!GetEnvironmentVariableW( configW, var, MAX_PATH ) || !var[0])
+    if (!(var = _wgetenv( L"XDG_CONFIG_HOME" )) || var[0] != '/')
     {
-        if (!GetEnvironmentVariableW( homedirW, var, MAX_PATH )) return TRUE;
-        fmt = home_fmtW;
+        if (!(var = _wgetenv( L"WINEHOMEDIR" ))) return TRUE;
+        fmt = L"%s/.config/user-dirs.dirs";
     }
     len = lstrlenW(var) + lstrlenW(fmt);
     name = heap_alloc( len * sizeof(WCHAR) );
@@ -3254,37 +3247,32 @@ static HRESULT _SHRegisterCommonShellFolders(void)
  */
 static HRESULT create_extra_folders(void)
 {
-    static const WCHAR environW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
-    static const WCHAR microsoftW[] = {'M','i','c','r','o','s','o','f','t',0};
-    static const WCHAR TempW[]    = {'T','e','m','p',0};
-    static const WCHAR TEMPW[]    = {'T','E','M','P',0};
-    static const WCHAR TMPW[]     = {'T','M','P',0};
     WCHAR path[MAX_PATH+5];
     HRESULT hr;
     HKEY hkey;
     DWORD type, size, ret;
 
-    ret = RegCreateKeyW( HKEY_CURRENT_USER, environW, &hkey );
+    ret = RegCreateKeyW( HKEY_CURRENT_USER, L"Environment", &hkey );
     if (ret) return HRESULT_FROM_WIN32( ret );
 
     /* FIXME: should be under AppData, but we don't want spaces in the temp path */
     hr = SHGetFolderPathAndSubDirW( 0, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL,
-                                    SHGFP_TYPE_DEFAULT, TempW, path );
+                                    SHGFP_TYPE_DEFAULT, L"Temp", path );
     if (SUCCEEDED(hr))
     {
         size = sizeof(path);
-        if (RegQueryValueExW( hkey, TEMPW, NULL, &type, (LPBYTE)path, &size ))
-            RegSetValueExW( hkey, TEMPW, 0, REG_SZ, (LPBYTE)path, (lstrlenW(path) + 1) * sizeof(WCHAR) );
+        if (RegQueryValueExW( hkey, L"TEMP", NULL, &type, (LPBYTE)path, &size ))
+            RegSetValueExW( hkey, L"TEMP", 0, REG_SZ, (LPBYTE)path, (lstrlenW(path) + 1) * sizeof(WCHAR) );
         size = sizeof(path);
-        if (RegQueryValueExW( hkey, TMPW, NULL, &type, (LPBYTE)path, &size ))
-            RegSetValueExW( hkey, TMPW, 0, REG_SZ, (LPBYTE)path, (lstrlenW(path) + 1) * sizeof(WCHAR) );
+        if (RegQueryValueExW( hkey, L"TMP", NULL, &type, (LPBYTE)path, &size ))
+            RegSetValueExW( hkey, L"TMP", 0, REG_SZ, (LPBYTE)path, (lstrlenW(path) + 1) * sizeof(WCHAR) );
     }
     RegCloseKey( hkey );
 
     if (SUCCEEDED(hr))
     {
         hr = SHGetFolderPathAndSubDirW( 0, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL,
-                                        SHGFP_TYPE_DEFAULT, microsoftW, path );
+                                        SHGFP_TYPE_DEFAULT, L"Microsoft", path );
     }
     if (SUCCEEDED(hr))
     {
@@ -3302,14 +3290,6 @@ static HRESULT create_extra_folders(void)
  */
 static HRESULT set_folder_attributes(void)
 {
-    static const WCHAR clsidW[] = {'C','L','S','I','D','\\',0 };
-    static const WCHAR shellfolderW[] = {'\\','S','h','e','l','l','F','o','l','d','e','r', 0 };
-    static const WCHAR wfparsingW[] = {'W','a','n','t','s','F','O','R','P','A','R','S','I','N','G',0};
-    static const WCHAR wfdisplayW[] = {'W','a','n','t','s','F','O','R','D','I','S','P','L','A','Y',0};
-    static const WCHAR hideasdeleteW[] = {'H','i','d','e','A','s','D','e','l','e','t','e','P','e','r','U','s','e','r',0};
-    static const WCHAR cfattributesW[] = {'C','a','l','l','F','o','r','A','t','t','r','i','b','u','t','e','s',0};
-    static const WCHAR emptyW[] = {0};
-
     static const struct
     {
         const CLSID *clsid;
@@ -3335,29 +3315,29 @@ static HRESULT set_folder_attributes(void)
     };
 
     unsigned int i;
-    WCHAR buffer[39 + ARRAY_SIZE(clsidW) + ARRAY_SIZE(shellfolderW)];
+    WCHAR buffer[39 + ARRAY_SIZE(L"CLSID\\") + ARRAY_SIZE(L"\\ShellFolder")];
     LONG res;
     HKEY hkey;
 
     for (i = 0; i < ARRAY_SIZE(folders); i++)
     {
-        lstrcpyW( buffer, clsidW );
+        lstrcpyW( buffer, L"CLSID\\" );
         StringFromGUID2( folders[i].clsid, buffer + lstrlenW(buffer), 39 );
-        lstrcatW( buffer, shellfolderW );
+        lstrcatW( buffer, L"\\ShellFolder" );
         res = RegCreateKeyExW( HKEY_CLASSES_ROOT, buffer, 0, NULL, 0,
                                KEY_READ | KEY_WRITE, NULL, &hkey, NULL);
         if (res) return HRESULT_FROM_WIN32( res );
         if (folders[i].wfparsing)
-            res = RegSetValueExW( hkey, wfparsingW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
+            res = RegSetValueExW( hkey, L"WantsFORPARSING", 0, REG_SZ, (const BYTE *)L"", sizeof(WCHAR) );
         if (folders[i].wfdisplay)
-            res = RegSetValueExW( hkey, wfdisplayW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
+            res = RegSetValueExW( hkey, L"WantsFORDISPLAY", 0, REG_SZ, (const BYTE *)L"", sizeof(WCHAR) );
         if (folders[i].hideasdel)
-            res = RegSetValueExW( hkey, hideasdeleteW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
+            res = RegSetValueExW( hkey, L"HideAsDeletePerUser", 0, REG_SZ, (const BYTE *)L"", sizeof(WCHAR) );
         if (folders[i].attr)
             res = RegSetValueExW( hkey, L"Attributes", 0, REG_DWORD,
                                   (const BYTE *)&folders[i].attr, sizeof(DWORD));
         if (folders[i].call_for_attr)
-            res = RegSetValueExW( hkey, cfattributesW, 0, REG_DWORD,
+            res = RegSetValueExW( hkey, L"CallForAttributes", 0, REG_DWORD,
                                  (const BYTE *)&folders[i].call_for_attr, sizeof(DWORD));
         RegCloseKey( hkey );
     }
@@ -3615,7 +3595,6 @@ static HRESULT get_known_folder_registry_path(
     LPWSTR lpStringGuid,
     LPWSTR *lpPath)
 {
-    static const WCHAR sBackslash[] = {'\\',0};
     HRESULT hr = S_OK;
     int length;
     WCHAR sGuid[50];
@@ -3634,8 +3613,7 @@ static HRESULT get_known_folder_registry_path(
 
     if(SUCCEEDED(hr))
     {
-        lstrcpyW(*lpPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FolderDescriptions");
-        lstrcatW(*lpPath, sBackslash);
+        lstrcpyW(*lpPath, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FolderDescriptions\\");
         lstrcatW(*lpPath, sGuid);
     }
 
@@ -3763,13 +3741,12 @@ static HRESULT redirect_known_folder(
     /* copy content if required */
     if(SUCCEEDED(hr) && (flags & KF_REDIRECT_COPY_CONTENTS) )
     {
-        static const WCHAR sWildcard[] = {'\\','*',0};
         WCHAR srcPath[MAX_PATH+1], dstPath[MAX_PATH+1];
         SHFILEOPSTRUCTW fileOp;
 
         ZeroMemory(srcPath, sizeof(srcPath));
         lstrcpyW(srcPath, lpSrcPath);
-        lstrcatW(srcPath, sWildcard);
+        lstrcatW(srcPath, L"\\*");
 
         ZeroMemory(dstPath, sizeof(dstPath));
         lstrcpyW(dstPath, pszTargetPath);
@@ -3949,7 +3926,6 @@ static HRESULT get_known_folder_path(
     LPWSTR registryPath,
     LPWSTR *ppszPath)
 {
-    static const WCHAR sBackslash[] = {'\\',0};
     HRESULT hr;
     DWORD dwSize, dwType;
     WCHAR path[MAX_PATH] = {0};
@@ -3979,7 +3955,7 @@ static HRESULT get_known_folder_path(
         }
 
         lstrcatW(path, parentPath);
-        lstrcatW(path, sBackslash);
+        lstrcatW(path, L"\\");
 
         heap_free(parentRegistryPath);
         heap_free(parentPath);

@@ -226,9 +226,6 @@ static ULONG WINAPI IShellFolder_fnRelease(IShellFolder2 *iface)
  */
 LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
 {
-    static WCHAR szfsbc[] = {
-        'F','i','l','e',' ','S','y','s','t','e','m',' ',
-        'B','i','n','d',' ','D','a','t','a',0 };
     IFileSystemBindData *fsbd = NULL;
     LPITEMIDLIST pidl = NULL;
     IUnknown *unk = NULL;
@@ -240,7 +237,7 @@ LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
         return NULL;
 
     /* see if the caller bound File System Bind Data */
-    r = IBindCtx_GetObjectParam( pbc, szfsbc, &unk );
+    r = IBindCtx_GetObjectParam( pbc, (WCHAR *)L"File System Bind Data", &unk );
     if (FAILED(r))
         return NULL;
 
@@ -295,7 +292,6 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
                                  DWORD * pchEaten, LPITEMIDLIST * ppidl,
                                  DWORD * pdwAttributes)
 {
-    static const WCHAR unix_root[] = {'\\','\\','?','\\','u','n','i','x','\\',0};
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
     HRESULT hr = S_OK;
@@ -317,12 +313,10 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 
     if (pbc)
     {
-        static WCHAR dataW[] = {'F','i','l','e',' ','S','y','s','t','e','m',' ',
-                                'B','i','n','d',' ','D','a','t','a',0 };
         IUnknown *unk;
 
         /* see if the caller bound File System Bind Data */
-        if (SUCCEEDED( IBindCtx_GetObjectParam( pbc, dataW, &unk )))
+        if (SUCCEEDED( IBindCtx_GetObjectParam( pbc, (WCHAR *)L"File System Bind Data", &unk )))
         {
             IUnknown_QueryInterface( unk, &IID_IFileSystemBindData, (void**)&fsbd );
             IUnknown_Release( unk );
@@ -343,7 +337,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
             lstrcpynW( szPath + len, lpszDisplayName + 1, MAX_PATH - len );
             for (p = szPath + len; *p; p++) if (*p == '/') *p = '\\';
         }
-        else if (!wcsnicmp( lpszDisplayName, unix_root, 9 ))
+        else if (!wcsnicmp( lpszDisplayName, L"\\\\?\\unix\\", 9 ))
         {
             lstrcpynW( szPath + len, lpszDisplayName + 9, MAX_PATH - len );
             if ((p = wcschr( szPath + len, '\\' )))
@@ -352,7 +346,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
         }
 
         /* Special case for the root folder. */
-        if (!wcsicmp( szPath, unix_root ))
+        if (!wcsicmp( szPath, L"\\\\?\\unix\\" ))
         {
             *ppidl = SHAlloc(sizeof(USHORT));
             if (!*ppidl) return E_FAIL;
@@ -594,16 +588,6 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
 static HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
         LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppvOut)
 {
-    static const WCHAR reg_blockedW[] = {'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'S','h','e','l','l',' ','E','x','t','e','n','s','i','o','n','s','\\',
-        'B','l','o','c','k','e','d',0};
-    static const WCHAR formatW[] = {'.','%','s','\\','S','h','e','l','l','E','x','\\',
-        '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
-        '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x',
-        '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0};
-
     IPersistFile *persist_file;
     char extensionA[20];
     WCHAR extensionW[20], buf[MAX_PATH];
@@ -620,7 +604,8 @@ static HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
 
     MultiByteToWideChar(CP_ACP, 0, extensionA, -1, extensionW, 20);
 
-    swprintf(buf, ARRAY_SIZE(buf), formatW, extensionW, riid->Data1, riid->Data2, riid->Data3,
+    swprintf(buf, ARRAY_SIZE(buf), L".%s\\ShellEx\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+             extensionW, riid->Data1, riid->Data2, riid->Data3,
             riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
             riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
@@ -628,7 +613,7 @@ static HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
                 NULL, buf, &size) != ERROR_SUCCESS)
         return S_FALSE;
 
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, reg_blockedW, 0, 0, 0,
+    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Blocked", 0, 0, 0,
                 KEY_READ, NULL, &key, NULL) != ERROR_SUCCESS)
         return E_FAIL;
     if(RegQueryValueExW(key, buf, 0, NULL, NULL, NULL)
@@ -636,7 +621,7 @@ static HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
         return E_ACCESSDENIED;
     RegCloseKey(key);
 
-    if(RegCreateKeyExW(HKEY_CURRENT_USER, reg_blockedW, 0, 0, 0,
+    if(RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Blocked", 0, 0, 0,
                 KEY_READ, NULL, &key, NULL) != ERROR_SUCCESS)
         return E_FAIL;
     if(RegQueryValueExW(key, buf, 0, NULL, NULL, NULL)
@@ -756,15 +741,6 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
     return hr;
 }
 
-static const WCHAR AdvancedW[] = { 'S','O','F','T','W','A','R','E',
- '\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
- 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l',
- 'o','r','e','r','\\','A','d','v','a','n','c','e','d',0 };
-static const WCHAR HideFileExtW[] = { 'H','i','d','e','F','i','l','e','E','x',
- 't',0 };
-static const WCHAR NeverShowExtW[] = { 'N','e','v','e','r','S','h','o','w','E',
- 'x','t',0 };
-
 /******************************************************************************
  * SHELL_FS_HideExtension [Internal]
  *
@@ -784,9 +760,10 @@ static BOOL SHELL_FS_HideExtension(LPCWSTR szPath)
     DWORD dwData;
     DWORD dwDataSize = sizeof (DWORD);
     BOOL doHide = FALSE; /* The default value is FALSE (win98 at least) */
-    
-    if (!RegCreateKeyExW(HKEY_CURRENT_USER, AdvancedW, 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0)) {
-        if (!RegQueryValueExW(hKey, HideFileExtW, 0, 0, (LPBYTE) &dwData, &dwDataSize))
+
+    if (!RegCreateKeyExW(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+                         0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0)) {
+        if (!RegQueryValueExW(hKey, L"HideFileExt", 0, 0, (LPBYTE) &dwData, &dwDataSize))
             doHide = dwData;
         RegCloseKey (hKey);
     }
@@ -800,7 +777,7 @@ static BOOL SHELL_FS_HideExtension(LPCWSTR szPath)
 
             if (!RegQueryValueW(HKEY_CLASSES_ROOT, ext, classname, &classlen))
                 if (!RegOpenKeyW(HKEY_CLASSES_ROOT, classname, &hKey)) {
-                    if (!RegQueryValueExW(hKey, NeverShowExtW, 0, NULL, NULL, NULL))
+                    if (!RegQueryValueExW(hKey, L"NeverShowExt", 0, NULL, NULL, NULL))
                         doHide = TRUE;
                     RegCloseKey(hKey);
                 }
@@ -821,7 +798,6 @@ void SHELL_FS_ProcessDisplayFilename(LPWSTR szPath, DWORD dwFlags)
 
 static void get_display_name( WCHAR dest[MAX_PATH], const WCHAR *path, LPCITEMIDLIST pidl, BOOL is_unix )
 {
-    static const WCHAR unix_root[] = {'\\','\\','?','\\','u','n','i','x','\\',0};
     char *buffer;
     WCHAR *res;
     DWORD i, len;
@@ -829,7 +805,7 @@ static void get_display_name( WCHAR dest[MAX_PATH], const WCHAR *path, LPCITEMID
     lstrcpynW( dest, path, MAX_PATH );
 
     /* try to get a better path than the \\?\unix one */
-    if (!wcsnicmp( path, unix_root, 9 ))
+    if (!wcsnicmp( path, L"\\\\?\\unix\\", 9 ))
     {
         if (!is_unix)
         {
@@ -949,7 +925,6 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
                                                 DWORD dwFlags,
                                                 LPITEMIDLIST * pPidlOut)
 {
-    static const WCHAR invalid_chars[] = { '\\','/',':','*','?','"','<','>','|',0 };
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
     WCHAR szSrc[MAX_PATH + 1], szDest[MAX_PATH + 1];
     LPWSTR ptr;
@@ -961,7 +936,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface,
     /* pidl has to contain a single non-empty SHITEMID */
     if (_ILIsDesktop(pidl) || !_ILIsPidlSimple(pidl) || !_ILGetTextPointer(pidl)) return E_INVALIDARG;
 
-    if (wcspbrk( lpName, invalid_chars )) return HRESULT_FROM_WIN32(ERROR_CANCELLED);
+    if (wcspbrk( lpName, L"\\/:*?\"<>|" )) return HRESULT_FROM_WIN32(ERROR_CANCELLED);
 
     /* build source path */
     lstrcpynW(szSrc, This->sPathTarget, MAX_PATH);
@@ -1142,7 +1117,6 @@ ISFHelper_fnGetUniqueName (ISFHelper * iface, LPWSTR pwszName, UINT uLen)
     HRESULT hr;
     WCHAR wszText[MAX_PATH];
     WCHAR wszNewFolder[25];
-    static const WCHAR wszFormat[] = {'%','s',' ','%','d',0 };
 
     TRACE ("(%p)(%p %u)\n", This, pwszName, uLen);
 
@@ -1165,7 +1139,7 @@ next:
          dwFetched) {
             _ILSimpleGetTextW (pidl, wszText, MAX_PATH);
             if (0 == lstrcmpiW (wszText, pwszName)) {
-                swprintf (pwszName, uLen, wszFormat, wszNewFolder, i++);
+                swprintf (pwszName, uLen, L"%s %d", wszNewFolder, i++);
                 if (i > 99) {
                     hr = E_FAIL;
                     break;
@@ -1494,11 +1468,7 @@ IFSFldr_PersistFolder3_Initialize (IPersistFolder3 * iface, LPCITEMIDLIST pidl)
             if (!SHGetSpecialFolderPathW( 0, wszTemp, CSIDL_PERSONAL, FALSE )) return E_FAIL;
             PathAddBackslashW( wszTemp );
         }
-        else
-        {
-            static const WCHAR unix_root[] = {'\\','\\','?','\\','u','n','i','x','\\',0};
-            lstrcpyW( wszTemp, unix_root );
-        }
+        else lstrcpyW( wszTemp, L"\\\\?\\unix\\" );
     }
     else SHGetPathFromIDListW( pidl, wszTemp );
 
@@ -1668,8 +1638,6 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *iface,
     IPropertyBag *pPropertyBag, IErrorLog *pErrorLog)
 {
     IGenericSFImpl *This = impl_from_IPersistPropertyBag(iface);
-
-    static const WCHAR wszTarget[] = { 'T','a','r','g','e','t', 0 };
     PERSIST_FOLDER_TARGET_INFO pftiTarget;
     VARIANT var;
     HRESULT hr;
@@ -1681,7 +1649,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *iface,
 
     /* Get 'Target' property from the property bag. */
     V_VT(&var) = VT_BSTR;
-    hr = IPropertyBag_Read(pPropertyBag, wszTarget, &var, NULL);
+    hr = IPropertyBag_Read(pPropertyBag, L"Target", &var, NULL);
     if (FAILED(hr))
         return E_FAIL;
     lstrcpyW(pftiTarget.szTargetParsingName, V_BSTR(&var));

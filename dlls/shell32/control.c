@@ -427,15 +427,13 @@ static CPlItem* Control_GetCPlItem_From_ListView(CPanel *panel)
 
 static void Control_StartApplet(HWND hWnd, CPlItem *item)
 {
-    static const WCHAR verbOpen[] = {'c','p','l','o','p','e','n',0};
-    static const WCHAR format[] = {'@','%','d',0};
-    WCHAR param[MAX_PATH];
+    WCHAR param[12];
 
     /* execute the applet if item is valid */
     if (item)
     {
-        wsprintfW(param, format, item->id);
-        ShellExecuteW(hWnd, verbOpen, item->applet->cmd, param, NULL, SW_SHOW);
+        swprintf(param, ARRAY_SIZE(param), L"@%d", item->id);
+        ShellExecuteW(hWnd, L"cplopen", item->applet->cmd, param, NULL, SW_SHOW);
     }
 }
 
@@ -605,8 +603,6 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 
 static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
-    static const WCHAR className[] = {'S','h','e','l','l','_','C','o','n','t','r','o',
-        'l','_','W','n','d','C','l','a','s','s',0};
     WNDCLASSEXW wc;
     MSG		msg;
     WCHAR appName[MAX_STRING_LEN];
@@ -623,7 +619,7 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     wc.hCursor = LoadCursorW( 0, (LPWSTR)IDC_ARROW );
     wc.hbrBackground = GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = className;
+    wc.lpszClassName = L"Shell_Control_WndClass";
     wc.hIconSm = LoadImageW( shell32_hInstance, MAKEINTRESOURCEW(IDI_SHELL_CONTROL_PANEL), IMAGE_ICON,
                              GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 
@@ -671,17 +667,13 @@ static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     HANDLE		h;
     WIN32_FIND_DATAW	fd;
     WCHAR		buffer[MAX_PATH];
-    static const WCHAR wszAllCpl[] = {'*','.','c','p','l',0};
-    static const WCHAR wszRegPath[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t',
-            '\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-            '\\','C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','C','p','l','s',0};
     WCHAR *p;
 
     /* first add .cpl files in the system directory */
     GetSystemDirectoryW( buffer, MAX_PATH );
     p = buffer + lstrlenW(buffer);
     *p++ = '\\';
-    lstrcpyW(p, wszAllCpl);
+    lstrcpyW(p, L"*.cpl");
 
     if ((h = FindFirstFileW(buffer, &fd)) != INVALID_HANDLE_VALUE) {
         do {
@@ -692,8 +684,8 @@ static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     }
 
     /* now check for cpls in the registry */
-    Control_RegisterRegistryApplets(hWnd, panel, HKEY_LOCAL_MACHINE, wszRegPath);
-    Control_RegisterRegistryApplets(hWnd, panel, HKEY_CURRENT_USER, wszRegPath);
+    Control_RegisterRegistryApplets(hWnd, panel, HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
+    Control_RegisterRegistryApplets(hWnd, panel, HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
 
     Control_DoInterface(panel, hWnd, hInst);
 }

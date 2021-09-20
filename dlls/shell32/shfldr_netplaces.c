@@ -177,13 +177,11 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnParseDisplayName (IShellFolder2 * ifac
                HWND hwndOwner, LPBC pbcReserved, LPOLESTR lpszDisplayName,
                DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
-    static const WCHAR wszEntireNetwork[] = {'E','n','t','i','r','e','N','e','t','w','o','r','k'}; /* not nul-terminated */
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
     HRESULT hr = E_INVALIDARG;
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
     LPITEMIDLIST pidlTemp = NULL;
-    int len;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n", This,
             hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName),
@@ -192,8 +190,7 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnParseDisplayName (IShellFolder2 * ifac
     *ppidl = NULL;
 
     szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
-    len = lstrlenW(szElement);
-    if (len == ARRAY_SIZE(wszEntireNetwork) && !wcsnicmp(szElement, wszEntireNetwork, ARRAY_SIZE(wszEntireNetwork)))
+    if (!wcsicmp(szElement, L"EntireNetwork"))
     {
         pidlTemp = _ILCreateEntireNetwork();
         if (pidlTemp)
