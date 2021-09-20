@@ -281,6 +281,11 @@ _FUNCTION_ {
 			format += 2;
 		    }
 		    break;
+#if _MSVCR_VER == 0 || _MSVCR_VER >= 140
+                case 'z':
+                    if (sizeof(void *) == sizeof(LONGLONG)) I64_prefix = 1;
+                    break;
+#endif
 		default:
 		    prefix_finished = 1;
 		}
