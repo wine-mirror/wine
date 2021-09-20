@@ -3666,7 +3666,6 @@ static void test_simple_joystick(void)
 
     check_member( devinst, expect_devinst, "%d", dwSize );
     check_member_guid( devinst, expect_devinst, guidProduct );
-    todo_wine
     check_member( devinst, expect_devinst, "%#x", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
@@ -3736,7 +3735,6 @@ static void test_simple_joystick(void)
     todo_wine
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
-    todo_wine
     check_member( devinst, expect_devinst, "%#x", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
@@ -3751,7 +3749,6 @@ static void test_simple_joystick(void)
     todo_wine
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
-    todo_wine
     check_member( devinst, expect_devinst, "%#x", dwDevType );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
@@ -3771,7 +3768,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
     check_member( caps, expect_caps, "%d", dwSize );
     check_member( caps, expect_caps, "%#x", dwFlags );
-    todo_wine
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
     check_member( caps, expect_caps, "%d", dwButtons );
@@ -4958,7 +4954,6 @@ static void test_device_types( void )
         todo_wine
         check_member_guid( devinst, expect_devinst[i], guidInstance );
         check_member_guid( devinst, expect_devinst[i], guidProduct );
-        todo_wine_if( i < 2 )
         check_member( devinst, expect_devinst[i], "%#x", dwDevType );
         todo_wine
         check_member_wstr( devinst, expect_devinst[i], tszInstanceName );
@@ -4972,7 +4967,6 @@ static void test_device_types( void )
         ok( hr == DI_OK, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
         check_member( caps, expect_caps[i], "%d", dwSize );
         check_member( caps, expect_caps[i], "%#x", dwFlags );
-        todo_wine_if( i < 2 )
         check_member( caps, expect_caps[i], "%#x", dwDevType );
         check_member( caps, expect_caps[i], "%d", dwAxes );
         check_member( caps, expect_caps[i], "%d", dwButtons );

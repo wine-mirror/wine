@@ -919,12 +919,52 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
+static DWORD device_type_for_version( DWORD type, DWORD version )
+{
+    if (version >= 0x0800) return type;
+
+    switch (GET_DIDEVICE_TYPE( type ))
+    {
+    case DI8DEVTYPE_JOYSTICK:
+        if (GET_DIDEVICE_SUBTYPE( type ) == DI8DEVTYPEJOYSTICK_LIMITED)
+            return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_UNKNOWN << 8) | DIDEVTYPE_HID;
+        return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8) | DIDEVTYPE_HID;
+
+    case DI8DEVTYPE_GAMEPAD:
+        return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_GAMEPAD << 8) | DIDEVTYPE_HID;
+
+    case DI8DEVTYPE_DRIVING:
+        return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_WHEEL << 8) | DIDEVTYPE_HID;
+
+    case DI8DEVTYPE_FLIGHT:
+        return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_FLIGHTSTICK << 8) | DIDEVTYPE_HID;
+
+    case DI8DEVTYPE_SUPPLEMENTAL:
+        if (GET_DIDEVICE_SUBTYPE( type ) == DI8DEVTYPESUPPLEMENTAL_HEADTRACKER)
+            return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_HEADTRACKER << 8) | DIDEVTYPE_HID;
+        if (GET_DIDEVICE_SUBTYPE( type ) == DI8DEVTYPESUPPLEMENTAL_RUDDERPEDALS)
+            return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_RUDDER << 8) | DIDEVTYPE_HID;
+        return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_UNKNOWN << 8) | DIDEVTYPE_HID;
+
+    case DI8DEVTYPE_1STPERSON:
+        return DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_UNKNOWN << 8) | DIDEVTYPE_HID;
+
+    default:
+        return DIDEVTYPE_DEVICE | DIDEVTYPE_HID;
+    }
+}
+
 static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HANDLE *device,
                                           PHIDP_PREPARSED_DATA *preparsed, HIDD_ATTRIBUTES *attrs,
                                           HIDP_CAPS *caps, DIDEVICEINSTANCEW *instance, DWORD version )
 {
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
+    DWORD type = 0, button_count = 0;
+    HIDP_BUTTON_CAPS buttons[10];
+    HIDP_VALUE_CAPS value;
     HANDLE device_file;
+    NTSTATUS status;
+    USHORT count;
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
@@ -946,10 +986,59 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
     instance->guidInstance.Data1 ^= handle;
     instance->guidProduct = DInput_PIDVID_Product_GUID;
     instance->guidProduct.Data1 = MAKELONG( attrs->VendorID, attrs->ProductID );
-    instance->dwDevType = get_device_type( version, caps->Usage != HID_USAGE_GENERIC_GAMEPAD ) | DIDEVTYPE_HID;
     instance->guidFFDriver = GUID_NULL;
     instance->wUsagePage = caps->UsagePage;
     instance->wUsage = caps->Usage;
+
+    count = ARRAY_SIZE(buttons);
+    status = HidP_GetSpecificButtonCaps( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, 0, buttons, &count, preparsed_data );
+    if (status != HIDP_STATUS_SUCCESS) count = button_count = 0;
+    while (count--)
+    {
+        if (!buttons[count].IsRange) button_count += 1;
+        else button_count += buttons[count].Range.UsageMax - buttons[count].Range.UsageMin + 1;
+    }
+
+    switch (caps->Usage)
+    {
+    case HID_USAGE_GENERIC_GAMEPAD:
+        type = DI8DEVTYPE_GAMEPAD | DIDEVTYPE_HID;
+        if (button_count < 6) type |= DI8DEVTYPEGAMEPAD_LIMITED << 8;
+        else type |= DI8DEVTYPEGAMEPAD_STANDARD << 8;
+        break;
+    case HID_USAGE_GENERIC_JOYSTICK:
+        type = DI8DEVTYPE_JOYSTICK | DIDEVTYPE_HID;
+        if (button_count < 5) type |= DI8DEVTYPEJOYSTICK_LIMITED << 8;
+        else type |= DI8DEVTYPEJOYSTICK_STANDARD << 8;
+
+        count = 1;
+        status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_GENERIC, 0,
+                                            HID_USAGE_GENERIC_Z, &value, &count, preparsed_data );
+        if (status != HIDP_STATUS_SUCCESS || !count)
+            type = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DIDEVTYPE_HID;
+
+        count = 1;
+        status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_GENERIC, 0,
+                                            HID_USAGE_GENERIC_HATSWITCH, &value, &count, preparsed_data );
+        if (status != HIDP_STATUS_SUCCESS || !count)
+            type = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DIDEVTYPE_HID;
+
+        break;
+    }
+
+    count = 1;
+    status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
+                                        &value, &count, preparsed_data );
+    if (status != HIDP_STATUS_SUCCESS || !count)
+        type = DI8DEVTYPE_SUPPLEMENTAL | (DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8) | DIDEVTYPE_HID;
+
+    count = 1;
+    status = HidP_GetSpecificValueCaps( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y,
+                                        &value, &count, preparsed_data );
+    if (status != HIDP_STATUS_SUCCESS || !count)
+        type = DI8DEVTYPE_SUPPLEMENTAL | (DI8DEVTYPESUPPLEMENTAL_UNKNOWN << 8) | DIDEVTYPE_HID;
+
+    instance->dwDevType = device_type_for_version( type, version );
 
     *device = device_file;
     *preparsed = preparsed_data;
