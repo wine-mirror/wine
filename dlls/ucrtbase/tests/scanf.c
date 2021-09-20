@@ -48,6 +48,7 @@ static void test_sscanf(void)
     float ret_float1, ret_float2;
     double double_res;
     unsigned int i;
+    size_t ret_size;
 
     static const unsigned int tests[] =
     {
@@ -289,6 +290,12 @@ static void test_sscanf(void)
 
         ret = vsscanf_wrapper(tests[i], "infi", -1, "%lf%n", &double_res, &count);
         ok(ret == -1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
+
+        ret_size = ~0;
+        ret = vsscanf_wrapper(tests[i], "1", -1, "%zd", &ret_size);
+        ok(ret == 1, "sscanf returned %d for flags %#x\n", ret, tests[i]);
+        ok(ret_size == 1, "got wrong size_t %s for flags %#x\n",
+                wine_dbgstr_longlong((LONGLONG)ret_size), tests[i]);
     }
 }
 
