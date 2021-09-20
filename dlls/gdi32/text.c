@@ -2300,12 +2300,107 @@ BOOL WINAPI RemoveFontResourceExA( const char *str, DWORD fl, void *pdv )
     return ret;
 }
 
+static void *map_file( const WCHAR *filename, LARGE_INTEGER *size )
+{
+    HANDLE file, mapping;
+    void *ptr;
+
+    file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    if (file == INVALID_HANDLE_VALUE) return NULL;
+
+    if (!GetFileSizeEx( file, size ) || size->u.HighPart)
+    {
+        CloseHandle( file );
+        return NULL;
+    }
+
+    mapping = CreateFileMappingW( file, NULL, PAGE_READONLY, 0, 0, NULL );
+    CloseHandle( file );
+    if (!mapping) return NULL;
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( mapping );
+
+    return ptr;
+}
+
+static void *find_resource( BYTE *ptr, WORD type, DWORD rsrc_off, DWORD size, DWORD *len )
+{
+    WORD align, type_id, count;
+    DWORD res_off;
+
+    if (size < rsrc_off + 10) return NULL;
+    align = *(WORD *)(ptr + rsrc_off);
+    rsrc_off += 2;
+    type_id = *(WORD *)(ptr + rsrc_off);
+    while (type_id && type_id != type)
+    {
+        count = *(WORD *)(ptr + rsrc_off + 2);
+        rsrc_off += 8 + count * 12;
+        if (size < rsrc_off + 8) return NULL;
+        type_id = *(WORD *)(ptr + rsrc_off);
+    }
+    if (!type_id) return NULL;
+    count = *(WORD *)(ptr + rsrc_off + 2);
+    if (size < rsrc_off + 8 + count * 12) return NULL;
+    res_off = *(WORD *)(ptr + rsrc_off + 8) << align;
+    *len = *(WORD *)(ptr + rsrc_off + 10) << align;
+    if (size < res_off + *len) return NULL;
+    return ptr + res_off;
+}
+
+static WCHAR *get_scalable_filename( const WCHAR *res, BOOL *hidden )
+{
+    LARGE_INTEGER size;
+    BYTE *ptr = map_file( res, &size );
+    const IMAGE_DOS_HEADER *dos;
+    const IMAGE_OS2_HEADER *ne;
+    WORD *fontdir;
+    char *data;
+    WCHAR *name = NULL;
+    DWORD len;
+
+    if (!ptr) return NULL;
+
+    if (size.u.LowPart < sizeof( *dos )) goto fail;
+    dos = (const IMAGE_DOS_HEADER *)ptr;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto fail;
+    if (size.u.LowPart < dos->e_lfanew + sizeof( *ne )) goto fail;
+    ne = (const IMAGE_OS2_HEADER *)(ptr + dos->e_lfanew);
+
+    fontdir = find_resource( ptr, 0x8007, dos->e_lfanew + ne->ne_rsrctab, size.u.LowPart, &len );
+    if (!fontdir) goto fail;
+    *hidden = (fontdir[35] & 0x80) != 0;  /* fontdir->dfType */
+
+    data = find_resource( ptr, 0x80cc, dos->e_lfanew + ne->ne_rsrctab, size.u.LowPart, &len );
+    if (!data) goto fail;
+    if (!memchr( data, 0, len )) goto fail;
+
+    len = MultiByteToWideChar( CP_ACP, 0, data, -1, NULL, 0 );
+    name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (name) MultiByteToWideChar( CP_ACP, 0, data, -1, name, len );
+
+fail:
+    UnmapViewOfFile( ptr );
+    return name;
+}
+
 /***********************************************************************
  *           AddFontResourceExW    (GDI32.@)
  */
 INT WINAPI AddFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
 {
-    return NtGdiAddFontResourceW( str, 0, 1, flags, 0, dv );
+    WCHAR *filename = NULL;
+    BOOL hidden;
+    INT ret;
+
+    if ((ret = NtGdiAddFontResourceW( str, 0, 1, flags, 0, dv ))) return ret;
+
+    if (!(filename = get_scalable_filename( str, &hidden ))) return 0;
+    if (hidden) flags |= FR_PRIVATE | FR_NOT_ENUM;
+    ret = NtGdiAddFontResourceW( filename, 0, 1, flags, 0, dv );
+    HeapFree( GetProcessHeap(), 0, filename );
+    return ret;
 }
 
 /***********************************************************************
@@ -2313,7 +2408,17 @@ INT WINAPI AddFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
  */
 BOOL WINAPI RemoveFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
 {
-    return NtGdiRemoveFontResourceW( str, 0, 1, flags, 0, dv );
+    WCHAR *filename = NULL;
+    BOOL hidden;
+    INT ret;
+
+    if ((ret = NtGdiRemoveFontResourceW( str, 0, 1, flags, 0, dv ))) return ret;
+
+    if (!(filename = get_scalable_filename( str, &hidden ))) return 0;
+    if (hidden) flags |= FR_PRIVATE | FR_NOT_ENUM;
+    ret = NtGdiRemoveFontResourceW( filename, 0, 1, flags, 0, dv );
+    HeapFree( GetProcessHeap(), 0, filename );
+    return ret;
 }
 
 /***********************************************************************
