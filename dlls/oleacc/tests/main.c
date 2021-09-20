@@ -916,11 +916,11 @@ static DWORD WINAPI default_client_thread(LPVOID param)
 
 static void test_default_client_accessible_object(void)
 {
-    IAccessible *acc;
+    IAccessible *acc, *win;
     IDispatch *disp;
     IOleWindow *ow;
     IEnumVARIANT *ev;
-    HWND chld, btn, hwnd, hwnd2;
+    HWND chld, chld2, btn, hwnd, hwnd2;
     HRESULT hr;
     VARIANT vid, v;
     BSTR str;
@@ -939,6 +939,9 @@ static void test_default_client_accessible_object(void)
     btn = CreateWindowA("BUTTON", "btn &t &junk", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
             50, 0, 50, 50, hwnd, NULL, NULL, NULL);
     ok(btn != NULL, "CreateWindow failed\n");
+    chld2 = CreateWindowA("static", "static &t &junk", WS_CHILD | WS_VISIBLE,
+            0, 0, 50, 50, chld, NULL, NULL, NULL);
+    ok(chld2 != NULL, "CreateWindow failed\n");
 
     hr = CreateStdAccessibleObject(NULL, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
     ok(hr == E_FAIL, "got %x\n", hr);
@@ -1012,6 +1015,94 @@ static void test_default_client_accessible_object(void)
     hr = IAccessible_get_accChild(acc, vid, &disp);
     ok(hr == E_INVALIDARG, "get_accChild returned %x\n", hr);
     ok(disp == NULL, "disp = %p\n", disp);
+
+    /* Neither the parent nor any child windows have focus, VT_EMPTY. */
+    hr = IAccessible_get_accFocus(acc, &v);
+    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
+
+    /* Set the focus to the parent window. */
+    ShowWindow(hwnd, SW_SHOW);
+    SetFocus(hwnd);
+    hr = IAccessible_get_accFocus(acc, &v);
+    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == CHILDID_SELF, "V_I4(&v) = %d\n", V_I4(&v));
+
+    /* Set focus to each child window. */
+    SetFocus(btn);
+    hr = IAccessible_get_accFocus(acc, &v);
+    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
+    ok(hr == S_OK, "got %x\n", hr);
+    hr = IOleWindow_GetWindow(ow, &hwnd2);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(btn == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, btn);
+    IOleWindow_Release(ow);
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
+    ok(hr == S_OK, "got %x\n", hr);
+    IDispatch_Release(V_DISPATCH(&v));
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
+    hr = IAccessible_get_accRole(win, vid, &v);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %d\n", V_I4(&v));
+    IAccessible_Release(win);
+
+    SetFocus(chld);
+    hr = IAccessible_get_accFocus(acc, &v);
+    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
+    ok(hr == S_OK, "got %x\n", hr);
+    hr = IOleWindow_GetWindow(ow, &hwnd2);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(chld == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld);
+    IOleWindow_Release(ow);
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
+    ok(hr == S_OK, "got %x\n", hr);
+    IDispatch_Release(V_DISPATCH(&v));
+
+    hr = IAccessible_get_accRole(win, vid, &v);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %d\n", V_I4(&v));
+    IAccessible_Release(win);
+
+    /* Child of a child, still works on parent HWND. */
+    SetFocus(chld2);
+    hr = IAccessible_get_accFocus(acc, &v);
+    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IOleWindow, (void**)&ow);
+    ok(hr == S_OK, "got %x\n", hr);
+    hr = IOleWindow_GetWindow(ow, &hwnd2);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(chld2 == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, chld2);
+    IOleWindow_Release(ow);
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IAccessible, (void**)&win);
+    ok(hr == S_OK, "got %x\n", hr);
+    IDispatch_Release(V_DISPATCH(&v));
+
+    hr = IAccessible_get_accRole(win, vid, &v);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    todo_wine ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    todo_wine ok(V_I4(&v) == ROLE_SYSTEM_WINDOW, "V_I4(&v) = %d\n", V_I4(&v));
+    IAccessible_Release(win);
+
+    ShowWindow(hwnd, SW_HIDE);
 
     hr = IAccessible_QueryInterface(acc, &IID_IEnumVARIANT, (void**)&ev);
     ok(hr == S_OK, "got %x\n", hr);
@@ -1194,6 +1285,10 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_OK, "got %x\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == STATE_SYSTEM_INVISIBLE, "V_I4(&v) = %x\n", V_I4(&v));
+
+    hr = IAccessible_get_accFocus(acc, &v);
+    ok(hr == S_OK, "hr %#x\n", hr);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
 
     hr = IAccessible_accHitTest(acc, 200, 200, &v);
     ok(hr == S_OK, "got %x\n", hr);
