@@ -753,31 +753,19 @@ static HRESULT WINAPI ItemMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
     return CreateAntiMoniker(ppmk);
 }
 
-/******************************************************************************
- *        ItemMoniker_CommonPrefixWith
- ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** ppmkPrefix)
+static HRESULT WINAPI ItemMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker *other,
+        IMoniker **prefix)
 {
-    DWORD mkSys;
-    
-    TRACE("(%p,%p)\n", pmkOther, ppmkPrefix);
+    TRACE("%p, %p, %p\n", iface, other, prefix);
 
-    IMoniker_IsSystemMoniker(pmkOther,&mkSys);
-    /* If the other moniker is an item moniker that is equal to this moniker, this method sets *ppmkPrefix */
-    /* to this moniker and returns MK_S_US */
-
-    if((mkSys==MKSYS_ITEMMONIKER) && (IMoniker_IsEqual(iface,pmkOther)==S_OK) ){
-
-        *ppmkPrefix=iface;
-
+    if (IMoniker_IsEqual(iface, other) == S_OK)
+    {
+        *prefix = iface;
         IMoniker_AddRef(iface);
-
         return MK_S_US;
     }
-    else
-        /* otherwise, the method calls the MonikerCommonPrefixWith function. This function correctly handles */
-        /* the case where the other moniker is a generic composite. */
-        return MonikerCommonPrefixWith(iface,pmkOther,ppmkPrefix);
+
+    return MonikerCommonPrefixWith(iface, other, prefix);
 }
 
 /******************************************************************************

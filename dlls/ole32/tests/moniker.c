@@ -2276,7 +2276,7 @@ static void test_item_moniker(void)
         "Moniker_IsRunning",
         NULL
     };
-    IMoniker *moniker, *moniker2, *reduced, *anti, *inverse;
+    IMoniker *moniker, *moniker2, *moniker3, *reduced, *anti, *inverse;
     DWORD i, hash, eaten, cookie;
     HRESULT hr;
     IBindCtx *bindctx;
@@ -2609,6 +2609,34 @@ todo_wine
     IMoniker_Release(moniker2);
 
     IMoniker_Release(anti);
+
+    IMoniker_Release(moniker);
+
+    /* CommonPrefixWith */
+    hr = CreateItemMoniker(L"!", L"Item", &moniker);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+    hr = CreateItemMoniker(L"#", L"Item", &moniker2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker, "Unexpected object.\n");
+    IMoniker_Release(moniker3);
+
+    IMoniker_Release(moniker2);
+
+    hr = CreateItemMoniker(L"!", L"Item2", &moniker2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    moniker3 = (void *)0xdeadbeef;
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+todo_wine
+{
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+    ok(!moniker3, "Unexpected object.\n");
+}
+
+    IMoniker_Release(moniker2);
 
     IMoniker_Release(moniker);
 }
