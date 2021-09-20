@@ -106,8 +106,6 @@ static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
-
-static const WCHAR busidW[] = {'I','O','H','I','D',0};
 static struct iohid_bus_options options;
 
 struct platform_private
@@ -266,7 +264,6 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
 {
     struct device_desc desc =
     {
-        .busid = busidW,
         .input = -1,
         .serialnumber = {"0000"},
     };

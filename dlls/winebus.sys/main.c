@@ -294,7 +294,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
 
     TRACE("desc %s, unix_device %p\n", debugstr_device_desc(desc), unix_device);
 
-    swprintf(dev_name, ARRAY_SIZE(dev_name), L"\\Device\\%s#%p", desc->busid, unix_device);
+    swprintf(dev_name, ARRAY_SIZE(dev_name), L"\\Device\\WINEBUS#%p", unix_device);
     RtlInitUnicodeString(&nameW, dev_name);
     status = IoCreateDevice(driver_obj, sizeof(struct device_extension), &nameW, 0, 0, FALSE, &device);
     if (status)

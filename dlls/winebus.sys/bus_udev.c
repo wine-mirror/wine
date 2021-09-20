@@ -100,9 +100,6 @@ static struct udev_monitor *udev_monitor;
 static int deviceloop_control[2];
 static struct list event_queue = LIST_INIT(event_queue);
 static struct list device_list = LIST_INIT(device_list);
-
-static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
-static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
 static struct udev_bus_options options;
 
 struct platform_private
@@ -985,7 +982,6 @@ static void udev_add_device(struct udev_device *dev)
     subsystem = udev_device_get_subsystem(dev);
     if (!strcmp(subsystem, "hidraw"))
     {
-        desc.busid = hidraw_busidW;
         if (!desc.manufacturer[0]) strcpy(desc.manufacturer, "hidraw");
 
 #ifdef HAVE_LINUX_HIDRAW_H
@@ -997,8 +993,6 @@ static void udev_add_device(struct udev_device *dev)
     else if (!strcmp(subsystem, "input"))
     {
         struct input_id device_id = {0};
-
-        desc.busid = lnxev_busidW;
 
         if (ioctl(fd, EVIOCGID, &device_id) < 0)
             WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));

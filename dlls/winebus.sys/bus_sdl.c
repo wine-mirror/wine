@@ -65,7 +65,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static pthread_mutex_t sdl_cs = PTHREAD_MUTEX_INITIALIZER;
-static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
 static struct sdl_bus_options options;
 
 static void *sdl_handle = NULL;
@@ -712,7 +711,6 @@ static void sdl_add_device(unsigned int index)
 {
     struct device_desc desc =
     {
-        .busid = sdl_busidW,
         .input = -1,
         .manufacturer = {"SDL"},
         .serialnumber = {"0000"},
