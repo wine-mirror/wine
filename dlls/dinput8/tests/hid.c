@@ -3627,6 +3627,7 @@ static void test_simple_joystick(void)
     };
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEOBJECTDATA objdata[32] = {{0}};
+    DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
     DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
@@ -3921,6 +3922,74 @@ static void test_simple_joystick(void)
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
 
+    hr = IDirectInputDevice8_GetObjectInfo( device, NULL, 0, DIPH_DEVICE );
+    ok( hr == E_POINTER, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0, DIPH_DEVICE );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+    objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0, DIPH_DEVICE );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+
+    res = MAKELONG( HID_USAGE_GENERIC_Z, HID_USAGE_PAGE_GENERIC );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+    res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[1], "%u", dwSize );
+    todo_wine
+    check_member_guid( objinst, expect_objects[1], guidType );
+    check_member( objinst, expect_objects[1], "%#x", dwOfs );
+    check_member( objinst, expect_objects[1], "%#x", dwType );
+    check_member( objinst, expect_objects[1], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
+    check_member( objinst, expect_objects[1], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[1], "%u", dwFFForceResolution );
+    todo_wine
+    check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[1], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[1], "%#04x", wUsagePage );
+    todo_wine
+    check_member( objinst, expect_objects[1], "%#04x", wUsage );
+    check_member( objinst, expect_objects[1], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[1], "%#04x", wExponent );
+    check_member( objinst, expect_objects[1], "%u", wReportId );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0x14, DIPH_BYOFFSET );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0, DIPH_BYOFFSET );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+    res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+    res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 1 );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[4], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[4], guidType );
+    todo_wine
+    check_member( objinst, expect_objects[4], "%#x", dwOfs );
+    check_member( objinst, expect_objects[4], "%#x", dwType );
+    check_member( objinst, expect_objects[4], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[4], tszName );
+    check_member( objinst, expect_objects[4], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[4], "%u", dwFFForceResolution );
+    todo_wine
+    check_member( objinst, expect_objects[4], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[4], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[4], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[4], "%#04x", wUsage );
+    check_member( objinst, expect_objects[4], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[4], "%#04x", wExponent );
+    check_member( objinst, expect_objects[4], "%u", wReportId );
+
     hr = IDirectInputDevice8_SetDataFormat( device, NULL );
     ok( hr == E_POINTER, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
@@ -3934,6 +4003,28 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
     ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, DIJOFS_Y, DIPH_BYOFFSET );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[0], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[0], guidType );
+    todo_wine
+    check_member( objinst, expect_objects[0], "%#x", dwOfs );
+    todo_wine
+    check_member( objinst, expect_objects[0], "%#x", dwType );
+    check_member( objinst, expect_objects[0], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[0], tszName );
+    check_member( objinst, expect_objects[0], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[0], "%u", dwFFForceResolution );
+    todo_wine
+    check_member( objinst, expect_objects[0], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[0], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[0], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[0], "%#04x", wUsage );
+    check_member( objinst, expect_objects[0], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[0], "%#04x", wExponent );
+    check_member( objinst, expect_objects[0], "%u", wReportId );
 
     hr = IDirectInputDevice8_SetEventNotification( device, (HANDLE)0xdeadbeef );
     todo_wine
