@@ -203,6 +203,7 @@ struct makefile
     const char     *staticlib;
     const char     *staticimplib;
     const char     *importlib;
+    const char     *unixlib;
     int             disabled;
     int             use_msvcrt;
     int             is_cross;
@@ -594,7 +595,7 @@ static const char *get_base_name( const char *name )
 {
     char *base;
     if (!strchr( name, '.' )) return name;
-    base = strdup( name );
+    base = xstrdup( name );
     *strrchr( base, '.' ) = 0;
     return base;
 }
@@ -3230,6 +3231,23 @@ static int has_object_file( struct makefile *make )
 
 
 /*******************************************************************
+ *         get_unix_lib_name
+ */
+static char *get_unix_lib_name( struct makefile *make )
+{
+    struct incl_file *source;
+
+    if (!*dll_ext) return NULL;
+    LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
+    {
+        if (!(source->file->flags & FLAG_C_UNIX)) continue;
+        return strmake( "%s%s", get_base_name( make->module ), dll_ext );
+    }
+    return NULL;
+}
+
+
+/*******************************************************************
  *         output_man_pages
  */
 static void output_man_pages( struct makefile *make )
@@ -3351,17 +3369,12 @@ static void output_module( struct makefile *make )
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
 
-    if (make->unixobj_files.count)
+    if (make->unixlib)
     {
         struct strarray unix_libs = empty_strarray;
         struct strarray unix_deps = empty_strarray;
         struct strarray extra_libs = get_expanded_make_var_array( make, "EXTRALIBS" );
         int native_unix_lib = strarray_exists( &extra_libs, "-Wl,--subsystem,unixlib" );
-        char *ext, *unix_lib = xmalloc( strlen( make->module ) + strlen( dll_ext ) + 1 );
-
-        strcpy( unix_lib, make->module );
-        if ((ext = get_extension( unix_lib ))) *ext = 0;
-        strcat( unix_lib, dll_ext );
 
         if (native_unix_lib)
         {
@@ -3388,9 +3401,9 @@ static void output_module( struct makefile *make )
 
         strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
 
-        strarray_add( &make->all_targets, unix_lib );
-        add_install_rule( make, make->module, unix_lib, strmake( "p%s/%s", so_dir, unix_lib ));
-        output( "%s:", obj_dir_path( make, unix_lib ));
+        strarray_add( &make->all_targets, make->unixlib );
+        add_install_rule( make, make->module, make->unixlib, strmake( "p%s/%s", so_dir, make->unixlib ));
+        output( "%s:", obj_dir_path( make, make->unixlib ));
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_deps );
         if (!native_unix_lib) output_filename( tools_path( make, "winebuild" ));
@@ -3612,12 +3625,7 @@ static void output_test_module( struct makefile *make )
     {
         output_filename( parent->is_cross ? obj_dir_path( parent, make->testdll )
                          : strmake( "%s%s", obj_dir_path( parent, make->testdll ), dll_ext ));
-        if (parent->unixobj_files.count)
-        {
-            char *ext, *unix_lib = xstrdup( parent->module );
-            if ((ext = get_extension( unix_lib ))) *ext = 0;
-            output_filename( strmake( "%s%s", obj_dir_path( parent, unix_lib ), dll_ext ));
-        }
+        if (parent->unixlib) output_filename( obj_dir_path( parent, parent->unixlib ));
     }
     output( "\n" );
     output( "%s %s:", obj_dir_path( make, "check" ), obj_dir_path( make, "test" ));
@@ -4284,6 +4292,7 @@ static void load_sources( struct makefile *make )
     }
 
     add_generated_sources( make );
+    make->unixlib = get_unix_lib_name( make );
 
     if (!make->use_msvcrt && !has_object_file( make ))
     {
