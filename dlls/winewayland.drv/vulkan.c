@@ -39,15 +39,75 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #ifdef SONAME_LIBVULKAN
 
+static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
+
 static void *vulkan_handle;
+
+static VkResult wayland_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+                                                               uint32_t *count,
+                                                               VkExtensionProperties* properties)
+{
+    unsigned int i;
+    VkResult res;
+
+    TRACE("layer_name %s, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
+
+    /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
+    if (layer_name)
+    {
+        ERR("Layer enumeration not supported from ICD.\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
+
+    /* We will return the same number of instance extensions reported by the host back to
+     * winevulkan. Along the way we may replace xlib extensions with their win32 equivalents.
+     * Winevulkan will perform more detailed filtering as it knows whether it has thunks
+     * for a particular extension.
+     */
+    res = pvkEnumerateInstanceExtensionProperties(layer_name, count, properties);
+    if (!properties || res < 0)
+        return res;
+
+    for (i = 0; i < *count; i++)
+    {
+        /* For now the only wayland extension we need to fixup. Long-term we may need an array. */
+        if (!strcmp(properties[i].extensionName, "VK_KHR_wayland_surface"))
+        {
+            TRACE("Substituting VK_KHR_wayland_surface for VK_KHR_win32_surface\n");
+
+            snprintf(properties[i].extensionName, sizeof(properties[i].extensionName),
+                    VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+            properties[i].specVersion = VK_KHR_WIN32_SURFACE_SPEC_VERSION;
+        }
+    }
+
+    TRACE("Returning %u extensions.\n", *count);
+    return res;
+}
 
 static void wine_vk_init(void)
 {
     if (!(vulkan_handle = dlopen(SONAME_LIBVULKAN, RTLD_NOW)))
+    {
         ERR("Failed to load %s.\n", SONAME_LIBVULKAN);
+        return;
+    }
+
+#define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
+    LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
+#undef LOAD_FUNCPTR
+
+    return;
+
+fail:
+    dlclose(vulkan_handle);
+    vulkan_handle = NULL;
 }
 
-static const struct vulkan_funcs vulkan_funcs;
+static const struct vulkan_funcs vulkan_funcs =
+{
+    .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
+};
 
 /**********************************************************************
  *           WAYLAND_wine_get_vulkan_driver
