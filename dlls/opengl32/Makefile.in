@@ -3,7 +3,8 @@ EXTRADEFS = -D_OPENGL32_
 IMPORTLIB = opengl32
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = glu32
-EXTRADLLFLAGS = -Wl,--image-base,0x7a800000
+
+EXTRADLLFLAGS = -Wl,--image-base,0x7a800000 -mcygwin
 
 C_SRCS = \
 	opengl_ext.c \

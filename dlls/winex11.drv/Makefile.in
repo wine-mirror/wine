@@ -4,6 +4,8 @@ DELAYIMPORTS = comctl32 ole32 shell32 imm32
 EXTRAINCL = $(X_CFLAGS)
 EXTRALIBS = $(X_LIBS) $(X_EXTRA_LIBS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	bitblt.c \
 	brush.c \

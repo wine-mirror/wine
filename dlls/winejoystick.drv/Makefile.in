@@ -2,6 +2,8 @@ MODULE    = winejoystick.drv
 IMPORTS   = winmm user32
 EXTRALIBS = $(IOKIT_LIBS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	joystick.c \
 	joystick_linux.c \

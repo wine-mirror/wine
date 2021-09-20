@@ -3,6 +3,8 @@ IMPORTS   = uuid urlmon shlwapi oleaut32 ole32 user32 advapi32
 EXTRALIBS = $(XML2_LIBS)
 EXTRAINCL = $(XML2_CFLAGS) $(XSLT_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	attribute.c \
 	bsc.c \

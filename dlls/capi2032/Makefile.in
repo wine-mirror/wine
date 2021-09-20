@@ -2,4 +2,6 @@ MODULE    = capi2032.dll
 IMPORTLIB = capi2032
 EXTRAINCL = $(CAPI20_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = cap20wxx.c

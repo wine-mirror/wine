@@ -2,6 +2,8 @@ MODULE    = iphlpapi.dll
 IMPORTLIB = iphlpapi
 IMPORTS   = advapi32 dnsapi nsi uuid
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	icmp.c \
 	iphlpapi_main.c

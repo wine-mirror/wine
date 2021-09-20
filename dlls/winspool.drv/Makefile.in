@@ -5,6 +5,8 @@ IMPORTS   = user32 gdi32 advapi32
 EXTRAINCL = $(CUPS_CFLAGS)
 EXTRALIBS = $(APPLICATIONSERVICES_LIBS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	info.c \
 	wspool.c

@@ -3,6 +3,8 @@ IMPORTS   = strmiids uuid ole32 advapi32
 EXTRALIBS = $(QUICKTIME_LIBS)
 PARENTSRC = ../strmbase
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	filter.c \
 	main.c \

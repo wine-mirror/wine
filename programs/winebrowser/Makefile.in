@@ -1,6 +1,7 @@
 MODULE    = winebrowser.exe
-APPMODE   = -mwindows -municode
 IMPORTS   = urlmon oleaut32 shell32 user32 advapi32
+
+EXTRADLLFLAGS = -mwindows -municode -mcygwin
 
 C_SRCS = \
 	main.c

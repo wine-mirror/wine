@@ -3,6 +3,8 @@ IMPORTS   = dmoguids msdmo ole32 uuid wmcodecdspuuid
 EXTRAINCL = $(MPG123_CFLAGS)
 EXTRALIBS = $(MPG123_LIBS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	mp3dmod.c
 

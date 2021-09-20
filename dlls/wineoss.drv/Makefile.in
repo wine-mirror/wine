@@ -4,6 +4,8 @@ DELAYIMPORTS = winmm
 EXTRALIBS = $(OSS4_LIBS)
 EXTRAINCL = $(OSS4_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	midi.c \
 	midipatch.c \

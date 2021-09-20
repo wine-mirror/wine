@@ -1,8 +1,9 @@
 MODULE    = winedbg.exe
-APPMODE   = -mconsole
 IMPORTS   = dbghelp advapi32
 DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32
 EXTRALIBS = $(POLL_LIBS)
+
+EXTRADLLFLAGS = -mconsole -mcygwin
 
 C_SRCS = \
 	be_arm.c \

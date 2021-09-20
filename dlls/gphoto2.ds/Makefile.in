@@ -3,6 +3,8 @@ IMPORTS   = comctl32 user32 gdi32 advapi32
 EXTRALIBS = $(GPHOTO2_LIBS) $(GPHOTO2_PORT_LIBS)
 EXTRAINCL = $(GPHOTO2_CFLAGS) $(GPHOTO2_PORT_CFLAGS) $(JPEG_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	capability.c \
 	ds_image.c \

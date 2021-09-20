@@ -1888,6 +1888,11 @@ int main(int argc, char **argv)
                         raw_compiler_arg = 0;
                         raw_winebuild_arg = 1;
                     }
+		    if (strcmp("-mcygwin", opts.args->base[i]) == 0)
+                    {
+			opts.use_msvcrt = 0;
+                        raw_compiler_arg = 0;
+                    }
 		    else if (strcmp("-mwindows", opts.args->base[i]) == 0)
                     {
 			opts.gui_app = 1;

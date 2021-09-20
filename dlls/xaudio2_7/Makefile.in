@@ -4,6 +4,8 @@ IMPORTS   = advapi32 ole32 user32 uuid
 EXTRALIBS = $(FAUDIO_LIBS)
 EXTRAINCL = $(FAUDIO_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	compat.c \
 	x3daudio.c \

@@ -5,6 +5,8 @@ PARENTSRC = ../xaudio2_7
 EXTRALIBS = $(FAUDIO_LIBS)
 EXTRAINCL = $(FAUDIO_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	xapo.c \
 	xapofx.c \

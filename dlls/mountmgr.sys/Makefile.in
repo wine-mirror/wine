@@ -1,9 +1,10 @@
 MODULE    = mountmgr.sys
 IMPORTS   = uuid advapi32 ntoskrnl
 DELAYIMPORTS = user32 iphlpapi
-EXTRADLLFLAGS = -Wl,--subsystem,native
 EXTRAINCL = $(DBUS_CFLAGS) $(HAL_CFLAGS)
 EXTRALIBS = $(DISKARBITRATION_LIBS) $(SYSTEMCONFIGURATION_LIBS) $(CORESERVICES_LIBS) $(SECURITY_LIBS)
+
+EXTRADLLFLAGS = -Wl,--subsystem,native -mcygwin
 
 C_SRCS = \
 	dbus.c \

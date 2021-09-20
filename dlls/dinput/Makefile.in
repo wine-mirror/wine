@@ -4,6 +4,8 @@ IMPORTS   = dinput dxguid uuid comctl32 ole32 user32 advapi32 hid setupapi
 EXTRADEFS = -DDIRECTINPUT_VERSION=0x0700
 EXTRALIBS = $(IOKIT_LIBS) $(FORCEFEEDBACK_LIBS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	ansi.c \
 	config.c \

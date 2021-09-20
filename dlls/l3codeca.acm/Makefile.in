@@ -3,5 +3,7 @@ IMPORTS   = winmm user32
 EXTRAINCL = $(MPG123_CFLAGS)
 EXTRALIBS = $(MPG123_LIBS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	mpegl3.c

@@ -4,5 +4,7 @@ IMPORTS   = dxgi dxguid gdi32 user32 uuid
 EXTRALIBS = $(VKD3D_LIBS)
 EXTRAINCL = $(VKD3D_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	d3d12_main.c

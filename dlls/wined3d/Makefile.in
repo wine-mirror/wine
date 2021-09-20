@@ -3,6 +3,8 @@ IMPORTLIB = wined3d
 IMPORTS   = opengl32 user32 gdi32 advapi32
 EXTRAINCL = $(VKD3D_SHADER_CFLAGS)
 
+EXTRADLLFLAGS = -mcygwin
+
 C_SRCS = \
 	adapter_gl.c \
 	adapter_vk.c \
