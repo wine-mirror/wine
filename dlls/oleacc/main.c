@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
 static const WCHAR lresult_atom_prefix[] = {'w','i','n','e','_','o','l','e','a','c','c',':'};
 
-typedef HRESULT (WINAPI *accessible_create)(HWND, const IID*, void**);
+typedef HRESULT (*accessible_create)(HWND, const IID*, void**);
 
 extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**) DECLSPEC_HIDDEN;
 extern BOOL WINAPI OLEACC_DllMain(HINSTANCE, DWORD, void*) DECLSPEC_HIDDEN;
