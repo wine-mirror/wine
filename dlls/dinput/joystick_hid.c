@@ -500,28 +500,33 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
 
     if (!header) return DIERR_INVALIDPARAM;
+    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
     if (!IS_DIPROP( guid )) return DI_OK;
 
     switch (LOWORD( guid ))
     {
     case (DWORD_PTR)DIPROP_RANGE:
+        if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         enum_value_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header );
         return DI_OK;
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
+        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
         lstrcpynW( value->wsz, impl->instance.tszProductName, MAX_PATH );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_INSTANCENAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
+        if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
         lstrcpynW( value->wsz, impl->instance.tszInstanceName, MAX_PATH );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_VIDPID:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         if (!impl->attrs.VendorID || !impl->attrs.ProductID) return DIERR_UNSUPPORTED;
         value->dwData = MAKELONG( impl->attrs.VendorID, impl->attrs.ProductID );
         return DI_OK;
@@ -529,12 +534,14 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     case (DWORD_PTR)DIPROP_JOYSTICKID:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
         value->dwData = impl->instance.guidInstance.Data3;
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_GUIDANDPATH:
     {
         DIPROPGUIDANDPATH *value = (DIPROPGUIDANDPATH *)header;
+        if (header->dwSize != sizeof(DIPROPGUIDANDPATH)) return DIERR_INVALIDPARAM;
         lstrcpynW( value->wszPath, impl->device_path, MAX_PATH );
         return DI_OK;
     }
@@ -566,11 +573,13 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
     TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
 
     if (!header) return DIERR_INVALIDPARAM;
+    if (header->dwHeaderSize != sizeof(DIPROPHEADER)) return DIERR_INVALIDPARAM;
     if (!IS_DIPROP( guid )) return DI_OK;
 
     switch (LOWORD( guid ))
     {
     case (DWORD_PTR)DIPROP_RANGE:
+        if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         enum_value_objects( impl, header, DIDFT_AXIS, set_property_prop_range, (void *)header );
         return DI_OK;
     default:

@@ -3785,11 +3785,9 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, NULL );
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetProperty returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetProperty returned %#x\n", hr );
     prop_dword.diph.dwHeaderSize = sizeof(DIPROPHEADER) - 1;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetProperty returned %#x\n", hr );
     prop_dword.diph.dwHeaderSize = sizeof(DIPROPHEADER);
 
