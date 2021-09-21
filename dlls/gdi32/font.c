@@ -5554,24 +5554,6 @@ DWORD WINAPI NtGdiGetGlyphIndicesW( HDC hdc, const WCHAR *str, INT count,
  *								       *
  ***********************************************************************/
 
-static BOOL CALLBACK load_enumed_resource(HMODULE hModule, LPCWSTR type, LPWSTR name, LONG_PTR lParam)
-{
-    HRSRC rsrc = FindResourceW(hModule, name, type);
-    HGLOBAL hMem = LoadResource(hModule, rsrc);
-    LPVOID *pMem = LockResource(hMem);
-    int *num_total = (int *)lParam;
-    DWORD num_in_res;
-
-    TRACE("Found resource %s - trying to load\n", wine_dbgstr_w(type));
-    if (!NtGdiAddFontMemResourceEx( pMem, SizeofResource(hModule, rsrc), NULL, 0, &num_in_res ))
-    {
-        ERR("Failed to load PE font resource mod=%p ptr=%p\n", hModule, hMem);
-        return FALSE;
-    }
-
-    *num_total += num_in_res;
-    return TRUE;
-}
 
 static int add_system_font_resource( const WCHAR *file, DWORD flags )
 {
@@ -5949,26 +5931,8 @@ void font_init(void)
 INT WINAPI NtGdiAddFontResourceW( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
                                   DWORD tid, void *dv )
 {
-    int ret;
-
     if (!font_funcs) return 1;
-    if (!(ret = add_font_resource( str, flags )))
-    {
-        /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
-        HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
-        if (hModule != NULL)
-        {
-            int num_resources = 0;
-            LPWSTR rt_font = (LPWSTR)((ULONG_PTR)8);  /* we don't want to include winuser.h */
-
-            TRACE("WineEngAddFontResourceEx failed on PE file %s - trying to load resources manually\n",
-                wine_dbgstr_w(str));
-            if (EnumResourceNamesW(hModule, rt_font, load_enumed_resource, (LONG_PTR)&num_resources))
-                ret = num_resources;
-            FreeLibrary(hModule);
-        }
-    }
-    return ret;
+    return add_font_resource( str, flags );
 }
 
 /***********************************************************************
@@ -6035,21 +5999,8 @@ BOOL WINAPI NtGdiRemoveFontMemResourceEx( HANDLE handle )
 BOOL WINAPI NtGdiRemoveFontResourceW( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
                                       DWORD tid, void *dv )
 {
-    int ret;
-
     if (!font_funcs) return TRUE;
-
-    if (!(ret = remove_font_resource( str, flags )))
-    {
-        /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
-        HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
-        if (hModule != NULL)
-        {
-            WARN("Can't unload resources from PE file %s\n", wine_dbgstr_w(str));
-            FreeLibrary(hModule);
-        }
-    }
-    return ret;
+    return remove_font_resource( str, flags );
 }
 
 /***********************************************************************
