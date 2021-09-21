@@ -323,37 +323,33 @@ CompositeMonikerImpl_GetSizeMax(IMoniker* iface,ULARGE_INTEGER* pcbSize)
     return S_OK;
 }
 
-/******************************************************************************
- *                  CompositeMoniker_BindToObject
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc,
-               IMoniker* pmkToLeft, REFIID riid, VOID** ppvResult)
+static HRESULT WINAPI CompositeMonikerImpl_BindToObject(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, REFIID riid, void **result)
 {
-    HRESULT   res;
-    IRunningObjectTable *prot;
+    IRunningObjectTable *rot;
+    IUnknown *object;
+    HRESULT hr;
     IMoniker *tempMk,*antiMk,*rightMostMk;
     IEnumMoniker *enumMoniker;
 
-    TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvResult);
+    TRACE("(%p,%p,%p,%s,%p)\n", iface, pbc, pmkToLeft, debugstr_guid(riid), result);
 
-    if (ppvResult==NULL)
+    if (!result)
         return E_POINTER;
 
-    *ppvResult=0;
-    /* If pmkToLeft is NULL, this method looks for the moniker in the ROT, and if found, queries the retrieved */
-    /* object for the requested interface pointer. */
-    if(pmkToLeft==NULL){
+    *result = NULL;
 
-        res=IBindCtx_GetRunningObjectTable(pbc,&prot);
+    if (!pmkToLeft)
+    {
+        hr = IBindCtx_GetRunningObjectTable(pbc, &rot);
+        if (SUCCEEDED(hr))
+        {
+            hr = IRunningObjectTable_GetObject(rot, iface, &object);
+            IRunningObjectTable_Release(rot);
+            if (FAILED(hr)) return E_INVALIDARG;
 
-        if (SUCCEEDED(res)){
-
-            /* if the requested class was loaded before ! we don't need to reload it */
-            res = IRunningObjectTable_GetObject(prot,iface,(IUnknown**)ppvResult);
-
-            if (res==S_OK)
-                return res;
+            hr = IUnknown_QueryInterface(object, riid, result);
+            IUnknown_Release(object);
         }
     }
     else{
@@ -364,17 +360,17 @@ CompositeMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc,
         IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
         IEnumMoniker_Release(enumMoniker);
 
-        res=CreateAntiMoniker(&antiMk);
-        res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
+        hr = CreateAntiMoniker(&antiMk);
+        hr = IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
         IMoniker_Release(antiMk);
 
-        res=IMoniker_BindToObject(rightMostMk,pbc,tempMk,riid,ppvResult);
+        hr = IMoniker_BindToObject(rightMostMk,pbc,tempMk,riid,result);
 
         IMoniker_Release(tempMk);
         IMoniker_Release(rightMostMk);
     }
 
-    return res;
+    return hr;
 }
 
 /******************************************************************************

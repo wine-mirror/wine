@@ -2906,8 +2906,9 @@ static void test_generic_composite_moniker(void)
 {
     IMoniker *moniker, *inverse, *inverse2, *moniker1, *moniker2, *moniker3, *moniker4;
     IEnumMoniker *enummoniker;
+    IRunningObjectTable *rot;
+    DWORD hash, cookie;
     HRESULT hr;
-    DWORD hash;
     IBindCtx *bindctx;
     FILETIME filetime;
     IUnknown *unknown;
@@ -3032,14 +3033,8 @@ todo_wine
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
     ok(hr == MK_E_NOTBINDABLE, "IMoniker_GetTimeOfLastChange should return MK_E_NOTBINDABLE, not 0x%08x\n", hr);
 
-    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    todo_wine
-    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08x\n", hr);
-
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08x\n", hr);
-
-    IBindCtx_Release(bindctx);
 
     hr = IMoniker_Inverse(moniker, &inverse);
     ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
@@ -3059,7 +3054,36 @@ todo_wine
 todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    /* BindToObject() */
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IBindCtx_GetRunningObjectTable(bindctx, &rot);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Register(rot, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)moniker,
+            moniker, &cookie);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unknown);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IMoniker, (void **)&unknown);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unknown);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IDispatch, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Revoke(rot, cookie);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IRunningObjectTable_Release(rot);
+
     IMoniker_Release(moniker);
+
+    IBindCtx_Release(bindctx);
 }
 
 static void test_pointer_moniker(void)
