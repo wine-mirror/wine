@@ -2385,6 +2385,23 @@ fail:
     return name;
 }
 
+static int add_font_resource( const WCHAR *str, DWORD flags, void *dv )
+{
+    UNICODE_STRING nt_name;
+    int ret;
+
+    if (!RtlDosPathNameToNtPathName_U( str, &nt_name, NULL, NULL )) return 0;
+    ret = NtGdiAddFontResourceW( nt_name.Buffer, nt_name.Length / sizeof(WCHAR) + 1,
+                                 1, flags, 0, dv );
+    RtlFreeUnicodeString( &nt_name );
+    if (!ret && !wcschr( str, '\\' ))
+    {
+        /* try as system font */
+        ret = NtGdiAddFontResourceW( str, lstrlenW( str ) + 1, 1, flags, 0, dv );
+    }
+    return ret;
+}
+
 /***********************************************************************
  *           AddFontResourceExW    (GDI32.@)
  */
@@ -2394,12 +2411,29 @@ INT WINAPI AddFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
     BOOL hidden;
     INT ret;
 
-    if ((ret = NtGdiAddFontResourceW( str, 0, 1, flags, 0, dv ))) return ret;
+    if ((ret = add_font_resource( str, flags, dv ))) return ret;
 
     if (!(filename = get_scalable_filename( str, &hidden ))) return 0;
     if (hidden) flags |= FR_PRIVATE | FR_NOT_ENUM;
-    ret = NtGdiAddFontResourceW( filename, 0, 1, flags, 0, dv );
+    ret = add_font_resource( filename, flags, dv );
     HeapFree( GetProcessHeap(), 0, filename );
+    return ret;
+}
+
+static int remove_font_resource( const WCHAR *str, DWORD flags, void *dv )
+{
+    UNICODE_STRING nt_name;
+    int ret;
+
+    if (!RtlDosPathNameToNtPathName_U( str, &nt_name, NULL, NULL )) return 0;
+    ret = NtGdiRemoveFontResourceW( nt_name.Buffer, nt_name.Length / sizeof(WCHAR) + 1,
+                                 1, flags, 0, dv );
+    RtlFreeUnicodeString( &nt_name );
+    if (!ret && !wcschr( str, '\\' ))
+    {
+        /* try as system font */
+        ret = NtGdiRemoveFontResourceW( str, lstrlenW( str ) + 1, 1, flags, 0, dv );
+    }
     return ret;
 }
 
@@ -2412,11 +2446,11 @@ BOOL WINAPI RemoveFontResourceExW( const WCHAR *str, DWORD flags, void *dv )
     BOOL hidden;
     INT ret;
 
-    if ((ret = NtGdiRemoveFontResourceW( str, 0, 1, flags, 0, dv ))) return ret;
+    if ((ret = remove_font_resource( str, flags, dv ))) return ret;
 
     if (!(filename = get_scalable_filename( str, &hidden ))) return 0;
     if (hidden) flags |= FR_PRIVATE | FR_NOT_ENUM;
-    ret = NtGdiRemoveFontResourceW( filename, 0, 1, flags, 0, dv );
+    ret = remove_font_resource( filename, flags, dv );
     HeapFree( GetProcessHeap(), 0, filename );
     return ret;
 }
@@ -2629,8 +2663,10 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, const WCHAR *resource_fil
                                          const WCHAR *font_file, const WCHAR *font_path )
 {
     struct fontdir fontdir = { 0 };
+    UNICODE_STRING nt_name;
     OUTLINETEXTMETRICW otm;
     WCHAR path[MAX_PATH];
+    BOOL ret;
 
     TRACE("(%d, %s, %s, %s)\n", hidden, debugstr_w(resource_file),
           debugstr_w(font_file), debugstr_w(font_path) );
@@ -2643,9 +2679,12 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, const WCHAR *resource_fil
         lstrcpynW( path, font_path, MAX_PATH );
         lstrcatW( path, L"\\" );
         lstrcatW( path, font_file );
+        if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL )) goto done;
     }
-    else if (!GetFullPathNameW( font_file, MAX_PATH, path, NULL )) goto done;
-    if (!get_file_outline_text_metric( path, &otm )) goto done;
+    else if (!RtlDosPathNameToNtPathName_U( font_file, &nt_name, NULL, NULL )) goto done;
+    ret = get_file_outline_text_metric( nt_name.Buffer, &otm );
+    RtlFreeUnicodeString( &nt_name );
+    if (!ret) goto done;
     if (!(otm.otmTextMetrics.tmPitchAndFamily & TMPF_TRUETYPE)) goto done;
 
     fontdir.num_of_resources  = 1;

@@ -5446,6 +5446,7 @@ BOOL get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
 
     if (!path || !font_funcs) return FALSE;
 
+    if (*path == '\\') path += 4; /* skip NT prefix */
     if (!(font = alloc_gdi_font( path, NULL, 0 ))) goto done;
     font->lf.lfHeight = 100;
     if (!font_funcs->load_font( font )) goto done;
@@ -5600,6 +5601,7 @@ static int add_font_resource( LPCWSTR file, DWORD flags )
     WCHAR path[MAX_PATH];
     int ret = 0;
 
+    if (*file == '\\') file += 4; /* skip NT prefix */
     if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
     {
         DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
@@ -5621,6 +5623,7 @@ static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
     WCHAR path[MAX_PATH];
     BOOL ret = FALSE;
 
+    if (*file == '\\') file += 4; /* skip NT prefix */
     if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
     {
         DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
