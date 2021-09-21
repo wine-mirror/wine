@@ -1713,11 +1713,25 @@ static struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_
 
     if (file)
     {
-        WIN32_FILE_ATTRIBUTE_DATA info;
-        if (GetFileAttributesExW( file, GetFileExInfoStandard, &info ))
+        FILE_NETWORK_OPEN_INFORMATION info;
+        UNICODE_STRING nt_name;
+        OBJECT_ATTRIBUTES attr;
+
+        nt_name.Buffer = (WCHAR *)file;
+        nt_name.Length = nt_name.MaximumLength = len * sizeof(WCHAR);
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.Attributes = OBJ_CASE_INSENSITIVE;
+        attr.ObjectName = &nt_name;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        if (!NtQueryFullAttributesFile( &attr, &info ))
         {
-            font->writetime = info.ftLastWriteTime;
-            font->data_size = (LONGLONG)info.nFileSizeHigh << 32 | info.nFileSizeLow;
+            font->writetime.dwLowDateTime  = info.LastWriteTime.LowPart;
+            font->writetime.dwHighDateTime = info.LastWriteTime.HighPart;
+            font->data_size = info.EndOfFile.QuadPart;
             memcpy( font->file, file, len * sizeof(WCHAR) );
         }
     }
