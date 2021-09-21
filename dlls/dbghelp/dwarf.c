@@ -1429,6 +1429,28 @@ static struct symt* dwarf2_parse_pointer_type(dwarf2_debug_info_t* di)
     return di->symt;
 }
 
+static struct symt* dwarf2_parse_subrange_type(dwarf2_debug_info_t* di)
+{
+    struct symt*        ref_type;
+    struct attribute    name;
+    struct attribute    dummy;
+
+    if (di->symt) return di->symt;
+
+    TRACE("%s\n", dwarf2_debug_di(di));
+
+    if (dwarf2_find_attribute(di, DW_AT_name, &name)) FIXME("Found name for subrange %s\n", name.u.string);
+    if (dwarf2_find_attribute(di, DW_AT_byte_size, &dummy)) FIXME("Found byte_size %lu\n", dummy.u.uvalue);
+    if (dwarf2_find_attribute(di, DW_AT_bit_size, &dummy)) FIXME("Found bit_size %lu\n", dummy.u.uvalue);
+    /* for now, we don't support the byte_size nor bit_size about the subrange, and pretend the two
+     * types are the same (FIXME)
+     */
+    ref_type = dwarf2_lookup_type(di);
+    di->symt = ref_type;
+    if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
+    return di->symt;
+}
+
 static struct symt* dwarf2_parse_array_type(dwarf2_debug_info_t* di)
 {
     struct symt* ref_type;
@@ -1681,6 +1703,9 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
             break;
         case DW_TAG_const_type:
             dwarf2_parse_const_type(child);
+            break;
+        case DW_TAG_subrange_type:
+            dwarf2_parse_subrange_type(child);
             break;
         case DW_TAG_structure_type:
         case DW_TAG_class_type:
@@ -2335,6 +2360,9 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
         break;
     case DW_TAG_namespace:
         dwarf2_parse_namespace(di);
+        break;
+    case DW_TAG_subrange_type:
+        dwarf2_parse_subrange_type(di);
         break;
     /* silence a couple of C++ defines */
     case DW_TAG_imported_module:
