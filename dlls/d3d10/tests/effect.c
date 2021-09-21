@@ -6641,33 +6641,24 @@ todo_wine
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 2);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(!strcmp(var_desc.Name, "f1"), "Unexpected name %s.\n", var_desc.Name);
-        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
-    }
+    ok(!strcmp(var_desc.Name, "f1"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
+    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 3);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
-        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
-    }
+    ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
+    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 4);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(!strcmp(var_desc.Name, "s_blendstate"), "Unexpected name %s.\n", var_desc.Name);
-        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
-    }
+    ok(!strcmp(var_desc.Name, "s_blendstate"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
+    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = child_effect->lpVtbl->GetVariableByName(child_effect, "s_texture");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
