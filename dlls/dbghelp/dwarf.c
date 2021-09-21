@@ -1507,6 +1507,21 @@ static struct symt* dwarf2_parse_volatile_type(dwarf2_debug_info_t* di)
     return ref_type;
 }
 
+static struct symt* dwarf2_parse_restrict_type(dwarf2_debug_info_t* di)
+{
+    struct symt* ref_type;
+
+    if (di->symt) return di->symt;
+
+    TRACE("%s\n", dwarf2_debug_di(di));
+
+    ref_type = dwarf2_lookup_type(di);
+    if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
+    di->symt = ref_type;
+
+    return ref_type;
+}
+
 static struct symt* dwarf2_parse_unspecified_type(dwarf2_debug_info_t* di)
 {
     struct attribute name;
@@ -2264,6 +2279,9 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
         break;
     case DW_TAG_volatile_type:
         dwarf2_parse_volatile_type(di);
+        break;
+    case DW_TAG_restrict_type:
+        dwarf2_parse_restrict_type(di);
         break;
     case DW_TAG_unspecified_type:
         dwarf2_parse_unspecified_type(di);
