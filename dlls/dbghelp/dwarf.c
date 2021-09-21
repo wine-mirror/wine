@@ -2343,6 +2343,7 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
         dwarf2_parse_unspecified_type(di);
         break;
     case DW_TAG_reference_type:
+    case DW_TAG_rvalue_reference_type:
         dwarf2_parse_reference_type(di);
         break;
     case DW_TAG_enumeration_type:
