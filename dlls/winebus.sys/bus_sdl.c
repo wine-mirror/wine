@@ -126,7 +126,7 @@ struct platform_private
     int button_start;
     int axis_start;
     int ball_start;
-    int hat_bit_offs; /* hatswitches are reported in the same bytes as buttons */
+    int hat_start;
 
     struct hid_descriptor desc;
 
@@ -193,26 +193,8 @@ static void set_ball_value(struct platform_private *ext, int index, int value1, 
 
 static void set_hat_value(struct platform_private *ext, int index, int value)
 {
-    int byte = ext->button_start + (ext->hat_bit_offs + 4 * index) / 8;
-    int bit_offs = (ext->hat_bit_offs + 4 * index) % 8;
-    int num_low_bits, num_high_bits;
-    unsigned char val, low_mask, high_mask;
-
-    /* 4-bit hatswitch value is packed into button bytes */
-    if (bit_offs <= 4)
-    {
-        num_low_bits = 4;
-        num_high_bits = 0;
-        low_mask = 0xf;
-        high_mask = 0;
-    }
-    else
-    {
-        num_low_bits = 8 - bit_offs;
-        num_high_bits = 4 - num_low_bits;
-        low_mask = (1 << num_low_bits) - 1;
-        high_mask = (1 << num_high_bits) - 1;
-    }
+    int byte = ext->hat_start + index;
+    unsigned char val;
 
     switch (value)
     {
@@ -231,13 +213,7 @@ static void set_hat_value(struct platform_private *ext, int index, int value)
         default: return;
     }
 
-    ext->report_buffer[byte] &= ~(low_mask << bit_offs);
-    ext->report_buffer[byte] |= (val & low_mask) << bit_offs;
-    if (high_mask)
-    {
-        ext->report_buffer[byte + 1] &= ~high_mask;
-        ext->report_buffer[byte + 1] |= val & high_mask;
-    }
+    ext->report_buffer[byte] = val;
 }
 
 static BOOL descriptor_add_haptic(struct platform_private *ext)
@@ -319,14 +295,14 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
         report_size += (sizeof(DWORD) * 2 * ball_count);
     }
 
+    hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
+    ext->hat_start = report_size;
+    report_size += hat_count;
+
     /* For now lump all buttons just into incremental usages, Ignore Keys */
     button_count = pSDL_JoystickNumButtons(ext->sdl_joystick);
     ext->button_start = report_size;
-
-    hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
-    ext->hat_bit_offs = button_count;
-
-    report_size += (button_count + hat_count * 4 + 7) / 8;
+    report_size += (button_count + 7) / 8;
 
     TRACE("Report will be %i bytes\n", report_size);
 
@@ -350,10 +326,10 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
                                                &joystick_usages[axis_count], TRUE, INT32_MIN, INT32_MAX))
         return STATUS_NO_MEMORY;
 
-    if (button_count && !hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
+    if (hat_count && !hid_descriptor_add_hatswitch(&ext->desc, hat_count))
         return STATUS_NO_MEMORY;
 
-    if (hat_count && !hid_descriptor_add_hatswitch(&ext->desc, hat_count))
+    if (button_count && !hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
         return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(ext))
@@ -413,13 +389,14 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
     static const USAGE trigger_axis_usages[] = {HID_USAGE_GENERIC_Z, HID_USAGE_GENERIC_RZ};
     INT i;
 
-    static const int BUTTON_BIT_COUNT = CONTROLLER_NUM_BUTTONS + CONTROLLER_NUM_HATSWITCHES * 4;
+    static const int BUTTON_BIT_COUNT = CONTROLLER_NUM_BUTTONS;
 
     ext->axis_start = 0;
-    ext->button_start = CONTROLLER_NUM_AXES * sizeof(DWORD);
-    ext->hat_bit_offs = CONTROLLER_NUM_BUTTONS;
+    ext->hat_start = CONTROLLER_NUM_AXES * sizeof(DWORD);
+    ext->button_start = ext->hat_start + CONTROLLER_NUM_HATSWITCHES;
 
     ext->buffer_length = (BUTTON_BIT_COUNT + 7) / 8
+        + CONTROLLER_NUM_HATSWITCHES
         + CONTROLLER_NUM_AXES * sizeof(DWORD);
 
     TRACE("Report will be %i bytes\n", ext->buffer_length);
@@ -439,10 +416,10 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
                                  FALSE, 0, 0x7fff))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, CONTROLLER_NUM_BUTTONS))
+    if (!hid_descriptor_add_hatswitch(&ext->desc, CONTROLLER_NUM_HATSWITCHES))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_hatswitch(&ext->desc, 1))
+    if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, CONTROLLER_NUM_BUTTONS))
         return STATUS_NO_MEMORY;
 
     if (BUTTON_BIT_COUNT % 8 != 0)

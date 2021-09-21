@@ -496,6 +496,23 @@ static NTSTATUS build_report_descriptor(struct wine_input_private *ext, struct u
         rel_count++;
     }
 
+    hat_count = 0;
+    for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
+    {
+        if (!test_bit(absbits, i)) continue;
+        ext->hat_map[i - ABS_HAT0X] = report_size;
+        ext->hat_values[i - ABS_HAT0X] = 0;
+        ext->hat_values[i - ABS_HAT0X + 1] = 0;
+        report_size++;
+        hat_count++;
+    }
+
+    if (hat_count)
+    {
+        if (!hid_descriptor_add_hatswitch(&ext->desc, hat_count))
+            return STATUS_NO_MEMORY;
+    }
+
     /* For now lump all buttons just into incremental usages, Ignore Keys */
     ext->button_start = report_size;
     button_count = count_buttons(ext->base.device_fd, ext->button_map);
@@ -512,23 +529,6 @@ static NTSTATUS build_report_descriptor(struct wine_input_private *ext, struct u
         }
 
         report_size += (button_count + 7) / 8;
-    }
-
-    hat_count = 0;
-    for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
-    {
-        if (!test_bit(absbits, i)) continue;
-        ext->hat_map[i - ABS_HAT0X] = report_size;
-        ext->hat_values[i - ABS_HAT0X] = 0;
-        ext->hat_values[i - ABS_HAT0X + 1] = 0;
-        report_size++;
-        hat_count++;
-    }
-
-    if (hat_count)
-    {
-        if (!hid_descriptor_add_hatswitch(&ext->desc, hat_count))
-            return STATUS_NO_MEMORY;
     }
 
     if (!hid_descriptor_end(&ext->desc))

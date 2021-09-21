@@ -138,7 +138,7 @@ BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count)
         LOGICAL_MAXIMUM(1, 8),
         PHYSICAL_MINIMUM(1, 0),
         PHYSICAL_MAXIMUM(2, 8),
-        REPORT_SIZE(1, 4),
+        REPORT_SIZE(1, 8),
         REPORT_COUNT(4, count),
         UNIT(1, 0x0e /* none */),
         INPUT(1, Data|Var|Abs|Null),
