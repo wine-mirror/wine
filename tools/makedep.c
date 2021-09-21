@@ -204,6 +204,7 @@ struct makefile
     const char     *staticimplib;
     const char     *importlib;
     const char     *unixlib;
+    int             native_unix_lib;
     int             disabled;
     int             use_msvcrt;
     int             is_cross;
@@ -2140,7 +2141,7 @@ static const char *get_static_lib( const struct makefile *make, const char *name
  */
 static const char *get_native_unix_lib( const struct makefile *make, const char *name )
 {
-    if (!make->unixlib) return NULL;
+    if (!make->native_unix_lib) return NULL;
     if (strncmp( make->unixlib, name, strlen(name) )) return NULL;
     if (make->unixlib[strlen(name)] != '.') return NULL;
     return obj_dir_path( make, make->unixlib );
@@ -2198,15 +2199,14 @@ static int needs_implib_symlink( const struct makefile *make )
 /*******************************************************************
  *         add_unix_libraries
  */
-static struct strarray add_unix_libraries( const struct makefile *make, struct strarray *deps,
-                                           int native_unix )
+static struct strarray add_unix_libraries( const struct makefile *make, struct strarray *deps )
 {
     struct strarray ret = empty_strarray;
     struct strarray all_libs = empty_strarray;
     unsigned int i, j;
 
     strarray_add( &all_libs, "-lwine_port" );
-    if (native_unix && strcmp( make->module, "ntdll.dll" )) strarray_add( &all_libs, "-lntdll" );
+    if (make->native_unix_lib && strcmp( make->unixlib, "ntdll.so" )) strarray_add( &all_libs, "-lntdll" );
     strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
     strarray_addall( &all_libs, libs );
 
@@ -2220,7 +2220,7 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
 
             for (j = 0; j < subdirs.count; j++)
                 if ((lib = get_static_lib( submakes[j], name ))) break;
-            if (!lib && native_unix)
+            if (!lib && make->native_unix_lib)
                 for (j = 0; j < subdirs.count; j++)
                     if ((lib = get_native_unix_lib( submakes[j], name ))) break;
         }
@@ -3342,7 +3342,7 @@ static void output_module( struct makefile *make )
     }
     else if (*dll_ext)
     {
-        if (!make->use_msvcrt) strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs, 0 ));
+        if (!make->use_msvcrt) strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
         for (i = 0; i < make->delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-Wl,-delayload,%s%s", make->delayimports.str[i],
                                               strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
@@ -3356,7 +3356,7 @@ static void output_module( struct makefile *make )
     }
     else
     {
-        strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs, 0 ));
+        strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
         strarray_add( &make->all_targets, make->module );
         add_install_rule( make, make->module, make->module,
                           strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
@@ -3390,10 +3390,8 @@ static void output_module( struct makefile *make )
     {
         struct strarray unix_libs = empty_strarray;
         struct strarray unix_deps = empty_strarray;
-        struct strarray extra_libs = get_expanded_make_var_array( make, "EXTRALIBS" );
-        int native_unix_lib = strarray_exists( &extra_libs, "-Wl,--subsystem,unixlib" );
 
-        if (!native_unix_lib)
+        if (!make->native_unix_lib)
         {
             struct strarray unix_imports = empty_strarray;
 
@@ -3408,20 +3406,20 @@ static void output_module( struct makefile *make )
             strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 1 ));
         }
 
-        strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps, native_unix_lib ));
+        strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
 
         strarray_add( &make->all_targets, make->unixlib );
         add_install_rule( make, make->module, make->unixlib, strmake( "p%s/%s", so_dir, make->unixlib ));
         output( "%s:", obj_dir_path( make, make->unixlib ));
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_deps );
-        if (!native_unix_lib) output_filename( tools_path( make, "winebuild" ));
+        if (!make->native_unix_lib) output_filename( tools_path( make, "winebuild" ));
         output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
         output_winegcc_command( make, 0 );
         output_filename( "-munix" );
         output_filename( "-shared" );
-        if (spec_file && !native_unix_lib) output_filename( spec_file );
+        if (spec_file && !make->native_unix_lib) output_filename( spec_file );
         if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) output_filename( "-nodefaultlibs" );
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_libs );
@@ -3555,7 +3553,7 @@ static void output_shared_lib( struct makefile *make )
 
     strarray_addall( &dep_libs, get_local_dependencies( make, basename, make->in_files ));
     strarray_addall( &all_libs, get_expanded_file_local_var( make, basename, "LDFLAGS" ));
-    strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs, 0 ));
+    strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
 
     output( "%s:", obj_dir_path( make, make->sharedlib ));
     output_filenames_obj_dir( make, make->object_files );
@@ -3669,7 +3667,7 @@ static void output_programs( struct makefile *make )
 
         if (!objs.count) objs = make->object_files;
         if (!strarray_exists( &all_libs, "-nodefaultlibs" ))
-            strarray_addall( &all_libs, add_unix_libraries( make, &deps, 0 ));
+            strarray_addall( &all_libs, add_unix_libraries( make, &deps ));
 
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
@@ -4241,6 +4239,7 @@ static void load_sources( struct makefile *make )
     make->sharedlib     = get_expanded_make_variable( make, "SHAREDLIB" );
     make->staticlib     = get_expanded_make_variable( make, "STATICLIB" );
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
+    if (*dll_ext) make->unixlib = get_expanded_make_variable( make, "UNIXLIB" );
 
     make->programs      = get_expanded_make_var_array( make, "PROGRAMS" );
     make->scripts       = get_expanded_make_var_array( make, "SCRIPTS" );
@@ -4259,6 +4258,7 @@ static void load_sources( struct makefile *make )
                        !strarray_exists( &make->extradllflags, "-mcygwin" );
     make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
                        strarray_exists( &make->extradllflags, "-mwindows" );
+    make->native_unix_lib = !!make->unixlib;
 
     if (make->use_msvcrt) strarray_add_uniq( &make->extradllflags, "-mno-cygwin" );
 
@@ -4300,7 +4300,7 @@ static void load_sources( struct makefile *make )
     }
 
     add_generated_sources( make );
-    make->unixlib = get_unix_lib_name( make );
+    if (!make->unixlib) make->unixlib = get_unix_lib_name( make );
 
     if (make->use_msvcrt) add_crt_import( make, &make->imports, &make->define_args );
 

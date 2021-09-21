@@ -528,7 +528,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->unicode_app) strarray_add( flags, "-municode" );
         if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( flags, "-nodefaultlibs" );
         if (opts->nostartfiles || opts->use_msvcrt) strarray_add( flags, "-nostartfiles" );
-        if (opts->subsystem && strcmp(opts->subsystem, "unixlib")) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
+        if (opts->subsystem) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
 
         strarray_add( flags, "-Wl,--nxcompat" );
 
@@ -568,7 +568,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( flags, "-nodefaultlibs" );
         if (opts->nostartfiles || opts->use_msvcrt) strarray_add( flags, "-nostartfiles" );
         if (opts->image_base) strarray_add( flags, strmake("-Wl,-base:%s", opts->image_base ));
-        if (opts->subsystem && strcmp(opts->subsystem, "unixlib"))
+        if (opts->subsystem)
             strarray_add( flags, strmake("-Wl,-subsystem:%s", opts->subsystem ));
         else
             strarray_add( flags, strmake("-Wl,-subsystem:%s", opts->gui_app ? "windows" : "console" ));
@@ -1088,7 +1088,7 @@ static const char *find_libgcc(const strarray *prefix, const strarray *link_tool
 /* add specified library to the list of files */
 static void add_library( struct options *opts, strarray *lib_dirs, strarray *files, const char *library )
 {
-    char *static_lib, *fullname = 0, *unixlib;
+    char *static_lib, *fullname = 0;
 
     switch(get_lib_type(opts->target_platform, lib_dirs, library, "lib", opts->lib_suffix, &fullname))
     {
@@ -1096,19 +1096,6 @@ static void add_library( struct options *opts, strarray *lib_dirs, strarray *fil
         strarray_add(files, strmake("-a%s", fullname));
         break;
     case file_dll:
-        if (opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "unixlib"))
-        {
-            if (get_lib_type(opts->target_platform, lib_dirs, library, "", ".so", &unixlib) == file_so)
-            {
-                strarray_add(files, strmake("-s%s", unixlib));
-                free(unixlib);
-            }
-            else
-            {
-                strarray_add(files, strmake("-l%s", library));
-            }
-            break;
-        }
         strarray_add(files, strmake("-d%s", fullname));
         if ((static_lib = find_static_lib(fullname)))
         {
@@ -1182,7 +1169,7 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
         strarray_add(spec_args, entry_point);
     }
 
-    if (opts->subsystem && strcmp( opts->subsystem, "unixlib" ))
+    if (opts->subsystem)
     {
         strarray_add(spec_args, "--subsystem");
         strarray_add(spec_args, opts->subsystem);
@@ -1387,7 +1374,7 @@ static void build(struct options* opts)
     else entry_point = opts->entry_point;
 
     /* run winebuild to generate the .spec.o file */
-    if (!(opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "unixlib")))
+    if (spec_file || !opts->unix_lib)
         spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
 
     if (fake_module) return;  /* nothing else to do */

@@ -1,6 +1,6 @@
 MODULE    = msv1_0.dll
+UNIXLIB   = msv1_0.so
 IMPORTS   = netapi32 advapi32
-EXTRALIBS = -Wl,--subsystem,unixlib
 
 C_SRCS = \
 	main.c \

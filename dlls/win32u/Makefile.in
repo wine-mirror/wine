@@ -1,7 +1,7 @@
 MODULE    = win32u.dll
+UNIXLIB   = win32u.so
 IMPORTLIB = win32u
 IMPORTS   = ntdll winecrt0
-EXTRALIBS = -Wl,--subsystem,unixlib
 
 EXTRADLLFLAGS = -nodefaultlibs -Wb,--syscall-table,1
 

@@ -1,8 +1,8 @@
 EXTRADEFS = -D_SVRAPI_
 MODULE    = netapi32.dll
+UNIXLIB   = netapi32.so
 IMPORTLIB = netapi32
 IMPORTS   = rpcrt4 iphlpapi ws2_32 advapi32 dnsapi
-EXTRALIBS = -Wl,--subsystem,unixlib
 
 C_SRCS = \
 	nbcmdqueue.c \
