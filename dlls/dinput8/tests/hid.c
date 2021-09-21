@@ -4093,7 +4093,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
-    todo_wine
     ok( hr == DIERR_NOTACQUIRED, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_Poll( device );
@@ -4107,7 +4106,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_NOEFFECT, "IDirectInputDevice8_Poll returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2) + 1, &state );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
 
     for (i = 0; i < ARRAY_SIZE(injected_input); ++i)

@@ -638,12 +638,17 @@ static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
 static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, DWORD len, void *ptr )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr = DI_OK;
 
     if (!ptr) return DIERR_INVALIDPARAM;
+    if (len != impl->base.data_format.user_df->dwDataSize) return DIERR_INVALIDPARAM;
 
-    fill_DataFormat( ptr, len, &impl->state, &impl->base.data_format );
+    EnterCriticalSection( &impl->base.crit );
+    if (!impl->base.acquired) hr = DIERR_NOTACQUIRED;
+    else fill_DataFormat( ptr, len, &impl->state, &impl->base.data_format );
+    LeaveCriticalSection( &impl->base.crit );
 
-    return DI_OK;
+    return hr;
 }
 
 static BOOL get_object_info( struct hid_joystick *impl, struct hid_caps *caps,
