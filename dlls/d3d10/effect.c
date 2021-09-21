@@ -3205,14 +3205,14 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,
         const char *name)
 {
-    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    for (i = 0; i < This->local_buffer_count; ++i)
+    for (i = 0; i < effect->local_buffer_count; ++i)
     {
-        struct d3d10_effect_variable *l = &This->local_buffers[i];
+        struct d3d10_effect_variable *l = &effect->local_buffers[i];
 
         if (l->name && !strcmp(l->name, name))
         {
@@ -3220,6 +3220,9 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
             return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
         }
     }
+
+    if (effect->pool)
+        return effect->pool->lpVtbl->GetConstantBufferByName(effect->pool, name);
 
     WARN("Invalid name specified\n");
 

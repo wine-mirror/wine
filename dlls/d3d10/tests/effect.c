@@ -6543,7 +6543,6 @@ todo_wine {
     ID3D10Device_Release(device3);
 
     cb = child_effect->lpVtbl->GetConstantBufferByName(child_effect, "s_cb");
-todo_wine
     ok(cb->lpVtbl->IsValid(cb), "Expected valid constant buffer.\n");
 
     hr = cb->lpVtbl->GetConstantBuffer(cb, &buffer);
