@@ -243,15 +243,6 @@ then
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
 fi
 
-dnl Normalize CPU architecture
-case $host_cpu in
-  *i[[3456789]]86*) AC_SUBST(ARCH,"i386") ;;
-  *x86_64*)         AC_SUBST(ARCH,"x86_64") ;;
-  *aarch64*)        AC_SUBST(ARCH,"aarch64") ;;
-  *arm*)            AC_SUBST(ARCH,"arm") ;;
-  *)                AC_SUBST(ARCH,"") ;;
-esac
-
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
   [wine_cv_toolsdir="$with_wine_tools"
    if test -z "$with_wine_tools"; then

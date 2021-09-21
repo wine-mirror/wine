@@ -157,7 +157,7 @@ static const char *tools_ext;
 static const char *exe_ext;
 static const char *dll_ext;
 static const char *man_ext;
-static const char *arch;
+static const char *host_cpu;
 static const char *pe_dir;
 static const char *so_dir;
 static const char *crosstarget;
@@ -523,6 +523,30 @@ static void strarray_set_value( struct strarray *array, const char *name, const 
 static void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) )
 {
     if (array->count) qsort( array->str, array->count, sizeof(*array->str), (void *)func );
+}
+
+
+/*******************************************************************
+ *         normalize_arch
+ */
+static const char *normalize_arch( const char *arch )
+{
+    unsigned int i, j;
+
+    static const char *map[][8] =
+    {
+        /* normalized   aliases */
+        { "i386",      "i486", "i586", "i686", "ia32" },
+        { "x86_64",    "amd64", "x86-64", "x86_amd64", "x64" },
+        { "aarch64",   "arm64" },
+        { "arm" },
+    };
+
+    for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
+        for (j = 0; map[i][j]; j++)
+            if (!strncmp( arch, map[i][j], strlen(map[i][j]) ))
+                return map[i][0];
+    return NULL;
 }
 
 
@@ -4410,7 +4434,7 @@ int main( int argc, char *argv[] )
     exe_ext      = get_expanded_make_variable( top_makefile, "EXEEXT" );
     man_ext      = get_expanded_make_variable( top_makefile, "api_manext" );
     dll_ext      = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
-    arch         = get_expanded_make_variable( top_makefile, "ARCH" );
+    host_cpu     = get_expanded_make_variable( top_makefile, "host_cpu" );
     crosstarget  = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
     crossdebug   = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
     fontforge    = get_expanded_make_variable( top_makefile, "FONTFORGE" );
@@ -4431,10 +4455,10 @@ int main( int argc, char *argv[] )
     if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
     if (!man_ext) man_ext = "3w";
-    if (arch)
+    if (host_cpu && (host_cpu = normalize_arch( host_cpu )))
     {
-        so_dir = strmake( "$(dlldir)/%s-unix", arch );
-        pe_dir = strmake( "$(dlldir)/%s-windows", arch );
+        so_dir = strmake( "$(dlldir)/%s-unix", host_cpu );
+        pe_dir = strmake( "$(dlldir)/%s-windows", host_cpu );
     }
     else
         so_dir = pe_dir = "$(dlldir)";
