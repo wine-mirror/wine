@@ -1433,9 +1433,10 @@ static struct symt* dwarf2_parse_array_type(dwarf2_debug_info_t* di)
 {
     struct symt* ref_type;
     struct symt* idx_type = NULL;
+    struct symt* symt = NULL;
     struct attribute min, max, cnt;
     dwarf2_debug_info_t* child;
-    unsigned int i;
+    unsigned int i, j;
     const struct vector* children;
 
     if (di->symt) return di->symt;
@@ -1466,6 +1467,28 @@ static struct symt* dwarf2_parse_array_type(dwarf2_debug_info_t* di)
                 cnt.u.uvalue = max.u.uvalue + 1 - min.u.uvalue;
             else if (!dwarf2_find_attribute(child, DW_AT_count, &cnt))
                 cnt.u.uvalue = 0;
+            break;
+        case DW_TAG_enumeration_type:
+            symt = dwarf2_parse_enumeration_type(child);
+            if (symt_check_tag(symt, SymTagEnum))
+            {
+                struct symt_enum* enum_symt = (struct symt_enum*)symt;
+                idx_type = enum_symt->base_type;
+                min.u.uvalue = ~0U;
+                max.u.uvalue = ~0U;
+                for (j = 0; j < enum_symt->vchildren.num_elts; ++j)
+                {
+                    struct symt** pc = vector_at(&enum_symt->vchildren, j);
+                    if (pc && symt_check_tag(*pc, SymTagData))
+                    {
+                        struct symt_data* elt = (struct symt_data*)(*pc);
+                        if (elt->u.value.n1.n2.n3.lVal < min.u.uvalue)
+                            min.u.uvalue = elt->u.value.n1.n2.n3.lVal;
+                        if (elt->u.value.n1.n2.n3.lVal > max.u.uvalue)
+                            max.u.uvalue = elt->u.value.n1.n2.n3.lVal;
+                    }
+                }
+            }
             break;
         default:
             FIXME("Unhandled Tag type 0x%lx at %s\n",
