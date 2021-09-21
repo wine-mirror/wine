@@ -3919,9 +3919,7 @@ static void test_simple_joystick(void)
     prop_range.lMax = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
-    todo_wine
     ok( prop_range.lMin == 0, "got %d expected %d\n", prop_range.lMin, 0 );
-    todo_wine
     ok( prop_range.lMax == 65535, "got %d expected %d\n", prop_range.lMax, 65535 );
 
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
@@ -3962,9 +3960,10 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
 
     check_member( objinst, expect_objects[1], "%u", dwSize );
-    todo_wine
     check_member_guid( objinst, expect_objects[1], guidType );
+    todo_wine
     check_member( objinst, expect_objects[1], "%#x", dwOfs );
+    todo_wine
     check_member( objinst, expect_objects[1], "%#x", dwType );
     check_member( objinst, expect_objects[1], "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
@@ -3974,7 +3973,6 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
     check_member( objinst, expect_objects[1], "%u", wDesignatorIndex );
     check_member( objinst, expect_objects[1], "%#04x", wUsagePage );
-    todo_wine
     check_member( objinst, expect_objects[1], "%#04x", wUsage );
     check_member( objinst, expect_objects[1], "%#04x", dwDimension );
     check_member( objinst, expect_objects[1], "%#04x", wExponent );
@@ -4310,9 +4308,7 @@ static void test_simple_joystick(void)
     prop_range.lMax = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
-    todo_wine
     ok( prop_range.lMin == -14000, "got %d expected %d\n", prop_range.lMin, -14000 );
-    todo_wine
     ok( prop_range.lMax == -4000, "got %d expected %d\n", prop_range.lMax, -4000 );
     prop_range.diph.dwHow = DIPH_BYUSAGE;
     prop_range.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_Y, HID_USAGE_PAGE_GENERIC );
@@ -4320,9 +4316,7 @@ static void test_simple_joystick(void)
     prop_range.lMax = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
-    todo_wine
     ok( prop_range.lMin == 1000, "got %d expected %d\n", prop_range.lMin, 1000 );
-    todo_wine
     ok( prop_range.lMax == 51000, "got %d expected %d\n", prop_range.lMax, 51000 );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
@@ -4478,7 +4472,7 @@ static void test_simple_joystick(void)
         if (broken( state.lX == -10750 )) win_skip( "Ignoring 32-bit rounding\n" );
         else
         {
-            todo_wine
+            todo_wine_if( i != 2 )
             check_member( state, expect_state_abs[i], "%d", lX );
             todo_wine_if( i != 2 )
             check_member( state, expect_state_abs[i], "%d", lY );

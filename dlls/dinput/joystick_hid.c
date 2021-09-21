@@ -209,7 +209,8 @@ static BOOL enum_object( struct hid_joystick *impl, const DIPROPHEADER *filter, 
         if ((filter->dwObj & 0x00ffffff) != (instance->dwType & 0x00ffffff)) return DIENUM_CONTINUE;
         return callback( impl, caps, instance, data );
     case DIPH_BYUSAGE:
-        if (LOWORD(filter->dwObj) != instance->wUsagePage || HIWORD(filter->dwObj) != instance->wUsage) return DIENUM_CONTINUE;
+        if (HIWORD( filter->dwObj ) != instance->wUsagePage) return DIENUM_CONTINUE;
+        if (LOWORD( filter->dwObj ) != instance->wUsage) return DIENUM_CONTINUE;
         return callback( impl, caps, instance, data );
     default:
         FIXME( "unimplemented filter dwHow %#x dwObj %#x\n", filter->dwHow, filter->dwObj );
