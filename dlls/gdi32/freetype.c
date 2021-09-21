@@ -1361,13 +1361,6 @@ static WCHAR *get_dos_file_name( LPCSTR str )
         RtlFreeHeap( GetProcessHeap(), 0, buffer );
         return NULL;
     }
-    if (buffer[5] == ':')
-    {
-        /* get rid of the \??\ prefix */
-        /* FIXME: should implement RtlNtPathNameToDosPathName and use that instead */
-        memmove( buffer, buffer + 4, (len - 4) * sizeof(WCHAR) );
-    }
-    else buffer[1] = '\\';
     return buffer;
 }
 

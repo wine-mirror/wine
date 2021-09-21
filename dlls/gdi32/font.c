@@ -89,6 +89,8 @@ static const struct font_backend_funcs *font_funcs;
 
 static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 
+static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
+
 static UINT font_smoothing = GGO_BITMAP;
 static UINT subpixel_orientation = GGO_GRAY4_BITMAP;
 static BOOL antialias_fakes = TRUE;
@@ -419,14 +421,11 @@ static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
         lstrcatW( path, L"\\fonts\\" );
 
     lstrcatW( path, file );
-    if (path[5] == ':') memmove( path, path + 4, (lstrlenW(path) - 3) * sizeof(WCHAR) );
-    else path[1] = '\\';  /* change \??\ to \\?\ */
 }
 
 static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
-    GetWindowsDirectoryW( path, MAX_PATH );
-    lstrcatW( path, L"\\fonts\\" );
+    lstrcpyW( path, L"\\??\\C:\\windows\\fonts\\" );
     lstrcatW( path, file );
 }
 
@@ -5446,7 +5445,6 @@ BOOL get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
 
     if (!path || !font_funcs) return FALSE;
 
-    if (*path == '\\') path += 4; /* skip NT prefix */
     if (!(font = alloc_gdi_font( path, NULL, 0 ))) goto done;
     font->lf.lfHeight = 100;
     if (!font_funcs->load_font( font )) goto done;
@@ -5598,21 +5596,18 @@ static BOOL remove_system_font_resource( LPCWSTR file, DWORD flags )
 
 static int add_font_resource( LPCWSTR file, DWORD flags )
 {
-    WCHAR path[MAX_PATH];
     int ret = 0;
 
-    if (*file == '\\') file += 4; /* skip NT prefix */
-    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+    if (*file == '\\')
     {
         DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
         if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
         EnterCriticalSection( &font_cs );
-        ret = font_funcs->add_font( path, addfont_flags );
+        ret = font_funcs->add_font( file, addfont_flags );
         LeaveCriticalSection( &font_cs );
     }
-
-    if (!ret && !wcschr( file, '\\' ))
+    else if (!wcschr( file, '\\' ))
         ret = add_system_font_resource( file, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
 
     return ret;
@@ -5620,19 +5615,16 @@ static int add_font_resource( LPCWSTR file, DWORD flags )
 
 static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
 {
-    WCHAR path[MAX_PATH];
     BOOL ret = FALSE;
 
-    if (*file == '\\') file += 4; /* skip NT prefix */
-    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+    if (*file == '\\')
     {
         DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
         if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-        ret = remove_font( path, addfont_flags );
+        ret = remove_font( file, addfont_flags );
     }
-
-    if (!ret && !wcschr( file, '\\' ))
+    else if (!wcschr( file, '\\' ))
         ret = remove_system_font_resource( file, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
 
     return ret;
@@ -5676,8 +5668,8 @@ static void load_directory_fonts( WCHAR *path, UINT flags )
 
 static void load_file_system_fonts(void)
 {
-    WCHAR *ptr, *next, path[MAX_PATH], value[1024];
-    DWORD len = ARRAY_SIZE(value);
+    WCHAR *ptr, *next, path[MAX_PATH + ARRAYSIZE(nt_prefixW)], value[1024];
+    DWORD len = sizeof(value);
 
     /* Windows directory */
     get_fonts_win_dir_path( L"*", path );
@@ -5697,6 +5689,11 @@ static void load_file_system_fonts(void)
             if (next && next - ptr < 2) continue;
             lstrcpynW( path, ptr, MAX_PATH - 2 );
             lstrcatW( path, L"\\*" );
+            if (path[1] == ':')
+            {
+                memmove( path + ARRAYSIZE(nt_prefixW), path, (lstrlenW( path ) + 1) * sizeof(WCHAR) );
+                memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
+            }
             load_directory_fonts( path, ADDFONT_EXTERNAL_FONT );
         }
     }
@@ -5716,7 +5713,7 @@ static void update_external_font_keys(void)
     struct external_key *key, *next;
     struct gdi_font_face *face;
     DWORD len, i = 0, type, dlen, vlen;
-    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH], *tmp;
+    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH + 4], *tmp;
     WCHAR *file;
     HKEY hkey;
 
@@ -5729,13 +5726,15 @@ static void update_external_font_keys(void)
 
     if (RegCreateKeyW( wine_fonts_key, L"External Fonts", &hkey )) return;
 
+    memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
     vlen = ARRAY_SIZE(value);
-    dlen = sizeof(path);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)path, &dlen ))
+    dlen = sizeof(path) - sizeof(nt_prefixW);
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)path + sizeof(nt_prefixW), &dlen ))
     {
         if (type != REG_SZ) goto next;
         if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
-        if ((face = find_face_from_full_name( value )) && !wcsicmp( face->file, path ))
+        if ((face = find_face_from_full_name( value )) &&
+            !wcsicmp( face->file, path[5] == ':' ? path : path + ARRAYSIZE(nt_prefixW) ))
         {
             face->flags |= ADDFONT_EXTERNAL_FOUND;
             goto next;
@@ -5746,7 +5745,7 @@ static void update_external_font_keys(void)
         list_add_tail( &external_keys, &key->entry );
     next:
         vlen = ARRAY_SIZE(value);
-        dlen = sizeof(path);
+        dlen = sizeof(path) - sizeof(nt_prefixW);
     }
 
     WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
@@ -5759,8 +5758,11 @@ static void update_external_font_keys(void)
             lstrcpyW( value, face->full_name );
             if (face->scalable) lstrcatW( value, L" (TrueType)" );
 
-            if (GetFullPathNameW( face->file, MAX_PATH, path, NULL ))
-                file = path;
+            if (face->file[0] == '\\')
+            {
+                file = face->file;
+                if (file[5] == ':') file += ARRAYSIZE(nt_prefixW);
+            }
             else if ((file = wcsrchr( face->file, '\\' )))
                 file++;
             else
@@ -5787,7 +5789,7 @@ static void update_external_font_keys(void)
 
 static void load_registry_fonts(void)
 {
-    WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH], *tmp;
+    WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH + 4], *tmp, *path;
     DWORD i = 0, type, dlen, vlen;
     HKEY hkey;
 
@@ -5800,8 +5802,9 @@ static void load_registry_fonts(void)
                      L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", &hkey ))
         return;
 
+    memcpy( data, nt_prefixW, sizeof(nt_prefixW) );
     vlen = ARRAY_SIZE(value);
-    dlen = sizeof(data);
+    dlen = sizeof(data) - sizeof(nt_prefixW);
     while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, NULL, NULL ))
     {
         if (type != REG_SZ) goto next;
@@ -5810,20 +5813,27 @@ static void load_registry_fonts(void)
         if (find_face_from_full_name( value )) goto next;
         if (tmp && !*tmp) *tmp = ' ';
 
-        if (RegQueryValueExW( hkey, value, NULL, NULL, (LPBYTE)data, &dlen ))
+        path = data + ARRAYSIZE(nt_prefixW);
+        if (RegQueryValueExW( hkey, value, NULL, NULL, (LPBYTE)data + sizeof(nt_prefixW), &dlen ))
         {
             WARN( "Unable to get face path %s\n", debugstr_w(value) );
             goto next;
         }
 
+        if (path[0] && path[1] == ':')
+        {
+            path = data;
+            dlen += sizeof(nt_prefixW);
+        }
+
         dlen /= sizeof(WCHAR);
-        if (data[0] && data[1] == ':')
-            add_font_resource( data, ADDFONT_ALLOW_BITMAP );
-        else if (dlen >= 6 && !wcsicmp( data + dlen - 5, L".fon" ))
-            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP );
+        if (*path == '\\')
+            add_font_resource( path, ADDFONT_ALLOW_BITMAP );
+        else if (dlen >= 6 && !wcsicmp( path + dlen - 5, L".fon" ))
+            add_system_font_resource( path, ADDFONT_ALLOW_BITMAP );
     next:
         vlen = ARRAY_SIZE(value);
-        dlen = sizeof(data);
+        dlen = sizeof(data) - sizeof(nt_prefixW);
     }
     RegCloseKey( hkey );
 }
