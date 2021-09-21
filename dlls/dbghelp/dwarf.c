@@ -1704,6 +1704,12 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
         case DW_TAG_const_type:
             dwarf2_parse_const_type(child);
             break;
+        case DW_TAG_volatile_type:
+            dwarf2_parse_volatile_type(di);
+            break;
+        case DW_TAG_pointer_type:
+            dwarf2_parse_pointer_type(child);
+            break;
         case DW_TAG_subrange_type:
             dwarf2_parse_subrange_type(child);
             break;
@@ -1713,11 +1719,13 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
         case DW_TAG_typedef:
             /* FIXME: we need to handle nested udt definitions */
         case DW_TAG_inheritance:
+        case DW_TAG_interface_type:
         case DW_TAG_template_type_param:
         case DW_TAG_template_value_param:
         case DW_TAG_variable:
         case DW_TAG_imported_declaration:
         case DW_TAG_ptr_to_member_type:
+        case DW_TAG_GNU_template_template_param:
         case DW_TAG_GNU_template_parameter_pack:
         case DW_TAG_GNU_formal_parameter_pack:
             /* FIXME: some C++ related stuff */
