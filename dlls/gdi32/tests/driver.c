@@ -29,16 +29,22 @@
 #include "winternl.h"
 #include "dwmapi.h"
 #include "ddk/d3dkmthk.h"
+#include "initguid.h"
+#include "setupapi.h"
+#include "ntddvdeo.h"
 
 #include "wine/test.h"
 
 static const WCHAR display1W[] = L"\\\\.\\DISPLAY1";
+
+DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
 static NTSTATUS (WINAPI *pD3DKMTCheckOcclusion)(const D3DKMT_CHECKOCCLUSION *);
 static NTSTATUS (WINAPI *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
 static NTSTATUS (WINAPI *pD3DKMTCreateDevice)(D3DKMT_CREATEDEVICE *);
 static NTSTATUS (WINAPI *pD3DKMTDestroyDevice)(const D3DKMT_DESTROYDEVICE *);
+static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromDeviceName)(D3DKMT_OPENADAPTERFROMDEVICENAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
 static NTSTATUS (WINAPI *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
@@ -789,6 +795,97 @@ static void test_D3DKMTCheckOcclusion(void)
     DestroyWindow(hwnd);
 }
 
+static void test_D3DKMTOpenAdapterFromDeviceName_deviface(const GUID *devinterface_guid,
+        NTSTATUS expected_status, BOOL todo)
+{
+    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
+    D3DKMT_OPENADAPTERFROMDEVICENAME device_name;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    DEVPROPTYPE type;
+    NTSTATUS status;
+    unsigned int i;
+    HDEVINFO set;
+    LUID luid;
+    BOOL ret;
+
+    set = SetupDiGetClassDevsW(devinterface_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevs failed, error %u.\n", GetLastError());
+
+    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
+    iface_data->cbSize = sizeof(*iface_data);
+    device_name.pDeviceName = iface_data->DevicePath;
+
+    i = 0;
+    while (SetupDiEnumDeviceInterfaces(set, NULL, devinterface_guid, i, &iface))
+    {
+        ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data,
+                sizeof(iface_detail_buffer), NULL, &device_data );
+        ok(ret, "Got unexpected ret %d, GetLastError() %u.\n", ret, GetLastError());
+
+        status = pD3DKMTOpenAdapterFromDeviceName(&device_name);
+        todo_wine_if(todo) ok(status == expected_status, "Got status %#x, expected %#x.\n", status, expected_status);
+
+        if (!status)
+        {
+            ret = SetupDiGetDevicePropertyW(set, &device_data, &DEVPROPKEY_GPU_LUID, &type,
+                    (BYTE *)&luid, sizeof(luid), NULL, 0);
+            ok(ret || GetLastError() == ERROR_NOT_FOUND, "Got unexpected ret %d, GetLastError() %u.\n",
+                    ret, GetLastError());
+
+            if (ret)
+            {
+                ret = RtlEqualLuid( &luid, &device_name.AdapterLuid);
+                todo_wine ok(ret, "Luid does not match.\n");
+            }
+            else
+            {
+                skip("Luid not found.\n");
+            }
+
+            close_adapter_desc.hAdapter = device_name.hAdapter;
+            status = pD3DKMTCloseAdapter(&close_adapter_desc);
+            ok(!status, "Got unexpected status %#x.\n", status);
+        }
+        ++i;
+    }
+    if (!i)
+        win_skip("No devices found.\n");
+
+    SetupDiDestroyDeviceInfoList( set );
+}
+
+static void test_D3DKMTOpenAdapterFromDeviceName(void)
+{
+    D3DKMT_OPENADAPTERFROMDEVICENAME device_name;
+    NTSTATUS status;
+
+    /* Make sure display devices are initialized. */
+    SendMessageW(GetDesktopWindow(), WM_NULL, 0, 0);
+
+    status = pD3DKMTOpenAdapterFromDeviceName(NULL);
+    if (status == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        win_skip("D3DKMTOpenAdapterFromDeviceName() is not supported.\n");
+        return;
+    }
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
+
+    memset(&device_name, 0, sizeof(device_name));
+    status = pD3DKMTOpenAdapterFromDeviceName(&device_name);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
+
+    winetest_push_context("GUID_DEVINTERFACE_DISPLAY_ADAPTER");
+    test_D3DKMTOpenAdapterFromDeviceName_deviface(&GUID_DEVINTERFACE_DISPLAY_ADAPTER, STATUS_INVALID_PARAMETER, TRUE);
+    winetest_pop_context();
+
+    winetest_push_context("GUID_DISPLAY_DEVICE_ARRIVAL");
+    test_D3DKMTOpenAdapterFromDeviceName_deviface(&GUID_DISPLAY_DEVICE_ARRIVAL, STATUS_SUCCESS, FALSE);
+    winetest_pop_context();
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
@@ -799,6 +896,7 @@ START_TEST(driver)
     pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32, "D3DKMTCloseAdapter");
     pD3DKMTCreateDevice = (void *)GetProcAddress(gdi32, "D3DKMTCreateDevice");
     pD3DKMTDestroyDevice = (void *)GetProcAddress(gdi32, "D3DKMTDestroyDevice");
+    pD3DKMTOpenAdapterFromDeviceName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromDeviceName");
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromGdiDisplayName");
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
     pD3DKMTSetVidPnSourceOwner = (void *)GetProcAddress(gdi32, "D3DKMTSetVidPnSourceOwner");
@@ -814,6 +912,7 @@ START_TEST(driver)
     test_D3DKMTCheckVidPnExclusiveOwnership();
     test_D3DKMTSetVidPnSourceOwner();
     test_D3DKMTCheckOcclusion();
+    test_D3DKMTOpenAdapterFromDeviceName();
 
     FreeLibrary(dwmapi);
 }

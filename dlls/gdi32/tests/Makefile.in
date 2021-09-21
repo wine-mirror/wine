@@ -1,5 +1,5 @@
 TESTDLL   = gdi32.dll
-IMPORTS   = user32 gdi32 advapi32
+IMPORTS   = setupapi user32 gdi32 advapi32
 
 C_SRCS = \
 	bitmap.c \
