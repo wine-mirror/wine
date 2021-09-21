@@ -1244,6 +1244,24 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
             return FALSE;
         *plow = low_pc.u.uvalue;
         *phigh = high_pc.u.uvalue;
+        if (ctx->head.version >= 4)
+            switch (high_pc.form)
+            {
+            case DW_FORM_addr:
+                break;
+            case DW_FORM_data1:
+            case DW_FORM_data2:
+            case DW_FORM_data4:
+            case DW_FORM_data8:
+            case DW_FORM_sdata:
+            case DW_FORM_udata:
+                /* From dwarf4 on, when FORM's class is constant, high_pc is an offset from low_pc */
+                *phigh += *plow;
+                break;
+            default:
+                FIXME("Unsupported class for high_pc\n");
+                break;
+            }
         return TRUE;
     }
 }
