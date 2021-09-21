@@ -9493,12 +9493,18 @@ static const struct message WmShiftF10Seq[] = {
     { WM_SYSCOMMAND, sent|defwinproc|wparam, SC_KEYMENU },
     { HCBT_SYSCOMMAND, hook },
     { WM_ENTERMENULOOP, sent|defwinproc|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_INITMENU, sent|defwinproc },
+    { EVENT_SYSTEM_MENUSTART, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_SYSMENU, 0 },
     { WM_MENUSELECT, sent|defwinproc|wparam, MAKEWPARAM(0,MF_SYSMENU|MF_POPUP|MF_HILITE), 0, MAKEWPARAM(0,MF_RIGHTJUSTIFY) },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_SYSMENU, 1 },
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xd0000001 }, /* XP */
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_ESCAPE, 0x10000001 }, /* XP */
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_SYSMENU, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|defwinproc|wparam|lparam, 0, 0 },
     { WM_MENUSELECT, sent|defwinproc|wparam|lparam, 0xffff0000, 0 },
+    { EVENT_SYSTEM_MENUEND, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_SYSMENU, 0 },
     { WM_EXITMENULOOP, sent|defwinproc|wparam|lparam, 0, 0 },
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_ESCAPE, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_ESCAPE, 0xc0000001 },
@@ -18533,6 +18539,15 @@ START_TEST(msg)
     test_paint_messages();
     test_interthread_messages();
     test_message_conversion();
+    test_accelerators();
+    test_timers();
+    test_timers_no_wnd();
+    test_timers_exceptions();
+    if (hCBT_hook)
+    {
+        test_set_hook();
+        test_recursive_hook();
+    }
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18543,15 +18558,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_accelerators();
-    test_timers();
-    test_timers_no_wnd();
-    test_timers_exceptions();
-    if (hCBT_hook)
-    {
-        test_set_hook();
-        test_recursive_hook();
-    }
     test_DestroyWindow();
     test_DispatchMessage();
     test_SendMessageTimeout();
