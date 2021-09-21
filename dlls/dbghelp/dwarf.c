@@ -1222,6 +1222,9 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
             high = dwarf2_parse_addr_head(&traverse, &ctx->head);
             if (low == 0 && high == 0) break;
             if (low == ULONG_MAX) FIXME("unsupported yet (base address selection)\n");
+            /* range values are relative to start of compilation unit */
+            low += ctx->compiland->address - ctx->module_ctx->load_offset;
+            high += ctx->compiland->address - ctx->module_ctx->load_offset;
             if (low  < *plow)  *plow = low;
             if (high > *phigh) *phigh = high;
         }
