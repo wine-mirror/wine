@@ -2912,6 +2912,11 @@ static void test_generic_composite_moniker(void)
     IBindCtx *bindctx;
     FILETIME filetime;
     IUnknown *unknown;
+    IROTData *rotdata;
+    IMarshal *marshal;
+    IStream *stream;
+    WCHAR *str;
+    ULONG len;
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
@@ -2936,10 +2941,7 @@ static void test_generic_composite_moniker(void)
     ok(hr == S_OK, "Failed to invert, hr %#x.\n", hr);
     hr = CreateGenericComposite(moniker1, inverse, &moniker);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(!moniker, "Unexpected pointer.\n");
-    if (moniker)
-        IMoniker_Release(moniker);
 
     /* (I1,I2) + (A,A) -> (I1,I2+A,A) -> (I1,A) -> () */
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
@@ -2950,10 +2952,7 @@ todo_wine
 
     hr = CreateGenericComposite(moniker, moniker3, &moniker4);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(!moniker4, "Unexpected pointer.\n");
-    if (moniker4)
-        IMoniker_Release(moniker4);
 
     IMoniker_Release(moniker);
     IMoniker_Release(moniker3);
@@ -2970,7 +2969,7 @@ todo_wine
 
     hr = CreateGenericComposite(moniker, moniker3, &moniker4);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    TEST_MONIKER_TYPE_TODO(moniker4, MKSYS_ANTIMONIKER);
+    TEST_MONIKER_TYPE(moniker4, MKSYS_ANTIMONIKER);
     IMoniker_Release(moniker4);
     IMoniker_Release(moniker);
     IMoniker_Release(moniker3);
@@ -3080,6 +3079,41 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IRunningObjectTable_Release(rot);
+
+    IMoniker_Release(moniker);
+
+    /* Uninitialized composite */
+    hr = CoCreateInstance(&CLSID_CompositeMoniker, NULL, CLSCTX_SERVER, &IID_IMoniker, (void **)&moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+    /* Exact error is E_OUTOFMEMORY */
+    hr = IMoniker_Save(moniker, stream, TRUE);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    IStream_Release(stream);
+
+    hash = 0xdeadbeef;
+    hr = IMoniker_Hash(moniker, &hash);
+    ok(hr == E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+    ok(hash == 0xdeadbeef, "Unexpected hash %#x.\n", hash);
+
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &str);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IROTData_GetComparisonData(rotdata, NULL, 0, &len);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    IROTData_Release(rotdata);
+
+    hr = IMoniker_QueryInterface(moniker, &IID_IMarshal, (void **)&marshal);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMarshal_GetMarshalSizeMax(marshal, &IID_IMoniker, NULL, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL, &len);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    hr = IMarshal_MarshalInterface(marshal, stream, &IID_IMoniker, NULL, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+    IMarshal_Release(marshal);
 
     IMoniker_Release(moniker);
 
