@@ -3179,22 +3179,27 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDesc(ID3D10Effect *iface, D3D10
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByIndex(ID3D10Effect *iface,
         UINT index)
 {
-    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
     struct d3d10_effect_variable *l;
 
     TRACE("iface %p, index %u\n", iface, index);
 
-    if (index >= This->local_buffer_count)
+    if (index < effect->local_buffer_count)
     {
-        WARN("Invalid index specified\n");
-        return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
+        l = &effect->local_buffers[index];
+
+        TRACE("Returning buffer %p, %s.\n", l, debugstr_a(l->name));
+
+        return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
     }
+    index -= effect->local_buffer_count;
 
-    l = &This->local_buffers[index];
+    if (effect->pool)
+        return effect->pool->lpVtbl->GetConstantBufferByIndex(effect->pool, index);
 
-    TRACE("Returning buffer %p, %s.\n", l, debugstr_a(l->name));
+    WARN("Invalid index specified\n");
 
-    return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
+    return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,

@@ -6607,17 +6607,13 @@ todo_wine
 
     cb = child_effect->lpVtbl->GetConstantBufferByIndex(child_effect, 2);
     ret = cb->lpVtbl->IsValid(cb);
-todo_wine
     ok(ret, "Unexpected invalid variable.\n");
 
     hr = cb->lpVtbl->GetDesc(cb, &var_desc);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
-        ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
-    }
+    ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
+todo_wine
+    ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     /* Pool techniques are not accessible */
     t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
