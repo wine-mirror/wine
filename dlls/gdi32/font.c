@@ -5889,8 +5889,14 @@ static const struct font_callback_funcs callback_funcs = { add_gdi_face };
  */
 void font_init(void)
 {
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+    UNICODE_STRING name;
     HANDLE mutex;
     DWORD disposition;
+
+    static WCHAR wine_font_mutexW[] =
+        {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
+         '\\','_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_'};
 
     if (RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\Fonts", 0, NULL, 0,
                          KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
@@ -5904,8 +5910,13 @@ void font_init(void)
     load_file_system_fonts();
     font_funcs->load_fonts();
 
-    if (!(mutex = CreateMutexW( NULL, FALSE, L"__WINE_FONT_MUTEX__" ))) return;
-    WaitForSingleObject( mutex, INFINITE );
+    attr.Attributes = OBJ_OPENIF;
+    attr.ObjectName = &name;
+    name.Buffer = wine_font_mutexW;
+    name.Length = name.MaximumLength = sizeof(wine_font_mutexW);
+
+    if (NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE ) < 0) return;
+    NtWaitForSingleObject( mutex, FALSE, NULL );
 
     RegCreateKeyExW( wine_fonts_key, L"Cache", 0, NULL, REG_OPTION_VOLATILE,
                      KEY_ALL_ACCESS, NULL, &wine_fonts_cache_key, &disposition );
@@ -5916,7 +5927,7 @@ void font_init(void)
         update_external_font_keys();
     }
 
-    ReleaseMutex( mutex );
+    NtReleaseMutant( mutex, NULL );
 
     if (disposition != REG_CREATED_NEW_KEY)
     {
