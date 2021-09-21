@@ -241,13 +241,10 @@ static BOOL descriptor_add_haptic(struct platform_private *ext)
     return TRUE;
 }
 
-static NTSTATUS build_report_descriptor(struct platform_private *ext)
+static NTSTATUS build_joystick_report_descriptor(struct platform_private *ext)
 {
-    INT i;
-    INT report_size;
-    INT button_count, axis_count, ball_count, hat_count;
-    static const USAGE device_usage[2] = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD};
-    static const USAGE controller_usages[] = {
+    static const USAGE joystick_usages[] =
+    {
         HID_USAGE_GENERIC_X,
         HID_USAGE_GENERIC_Y,
         HID_USAGE_GENERIC_Z,
@@ -256,19 +253,11 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
         HID_USAGE_GENERIC_RZ,
         HID_USAGE_GENERIC_SLIDER,
         HID_USAGE_GENERIC_DIAL,
-        HID_USAGE_GENERIC_WHEEL};
-    static const USAGE joystick_usages[] = {
-        HID_USAGE_GENERIC_X,
-        HID_USAGE_GENERIC_Y,
-        HID_USAGE_GENERIC_Z,
-        HID_USAGE_GENERIC_RZ,
-        HID_USAGE_GENERIC_RX,
-        HID_USAGE_GENERIC_RY,
-        HID_USAGE_GENERIC_SLIDER,
-        HID_USAGE_GENERIC_DIAL,
-        HID_USAGE_GENERIC_WHEEL};
+        HID_USAGE_GENERIC_WHEEL
+    };
 
-    report_size = 0;
+    int i, report_size = 1;
+    int button_count, axis_count, ball_count, hat_count;
 
     axis_count = pSDL_JoystickNumAxes(ext->sdl_joystick);
     if (axis_count > 6)
@@ -276,24 +265,17 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
         FIXME("Clamping joystick to 6 axis\n");
         axis_count = 6;
     }
-
     ext->axis_start = report_size;
-    if (axis_count)
-    {
-        report_size += (sizeof(DWORD) * axis_count);
-    }
+    report_size += (sizeof(DWORD) * axis_count);
 
     ball_count = pSDL_JoystickNumBalls(ext->sdl_joystick);
-    ext->ball_start = report_size;
-    if (ball_count)
+    if (axis_count + ball_count * 2 > ARRAY_SIZE(joystick_usages))
     {
-        if ((ball_count*2) + axis_count > 9)
-        {
-            FIXME("Capping ball + axis at 9\n");
-            ball_count = (9-axis_count)/2;
-        }
-        report_size += (sizeof(DWORD) * 2 * ball_count);
+        FIXME("Capping ball + axis at 9\n");
+        ball_count = (ARRAY_SIZE(joystick_usages) - axis_count) / 2;
     }
+    ext->ball_start = report_size;
+    report_size += (sizeof(DWORD) * 2 * ball_count);
 
     hat_count = pSDL_JoystickNumHats(ext->sdl_joystick);
     ext->hat_start = report_size;
@@ -306,21 +288,12 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
 
     TRACE("Report will be %i bytes\n", report_size);
 
-    if (!hid_descriptor_begin(&ext->desc, device_usage[0], device_usage[1]))
+    if (!hid_descriptor_begin(&ext->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_JOYSTICK))
         return STATUS_NO_MEMORY;
 
-    if (axis_count == 6 && button_count >= 14)
-    {
-        if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
-                                     controller_usages, FALSE, 0, 0xffff))
-            return STATUS_NO_MEMORY;
-    }
-    else if (axis_count)
-    {
-        if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
-                                     joystick_usages, FALSE, 0, 0xffff))
-            return STATUS_NO_MEMORY;
-    }
+    if (axis_count && !hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
+                                               joystick_usages, FALSE, -32768, 32767))
+        return STATUS_NO_MEMORY;
 
     if (ball_count && !hid_descriptor_add_axes(&ext->desc, ball_count * 2, HID_USAGE_PAGE_GENERIC,
                                                &joystick_usages[axis_count], TRUE, INT32_MIN, INT32_MAX))
@@ -452,7 +425,7 @@ static NTSTATUS sdl_device_start(struct unix_device *iface)
 {
     struct platform_private *ext = impl_from_unix_device(iface);
     if (ext->sdl_controller) return build_mapped_report_descriptor(ext);
-    return build_report_descriptor(ext);
+    return build_joystick_report_descriptor(ext);
 }
 
 static void sdl_device_stop(struct unix_device *iface)
@@ -550,15 +523,11 @@ static const struct unix_device_vtbl sdl_device_vtbl =
     sdl_device_set_feature_report,
 };
 
-static BOOL set_report_from_event(struct platform_private *device, SDL_Event *event)
+static BOOL set_report_from_joystick_event(struct platform_private *device, SDL_Event *event)
 {
     struct unix_device *iface = &device->unix_device;
 
-    if (device->sdl_controller)
-    {
-        /* We want mapped events */
-        return TRUE;
-    }
+    if (device->sdl_controller) return TRUE; /* use controller events instead */
 
     switch(event->type)
     {
@@ -751,7 +720,7 @@ static void process_device_event(SDL_Event *event)
     {
         id = ((SDL_JoyButtonEvent *)event)->which;
         device = find_device_from_id(id);
-        if (device) set_report_from_event(device, event);
+        if (device) set_report_from_joystick_event(device, event);
         else WARN("failed to find device with id %d\n", id);
     }
     else if (event->type >= SDL_CONTROLLERAXISMOTION && event->type <= SDL_CONTROLLERBUTTONUP)
