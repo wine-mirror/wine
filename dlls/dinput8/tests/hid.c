@@ -4337,17 +4337,14 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, NULL );
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_DEVICE;
     prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_VIDPID returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
-    todo_wine
     ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
 
     prop_string.diph.dwHow = DIPH_DEVICE;
@@ -4367,16 +4364,12 @@ static void test_simple_joystick(void)
         debugstr_w(prop_string.wsz) );
 
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_TYPENAME returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    todo_wine
     ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_USERNAME returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_READONLY, "IDirectInputDevice8_SetProperty DIPROP_GRANULARITY returned %#x\n", hr );
 
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
