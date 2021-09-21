@@ -424,8 +424,7 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
     ext->hat_bit_offs = CONTROLLER_NUM_BUTTONS;
 
     ext->buffer_length = (BUTTON_BIT_COUNT + 7) / 8
-        + CONTROLLER_NUM_AXES * sizeof(WORD)
-        + 2/* unknown constant*/;
+        + CONTROLLER_NUM_AXES * sizeof(WORD);
 
     TRACE("Report will be %i bytes\n", ext->buffer_length);
 
@@ -457,10 +456,6 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
             return STATUS_NO_MEMORY;
     }
 
-    /* unknown constant */
-    if (!hid_descriptor_add_padding(&ext->desc, 16))
-        return STATUS_NO_MEMORY;
-
     if (!descriptor_add_haptic(ext))
         return STATUS_NO_MEMORY;
 
@@ -474,10 +469,6 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
         set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i), TRUE);
 
     set_hat_value(ext, 0, compose_dpad_value(ext->sdl_controller));
-
-    /* unknown constant */
-    ext->report_buffer[14] = 0x89;
-    ext->report_buffer[15] = 0xc5;
 
     return STATUS_SUCCESS;
 
