@@ -51,9 +51,9 @@
 #include "hidusage.h"
 
 #ifdef WORDS_BIGENDIAN
-# define LE_WORD(x) RtlUshortByteSwap(x)
+# define LE_DWORD(x) RtlUlongByteSwap(x)
 #else
-# define LE_WORD(x) (x)
+# define LE_DWORD(x) (x)
 #endif
 
 #include "unix_private.h"
@@ -175,24 +175,20 @@ static void set_button_value(struct platform_private *ext, int index, int value)
 
 static void set_axis_value(struct platform_private *ext, int index, short value, BOOL controller)
 {
-    WORD *report = (WORD *)(ext->report_buffer + ext->axis_start);
+    DWORD *report = (DWORD *)(ext->report_buffer + ext->axis_start);
 
     if (controller && (index == SDL_CONTROLLER_AXIS_TRIGGERLEFT || index == SDL_CONTROLLER_AXIS_TRIGGERRIGHT))
-        report[index] = LE_WORD(value);
+        report[index] = LE_DWORD(value);
     else
-        report[index] = LE_WORD(value) + 32768;
+        report[index] = LE_DWORD(value) + 32768;
 }
 
 static void set_ball_value(struct platform_private *ext, int index, int value1, int value2)
 {
     int offset;
-    offset = ext->ball_start + (index * sizeof(WORD));
-    if (value1 > 127) value1 = 127;
-    if (value1 < -127) value1 = -127;
-    if (value2 > 127) value2 = 127;
-    if (value2 < -127) value2 = -127;
-    *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value1);
-    *((WORD*)&ext->report_buffer[offset + sizeof(WORD)]) = LE_WORD(value2);
+    offset = ext->ball_start + (index * sizeof(DWORD));
+    *(DWORD *)&ext->report_buffer[offset] = LE_DWORD(value1);
+    *(DWORD *)&ext->report_buffer[offset + sizeof(DWORD)] = LE_DWORD(value2);
 }
 
 static void set_hat_value(struct platform_private *ext, int index, int value)
@@ -308,7 +304,7 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
     ext->axis_start = report_size;
     if (axis_count)
     {
-        report_size += (sizeof(WORD) * axis_count);
+        report_size += (sizeof(DWORD) * axis_count);
     }
 
     ball_count = pSDL_JoystickNumBalls(ext->sdl_joystick);
@@ -320,7 +316,7 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
             FIXME("Capping ball + axis at 9\n");
             ball_count = (9-axis_count)/2;
         }
-        report_size += (sizeof(WORD) * 2 * ball_count);
+        report_size += (sizeof(DWORD) * 2 * ball_count);
     }
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
@@ -340,18 +336,18 @@ static NTSTATUS build_report_descriptor(struct platform_private *ext)
     if (axis_count == 6 && button_count >= 14)
     {
         if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
-                                     controller_usages, FALSE, 16, 0, 0xffff))
+                                     controller_usages, FALSE, 0, 0xffff))
             return STATUS_NO_MEMORY;
     }
     else if (axis_count)
     {
         if (!hid_descriptor_add_axes(&ext->desc, axis_count, HID_USAGE_PAGE_GENERIC,
-                                     joystick_usages, FALSE, 16, 0, 0xffff))
+                                     joystick_usages, FALSE, 0, 0xffff))
             return STATUS_NO_MEMORY;
     }
 
     if (ball_count && !hid_descriptor_add_axes(&ext->desc, ball_count * 2, HID_USAGE_PAGE_GENERIC,
-                                               &joystick_usages[axis_count], TRUE, 8, 0x81, 0x7f))
+                                               &joystick_usages[axis_count], TRUE, INT32_MIN, INT32_MAX))
         return STATUS_NO_MEMORY;
 
     if (button_count && !hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
@@ -420,11 +416,11 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
     static const int BUTTON_BIT_COUNT = CONTROLLER_NUM_BUTTONS + CONTROLLER_NUM_HATSWITCHES * 4;
 
     ext->axis_start = 0;
-    ext->button_start = CONTROLLER_NUM_AXES * sizeof(WORD);
+    ext->button_start = CONTROLLER_NUM_AXES * sizeof(DWORD);
     ext->hat_bit_offs = CONTROLLER_NUM_BUTTONS;
 
     ext->buffer_length = (BUTTON_BIT_COUNT + 7) / 8
-        + CONTROLLER_NUM_AXES * sizeof(WORD);
+        + CONTROLLER_NUM_AXES * sizeof(DWORD);
 
     TRACE("Report will be %i bytes\n", ext->buffer_length);
 
@@ -432,15 +428,15 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
         return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, left_axis_usages,
-                                 FALSE, 16, 0, 0xffff))
+                                 FALSE, 0, 0xffff))
         return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, right_axis_usages,
-                                 FALSE, 16, 0, 0xffff))
+                                 FALSE, 0, 0xffff))
         return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_axes(&ext->desc, 2, HID_USAGE_PAGE_GENERIC, trigger_axis_usages,
-                                 FALSE, 16, 0, 0x7fff))
+                                 FALSE, 0, 0x7fff))
         return STATUS_NO_MEMORY;
 
     if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, CONTROLLER_NUM_BUTTONS))

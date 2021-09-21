@@ -148,7 +148,7 @@ BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count)
 }
 
 BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
-                             const USAGE *usages, BOOL rel, INT size, LONG min, LONG max)
+                             const USAGE *usages, BOOL rel, LONG min, LONG max)
 {
     const BYTE template_begin[] =
     {
@@ -159,33 +159,13 @@ BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usag
     {
         END_COLLECTION,
     };
-    const BYTE template_1[] =
-    {
-        LOGICAL_MINIMUM(1, min),
-        LOGICAL_MAXIMUM(1, max),
-        PHYSICAL_MINIMUM(1, min),
-        PHYSICAL_MAXIMUM(1, max),
-        REPORT_SIZE(1, size),
-        REPORT_COUNT(1, count),
-        INPUT(1, Data|Var|(rel ? Rel : Abs)),
-    };
-    const BYTE template_2[] =
-    {
-        LOGICAL_MINIMUM(2, min),
-        LOGICAL_MAXIMUM(2, max),
-        PHYSICAL_MINIMUM(2, min),
-        PHYSICAL_MAXIMUM(2, max),
-        REPORT_SIZE(1, size),
-        REPORT_COUNT(1, count),
-        INPUT(1, Data|Var|(rel ? Rel : Abs)),
-    };
-    const BYTE template_4[] =
+    const BYTE template[] =
     {
         LOGICAL_MINIMUM(4, min),
         LOGICAL_MAXIMUM(4, max),
         PHYSICAL_MINIMUM(4, min),
         PHYSICAL_MAXIMUM(4, max),
-        REPORT_SIZE(1, size),
+        REPORT_SIZE(1, 32),
         REPORT_COUNT(1, count),
         INPUT(1, Data|Var|(rel ? Rel : Abs)),
     };
@@ -200,21 +180,8 @@ BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usag
             return FALSE;
     }
 
-    if (size >= 16)
-    {
-        if (!hid_descriptor_append(desc, template_4, sizeof(template_4)))
-            return FALSE;
-    }
-    else if (size >= 8)
-    {
-        if (!hid_descriptor_append(desc, template_2, sizeof(template_2)))
-            return FALSE;
-    }
-    else
-    {
-        if (!hid_descriptor_append(desc, template_1, sizeof(template_1)))
-            return FALSE;
-    }
+    if (!hid_descriptor_append(desc, template, sizeof(template)))
+        return FALSE;
 
     if (!hid_descriptor_append(desc, template_end, sizeof(template_end)))
         return FALSE;

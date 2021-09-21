@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -78,10 +79,8 @@
 #endif
 
 #ifdef WORDS_BIGENDIAN
-#define LE_WORD(x) RtlUshortByteSwap(x)
 #define LE_DWORD(x) RtlUlongByteSwap(x)
 #else
-#define LE_WORD(x) (x)
 #define LE_DWORD(x) (x)
 #endif
 
@@ -389,9 +388,7 @@ static void set_rel_axis_value(struct wine_input_private *ext, int code, int val
     if (code < HID_REL_MAX && REL_TO_HID_MAP[code][0] != 0)
     {
         index = ext->rel_map[code];
-        if (value > 127) value = 127;
-        if (value < -127) value = -127;
-        ext->current_report_buffer[index] = value;
+        *(DWORD *)&ext->current_report_buffer[index] = LE_DWORD(value);
     }
 }
 
@@ -474,7 +471,7 @@ static NTSTATUS build_report_descriptor(struct wine_input_private *ext, struct u
         if (!(usage.UsagePage = ABS_TO_HID_MAP[i][0])) continue;
         if (!(usage.Usage = ABS_TO_HID_MAP[i][1])) continue;
 
-        if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, FALSE, 32,
+        if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, FALSE,
                                      LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
             return STATUS_NO_MEMORY;
 
@@ -490,12 +487,12 @@ static NTSTATUS build_report_descriptor(struct wine_input_private *ext, struct u
         if (!(usage.UsagePage = REL_TO_HID_MAP[i][0])) continue;
         if (!(usage.Usage = REL_TO_HID_MAP[i][1])) continue;
 
-        if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, TRUE, 8,
-                                     0x81, 0x7f))
+        if (!hid_descriptor_add_axes(&ext->desc, 1, usage.UsagePage, &usage.Usage, TRUE,
+                                     INT32_MIN, INT32_MAX))
             return STATUS_NO_MEMORY;
 
         ext->rel_map[i] = report_size;
-        report_size++;
+        report_size += 4;
         rel_count++;
     }
 
