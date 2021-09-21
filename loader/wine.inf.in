@@ -4659,7 +4659,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2007",1,94,0
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2008",1,94,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2009",1,94,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2010",1,94,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,01,00,05,00,01,00,00,00,00,00,00,00,00,00,00,00,09,00,00,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2011",1,94,02,00,00,00,00,00,00,24,fa,ff,ff,00,00,04,00,06,00,01,00,04,00,00,00,00,00,00,00,00,00,0c,00,05,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2011",1,94,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,04,00,06,00,01,00,04,00,00,00,00,00,00,00,00,00,09,00,06,00,04,00,03,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"2012",1,f4,fc,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,04,00,00,00,00,00,00,00,00,00,09,00,00,00,05,00,03,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"FirstEntry",0x10001,"2000"
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time\Dynamic DST,"LastEntry",0x10001,"2012"
