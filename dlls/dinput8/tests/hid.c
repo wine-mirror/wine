@@ -4102,7 +4102,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_Acquire returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_Poll( device );
-    todo_wine
     ok( hr == DI_NOEFFECT, "IDirectInputDevice8_Poll returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2) + 1, &state );

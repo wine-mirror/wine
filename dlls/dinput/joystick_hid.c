@@ -704,6 +704,18 @@ static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, D
     return S_OK;
 }
 
+static HRESULT WINAPI hid_joystick_Poll( IDirectInputDevice8W *iface )
+{
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr = DI_NOEFFECT;
+
+    EnterCriticalSection( &impl->base.crit );
+    if (!impl->base.acquired) hr = DIERR_NOTACQUIRED;
+    LeaveCriticalSection( &impl->base.crit );
+
+    return hr;
+}
+
 static HRESULT WINAPI hid_joystick_BuildActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
                                                    const WCHAR *username, DWORD flags )
 {
@@ -756,7 +768,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_SendForceFeedbackCommand,
     IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
-    IDirectInputDevice2WImpl_Poll,
+    hid_joystick_Poll,
     IDirectInputDevice2WImpl_SendDeviceData,
     /*** IDirectInputDevice7 methods ***/
     IDirectInputDevice7WImpl_EnumEffectsInFile,
