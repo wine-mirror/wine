@@ -1,0 +1,6 @@
+TESTDLL = d3dx10_34.dll
+IMPORTS = d3dx10_34 ole32 gdi32
+PARENTSRC = ../../d3dx10_43/tests
+
+C_SRCS = \
+	d3dx10.c
