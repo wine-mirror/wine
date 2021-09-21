@@ -422,13 +422,6 @@ static NTSTATUS build_mapped_report_descriptor(struct platform_private *ext)
     if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, CONTROLLER_NUM_BUTTONS))
         return STATUS_NO_MEMORY;
 
-    if (BUTTON_BIT_COUNT % 8 != 0)
-    {
-        /* unused bits between hatswitch and following constant */
-        if (!hid_descriptor_add_padding(&ext->desc, 8 - (BUTTON_BIT_COUNT % 8)))
-            return STATUS_NO_MEMORY;
-    }
-
     if (!descriptor_add_haptic(ext))
         return STATUS_NO_MEMORY;
 

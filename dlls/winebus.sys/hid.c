@@ -99,6 +99,7 @@ void hid_descriptor_free(struct hid_descriptor *desc)
 BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
                                 USAGE usage_min, USAGE usage_max)
 {
+    const USHORT count = usage_max - usage_min + 1;
     const BYTE template[] =
     {
         USAGE_PAGE(2, usage_page),
@@ -108,24 +109,24 @@ BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
         LOGICAL_MAXIMUM(1, 1),
         PHYSICAL_MINIMUM(1, 0),
         PHYSICAL_MAXIMUM(1, 1),
-        REPORT_COUNT(2, usage_max - usage_min + 1),
+        REPORT_COUNT(2, count),
         REPORT_SIZE(1, 1),
         INPUT(1, Data|Var|Abs),
     };
-
-    return hid_descriptor_append(desc, template, sizeof(template));
-}
-
-BOOL hid_descriptor_add_padding(struct hid_descriptor *desc, BYTE bitcount)
-{
-    const BYTE template[] =
+    const BYTE template_pad[] =
     {
-        REPORT_COUNT(1, bitcount),
+        REPORT_COUNT(1, 8 - (count % 8)),
         REPORT_SIZE(1, 1),
         INPUT(1, Cnst|Var|Abs),
     };
 
-    return hid_descriptor_append(desc, template, sizeof(template));
+    if (!hid_descriptor_append(desc, template, sizeof(template)))
+        return FALSE;
+
+    if ((count % 8) && !hid_descriptor_append(desc, template_pad, sizeof(template_pad)))
+        return FALSE;
+
+    return TRUE;
 }
 
 BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count)

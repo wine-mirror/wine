@@ -521,13 +521,6 @@ static NTSTATUS build_report_descriptor(struct wine_input_private *ext, struct u
         if (!hid_descriptor_add_buttons(&ext->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
             return STATUS_NO_MEMORY;
 
-        if (button_count % 8)
-        {
-            BYTE padding = 8 - (button_count % 8);
-            if (!hid_descriptor_add_padding(&ext->desc, padding))
-                return STATUS_NO_MEMORY;
-        }
-
         report_size += (button_count + 7) / 8;
     }
 

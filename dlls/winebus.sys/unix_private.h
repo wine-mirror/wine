@@ -82,7 +82,6 @@ extern void hid_descriptor_free(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
 
 extern BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
                                        USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
-extern BOOL hid_descriptor_add_padding(struct hid_descriptor *desc, BYTE bitcount) DECLSPEC_HIDDEN;
 extern BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count) DECLSPEC_HIDDEN;
 extern BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
                                     const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
