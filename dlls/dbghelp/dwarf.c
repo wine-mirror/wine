@@ -1209,26 +1209,28 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
     {
         dwarf2_traverse_context_t   traverse;
         ULONG_PTR                   low, high;
+        const ULONG_PTR             UMAX = ~(ULONG_PTR)0u;
 
         traverse.data = ctx->module_ctx->sections[section_ranges].address + range.u.uvalue;
         traverse.end_data = ctx->module_ctx->sections[section_ranges].address +
             ctx->module_ctx->sections[section_ranges].size;
 
-        *plow  = ULONG_MAX;
+        *plow  = UMAX;
         *phigh = 0;
         while (traverse.data + 2 * ctx->head.word_size < traverse.end_data)
         {
             low = dwarf2_parse_addr_head(&traverse, &ctx->head);
             high = dwarf2_parse_addr_head(&traverse, &ctx->head);
             if (low == 0 && high == 0) break;
-            if (low == ULONG_MAX) FIXME("unsupported yet (base address selection)\n");
+            if (low == (ctx->head.word_size == 8 ? (~(DWORD64)0u) : (DWORD64)(~0u)))
+                FIXME("unsupported yet (base address selection)\n");
             /* range values are relative to start of compilation unit */
             low += ctx->compiland->address - ctx->module_ctx->load_offset;
             high += ctx->compiland->address - ctx->module_ctx->load_offset;
             if (low  < *plow)  *plow = low;
             if (high > *phigh) *phigh = high;
         }
-        if (*plow == ULONG_MAX || *phigh == 0) {FIXME("no entry found\n"); return FALSE;}
+        if (*plow == UMAX || *phigh == 0) {FIXME("no entry found\n"); return FALSE;}
         if (*plow == *phigh) {FIXME("entry found, but low=high\n"); return FALSE;}
 
         return TRUE;
