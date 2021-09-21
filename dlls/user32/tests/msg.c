@@ -15173,8 +15173,8 @@ static const struct message wm_lb_setcursel_0[] =
     { LB_SETCURSEL, sent|wparam|lparam, 0, 0 },
     { WM_CTLCOLORLISTBOX, sent|parent },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000120f2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
-    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
     { 0 }
 };
 static const struct message wm_lb_setcursel_1[] =
@@ -15184,8 +15184,8 @@ static const struct message wm_lb_setcursel_1[] =
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000020f2 },
     { WM_CTLCOLORLISTBOX, sent|parent },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000121f2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
-    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 2 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 2 },
     { 0 }
 };
 static const struct message wm_lb_setcursel_2[] =
@@ -15195,8 +15195,8 @@ static const struct message wm_lb_setcursel_2[] =
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000021f2 },
     { WM_CTLCOLORLISTBOX, sent|parent },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000122f2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
-    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 3 },
     { 0 }
 };
 static const struct message wm_lb_click_0[] =
@@ -15206,14 +15206,14 @@ static const struct message wm_lb_click_0[] =
     { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|wparam|optional|parent, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|defwinproc },
 
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x001142f2 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_LISTBOX, LBN_SETFOCUS) },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 3 },
     { WM_LBTRACKPOINT, sent|wparam|lparam|parent, 0, MAKELPARAM(1,1) },
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
 
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000142f2 },
     { WM_CTLCOLORLISTBOX, sent|parent },
@@ -15222,11 +15222,11 @@ static const struct message wm_lb_click_0[] =
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000120f2 },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x001140f2 },
 
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
-    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
 
     { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_LISTBOX, LBN_SELCHANGE) },
     { 0 }
@@ -15234,6 +15234,7 @@ static const struct message wm_lb_click_0[] =
 static const struct message wm_lb_deletestring[] =
 {
     { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
     { WM_DELETEITEM, sent|wparam|parent|optional, ID_LISTBOX, 0 },
     { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
     { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
@@ -15242,6 +15243,7 @@ static const struct message wm_lb_deletestring[] =
 static const struct message wm_lb_deletestring_reset[] =
 {
     { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
     { LB_RESETCONTENT, sent|wparam|lparam|defwinproc|optional, 0, 0 },
     { WM_DELETEITEM, sent|wparam|parent|optional, ID_LISTBOX, 0 },
     { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
@@ -15251,31 +15253,41 @@ static const struct message wm_lb_deletestring_reset[] =
 static const struct message wm_lb_addstring[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
+    /* Child ID changes each test, don't test lparam. */
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { 0 }
 };
 static const struct message wm_lb_addstring_ownerdraw[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf0f2, 0xf30604ed },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf1f2, 0xf30604ee },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 2 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf2f2, 0xf30604ef },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 3 },
     { 0 }
 };
 static const struct message wm_lb_addstring_sort_ownerdraw[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf0f2, 0xf30604ed },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 1 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
     { WM_COMPAREITEM, sent|wparam|lparam|parent, 0xf30604ed, 0xf30604ee },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf1f2, 0xf30604ee },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 2 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
     { WM_COMPAREITEM, sent|wparam|lparam|parent, 0xf30604ed, 0xf30604ef },
     { WM_COMPAREITEM, sent|wparam|lparam|parent, 0xf30604ee, 0xf30604ef },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf2f2, 0xf30604ef },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 3 },
     { 0 }
 };
 
@@ -18515,6 +18527,9 @@ START_TEST(msg)
     test_autoradio_BM_CLICK();
     test_autoradio_kbd_move();
     test_static_messages();
+    test_listbox_messages();
+    test_combobox_messages();
+    test_wmime_keydown_message();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18525,9 +18540,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_listbox_messages();
-    test_combobox_messages();
-    test_wmime_keydown_message();
     test_paint_messages();
     test_interthread_messages();
     test_message_conversion();
