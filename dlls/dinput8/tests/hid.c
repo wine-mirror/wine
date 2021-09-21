@@ -4214,8 +4214,6 @@ static void test_simple_joystick(void)
     ok( res == 1, "got %u expected %u\n", res, 1 );
     check_member( objdata[0], expect_objdata[0], "%#x", dwOfs );
     check_member( objdata[0], expect_objdata[0], "%#x", dwData );
-    todo_wine
-    check_member( objdata[0], expect_objdata[0], "%#x", dwSequence );
     ok( objdata[0].uAppData == -1, "got %p, expected %p\n", (void *)objdata[0].uAppData, (void *)-1 );
     res = 4;
     hr = IDirectInputDevice8_GetDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
@@ -4226,8 +4224,6 @@ static void test_simple_joystick(void)
         winetest_push_context( "objdata[%d]", i );
         check_member( objdata[i], expect_objdata[1 + i], "%#x", dwOfs );
         check_member( objdata[i], expect_objdata[1 + i], "%#x", dwData );
-        todo_wine
-        check_member( objdata[i], expect_objdata[1 + i], "%#x", dwSequence );
         ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
         winetest_pop_context();
     }
