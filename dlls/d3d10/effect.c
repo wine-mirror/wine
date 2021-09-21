@@ -3312,7 +3312,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableBySemantic(ID3D10Effect *iface,
         const char *semantic)
 {
-    struct d3d10_effect *This = impl_from_ID3D10Effect(iface);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
     unsigned int i;
 
     TRACE("iface %p, semantic %s\n", iface, debugstr_a(semantic));
@@ -3323,9 +3323,9 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         return &null_variable.ID3D10EffectVariable_iface;
     }
 
-    for (i = 0; i < This->local_buffer_count; ++i)
+    for (i = 0; i < effect->local_buffer_count; ++i)
     {
-        struct d3d10_effect_variable *l = &This->local_buffers[i];
+        struct d3d10_effect_variable *l = &effect->local_buffers[i];
         unsigned int j;
 
         for (j = 0; j < l->type->member_count; ++j)
@@ -3340,9 +3340,9 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         }
     }
 
-    for (i = 0; i < This->local_variable_count; ++i)
+    for (i = 0; i < effect->local_variable_count; ++i)
     {
-        struct d3d10_effect_variable *v = &This->local_variables[i];
+        struct d3d10_effect_variable *v = &effect->local_variables[i];
 
         if (v->semantic && !stricmp(v->semantic, semantic))
         {
@@ -3350,6 +3350,9 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
             return &v->ID3D10EffectVariable_iface;
         }
     }
+
+    if (effect->pool)
+        return effect->pool->lpVtbl->GetVariableBySemantic(effect->pool, semantic);
 
     WARN("Invalid semantic specified\n");
 
