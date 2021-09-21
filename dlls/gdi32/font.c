@@ -420,13 +420,13 @@ static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
     else if (GetEnvironmentVariableW( L"WINEBUILDDIR", path, MAX_PATH ))
         lstrcatW( path, L"\\fonts\\" );
 
-    lstrcatW( path, file );
+    if (file) lstrcatW( path, file );
 }
 
 static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
     lstrcpyW( path, L"\\??\\C:\\windows\\fonts\\" );
-    lstrcatW( path, file );
+    if (file) lstrcatW( path, file );
 }
 
 /* font substitutions */
@@ -5663,21 +5663,52 @@ static void load_system_bitmap_fonts(void)
 
 static void load_directory_fonts( WCHAR *path, UINT flags )
 {
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    IO_STATUS_BLOCK io;
     HANDLE handle;
-    WIN32_FIND_DATAW data;
-    WCHAR *p;
+    char buf[8192];
+    size_t len;
 
-    p = path + lstrlenW(path) - 1;
-    TRACE( "loading fonts from %s\n", debugstr_w(path) );
-    handle = FindFirstFileW( path, &data );
-    if (handle == INVALID_HANDLE_VALUE) return;
-    do
+    len = lstrlenW( path );
+    while (len && path[len - 1] == '\\') len--;
+
+    nt_name.Buffer = path;
+    nt_name.MaximumLength = nt_name.Length = len * sizeof(WCHAR);
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT ))
+        return;
+
+    path[len++] = '\\';
+
+    while (!NtQueryDirectoryFile( handle, 0, NULL, NULL, &io, buf, sizeof(buf),
+                                  FileBothDirectoryInformation, FALSE, NULL, FALSE ) &&
+           io.Information)
     {
-        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
-        lstrcpyW( p, data.cFileName );
-        font_funcs->add_font( path, flags );
-    } while (FindNextFileW( handle, &data ));
-    FindClose( handle );
+        FILE_BOTH_DIR_INFORMATION *info = (FILE_BOTH_DIR_INFORMATION *)buf;
+        for (;;)
+        {
+            if (!(info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            {
+                memcpy( path + len, info->FileName, info->FileNameLength );
+                path[len + info->FileNameLength / sizeof(WCHAR)] = 0;
+                font_funcs->add_font( path, flags );
+            }
+            if (!info->NextEntryOffset) break;
+            info = (FILE_BOTH_DIR_INFORMATION *)((char *)info + info->NextEntryOffset);
+        }
+    }
+
+    NtClose( handle );
 }
 
 static void load_file_system_fonts(void)
@@ -5686,11 +5717,11 @@ static void load_file_system_fonts(void)
     DWORD len = sizeof(value);
 
     /* Windows directory */
-    get_fonts_win_dir_path( L"*", path );
+    get_fonts_win_dir_path( NULL, path );
     load_directory_fonts( path, 0 );
 
     /* Wine data directory */
-    get_fonts_data_dir_path( L"*", path );
+    get_fonts_data_dir_path( NULL, path );
     load_directory_fonts( path, ADDFONT_EXTERNAL_FONT );
 
     /* custom paths */
@@ -5701,8 +5732,7 @@ static void load_file_system_fonts(void)
         {
             if ((next = wcschr( ptr, ';' ))) *next++ = 0;
             if (next && next - ptr < 2) continue;
-            lstrcpynW( path, ptr, MAX_PATH - 2 );
-            lstrcatW( path, L"\\*" );
+            lstrcpynW( path, ptr, MAX_PATH );
             if (path[1] == ':')
             {
                 memmove( path + ARRAYSIZE(nt_prefixW), path, (lstrlenW( path ) + 1) * sizeof(WCHAR) );
