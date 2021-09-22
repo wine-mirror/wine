@@ -44,25 +44,27 @@ static NTSTATUS get_value_caps_range( struct hid_preparsed_data *preparsed, HIDP
     switch (report_type)
     {
     case HidP_Input:
-        if (report_len && report_len != preparsed->caps.InputReportByteLength)
+        if (report_len && report_len != preparsed->input_report_byte_length)
             return HIDP_STATUS_INVALID_REPORT_LENGTH;
         *caps = HID_INPUT_VALUE_CAPS( preparsed );
+        *caps_end = *caps + preparsed->input_caps_count;
         break;
     case HidP_Output:
-        if (report_len && report_len != preparsed->caps.OutputReportByteLength)
+        if (report_len && report_len != preparsed->output_report_byte_length)
             return HIDP_STATUS_INVALID_REPORT_LENGTH;
         *caps = HID_OUTPUT_VALUE_CAPS( preparsed );
+        *caps_end = *caps + preparsed->output_caps_count;
         break;
     case HidP_Feature:
-        if (report_len && report_len != preparsed->caps.FeatureReportByteLength)
+        if (report_len && report_len != preparsed->feature_report_byte_length)
             return HIDP_STATUS_INVALID_REPORT_LENGTH;
         *caps = HID_FEATURE_VALUE_CAPS( preparsed );
+        *caps_end = *caps + preparsed->feature_caps_count;
         break;
     default:
         return HIDP_STATUS_INVALID_REPORT_TYPE;
     }
 
-    *caps_end = *caps + preparsed->value_caps_count[report_type];
     return HIDP_STATUS_SUCCESS;
 }
 
@@ -165,12 +167,58 @@ NTSTATUS WINAPI HidP_GetButtonCaps( HIDP_REPORT_TYPE report_type, HIDP_BUTTON_CA
 NTSTATUS WINAPI HidP_GetCaps( PHIDP_PREPARSED_DATA preparsed_data, HIDP_CAPS *caps )
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
+    struct hid_value_caps *it, *end;
 
     TRACE( "preparsed_data %p, caps %p.\n", preparsed_data, caps );
 
     if (!preparsed || preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
-    *caps = preparsed->caps;
+    caps->Usage = preparsed->usage;
+    caps->UsagePage = preparsed->usage_page;
+    caps->InputReportByteLength = preparsed->input_report_byte_length;
+    caps->OutputReportByteLength = preparsed->output_report_byte_length;
+    caps->FeatureReportByteLength = preparsed->feature_report_byte_length;
+    caps->NumberLinkCollectionNodes = preparsed->number_link_collection_nodes;
+    caps->NumberInputButtonCaps = 0;
+    caps->NumberInputValueCaps = 0;
+    caps->NumberInputDataIndices = 0;
+    caps->NumberOutputButtonCaps = 0;
+    caps->NumberOutputValueCaps = 0;
+    caps->NumberOutputDataIndices = 0;
+    caps->NumberFeatureButtonCaps = 0;
+    caps->NumberFeatureValueCaps = 0;
+    caps->NumberFeatureDataIndices = 0;
+
+    for (it = HID_INPUT_VALUE_CAPS( preparsed ), end = it + preparsed->input_caps_count;
+         it != end; ++it)
+    {
+        if (!it->usage_min && !it->usage_max) continue;
+        if (it->flags & HID_VALUE_CAPS_IS_BUTTON) caps->NumberInputButtonCaps++;
+        else caps->NumberInputValueCaps++;
+        if (!(it->flags & HID_VALUE_CAPS_IS_RANGE)) caps->NumberInputDataIndices++;
+        else caps->NumberInputDataIndices += it->data_index_max - it->data_index_min + 1;
+    }
+
+    for (it = HID_OUTPUT_VALUE_CAPS( preparsed ), end = it + preparsed->output_caps_count;
+         it != end; ++it)
+    {
+        if (!it->usage_min && !it->usage_max) continue;
+        if (it->flags & HID_VALUE_CAPS_IS_BUTTON) caps->NumberOutputButtonCaps++;
+        else caps->NumberOutputValueCaps++;
+        if (!(it->flags & HID_VALUE_CAPS_IS_RANGE)) caps->NumberOutputDataIndices++;
+        else caps->NumberOutputDataIndices += it->data_index_max - it->data_index_min + 1;
+    }
+
+    for (it = HID_FEATURE_VALUE_CAPS( preparsed ), end = it + preparsed->feature_caps_count;
+         it != end; ++it)
+    {
+        if (!it->usage_min && !it->usage_max) continue;
+        if (it->flags & HID_VALUE_CAPS_IS_BUTTON) caps->NumberFeatureButtonCaps++;
+        else caps->NumberFeatureValueCaps++;
+        if (!(it->flags & HID_VALUE_CAPS_IS_RANGE)) caps->NumberFeatureDataIndices++;
+        else caps->NumberFeatureDataIndices += it->data_index_max - it->data_index_min + 1;
+    }
+
     return HIDP_STATUS_SUCCESS;
 }
 
@@ -956,7 +1004,7 @@ NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, U
 
     if (!preparsed || preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
-    count = *nodes_len = preparsed->caps.NumberLinkCollectionNodes;
+    count = *nodes_len = preparsed->number_link_collection_nodes;
     if (capacity < count) return HIDP_STATUS_BUFFER_TOO_SMALL;
 
     for (i = 0; i < count; ++i)

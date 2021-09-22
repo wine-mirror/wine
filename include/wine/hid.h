@@ -76,14 +76,27 @@ struct hid_preparsed_data
 {
     DWORD magic;
     DWORD size;
-    HIDP_CAPS caps;
-    USHORT value_caps_count[3];
+    USAGE usage;
+    USAGE usage_page;
+    USHORT input_caps_start;
+    USHORT input_caps_count;
+    USHORT input_caps_end;
+    USHORT input_report_byte_length;
+    USHORT output_caps_start;
+    USHORT output_caps_count;
+    USHORT output_caps_end;
+    USHORT output_report_byte_length;
+    USHORT feature_caps_start;
+    USHORT feature_caps_count;
+    USHORT feature_caps_end;
+    USHORT feature_report_byte_length;
+    USHORT number_link_collection_nodes;
     struct hid_value_caps value_caps[1];
 };
 
-#define HID_INPUT_VALUE_CAPS(d) ((d)->value_caps)
-#define HID_OUTPUT_VALUE_CAPS(d) (HID_INPUT_VALUE_CAPS(d) + (d)->value_caps_count[0])
-#define HID_FEATURE_VALUE_CAPS(d) (HID_OUTPUT_VALUE_CAPS(d) + (d)->value_caps_count[1])
-#define HID_COLLECTION_VALUE_CAPS(d) (HID_FEATURE_VALUE_CAPS(d) + (d)->value_caps_count[2])
+#define HID_INPUT_VALUE_CAPS(d) ((d)->value_caps + (d)->input_caps_start)
+#define HID_OUTPUT_VALUE_CAPS(d) ((d)->value_caps + (d)->output_caps_start)
+#define HID_FEATURE_VALUE_CAPS(d) ((d)->value_caps + (d)->feature_caps_start)
+#define HID_COLLECTION_VALUE_CAPS(d) ((d)->value_caps + (d)->feature_caps_end)
 
 #endif /* __WINE_PARSE_H */

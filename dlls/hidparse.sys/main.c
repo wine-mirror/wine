@@ -116,30 +116,20 @@ static void debug_print_preparsed( struct hid_preparsed_data *data )
 
     if (TRACE_ON( hidp ))
     {
-        TRACE( "START PREPARSED Data <<< Usage: %i, UsagePage: %i, "
-               "InputReportByteLength: %i, tOutputReportByteLength: %i, "
-               "FeatureReportByteLength: %i, NumberLinkCollectionNodes: %i, "
-               "NumberInputButtonCaps: %i, NumberInputValueCaps: %i, "
-               "NumberInputDataIndices: %i, NumberOutputButtonCaps: %i, "
-               "NumberOutputValueCaps: %i, NumberOutputDataIndices: %i, "
-               "NumberFeatureButtonCaps: %i, NumberFeatureValueCaps: %i, "
-               "NumberFeatureDataIndices: %i\n",
-               data->caps.Usage, data->caps.UsagePage, data->caps.InputReportByteLength,
-               data->caps.OutputReportByteLength, data->caps.FeatureReportByteLength,
-               data->caps.NumberLinkCollectionNodes, data->caps.NumberInputButtonCaps,
-               data->caps.NumberInputValueCaps, data->caps.NumberInputDataIndices,
-               data->caps.NumberOutputButtonCaps, data->caps.NumberOutputValueCaps,
-               data->caps.NumberOutputDataIndices, data->caps.NumberFeatureButtonCaps,
-               data->caps.NumberFeatureValueCaps, data->caps.NumberFeatureDataIndices );
-        end = data->value_caps_count[HidP_Input];
-        for (i = 0; i < end; i++) TRACE( "INPUT: %s\n", debugstr_hid_value_caps( HID_INPUT_VALUE_CAPS( data ) + i ) );
-        end = data->value_caps_count[HidP_Output];
-        for (i = 0; i < end; i++) TRACE( "OUTPUT: %s\n", debugstr_hid_value_caps( HID_OUTPUT_VALUE_CAPS( data ) + i ) );
-        end = data->value_caps_count[HidP_Feature];
-        for (i = 0; i < end; i++) TRACE( "FEATURE: %s\n", debugstr_hid_value_caps( HID_FEATURE_VALUE_CAPS( data ) + i ) );
-        end = data->caps.NumberLinkCollectionNodes;
-        for (i = 0; i < end; i++) TRACE( "COLLECTION: %s\n", debugstr_hid_value_caps( HID_COLLECTION_VALUE_CAPS( data ) + i ) );
-        TRACE(">>> END Preparsed Data\n");
+        TRACE( "usage %02x:%02x input %u-(%u)-%u, report len %u output %u-(%u)-%u, report len %u "
+               "feature %u-(%u)-%u, report len %u collections %u\n", data->usage_page, data->usage,
+                data->input_caps_start, data->input_caps_count, data->input_caps_end, data->input_report_byte_length,
+                data->output_caps_start, data->output_caps_count, data->output_caps_end, data->output_report_byte_length,
+                data->feature_caps_start, data->feature_caps_count, data->feature_caps_end, data->feature_report_byte_length,
+                data->number_link_collection_nodes );
+        end = data->input_caps_count;
+        for (i = 0; i < end; i++) TRACE( "input %d: %s\n", i, debugstr_hid_value_caps( HID_INPUT_VALUE_CAPS( data ) + i ) );
+        end = data->output_caps_count;
+        for (i = 0; i < end; i++) TRACE( "output %d: %s\n", i, debugstr_hid_value_caps( HID_OUTPUT_VALUE_CAPS( data ) + i ) );
+        end = data->feature_caps_count;
+        for (i = 0; i < end; i++) TRACE( "feature %d: %s\n", i, debugstr_hid_value_caps( HID_FEATURE_VALUE_CAPS( data ) + i ) );
+        end = data->number_link_collection_nodes;
+        for (i = 0; i < end; i++) TRACE( "collection %d: %s\n", i, debugstr_hid_value_caps( HID_COLLECTION_VALUE_CAPS( data ) + i ) );
     }
 }
 
@@ -416,7 +406,7 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
 {
     struct hid_preparsed_data *data;
     struct hid_value_caps *caps;
-    DWORD i, button, filler, caps_len, size;
+    DWORD caps_len, size;
 
     caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps +
                state->caps.NumberFeatureValueCaps + state->caps.NumberLinkCollectionNodes;
@@ -426,47 +416,30 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     memset( data, 0, size );
     data->magic = HID_MAGIC;
     data->size = size;
-    data->caps = state->caps;
-    data->value_caps_count[HidP_Input] = state->caps.NumberInputValueCaps;
-    data->value_caps_count[HidP_Output] = state->caps.NumberOutputValueCaps;
-    data->value_caps_count[HidP_Feature] = state->caps.NumberFeatureValueCaps;
-
-    /* fixup value vs button vs filler counts */
+    data->usage = state->caps.Usage;
+    data->usage_page = state->caps.UsagePage;
+    data->input_caps_start = 0;
+    data->input_caps_count = state->caps.NumberInputValueCaps;
+    data->input_caps_end = data->input_caps_start + data->input_caps_count;
+    data->input_report_byte_length = state->caps.InputReportByteLength;
+    data->output_caps_start = data->input_caps_end;
+    data->output_caps_count = state->caps.NumberOutputValueCaps;
+    data->output_caps_end = data->output_caps_start + data->output_caps_count;
+    data->output_report_byte_length = state->caps.OutputReportByteLength;
+    data->feature_caps_start = data->output_caps_end;
+    data->feature_caps_count = state->caps.NumberFeatureValueCaps;
+    data->feature_caps_end = data->feature_caps_start + data->feature_caps_count;
+    data->feature_report_byte_length = state->caps.FeatureReportByteLength;
+    data->number_link_collection_nodes = state->caps.NumberLinkCollectionNodes;
 
     caps = HID_INPUT_VALUE_CAPS( data );
-    memcpy( caps, state->values[0], data->caps.NumberInputValueCaps * sizeof(*caps) );
-    for (i = 0, button = 0, filler = 0; i < data->caps.NumberInputValueCaps; ++i)
-    {
-        if (!caps[i].usage_min && !caps[i].usage_max) filler++;
-        else if (caps[i].flags & HID_VALUE_CAPS_IS_BUTTON) button++;
-    }
-    data->caps.NumberInputButtonCaps = button;
-    data->caps.NumberInputValueCaps -= filler + button;
-
+    memcpy( caps, state->values[0], data->input_caps_count * sizeof(*caps) );
     caps = HID_OUTPUT_VALUE_CAPS( data );
-    memcpy( caps, state->values[1], data->caps.NumberOutputValueCaps * sizeof(*caps) );
-    for (i = 0, button = 0, filler = 0; i < data->caps.NumberOutputValueCaps; ++i)
-    {
-        if (!caps[i].usage_min && !caps[i].usage_max) filler++;
-        else if (caps[i].flags & HID_VALUE_CAPS_IS_BUTTON) button++;
-    }
-    caps += data->caps.NumberOutputValueCaps;
-    data->caps.NumberOutputButtonCaps = button;
-    data->caps.NumberOutputValueCaps -= filler + button;
-
+    memcpy( caps, state->values[1], data->output_caps_count * sizeof(*caps) );
     caps = HID_FEATURE_VALUE_CAPS( data );
-    memcpy( caps, state->values[2], data->caps.NumberFeatureValueCaps * sizeof(*caps) );
-    for (i = 0, button = 0, filler = 0; i < data->caps.NumberFeatureValueCaps; ++i)
-    {
-        if (!caps[i].usage_min && !caps[i].usage_max) filler++;
-        else if (caps[i].flags & HID_VALUE_CAPS_IS_BUTTON) button++;
-    }
-    caps += data->caps.NumberFeatureValueCaps;
-    data->caps.NumberFeatureButtonCaps = button;
-    data->caps.NumberFeatureValueCaps -= filler + button;
-
+    memcpy( caps, state->values[2], data->feature_caps_count * sizeof(*caps) );
     caps = HID_COLLECTION_VALUE_CAPS( data );
-    memcpy( caps, state->collections, data->caps.NumberLinkCollectionNodes * sizeof(*caps) );
+    memcpy( caps, state->collections, data->number_link_collection_nodes * sizeof(*caps) );
 
     return data;
 }
@@ -645,17 +618,17 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     }
 
     device_desc->CollectionDescLength = 1;
-    device_desc->CollectionDesc[0].UsagePage = preparsed->caps.UsagePage;
-    device_desc->CollectionDesc[0].Usage = preparsed->caps.Usage;
+    device_desc->CollectionDesc[0].UsagePage = preparsed->usage_page;
+    device_desc->CollectionDesc[0].Usage = preparsed->usage;
     device_desc->CollectionDesc[0].CollectionNumber = 1;
-    device_desc->CollectionDesc[0].InputLength = preparsed->caps.InputReportByteLength;
-    device_desc->CollectionDesc[0].OutputLength = preparsed->caps.OutputReportByteLength;
-    device_desc->CollectionDesc[0].FeatureLength = preparsed->caps.FeatureReportByteLength;
+    device_desc->CollectionDesc[0].InputLength = preparsed->input_report_byte_length;
+    device_desc->CollectionDesc[0].OutputLength = preparsed->output_report_byte_length;
+    device_desc->CollectionDesc[0].FeatureLength = preparsed->feature_report_byte_length;
     device_desc->CollectionDesc[0].PreparsedDataLength = preparsed->size;
     device_desc->CollectionDesc[0].PreparsedData = (PHIDP_PREPARSED_DATA)preparsed;
 
     caps = HID_INPUT_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->value_caps_count[HidP_Input];
+    caps_end = caps + preparsed->input_caps_count;
     for (; caps != caps_end; ++caps)
     {
         len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
@@ -664,7 +637,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     }
 
     caps = HID_OUTPUT_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->value_caps_count[HidP_Output];
+    caps_end = caps + preparsed->output_caps_count;
     for (; caps != caps_end; ++caps)
     {
         len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
@@ -673,7 +646,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     }
 
     caps = HID_FEATURE_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->value_caps_count[HidP_Feature];
+    caps_end = caps + preparsed->feature_caps_count;
     for (; caps != caps_end; ++caps)
     {
         len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
