@@ -37,6 +37,10 @@ struct media_stream
 
     struct wg_parser_stream *wg_stream;
 
+    IUnknown **token_queue;
+    LONG token_queue_count;
+    LONG token_queue_cap;
+
     enum
     {
         STREAM_INACTIVE,
@@ -50,6 +54,7 @@ struct media_stream
 enum source_async_op
 {
     SOURCE_ASYNC_START,
+    SOURCE_ASYNC_PAUSE,
     SOURCE_ASYNC_STOP,
     SOURCE_ASYNC_REQUEST_SAMPLE,
 };
@@ -96,6 +101,7 @@ struct media_source
     {
         SOURCE_OPENING,
         SOURCE_STOPPED,
+        SOURCE_PAUSED,
         SOURCE_RUNNING,
         SOURCE_SHUTDOWN,
     } state;
@@ -260,6 +266,55 @@ static IMFStreamDescriptor *stream_descriptor_from_id(IMFPresentationDescriptor 
     return NULL;
 }
 
+static BOOL enqueue_token(struct media_stream *stream, IUnknown *token)
+{
+    if (stream->token_queue_count == stream->token_queue_cap)
+    {
+        IUnknown **buf;
+        stream->token_queue_cap = stream->token_queue_cap * 2 + 1;
+        buf = realloc(stream->token_queue, stream->token_queue_cap * sizeof(*buf));
+        if (buf)
+            stream->token_queue = buf;
+        else
+        {
+            stream->token_queue_cap = stream->token_queue_count;
+            return FALSE;
+        }
+    }
+    stream->token_queue[stream->token_queue_count++] = token;
+    return TRUE;
+}
+
+static void flush_token_queue(struct media_stream *stream, BOOL send)
+{
+    LONG i;
+
+    for (i = 0; i < stream->token_queue_count; i++)
+    {
+        if (send)
+        {
+            HRESULT hr;
+            struct source_async_command *command;
+            if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_REQUEST_SAMPLE, &command)))
+            {
+                command->u.request_sample.stream = stream;
+                command->u.request_sample.token = stream->token_queue[i];
+
+                hr = MFPutWorkItem(stream->parent_source->async_commands_queue,
+                        &stream->parent_source->async_commands_callback, &command->IUnknown_iface);
+            }
+            if (FAILED(hr))
+                WARN("Could not enqueue sample request, hr %#x\n", hr);
+        }
+        else if (stream->token_queue[i])
+            IUnknown_Release(stream->token_queue[i]);
+    }
+    free(stream->token_queue);
+    stream->token_queue = NULL;
+    stream->token_queue_count = 0;
+    stream->token_queue_cap = 0;
+}
+
 static void start_pipeline(struct media_source *source, struct source_async_command *command)
 {
     PROPVARIANT *position = &command->u.start.position;
@@ -333,6 +388,27 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
         unix_funcs->wg_parser_stream_seek(source->streams[0]->wg_stream, 1.0,
                 position->hVal.QuadPart, 0, AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
     unix_funcs->wg_parser_end_flush(source->wg_parser);
+
+    for (i = 0; i < source->stream_count; i++)
+        flush_token_queue(source->streams[i], position->vt == VT_EMPTY);
+}
+
+static void pause_pipeline(struct media_source *source)
+{
+    unsigned int i;
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        if (stream->state != STREAM_INACTIVE)
+        {
+            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamPaused, &GUID_NULL, S_OK, NULL);
+        }
+    }
+
+    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourcePaused, &GUID_NULL, S_OK, NULL);
+
+    source->state = SOURCE_PAUSED;
 }
 
 static void stop_pipeline(struct media_source *source)
@@ -354,6 +430,9 @@ static void stop_pipeline(struct media_source *source)
     IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceStopped, &GUID_NULL, S_OK, NULL);
 
     source->state = SOURCE_STOPPED;
+
+    for (i = 0; i < source->stream_count; i++)
+        flush_token_queue(source->streams[i], FALSE);
 }
 
 static void dispatch_end_of_presentation(struct media_source *source)
@@ -502,11 +581,17 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
         case SOURCE_ASYNC_START:
             start_pipeline(source, command);
             break;
+        case SOURCE_ASYNC_PAUSE:
+            pause_pipeline(source);
+            break;
         case SOURCE_ASYNC_STOP:
             stop_pipeline(source);
             break;
         case SOURCE_ASYNC_REQUEST_SAMPLE:
-            wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token);
+            if (source->state == SOURCE_PAUSED)
+                enqueue_token(command->u.request_sample.stream, command->u.request_sample.token);
+            else
+                wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token);
             break;
     }
 
@@ -617,6 +702,7 @@ static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
     {
         if (stream->event_queue)
             IMFMediaEventQueue_Release(stream->event_queue);
+        flush_token_queue(stream, FALSE);
         free(stream);
     }
 
@@ -719,8 +805,8 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
             IUnknown_AddRef(token);
         command->u.request_sample.token = token;
 
-        /* Once pause support is added, this will need to put into a stream queue, and synchronization will need to be added*/
-        hr = MFPutWorkItem(stream->parent_source->async_commands_queue, &stream->parent_source->async_commands_callback, &command->IUnknown_iface);
+        hr = MFPutWorkItem(stream->parent_source->async_commands_queue,
+                &stream->parent_source->async_commands_callback, &command->IUnknown_iface);
     }
 
     return hr;
@@ -1147,7 +1233,7 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
     if (source->state == SOURCE_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    *characteristics = MFMEDIASOURCE_CAN_SEEK;
+    *characteristics = MFMEDIASOURCE_CAN_SEEK | MFMEDIASOURCE_CAN_PAUSE;
 
     return S_OK;
 }
@@ -1211,13 +1297,22 @@ static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
+    struct source_async_command *command;
+    HRESULT hr;
 
-    FIXME("%p: stub\n", iface);
+    TRACE("%p.\n", iface);
 
     if (source->state == SOURCE_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    if (source->state != SOURCE_RUNNING)
+        return MF_E_INVALID_STATE_TRANSITION;
+
+    if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_PAUSE, &command)))
+        hr = MFPutWorkItem(source->async_commands_queue,
+                &source->async_commands_callback, &command->IUnknown_iface);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
