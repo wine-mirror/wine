@@ -137,6 +137,7 @@ enum install_rules { INSTALL_LIB, INSTALL_DEV, NB_INSTALL_RULES };
 /* variables common to all makefiles */
 static struct strarray linguas;
 static struct strarray dll_flags;
+static struct strarray unix_dllflags;
 static struct strarray target_flags;
 static struct strarray msvcrt_flags;
 static struct strarray extra_cflags;
@@ -2013,7 +2014,8 @@ static void add_generated_sources( struct makefile *make )
         if (strendswith( objs.str[i], ".o" ))
         {
             file = add_generated_source( make, objs.str[i], replace_extension( objs.str[i], ".o", ".c" ));
-            if (make->module || make->staticlib) file->file->flags |= FLAG_C_UNIX;
+            file->file->flags |= FLAG_C_UNIX;
+            file->use_msvcrt = 0;
         }
         else if (strendswith( objs.str[i], ".res" ))
             add_generated_source( make, replace_extension( objs.str[i], ".res", ".rc" ), NULL );
@@ -3170,7 +3172,11 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
-        if (make->module || make->staticlib || make->sharedlib || make->testdll)
+        if (make->sharedlib || (make->staticlib && !make->module) || (source->file->flags & FLAG_C_UNIX))
+        {
+            output_filenames( unix_dllflags );
+        }
+        else if (make->module || make->staticlib || make->testdll)
         {
             output_filenames( dll_flags );
             if (source->use_msvcrt) output_filenames( msvcrt_flags );
@@ -3413,14 +3419,24 @@ static void output_module( struct makefile *make )
         output( "%s:", obj_dir_path( make, make->unixlib ));
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_deps );
-        if (!make->native_unix_lib) output_filename( tools_path( make, "winebuild" ));
-        output_filename( tools_path( make, "winegcc" ));
-        output( "\n" );
-        output_winegcc_command( make, 0 );
-        output_filename( "-munix" );
-        output_filename( "-shared" );
-        if (spec_file && !make->native_unix_lib) output_filename( spec_file );
-        if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) output_filename( "-nodefaultlibs" );
+
+        if (make->native_unix_lib)
+        {
+            output( "\n" );
+            output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
+            output_filenames( get_expanded_make_var_array( make, "UNIXLDFLAGS" ));
+        }
+        else
+        {
+            output_filename( tools_path( make, "winebuild" ));
+            output_filename( tools_path( make, "winegcc" ));
+            output( "\n" );
+            output_winegcc_command( make, 0 );
+            output_filename( "-munix" );
+            output_filename( "-shared" );
+            if (spec_file) output_filename( spec_file );
+            if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) output_filename( "-nodefaultlibs" );
+        }
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_libs );
         output_filename( "$(LDFLAGS)" );
@@ -3559,7 +3575,7 @@ static void output_shared_lib( struct makefile *make )
     output_filenames_obj_dir( make, make->object_files );
     output_filenames( dep_libs );
     output( "\n" );
-    output( "\t%s$(CC) -o $@", cmd_prefix( "CC" ));
+    output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
     output_filenames_obj_dir( make, make->object_files );
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
@@ -4415,40 +4431,41 @@ int main( int argc, char *argv[] )
 
     top_makefile = parse_makefile( NULL );
 
-    target_flags = get_expanded_make_var_array( top_makefile, "TARGETFLAGS" );
-    msvcrt_flags = get_expanded_make_var_array( top_makefile, "MSVCRTFLAGS" );
-    dll_flags    = get_expanded_make_var_array( top_makefile, "DLLFLAGS" );
-    extra_cflags = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
+    target_flags       = get_expanded_make_var_array( top_makefile, "TARGETFLAGS" );
+    msvcrt_flags       = get_expanded_make_var_array( top_makefile, "MSVCRTFLAGS" );
+    dll_flags          = get_expanded_make_var_array( top_makefile, "DLLFLAGS" );
+    extra_cflags       = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
     extra_cross_cflags = get_expanded_make_var_array( top_makefile, "EXTRACROSSCFLAGS" );
-    cpp_flags    = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
-    lddll_flags  = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
-    libs         = get_expanded_make_var_array( top_makefile, "LIBS" );
-    enable_tests = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
-    delay_load_flag = get_expanded_make_variable( top_makefile, "DELAYLOADFLAG" );
-    top_install_lib = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_LIB" );
-    top_install_dev = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_DEV" );
+    unix_dllflags      = get_expanded_make_var_array( top_makefile, "UNIXDLLFLAGS" );
+    cpp_flags          = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
+    lddll_flags        = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
+    libs               = get_expanded_make_var_array( top_makefile, "LIBS" );
+    enable_tests       = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
+    top_install_lib    = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_LIB" );
+    top_install_dev    = get_expanded_make_var_array( top_makefile, "TOP_INSTALL_DEV" );
 
-    root_src_dir = get_expanded_make_variable( top_makefile, "srcdir" );
-    tools_dir    = get_expanded_make_variable( top_makefile, "TOOLSDIR" );
-    tools_ext    = get_expanded_make_variable( top_makefile, "TOOLSEXT" );
-    exe_ext      = get_expanded_make_variable( top_makefile, "EXEEXT" );
-    man_ext      = get_expanded_make_variable( top_makefile, "api_manext" );
-    dll_ext      = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
-    host_cpu     = get_expanded_make_variable( top_makefile, "host_cpu" );
-    crosstarget  = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
-    crossdebug   = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
-    fontforge    = get_expanded_make_variable( top_makefile, "FONTFORGE" );
-    convert      = get_expanded_make_variable( top_makefile, "CONVERT" );
-    flex         = get_expanded_make_variable( top_makefile, "FLEX" );
-    bison        = get_expanded_make_variable( top_makefile, "BISON" );
-    ar           = get_expanded_make_variable( top_makefile, "AR" );
-    ranlib       = get_expanded_make_variable( top_makefile, "RANLIB" );
-    rsvg         = get_expanded_make_variable( top_makefile, "RSVG" );
-    icotool      = get_expanded_make_variable( top_makefile, "ICOTOOL" );
-    dlltool      = get_expanded_make_variable( top_makefile, "DLLTOOL" );
-    msgfmt       = get_expanded_make_variable( top_makefile, "MSGFMT" );
-    sed_cmd      = get_expanded_make_variable( top_makefile, "SED_CMD" );
-    ln_s         = get_expanded_make_variable( top_makefile, "LN_S" );
+    delay_load_flag    = get_expanded_make_variable( top_makefile, "DELAYLOADFLAG" );
+    root_src_dir       = get_expanded_make_variable( top_makefile, "srcdir" );
+    tools_dir          = get_expanded_make_variable( top_makefile, "TOOLSDIR" );
+    tools_ext          = get_expanded_make_variable( top_makefile, "TOOLSEXT" );
+    exe_ext            = get_expanded_make_variable( top_makefile, "EXEEXT" );
+    man_ext            = get_expanded_make_variable( top_makefile, "api_manext" );
+    dll_ext            = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
+    host_cpu           = get_expanded_make_variable( top_makefile, "host_cpu" );
+    crosstarget        = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
+    crossdebug         = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
+    fontforge          = get_expanded_make_variable( top_makefile, "FONTFORGE" );
+    convert            = get_expanded_make_variable( top_makefile, "CONVERT" );
+    flex               = get_expanded_make_variable( top_makefile, "FLEX" );
+    bison              = get_expanded_make_variable( top_makefile, "BISON" );
+    ar                 = get_expanded_make_variable( top_makefile, "AR" );
+    ranlib             = get_expanded_make_variable( top_makefile, "RANLIB" );
+    rsvg               = get_expanded_make_variable( top_makefile, "RSVG" );
+    icotool            = get_expanded_make_variable( top_makefile, "ICOTOOL" );
+    dlltool            = get_expanded_make_variable( top_makefile, "DLLTOOL" );
+    msgfmt             = get_expanded_make_variable( top_makefile, "MSGFMT" );
+    sed_cmd            = get_expanded_make_variable( top_makefile, "SED_CMD" );
+    ln_s               = get_expanded_make_variable( top_makefile, "LN_S" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;

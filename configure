@@ -751,6 +751,8 @@ WINEPRELOADER_LDFLAGS
 WINELOADER_LDFLAGS
 TOP_INSTALL_DEV
 TOP_INSTALL_LIB
+UNIXLDFLAGS
+UNIXDLLFLAGS
 LDEXECFLAGS
 LDDLLFLAGS
 DLLFLAGS
@@ -7940,6 +7942,10 @@ LDDLLFLAGS=""
 
 LDEXECFLAGS=""
 
+UNIXDLLFLAGS="-fPIC"
+
+UNIXLDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname,\$(UNIXLIB)"
+
 TOP_INSTALL_LIB=""
 
 TOP_INSTALL_DEV=""
@@ -9118,6 +9124,7 @@ fi
         LIBS="$ac_save_LIBS"
     fi
 
+    UNIXLDFLAGS="-dynamiclib -install_name @loader_path/\$(UNIXLIB)"
     LIBWINE_SHAREDLIB="libwine.$libwine_version.dylib"
 
     LIBWINE_LDFLAGS="-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"
@@ -9132,6 +9139,31 @@ fi
     LDDLLFLAGS="-fPIC"
     LDEXECFLAGS="-Wl,-pie"
     enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
+$as_echo_n "checking whether the compiler supports -Wl,-z,defs... " >&6; }
+if ${ac_cv_cflags__Wl__z_defs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-z,defs"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wl__z_defs=yes
+else
+  ac_cv_cflags__Wl__z_defs=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__z_defs" >&5
+$as_echo "$ac_cv_cflags__Wl__z_defs" >&6; }
+if test "x$ac_cv_cflags__Wl__z_defs" = xyes; then :
+  UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"
+fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -Wl,--export-dynamic... " >&6; }
 if ${ac_cv_cflags__fPIC__Wl___export_dynamic+:} false; then :
@@ -9346,6 +9378,31 @@ if test "x$ac_cv_cflags__shared__Wl___version_script_conftest_map" = xyes; then 
 fi
     rm -f conftest.map
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
+$as_echo_n "checking whether the compiler supports -Wl,-z,defs... " >&6; }
+if ${ac_cv_cflags__Wl__z_defs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-z,defs"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wl__z_defs=yes
+else
+  ac_cv_cflags__Wl__z_defs=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__z_defs" >&5
+$as_echo "$ac_cv_cflags__Wl__z_defs" >&6; }
+if test "x$ac_cv_cflags__Wl__z_defs" = xyes; then :
+  UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"
+fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--export-dynamic" >&5
 $as_echo_n "checking whether the compiler supports -Wl,--export-dynamic... " >&6; }
 if ${ac_cv_cflags__Wl___export_dynamic+:} false; then :
@@ -17828,6 +17885,7 @@ if test "$ac_cv_c_cfi_support" = "yes"
 then
    DLLFLAGS="$DLLFLAGS -fasynchronous-unwind-tables"
    LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
+   UNIXDLLFLAGS="$UNIXDLLFLAGS -fasynchronous-unwind-tables"
 else
    if test "x$enable_win64" = "xyes"
    then
