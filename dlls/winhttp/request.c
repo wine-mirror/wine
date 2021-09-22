@@ -3288,9 +3288,20 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
 
 static DWORD receive_bytes( struct socket *socket, char *buf, DWORD len, DWORD *ret_len )
 {
-    DWORD err;
-    if ((err = netconn_recv( socket->request->netconn, buf, len, 0, (int *)ret_len ))) return err;
-    if (*ret_len != len) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+    DWORD err, size = 0, needed = len;
+    char *ptr = buf;
+    int received;
+
+    if (socket->request->read_size)
+    {
+        size = min( needed, socket->request->read_size );
+        memcpy( ptr, socket->request->read_buf + socket->request->read_pos, size );
+        remove_data( socket->request, size );
+        needed -= size;
+        ptr += size;
+    }
+    if ((err = netconn_recv( socket->request->netconn, ptr, needed, 0, &received ))) return err;
+    if ((*ret_len = size + received) != len) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
     return ERROR_SUCCESS;
 }
 
