@@ -1099,6 +1099,176 @@ done:
     pSetThreadDpiAwarenessContext(old_context);
 }
 
+static void test_EnableTheming(void)
+{
+    WCHAR old_color_string[13], new_color_string[13], color_string[13];
+    BOOL old_gradient_caption, new_gradient_caption, gradient_caption;
+    BOOL old_flat_menu, new_flat_menu, flat_menu;
+    LOGFONTW old_logfont, new_logfont, logfont;
+    NONCLIENTMETRICSW old_ncm, new_ncm, ncm;
+    DPI_AWARENESS_CONTEXT old_context = 0;
+    COLORREF old_color, new_color;
+    BOOL is_theme_active, ret;
+    DWORD size, length;
+    HRESULT hr;
+    LSTATUS ls;
+    HKEY hkey;
+
+    if (IsThemeActive())
+    {
+        hr = EnableTheming(TRUE);
+        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(IsThemeActive(), "Expected theming active.\n");
+
+        /* Only run in interactive mode because once theming is disabled, it can't be turned back on
+         * via EnableTheming() */
+        if (winetest_interactive)
+        {
+            if (pSetThreadDpiAwarenessContext)
+            {
+                old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+            }
+            else if (get_primary_monitor_effective_dpi() != 96)
+            {
+                skip("DPI isn't 96, skipping.\n");
+                return;
+            }
+
+            /* Read current system metrics */
+            old_color = GetSysColor(COLOR_SCROLLBAR);
+            swprintf(old_color_string, ARRAY_SIZE(old_color_string), L"%d %d %d",
+                     GetRValue(old_color), GetGValue(old_color), GetBValue(old_color));
+
+            memset(&old_ncm, 0, sizeof(old_ncm));
+            old_ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
+            ret = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(old_ncm), &old_ncm, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+
+            memset(&old_logfont, 0, sizeof(old_logfont));
+            ret = SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(old_logfont), &old_logfont, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_GETFLATMENU, 0, &old_flat_menu, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_GETGRADIENTCAPTIONS, 0, &old_gradient_caption, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+
+            /* Write new system metrics to the registry */
+            new_color = ~old_color;
+            new_flat_menu = !old_flat_menu;
+            new_gradient_caption = !old_gradient_caption;
+            memcpy(&new_ncm, &old_ncm, sizeof(new_ncm));
+            new_ncm.iScrollWidth += 5;
+            memcpy(&new_logfont, &old_logfont, sizeof(new_logfont));
+            new_logfont.lfWidth += 5;
+
+            ls = RegOpenKeyExW(HKEY_CURRENT_USER, L"Control Panel\\Colors", 0, KEY_ALL_ACCESS,
+                               &hkey);
+            ok(!ls, "RegOpenKeyExW failed, ls %#x.\n", ls);
+
+            length = swprintf(new_color_string, ARRAY_SIZE(new_color_string), L"%d %d %d",
+                              GetRValue(new_color), GetGValue(new_color), GetBValue(new_color));
+            ls = RegSetValueExW(hkey, L"Scrollbar", 0, REG_SZ, (BYTE *)new_color_string,
+                                (length + 1) * sizeof(WCHAR));
+            ok(!ls, "RegSetValueExW failed, ls %#x.\n", ls);
+
+            ret = SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(new_ncm), &new_ncm,
+                                        SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_SETICONTITLELOGFONT, sizeof(new_logfont), &new_logfont,
+                                        SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_SETFLATMENU, 0, (void *)(INT_PTR)new_flat_menu,
+                                        SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_SETGRADIENTCAPTIONS, 0,
+                                        (void *)(INT_PTR)new_gradient_caption, SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+
+            /* Change theming state */
+            hr = EnableTheming(FALSE);
+            ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+            is_theme_active = IsThemeActive();
+            ok(!is_theme_active || broken(is_theme_active), /* Win8+ can no longer disable theming */
+               "Expected theming inactive.\n");
+
+            /* Test that system metrics are unchanged */
+            size = sizeof(color_string);
+            ls = RegQueryValueExW(hkey, L"Scrollbar", NULL, NULL, (BYTE *)color_string, &size);
+            ok(!ls, "RegQueryValueExW failed, ls %#x.\n", ls);
+            todo_wine
+            ok(!lstrcmpW(color_string, new_color_string), "Expected %s, got %s.\n",
+               wine_dbgstr_w(new_color_string), wine_dbgstr_w(color_string));
+
+            ret = SystemParametersInfoW(SPI_GETFLATMENU, 0, &flat_menu, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ok(flat_menu == new_flat_menu, "Expected %d, got %d.\n", new_flat_menu, flat_menu);
+            ret = SystemParametersInfoW(SPI_GETGRADIENTCAPTIONS, 0, &gradient_caption, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            todo_wine
+            ok(gradient_caption == new_gradient_caption, "Expected %d, got %d.\n",
+               new_gradient_caption, gradient_caption);
+
+            memset(&ncm, 0, sizeof(ncm));
+            ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
+            ret = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            todo_wine
+            ok(!memcmp(&ncm, &new_ncm, sizeof(ncm)), "Expected non-client metrics unchanged.\n");
+
+            memset(&logfont, 0, sizeof(logfont));
+            ret = SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(logfont), &logfont, 0);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            todo_wine
+            ok(!memcmp(&logfont, &new_logfont, sizeof(logfont)),
+               "Expected icon title font unchanged.\n");
+
+            /* Test that theming cannot be turned on via EnableTheming() */
+            hr = EnableTheming(TRUE);
+            ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+            is_theme_active = IsThemeActive();
+            todo_wine
+            ok(!is_theme_active || broken(is_theme_active), /* Win8+ can no longer disable theming */
+               "Expected theming inactive.\n");
+
+            /* Restore system metrics */
+            ls = RegSetValueExW(hkey, L"Scrollbar", 0, REG_SZ, (BYTE *)old_color_string,
+                                (lstrlenW(old_color_string) + 1) * sizeof(WCHAR));
+            ok(!ls, "RegSetValueExW failed, ls %#x.\n", ls);
+            ret = SystemParametersInfoW(SPI_SETFLATMENU, 0, (void *)(INT_PTR)old_flat_menu,
+                                        SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_SETGRADIENTCAPTIONS, 0,
+                                        (void *)(INT_PTR)old_gradient_caption, SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(old_ncm), &old_ncm,
+                                        SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+            ret = SystemParametersInfoW(SPI_SETICONTITLELOGFONT, sizeof(old_logfont), &old_logfont,
+                                        SPIF_UPDATEINIFILE);
+            ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
+
+            RegCloseKey(hkey);
+            if (pSetThreadDpiAwarenessContext)
+                pSetThreadDpiAwarenessContext(old_context);
+        }
+    }
+    else
+    {
+        hr = EnableTheming(FALSE);
+        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(!IsThemeActive(), "Expected theming inactive.\n");
+
+        hr = EnableTheming(TRUE);
+        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        todo_wine
+        ok(!IsThemeActive(), "Expected theming inactive.\n");
+
+        hr = EnableTheming(FALSE);
+        ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
+        ok(!IsThemeActive(), "Expected theming inactive.\n");
+    }
+}
+
 START_TEST(system)
 {
     init_funcs();
@@ -1118,4 +1288,7 @@ START_TEST(system)
     test_GetThemePartSize();
     test_CloseThemeData();
     test_buffered_paint();
+
+    /* Test EnableTheming() in the end because it may disable theming */
+    test_EnableTheming();
 }
