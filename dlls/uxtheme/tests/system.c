@@ -1260,7 +1260,6 @@ static void test_EnableTheming(void)
 
         hr = EnableTheming(TRUE);
         ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
-        todo_wine
         ok(!IsThemeActive(), "Expected theming inactive.\n");
 
         hr = EnableTheming(FALSE);

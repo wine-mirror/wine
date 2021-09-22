@@ -571,20 +571,16 @@ BOOL WINAPI IsCompositionActive(void)
 HRESULT WINAPI EnableTheming(BOOL fEnable)
 {
     HKEY hKey;
-    WCHAR szEnabled[] = L"0";
 
     TRACE("(%d)\n", fEnable);
 
-    if(fEnable != bThemeActive) {
-        if(fEnable) 
-            UXTHEME_BackupSystemMetrics();
-        else
-            UXTHEME_RestoreSystemMetrics();
+    if (bThemeActive && !fEnable)
+    {
+        UXTHEME_RestoreSystemMetrics();
         UXTHEME_SaveSystemMetrics ();
         bThemeActive = fEnable;
-        if(bThemeActive) szEnabled[0] = '1';
         if(!RegOpenKeyW(HKEY_CURRENT_USER, szThemeManager, &hKey)) {
-            RegSetValueExW(hKey, L"ThemeActive", 0, REG_SZ, (BYTE*)szEnabled, sizeof(WCHAR));
+            RegSetValueExW(hKey, L"ThemeActive", 0, REG_SZ, (BYTE *)L"0", 2 * sizeof(WCHAR));
             RegCloseKey(hKey);
         }
 	UXTHEME_broadcast_msg (NULL, WM_THEMECHANGED);
