@@ -660,6 +660,7 @@ static const struct notification websocket_test[] =
     { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
+    { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_shutdown,         WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NF_SIGNAL },
     { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NF_SIGNAL },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
@@ -715,7 +716,7 @@ static void test_websocket(void)
 
     setup_test( &info, winhttp_connect, __LINE__ );
     SetLastError( 0xdeadbeef );
-    connection = WinHttpConnect( session, L"echo.websocket.org", 0, 0 );
+    connection = WinHttpConnect( session, L"ws.ifelse.io", 0, 0 );
     err = GetLastError();
     ok( connection != NULL, "got %u\n", err);
     ok( err == ERROR_SUCCESS || broken(err == WSAEINVAL) /* < win7 */, "got %u\n", err );
@@ -785,7 +786,18 @@ static void test_websocket(void)
     WaitForSingleObject( info.wait, INFINITE );
     ok( size == 0xdeadbeef, "got %u\n", size );
     ok( type == 0xdeadbeef, "got %u\n", type );
-    ok( buffer[0], "unexpected data\n" );
+    ok( buffer[0] == 'R', "unexpected data\n" );
+
+    setup_test( &info, winhttp_websocket_receive, __LINE__ );
+    buffer[0] = 0;
+    size = 0xdeadbeef;
+    type = 0xdeadbeef;
+    err = pWinHttpWebSocketReceive( socket, buffer, sizeof(buffer), &size, &type );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+    WaitForSingleObject( info.wait, INFINITE );
+    ok( size == 0xdeadbeef, "got %u\n", size );
+    ok( type == 0xdeadbeef, "got %u\n", type );
+    ok( buffer[0] == 'h', "unexpected data\n" );
 
     setup_test( &info, winhttp_websocket_shutdown, __LINE__ );
     err = pWinHttpWebSocketShutdown( socket, 1000, (void *)"success", sizeof("success") );
