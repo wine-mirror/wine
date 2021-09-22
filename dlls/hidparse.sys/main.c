@@ -135,7 +135,12 @@ static void debug_print_preparsed( struct hid_preparsed_data *data )
 
 struct hid_parser_state
 {
-    HIDP_CAPS caps;
+    USAGE usage;
+    USAGE usage_page;
+    USHORT input_report_byte_length;
+    USHORT output_report_byte_length;
+    USHORT feature_report_byte_length;
+    USHORT number_link_collection_nodes;
 
     USAGE usages_page[256];
     USAGE usages_min[256];
@@ -155,10 +160,10 @@ struct hid_parser_state
     struct hid_value_caps *values[3];
     ULONG                  values_size[3];
 
-    ULONG   bit_size[3][256];
-    USHORT *byte_size[3]; /* pointers to caps */
-    USHORT *value_idx[3]; /* pointers to caps */
-    USHORT *data_idx[3]; /* pointers to caps */
+    ULONG  bit_size[3][256];
+    USHORT byte_length[3];
+    USHORT caps_count[3];
+    USHORT data_count[3];
 };
 
 static BOOL array_reserve( struct hid_value_caps **array, DWORD *array_size, DWORD index )
@@ -274,7 +279,7 @@ static BOOL parse_new_collection( struct hid_parser_state *state )
         return FALSE;
     }
 
-    if (!array_reserve( &state->collections, &state->collections_size, state->caps.NumberLinkCollectionNodes ))
+    if (!array_reserve( &state->collections, &state->collections_size, state->number_link_collection_nodes ))
     {
         ERR( "HID parser collections overflow!\n" );
         return FALSE;
@@ -286,16 +291,16 @@ static BOOL parse_new_collection( struct hid_parser_state *state )
     state->items.usage_min = state->usages_min[0];
     state->items.usage_max = state->usages_max[0];
 
-    state->collections[state->caps.NumberLinkCollectionNodes] = state->items;
-    state->items.link_collection = state->caps.NumberLinkCollectionNodes;
+    state->collections[state->number_link_collection_nodes] = state->items;
+    state->items.link_collection = state->number_link_collection_nodes;
     state->items.link_usage_page = state->items.usage_page;
     state->items.link_usage = state->items.usage_min;
-    if (!state->caps.NumberLinkCollectionNodes)
+    if (!state->number_link_collection_nodes)
     {
-        state->caps.UsagePage = state->items.usage_page;
-        state->caps.Usage = state->items.usage_min;
+        state->usage_page = state->items.usage_page;
+        state->usage = state->items.usage_min;
     }
-    state->caps.NumberLinkCollectionNodes++;
+    state->number_link_collection_nodes++;
 
     reset_local_items( state );
     return TRUE;
@@ -320,15 +325,15 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     struct hid_value_caps *value;
     USAGE usage_page = state->items.usage_page;
     DWORD usages_size = max( 1, state->usages_size );
-    USHORT *byte_size = state->byte_size[type];
-    USHORT *value_idx = state->value_idx[type];
-    USHORT *data_idx = state->data_idx[type];
+    USHORT *byte_length = &state->byte_length[type];
+    USHORT *caps_count = &state->caps_count[type];
+    USHORT *data_count = &state->data_count[type];
     ULONG start_bit, *bit_size = &state->bit_size[type][state->items.report_id];
     BOOL is_array;
 
     if (!*bit_size) *bit_size = 8;
     *bit_size += state->items.bit_size * state->items.report_count;
-    *byte_size = max( *byte_size, (*bit_size + 7) / 8 );
+    *byte_length = max( *byte_length, (*bit_size + 7) / 8 );
     start_bit = *bit_size;
 
     if (!state->items.report_count)
@@ -337,12 +342,12 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         return TRUE;
     }
 
-    if (!array_reserve( &state->values[type], &state->values_size[type], *value_idx + usages_size ))
+    if (!array_reserve( &state->values[type], &state->values_size[type], *caps_count + usages_size ))
     {
         ERR( "HID parser values overflow!\n" );
         return FALSE;
     }
-    value = state->values[type] + *value_idx;
+    value = state->values[type] + *caps_count;
 
     if (!(is_array = HID_VALUE_CAPS_IS_ARRAY( &state->items ))) state->items.report_count -= usages_size - 1;
     else start_bit -= state->items.report_count * state->items.bit_size;
@@ -361,33 +366,17 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         state->items.usage_page = state->usages_page[usages_size];
         state->items.usage_min = state->usages_min[usages_size];
         state->items.usage_max = state->usages_max[usages_size];
-        state->items.data_index_min = *data_idx;
-        state->items.data_index_max = *data_idx + state->items.usage_max - state->items.usage_min;
-        if (state->items.usage_max || state->items.usage_min) *data_idx = state->items.data_index_max + 1;
+        state->items.data_index_min = *data_count;
+        state->items.data_index_max = *data_count + state->items.usage_max - state->items.usage_min;
+        if (state->items.usage_max || state->items.usage_min) *data_count = state->items.data_index_max + 1;
         *value++ = state->items;
-        *value_idx += 1;
+        *caps_count += 1;
         if (!is_array) state->items.report_count = 1;
     }
 
     state->items.usage_page = usage_page;
     reset_local_items( state );
     return TRUE;
-}
-
-static void init_parser_state( struct hid_parser_state *state )
-{
-    memset( state, 0, sizeof(*state) );
-    state->byte_size[HidP_Input] = &state->caps.InputReportByteLength;
-    state->byte_size[HidP_Output] = &state->caps.OutputReportByteLength;
-    state->byte_size[HidP_Feature] = &state->caps.FeatureReportByteLength;
-
-    state->value_idx[HidP_Input] = &state->caps.NumberInputValueCaps;
-    state->value_idx[HidP_Output] = &state->caps.NumberOutputValueCaps;
-    state->value_idx[HidP_Feature] = &state->caps.NumberFeatureValueCaps;
-
-    state->data_idx[HidP_Input] = &state->caps.NumberInputDataIndices;
-    state->data_idx[HidP_Output] = &state->caps.NumberOutputDataIndices;
-    state->data_idx[HidP_Feature] = &state->caps.NumberFeatureDataIndices;
 }
 
 static void free_parser_state( struct hid_parser_state *state )
@@ -408,29 +397,29 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     struct hid_value_caps *caps;
     DWORD caps_len, size;
 
-    caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps +
-               state->caps.NumberFeatureValueCaps + state->caps.NumberLinkCollectionNodes;
+    caps_len = state->caps_count[HidP_Input] + state->caps_count[HidP_Output] +
+               state->caps_count[HidP_Feature] + state->number_link_collection_nodes;
     size = FIELD_OFFSET( struct hid_preparsed_data, value_caps[caps_len] );
 
     if (!(data = ExAllocatePool( pool_type, size ))) return NULL;
     memset( data, 0, size );
     data->magic = HID_MAGIC;
     data->size = size;
-    data->usage = state->caps.Usage;
-    data->usage_page = state->caps.UsagePage;
+    data->usage = state->usage;
+    data->usage_page = state->usage_page;
     data->input_caps_start = 0;
-    data->input_caps_count = state->caps.NumberInputValueCaps;
+    data->input_caps_count = state->caps_count[HidP_Input];
     data->input_caps_end = data->input_caps_start + data->input_caps_count;
-    data->input_report_byte_length = state->caps.InputReportByteLength;
+    data->input_report_byte_length = state->byte_length[HidP_Input];
     data->output_caps_start = data->input_caps_end;
-    data->output_caps_count = state->caps.NumberOutputValueCaps;
+    data->output_caps_count = state->caps_count[HidP_Output];
     data->output_caps_end = data->output_caps_start + data->output_caps_count;
-    data->output_report_byte_length = state->caps.OutputReportByteLength;
+    data->output_report_byte_length = state->byte_length[HidP_Output];
     data->feature_caps_start = data->output_caps_end;
-    data->feature_caps_count = state->caps.NumberFeatureValueCaps;
+    data->feature_caps_count = state->caps_count[HidP_Feature];
     data->feature_caps_end = data->feature_caps_start + data->feature_caps_count;
-    data->feature_report_byte_length = state->caps.FeatureReportByteLength;
-    data->number_link_collection_nodes = state->caps.NumberLinkCollectionNodes;
+    data->feature_report_byte_length = state->byte_length[HidP_Feature];
+    data->number_link_collection_nodes = state->number_link_collection_nodes;
 
     caps = HID_INPUT_VALUE_CAPS( data );
     memcpy( caps, state->values[0], data->input_caps_count * sizeof(*caps) );
@@ -464,8 +453,7 @@ struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int leng
         }
     }
 
-    if (!(state = malloc( sizeof(*state) ))) return NULL;
-    init_parser_state( state );
+    if (!(state = calloc( 1, sizeof(*state) ))) return NULL;
 
     for (ptr = descriptor, end = descriptor + length; ptr != end; ptr += size + 1)
     {
