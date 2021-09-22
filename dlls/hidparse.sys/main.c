@@ -384,9 +384,9 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     for (i = 0; i < usages_size; ++i)
     {
         if (!is_array) start_bit -= state->items.report_count * state->items.bit_size;
-        else if (i < usages_size - 1) state->items.flags |= HID_VALUE_CAPS_ARRAY_HAS_MORE;
+        else if (i) state->items.flags |= HID_VALUE_CAPS_ARRAY_HAS_MORE;
         else state->items.flags &= ~HID_VALUE_CAPS_ARRAY_HAS_MORE;
-        add_new_value_caps( state, values, i, start_bit );
+        add_new_value_caps( state, values, is_array ? usages_size - i - 1 : i, start_bit );
         if (!is_array) state->items.report_count = 1;
     }
     state->caps_count[type] += usages_size;

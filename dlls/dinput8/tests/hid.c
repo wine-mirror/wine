@@ -3174,9 +3174,7 @@ static void test_hidp_kdr(void)
             check_member( kdr->caps[i], expect_caps[i], "%d", string_max );
             check_member( kdr->caps[i], expect_caps[i], "%d", designator_min );
             check_member( kdr->caps[i], expect_caps[i], "%d", designator_max );
-            todo_wine_if( !(kdr->caps[i].bit_field & 2) && !(kdr->caps[i].flags & HIDP_KDR_CAPS_IS_RANGE) )
             check_member( kdr->caps[i], expect_caps[i], "%#x", data_index_min );
-            todo_wine_if( !(kdr->caps[i].bit_field & 2) && !(kdr->caps[i].flags & HIDP_KDR_CAPS_IS_RANGE) )
             check_member( kdr->caps[i], expect_caps[i], "%#x", data_index_max );
             todo_wine_if( expect_caps[i].null_value )
             check_member( kdr->caps[i], expect_caps[i], "%d", null_value );
