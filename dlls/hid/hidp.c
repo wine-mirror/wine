@@ -997,7 +997,7 @@ NTSTATUS WINAPI HidP_GetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULO
 NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, ULONG *nodes_len, PHIDP_PREPARSED_DATA preparsed_data )
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    struct hid_value_caps *caps = HID_COLLECTION_VALUE_CAPS( preparsed );
+    struct hid_collection_node *collections = HID_COLLECTION_NODES( preparsed );
     ULONG i, count, capacity = *nodes_len;
 
     TRACE( "nodes %p, nodes_len %p, preparsed_data %p.\n", nodes, nodes_len, preparsed_data );
@@ -1009,21 +1009,14 @@ NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, U
 
     for (i = 0; i < count; ++i)
     {
-        nodes[i].LinkUsagePage = caps[i].usage_page;
-        nodes[i].LinkUsage = caps[i].usage_min;
-        nodes[i].Parent = caps[i].link_collection;
-        nodes[i].CollectionType = caps[i].bit_field;
+        nodes[i].LinkUsagePage = collections[i].usage_page;
+        nodes[i].LinkUsage = collections[i].usage;
+        nodes[i].Parent = collections[i].parent;
+        nodes[i].CollectionType = collections[i].collection_type;
+        nodes[i].FirstChild = collections[i].first_child;
+        nodes[i].NextSibling = collections[i].next_sibling;
+        nodes[i].NumberOfChildren = collections[i].number_of_children;
         nodes[i].IsAlias = 0;
-        nodes[i].FirstChild = 0;
-        nodes[i].NextSibling = 0;
-        nodes[i].NumberOfChildren = 0;
-
-        if (i > 0)
-        {
-            nodes[i].NextSibling = nodes[nodes[i].Parent].FirstChild;
-            nodes[nodes[i].Parent].FirstChild = i;
-            nodes[nodes[i].Parent].NumberOfChildren++;
-        }
     }
 
     return HIDP_STATUS_SUCCESS;

@@ -110,6 +110,14 @@ static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
                              caps->units, caps->units_exp, caps->logical_min, caps->logical_max, caps->physical_min, caps->physical_max );
 }
 
+static inline const char *debugstr_hid_collection_node( struct hid_collection_node *node )
+{
+    if (!node) return "(null)";
+    return wine_dbg_sprintf( "Usg %02x:%02x, Parent %u, Next %u, NbChild %u, Child %u, Type %02x",
+                             node->usage_page, node->usage, node->parent, node->next_sibling,
+                             node->number_of_children, node->first_child, node->collection_type );
+}
+
 static void debug_print_preparsed( struct hid_preparsed_data *data )
 {
     unsigned int i, end;
@@ -129,7 +137,7 @@ static void debug_print_preparsed( struct hid_preparsed_data *data )
         end = data->feature_caps_count;
         for (i = 0; i < end; i++) TRACE( "feature %d: %s\n", i, debugstr_hid_value_caps( HID_FEATURE_VALUE_CAPS( data ) + i ) );
         end = data->number_link_collection_nodes;
-        for (i = 0; i < end; i++) TRACE( "collection %d: %s\n", i, debugstr_hid_value_caps( HID_COLLECTION_VALUE_CAPS( data ) + i ) );
+        for (i = 0; i < end; i++) TRACE( "collection %d: %s\n", i, debugstr_hid_collection_node( HID_COLLECTION_NODES( data ) + i ) );
     }
 }
 
@@ -393,16 +401,20 @@ static void free_parser_state( struct hid_parser_state *state )
 
 static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state *state, POOL_TYPE pool_type )
 {
+    struct hid_collection_node *nodes;
     struct hid_preparsed_data *data;
     struct hid_value_caps *caps;
-    DWORD caps_len, size;
+    DWORD i, size, caps_size;
 
-    caps_len = state->caps_count[HidP_Input] + state->caps_count[HidP_Output] +
-               state->caps_count[HidP_Feature] + state->number_link_collection_nodes;
-    size = FIELD_OFFSET( struct hid_preparsed_data, value_caps[caps_len] );
+    caps_size = state->caps_count[HidP_Input] + state->caps_count[HidP_Output] +
+                state->caps_count[HidP_Feature];
+    caps_size *= sizeof(struct hid_value_caps);
 
+    size = caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
+           state->number_link_collection_nodes * sizeof(struct hid_collection_node);
     if (!(data = ExAllocatePool( pool_type, size ))) return NULL;
     memset( data, 0, size );
+
     data->magic = HID_MAGIC;
     data->size = size;
     data->usage = state->usage;
@@ -419,6 +431,7 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     data->feature_caps_count = state->caps_count[HidP_Feature];
     data->feature_caps_end = data->feature_caps_start + data->feature_caps_count;
     data->feature_report_byte_length = state->byte_length[HidP_Feature];
+    data->caps_size = caps_size;
     data->number_link_collection_nodes = state->number_link_collection_nodes;
 
     caps = HID_INPUT_VALUE_CAPS( data );
@@ -427,8 +440,25 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     memcpy( caps, state->values[1], data->output_caps_count * sizeof(*caps) );
     caps = HID_FEATURE_VALUE_CAPS( data );
     memcpy( caps, state->values[2], data->feature_caps_count * sizeof(*caps) );
-    caps = HID_COLLECTION_VALUE_CAPS( data );
-    memcpy( caps, state->collections, data->number_link_collection_nodes * sizeof(*caps) );
+
+    nodes = HID_COLLECTION_NODES( data );
+    for (i = 0; i < data->number_link_collection_nodes; ++i)
+    {
+        nodes[i].usage_page = state->collections[i].usage_page;
+        nodes[i].usage = state->collections[i].usage_min;
+        nodes[i].parent = state->collections[i].link_collection;
+        nodes[i].collection_type = state->collections[i].bit_field;
+        nodes[i].first_child = 0;
+        nodes[i].next_sibling = 0;
+        nodes[i].number_of_children = 0;
+
+        if (i > 0)
+        {
+            nodes[i].next_sibling = nodes[nodes[i].parent].first_child;
+            nodes[nodes[i].parent].first_child = i;
+            nodes[nodes[i].parent].number_of_children++;
+        }
+    }
 
     return data;
 }

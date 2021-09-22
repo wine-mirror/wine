@@ -31,6 +31,17 @@
 
 #define HID_MAGIC 0x8491759
 
+struct hid_collection_node
+{
+    USAGE usage;
+    USAGE usage_page;
+    USHORT parent;
+    USHORT number_of_children;
+    USHORT next_sibling;
+    USHORT first_child;
+    ULONG collection_type;
+};
+
 struct hid_value_caps
 {
     USAGE   usage_page;
@@ -90,13 +101,15 @@ struct hid_preparsed_data
     USHORT feature_caps_count;
     USHORT feature_caps_end;
     USHORT feature_report_byte_length;
+    USHORT caps_size;
     USHORT number_link_collection_nodes;
     struct hid_value_caps value_caps[1];
+    /* struct hid_collection_node nodes[1] */
 };
 
 #define HID_INPUT_VALUE_CAPS(d) ((d)->value_caps + (d)->input_caps_start)
 #define HID_OUTPUT_VALUE_CAPS(d) ((d)->value_caps + (d)->output_caps_start)
 #define HID_FEATURE_VALUE_CAPS(d) ((d)->value_caps + (d)->feature_caps_start)
-#define HID_COLLECTION_VALUE_CAPS(d) ((d)->value_caps + (d)->feature_caps_end)
+#define HID_COLLECTION_NODES(d) (struct hid_collection_node *)((char *)(d)->value_caps + (d)->caps_size)
 
 #endif /* __WINE_PARSE_H */
