@@ -415,8 +415,7 @@ static struct hid_preparsed_data *build_preparsed_data( struct hid_parser_state 
     if (!(data = ExAllocatePool( pool_type, size ))) return NULL;
     memset( data, 0, size );
 
-    data->magic = HID_MAGIC;
-    data->size = size;
+    memcpy( data->magic, "HidP KDR", 8 );
     data->usage = state->usage;
     data->usage_page = state->usage_page;
     data->input_caps_start = 0;
@@ -635,6 +634,9 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
         return STATUS_NO_MEMORY;
     }
 
+    len = preparsed->caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
+          preparsed->number_link_collection_nodes * sizeof(struct hid_collection_node);
+
     device_desc->CollectionDescLength = 1;
     device_desc->CollectionDesc[0].UsagePage = preparsed->usage_page;
     device_desc->CollectionDesc[0].Usage = preparsed->usage;
@@ -642,7 +644,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     device_desc->CollectionDesc[0].InputLength = preparsed->input_report_byte_length;
     device_desc->CollectionDesc[0].OutputLength = preparsed->output_report_byte_length;
     device_desc->CollectionDesc[0].FeatureLength = preparsed->feature_report_byte_length;
-    device_desc->CollectionDesc[0].PreparsedDataLength = preparsed->size;
+    device_desc->CollectionDesc[0].PreparsedDataLength = len;
     device_desc->CollectionDesc[0].PreparsedData = (PHIDP_PREPARSED_DATA)preparsed;
 
     caps = HID_INPUT_VALUE_CAPS( preparsed );

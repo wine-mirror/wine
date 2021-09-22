@@ -44,31 +44,36 @@ struct hid_collection_node
 
 struct hid_value_caps
 {
-    USAGE   usage_page;
-    USAGE   usage_min;
-    USAGE   usage_max;
-    USHORT  data_index_min;
-    USHORT  data_index_max;
-    USHORT  string_min;
-    USHORT  string_max;
-    USHORT  designator_min;
-    USHORT  designator_max;
-    ULONG   flags;
-    UCHAR   report_id;
-    USHORT  link_collection;
-    USAGE   link_usage_page;
-    USAGE   link_usage;
-    USHORT  bit_field;
-    USHORT  bit_size;
-    USHORT  report_count;
-    UCHAR   start_bit;
-    USHORT  start_byte;
-    LONG    logical_min;
-    LONG    logical_max;
-    LONG    physical_min;
-    LONG    physical_max;
-    ULONG   units;
-    ULONG   units_exp;
+    USHORT usage_page;
+    UCHAR report_id;
+    UCHAR start_bit;
+    USHORT bit_size;
+    USHORT report_count;
+    USHORT start_byte;
+    USHORT total_bits;
+    ULONG bit_field;
+    USHORT end_byte;
+    USHORT link_collection;
+    USAGE link_usage_page;
+    USAGE link_usage;
+    ULONG flags;
+    ULONG padding[8];
+    USAGE usage_min;
+    USAGE usage_max;
+    USHORT string_min;
+    USHORT string_max;
+    USHORT designator_min;
+    USHORT designator_max;
+    USHORT data_index_min;
+    USHORT data_index_max;
+    USHORT null_value;
+    USHORT unknown;
+    LONG logical_min;
+    LONG logical_max;
+    LONG physical_min;
+    LONG physical_max;
+    LONG units;
+    LONG units_exp;
 };
 
 /* named array continues on next caps */
@@ -85,10 +90,10 @@ struct hid_value_caps
 
 struct hid_preparsed_data
 {
-    DWORD magic;
-    DWORD size;
+    char magic[8];
     USAGE usage;
     USAGE usage_page;
+    USHORT unknown[2];
     USHORT input_caps_start;
     USHORT input_caps_count;
     USHORT input_caps_end;

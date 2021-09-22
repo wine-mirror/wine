@@ -717,6 +717,7 @@ UINT WINAPI GetRawInputDeviceInfoA(HANDLE device, UINT command, void *data, UINT
  */
 UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT *data_size)
 {
+    struct hid_preparsed_data *preparsed;
     RID_DEVICE_INFO info;
     struct device *device;
     DWORD len, data_len;
@@ -751,7 +752,10 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         break;
 
     case RIDI_PREPARSEDDATA:
-        len = device->data ? ((struct hid_preparsed_data *)device->data)->size : 0;
+        if (!(preparsed = (struct hid_preparsed_data *)device->data)) len = 0;
+        else len = preparsed->caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
+                   preparsed->number_link_collection_nodes * sizeof(struct hid_collection_node);
+
         if (device->data && len <= data_len && data)
             memcpy(data, device->data, len);
         *data_size = len;

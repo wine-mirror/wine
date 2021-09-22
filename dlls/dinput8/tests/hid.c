@@ -3116,7 +3116,6 @@ static void test_hidp_kdr(void)
     ok( ret, "HidD_GetPreparsedData failed with error %u\n", GetLastError() );
 
     kdr = (struct hidp_kdr *)preparsed_data;
-    todo_wine
     ok( !strncmp( kdr->magic, expect_kdr.magic, 8 ), "got %s expected %s\n",
         debugstr_an(kdr->magic, 8), debugstr_an(expect_kdr.magic, 8) );
 
@@ -3135,13 +3134,15 @@ static void test_hidp_kdr(void)
         check_member( *kdr, expect_kdr, "%d", output_caps_end );
         check_member( *kdr, expect_kdr, "%d", output_report_byte_length );
         check_member( *kdr, expect_kdr, "%d", feature_caps_start );
+        todo_wine
         check_member( *kdr, expect_kdr, "%d", feature_caps_count );
         check_member( *kdr, expect_kdr, "%d", feature_caps_end );
         check_member( *kdr, expect_kdr, "%d", feature_report_byte_length );
+        todo_wine
         check_member( *kdr, expect_kdr, "%d", caps_size );
         check_member( *kdr, expect_kdr, "%d", number_link_collection_nodes );
 
-        for (i = 0; i < ARRAY_SIZE(expect_caps); ++i)
+        for (i = 0; i < min( ARRAY_SIZE(expect_caps), kdr->caps_size / sizeof(struct hidp_kdr_caps) ); ++i)
         {
             winetest_push_context( "caps[%d]", i );
             check_member( kdr->caps[i], expect_caps[i], "%04x", usage_page );
@@ -3150,8 +3151,10 @@ static void test_hidp_kdr(void)
             check_member( kdr->caps[i], expect_caps[i], "%d", bit_size );
             check_member( kdr->caps[i], expect_caps[i], "%d", report_count );
             check_member( kdr->caps[i], expect_caps[i], "%d", start_byte );
+            todo_wine
             check_member( kdr->caps[i], expect_caps[i], "%d", total_bits );
             check_member( kdr->caps[i], expect_caps[i], "%#x", bit_field );
+            todo_wine_if( expect_caps[i].end_byte )
             check_member( kdr->caps[i], expect_caps[i], "%d", end_byte );
             check_member( kdr->caps[i], expect_caps[i], "%d", link_collection );
             check_member( kdr->caps[i], expect_caps[i], "%04x", link_usage_page );
@@ -3171,13 +3174,20 @@ static void test_hidp_kdr(void)
             check_member( kdr->caps[i], expect_caps[i], "%d", string_max );
             check_member( kdr->caps[i], expect_caps[i], "%d", designator_min );
             check_member( kdr->caps[i], expect_caps[i], "%d", designator_max );
+            todo_wine_if( !(kdr->caps[i].bit_field & 2) && !(kdr->caps[i].flags & HIDP_KDR_CAPS_IS_RANGE) )
             check_member( kdr->caps[i], expect_caps[i], "%#x", data_index_min );
+            todo_wine_if( !(kdr->caps[i].bit_field & 2) && !(kdr->caps[i].flags & HIDP_KDR_CAPS_IS_RANGE) )
             check_member( kdr->caps[i], expect_caps[i], "%#x", data_index_max );
+            todo_wine_if( expect_caps[i].null_value )
             check_member( kdr->caps[i], expect_caps[i], "%d", null_value );
             check_member( kdr->caps[i], expect_caps[i], "%d", unknown );
+            todo_wine_if( !(kdr->caps[i].bit_field & 2) )
             check_member( kdr->caps[i], expect_caps[i], "%d", logical_min );
+            todo_wine_if( kdr->caps[i].flags & HIDP_KDR_CAPS_IS_BUTTON )
             check_member( kdr->caps[i], expect_caps[i], "%d", logical_max );
+            todo_wine_if( kdr->caps[i].flags & HIDP_KDR_CAPS_IS_BUTTON )
             check_member( kdr->caps[i], expect_caps[i], "%d", physical_min );
+            todo_wine_if( kdr->caps[i].flags & HIDP_KDR_CAPS_IS_BUTTON )
             check_member( kdr->caps[i], expect_caps[i], "%d", physical_max );
             check_member( kdr->caps[i], expect_caps[i], "%#x", units );
             check_member( kdr->caps[i], expect_caps[i], "%#x", units_exp );
