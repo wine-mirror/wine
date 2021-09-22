@@ -29,6 +29,7 @@
 static void test_data_key(void)
 {
     ISpRegDataKey *data_key;
+    ISpDataKey *sub;
     HRESULT hr;
     HKEY key;
     LONG res;
@@ -41,10 +42,17 @@ static void test_data_key(void)
                            NULL, &key, NULL );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
+    hr = ISpRegDataKey_CreateKey( data_key, L"Testing", &sub );
+    ok( hr == E_HANDLE, "got %08lx\n", hr );
+
     hr = ISpRegDataKey_SetKey( data_key, key, FALSE );
     ok( hr == S_OK, "got %08lx\n", hr );
     hr = ISpRegDataKey_SetKey( data_key, key, FALSE );
     ok( hr == SPERR_ALREADY_INITIALIZED, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_CreateKey( data_key, L"Testing", &sub );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpDataKey_Release(sub);
 
     ISpRegDataKey_Release( data_key );
 }

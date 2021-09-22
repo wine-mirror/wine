@@ -145,8 +145,28 @@ static HRESULT WINAPI data_key_OpenKey( ISpRegDataKey *iface,
 static HRESULT WINAPI data_key_CreateKey( ISpRegDataKey *iface,
                                           LPCWSTR name, ISpDataKey **sub_key )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct data_key *This = impl_from_ISpRegDataKey( iface );
+    ISpRegDataKey *spregkey;
+    HRESULT hr;
+    HKEY key;
+    LONG res;
+
+    TRACE( "%p, %s, %p\n", This, debugstr_w(name), sub_key );
+
+    res = RegCreateKeyExW( This->key, name, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+    if (res != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(res);
+
+    hr = data_key_create(NULL, &IID_ISpRegDataKey, (void**)&spregkey);
+    if (SUCCEEDED(hr))
+    {
+        hr = ISpRegDataKey_SetKey(spregkey, key, FALSE);
+        if (SUCCEEDED(hr))
+            hr = ISpRegDataKey_QueryInterface(spregkey, &IID_ISpDataKey, (void**)sub_key);
+        ISpRegDataKey_Release(spregkey);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI data_key_DeleteKey( ISpRegDataKey *iface, LPCWSTR name )
