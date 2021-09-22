@@ -100,8 +100,6 @@ struct media_source
         SOURCE_SHUTDOWN,
     } state;
 
-    LONGLONG start_time;
-
     HANDLE read_thread;
     bool read_thread_shutdown;
 };
@@ -274,7 +272,6 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
         position->vt = VT_I8;
         position->hVal.QuadPart = 0;
     }
-    source->start_time = position->hVal.QuadPart;
 
     for (i = 0; i < source->stream_count; i++)
     {
@@ -427,7 +424,7 @@ static void send_buffer(struct media_stream *stream, const struct wg_parser_even
         goto out;
     }
 
-    if (FAILED(hr = IMFSample_SetSampleTime(sample, event->u.buffer.pts - stream->parent_source->start_time)))
+    if (FAILED(hr = IMFSample_SetSampleTime(sample, event->u.buffer.pts)))
     {
         ERR("Failed to set sample time, hr %#x.\n", hr);
         goto out;
