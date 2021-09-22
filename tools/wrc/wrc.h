@@ -43,7 +43,6 @@ extern int utf8_input;
 extern int check_utf8;
 
 extern char *input_name;
-extern char *cmdline;
 
 extern const char *nlsdirs[];
 
