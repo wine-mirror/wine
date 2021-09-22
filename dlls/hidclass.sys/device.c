@@ -190,27 +190,30 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     KIRQL irql;
     IRP *irp;
 
-    size = offsetof( RAWINPUT, data.hid.bRawData[packet->reportBufferLen] );
-    if (!(rawinput = malloc( size ))) ERR( "Failed to allocate rawinput data!\n" );
-    else
+    if (IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID ))
     {
-        INPUT input;
+        size = offsetof( RAWINPUT, data.hid.bRawData[packet->reportBufferLen] );
+        if (!(rawinput = malloc( size ))) ERR( "Failed to allocate rawinput data!\n" );
+        else
+        {
+            INPUT input;
 
-        rawinput->header.dwType = RIM_TYPEHID;
-        rawinput->header.dwSize = size;
-        rawinput->header.hDevice = ULongToHandle( ext->u.pdo.rawinput_handle );
-        rawinput->header.wParam = RIM_INPUT;
-        rawinput->data.hid.dwCount = 1;
-        rawinput->data.hid.dwSizeHid = packet->reportBufferLen;
-        memcpy( rawinput->data.hid.bRawData, packet->reportBuffer, packet->reportBufferLen );
+            rawinput->header.dwType = RIM_TYPEHID;
+            rawinput->header.dwSize = size;
+            rawinput->header.hDevice = ULongToHandle( ext->u.pdo.rawinput_handle );
+            rawinput->header.wParam = RIM_INPUT;
+            rawinput->data.hid.dwCount = 1;
+            rawinput->data.hid.dwSizeHid = packet->reportBufferLen;
+            memcpy( rawinput->data.hid.bRawData, packet->reportBuffer, packet->reportBufferLen );
 
-        input.type = INPUT_HARDWARE;
-        input.hi.uMsg = WM_INPUT;
-        input.hi.wParamH = 0;
-        input.hi.wParamL = 0;
-        __wine_send_input( 0, &input, rawinput );
+            input.type = INPUT_HARDWARE;
+            input.hi.uMsg = WM_INPUT;
+            input.hi.wParamH = 0;
+            input.hi.wParamL = 0;
+            __wine_send_input( 0, &input, rawinput );
 
-        free( rawinput );
+            free( rawinput );
+        }
     }
 
     if (!(last_report = hid_report_create( packet )))
