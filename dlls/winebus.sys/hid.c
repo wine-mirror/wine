@@ -94,6 +94,7 @@ BOOL hid_device_end_report_descriptor(struct unix_device *iface)
         END_COLLECTION,
     };
 
+    iface->hid_device_state.report_len = (iface->hid_device_state.bit_size + 7) / 8;
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 

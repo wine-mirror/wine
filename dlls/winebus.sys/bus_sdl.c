@@ -123,11 +123,6 @@ struct sdl_device
     SDL_GameController *sdl_controller;
     SDL_JoystickID id;
 
-    int button_start;
-    int axis_start;
-    int ball_start;
-    int hat_start;
-
     int buffer_length;
     BYTE *report_buffer;
 
@@ -152,39 +147,43 @@ static struct sdl_device *find_device_from_id(SDL_JoystickID id)
 
 static void set_button_value(struct sdl_device *impl, int index, int value)
 {
-    int byte_index = impl->button_start + index / 8;
+    struct hid_device_state *state = &impl->unix_device.hid_device_state;
+    USHORT offset = state->button_start;
+    int byte_index = offset + index / 8;
     int bit_index = index % 8;
     BYTE mask = 1 << bit_index;
-
-    if (value)
-    {
-        impl->report_buffer[byte_index] = impl->report_buffer[byte_index] | mask;
-    }
-    else
-    {
-        mask = ~mask;
-        impl->report_buffer[byte_index] = impl->report_buffer[byte_index] & mask;
-    }
+    if (index >= state->button_count) return;
+    if (value) impl->report_buffer[byte_index] |= mask;
+    else impl->report_buffer[byte_index] &= ~mask;
 }
 
 static void set_axis_value(struct sdl_device *impl, int index, short value)
 {
-    DWORD *report = (DWORD *)(impl->report_buffer + impl->axis_start);
-    report[index] = LE_DWORD(value);
+    struct hid_device_state *state = &impl->unix_device.hid_device_state;
+    USHORT offset = state->abs_axis_start;
+    if (index >= state->abs_axis_count) return;
+    offset += index * sizeof(DWORD);
+    *(DWORD *)&impl->report_buffer[offset] = LE_DWORD(value);
 }
 
 static void set_ball_value(struct sdl_device *impl, int index, int value1, int value2)
 {
-    int offset;
-    offset = impl->ball_start + (index * sizeof(DWORD));
+    struct hid_device_state *state = &impl->unix_device.hid_device_state;
+    USHORT offset = state->rel_axis_start;
+    if (index >= state->rel_axis_count) return;
+    offset += index * sizeof(DWORD);
     *(DWORD *)&impl->report_buffer[offset] = LE_DWORD(value1);
     *(DWORD *)&impl->report_buffer[offset + sizeof(DWORD)] = LE_DWORD(value2);
 }
 
 static void set_hat_value(struct sdl_device *impl, int index, int value)
 {
-    int byte = impl->hat_start + index;
+    struct hid_device_state *state = &impl->unix_device.hid_device_state;
+    USHORT offset = state->hatswitch_start;
     unsigned char val;
+
+    if (index >= state->hatswitch_count) return;
+    offset += index;
 
     switch (value)
     {
@@ -203,7 +202,7 @@ static void set_hat_value(struct sdl_device *impl, int index, int value)
         default: return;
     }
 
-    impl->report_buffer[byte] = val;
+    impl->report_buffer[offset] = val;
 }
 
 static BOOL descriptor_add_haptic(struct sdl_device *impl)
@@ -246,8 +245,7 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
         HID_USAGE_GENERIC_WHEEL
     };
     struct sdl_device *impl = impl_from_unix_device(iface);
-    int i, report_size = 1;
-    int button_count, axis_count, ball_count, hat_count;
+    int i, button_count, axis_count, ball_count, hat_count;
 
     axis_count = pSDL_JoystickNumAxes(impl->sdl_joystick);
     if (axis_count > 6)
@@ -255,8 +253,6 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
         FIXME("Clamping joystick to 6 axis\n");
         axis_count = 6;
     }
-    impl->axis_start = report_size;
-    report_size += (sizeof(DWORD) * axis_count);
 
     ball_count = pSDL_JoystickNumBalls(impl->sdl_joystick);
     if (axis_count + ball_count * 2 > ARRAY_SIZE(joystick_usages))
@@ -264,19 +260,9 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
         FIXME("Capping ball + axis at 9\n");
         ball_count = (ARRAY_SIZE(joystick_usages) - axis_count) / 2;
     }
-    impl->ball_start = report_size;
-    report_size += (sizeof(DWORD) * 2 * ball_count);
 
     hat_count = pSDL_JoystickNumHats(impl->sdl_joystick);
-    impl->hat_start = report_size;
-    report_size += hat_count;
-
-    /* For now lump all buttons just into incremental usages, Ignore Keys */
     button_count = pSDL_JoystickNumButtons(impl->sdl_joystick);
-    impl->button_start = report_size;
-    report_size += (button_count + 7) / 8;
-
-    TRACE("Report will be %i bytes\n", report_size);
 
     if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_JOYSTICK))
         return STATUS_NO_MEMORY;
@@ -301,8 +287,8 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
-    impl->buffer_length = report_size;
-    if (!(impl->report_buffer = calloc(1, report_size))) goto failed;
+    impl->buffer_length = iface->hid_device_state.report_len;
+    if (!(impl->report_buffer = calloc(1, impl->buffer_length))) goto failed;
 
     /* Initialize axis in the report */
     for (i = 0; i < axis_count; i++)
@@ -353,13 +339,6 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
     ULONG i, button_count = SDL_CONTROLLER_BUTTON_MAX - 1;
     C_ASSERT(SDL_CONTROLLER_AXIS_MAX == 6);
 
-    impl->axis_start = 0;
-    impl->hat_start = SDL_CONTROLLER_AXIS_MAX * sizeof(DWORD);
-    impl->button_start = impl->hat_start + 1;
-    impl->buffer_length = impl->button_start + (button_count + 7) / 8;
-
-    TRACE("Report will be %i bytes\n", impl->buffer_length);
-
     if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD))
         return STATUS_NO_MEMORY;
 
@@ -387,6 +366,7 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
+    impl->buffer_length = impl->unix_device.hid_device_state.report_len;
     if (!(impl->report_buffer = calloc(1, impl->buffer_length))) goto failed;
 
     /* Initialize axis in the report */

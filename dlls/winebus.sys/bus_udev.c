@@ -127,12 +127,11 @@ struct lnxev_device
     BYTE *current_report_buffer;
     enum { FIRST, NORMAL, DROPPED } report_state;
 
-    int button_start;
-    BYTE button_map[KEY_MAX];
+    BYTE abs_map[HID_ABS_MAX];
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
+    BYTE button_map[KEY_MAX];
     int hat_values[8];
-    int abs_map[HID_ABS_MAX];
 };
 
 static inline struct base_device *impl_from_unix_device(struct unix_device *iface)
@@ -331,25 +330,22 @@ static const BYTE* what_am_I(struct udev_device *dev)
     return Unknown;
 }
 
-static void set_button_value(int index, int value, BYTE* buffer)
+static void set_button_value(struct lnxev_device *impl, int index, int value)
 {
-    int bindex = index / 8;
-    int b = index % 8;
-    BYTE mask;
-
-    mask = 1<<b;
-    if (value)
-        buffer[bindex] = buffer[bindex] | mask;
-    else
-    {
-        mask = ~mask;
-        buffer[bindex] = buffer[bindex] & mask;
-    }
+    struct hid_device_state *state = &impl->base.unix_device.hid_device_state;
+    USHORT offset = state->button_start;
+    int byte_index = offset + index / 8;
+    int bit_index = index % 8;
+    BYTE mask = 1 << bit_index;
+    if (index >= state->button_count) return;
+    if (value) impl->current_report_buffer[byte_index] |= mask;
+    else impl->current_report_buffer[byte_index] &= ~mask;
 }
 
 static void set_abs_axis_value(struct lnxev_device *impl, int code, int value)
 {
-    int index;
+    struct hid_device_state *state = &impl->base.unix_device.hid_device_state;
+    USHORT offset, index;
     /* check for hatswitches */
     if (code <= ABS_HAT3Y && code >= ABS_HAT0X)
     {
@@ -387,22 +383,33 @@ static void set_abs_axis_value(struct lnxev_device *impl, int code, int value)
             else
                 value = 6;
         }
-        impl->current_report_buffer[impl->hat_map[index]] = value;
+        index = impl->hat_map[index];
+        offset = state->hatswitch_start;
+        if (index >= state->hatswitch_count) return;
+        offset += index;
+        impl->current_report_buffer[offset] = value;
     }
     else if (code < HID_ABS_MAX && ABS_TO_HID_MAP[code][0] != 0)
     {
         index = impl->abs_map[code];
-        *((DWORD*)&impl->current_report_buffer[index]) = LE_DWORD(value);
+        offset = state->abs_axis_start;
+        if (index >= state->abs_axis_count) return;
+        offset += index * sizeof(DWORD);
+        *(DWORD *)&impl->current_report_buffer[offset] = LE_DWORD(value);
     }
 }
 
 static void set_rel_axis_value(struct lnxev_device *impl, int code, int value)
 {
-    int index;
+    struct hid_device_state *state = &impl->base.unix_device.hid_device_state;
+    USHORT offset, index;
     if (code < HID_REL_MAX && REL_TO_HID_MAP[code][0] != 0)
     {
         index = impl->rel_map[code];
-        *(DWORD *)&impl->current_report_buffer[index] = LE_DWORD(value);
+        offset = state->rel_axis_start;
+        if (index >= state->rel_axis_count) return;
+        offset += index * sizeof(DWORD);
+        *(DWORD *)&impl->current_report_buffer[offset] = LE_DWORD(value);
     }
 }
 
@@ -455,9 +462,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     BYTE absbits[(ABS_MAX+7)/8];
     BYTE relbits[(REL_MAX+7)/8];
     USAGE_AND_PAGE usage;
-    INT i;
-    INT report_size;
-    INT button_count, abs_count, rel_count, hat_count;
+    INT i, button_count, abs_count, rel_count, hat_count;
     const BYTE *device_usage = what_am_I(dev);
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
 
@@ -471,8 +476,6 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
         memset(absbits, 0, sizeof(absbits));
     }
-
-    report_size = 0;
 
     if (!hid_device_begin_report_descriptor(iface, device_usage[0], device_usage[1]))
         return STATUS_NO_MEMORY;
@@ -490,9 +493,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
                                  LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
             return STATUS_NO_MEMORY;
 
-        impl->abs_map[i] = report_size;
-        report_size += 4;
-        abs_count++;
+        impl->abs_map[i] = abs_count++;
     }
 
     rel_count = 0;
@@ -506,47 +507,32 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
                                  INT32_MIN, INT32_MAX))
             return STATUS_NO_MEMORY;
 
-        impl->rel_map[i] = report_size;
-        report_size += 4;
-        rel_count++;
+        impl->rel_map[i] = rel_count++;
     }
 
     hat_count = 0;
     for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
     {
         if (!test_bit(absbits, i)) continue;
-        impl->hat_map[i - ABS_HAT0X] = report_size;
+        impl->hat_map[i - ABS_HAT0X] = hat_count++;
         impl->hat_values[i - ABS_HAT0X] = 0;
         impl->hat_values[i - ABS_HAT0X + 1] = 0;
-        report_size++;
-        hat_count++;
     }
 
-    if (hat_count)
-    {
-        if (!hid_device_add_hatswitch(iface, hat_count))
-            return STATUS_NO_MEMORY;
-    }
+    if (hat_count && !hid_device_add_hatswitch(iface, hat_count))
+        return STATUS_NO_MEMORY;
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
-    impl->button_start = report_size;
     button_count = count_buttons(impl->base.device_fd, impl->button_map);
-    if (button_count)
-    {
-        if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
-            return STATUS_NO_MEMORY;
-
-        report_size += (button_count + 7) / 8;
-    }
+    if (button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
+        return STATUS_NO_MEMORY;
 
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
-    TRACE("Report will be %i bytes\n", report_size);
-
-    impl->buffer_length = report_size;
-    if (!(impl->current_report_buffer = calloc(1, report_size))) goto failed;
-    if (!(impl->last_report_buffer = calloc(1, report_size))) goto failed;
+    impl->buffer_length = iface->hid_device_state.report_len;
+    if (!(impl->current_report_buffer = calloc(1, impl->buffer_length))) goto failed;
+    if (!(impl->last_report_buffer = calloc(1, impl->buffer_length))) goto failed;
     impl->report_state = FIRST;
 
     /* Initialize axis in the report */
@@ -594,7 +580,7 @@ static BOOL set_report_from_event(struct lnxev_device *impl, struct input_event 
             return FALSE;
 #endif
         case EV_KEY:
-            set_button_value(impl->button_start * 8 + impl->button_map[ie->code], ie->value, impl->current_report_buffer);
+            set_button_value(impl, impl->button_map[ie->code], ie->value);
             return FALSE;
         case EV_ABS:
             set_abs_axis_value(impl, ie->code, ie->value);

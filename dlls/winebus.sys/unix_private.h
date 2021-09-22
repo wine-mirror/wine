@@ -68,6 +68,7 @@ struct hid_device_state
     USHORT hatswitch_count;
     USHORT button_start;
     USHORT button_count;
+    USHORT report_len;
 };
 
 struct unix_device
