@@ -698,7 +698,7 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 
 dnl **** Check for working dll ****
 
-AC_SUBST(DLLFLAGS,"-D_REENTRANT")
+AC_SUBST(DLLFLAGS,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDEXECFLAGS,"")
 AC_SUBST(TOP_INSTALL_LIB,"")
@@ -706,7 +706,6 @@ AC_SUBST(TOP_INSTALL_DEV,"")
 AC_SUBST(WINELOADER_LDFLAGS,"")
 AC_SUBST(WINEPRELOADER_LDFLAGS,"")
 LIBEXT="so"
-DLLEXT=".so"
 WINE_PATH_SONAME_TOOLS
 WINE_CONFIG_HELPERS
 
@@ -719,7 +718,6 @@ case $host_os in
   cygwin*|mingw32*)
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     LIBEXT="dll"
-    DLLEXT=""
     dnl Disable stdcall fixups to catch prototype mismatches
     case $host_cpu in
       *i[[3456]]86*) WINE_TRY_CFLAGS([-Wl,--disable-stdcall-fixup],
@@ -904,57 +902,38 @@ case $host_os in
         DLLFLAGS="$DLLFLAGS -fPIC"
         LDDLLFLAGS="-fPIC" ;;
     esac
-    AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
-        [WINE_TRY_SHLIB_FLAGS([-fPIC -shared -Wl,-Bsymbolic],
-                              ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
-    if test "$ac_cv_c_dll_gnuelf" = "yes"
-    then
-      LIBWINE_LDFLAGS="-shared"
-      WINE_TRY_CFLAGS([-shared -Wl,-soname,confest.so.1],
-                      [LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so.$libwine_soversion"],
-                      [WINE_TRY_CFLAGS([-shared -Wl,-h,confest.so.1],
-                                       [LIBWINE_LDFLAGS="-shared -Wl,-h,libwine.so.$libwine_soversion"])])
+    LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so.$libwine_soversion"
 
-      echo '{ global: *; };' >conftest.map
-      WINE_TRY_CFLAGS([-shared -Wl,--version-script=conftest.map],
-                      [LIBWINE_LDFLAGS="$LIBWINE_LDFLAGS -Wl,--version-script=\$(srcdir)/wine.map"])
-      rm -f conftest.map
+    echo '{ global: *; };' >conftest.map
+    WINE_TRY_CFLAGS([-shared -Wl,--version-script=conftest.map],
+                    [LIBWINE_LDFLAGS="$LIBWINE_LDFLAGS -Wl,--version-script=\$(srcdir)/wine.map"])
+    rm -f conftest.map
 
-      WINE_TRY_CFLAGS([-Wl,--export-dynamic],
-                      [WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
-      WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
+    WINE_TRY_CFLAGS([-Wl,--export-dynamic],
+                    [WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
+    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-      case $host_cpu in
-        *i[[3456789]]86* | x86_64 | *aarch64* | arm*)
-          WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x7bc00000],
-                          [case $host_os in
-                           freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                           *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
-                           esac],
-                          [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7d000400],
-                                           [case $host_os in
-                                              freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                              *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
-                                           esac])
-                           AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
-                           if test "x$PRELINK" = xfalse
-                           then
-                               WINE_WARNING([prelink not found and linker does not support relocation, base address of core dlls won't be set correctly.])
-                           fi])
-          WINE_TRY_CFLAGS([-Wl,-z,max-page-size=0x1000],
-                          [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"])
-          ;;
-      esac
-
-    else
-      AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
-          [WINE_TRY_SHLIB_FLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
-                                ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
-      if test "$ac_cv_c_dll_unixware" = "yes"
-      then
-        LIBWINE_LDFLAGS="-Wl,-G,-h,libwine.so.$libwine_soversion"
-      fi
-    fi
+    case $host_cpu in
+      *i[[3456789]]86* | x86_64 | *aarch64* | arm*)
+        WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x7bc00000],
+                        [case $host_os in
+                         freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
+                         *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
+                         esac],
+                        [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7d000400],
+                                         [case $host_os in
+                                            freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
+                                            *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
+                                         esac])
+                         AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
+                         if test "x$PRELINK" = xfalse
+                         then
+                             WINE_WARNING([prelink not found and linker does not support relocation, base address of core dlls won't be set correctly.])
+                         fi])
+        WINE_TRY_CFLAGS([-Wl,-z,max-page-size=0x1000],
+                        [WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"])
+        ;;
+    esac
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so.$libwine_version")
     AC_SUBST(LIBWINE_DEPENDS,"wine.map")
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.so.$libwine_version libs/wine/libwine.so.$libwine_soversion"

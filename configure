@@ -7934,7 +7934,7 @@ done
 
 
 
-DLLFLAGS="-D_REENTRANT"
+DLLFLAGS=""
 
 LDDLLFLAGS=""
 
@@ -7949,7 +7949,6 @@ WINELOADER_LDFLAGS=""
 WINEPRELOADER_LDFLAGS=""
 
 LIBEXT="so"
-DLLEXT=".so"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -8313,7 +8312,6 @@ else
 fi
 
     LIBEXT="dll"
-    DLLEXT=""
         case $host_cpu in
       *i[3456]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
 $as_echo_n "checking whether the compiler supports -Wl,--disable-stdcall-fixup... " >&6; }
@@ -9318,90 +9316,10 @@ fi
         DLLFLAGS="$DLLFLAGS -fPIC"
         LDDLLFLAGS="-fPIC" ;;
     esac
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build a GNU style ELF dll" >&5
-$as_echo_n "checking whether we can build a GNU style ELF dll... " >&6; }
-if ${ac_cv_c_dll_gnuelf+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -fPIC -shared -Wl,-Bsymbolic"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void myfunc() {}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__fPIC__shared__Wl__Bsymbolic=yes
-else
-  ac_cv_cflags__fPIC__shared__Wl__Bsymbolic=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-if test "x$ac_cv_cflags__fPIC__shared__Wl__Bsymbolic" = xyes; then :
-  ac_cv_c_dll_gnuelf="yes"
-else
-  ac_cv_c_dll_gnuelf="no"
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_dll_gnuelf" >&5
-$as_echo "$ac_cv_c_dll_gnuelf" >&6; }
-    if test "$ac_cv_c_dll_gnuelf" = "yes"
-    then
-      LIBWINE_LDFLAGS="-shared"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -shared -Wl,-soname,confest.so.1" >&5
-$as_echo_n "checking whether the compiler supports -shared -Wl,-soname,confest.so.1... " >&6; }
-if ${ac_cv_cflags__shared__Wl__soname_confest_so_1+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -shared -Wl,-soname,confest.so.1"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__shared__Wl__soname_confest_so_1=yes
-else
-  ac_cv_cflags__shared__Wl__soname_confest_so_1=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__shared__Wl__soname_confest_so_1" >&5
-$as_echo "$ac_cv_cflags__shared__Wl__soname_confest_so_1" >&6; }
-if test "x$ac_cv_cflags__shared__Wl__soname_confest_so_1" = xyes; then :
-  LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so.$libwine_soversion"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -shared -Wl,-h,confest.so.1" >&5
-$as_echo_n "checking whether the compiler supports -shared -Wl,-h,confest.so.1... " >&6; }
-if ${ac_cv_cflags__shared__Wl__h_confest_so_1+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -shared -Wl,-h,confest.so.1"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__shared__Wl__h_confest_so_1=yes
-else
-  ac_cv_cflags__shared__Wl__h_confest_so_1=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__shared__Wl__h_confest_so_1" >&5
-$as_echo "$ac_cv_cflags__shared__Wl__h_confest_so_1" >&6; }
-if test "x$ac_cv_cflags__shared__Wl__h_confest_so_1" = xyes; then :
-  LIBWINE_LDFLAGS="-shared -Wl,-h,libwine.so.$libwine_soversion"
-fi
-fi
+    LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so.$libwine_soversion"
 
-      echo '{ global: *; };' >conftest.map
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -shared -Wl,--version-script=conftest.map" >&5
+    echo '{ global: *; };' >conftest.map
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -shared -Wl,--version-script=conftest.map" >&5
 $as_echo_n "checking whether the compiler supports -shared -Wl,--version-script=conftest.map... " >&6; }
 if ${ac_cv_cflags__shared__Wl___version_script_conftest_map+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9426,9 +9344,9 @@ $as_echo "$ac_cv_cflags__shared__Wl___version_script_conftest_map" >&6; }
 if test "x$ac_cv_cflags__shared__Wl___version_script_conftest_map" = xyes; then :
   LIBWINE_LDFLAGS="$LIBWINE_LDFLAGS -Wl,--version-script=\$(srcdir)/wine.map"
 fi
-      rm -f conftest.map
+    rm -f conftest.map
 
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--export-dynamic" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--export-dynamic" >&5
 $as_echo_n "checking whether the compiler supports -Wl,--export-dynamic... " >&6; }
 if ${ac_cv_cflags__Wl___export_dynamic+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9453,11 +9371,11 @@ $as_echo "$ac_cv_cflags__Wl___export_dynamic" >&6; }
 if test "x$ac_cv_cflags__Wl___export_dynamic" = xyes; then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
-      WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
+    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-      case $host_cpu in
-        *i[3456789]86* | x86_64 | *aarch64* | arm*)
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
+    case $host_cpu in
+      *i[3456789]86* | x86_64 | *aarch64* | arm*)
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000... " >&6; }
 if ${ac_cv_cflags__Wl__Ttext_segment_0x7bc00000+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9481,9 +9399,9 @@ fi
 $as_echo "$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&6; }
 if test "x$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" = xyes; then :
   case $host_os in
-                           freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                           *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
-                           esac
+                         freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
+                         *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
+                         esac
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400" >&5
 $as_echo_n "checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400... " >&6; }
@@ -9509,11 +9427,11 @@ fi
 $as_echo "$ac_cv_cflags__Wl___section_start__interp_0x7d000400" >&6; }
 if test "x$ac_cv_cflags__Wl___section_start__interp_0x7d000400" = xyes; then :
   case $host_os in
-                                              freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                              *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
-                                           esac
+                                            freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
+                                            *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
+                                         esac
 fi
-                           # Extract the first word of "prelink", so it can be a program name with args.
+                         # Extract the first word of "prelink", so it can be a program name with args.
 set dummy prelink; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -9554,12 +9472,12 @@ $as_echo "no" >&6; }
 fi
 
 
-                           if test "x$PRELINK" = xfalse
-                           then
-                               as_fn_append wine_warnings "|prelink not found and linker does not support relocation, base address of core dlls won't be set correctly."
-                           fi
+                         if test "x$PRELINK" = xfalse
+                         then
+                             as_fn_append wine_warnings "|prelink not found and linker does not support relocation, base address of core dlls won't be set correctly."
+                         fi
 fi
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,max-page-size=0x1000" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,max-page-size=0x1000" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-z,max-page-size=0x1000... " >&6; }
 if ${ac_cv_cflags__Wl__z_max_page_size_0x1000+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -9584,42 +9502,8 @@ $as_echo "$ac_cv_cflags__Wl__z_max_page_size_0x1000" >&6; }
 if test "x$ac_cv_cflags__Wl__z_max_page_size_0x1000" = xyes; then :
   WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"
 fi
-          ;;
-      esac
-
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build a UnixWare (Solaris) dll" >&5
-$as_echo_n "checking whether we can build a UnixWare (Solaris) dll... " >&6; }
-if ${ac_cv_c_dll_unixware+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void myfunc() {}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__fPIC__Wl__G__h_conftest_so_1_0__B_symbolic=yes
-else
-  ac_cv_cflags__fPIC__Wl__G__h_conftest_so_1_0__B_symbolic=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-if test "x$ac_cv_cflags__fPIC__Wl__G__h_conftest_so_1_0__B_symbolic" = xyes; then :
-  ac_cv_c_dll_unixware="yes"
-else
-  ac_cv_c_dll_unixware="no"
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_dll_unixware" >&5
-$as_echo "$ac_cv_c_dll_unixware" >&6; }
-      if test "$ac_cv_c_dll_unixware" = "yes"
-      then
-        LIBWINE_LDFLAGS="-Wl,-G,-h,libwine.so.$libwine_soversion"
-      fi
-    fi
+        ;;
+    esac
     LIBWINE_SHAREDLIB="libwine.so.$libwine_version"
 
     LIBWINE_DEPENDS="wine.map"
