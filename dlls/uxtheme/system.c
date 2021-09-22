@@ -199,39 +199,39 @@ static void UXTHEME_LoadTheme(void)
 
 /***********************************************************************/
 
-static const char * const SysColorsNames[] =
+static const WCHAR * const SysColorsNames[] =
 {
-    "Scrollbar",                /* COLOR_SCROLLBAR */
-    "Background",               /* COLOR_BACKGROUND */
-    "ActiveTitle",              /* COLOR_ACTIVECAPTION */
-    "InactiveTitle",            /* COLOR_INACTIVECAPTION */
-    "Menu",                     /* COLOR_MENU */
-    "Window",                   /* COLOR_WINDOW */
-    "WindowFrame",              /* COLOR_WINDOWFRAME */
-    "MenuText",                 /* COLOR_MENUTEXT */
-    "WindowText",               /* COLOR_WINDOWTEXT */
-    "TitleText",                /* COLOR_CAPTIONTEXT */
-    "ActiveBorder",             /* COLOR_ACTIVEBORDER */
-    "InactiveBorder",           /* COLOR_INACTIVEBORDER */
-    "AppWorkSpace",             /* COLOR_APPWORKSPACE */
-    "Hilight",                  /* COLOR_HIGHLIGHT */
-    "HilightText",              /* COLOR_HIGHLIGHTTEXT */
-    "ButtonFace",               /* COLOR_BTNFACE */
-    "ButtonShadow",             /* COLOR_BTNSHADOW */
-    "GrayText",                 /* COLOR_GRAYTEXT */
-    "ButtonText",               /* COLOR_BTNTEXT */
-    "InactiveTitleText",        /* COLOR_INACTIVECAPTIONTEXT */
-    "ButtonHilight",            /* COLOR_BTNHIGHLIGHT */
-    "ButtonDkShadow",           /* COLOR_3DDKSHADOW */
-    "ButtonLight",              /* COLOR_3DLIGHT */
-    "InfoText",                 /* COLOR_INFOTEXT */
-    "InfoWindow",               /* COLOR_INFOBK */
-    "ButtonAlternateFace",      /* COLOR_ALTERNATEBTNFACE */
-    "HotTrackingColor",         /* COLOR_HOTLIGHT */
-    "GradientActiveTitle",      /* COLOR_GRADIENTACTIVECAPTION */
-    "GradientInactiveTitle",    /* COLOR_GRADIENTINACTIVECAPTION */
-    "MenuHilight",              /* COLOR_MENUHILIGHT */
-    "MenuBar",                  /* COLOR_MENUBAR */
+    L"Scrollbar",               /* COLOR_SCROLLBAR */
+    L"Background",              /* COLOR_BACKGROUND */
+    L"ActiveTitle",             /* COLOR_ACTIVECAPTION */
+    L"InactiveTitle",           /* COLOR_INACTIVECAPTION */
+    L"Menu",                    /* COLOR_MENU */
+    L"Window",                  /* COLOR_WINDOW */
+    L"WindowFrame",             /* COLOR_WINDOWFRAME */
+    L"MenuText",                /* COLOR_MENUTEXT */
+    L"WindowText",              /* COLOR_WINDOWTEXT */
+    L"TitleText",               /* COLOR_CAPTIONTEXT */
+    L"ActiveBorder",            /* COLOR_ACTIVEBORDER */
+    L"InactiveBorder",          /* COLOR_INACTIVEBORDER */
+    L"AppWorkSpace",            /* COLOR_APPWORKSPACE */
+    L"Hilight",                 /* COLOR_HIGHLIGHT */
+    L"HilightText",             /* COLOR_HIGHLIGHTTEXT */
+    L"ButtonFace",              /* COLOR_BTNFACE */
+    L"ButtonShadow",            /* COLOR_BTNSHADOW */
+    L"GrayText",                /* COLOR_GRAYTEXT */
+    L"ButtonText",              /* COLOR_BTNTEXT */
+    L"InactiveTitleText",       /* COLOR_INACTIVECAPTIONTEXT */
+    L"ButtonHilight",           /* COLOR_BTNHIGHLIGHT */
+    L"ButtonDkShadow",          /* COLOR_3DDKSHADOW */
+    L"ButtonLight",             /* COLOR_3DLIGHT */
+    L"InfoText",                /* COLOR_INFOTEXT */
+    L"InfoWindow",              /* COLOR_INFOBK */
+    L"ButtonAlternateFace",     /* COLOR_ALTERNATEBTNFACE */
+    L"HotTrackingColor",        /* COLOR_HOTLIGHT */
+    L"GradientActiveTitle",     /* COLOR_GRADIENTACTIVECAPTION */
+    L"GradientInactiveTitle",   /* COLOR_GRADIENTINACTIVECAPTION */
+    L"MenuHilight",             /* COLOR_MENUHILIGHT */
+    L"MenuBar",                 /* COLOR_MENUBAR */
 };
 
 static const WCHAR strColorKey[] = L"Control Panel\\Colors";
@@ -251,9 +251,9 @@ static const struct BackupSysParam
 
 static void save_sys_colors (HKEY baseKey)
 {
-    char colorStr[13];
+    WCHAR colorStr[13];
     HKEY hKey;
-    int i;
+    int i, length;
 
     if (RegCreateKeyExW( baseKey, strColorKey,
                          0, 0, 0, KEY_ALL_ACCESS,
@@ -262,12 +262,11 @@ static void save_sys_colors (HKEY baseKey)
         for (i = 0; i < NUM_SYS_COLORS; i++)
         {
             COLORREF col = GetSysColor (i);
-        
-            sprintf (colorStr, "%d %d %d", 
-                GetRValue (col), GetGValue (col), GetBValue (col));
 
-            RegSetValueExA (hKey, SysColorsNames[i], 0, REG_SZ, 
-                (BYTE*)colorStr, strlen (colorStr)+1);
+            length = swprintf(colorStr, ARRAY_SIZE(colorStr), L"%d %d %d", GetRValue(col),
+                              GetGValue(col), GetBValue(col));
+            RegSetValueExW(hKey, SysColorsNames[i], 0, REG_SZ, (BYTE *)colorStr,
+                           (length + 1) * sizeof(WCHAR));
         }
         RegCloseKey (hKey);
     }
@@ -350,14 +349,14 @@ static void UXTHEME_RestoreSystemMetrics(void)
             for (i = 0; i < NUM_SYS_COLORS; i++)
             {
                 DWORD type;
-                char colorStr[13];
+                WCHAR colorStr[13];
                 DWORD count = sizeof(colorStr);
-            
-                if (RegQueryValueExA (colorKey, SysColorsNames[i], 0,
-                    &type, (LPBYTE) colorStr, &count) == ERROR_SUCCESS)
+
+                if (RegQueryValueExW(colorKey, SysColorsNames[i], 0, &type, (LPBYTE)colorStr,
+                                     &count) == ERROR_SUCCESS)
                 {
                     int r, g, b;
-                    if (sscanf (colorStr, "%d %d %d", &r, &g, &b) == 3)
+                    if (swscanf(colorStr, L"%d %d %d", &r, &g, &b) == 3)
                     {
                         sysColsIndices[sysColCount] = i;
                         sysCols[sysColCount] = RGB(r, g, b);
