@@ -733,12 +733,18 @@ struct PARSENONCLIENTSTATE
 
 static inline void parse_init_nonclient (struct PARSENONCLIENTSTATE* state)
 {
+    DPI_AWARENESS_CONTEXT old_context;
+
+    old_context = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+
     memset (state, 0, sizeof (*state));
     state->metrics.cbSize = sizeof (NONCLIENTMETRICSW);
     SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, sizeof (NONCLIENTMETRICSW),
         &state->metrics, 0);
     SystemParametersInfoW (SPI_GETICONTITLELOGFONT, sizeof (LOGFONTW),
         &state->iconTitleFont, 0);
+
+    SetThreadDpiAwarenessContext(old_context);
 }
 
 static BOOL parse_handle_nonclient_font (struct PARSENONCLIENTSTATE* state, 
