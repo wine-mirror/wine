@@ -3291,7 +3291,7 @@ static void test_websocket(int port)
     session = WinHttpOpen(L"winetest", 0, NULL, NULL, 0);
     ok(session != NULL, "got %u\n", GetLastError());
 
-    connection = WinHttpConnect(session, L"echo.websocket.org", 0, 0);
+    connection = WinHttpConnect(session, L"ws.ifelse.io", 0, 0);
     ok(connection != NULL, "got %u\n", GetLastError());
 
     request = WinHttpOpenRequest(connection, L"GET", L"/", NULL, NULL, NULL, 0);
@@ -3315,6 +3315,15 @@ static void test_websocket(int port)
 
     socket = pWinHttpWebSocketCompleteUpgrade(request, 0);
     ok(socket != NULL, "got %u\n", GetLastError());
+
+    buf[0] = 0;
+    count = 0;
+    type = 0xdeadbeef;
+    error = pWinHttpWebSocketReceive(socket, buf, sizeof(buf), &count, &type);
+    ok(!error, "got %u\n", error);
+    ok(buf[0] == 'R', "got %c\n", buf[0]);
+    ok(count == 26, "got %u\n", count);
+    ok(type == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE, "got %u\n", type);
 
     error = pWinHttpWebSocketSend(socket, WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE, NULL, 1);
     ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
@@ -3388,10 +3397,10 @@ static void test_websocket(int port)
     error = pWinHttpWebSocketQueryCloseStatus(socket, NULL, NULL, 0, &len);
     ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
 
-    len = 0;
+    len = 0xdeadbeef;
     error = pWinHttpWebSocketQueryCloseStatus(socket, &close_status, NULL, 0, &len);
-    ok(error == ERROR_INSUFFICIENT_BUFFER, "got %u\n", error);
-    ok(len, "len not set\n");
+    ok(!error, "got %u\n", error);
+    ok(!len, "got %u\n", len);
 
     error = pWinHttpWebSocketQueryCloseStatus(socket, &close_status, NULL, 1, &len);
     ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
@@ -3402,7 +3411,7 @@ static void test_websocket(int port)
     error = pWinHttpWebSocketQueryCloseStatus(socket, &close_status, buf, sizeof(buf), &len);
     ok(!error, "got %u\n", error);
     ok(close_status == 1000, "got %08x\n", close_status);
-    ok(len == sizeof("success"), "got %u\n", len);
+    ok(!len, "got %u\n", len);
 
     WinHttpCloseHandle(socket);
     WinHttpCloseHandle(request);
