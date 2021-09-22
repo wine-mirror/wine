@@ -194,6 +194,7 @@ static void test_default_token_id(void)
 static void test_object_token(void)
 {
     ISpObjectToken *token;
+    ISpDataKey *sub_key;
     HRESULT hr;
     LPWSTR tempW, token_id;
     ISpObjectTokenCategory *cat;
@@ -252,6 +253,13 @@ static void test_object_token(void)
             wine_dbgstr_w(tempW) );
         CoTaskMemFree( tempW );
     }
+
+    hr = ISpObjectToken_OpenKey(token, L"Non-exist", &sub_key);
+    ok( hr == SPERR_NOT_FOUND, "got %08lx\n", hr );
+
+    hr = ISpObjectToken_OpenKey(token, L"Classes", &sub_key);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpDataKey_Release(sub_key);
 
     cat = (LPVOID)0xdeadbeef;
     hr = ISpObjectToken_GetCategory( token, &cat );
