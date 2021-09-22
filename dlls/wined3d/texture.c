@@ -5029,7 +5029,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
 
         if (dst_bo->host_synced)
         {
-            vk_barrier.srcAccessMask |= VK_ACCESS_HOST_READ_BIT;
+            vk_barrier.dstAccessMask |= VK_ACCESS_HOST_READ_BIT;
             bo_stage_flags |= VK_PIPELINE_STAGE_HOST_BIT;
         }
 
