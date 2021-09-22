@@ -127,8 +127,6 @@ struct lnxev_device
     BYTE *current_report_buffer;
     enum { FIRST, NORMAL, DROPPED } report_state;
 
-    struct hid_descriptor desc;
-
     int button_start;
     BYTE button_map[KEY_MAX];
     BYTE rel_map[HID_REL_MAX];
@@ -451,7 +449,7 @@ static INT count_abs_axis(int device_fd)
     return abs_count;
 }
 
-static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_device *dev)
+static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_device *dev)
 {
     struct input_absinfo abs_info[HID_ABS_MAX];
     BYTE absbits[(ABS_MAX+7)/8];
@@ -461,6 +459,7 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
     INT report_size;
     INT button_count, abs_count, rel_count, hat_count;
     const BYTE *device_usage = what_am_I(dev);
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
 
     if (ioctl(impl->base.device_fd, EVIOCGBIT(EV_REL, sizeof(relbits)), relbits) == -1)
     {
@@ -475,7 +474,7 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
 
     report_size = 0;
 
-    if (!hid_descriptor_begin(&impl->desc, device_usage[0], device_usage[1]))
+    if (!hid_device_begin_report_descriptor(iface, device_usage[0], device_usage[1]))
         return STATUS_NO_MEMORY;
 
     abs_count = 0;
@@ -487,8 +486,8 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
         if (!(usage.UsagePage = ABS_TO_HID_MAP[i][0])) continue;
         if (!(usage.Usage = ABS_TO_HID_MAP[i][1])) continue;
 
-        if (!hid_descriptor_add_axes(&impl->desc, 1, usage.UsagePage, &usage.Usage, FALSE,
-                                     LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
+        if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, FALSE,
+                                 LE_DWORD(abs_info[i].minimum), LE_DWORD(abs_info[i].maximum)))
             return STATUS_NO_MEMORY;
 
         impl->abs_map[i] = report_size;
@@ -503,8 +502,8 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
         if (!(usage.UsagePage = REL_TO_HID_MAP[i][0])) continue;
         if (!(usage.Usage = REL_TO_HID_MAP[i][1])) continue;
 
-        if (!hid_descriptor_add_axes(&impl->desc, 1, usage.UsagePage, &usage.Usage, TRUE,
-                                     INT32_MIN, INT32_MAX))
+        if (!hid_device_add_axes(iface, 1, usage.UsagePage, &usage.Usage, TRUE,
+                                 INT32_MIN, INT32_MAX))
             return STATUS_NO_MEMORY;
 
         impl->rel_map[i] = report_size;
@@ -525,7 +524,7 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
 
     if (hat_count)
     {
-        if (!hid_descriptor_add_hatswitch(&impl->desc, hat_count))
+        if (!hid_device_add_hatswitch(iface, hat_count))
             return STATUS_NO_MEMORY;
     }
 
@@ -534,13 +533,13 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
     button_count = count_buttons(impl->base.device_fd, impl->button_map);
     if (button_count)
     {
-        if (!hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
+        if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
             return STATUS_NO_MEMORY;
 
         report_size += (button_count + 7) / 8;
     }
 
-    if (!hid_descriptor_end(&impl->desc))
+    if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
     TRACE("Report will be %i bytes\n", report_size);
@@ -560,7 +559,6 @@ static NTSTATUS build_report_descriptor(struct lnxev_device *impl, struct udev_d
 failed:
     free(impl->current_report_buffer);
     free(impl->last_report_buffer);
-    hid_descriptor_free(&impl->desc);
     return STATUS_NO_MEMORY;
 }
 
@@ -785,7 +783,7 @@ static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER
 #endif
 }
 
-static const struct unix_device_vtbl hidraw_device_vtbl =
+static const struct raw_device_vtbl hidraw_device_vtbl =
 {
     hidraw_device_destroy,
     hidraw_device_start,
@@ -804,7 +802,6 @@ static void lnxev_device_destroy(struct unix_device *iface)
 
     free(impl->current_report_buffer);
     free(impl->last_report_buffer);
-    hid_descriptor_free(&impl->desc);
 
     udev_device_unref(impl->base.udev_device);
 }
@@ -814,7 +811,7 @@ static NTSTATUS lnxev_device_start(struct unix_device *iface)
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     NTSTATUS status;
 
-    if ((status = build_report_descriptor(impl, impl->base.udev_device)))
+    if ((status = build_report_descriptor(iface, impl->base.udev_device)))
         return status;
 
     pthread_mutex_lock(&udev_cs);
@@ -831,18 +828,6 @@ static void lnxev_device_stop(struct unix_device *iface)
     stop_polling_device(iface);
     list_remove(&impl->base.unix_device.entry);
     pthread_mutex_unlock(&udev_cs);
-}
-
-static NTSTATUS lnxev_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
-                                                   DWORD length, DWORD *out_length)
-{
-    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-
-    *out_length = impl->desc.size;
-    if (length < impl->desc.size) return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, impl->desc.data, impl->desc.size);
-    return STATUS_SUCCESS;
 }
 
 static void lnxev_device_read_report(struct unix_device *iface)
@@ -881,12 +866,11 @@ static void lnxev_device_set_feature_report(struct unix_device *iface, HID_XFER_
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static const struct unix_device_vtbl lnxev_device_vtbl =
+static const struct hid_device_vtbl lnxev_device_vtbl =
 {
     lnxev_device_destroy,
     lnxev_device_start,
     lnxev_device_stop,
-    lnxev_device_get_report_descriptor,
     lnxev_device_set_output_report,
     lnxev_device_get_feature_report,
     lnxev_device_set_feature_report,
@@ -1032,7 +1016,7 @@ static void udev_add_device(struct udev_device *dev)
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        if (!(impl = unix_device_create(&hidraw_device_vtbl, sizeof(struct hidraw_device)))) return;
+        if (!(impl = raw_device_create(&hidraw_device_vtbl, sizeof(struct hidraw_device)))) return;
         list_add_tail(&device_list, &impl->unix_device.entry);
         impl->read_report = hidraw_device_read_report;
         impl->udev_device = udev_device_ref(dev);
@@ -1043,7 +1027,7 @@ static void udev_add_device(struct udev_device *dev)
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
-        if (!(impl = unix_device_create(&lnxev_device_vtbl, sizeof(struct lnxev_device)))) return;
+        if (!(impl = hid_device_create(&lnxev_device_vtbl, sizeof(struct lnxev_device)))) return;
         list_add_tail(&device_list, &impl->unix_device.entry);
         impl->read_report = lnxev_device_read_report;
         impl->udev_device = udev_device_ref(dev);

@@ -62,29 +62,19 @@ BOOL is_xbox_gamepad(WORD vid, WORD pid)
 struct mouse_device
 {
     struct unix_device unix_device;
-    struct hid_descriptor desc;
 };
-
-static inline struct mouse_device *mouse_from_unix_device(struct unix_device *iface)
-{
-    return CONTAINING_RECORD(iface, struct mouse_device, unix_device);
-}
 
 static void mouse_destroy(struct unix_device *iface)
 {
-    struct mouse_device *impl = mouse_from_unix_device(iface);
-    hid_descriptor_free(&impl->desc);
 }
 
 static NTSTATUS mouse_start(struct unix_device *iface)
 {
-    struct mouse_device *impl = mouse_from_unix_device(iface);
-
-    if (!hid_descriptor_begin(&impl->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
+    if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_BUTTON, 1, 3))
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 3))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_end(&impl->desc))
+    if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
     return STATUS_SUCCESS;
@@ -92,19 +82,6 @@ static NTSTATUS mouse_start(struct unix_device *iface)
 
 static void mouse_stop(struct unix_device *iface)
 {
-}
-
-static NTSTATUS mouse_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
-{
-    struct mouse_device *impl = mouse_from_unix_device(iface);
-
-    TRACE("buffer %p, length %u.\n", buffer, length);
-
-    *ret_length = impl->desc.size;
-    if (length < impl->desc.size) return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, impl->desc.data, impl->desc.size);
-    return STATUS_SUCCESS;
 }
 
 static void mouse_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -128,12 +105,11 @@ static void mouse_set_feature_report(struct unix_device *iface, HID_XFER_PACKET 
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static const struct unix_device_vtbl mouse_vtbl =
+static const struct hid_device_vtbl mouse_vtbl =
 {
     mouse_destroy,
     mouse_start,
     mouse_stop,
-    mouse_get_report_descriptor,
     mouse_set_output_report,
     mouse_get_feature_report,
     mouse_set_feature_report,
@@ -153,36 +129,26 @@ static NTSTATUS mouse_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = mouse_device_desc;
-    params->device = unix_device_create(&mouse_vtbl, sizeof(struct mouse_device));
+    params->device = hid_device_create(&mouse_vtbl, sizeof(struct mouse_device));
     return STATUS_SUCCESS;
 }
 
 struct keyboard_device
 {
     struct unix_device unix_device;
-    struct hid_descriptor desc;
 };
-
-static inline struct keyboard_device *keyboard_from_unix_device(struct unix_device *iface)
-{
-    return CONTAINING_RECORD(iface, struct keyboard_device, unix_device);
-}
 
 static void keyboard_destroy(struct unix_device *iface)
 {
-    struct keyboard_device *impl = keyboard_from_unix_device(iface);
-    hid_descriptor_free(&impl->desc);
 }
 
 static NTSTATUS keyboard_start(struct unix_device *iface)
 {
-    struct keyboard_device *impl = keyboard_from_unix_device(iface);
-
-    if (!hid_descriptor_begin(&impl->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
+    if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_KEYBOARD, 0, 101))
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_KEYBOARD, 0, 101))
         return STATUS_NO_MEMORY;
-    if (!hid_descriptor_end(&impl->desc))
+    if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
     return STATUS_SUCCESS;
@@ -190,19 +156,6 @@ static NTSTATUS keyboard_start(struct unix_device *iface)
 
 static void keyboard_stop(struct unix_device *iface)
 {
-}
-
-static NTSTATUS keyboard_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *ret_length)
-{
-    struct keyboard_device *impl = keyboard_from_unix_device(iface);
-
-    TRACE("buffer %p, length %u.\n", buffer, length);
-
-    *ret_length = impl->desc.size;
-    if (length < impl->desc.size) return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, impl->desc.data, impl->desc.size);
-    return STATUS_SUCCESS;
 }
 
 static void keyboard_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -226,12 +179,11 @@ static void keyboard_set_feature_report(struct unix_device *iface, HID_XFER_PACK
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static const struct unix_device_vtbl keyboard_vtbl =
+static const struct hid_device_vtbl keyboard_vtbl =
 {
     keyboard_destroy,
     keyboard_start,
     keyboard_stop,
-    keyboard_get_report_descriptor,
     keyboard_set_output_report,
     keyboard_get_feature_report,
     keyboard_set_feature_report,
@@ -251,11 +203,11 @@ static NTSTATUS keyboard_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = keyboard_device_desc;
-    params->device = unix_device_create(&keyboard_vtbl, sizeof(struct keyboard_device));
+    params->device = hid_device_create(&keyboard_vtbl, sizeof(struct keyboard_device));
     return STATUS_SUCCESS;
 }
 
-void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size)
+void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size)
 {
     struct unix_device *iface;
 

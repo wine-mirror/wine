@@ -128,8 +128,6 @@ struct sdl_device
     int ball_start;
     int hat_start;
 
-    struct hid_descriptor desc;
-
     int buffer_length;
     BYTE *report_buffer;
 
@@ -219,7 +217,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
         {
             pSDL_HapticStopAll(impl->sdl_haptic);
             pSDL_HapticRumbleInit(impl->sdl_haptic);
-            if (!hid_descriptor_add_haptics(&impl->desc))
+            if (!hid_device_add_haptics(&impl->unix_device))
                 return FALSE;
             impl->haptic_effect_id = -1;
         }
@@ -233,7 +231,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
     return TRUE;
 }
 
-static NTSTATUS build_joystick_report_descriptor(struct sdl_device *impl)
+static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
 {
     static const USAGE joystick_usages[] =
     {
@@ -247,7 +245,7 @@ static NTSTATUS build_joystick_report_descriptor(struct sdl_device *impl)
         HID_USAGE_GENERIC_DIAL,
         HID_USAGE_GENERIC_WHEEL
     };
-
+    struct sdl_device *impl = impl_from_unix_device(iface);
     int i, report_size = 1;
     int button_count, axis_count, ball_count, hat_count;
 
@@ -280,27 +278,27 @@ static NTSTATUS build_joystick_report_descriptor(struct sdl_device *impl)
 
     TRACE("Report will be %i bytes\n", report_size);
 
-    if (!hid_descriptor_begin(&impl->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_JOYSTICK))
+    if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_JOYSTICK))
         return STATUS_NO_MEMORY;
 
-    if (axis_count && !hid_descriptor_add_axes(&impl->desc, axis_count, HID_USAGE_PAGE_GENERIC,
-                                               joystick_usages, FALSE, -32768, 32767))
+    if (axis_count && !hid_device_add_axes(iface, axis_count, HID_USAGE_PAGE_GENERIC,
+                                           joystick_usages, FALSE, -32768, 32767))
         return STATUS_NO_MEMORY;
 
-    if (ball_count && !hid_descriptor_add_axes(&impl->desc, ball_count * 2, HID_USAGE_PAGE_GENERIC,
-                                               &joystick_usages[axis_count], TRUE, INT32_MIN, INT32_MAX))
+    if (ball_count && !hid_device_add_axes(iface, ball_count * 2, HID_USAGE_PAGE_GENERIC,
+                                           &joystick_usages[axis_count], TRUE, INT32_MIN, INT32_MAX))
         return STATUS_NO_MEMORY;
 
-    if (hat_count && !hid_descriptor_add_hatswitch(&impl->desc, hat_count))
+    if (hat_count && !hid_device_add_hatswitch(iface, hat_count))
         return STATUS_NO_MEMORY;
 
-    if (button_count && !hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
+    if (button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
         return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(impl))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_end(&impl->desc))
+    if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
     impl->buffer_length = report_size;
@@ -316,7 +314,6 @@ static NTSTATUS build_joystick_report_descriptor(struct sdl_device *impl)
 
 failed:
     free(impl->report_buffer);
-    hid_descriptor_free(&impl->desc);
     return STATUS_NO_MEMORY;
 }
 
@@ -347,11 +344,12 @@ static SHORT compose_dpad_value(SDL_GameController *joystick)
     return SDL_HAT_CENTERED;
 }
 
-static NTSTATUS build_controller_report_descriptor(struct sdl_device *impl)
+static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
 {
     static const USAGE left_axis_usages[] = {HID_USAGE_GENERIC_X, HID_USAGE_GENERIC_Y};
     static const USAGE right_axis_usages[] = {HID_USAGE_GENERIC_RX, HID_USAGE_GENERIC_RY};
     static const USAGE trigger_axis_usages[] = {HID_USAGE_GENERIC_Z, HID_USAGE_GENERIC_RZ};
+    struct sdl_device *impl = impl_from_unix_device(iface);
     ULONG i, button_count = SDL_CONTROLLER_BUTTON_MAX - 1;
     C_ASSERT(SDL_CONTROLLER_AXIS_MAX == 6);
 
@@ -362,31 +360,31 @@ static NTSTATUS build_controller_report_descriptor(struct sdl_device *impl)
 
     TRACE("Report will be %i bytes\n", impl->buffer_length);
 
-    if (!hid_descriptor_begin(&impl->desc, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD))
+    if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_axes(&impl->desc, 2, HID_USAGE_PAGE_GENERIC, left_axis_usages,
-                                 FALSE, -32768, 32767))
+    if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, left_axis_usages,
+                             FALSE, -32768, 32767))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_axes(&impl->desc, 2, HID_USAGE_PAGE_GENERIC, right_axis_usages,
-                                 FALSE, -32768, 32767))
+    if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, right_axis_usages,
+                             FALSE, -32768, 32767))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_axes(&impl->desc, 2, HID_USAGE_PAGE_GENERIC, trigger_axis_usages,
-                                 FALSE, 0, 32767))
+    if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, trigger_axis_usages,
+                             FALSE, 0, 32767))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_hatswitch(&impl->desc, 1))
+    if (!hid_device_add_hatswitch(iface, 1))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_add_buttons(&impl->desc, HID_USAGE_PAGE_BUTTON, 1, button_count))
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
         return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(impl))
         return STATUS_NO_MEMORY;
 
-    if (!hid_descriptor_end(&impl->desc))
+    if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
     if (!(impl->report_buffer = calloc(1, impl->buffer_length))) goto failed;
@@ -400,7 +398,6 @@ static NTSTATUS build_controller_report_descriptor(struct sdl_device *impl)
 
 failed:
     free(impl->report_buffer);
-    hid_descriptor_free(&impl->desc);
     return STATUS_NO_MEMORY;
 }
 
@@ -411,8 +408,8 @@ static void sdl_device_destroy(struct unix_device *iface)
 static NTSTATUS sdl_device_start(struct unix_device *iface)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
-    if (impl->sdl_controller) return build_controller_report_descriptor(impl);
-    return build_joystick_report_descriptor(impl);
+    if (impl->sdl_controller) return build_controller_report_descriptor(iface);
+    return build_joystick_report_descriptor(iface);
 }
 
 static void sdl_device_stop(struct unix_device *iface)
@@ -426,18 +423,6 @@ static void sdl_device_stop(struct unix_device *iface)
     pthread_mutex_lock(&sdl_cs);
     list_remove(&impl->unix_device.entry);
     pthread_mutex_unlock(&sdl_cs);
-}
-
-static NTSTATUS sdl_device_get_reportdescriptor(struct unix_device *iface, BYTE *buffer,
-                                                DWORD length, DWORD *out_length)
-{
-    struct sdl_device *impl = impl_from_unix_device(iface);
-
-    *out_length = impl->desc.size;
-    if (length < impl->desc.size) return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, impl->desc.data, impl->desc.size);
-    return STATUS_SUCCESS;
 }
 
 static void sdl_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -499,12 +484,11 @@ static void sdl_device_set_feature_report(struct unix_device *iface, HID_XFER_PA
     io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
-static const struct unix_device_vtbl sdl_device_vtbl =
+static const struct hid_device_vtbl sdl_device_vtbl =
 {
     sdl_device_destroy,
     sdl_device_start,
     sdl_device_stop,
-    sdl_device_get_reportdescriptor,
     sdl_device_set_output_report,
     sdl_device_get_feature_report,
     sdl_device_set_feature_report,
@@ -664,7 +648,7 @@ static void sdl_add_device(unsigned int index)
 
     TRACE("%s id %d, desc %s.\n", controller ? "controller" : "joystick", id, debugstr_device_desc(&desc));
 
-    if (!(impl = unix_device_create(&sdl_device_vtbl, sizeof(struct sdl_device)))) return;
+    if (!(impl = hid_device_create(&sdl_device_vtbl, sizeof(struct sdl_device)))) return;
     list_add_tail(&device_list, &impl->unix_device.entry);
     impl->sdl_joystick = joystick;
     impl->sdl_controller = controller;

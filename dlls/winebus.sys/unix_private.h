@@ -29,7 +29,7 @@
 
 #include "wine/list.h"
 
-struct unix_device_vtbl
+struct raw_device_vtbl
 {
     void (*destroy)(struct unix_device *iface);
     NTSTATUS (*start)(struct unix_device *iface);
@@ -40,14 +40,35 @@ struct unix_device_vtbl
     void (*set_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
 };
 
-struct unix_device
+struct hid_device_vtbl
 {
-    const struct unix_device_vtbl *vtbl;
-    struct list entry;
-    LONG ref;
+    void (*destroy)(struct unix_device *iface);
+    NTSTATUS (*start)(struct unix_device *iface);
+    void (*stop)(struct unix_device *iface);
+    void (*set_output_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
+    void (*get_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
+    void (*set_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
 };
 
-extern void *unix_device_create(const struct unix_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
+struct hid_report_descriptor
+{
+    BYTE *data;
+    SIZE_T size;
+    SIZE_T max_size;
+};
+
+struct unix_device
+{
+    const struct raw_device_vtbl *vtbl;
+    struct list entry;
+    LONG ref;
+
+    const struct hid_device_vtbl *hid_vtbl;
+    struct hid_report_descriptor hid_report_descriptor;
+};
+
+extern void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
+extern void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
 
 extern NTSTATUS sdl_bus_init(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS sdl_bus_wait(void *) DECLSPEC_HIDDEN;
@@ -69,24 +90,16 @@ extern BOOL bus_event_queue_input_report(struct list *queue, struct unix_device 
                                          BYTE *report, USHORT length) DECLSPEC_HIDDEN;
 extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event) DECLSPEC_HIDDEN;
 
-struct hid_descriptor
-{
-    BYTE *data;
-    SIZE_T size;
-    SIZE_T max_size;
-};
+extern BOOL hid_device_begin_report_descriptor(struct unix_device *iface, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
+extern BOOL hid_device_end_report_descriptor(struct unix_device *iface) DECLSPEC_HIDDEN;
 
-extern BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
-extern BOOL hid_descriptor_end(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
-extern void hid_descriptor_free(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page,
+                                   USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
+                                const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
 
-extern BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
-                                       USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
-extern BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count) DECLSPEC_HIDDEN;
-extern BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
-                                    const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
-
-extern BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 

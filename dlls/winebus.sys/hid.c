@@ -34,7 +34,7 @@
 
 #include "unix_private.h"
 
-static BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffer, SIZE_T size)
+static BOOL hid_report_descriptor_append(struct hid_report_descriptor *desc, const BYTE *buffer, SIZE_T size)
 {
     BYTE *tmp = desc->data;
 
@@ -57,18 +57,19 @@ static BOOL hid_descriptor_append(struct hid_descriptor *desc, const BYTE *buffe
 
 #include "psh_hid_macros.h"
 
-static BOOL hid_descriptor_append_usage(struct hid_descriptor *desc, USAGE usage)
+static BOOL hid_report_descriptor_append_usage(struct hid_report_descriptor *desc, USAGE usage)
 {
     const BYTE template[] =
     {
         USAGE(2, usage),
     };
 
-    return hid_descriptor_append(desc, template, sizeof(template));
+    return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE usage)
+BOOL hid_device_begin_report_descriptor(struct unix_device *iface, USAGE usage_page, USAGE usage)
 {
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE template[] =
     {
         USAGE_PAGE(2, usage_page),
@@ -78,27 +79,23 @@ BOOL hid_descriptor_begin(struct hid_descriptor *desc, USAGE usage_page, USAGE u
     };
 
     memset(desc, 0, sizeof(*desc));
-    return hid_descriptor_append(desc, template, sizeof(template));
+    return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_descriptor_end(struct hid_descriptor *desc)
+BOOL hid_device_end_report_descriptor(struct unix_device *iface)
 {
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     static const BYTE template[] =
     {
         END_COLLECTION,
     };
 
-    return hid_descriptor_append(desc, template, sizeof(template));
+    return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-void hid_descriptor_free(struct hid_descriptor *desc)
+BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page, USAGE usage_min, USAGE usage_max)
 {
-    free(desc->data);
-}
-
-BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
-                                USAGE usage_min, USAGE usage_max)
-{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const USHORT count = usage_max - usage_min + 1;
     const BYTE template[] =
     {
@@ -120,17 +117,18 @@ BOOL hid_descriptor_add_buttons(struct hid_descriptor *desc, USAGE usage_page,
         INPUT(1, Cnst|Var|Abs),
     };
 
-    if (!hid_descriptor_append(desc, template, sizeof(template)))
+    if (!hid_report_descriptor_append(desc, template, sizeof(template)))
         return FALSE;
 
-    if ((count % 8) && !hid_descriptor_append(desc, template_pad, sizeof(template_pad)))
+    if ((count % 8) && !hid_report_descriptor_append(desc, template_pad, sizeof(template_pad)))
         return FALSE;
 
     return TRUE;
 }
 
-BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count)
+BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
 {
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE template[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -145,12 +143,13 @@ BOOL hid_descriptor_add_hatswitch(struct hid_descriptor *desc, INT count)
         INPUT(1, Data|Var|Abs|Null),
     };
 
-    return hid_descriptor_append(desc, template, sizeof(template));
+    return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usage_page,
-                             const USAGE *usages, BOOL rel, LONG min, LONG max)
+BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
+                         const USAGE *usages, BOOL rel, LONG min, LONG max)
 {
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE template_begin[] =
     {
         USAGE_PAGE(1, usage_page),
@@ -172,26 +171,27 @@ BOOL hid_descriptor_add_axes(struct hid_descriptor *desc, BYTE count, USAGE usag
     };
     int i;
 
-    if (!hid_descriptor_append(desc, template_begin, sizeof(template_begin)))
+    if (!hid_report_descriptor_append(desc, template_begin, sizeof(template_begin)))
         return FALSE;
 
     for (i = 0; i < count; i++)
     {
-        if (!hid_descriptor_append_usage(desc, usages[i]))
+        if (!hid_report_descriptor_append_usage(desc, usages[i]))
             return FALSE;
     }
 
-    if (!hid_descriptor_append(desc, template, sizeof(template)))
+    if (!hid_report_descriptor_append(desc, template, sizeof(template)))
         return FALSE;
 
-    if (!hid_descriptor_append(desc, template_end, sizeof(template_end)))
+    if (!hid_report_descriptor_append(desc, template_end, sizeof(template_end)))
         return FALSE;
 
     return TRUE;
 }
 
-BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc)
+BOOL hid_device_add_haptics(struct unix_device *iface)
 {
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     static const BYTE template[] =
     {
         USAGE_PAGE(2, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN),
@@ -214,7 +214,68 @@ BOOL hid_descriptor_add_haptics(struct hid_descriptor *desc)
         OUTPUT(1, Data|Var|Abs),
     };
 
-    return hid_descriptor_append(desc, template, sizeof(template));
+    return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
 #include "pop_hid_macros.h"
+
+static void hid_device_destroy(struct unix_device *iface)
+{
+    iface->hid_vtbl->destroy(iface);
+    free(iface->hid_report_descriptor.data);
+}
+
+static NTSTATUS hid_device_start(struct unix_device *iface)
+{
+    return iface->hid_vtbl->start(iface);
+}
+
+static void hid_device_stop(struct unix_device *iface)
+{
+    iface->hid_vtbl->stop(iface);
+}
+
+NTSTATUS hid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer, DWORD length, DWORD *out_length)
+{
+    *out_length = iface->hid_report_descriptor.size;
+    if (length < iface->hid_report_descriptor.size) return STATUS_BUFFER_TOO_SMALL;
+
+    memcpy(buffer, iface->hid_report_descriptor.data, iface->hid_report_descriptor.size);
+    return STATUS_SUCCESS;
+}
+
+static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+{
+    return iface->hid_vtbl->set_output_report(iface, packet, io);
+}
+
+static void hid_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+{
+    return iface->hid_vtbl->get_feature_report(iface, packet, io);
+}
+
+static void hid_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+{
+    return iface->hid_vtbl->set_feature_report(iface, packet, io);
+}
+
+static const struct raw_device_vtbl raw_device_vtbl =
+{
+    hid_device_destroy,
+    hid_device_start,
+    hid_device_stop,
+    hid_device_get_report_descriptor,
+    hid_device_set_output_report,
+    hid_device_get_feature_report,
+    hid_device_set_feature_report,
+};
+
+void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size)
+{
+    struct unix_device *impl;
+
+    if (!(impl = raw_device_create(&raw_device_vtbl, size))) return NULL;
+    impl->hid_vtbl = vtbl;
+
+    return impl;
+}

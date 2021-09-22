@@ -249,7 +249,7 @@ static void iohid_device_set_feature_report(struct unix_device *iface, HID_XFER_
     }
 }
 
-static const struct unix_device_vtbl iohid_device_vtbl =
+static const struct raw_device_vtbl iohid_device_vtbl =
 {
     iohid_device_destroy,
     iohid_device_start,
@@ -336,7 +336,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
 
     TRACE("dev %p, desc %s.\n", IOHIDDevice, debugstr_device_desc(&desc));
 
-    if (!(impl = unix_device_create(&iohid_device_vtbl, sizeof(struct iohid_device)))) return;
+    if (!(impl = raw_device_create(&iohid_device_vtbl, sizeof(struct iohid_device)))) return;
     list_add_tail(&device_list, &impl->unix_device.entry);
     impl->device = IOHIDDevice;
     impl->buffer = NULL;
