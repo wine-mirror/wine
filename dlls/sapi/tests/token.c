@@ -33,6 +33,7 @@ static void test_data_key(void)
     HRESULT hr;
     HKEY key;
     LONG res;
+    WCHAR *value;
 
     hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpRegDataKey, (void **)&data_key );
@@ -45,10 +46,19 @@ static void test_data_key(void)
     hr = ISpRegDataKey_CreateKey( data_key, L"Testing", &sub );
     ok( hr == E_HANDLE, "got %08lx\n", hr );
 
+    hr = ISpRegDataKey_GetStringValue( data_key, L"Voice", &value );
+    ok( hr == E_HANDLE, "got %08lx\n", hr );
+
     hr = ISpRegDataKey_SetKey( data_key, key, FALSE );
     ok( hr == S_OK, "got %08lx\n", hr );
     hr = ISpRegDataKey_SetKey( data_key, key, FALSE );
     ok( hr == SPERR_ALREADY_INITIALIZED, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_GetStringValue( data_key, L"Voice", &value );
+    ok( hr == SPERR_NOT_FOUND, "got %08lx\n", hr );
+
+    hr = ISpRegDataKey_GetStringValue( data_key, L"", &value );
+    ok( hr == SPERR_NOT_FOUND, "got %08lx\n", hr );
 
     hr = ISpRegDataKey_CreateKey( data_key, L"Testing", &sub );
     ok( hr == S_OK, "got %08lx\n", hr );
