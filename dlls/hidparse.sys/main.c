@@ -328,14 +328,29 @@ static BOOL parse_end_collection( struct hid_parser_state *state )
     return TRUE;
 }
 
+static void add_new_value_caps( struct hid_parser_state *state, struct hid_value_caps *values,
+                                LONG i, ULONG start_bit )
+{
+    DWORD count, usages_size = max( 1, state->usages_size );
+
+    state->items.start_byte = start_bit / 8;
+    state->items.start_bit = start_bit % 8;
+    state->items.usage_page = state->usages_page[usages_size - 1 - i];
+    state->items.usage_min = state->usages_min[usages_size - 1 - i];
+    state->items.usage_max = state->usages_max[usages_size - 1 - i];
+    if (!state->items.usage_max && !state->items.usage_min) count = -1;
+    else count = state->items.usage_max - state->items.usage_min;
+    state->items.data_index_min = state->items.data_index_max + 1;
+    state->items.data_index_max = state->items.data_index_min + count;
+    values[i] = state->items;
+}
+
 static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type )
 {
-    struct hid_value_caps *value;
+    struct hid_value_caps *values;
     USAGE usage_page = state->items.usage_page;
-    DWORD usages_size = max( 1, state->usages_size );
+    DWORD i, usages_size = max( 1, state->usages_size );
     USHORT *byte_length = &state->byte_length[type];
-    USHORT *caps_count = &state->caps_count[type];
-    USHORT *data_count = &state->data_count[type];
     ULONG start_bit, *bit_size = &state->bit_size[type][state->items.report_id];
     BOOL is_array;
 
@@ -350,12 +365,13 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         return TRUE;
     }
 
-    if (!array_reserve( &state->values[type], &state->values_size[type], *caps_count + usages_size ))
+    if (!array_reserve( &state->values[type], &state->values_size[type],
+                        state->caps_count[type] + usages_size ))
     {
         ERR( "HID parser values overflow!\n" );
         return FALSE;
     }
-    value = state->values[type] + *caps_count;
+    values = state->values[type] + state->caps_count[type];
 
     if (!(is_array = HID_VALUE_CAPS_IS_ARRAY( &state->items ))) state->items.report_count -= usages_size - 1;
     else start_bit -= state->items.report_count * state->items.bit_size;
@@ -364,23 +380,17 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     if (state->items.bit_field & INPUT_DATA_CONST) state->items.flags |= HID_VALUE_CAPS_IS_CONSTANT;
     if (state->items.bit_size == 1 || is_array) state->items.flags |= HID_VALUE_CAPS_IS_BUTTON;
 
-    while (usages_size--)
+    state->items.data_index_max = state->data_count[type] - 1;
+    for (i = 0; i < usages_size; ++i)
     {
         if (!is_array) start_bit -= state->items.report_count * state->items.bit_size;
-        else if (usages_size) state->items.flags |= HID_VALUE_CAPS_ARRAY_HAS_MORE;
+        else if (i < usages_size - 1) state->items.flags |= HID_VALUE_CAPS_ARRAY_HAS_MORE;
         else state->items.flags &= ~HID_VALUE_CAPS_ARRAY_HAS_MORE;
-        state->items.start_byte = start_bit / 8;
-        state->items.start_bit = start_bit % 8;
-        state->items.usage_page = state->usages_page[usages_size];
-        state->items.usage_min = state->usages_min[usages_size];
-        state->items.usage_max = state->usages_max[usages_size];
-        state->items.data_index_min = *data_count;
-        state->items.data_index_max = *data_count + state->items.usage_max - state->items.usage_min;
-        if (state->items.usage_max || state->items.usage_min) *data_count = state->items.data_index_max + 1;
-        *value++ = state->items;
-        *caps_count += 1;
+        add_new_value_caps( state, values, i, start_bit );
         if (!is_array) state->items.report_count = 1;
     }
+    state->caps_count[type] += usages_size;
+    state->data_count[type] = state->items.data_index_max + 1;
 
     state->items.usage_page = usage_page;
     reset_local_items( state );
