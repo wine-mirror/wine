@@ -576,8 +576,6 @@ HRESULT WINAPI EnableTheming(BOOL fEnable)
 
     if (bThemeActive && !fEnable)
     {
-        UXTHEME_RestoreSystemMetrics();
-        UXTHEME_SaveSystemMetrics ();
         bThemeActive = fEnable;
         if(!RegOpenKeyW(HKEY_CURRENT_USER, szThemeManager, &hKey)) {
             RegSetValueExW(hKey, L"ThemeActive", 0, REG_SZ, (BYTE *)L"0", 2 * sizeof(WCHAR));

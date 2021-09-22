@@ -1195,7 +1195,6 @@ static void test_EnableTheming(void)
             size = sizeof(color_string);
             ls = RegQueryValueExW(hkey, L"Scrollbar", NULL, NULL, (BYTE *)color_string, &size);
             ok(!ls, "RegQueryValueExW failed, ls %#x.\n", ls);
-            todo_wine
             ok(!lstrcmpW(color_string, new_color_string), "Expected %s, got %s.\n",
                wine_dbgstr_w(new_color_string), wine_dbgstr_w(color_string));
 
@@ -1204,7 +1203,6 @@ static void test_EnableTheming(void)
             ok(flat_menu == new_flat_menu, "Expected %d, got %d.\n", new_flat_menu, flat_menu);
             ret = SystemParametersInfoW(SPI_GETGRADIENTCAPTIONS, 0, &gradient_caption, 0);
             ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
-            todo_wine
             ok(gradient_caption == new_gradient_caption, "Expected %d, got %d.\n",
                new_gradient_caption, gradient_caption);
 
@@ -1212,13 +1210,11 @@ static void test_EnableTheming(void)
             ncm.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
             ret = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
             ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
-            todo_wine
             ok(!memcmp(&ncm, &new_ncm, sizeof(ncm)), "Expected non-client metrics unchanged.\n");
 
             memset(&logfont, 0, sizeof(logfont));
             ret = SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(logfont), &logfont, 0);
             ok(ret, "SystemParametersInfoW failed, error %u.\n", GetLastError());
-            todo_wine
             ok(!memcmp(&logfont, &new_logfont, sizeof(logfont)),
                "Expected icon title font unchanged.\n");
 
@@ -1226,7 +1222,6 @@ static void test_EnableTheming(void)
             hr = EnableTheming(TRUE);
             ok(hr == S_OK, "EnableTheming failed, hr %#x.\n", hr);
             is_theme_active = IsThemeActive();
-            todo_wine
             ok(!is_theme_active || broken(is_theme_active), /* Win8+ can no longer disable theming */
                "Expected theming inactive.\n");
 
