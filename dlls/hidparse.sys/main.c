@@ -335,6 +335,8 @@ static void add_new_value_caps( struct hid_parser_state *state, struct hid_value
 
     state->items.start_byte = start_bit / 8;
     state->items.start_bit = start_bit % 8;
+    state->items.total_bits = state->items.report_count * state->items.bit_size;
+    state->items.end_byte = (start_bit + state->items.total_bits + 7) / 8;
     state->items.usage_page = state->usages_page[usages_size - 1 - i];
     state->items.usage_min = state->usages_min[usages_size - 1 - i];
     state->items.usage_max = state->usages_max[usages_size - 1 - i];
@@ -343,6 +345,15 @@ static void add_new_value_caps( struct hid_parser_state *state, struct hid_value
     state->items.data_index_min = state->items.data_index_max + 1;
     state->items.data_index_max = state->items.data_index_min + count;
     values[i] = state->items;
+
+    if (values[i].flags & HID_VALUE_CAPS_IS_BUTTON)
+    {
+        if (!HID_VALUE_CAPS_IS_ARRAY( values + i )) values[i].logical_min = 0;
+        else values[i].logical_min = values[i].logical_max;
+        values[i].logical_max = 0;
+        values[i].physical_min = 0;
+        values[i].physical_max = 0;
+    }
 }
 
 static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type )
@@ -379,6 +390,10 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     if (!(state->items.bit_field & INPUT_ABS_REL)) state->items.flags |= HID_VALUE_CAPS_IS_ABSOLUTE;
     if (state->items.bit_field & INPUT_DATA_CONST) state->items.flags |= HID_VALUE_CAPS_IS_CONSTANT;
     if (state->items.bit_size == 1 || is_array) state->items.flags |= HID_VALUE_CAPS_IS_BUTTON;
+
+    if (is_array) state->items.null_value = state->items.logical_min;
+    else if (!(state->items.bit_field & INPUT_NULL)) state->items.null_value = 0;
+    else state->items.null_value = 1;
 
     state->items.data_index_max = state->data_count[type] - 1;
     for (i = 0; i < usages_size; ++i)
