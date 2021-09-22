@@ -32,7 +32,11 @@
 #include "hidusage.h"
 #include "ddk/wdm.h"
 
+#include "wine/debug.h"
+
 #include "unix_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 static BOOL hid_report_descriptor_append(struct hid_report_descriptor *desc, const BYTE *buffer, SIZE_T size)
 {
@@ -93,6 +97,25 @@ BOOL hid_device_end_report_descriptor(struct unix_device *iface)
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
+static BOOL hid_device_add_button_count(struct unix_device *iface, BYTE count)
+{
+    USHORT offset = iface->hid_device_state.bit_size / 8;
+
+    if ((iface->hid_device_state.bit_size % 8) && !iface->hid_device_state.button_count)
+        ERR("buttons should start byte aligned, missing padding!\n");
+    else if (iface->hid_device_state.bit_size + count > 0x80000)
+        ERR("report size overflow, too many elements!\n");
+    else
+    {
+        if (!iface->hid_device_state.button_count) iface->hid_device_state.button_start = offset;
+        iface->hid_device_state.button_count += count;
+        iface->hid_device_state.bit_size += count;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page, USAGE usage_min, USAGE usage_max)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
@@ -117,6 +140,9 @@ BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page, USAGE u
         INPUT(1, Cnst|Var|Abs),
     };
 
+    if (!hid_device_add_button_count(iface, usage_max - usage_min + 1))
+        return FALSE;
+
     if (!hid_report_descriptor_append(desc, template, sizeof(template)))
         return FALSE;
 
@@ -124,6 +150,27 @@ BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page, USAGE u
         return FALSE;
 
     return TRUE;
+}
+
+static BOOL hid_device_add_hatswitch_count(struct unix_device *iface, BYTE count)
+{
+    USHORT offset = iface->hid_device_state.bit_size / 8;
+
+    if (iface->hid_device_state.button_count)
+        ERR("hatswitches should be added before buttons!\n");
+    else if ((iface->hid_device_state.bit_size % 8))
+        ERR("hatswitches should be byte aligned, missing padding!\n");
+    else if (iface->hid_device_state.bit_size + 8 * count > 0x80000)
+        ERR("report size overflow, too many elements!\n");
+    else
+    {
+        if (!iface->hid_device_state.hatswitch_count) iface->hid_device_state.hatswitch_start = offset;
+        iface->hid_device_state.hatswitch_count += count;
+        iface->hid_device_state.bit_size += 8 * count;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
@@ -143,7 +190,40 @@ BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
         INPUT(1, Data|Var|Abs|Null),
     };
 
+    if (!hid_device_add_hatswitch_count(iface, count))
+        return FALSE;
+
     return hid_report_descriptor_append(desc, template, sizeof(template));
+}
+
+static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE count)
+{
+    USHORT offset = iface->hid_device_state.bit_size / 8;
+
+    if (!rel && iface->hid_device_state.rel_axis_count)
+        ERR("absolute axes should be added before relative axes!\n");
+    else if (iface->hid_device_state.button_count || iface->hid_device_state.hatswitch_count)
+        ERR("axes should be added before buttons or hatswitches!\n");
+    else if ((iface->hid_device_state.bit_size % 8))
+        ERR("axes should be byte aligned, missing padding!\n");
+    else if (iface->hid_device_state.bit_size + 32 * count > 0x80000)
+        ERR("report size overflow, too many elements!\n");
+    else if (rel)
+    {
+        if (!iface->hid_device_state.rel_axis_count) iface->hid_device_state.rel_axis_start = offset;
+        iface->hid_device_state.rel_axis_count += count;
+        iface->hid_device_state.bit_size += 32 * count;
+        return TRUE;
+    }
+    else
+    {
+        if (!iface->hid_device_state.abs_axis_count) iface->hid_device_state.abs_axis_start = offset;
+        iface->hid_device_state.abs_axis_count += count;
+        iface->hid_device_state.bit_size += 32 * count;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
@@ -170,6 +250,9 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
         INPUT(1, Data|Var|(rel ? Rel : Abs)),
     };
     int i;
+
+    if (!hid_device_add_axis_count(iface, rel, count))
+        return FALSE;
 
     if (!hid_report_descriptor_append(desc, template_begin, sizeof(template_begin)))
         return FALSE;

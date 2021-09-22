@@ -57,6 +57,19 @@ struct hid_report_descriptor
     SIZE_T max_size;
 };
 
+struct hid_device_state
+{
+    ULONG bit_size;
+    USHORT abs_axis_start;
+    USHORT abs_axis_count;
+    USHORT rel_axis_start;
+    USHORT rel_axis_count;
+    USHORT hatswitch_start;
+    USHORT hatswitch_count;
+    USHORT button_start;
+    USHORT button_count;
+};
+
 struct unix_device
 {
     const struct raw_device_vtbl *vtbl;
@@ -65,6 +78,7 @@ struct unix_device
 
     const struct hid_device_vtbl *hid_vtbl;
     struct hid_report_descriptor hid_report_descriptor;
+    struct hid_device_state hid_device_state;
 };
 
 extern void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
