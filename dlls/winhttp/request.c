@@ -1872,11 +1872,8 @@ static void drain_content( struct request *request )
     for (;;)
     {
         if (request->read_chunked) size = sizeof(buffer);
-        else
-        {
-            if (bytes_total >= bytes_left) return;
-            size = min( sizeof(buffer), bytes_left - bytes_total );
-        }
+        else size = min( sizeof(buffer), bytes_left - bytes_total );
+
         if (read_data( request, buffer, size, &bytes_read, FALSE ) || !bytes_read) return;
         bytes_total += bytes_read;
     }
