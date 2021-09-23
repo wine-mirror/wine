@@ -948,17 +948,53 @@ static BYTE get_page_vprot( const void *addr )
  *
  * Return the size of the region with equal masked vprot byte.
  * Also return the protections for the first page.
- * The function assumes that base and size are page aligned and
- * base + size does not wrap around. */
+ * The function assumes that base and size are page aligned,
+ * base + size does not wrap around and the range is within view so
+ * vprot bytes are allocated for the range. */
 static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vprot )
 {
-    char *addr;
+    static const UINT_PTR word_from_byte = (UINT_PTR)0x101010101010101;
+    static const UINT_PTR index_align_mask = sizeof(UINT_PTR) - 1;
+    SIZE_T curr_idx, start_idx, end_idx, aligned_start_idx;
+    UINT_PTR vprot_word, mask_word;
+    const BYTE *vprot_ptr;
 
-    *vprot = get_page_vprot( base );
-    for (addr = base + page_size; addr != base + size; addr += page_size)
-        if ((*vprot ^ get_page_vprot( addr )) & mask) break;
+    TRACE("base %p, size %p, mask %#x.\n", base, (void *)size, mask);
 
-    return addr - base;
+    curr_idx = start_idx = (size_t)base >> page_shift;
+    end_idx = start_idx + (size >> page_shift);
+
+    aligned_start_idx = (start_idx + index_align_mask) & ~index_align_mask;
+    if (aligned_start_idx > end_idx) aligned_start_idx = end_idx;
+
+#ifdef _WIN64
+    vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift] + (curr_idx & pages_vprot_mask);
+#else
+    vprot_ptr = pages_vprot + curr_idx;
+#endif
+    *vprot = *vprot_ptr;
+
+    /* Page count page table is at least the multiples of sizeof(UINT_PTR)
+     * so we don't have to worry about crossing the boundary on unaligned idx values. */
+
+    for (; curr_idx < aligned_start_idx; ++curr_idx, ++vprot_ptr)
+        if ((*vprot ^ *vprot_ptr) & mask) return (curr_idx - start_idx) << page_shift;
+
+    vprot_word = word_from_byte * *vprot;
+    mask_word = word_from_byte * mask;
+    for (; curr_idx < end_idx; curr_idx += sizeof(UINT_PTR), vprot_ptr += sizeof(UINT_PTR))
+    {
+#ifdef _WIN64
+        if (!(curr_idx & pages_vprot_mask)) vprot_ptr = pages_vprot[curr_idx >> pages_vprot_shift];
+#endif
+        if ((vprot_word ^ *(UINT_PTR *)vprot_ptr) & mask_word)
+        {
+            for (; curr_idx < end_idx; ++curr_idx, ++vprot_ptr)
+                if ((*vprot ^ *vprot_ptr) & mask) break;
+            return (curr_idx - start_idx) << page_shift;
+        }
+    }
+    return size;
 }
 
 /***********************************************************************
