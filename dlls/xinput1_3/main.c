@@ -233,7 +233,7 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
         if (controller->enabled)
         {
             memset(output_report_buf, 0, output_report_len);
-            output_report_buf[0] = /* report id */ 0;
+            output_report_buf[0] = 1;
             output_report_buf[1] = 0x8;
             output_report_buf[3] = (BYTE)(state->wLeftMotorSpeed / 256);
             output_report_buf[4] = (BYTE)(state->wRightMotorSpeed / 256);

@@ -46,6 +46,7 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
+#include "ddk/hidsdi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "hidusage.h"
@@ -119,6 +120,7 @@ struct sdl_device
 
     SDL_Haptic *sdl_haptic;
     int haptic_effect_id;
+    BYTE vendor_rumble_report_id;
 };
 
 static inline struct sdl_device *impl_from_unix_device(struct unix_device *iface)
@@ -166,7 +168,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
         {
             pSDL_HapticStopAll(impl->sdl_haptic);
             pSDL_HapticRumbleInit(impl->sdl_haptic);
-            if (!hid_device_add_haptics(&impl->unix_device))
+            if (!hid_device_add_haptics(&impl->unix_device, &impl->vendor_rumble_report_id))
                 return FALSE;
             impl->haptic_effect_id = -1;
         }
@@ -217,6 +219,9 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_JOYSTICK))
         return STATUS_NO_MEMORY;
 
+    if (!hid_device_begin_input_report(iface))
+        return STATUS_NO_MEMORY;
+
     if (axis_count && !hid_device_add_axes(iface, axis_count, HID_USAGE_PAGE_GENERIC,
                                            joystick_usages, FALSE, -32768, 32767))
         return STATUS_NO_MEMORY;
@@ -229,6 +234,9 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
         return STATUS_NO_MEMORY;
 
     if (button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
+        return STATUS_NO_MEMORY;
+
+    if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(impl))
@@ -258,6 +266,9 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
     if (!hid_device_begin_report_descriptor(iface, HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD))
         return STATUS_NO_MEMORY;
 
+    if (!hid_device_begin_input_report(iface))
+        return STATUS_NO_MEMORY;
+
     if (!hid_device_add_axes(iface, 2, HID_USAGE_PAGE_GENERIC, left_axis_usages,
                              FALSE, -32768, 32767))
         return STATUS_NO_MEMORY;
@@ -274,6 +285,9 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
         return STATUS_NO_MEMORY;
 
     if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
+        return STATUS_NO_MEMORY;
+
+    if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
     if (!descriptor_add_haptic(impl))
@@ -325,7 +339,7 @@ static void sdl_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
 
-    if (impl->sdl_haptic && packet->reportId == 0)
+    if (impl->sdl_haptic && packet->reportId == impl->vendor_rumble_report_id)
     {
         WORD left = packet->reportBuffer[2] * 128;
         WORD right = packet->reportBuffer[3] * 128;

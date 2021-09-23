@@ -391,6 +391,9 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     if (!hid_device_begin_report_descriptor(iface, device_usage[0], device_usage[1]))
         return STATUS_NO_MEMORY;
 
+    if (!hid_device_begin_input_report(iface))
+        return STATUS_NO_MEMORY;
+
     abs_count = 0;
     for (i = 0; i < HID_ABS_MAX; i++)
     {
@@ -435,6 +438,9 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     /* For now lump all buttons just into incremental usages, Ignore Keys */
     button_count = count_buttons(impl->base.device_fd, impl->button_map);
     if (button_count && !hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, button_count))
+        return STATUS_NO_MEMORY;
+
+    if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
     if (!hid_device_end_report_descriptor(iface))

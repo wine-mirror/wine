@@ -31,6 +31,7 @@
 #include "winioctl.h"
 #include "hidusage.h"
 #include "ddk/wdm.h"
+#include "ddk/hidsdi.h"
 
 #include "wine/debug.h"
 
@@ -89,6 +90,39 @@ BOOL hid_device_begin_report_descriptor(struct unix_device *iface, USAGE usage_p
 BOOL hid_device_end_report_descriptor(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    static const BYTE template[] =
+    {
+        END_COLLECTION,
+    };
+
+    return hid_report_descriptor_append(desc, template, sizeof(template));
+}
+
+BOOL hid_device_begin_input_report(struct unix_device *iface)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    struct hid_device_state *state = &iface->hid_device_state;
+    const BYTE report_id = ++desc->next_report_id[HidP_Input];
+    const BYTE template[] =
+    {
+        COLLECTION(1, Report),
+            REPORT_ID(1, report_id),
+    };
+
+    if (state->report_len)
+    {
+        ERR("input report already created\n");
+        return FALSE;
+    }
+
+    state->id = report_id;
+    state->bit_size += 8;
+    return hid_report_descriptor_append(desc, template, sizeof(template));
+}
+
+BOOL hid_device_end_input_report(struct unix_device *iface)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     struct hid_device_state *state = &iface->hid_device_state;
     static const BYTE template[] =
     {
@@ -98,6 +132,9 @@ BOOL hid_device_end_report_descriptor(struct unix_device *iface)
     state->report_len = (state->bit_size + 7) / 8;
     if (!(state->report_buf = calloc(1, state->report_len))) return FALSE;
     if (!(state->last_report_buf = calloc(1, state->report_len))) return FALSE;
+
+    state->report_buf[0] = state->id;
+    state->last_report_buf[0] = state->id;
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
@@ -276,31 +313,36 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
     return TRUE;
 }
 
-BOOL hid_device_add_haptics(struct unix_device *iface)
+BOOL hid_device_add_haptics(struct unix_device *iface, BYTE *id)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
-    static const BYTE template[] =
+    const BYTE report_id = ++desc->next_report_id[HidP_Output];
+    const BYTE template[] =
     {
         USAGE_PAGE(2, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN),
-        USAGE(1, 0x01),
-        /* padding */
-        REPORT_COUNT(1, 0x02),
-        REPORT_SIZE(1, 0x08),
-        OUTPUT(1, Data|Var|Abs),
-        /* actuators */
-        LOGICAL_MINIMUM(1, 0x00),
-        LOGICAL_MAXIMUM(1, 0xff),
-        PHYSICAL_MINIMUM(1, 0x00),
-        PHYSICAL_MAXIMUM(1, 0xff),
-        REPORT_SIZE(1, 0x08),
-        REPORT_COUNT(1, 0x02),
-        OUTPUT(1, Data|Var|Abs),
-        /* padding */
-        REPORT_COUNT(1, 0x02),
-        REPORT_SIZE(1, 0x08),
-        OUTPUT(1, Data|Var|Abs),
+        COLLECTION(1, Report),
+            REPORT_ID(1, report_id),
+            /* padding */
+            REPORT_COUNT(1, 0x02),
+            REPORT_SIZE(1, 0x08),
+            OUTPUT(1, Data|Var|Abs),
+            /* actuators */
+            USAGE(1, 0x01),
+            LOGICAL_MINIMUM(1, 0x00),
+            LOGICAL_MAXIMUM(1, 0xff),
+            PHYSICAL_MINIMUM(1, 0x00),
+            PHYSICAL_MAXIMUM(1, 0xff),
+            REPORT_SIZE(1, 0x08),
+            REPORT_COUNT(1, 0x02),
+            OUTPUT(1, Data|Var|Abs),
+            /* padding */
+            REPORT_COUNT(1, 0x02),
+            REPORT_SIZE(1, 0x08),
+            OUTPUT(1, Data|Var|Abs),
+        END_COLLECTION,
     };
 
+    *id = report_id;
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 

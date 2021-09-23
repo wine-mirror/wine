@@ -55,6 +55,7 @@ struct hid_report_descriptor
     BYTE *data;
     SIZE_T size;
     SIZE_T max_size;
+    BYTE next_report_id[3];
 };
 
 struct hid_device_state
@@ -72,6 +73,7 @@ struct hid_device_state
     BYTE *report_buf;
     BYTE *last_report_buf;
     BOOL dropped;
+    BYTE id;
 };
 
 struct unix_device
@@ -111,13 +113,15 @@ extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event) DEC
 extern BOOL hid_device_begin_report_descriptor(struct unix_device *iface, USAGE usage_page, USAGE usage) DECLSPEC_HIDDEN;
 extern BOOL hid_device_end_report_descriptor(struct unix_device *iface) DECLSPEC_HIDDEN;
 
+extern BOOL hid_device_begin_input_report(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_end_input_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 extern BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page,
                                    USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
 extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count) DECLSPEC_HIDDEN;
 extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
                                 const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
 
-extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_haptics(struct unix_device *iface, BYTE *id) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
 extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
