@@ -128,7 +128,6 @@ struct sdl_device
     DWORD effect_support;
     SDL_Haptic *sdl_haptic;
     int haptic_effect_id;
-    BYTE vendor_rumble_report_id;
 };
 
 static inline struct sdl_device *impl_from_unix_device(struct unix_device *iface)
@@ -187,7 +186,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
 
     if (impl->effect_support & EFFECT_SUPPORT_HAPTICS)
     {
-        if (!hid_device_add_haptics(&impl->unix_device, &impl->vendor_rumble_report_id))
+        if (!hid_device_add_haptics(&impl->unix_device))
             return FALSE;
     }
 
@@ -348,36 +347,28 @@ static void sdl_device_stop(struct unix_device *iface)
     pthread_mutex_unlock(&sdl_cs);
 }
 
-static void sdl_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+NTSTATUS sdl_device_haptics_start(struct unix_device *iface, DWORD duration_ms,
+                                  USHORT rumble_intensity, USHORT buzz_intensity)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
     SDL_HapticEffect effect;
 
-    if (packet->reportId == impl->vendor_rumble_report_id)
-    {
-        WORD left = packet->reportBuffer[2] * 128;
-        WORD right = packet->reportBuffer[3] * 128;
+    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u.\n", iface, duration_ms,
+          rumble_intensity, buzz_intensity);
 
-        pSDL_memset(&effect, 0, sizeof(SDL_HapticEffect));
-        effect.type = SDL_HAPTIC_LEFTRIGHT;
-        effect.leftright.length = -1;
-        effect.leftright.large_magnitude = left;
-        effect.leftright.small_magnitude = right;
+    if (!(impl->effect_support & EFFECT_SUPPORT_HAPTICS)) return STATUS_NOT_SUPPORTED;
 
-        io->Information = packet->reportBufferLen;
-        io->Status = STATUS_SUCCESS;
-    }
-    else
-    {
-        io->Information = 0;
-        io->Status = STATUS_NOT_IMPLEMENTED;
-        return;
-    }
+    memset(&effect, 0, sizeof(SDL_HapticEffect));
+    effect.type = SDL_HAPTIC_LEFTRIGHT;
+    effect.leftright.length = duration_ms;
+    effect.leftright.large_magnitude = rumble_intensity;
+    effect.leftright.small_magnitude = buzz_intensity;
 
     if (impl->sdl_haptic) pSDL_HapticStopAll(impl->sdl_haptic);
     if (impl->effect_support & WINE_SDL_JOYSTICK_RUMBLE)
         pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0);
-    if (!effect.leftright.large_magnitude && !effect.leftright.small_magnitude) return;
+    if (!effect.leftright.large_magnitude && !effect.leftright.small_magnitude)
+        return STATUS_SUCCESS;
 
     if (impl->effect_support & SDL_HAPTIC_LEFTRIGHT)
     {
@@ -397,18 +388,8 @@ static void sdl_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
         pSDL_JoystickRumble(impl->sdl_joystick, effect.leftright.large_magnitude,
                             effect.leftright.small_magnitude, -1);
     }
-}
 
-static void sdl_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
-
-static void sdl_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
+    return STATUS_SUCCESS;
 }
 
 static const struct hid_device_vtbl sdl_device_vtbl =
@@ -416,9 +397,7 @@ static const struct hid_device_vtbl sdl_device_vtbl =
     sdl_device_destroy,
     sdl_device_start,
     sdl_device_stop,
-    sdl_device_set_output_report,
-    sdl_device_get_feature_report,
-    sdl_device_set_feature_report,
+    sdl_device_haptics_start,
 };
 
 static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *event)

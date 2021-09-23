@@ -734,22 +734,13 @@ static void lnxev_device_read_report(struct unix_device *iface)
         bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
 }
 
-static void lnxev_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD duration_ms,
+                                           USHORT rumble_intensity, USHORT buzz_intensity)
 {
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
+    FIXME("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u stub!\n", iface,
+          duration_ms, rumble_intensity, buzz_intensity);
 
-static void lnxev_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
-
-static void lnxev_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static const struct hid_device_vtbl lnxev_device_vtbl =
@@ -757,9 +748,7 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
     lnxev_device_destroy,
     lnxev_device_start,
     lnxev_device_stop,
-    lnxev_device_set_output_report,
-    lnxev_device_get_feature_report,
-    lnxev_device_set_feature_report,
+    lnxev_device_haptics_start,
 };
 #endif
 

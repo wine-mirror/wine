@@ -38,8 +38,6 @@
 
 #include "unix_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
-
 BOOL is_xbox_gamepad(WORD vid, WORD pid)
 {
     if (vid != 0x045e) return FALSE;
@@ -84,25 +82,10 @@ static void mouse_stop(struct unix_device *iface)
 {
 }
 
-static void mouse_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static NTSTATUS mouse_haptics_start(struct unix_device *iface, DWORD duration,
+                                    USHORT rumble_intensity, USHORT buzz_intensity)
 {
-    FIXME("id %u, stub!\n", packet->reportId);
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
-
-static void mouse_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    FIXME("id %u, stub!\n", packet->reportId);
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
-
-static void mouse_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    FIXME("id %u, stub!\n", packet->reportId);
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
+    return STATUS_NOT_SUPPORTED;
 }
 
 static const struct hid_device_vtbl mouse_vtbl =
@@ -110,9 +93,7 @@ static const struct hid_device_vtbl mouse_vtbl =
     mouse_destroy,
     mouse_start,
     mouse_stop,
-    mouse_set_output_report,
-    mouse_get_feature_report,
-    mouse_set_feature_report,
+    mouse_haptics_start,
 };
 
 static const struct device_desc mouse_device_desc =
@@ -158,25 +139,10 @@ static void keyboard_stop(struct unix_device *iface)
 {
 }
 
-static void keyboard_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+static NTSTATUS keyboard_haptics_start(struct unix_device *iface, DWORD duration,
+                                       USHORT rumble_intensity, USHORT buzz_intensity)
 {
-    FIXME("id %u, stub!\n", packet->reportId);
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
-
-static void keyboard_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    FIXME("id %u, stub!\n", packet->reportId);
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-}
-
-static void keyboard_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    FIXME("id %u, stub!\n", packet->reportId);
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
+    return STATUS_NOT_SUPPORTED;
 }
 
 static const struct hid_device_vtbl keyboard_vtbl =
@@ -184,9 +150,7 @@ static const struct hid_device_vtbl keyboard_vtbl =
     keyboard_destroy,
     keyboard_start,
     keyboard_stop,
-    keyboard_set_output_report,
-    keyboard_get_feature_report,
-    keyboard_set_feature_report,
+    keyboard_haptics_start,
 };
 
 static const struct device_desc keyboard_device_desc =

@@ -313,7 +313,7 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
     return TRUE;
 }
 
-BOOL hid_device_add_haptics(struct unix_device *iface, BYTE *id)
+BOOL hid_device_add_haptics(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE report_id = ++desc->next_report_id[HidP_Output];
@@ -342,7 +342,7 @@ BOOL hid_device_add_haptics(struct unix_device *iface, BYTE *id)
         END_COLLECTION,
     };
 
-    *id = report_id;
+    iface->hid_haptics.vendor_report = report_id;
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
@@ -377,17 +377,32 @@ NTSTATUS hid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffe
 
 static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    return iface->hid_vtbl->set_output_report(iface, packet, io);
+    struct hid_haptics *haptics = &iface->hid_haptics;
+    if (packet->reportId == haptics->vendor_report)
+    {
+        WORD left = packet->reportBuffer[2] * 128;
+        WORD right = packet->reportBuffer[3] * 128;
+
+        io->Information = packet->reportBufferLen;
+        io->Status = iface->hid_vtbl->haptics_start(iface, -1, left, right);
+    }
+    else
+    {
+        io->Information = 0;
+        io->Status = STATUS_NOT_IMPLEMENTED;
+    }
 }
 
 static void hid_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    return iface->hid_vtbl->get_feature_report(iface, packet, io);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
 static void hid_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
-    return iface->hid_vtbl->set_feature_report(iface, packet, io);
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
 }
 
 static const struct raw_device_vtbl raw_device_vtbl =

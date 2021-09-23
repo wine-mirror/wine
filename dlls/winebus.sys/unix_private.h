@@ -45,9 +45,8 @@ struct hid_device_vtbl
     void (*destroy)(struct unix_device *iface);
     NTSTATUS (*start)(struct unix_device *iface);
     void (*stop)(struct unix_device *iface);
-    void (*set_output_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
-    void (*get_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
-    void (*set_feature_report)(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io);
+    NTSTATUS (*haptics_start)(struct unix_device *iface, DWORD duration_ms,
+                              USHORT rumble_intensity, USHORT buzz_intensity);
 };
 
 struct hid_report_descriptor
@@ -56,6 +55,11 @@ struct hid_report_descriptor
     SIZE_T size;
     SIZE_T max_size;
     BYTE next_report_id[3];
+};
+
+struct hid_haptics
+{
+    BYTE vendor_report;
 };
 
 struct hid_device_state
@@ -85,6 +89,7 @@ struct unix_device
     const struct hid_device_vtbl *hid_vtbl;
     struct hid_report_descriptor hid_report_descriptor;
     struct hid_device_state hid_device_state;
+    struct hid_haptics hid_haptics;
 };
 
 extern void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
@@ -121,7 +126,7 @@ extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count) DECLS
 extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
                                 const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
 
-extern BOOL hid_device_add_haptics(struct unix_device *iface, BYTE *id) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
 extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
