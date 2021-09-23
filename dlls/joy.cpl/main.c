@@ -155,20 +155,7 @@ static void destroy_joysticks(struct JoystickData *data)
     }
 
     free(data->joysticks);
-}
-
-static void initialize_joysticks_list(HWND hwnd, struct JoystickData *data)
-{
-    int i;
-
-    SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_RESETCONTENT, 0, 0);
-
-    /* Add enumerated joysticks */
-    for (i = 0; i < data->num_joysticks; i++)
-    {
-        struct Joystick *joy = &data->joysticks[i];
-        SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
-    }
+    data->joysticks = NULL;
 }
 
 /******************************************************************************
@@ -233,14 +220,22 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
     if (appkey) RegCloseKey(appkey);
 }
 
-static void initialize_disabled_joysticks_list(HWND hwnd)
+static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
 {
+    struct Joystick *joy, *joy_end;
     HKEY hkey, appkey;
     DWORD values = 0;
     LSTATUS status;
     DWORD i;
 
+    destroy_joysticks(data);
+    initialize_joysticks(data);
+
+    SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_RESETCONTENT, 0, 0);
     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_RESETCONTENT, 0, 0);
+
+    for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
+        SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
 
     /* Search for disabled joysticks */
     get_app_key(&hkey, &appkey);
@@ -275,8 +270,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
         {
             data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
 
-            initialize_joysticks_list(hwnd, data);
-            initialize_disabled_joysticks_list(hwnd);
+            refresh_joystick_list(hwnd, data);
 
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), FALSE);
@@ -298,7 +292,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     if (sel >= 0)
                     {
                         enable_joystick(data->joysticks[sel].instance.tszInstanceName, FALSE);
-                        initialize_disabled_joysticks_list(hwnd);
+                        refresh_joystick_list(hwnd, data);
                     }
                 }
                 break;
@@ -312,7 +306,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                         WCHAR text[MAX_PATH];
                         SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_GETTEXT, sel, (LPARAM) text);
                         enable_joystick(text, TRUE);
-                        initialize_disabled_joysticks_list(hwnd);
+                        refresh_joystick_list(hwnd, data);
                     }
                 }
                 break;
