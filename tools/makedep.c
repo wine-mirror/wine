@@ -909,9 +909,6 @@ static void add_dependency( struct file *file, const char *name, enum incl_type 
 {
     /* enforce some rules for the Wine tree */
 
-    if (!memcmp( name, "../", 3 ))
-        fatal_error( "#include directive with relative path not allowed\n" );
-
     if (!strcmp( name, "config.h" ))
     {
         if (strendswith( file->name, ".h" ))
@@ -1456,6 +1453,7 @@ static struct file *open_global_file( const struct makefile *make, const char *p
  */
 static struct file *open_global_header( const struct makefile *make, const char *path, char **filename )
 {
+    if (!strncmp( path, "../", 3 )) return NULL;
     return open_global_file( make, strmake( "include/%s", path ), filename );
 }
 
