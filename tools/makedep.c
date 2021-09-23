@@ -907,26 +907,6 @@ static struct file *add_file( const char *name )
  */
 static void add_dependency( struct file *file, const char *name, enum incl_type type )
 {
-    /* enforce some rules for the Wine tree */
-
-    if (!strcmp( name, "config.h" ))
-    {
-        if (strendswith( file->name, ".h" ))
-            fatal_error( "config.h must not be included by a header file\n" );
-        if (file->deps_count)
-            fatal_error( "config.h must be included before anything else\n" );
-    }
-    else if (!strcmp( name, "wine/port.h" ))
-    {
-        if (strendswith( file->name, ".h" ))
-            fatal_error( "wine/port.h must not be included by a header file\n" );
-        if (!file->deps_count) fatal_error( "config.h must be included before wine/port.h\n" );
-        if (file->deps_count > 1)
-            fatal_error( "wine/port.h must be included before everything except config.h\n" );
-        if (strcmp( file->deps[0].name, "config.h" ))
-            fatal_error( "config.h must be included before wine/port.h\n" );
-    }
-
     if (file->deps_count >= file->deps_size)
     {
         file->deps_size *= 2;
@@ -1630,9 +1610,6 @@ static void add_all_includes( struct makefile *make, struct incl_file *parent, s
 {
     unsigned int i;
 
-    parent->files_count = 0;
-    parent->files_size = file->deps_count;
-    parent->files = xmalloc( parent->files_size * sizeof(*parent->files) );
     for (i = 0; i < file->deps_count; i++)
     {
         switch (file->deps[i].type)
@@ -2094,7 +2071,22 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
             return;  /* library is imported only when building a typelib */
         file->owner = source;
         strarray_add( &source->dependencies, file->filename );
+
+        /* sanity checks */
+        if ((!strcmp( file->filename, "include/config.h" ) && file != source->files[0]) ||
+            (!strcmp( file->filename, "include/wine/port.h" ) && file != source->files[1]))
+        {
+            input_file_name = source->filename;
+            input_line = 0;
+            for (i = 0; i < source->file->deps_count; i++)
+            {
+                if (!strcmp( source->file->deps[i].name, file->name ))
+                    input_line = source->file->deps[i].line;
+            }
+            fatal_error( "%s must be included before other headers\n", file->name );
+        }
     }
+
     for (i = 0; i < file->files_count; i++) get_dependencies( file->files[i], source );
 }
 
