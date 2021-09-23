@@ -3286,9 +3286,14 @@ static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *c
 
 struct check_objects_todos
 {
+    BOOL guid;
     BOOL ofs;
     BOOL type;
+    BOOL flags;
     BOOL collection_number;
+    BOOL usage;
+    BOOL usage_page;
+    BOOL report_id;
 };
 
 struct check_objects_params
@@ -3312,11 +3317,13 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     if (params->index >= params->expect_count) exp = &unexpected_obj;
 
     check_member( *obj, *exp, "%u", dwSize );
+    todo_wine_if( todo->guid )
     check_member_guid( *obj, *exp, guidType );
     todo_wine_if( todo->ofs )
     check_member( *obj, *exp, "%#x", dwOfs );
     todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
+    todo_wine_if( todo->flags )
     check_member( *obj, *exp, "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
@@ -3324,10 +3331,13 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     todo_wine_if( todo->collection_number )
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
+    todo_wine_if( todo->usage_page )
     check_member( *obj, *exp, "%#04x", wUsagePage );
+    todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
     check_member( *obj, *exp, "%#04x", dwDimension );
     check_member( *obj, *exp, "%#04x", wExponent );
+    todo_wine_if( todo->report_id )
     check_member( *obj, *exp, "%u", wReportId );
 
     winetest_pop_context();
@@ -3355,6 +3365,8 @@ static void test_simple_joystick(void)
             COLLECTION(1, Report),
                 REPORT_ID(1, 1),
 
+                USAGE(1, HID_USAGE_GENERIC_WHEEL),
+                USAGE(4, (0xff01u<<16)|(0x1234)),
                 USAGE(1, HID_USAGE_GENERIC_X),
                 USAGE(1, HID_USAGE_GENERIC_Y),
                 LOGICAL_MINIMUM(1, 0xe7),
@@ -3362,7 +3374,7 @@ static void test_simple_joystick(void)
                 PHYSICAL_MINIMUM(1, 0xe7),
                 PHYSICAL_MAXIMUM(1, 0x38),
                 REPORT_SIZE(1, 8),
-                REPORT_COUNT(1, 2),
+                REPORT_COUNT(1, 4),
                 INPUT(1, Data|Var|Abs),
 
                 USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
@@ -3392,14 +3404,14 @@ static void test_simple_joystick(void)
 
     static const HIDP_CAPS hid_caps =
     {
-        .InputReportByteLength = 4,
+        .InputReportByteLength = 6,
     };
     static const DIDEVCAPS expect_caps =
     {
         .dwSize = sizeof(DIDEVCAPS),
         .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
         .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
-        .dwAxes = 2,
+        .dwAxes = 3,
         .dwPOVs = 1,
         .dwButtons = 2,
     };
@@ -3407,53 +3419,53 @@ static void test_simple_joystick(void)
     {
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0},
+            .report_buf = {1,0x10,0x10,0x10,0x10,0},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x38,0x38,0xf8},
+            .report_buf = {1,0x10,0x10,0x38,0x38,0xf8},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x01,0x01,0x00},
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x00},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x01,0x01,0x00},
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x00},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x80,0x80,0xff},
+            .report_buf = {1,0x10,0x10,0x80,0x80,0xff},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0xee,0x54},
+            .report_buf = {1,0x10,0x10,0x10,0xee,0x54},
         },
     };
     static const struct DIJOYSTATE2 expect_state[] =
     {
-        {.lX = 32767, .lY = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = 32767, .lY = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = 65535, .lY = 65535, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
-        {.lX = 20779, .lY = 20779, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = 20779, .lY = 20779, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = 0, .lY = 0, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
-        {.lX = 32767, .lY = 5594, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
+        {.lX = 32767, .lY = 32767, .lZ = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 32767, .lY = 32767, .lZ = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 65535, .lY = 65535, .lZ = 32767, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = 20779, .lY = 20779, .lZ = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 20779, .lY = 20779, .lZ = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 0, .lY = 0, .lZ = 32767, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = 32767, .lY = 5594, .lZ = 32767, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
     };
     static const struct DIJOYSTATE2 expect_state_abs[] =
     {
-        {.lX = -9000, .lY = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = -9000, .lY = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = -4000, .lY = 51000, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
-        {.lX = -10667, .lY = 12905, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = -10667, .lY = 12905, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
-        {.lX = -14000, .lY = 1000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
-        {.lX = -9000, .lY = 1000, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
+        {.lX = -9000, .lY = 26000, .lZ = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -9000, .lY = 26000, .lZ = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -4000, .lY = 51000, .lZ = 26000, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = -10667, .lY = 12905, .lZ = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -10667, .lY = 12905, .lZ = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = -14000, .lY = 1000, .lZ = 26000, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
+        {.lX = -9000, .lY = 1000, .lZ = 26000, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80}},
     };
     static const struct DIJOYSTATE2 expect_state_rel[] =
     {
         {.lX = 0, .lY = 0, .rgdwPOV = {13500, -1, -1, -1}, .rgbButtons = {0x80, 0}},
-        {.lX = 9016, .lY = -984, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
+        {.lX = 9016, .lY = -984, .lZ = -25984, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
         {.lX = 40, .lY = 40, .rgdwPOV = {31500, -1, -1, -1}, .rgbButtons = {0x80, 0x80}},
         {.lX = -55, .lY = -55, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
         {.lX = 0, .lY = 0, .rgdwPOV = {-1, -1, -1, -1}, .rgbButtons = {0, 0}},
@@ -3517,8 +3529,20 @@ static void test_simple_joystick(void)
         },
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_ZAxis,
+            .dwOfs = 0xc,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(2),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Wheel",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_WHEEL,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_POV,
-            .dwOfs = 0x8,
+            .dwOfs = 0x10,
             .dwType = DIDFT_POV|DIDFT_MAKEINSTANCE(0),
             .tszName = L"Hat Switch",
             .wCollectionNumber = 1,
@@ -3529,7 +3553,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = 0xc,
+            .dwOfs = 0x14,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0),
             .tszName = L"Button 0",
             .wCollectionNumber = 1,
@@ -3540,7 +3564,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = 0xd,
+            .dwOfs = 0x15,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1),
             .tszName = L"Button 1",
             .wCollectionNumber = 1,
@@ -3569,9 +3593,11 @@ static void test_simple_joystick(void)
     {
         {.ofs = TRUE},
         {.ofs = TRUE},
-        {.ofs = TRUE},
-        {.ofs = TRUE},
-        {.ofs = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .usage = TRUE, .usage_page = TRUE},
+        {.ofs = TRUE, .type = TRUE, .usage = TRUE},
+        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .collection_number = TRUE, .report_id = TRUE, .usage = TRUE, .usage_page = TRUE},
+        {.type = TRUE},
     };
 
     struct check_objects_params check_objects_params =
@@ -3768,6 +3794,7 @@ static void test_simple_joystick(void)
     check_member( caps, expect_caps, "%d", dwSize );
     check_member( caps, expect_caps, "%#x", dwFlags );
     check_member( caps, expect_caps, "%#x", dwDevType );
+    todo_wine
     check_member( caps, expect_caps, "%d", dwAxes );
     check_member( caps, expect_caps, "%d", dwButtons );
     check_member( caps, expect_caps, "%d", dwPOVs );
@@ -3933,9 +3960,11 @@ static void test_simple_joystick(void)
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
-    ok( res == 4, "got %u expected %u\n", res, 4 );
+    todo_wine
+    ok( res == 5, "got %u expected %u\n", res, 5 );
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
+    todo_wine
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
 
@@ -3987,22 +4016,22 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
     ok( hr == DI_OK, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[4], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[4], guidType );
+    check_member( objinst, expect_objects[5], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[5], guidType );
     todo_wine
-    check_member( objinst, expect_objects[4], "%#x", dwOfs );
-    check_member( objinst, expect_objects[4], "%#x", dwType );
-    check_member( objinst, expect_objects[4], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[4], tszName );
-    check_member( objinst, expect_objects[4], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[4], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[4], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[4], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[4], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[4], "%#04x", wUsage );
-    check_member( objinst, expect_objects[4], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[4], "%#04x", wExponent );
-    check_member( objinst, expect_objects[4], "%u", wReportId );
+    check_member( objinst, expect_objects[5], "%#x", dwOfs );
+    check_member( objinst, expect_objects[5], "%#x", dwType );
+    check_member( objinst, expect_objects[5], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[5], tszName );
+    check_member( objinst, expect_objects[5], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[5], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[5], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[5], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[5], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[5], "%#04x", wUsage );
+    check_member( objinst, expect_objects[5], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[5], "%#04x", wExponent );
+    check_member( objinst, expect_objects[5], "%u", wReportId );
 
     hr = IDirectInputDevice8_SetDataFormat( device, NULL );
     ok( hr == E_POINTER, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
@@ -4108,7 +4137,9 @@ static void test_simple_joystick(void)
         check_member( state, expect_state[i], "%d", lX );
         todo_wine_if( i != 2 )
         check_member( state, expect_state[i], "%d", lY );
+        todo_wine
         check_member( state, expect_state[i], "%d", lZ );
+        check_member( state, expect_state[i], "%d", lRx );
         todo_wine_if( i == 0 )
         check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
         check_member( state, expect_state[i], "%#x", rgdwPOV[1] );
@@ -4132,7 +4163,9 @@ static void test_simple_joystick(void)
     check_member( state, expect_state[i], "%d", lX );
     todo_wine
     check_member( state, expect_state[i], "%d", lY );
+    todo_wine
     check_member( state, expect_state[i], "%d", lZ );
+    check_member( state, expect_state[i], "%d", lRx );
     check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
     check_member( state, expect_state[i], "%#x", rgdwPOV[1] );
     check_member( state, expect_state[i], "%#x", rgbButtons[0] );
@@ -4257,7 +4290,9 @@ static void test_simple_joystick(void)
     check_member( state, expect_state[3], "%d", lX );
     todo_wine
     check_member( state, expect_state[3], "%d", lY );
+    todo_wine
     check_member( state, expect_state[3], "%d", lZ );
+    check_member( state, expect_state[3], "%d", lRx );
     check_member( state, expect_state[3], "%d", rgdwPOV[0] );
     check_member( state, expect_state[3], "%d", rgdwPOV[1] );
     check_member( state, expect_state[3], "%#x", rgbButtons[0] );
@@ -4312,7 +4347,9 @@ static void test_simple_joystick(void)
     check_member( state, expect_state_abs[1], "%d", lX );
     todo_wine
     check_member( state, expect_state_abs[1], "%d", lY );
+    todo_wine
     check_member( state, expect_state_abs[1], "%d", lZ );
+    check_member( state, expect_state_abs[1], "%d", lRx );
     check_member( state, expect_state_abs[1], "%d", rgdwPOV[0] );
     check_member( state, expect_state_abs[1], "%d", rgdwPOV[1] );
     check_member( state, expect_state_abs[1], "%#x", rgbButtons[0] );
@@ -4457,7 +4494,9 @@ static void test_simple_joystick(void)
             todo_wine_if( i != 2 )
             check_member( state, expect_state_abs[i], "%d", lY );
         }
+        todo_wine
         check_member( state, expect_state_abs[i], "%d", lZ );
+        check_member( state, expect_state_abs[i], "%d", lRx );
         check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );
         check_member( state, expect_state_abs[i], "%d", rgdwPOV[1] );
         check_member( state, expect_state_abs[i], "%#x", rgbButtons[0] );
@@ -4480,7 +4519,9 @@ static void test_simple_joystick(void)
     check_member( state, expect_state_abs[i], "%d", lX );
     todo_wine
     check_member( state, expect_state_abs[i], "%d", lY );
+    todo_wine
     check_member( state, expect_state_abs[i], "%d", lZ );
+    check_member( state, expect_state_abs[i], "%d", lRx );
     check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );
     check_member( state, expect_state_abs[i], "%d", rgdwPOV[1] );
     check_member( state, expect_state_abs[i], "%#x", rgbButtons[0] );
@@ -4575,7 +4616,9 @@ static void test_simple_joystick(void)
         check_member( state, expect_state_rel[i], "%d", lX );
         todo_wine
         check_member( state, expect_state_rel[i], "%d", lY );
+        todo_wine_if( i == 1 )
         check_member( state, expect_state_rel[i], "%d", lZ );
+        check_member( state, expect_state_rel[i], "%d", lRx );
         check_member( state, expect_state_rel[i], "%d", rgdwPOV[0] );
         check_member( state, expect_state_rel[i], "%d", rgdwPOV[1] );
         check_member( state, expect_state_rel[i], "%#x", rgbButtons[0] );
@@ -4599,6 +4642,7 @@ static void test_simple_joystick(void)
     todo_wine
     check_member( state, expect_state_rel[i], "%d", lY );
     check_member( state, expect_state_rel[i], "%d", lZ );
+    check_member( state, expect_state_rel[i], "%d", lRx );
     check_member( state, expect_state_rel[i], "%d", rgdwPOV[0] );
     check_member( state, expect_state_rel[i], "%d", rgdwPOV[1] );
     check_member( state, expect_state_rel[i], "%#x", rgbButtons[0] );
