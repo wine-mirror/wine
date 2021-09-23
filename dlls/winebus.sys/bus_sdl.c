@@ -50,12 +50,6 @@
 #include "wine/unicode.h"
 #include "hidusage.h"
 
-#ifdef WORDS_BIGENDIAN
-# define LE_DWORD(x) RtlUlongByteSwap(x)
-#else
-# define LE_DWORD(x) (x)
-#endif
-
 #include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
@@ -142,64 +136,23 @@ static struct sdl_device *find_device_from_id(SDL_JoystickID id)
     return NULL;
 }
 
-static void set_button_value(struct sdl_device *impl, int index, int value)
+static void set_hat_value(struct unix_device *iface, int index, int value)
 {
-    struct hid_device_state *state = &impl->unix_device.hid_device_state;
-    USHORT offset = state->button_start;
-    int byte_index = offset + index / 8;
-    int bit_index = index % 8;
-    BYTE mask = 1 << bit_index;
-    if (index >= state->button_count) return;
-    if (value) state->report_buf[byte_index] |= mask;
-    else state->report_buf[byte_index] &= ~mask;
-}
-
-static void set_axis_value(struct sdl_device *impl, int index, short value)
-{
-    struct hid_device_state *state = &impl->unix_device.hid_device_state;
-    USHORT offset = state->abs_axis_start;
-    if (index >= state->abs_axis_count) return;
-    offset += index * sizeof(DWORD);
-    *(DWORD *)&state->report_buf[offset] = LE_DWORD(value);
-}
-
-static void set_ball_value(struct sdl_device *impl, int index, int value1, int value2)
-{
-    struct hid_device_state *state = &impl->unix_device.hid_device_state;
-    USHORT offset = state->rel_axis_start;
-    if (index >= state->rel_axis_count) return;
-    offset += index * sizeof(DWORD);
-    *(DWORD *)&state->report_buf[offset] = LE_DWORD(value1);
-    *(DWORD *)&state->report_buf[offset + sizeof(DWORD)] = LE_DWORD(value2);
-}
-
-static void set_hat_value(struct sdl_device *impl, int index, int value)
-{
-    struct hid_device_state *state = &impl->unix_device.hid_device_state;
-    USHORT offset = state->hatswitch_start;
-    unsigned char val;
-
-    if (index >= state->hatswitch_count) return;
-    offset += index;
-
+    LONG x = 0, y = 0;
     switch (value)
     {
-        /* 8 1 2
-         * 7 0 3
-         * 6 5 4 */
-        case SDL_HAT_CENTERED: val = 0; break;
-        case SDL_HAT_UP: val = 1; break;
-        case SDL_HAT_RIGHTUP: val = 2; break;
-        case SDL_HAT_RIGHT: val = 3; break;
-        case SDL_HAT_RIGHTDOWN: val = 4; break;
-        case SDL_HAT_DOWN: val = 5; break;
-        case SDL_HAT_LEFTDOWN: val = 6; break;
-        case SDL_HAT_LEFT: val = 7; break;
-        case SDL_HAT_LEFTUP: val = 8; break;
-        default: return;
+    case SDL_HAT_CENTERED: break;
+    case SDL_HAT_UP: y = 1; break;
+    case SDL_HAT_RIGHTUP: y = x = 1; break;
+    case SDL_HAT_RIGHT: x = 1; break;
+    case SDL_HAT_RIGHTDOWN: x = 1; y = -1; break;
+    case SDL_HAT_DOWN: y = -1; break;
+    case SDL_HAT_LEFTDOWN: x = y = -1; break;
+    case SDL_HAT_LEFT: x = -1; break;
+    case SDL_HAT_LEFTUP: x = -1; y = 1; break;
     }
-
-    state->report_buf[offset] = val;
+    hid_device_set_hatswitch_x(iface, index, x);
+    hid_device_set_hatswitch_y(iface, index, y);
 }
 
 static BOOL descriptor_add_haptic(struct sdl_device *impl)
@@ -286,38 +239,11 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
 
     /* Initialize axis in the report */
     for (i = 0; i < axis_count; i++)
-        set_axis_value(impl, i, pSDL_JoystickGetAxis(impl->sdl_joystick, i));
+        hid_device_set_abs_axis(iface, i, pSDL_JoystickGetAxis(impl->sdl_joystick, i));
     for (i = 0; i < hat_count; i++)
-        set_hat_value(impl, i, pSDL_JoystickGetHat(impl->sdl_joystick, i));
+        set_hat_value(iface, i, pSDL_JoystickGetHat(impl->sdl_joystick, i));
 
     return STATUS_SUCCESS;
-}
-
-static SHORT compose_dpad_value(SDL_GameController *joystick)
-{
-    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP))
-    {
-        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
-            return SDL_HAT_RIGHTUP;
-        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
-            return SDL_HAT_LEFTUP;
-        return SDL_HAT_UP;
-    }
-
-    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
-    {
-        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
-            return SDL_HAT_RIGHTDOWN;
-        if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
-            return SDL_HAT_LEFTDOWN;
-        return SDL_HAT_DOWN;
-    }
-
-    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
-        return SDL_HAT_RIGHT;
-    if (pSDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
-        return SDL_HAT_LEFT;
-    return SDL_HAT_CENTERED;
 }
 
 static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
@@ -358,8 +284,15 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
 
     /* Initialize axis in the report */
     for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
-        set_axis_value(impl, i, pSDL_GameControllerGetAxis(impl->sdl_controller, i));
-    set_hat_value(impl, 0, compose_dpad_value(impl->sdl_controller));
+        hid_device_set_abs_axis(iface, i, pSDL_GameControllerGetAxis(impl->sdl_controller, i));
+    if (pSDL_GameControllerGetButton(impl->sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_UP))
+        hid_device_set_hatswitch_y(iface, 0, -1);
+    if (pSDL_GameControllerGetButton(impl->sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+        hid_device_set_hatswitch_y(iface, 0, +1);
+    if (pSDL_GameControllerGetButton(impl->sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+        hid_device_set_hatswitch_x(iface, 0, -1);
+    if (pSDL_GameControllerGetButton(impl->sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+        hid_device_set_hatswitch_x(iface, 0, +1);
 
     return STATUS_SUCCESS;
 }
@@ -471,7 +404,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyButtonEvent *ie = &event->jbutton;
 
-            set_button_value(impl, ie->button, ie->state);
+            hid_device_set_button(iface, ie->button, ie->state);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
@@ -479,18 +412,16 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyAxisEvent *ie = &event->jaxis;
 
-            if (ie->axis < 6)
-            {
-                set_axis_value(impl, ie->axis, ie->value);
-                bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
-            }
+            hid_device_set_abs_axis(iface, ie->axis, ie->value);
+            bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
         case SDL_JOYBALLMOTION:
         {
             SDL_JoyBallEvent *ie = &event->jball;
 
-            set_ball_value(impl, ie->ball, ie->xrel, ie->yrel);
+            hid_device_set_rel_axis(iface, 2 * ie->ball, ie->xrel);
+            hid_device_set_rel_axis(iface, 2 * ie->ball + 1, ie->yrel);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
@@ -498,7 +429,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyHatEvent *ie = &event->jhat;
 
-            set_hat_value(impl, ie->hat, ie->value);
+            set_hat_value(iface, ie->hat, ie->value);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
@@ -524,10 +455,16 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
             switch ((button = ie->button))
             {
             case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                hid_device_set_hatswitch_y(iface, 0, ie->state ? -1 : 0);
+                break;
             case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                hid_device_set_hatswitch_y(iface, 0, ie->state ? +1 : 0);
+                break;
             case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                hid_device_set_hatswitch_x(iface, 0, ie->state ? -1 : 0);
+                break;
             case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-                set_hat_value(impl, 0, compose_dpad_value(impl->sdl_controller));
+                hid_device_set_hatswitch_x(iface, 0, ie->state ? +1 : 0);
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: button = 4; break;
             case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: button = 5; break;
@@ -538,7 +475,7 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
             case SDL_CONTROLLER_BUTTON_GUIDE: button = 10; break;
             }
 
-            set_button_value(impl, button, ie->state);
+            hid_device_set_button(iface, button, ie->state);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
@@ -546,7 +483,7 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
         {
             SDL_ControllerAxisEvent *ie = &event->caxis;
 
-            set_axis_value(impl, ie->axis, ie->value);
+            hid_device_set_abs_axis(iface, ie->axis, ie->value);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }

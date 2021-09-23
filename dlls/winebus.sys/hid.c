@@ -369,6 +369,93 @@ void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size)
     return impl;
 }
 
+#ifdef WORDS_BIGENDIAN
+# define LE_ULONG(x) RtlUlongByteSwap((ULONG)(x))
+#else
+# define LE_ULONG(x) ((ULONG)(x))
+#endif
+
+BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value)
+{
+    struct hid_device_state *state = &iface->hid_device_state;
+    ULONG offset = state->abs_axis_start + index * 4;
+    if (index > state->abs_axis_count) return FALSE;
+    *(ULONG *)(state->report_buf + offset) = LE_ULONG(value);
+    return TRUE;
+}
+
+BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value)
+{
+    struct hid_device_state *state = &iface->hid_device_state;
+    ULONG offset = state->rel_axis_start + index * 4;
+    if (index > state->rel_axis_count) return FALSE;
+    *(ULONG *)(state->report_buf + offset) = LE_ULONG(value);
+    return TRUE;
+}
+
+BOOL hid_device_set_button(struct unix_device *iface, ULONG index, BOOL is_set)
+{
+    struct hid_device_state *state = &iface->hid_device_state;
+    ULONG offset = state->button_start + (index / 8);
+    BYTE mask = (1 << (index % 8));
+    if (index > state->button_count) return FALSE;
+    if (is_set) state->report_buf[offset] |= mask;
+    else state->report_buf[offset] &= ~mask;
+    return TRUE;
+}
+
+/* hatswitch x / y vs value:
+ *      -1  x +1
+ *     +-------->
+ *  -1 | 8  1  2
+ *   y | 7  0  3
+ *  +1 | 6  5  4
+ *     v
+ */
+static void hatswitch_decompose(BYTE value, LONG *x, LONG *y)
+{
+    *x = *y = 0;
+    if (value == 8 || value == 1 || value == 2) *y = -1;
+    if (value == 6 || value == 5 || value == 4) *y = +1;
+    if (value == 8 || value == 7 || value == 6) *x = -1;
+    if (value == 2 || value == 3 || value == 4) *x = +1;
+}
+
+static void hatswitch_compose(LONG x, LONG y, BYTE *value)
+{
+    if (x == 0 && y == 0) *value = 0;
+    else if (x == 0 && y < 0) *value = 1;
+    else if (x > 0 && y < 0) *value = 2;
+    else if (x > 0 && y == 0) *value = 3;
+    else if (x > 0 && y > 0) *value = 4;
+    else if (x == 0 && y > 0) *value = 5;
+    else if (x < 0 && y > 0) *value = 6;
+    else if (x < 0 && y == 0) *value = 7;
+    else if (x < 0 && y < 0) *value = 8;
+}
+
+BOOL hid_device_set_hatswitch_x(struct unix_device *iface, ULONG index, LONG new_x)
+{
+    struct hid_device_state *state = &iface->hid_device_state;
+    ULONG offset = state->hatswitch_start + index;
+    LONG x, y;
+    if (index > state->hatswitch_count) return FALSE;
+    hatswitch_decompose(state->report_buf[offset], &x, &y);
+    hatswitch_compose(new_x, y, &state->report_buf[offset]);
+    return TRUE;
+}
+
+BOOL hid_device_set_hatswitch_y(struct unix_device *iface, ULONG index, LONG new_y)
+{
+    struct hid_device_state *state = &iface->hid_device_state;
+    ULONG offset = state->hatswitch_start + index;
+    LONG x, y;
+    if (index > state->hatswitch_count) return FALSE;
+    hatswitch_decompose(state->report_buf[offset], &x, &y);
+    hatswitch_compose(x, new_y, &state->report_buf[offset]);
+    return TRUE;
+}
+
 BOOL hid_device_sync_report(struct unix_device *iface)
 {
     BOOL dropped;

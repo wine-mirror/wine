@@ -126,7 +126,6 @@ struct lnxev_device
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
     BYTE button_map[KEY_MAX];
-    int hat_values[8];
 };
 
 static inline struct base_device *impl_from_unix_device(struct unix_device *iface)
@@ -325,89 +324,6 @@ static const BYTE* what_am_I(struct udev_device *dev)
     return Unknown;
 }
 
-static void set_button_value(struct lnxev_device *impl, int index, int value)
-{
-    struct hid_device_state *state = &impl->base.unix_device.hid_device_state;
-    USHORT offset = state->button_start;
-    int byte_index = offset + index / 8;
-    int bit_index = index % 8;
-    BYTE mask = 1 << bit_index;
-    if (index >= state->button_count) return;
-    if (value) state->report_buf[byte_index] |= mask;
-    else state->report_buf[byte_index] &= ~mask;
-}
-
-static void set_abs_axis_value(struct lnxev_device *impl, int code, int value)
-{
-    struct hid_device_state *state = &impl->base.unix_device.hid_device_state;
-    USHORT offset, index;
-    /* check for hatswitches */
-    if (code <= ABS_HAT3Y && code >= ABS_HAT0X)
-    {
-        index = code - ABS_HAT0X;
-        impl->hat_values[index] = value;
-        if ((code - ABS_HAT0X) % 2)
-            index--;
-        /* 8 1 2
-         * 7 0 3
-         * 6 5 4 */
-        if (impl->hat_values[index] == 0)
-        {
-            if (impl->hat_values[index+1] == 0)
-                value = 0;
-            else if (impl->hat_values[index+1] < 0)
-                value = 1;
-            else
-                value = 5;
-        }
-        else if (impl->hat_values[index] > 0)
-        {
-            if (impl->hat_values[index+1] == 0)
-                value = 3;
-            else if (impl->hat_values[index+1] < 0)
-                value = 2;
-            else
-                value = 4;
-        }
-        else
-        {
-            if (impl->hat_values[index+1] == 0)
-                value = 7;
-            else if (impl->hat_values[index+1] < 0)
-                value = 8;
-            else
-                value = 6;
-        }
-        index = impl->hat_map[index];
-        offset = state->hatswitch_start;
-        if (index >= state->hatswitch_count) return;
-        offset += index;
-        state->report_buf[offset] = value;
-    }
-    else if (code < HID_ABS_MAX && ABS_TO_HID_MAP[code][0] != 0)
-    {
-        index = impl->abs_map[code];
-        offset = state->abs_axis_start;
-        if (index >= state->abs_axis_count) return;
-        offset += index * sizeof(DWORD);
-        *(DWORD *)&state->report_buf[offset] = LE_DWORD(value);
-    }
-}
-
-static void set_rel_axis_value(struct lnxev_device *impl, int code, int value)
-{
-    struct hid_device_state *state = &impl->base.unix_device.hid_device_state;
-    USHORT offset, index;
-    if (code < HID_REL_MAX && REL_TO_HID_MAP[code][0] != 0)
-    {
-        index = impl->rel_map[code];
-        offset = state->rel_axis_start;
-        if (index >= state->rel_axis_count) return;
-        offset += index * sizeof(DWORD);
-        *(DWORD *)&state->report_buf[offset] = LE_DWORD(value);
-    }
-}
-
 static INT count_buttons(int device_fd, BYTE *map)
 {
     int i;
@@ -506,12 +422,11 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     }
 
     hat_count = 0;
-    for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
+    for (i = ABS_HAT0X; i <= ABS_HAT3X; i += 2)
     {
         if (!test_bit(absbits, i)) continue;
-        impl->hat_map[i - ABS_HAT0X] = hat_count++;
-        impl->hat_values[i - ABS_HAT0X] = 0;
-        impl->hat_values[i - ABS_HAT0X + 1] = 0;
+        impl->hat_map[i - ABS_HAT0X] = hat_count;
+        impl->hat_map[i - ABS_HAT0X + 1] = hat_count++;
     }
 
     if (hat_count && !hid_device_add_hatswitch(iface, hat_count))
@@ -527,8 +442,15 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
 
     /* Initialize axis in the report */
     for (i = 0; i < HID_ABS_MAX; i++)
-        if (test_bit(absbits, i))
-            set_abs_axis_value(impl, i, abs_info[i].value);
+    {
+        if (!test_bit(absbits, i)) continue;
+        if (i < ABS_HAT0X || i > ABS_HAT3Y)
+            hid_device_set_abs_axis(iface, impl->abs_map[i], abs_info[i].value);
+        else if ((i - ABS_HAT0X) % 2)
+            hid_device_set_hatswitch_y(iface, impl->hat_map[i - ABS_HAT0X], abs_info[i].value);
+        else
+            hid_device_set_hatswitch_x(iface, impl->hat_map[i - ABS_HAT0X], abs_info[i].value);
+    }
 
     return STATUS_SUCCESS;
 }
@@ -536,33 +458,39 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
 static BOOL set_report_from_event(struct unix_device *iface, struct input_event *ie)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-    switch(ie->type)
+
+    switch (ie->type)
     {
 #ifdef EV_SYN
-        case EV_SYN:
-            switch (ie->code)
-            {
-            case SYN_REPORT: return hid_device_sync_report(iface);
-            case SYN_DROPPED: hid_device_drop_report(iface); break;
-            }
-            return FALSE;
+    case EV_SYN:
+        switch (ie->code)
+        {
+        case SYN_REPORT: return hid_device_sync_report(iface);
+        case SYN_DROPPED: hid_device_drop_report(iface); break;
+        }
+        return FALSE;
 #endif
 #ifdef EV_MSC
-        case EV_MSC:
-            return FALSE;
+    case EV_MSC:
+        return FALSE;
 #endif
-        case EV_KEY:
-            set_button_value(impl, impl->button_map[ie->code], ie->value);
-            return FALSE;
-        case EV_ABS:
-            set_abs_axis_value(impl, ie->code, ie->value);
-            return FALSE;
-        case EV_REL:
-            set_rel_axis_value(impl, ie->code, ie->value);
-            return FALSE;
-        default:
-            ERR("TODO: Process Report (%i, %i)\n",ie->type, ie->code);
-            return FALSE;
+    case EV_KEY:
+        hid_device_set_button(iface, impl->button_map[ie->code], ie->value);
+        return FALSE;
+    case EV_ABS:
+        if (ie->code < ABS_HAT0X || ie->code > ABS_HAT3Y)
+            hid_device_set_abs_axis(iface, impl->abs_map[ie->code], ie->value);
+        else if ((ie->code - ABS_HAT0X) % 2)
+            hid_device_set_hatswitch_y(iface, impl->hat_map[ie->code - ABS_HAT0X], ie->value);
+        else
+            hid_device_set_hatswitch_x(iface, impl->hat_map[ie->code - ABS_HAT0X], ie->value);
+        return FALSE;
+    case EV_REL:
+        hid_device_set_rel_axis(iface, impl->rel_map[ie->code], ie->value);
+        return FALSE;
+    default:
+        ERR("TODO: Process Report (%i, %i)\n",ie->type, ie->code);
+        return FALSE;
     }
 }
 #endif
@@ -790,8 +718,6 @@ static void lnxev_device_read_report(struct unix_device *iface)
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     struct input_event ie;
     int size;
-
-    if (!state->report_buf || !state->report_len) return;
 
     size = read(impl->base.device_fd, &ie, sizeof(ie));
     if (size == -1)
