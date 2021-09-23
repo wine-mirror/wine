@@ -63,7 +63,7 @@ static void test_device(const WCHAR *service_name, const MIB_IF_ROW2 *row)
     iosb.Information = 0xdeadbeef;
     status = NtDeviceIoControlFile( netdev, NULL, NULL, NULL, &iosb,
             IOCTL_NDIS_QUERY_GLOBAL_STATS, &oid, sizeof(oid), &medium, sizeof(medium) );
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got status %#x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got status %#x\n", status);
     ok(iosb.Status == 0xdeadbeef, "got %#x\n", iosb.Status);
     ok(iosb.Information == 0xdeadbeef, "got size %#Ix\n", iosb.Information);
 

@@ -89,7 +89,7 @@ static void query_global_stats(IRP *irp, const MIB_IF_ROW2 *netdev)
     }
     default:
         FIXME( "Unsupported OID %x\n", oid );
-        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
         break;
     }
 }
