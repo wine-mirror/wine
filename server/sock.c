@@ -832,6 +832,12 @@ static int get_poll_flags( struct sock *sock, int event )
     return flags;
 }
 
+static void complete_async_poll( struct poll_req *req, unsigned int status )
+{
+    /* pass 0 as result; client will set actual result size */
+    async_request_complete( req->async, status, 0, req->count * sizeof(*req->output), req->output );
+}
+
 static void complete_async_polls( struct sock *sock, int event, int error )
 {
     int flags = get_poll_flags( sock, event );
@@ -855,8 +861,7 @@ static void complete_async_polls( struct sock *sock, int event, int error )
             req->output[i].flags = req->sockets[i].flags & flags;
             req->output[i].status = sock_get_ntstatus( error );
 
-            async_request_complete( req->async, STATUS_SUCCESS, 0,
-                                    req->count * sizeof(*req->output), req->output );
+            complete_async_poll( req, STATUS_SUCCESS );
             break;
         }
     }
@@ -870,7 +875,7 @@ static void async_poll_timeout( void *private )
 
     if (req->iosb->status != STATUS_PENDING) return;
 
-    async_request_complete( req->async, STATUS_TIMEOUT, 0, req->count * sizeof(*req->output), req->output );
+    complete_async_poll( req, STATUS_TIMEOUT );
 }
 
 static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
@@ -1320,12 +1325,7 @@ static int sock_close_handle( struct object *obj, struct process *process, obj_h
                 }
             }
 
-            if (signaled)
-            {
-                /* pass 0 as result; client will set actual result size */
-                async_request_complete( poll_req->async, STATUS_SUCCESS, 0,
-                                        poll_req->count * sizeof(*poll_req->output), poll_req->output );
-            }
+            if (signaled) complete_async_poll( poll_req, STATUS_SUCCESS );
         }
     }
 
@@ -2913,7 +2913,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, timeout_t 
     }
 
     if (!timeout || signaled)
-        async_request_complete( req->async, STATUS_SUCCESS, 0, count * sizeof(*output), output );
+        complete_async_poll( req, STATUS_SUCCESS );
 
     for (i = 0; i < req->count; ++i)
         sock_reselect( req->sockets[i].sock );
