@@ -513,9 +513,9 @@ open(TYPES, ">$types_file") or die "cannot create $types_file";
 print TYPES <<END
 /* Automatically generated from OpenCL registry files; DO NOT EDIT! */
 
-typedef int32_t cl_int DECLSPEC_ALIGN(4);
-typedef uint32_t cl_uint DECLSPEC_ALIGN(4);
-typedef uint64_t cl_ulong DECLSPEC_ALIGN(8);
+typedef int32_t DECLSPEC_ALIGN(4) cl_int;
+typedef uint32_t DECLSPEC_ALIGN(4) cl_uint;
+typedef uint64_t DECLSPEC_ALIGN(8) cl_ulong;
 
 END
 ;

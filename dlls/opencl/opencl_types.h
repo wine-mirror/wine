@@ -1,8 +1,8 @@
 /* Automatically generated from OpenCL registry files; DO NOT EDIT! */
 
-typedef int32_t cl_int DECLSPEC_ALIGN(4);
-typedef uint32_t cl_uint DECLSPEC_ALIGN(4);
-typedef uint64_t cl_ulong DECLSPEC_ALIGN(8);
+typedef int32_t DECLSPEC_ALIGN(4) cl_int;
+typedef uint32_t DECLSPEC_ALIGN(4) cl_uint;
+typedef uint64_t DECLSPEC_ALIGN(8) cl_ulong;
 
 typedef struct _cl_platform_id *      cl_platform_id;
 typedef struct _cl_device_id *        cl_device_id;
