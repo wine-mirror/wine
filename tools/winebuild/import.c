@@ -600,7 +600,7 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
 
 /* combine a list of object files with ld into a single object file */
 /* returns the name of the combined file */
-static const char *ldcombine_files( DLLSPEC *spec, char **argv )
+static const char *ldcombine_files( DLLSPEC *spec, struct strarray files )
 {
     char *ld_tmp_file, *undef_file;
     struct strarray args = get_ld_command();
@@ -612,13 +612,13 @@ static const char *ldcombine_files( DLLSPEC *spec, char **argv )
     strarray_add( &args, "-o" );
     strarray_add( &args, ld_tmp_file );
     if (undef_file) strarray_add( &args, undef_file );
-    while (*argv) strarray_add( &args, *argv++ );
+    strarray_addall( &args, files );
     spawn( args );
     return ld_tmp_file;
 }
 
 /* read in the list of undefined symbols */
-void read_undef_symbols( DLLSPEC *spec, char **argv )
+void read_undef_symbols( DLLSPEC *spec, struct strarray files )
 {
     size_t prefix_len;
     FILE *f;
@@ -627,14 +627,14 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     int err;
     const char *name;
 
-    if (!argv[0]) return;
+    if (!files.count) return;
 
     add_extra_undef_symbols( spec );
 
     strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );
 
-    name = ldcombine_files( spec, argv );
+    name = ldcombine_files( spec, files );
 
     cmd = strmake( "%s -u %s", prog, name );
     if (verbose)
@@ -1604,7 +1604,7 @@ static void assemble_files( const char *prefix )
 }
 
 /* build a library from the current asm files and any additional object files in argv */
-static void build_library( const char *output_name, char **argv, int create )
+static void build_library( const char *output_name, struct strarray files, int create )
 {
     struct strarray args;
 
@@ -1621,7 +1621,7 @@ static void build_library( const char *output_name, char **argv, int create )
         strarray_add( &args, strmake( "-out:%s", output_name ));
     }
     strarray_addall( &args, as_files );
-    while (*argv) strarray_add( &args, *argv++ );
+    strarray_addall( &args, files );
     if (create) unlink( output_name );
     spawn( args );
 
@@ -1739,16 +1739,16 @@ static void build_unix_import_lib( DLLSPEC *spec )
 }
 
 /* output an import library for a Win32 module and additional object files */
-void output_static_lib( DLLSPEC *spec, char **argv )
+void output_static_lib( DLLSPEC *spec, struct strarray files )
 {
     if (is_pe())
     {
         if (spec) build_windows_import_lib( output_file_name, spec );
-        if (argv[0] || !spec) build_library( output_file_name, argv, !spec );
+        if (files.count || !spec) build_library( output_file_name, files, !spec );
     }
     else
     {
         if (spec) build_unix_import_lib( spec );
-        build_library( output_file_name, argv, 1 );
+        build_library( output_file_name, files, 1 );
     }
 }

@@ -1061,7 +1061,7 @@ void output_def_file( DLLSPEC *spec, int import_only )
 /*******************************************************************
  *         make_builtin_files
  */
-void make_builtin_files( char *argv[] )
+void make_builtin_files( struct strarray files )
 {
     int i, fd;
     struct
@@ -1071,13 +1071,14 @@ void make_builtin_files( char *argv[] )
         unsigned int   e_lfanew;
     } header;
 
-    for (i = 0; argv[i]; i++)
+    for (i = 0; i < files.count; i++)
     {
-        if ((fd = open( argv[i], O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", argv[i] );
+        if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
+            fatal_perror( "Cannot open %s", files.str[i] );
         if (read( fd, &header, sizeof(header) ) == sizeof(header) && !memcmp( &header.e_magic, "MZ", 2 ))
         {
             if (header.e_lfanew < sizeof(header) + sizeof(builtin_signature))
-                fatal_error( "%s: Not enough space (%x) for Wine signature\n", argv[i], header.e_lfanew );
+                fatal_error( "%s: Not enough space (%x) for Wine signature\n", files.str[i], header.e_lfanew );
             write( fd, builtin_signature, sizeof(builtin_signature) );
 
             if (prefer_native)
@@ -1093,7 +1094,7 @@ void make_builtin_files( char *argv[] )
                 }
             }
         }
-        else fatal_error( "%s: Unrecognized file format\n", argv[i] );
+        else fatal_error( "%s: Unrecognized file format\n", files.str[i] );
         close( fd );
     }
 }
@@ -1239,19 +1240,20 @@ static void fixup_elf64( const char *name, int fd, void *header, size_t header_s
 /*******************************************************************
  *         fixup_constructors
  */
-void fixup_constructors( char *argv[] )
+void fixup_constructors( struct strarray files )
 {
     int i, fd, size;
     unsigned int header[64];
 
-    for (i = 0; argv[i]; i++)
+    for (i = 0; i < files.count; i++)
     {
-        if ((fd = open( argv[i], O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", argv[i] );
+        if ((fd = open( files.str[i], O_RDWR | O_BINARY )) == -1)
+            fatal_perror( "Cannot open %s", files.str[i] );
         size = read( fd, &header, sizeof(header) );
         if (size > 5)
         {
-            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( argv[i], fd, header, size );
-            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( argv[i], fd, header, size );
+            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( files.str[i], fd, header, size );
+            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( files.str[i], fd, header, size );
         }
         close( fd );
     }

@@ -87,6 +87,7 @@ FILE *output_file = NULL;
 const char *output_file_name = NULL;
 static int fake_module;
 
+static const struct strarray empty_strarray;
 struct strarray lib_path = { 0 };
 struct strarray tools_path = { 0 };
 struct strarray as_command = { 0 };
@@ -442,11 +443,12 @@ static const char *get_default_entry_point( const DLLSPEC *spec )
 }
 
 /* parse options from the argv array and remove all the recognized ones */
-static char **parse_options( int argc, char **argv, DLLSPEC *spec )
+static struct strarray parse_options( int argc, char **argv, DLLSPEC *spec )
 {
     char *p;
     int optc;
     int save_temps = 0;
+    struct strarray files = empty_strarray;
 
     while ((optc = getopt_long( argc, argv, short_options, long_options, NULL )) != -1)
     {
@@ -639,21 +641,22 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         break;
     }
 
-    return &argv[optind];
+    while (argv[optind]) strarray_add( &files, argv[optind++] );
+    return files;
 }
 
 
 /* load all specified resource files */
-static void load_resources( char *argv[], DLLSPEC *spec )
+static struct strarray load_resources( struct strarray files, DLLSPEC *spec )
 {
+    struct strarray ret = empty_strarray;
     int i;
-    char **ptr, **last;
 
     switch (spec->type)
     {
     case SPEC_WIN16:
         for (i = 0; i < res_files.count; i++) load_res16_file( res_files.str[i], spec );
-        break;
+        return files;
 
     case SPEC_WIN32:
         for (i = 0; i < res_files.count; i++)
@@ -663,29 +666,30 @@ static void load_resources( char *argv[], DLLSPEC *spec )
         }
 
         /* load any resource file found in the remaining arguments */
-        for (ptr = last = argv; *ptr; ptr++)
+        for (i = 0; i < files.count; i++)
         {
-            if (!load_res32_file( *ptr, spec ))
-                *last++ = *ptr; /* not a resource file, keep it in the list */
+            if (!load_res32_file( files.str[i], spec ))
+                strarray_add( &ret, files.str[i] ); /* not a resource file, keep it in the list */
         }
-        *last = NULL;
         break;
     }
+    return ret;
 }
 
 /* add input files that look like import libs to the import list */
-static void load_import_libs( char *argv[] )
+static struct strarray load_import_libs( struct strarray files )
 {
-    char **ptr, **last;
+    struct strarray ret = empty_strarray;
+    int i;
 
-    for (ptr = last = argv; *ptr; ptr++)
+    for (i = 0; i < files.count; i++)
     {
-        if (strendswith( *ptr, ".def" ))
-            add_import_dll( NULL, *ptr );
+        if (strendswith( files.str[i], ".def" ))
+            add_import_dll( NULL, files.str[i] );
         else
-            *last++ = *ptr; /* not an import dll, keep it in the list */
+            strarray_add( &ret, files.str[i] ); /* not an import dll, keep it in the list */
     }
-    *last = NULL;
+    return ret;
 }
 
 static int parse_input_file( DLLSPEC *spec )
@@ -710,6 +714,7 @@ static int parse_input_file( DLLSPEC *spec )
 int main(int argc, char **argv)
 {
     DLLSPEC *spec = alloc_dll_spec();
+    struct strarray files;
 
 #ifdef SIGHUP
     signal( SIGHUP, exit_on_signal );
@@ -717,7 +722,7 @@ int main(int argc, char **argv)
     signal( SIGTERM, exit_on_signal );
     signal( SIGINT, exit_on_signal );
 
-    argv = parse_options( argc, argv, spec );
+    files = parse_options( argc, argv, spec );
     atexit( cleanup );  /* make sure we remove the output file on exit */
 
     switch(exec_mode)
@@ -727,7 +732,7 @@ int main(int argc, char **argv)
             spec->characteristics |= IMAGE_FILE_DLL;
         /* fall through */
     case MODE_EXE:
-        load_resources( argv, spec );
+        files = load_resources( files, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
         if (!spec->init_func && !unix_lib) spec->init_func = xstrdup( get_default_entry_point( spec ));
 
@@ -739,15 +744,15 @@ int main(int argc, char **argv)
         }
         if (!is_pe())
         {
-            load_import_libs( argv );
-            read_undef_symbols( spec, argv );
+            files = load_import_libs( files );
+            read_undef_symbols( spec, files );
             resolve_imports( spec );
         }
         if (spec->type == SPEC_WIN16) output_spec16_file( spec );
         else output_spec32_file( spec );
         break;
     case MODE_DEF:
-        if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
+        if (files.count) fatal_error( "file argument '%s' not allowed in this mode\n", files.str[0] );
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         open_output_file();
@@ -757,21 +762,21 @@ int main(int argc, char **argv)
     case MODE_IMPLIB:
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
-        output_static_lib( spec, argv );
+        output_static_lib( spec, files );
         break;
     case MODE_STATICLIB:
-        output_static_lib( NULL, argv );
+        output_static_lib( NULL, files );
         break;
     case MODE_BUILTIN:
-        if (!argv[0]) fatal_error( "missing file argument for --builtin option\n" );
-        make_builtin_files( argv );
+        if (!files.count) fatal_error( "missing file argument for --builtin option\n" );
+        make_builtin_files( files );
         break;
     case MODE_FIXUP_CTORS:
-        if (!argv[0]) fatal_error( "missing file argument for --fixup-ctors option\n" );
-        fixup_constructors( argv );
+        if (!files.count) fatal_error( "missing file argument for --fixup-ctors option\n" );
+        fixup_constructors( files );
         break;
     case MODE_RESOURCES:
-        load_resources( argv, spec );
+        files = load_resources( files, spec );
         output_res_o_file( spec );
         break;
     default:
