@@ -14400,11 +14400,13 @@ static void test_dialog_messages(void)
 static void test_enddialog_seq(HWND dialog, HWND owner)
 {
     const struct message seq[] = {
+        { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
         { WM_ENABLE, sent },
         { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
         { HCBT_ACTIVATE, hook|wparam, (WPARAM)owner },
         { WM_NCACTIVATE, sent|wparam|lparam, WA_INACTIVE, (LPARAM)owner },
         { WM_ACTIVATE, sent|wparam|lparam, WA_INACTIVE, (LPARAM)owner },
+        { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
         /* FIXME: Following two are optional because Wine sends WM_QUERYNEWPALETTE instead of WM_WINDOWPOSCHANGING */
         { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
         { WM_QUERYNEWPALETTE, sent|optional },
@@ -14413,6 +14415,7 @@ static void test_enddialog_seq(HWND dialog, HWND owner)
         { WM_ACTIVATE, sent|wparam|lparam, WA_ACTIVE, (LPARAM)dialog },
         { HCBT_SETFOCUS, hook|wparam, (WPARAM)owner },
         { WM_KILLFOCUS, sent|wparam, (WPARAM)owner },
+        { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
         { WM_SETFOCUS, sent|defwinproc|wparam, (WPARAM)dialog },
         { 0 }
     };
@@ -14425,15 +14428,18 @@ static void test_enddialog_seq(HWND dialog, HWND owner)
 static void test_enddialog_seq2(HWND dialog, HWND owner)
 {
     const struct message seq[] = {
+        { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
         { WM_ENABLE, parent|sent },
         { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
         { HCBT_ACTIVATE, hook|wparam, (WPARAM)owner },
         { WM_NCACTIVATE, sent|wparam|lparam, WA_INACTIVE, (LPARAM)owner },
         { WM_ACTIVATE, sent|wparam|lparam, WA_INACTIVE, (LPARAM)owner },
+        { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
         { WM_WINDOWPOSCHANGING, sent|optional|wparam, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
         { WM_WINDOWPOSCHANGING, sent|optional|wparam, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
         { HCBT_SETFOCUS, hook|wparam, (WPARAM)owner },
         { WM_KILLFOCUS, sent|wparam, (WPARAM)owner },
+        { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
         { WM_SETFOCUS, sent|parent|defwinproc|wparam, (WPARAM)dialog },
         { 0 }
     };
@@ -18598,6 +18604,10 @@ START_TEST(msg)
     test_SetWindowRgn();
     test_sys_menu();
     test_dialog_messages();
+    test_EndDialog();
+    test_nullCallback();
+    test_dbcs_wm_char();
+    test_unicode_wm_char();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18608,10 +18618,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_EndDialog();
-    test_nullCallback();
-    test_dbcs_wm_char();
-    test_unicode_wm_char();
     test_menu_messages();
     test_paintingloop();
     test_defwinproc();
