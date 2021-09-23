@@ -11844,14 +11844,14 @@ static const struct message sl_edit_setfocus[] =
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 10 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 15 },
     { WM_CTLCOLOREDIT, sent|parent },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 11 },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
     { 0 }
 };
@@ -11860,7 +11860,7 @@ static const struct message sl_edit_invisible[] =
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 }, /* Sent for IME. */
     { WM_KILLFOCUS, sent|parent },
     { WM_SETFOCUS, sent },
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
@@ -11871,22 +11871,22 @@ static const struct message ml_edit_setfocus[] =
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 10 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 11 },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
     { 0 }
 };
 static const struct message sl_edit_killfocus[] =
 {
     { HCBT_SETFOCUS, hook },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
-    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_KILLFOCUS) },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
@@ -11895,7 +11895,7 @@ static const struct message sl_edit_killfocus[] =
 static const struct message sl_edit_lbutton_dblclk[] =
 {
     { WM_LBUTTONDBLCLK, sent },
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { 0 }
 };
 static const struct message sl_edit_lbutton_down[] =
@@ -11904,52 +11904,52 @@ static const struct message sl_edit_lbutton_down[] =
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 10 },
     { WM_CTLCOLOREDIT, sent|parent },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 11 },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
-    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { WM_CTLCOLOREDIT, sent|parent|optional },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 11 },
-    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { 0 }
 };
 static const struct message ml_edit_lbutton_down[] =
 {
     { WM_LBUTTONDOWN, sent|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 10 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 11 },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_EDIT, EN_SETFOCUS) },
     { 0 }
 };
 static const struct message sl_edit_lbutton_up[] =
 {
     { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
-    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
-    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|defwinproc },
-    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CARET, 0 },
     { 0 }
 };
 static const struct message ml_edit_lbutton_up[] =
 {
     { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|defwinproc },
     { 0 }
 };
