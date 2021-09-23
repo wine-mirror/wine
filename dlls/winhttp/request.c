@@ -2539,7 +2539,6 @@ static DWORD handle_redirect( struct request *request, DWORD status )
     struct connect *connect = request->connect;
     INTERNET_PORT port;
     WCHAR *hostname = NULL, *location = NULL;
-    int index;
 
     if ((ret = get_redirect_url( request, &location, &len_loc ))) return ret;
 
@@ -2637,10 +2636,6 @@ static DWORD handle_redirect( struct request *request, DWORD status )
         }
         else request->path = strdupW( L"/" );
     }
-
-    /* remove content-type/length headers */
-    if ((index = get_header_index( request, L"Content-Type", 0, TRUE )) >= 0) delete_header( request, index );
-    if ((index = get_header_index( request, L"Content-Length", 0, TRUE )) >= 0 ) delete_header( request, index );
 
     if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !wcscmp( request->verb, L"POST" ))
     {
