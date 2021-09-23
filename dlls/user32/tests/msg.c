@@ -1865,6 +1865,7 @@ static const struct message WmModalDialogSeq_2[] = {
     { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CHANGEUISTATE, sent|optional },
     { WM_UPDATEUISTATE, sent|optional },
     { WM_ENABLE, sent|wparam, 1 },
@@ -1872,6 +1873,7 @@ static const struct message WmModalDialogSeq_2[] = {
     { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam|optional, 0, 0 },
     { WM_CHANGEUISTATE, sent|optional },
     { WM_UPDATEUISTATE, sent|optional },
+    { EVENT_SYSTEM_DIALOGEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { HCBT_DESTROYWND, hook },
     { 0x0090, sent|optional },
     { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
@@ -14133,6 +14135,7 @@ static const struct message WmCreateDialogParamSeq_1[] = {
     { WM_GETDLGCODE, sent|wparam|lparam|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
     { HCBT_SETFOCUS, hook },
     { HCBT_ACTIVATE, hook },
+    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|optional },
     { WM_PALETTEISCHANGING, sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
@@ -14140,6 +14143,7 @@ static const struct message WmCreateDialogParamSeq_1[] = {
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent },
     { WM_ACTIVATE, sent|wparam, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent },
     { WM_CHANGEUISTATE, sent|optional },
     { 0 }
@@ -14159,6 +14163,7 @@ static const struct message WmCreateDialogParamSeq_2[] = {
 
 static const struct message WmCreateDialogParamSeq_3[] = {
     { HCBT_CREATEWND, hook },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_SETFONT, sent|parent },
     { WM_INITDIALOG, sent|parent },
     { WM_GETDLGCODE, sent|wparam|lparam, 0, 0 },
@@ -14167,11 +14172,13 @@ static const struct message WmCreateDialogParamSeq_3[] = {
     { EM_SETSEL, sent|wparam|lparam|optional, 0, INT_MAX },
     { EM_SETSEL, sent|wparam|lparam|optional, 0, INT_MAX },
     { HCBT_ACTIVATE, hook },
+    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|parent|optional }, /* TODO: this message should not be sent */
     { WM_WINDOWPOSCHANGING, sent|parent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGING, sent|parent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|parent|wparam|optional, SWP_NOREDRAW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_WINDOWPOSCHANGED, sent|parent|wparam|optional, SWP_NOREDRAW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 },
     { WM_ACTIVATEAPP, sent|parent|wparam, 1 },
     { WM_NCACTIVATE, sent|parent },
     { WM_ACTIVATE, sent|parent|wparam, 1 },
@@ -14199,14 +14206,17 @@ static const struct message WmCreateDialogParamSeq_4[] = {
     { EM_SETSEL, sent|wparam|lparam|optional, 0, INT_MAX },
     { EM_SETSEL, sent|wparam|lparam|optional, 0, INT_MAX },
     { HCBT_ACTIVATE, hook },
+    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|parent|optional }, /* TODO: this message should not be sent */
     { WM_WINDOWPOSCHANGING, sent|parent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGING, sent|parent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|parent|wparam|optional, SWP_NOREDRAW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 },
     { WM_ACTIVATEAPP, sent|parent|wparam, 1 },
     { WM_NCACTIVATE, sent|parent },
     { WM_ACTIVATE, sent|parent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|parent },
     { WM_KILLFOCUS, sent|parent },
     { WM_SETFOCUS, sent },
@@ -18587,6 +18597,7 @@ START_TEST(msg)
 
     test_SetWindowRgn();
     test_sys_menu();
+    test_dialog_messages();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18597,7 +18608,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_dialog_messages();
     test_EndDialog();
     test_nullCallback();
     test_dbcs_wm_char();
