@@ -2591,6 +2591,37 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jmp 5b" )
 
 
+/***********************************************************************
+ *           __wine_setjmpex
+ */
+__ASM_GLOBAL_FUNC( __wine_setjmpex,
+                   "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
+                   "movl %ebp,0(%ecx)\n\t"   /* jmp_buf.Ebp */
+                   "movl %ebx,4(%ecx)\n\t"   /* jmp_buf.Ebx */
+                   "movl %edi,8(%ecx)\n\t"   /* jmp_buf.Edi */
+                   "movl %esi,12(%ecx)\n\t"  /* jmp_buf.Esi */
+                   "movl %esp,16(%ecx)\n\t"  /* jmp_buf.Esp */
+                   "movl 0(%esp),%eax\n\t"
+                   "movl %eax,20(%ecx)\n\t"  /* jmp_buf.Eip */
+                   "xorl %eax,%eax\n\t"
+                   "ret" )
+
+
+/***********************************************************************
+ *           __wine_longjmp
+ */
+__ASM_GLOBAL_FUNC( __wine_longjmp,
+                   "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
+                   "movl 8(%esp),%eax\n\t"   /* retval */
+                   "movl 0(%ecx),%ebp\n\t"   /* jmp_buf.Ebp */
+                   "movl 4(%ecx),%ebx\n\t"   /* jmp_buf.Ebx */
+                   "movl 8(%ecx),%edi\n\t"   /* jmp_buf.Edi */
+                   "movl 12(%ecx),%esi\n\t"  /* jmp_buf.Esi */
+                   "movl 16(%ecx),%esp\n\t"  /* jmp_buf.Esp */
+                   "addl $4,%esp\n\t"        /* get rid of return address */
+                   "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ )
+
+
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
  */

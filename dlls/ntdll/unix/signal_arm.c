@@ -1104,4 +1104,38 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mov r0, r1\n\t"
                    "b 4b" )
 
+
+/***********************************************************************
+ *           __wine_setjmpex
+ */
+__ASM_GLOBAL_FUNC( __wine_setjmpex,
+                   "stm r0, {r1,r4-r11}\n"         /* jmp_buf->Frame,R4..R11 */
+                   "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
+                   "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
+#ifndef __SOFTFP__
+                   "vmrs r2, fpscr\n\t"
+                   "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
+                   "add r0, r0, #0x30\n\t"
+                   "vstm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
+#endif
+                   "mov r0, #0\n\t"
+                   "bx lr" )
+
+
+/***********************************************************************
+ *           __wine_longjmp
+ */
+__ASM_GLOBAL_FUNC( __wine_longjmp,
+                   "ldm r0, {r3-r11}\n\t"          /* jmp_buf->Frame,R4..R11 */
+                   "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
+                   "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
+#ifndef __SOFTFP__
+                   "ldr r3, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
+                   "vmsr fpscr, r3\n\t"
+                   "add r0, r0, #0x30\n\t"
+                   "vldm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
+#endif
+                   "mov r0, r1\n\t"                /* retval */
+                   "bx r2" )
+
 #endif  /* __arm__ */
