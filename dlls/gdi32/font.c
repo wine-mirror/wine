@@ -2481,20 +2481,28 @@ static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl, int 
 static void set_value_key(HKEY hkey, const char *name, const char *value)
 {
     if (value)
-        RegSetValueExA(hkey, name, 0, REG_SZ, (const BYTE *)value, strlen(value) + 1);
+        set_reg_ascii_value( hkey, name, value );
     else if (name)
-        RegDeleteValueA(hkey, name);
+    {
+        WCHAR nameW[64];
+        asciiz_to_unicode( nameW, name );
+        reg_delete_value( hkey, nameW );
+    }
 }
 
 static void update_font_association_info(UINT current_ansi_codepage)
 {
+    static const WCHAR associated_charsetW[] =
+        { 'A','s','s','o','c','i','a','t','e','d',' ','C','h','a','r','s','e','t' };
+
     if (is_dbcs_ansi_cp(current_ansi_codepage))
     {
         HKEY hkey;
-        if (RegCreateKeyW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\FontAssoc", &hkey) == ERROR_SUCCESS)
+        if ((hkey = reg_create_key( NULL, font_assoc_keyW, sizeof(font_assoc_keyW), 0, NULL )))
         {
             HKEY hsubkey;
-            if (RegCreateKeyW(hkey, L"Associated Charset", &hsubkey) == ERROR_SUCCESS)
+            if ((hsubkey = reg_create_key( hkey, associated_charsetW, sizeof(associated_charsetW),
+                                           0, NULL )))
             {
                 switch (current_ansi_codepage)
                 {
@@ -2511,12 +2519,12 @@ static void update_font_association_info(UINT current_ansi_codepage)
                     set_value_key(hsubkey, "SYMBOL(02)", "NO");
                     break;
                 }
-                RegCloseKey(hsubkey);
+                NtClose( hsubkey );
             }
 
             /* TODO: Associated DefaultFonts */
 
-            RegCloseKey(hkey);
+            NtClose( hkey );
         }
     }
     else
