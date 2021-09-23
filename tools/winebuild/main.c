@@ -453,7 +453,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         switch(optc)
         {
         case 'B':
-            strarray_add( &tools_path, xstrdup( optarg ), NULL );
+            strarray_add( &tools_path, xstrdup( optarg ));
             break;
         case 'D':
             /* ignored */
@@ -479,7 +479,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             /* ignored, because cc generates correct code. */
             break;
         case 'L':
-            strarray_add( &lib_path, xstrdup( optarg ), NULL );
+            strarray_add( &lib_path, xstrdup( optarg ));
             break;
         case 'm':
             if (!strcmp( optarg, "16" )) spec->type = SPEC_WIN16;
@@ -533,7 +533,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             output_file_name = xstrdup( optarg );
             break;
         case 'r':
-            strarray_add( &res_files, xstrdup( optarg ), NULL );
+            strarray_add( &res_files, xstrdup( optarg ));
             break;
         case 'u':
             add_extra_ld_symbol( optarg );

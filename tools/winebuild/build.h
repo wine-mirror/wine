@@ -171,9 +171,9 @@ static inline int is_pe(void)
 
 struct strarray
 {
+    unsigned int count;  /* strings in use */
+    unsigned int size;   /* total allocated size */
     const char **str;
-    unsigned int count;
-    unsigned int max;
 };
 
 /* entry point flags */
@@ -248,9 +248,11 @@ extern char *strupper(char *s);
 extern int strendswith(const char* str, const char* end);
 extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 extern struct strarray strarray_fromstring( const char *str, const char *delim );
-extern void strarray_add( struct strarray *array, ... );
-extern void strarray_addv( struct strarray *array, char * const *argv );
+extern void strarray_add( struct strarray *array, const char *str );
 extern void strarray_addall( struct strarray *array, struct strarray args );
+extern void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) );
+extern const char *strarray_bsearch( const struct strarray *array, const char *str,
+                                     int (*func)(const char **, const char **) );
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )

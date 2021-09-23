@@ -36,12 +36,6 @@
 
 #include "build.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-# define PATH_SEPARATOR ';'
-#else
-# define PATH_SEPARATOR ':'
-#endif
-
 static struct strarray tmp_files;
 static struct strarray empty_strarray;
 static const char *output_file_source_name;
@@ -145,47 +139,22 @@ char *strmake( const char* fmt, ... )
     }
 }
 
-static struct strarray strarray_copy( struct strarray src )
+void strarray_add( struct strarray *array, const char *str )
 {
-    struct strarray array;
-    array.count = src.count;
-    array.max = src.max;
-    array.str = xmalloc( array.max * sizeof(*array.str) );
-    memcpy( array.str, src.str, array.count * sizeof(*array.str) );
-    return array;
-}
-
-static void strarray_add_one( struct strarray *array, const char *str )
-{
-    if (array->count == array->max)
+    if (array->count == array->size)
     {
-        array->max *= 2;
-        if (array->max < 16) array->max = 16;
-        array->str = xrealloc( array->str, array->max * sizeof(*array->str) );
+	if (array->size) array->size *= 2;
+        else array->size = 16;
+	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
     }
     array->str[array->count++] = str;
-}
-
-void strarray_add( struct strarray *array, ... )
-{
-    va_list valist;
-    const char *str;
-
-    va_start( valist, array );
-    while ((str = va_arg( valist, const char *))) strarray_add_one( array, str );
-    va_end( valist );
-}
-
-void strarray_addv( struct strarray *array, char * const *argv )
-{
-    while (*argv) strarray_add_one( array, *argv++ );
 }
 
 void strarray_addall( struct strarray *array, struct strarray args )
 {
     unsigned int i;
 
-    for (i = 0; i < args.count; i++) strarray_add_one( array, args.str[i] );
+    for (i = 0; i < args.count; i++) strarray_add( array, args.str[i] );
 }
 
 struct strarray strarray_fromstring( const char *str, const char *delim )
@@ -195,10 +164,33 @@ struct strarray strarray_fromstring( const char *str, const char *delim )
     char *buf = xstrdup( str );
 
     for (tok = strtok( buf, delim ); tok; tok = strtok( NULL, delim ))
-	strarray_add_one( &array, strdup( tok ));
-
+        strarray_add( &array, xstrdup( tok ));
     free( buf );
     return array;
+}
+
+static struct strarray strarray_frompath( const char *path )
+{
+    if (!path) return empty_strarray;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    return strarray_fromstring( path, ";" );
+#else
+    return strarray_fromstring( path, ":" );
+#endif
+}
+
+void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) )
+{
+    if (array->count) qsort( array->str, array->count, sizeof(*array->str), (void *)func );
+}
+
+const char *strarray_bsearch( const struct strarray *array, const char *str,
+                              int (*func)(const char **, const char **) )
+{
+    char **res = NULL;
+
+    if (array->count) res = bsearch( &str, array->str, array->count, sizeof(*array->str), (void *)func );
+    return res ? *res : NULL;
 }
 
 void fatal_error( const char *msg, ... )
@@ -288,20 +280,8 @@ static struct strarray get_tools_path(void)
 
     if (!done)
     {
-        dirs = strarray_copy( tools_path );
-
-        /* then append the PATH directories */
-        if (getenv( "PATH" ))
-        {
-            char *p = xstrdup( getenv( "PATH" ));
-            while (*p)
-            {
-                strarray_add_one( &dirs, p );
-                while (*p && *p != PATH_SEPARATOR) p++;
-                if (!*p) break;
-                *p++ = 0;
-            }
-        }
+        strarray_addall( &dirs, tools_path );
+        strarray_addall( &dirs, strarray_frompath( getenv( "PATH" )));
         done = 1;
     }
     return dirs;
@@ -347,7 +327,7 @@ void spawn( struct strarray args )
     const char *argv0 = find_binary( NULL, args.str[0] );
 
     if (argv0) args.str[0] = argv0;
-    strarray_add_one( &args, NULL );
+    strarray_add( &args, NULL );
     if (verbose)
         for (i = 0; args.str[i]; i++)
             fprintf( stderr, "%s%c", args.str[i], args.str[i+1] ? ' ' : '\n' );
@@ -360,18 +340,18 @@ void spawn( struct strarray args )
     }
 }
 
-static const char *find_clang_tool( const struct strarray clang, const char *tool )
+static const char *find_clang_tool( struct strarray clang, const char *tool )
 {
     const char *out = get_temp_file_name( "print_tool", ".out" );
-    struct strarray args;
+    struct strarray args = empty_strarray;
     int sout = -1;
     char *path, *p;
     struct stat st;
     size_t cnt;
 
-    args = strarray_copy( clang );
-    strarray_add_one( &args, strmake( "-print-prog-name=%s", tool ) );
-    if (verbose) strarray_add_one( &args, "-v" );
+    strarray_addall( &args, clang );
+    strarray_add( &args, strmake( "-print-prog-name=%s", tool ));
+    if (verbose) strarray_add( &args, "-v" );
 
     sout = dup( fileno(stdout) );
     freopen( out, "w", stdout );
@@ -426,13 +406,13 @@ struct strarray find_tool( const char *name, const char * const *names )
         if (!file && !(file = find_binary( "llvm", name )))
         {
             struct strarray clang = empty_strarray;
-            strarray_add_one( &clang, "clang" );
+            strarray_add( &clang, "clang" );
             file = find_clang_tool( clang, strmake( "llvm-%s", name ));
         }
     }
     if (!file) fatal_error( "cannot find the '%s' tool\n", name );
 
-    strarray_add_one( &ret, file );
+    strarray_add( &ret, file );
     return ret;
 }
 
@@ -447,31 +427,32 @@ struct strarray find_link_tool(void)
     if (!file)
     {
         struct strarray clang = empty_strarray;
-        strarray_add_one( &clang, "clang" );
+        strarray_add( &clang, "clang" );
         file = find_clang_tool( clang, "lld-link" );
     }
 
     if (!file) fatal_error( "cannot find the 'lld-link' tool\n" );
-    strarray_add_one( &ret, file );
+    strarray_add( &ret, file );
     return ret;
 }
 
 struct strarray get_as_command(void)
 {
-    struct strarray args;
+    struct strarray args = empty_strarray;
     unsigned int i;
 
     if (cc_command.count)
     {
-        args = strarray_copy( cc_command );
-        strarray_add( &args, "-xassembler", "-c", NULL );
+        strarray_addall( &args, cc_command );
+        strarray_add( &args, "-xassembler" );
+        strarray_add( &args, "-c" );
         if (force_pointer_size)
-            strarray_add_one( &args, (force_pointer_size == 8) ? "-m64" : "-m32" );
-        if (cpu_option) strarray_add_one( &args, strmake("-mcpu=%s", cpu_option) );
-        if (fpu_option) strarray_add_one( &args, strmake("-mfpu=%s", fpu_option) );
-        if (arch_option) strarray_add_one( &args, strmake("-march=%s", arch_option) );
+            strarray_add( &args, (force_pointer_size == 8) ? "-m64" : "-m32" );
+        if (cpu_option) strarray_add( &args, strmake("-mcpu=%s", cpu_option) );
+        if (fpu_option) strarray_add( &args, strmake("-mfpu=%s", fpu_option) );
+        if (arch_option) strarray_add( &args, strmake("-march=%s", arch_option) );
         for (i = 0; i < tools_path.count; i++)
-            strarray_add_one( &args, strmake("-B%s", tools_path.str[i] ));
+            strarray_add( &args, strmake("-B%s", tools_path.str[i] ));
         return args;
     }
 
@@ -481,37 +462,38 @@ struct strarray get_as_command(void)
         as_command = find_tool( "as", commands );
     }
 
-    args = strarray_copy( as_command );
+    strarray_addall( &args, as_command );
 
     if (force_pointer_size)
     {
         switch (target_platform)
         {
         case PLATFORM_APPLE:
-            strarray_add( &args, "-arch", (force_pointer_size == 8) ? "x86_64" : "i386", NULL );
+            strarray_add( &args, "-arch" );
+            strarray_add( &args, (force_pointer_size == 8) ? "x86_64" : "i386" );
             break;
         default:
             switch(target_cpu)
             {
             case CPU_POWERPC:
-                strarray_add_one( &args, (force_pointer_size == 8) ? "-a64" : "-a32" );
+                strarray_add( &args, (force_pointer_size == 8) ? "-a64" : "-a32" );
                 break;
             default:
-                strarray_add_one( &args, (force_pointer_size == 8) ? "--64" : "--32" );
+                strarray_add( &args, (force_pointer_size == 8) ? "--64" : "--32" );
                 break;
             }
             break;
         }
     }
 
-    if (cpu_option) strarray_add_one( &args, strmake("-mcpu=%s", cpu_option) );
-    if (fpu_option) strarray_add_one( &args, strmake("-mfpu=%s", fpu_option) );
+    if (cpu_option) strarray_add( &args, strmake("-mcpu=%s", cpu_option) );
+    if (fpu_option) strarray_add( &args, strmake("-mfpu=%s", fpu_option) );
     return args;
 }
 
 struct strarray get_ld_command(void)
 {
-    struct strarray args;
+    struct strarray args = empty_strarray;
 
     if (!ld_command.count)
     {
@@ -519,30 +501,35 @@ struct strarray get_ld_command(void)
         ld_command = find_tool( "ld", commands );
     }
 
-    args = strarray_copy( ld_command );
+    strarray_addall( &args, ld_command );
 
     if (force_pointer_size)
     {
         switch (target_platform)
         {
         case PLATFORM_APPLE:
-            strarray_add( &args, "-arch", (force_pointer_size == 8) ? "x86_64" : "i386", NULL );
+            strarray_add( &args, "-arch" );
+            strarray_add( &args, (force_pointer_size == 8) ? "x86_64" : "i386" );
             break;
         case PLATFORM_FREEBSD:
-            strarray_add( &args, "-m", (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd", NULL );
+            strarray_add( &args, "-m" );
+            strarray_add( &args, (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd" );
             break;
         case PLATFORM_MINGW:
         case PLATFORM_WINDOWS:
-            strarray_add( &args, "-m", (force_pointer_size == 8) ? "i386pep" : "i386pe", NULL );
+            strarray_add( &args, "-m" );
+            strarray_add( &args, (force_pointer_size == 8) ? "i386pep" : "i386pe" );
             break;
         default:
             switch(target_cpu)
             {
             case CPU_POWERPC:
-                strarray_add( &args, "-m", (force_pointer_size == 8) ? "elf64ppc" : "elf32ppc", NULL );
+                strarray_add( &args, "-m" );
+                strarray_add( &args, (force_pointer_size == 8) ? "elf64ppc" : "elf32ppc" );
                 break;
             default:
-                strarray_add( &args, "-m", (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386", NULL );
+                strarray_add( &args, "-m" );
+                strarray_add( &args, (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386" );
                 break;
             }
             break;
@@ -550,7 +537,7 @@ struct strarray get_ld_command(void)
     }
 
     if (target_cpu == CPU_ARM && !is_pe())
-        strarray_add( &args, "--no-wchar-size-warning", NULL );
+        strarray_add( &args, "--no-wchar-size-warning" );
 
     return args;
 }
@@ -595,7 +582,7 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
     }
 
     close( fd );
-    strarray_add_one( &tmp_files, name );
+    strarray_add( &tmp_files, name );
     return name;
 }
 
@@ -889,7 +876,9 @@ int remove_stdcall_decoration( char *name )
 void assemble_file( const char *src_file, const char *obj_file )
 {
     struct strarray args = get_as_command();
-    strarray_add( &args, "-o", obj_file, src_file, NULL );
+    strarray_add( &args, "-o" );
+    strarray_add( &args, obj_file );
+    strarray_add( &args, src_file );
     spawn( args );
 }
 

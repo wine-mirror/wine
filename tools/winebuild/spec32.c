@@ -55,7 +55,7 @@ static struct strarray spec_extra_ld_symbols = { 0 }; /* list of extra symbols t
 /* add a symbol to the list of extra symbols that ld must resolve */
 void add_spec_extra_ld_symbol( const char *name )
 {
-    strarray_add( &spec_extra_ld_symbols, name, NULL );
+    strarray_add( &spec_extra_ld_symbols, name );
 }
 
 static unsigned int hash_filename( const char *name )

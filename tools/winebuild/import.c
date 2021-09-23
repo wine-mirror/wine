@@ -123,7 +123,7 @@ static const char *stdc_names[] =
     "wcstoul"
 };
 
-static struct strarray stdc_functions = { stdc_names, ARRAY_SIZE(stdc_names), ARRAY_SIZE(stdc_names) };
+static const struct strarray stdc_functions = { ARRAY_SIZE(stdc_names), ARRAY_SIZE(stdc_names), stdc_names };
 
 struct import_func
 {
@@ -172,9 +172,9 @@ static inline const char *ppc_reg( int reg )
 }
 
 /* compare function names; helper for resolve_imports */
-static int name_cmp( const void *name, const void *entry )
+static int name_cmp( const char **name, const char **entry )
 {
-    return strcmp( *(const char* const *)name, *(const char* const *)entry );
+    return strcmp( *name, *entry );
 }
 
 /* compare function names; helper for resolve_imports */
@@ -196,18 +196,15 @@ static inline void remove_name( struct strarray *table, unsigned int idx )
 }
 
 /* locate a name in a (sorted) list */
-static inline const char *find_name( const char *name, const struct strarray *table )
+static inline const char *find_name( const char *name, struct strarray table )
 {
-    char **res = NULL;
-
-    if (table->count) res = bsearch( &name, table->str, table->count, sizeof(*table->str), name_cmp );
-    return res ? *res : NULL;
+    return strarray_bsearch( &table, name, name_cmp );
 }
 
 /* sort a name table */
 static inline void sort_names( struct strarray *table )
 {
-    if (table->count) qsort( table->str, table->count, sizeof(*table->str), name_cmp );
+    strarray_qsort( table, name_cmp );
 }
 
 /* locate an export in a (sorted) export list */
@@ -382,7 +379,7 @@ void add_delayed_import( const char *name )
     struct import *imp;
     char *fullname = get_dll_name( name, NULL );
 
-    strarray_add( &delayed_imports, fullname, NULL );
+    strarray_add( &delayed_imports, fullname );
     if ((imp = find_import_dll( fullname )))
     {
         list_remove( &imp->entry );
@@ -393,7 +390,7 @@ void add_delayed_import( const char *name )
 /* add a symbol to the list of extra symbols that ld must resolve */
 void add_extra_ld_symbol( const char *name )
 {
-    strarray_add( &extra_ld_symbols, name, NULL );
+    strarray_add( &extra_ld_symbols, name );
 }
 
 /* retrieve an imported dll, adding one if necessary */
@@ -546,7 +543,7 @@ static void check_undefined_exports( DLLSPEC *spec )
         if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
         if (odp->flags & FLAG_SYSCALL) continue;
-        if (find_name( odp->link_name, &undef_symbols ))
+        if (find_name( odp->link_name, undef_symbols ))
         {
             switch(odp->type)
             {
@@ -557,7 +554,7 @@ static void check_undefined_exports( DLLSPEC *spec )
                 if (link_ext_symbols)
                 {
                     odp->flags |= FLAG_EXT_LINK;
-                    strarray_add( &ext_link_imports, odp->link_name, NULL );
+                    strarray_add( &ext_link_imports, odp->link_name );
                 }
                 else error( "%s:%d: function '%s' not defined\n",
                             spec->src_name, odp->lineno, odp->link_name );
@@ -611,8 +608,11 @@ static const char *ldcombine_files( DLLSPEC *spec, char **argv )
     undef_file = create_undef_symbols_file( spec );
     ld_tmp_file = get_temp_file_name( output_file_name, ".o" );
 
-    strarray_add( &args, "-r", "-o", ld_tmp_file, undef_file, NULL );
-    strarray_addv( &args, argv );
+    strarray_add( &args, "-r" );
+    strarray_add( &args, "-o" );
+    strarray_add( &args, ld_tmp_file );
+    if (undef_file) strarray_add( &args, undef_file );
+    while (*argv) strarray_add( &args, *argv++ );
     spawn( args );
     return ld_tmp_file;
 }
@@ -655,8 +655,8 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
             add_undef_import( p + strlen( import_func_prefix ), 0 );
         else if (!strncmp( p, import_ord_prefix, strlen(import_ord_prefix) ))
             add_undef_import( p + strlen( import_ord_prefix ), 1 );
-        else if (use_msvcrt || !find_name( p, &stdc_functions ))
-            strarray_add( &undef_symbols, xstrdup( p ), NULL );
+        else if (use_msvcrt || !find_name( p, stdc_functions ))
+            strarray_add( &undef_symbols, xstrdup( p ));
     }
     if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
     free( cmd );
@@ -711,7 +711,7 @@ void resolve_imports( DLLSPEC *spec )
 /* check if symbol is still undefined */
 int is_undefined( const char *name )
 {
-    return find_name( name, &undef_symbols ) != NULL;
+    return find_name( name, undef_symbols ) != NULL;
 }
 
 /* output the get_pc thunk if needed */
@@ -1584,7 +1584,7 @@ static void new_output_as_file(void)
 
     if (output_file) fclose( output_file );
     name = open_temp_output_file( ".s" );
-    strarray_add( &as_files, name, NULL );
+    strarray_add( &as_files, name );
 }
 
 /* assemble all the asm files */
@@ -1611,22 +1611,24 @@ static void build_library( const char *output_name, char **argv, int create )
     if (!create || target_platform != PLATFORM_WINDOWS)
     {
         args = find_tool( "ar", NULL );
-        strarray_add( &args, create ? "rc" : "r", output_name, NULL );
+        strarray_add( &args, create ? "rc" : "r" );
+        strarray_add( &args, output_name );
     }
     else
     {
         args = find_link_tool();
-        strarray_add( &args, "/lib", strmake( "-out:%s", output_name ), NULL );
+        strarray_add( &args, "/lib" );
+        strarray_add( &args, strmake( "-out:%s", output_name ));
     }
     strarray_addall( &args, as_files );
-    strarray_addv( &args, argv );
+    while (*argv) strarray_add( &args, *argv++ );
     if (create) unlink( output_name );
     spawn( args );
 
     if (target_platform != PLATFORM_WINDOWS)
     {
         struct strarray ranlib = find_tool( "ranlib", NULL );
-        strarray_add( &ranlib, output_name, NULL );
+        strarray_add( &ranlib, output_name );
         spawn( ranlib );
     }
 }
@@ -1636,40 +1638,42 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec )
 {
     struct strarray args;
     char *def_file;
-    const char *as_flags, *m_flag;
 
     def_file = open_temp_output_file( ".def" );
     output_def_file( spec, 1 );
     fclose( output_file );
 
     args = find_tool( "dlltool", NULL );
+    strarray_add( &args, "-k" );
+    strarray_add( &args, strendswith( lib_name, ".delay.a" ) ? "-y" : "-l" );
+    strarray_add( &args, lib_name );
+    strarray_add( &args, "-d" );
+    strarray_add( &args, def_file );
+
     switch (target_cpu)
     {
         case CPU_x86:
-            m_flag = "i386";
-            as_flags = "--as-flags=--32";
+            strarray_add( &args, "-m" );
+            strarray_add( &args, "i386" );
+            strarray_add( &args, "--as-flags=--32" );
             break;
         case CPU_x86_64:
-            m_flag = "i386:x86-64";
-            as_flags = "--as-flags=--64";
+            strarray_add( &args, "-m" );
+            strarray_add( &args, "i386:x86-64" );
+            strarray_add( &args, "--as-flags=--64" );
             break;
         case CPU_ARM:
-            m_flag = "arm";
-            as_flags = NULL;
+            strarray_add( &args, "-m" );
+            strarray_add( &args, "arm" );
             break;
         case CPU_ARM64:
-            m_flag = "arm64";
-            as_flags = NULL;
+            strarray_add( &args, "-m" );
+            strarray_add( &args, "arm64" );
             break;
         default:
-            m_flag = NULL;
             break;
     }
 
-    strarray_add( &args, "-k", strendswith( lib_name, ".delay.a" ) ? "-y" : "-l",
-                  lib_name, "-d", def_file, NULL );
-    if (m_flag)
-        strarray_add( &args, "-m", m_flag, as_flags, NULL );
     spawn( args );
 }
 
