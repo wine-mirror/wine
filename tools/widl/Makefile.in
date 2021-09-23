@@ -1,5 +1,5 @@
 PROGRAMS = widl
-MANPAGES = widl.man.in
+PARENTSRC = ../wrc
 
 C_SRCS = \
 	client.c \
@@ -14,15 +14,21 @@ C_SRCS = \
 	typetree.c \
 	utils.c \
 	widl.c \
+	wpp.c \
 	write_msft.c
 
-LEX_SRCS   = parser.l
-BISON_SRCS = parser.y
+LEX_SRCS = \
+	parser.l \
+	ppl.l
+
+BISON_SRCS = \
+	parser.y \
+	ppy.y
+
+MANPAGES = widl.man.in
 
 widl_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \
 	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\"
-
-EXTRALIBS = -lwpp
 
 INSTALL_DEV = $(PROGRAMS)

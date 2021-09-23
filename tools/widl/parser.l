@@ -62,7 +62,7 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
-#include "wine/wpp.h"
+#include "wpp_private.h"
 
 #include "parser.tab.h"
 

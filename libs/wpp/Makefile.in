@@ -1,6 +1,0 @@
-STATICLIB = libwpp.a
-
-C_SRCS = wpp.c
-
-LEX_SRCS   = ppl.l
-BISON_SRCS = ppy.y

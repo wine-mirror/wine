@@ -21,7 +21,6 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/wpp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +36,7 @@
 
 #include "widl.h"
 #include "utils.h"
+#include "wpp_private.h"
 #include "parser.h"
 #include "header.h"
 #include "typelib.h"

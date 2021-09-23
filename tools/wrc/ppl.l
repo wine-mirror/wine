@@ -17,16 +17,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * History:
- * 24-Apr-2000 BS	- Started from scratch to restructure everything
- *			  and reintegrate the source into the wine-tree.
- * 04-Jan-2000 BS	- Added comments about the lexicographical
- *			  grammar to give some insight in the complexity.
- * 28-Dec-1999 BS	- Eliminated backing-up of the flexer by running
- *			  `flex -b' on the source. This results in some
- *			  weirdo extra rules, but a much faster scanner.
- * 23-Dec-1999 BS	- Started this file
- *
  *-------------------------------------------------------------------------
  * The preprocessor's lexographical grammar (approximately):
  *
@@ -182,7 +172,6 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 #define YY_NO_UNISTD_H
 #endif
 
-#include "wine/wpp.h"
 #include "wpp_private.h"
 #include "ppy.tab.h"
 

@@ -3,7 +3,6 @@
  *
  * Copyright 1999-2000	Bertho A. Stultiens (BS)
  *
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -17,13 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * History:
- * 24-Apr-2000 BS	Restructured the lot to fit the new scanner
- *			and reintegrate into the wine-tree.
- * 01-Jan-2000 BS	FIXME: win16 preprocessor calculates with
- *			16 bit ints and overflows...?
- * 26-Dec-1999 BS	Started this file
  *
  */
 

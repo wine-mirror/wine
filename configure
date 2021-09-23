@@ -1789,7 +1789,6 @@ enable_fonts
 enable_include
 enable_port
 enable_wine
-enable_wpp
 enable_loader
 enable_nls
 enable_po
@@ -21101,7 +21100,6 @@ wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/port enable_port
 wine_fn_config_makefile libs/wine enable_wine
-wine_fn_config_makefile libs/wpp enable_wpp
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
 wine_fn_config_makefile po enable_po

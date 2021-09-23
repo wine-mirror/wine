@@ -41,7 +41,7 @@
 #include "genres.h"
 #include "newstruc.h"
 #include "parser.h"
-#include "wine/wpp.h"
+#include "wpp_private.h"
 
 #ifdef WORDS_BIGENDIAN
 #define ENDIAN	"big"

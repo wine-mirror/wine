@@ -40,7 +40,7 @@
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
-#include "wine/wpp.h"
+#include "wpp_private.h"
 #include "header.h"
 
 static const char usage[] =
