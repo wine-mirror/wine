@@ -4082,7 +4082,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Acquire returned: %#x\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE );
-    todo_wine
     ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );

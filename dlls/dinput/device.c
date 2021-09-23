@@ -1118,6 +1118,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetDataFormat(LPDIRECTINPUTDEVICE8W ifac
 HRESULT WINAPI IDirectInputDevice2WImpl_SetCooperativeLevel(LPDIRECTINPUTDEVICE8W iface, HWND hwnd, DWORD dwflags)
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
+    HRESULT hr;
 
     TRACE("(%p) %p,0x%08x\n", This, hwnd, dwflags);
     _dump_cooperativelevel_DI(dwflags);
@@ -1144,11 +1145,16 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetCooperativeLevel(LPDIRECTINPUTDEVICE8
 
     /* Store the window which asks for the mouse */
     EnterCriticalSection(&This->crit);
-    This->win = hwnd;
-    This->dwCoopLevel = dwflags;
+    if (This->acquired) hr = DIERR_ACQUIRED;
+    else
+    {
+        This->win = hwnd;
+        This->dwCoopLevel = dwflags;
+        hr = DI_OK;
+    }
     LeaveCriticalSection(&This->crit);
 
-    return DI_OK;
+    return hr;
 }
 
 /******************************************************************************
