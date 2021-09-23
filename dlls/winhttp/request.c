@@ -2570,6 +2570,7 @@ static DWORD handle_redirect( struct request *request, DWORD status )
         }
         heap_free( request->path );
         request->path = path;
+        ret = ERROR_SUCCESS;
 
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, len_loc + 1 );
     }
