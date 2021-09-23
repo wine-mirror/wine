@@ -112,7 +112,7 @@ static void initialize_joysticks(struct JoystickData *data)
     data->num_joysticks = 0;
     data->cur_joystick = 0;
     IDirectInput8_EnumDevices(data->di, DI8DEVCLASS_GAMECTRL, enum_callback, data, DIEDFL_ATTACHEDONLY);
-    data->joysticks = HeapAlloc(GetProcessHeap(), 0, sizeof(struct Joystick) * data->num_joysticks);
+    data->joysticks = malloc(sizeof(struct Joystick) * data->num_joysticks);
 
     /* Get all the joysticks */
     IDirectInput8_EnumDevices(data->di, DI8DEVCLASS_GAMECTRL, enum_callback, data, DIEDFL_ATTACHEDONLY);
@@ -134,14 +134,14 @@ static void destroy_joysticks(struct JoystickData *data)
                 if (data->joysticks[i].effects[j].effect)
                     IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
 
-            HeapFree(GetProcessHeap(), 0, data->joysticks[i].effects);
+            free(data->joysticks[i].effects);
         }
 
         IDirectInputDevice8_Unacquire(data->joysticks[i].device);
         IDirectInputDevice8_Release(data->joysticks[i].device);
     }
 
-    HeapFree(GetProcessHeap(), 0, data->joysticks);
+    free(data->joysticks);
 }
 
 static void initialize_joysticks_list(HWND hwnd, struct JoystickData *data)
@@ -823,7 +823,7 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
                     joy->num_effects = 0;
                     joy->effects = NULL;
                     IDirectInputDevice8_EnumEffects(joy->device, ff_effects_callback, (void *) joy, 0);
-                    joy->effects = HeapAlloc(GetProcessHeap(), 0, sizeof(struct Effect) * joy->num_effects);
+                    joy->effects = malloc(sizeof(struct Effect) * joy->num_effects);
 
                     joy->cur_effect = 0;
                     IDirectInputDevice8_EnumEffects(joy->device, ff_effects_callback, (void*) joy, 0);
