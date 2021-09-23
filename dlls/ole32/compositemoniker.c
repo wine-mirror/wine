@@ -702,67 +702,61 @@ CompositeMonikerImpl_IsRunning(IMoniker* iface, IBindCtx* pbc,
         }
 }
 
-/******************************************************************************
- *        CompositeMoniker_GetTimeOfLastChange
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_GetTimeOfLastChange(IMoniker* iface, IBindCtx* pbc,
-               IMoniker* pmkToLeft, FILETIME* pCompositeTime)
+static HRESULT compose_with(IMoniker *left, IMoniker *right, IMoniker **c)
 {
-    HRESULT res;
-    IMoniker *tempMk,*antiMk,*rightMostMk,*leftMk;
-    IEnumMoniker *enumMoniker;
+    HRESULT hr = IMoniker_ComposeWith(left, right, TRUE, c);
+    if (FAILED(hr) && hr != MK_E_NEEDGENERIC) return hr;
+    return CreateGenericComposite(left, right, c);
+}
 
-    TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pCompositeTime);
+static HRESULT WINAPI CompositeMonikerImpl_GetTimeOfLastChange(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *toleft, FILETIME *changetime)
+{
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *left, *rightmost, *composed_left = NULL, *running = NULL;
+    IRunningObjectTable *rot;
+    HRESULT hr;
 
-    if (pCompositeTime==NULL)
+    TRACE("%p, %p, %p, %p.\n", iface, pbc, toleft, changetime);
+
+    if (!changetime || !pbc)
         return E_INVALIDARG;
 
-    /* This method creates a composite of pmkToLeft (if non-NULL) and this moniker and uses the ROT to  */
-    /* retrieve the time of last change. If the object is not in the ROT, the method recursively calls  */
-    /* IMoniker::GetTimeOfLastChange on the rightmost component of the composite, passing the remainder */
-    /* of the composite as the pmkToLeft parameter for that call.                                       */
-    if (pmkToLeft)
+    if (FAILED(hr = composite_get_rightmost(moniker, &left, &rightmost)))
+        return hr;
+
+    if (toleft)
     {
-        IRunningObjectTable* rot;
-
-        res = IMoniker_ComposeWith(pmkToLeft, iface, FALSE, &leftMk);
-        if (FAILED(res))
-            return res;
-
-        res = IBindCtx_GetRunningObjectTable(pbc,&rot);
-        if (FAILED(res))
-        {
-            IMoniker_Release(leftMk);
-            return res;
-        }
-
-        if (IRunningObjectTable_GetTimeOfLastChange(rot,leftMk,pCompositeTime)==S_OK)
-        {
-            IMoniker_Release(leftMk);
-            return res;
-        }
+        /* Compose (toleft, left) and check that against rightmost */
+        if (SUCCEEDED(hr = compose_with(toleft, left, &composed_left)) && composed_left)
+            hr = compose_with(composed_left, rightmost, &running);
     }
     else
-        leftMk = iface;
+    {
+        composed_left = left;
+        IMoniker_AddRef(composed_left);
+        running = iface;
+        IMoniker_AddRef(running);
+    }
 
-    IMoniker_Enum(iface, FALSE, &enumMoniker);
-    IEnumMoniker_Next(enumMoniker, 1, &rightMostMk, NULL);
-    IEnumMoniker_Release(enumMoniker);
+    if (SUCCEEDED(hr))
+    {
+        if (SUCCEEDED(hr = IBindCtx_GetRunningObjectTable(pbc, &rot)))
+        {
+            if (IRunningObjectTable_GetTimeOfLastChange(rot, running, changetime) != S_OK)
+                hr = IMoniker_GetTimeOfLastChange(rightmost, pbc, composed_left, changetime);
+            IRunningObjectTable_Release(rot);
+        }
+    }
 
-    res = CreateAntiMoniker(&antiMk);
-    res = IMoniker_ComposeWith(leftMk, antiMk, 0, &tempMk);
-    IMoniker_Release(antiMk);
+    if (composed_left)
+        IMoniker_Release(composed_left);
+    if (running)
+        IMoniker_Release(running);
+    IMoniker_Release(rightmost);
+    IMoniker_Release(left);
 
-    res = IMoniker_GetTimeOfLastChange(rightMostMk, pbc, tempMk, pCompositeTime);
-
-    IMoniker_Release(tempMk);
-    IMoniker_Release(rightMostMk);
-
-    if (pmkToLeft)
-        IMoniker_Release(leftMk);
-
-    return res;
+    return hr;
 }
 
 /******************************************************************************

@@ -2954,6 +2954,7 @@ static void test_generic_composite_moniker(void)
     IMoniker *moniker, *inverse, *moniker1, *moniker2;
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
+    unsigned int eaten, i;
     DWORD hash, cookie;
     HRESULT hr;
     IBindCtx *bindctx;
@@ -2962,7 +2963,7 @@ static void test_generic_composite_moniker(void)
     IROTData *rotdata;
     IMarshal *marshal;
     IStream *stream;
-    unsigned int i;
+    FILETIME ft;
     WCHAR *str;
     ULONG len;
 
@@ -3141,6 +3142,54 @@ todo_wine
     IMarshal_Release(marshal);
 
     IMoniker_Release(moniker);
+
+    /* GetTimeOfLastChange() */
+    eaten = 0;
+    hr = create_moniker_from_desc("CI1I2", &eaten, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    eaten = 0;
+    hr = create_moniker_from_desc("I1", &eaten, &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* See if non-generic composition is possible */
+    hr = IMoniker_ComposeWith(moniker1, moniker, TRUE, &moniker2);
+todo_wine
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+
+    hr = IBindCtx_GetRunningObjectTable(bindctx, &rot);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, moniker1, &ft);
+    ok(hr == MK_E_NOTBINDABLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &ft);
+    ok(hr == MK_E_NOTBINDABLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, NULL, NULL, &ft);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Register(rot, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)moniker,
+            moniker, &cookie);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &ft);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, moniker1, &ft);
+todo_wine
+    ok(hr == MK_E_NOTBINDABLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Revoke(rot, cookie);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IRunningObjectTable_Release(rot);
+
+    IMoniker_Release(moniker);
+    IMoniker_Release(moniker1);
 
     IBindCtx_Release(bindctx);
 }
