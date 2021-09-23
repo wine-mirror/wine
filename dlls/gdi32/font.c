@@ -91,6 +91,17 @@ static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 
 static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
+static const WCHAR font_substitutes_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','o','f','t','w','a','r','e',
+    '\\','M','i','c','r','o','s','o','f','t',
+    '\\','W','i','n','d','o','w','s',' ','N','T',
+    '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+    '\\','F','o','n','t','S','u','b','s','t','i','t','u','t','e','s'
+};
+
 static const WCHAR font_assoc_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -456,6 +467,24 @@ static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
     return ret;
 }
 
+static BOOL reg_enum_value( HKEY hkey, unsigned int index, KEY_VALUE_FULL_INFORMATION *info,
+                            ULONG size, WCHAR *name, ULONG name_size )
+{
+    ULONG full_size;
+
+    if (NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                             info, size, &full_size ))
+        return FALSE;
+
+    if (name_size)
+    {
+        if (name_size < info->NameLength + sizeof(WCHAR)) return FALSE;
+        memcpy( name, info->Name, info->NameLength );
+        name[info->NameLength / sizeof(WCHAR)] = 0;
+    }
+    return TRUE;
+}
+
 static BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len )
 {
     char buffer[4096];
@@ -541,20 +570,23 @@ static BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const 
 
 static void load_gdi_font_subst(void)
 {
+    char buffer[512];
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
     HKEY hkey;
-    DWORD i = 0, type, dlen, vlen;
-    WCHAR value[64], data[64], *p;
+    DWORD i = 0;
+    WCHAR *data, *p, value[64];
 
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
-                     &hkey)) return;
+    if (!(hkey = reg_open_key( NULL, font_substitutes_keyW, sizeof(font_substitutes_keyW) )))
+        return;
 
-    dlen = sizeof(data);
-    vlen = ARRAY_SIZE(value);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)data, &dlen ))
+    while (reg_enum_value( hkey, i++, info, sizeof(buffer), value, sizeof(value) ))
     {
         int from_charset = -1, to_charset = -1;
 
-        TRACE("Got %s=%s\n", debugstr_w(value), debugstr_w(data));
+        if (info->Type != REG_SZ) continue;
+        data = (WCHAR *)((char *)info + info->DataOffset);
+
+        TRACE( "Got %s=%s\n", debugstr_w(value), debugstr_w(data) );
         if ((p = wcsrchr( value, ',' )) && p[1])
         {
             *p++ = 0;
@@ -570,12 +602,8 @@ static void load_gdi_font_subst(void)
            or mapping of DEFAULT_CHARSET */
         if ((!from_charset || to_charset == from_charset) && to_charset != DEFAULT_CHARSET)
             add_gdi_font_subst( value, from_charset, data, to_charset );
-
-        /* reset dlen and vlen */
-        dlen = sizeof(data);
-        vlen = ARRAY_SIZE(value);
     }
-    RegCloseKey( hkey );
+    NtClose( hkey );
 }
 
 /* font families */
