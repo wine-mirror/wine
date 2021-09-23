@@ -792,21 +792,24 @@ static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace 
  */
 static void load_gdi_font_replacements(void)
 {
+    char buffer[2048];
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
     HKEY hkey;
-    DWORD i = 0, type, dlen, vlen;
-    WCHAR value[LF_FACESIZE], data[1024];
+    DWORD i = 0;
+    WCHAR value[LF_FACESIZE];
+
+    static const WCHAR replacementsW[] = {'R','e','p','l','a','c','e','m','e','n','t','s'};
 
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
-    if (RegOpenKeyW( wine_fonts_key, L"Replacements", &hkey )) return;
+    if (!(hkey = reg_open_key( wine_fonts_key, replacementsW, sizeof(replacementsW) ))) return;
 
-    dlen = sizeof(data);
-    vlen = ARRAY_SIZE(value);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)data, &dlen ))
+    while (reg_enum_value( hkey, i++, info, sizeof(buffer), value, sizeof(value) ))
     {
+        WCHAR *data = (WCHAR *)((char *)info + info->DataOffset);
         /* "NewName"="Oldname" */
         if (!find_family_from_any_name( value ))
         {
-            if (type == REG_MULTI_SZ)
+            if (info->Type == REG_MULTI_SZ)
             {
                 WCHAR *replace = data;
                 while (*replace)
@@ -815,15 +818,11 @@ static void load_gdi_font_replacements(void)
                     replace += lstrlenW(replace) + 1;
                 }
             }
-            else if (type == REG_SZ) add_family_replacement( value, data );
+            else if (info->Type == REG_SZ) add_family_replacement( value, data );
         }
         else TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
-
-        /* reset dlen and vlen */
-        dlen = sizeof(data);
-        vlen = ARRAY_SIZE(value);
     }
-    RegCloseKey( hkey );
+    NtClose( hkey );
 }
 
 static void dump_gdi_font_list(void)
