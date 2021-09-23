@@ -98,6 +98,7 @@ static NTSTATUS WINAPI ndis_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     MIB_IF_ROW2 *netdev = device->DeviceExtension;
+    NTSTATUS status;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -115,8 +116,9 @@ static NTSTATUS WINAPI ndis_ioctl(DEVICE_OBJECT *device, IRP *irp)
         break;
     }
 
+    status = irp->IoStatus.u.Status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 static void add_key(const WCHAR *guidstrW, const MIB_IF_ROW2 *netdev)
