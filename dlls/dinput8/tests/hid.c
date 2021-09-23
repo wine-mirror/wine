@@ -3286,14 +3286,9 @@ static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *c
 
 struct check_objects_todos
 {
-    BOOL guid;
     BOOL ofs;
     BOOL type;
-    BOOL flags;
     BOOL collection_number;
-    BOOL usage;
-    BOOL usage_page;
-    BOOL report_id;
 };
 
 struct check_objects_params
@@ -3317,13 +3312,11 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     if (params->index >= params->expect_count) exp = &unexpected_obj;
 
     check_member( *obj, *exp, "%u", dwSize );
-    todo_wine_if( todo->guid )
     check_member_guid( *obj, *exp, guidType );
     todo_wine_if( todo->ofs )
     check_member( *obj, *exp, "%#x", dwOfs );
     todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
-    todo_wine_if( todo->flags )
     check_member( *obj, *exp, "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
@@ -3331,13 +3324,10 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     todo_wine_if( todo->collection_number )
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
-    todo_wine_if( todo->usage_page )
     check_member( *obj, *exp, "%#04x", wUsagePage );
-    todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
     check_member( *obj, *exp, "%#04x", dwDimension );
     check_member( *obj, *exp, "%#04x", wExponent );
-    todo_wine_if( todo->report_id )
     check_member( *obj, *exp, "%u", wReportId );
 
     winetest_pop_context();
@@ -3593,11 +3583,10 @@ static void test_simple_joystick(void)
     {
         {.ofs = TRUE},
         {.ofs = TRUE},
-        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE},
-        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .usage = TRUE, .usage_page = TRUE},
-        {.ofs = TRUE, .type = TRUE, .usage = TRUE},
-        {.guid = TRUE, .ofs = TRUE, .type = TRUE, .collection_number = TRUE, .report_id = TRUE, .usage = TRUE, .usage_page = TRUE},
-        {.type = TRUE},
+        {.ofs = TRUE},
+        {.ofs = TRUE},
+        {.ofs = TRUE},
+        {.ofs = TRUE},
     };
 
     struct check_objects_params check_objects_params =
@@ -3794,7 +3783,6 @@ static void test_simple_joystick(void)
     check_member( caps, expect_caps, "%d", dwSize );
     check_member( caps, expect_caps, "%#x", dwFlags );
     check_member( caps, expect_caps, "%#x", dwDevType );
-    todo_wine
     check_member( caps, expect_caps, "%d", dwAxes );
     check_member( caps, expect_caps, "%d", dwButtons );
     check_member( caps, expect_caps, "%d", dwPOVs );
@@ -3960,11 +3948,9 @@ static void test_simple_joystick(void)
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
-    todo_wine
     ok( res == 5, "got %u expected %u\n", res, 5 );
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
-    todo_wine
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
 
@@ -4616,7 +4602,7 @@ static void test_simple_joystick(void)
         check_member( state, expect_state_rel[i], "%d", lX );
         todo_wine
         check_member( state, expect_state_rel[i], "%d", lY );
-        todo_wine_if( i == 1 )
+        todo_wine
         check_member( state, expect_state_rel[i], "%d", lZ );
         check_member( state, expect_state_rel[i], "%d", lRx );
         check_member( state, expect_state_rel[i], "%d", rgdwPOV[0] );
@@ -4641,6 +4627,7 @@ static void test_simple_joystick(void)
     check_member( state, expect_state_rel[i], "%d", lX );
     todo_wine
     check_member( state, expect_state_rel[i], "%d", lY );
+    todo_wine
     check_member( state, expect_state_rel[i], "%d", lZ );
     check_member( state, expect_state_rel[i], "%d", lRx );
     check_member( state, expect_state_rel[i], "%d", rgdwPOV[0] );

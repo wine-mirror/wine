@@ -178,6 +178,7 @@ static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
         case HID_USAGE_GENERIC_X: return &GUID_XAxis;
         case HID_USAGE_GENERIC_Y: return &GUID_YAxis;
         case HID_USAGE_GENERIC_Z: return &GUID_ZAxis;
+        case HID_USAGE_GENERIC_WHEEL: return &GUID_ZAxis;
         case HID_USAGE_GENERIC_RX: return &GUID_RxAxis;
         case HID_USAGE_GENERIC_RY: return &GUID_RyAxis;
         case HID_USAGE_GENERIC_RZ: return &GUID_RzAxis;
@@ -274,6 +275,7 @@ static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *f
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Z:
+            case HID_USAGE_GENERIC_WHEEL:
                 instance.dwOfs = DIJOFS_Z;
                 set_axis_type( &instance, seen_axis, 2, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
@@ -301,6 +303,7 @@ static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *f
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
+            case HID_USAGE_GENERIC_DIAL:
             case HID_USAGE_GENERIC_SLIDER:
                 instance.dwOfs = DIJOFS_SLIDER( 0 );
                 instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
