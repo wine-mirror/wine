@@ -34,12 +34,6 @@
 # define min(x,y) (((x) < (y)) ? (x) : (y))
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-# define PATH_SEPARATOR ';'
-#else
-# define PATH_SEPARATOR ':'
-#endif
-
 int verbose = 0;
 
 void error(const char* s, ...)
@@ -83,8 +77,8 @@ int strendswith(const char* str, const char* end)
 {
     int l = strlen(str);
     int m = strlen(end);
-   
-    return l >= m && strcmp(str + l - m, end) == 0; 
+
+    return l >= m && strcmp(str + l - m, end) == 0;
 }
 
 char* strmake(const char* fmt, ...)
@@ -106,82 +100,60 @@ char* strmake(const char* fmt, ...)
     }
 }
 
-strarray* strarray_alloc(void)
+void strarray_add( struct strarray *array, const char *str )
 {
-    strarray* arr = xmalloc(sizeof(*arr));
-    arr->maximum = arr->size = 0;
-    arr->base = NULL;
-    return arr;
-}
-
-void strarray_free(strarray* arr)
-{
-    free(arr->base);
-    free(arr);
-}
-
-void strarray_add(strarray* arr, const char* str)
-{
-    if (arr->size == arr->maximum)
+    if (array->count == array->size)
     {
-	arr->maximum += 10;
-	arr->base = xrealloc(arr->base, sizeof(*(arr->base)) * arr->maximum);
+	if (array->size) array->size *= 2;
+        else array->size = 16;
+	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
     }
-    arr->base[arr->size++] = str;
+    array->str[array->count++] = str;
 }
 
-void strarray_del(strarray* arr, unsigned int i)
-{
-    if (i >= arr->size) error("Invalid index i=%d\n", i);
-    memmove(&arr->base[i], &arr->base[i + 1], (arr->size - i - 1) * sizeof(arr->base[0]));
-    arr->size--;
-}
-
-void strarray_addall(strarray* arr, const strarray* from)
+void strarray_addall( struct strarray *array, struct strarray added )
 {
     unsigned int i;
 
-    for (i = 0; i < from->size; i++)
-	strarray_add(arr, from->base[i]);
+    for (i = 0; i < added.count; i++) strarray_add( array, added.str[i] );
 }
 
-strarray* strarray_dup(const strarray* arr)
+struct strarray strarray_fromstring( const char *str, const char *delim )
 {
-    strarray* dup = strarray_alloc();
-    unsigned int i;
+    struct strarray array = empty_strarray;
+    char *buf = xstrdup( str );
+    const char *tok;
 
-    for (i = 0; i < arr->size; i++)
-	strarray_add(dup, arr->base[i]);
-
-    return dup;
+    for (tok = strtok( buf, delim ); tok; tok = strtok( NULL, delim ))
+        strarray_add( &array, xstrdup( tok ));
+    free( buf );
+    return array;
 }
 
-strarray* strarray_fromstring(const char* str, const char* delim)
+static struct strarray strarray_frompath( const char *path )
 {
-    strarray* arr = strarray_alloc();
-    char* buf = strdup(str);
-    const char* tok;
-
-    for(tok = strtok(buf, delim); tok; tok = strtok(0, delim))
-	strarray_add(arr, strdup(tok));
-
-    free(buf);
-    return arr;
+    if (!path) return empty_strarray;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    return strarray_fromstring( path, ";" );
+#else
+    return strarray_fromstring( path, ":" );
+#endif
 }
 
-char* strarray_tostring(const strarray* arr, const char* sep)
+char *strarray_tostring( struct strarray array, const char *sep )
 {
-    char *str, *newstr;
-    unsigned int i;
+    char *str;
+    unsigned int i, len = 1 + (array.count - 1) * strlen(sep);
 
-    str = strmake("%s", arr->base[0]);
-    for (i = 1; i < arr->size; i++)
+    if (!array.count) return xstrdup("");
+    for (i = 0; i < array.count; i++) len += strlen( array.str[i] );
+    str = xmalloc( len );
+    strcpy( str, array.str[0] );
+    for (i = 1; i < array.count; i++)
     {
-	newstr = strmake("%s%s%s", str, sep, arr->base[i]);
-	free(str);
-	str = newstr;
+        strcat( str, sep );
+        strcat( str, array.str[i] );
     }
-
     return str;
 }
 
@@ -296,24 +268,25 @@ static file_type guess_lib_type(enum target_platform platform, const char* dir,
     return file_na;
 }
 
-file_type get_lib_type(enum target_platform platform, strarray* path, const char *library,
+file_type get_lib_type(enum target_platform platform, struct strarray path, const char *library,
                        const char *prefix, const char *suffix, char** file)
 {
     unsigned int i;
 
     if (!suffix) suffix = ".a";
-    for (i = 0; i < path->size; i++)
+    for (i = 0; i < path.count; i++)
     {
-        file_type type = guess_lib_type(platform, path->base[i], library, prefix, suffix, file);
+        file_type type = guess_lib_type(platform, path.str[i], library, prefix, suffix, file);
 	if (type != file_na) return type;
     }
     return file_na;
 }
 
-const char *find_binary( const strarray* prefix, const char *name )
+const char *find_binary( struct strarray prefix, const char *name )
 {
     char *file_name, *args;
-    static strarray *path;
+    struct strarray dirs = empty_strarray;
+    static struct strarray path;
     unsigned int i;
 
     if (strchr( name, '/' )) return name;
@@ -321,47 +294,29 @@ const char *find_binary( const strarray* prefix, const char *name )
     file_name = xstrdup( name );
     if ((args = strchr( file_name, ' ' ))) *args++ = 0;
 
-    if (prefix)
-    {
-        for (i = 0; i < prefix->size; i++)
-        {
-            struct stat st;
-            char *prog = strmake( "%s/%s%s", prefix->base[i], file_name, EXEEXT );
-            if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111))
-                return args ? strmake( "%s %s", prog, args ) : prog;
-            free( prog );
-        }
-    }
-    if (!path)
-    {
-        path = strarray_alloc();
+    if (!path.count) strarray_addall( &path, strarray_frompath( getenv( "PATH" )));
 
-        /* then append the PATH directories */
-        if (getenv( "PATH" ))
-        {
-            char *p = xstrdup( getenv( "PATH" ));
-            while (*p)
-            {
-                strarray_add( path, p );
-                while (*p && *p != PATH_SEPARATOR) p++;
-                if (!*p) break;
-                *p++ = 0;
-            }
-        }
+    strarray_addall( &dirs, prefix );
+    strarray_addall( &dirs, path );
+    for (i = 0; i < dirs.count; i++)
+    {
+        struct stat st;
+        char *prog = strmake( "%s/%s%s", dirs.str[i], file_name, EXEEXT );
+        if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111))
+            return args ? strmake( "%s %s", prog, args ) : prog;
+        free( prog );
     }
-    return prefix == path ? NULL : find_binary( path, name );
+    return NULL;
 }
 
-int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
+int spawn(struct strarray prefix, struct strarray args, int ignore_errors)
 {
     unsigned int i;
     int status;
-    strarray* arr = strarray_dup(args);
     const char** argv;
-    char* prog = 0;
 
-    strarray_add(arr, NULL);
-    argv = arr->base;
+    strarray_add( &args, NULL);
+    argv = args.str;
     argv[0] = find_binary( prefix, argv[0] );
 
     if (verbose)
@@ -381,7 +336,5 @@ int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 	exit(3);
     }
 
-    free(prog);
-    strarray_free(arr);
     return status;
 }
