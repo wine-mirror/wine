@@ -212,7 +212,7 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
     get_app_key(&hkey, &appkey);
 
     if (!enable)
-        set_config_key(hkey, appkey, joy_name, L"disabled", lstrlenW(L"disabled"));
+        set_config_key(hkey, appkey, joy_name, L"disabled", wcslen(L"disabled"));
     else
         set_config_key(hkey, appkey, joy_name, NULL, 0);
 
@@ -240,7 +240,7 @@ static void initialize_disabled_joysticks_list(HWND hwnd)
 
         status = RegEnumValueW(hkey, i, buf_name, &name_len, NULL, NULL, (BYTE*) buf_data, &data_len);
 
-        if (status == ERROR_SUCCESS && !lstrcmpW(L"disabled", buf_data))
+        if (status == ERROR_SUCCESS && !wcscmp(L"disabled", buf_data))
             SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_ADDSTRING, 0, (LPARAM) buf_name);
     }
 
