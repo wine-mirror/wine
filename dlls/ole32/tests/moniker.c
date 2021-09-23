@@ -68,15 +68,6 @@ DEFINE_OLEGUID(CLSID_CompositeMoniker, 0x309, 0, 0);
 DEFINE_OLEGUID(CLSID_ClassMoniker,     0x31a, 0, 0);
 DEFINE_OLEGUID(CLSID_PointerMoniker,   0x306, 0, 0);
 
-#define EXPECT_REF(obj,ref) _expect_ref((IUnknown *)obj, ref, __LINE__)
-static void _expect_ref(IUnknown* obj, ULONG ref, int line)
-{
-    ULONG refcount;
-    IUnknown_AddRef(obj);
-    refcount = IUnknown_Release(obj);
-    ok_(__FILE__, line)(refcount == ref, "Unexpected got %u.\n", refcount);
-}
-
 #define TEST_MONIKER_TYPE_TODO(m,t) _test_moniker_type(m, t, TRUE, __LINE__)
 #define TEST_MONIKER_TYPE(m,t) _test_moniker_type(m, t, FALSE, __LINE__)
 static void _test_moniker_type(IMoniker *moniker, DWORD type, BOOL todo, int line)
@@ -2902,9 +2893,65 @@ todo_wine
     IMoniker_Release(moniker2);
 }
 
+static HRESULT create_moniker_from_desc(const char *desc, unsigned int *eaten,
+        IMoniker **moniker)
+{
+    IMoniker *left, *right;
+    WCHAR nameW[3];
+    HRESULT hr;
+
+    desc += *eaten;
+
+    switch (*desc)
+    {
+        case 'I':
+            nameW[0] = desc[0];
+            nameW[1] = desc[1];
+            nameW[2] = 0;
+            *eaten += 2;
+            return CreateItemMoniker(L"!", nameW, moniker);
+        case 'A':
+            *eaten += 2;
+            *moniker = create_antimoniker(desc[1] - '0');
+            return S_OK;
+        case 'C':
+            (*eaten)++;
+            hr = create_moniker_from_desc(desc, eaten, &left);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            hr = create_moniker_from_desc(desc, eaten, &right);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            hr = CreateGenericComposite(left, right, moniker);
+            IMoniker_Release(left);
+            IMoniker_Release(right);
+            return hr;
+        default:
+            ok(0, "Unexpected description %s.\n", desc);
+            return E_NOTIMPL;
+    }
+}
+
 static void test_generic_composite_moniker(void)
 {
-    IMoniker *moniker, *inverse, *inverse2, *moniker1, *moniker2, *moniker3, *moniker4;
+    static const struct simplify_test
+    {
+        const char *left;
+        const char *right;
+        unsigned int result_type;
+        const WCHAR *name;
+    }
+    simplify_tests[] =
+    {
+        { "I1", "I2", MKSYS_GENERICCOMPOSITE, L"!I1!I2" },
+        { "I1", "A2", MKSYS_ANTIMONIKER, L"\\.." },
+        { "A1", "A1", MKSYS_GENERICCOMPOSITE, L"\\..\\.." },
+        { "A2", "A1", MKSYS_GENERICCOMPOSITE, L"\\..\\..\\.." },
+        { "CI1I2", "A1", MKSYS_ITEMMONIKER, L"!I1" },
+        { "I1", "A1", MKSYS_NONE },
+        { "CI1I2", "A2", MKSYS_NONE },
+        { "CI1I2", "A3", MKSYS_ANTIMONIKER, L"\\.." },
+        { "CI1I3", "CA1I2", MKSYS_GENERICCOMPOSITE, L"!I1!I2" },
+    };
+    IMoniker *moniker, *inverse, *moniker1, *moniker2;
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
     DWORD hash, cookie;
@@ -2915,11 +2962,51 @@ static void test_generic_composite_moniker(void)
     IROTData *rotdata;
     IMarshal *marshal;
     IStream *stream;
+    unsigned int i;
     WCHAR *str;
     ULONG len;
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(simplify_tests); ++i)
+    {
+        IMoniker *left, *right, *composite = NULL;
+        unsigned int moniker_type, eaten;
+        WCHAR *name;
+
+        winetest_push_context("simplify[%u]", i);
+
+        eaten = 0;
+        hr = create_moniker_from_desc(simplify_tests[i].left, &eaten, &left);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        eaten = 0;
+        hr = create_moniker_from_desc(simplify_tests[i].right, &eaten, &right);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        hr = CreateGenericComposite(left, right, &composite);
+        ok(hr == S_OK, "Failed to create a composite, hr %#x.\n", hr);
+
+        if (composite)
+        {
+            hr = IMoniker_IsSystemMoniker(composite, &moniker_type);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            ok(moniker_type == simplify_tests[i].result_type, "Unexpected result type %u.\n", moniker_type);
+
+            hr = IMoniker_GetDisplayName(composite, bindctx, NULL, &name);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            ok(!lstrcmpW(name, simplify_tests[i].name), "Unexpected result name %s.\n", wine_dbgstr_w(name));
+            CoTaskMemFree(name);
+
+            IMoniker_Release(composite);
+        }
+        else
+            ok(simplify_tests[i].result_type == MKSYS_NONE, "Unexpected result type.\n");
+
+        winetest_pop_context();
+
+        IMoniker_Release(left);
+        IMoniker_Release(right);
+    }
 
     hr = CreateItemMoniker(L"!", L"Test", &moniker1);
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
@@ -2928,71 +3015,9 @@ static void test_generic_composite_moniker(void)
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
 
-    /* Compose with itself. */
-    EXPECT_REF(moniker1, 2);
-    hr = CreateGenericComposite(moniker1, moniker1, &moniker);
+    hr = CreateGenericComposite(moniker1, moniker2, &moniker);
     ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    EXPECT_REF(moniker1, 4);
     TEST_MONIKER_TYPE(moniker, MKSYS_GENERICCOMPOSITE);
-    IMoniker_Release(moniker);
-
-    /* (I) + (A) -> () */
-    hr = IMoniker_Inverse(moniker1, &inverse);
-    ok(hr == S_OK, "Failed to invert, hr %#x.\n", hr);
-    hr = CreateGenericComposite(moniker1, inverse, &moniker);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!moniker, "Unexpected pointer.\n");
-
-    /* (I1,I2) + (A,A) -> (I1,I2+A,A) -> (I1,A) -> () */
-    hr = CreateGenericComposite(moniker1, moniker2, &moniker);
-    ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    hr = CreateGenericComposite(inverse, inverse, &moniker3);
-    ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    TEST_MONIKER_TYPE(moniker3, MKSYS_GENERICCOMPOSITE);
-
-    hr = CreateGenericComposite(moniker, moniker3, &moniker4);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!moniker4, "Unexpected pointer.\n");
-
-    IMoniker_Release(moniker);
-    IMoniker_Release(moniker3);
-
-    /* (I1,I2) + (A2,A) -> (I1,I2+A2,A) -> (I1,A,A) -> (I1+A,A) -> (A) */
-    hr = CreateGenericComposite(moniker1, moniker2, &moniker);
-    ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    ok(!!moniker, "Unexpected pointer.\n");
-    inverse2 = create_antimoniker(2);
-    hr = CreateGenericComposite(inverse2, inverse, &moniker3);
-    ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    ok(!!moniker3, "Unexpected pointer.\n");
-    IMoniker_Release(inverse2);
-
-    hr = CreateGenericComposite(moniker, moniker3, &moniker4);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    TEST_MONIKER_TYPE(moniker4, MKSYS_ANTIMONIKER);
-    IMoniker_Release(moniker4);
-    IMoniker_Release(moniker);
-    IMoniker_Release(moniker3);
-
-    /* (I1,I2) + (A,I2) -> (I1,I2+A,I2) -> (I1,I2) */
-    hr = CreateGenericComposite(moniker1, moniker2, &moniker);
-    ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    ok(!!moniker, "Unexpected pointer.\n");
-
-    hr = CreateGenericComposite(inverse, moniker2, &moniker3);
-    ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
-    ok(!!moniker3, "Unexpected pointer.\n");
-
-    hr = CreateGenericComposite(moniker, moniker3, &moniker4);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    TEST_MONIKER_TYPE(moniker4, MKSYS_GENERICCOMPOSITE);
-
-    TEST_DISPLAY_NAME(moniker4, L"!Test#Wine");
-
-    IMoniker_Release(moniker4);
-    IMoniker_Release(moniker3);
-
-    IMoniker_Release(inverse);
 
     /* Generic composite is special, as it does not addref in this case. */
     hr = IMoniker_QueryInterface(moniker, &CLSID_CompositeMoniker, (void **)&unknown);
