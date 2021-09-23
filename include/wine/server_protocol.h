@@ -1762,7 +1762,7 @@ struct poll_socket_output
 struct poll_socket_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    int          exclusive;
     async_data_t async;
     timeout_t    timeout;
     /* VARARG(sockets,poll_socket_input); */
@@ -6257,7 +6257,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 731
+#define SERVER_PROTOCOL_VERSION 732
 
 /* ### protocol_version end ### */
 

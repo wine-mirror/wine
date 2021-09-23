@@ -867,7 +867,7 @@ static void test_poll_exclusive(void)
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[0], 100);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[1], 100);
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
@@ -927,7 +927,7 @@ static void test_poll_exclusive(void)
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[1], 100);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[2], 100);
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
@@ -997,7 +997,7 @@ static void test_poll_exclusive(void)
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[2], 100);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[3], 100);
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
@@ -1048,7 +1048,7 @@ static void test_poll_exclusive(void)
     CloseHandle(thrd);
 
     ret = WaitForSingleObject(events[0], 100);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
 
     CancelIo((HANDLE)ctl_sock);
 
@@ -1073,7 +1073,7 @@ static void test_poll_exclusive(void)
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[0], 100);
-    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
 
     ret = WaitForSingleObject(events[1], 100);
     ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);

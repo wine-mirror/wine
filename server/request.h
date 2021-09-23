@@ -1045,6 +1045,7 @@ C_ASSERT( sizeof(struct recv_socket_request) == 64 );
 C_ASSERT( FIELD_OFFSET(struct recv_socket_reply, wait) == 8 );
 C_ASSERT( FIELD_OFFSET(struct recv_socket_reply, options) == 12 );
 C_ASSERT( sizeof(struct recv_socket_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct poll_socket_request, exclusive) == 12 );
 C_ASSERT( FIELD_OFFSET(struct poll_socket_request, async) == 16 );
 C_ASSERT( FIELD_OFFSET(struct poll_socket_request, timeout) == 56 );
 C_ASSERT( sizeof(struct poll_socket_request) == 64 );

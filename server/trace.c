@@ -2122,7 +2122,8 @@ static void dump_recv_socket_reply( const struct recv_socket_reply *req )
 
 static void dump_poll_socket_request( const struct poll_socket_request *req )
 {
-    dump_async_data( " async=", &req->async );
+    fprintf( stderr, " exclusive=%d", req->exclusive );
+    dump_async_data( ", async=", &req->async );
     dump_timeout( ", timeout=", &req->timeout );
     dump_varargs_poll_socket_input( ", sockets=", cur_size );
 }

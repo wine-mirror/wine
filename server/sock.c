@@ -128,6 +128,7 @@ struct poll_req
     struct async *async;
     struct iosb *iosb;
     struct timeout_user *timeout;
+    int exclusive;
     unsigned int count;
     struct poll_socket_output *output;
     struct
@@ -205,6 +206,7 @@ struct sock
     struct list         accept_list; /* list of pending accept requests */
     struct accept_req  *accept_recv_req; /* pending accept-into request which will recv on this socket */
     struct connect_req *connect_req; /* pending connection request */
+    struct poll_req    *main_poll;   /* main poll */
     union win_sockaddr  addr;        /* socket name */
     int                 addr_len;    /* socket name length */
     unsigned int        rcvbuf;      /* advisory recv buffer size */
@@ -231,6 +233,7 @@ static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_fd_type( struct fd *fd );
 static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void sock_cancel_async( struct fd *fd, struct async *async );
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -274,7 +277,7 @@ static const struct fd_ops sock_fd_ops =
     default_fd_get_file_info,     /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     sock_ioctl,                   /* ioctl */
-    default_fd_cancel_async,      /* cancel_async */
+    sock_cancel_async,            /* cancel_async */
     sock_queue_async,             /* queue_async */
     sock_reselect_async           /* reselect_async */
 };
@@ -834,6 +837,16 @@ static int get_poll_flags( struct sock *sock, int event )
 
 static void complete_async_poll( struct poll_req *req, unsigned int status )
 {
+    unsigned int i;
+
+    for (i = 0; i < req->count; ++i)
+    {
+        struct sock *sock = req->sockets[i].sock;
+
+        if (sock->main_poll == req)
+            sock->main_poll = NULL;
+    }
+
     /* pass 0 as result; client will set actual result size */
     async_request_complete( req->async, status, 0, req->count * sizeof(*req->output), req->output );
 }
@@ -1222,6 +1235,29 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd )
     return FD_TYPE_SOCKET;
 }
 
+static void sock_cancel_async( struct fd *fd, struct async *async )
+{
+    struct poll_req *req;
+
+    LIST_FOR_EACH_ENTRY( req, &poll_list, struct poll_req, entry )
+    {
+        unsigned int i;
+
+        if (req->async != async)
+            continue;
+
+        for (i = 0; i < req->count; i++)
+        {
+            struct sock *sock = req->sockets[i].sock;
+
+            if (sock->main_poll == req)
+                sock->main_poll = NULL;
+        }
+    }
+
+    async_terminate( async, STATUS_CANCELLED );
+}
+
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
     struct sock *sock = get_fd_user( fd );
@@ -1383,6 +1419,7 @@ static struct sock *create_socket(void)
     sock->ifchange_obj = NULL;
     sock->accept_recv_req = NULL;
     sock->connect_req = NULL;
+    sock->main_poll = NULL;
     memset( &sock->addr, 0, sizeof(sock->addr) );
     sock->addr_len = 0;
     sock->rd_shutdown = 0;
@@ -2840,7 +2877,27 @@ static int poll_single_socket( struct sock *sock, int mask )
     return get_poll_flags( sock, pollfd.revents ) & mask;
 }
 
-static void poll_socket( struct sock *poll_sock, struct async *async, timeout_t timeout,
+static void handle_exclusive_poll(struct poll_req *req)
+{
+    unsigned int i;
+
+    for (i = 0; i < req->count; ++i)
+    {
+        struct sock *sock = req->sockets[i].sock;
+        struct poll_req *main_poll = sock->main_poll;
+
+        if (main_poll && main_poll->exclusive && req->exclusive)
+        {
+            complete_async_poll( main_poll, STATUS_SUCCESS );
+            main_poll = NULL;
+        }
+
+        if (!main_poll)
+            sock->main_poll = req;
+    }
+}
+
+static void poll_socket( struct sock *poll_sock, struct async *async, int exclusive, timeout_t timeout,
                          unsigned int count, const struct poll_socket_input *input )
 {
     struct poll_socket_output *output;
@@ -2881,10 +2938,13 @@ static void poll_socket( struct sock *poll_sock, struct async *async, timeout_t 
         req->sockets[i].flags = input[i].flags;
     }
 
+    req->exclusive = exclusive;
     req->count = count;
     req->async = (struct async *)grab_object( async );
     req->iosb = async_get_iosb( async );
     req->output = output;
+
+    handle_exclusive_poll(req);
 
     list_add_tail( &poll_list, &req->entry );
     async_set_completion_callback( async, free_poll_req, req );
@@ -3287,7 +3347,7 @@ DECL_HANDLER(poll_socket)
 
     if ((async = create_request_async( sock->fd, get_fd_comp_flags( sock->fd ), &req->async )))
     {
-        poll_socket( sock, async, req->timeout, count, input );
+        poll_socket( sock, async, req->exclusive, req->timeout, count, input );
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( sock->fd );
         release_object( async );

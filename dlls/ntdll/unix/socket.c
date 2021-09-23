@@ -741,7 +741,6 @@ static NTSTATUS sock_poll( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
             params->padding[0], params->padding[1], params->padding[2],
             params->sockets[0].socket, params->sockets[0].flags );
 
-    if (params->exclusive) FIXME( "ignoring exclusive flag\n" );
     if (params->padding[0]) FIXME( "padding[0] is %#x\n", params->padding[0] );
     if (params->padding[1]) FIXME( "padding[1] is %#x\n", params->padding[1] );
     if (params->padding[2]) FIXME( "padding[2] is %#x\n", params->padding[2] );
@@ -782,6 +781,7 @@ static NTSTATUS sock_poll( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     SERVER_START_REQ( poll_socket )
     {
         req->async = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
+        req->exclusive = !!params->exclusive;
         req->timeout = params->timeout;
         wine_server_add_data( req, input, params->count * sizeof(*input) );
         wine_server_set_reply( req, async->sockets, params->count * sizeof(async->sockets[0]) );

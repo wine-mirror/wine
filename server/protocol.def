@@ -1451,6 +1451,7 @@ struct poll_socket_output
 
 /* Perform an async poll on a socket */
 @REQ(poll_socket)
+    int          exclusive;     /* is the poll exclusive? */
     async_data_t async;         /* async I/O parameters */
     timeout_t    timeout;       /* timeout */
     VARARG(sockets,poll_socket_input); /* list of sockets to poll */
