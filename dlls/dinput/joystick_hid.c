@@ -1199,7 +1199,7 @@ static BOOL init_objects( struct hid_joystick *impl, struct hid_caps *caps,
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
 
     format->dwNumObjs++;
-    if (instance->dwType & DIDFT_PSHBUTTON) impl->dev_caps.dwButtons++;
+    if (instance->dwType & DIDFT_BUTTON) impl->dev_caps.dwButtons++;
     if (instance->dwType & DIDFT_AXIS) impl->dev_caps.dwAxes++;
     if (instance->dwType & DIDFT_POV) impl->dev_caps.dwPOVs++;
 
