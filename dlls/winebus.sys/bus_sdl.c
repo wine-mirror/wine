@@ -123,9 +123,6 @@ struct sdl_device
     SDL_GameController *sdl_controller;
     SDL_JoystickID id;
 
-    int buffer_length;
-    BYTE *report_buffer;
-
     SDL_Haptic *sdl_haptic;
     int haptic_effect_id;
 };
@@ -153,8 +150,8 @@ static void set_button_value(struct sdl_device *impl, int index, int value)
     int bit_index = index % 8;
     BYTE mask = 1 << bit_index;
     if (index >= state->button_count) return;
-    if (value) impl->report_buffer[byte_index] |= mask;
-    else impl->report_buffer[byte_index] &= ~mask;
+    if (value) state->report_buf[byte_index] |= mask;
+    else state->report_buf[byte_index] &= ~mask;
 }
 
 static void set_axis_value(struct sdl_device *impl, int index, short value)
@@ -163,7 +160,7 @@ static void set_axis_value(struct sdl_device *impl, int index, short value)
     USHORT offset = state->abs_axis_start;
     if (index >= state->abs_axis_count) return;
     offset += index * sizeof(DWORD);
-    *(DWORD *)&impl->report_buffer[offset] = LE_DWORD(value);
+    *(DWORD *)&state->report_buf[offset] = LE_DWORD(value);
 }
 
 static void set_ball_value(struct sdl_device *impl, int index, int value1, int value2)
@@ -172,8 +169,8 @@ static void set_ball_value(struct sdl_device *impl, int index, int value1, int v
     USHORT offset = state->rel_axis_start;
     if (index >= state->rel_axis_count) return;
     offset += index * sizeof(DWORD);
-    *(DWORD *)&impl->report_buffer[offset] = LE_DWORD(value1);
-    *(DWORD *)&impl->report_buffer[offset + sizeof(DWORD)] = LE_DWORD(value2);
+    *(DWORD *)&state->report_buf[offset] = LE_DWORD(value1);
+    *(DWORD *)&state->report_buf[offset + sizeof(DWORD)] = LE_DWORD(value2);
 }
 
 static void set_hat_value(struct sdl_device *impl, int index, int value)
@@ -202,7 +199,7 @@ static void set_hat_value(struct sdl_device *impl, int index, int value)
         default: return;
     }
 
-    impl->report_buffer[offset] = val;
+    state->report_buf[offset] = val;
 }
 
 static BOOL descriptor_add_haptic(struct sdl_device *impl)
@@ -287,9 +284,6 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
-    impl->buffer_length = iface->hid_device_state.report_len;
-    if (!(impl->report_buffer = calloc(1, impl->buffer_length))) goto failed;
-
     /* Initialize axis in the report */
     for (i = 0; i < axis_count; i++)
         set_axis_value(impl, i, pSDL_JoystickGetAxis(impl->sdl_joystick, i));
@@ -297,10 +291,6 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
         set_hat_value(impl, i, pSDL_JoystickGetHat(impl->sdl_joystick, i));
 
     return STATUS_SUCCESS;
-
-failed:
-    free(impl->report_buffer);
-    return STATUS_NO_MEMORY;
 }
 
 static SHORT compose_dpad_value(SDL_GameController *joystick)
@@ -366,19 +356,12 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
-    impl->buffer_length = impl->unix_device.hid_device_state.report_len;
-    if (!(impl->report_buffer = calloc(1, impl->buffer_length))) goto failed;
-
     /* Initialize axis in the report */
     for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
         set_axis_value(impl, i, pSDL_GameControllerGetAxis(impl->sdl_controller, i));
     set_hat_value(impl, 0, compose_dpad_value(impl->sdl_controller));
 
     return STATUS_SUCCESS;
-
-failed:
-    free(impl->report_buffer);
-    return STATUS_NO_MEMORY;
 }
 
 static void sdl_device_destroy(struct unix_device *iface)
@@ -477,6 +460,7 @@ static const struct hid_device_vtbl sdl_device_vtbl =
 static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *event)
 {
     struct unix_device *iface = &impl->unix_device;
+    struct hid_device_state *state = &iface->hid_device_state;
 
     if (impl->sdl_controller) return TRUE; /* use controller events instead */
 
@@ -488,8 +472,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
             SDL_JoyButtonEvent *ie = &event->jbutton;
 
             set_button_value(impl, ie->button, ie->state);
-
-            bus_event_queue_input_report(&event_queue, iface, impl->report_buffer, impl->buffer_length);
+            bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
         case SDL_JOYAXISMOTION:
@@ -499,7 +482,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
             if (ie->axis < 6)
             {
                 set_axis_value(impl, ie->axis, ie->value);
-                bus_event_queue_input_report(&event_queue, iface, impl->report_buffer, impl->buffer_length);
+                bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             }
             break;
         }
@@ -508,7 +491,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
             SDL_JoyBallEvent *ie = &event->jball;
 
             set_ball_value(impl, ie->ball, ie->xrel, ie->yrel);
-            bus_event_queue_input_report(&event_queue, iface, impl->report_buffer, impl->buffer_length);
+            bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
         case SDL_JOYHATMOTION:
@@ -516,7 +499,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
             SDL_JoyHatEvent *ie = &event->jhat;
 
             set_hat_value(impl, ie->hat, ie->value);
-            bus_event_queue_input_report(&event_queue, iface, impl->report_buffer, impl->buffer_length);
+            bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
         default:
@@ -528,6 +511,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
 static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event *event)
 {
     struct unix_device *iface = &impl->unix_device;
+    struct hid_device_state *state = &iface->hid_device_state;
 
     switch(event->type)
     {
@@ -555,7 +539,7 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
             }
 
             set_button_value(impl, button, ie->state);
-            bus_event_queue_input_report(&event_queue, iface, impl->report_buffer, impl->buffer_length);
+            bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
         case SDL_CONTROLLERAXISMOTION:
@@ -563,7 +547,7 @@ static BOOL set_report_from_controller_event(struct sdl_device *impl, SDL_Event 
             SDL_ControllerAxisEvent *ie = &event->caxis;
 
             set_axis_value(impl, ie->axis, ie->value);
-            bus_event_queue_input_report(&event_queue, iface, impl->report_buffer, impl->buffer_length);
+            bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
         default:

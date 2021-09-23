@@ -89,12 +89,15 @@ BOOL hid_device_begin_report_descriptor(struct unix_device *iface, USAGE usage_p
 BOOL hid_device_end_report_descriptor(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    struct hid_device_state *state = &iface->hid_device_state;
     static const BYTE template[] =
     {
         END_COLLECTION,
     };
 
-    iface->hid_device_state.report_len = (iface->hid_device_state.bit_size + 7) / 8;
+    state->report_len = (state->bit_size + 7) / 8;
+    if (!(state->report_buf = calloc(1, state->report_len))) return FALSE;
+    if (!(state->last_report_buf = calloc(1, state->report_len))) return FALSE;
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
@@ -307,6 +310,8 @@ static void hid_device_destroy(struct unix_device *iface)
 {
     iface->hid_vtbl->destroy(iface);
     free(iface->hid_report_descriptor.data);
+    free(iface->hid_device_state.report_buf);
+    free(iface->hid_device_state.last_report_buf);
 }
 
 static NTSTATUS hid_device_start(struct unix_device *iface)
@@ -362,4 +367,24 @@ void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size)
     impl->hid_vtbl = vtbl;
 
     return impl;
+}
+
+BOOL hid_device_sync_report(struct unix_device *iface)
+{
+    BOOL dropped;
+
+    if (!(dropped = iface->hid_device_state.dropped))
+        memcpy(iface->hid_device_state.last_report_buf, iface->hid_device_state.report_buf,
+               iface->hid_device_state.report_len);
+    else
+        memcpy(iface->hid_device_state.report_buf, iface->hid_device_state.last_report_buf,
+               iface->hid_device_state.report_len);
+    iface->hid_device_state.dropped = FALSE;
+
+    return !dropped;
+}
+
+void hid_device_drop_report(struct unix_device *iface)
+{
+    iface->hid_device_state.dropped = TRUE;
 }

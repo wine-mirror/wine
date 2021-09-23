@@ -69,6 +69,9 @@ struct hid_device_state
     USHORT button_start;
     USHORT button_count;
     USHORT report_len;
+    BYTE *report_buf;
+    BYTE *last_report_buf;
+    BOOL dropped;
 };
 
 struct unix_device
@@ -115,6 +118,9 @@ extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usa
                                 const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
+
+extern BOOL hid_device_sync_report(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern void hid_device_drop_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 

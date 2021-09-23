@@ -122,11 +122,6 @@ struct lnxev_device
 {
     struct base_device base;
 
-    int buffer_length;
-    BYTE *last_report_buffer;
-    BYTE *current_report_buffer;
-    enum { FIRST, NORMAL, DROPPED } report_state;
-
     BYTE abs_map[HID_ABS_MAX];
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
@@ -338,8 +333,8 @@ static void set_button_value(struct lnxev_device *impl, int index, int value)
     int bit_index = index % 8;
     BYTE mask = 1 << bit_index;
     if (index >= state->button_count) return;
-    if (value) impl->current_report_buffer[byte_index] |= mask;
-    else impl->current_report_buffer[byte_index] &= ~mask;
+    if (value) state->report_buf[byte_index] |= mask;
+    else state->report_buf[byte_index] &= ~mask;
 }
 
 static void set_abs_axis_value(struct lnxev_device *impl, int code, int value)
@@ -387,7 +382,7 @@ static void set_abs_axis_value(struct lnxev_device *impl, int code, int value)
         offset = state->hatswitch_start;
         if (index >= state->hatswitch_count) return;
         offset += index;
-        impl->current_report_buffer[offset] = value;
+        state->report_buf[offset] = value;
     }
     else if (code < HID_ABS_MAX && ABS_TO_HID_MAP[code][0] != 0)
     {
@@ -395,7 +390,7 @@ static void set_abs_axis_value(struct lnxev_device *impl, int code, int value)
         offset = state->abs_axis_start;
         if (index >= state->abs_axis_count) return;
         offset += index * sizeof(DWORD);
-        *(DWORD *)&impl->current_report_buffer[offset] = LE_DWORD(value);
+        *(DWORD *)&state->report_buf[offset] = LE_DWORD(value);
     }
 }
 
@@ -409,7 +404,7 @@ static void set_rel_axis_value(struct lnxev_device *impl, int code, int value)
         offset = state->rel_axis_start;
         if (index >= state->rel_axis_count) return;
         offset += index * sizeof(DWORD);
-        *(DWORD *)&impl->current_report_buffer[offset] = LE_DWORD(value);
+        *(DWORD *)&state->report_buf[offset] = LE_DWORD(value);
     }
 }
 
@@ -530,48 +525,25 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
-    impl->buffer_length = iface->hid_device_state.report_len;
-    if (!(impl->current_report_buffer = calloc(1, impl->buffer_length))) goto failed;
-    if (!(impl->last_report_buffer = calloc(1, impl->buffer_length))) goto failed;
-    impl->report_state = FIRST;
-
     /* Initialize axis in the report */
     for (i = 0; i < HID_ABS_MAX; i++)
         if (test_bit(absbits, i))
             set_abs_axis_value(impl, i, abs_info[i].value);
 
     return STATUS_SUCCESS;
-
-failed:
-    free(impl->current_report_buffer);
-    free(impl->last_report_buffer);
-    return STATUS_NO_MEMORY;
 }
 
-static BOOL set_report_from_event(struct lnxev_device *impl, struct input_event *ie)
+static BOOL set_report_from_event(struct unix_device *iface, struct input_event *ie)
 {
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     switch(ie->type)
     {
 #ifdef EV_SYN
         case EV_SYN:
             switch (ie->code)
             {
-                case SYN_REPORT:
-                    if (impl->report_state == NORMAL)
-                    {
-                        memcpy(impl->last_report_buffer, impl->current_report_buffer, impl->buffer_length);
-                        return TRUE;
-                    }
-                    else
-                    {
-                        if (impl->report_state == DROPPED)
-                            memcpy(impl->current_report_buffer, impl->last_report_buffer, impl->buffer_length);
-                        impl->report_state = NORMAL;
-                    }
-                    break;
-                case SYN_DROPPED:
-                    TRACE_(hid_report)("received SY_DROPPED\n");
-                    impl->report_state = DROPPED;
+            case SYN_REPORT: return hid_device_sync_report(iface);
+            case SYN_DROPPED: hid_device_drop_report(iface); break;
             }
             return FALSE;
 #endif
@@ -785,10 +757,6 @@ static const struct raw_device_vtbl hidraw_device_vtbl =
 static void lnxev_device_destroy(struct unix_device *iface)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-
-    free(impl->current_report_buffer);
-    free(impl->last_report_buffer);
-
     udev_device_unref(impl->base.udev_device);
 }
 
@@ -818,20 +786,20 @@ static void lnxev_device_stop(struct unix_device *iface)
 
 static void lnxev_device_read_report(struct unix_device *iface)
 {
+    struct hid_device_state *state = &iface->hid_device_state;
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
     struct input_event ie;
     int size;
 
-    if (!impl->current_report_buffer || impl->buffer_length == 0)
-        return;
+    if (!state->report_buf || !state->report_len) return;
 
     size = read(impl->base.device_fd, &ie, sizeof(ie));
     if (size == -1)
         TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
     else if (size == 0)
         TRACE_(hid_report)("Failed to read report\n");
-    else if (set_report_from_event(impl, &ie))
-        bus_event_queue_input_report(&event_queue, iface, impl->current_report_buffer, impl->buffer_length);
+    else if (set_report_from_event(iface, &ie))
+        bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
 }
 
 static void lnxev_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
