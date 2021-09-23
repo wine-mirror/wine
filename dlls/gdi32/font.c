@@ -467,6 +467,31 @@ static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
     return ret;
 }
 
+static HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
+                            DWORD options, DWORD *disposition )
+{
+    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition )) return 0;
+    return ret;
+}
+
+static void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value, DWORD count )
+{
+    unsigned int name_size = lstrlenW( name ) * sizeof(WCHAR);
+    UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
+    NtSetValueKey( hkey, &nameW, 0, type, value, count );
+}
+
 static BOOL reg_enum_value( HKEY hkey, unsigned int index, KEY_VALUE_FULL_INFORMATION *info,
                             ULONG size, WCHAR *name, ULONG name_size )
 {
@@ -1193,21 +1218,22 @@ static void add_face_to_cache( struct gdi_font_face *face )
     DWORD len, buffer[1024];
     struct cached_face *cached = (struct cached_face *)buffer;
 
-    if (RegCreateKeyExW( wine_fonts_cache_key, face->family->family_name, 0, NULL, REG_OPTION_VOLATILE,
-                         KEY_ALL_ACCESS, NULL, &hkey_family, NULL ))
+    if (!(hkey_family = reg_create_key( wine_fonts_cache_key, face->family->family_name,
+                                        lstrlenW( face->family->family_name ) * sizeof(WCHAR),
+                                        REG_OPTION_VOLATILE, NULL )))
         return;
 
     if (face->family->second_name[0])
-        RegSetValueExW( hkey_family, NULL, 0, REG_SZ, (BYTE *)face->family->second_name,
-                        (lstrlenW( face->family->second_name ) + 1) * sizeof(WCHAR) );
+        set_reg_value( hkey_family, NULL, REG_SZ, face->family->second_name,
+                       (lstrlenW( face->family->second_name ) + 1) * sizeof(WCHAR) );
 
     if (!face->scalable)
     {
         WCHAR name[10];
 
         swprintf( name, ARRAY_SIZE(name), L"%d", face->size.y_ppem );
-        RegCreateKeyExW( hkey_family, name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS,
-                         NULL, &hkey_face, NULL);
+        hkey_face = reg_create_key( hkey_family, name, lstrlenW( name ) * sizeof(WCHAR),
+                                    REG_OPTION_VOLATILE, NULL );
     }
     else hkey_face = hkey_family;
 
@@ -1223,11 +1249,11 @@ static void add_face_to_cache( struct gdi_font_face *face )
     lstrcpyW( cached->full_name + len, face->file );
     len += lstrlenW( face->file ) + 1;
 
-    RegSetValueExW( hkey_face, face->style_name, 0, REG_BINARY, (BYTE *)cached,
-                    offsetof( struct cached_face, full_name[len] ));
+    set_reg_value( hkey_face, face->style_name, REG_BINARY, cached,
+                   offsetof( struct cached_face, full_name[len] ));
 
-    if (hkey_face != hkey_family) RegCloseKey( hkey_face );
-    RegCloseKey( hkey_family );
+    if (hkey_face != hkey_family) NtClose( hkey_face );
+    NtClose( hkey_family );
 }
 
 static void remove_face_from_cache( struct gdi_font_face *face )
