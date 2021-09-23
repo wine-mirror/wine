@@ -12918,11 +12918,14 @@ static INT_PTR CALLBACK wm_quit_dlg_proc(HWND hwnd, UINT message, WPARAM wp, LPA
 
 static const struct message WmQuitDialogSeq[] = {
     { HCBT_CREATEWND, hook },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
     { WM_CHANGEUISTATE, sent|optional },
+    { EVENT_SYSTEM_DIALOGEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { HCBT_DESTROYWND, hook },
     { 0x0090, sent|optional }, /* Vista */
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
@@ -18556,6 +18559,8 @@ START_TEST(msg)
     test_DispatchMessage();
     test_SendMessageTimeout();
     test_edit_messages();
+    test_quit_message();
+    test_notify_message();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18566,8 +18571,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_quit_message();
-    test_notify_message();
     test_SetActiveWindow();
     test_restore_messages();
     test_invalid_window();
