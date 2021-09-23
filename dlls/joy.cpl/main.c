@@ -60,6 +60,7 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
  *   First time it checks if space for the joysticks was already reserved
  *   and if not, just counts how many there are.
  */
+static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef);
 static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *context)
 {
     struct JoystickData *data = context;
@@ -100,6 +101,18 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     proprange.lMax = TEST_AXIS_MAX;
 
     IDirectInputDevice_SetProperty(joystick->device, DIPROP_RANGE, &proprange.diph);
+
+    if (!joystick->forcefeedback) return DIENUM_CONTINUE;
+
+    /* Count device effects and then store them */
+    joystick->num_effects = 0;
+    joystick->effects = NULL;
+    IDirectInputDevice8_EnumEffects(joystick->device, ff_effects_callback, (void *)joystick, 0);
+    joystick->effects = malloc(sizeof(struct Effect) * joystick->num_effects);
+
+    joystick->cur_effect = 0;
+    IDirectInputDevice8_EnumEffects(joystick->device, ff_effects_callback, (void*)joystick, 0);
+    joystick->num_effects = joystick->cur_effect;
 
     return DIENUM_CONTINUE;
 }
@@ -818,16 +831,6 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
                     SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_SETITEMDATA, cur, i);
 
                     cur++;
-
-                    /* Count device effects and then store them */
-                    joy->num_effects = 0;
-                    joy->effects = NULL;
-                    IDirectInputDevice8_EnumEffects(joy->device, ff_effects_callback, (void *) joy, 0);
-                    joy->effects = malloc(sizeof(struct Effect) * joy->num_effects);
-
-                    joy->cur_effect = 0;
-                    IDirectInputDevice8_EnumEffects(joy->device, ff_effects_callback, (void*) joy, 0);
-                    joy->num_effects = joy->cur_effect;
                 }
             }
 
