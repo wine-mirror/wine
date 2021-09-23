@@ -2077,8 +2077,8 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     int bytes_sent;
     DWORD ret, len;
 
-    clear_response_headers( request );
     drain_content( request );
+    clear_response_headers( request );
 
     if (session->agent)
         process_header( request, L"User-Agent", session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
