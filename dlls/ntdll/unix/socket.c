@@ -1017,7 +1017,7 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
 
         if (ret < read_size || (async->file_len && async->file_cursor == async->file_len))
             async->file = NULL;
-        return STATUS_PENDING; /* still more data to send */
+        return STATUS_DEVICE_NOT_READY; /* still more data to send */
     }
 
     while (async->tail_cursor < async->buffers.TailLength)
