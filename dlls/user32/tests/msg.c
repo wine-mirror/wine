@@ -18333,6 +18333,7 @@ static void test_DoubleSetCapture(void)
 static const struct message WmRestoreMinimizedSeq[] =
 {
     { HCBT_ACTIVATE, hook },
+    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
@@ -18352,16 +18353,20 @@ static const struct message WmRestoreMinimizedSeq[] =
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_GETMINMAXINFO, sent|defwinproc },
     { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_NCPAINT, sent|wparam|defwinproc|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|defwinproc },
     { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_NCCALCSIZE, sent|wparam|defwinproc|optional, 1 },
     { WM_NCPAINT, sent|wparam|defwinproc|optional, 1 },
     { WM_ERASEBKGND, sent|defwinproc|optional },
     { HCBT_SETFOCUS, hook },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|defwinproc },
     { WM_ACTIVATE, sent|wparam|defwinproc, 1 },
     { WM_PAINT, sent| optional },
@@ -18570,6 +18575,13 @@ START_TEST(msg)
     test_quit_message();
     test_notify_message();
     test_SetActiveWindow();
+    test_restore_messages();
+    test_invalid_window();
+
+    if (!pTrackMouseEvent)
+        win_skip("TrackMouseEvent is not available\n");
+    else
+        test_TrackMouseEvent();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18579,14 +18591,6 @@ START_TEST(msg)
         pUnhookWinEvent = 0;
     }
     hEvent_hook = 0;
-
-    test_restore_messages();
-    test_invalid_window();
-
-    if (!pTrackMouseEvent)
-        win_skip("TrackMouseEvent is not available\n");
-    else
-        test_TrackMouseEvent();
 
     test_SetWindowRgn();
     test_sys_menu();
