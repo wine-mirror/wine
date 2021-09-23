@@ -91,6 +91,18 @@ static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 
 static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
+static const WCHAR system_link_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','o','f','t','w','a','r','e',
+    '\\','M','i','c','r','o','s','o','f','t',
+    '\\','W','i','n','d','o','w','s',' ','N','T',
+    '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+    '\\','F','o','n','t','L','i','n','k',
+    '\\','S','y','s','t','e','m','L','i','n','k'
+};
+
 static const WCHAR font_substitutes_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -1470,34 +1482,33 @@ static void load_system_links(void)
     struct gdi_font_link *font_link, *system_font_link;
     struct gdi_font_face *face;
 
-    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE,
-                      L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink", &hkey ))
+    if ((hkey = reg_open_key( NULL, system_link_keyW, sizeof(system_link_keyW) )))
     {
-        WCHAR value[MAX_PATH], data[1024];
-        DWORD type, val_len, data_len;
+        char buffer[4096];
+        KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+        WCHAR value[MAX_PATH];
         WCHAR *entry, *next;
 
-        val_len = ARRAY_SIZE(value);
-        data_len = sizeof(data);
         i = 0;
-        while (!RegEnumValueW( hkey, i++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len))
+        while (reg_enum_value( hkey, i++, info, sizeof(buffer), value, sizeof(value) ))
         {
             /* Don't store fonts that are only substitutes for other fonts */
             if (!get_gdi_font_subst( value, -1, NULL ))
             {
+                char *data = (char *)info + info->DataOffset;
                 font_link = add_gdi_font_link( value );
-                for (entry = data; (char *)entry < (char *)data + data_len && *entry; entry = next)
+                for (entry = (WCHAR *)data; (char *)entry < data + info->DataLength && *entry; entry = next)
                 {
                     const WCHAR *family_name = NULL;
                     WCHAR *p;
 
-                    TRACE("%s: %s\n", debugstr_w(value), debugstr_w(entry));
+                    TRACE( "%s: %s\n", debugstr_w(value), debugstr_w(entry) );
 
                     next = entry + lstrlenW(entry) + 1;
                     if ((p = wcschr( entry, ',' )))
                     {
                         *p++ = 0;
-                        while (iswspace(*p)) p++;
+                        while (*p == ' ' || *p == '\t') p++;
                         if (!(family_name = get_gdi_font_subst( p, -1, NULL ))) family_name = p;
                     }
                     if ((face = find_face_from_filename( entry, family_name )))
@@ -1510,11 +1521,8 @@ static void load_system_links(void)
                 }
             }
             else TRACE("%s: SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
-
-            val_len = ARRAY_SIZE(value);
-            data_len = sizeof(data);
         }
-        RegCloseKey( hkey );
+        NtClose( hkey );
     }
 
     if ((shelldlg_name = get_gdi_font_subst( L"MS Shell Dlg", -1, NULL )))
