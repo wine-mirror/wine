@@ -91,6 +91,16 @@ static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 
 static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
+static const WCHAR font_assoc_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','C','o','n','t','r','o','l',
+    '\\','F','o','n','t','A','s','s','o','c'
+};
+
 static UINT font_smoothing = GGO_BITMAP;
 static UINT subpixel_orientation = GGO_GRAY4_BITMAP;
 static BOOL antialias_fakes = TRUE;
@@ -427,6 +437,41 @@ static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
     lstrcpyW( path, L"\\??\\C:\\windows\\fonts\\" );
     if (file) lstrcatW( path, file );
+}
+
+static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
+{
+    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) return 0;
+    return ret;
+}
+
+static BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len )
+{
+    char buffer[4096];
+    KEY_NODE_INFORMATION *key_info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD size;
+    HKEY key;
+    BOOL ret = TRUE;
+
+    if (!(key = reg_open_key( parent, name, name_len ))) return FALSE;
+
+    while (ret && !NtEnumerateKey( key, 0, KeyNodeInformation, key_info, sizeof(buffer), &size ))
+        ret = reg_delete_tree( key, key_info->Name, key_info->NameLength );
+
+    if (ret) ret = !NtDeleteKey( key );
+    NtClose( key );
+    return ret;
 }
 
 /* font substitutions */
@@ -2373,7 +2418,7 @@ static void update_font_association_info(UINT current_ansi_codepage)
         }
     }
     else
-        RegDeleteTreeW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\FontAssoc");
+        reg_delete_tree( NULL, font_assoc_keyW, sizeof(font_assoc_keyW) );
 }
 
 static void set_multi_value_key(HKEY hkey, const WCHAR *name, const WCHAR *value, DWORD len)
