@@ -104,7 +104,7 @@ struct afd_poll_params
 {
     LONGLONG timeout;
     unsigned int count;
-    BOOLEAN unknown;
+    BOOLEAN exclusive;
     BOOLEAN padding[3];
     struct
     {

@@ -31,6 +31,8 @@
 #include "wine/afd.h"
 #include "wine/test.h"
 
+#define TIMEOUT_INFINITE _I64_MAX
+
 static void tcp_socketpair(SOCKET *src, SOCKET *dst)
 {
     SOCKET server = INVALID_SOCKET;
@@ -212,6 +214,7 @@ static void test_poll(void)
 
     in_params->timeout = 0;
     in_params->count = 1;
+    in_params->exclusive = FALSE;
     in_params->sockets[0].socket = listener;
     in_params->sockets[0].flags = ~0;
     in_params->sockets[0].status = 0xdeadbeef;
@@ -745,6 +748,351 @@ static void test_poll(void)
     CloseHandle(event);
     free(large_buffer);
 }
+
+struct poll_exclusive_thread_cb_ctx
+{
+    SOCKET ctl_sock;
+    HANDLE event;
+    IO_STATUS_BLOCK *io;
+    ULONG params_size;
+    struct afd_poll_params *in_params;
+    struct afd_poll_params *out_params;
+};
+
+static DWORD WINAPI poll_exclusive_thread_cb(void *param)
+{
+    struct poll_exclusive_thread_cb_ctx *ctx = param;
+    int ret;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctx->ctl_sock, ctx->event, NULL, NULL, ctx->io,
+            IOCTL_AFD_POLL, ctx->in_params, ctx->params_size, ctx->out_params, ctx->params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(ctx->event, 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    return 0;
+}
+
+#define POLL_SOCK_CNT 2
+#define POLL_CNT 4
+
+static void test_poll_exclusive(void)
+{
+    char in_buffer[offsetof(struct afd_poll_params, sockets[POLL_SOCK_CNT + 1])];
+    char out_buffers[POLL_CNT][offsetof(struct afd_poll_params, sockets[POLL_SOCK_CNT + 1])];
+    struct afd_poll_params *in_params = (struct afd_poll_params *)in_buffer;
+    struct afd_poll_params *out_params[POLL_CNT] =
+    {
+        (struct afd_poll_params *)out_buffers[0],
+        (struct afd_poll_params *)out_buffers[1],
+        (struct afd_poll_params *)out_buffers[2],
+        (struct afd_poll_params *)out_buffers[3]
+    };
+    SOCKET ctl_sock;
+    SOCKET socks[POLL_CNT];
+    IO_STATUS_BLOCK io[POLL_CNT];
+    HANDLE events[POLL_CNT];
+    ULONG params_size;
+    struct poll_exclusive_thread_cb_ctx cb_ctx;
+    HANDLE thrd;
+    size_t i;
+    int ret;
+
+    ctl_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    for (i = 0; i < POLL_CNT; i++)
+    {
+        socks[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        events[i] = CreateEventW(NULL, TRUE, FALSE, NULL);
+    }
+
+    params_size = offsetof(struct afd_poll_params, sockets[1]);
+
+    in_params->timeout = TIMEOUT_INFINITE;
+    in_params->count = 1;
+    in_params->exclusive = FALSE;
+    in_params->sockets[0].socket = socks[0];
+    in_params->sockets[0].flags = ~0;
+    in_params->sockets[0].status = 0;
+
+    /***** Exclusive explicitly terminated *****/
+
+    in_params->exclusive = TRUE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    /***** Same socket tests *****/
+
+    /* Basic non-exclusive behavior as reference. */
+
+    in_params->exclusive = FALSE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /* If the main poll is exclusive it is terminated by the following exclusive. */
+
+    in_params->exclusive = TRUE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[0], 100);
+    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /* If the main poll is non-exclusive neither itself nor the following exclusives are terminated. */
+
+    in_params->exclusive = FALSE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    in_params->exclusive = TRUE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[2], NULL, NULL, &io[2],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[2], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[2], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /* A new poll is considered the main poll if no others are queued at the time. */
+
+    in_params->exclusive = FALSE;
+
+    ret = NtDeviceIoControlFile((HANDLE)socks[0], events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    CancelIo((HANDLE)socks[0]);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    in_params->exclusive = TRUE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[2], NULL, NULL, &io[2],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[2], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[2], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /* The exclusive check does not happen again after the call to NtDeviceIoControlFile(). */
+
+    in_params->exclusive = FALSE;
+
+    ret = NtDeviceIoControlFile((HANDLE)socks[0], events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    in_params->exclusive = TRUE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    CancelIo((HANDLE)socks[0]);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[2], NULL, NULL, &io[2],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[2], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[2], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /* After the main poll is terminated, any subsequent poll becomes the main
+     * and can be terminated if exclusive. */
+
+    in_params->exclusive = FALSE;
+
+    ret = NtDeviceIoControlFile((HANDLE)socks[0], events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    in_params->exclusive = TRUE;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    CancelIo((HANDLE)socks[0]);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[2], NULL, NULL, &io[2],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[2], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[3], NULL, NULL, &io[3],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[3], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[2], 100);
+    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[3], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /***** Exclusive poll on different sockets *****/
+
+    in_params->exclusive = TRUE;
+    in_params->sockets[0].socket = socks[0];
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    in_params->sockets[0].socket = socks[1];
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[0], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /***** Exclusive poll from other thread *****/
+
+    in_params->exclusive = TRUE;
+    in_params->sockets[0].socket = ctl_sock;
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    cb_ctx.ctl_sock = ctl_sock;
+    cb_ctx.event = events[1];
+    cb_ctx.io = &io[1];
+    cb_ctx.params_size = params_size;
+    cb_ctx.in_params = in_params;
+    cb_ctx.out_params = out_params[1];
+
+    thrd = CreateThread(NULL, 0, poll_exclusive_thread_cb, &cb_ctx, 0, NULL);
+    WaitForSingleObject(thrd, INFINITE);
+    CloseHandle(thrd);
+
+    ret = WaitForSingleObject(events[0], 100);
+    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /***** Exclusive poll on overlapping socket sets *****/
+
+    params_size = offsetof(struct afd_poll_params, sockets[2]);
+
+    in_params->exclusive = TRUE;
+    in_params->count = 2;
+    in_params->sockets[0].socket = ctl_sock;
+    in_params->sockets[1].socket = socks[0];
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[0], NULL, NULL, &io[0],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[0], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    in_params->sockets[0].socket = ctl_sock;
+    in_params->sockets[1].socket = socks[1];
+
+    ret = NtDeviceIoControlFile((HANDLE)ctl_sock, events[1], NULL, NULL, &io[1],
+            IOCTL_AFD_POLL, in_params, params_size, out_params[1], params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[0], 100);
+    todo_wine ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = WaitForSingleObject(events[1], 100);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    CancelIo((HANDLE)ctl_sock);
+
+    /* Cleanup. */
+
+    closesocket(ctl_sock);
+
+    for (i = 0; i < POLL_CNT; i++)
+    {
+        closesocket(socks[i]);
+        CloseHandle(events[i]);
+    }
+}
+
+#undef POLL_SOCK_CNT
+#undef POLL_CNT
 
 static void test_poll_completion_port(void)
 {
@@ -1751,6 +2099,7 @@ START_TEST(afd)
 
     test_open_device();
     test_poll();
+    test_poll_exclusive();
     test_poll_completion_port();
     test_recv();
     test_event_select();
