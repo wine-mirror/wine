@@ -132,6 +132,13 @@ static struct font_gamma_ramp font_gamma_ramp;
 static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
 
+static UINT asciiz_to_unicode( WCHAR *dst, const char *src )
+{
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return (p - dst) * sizeof(WCHAR);
+}
+
 static inline WCHAR facename_tolower( WCHAR c )
 {
     if (c >= 'A' && c <= 'Z') return c - 'A' + 'a';
@@ -502,6 +509,13 @@ static void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *
     unsigned int name_size = lstrlenW( name ) * sizeof(WCHAR);
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
     NtSetValueKey( hkey, &nameW, 0, type, value, count );
+}
+
+static void set_reg_ascii_value( HKEY hkey, const char *name, const char *value )
+{
+    WCHAR nameW[64], valueW[128];
+    asciiz_to_unicode( nameW, name );
+    set_reg_value( hkey, nameW, REG_SZ, valueW, asciiz_to_unicode( valueW, value ));
 }
 
 static ULONG query_reg_value( HKEY hkey, const WCHAR *name,
@@ -2458,10 +2472,10 @@ static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl, int 
 {
     const char *sserif = (dpi <= 108) ? fl->sserif_96 : fl->sserif_120;
 
-    RegSetValueExA(hkey, "Courier", 0, REG_SZ, (const BYTE *)fl->courier, strlen(fl->courier)+1);
-    RegSetValueExA(hkey, "MS Serif", 0, REG_SZ, (const BYTE *)fl->serif, strlen(fl->serif)+1);
-    RegSetValueExA(hkey, "MS Sans Serif", 0, REG_SZ, (const BYTE *)sserif, strlen(sserif)+1);
-    RegSetValueExA(hkey, "Small Fonts", 0, REG_SZ, (const BYTE *)fl->small, strlen(fl->small)+1);
+    set_reg_ascii_value( hkey, "Courier", fl->courier );
+    set_reg_ascii_value( hkey, "MS Serif", fl->serif );
+    set_reg_ascii_value( hkey, "MS Sans Serif", sserif );
+    set_reg_ascii_value( hkey, "Small Fonts", fl->small );
 }
 
 static void set_value_key(HKEY hkey, const char *name, const char *value)
