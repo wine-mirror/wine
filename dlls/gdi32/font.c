@@ -492,6 +492,19 @@ static void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *
     NtSetValueKey( hkey, &nameW, 0, type, value, count );
 }
 
+static ULONG query_reg_value( HKEY hkey, const WCHAR *name,
+                              KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+{
+    unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
+    UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
+
+    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                         info, size, &size ))
+        return 0;
+
+    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+}
+
 static BOOL reg_enum_value( HKEY hkey, unsigned int index, KEY_VALUE_FULL_INFORMATION *info,
                             ULONG size, WCHAR *name, ULONG name_size )
 {
@@ -1187,27 +1200,30 @@ static void load_face_from_cache( HKEY hkey_family, struct gdi_font_family *fami
 
 static void load_font_list_from_cache(void)
 {
-    DWORD size, family_index = 0;
+    WCHAR buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
+    KEY_NODE_INFORMATION *enum_info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD family_index = 0, total_size;
     struct gdi_font_family *family;
     HKEY hkey_family;
-    WCHAR buffer[4096], second_name[LF_FACESIZE];
+    WCHAR *second_name = (WCHAR *)info->Data;
 
-    size = sizeof(buffer);
-    while (!RegEnumKeyExW( wine_fonts_cache_key, family_index++, buffer, &size, NULL, NULL, NULL, NULL ))
+    while (!NtEnumerateKey( wine_fonts_cache_key, family_index++, KeyNodeInformation, enum_info,
+                            sizeof(buffer), &total_size ))
     {
-        RegOpenKeyExW( wine_fonts_cache_key, buffer, 0, KEY_ALL_ACCESS, &hkey_family );
-        TRACE("opened family key %s\n", debugstr_w(buffer));
-        size = sizeof(second_name);
-        if (RegQueryValueExW( hkey_family, NULL, NULL, NULL, (BYTE *)second_name, &size ))
+        if (!(hkey_family = reg_open_key( wine_fonts_cache_key, enum_info->Name,
+                                          enum_info->NameLength )))
+            continue;
+        TRACE( "opened family key %s\n", debugstr_wn(enum_info->Name, enum_info->NameLength / sizeof(WCHAR)) );
+        if (!query_reg_value( hkey_family, NULL, info, sizeof(buffer) ))
             second_name[0] = 0;
 
         family = create_family( buffer, second_name );
 
         load_face_from_cache( hkey_family, family, buffer, sizeof(buffer), TRUE );
 
-        RegCloseKey( hkey_family );
+        NtClose( hkey_family );
         release_family( family );
-        size = sizeof(buffer);
     }
 }
 
