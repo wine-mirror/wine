@@ -523,6 +523,13 @@ static BOOL reg_enum_value( HKEY hkey, unsigned int index, KEY_VALUE_FULL_INFORM
     return TRUE;
 }
 
+static void reg_delete_value( HKEY hkey, const WCHAR *name )
+{
+    unsigned int name_size = lstrlenW( name ) * sizeof(WCHAR);
+    UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
+    NtDeleteValueKey( hkey, &nameW );
+}
+
 static BOOL reg_delete_tree( HKEY parent, const WCHAR *name, ULONG name_len )
 {
     char buffer[4096];
@@ -1273,20 +1280,25 @@ static void add_face_to_cache( struct gdi_font_face *face )
 
 static void remove_face_from_cache( struct gdi_font_face *face )
 {
-    HKEY hkey_family;
+    HKEY hkey_family, hkey;
 
-    if (RegOpenKeyExW( wine_fonts_cache_key, face->family->family_name, 0, KEY_ALL_ACCESS, &hkey_family ))
+    if (!(hkey_family = reg_open_key( wine_fonts_cache_key, face->family->family_name,
+                                      lstrlenW( face->family->family_name ) * sizeof(WCHAR) )))
         return;
 
     if (!face->scalable)
     {
         WCHAR name[10];
         swprintf( name, ARRAY_SIZE(name), L"%d", face->size.y_ppem );
-        RegDeleteKeyW( hkey_family, name );
+        if ((hkey = reg_open_key( hkey_family, name, lstrlenW( name ) * sizeof(WCHAR) )))
+        {
+            NtDeleteKey( hkey );
+            NtClose( hkey );
+        }
     }
-    else RegDeleteValueW( hkey_family, face->style_name );
+    else reg_delete_value( hkey_family, face->style_name );
 
-    RegCloseKey( hkey_family );
+    NtClose( hkey_family );
 }
 
 /* font links */
