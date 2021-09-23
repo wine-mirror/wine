@@ -4015,7 +4015,6 @@ static void test_simple_joystick(void)
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
     dataformat.dwSize = sizeof(DIDATAFORMAT);
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
     dataformat.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );

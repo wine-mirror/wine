@@ -1094,6 +1094,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetDataFormat(LPDIRECTINPUTDEVICE8W ifac
     _dump_DIDATAFORMAT(df);
 
     if (df->dwSize != sizeof(DIDATAFORMAT)) return DIERR_INVALIDPARAM;
+    if (df->dwObjSize != sizeof(DIOBJECTDATAFORMAT)) return DIERR_INVALIDPARAM;
     if (This->acquired) return DIERR_ACQUIRED;
 
     EnterCriticalSection(&This->crit);
