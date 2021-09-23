@@ -87,6 +87,7 @@ static inline EnumMonikerImpl *impl_from_IEnumMoniker(IEnumMoniker *iface)
 }
 
 static HRESULT EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,ULONG tabSize,ULONG currentPos,BOOL leftToRight,IEnumMoniker ** ppmk);
+static HRESULT composite_get_rightmost(CompositeMonikerImpl *composite, IMoniker **left, IMoniker **rightmost);
 
 /*******************************************************************************
  *        CompositeMoniker_QueryInterface
@@ -1132,30 +1133,28 @@ static HRESULT WINAPI CompositeMonikerImpl_GetDisplayName(IMoniker *iface, IBind
     return S_OK;
 }
 
-/******************************************************************************
- *        CompositeMoniker_ParseDisplayName
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_ParseDisplayName(IMoniker* iface, IBindCtx* pbc,
-               IMoniker* pmkToLeft, LPOLESTR pszDisplayName, ULONG* pchEaten,
-               IMoniker** ppmkOut)
+static HRESULT WINAPI CompositeMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *pmkToLeft, LPOLESTR name, ULONG *eaten, IMoniker **result)
 {
-    IEnumMoniker *enumMoniker;
-    IMoniker *tempMk,*rightMostMk,*antiMk;
-    /* This method recursively calls IMoniker::ParseDisplayName on the rightmost component of the composite,*/
-    /* passing everything else as the pmkToLeft parameter for that call. */
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *left, *rightmost;
+    HRESULT hr;
 
-    /* get the most right moniker */
-    IMoniker_Enum(iface,FALSE,&enumMoniker);
-    IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
-    IEnumMoniker_Release(enumMoniker);
+    TRACE("%p, %p, %p, %s, %p, %p.\n", iface, pbc, pmkToLeft, debugstr_w(name), eaten, result);
 
-    /* get the left moniker */
-    CreateAntiMoniker(&antiMk);
-    IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-    IMoniker_Release(antiMk);
+    if (!pbc)
+        return E_INVALIDARG;
 
-    return IMoniker_ParseDisplayName(rightMostMk,pbc,tempMk,pszDisplayName,pchEaten,ppmkOut);
+    if (FAILED(hr = composite_get_rightmost(moniker, &left, &rightmost)))
+        return hr;
+
+    /* Let rightmost component parse the name, using what's left of the composite as a left side. */
+    hr = IMoniker_ParseDisplayName(rightmost, pbc, left, name, eaten, result);
+
+    IMoniker_Release(left);
+    IMoniker_Release(rightmost);
+
+    return hr;
 }
 
 /******************************************************************************
@@ -1828,6 +1827,48 @@ static void moniker_get_tree_comp_count(const struct comp_node *root, unsigned i
 
     moniker_get_tree_comp_count(root->left, count);
     moniker_get_tree_comp_count(root->right, count);
+}
+
+static HRESULT composite_get_rightmost(CompositeMonikerImpl *composite, IMoniker **left, IMoniker **rightmost)
+{
+    struct comp_node *root, *node;
+    unsigned int count;
+    HRESULT hr;
+
+    /* Shortcut for trivial case when right component is non-composite */
+    if (!unsafe_impl_from_IMoniker(composite->right))
+    {
+        *left = composite->left;
+        IMoniker_AddRef(*left);
+        *rightmost = composite->right;
+        IMoniker_AddRef(*rightmost);
+        return S_OK;
+    }
+
+    *left = *rightmost = NULL;
+
+    if (FAILED(hr = moniker_get_tree_representation(&composite->IMoniker_iface, NULL, &root)))
+        return hr;
+
+    if (!(node = moniker_tree_get_rightmost(root)))
+    {
+        WARN("Couldn't get right most component.\n");
+        return E_FAIL;
+    }
+
+    *rightmost = node->moniker;
+    IMoniker_AddRef(*rightmost);
+    moniker_tree_discard(node, TRUE);
+
+    hr = moniker_create_from_tree(root, &count, left);
+    moniker_tree_release(root);
+    if (FAILED(hr))
+    {
+        IMoniker_Release(*rightmost);
+        *rightmost = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT moniker_simplify_composition(IMoniker *left, IMoniker *right,
