@@ -13366,6 +13366,8 @@ static const struct message WmSetWindowRgn_clear[] = {
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|optional },
     { WM_NCCALCSIZE, sent|optional|wparam, 1 },
     { WM_NCPAINT, sent|optional },
@@ -18583,6 +18585,9 @@ START_TEST(msg)
     else
         test_TrackMouseEvent();
 
+    test_SetWindowRgn();
+    test_sys_menu();
+
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
     {
@@ -18592,8 +18597,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_SetWindowRgn();
-    test_sys_menu();
     test_dialog_messages();
     test_EndDialog();
     test_nullCallback();
