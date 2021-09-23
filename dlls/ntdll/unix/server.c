@@ -390,6 +390,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
             /* the server will pass us NULL if a call failed synchronously */
             set_async_iosb( call->async_io.sb, result->async_io.status, info );
         }
+        else result->async_io.status = STATUS_PENDING; /* restart it */
         break;
     }
     case APC_VIRTUAL_ALLOC:
