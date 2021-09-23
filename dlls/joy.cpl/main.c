@@ -642,12 +642,9 @@ static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
 
 static void ff_handle_joychange(HWND hwnd, struct JoystickData *data)
 {
-    int sel;
-
     if (data->num_ff == 0) return;
 
-    sel = SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_GETCURSEL, 0, 0);
-    data->chosen_joystick = SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_GETITEMDATA, sel, 0);
+    data->chosen_joystick = SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_GETCURSEL, 0, 0);
     initialize_effects_list(hwnd, &data->joysticks[data->chosen_joystick]);
 }
 
@@ -808,6 +805,14 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
  * ff_dlgproc [internal]
  *
  */
+static void refresh_ff_joystick_list(HWND hwnd, struct JoystickData *data)
+{
+    struct Joystick *joy, *joy_end;
+    SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_RESETCONTENT, 0, 0);
+    for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
+        SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)joy->instance.tszInstanceName);
+}
+
 static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static HANDLE thread;
@@ -818,24 +823,9 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     {
         case WM_INITDIALOG:
         {
-            int i, cur = 0;
-
             data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
 
-            /* Add joysticks with FF support to the combobox and get the effects */
-            for (i = 0; i < data->num_joysticks; i++)
-            {
-                struct Joystick *joy = &data->joysticks[i];
-
-                if (joy->forcefeedback)
-                {
-                    SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
-                    SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_SETITEMDATA, cur, i);
-
-                    cur++;
-                }
-            }
-
+            refresh_ff_joystick_list(hwnd, data);
             draw_ff_axis(hwnd, data);
 
             return TRUE;
@@ -861,6 +851,8 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
             switch(((LPNMHDR)lparam)->code)
             {
                 case PSN_SETACTIVE:
+                    refresh_ff_joystick_list(hwnd, data);
+
                     if (data->num_ff > 0)
                     {
                         DWORD tid;
