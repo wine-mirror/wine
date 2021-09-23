@@ -533,6 +533,14 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
  * test_dlgproc [internal]
  *
  */
+static void refresh_test_joystick_list(HWND hwnd, struct JoystickData *data)
+{
+    struct Joystick *joy, *joy_end;
+    SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_RESETCONTENT, 0, 0);
+    for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
+        SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)joy->instance.tszInstanceName);
+}
+
 static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static HANDLE thread;
@@ -543,17 +551,9 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     {
         case WM_INITDIALOG:
         {
-            int i;
-
             data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
 
-            /* Add enumerated joysticks to the combobox */
-            for (i = 0; i < data->num_joysticks; i++)
-            {
-                struct Joystick *joy = &data->joysticks[i];
-                SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
-            }
-
+            refresh_test_joystick_list(hwnd, data);
             draw_joystick_buttons(hwnd, data);
             draw_joystick_axes(hwnd, data);
 
@@ -575,6 +575,8 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                 case PSN_SETACTIVE:
                 {
                     DWORD tid;
+
+                    refresh_test_joystick_list(hwnd, data);
 
                     /* Initialize input thread */
                     if (data->num_joysticks > 0)
