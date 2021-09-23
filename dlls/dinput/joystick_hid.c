@@ -379,8 +379,8 @@ static BOOL enum_collections_objects( struct hid_joystick *impl, const DIPROPHEA
 {
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     struct hid_caps caps = {.type = LINK_COLLECTION_NODE};
+    DWORD collection = 0, i;
     BOOL ret;
-    DWORD i;
 
     for (i = 0; i < impl->caps.NumberLinkCollectionNodes; ++i)
     {
@@ -393,7 +393,7 @@ static BOOL enum_collections_objects( struct hid_joystick *impl, const DIPROPHEA
         else
         {
             instance.dwOfs = 0;
-            instance.dwType = DIDFT_COLLECTION | DIDFT_NODATA;
+            instance.dwType = DIDFT_COLLECTION | DIDFT_MAKEINSTANCE( collection++ ) | DIDFT_NODATA;
             instance.dwFlags = 0;
             instance.wUsagePage = caps.node->LinkUsagePage;
             instance.wUsage = caps.node->LinkUsage;

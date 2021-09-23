@@ -3572,8 +3572,6 @@ static void test_simple_joystick(void)
         {.ofs = TRUE},
         {.ofs = TRUE},
         {.ofs = TRUE},
-        {},
-        {.type = TRUE},
     };
 
     struct check_objects_params check_objects_params =
