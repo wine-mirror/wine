@@ -248,6 +248,7 @@ static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *f
             instance.wUsage = caps.value->NotRange.Usage;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps.value->ReportID;
+            instance.wCollectionNumber = caps.value->LinkCollection;
 
             switch (instance.wUsage)
             {
@@ -348,6 +349,7 @@ static BOOL enum_button_objects( struct hid_joystick *impl, const DIPROPHEADER *
                 instance.wUsage = j;
                 instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
                 instance.wReportId = caps.button->ReportID;
+                instance.wCollectionNumber = caps.button->LinkCollection;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
             }
@@ -363,6 +365,7 @@ static BOOL enum_button_objects( struct hid_joystick *impl, const DIPROPHEADER *
             instance.wUsage = caps.button->NotRange.Usage;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps.button->ReportID;
+            instance.wCollectionNumber = caps.button->LinkCollection;
             ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
@@ -396,6 +399,7 @@ static BOOL enum_collections_objects( struct hid_joystick *impl, const DIPROPHEA
             instance.wUsage = caps.node->LinkUsage;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = 0;
+            instance.wCollectionNumber = caps.node->Parent;
             ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }

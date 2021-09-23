@@ -3567,11 +3567,11 @@ static void test_simple_joystick(void)
     };
     const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
     {
-        {.ofs = TRUE, .type = TRUE, .collection_number = TRUE},
-        {.ofs = TRUE, .type = TRUE, .collection_number = TRUE},
-        {.ofs = TRUE, .collection_number = TRUE},
-        {.ofs = TRUE, .collection_number = TRUE},
-        {.ofs = TRUE, .collection_number = TRUE},
+        {.ofs = TRUE, .type = TRUE},
+        {.ofs = TRUE, .type = TRUE},
+        {.ofs = TRUE},
+        {.ofs = TRUE},
+        {.ofs = TRUE},
         {},
         {.type = TRUE},
     };
@@ -3968,7 +3968,6 @@ static void test_simple_joystick(void)
     if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
     check_member( objinst, expect_objects[1], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[1], "%u", dwFFForceResolution );
-    todo_wine
     check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
     check_member( objinst, expect_objects[1], "%u", wDesignatorIndex );
     check_member( objinst, expect_objects[1], "%#04x", wUsagePage );
@@ -4000,7 +3999,6 @@ static void test_simple_joystick(void)
     if (!localized) todo_wine check_member_wstr( objinst, expect_objects[4], tszName );
     check_member( objinst, expect_objects[4], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[4], "%u", dwFFForceResolution );
-    todo_wine
     check_member( objinst, expect_objects[4], "%u", wCollectionNumber );
     check_member( objinst, expect_objects[4], "%u", wDesignatorIndex );
     check_member( objinst, expect_objects[4], "%#04x", wUsagePage );
@@ -4035,7 +4033,6 @@ static void test_simple_joystick(void)
     if (!localized) todo_wine check_member_wstr( objinst, expect_objects[0], tszName );
     check_member( objinst, expect_objects[0], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[0], "%u", dwFFForceResolution );
-    todo_wine
     check_member( objinst, expect_objects[0], "%u", wCollectionNumber );
     check_member( objinst, expect_objects[0], "%u", wDesignatorIndex );
     check_member( objinst, expect_objects[0], "%#04x", wUsagePage );
