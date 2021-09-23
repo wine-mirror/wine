@@ -3567,8 +3567,8 @@ static void test_simple_joystick(void)
     };
     const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
     {
-        {.ofs = TRUE, .type = TRUE},
-        {.ofs = TRUE, .type = TRUE},
+        {.ofs = TRUE},
+        {.ofs = TRUE},
         {.ofs = TRUE},
         {.ofs = TRUE},
         {.ofs = TRUE},
@@ -3960,7 +3960,6 @@ static void test_simple_joystick(void)
     check_member_guid( objinst, expect_objects[1], guidType );
     todo_wine
     check_member( objinst, expect_objects[1], "%#x", dwOfs );
-    todo_wine
     check_member( objinst, expect_objects[1], "%#x", dwType );
     check_member( objinst, expect_objects[1], "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
@@ -4025,7 +4024,6 @@ static void test_simple_joystick(void)
     check_member_guid( objinst, expect_objects[0], guidType );
     todo_wine
     check_member( objinst, expect_objects[0], "%#x", dwOfs );
-    todo_wine
     check_member( objinst, expect_objects[0], "%#x", dwType );
     check_member( objinst, expect_objects[0], "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( objinst, expect_objects[0], tszName );

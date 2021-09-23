@@ -220,13 +220,20 @@ static BOOL enum_object( struct hid_joystick *impl, const DIPROPHEADER *filter, 
     return DIENUM_CONTINUE;
 }
 
+static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD i, DWORD *count )
+{
+    if (!seen[i]) instance->dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( i );
+    else instance->dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + *count++ );
+    seen[i] = TRUE;
+}
+
 static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
                                 DWORD flags, enum_object_callback callback, void *data )
 {
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     struct hid_caps caps = {.type = VALUE_CAPS};
+    BOOL ret, seen_axis[6] = {0};
     DWORD axis = 0, pov = 0, i;
-    BOOL ret;
 
     for (i = 0; i < impl->caps.NumberInputValueCaps; ++i)
     {
@@ -254,49 +261,49 @@ static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *f
             {
             case HID_USAGE_GENERIC_X:
                 instance.dwOfs = DIJOFS_X;
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                set_axis_type( &instance, seen_axis, 0, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Y:
                 instance.dwOfs = DIJOFS_Y;
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                set_axis_type( &instance, seen_axis, 1, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Z:
                 instance.dwOfs = DIJOFS_Z;
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                set_axis_type( &instance, seen_axis, 2, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RX:
                 instance.dwOfs = DIJOFS_RX;
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                set_axis_type( &instance, seen_axis, 3, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RY:
                 instance.dwOfs = DIJOFS_RY;
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                set_axis_type( &instance, seen_axis, 4, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RZ:
                 instance.dwOfs = DIJOFS_RZ;
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                set_axis_type( &instance, seen_axis, 5, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_SLIDER:
                 instance.dwOfs = DIJOFS_SLIDER( 0 );
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( axis++ );
+                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
