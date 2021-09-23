@@ -1136,19 +1136,21 @@ struct cached_face
 static void load_face_from_cache( HKEY hkey_family, struct gdi_font_family *family,
                                   void *buffer, DWORD buffer_size, BOOL scalable )
 {
-    DWORD type, size, needed, index = 0;
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+    KEY_NODE_INFORMATION *node_info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD index = 0, total_size;
     struct gdi_font_face *face;
     HKEY hkey_strike;
     WCHAR name[256];
-    struct cached_face *cached = (struct cached_face *)buffer;
+    struct cached_face *cached;
 
-    size = sizeof(name);
-    needed = buffer_size - sizeof(DWORD);
-    while (!RegEnumValueW( hkey_family, index++, name, &size, NULL, &type, buffer, &needed ))
+    while (reg_enum_value( hkey_family, index++, info,
+                           buffer_size - sizeof(DWORD), name, sizeof(name) ))
     {
-        if (type == REG_BINARY && needed > sizeof(*cached))
+        cached = (struct cached_face *)((char *)info + info->DataOffset);
+        if (info->Type == REG_BINARY && info->DataLength > sizeof(*cached))
         {
-            ((DWORD *)buffer)[needed / sizeof(DWORD)] = 0;
+            ((DWORD *)cached)[info->DataLength / sizeof(DWORD)] = 0;
             if ((face = create_face( family, name, cached->full_name,
                                      cached->full_name + lstrlenW(cached->full_name) + 1,
                                      NULL, 0, cached->index, cached->fs, cached->ntmflags, cached->version,
@@ -1167,22 +1169,19 @@ static void load_face_from_cache( HKEY hkey_family, struct gdi_font_family *fami
                 release_face( face );
             }
         }
-        size = sizeof(name);
-        needed = buffer_size - sizeof(DWORD);
     }
 
     /* load bitmap strikes */
 
     index = 0;
-    needed = buffer_size;
-    while (!RegEnumKeyExW( hkey_family, index++, buffer, &needed, NULL, NULL, NULL, NULL ))
+    while (!NtEnumerateKey( hkey_family, index++, KeyNodeInformation, node_info,
+                            buffer_size, &total_size ))
     {
-        if (!RegOpenKeyExW( hkey_family, buffer, 0, KEY_ALL_ACCESS, &hkey_strike ))
+        if ((hkey_strike = reg_open_key( hkey_family, node_info->Name, node_info->NameLength )))
         {
             load_face_from_cache( hkey_strike, family, buffer, buffer_size, FALSE );
-            RegCloseKey( hkey_strike );
+            NtClose( hkey_strike );
         }
-        needed = buffer_size;
     }
 }
 
