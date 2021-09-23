@@ -2217,6 +2217,12 @@ static const char switchprotocols[] =
 "Upgrade: websocket\r\n"
 "Connection: Upgrade\r\n";
 
+static const char redirectmsg[] =
+"HTTP/1.1 307 Temporary Redirect\r\n"
+"Content-Length: 0\r\n"
+"Location: /temporary\r\n"
+"Connection: close\r\n\r\n";
+
 static const char unauthorized[] = "Unauthorized";
 static const char hello_world[] = "Hello World";
 static const char auth_unseen[] = "Auth Unseen";
@@ -2447,6 +2453,17 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 continue;
             }
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
+        }
+        else if (strstr(buffer, "POST /redirect"))
+        {
+            send(c, redirectmsg, sizeof redirectmsg - 1, 0);
+        }
+        else if (strstr(buffer, "POST /temporary"))
+        {
+            char buf[32];
+            recv(c, buf, sizeof(buf), 0);
+            send(c, okmsg, sizeof okmsg - 1, 0);
+            send(c, page1, sizeof page1 - 1, 0);
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -3093,6 +3110,51 @@ static void test_head_request(int port)
     ret = WinHttpQueryDataAvailable(req, &count);
     ok(ret, "failed to query data available %u\n", GetLastError());
     ok(!count, "got %u\n", count);
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
+static void test_redirect(int port)
+{
+    HINTERNET ses, con, req;
+    char buf[128];
+    DWORD size, len, count, status;
+    BOOL ret;
+
+    ses = WinHttpOpen(L"winetest", WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, L"localhost", port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, L"POST", L"/redirect", NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, (void *)"data", sizeof("data"), sizeof("data"), 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, &status, &size, NULL);
+    ok(ret, "failed to get status code %u\n", GetLastError());
+    ok(status == HTTP_STATUS_OK, "got %u\n", status);
+
+    count = 0;
+    ret = WinHttpQueryDataAvailable(req, &count);
+    ok(ret, "failed to query data available %u\n", GetLastError());
+    ok(count == 128, "got %u\n", count);
+
+    len = sizeof(buf);
+    count = 0;
+    ret = WinHttpReadData(req, buf, len, &count);
+    ok(ret, "failed to read data %u\n", GetLastError());
+    ok(count == 128, "got %u\n", count);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -5200,6 +5262,7 @@ START_TEST (winhttp)
     test_request_path_escapes(si.port);
     test_passport_auth(si.port);
     test_websocket(si.port);
+    test_redirect(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, L"/quit");
