@@ -168,7 +168,6 @@ int pp_get_if_depth(void);
 
 int ppy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int ppy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
-void pp_internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
 
 /* current preprocessor state */
 /* everything is in this structure to avoid polluting the global symbol space */

@@ -266,28 +266,26 @@ static void string_to_upper(string_t *str)
 {
     int i;
 
-    if(str->type == str_char)
+    switch (str->type)
     {
+    case str_char:
         for (i = 0; i < str->size; i++)
             if (str->str.cstr[i] >= 'a' && str->str.cstr[i] <= 'z') str->str.cstr[i] -= 32;
-    }
-    else if(str->type == str_unicode)
-    {
+        break;
+    case str_unicode:
         for (i = 0; i < str->size; i++)
             if (str->str.wstr[i] >= 'a' && str->str.wstr[i] <= 'z') str->str.wstr[i] -= 32;
-    }
-    else
-    {
-        internal_error(__FILE__, __LINE__, "Invalid string type %d\n", str->type);
+        break;
     }
 }
 
 static int parse_accel_string( const string_t *key, int flags )
 {
-    int keycode;
+    int keycode = 0;
 
-    if(key->type == str_char)
+    switch (key->type)
     {
+    case str_char:
         if (key->str.cstr[0] == '#') return 0;  /* ignore message contexts */
 	if((flags & WRC_AF_VIRTKEY) &&
            !((key->str.cstr[0] >= 'A' && key->str.cstr[0] <= 'Z') ||
@@ -316,9 +314,9 @@ static int parse_accel_string( const string_t *key, int flags )
 	}
 	else
             keycode = key->str.cstr[0];
-    }
-    else
-    {
+        break;
+
+    case str_unicode:
         if (key->str.wstr[0] == '#') return 0;  /* ignore message contexts */
 	if((flags & WRC_AF_VIRTKEY) &&
            !((key->str.wstr[0] >= 'A' && key->str.wstr[0] <= 'Z') ||
@@ -346,6 +344,7 @@ static int parse_accel_string( const string_t *key, int flags )
 	}
 	else
             keycode = key->str.wstr[0];
+        break;
     }
     return keycode;
 }
@@ -391,9 +390,7 @@ static void put_string(res_t *res, const string_t *str, int isterm, const langua
     }
     else
     {
-        if (str->type == str_unicode)
-            internal_error(__FILE__, __LINE__, "Unicode string %s in 16-bit\n",
-                           convert_string_utf8( str, 0 ));
+        assert( str->type == str_char );
         if (!isterm) put_byte(res, str->size);
         for(cnt = 0; cnt < str->size; cnt++)
         {
@@ -417,23 +414,20 @@ static void put_string(res_t *res, const string_t *str, int isterm, const langua
 */
 static void put_name_id(res_t *res, name_id_t *nid, int upcase, const language_t *lang)
 {
-	if(nid->type == name_ord)
+	switch (nid->type)
 	{
+	case name_ord:
 		if(win32)
 			put_word(res, 0xffff);
 		else
 			put_byte(res, 0xff);
 		put_word(res, (WORD)nid->name.i_name);
-	}
-	else if(nid->type == name_str)
-	{
+		break;
+	case name_str:
 		if(upcase)
 			string_to_upper(nid->name.s_name);
 		put_string(res, nid->name.s_name, TRUE, lang);
-	}
-	else
-	{
-		internal_error(__FILE__, __LINE__, "Invalid name_id type %d\n", nid->type);
+		break;
 	}
 }
 
@@ -703,10 +697,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 				put_dword(res, ctrl->id);
 			else
 				put_word(res, ctrl->id);
-			if(ctrl->ctlclass)
-				put_name_id(res, ctrl->ctlclass, FALSE, dlg->lvc.language);
-			else
-				internal_error(__FILE__, __LINE__, "Control has no control-class\n");
+			put_name_id(res, ctrl->ctlclass, FALSE, dlg->lvc.language);
 			if(ctrl->title)
 				put_name_id(res, ctrl->title, FALSE, dlg->lvc.language);
 			else
@@ -764,19 +755,14 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			put_word(res, ctrl->height);
 			put_word(res, ctrl->id);
 			put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask: WS_CHILD);
-			if(ctrl->ctlclass)
-			{
-				if(ctrl->ctlclass->type == name_ord
-				&& ctrl->ctlclass->name.i_name >= 0x80
-				&& ctrl->ctlclass->name.i_name <= 0x85)
-					put_byte(res, ctrl->ctlclass->name.i_name);
-				else if(ctrl->ctlclass->type == name_str)
-					put_name_id(res, ctrl->ctlclass, FALSE, NULL);
-				else
-					error("Unknown control-class %04x\n", ctrl->ctlclass->name.i_name);
-			}
+			if(ctrl->ctlclass->type == name_ord
+			&& ctrl->ctlclass->name.i_name >= 0x80
+			&& ctrl->ctlclass->name.i_name <= 0x85)
+				put_byte(res, ctrl->ctlclass->name.i_name);
+			else if(ctrl->ctlclass->type == name_str)
+				put_name_id(res, ctrl->ctlclass, FALSE, NULL);
 			else
-				internal_error(__FILE__, __LINE__, "Control has no control-class\n");
+				error("Unknown control-class %04x\n", ctrl->ctlclass->name.i_name);
 			if(ctrl->title)
 				put_name_id(res, ctrl->title, FALSE, NULL);
 			else
@@ -1378,8 +1364,9 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 	put_pad(res);
 	for(val = blk->values; val; val = val->next)
 	{
-		if(val->type == val_str)
+		switch(val->type)
 		{
+		case val_str:
 			valblksizetag = res->size;
 			put_word(res, 0);	/* Will be overwritten later */
 			valvalsizetag = res->size;
@@ -1398,9 +1385,8 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 				set_word(res, valvalsizetag, (WORD)(res->size - tag));
 			set_word(res, valblksizetag, (WORD)(res->size - valblksizetag));
 			put_pad(res);
-		}
-		else if(val->type == val_words)
-		{
+                        break;
+		case val_words:
 			valblksizetag = res->size;
 			put_word(res, 0);	/* Will be overwritten later */
 			valvalsizetag = res->size;
@@ -1419,14 +1405,10 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 			set_word(res, valvalsizetag, (WORD)(res->size - tag));
 			set_word(res, valblksizetag, (WORD)(res->size - valblksizetag));
 			put_pad(res);
-		}
-		else if(val->type == val_block)
-		{
+                        break;
+		case val_block:
 			versionblock2res(res, val->value.block, level+1, lang);
-		}
-		else
-		{
-			internal_error(__FILE__, __LINE__, "Invalid value indicator %d in VERSIONINFO\n", val->type);
+                        break;
 		}
 	}
 
@@ -1591,11 +1573,12 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 #define MAXNAMELEN	32
 char *prep_nid_for_label(const name_id_t *nid)
 {
-	static char buf[MAXNAMELEN+1];
+    static char buf[MAXNAMELEN+1];
 
-	assert(nid != NULL);
-
-	if(nid->type == name_str && nid->name.s_name->type == str_unicode)
+    switch (nid->type)
+    {
+    case name_str:
+	if(nid->name.s_name->type == str_unicode)
 	{
 		WCHAR *sptr;
 		int i;
@@ -1610,7 +1593,7 @@ char *prep_nid_for_label(const name_id_t *nid)
 		}
 		buf[i] = '\0';
 	}
-	else if(nid->type == name_str && nid->name.s_name->type == str_char)
+	else
 	{
 		char *cptr;
 		int i;
@@ -1625,15 +1608,13 @@ char *prep_nid_for_label(const name_id_t *nid)
 		}
 		buf[i] = '\0';
 	}
-	else if(nid->type == name_ord)
-	{
-		sprintf(buf, "%u", nid->name.i_name);
-	}
-	else
-	{
-		internal_error(__FILE__, __LINE__, "Resource name_id with invalid type %d\n", nid->type);
-	}
-	return buf;
+        break;
+
+    case name_ord:
+        sprintf(buf, "%u", nid->name.i_name);
+        break;
+    }
+    return buf;
 }
 #undef MAXNAMELEN
 
@@ -1787,7 +1768,7 @@ void resources2res(resource_t *top)
 			    top->binres = anicurico2res(top->name, top->res.ani, top->type);
 			break;
 		default:
-			internal_error(__FILE__, __LINE__, "Unknown resource type encountered %d in binary res generation\n", top->type);
+			assert(0);
 		}
 		top->c_name = make_c_name(get_c_typename(top->type), top->name, top->lan);
 		top = top->next;

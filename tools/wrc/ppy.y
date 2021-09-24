@@ -86,7 +86,7 @@
 	case SIZE_INT:		BIN_OP_INT(r, v1, v2, OP); break;	\
 	case SIZE_LONG:		BIN_OP_LONG(r, v1, v2, OP); break;	\
 	case SIZE_LONGLONG:	BIN_OP_LONGLONG(r, v1, v2, OP); break;	\
-	default: pp_internal_error(__FILE__, __LINE__, "Invalid type indicator (0x%04x)", v1.type);	\
+	default: assert(0);                                             \
 	}
 
 
@@ -219,8 +219,6 @@ preprocessor
 			break;
 		case if_error:
 			break;
-		default:
-			pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #elif directive", s);
 		}
 		}
 	| tELSE tNL		{
@@ -245,8 +243,6 @@ preprocessor
 			break;
 		case if_error:
 			break;
-		default:
-			pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #else directive", s);
 		}
 		}
 	| tENDIF tNL		{

@@ -85,16 +85,6 @@ int parser_warning(const char *s, ...)
 	return 0;
 }
 
-void internal_error(const char *file, int line, const char *s, ...)
-{
-	va_list ap;
-	va_start(ap, s);
-	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
-	vfprintf(stderr, s, ap);
-	va_end(ap);
-	exit(3);
-}
-
 void fatal_perror( const char *msg, ... )
 {
         va_list valist;
@@ -264,36 +254,30 @@ int compare_striW( const WCHAR *str1, const WCHAR *str2 )
 */
 int compare_name_id(const name_id_t *n1, const name_id_t *n2)
 {
-	if(n1->type == name_ord && n2->type == name_ord)
-	{
-		return n1->name.i_name - n2->name.i_name;
-	}
-	else if(n1->type == name_str && n2->type == name_str)
+    switch (n1->type)
+    {
+    case name_ord:
+	if (n2->type == name_ord) return n1->name.i_name - n2->name.i_name;
+	return 1;
+
+    case name_str:
+	if (n2->type == name_str)
 	{
 		if(n1->name.s_name->type == str_char
 		&& n2->name.s_name->type == str_char)
 		{
 			return compare_striA(n1->name.s_name->str.cstr, n2->name.s_name->str.cstr);
 		}
-		else if(n1->name.s_name->type == str_unicode
-		&& n2->name.s_name->type == str_unicode)
-		{
-			return compare_striW(n1->name.s_name->str.wstr, n2->name.s_name->str.wstr);
-		}
 		else
 		{
-			internal_error(__FILE__, __LINE__, "Can't yet compare strings of mixed type\n");
+			assert( n1->name.s_name->type == str_unicode );
+			assert( n2->name.s_name->type == str_unicode );
+			return compare_striW(n1->name.s_name->str.wstr, n2->name.s_name->str.wstr);
 		}
 	}
-	else if(n1->type == name_ord && n2->type == name_str)
-		return 1;
-	else if(n1->type == name_str && n2->type == name_ord)
-		return -1;
-	else
-		internal_error(__FILE__, __LINE__, "Comparing name-ids with unknown types (%d, %d)\n",
-				n1->type, n2->type);
-
-	return 0; /* Keep the compiler happy */
+        return -1;
+    }
+    return 0; /* Keep the compiler happy */
 }
 
 #ifdef _WIN32

@@ -892,11 +892,11 @@ static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 			rtp = NEXT_TAG(rtp);
 		}
 		else
-			internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file\n",
-				       isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
-				       isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
-				       isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
-				       isprint(rtp->tag[3]) ? rtp->tag[3] : '.');
+			error("Unknown tag \"%c%c%c%c\" in RIFF file\n",
+                              isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
+                              isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
+                              isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
+                              isprint(rtp->tag[3]) ? rtp->tag[3] : '.');
 
 		if((UINT_PTR)rtp & 1)
 			rtp = SKIP_TAG(rtp,1);
@@ -1002,7 +1002,7 @@ ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt)
 				rtp = NEXT_TAG(rtp);
 			}
 			else
-				internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file\n",
+				error("Unknown tag \"%c%c%c%c\" in RIFF file\n",
 				       isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
 				       isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
 				       isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
@@ -1098,7 +1098,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 	 * the ID, offset and length (and flag) fields to be very sure.
 	 */
 	if(hi && lo)
-		internal_error(__FILE__, __LINE__, "Messagetable contains more than 65535 blocks; cannot determine endian\n");
+		error("Messagetable contains more than 65535 blocks; cannot determine endian\n");
 	if(!hi && !lo)
 		parser_error("Invalid messagetable block count 0");
 

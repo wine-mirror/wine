@@ -553,7 +553,7 @@ resource_definition
 		{
 			$$ = rsc = new_resource(res_anicur, $1->u.ani, $1->u.ani->memopt, $1->u.ani->data->lvc.language);
 		}
-		else if($1->type == res_curg)
+		else /* res_curg */
 		{
 			cursor_t *cur;
 			$$ = rsc = new_resource(res_curg, $1->u.curg, $1->u.curg->memopt, $1->u.curg->lvc.language);
@@ -567,8 +567,6 @@ resource_definition
 				rsc->name->name.i_name = cur->id;
 			}
 		}
-		else
-			internal_error(__FILE__, __LINE__, "Invalid top-level type %d in cursor resource\n", $1->type);
 		free($1);
 		}
 	| dialog	{ $$ = new_resource(res_dlg, $1, $1->memopt, $1->lvc.language); }
@@ -587,7 +585,7 @@ resource_definition
 		{
 			$$ = rsc = new_resource(res_aniico, $1->u.ani, $1->u.ani->memopt, $1->u.ani->data->lvc.language);
 		}
-		else if($1->type == res_icog)
+		else /* res_icog */
 		{
 			icon_t *ico;
 			$$ = rsc = new_resource(res_icog, $1->u.icog, $1->u.icog->memopt, $1->u.icog->lvc.language);
@@ -601,8 +599,6 @@ resource_definition
 				rsc->name->name.i_name = ico->id;
 			}
 		}
-		else
-			internal_error(__FILE__, __LINE__, "Invalid top-level type %d in icon resource\n", $1->type);
 		free($1);
 		}
 	| menu		{ $$ = new_resource(res_men, $1, $1->memopt, $1->lvc.language); }
@@ -2258,10 +2254,13 @@ static raw_data_t *str2raw_data(string_t *str)
 	rd = new_raw_data();
 	rd->size = str->size * (str->type == str_char ? 1 : 2);
 	rd->data = xmalloc(rd->size);
-	if(str->type == str_char)
-		memcpy(rd->data, str->str.cstr, rd->size);
-	else if(str->type == str_unicode)
+	switch (str->type)
 	{
+	case str_char:
+		memcpy(rd->data, str->str.cstr, rd->size);
+		break;
+	case str_unicode:
+            {
 		int i;
 		switch(byteorder)
 		{
@@ -2286,9 +2285,8 @@ static raw_data_t *str2raw_data(string_t *str)
 			}
 			break;
 		}
+            }
 	}
-	else
-		internal_error(__FILE__, __LINE__, "Invalid stringtype\n");
 	return rd;
 }
 
@@ -2720,7 +2718,7 @@ static resource_t *build_fontdirs(resource_t *tail)
 		if((byteorder == WRC_BO_BIG && !isswapped) || (byteorder != WRC_BO_BIG && isswapped))
 #endif
 		{
-			internal_error(__FILE__, __LINE__, "User supplied FONTDIR needs byteswapping\n");
+			error("User supplied FONTDIR needs byteswapping\n");
 		}
 	}
 

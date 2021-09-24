@@ -428,7 +428,7 @@ static const char * const pp_if_state_str[] = {
 void pp_push_if(pp_if_state_t s)
 {
 	if(if_stack_idx >= MAXIFSTACK)
-		pp_internal_error(__FILE__, __LINE__, "#if-stack overflow; #{if,ifdef,ifndef} nested too deeply (> %d)", MAXIFSTACK);
+		error("#if-stack overflow; #{if,ifdef,ifndef} nested too deeply (> %d)", MAXIFSTACK);
 
 	if(pp_flex_debug)
 		fprintf(stderr, "Push if %s:%d: %s(%d) -> %s(%d)\n", pp_status.input, pp_status.line_number, pp_if_state_str[pp_if_state()], if_stack_idx, pp_if_state_str[s], if_stack_idx+1);
@@ -446,8 +446,8 @@ void pp_push_if(pp_if_state_t s)
 	case if_ignore:
 		pp_push_ignore_state();
 		break;
-	default:
-		pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d)", (int)pp_if_state());
+	case if_error:
+		assert(0);
 	}
 }
 
@@ -470,8 +470,8 @@ pp_if_state_t pp_pop_if(void)
 	case if_ignore:
 		pp_pop_ignore_state();
 		break;
-	default:
-		pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d)", (int)pp_if_state());
+	case if_error:
+		assert(0);
 	}
 
 	if(pp_flex_debug)
@@ -509,8 +509,8 @@ void pp_next_if_state(int i)
 	case if_ignore:
 		pp_push_if(if_ignore);
 		break;
-	default:
-		pp_internal_error(__FILE__, __LINE__, "Invalid pp_if_state (%d) in #{if,ifdef,ifndef} directive", (int)pp_if_state());
+	case if_error:
+		assert(0);
 	}
 }
 
@@ -543,17 +543,6 @@ int ppy_warning(const char *s, ...)
 	generic_msg(s, "warning", ppy_text, ap);
 	va_end(ap);
 	return 0;
-}
-
-void pp_internal_error(const char *file, int line, const char *s, ...)
-{
-	va_list ap;
-	va_start(ap, s);
-	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
-	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
-	va_end(ap);
-	exit(3);
 }
 
 static void add_cmdline_defines(void)

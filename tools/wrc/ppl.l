@@ -672,7 +672,7 @@ static struct list pp_includelogiclist = LIST_INIT( pp_includelogiclist );
 				push_macro(ppp);
 				break;
 			default:
-				pp_internal_error(__FILE__, __LINE__, "Invalid define type %d\n", ppp->type);
+				assert(0);
 			}
 		}
 		else put_buffer(ppy_text, ppy_leng);
@@ -916,8 +916,6 @@ static void expand_special(pp_entry_t *ppp)
 		buf = xrealloc(buf, strlen(pp_status.input) + 3);
 		sprintf(buf, "\"%s\"", pp_status.input);
 	}
-	else
-		pp_internal_error(__FILE__, __LINE__, "Special macro '%s' not found...\n", ppp->ident);
 
 	if(pp_flex_debug)
 		fprintf(stderr, "expand_special(%d): %s:%d: '%s' -> '%s'\n",
@@ -1059,9 +1057,6 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 		if(pp_flex_debug)
 			fprintf(stderr, "add_expand_text: exp_subst(%d): '%s'\n", mtp->subst.argidx, exp);
 		break;
-
-	default:
-		pp_internal_error(__FILE__, __LINE__, "Invalid expansion type (%d) in macro expansion\n", mtp->type);
 	}
 	return mtp;
 }
@@ -1196,7 +1191,7 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 	if(ppy_debug)
 		printf("push_buffer(%d): %p %p %p %d\n", bufferstackidx, ppp, filename, incname, pop);
 	if(bufferstackidx >= MAXBUFFERSTACK)
-		pp_internal_error(__FILE__, __LINE__, "Buffer stack overflow");
+		error("Buffer stack overflow");
 
 	memset(&bufferstack[bufferstackidx], 0, sizeof(bufferstack[0]));
 	bufferstack[bufferstackidx].bufferstate	= YY_CURRENT_BUFFER;
@@ -1221,16 +1216,11 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 		pp_status.input  = filename;
 		ncontinuations = 0;
 	}
-	else if(!pop)
-		pp_internal_error(__FILE__, __LINE__, "Pushing buffer without knowing where to go to");
 	bufferstackidx++;
 }
 
 static bufferstackentry_t *pop_buffer(void)
 {
-	if(bufferstackidx < 0)
-		pp_internal_error(__FILE__, __LINE__, "Bufferstack underflow?");
-
 	if(bufferstackidx == 0)
 		return NULL;
 
@@ -1295,10 +1285,8 @@ static bufferstackentry_t *pop_buffer(void)
 
 	if(bufferstack[bufferstackidx].should_pop)
 	{
-		if(yy_current_state() == pp_macexp)
-			macro_add_expansion();
-		else
-			pp_internal_error(__FILE__, __LINE__, "Pop buffer and state without macro expansion state");
+		assert( yy_current_state() == pp_macexp );
+		macro_add_expansion();
 		yy_pop_state();
 	}
 
@@ -1332,8 +1320,7 @@ static macexpstackentry_t *top_macro(void)
 
 static macexpstackentry_t *pop_macro(void)
 {
-	if(macexpstackidx <= 0)
-		pp_internal_error(__FILE__, __LINE__, "Macro expansion stack underflow\n");
+	assert(macexpstackidx > 0);
 	return macexpstack[--macexpstackidx];
 }
 
