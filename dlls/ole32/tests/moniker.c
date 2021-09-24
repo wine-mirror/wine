@@ -127,6 +127,43 @@ static IMoniker *create_antimoniker(DWORD level)
     return moniker;
 }
 
+static HRESULT create_moniker_from_desc(const char *desc, unsigned int *eaten,
+        IMoniker **moniker)
+{
+    IMoniker *left, *right;
+    WCHAR nameW[3];
+    HRESULT hr;
+
+    desc += *eaten;
+
+    switch (*desc)
+    {
+        case 'I':
+            nameW[0] = desc[0];
+            nameW[1] = desc[1];
+            nameW[2] = 0;
+            *eaten += 2;
+            return CreateItemMoniker(L"!", nameW, moniker);
+        case 'A':
+            *eaten += 2;
+            *moniker = create_antimoniker(desc[1] - '0');
+            return S_OK;
+        case 'C':
+            (*eaten)++;
+            hr = create_moniker_from_desc(desc, eaten, &left);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            hr = create_moniker_from_desc(desc, eaten, &right);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            hr = CreateGenericComposite(left, right, moniker);
+            IMoniker_Release(left);
+            IMoniker_Release(right);
+            return hr;
+        default:
+            ok(0, "Unexpected description %s.\n", desc);
+            return E_NOTIMPL;
+    }
+}
+
 static SIZE_T round_global_size(SIZE_T size)
 {
     static SIZE_T global_size_alignment = -1;
@@ -2267,7 +2304,7 @@ static void test_item_moniker(void)
         "Moniker_IsRunning",
         NULL
     };
-    IMoniker *moniker, *moniker2, *moniker3, *reduced, *anti, *inverse;
+    IMoniker *moniker, *moniker2, *moniker3, *reduced, *anti, *inverse, *c;
     DWORD i, hash, eaten, cookie;
     HRESULT hr;
     IBindCtx *bindctx;
@@ -2589,7 +2626,7 @@ todo_wine
     ok(!moniker2, "Unexpected pointer.\n");
     IMoniker_Release(anti);
 
-    /* I + A2 -> (A) */
+    /* I + A2 -> A */
     anti = create_antimoniker(2);
     hr = IMoniker_ComposeWith(moniker, anti, TRUE, &moniker2);
     ok(hr == S_OK, "Failed to compose, hr %#x.\n", hr);
@@ -2600,6 +2637,24 @@ todo_wine
     IMoniker_Release(moniker2);
 
     IMoniker_Release(anti);
+
+    /* I + (A,A3) -> A3 */
+
+    /* Simplification has to through generic composite logic,
+       even when resolved to non-composite, generic composite option has to be enabled. */
+    eaten = 0;
+    hr = create_moniker_from_desc("CA1A3", &eaten, &c);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, FALSE, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_ANTIMONIKER);
+    hr = IMoniker_Hash(moniker2, &hash);
+    ok(hr == S_OK, "Failed to get hash, hr %#x.\n", hr);
+    ok(hash == 0x80000003, "Unexpected hash.\n");
+    IMoniker_Release(moniker2);
+    IMoniker_Release(c);
 
     IMoniker_Release(moniker);
 
@@ -2893,43 +2948,6 @@ todo_wine
     IMoniker_Release(moniker2);
 }
 
-static HRESULT create_moniker_from_desc(const char *desc, unsigned int *eaten,
-        IMoniker **moniker)
-{
-    IMoniker *left, *right;
-    WCHAR nameW[3];
-    HRESULT hr;
-
-    desc += *eaten;
-
-    switch (*desc)
-    {
-        case 'I':
-            nameW[0] = desc[0];
-            nameW[1] = desc[1];
-            nameW[2] = 0;
-            *eaten += 2;
-            return CreateItemMoniker(L"!", nameW, moniker);
-        case 'A':
-            *eaten += 2;
-            *moniker = create_antimoniker(desc[1] - '0');
-            return S_OK;
-        case 'C':
-            (*eaten)++;
-            hr = create_moniker_from_desc(desc, eaten, &left);
-            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-            hr = create_moniker_from_desc(desc, eaten, &right);
-            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-            hr = CreateGenericComposite(left, right, moniker);
-            IMoniker_Release(left);
-            IMoniker_Release(right);
-            return hr;
-        default:
-            ok(0, "Unexpected description %s.\n", desc);
-            return E_NOTIMPL;
-    }
-}
-
 static void test_generic_composite_moniker(void)
 {
     static const struct simplify_test
@@ -3154,7 +3172,6 @@ todo_wine
 
     /* See if non-generic composition is possible */
     hr = IMoniker_ComposeWith(moniker1, moniker, TRUE, &moniker2);
-todo_wine
     ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
 
     hr = IBindCtx_GetRunningObjectTable(bindctx, &rot);
