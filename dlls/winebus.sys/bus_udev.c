@@ -126,6 +126,8 @@ struct lnxev_device
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
     BYTE button_map[KEY_MAX];
+
+    int haptic_effect_id;
 };
 
 static inline struct base_device *impl_from_unix_device(struct unix_device *iface)
@@ -372,6 +374,8 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     struct input_absinfo abs_info[HID_ABS_MAX];
     BYTE absbits[(ABS_MAX+7)/8];
     BYTE relbits[(REL_MAX+7)/8];
+    BYTE ffbits[(FF_MAX+7)/8];
+    struct ff_effect effect;
     USAGE_AND_PAGE usage;
     INT i, button_count, abs_count, rel_count, hat_count;
     const BYTE *device_usage = what_am_I(dev);
@@ -386,6 +390,11 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     {
         WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
         memset(absbits, 0, sizeof(absbits));
+    }
+    if (ioctl(impl->base.device_fd, EVIOCGBIT(EV_FF, sizeof(ffbits)), ffbits) == -1)
+    {
+        WARN("ioctl(EVIOCGBIT, EV_FF) failed: %d %s\n", errno, strerror(errno));
+        memset(ffbits, 0, sizeof(ffbits));
     }
 
     if (!hid_device_begin_report_descriptor(iface, device_usage[0], device_usage[1]))
@@ -442,6 +451,23 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
 
     if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
+
+    impl->haptic_effect_id = -1;
+    if (test_bit(ffbits, FF_RUMBLE))
+    {
+        effect.id = -1;
+        effect.type = FF_RUMBLE;
+        effect.replay.length = 0;
+        effect.u.rumble.strong_magnitude = 0;
+        effect.u.rumble.weak_magnitude = 0;
+
+        if (ioctl(impl->base.device_fd, EVIOCSFF, &effect) == -1)
+            WARN("couldn't allocate rumble effect for haptics: %d %s\n", errno, strerror(errno));
+        else if (!hid_device_add_haptics(iface))
+            return FALSE;
+        else
+            impl->haptic_effect_id = effect.id;
+    }
 
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
@@ -737,10 +763,42 @@ static void lnxev_device_read_report(struct unix_device *iface)
 static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD duration_ms,
                                            USHORT rumble_intensity, USHORT buzz_intensity)
 {
-    FIXME("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u stub!\n", iface,
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    struct ff_effect effect =
+    {
+        .id = impl->haptic_effect_id,
+        .type = FF_RUMBLE,
+    };
+    struct input_event event;
+
+    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u stub!\n", iface,
           duration_ms, rumble_intensity, buzz_intensity);
 
-    return STATUS_NOT_IMPLEMENTED;
+    effect.replay.length = duration_ms;
+    effect.u.rumble.strong_magnitude = rumble_intensity;
+    effect.u.rumble.weak_magnitude = buzz_intensity;
+
+    if (ioctl(impl->base.device_fd, EVIOCSFF, &effect) == -1)
+    {
+        effect.id = -1;
+        if (ioctl(impl->base.device_fd, EVIOCSFF, &effect) == 1)
+        {
+            WARN("couldn't re-allocate rumble effect for haptics: %d %s\n", errno, strerror(errno));
+            return STATUS_UNSUCCESSFUL;
+        }
+        impl->haptic_effect_id = effect.id;
+    }
+
+    event.type = EV_FF;
+    event.code = effect.id;
+    event.value = 1;
+    if (write(impl->base.device_fd, &event, sizeof(event)) == -1)
+    {
+        WARN("couldn't start haptics rumble effect: %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static const struct hid_device_vtbl lnxev_device_vtbl =
