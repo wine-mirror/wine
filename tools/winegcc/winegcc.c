@@ -1475,6 +1475,7 @@ static void build(struct options* opts)
     {
         struct strarray tool, objcopy = build_tool_name(opts, TOOL_OBJCOPY);
 
+        tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--only-keep-debug");
         strarray_add(&tool, output_path);
