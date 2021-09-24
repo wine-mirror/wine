@@ -776,7 +776,7 @@ msgstr "全字匹配(&W)"
 msgid "Match &Case"
 msgstr "区分大小写(&C)"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
 msgstr "方向"
 
@@ -3663,24 +3663,36 @@ msgid "&Disable"
 msgstr "停用(&D)"
 
 #: dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "重设"
+
+#: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "启用(&E)"
 
-#: dlls/joy.cpl/joy.rc:42
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "Edit Override"
+msgid "&Override"
+msgstr "编辑顶替"
+
+#: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "已连接"
 
-#: dlls/joy.cpl/joy.rc:44
+#: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
 msgid "Connected (xinput device)"
 msgstr "语音输入设备："
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
 msgstr "停用"
 
-#: dlls/joy.cpl/joy.rc:48
+#: dlls/joy.cpl/joy.rc:50
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3688,23 +3700,23 @@ msgstr ""
 "在禁用或启用设备之后，已连接的操纵杆的信息将不会在这里更新，直到您重启该小工"
 "具为止。"
 
-#: dlls/joy.cpl/joy.rc:53
+#: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
 msgstr "测试操纵杆"
 
-#: dlls/joy.cpl/joy.rc:57
+#: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
 msgstr "按钮"
 
-#: dlls/joy.cpl/joy.rc:66
+#: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
 msgstr "测试力反馈"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
 msgstr "可选效果"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:74
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

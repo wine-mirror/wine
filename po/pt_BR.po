@@ -785,7 +785,7 @@ msgstr "Palavra &Inteira"
 msgid "Match &Case"
 msgstr "&Maiúsculas/minúsculas"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
 msgstr "Direção"
 
@@ -3721,24 +3721,36 @@ msgid "&Disable"
 msgstr "&Desativar"
 
 #: dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Reiniciar"
+
+#: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Habilitar"
 
-#: dlls/joy.cpl/joy.rc:42
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "Edit Override"
+msgid "&Override"
+msgstr "Editar Substituição"
+
+#: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Conectado"
 
-#: dlls/joy.cpl/joy.rc:44
+#: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
 msgid "Connected (xinput device)"
 msgstr "Entrada de voz:"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
 msgstr "Desativado"
 
-#: dlls/joy.cpl/joy.rc:48
+#: dlls/joy.cpl/joy.rc:50
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3746,23 +3758,23 @@ msgstr ""
 "Depois de habilitar/desabilitar um dispositivo, os controles conectados não "
 "serão atualizados até que o applet seja reaberto."
 
-#: dlls/joy.cpl/joy.rc:53
+#: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
 msgstr "Testar Controle"
 
-#: dlls/joy.cpl/joy.rc:57
+#: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
 msgstr "Botões"
 
-#: dlls/joy.cpl/joy.rc:66
+#: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
 msgstr "Testar Force Feedback"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
 msgstr "Efeitos Disponíveis"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:74
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

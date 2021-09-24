@@ -785,7 +785,7 @@ msgstr "Geheel &woord"
 msgid "Match &Case"
 msgstr "Gelijke &hoofd-/kleine letters"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
 msgstr "Zoekrichting"
 
@@ -3722,24 +3722,36 @@ msgid "&Disable"
 msgstr "&Uitzetten"
 
 #: dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Terugzetten"
+
+#: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "Activ&eren"
 
-#: dlls/joy.cpl/joy.rc:42
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "Edit Override"
+msgid "&Override"
+msgstr "DLL Bewerken"
+
+#: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Verbonden"
 
-#: dlls/joy.cpl/joy.rc:44
+#: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
 msgid "Connected (xinput device)"
 msgstr "Steminvoer apparaat:"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
 msgstr "Deactiveren"
 
-#: dlls/joy.cpl/joy.rc:48
+#: dlls/joy.cpl/joy.rc:50
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3747,23 +3759,23 @@ msgstr ""
 "Na het uit- of inschakelen van een apparaat zullen de aangesloten joysticks "
 "niet vernieuwd worden totdat u deze applet herstart."
 
-#: dlls/joy.cpl/joy.rc:53
+#: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
 msgstr "Joystick testen"
 
-#: dlls/joy.cpl/joy.rc:57
+#: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
 msgstr "Knoppen"
 
-#: dlls/joy.cpl/joy.rc:66
+#: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
 msgstr "Force Feedback Testen"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
 msgstr "Beschikbare effecten"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:74
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

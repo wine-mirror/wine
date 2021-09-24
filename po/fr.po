@@ -800,7 +800,7 @@ msgstr "Mots &entiers seulement"
 msgid "Match &Case"
 msgstr "Respecter la &casse"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
 msgstr "Direction"
 
@@ -3763,24 +3763,36 @@ msgid "&Disable"
 msgstr "&Désactiver"
 
 #: dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Réinitialiser"
+
+#: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Activer"
 
-#: dlls/joy.cpl/joy.rc:42
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "Edit Override"
+msgid "&Override"
+msgstr "Éditer le remplacement"
+
+#: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Connecté"
 
-#: dlls/joy.cpl/joy.rc:44
+#: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
 msgid "Connected (xinput device)"
 msgstr "Périphérique d'entrée voix :"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
 msgstr "Désactivé"
 
-#: dlls/joy.cpl/joy.rc:48
+#: dlls/joy.cpl/joy.rc:50
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3789,23 +3801,23 @@ msgstr ""
 "joysticks connectés ne sera pas mise à jour à moins de redémarrer cette "
 "applet."
 
-#: dlls/joy.cpl/joy.rc:53
+#: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
 msgstr "Tester le joystick"
 
-#: dlls/joy.cpl/joy.rc:57
+#: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
 msgstr "Boutons"
 
-#: dlls/joy.cpl/joy.rc:66
+#: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
 msgstr "Tester le retour de force"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
 msgstr "Effets disponibles"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:74
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

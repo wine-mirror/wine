@@ -272,6 +272,21 @@ static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
     if (appkey) RegCloseKey(appkey);
 }
 
+static void override_joystick(WCHAR *joy_name, BOOL override)
+{
+    HKEY hkey, appkey;
+
+    get_app_key(&hkey, &appkey);
+
+    if (override)
+        set_config_key(hkey, appkey, joy_name, L"override", wcslen(L"override"));
+    else
+        set_config_key(hkey, appkey, joy_name, NULL, 0);
+
+    if (hkey) RegCloseKey(hkey);
+    if (appkey) RegCloseKey(appkey);
+}
+
 /*********************************************************************
  * list_dlgproc [internal]
  *
@@ -293,6 +308,8 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
 
             /* Store the hwnd to be used with MapDialogRect for unit conversions */
             data->graphics.hwnd = hwnd;
@@ -332,11 +349,35 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                 }
                 break;
 
+                case IDC_BUTTONRESET:
+                {
+                    if ((sel = SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETCURSEL, 0, 0)) >= 0)
+                    {
+                        SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
+                        override_joystick(instance_name, FALSE);
+                        refresh_joystick_list(hwnd, data);
+                    }
+                }
+                break;
+
+                case IDC_BUTTONOVERRIDE:
+                {
+                    if ((sel = SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETCURSEL, 0, 0)) >= 0)
+                    {
+                        SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
+                        override_joystick(instance_name, TRUE);
+                        refresh_joystick_list(hwnd, data);
+                    }
+                }
+                break;
+
                 case IDC_JOYSTICKLIST:
                     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_SETCURSEL, -1, 0);
                     SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_SETCURSEL, -1, 0);
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), TRUE);
+                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
+                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), TRUE);
                 break;
 
                 case IDC_XINPUTLIST:
@@ -344,6 +385,8 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_SETCURSEL, -1, 0);
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), TRUE);
+                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), TRUE);
+                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
                 break;
 
                 case IDC_DISABLEDLIST:
@@ -351,6 +394,8 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_SETCURSEL, -1, 0);
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), TRUE);
                     EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), FALSE);
+                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
+                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
                 break;
             }
 

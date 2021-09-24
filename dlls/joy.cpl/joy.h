@@ -42,6 +42,7 @@ struct Joystick {
     int num_axes;
     BOOL forcefeedback;
     BOOL is_xinput;
+    BOOL has_override;
     int num_effects;
     int cur_effect;
     int chosen_effect;
@@ -87,6 +88,8 @@ struct JoystickData {
 #define IDC_XINPUTLIST      2002
 #define IDC_BUTTONDISABLE   2010
 #define IDC_BUTTONENABLE    2011
+#define IDC_BUTTONRESET     2012
+#define IDC_BUTTONOVERRIDE  2013
 
 #define IDC_TESTSELECTCOMBO 2100
 #define IDC_TESTGROUPXY     2101

@@ -792,7 +792,7 @@ msgstr "Troba només &paraules completes"
 msgid "Match &Case"
 msgstr "&Distingeix entre majúscules i minúscules"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
 msgstr "Direcció"
 
@@ -3731,24 +3731,36 @@ msgid "&Disable"
 msgstr "&Inhabilita"
 
 #: dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Reinicia"
+
+#: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "&Habilita"
 
-#: dlls/joy.cpl/joy.rc:42
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "Edit Override"
+msgid "&Override"
+msgstr "Edita reemplaçament"
+
+#: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Connectat"
 
-#: dlls/joy.cpl/joy.rc:44
+#: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
 msgid "Connected (xinput device)"
 msgstr "Dispositiu d'entrada de veu:"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
 msgstr "Inhabilitat"
 
-#: dlls/joy.cpl/joy.rc:48
+#: dlls/joy.cpl/joy.rc:50
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3756,23 +3768,23 @@ msgstr ""
 "Després d'inhabilitar o habilitar un dispositiu, no s'actualitzaran aquí les "
 "palanques de control connectades fins que reinicieu aquesta miniaplicació."
 
-#: dlls/joy.cpl/joy.rc:53
+#: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
 msgstr "Prova de palanca de control"
 
-#: dlls/joy.cpl/joy.rc:57
+#: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
 msgstr "Botons"
 
-#: dlls/joy.cpl/joy.rc:66
+#: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
 msgstr "Prova de retroacció de força"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
 msgstr "Efectes disponibles"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:74
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

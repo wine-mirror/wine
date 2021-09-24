@@ -37,7 +37,9 @@ CAPTION "Joysticks"
 FONT 8, "Ms Shell Dlg"
 {
     PUSHBUTTON      "&Disable", IDC_BUTTONDISABLE, 200, 20, 60, 15
+    PUSHBUTTON      "&Reset", IDC_BUTTONRESET, 200, 40, 60, 15
     PUSHBUTTON      "&Enable", IDC_BUTTONENABLE, 200, 190, 60, 15
+    PUSHBUTTON      "&Override", IDC_BUTTONOVERRIDE, 200, 100, 60, 15
     LTEXT           "Connected", IDC_STATIC, 10, 10, 100, 10
     LISTBOX         IDC_JOYSTICKLIST, 10, 20, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
     LTEXT           "Connected (xinput device)", IDC_STATIC, 10, 90, 100, 10

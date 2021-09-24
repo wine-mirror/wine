@@ -782,7 +782,7 @@ msgstr "Mots &etîrs seulmint"
 msgid "Match &Case"
 msgstr "Rispecter les &madjuscules/minuscules"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
 msgstr "Direccion"
 
@@ -3687,44 +3687,53 @@ msgid "&Disable"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:41
+#, fuzzy
+msgid "&Reset"
+msgstr "&Rifé"
+
+#: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:42
-msgid "Connected"
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Override"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected (xinput device)"
+msgid "Connected"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Disabled"
+msgid "Connected (xinput device)"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:48
+msgid "Disabled"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:50
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:53
+#: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:57
+#: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:66
+#: dlls/joy.cpl/joy.rc:68
 msgid "Test Force Feedback"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid "Available Effects"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:74
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
