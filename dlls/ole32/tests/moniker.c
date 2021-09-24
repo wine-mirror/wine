@@ -127,33 +127,41 @@ static IMoniker *create_antimoniker(DWORD level)
     return moniker;
 }
 
-static HRESULT create_moniker_from_desc(const char *desc, unsigned int *eaten,
+static HRESULT create_moniker_parse_desc(const char *desc, unsigned int *eaten,
         IMoniker **moniker)
 {
+    unsigned int comp_len = 0;
+    WCHAR itemnameW[3] = L"Ix";
     IMoniker *left, *right;
-    WCHAR nameW[3];
     HRESULT hr;
-
-    desc += *eaten;
 
     switch (*desc)
     {
         case 'I':
-            nameW[0] = desc[0];
-            nameW[1] = desc[1];
-            nameW[2] = 0;
-            *eaten += 2;
-            return CreateItemMoniker(L"!", nameW, moniker);
+            itemnameW[1] = desc[1];
+            *eaten = 2;
+            return CreateItemMoniker(L"!", itemnameW, moniker);
         case 'A':
-            *eaten += 2;
+            *eaten = 2;
             *moniker = create_antimoniker(desc[1] - '0');
             return S_OK;
         case 'C':
-            (*eaten)++;
-            hr = create_moniker_from_desc(desc, eaten, &left);
+            *eaten = 1;
+            desc++;
+
+            comp_len = 0;
+            hr = create_moniker_parse_desc(desc, &comp_len, &left);
             ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-            hr = create_moniker_from_desc(desc, eaten, &right);
+
+            *eaten += comp_len;
+            desc += comp_len;
+
+            comp_len = 0;
+            hr = create_moniker_parse_desc(desc, &comp_len, &right);
             ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+            *eaten += comp_len;
+
             hr = CreateGenericComposite(left, right, moniker);
             IMoniker_Release(left);
             IMoniker_Release(right);
@@ -162,6 +170,12 @@ static HRESULT create_moniker_from_desc(const char *desc, unsigned int *eaten,
             ok(0, "Unexpected description %s.\n", desc);
             return E_NOTIMPL;
     }
+}
+
+static HRESULT create_moniker_from_desc(const char *desc, IMoniker **moniker)
+{
+    unsigned int eaten = 0;
+    return create_moniker_parse_desc(desc, &eaten, moniker);
 }
 
 static SIZE_T round_global_size(SIZE_T size)
@@ -2642,8 +2656,7 @@ todo_wine
 
     /* Simplification has to through generic composite logic,
        even when resolved to non-composite, generic composite option has to be enabled. */
-    eaten = 0;
-    hr = create_moniker_from_desc("CA1A3", &eaten, &c);
+    hr = create_moniker_from_desc("CA1A3", &c);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
     ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
@@ -2972,7 +2985,6 @@ static void test_generic_composite_moniker(void)
     IMoniker *moniker, *inverse, *moniker1, *moniker2;
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
-    unsigned int eaten, i;
     DWORD hash, cookie;
     HRESULT hr;
     IBindCtx *bindctx;
@@ -2981,6 +2993,7 @@ static void test_generic_composite_moniker(void)
     IROTData *rotdata;
     IMarshal *marshal;
     IStream *stream;
+    unsigned int i;
     FILETIME ft;
     WCHAR *str;
     ULONG len;
@@ -2991,16 +3004,14 @@ static void test_generic_composite_moniker(void)
     for (i = 0; i < ARRAY_SIZE(simplify_tests); ++i)
     {
         IMoniker *left, *right, *composite = NULL;
-        unsigned int moniker_type, eaten;
+        unsigned int moniker_type;
         WCHAR *name;
 
         winetest_push_context("simplify[%u]", i);
 
-        eaten = 0;
-        hr = create_moniker_from_desc(simplify_tests[i].left, &eaten, &left);
+        hr = create_moniker_from_desc(simplify_tests[i].left, &left);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-        eaten = 0;
-        hr = create_moniker_from_desc(simplify_tests[i].right, &eaten, &right);
+        hr = create_moniker_from_desc(simplify_tests[i].right, &right);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = CreateGenericComposite(left, right, &composite);
         ok(hr == S_OK, "Failed to create a composite, hr %#x.\n", hr);
@@ -3162,12 +3173,10 @@ todo_wine
     IMoniker_Release(moniker);
 
     /* GetTimeOfLastChange() */
-    eaten = 0;
-    hr = create_moniker_from_desc("CI1I2", &eaten, &moniker);
+    hr = create_moniker_from_desc("CI1I2", &moniker);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    eaten = 0;
-    hr = create_moniker_from_desc("I1", &eaten, &moniker1);
+    hr = create_moniker_from_desc("I1", &moniker1);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* See if non-generic composition is possible */
@@ -3224,7 +3233,6 @@ static void test_pointer_moniker(void)
     IStream *stream;
     IROTData *rotdata;
     LPOLESTR display_name;
-    unsigned int eaten;
     IMarshal *marshal;
     LARGE_INTEGER pos;
     CLSID clsid;
@@ -3417,8 +3425,7 @@ static void test_pointer_moniker(void)
        even when resolved to non-composite, generic composite option has to be enabled. */
 
     /* P + (A,A3) -> A3 */
-    eaten = 0;
-    hr = create_moniker_from_desc("CA1A3", &eaten, &c);
+    hr = create_moniker_from_desc("CA1A3", &c);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
     ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
@@ -3432,8 +3439,7 @@ static void test_pointer_moniker(void)
     IMoniker_Release(c);
 
     /* P + (A,I) -> I */
-    eaten = 0;
-    hr = create_moniker_from_desc("CA1I1", &eaten, &c);
+    hr = create_moniker_from_desc("CA1I1", &c);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
     ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
