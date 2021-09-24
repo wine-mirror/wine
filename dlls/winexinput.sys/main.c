@@ -323,14 +323,14 @@ struct device_strings
 
 static const struct device_strings device_strings[] =
 {
-    { .id = L"VID_045E&PID_028E&IG_00", .product = L"Controller (XBOX 360 For Windows)" },
-    { .id = L"VID_045E&PID_028F&IG_00", .product = L"Controller (XBOX 360 For Windows)" },
-    { .id = L"VID_045E&PID_02D1&IG_00", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02DD&IG_00", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02E3&IG_00", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02EA&IG_00", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02FD&IG_00", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_0719&IG_00", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_028E", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_028F", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_02D1", .product = L"Controller (XBOX One For Windows)" },
+    { .id = L"VID_045E&PID_02DD", .product = L"Controller (XBOX One For Windows)" },
+    { .id = L"VID_045E&PID_02E3", .product = L"Controller (XBOX One For Windows)" },
+    { .id = L"VID_045E&PID_02EA", .product = L"Controller (XBOX One For Windows)" },
+    { .id = L"VID_045E&PID_02FD", .product = L"Controller (XBOX One For Windows)" },
+    { .id = L"VID_045E&PID_0719", .product = L"Controller (XBOX 360 For Windows)" },
 };
 
 static const WCHAR *find_product_string(const WCHAR *device_id)
@@ -339,7 +339,7 @@ static const WCHAR *find_product_string(const WCHAR *device_id)
     DWORD i;
 
     for (i = 0; i < ARRAY_SIZE(device_strings); ++i)
-        if (!wcsicmp(device_strings[i].id, match_id))
+        if (!wcsnicmp(device_strings[i].id, match_id, 17))
             return device_strings[i].product;
 
     return NULL;
@@ -459,7 +459,7 @@ static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
     TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
 
     if (code == IOCTL_HID_READ_REPORT) return try_complete_pending_read(device, irp);
-    if (impl->is_gamepad) return gamepad_internal_ioctl(device, irp);
+    if (impl->is_gamepad || code == IOCTL_HID_GET_STRING) return gamepad_internal_ioctl(device, irp);
 
     IoSkipCurrentIrpStackLocation(irp);
     return IoCallDriver(fdo->bus_device, irp);
