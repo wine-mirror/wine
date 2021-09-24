@@ -241,80 +241,23 @@ PointerMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
 
     return MK_S_REDUCED_TO_SELF;
 }
-/******************************************************************************
- *        PointerMoniker_ComposeWith
- ******************************************************************************/
-static HRESULT WINAPI
-PointerMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
-                            BOOL fOnlyIfNotGeneric, IMoniker** ppmkComposite)
+
+static HRESULT WINAPI PointerMonikerImpl_ComposeWith(IMoniker *iface, IMoniker *right,
+        BOOL only_if_not_generic, IMoniker **result)
 {
+    DWORD order;
 
-    HRESULT res=S_OK;
-    DWORD mkSys,mkSys2, order;
-    IEnumMoniker* penumMk=0;
-    IMoniker *pmostLeftMk=0;
-    IMoniker* tempMkComposite=0;
+    TRACE("%p, %p, %d, %p.\n", iface, right, only_if_not_generic, result);
 
-    TRACE("(%p,%d,%p)\n", pmkRight, fOnlyIfNotGeneric, ppmkComposite);
+    if (!result || !right)
+        return E_POINTER;
 
-    if ((ppmkComposite==NULL)||(pmkRight==NULL))
-	return E_POINTER;
+    *result = NULL;
 
-    *ppmkComposite=0;
+    if (is_anti_moniker(right, &order))
+        return order > 1 ? create_anti_moniker(order - 1, result) : S_OK;
 
-    if (is_anti_moniker(pmkRight, &order))
-    {
-        return order > 1 ? create_anti_moniker(order - 1, ppmkComposite) : S_OK;
-    }
-    else
-    {
-        /* if pmkRight is a composite whose leftmost component is an anti-moniker,           */
-        /* the returned moniker is the composite after the leftmost anti-moniker is removed. */
-        IMoniker_IsSystemMoniker(pmkRight,&mkSys);
-
-         if(mkSys==MKSYS_GENERICCOMPOSITE){
-
-            res=IMoniker_Enum(pmkRight,TRUE,&penumMk);
-
-            if (FAILED(res))
-                return res;
-
-            res=IEnumMoniker_Next(penumMk,1,&pmostLeftMk,NULL);
-
-            IMoniker_IsSystemMoniker(pmostLeftMk,&mkSys2);
-
-            if(mkSys2==MKSYS_ANTIMONIKER){
-
-                IMoniker_Release(pmostLeftMk);
-
-                tempMkComposite=iface;
-                IMoniker_AddRef(iface);
-
-                while(IEnumMoniker_Next(penumMk,1,&pmostLeftMk,NULL)==S_OK){
-
-                    res=CreateGenericComposite(tempMkComposite,pmostLeftMk,ppmkComposite);
-
-                    IMoniker_Release(tempMkComposite);
-                    IMoniker_Release(pmostLeftMk);
-
-                    tempMkComposite=*ppmkComposite;
-                    IMoniker_AddRef(tempMkComposite);
-                }
-                return res;
-            }
-            else
-                return CreateGenericComposite(iface,pmkRight,ppmkComposite);
-         }
-         /* If pmkRight is not an anti-moniker, the method combines the two monikers into a generic
-          composite if fOnlyIfNotGeneric is FALSE; if fOnlyIfNotGeneric is TRUE, the method returns
-          a NULL moniker and a return value of MK_E_NEEDGENERIC */
-          else
-            if (!fOnlyIfNotGeneric)
-                return CreateGenericComposite(iface,pmkRight,ppmkComposite);
-
-            else
-                return MK_E_NEEDGENERIC;
-    }
+    return only_if_not_generic ? MK_E_NEEDGENERIC : CreateGenericComposite(iface, right, result);
 }
 
 /******************************************************************************

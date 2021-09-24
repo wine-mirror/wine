@@ -3213,7 +3213,7 @@ todo_wine
 
 static void test_pointer_moniker(void)
 {
-    IMoniker *moniker, *moniker2, *prefix, *inverse, *anti;
+    IMoniker *moniker, *moniker2, *prefix, *inverse, *anti, *c;
     struct test_factory factory;
     IEnumMoniker *enummoniker;
     DWORD hash, size;
@@ -3224,6 +3224,7 @@ static void test_pointer_moniker(void)
     IStream *stream;
     IROTData *rotdata;
     LPOLESTR display_name;
+    unsigned int eaten;
     IMarshal *marshal;
     LARGE_INTEGER pos;
     CLSID clsid;
@@ -3411,6 +3412,36 @@ static void test_pointer_moniker(void)
     IMoniker_Release(moniker2);
 
     IMoniker_Release(anti);
+
+    /* Simplification has to through generic composite logic,
+       even when resolved to non-composite, generic composite option has to be enabled. */
+
+    /* P + (A,A3) -> A3 */
+    eaten = 0;
+    hr = create_moniker_from_desc("CA1A3", &eaten, &c);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, FALSE, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_ANTIMONIKER);
+    hr = IMoniker_Hash(moniker2, &hash);
+    ok(hr == S_OK, "Failed to get hash, hr %#x.\n", hr);
+    ok(hash == 0x80000003, "Unexpected hash.\n");
+    IMoniker_Release(moniker2);
+    IMoniker_Release(c);
+
+    /* P + (A,I) -> I */
+    eaten = 0;
+    hr = create_moniker_from_desc("CA1I1", &eaten, &c);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, FALSE, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_ITEMMONIKER);
+    IMoniker_Release(moniker2);
+    IMoniker_Release(c);
 
     IMoniker_Release(moniker);
 }
