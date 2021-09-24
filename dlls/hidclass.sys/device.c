@@ -116,9 +116,10 @@ static struct hid_report_queue *hid_report_queue_create( void )
     return queue;
 }
 
-static void hid_report_queue_destroy( struct hid_report_queue *queue )
+void hid_report_queue_destroy( struct hid_report_queue *queue )
 {
     while (queue->length--) hid_report_decref( queue->reports[queue->length] );
+    list_remove( &queue->entry );
     free( queue );
 }
 
@@ -654,9 +655,21 @@ NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     struct hid_report_queue *queue;
+    BOOL removed;
     KIRQL irql;
 
     TRACE("Open handle on device %p\n", device);
+
+    KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
+    removed = ext->u.pdo.removed;
+    KeReleaseSpinLock( &ext->u.pdo.lock, irql );
+
+    if (removed)
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        return STATUS_DELETE_PENDING;
+    }
 
     if (!(queue = hid_report_queue_create())) irp->IoStatus.Status = STATUS_NO_MEMORY;
     else
@@ -677,9 +690,21 @@ NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp)
 {
     struct hid_report_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    BOOL removed;
     KIRQL irql;
 
     TRACE("Close handle on device %p\n", device);
+
+    KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
+    removed = ext->u.pdo.removed;
+    KeReleaseSpinLock( &ext->u.pdo.lock, irql );
+
+    if (removed)
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        return STATUS_DELETE_PENDING;
+    }
 
     if (queue)
     {

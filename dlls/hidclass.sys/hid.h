@@ -123,7 +123,7 @@ void call_minidriver( ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in
 
 /* Internal device functions */
 void HID_StartDeviceThread(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
-
+void hid_report_queue_destroy( struct hid_report_queue *queue );
 IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext) DECLSPEC_HIDDEN;
 
 NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
