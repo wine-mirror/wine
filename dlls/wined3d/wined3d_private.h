@@ -3942,6 +3942,7 @@ struct wined3d_null_views_vk
     VkDescriptorImageInfo vk_info_1d_array;
     VkDescriptorImageInfo vk_info_2d_array;
     VkDescriptorImageInfo vk_info_2dms_array;
+    VkDescriptorImageInfo vk_info_cube_array;
 };
 
 #define WINED3D_ALLOCATOR_CHUNK_SIZE        (64 * 1024 * 1024)

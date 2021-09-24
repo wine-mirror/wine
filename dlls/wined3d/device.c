@@ -855,9 +855,23 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     v->vk_info_2dms_array.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     TRACE("Created 2D MSAA array image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_2dms_array.imageView));
 
+    view_desc.image = r->image_2d.vk_image;
+    view_desc.subresourceRange.layerCount = 6;
+    view_desc.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+    if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_cube_array.imageView))) < 0)
+    {
+        ERR("Failed to create cube array image view, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+    v->vk_info_cube_array.sampler = VK_NULL_HANDLE;
+    v->vk_info_cube_array.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    TRACE("Created cube array image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_cube_array.imageView));
+
     return true;
 
 fail:
+    if (v->vk_info_cube_array.imageView)
+        VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_cube_array.imageView, NULL));
     if (v->vk_info_2d_array.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_2d_array.imageView, NULL));
     if (v->vk_info_cube.imageView)
@@ -883,6 +897,7 @@ void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk, s
     struct wined3d_null_views_vk *v = &device_vk->null_views_vk;
     uint64_t id = context_vk->current_command_buffer.id;
 
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_cube_array.imageView, id);
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2dms_array.imageView, id);
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2d_array.imageView, id);
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_cube.imageView, id);
