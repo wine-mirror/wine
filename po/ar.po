@@ -790,7 +790,7 @@ msgstr "مطابقة ال&كلمة"
 msgid "Match &Case"
 msgstr "مطابقة ال&حالة"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "الاتجاه"
 
@@ -3739,10 +3739,16 @@ msgid "Connected"
 msgstr "م&تصل"
 
 #: dlls/joy.cpl/joy.rc:44
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "جهاز الإدخال الصوتي:"
+
+#: dlls/joy.cpl/joy.rc:46
 msgid "Disabled"
 msgstr "معطل"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3750,23 +3756,23 @@ msgstr ""
 "بعد تعطيل أو تفعيل جهاز ، مقبض اللعب المتصل لنيتم تحديثه هنا حتى إعادة تشغيل "
 "التطبيق."
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr "اختبار مقبض اللعب"
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr "الأزرار"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr "اختبار الهزّاز"
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 msgid "Available Effects"
 msgstr "المؤثرات المتاحة"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

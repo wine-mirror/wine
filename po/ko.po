@@ -787,7 +787,7 @@ msgstr "단어 단위로(&W)"
 msgid "Match &Case"
 msgstr "대/소문자 구분(&C)"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "방향"
 
@@ -3704,10 +3704,16 @@ msgid "Connected"
 msgstr "연결됨"
 
 #: dlls/joy.cpl/joy.rc:44
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "음성 입력 장치:"
+
+#: dlls/joy.cpl/joy.rc:46
 msgid "Disabled"
 msgstr "불가능"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3715,23 +3721,23 @@ msgstr ""
 "장치를 비활성화하거나 활성화한 후, 이 애플릿을 다시 시작할 때까지 연결된 조이"
 "스틱을 업데이트하지 않습니다."
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr "조이스틱 테스트"
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr "버튼"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr "강제 피드백 테스트"
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 msgid "Available Effects"
 msgstr "사용 가능한 효과"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

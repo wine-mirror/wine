@@ -41,6 +41,7 @@ struct Joystick {
     int num_buttons;
     int num_axes;
     BOOL forcefeedback;
+    BOOL is_xinput;
     int num_effects;
     int cur_effect;
     int chosen_effect;
@@ -82,17 +83,19 @@ struct JoystickData {
 #define IDD_FORCEFEEDBACK   1002
 
 #define IDC_JOYSTICKLIST    2000
-#define IDC_BUTTONDISABLE   2001
-#define IDC_BUTTONENABLE    2002
-#define IDC_DISABLEDLIST    2003
-#define IDC_TESTSELECTCOMBO 2004
-#define IDC_TESTGROUPXY     2005
-#define IDC_TESTGROUPRXRY   2006
-#define IDC_TESTGROUPZRZ    2007
-#define IDC_TESTGROUPPOV    2008
+#define IDC_DISABLEDLIST    2001
+#define IDC_XINPUTLIST      2002
+#define IDC_BUTTONDISABLE   2010
+#define IDC_BUTTONENABLE    2011
 
-#define IDC_FFSELECTCOMBO   2009
-#define IDC_FFEFFECTLIST    2010
+#define IDC_TESTSELECTCOMBO 2100
+#define IDC_TESTGROUPXY     2101
+#define IDC_TESTGROUPRXRY   2102
+#define IDC_TESTGROUPZRZ    2103
+#define IDC_TESTGROUPPOV    2104
+
+#define IDC_FFSELECTCOMBO   2200
+#define IDC_FFEFFECTLIST    2201
 
 #define ICO_MAIN            100
 

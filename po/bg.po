@@ -801,7 +801,7 @@ msgstr "&Само цели думи"
 msgid "Match &Case"
 msgstr "&Чувствителен регистър"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "Посока"
 
@@ -3754,35 +3754,39 @@ msgid "Connected"
 msgstr "Файлът не е намерен"
 
 #: dlls/joy.cpl/joy.rc:44
+msgid "Connected (xinput device)"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "&Disable"
 msgid "Disabled"
 msgstr "&Забрани"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 #, fuzzy
 msgid "Available Effects"
 msgstr "На&пред"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

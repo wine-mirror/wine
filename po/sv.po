@@ -796,7 +796,7 @@ msgstr "&Bara hela ord"
 msgid "Match &Case"
 msgstr "&Skillnad på stora/små bokstäver"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "Riktning"
 
@@ -3749,10 +3749,16 @@ msgid "Connected"
 msgstr "Ansluten"
 
 #: dlls/joy.cpl/joy.rc:44
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "Ingångsenhet för röster:"
+
+#: dlls/joy.cpl/joy.rc:46
 msgid "Disabled"
 msgstr "Inaktiverad"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3760,23 +3766,23 @@ msgstr ""
 "Efter att ha inaktiverat eller aktiverat en enhet kommer de anslutna "
 "styrspakarna inte att uppdateras här innan du startar om detta miniprogram."
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr "Testa joysticken"
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr "Knappar"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr "Testa kraftåterkoppling"
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 msgid "Available Effects"
 msgstr "Tillgängliga effekter"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

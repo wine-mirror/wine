@@ -792,7 +792,7 @@ msgstr "Troba només &paraules completes"
 msgid "Match &Case"
 msgstr "&Distingeix entre majúscules i minúscules"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "Direcció"
 
@@ -3739,10 +3739,16 @@ msgid "Connected"
 msgstr "Connectat"
 
 #: dlls/joy.cpl/joy.rc:44
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "Dispositiu d'entrada de veu:"
+
+#: dlls/joy.cpl/joy.rc:46
 msgid "Disabled"
 msgstr "Inhabilitat"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3750,23 +3756,23 @@ msgstr ""
 "Després d'inhabilitar o habilitar un dispositiu, no s'actualitzaran aquí les "
 "palanques de control connectades fins que reinicieu aquesta miniaplicació."
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr "Prova de palanca de control"
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr "Botons"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr "Prova de retroacció de força"
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 msgid "Available Effects"
 msgstr "Efectes disponibles"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

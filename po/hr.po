@@ -795,7 +795,7 @@ msgstr "Odgovara samo &cijela riječ"
 msgid "Match &Case"
 msgstr "Odgovara &veličina slova"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "Smjer"
 
@@ -3744,10 +3744,16 @@ msgid "Connected"
 msgstr "Povezan"
 
 #: dlls/joy.cpl/joy.rc:44
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "Ulazni uređdaj za glas:"
+
+#: dlls/joy.cpl/joy.rc:46
 msgid "Disabled"
 msgstr "Isključen"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3755,23 +3761,23 @@ msgstr ""
 "Nakon isključivanja ili uključivanja uređaja, povezani joystici neće biti "
 "osvježeni ovdje dok ponovno ne pokrenete ovaj applet."
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr "Isprobaj joystick"
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr "Gumbi"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr "Isprobaj povratnu vezu sile"
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 msgid "Available Effects"
 msgstr "Dostupni efekti"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

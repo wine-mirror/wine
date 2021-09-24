@@ -815,7 +815,7 @@ msgstr "Len &celé slová"
 msgid "Match &Case"
 msgstr "&Rozlišovať malé a veľké písmená"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "Smer"
 
@@ -3700,35 +3700,41 @@ msgstr "Súbor nenájdený"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "Hlasové vstupné zariadenie:"
+
+#: dlls/joy.cpl/joy.rc:46
+#, fuzzy
 #| msgid "&Disable"
 msgid "Disabled"
 msgstr "&Zakázať"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 #, fuzzy
 #| msgid "Available formats"
 msgid "Available Effects"
 msgstr "Dostupné formáty"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

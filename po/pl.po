@@ -788,7 +788,7 @@ msgstr "Uwzględniaj tylko całe &wyrazy"
 msgid "Match &Case"
 msgstr "&Rozróżniaj wielkość liter"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:72
+#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:74
 msgid "Direction"
 msgstr "Kierunek"
 
@@ -3733,10 +3733,16 @@ msgid "Connected"
 msgstr "Włączone"
 
 #: dlls/joy.cpl/joy.rc:44
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (xinput device)"
+msgstr "Urządzenie wejściowe głosu:"
+
+#: dlls/joy.cpl/joy.rc:46
 msgid "Disabled"
 msgstr "Wyłączone"
 
-#: dlls/joy.cpl/joy.rc:46
+#: dlls/joy.cpl/joy.rc:48
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3744,23 +3750,23 @@ msgstr ""
 "Po wyłączeniu lub włączeniu urządzenia, podłączone joysticki nie będą tutaj "
 "uaktualnione do momentu ponownego uruchomienia tego apletu."
 
-#: dlls/joy.cpl/joy.rc:51
+#: dlls/joy.cpl/joy.rc:53
 msgid "Test Joystick"
 msgstr "Próba Joysticka"
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:57
 msgid "Buttons"
 msgstr "Przyciski"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:66
 msgid "Test Force Feedback"
 msgstr "Próba odczucia siły zwrotnej"
 
-#: dlls/joy.cpl/joy.rc:68
+#: dlls/joy.cpl/joy.rc:70
 msgid "Available Effects"
 msgstr "Dostępne efekty"
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:72
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
