@@ -1503,6 +1503,10 @@ static BOOL read_float_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, floa
             out_data[idx] = (INT)value;
             return TRUE;
 
+        case D3D10_SVT_UINT:
+            out_data[idx] = value;
+            return TRUE;
+
         default:
             FIXME("Unhandled in_type %#x.\n", in_type);
             return FALSE;
