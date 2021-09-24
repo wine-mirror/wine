@@ -1830,7 +1830,7 @@ static void test_class_moniker(void)
         { L"clsid:{11111111-0000-0000-2222-444444444444", 0, MK_E_SYNTAX },
         { L"clsid:11111111-0000-0000-2222-444444444444}", 43 },
     };
-    IMoniker *moniker, *moniker2, *inverse, *reduced, *anti;
+    IMoniker *moniker, *moniker2, *inverse, *reduced, *anti, *c;
     IEnumMoniker *enummoniker;
     ULONG length, eaten;
     ULARGE_INTEGER size;
@@ -2036,12 +2036,34 @@ todo_wine
     ok(!moniker2, "Unexpected pointer.\n");
     IMoniker_Release(anti);
 
-    /* C + A2 -> A */
+    /* C + A2 -> () */
     anti = create_antimoniker(2);
     hr = IMoniker_ComposeWith(moniker, anti, TRUE, &moniker2);
     ok(hr == S_OK, "Failed to compose, hr %#x.\n", hr);
     ok(!moniker2, "Unexpected pointer.\n");
     IMoniker_Release(anti);
+
+    /* C + (A,I) -> I */
+    hr = create_moniker_from_desc("CA1I1", &c);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, FALSE, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_ITEMMONIKER);
+    IMoniker_Release(moniker2);
+    IMoniker_Release(c);
+
+    /* C + (A2,I) -> I */
+    hr = create_moniker_from_desc("CA1I1", &c);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, TRUE, &moniker2);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_ComposeWith(moniker, c, FALSE, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_ITEMMONIKER);
+    IMoniker_Release(moniker2);
+    IMoniker_Release(c);
 
     IMoniker_Release(moniker);
 }
