@@ -220,8 +220,8 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
 
     pdo_ext = child_pdo->DeviceExtension;
     pdo_ext->u.pdo.parent_fdo = fdo;
-    list_init( &pdo_ext->u.pdo.report_queues );
-    KeInitializeSpinLock( &pdo_ext->u.pdo.report_queues_lock );
+    list_init( &pdo_ext->u.pdo.queues );
+    KeInitializeSpinLock( &pdo_ext->u.pdo.queues_lock );
     wcscpy(pdo_ext->device_id, fdo_ext->device_id);
     wcscpy(pdo_ext->instance_id, fdo_ext->instance_id);
     pdo_ext->class_guid = fdo_ext->class_guid;
@@ -374,7 +374,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     NTSTATUS status = irp->IoStatus.Status;
-    struct hid_report_queue *queue, *next;
+    struct hid_queue *queue, *next;
     KIRQL irql;
 
     TRACE("irp %p, minor function %#x.\n", irp, irpsp->MinorFunction);
@@ -484,10 +484,10 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
             CloseHandle(ext->u.pdo.halt_event);
 
-            KeAcquireSpinLock( &ext->u.pdo.report_queues_lock, &irql );
-            LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.report_queues, struct hid_report_queue, entry )
-                hid_report_queue_destroy( queue );
-            KeReleaseSpinLock( &ext->u.pdo.report_queues_lock, irql );
+            KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
+            LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.queues, struct hid_queue, entry )
+                hid_queue_destroy( queue );
+            KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
 
             HidP_FreeCollectionDescription(&ext->u.pdo.device_desc);
 
@@ -503,10 +503,10 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             ext->u.pdo.removed = TRUE;
             KeReleaseSpinLock(&ext->u.pdo.lock, irql);
 
-            KeAcquireSpinLock( &ext->u.pdo.report_queues_lock, &irql );
-            LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.report_queues, struct hid_report_queue, entry )
-                hid_report_queue_remove_pending_irps( queue );
-            KeReleaseSpinLock( &ext->u.pdo.report_queues_lock, irql );
+            KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
+            LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.queues, struct hid_queue, entry )
+                hid_queue_remove_pending_irps( queue );
+            KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
 
             SetEvent(ext->u.pdo.halt_event);
             status = STATUS_SUCCESS;
