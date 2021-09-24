@@ -2013,7 +2013,7 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
 }
 
 static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
-        const char **ptr, struct d3d10_effect_variable *v)
+        const char **ptr, BOOL local, struct d3d10_effect_variable *v)
 {
     DWORD offset, default_value_offset;
     HRESULT hr;
@@ -2039,17 +2039,20 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
     read_dword(ptr, &v->flag);
     TRACE("Variable flag: %#x.\n", v->flag);
 
-    if (default_value_offset)
-        FIXME("Set default variable value.\n");
-
-    read_dword(ptr, &v->annotation_count);
-    TRACE("Variable has %u annotations.\n", v->annotation_count);
-
-    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, v->effect,
-            v->annotation_count, &v->annotations)))
+    if (local)
     {
-        ERR("Failed to parse variable annotations, hr %#x.\n", hr);
-        return hr;
+        if (default_value_offset)
+            FIXME("Set default variable value.\n");
+
+        read_dword(ptr, &v->annotation_count);
+        TRACE("Variable has %u annotations.\n", v->annotation_count);
+
+        if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, v->effect,
+                v->annotation_count, &v->annotations)))
+        {
+            ERR("Failed to parse variable annotations, hr %#x.\n", hr);
+            return hr;
+        }
     }
 
     if (v->flag & D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
@@ -2313,9 +2316,10 @@ static HRESULT create_variable_buffer(struct d3d10_effect_variable *v, D3D10_CBU
     return S_OK;
 }
 
-static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
-        const char **ptr, struct d3d10_effect_variable *l)
+static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char **ptr,
+        BOOL local, struct d3d10_effect_variable *l)
 {
+    const char *prefix = local ? "Local" : "Shared";
     unsigned int i;
     DWORD offset;
     D3D10_CBUFFER_TYPE d3d10_cbuffer_type;
@@ -2333,20 +2337,20 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     l->type->effect = l->effect;
 
     read_dword(ptr, &offset);
-    TRACE("Local buffer name at offset %#x.\n", offset);
+    TRACE("%s buffer name at offset %#x.\n", prefix, offset);
 
     if (!fx10_copy_string(data, data_size, offset, &l->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
     }
-    TRACE("Local buffer name: %s.\n", debugstr_a(l->name));
+    TRACE("%s buffer name: %s.\n", prefix, debugstr_a(l->name));
 
     read_dword(ptr, &l->data_size);
-    TRACE("Local buffer data size: %#x.\n", l->data_size);
+    TRACE("%s buffer data size: %#x.\n", prefix, l->data_size);
 
     read_dword(ptr, &d3d10_cbuffer_type);
-    TRACE("Local buffer type: %#x.\n", d3d10_cbuffer_type);
+    TRACE("%s buffer type: %#x.\n", prefix, d3d10_cbuffer_type);
 
     switch(d3d10_cbuffer_type)
     {
@@ -2374,19 +2378,22 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     }
 
     read_dword(ptr, &l->type->member_count);
-    TRACE("Local buffer member count: %#x.\n", l->type->member_count);
+    TRACE("%s buffer member count: %#x.\n", prefix, l->type->member_count);
 
     read_dword(ptr, &l->explicit_bind_point);
-    TRACE("Local buffer explicit bind point: %#x.\n", l->explicit_bind_point);
+    TRACE("%s buffer explicit bind point: %#x.\n", prefix, l->explicit_bind_point);
 
-    read_dword(ptr, &l->annotation_count);
-    TRACE("Local buffer has %u annotations.\n", l->annotation_count);
-
-    if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, l->effect,
-            l->annotation_count, &l->annotations)))
+    if (local)
     {
-        ERR("Failed to parse buffer annotations, hr %#x.\n", hr);
-        return hr;
+        read_dword(ptr, &l->annotation_count);
+        TRACE("Local buffer has %u annotations.\n", l->annotation_count);
+
+        if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, l->effect,
+                l->annotation_count, &l->annotations)))
+        {
+            ERR("Failed to parse buffer annotations, hr %#x.\n", hr);
+            return hr;
+        }
     }
 
     if (!(l->members = heap_calloc(l->type->member_count, sizeof(*l->members))))
@@ -2409,7 +2416,7 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
         v->buffer = l;
         v->effect = l->effect;
 
-        if (FAILED(hr = parse_fx10_numeric_variable(data, data_size, ptr, v)))
+        if (FAILED(hr = parse_fx10_numeric_variable(data, data_size, ptr, local, v)))
             return hr;
 
         /*
@@ -2480,7 +2487,7 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     }
     l->type->stride = l->type->size_unpacked = (stride + 0xf) & ~0xf;
 
-    TRACE("Constant buffer:\n");
+    TRACE("%s constant buffer:\n", prefix);
     TRACE("\tType name: %s.\n", debugstr_a(l->type->name));
     TRACE("\tElement count: %u.\n", l->type->element_count);
     TRACE("\tMember count: %u.\n", l->type->member_count);
@@ -2490,7 +2497,7 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     TRACE("\tBasetype: %s.\n", debug_d3d10_shader_variable_type(l->type->basetype));
     TRACE("\tTypeclass: %s.\n", debug_d3d10_shader_variable_class(l->type->type_class));
 
-    if (l->type->size_unpacked)
+    if (local && l->type->size_unpacked)
     {
         if (FAILED(hr = create_variable_buffer(l, d3d10_cbuffer_type)))
             return hr;
@@ -2565,7 +2572,18 @@ static BOOL d3d10_effect_types_match(const struct d3d10_effect_type *t1,
 static HRESULT d3d10_effect_validate_shared_variable(const struct d3d10_effect *effect,
         const struct d3d10_effect_variable *v)
 {
-    ID3D10EffectVariable *sv = effect->pool->lpVtbl->GetVariableByName(effect->pool, v->name);
+    ID3D10EffectVariable *sv;
+
+    switch (v->type->basetype)
+    {
+        case D3D10_SVT_CBUFFER:
+        case D3D10_SVT_TBUFFER:
+            sv = (ID3D10EffectVariable *)effect->pool->lpVtbl->GetConstantBufferByName(
+                    effect->pool, v->name);
+            break;
+        default:
+            sv = effect->pool->lpVtbl->GetVariableByName(effect->pool, v->name);
+    }
 
     if (!sv->lpVtbl->IsValid(sv))
     {
@@ -2632,7 +2650,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         l->effect = e;
         l->buffer = &null_local_buffer;
 
-        if (FAILED(hr = parse_fx10_local_buffer(data, data_size, &ptr, l)))
+        if (FAILED(hr = parse_fx10_buffer(data, data_size, &ptr, TRUE, l)))
             return hr;
     }
 
@@ -2646,6 +2664,23 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
 
         if (FAILED(hr = parse_fx10_object_variable(data, data_size, &ptr, FALSE, v)))
             return hr;
+    }
+
+    for (i = 0; i < e->shared_buffer_count; ++i)
+    {
+        struct d3d10_effect_variable b = { 0 };
+
+        b.effect = e;
+
+        if (FAILED(hr = parse_fx10_buffer(data, data_size, &ptr, FALSE, &b)))
+        {
+            d3d10_effect_variable_destroy(&b);
+            return hr;
+        }
+
+        hr = d3d10_effect_validate_shared_variable(e, &b);
+        d3d10_effect_variable_destroy(&b);
+        if (FAILED(hr)) return hr;
     }
 
     for (i = 0; i < e->shared_object_count; ++i)
@@ -2703,8 +2738,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->local_variable_count);
     TRACE("Object count: %u\n", e->local_variable_count);
 
-    read_dword(&ptr, &e->sharedbuffers_count);
-    TRACE("Pool buffer count: %u\n", e->sharedbuffers_count);
+    read_dword(&ptr, &e->shared_buffer_count);
+    TRACE("Pool buffer count: %u\n", e->shared_buffer_count);
 
     read_dword(&ptr, &unused);
     TRACE("Pool variable count: %u\n", unused);
@@ -2748,7 +2783,7 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->anonymous_shader_count);
     TRACE("Anonymous shader count: %u\n", e->anonymous_shader_count);
 
-    if (!e->pool && e->shared_object_count)
+    if (!e->pool && (e->shared_object_count || e->shared_buffer_count))
     {
         WARN("Effect requires a pool to load.\n");
         return E_FAIL;
