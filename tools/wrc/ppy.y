@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "utils.h"
 #include "wpp_private.h"
 
 
@@ -270,27 +271,23 @@ preprocessor
 	| tMACRO res_arg allmargs tMACROEND opt_mtexts tNL	{
 		pp_add_macro($1, macro_args, nmacro_args, $5);
 		}
-	| tLINE tSINT tDQSTRING	tNL	{ if($3) pp_writestring("# %d %s\n", $2 , $3); free($3); }
-	| tGCCLINE tSINT tDQSTRING tNL	{ if($3) pp_writestring("# %d %s\n", $2 , $3); free($3); }
+	| tLINE tSINT tDQSTRING	tNL	{ if($3) fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
+	| tGCCLINE tSINT tDQSTRING tNL	{ if($3) fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tNL
-		{ if($3) pp_writestring("# %d %s %d\n", $2, $3, $4); free($3); }
+	        { if($3) fprintf(ppy_out, "# %d %s %d\n", $2, $3, $4); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tNL
-		{ if($3) pp_writestring("# %d %s %d %d\n", $2 ,$3, $4, $5); free($3); }
+		{ if($3) fprintf(ppy_out, "# %d %s %d %d\n", $2 ,$3, $4, $5); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT  tNL
-		{ if($3) pp_writestring("# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
+	        { if($3) fprintf(ppy_out, "# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT tSINT tNL
-		{ if($3) pp_writestring("# %d %s %d %d %d %d\n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
+		{ if($3) fprintf(ppy_out, "# %d %s %d %d %d %d\n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ ppy_error("#error directive: '%s'", $2); free($2); }
 	| tWARNING opt_text tNL	{ ppy_warning("#warning directive: '%s'", $2); free($2); }
-	| tPRAGMA opt_text tNL	{ pp_writestring("#pragma %s\n", $2 ? $2 : ""); free($2); }
+	| tPRAGMA opt_text tNL	{ fprintf(ppy_out, "#pragma %s\n", $2 ? $2 : ""); free($2); }
 	| tPPIDENT opt_text tNL	{ if(pp_status.pedantic) ppy_warning("#ident ignored (arg: '%s')", $2); free($2); }
         | tRCINCLUDE tRCINCLUDEPATH {
-                int nl=strlen($2) +3;
-                char *fn=pp_xmalloc(nl);
-                sprintf(fn,"\"%s\"",$2);
-                pp_do_include(fn,1);
-                free($2);
+                pp_do_include(strmake( "\"%s\"", $2 ),1);
 	}
 	| tRCINCLUDE tDQSTRING {
 		pp_do_include($2,1);
@@ -538,8 +535,8 @@ static int boolean(cval_t *v)
 static char *add_new_marg(char *str)
 {
 	char *ma;
-	macro_args = pp_xrealloc(macro_args, (nmacro_args+1) * sizeof(macro_args[0]));
-	macro_args[nmacro_args++] = ma = pp_xstrdup(str);
+	macro_args = xrealloc(macro_args, (nmacro_args+1) * sizeof(macro_args[0]));
+	macro_args[nmacro_args++] = ma = xstrdup(str);
 	return ma;
 }
 
@@ -558,7 +555,7 @@ static int marg_index(char *id)
 
 static mtext_t *new_mtext(char *str, int idx, def_exp_t type)
 {
-	mtext_t *mt = pp_xmalloc(sizeof(mtext_t));
+	mtext_t *mt = xmalloc(sizeof(mtext_t));
 
 	if(str == NULL)
 		mt->subst.argidx = idx;
@@ -579,7 +576,7 @@ static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp)
 
 	if(tail->type == exp_text && mtp->type == exp_text)
 	{
-		tail->subst.text = pp_xrealloc(tail->subst.text, strlen(tail->subst.text)+strlen(mtp->subst.text)+1);
+		tail->subst.text = xrealloc(tail->subst.text, strlen(tail->subst.text)+strlen(mtp->subst.text)+1);
 		strcat(tail->subst.text, mtp->subst.text);
 		free(mtp->subst.text);
 		free(mtp);
@@ -645,7 +642,7 @@ static char *merge_text(char *s1, char *s2)
 {
 	int l1 = strlen(s1);
 	int l2 = strlen(s2);
-	s1 = pp_xrealloc(s1, l1+l2+1);
+	s1 = xrealloc(s1, l1+l2+1);
 	memcpy(s1+l1, s2, l2+1);
 	free(s2);
 	return s1;

@@ -34,6 +34,7 @@
 # include <unistd.h>
 #endif
 
+#include "utils.h"
 #include "wpp_private.h"
 
 struct pp_status pp_status;
@@ -57,42 +58,8 @@ struct define
 
 static struct list cmdline_defines = LIST_INIT( cmdline_defines );
 
-void *pp_xmalloc(size_t size)
-{
-    void *res;
-
-    assert(size > 0);
-    res = malloc(size);
-    if(res == NULL)
-    {
-        fprintf( stderr, "Virtual memory exhausted\n" );
-        exit(1);
-    }
-    return res;
-}
-
-void *pp_xrealloc(void *p, size_t size)
-{
-    void *res;
-
-    assert(size > 0);
-    res = realloc(p, size);
-    if(res == NULL)
-    {
-        fprintf( stderr, "Virtual memory exhausted\n" );
-        exit(1);
-    }
-    return res;
-}
-
-char *pp_xstrdup(const char *str)
-{
-	int len = strlen(str)+1;
-	return memcpy(pp_xmalloc(len), str, len);
-}
-
-char *wpp_lookup(const char *name, int type, const char *parent_name,
-                 char **include_path, int include_path_count)
+static char *wpp_lookup(const char *name, int type, const char *parent_name,
+                        char **include_path, int include_path_count)
 {
     char *cpy;
     char *cptr;
@@ -100,7 +67,7 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
     const char *ccptr;
     int i, fd;
 
-    cpy = pp_xmalloc(strlen(name)+1);
+    cpy = xmalloc(strlen(name)+1);
     cptr = cpy;
 
     for(ccptr = name; *ccptr; ccptr++)
@@ -125,7 +92,7 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
 
         if ((p = strrchr( parent_name, '/' ))) p++;
         else p = parent_name;
-        path = pp_xmalloc( (p - parent_name) + strlen(cpy) + 1 );
+        path = xmalloc( (p - parent_name) + strlen(cpy) + 1 );
         memcpy( path, parent_name, p - parent_name );
         strcpy( path + (p - parent_name), cpy );
         fd = open( path, O_RDONLY );
@@ -140,10 +107,7 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
     /* Search -I path */
     for(i = 0; i < include_path_count; i++)
     {
-        path = pp_xmalloc(strlen(include_path[i]) + strlen(cpy) + 2);
-        strcpy(path, include_path[i]);
-        strcat(path, "/");
-        strcat(path, cpy);
+        path = strmake("%s/%s", include_path[i], cpy);
         fd = open( path, O_RDONLY );
         if (fd != -1)
         {
@@ -195,7 +159,7 @@ static void free_pp_entry( pp_entry_t *ppp, int idx )
 }
 
 /* initialize the define state */
-void pp_init_define_state(void)
+static void pp_init_define_state(void)
 {
     int i;
 
@@ -203,7 +167,7 @@ void pp_init_define_state(void)
 }
 
 /* free the current define state */
-void pp_free_define_state(void)
+static void pp_free_define_state(void)
 {
     int i;
     pp_entry_t *ppp, *ppp2;
@@ -255,12 +219,12 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 			ppy_warning("Redefinition of %s\n\tPrevious definition: %s:%d", def, ppp->filename, ppp->linenumber);
 		pp_del_define(def);
 	}
-	ppp = pp_xmalloc(sizeof(pp_entry_t));
+	ppp = xmalloc(sizeof(pp_entry_t));
 	memset( ppp, 0, sizeof(*ppp) );
-	ppp->ident = pp_xstrdup(def);
+	ppp->ident = xstrdup(def);
 	ppp->type = def_define;
-	ppp->subst.text = text ? pp_xstrdup(text) : NULL;
-	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
+	ppp->subst.text = text ? xstrdup(text) : NULL;
+	ppp->filename = xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
         list_add_head( &pp_defines[idx], &ppp->entry );
 	if(ppp->subst.text)
@@ -295,14 +259,14 @@ pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, mtext_t *exp)
 			ppy_warning("Redefinition of %s\n\tPrevious definition: %s:%d", id, ppp->filename, ppp->linenumber);
 		pp_del_define(id);
 	}
-	ppp = pp_xmalloc(sizeof(pp_entry_t));
+	ppp = xmalloc(sizeof(pp_entry_t));
 	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident	= id;
 	ppp->type	= def_macro;
 	ppp->margs	= args;
 	ppp->nargs	= nargs;
 	ppp->subst.mtext= exp;
-	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
+	ppp->filename = xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
         list_add_head( &pp_defines[idx], &ppp->entry );
 	if(pp_status.debug)
@@ -349,7 +313,7 @@ static int nincludepath = 0;
 void wpp_add_include_path(const char *path)
 {
 	char *tok;
-	char *cpy = pp_xstrdup(path);
+	char *cpy = xstrdup(path);
 
 	tok = strtok(cpy, INCLUDESEPARATOR);
 	while(tok)
@@ -358,7 +322,7 @@ void wpp_add_include_path(const char *path)
 			char *dir;
 			char *cptr;
 
-			dir = pp_xstrdup(tok);
+			dir = xstrdup(tok);
 			for(cptr = dir; *cptr; cptr++)
 			{
 				/* Convert to forward slash */
@@ -370,7 +334,7 @@ void wpp_add_include_path(const char *path)
 				*cptr = '\0';
 
 			/* Add to list */
-			includepath = pp_xrealloc(includepath, (nincludepath+1) * sizeof(*includepath));
+			includepath = xrealloc(includepath, (nincludepath+1) * sizeof(*includepath));
 			includepath[nincludepath] = dir;
 			nincludepath++;
 		}
@@ -633,14 +597,14 @@ static void wpp_add_define( const char *name, const char *value )
         if (!strcmp( def->name, name ))
         {
             free( def->value );
-            def->value = pp_xstrdup(value);
+            def->value = xstrdup(value);
             return;
         }
     }
 
-    def = pp_xmalloc( sizeof(*def) );
-    def->name  = pp_xstrdup(name);
-    def->value = pp_xstrdup(value);
+    def = xmalloc( sizeof(*def) );
+    def->name  = xstrdup(name);
+    def->value = xstrdup(value);
     list_add_head( &cmdline_defines, &def->entry );
 }
 
@@ -666,7 +630,7 @@ void wpp_del_define( const char *name )
 void wpp_add_cmdline_define( const char *value )
 {
     char *p;
-    char *str = pp_xstrdup(value);
+    char *str = xstrdup(value);
 
     p = strchr( str, '=' );
     if (p) *p++ = 0;
@@ -708,10 +672,10 @@ int wpp_parse( const char *input, FILE *output )
     else if (!(pp_status.file = fopen(input, "rt")))
         ppy_error("Could not open %s\n", input);
 
-    pp_status.input = input ? pp_xstrdup(input) : NULL;
+    pp_status.input = input ? xstrdup(input) : NULL;
 
     ppy_out = output;
-    pp_writestring("# 1 \"%s\" 1\n", input ? input : "");
+    fprintf(ppy_out, "# 1 \"%s\" 1\n", input ? input : "");
 
     ret = ppy_parse();
 
