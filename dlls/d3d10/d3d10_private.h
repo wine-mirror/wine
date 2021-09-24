@@ -256,6 +256,11 @@ struct d3d10_effect_anonymous_shader
     struct d3d10_effect_type type;
 };
 
+enum d3d10_effect_flags
+{
+    D3D10_EFFECT_OPTIMIZED = 0x1,
+};
+
 /* ID3D10Effect */
 struct d3d10_effect
 {
@@ -282,6 +287,7 @@ struct d3d10_effect
     DWORD depthstencilview_count;
     DWORD used_shader_count;
     DWORD anonymous_shader_count;
+    DWORD flags;
 
     DWORD used_shader_current;
     DWORD anonymous_shader_current;

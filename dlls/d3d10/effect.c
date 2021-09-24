@@ -3531,6 +3531,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
 
     FIXME("iface %p semi-stub!\n", iface);
 
+    if (effect->flags & D3D10_EFFECT_OPTIMIZED)
+        return S_OK;
+
     for (i = 0; i < effect->used_shader_count; ++i)
     {
         v = effect->used_shaders[i];
@@ -3561,14 +3564,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_Optimize(ID3D10Effect *iface)
         effect->techniques[i].name = NULL;
     }
 
+    effect->flags |= D3D10_EFFECT_OPTIMIZED;
+
     return S_OK;
 }
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_IsOptimized(ID3D10Effect *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
 
-    return FALSE;
+    TRACE("iface %p.\n", iface);
+
+    return !!(effect->flags & D3D10_EFFECT_OPTIMIZED);
 }
 
 const struct ID3D10EffectVtbl d3d10_effect_vtbl =

@@ -6017,6 +6017,7 @@ static void test_effect_optimize(void)
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
+    BOOL ret;
 
     if (!(device = create_device()))
     {
@@ -6051,8 +6052,14 @@ static void test_effect_optimize(void)
     ok(!!shaderdesc.NumInputSignatureEntries, "Unexpected input signature count.\n");
     ok(!!shaderdesc.NumOutputSignatureEntries, "Unexpected output signature count.\n");
 
+    ret = effect->lpVtbl->IsOptimized(effect);
+    ok(!ret, "Unexpected return value.\n");
+
     hr = effect->lpVtbl->Optimize(effect);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = effect->lpVtbl->IsOptimized(effect);
+    ok(ret, "Unexpected return value.\n");
 
     hr = gs->lpVtbl->GetShaderDesc(gs, 0, &shaderdesc);
     ok(hr == S_OK, "Failed to get shader description, hr %#x.\n", hr);
@@ -6080,6 +6087,10 @@ static void test_effect_optimize(void)
 
     tech = effect->lpVtbl->GetTechniqueByName(effect, "Render");
     ok(!tech->lpVtbl->IsValid(tech), "Unexpected valid technique.\n");
+
+    /* Already optimized */
+    hr = effect->lpVtbl->Optimize(effect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
