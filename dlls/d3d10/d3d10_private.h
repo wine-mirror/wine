@@ -270,7 +270,7 @@ struct d3d10_effect
     DWORD variable_count;
     DWORD local_variable_count;
     DWORD sharedbuffers_count;
-    DWORD sharedobjects_count;
+    DWORD shared_object_count;
     DWORD technique_count;
     DWORD index_offset;
     DWORD texture_count;

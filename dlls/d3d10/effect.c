@@ -50,6 +50,7 @@ static inline struct d3d10_effect *impl_from_ID3D10EffectPool(ID3D10EffectPool *
 }
 
 static const struct ID3D10EffectVtbl d3d10_effect_pool_effect_vtbl;
+static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v);
 
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
@@ -2096,8 +2097,8 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
     return S_OK;
 }
 
-static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
-        const char **ptr, struct d3d10_effect_variable *v)
+static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
+        const char **ptr, BOOL shared_type_desc, struct d3d10_effect_variable *v)
 {
     unsigned int i;
     HRESULT hr;
@@ -2118,6 +2119,9 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
 
     read_dword(ptr, &v->explicit_bind_point);
     TRACE("Variable explicit bind point %#x.\n", v->explicit_bind_point);
+
+    /* Shared variable description contains only type information. */
+    if (shared_type_desc) return S_OK;
 
     switch (v->type->basetype)
     {
@@ -2534,6 +2538,50 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
     heap_free(t);
 }
 
+static BOOL d3d10_effect_types_match(const struct d3d10_effect_type *t1,
+        const struct d3d10_effect_type *t2)
+{
+    unsigned int i;
+
+    if (strcmp(t1->name, t2->name)) return FALSE;
+    if (t1->basetype != t2->basetype) return FALSE;
+    if (t1->type_class != t2->type_class) return FALSE;
+    if (t1->element_count != t2->element_count) return FALSE;
+    if (t1->element_count) return d3d10_effect_types_match(t1->elementtype, t2->elementtype);
+    if (t1->member_count != t2->member_count) return FALSE;
+    if (t1->column_count != t2->column_count) return FALSE;
+    if (t1->row_count != t2->row_count) return FALSE;
+
+    for (i = 0; i < t1->member_count; ++i)
+    {
+        if (strcmp(t1->members[i].name, t2->members[i].name)) return FALSE;
+        if (t1->members[i].buffer_offset != t2->members[i].buffer_offset) return FALSE;
+        if (!d3d10_effect_types_match(t1->members[i].type, t2->members[i].type)) return FALSE;
+    }
+
+    return TRUE;
+}
+
+static HRESULT d3d10_effect_validate_shared_variable(const struct d3d10_effect *effect,
+        const struct d3d10_effect_variable *v)
+{
+    ID3D10EffectVariable *sv = effect->pool->lpVtbl->GetVariableByName(effect->pool, v->name);
+
+    if (!sv->lpVtbl->IsValid(sv))
+    {
+        WARN("Variable %s wasn't found in the pool.\n", debugstr_a(v->name));
+        return E_INVALIDARG;
+    }
+
+    if (!d3d10_effect_types_match(impl_from_ID3D10EffectVariable(sv)->type, v->type))
+    {
+        WARN("Variable %s type does not match pool type.\n", debugstr_a(v->name));
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
 {
     const char *ptr;
@@ -2596,8 +2644,25 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         v->ID3D10EffectVariable_iface.lpVtbl = &d3d10_effect_variable_vtbl;
         v->buffer = &null_local_buffer;
 
-        if (FAILED(hr = parse_fx10_local_variable(data, data_size, &ptr, v)))
+        if (FAILED(hr = parse_fx10_object_variable(data, data_size, &ptr, FALSE, v)))
             return hr;
+    }
+
+    for (i = 0; i < e->shared_object_count; ++i)
+    {
+        struct d3d10_effect_variable o = { 0 };
+
+        o.effect = e;
+
+        if (FAILED(hr = parse_fx10_object_variable(data, data_size, &ptr, TRUE, &o)))
+        {
+            d3d10_effect_variable_destroy(&o);
+            return hr;
+        }
+
+        hr = d3d10_effect_validate_shared_variable(e, &o);
+        d3d10_effect_variable_destroy(&o);
+        if (FAILED(hr)) return hr;
     }
 
     for (i = 0; i < e->technique_count; ++i)
@@ -2644,8 +2709,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &unused);
     TRACE("Pool variable count: %u\n", unused);
 
-    read_dword(&ptr, &e->sharedobjects_count);
-    TRACE("Pool objects count: %u\n", e->sharedobjects_count);
+    read_dword(&ptr, &e->shared_object_count);
+    TRACE("Pool objects count: %u\n", e->shared_object_count);
 
     read_dword(&ptr, &e->technique_count);
     TRACE("Technique count: %u\n", e->technique_count);
@@ -2682,6 +2747,12 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
 
     read_dword(&ptr, &e->anonymous_shader_count);
     TRACE("Anonymous shader count: %u\n", e->anonymous_shader_count);
+
+    if (!e->pool && e->shared_object_count)
+    {
+        WARN("Effect requires a pool to load.\n");
+        return E_FAIL;
+    }
 
     return parse_fx10_body(e, ptr, data_size - (ptr - data));
 }
