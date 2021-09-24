@@ -317,32 +317,6 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
 BOOL hid_device_add_haptics(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
-    const BYTE vendor_report = ++desc->next_report_id[HidP_Output];
-    const BYTE vendor_template[] =
-    {
-        USAGE_PAGE(2, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN),
-        COLLECTION(1, Report),
-            REPORT_ID(1, vendor_report),
-            /* padding */
-            REPORT_COUNT(1, 0x02),
-            REPORT_SIZE(1, 0x08),
-            OUTPUT(1, Data|Var|Abs),
-            /* actuators */
-            USAGE(1, 0x01),
-            LOGICAL_MINIMUM(1, 0x00),
-            LOGICAL_MAXIMUM(1, 0xff),
-            PHYSICAL_MINIMUM(1, 0x00),
-            PHYSICAL_MAXIMUM(1, 0xff),
-            REPORT_SIZE(1, 0x08),
-            REPORT_COUNT(1, 0x02),
-            OUTPUT(1, Data|Var|Abs),
-            /* padding */
-            REPORT_COUNT(1, 0x02),
-            REPORT_SIZE(1, 0x08),
-            OUTPUT(1, Data|Var|Abs),
-        END_COLLECTION,
-    };
-
     const BYTE haptics_features_report = ++desc->next_report_id[HidP_Feature];
     const BYTE haptics_waveform_report = ++desc->next_report_id[HidP_Output];
     const BYTE haptics_template[] =
@@ -409,8 +383,6 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
         END_COLLECTION,
     };
 
-    iface->hid_haptics.vendor_report = vendor_report;
-
     iface->hid_haptics.features_report = haptics_features_report;
     iface->hid_haptics.waveform_report = haptics_waveform_report;
     iface->hid_haptics.features.waveform_list[0] = HID_USAGE_HAPTICS_WAVEFORM_RUMBLE;
@@ -418,9 +390,6 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
     iface->hid_haptics.features.duration_list[0] = 0;
     iface->hid_haptics.features.duration_list[1] = 0;
     iface->hid_haptics.features.waveform_cutoff_time_ms = 1000;
-
-    if (!hid_report_descriptor_append(desc, vendor_template, sizeof(vendor_template)))
-        return FALSE;
 
     return hid_report_descriptor_append(desc, haptics_template, sizeof(haptics_template));
 }
@@ -457,15 +426,8 @@ NTSTATUS hid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffe
 static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct hid_haptics *haptics = &iface->hid_haptics;
-    if (packet->reportId == haptics->vendor_report)
-    {
-        WORD left = packet->reportBuffer[2] * 128;
-        WORD right = packet->reportBuffer[3] * 128;
 
-        io->Information = packet->reportBufferLen;
-        io->Status = iface->hid_vtbl->haptics_start(iface, -1, left, right);
-    }
-    else if (packet->reportId == haptics->waveform_report)
+    if (packet->reportId == haptics->waveform_report)
     {
         struct hid_haptics_waveform *waveform = (struct hid_haptics_waveform *)(packet->reportBuffer + 1);
         struct hid_haptics_waveform *rumble = haptics->waveforms + HAPTICS_WAVEFORM_RUMBLE_INDEX;

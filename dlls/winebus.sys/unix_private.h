@@ -83,7 +83,6 @@ struct hid_haptics
 {
     struct hid_haptics_features features;
     struct hid_haptics_waveform waveforms[HAPTICS_WAVEFORM_LAST_INDEX + 1];
-    BYTE vendor_report;
     BYTE features_report;
     BYTE waveform_report;
 };
