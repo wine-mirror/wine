@@ -237,8 +237,8 @@ INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
 
     if (dc->hClipRgn)
     {
-        x = MulDiv( x, dc->attr->vport_ext.cx, dc->attr->wnd_ext.cx );
-        y = MulDiv( y, dc->attr->vport_ext.cy, dc->attr->wnd_ext.cy );
+        x = muldiv( x, dc->attr->vport_ext.cx, dc->attr->wnd_ext.cx );
+        y = muldiv( y, dc->attr->vport_ext.cy, dc->attr->wnd_ext.cy );
         if (dc->attr->layout & LAYOUT_RTL) x = -x;
         ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
         update_dc_clipping( dc );

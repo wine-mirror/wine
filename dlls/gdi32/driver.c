@@ -382,9 +382,9 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     {
     case DRIVERVERSION:   return 0x4000;
     case TECHNOLOGY:      return DT_RASDISPLAY;
-    case HORZSIZE:        return MulDiv( NtGdiGetDeviceCaps( dev->hdc, HORZRES ), 254,
+    case HORZSIZE:        return muldiv( NtGdiGetDeviceCaps( dev->hdc, HORZRES ), 254,
                                          NtGdiGetDeviceCaps( dev->hdc, LOGPIXELSX ) * 10 );
-    case VERTSIZE:        return MulDiv( NtGdiGetDeviceCaps( dev->hdc, VERTRES ), 254,
+    case VERTSIZE:        return muldiv( NtGdiGetDeviceCaps( dev->hdc, VERTRES ), 254,
                                          NtGdiGetDeviceCaps( dev->hdc, LOGPIXELSY ) * 10 );
     case HORZRES:
     {

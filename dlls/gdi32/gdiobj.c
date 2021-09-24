@@ -592,7 +592,7 @@ static HFONT create_scaled_font( const LOGFONTW *deffont )
     }
 
     lf = *deffont;
-    lf.lfHeight = MulDiv( lf.lfHeight, dpi, 96 );
+    lf.lfHeight = muldiv( lf.lfHeight, dpi, 96 );
     return create_font( &lf );
 }
 

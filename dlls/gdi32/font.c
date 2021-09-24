@@ -2874,9 +2874,9 @@ static BOOL get_face_enum_data( struct gdi_font_face *face, ENUMLOGFONTEXW *elf,
         UINT cell_height;
 
 #define TM font->otm.otmTextMetrics
-#define SCALE_NTM(value) (MulDiv( ntm->ntmTm.tmHeight, (value), TM.tmHeight ))
+#define SCALE_NTM(value) (muldiv( ntm->ntmTm.tmHeight, (value), TM.tmHeight ))
         cell_height = TM.tmHeight / ( -lf.lfHeight / font->otm.otmEMSquare );
-        ntm->ntmTm.tmHeight = MulDiv( ntm_ppem, cell_height, font->otm.otmEMSquare );
+        ntm->ntmTm.tmHeight = muldiv( ntm_ppem, cell_height, font->otm.otmEMSquare );
         ntm->ntmTm.tmAscent = SCALE_NTM( TM.tmAscent );
         ntm->ntmTm.tmDescent = ntm->ntmTm.tmHeight - ntm->ntmTm.tmAscent;
         ntm->ntmTm.tmInternalLeading = SCALE_NTM( TM.tmInternalLeading );
