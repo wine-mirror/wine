@@ -39,10 +39,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(print);
  */
 DWORD WINAPI NtGdiGetSpoolMessage( void *ptr1, DWORD data2, void *ptr3, DWORD data4 )
 {
-    TRACE("(%p 0x%x %p 0x%x) stub\n", ptr1, data2, ptr3, data4);
+    LARGE_INTEGER time;
+
+    TRACE( "(%p 0x%x %p 0x%x) stub\n", ptr1, data2, ptr3, data4 );
+
     /* avoid 100% cpu usage with spoolsv.exe from w2k
       (spoolsv.exe from xp does Sleep 1000/1500/2000 in a loop) */
-    Sleep(500);
+    time.QuadPart = 500 * -10000;
+    NtDelayExecution( FALSE, &time );
     return 0;
 }
 

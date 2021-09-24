@@ -745,13 +745,13 @@ static inline void lock_surface( struct windrv_physdev *dev )
 {
     GDI_CheckNotLock();
     dev->surface->funcs->lock( dev->surface );
-    if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = GetTickCount();
+    if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = NtGetTickCount();
 }
 
 static inline void unlock_surface( struct windrv_physdev *dev )
 {
     dev->surface->funcs->unlock( dev->surface );
-    if (GetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
+    if (NtGetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
 }
 
 static void CDECL unlock_bits_surface( struct gdi_image_bits *bits )

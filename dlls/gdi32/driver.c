@@ -235,7 +235,7 @@ void CDECL __wine_set_display_driver( HMODULE module )
     if (!(driver = create_driver( module )))
     {
         ERR( "Could not create graphics driver\n" );
-        ExitProcess(1);
+        NtTerminateProcess( GetCurrentThread(), 1 );
     }
     if (InterlockedCompareExchangePointer( (void **)&display_driver, driver, NULL ))
         HeapFree( GetProcessHeap(), 0, driver );

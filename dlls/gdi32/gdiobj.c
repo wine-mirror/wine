@@ -885,7 +885,7 @@ void GDI_CheckNotLock(void)
     if (RtlIsCriticalSectionLockedByThread(&gdi_section))
     {
         ERR( "BUG: holding GDI lock\n" );
-        DebugBreak();
+        assert( 0 );
     }
 }
 
