@@ -222,8 +222,6 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     pdo_ext->u.pdo.parent_fdo = fdo;
     list_init( &pdo_ext->u.pdo.report_queues );
     KeInitializeSpinLock( &pdo_ext->u.pdo.report_queues_lock );
-    InitializeListHead(&pdo_ext->u.pdo.irp_queue);
-    KeInitializeSpinLock(&pdo_ext->u.pdo.irp_queue_lock);
     wcscpy(pdo_ext->device_id, fdo_ext->device_id);
     wcscpy(pdo_ext->instance_id, fdo_ext->instance_id);
     pdo_ext->class_guid = fdo_ext->class_guid;
@@ -370,17 +368,6 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     }
 }
 
-static void remove_pending_irps(BASE_DEVICE_EXTENSION *ext)
-{
-    IRP *irp;
-
-    while ((irp = pop_irp_from_queue(ext)))
-    {
-        irp->IoStatus.Status = STATUS_DELETE_PENDING;
-        IoCompleteRequest(irp, IO_NO_INCREMENT);
-    }
-}
-
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -482,8 +469,6 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             break;
 
         case IRP_MN_REMOVE_DEVICE:
-            remove_pending_irps(ext);
-
             send_wm_input_device_change(ext, GIDC_REMOVAL);
 
             IoSetDeviceInterfaceState(&ext->u.pdo.link_name, FALSE);
@@ -518,7 +503,10 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             ext->u.pdo.removed = TRUE;
             KeReleaseSpinLock(&ext->u.pdo.lock, irql);
 
-            remove_pending_irps(ext);
+            KeAcquireSpinLock( &ext->u.pdo.report_queues_lock, &irql );
+            LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.report_queues, struct hid_report_queue, entry )
+                hid_report_queue_remove_pending_irps( queue );
+            KeReleaseSpinLock( &ext->u.pdo.report_queues_lock, irql );
 
             SetEvent(ext->u.pdo.halt_event);
             status = STATUS_SUCCESS;
