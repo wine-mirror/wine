@@ -506,7 +506,7 @@ static HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
 
 static void set_reg_value( HKEY hkey, const WCHAR *name, UINT type, const void *value, DWORD count )
 {
-    unsigned int name_size = lstrlenW( name ) * sizeof(WCHAR);
+    unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
     NtSetValueKey( hkey, &nameW, 0, type, value, count );
 }
