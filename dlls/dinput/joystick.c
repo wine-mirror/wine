@@ -271,23 +271,25 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
     }
 }
 
-BOOL device_disabled_registry(const char* name, BOOL disable)
+BOOL device_disabled_registry(const char* name)
 {
     DIDEVICEINSTANCEW instance;
 
     MultiByteToWideChar( CP_ACP, 0, name, -1, instance.tszInstanceName, MAX_PATH );
-    return device_instance_is_disabled( &instance, disable );
+    return device_instance_is_disabled( &instance, NULL );
 }
 
-BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL disable )
+BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override )
 {
     static const WCHAR disabled_str[] = {'d', 'i', 's', 'a', 'b', 'l', 'e', 'd', 0};
-    static const WCHAR enabled_str[] = {'e', 'n', 'a', 'b', 'l', 'e', 'd', 0};
+    static const WCHAR override_str[] = {'o', 'v', 'e', 'r', 'r', 'i', 'd', 'e', 0};
     static const WCHAR joystick_key[] = {'J', 'o', 'y', 's', 't', 'i', 'c', 'k', 's', 0};
     WCHAR buffer[MAX_PATH];
     HKEY hkey, appkey, temp;
+    BOOL disable = FALSE;
 
     get_app_key(&hkey, &appkey);
+    if (override) *override = FALSE;
 
     /* Joystick settings are in the 'joysticks' subkey */
     if (appkey)
@@ -307,15 +309,15 @@ BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL disable )
     /* Look for the "controllername"="disabled" key */
     if (!get_config_key( hkey, appkey, instance->tszInstanceName, buffer, sizeof(buffer) ))
     {
-        if (!disable && !strcmpW( disabled_str, buffer ))
+        if (!strcmpW( disabled_str, buffer ))
         {
             TRACE( "Disabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
             disable = TRUE;
         }
-        else if (disable && !strcmpW( enabled_str, buffer ))
+        else if (override && !strcmpW( override_str, buffer ))
         {
-            TRACE( "Enabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
-            disable = FALSE;
+            TRACE( "Force enabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
+            *override = TRUE;
         }
     }
 

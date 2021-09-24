@@ -175,7 +175,7 @@ static INT find_joystick_devices(void)
         /* Append driver name */
         strcat(joydev.name, JOYDEVDRIVER);
 
-        if (device_disabled_registry(joydev.name, FALSE)) {
+        if (device_disabled_registry(joydev.name)) {
             close(fd);
             continue;
         }

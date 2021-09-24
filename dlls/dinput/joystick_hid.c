@@ -45,6 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
+DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x47,0x67,0x50,0xc5,0xe1,0xa6 );
 DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
 DEFINE_DEVPROPKEY( DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2 );
 
@@ -1107,13 +1108,17 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
                                          HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
                                          HIDD_ATTRIBUTES *attrs, HIDP_CAPS *caps, DWORD version )
 {
+    static const WCHAR ig_w[] = {'&','I','G','_',0};
+    static const WCHAR xi_w[] = {'&','X','I','_',0};
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
     SP_DEVINFO_DATA devinfo = {.cbSize = sizeof(devinfo)};
     DIDEVICEINSTANCEW instance = *filter;
+    WCHAR device_id[MAX_PATH], *tmp;
+    HDEVINFO set, xi_set;
     UINT32 i = 0, handle;
-    HDEVINFO set;
+    BOOL override;
     DWORD type;
     GUID hid;
 
@@ -1124,6 +1129,7 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
 
     set = SetupDiGetClassDevsW( &hid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
     if (set == INVALID_HANDLE_VALUE) return DIERR_DEVICENOTREG;
+    xi_set = SetupDiGetClassDevsW( &GUID_DEVINTERFACE_WINEXINPUT, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
 
     *device = NULL;
     *preparsed = NULL;
@@ -1140,6 +1146,29 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
                                            attrs, caps, &instance, version ))
             continue;
 
+        if (device_instance_is_disabled( &instance, &override ))
+            goto next;
+
+        if (override)
+        {
+            if (!SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) ||
+                !(tmp = strstrW( device_id, ig_w )))
+                goto next;
+            memcpy( tmp, xi_w, sizeof(xi_w) - sizeof(WCHAR) );
+            if (!SetupDiOpenDeviceInfoW( xi_set, device_id, NULL, 0, &devinfo ))
+                goto next;
+            if (!SetupDiEnumDeviceInterfaces( xi_set, &devinfo, &GUID_DEVINTERFACE_WINEXINPUT, 0, &iface ))
+                goto next;
+            if (!SetupDiGetDeviceInterfaceDetailW( xi_set, &iface, detail, sizeof(buffer), NULL, &devinfo ))
+                goto next;
+
+            CloseHandle( *device );
+            HidD_FreePreparsedData( *preparsed );
+            if (!hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
+                                               attrs, caps, &instance, version ))
+                continue;
+        }
+
         /* enumerate device by GUID */
         if (index < 0 && IsEqualGUID( &filter->guidProduct, &instance.guidProduct )) break;
         if (index < 0 && IsEqualGUID( &filter->guidInstance, &instance.guidInstance )) break;
@@ -1147,12 +1176,14 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
         /* enumerate all devices */
         if (index >= 0 && !index--) break;
 
+    next:
         CloseHandle( *device );
         HidD_FreePreparsedData( *preparsed );
         *device = NULL;
         *preparsed = NULL;
     }
 
+    if (xi_set != INVALID_HANDLE_VALUE) SetupDiDestroyDeviceInfoList( xi_set );
     SetupDiDestroyDeviceInfoList( set );
     if (!*device || !*preparsed) return DIERR_DEVICENOTREG;
 
@@ -1186,8 +1217,6 @@ static HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTAN
         return S_FALSE;
     if (version >= 0x0800 && type != DI8DEVCLASS_ALL && type != DI8DEVCLASS_GAMECTRL)
         return S_FALSE;
-
-    if (device_instance_is_disabled( instance, FALSE )) return DIERR_DEVICENOTREG;
 
     TRACE( "found device %s, usage %04x:%04x, product %s, instance %s, name %s\n", debugstr_w(device_path),
            instance->wUsagePage, instance->wUsage, debugstr_guid( &instance->guidProduct ),
