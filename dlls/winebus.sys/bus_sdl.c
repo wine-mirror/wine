@@ -102,7 +102,6 @@ MAKE_FUNCPTR(SDL_HapticRumbleSupported);
 MAKE_FUNCPTR(SDL_HapticRunEffect);
 MAKE_FUNCPTR(SDL_HapticStopAll);
 MAKE_FUNCPTR(SDL_JoystickIsHaptic);
-MAKE_FUNCPTR(SDL_memset);
 MAKE_FUNCPTR(SDL_GameControllerAddMapping);
 MAKE_FUNCPTR(SDL_RegisterEvents);
 MAKE_FUNCPTR(SDL_PushEvent);
@@ -658,7 +657,6 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticRunEffect);
     LOAD_FUNCPTR(SDL_HapticStopAll);
     LOAD_FUNCPTR(SDL_JoystickIsHaptic);
-    LOAD_FUNCPTR(SDL_memset);
     LOAD_FUNCPTR(SDL_GameControllerAddMapping);
     LOAD_FUNCPTR(SDL_RegisterEvents);
     LOAD_FUNCPTR(SDL_PushEvent);
