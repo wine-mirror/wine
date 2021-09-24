@@ -191,7 +191,7 @@ void pp_del_define(const char *name)
 
 	if((ppp = pplookup(name)) == NULL)
 	{
-		if(pp_status.pedantic)
+		if(pedantic)
 			ppy_warning("%s was not defined", name);
 		return;
 	}
@@ -215,8 +215,9 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 	idx = pphash(def);
 	if((ppp = pplookup(def)) != NULL)
 	{
-		if(pp_status.pedantic)
-			ppy_warning("Redefinition of %s\n\tPrevious definition: %s:%d", def, ppp->filename, ppp->linenumber);
+		if(pedantic)
+			ppy_warning("Redefinition of %s\n%s:%d: note: previous definition was here",
+                                    def, ppp->filename, ppp->linenumber);
 		pp_del_define(def);
 	}
 	ppp = xmalloc(sizeof(pp_entry_t));
@@ -255,8 +256,9 @@ pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, mtext_t *exp)
 	idx = pphash(id);
 	if((ppp = pplookup(id)) != NULL)
 	{
-		if(pp_status.pedantic)
-			ppy_warning("Redefinition of %s\n\tPrevious definition: %s:%d", id, ppp->filename, ppp->linenumber);
+		if(pedantic)
+			ppy_warning("Redefinition of %s\n%s:%d: note: previous definition was here",
+                                    id, ppp->filename, ppp->linenumber);
 		pp_del_define(id);
 	}
 	ppp = xmalloc(sizeof(pp_entry_t));
@@ -634,13 +636,6 @@ void wpp_set_debug( int lex_debug, int parser_debug, int msg_debug )
     pp_flex_debug   = lex_debug;
     ppy_debug       = parser_debug;
     pp_status.debug = msg_debug;
-}
-
-
-/* set the pedantic mode */
-void wpp_set_pedantic( int on )
-{
-    pp_status.pedantic = on;
 }
 
 

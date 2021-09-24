@@ -115,6 +115,7 @@ ws	[ \f\t\r]
 #include "utils.h"
 #include "parser.h"
 #include "newstruc.h"
+#include "wpp_private.h"
 
 #include "parser.tab.h"
 

@@ -27,7 +27,6 @@
 extern void wpp_del_define( const char *name );
 extern void wpp_add_cmdline_define( const char *value );
 extern void wpp_set_debug( int lex_debug, int parser_debug, int msg_debug );
-extern void wpp_set_pedantic( int on );
 extern void wpp_add_include_path( const char *path );
 extern char *wpp_find_include( const char *name, const char *parent_name );
 /* Return value == 0 means successful execution */
@@ -177,12 +176,12 @@ struct pp_status
     FILE *file;         /* current input file descriptor */
     int line_number;    /* current line number */
     int char_number;    /* current char number in line */
-    int pedantic;       /* pedantic option */
     int debug;          /* debug messages flag */
 };
 
 extern struct pp_status pp_status;
 extern include_state_t pp_incl_state;
+extern int pedantic;
 
 /*
  * From ppl.l

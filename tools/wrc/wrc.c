@@ -439,7 +439,6 @@ int main(int argc,char *argv[])
 			break;
 		case LONG_OPT_PEDANTIC:
 			pedantic = 1;
-			wpp_set_pedantic(1);
 			break;
 		case LONG_OPT_VERIFY_TRANSL:
 			verify_translations_mode = 1;

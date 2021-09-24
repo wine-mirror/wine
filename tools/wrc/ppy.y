@@ -281,7 +281,7 @@ preprocessor
 	| tERROR opt_text tNL	{ ppy_error("#error directive: '%s'", $2); free($2); }
 	| tWARNING opt_text tNL	{ ppy_warning("#warning directive: '%s'", $2); free($2); }
 	| tPRAGMA opt_text tNL	{ fprintf(ppy_out, "#pragma %s\n", $2 ? $2 : ""); free($2); }
-	| tPPIDENT opt_text tNL	{ if(pp_status.pedantic) ppy_warning("#ident ignored (arg: '%s')", $2); free($2); }
+	| tPPIDENT opt_text tNL	{ if(pedantic) ppy_warning("#ident ignored (arg: '%s')", $2); free($2); }
         | tRCINCLUDE tRCINCLUDEPATH {
                 pp_do_include(strmake( "\"%s\"", $2 ),1);
 	}
