@@ -1,6 +1,6 @@
 MODULE    = xinput1_3.dll
 IMPORTLIB = xinput
-DELAYIMPORTS = hid setupapi
+DELAYIMPORTS = hid setupapi advapi32
 
 C_SRCS = \
 	main.c

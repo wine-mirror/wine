@@ -394,6 +394,52 @@ failed:
     return FALSE;
 }
 
+static void get_registry_keys(HKEY *defkey, HKEY *appkey)
+{
+    WCHAR buffer[MAX_PATH + 26], *name = buffer, *tmp;
+    DWORD len;
+    HKEY hkey;
+
+    *appkey = 0;
+    if (RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Wine\\DirectInput\\Joysticks", defkey))
+        *defkey = 0;
+
+    if (!(len = GetModuleFileNameW(0, buffer, MAX_PATH)) || len >= MAX_PATH)
+        return;
+
+    if (!RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Wine\\AppDefaults", &hkey))
+    {
+        if ((tmp = wcsrchr(name, '/'))) name = tmp + 1;
+        if ((tmp = wcsrchr(name, '\\'))) name = tmp + 1;
+        wcscat(name, L"\\DirectInput\\Joysticks");
+        if (RegOpenKeyW(hkey, name, appkey)) *appkey = 0;
+        RegCloseKey(hkey);
+    }
+}
+
+static BOOL device_is_overriden(HANDLE device)
+{
+    WCHAR name[MAX_PATH], buffer[MAX_PATH];
+    DWORD size = sizeof(buffer);
+    BOOL disable = FALSE;
+    HKEY defkey, appkey;
+
+    if (!HidD_GetProductString(device, name, MAX_PATH)) return FALSE;
+
+    get_registry_keys(&defkey, &appkey);
+    if (!defkey && !appkey) return FALSE;
+    if ((appkey && !RegQueryValueExW(appkey, name, 0, NULL, (LPBYTE)buffer, &size)) ||
+        (defkey && !RegQueryValueExW(defkey, name, 0, NULL, (LPBYTE)buffer, &size)))
+    {
+        if ((disable = !wcscmp(buffer, L"override")))
+            TRACE("Disabling gamepad '%s' based on registry key.\n", debugstr_w(name));
+    }
+
+    if (appkey) RegCloseKey(appkey);
+    if (defkey) RegCloseKey(defkey);
+    return disable;
+}
+
 static void update_controller_list(void)
 {
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
@@ -437,6 +483,8 @@ static void update_controller_list(void)
         else if (caps.Usage != HID_USAGE_GENERIC_GAMEPAD && caps.Usage != HID_USAGE_GENERIC_JOYSTICK &&
                  caps.Usage != HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER)
             WARN("ignoring HID device, unsupported usage %04x:%04x\n", caps.UsagePage, caps.Usage);
+        else if (device_is_overriden(device))
+            WARN("ignoring HID device, overriden for dinput\n");
         else if (!controller_init(&controllers[i], preparsed, &caps, device, detail->DevicePath))
             WARN("ignoring HID device, failed to initialize\n");
         else
