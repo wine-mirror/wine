@@ -57,9 +57,35 @@ struct hid_report_descriptor
     BYTE next_report_id[3];
 };
 
+enum haptics_waveform_index
+{
+    HAPTICS_WAVEFORM_STOP_INDEX = 1,
+    HAPTICS_WAVEFORM_NULL_INDEX = 2,
+    HAPTICS_WAVEFORM_RUMBLE_INDEX = 3,
+    HAPTICS_WAVEFORM_BUZZ_INDEX = 4,
+    HAPTICS_WAVEFORM_LAST_INDEX = HAPTICS_WAVEFORM_BUZZ_INDEX,
+};
+
+struct hid_haptics_features
+{
+    WORD  waveform_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
+    WORD  duration_list[HAPTICS_WAVEFORM_LAST_INDEX - HAPTICS_WAVEFORM_NULL_INDEX];
+    DWORD waveform_cutoff_time_ms;
+};
+
+struct hid_haptics_waveform
+{
+    WORD manual_trigger;
+    WORD intensity;
+};
+
 struct hid_haptics
 {
+    struct hid_haptics_features features;
+    struct hid_haptics_waveform waveforms[HAPTICS_WAVEFORM_LAST_INDEX + 1];
     BYTE vendor_report;
+    BYTE features_report;
+    BYTE waveform_report;
 };
 
 struct hid_device_state
