@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-11 20:20+0200\n"
+"PO-Revision-Date: 2021-09-25 22:40+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -787,7 +787,7 @@ msgstr "Gelijke &hoofd-/kleine letters"
 
 #: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
 msgid "Direction"
-msgstr "Zoekrichting"
+msgstr "Oriëntatie"
 
 #: dlls/comdlg32/comdlg32.rc:326 programs/view/view.rc:42
 msgid "&Up"
@@ -3722,34 +3722,28 @@ msgid "&Disable"
 msgstr "&Uitzetten"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Terugzetten"
+msgstr "&Terugzetten"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
-msgstr "Activ&eren"
+msgstr "&Activeren"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "DLL Bewerken"
+msgstr "&Overschrijven"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Verbonden"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Steminvoer apparaat:"
+msgstr "Verbonden (xinput apparaat)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
-msgstr "Deactiveren"
+msgstr "Uitgeschakeld"
 
 #: dlls/joy.cpl/joy.rc:50
 msgid ""
@@ -3757,7 +3751,7 @@ msgid ""
 "updated here until you restart this applet."
 msgstr ""
 "Na het uit- of inschakelen van een apparaat zullen de aangesloten joysticks "
-"niet vernieuwd worden totdat u deze applet herstart."
+"niet vernieuwd worden totdat deze applicatie herstart wordt."
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "Test Joystick"
