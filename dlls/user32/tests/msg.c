@@ -15973,8 +15973,8 @@ static void test_paintingloop(void)
 
 static const struct message NCRBUTTONDOWNSeq[] =
 {
-    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent },
     { WM_CONTEXTMENU, sent, /*hwnd*/0, -1 },
     { 0 }
