@@ -538,7 +538,8 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
             strarray_add( &flags, "-Wl,--large-address-aware" );
 
         /* make sure we don't need a libgcc_s dll on Windows */
-        strarray_add( &flags, "-static-libgcc" );
+        if (!opts->nodefaultlibs && !opts->use_msvcrt)
+            strarray_add( &flags, "-static-libgcc" );
 
         if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
             strarray_add(&link_args, strmake("-Wl,-pdb,%s", opts->debug_file));
