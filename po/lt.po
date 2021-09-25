@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-09-11 13:26+0300\n"
+"PO-Revision-Date: 2021-09-25 10:47+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3711,30 +3711,24 @@ msgid "&Disable"
 msgstr "&Išjungti"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Atkurti"
+msgstr "&Atkurti"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
 msgstr "Įj&ungti"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Redaguoti nustelbimą"
+msgstr "&Nustelbti"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Prijungta"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Balso įvedimo įtaisas:"
+msgstr "Prijungta (xinput įrenginys)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
