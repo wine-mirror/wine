@@ -3568,6 +3568,58 @@ static void apply_frame_state(const struct module* module, struct cpu_stack_walk
     *context = new_context;
 }
 
+static BOOL dwarf2_fetch_frame_info(struct module* module, struct cpu* cpu, LONG_PTR ip, struct frame_info* info)
+{
+    dwarf2_traverse_context_t cie_ctx, fde_ctx;
+    struct module_format* modfmt;
+    const unsigned char* end;
+    DWORD_PTR delta;
+
+    modfmt = module->format_info[DFI_DWARF];
+    if (!modfmt) return FALSE;
+    memset(info, 0, sizeof(*info));
+    fde_ctx.data = modfmt->u.dwarf2_info->eh_frame.address;
+    fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->eh_frame.size;
+    /* let offsets relative to the eh_frame sections be correctly computed, as we'll map
+     * in this process the IMAGE section at a different address as the one expected by
+     * the image
+     */
+    delta = module->module.BaseOfImage + modfmt->u.dwarf2_info->eh_frame.rva -
+        (DWORD_PTR)modfmt->u.dwarf2_info->eh_frame.address;
+    if (!dwarf2_get_cie(ip, module, delta, &fde_ctx, &cie_ctx, info, TRUE))
+    {
+        fde_ctx.data = modfmt->u.dwarf2_info->debug_frame.address;
+        fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->debug_frame.size;
+        delta = module->reloc_delta;
+        if (!dwarf2_get_cie(ip, module, delta, &fde_ctx, &cie_ctx, info, FALSE))
+        {
+            TRACE("Couldn't find information for %lx\n", ip);
+            return FALSE;
+        }
+    }
+
+    TRACE("function %lx/%lx code_align %lu data_align %ld retaddr %s\n",
+          ip, info->ip, info->code_align, info->data_align,
+          cpu->fetch_regname(cpu->map_dwarf_register(info->retaddr_reg, module, TRUE)));
+
+    if (ip != info->ip)
+    {
+        execute_cfa_instructions(module, &cie_ctx, ip, info);
+
+        if (info->aug_z_format)  /* get length of augmentation data */
+        {
+            ULONG_PTR len = dwarf2_leb128_as_unsigned(&fde_ctx);
+            end = fde_ctx.data + len;
+        }
+        else end = NULL;
+        dwarf2_parse_augmentation_ptr(&fde_ctx, info->lsda_encoding, modfmt->u.dwarf2_info->word_size); /* handler_data */
+        if (end) fde_ctx.data = end;
+
+        execute_cfa_instructions(module, &fde_ctx, ip, info);
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *           dwarf2_virtual_unwind
  *
@@ -3577,56 +3629,15 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
 {
     struct module_pair pair;
     struct frame_info info;
-    dwarf2_traverse_context_t cie_ctx, fde_ctx;
-    struct module_format* modfmt;
-    const unsigned char* end;
-    DWORD_PTR delta;
 
     if (!(pair.pcs = process_find_by_handle(csw->hProcess)) ||
         !(pair.requested = module_find_by_addr(pair.pcs, ip, DMT_UNKNOWN)) ||
         !module_get_debug(&pair))
         return FALSE;
-    modfmt = pair.effective->format_info[DFI_DWARF];
-    if (!modfmt) return FALSE;
-    memset(&info, 0, sizeof(info));
-    fde_ctx.data = modfmt->u.dwarf2_info->eh_frame.address;
-    fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->eh_frame.size;
-    /* let offsets relative to the eh_frame sections be correctly computed, as we'll map
-     * in this process the IMAGE section at a different address as the one expected by
-     * the image
-     */
-    delta = pair.effective->module.BaseOfImage + modfmt->u.dwarf2_info->eh_frame.rva -
-        (DWORD_PTR)modfmt->u.dwarf2_info->eh_frame.address;
-    if (!dwarf2_get_cie(ip, pair.effective, delta, &fde_ctx, &cie_ctx, &info, TRUE))
-    {
-        fde_ctx.data = modfmt->u.dwarf2_info->debug_frame.address;
-        fde_ctx.end_data = fde_ctx.data + modfmt->u.dwarf2_info->debug_frame.size;
-        delta = pair.effective->reloc_delta;
-        if (!dwarf2_get_cie(ip, pair.effective, delta, &fde_ctx, &cie_ctx, &info, FALSE))
-        {
-            TRACE("Couldn't find information for %lx\n", ip);
-            return FALSE;
-        }
-    }
-
-    TRACE("function %lx/%lx code_align %lu data_align %ld retaddr %s\n",
-          ip, info.ip, info.code_align, info.data_align,
-          csw->cpu->fetch_regname(csw->cpu->map_dwarf_register(info.retaddr_reg, pair.effective, TRUE)));
+    if (!dwarf2_fetch_frame_info(pair.effective, csw->cpu, ip, &info)) return FALSE;
 
     /* if at very beginning of function, return and use default unwinder */
     if (ip == info.ip) return FALSE;
-    execute_cfa_instructions(pair.effective, &cie_ctx, ip, &info);
-
-    if (info.aug_z_format)  /* get length of augmentation data */
-    {
-        ULONG_PTR len = dwarf2_leb128_as_unsigned(&fde_ctx);
-        end = fde_ctx.data + len;
-    }
-    else end = NULL;
-    dwarf2_parse_augmentation_ptr(&fde_ctx, info.lsda_encoding, modfmt->u.dwarf2_info->word_size); /* handler_data */
-    if (end) fde_ctx.data = end;
-
-    execute_cfa_instructions(pair.effective, &fde_ctx, ip, &info);
 
     /* if there is no information about retaddr, use default unwinder */
     if (info.state.rules[info.retaddr_reg] == RULE_UNSET) return FALSE;
