@@ -2821,20 +2821,15 @@ static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* f
 static enum location_error loc_compute_frame(struct process* pcs,
                                              const struct module_format* modfmt,
                                              const struct symt_function* func,
-                                             DWORD_PTR ip, struct location* frame)
+                                             DWORD_PTR ip, const dwarf2_cuhead_t* head,
+                                             struct location* frame)
 {
     struct symt**               psym = NULL;
     struct location*            pframe;
     dwarf2_traverse_context_t   lctx;
     enum location_error         err;
     unsigned int                i;
-    const dwarf2_cuhead_t*      head = get_cuhead_from_func(func);
 
-    if (!head)
-    {
-        FIXME("Shouldn't happen\n");
-        return loc_err_internal;
-    }
     for (i=0; i<vector_length(&func->vchildren); i++)
     {
         psym = vector_at(&func->vchildren, i);
@@ -3663,7 +3658,7 @@ static void dwarf2_location_compute(struct process* pcs,
         /* instruction pointer relative to compiland's start */
         ip = pcs->ctx_frame.InstructionOffset - ((struct symt_compiland*)func->container)->address;
 
-        if ((err = loc_compute_frame(pcs, modfmt, func, ip, &frame)) == 0)
+        if ((err = loc_compute_frame(pcs, modfmt, func, ip, head, &frame)) == 0)
         {
             switch (loc->kind)
             {
