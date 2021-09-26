@@ -234,6 +234,7 @@ struct dwarf2_module_info_s
 
 #define loc_dwarf2_location_list        (loc_user + 0)
 #define loc_dwarf2_block                (loc_user + 1)
+#define loc_dwarf2_frame_cfa            (loc_user + 2)
 
 /* forward declarations */
 static struct symt* dwarf2_parse_enumeration_type(dwarf2_debug_info_t* entry);
@@ -1085,8 +1086,13 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
     }
 
     /* assume we have a block form */
-
-    if (xloc.u.block.size)
+    if (dw == DW_AT_frame_base && xloc.u.block.size == 1 && *xloc.u.block.ptr == DW_OP_call_frame_cfa)
+    {
+        loc->kind = loc_dwarf2_frame_cfa;
+        loc->reg = Wine_DW_no_register;
+        loc->offset = 0;
+    }
+    else if (xloc.u.block.size)
     {
         dwarf2_traverse_context_t       lctx;
         enum location_error             err;
@@ -2818,6 +2824,8 @@ static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* f
     return NULL;
 }
 
+static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame);
+
 static enum location_error loc_compute_frame(struct process* pcs,
                                              const struct module_format* modfmt,
                                              const struct symt_function* func,
@@ -2857,6 +2865,9 @@ static enum location_error loc_compute_frame(struct process* pcs,
                     WARN("Couldn't compute runtime frame location\n");
                     return loc_err_too_complex;
                 }
+                break;
+            case loc_dwarf2_frame_cfa:
+                if (!compute_call_frame_cfa(modfmt->module, ip + ((struct symt_compiland*)func->container)->address, frame)) return loc_err_internal;
                 break;
             default:
                 WARN("Unsupported frame kind %d\n", pframe->kind);
@@ -3644,6 +3655,43 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
 
     apply_frame_state(pair.effective, csw, context, &info.state, cfa);
 
+    return TRUE;
+}
+
+static BOOL compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame)
+{
+    struct frame_info info;
+
+    if (!dwarf2_fetch_frame_info(module, dbghelp_current_cpu, ip, &info)) return FALSE;
+
+    /* beginning of function, or no available dwarf information ? */
+    if (ip == info.ip || info.state.rules[info.retaddr_reg] == RULE_UNSET)
+    {
+        /* fake the default unwinder */
+        frame->kind = loc_regrel;
+        frame->reg = dbghelp_current_cpu->frame_regno;
+        frame->offset = dbghelp_current_cpu->word_size; /* FIXME stack direction */
+    }
+    else
+    {
+        /* we expect to translate the call_frame_cfa into a regrel location...
+         * that should cover most of the cases
+         */
+        switch (info.state.cfa_rule)
+        {
+        case RULE_EXPRESSION:
+            FIXME("Too complex expression for frame_CFA resolution (RULE_EXPRESSION)\n");
+            break;
+        case RULE_VAL_EXPRESSION:
+            FIXME("Too complex expression for frame_CFA resolution (RULE_VAL_EXPRESSION)\n");
+            break;
+        default:
+            frame->kind = loc_regrel;
+            frame->reg = dbghelp_current_cpu->map_dwarf_register(info.state.cfa_reg, module, TRUE);
+            frame->offset = info.state.cfa_offset;
+            break;
+        }
+    }
     return TRUE;
 }
 
