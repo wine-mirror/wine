@@ -1147,7 +1147,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_debug_info_t* di, const char* name
     struct attribute diname;
     struct attribute spec;
 
-    if (di->abbrev->tag == DW_TAG_compile_unit) return name;
+    if (di->abbrev->tag == DW_TAG_compile_unit || di->abbrev->tag == DW_TAG_partial_unit) return name;
 
     /* if the di is a definition, but has also a (previous) declaration, then scope must
      * be gotten from declaration not definition
@@ -2718,7 +2718,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
     ctx->status = UNIT_BEINGLOADED;
     if (dwarf2_read_one_debug_info(ctx, &cu_ctx, NULL, &di))
     {
-        if (di->abbrev->tag == DW_TAG_compile_unit)
+        if (di->abbrev->tag == DW_TAG_compile_unit || di->abbrev->tag == DW_TAG_partial_unit)
         {
             struct attribute            name;
             struct vector*              children;
@@ -2754,7 +2754,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
             ctx->status = UNIT_LOADED;
             ret = TRUE;
         }
-        else FIXME("Should have a compilation unit here\n");
+        else FIXME("Should have a compilation unit here %lu\n", di->abbrev->tag);
     }
     if (ctx->status == UNIT_BEINGLOADED) ctx->status = UNIT_LOADED_FAIL;
     return ret;
