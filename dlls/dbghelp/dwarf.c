@@ -2305,6 +2305,24 @@ static void dwarf2_parse_namespace(dwarf2_debug_info_t* di)
     }
 }
 
+static void dwarf2_parse_imported_unit(dwarf2_debug_info_t* di)
+{
+    struct attribute imp;
+
+    if (di->symt) return;
+
+    TRACE("%s\n", dwarf2_debug_di(di));
+
+    if (dwarf2_find_attribute(di, DW_AT_import, &imp))
+    {
+        dwarf2_debug_info_t* jmp = dwarf2_jump_to_debug_info(&imp);
+        if (jmp) di->symt = jmp->symt;
+        else FIXME("Couldn't load imported CU\n");
+    }
+    else
+        FIXME("Couldn't find import attribute\n");
+}
+
 static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
 {
     switch (di->abbrev->tag)
@@ -2372,6 +2390,9 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
         break;
     case DW_TAG_subrange_type:
         dwarf2_parse_subrange_type(di);
+        break;
+    case DW_TAG_imported_unit:
+        dwarf2_parse_imported_unit(di);
         break;
     /* silence a couple of C++ defines */
     case DW_TAG_imported_module:
