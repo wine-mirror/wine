@@ -2400,9 +2400,13 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
     case DW_TAG_imported_unit:
         dwarf2_parse_imported_unit(di);
         break;
-    /* silence a couple of C++ defines */
+    /* keep it silent until we need DW_OP_call_xxx support */
+    case DW_TAG_dwarf_procedure:
+    /* silence a couple of non-C language defines (mainly C++ but others too) */
     case DW_TAG_imported_module:
     case DW_TAG_imported_declaration:
+    case DW_TAG_interface_type:
+    case DW_TAG_module:
     case DW_TAG_ptr_to_member_type:
         break;
     default:
