@@ -1688,7 +1688,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
         switch (child->abbrev->tag)
         {
         case DW_TAG_array_type:
-            dwarf2_parse_array_type(di);
+            dwarf2_parse_array_type(child);
             break;
         case DW_TAG_member:
             /* FIXME: should I follow the sibling stuff ?? */
@@ -1705,7 +1705,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
             dwarf2_parse_const_type(child);
             break;
         case DW_TAG_volatile_type:
-            dwarf2_parse_volatile_type(di);
+            dwarf2_parse_volatile_type(child);
             break;
         case DW_TAG_pointer_type:
             dwarf2_parse_pointer_type(child);
@@ -2205,10 +2205,10 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
             dwarf2_parse_inlined_subroutine(&subpgm, NULL, child);
             break;
         case DW_TAG_pointer_type:
-            dwarf2_parse_pointer_type(di);
+            dwarf2_parse_pointer_type(child);
             break;
         case DW_TAG_const_type:
-            dwarf2_parse_const_type(di);
+            dwarf2_parse_const_type(child);
             break;
         case DW_TAG_subprogram:
             /* FIXME: likely a declaration (to be checked)
