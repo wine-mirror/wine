@@ -263,6 +263,34 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
     }
 }
 
+#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b)
+static void check_rt_color_(unsigned int line, IDirect3DSurface8 *rt, D3DCOLOR expected_color)
+{
+    D3DCOLOR color = 0xdeadbeef;
+    struct surface_readback rb;
+    D3DSURFACE_DESC desc;
+    unsigned int x, y;
+    HRESULT hr;
+
+    hr = IDirect3DSurface8_GetDesc(rt, &desc);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get surface desc, hr %#x.\n", hr);
+
+    get_rt_readback(rt, &rb);
+    for (y = 0; y < desc.Height; ++y)
+    {
+        for (x = 0; x < desc.Width; ++x)
+        {
+            color = get_readback_color(&rb, x, y) & 0x00ffffff;
+            if (color != expected_color)
+                break;
+        }
+        if (color != expected_color)
+            break;
+    }
+    release_surface_readback(&rb);
+    ok_(__FILE__, line)(color == expected_color, "Got unexpected color 0x%08x.\n", color);
+}
+
 static IDirect3DDevice8 *create_device(IDirect3D8 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -11157,6 +11185,113 @@ static void test_sample_mask(void)
     DestroyWindow(window);
 }
 
+struct dynamic_vb_vertex
+{
+    struct vec3 position;
+    DWORD diffuse;
+};
+
+static void fill_dynamic_vb_quad(struct dynamic_vb_vertex *quad, unsigned int x, unsigned int y)
+{
+    unsigned int i;
+
+    memset(quad, 0, 4 * sizeof(*quad));
+
+    quad[0].position.x = quad[1].position.x = -1.0f + 0.01f * x;
+    quad[2].position.x = quad[3].position.x = -1.0f + 0.01f * (x + 1);
+
+    quad[0].position.y = quad[2].position.y = -1.0f + 0.01f * y;
+    quad[1].position.y = quad[3].position.y = -1.0f + 0.01f * (y + 1);
+
+    for (i = 0; i < 4; ++i)
+        quad[i].diffuse = 0xff00ff00;
+}
+
+static void test_dynamic_map_synchronization(void)
+{
+    IDirect3DVertexBuffer8 *buffer;
+    IDirect3DDevice8 *device;
+    IDirect3DSurface8 *rt;
+    unsigned int x, y;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BYTE *data;
+
+    window = create_window();
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, 200 * 4 * sizeof(struct dynamic_vb_vertex),
+            D3DUSAGE_DYNAMIC, D3DFVF_XYZ, D3DPOOL_DEFAULT, &buffer);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, buffer, sizeof(struct dynamic_vb_vertex));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (y = 0; y < 200; ++y)
+    {
+        hr = IDirect3DVertexBuffer8_Lock(buffer, 0, 0, &data, D3DLOCK_DISCARD);
+        ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+        fill_dynamic_vb_quad((struct dynamic_vb_vertex *)data, 0, y);
+
+        hr = IDirect3DVertexBuffer8_Unlock(buffer);
+        ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (x = 1; x < 200; ++x)
+        {
+            hr = IDirect3DVertexBuffer8_Lock(buffer, 4 * sizeof(struct dynamic_vb_vertex) * x,
+                    4 * sizeof(struct dynamic_vb_vertex), &data, D3DLOCK_NOOVERWRITE);
+            ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+            fill_dynamic_vb_quad((struct dynamic_vb_vertex *)data, x, y);
+
+            hr = IDirect3DVertexBuffer8_Unlock(buffer);
+            ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 4 * x, 2);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        }
+    }
+
+    hr = IDirect3DDevice8_GetRenderTarget(device, &rt);
+    ok(hr == S_OK, "Failed to get render target, hr %#x.\n", hr);
+    check_rt_color(rt, 0x0000ff00);
+    IDirect3DSurface8_Release(rt);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DVertexBuffer8_Release(buffer);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -11235,4 +11370,5 @@ START_TEST(visual)
     test_alphatest();
     test_desktop_window();
     test_sample_mask();
+    test_dynamic_map_synchronization();
 }
