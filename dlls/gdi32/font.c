@@ -125,6 +125,18 @@ static const WCHAR software_config_keyW[] =
     '\\','S','o','f','t','w','a','r','e',
 };
 
+static const WCHAR fonts_config_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s',
+    '\\','C','u','r','r','e','n','t',
+    '\\','S','o','f','t','w','a','r','e',
+    '\\','F','o','n','t','s'
+};
+
 static const WCHAR fonts_win9x_config_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -5860,19 +5872,19 @@ static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
 
 static void load_system_bitmap_fonts(void)
 {
-    static const WCHAR * const fonts[] = { L"FONTS.FON", L"OEMFONT.FON", L"FIXEDFON.FON" };
+    static const char * const fonts[] = { "FONTS.FON", "OEMFONT.FON", "FIXEDFON.FON" };
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[MAX_PATH * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
     HKEY hkey;
-    WCHAR data[MAX_PATH];
-    DWORD i, dlen, type;
+    DWORD i;
 
-    if (RegOpenKeyW( HKEY_CURRENT_CONFIG, L"Software\\Fonts", &hkey )) return;
+    if (!(hkey = reg_open_key( NULL, fonts_config_keyW, sizeof(fonts_config_keyW) ))) return;
     for (i = 0; i < ARRAY_SIZE(fonts); i++)
     {
-        dlen = sizeof(data);
-        if (!RegQueryValueExW( hkey, fonts[i], 0, &type, (BYTE *)data, &dlen ) && type == REG_SZ)
-            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP );
+        if (query_reg_ascii_value( hkey, fonts[i], info, sizeof(value_buffer) ) && info->Type == REG_SZ)
+            add_system_font_resource( (const WCHAR *)info->Data, ADDFONT_ALLOW_BITMAP );
     }
-    RegCloseKey( hkey );
+    NtClose( hkey );
 }
 
 static void load_directory_fonts( WCHAR *path, UINT flags )
@@ -5927,8 +5939,9 @@ static void load_directory_fonts( WCHAR *path, UINT flags )
 
 static void load_file_system_fonts(void)
 {
-    WCHAR *ptr, *next, path[MAX_PATH + ARRAYSIZE(nt_prefixW)], value[1024];
-    DWORD len = sizeof(value);
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[1024 * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
+    WCHAR *ptr, *next, path[MAX_PATH];
 
     /* Windows directory */
     get_fonts_win_dir_path( NULL, path );
@@ -5940,9 +5953,10 @@ static void load_file_system_fonts(void)
 
     /* custom paths */
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
-    if (!RegQueryValueExW( wine_fonts_key, L"Path", NULL, NULL, (BYTE *)value, &len ))
+    if (query_reg_ascii_value( wine_fonts_key, "Path", info, sizeof(value_buffer) ) &&
+        info->Type == REG_SZ)
     {
-        for (ptr = value; ptr; ptr = next)
+        for (ptr = (WCHAR *)info->Data; ptr; ptr = next)
         {
             if ((next = wcschr( ptr, ';' ))) *next++ = 0;
             if (next && next - ptr < 2) continue;
