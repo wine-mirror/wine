@@ -110,6 +110,7 @@ static HWINEVENTHOOK hEvent_hook;
 static HHOOK hKBD_hook;
 static HHOOK hCBT_hook;
 static DWORD cbt_hook_thread_id;
+static DWORD winevent_hook_thread_id;
 
 static const WCHAR testWindowClassW[] =
 { 'T','e','s','t','W','i','n','d','o','w','C','l','a','s','s','W',0 };
@@ -10378,7 +10379,7 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 				    DWORD thread_id,
 				    DWORD event_time)
 {
-    ok(thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
+    ok(thread_id == winevent_hook_thread_id, "we didn't ask for events from other threads\n");
 
     /* ignore mouse cursor events */
     if (object_id == OBJID_CURSOR) return;
@@ -18607,7 +18608,7 @@ START_TEST(msg)
     }
     if (!hEvent_hook) win_skip( "no win event hook support\n" );
 
-    cbt_hook_thread_id = GetCurrentThreadId();
+    cbt_hook_thread_id = winevent_hook_thread_id = GetCurrentThreadId();
     hCBT_hook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
     if (!hCBT_hook) win_skip( "cannot set global hook, will skip hook tests\n" );
 
