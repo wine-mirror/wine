@@ -132,6 +132,11 @@ static struct font_gamma_ramp font_gamma_ramp;
 static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
 
+static void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+{
+    while (len--) *dst++ = (unsigned char)*src++;
+}
+
 static UINT asciiz_to_unicode( WCHAR *dst, const char *src )
 {
     WCHAR *p = dst;
@@ -1410,11 +1415,18 @@ static void add_gdi_font_link_entry( struct gdi_font_link *link, const WCHAR *fa
     list_add_tail( &link->links, &entry->entry );
 }
 
+static const WCHAR lucida_sans_unicodeW[] =
+    {'L','u','c','i','d','a',' ','S','a','n','s',' ','U','n','i','c','o','d','e',0};
+static const WCHAR microsoft_sans_serifW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
+static const WCHAR tahomaW[] =
+    {'T','a','h','o','m','a',0};
+
 static const WCHAR * const font_links_list[] =
 {
-    L"Lucida Sans Unicode",
-    L"Microsoft Sans Serif",
-    L"Tahoma"
+    lucida_sans_unicodeW,
+    microsoft_sans_serifW,
+    tahomaW
 };
 
 static const struct font_links_defaults_list
@@ -2531,47 +2543,48 @@ static void update_font_association_info(UINT current_ansi_codepage)
         reg_delete_tree( NULL, font_assoc_keyW, sizeof(font_assoc_keyW) );
 }
 
-static void set_multi_value_key(HKEY hkey, const WCHAR *name, const WCHAR *value, DWORD len)
+static void set_multi_value_key( HKEY hkey, const WCHAR *name, const char *value, DWORD len )
 {
+    WCHAR valueW[256];
+    ascii_to_unicode( valueW, value, len );
     if (value)
-        RegSetValueExW(hkey, name, 0, REG_MULTI_SZ, (const BYTE *)value, len);
+        set_reg_value( hkey, name, REG_MULTI_SZ, valueW, len * sizeof(WCHAR) );
     else if (name)
-        RegDeleteValueW(hkey, name);
+        reg_delete_value( hkey, name );
 }
 
 static void update_font_system_link_info(UINT current_ansi_codepage)
 {
-    static const WCHAR system_link_simplified_chinese[] =
-        L"SIMSUN.TTC,SimSun\0"
-        L"MINGLIU.TTC,PMingLiu\0"
-        L"MSGOTHIC.TTC,MS UI Gothic\0"
-        L"BATANG.TTC,Batang\0";
-    static const WCHAR system_link_traditional_chinese[] =
-        L"MINGLIU.TTC,PMingLiu\0"
-        L"SIMSUN.TTC,SimSun\0"
-        L"MSGOTHIC.TTC,MS UI Gothic\0"
-        L"BATANG.TTC,Batang\0";
-    static const WCHAR system_link_japanese[] =
-        L"MSGOTHIC.TTC,MS UI Gothic\0"
-        L"MINGLIU.TTC,PMingLiU\0"
-        L"SIMSUN.TTC,SimSun\0"
-        L"GULIM.TTC,Gulim\0";
-    static const WCHAR system_link_korean[] =
-        L"GULIM.TTC,Gulim\0"
-        L"MSGOTHIC.TTC,MS UI Gothic\0"
-        L"MINGLIU.TTC,PMingLiU\0"
-        L"SIMSUN.TTC,SimSun\0";
-    static const WCHAR system_link_non_cjk[] =
-        L"MSGOTHIC.TTC,MS UI Gothic\0"
-        L"MINGLIU.TTC,PMingLiU\0"
-        L"SIMSUN.TTC,SimSun\0"
-        L"GULIM.TTC,Gulim\0";
+    static const char system_link_simplified_chinese[] =
+        "SIMSUN.TTC,SimSun\0"
+        "MINGLIU.TTC,PMingLiu\0"
+        "MSGOTHIC.TTC,MS UI Gothic\0"
+        "BATANG.TTC,Batang\0";
+    static const char system_link_traditional_chinese[] =
+        "MINGLIU.TTC,PMingLiu\0"
+        "SIMSUN.TTC,SimSun\0"
+        "MSGOTHIC.TTC,MS UI Gothic\0"
+        "BATANG.TTC,Batang\0";
+    static const char system_link_japanese[] =
+        "MSGOTHIC.TTC,MS UI Gothic\0"
+        "MINGLIU.TTC,PMingLiU\0"
+        "SIMSUN.TTC,SimSun\0"
+        "GULIM.TTC,Gulim\0";
+    static const char system_link_korean[] =
+        "GULIM.TTC,Gulim\0"
+        "MSGOTHIC.TTC,MS UI Gothic\0"
+        "MINGLIU.TTC,PMingLiU\0"
+        "SIMSUN.TTC,SimSun\0";
+    static const char system_link_non_cjk[] =
+        "MSGOTHIC.TTC,MS UI Gothic\0"
+        "MINGLIU.TTC,PMingLiU\0"
+        "SIMSUN.TTC,SimSun\0"
+        "GULIM.TTC,Gulim\0";
     HKEY hkey;
 
-    if (!RegCreateKeyW(HKEY_LOCAL_MACHINE,
-                       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink", &hkey))
+    if ((hkey = reg_create_key( NULL, system_link_keyW, sizeof(system_link_keyW), 0, NULL )))
     {
-        const WCHAR *link;
+        const char *link;
         DWORD len;
 
         switch (current_ansi_codepage)
@@ -2596,10 +2609,10 @@ static void update_font_system_link_info(UINT current_ansi_codepage)
             link = system_link_non_cjk;
             len = sizeof(system_link_non_cjk);
         }
-        set_multi_value_key(hkey, L"Lucida Sans Unicode", link, len);
-        set_multi_value_key(hkey, L"Microsoft Sans Serif", link, len);
-        set_multi_value_key(hkey, L"Tahoma", link, len);
-        RegCloseKey(hkey);
+        set_multi_value_key(hkey, lucida_sans_unicodeW, link, len);
+        set_multi_value_key(hkey, microsoft_sans_serifW, link, len);
+        set_multi_value_key(hkey, tahomaW, link, len);
+        NtClose( hkey );
     }
 }
 
