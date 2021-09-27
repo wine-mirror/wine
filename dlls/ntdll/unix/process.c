@@ -482,6 +482,59 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
 
 
 /***********************************************************************
+ *           __wine_unix_spawnvp
+ */
+NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait )
+{
+    pid_t pid, wret;
+    int fd[2], status, err;
+
+#ifdef HAVE_PIPE2
+    if (pipe2( fd, O_CLOEXEC ) == -1)
+#endif
+    {
+        if (pipe(fd) == -1) return STATUS_TOO_MANY_OPENED_FILES;
+        fcntl( fd[0], F_SETFD, FD_CLOEXEC );
+        fcntl( fd[1], F_SETFD, FD_CLOEXEC );
+    }
+
+    if (!(pid = fork()))
+    {
+        /* in child */
+        close( fd[0] );
+        signal( SIGPIPE, SIG_DFL );
+        if (!wait)
+        {
+            if (!(pid = fork())) execvp( argv[0], argv ); /* in grandchild */
+            if (pid > 0) _exit(0); /* exit child if fork succeeded */
+        }
+        else execvp( argv[0], argv );
+
+        err = errno_to_status( errno );
+        write( fd[1], &err, sizeof(err) );
+        _exit(1);
+    }
+    close( fd[1] );
+
+    if (pid != -1)
+    {
+        while (pid != (wret = waitpid( pid, &status, 0 )))
+            if (wret == -1 && errno != EINTR) break;
+
+        if (read( fd[0], &err, sizeof(err) ) <= 0)  /* if we read something, exec or second fork failed */
+        {
+            if (pid == wret && WIFEXITED(status)) err = WEXITSTATUS(status);
+            else err = 255;  /* abnormal exit with an abort or an interrupt */
+        }
+    }
+    else err = errno_to_status( errno );
+
+    close( fd[0] );
+    return err;
+}
+
+
+/***********************************************************************
  *           fork_and_exec
  *
  * Fork and exec a new Unix binary, checking for errors.

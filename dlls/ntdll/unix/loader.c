@@ -344,6 +344,7 @@ static void * const syscalls[] =
     NtYieldExecution,
     __wine_dbg_write,
     __wine_unix_call,
+    __wine_unix_spawnvp,
     wine_nt_to_unix_file_name,
     wine_server_call,
     wine_server_fd_to_handle,

@@ -1622,6 +1622,7 @@
 
 # Unix interface
 @ stdcall -syscall __wine_unix_call(int64 long ptr)
+@ stdcall -syscall __wine_unix_spawnvp(long ptr)
 @ cdecl __wine_set_unix_funcs(long ptr)
 @ cdecl __wine_init_unix_lib(long long ptr ptr)
 @ stdcall __wine_ctrl_routine(ptr)

@@ -285,6 +285,25 @@ NTSTATUS WINAPI wow64___wine_unix_call( UINT *args )
 
 
 /**********************************************************************
+ *           wow64___wine_unix_spawnvp
+ */
+NTSTATUS WINAPI wow64___wine_unix_spawnvp( UINT *args )
+{
+    ULONG *argv32 = get_ptr( &args );
+    int wait = get_ulong( &args );
+
+    unsigned int i, count = 0;
+    char **argv;
+
+    while (argv32[count]) count++;
+    argv = Wow64AllocateTemp( (count + 1) * sizeof(*argv) );
+    for (i = 0; i < count; i++) argv[i] = ULongToPtr( argv32[i] );
+    argv[count] = NULL;
+    return __wine_unix_spawnvp( argv, wait );
+}
+
+
+/**********************************************************************
  *           wow64_wine_server_call
  */
 NTSTATUS WINAPI wow64_wine_server_call( UINT *args )

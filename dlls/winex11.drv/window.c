@@ -2854,7 +2854,7 @@ static LRESULT start_screensaver(void)
     if (!is_virtual_desktop())
     {
         const char *argv[3] = { "xdg-screensaver", "activate", NULL };
-        int pid = _spawnvp( _P_DETACH, argv[0], argv );
+        int pid = __wine_unix_spawnvp( (char **)argv, FALSE );
         if (pid > 0)
         {
             TRACE( "started process %d\n", pid );
