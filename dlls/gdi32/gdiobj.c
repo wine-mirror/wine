@@ -515,46 +515,6 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
 
 
 /******************************************************************************
- *              get_reg_dword
- *
- * Read a DWORD value from the registry
- */
-static BOOL get_reg_dword(HKEY base, const WCHAR *key_name, const WCHAR *value_name, DWORD *value)
-{
-    HKEY key;
-    DWORD type, data, size = sizeof(data);
-    BOOL ret = FALSE;
-
-    if (RegOpenKeyW(base, key_name, &key) == ERROR_SUCCESS)
-    {
-        if (RegQueryValueExW(key, value_name, NULL, &type, (void *)&data, &size) == ERROR_SUCCESS &&
-            type == REG_DWORD)
-        {
-            *value = data;
-            ret = TRUE;
-        }
-        RegCloseKey(key);
-    }
-    return ret;
-}
-
-/******************************************************************************
- *              get_dpi
- *
- * get the dpi from the registry
- */
-DWORD get_dpi(void)
-{
-    DWORD dpi;
-
-    if (get_reg_dword(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", &dpi))
-        return dpi;
-    if (get_reg_dword(HKEY_CURRENT_CONFIG, L"Software\\Fonts", L"LogPixels", &dpi))
-        return dpi;
-    return 0;
-}
-
-/******************************************************************************
  *              get_system_dpi
  *
  * Get the system DPI, based on the DPI awareness mode.
@@ -580,16 +540,9 @@ static HFONT create_font( const LOGFONTW *deffont )
     return NtGdiHfontCreate( &lf, sizeof(lf), 0, 0, NULL );
 }
 
-static HFONT create_scaled_font( const LOGFONTW *deffont )
+static HFONT create_scaled_font( const LOGFONTW *deffont, unsigned int dpi )
 {
     LOGFONTW lf;
-    static DWORD dpi;
-
-    if (!dpi)
-    {
-        dpi = get_dpi();
-        if (!dpi) dpi = 96;
-    }
 
     lf = *deffont;
     lf.lfHeight = muldiv( lf.lfHeight, dpi, 96 );
@@ -634,7 +587,7 @@ HGDIOBJ get_stock_object( INT obj )
     return entry_to_handle( handle_entry( ULongToHandle( obj + FIRST_GDI_HANDLE )));
 }
 
-static void init_stock_objects(void)
+static void init_stock_objects( unsigned int dpi )
 {
     const struct DefaultFontInfo *deffonts;
     unsigned int i;
@@ -655,7 +608,7 @@ static void init_stock_objects(void)
     create_pen( PS_NULL,  0, RGB(0,0,0) );
 
     /* slot 9 is not used for non-scaled stock objects */
-    create_scaled_font( &OEMFixedFont );
+    create_scaled_font( &OEMFixedFont, dpi );
 
     /* language-independent stock fonts */
     create_font( &OEMFixedFont );
@@ -679,9 +632,9 @@ static void init_stock_objects(void)
 
     assert( (HandleToULong( obj ) & 0xffff) == FIRST_GDI_HANDLE + DEFAULT_BITMAP );
 
-    create_scaled_font( &deffonts->SystemFont );
-    create_scaled_font( &deffonts->SystemFixedFont );
-    create_scaled_font( &deffonts->DefaultGuiFont );
+    create_scaled_font( &deffonts->SystemFont, dpi );
+    create_scaled_font( &deffonts->SystemFixedFont, dpi );
+    create_scaled_font( &deffonts->DefaultGuiFont, dpi );
 
     /* clear the NOSYSTEM bit on all stock objects*/
     for (i = 0; i < STOCK_LAST + 5; i++)
@@ -699,14 +652,16 @@ static void init_stock_objects(void)
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
+    unsigned int dpi;
+
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     gdi32_module = inst;
     DisableThreadLibraryCalls( inst );
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
     set_gdi_shared();
-    font_init();
-    init_stock_objects();
+    dpi = font_init();
+    init_stock_objects( dpi );
     return TRUE;
 }
 

@@ -338,7 +338,7 @@ struct font_callback_funcs
                                const struct bitmap_font_size *size );
 };
 
-extern void font_init(void) DECLSPEC_HIDDEN;
+extern UINT font_init(void) DECLSPEC_HIDDEN;
 
 /* opentype.c */
 
@@ -380,7 +380,6 @@ extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
-extern DWORD get_dpi(void) DECLSPEC_HIDDEN;
 extern DWORD get_system_dpi(void) DECLSPEC_HIDDEN;
 extern HGDIOBJ get_stock_object( INT obj ) DECLSPEC_HIDDEN;
 extern DWORD get_gdi_object_type( HGDIOBJ obj ) DECLSPEC_HIDDEN;

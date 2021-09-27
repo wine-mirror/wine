@@ -2682,7 +2682,7 @@ static void update_font_system_link_info(UINT current_ansi_codepage)
     }
 }
 
-static void update_codepage(void)
+static void update_codepage( UINT screen_dpi )
 {
     char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[40 * sizeof(WCHAR)])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
@@ -2691,13 +2691,10 @@ static void update_codepage(void)
     HKEY hkey;
     DWORD size;
     UINT i, ansi_cp, oem_cp;
-    DWORD screen_dpi, font_dpi = 0;
+    DWORD font_dpi = 0;
     BOOL done = FALSE, cp_match = FALSE;
 
     static const WCHAR log_pixelsW[] = {'L','o','g','P','i','x','e','l','s',0};
-
-    screen_dpi = get_dpi();
-    if (!screen_dpi) screen_dpi = 96;
 
     size = query_reg_value( wine_fonts_key, log_pixelsW, info, sizeof(value_buffer) );
     if (size == sizeof(DWORD) && info->Type == REG_DWORD)
@@ -4177,12 +4174,13 @@ static BOOL get_key_value( HKEY key, const char *name, DWORD *value )
     return !!count;
 }
 
-static void init_font_options( HKEY hkcu )
+static UINT init_font_options( HKEY hkcu )
 {
     char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[20 * sizeof(WCHAR)])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
     HKEY key;
     DWORD i, val, gamma = 1400;
+    UINT dpi = 0;
 
     static const WCHAR desktop_keyW[] =
         { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p' };
@@ -4220,6 +4218,7 @@ static void init_font_options( HKEY hkcu )
         {
             gamma = min( max( val, 1000 ), 2200 );
         }
+        if (get_key_value( key, "LogPixels", &val )) dpi = val;
         NtClose( key );
     }
 
@@ -4235,8 +4234,17 @@ static void init_font_options( HKEY hkcu )
             font_gamma_ramp.decode[i] = pow( i / 255., gamma / 1000. ) * 255. + .5;
         }
     }
+
+    if (!dpi && (key = reg_open_key( NULL, fonts_config_keyW, sizeof(fonts_config_keyW) )))
+    {
+        if (get_key_value( key, "LogPixels", &val )) dpi = val;
+        NtClose( key );
+    }
+    if (!dpi) dpi = 96;
+
     font_gamma_ramp.gamma = gamma;
-    TRACE("gamma %d\n", font_gamma_ramp.gamma);
+    TRACE( "gamma %d screen dpi %u\n", font_gamma_ramp.gamma, dpi );
+    return dpi;
 }
 
 
@@ -6123,12 +6131,13 @@ static const struct font_callback_funcs callback_funcs = { add_gdi_face };
 /***********************************************************************
  *              font_init
  */
-void font_init(void)
+UINT font_init(void)
 {
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     UNICODE_STRING name;
     HANDLE mutex, hkcu;
     DWORD disposition;
+    UINT dpi = 0;
 
     static WCHAR wine_font_mutexW[] =
         {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
@@ -6137,14 +6146,15 @@ void font_init(void)
         {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','F','o','n','t','s'};
     static const WCHAR cacheW[] = {'C','a','c','h','e'};
 
-    if (RtlOpenCurrentUser( MAXIMUM_ALLOWED, &hkcu )) return;
+    if (RtlOpenCurrentUser( MAXIMUM_ALLOWED, &hkcu )) return 0;
     wine_fonts_key = reg_create_key( hkcu, wine_fonts_keyW, sizeof(wine_fonts_keyW), 0, NULL );
-    if (wine_fonts_key) init_font_options( hkcu );
+    if (wine_fonts_key) dpi = init_font_options( hkcu );
     NtClose( hkcu );
-    if (!wine_fonts_key) return;
-    update_codepage();
+    if (!dpi) return 96;
+    update_codepage( dpi );
 
-    if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs )) return;
+    if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs ))
+        return dpi;
 
     load_system_bitmap_fonts();
     load_file_system_fonts();
@@ -6155,7 +6165,7 @@ void font_init(void)
     name.Buffer = wine_font_mutexW;
     name.Length = name.MaximumLength = sizeof(wine_font_mutexW);
 
-    if (NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE ) < 0) return;
+    if (NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE ) < 0) return dpi;
     NtWaitForSingleObject( mutex, FALSE, NULL );
 
     wine_fonts_cache_key = reg_create_key( wine_fonts_key, cacheW, sizeof(cacheW),
@@ -6181,6 +6191,7 @@ void font_init(void)
     load_system_links();
     dump_gdi_font_list();
     dump_gdi_font_subst();
+    return dpi;
 }
 
 /***********************************************************************
