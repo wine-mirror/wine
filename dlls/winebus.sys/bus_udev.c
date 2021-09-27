@@ -215,6 +215,191 @@ static struct base_device *find_device_from_udev(struct udev_device *dev)
     return NULL;
 }
 
+static void hidraw_device_destroy(struct unix_device *iface)
+{
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+
+    udev_device_unref(impl->base.udev_device);
+}
+
+static NTSTATUS hidraw_device_start(struct unix_device *iface)
+{
+    pthread_mutex_lock(&udev_cs);
+    start_polling_device(iface);
+    pthread_mutex_unlock(&udev_cs);
+    return STATUS_SUCCESS;
+}
+
+static void hidraw_device_stop(struct unix_device *iface)
+{
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+
+    pthread_mutex_lock(&udev_cs);
+    stop_polling_device(iface);
+    list_remove(&impl->base.unix_device.entry);
+    pthread_mutex_unlock(&udev_cs);
+}
+
+static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
+                                                    DWORD length, DWORD *out_length)
+{
+#ifdef HAVE_LINUX_HIDRAW_H
+    struct hidraw_report_descriptor descriptor;
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+
+    if (ioctl(impl->base.device_fd, HIDIOCGRDESCSIZE, &descriptor.size) == -1)
+    {
+        WARN("ioctl(HIDIOCGRDESCSIZE) failed: %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    *out_length = descriptor.size;
+
+    if (length < descriptor.size)
+        return STATUS_BUFFER_TOO_SMALL;
+    if (!descriptor.size)
+        return STATUS_SUCCESS;
+
+    if (ioctl(impl->base.device_fd, HIDIOCGRDESC, &descriptor) == -1)
+    {
+        WARN("ioctl(HIDIOCGRDESC) failed: %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    memcpy(buffer, descriptor.value, descriptor.size);
+    return STATUS_SUCCESS;
+#else
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
+static void hidraw_device_read_report(struct unix_device *iface)
+{
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+    BYTE report_buffer[1024];
+
+    int size = read(impl->base.device_fd, report_buffer, sizeof(report_buffer));
+    if (size == -1)
+        TRACE_(hid_report)("Read failed. Likely an unplugged device %d %s\n", errno, strerror(errno));
+    else if (size == 0)
+        TRACE_(hid_report)("Failed to read report\n");
+    else
+        bus_event_queue_input_report(&event_queue, iface, report_buffer, size);
+}
+
+static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
+{
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+    ULONG length = packet->reportBufferLen;
+    BYTE buffer[8192];
+    int count = 0;
+
+    if ((buffer[0] = packet->reportId))
+        count = write(impl->base.device_fd, packet->reportBuffer, length);
+    else if (length > sizeof(buffer) - 1)
+        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", packet->reportId, length);
+    else
+    {
+        memcpy(buffer + 1, packet->reportBuffer, length);
+        count = write(impl->base.device_fd, buffer, length + 1);
+    }
+
+    if (count > 0)
+    {
+        io->Information = count;
+        io->Status = STATUS_SUCCESS;
+    }
+    else
+    {
+        ERR_(hid_report)("id %d write failed error: %d %s\n", packet->reportId, errno, strerror(errno));
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
+    }
+}
+
+static void hidraw_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet,
+                                             IO_STATUS_BLOCK *io)
+{
+#if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+    ULONG length = packet->reportBufferLen;
+    BYTE buffer[8192];
+    int count = 0;
+
+    if ((buffer[0] = packet->reportId) && length <= 0x1fff)
+        count = ioctl(impl->base.device_fd, HIDIOCGFEATURE(length), packet->reportBuffer);
+    else if (length > sizeof(buffer) - 1)
+        ERR_(hid_report)("id %d length %u >= 8192, cannot read\n", packet->reportId, length);
+    else
+    {
+        count = ioctl(impl->base.device_fd, HIDIOCGFEATURE(length + 1), buffer);
+        memcpy(packet->reportBuffer, buffer + 1, length);
+    }
+
+    if (count > 0)
+    {
+        io->Information = count;
+        io->Status = STATUS_SUCCESS;
+    }
+    else
+    {
+        ERR_(hid_report)("id %d read failed, error: %d %s\n", packet->reportId, errno, strerror(errno));
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
+    }
+#else
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
+static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet,
+                                             IO_STATUS_BLOCK *io)
+{
+#if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
+    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
+    ULONG length = packet->reportBufferLen;
+    BYTE buffer[8192];
+    int count = 0;
+
+    if ((buffer[0] = packet->reportId) && length <= 0x1fff)
+        count = ioctl(impl->base.device_fd, HIDIOCSFEATURE(length), packet->reportBuffer);
+    else if (length > sizeof(buffer) - 1)
+        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", packet->reportId, length);
+    else
+    {
+        memcpy(buffer + 1, packet->reportBuffer, length);
+        count = ioctl(impl->base.device_fd, HIDIOCSFEATURE(length + 1), buffer);
+    }
+
+    if (count > 0)
+    {
+        io->Information = count;
+        io->Status = STATUS_SUCCESS;
+    }
+    else
+    {
+        ERR_(hid_report)("id %d write failed, error: %d %s\n", packet->reportId, errno, strerror(errno));
+        io->Information = 0;
+        io->Status = STATUS_UNSUCCESSFUL;
+    }
+#else
+    io->Information = 0;
+    io->Status = STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
+static const struct raw_device_vtbl hidraw_device_vtbl =
+{
+    hidraw_device_destroy,
+    hidraw_device_start,
+    hidraw_device_stop,
+    hidraw_device_get_report_descriptor,
+    hidraw_device_set_output_report,
+    hidraw_device_get_feature_report,
+    hidraw_device_set_feature_report,
+};
+
 #ifdef HAS_PROPER_INPUT_HEADER
 
 static const char *get_device_syspath(struct udev_device *dev)
@@ -529,194 +714,6 @@ static BOOL set_report_from_event(struct unix_device *iface, struct input_event 
         return FALSE;
     }
 }
-#endif
-
-static void hidraw_device_destroy(struct unix_device *iface)
-{
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-
-    udev_device_unref(impl->base.udev_device);
-}
-
-static NTSTATUS hidraw_device_start(struct unix_device *iface)
-{
-    pthread_mutex_lock(&udev_cs);
-    start_polling_device(iface);
-    pthread_mutex_unlock(&udev_cs);
-    return STATUS_SUCCESS;
-}
-
-static void hidraw_device_stop(struct unix_device *iface)
-{
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-
-    pthread_mutex_lock(&udev_cs);
-    stop_polling_device(iface);
-    list_remove(&impl->base.unix_device.entry);
-    pthread_mutex_unlock(&udev_cs);
-}
-
-static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, BYTE *buffer,
-                                                    DWORD length, DWORD *out_length)
-{
-#ifdef HAVE_LINUX_HIDRAW_H
-    struct hidraw_report_descriptor descriptor;
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-
-    if (ioctl(impl->base.device_fd, HIDIOCGRDESCSIZE, &descriptor.size) == -1)
-    {
-        WARN("ioctl(HIDIOCGRDESCSIZE) failed: %d %s\n", errno, strerror(errno));
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    *out_length = descriptor.size;
-
-    if (length < descriptor.size)
-        return STATUS_BUFFER_TOO_SMALL;
-    if (!descriptor.size)
-        return STATUS_SUCCESS;
-
-    if (ioctl(impl->base.device_fd, HIDIOCGRDESC, &descriptor) == -1)
-    {
-        WARN("ioctl(HIDIOCGRDESC) failed: %d %s\n", errno, strerror(errno));
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    memcpy(buffer, descriptor.value, descriptor.size);
-    return STATUS_SUCCESS;
-#else
-    return STATUS_NOT_IMPLEMENTED;
-#endif
-}
-
-static void hidraw_device_read_report(struct unix_device *iface)
-{
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    BYTE report_buffer[1024];
-
-    int size = read(impl->base.device_fd, report_buffer, sizeof(report_buffer));
-    if (size == -1)
-        TRACE_(hid_report)("Read failed. Likely an unplugged device %d %s\n", errno, strerror(errno));
-    else if (size == 0)
-        TRACE_(hid_report)("Failed to read report\n");
-    else
-        bus_event_queue_input_report(&event_queue, iface, report_buffer, size);
-}
-
-static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
-{
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    ULONG length = packet->reportBufferLen;
-    BYTE buffer[8192];
-    int count = 0;
-
-    if ((buffer[0] = packet->reportId))
-        count = write(impl->base.device_fd, packet->reportBuffer, length);
-    else if (length > sizeof(buffer) - 1)
-        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", packet->reportId, length);
-    else
-    {
-        memcpy(buffer + 1, packet->reportBuffer, length);
-        count = write(impl->base.device_fd, buffer, length + 1);
-    }
-
-    if (count > 0)
-    {
-        io->Information = count;
-        io->Status = STATUS_SUCCESS;
-    }
-    else
-    {
-        ERR_(hid_report)("id %d write failed error: %d %s\n", packet->reportId, errno, strerror(errno));
-        io->Information = 0;
-        io->Status = STATUS_UNSUCCESSFUL;
-    }
-}
-
-static void hidraw_device_get_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet,
-                                             IO_STATUS_BLOCK *io)
-{
-#if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    ULONG length = packet->reportBufferLen;
-    BYTE buffer[8192];
-    int count = 0;
-
-    if ((buffer[0] = packet->reportId) && length <= 0x1fff)
-        count = ioctl(impl->base.device_fd, HIDIOCGFEATURE(length), packet->reportBuffer);
-    else if (length > sizeof(buffer) - 1)
-        ERR_(hid_report)("id %d length %u >= 8192, cannot read\n", packet->reportId, length);
-    else
-    {
-        count = ioctl(impl->base.device_fd, HIDIOCGFEATURE(length + 1), buffer);
-        memcpy(packet->reportBuffer, buffer + 1, length);
-    }
-
-    if (count > 0)
-    {
-        io->Information = count;
-        io->Status = STATUS_SUCCESS;
-    }
-    else
-    {
-        ERR_(hid_report)("id %d read failed, error: %d %s\n", packet->reportId, errno, strerror(errno));
-        io->Information = 0;
-        io->Status = STATUS_UNSUCCESSFUL;
-    }
-#else
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-#endif
-}
-
-static void hidraw_device_set_feature_report(struct unix_device *iface, HID_XFER_PACKET *packet,
-                                             IO_STATUS_BLOCK *io)
-{
-#if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
-    struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    ULONG length = packet->reportBufferLen;
-    BYTE buffer[8192];
-    int count = 0;
-
-    if ((buffer[0] = packet->reportId) && length <= 0x1fff)
-        count = ioctl(impl->base.device_fd, HIDIOCSFEATURE(length), packet->reportBuffer);
-    else if (length > sizeof(buffer) - 1)
-        ERR_(hid_report)("id %d length %u >= 8192, cannot write\n", packet->reportId, length);
-    else
-    {
-        memcpy(buffer + 1, packet->reportBuffer, length);
-        count = ioctl(impl->base.device_fd, HIDIOCSFEATURE(length + 1), buffer);
-    }
-
-    if (count > 0)
-    {
-        io->Information = count;
-        io->Status = STATUS_SUCCESS;
-    }
-    else
-    {
-        ERR_(hid_report)("id %d write failed, error: %d %s\n", packet->reportId, errno, strerror(errno));
-        io->Information = 0;
-        io->Status = STATUS_UNSUCCESSFUL;
-    }
-#else
-    io->Information = 0;
-    io->Status = STATUS_NOT_IMPLEMENTED;
-#endif
-}
-
-static const struct raw_device_vtbl hidraw_device_vtbl =
-{
-    hidraw_device_destroy,
-    hidraw_device_start,
-    hidraw_device_stop,
-    hidraw_device_get_report_descriptor,
-    hidraw_device_set_output_report,
-    hidraw_device_get_feature_report,
-    hidraw_device_set_feature_report,
-};
-
-#ifdef HAS_PROPER_INPUT_HEADER
 
 static void lnxev_device_destroy(struct unix_device *iface)
 {
@@ -812,7 +809,7 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
     lnxev_device_stop,
     lnxev_device_haptics_start,
 };
-#endif
+#endif /* HAS_PROPER_INPUT_HEADER */
 
 static void get_device_subsystem_info(struct udev_device *dev, char const *subsystem, struct device_desc *desc)
 {
