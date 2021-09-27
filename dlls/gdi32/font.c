@@ -4137,37 +4137,42 @@ const struct gdi_dc_funcs font_driver =
     GDI_PRIORITY_FONT_DRV           /* priority */
 };
 
-static DWORD get_key_value( HKEY key, const WCHAR *name, DWORD *value )
+static BOOL get_key_value( HKEY key, const char *name, DWORD *value )
 {
-    WCHAR buf[12];
-    DWORD count = sizeof(buf), type, err;
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[12 * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
+    DWORD count;
 
-    err = RegQueryValueExW( key, name, NULL, &type, (BYTE *)buf, &count );
-    if (!err)
+    count = query_reg_ascii_value( key, name, info, sizeof(value_buffer) );
+    if (count)
     {
-        if (type == REG_DWORD) memcpy( value, buf, sizeof(*value) );
-        else *value = wcstol( buf, NULL, 10 );
+        if (info->Type == REG_DWORD) memcpy( value, info->Data, sizeof(*value) );
+        else *value = wcstol( (const WCHAR *)info->Data, NULL, 10 );
     }
-    return err;
+    return !!count;
 }
 
-static void init_font_options(void)
+static void init_font_options( HKEY hkcu )
 {
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[20 * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
     HKEY key;
-    DWORD i, type, size, val, gamma = 1400;
-    WCHAR buffer[20];
+    DWORD i, val, gamma = 1400;
 
-    size = sizeof(buffer);
-    if (!RegQueryValueExW( wine_fonts_key, L"AntialiasFakeBoldOrItalic", NULL,
-                           &type, (BYTE *)buffer, &size) && type == REG_SZ && size >= 1)
+    static const WCHAR desktop_keyW[] =
+        { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p' };
+
+    if (query_reg_ascii_value( wine_fonts_key, "AntialiasFakeBoldOrItalic",
+                               info, sizeof(value_buffer) ) && info->Type == REG_SZ)
     {
-        antialias_fakes = (wcschr(L"yYtT1", buffer[0]) != NULL);
+        static const WCHAR valsW[] = {'y','Y','t','T','1',0};
+        antialias_fakes = (wcschr( valsW, *(const WCHAR *)info->Data ) != NULL);
     }
 
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Control Panel\\Desktop", &key ))
+    if ((key = reg_open_key( hkcu, desktop_keyW, sizeof(desktop_keyW) )))
     {
         /* FIXME: handle vertical orientations even though Windows doesn't */
-        if (!get_key_value( key, L"FontSmoothingOrientation", &val ))
+        if (get_key_value( key, "FontSmoothingOrientation", &val ))
         {
             switch (val)
             {
@@ -4179,18 +4184,18 @@ static void init_font_options(void)
                 break;
             }
         }
-        if (!get_key_value( key, L"FontSmoothing", &val ) && val /* enabled */)
+        if (get_key_value( key, "FontSmoothing", &val ) && val /* enabled */)
         {
-            if (!get_key_value( key, L"FontSmoothingType", &val ) && val == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
+            if (get_key_value( key, "FontSmoothingType", &val ) && val == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
                 font_smoothing = subpixel_orientation;
             else
                 font_smoothing = GGO_GRAY4_BITMAP;
         }
-        if (!get_key_value( key, L"FontSmoothingGamma", &val ) && val)
+        if (get_key_value( key, "FontSmoothingGamma", &val ) && val)
         {
             gamma = min( max( val, 1000 ), 2200 );
         }
-        RegCloseKey( key );
+        NtClose( key );
     }
 
     /* Calibrating the difference between the registry value and the Wine gamma value.
@@ -6091,19 +6096,23 @@ void font_init(void)
 {
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     UNICODE_STRING name;
-    HANDLE mutex;
+    HANDLE mutex, hkcu;
     DWORD disposition;
 
     static WCHAR wine_font_mutexW[] =
         {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
          '\\','_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_'};
+    static const WCHAR wine_fonts_keyW[] =
+        {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','F','o','n','t','s'};
 
-    if (RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\Fonts", 0, NULL, 0,
-                         KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
-        return;
+    if (RtlOpenCurrentUser( MAXIMUM_ALLOWED, &hkcu )) return;
 
-    init_font_options();
+    wine_fonts_key = reg_create_key( hkcu, wine_fonts_keyW, sizeof(wine_fonts_keyW), 0, NULL );
+    if (wine_fonts_key) init_font_options( hkcu );
+    NtClose( hkcu );
+    if (!wine_fonts_key) return;
     update_codepage();
+
     if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs )) return;
 
     load_system_bitmap_fonts();
