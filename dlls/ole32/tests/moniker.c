@@ -3359,6 +3359,24 @@ todo_wine
     IMoniker_Release(moniker2);
     IMoniker_Release(moniker1);
 
+    /* ComposeWith() */
+    hr = create_moniker_from_desc("CI1I2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = create_moniker_from_desc("I3", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_ComposeWith(moniker1, NULL, FALSE, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(moniker == moniker1, "Unexpected pointer.\n");
+    IMoniker_Release(moniker);
+
+    hr = IMoniker_ComposeWith(moniker1, NULL, TRUE, &moniker);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    ok(!moniker, "Unexpected pointer.\n");
+
+    IMoniker_Release(moniker2);
+    IMoniker_Release(moniker1);
+
     IBindCtx_Release(bindctx);
 }
 

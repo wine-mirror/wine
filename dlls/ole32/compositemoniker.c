@@ -485,28 +485,14 @@ CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar
     }
 }
 
-/******************************************************************************
- *        CompositeMoniker_ComposeWith
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
-               BOOL fOnlyIfNotGeneric, IMoniker** ppmkComposite)
+static HRESULT WINAPI CompositeMonikerImpl_ComposeWith(IMoniker *iface, IMoniker *right,
+        BOOL only_if_not_generic, IMoniker **composite)
 {
-    TRACE("(%p,%p,%d,%p)\n",iface,pmkRight,fOnlyIfNotGeneric,ppmkComposite);
+    TRACE("%p, %p, %d, %p.\n", iface, right, only_if_not_generic, composite);
 
-    if ((ppmkComposite==NULL)||(pmkRight==NULL))
-	return E_POINTER;
+    *composite = NULL;
 
-    *ppmkComposite=0;
-
-    /* If fOnlyIfNotGeneric is TRUE, this method sets *pmkComposite to NULL and returns MK_E_NEEDGENERIC; */
-    /* otherwise, the method returns the result of combining the two monikers by calling the */
-    /* CreateGenericComposite function */
-
-    if (fOnlyIfNotGeneric)
-        return MK_E_NEEDGENERIC;
-
-    return CreateGenericComposite(iface,pmkRight,ppmkComposite);
+    return only_if_not_generic ? MK_E_NEEDGENERIC : CreateGenericComposite(iface, right, composite);
 }
 
 static void composite_get_components(IMoniker *moniker, IMoniker **components, unsigned int *index)
