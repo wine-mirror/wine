@@ -6068,53 +6068,54 @@ static void update_external_font_keys(void)
 
 static void load_registry_fonts(void)
 {
-    WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH + 4], *tmp, *path;
-    DWORD i = 0, type, dlen, vlen;
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[MAX_PATH * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
+    KEY_VALUE_FULL_INFORMATION *enum_info = (KEY_VALUE_FULL_INFORMATION *)value_buffer;
+    WCHAR value[LF_FULLFACESIZE + 12], *tmp, *path;
+    DWORD i = 0, dlen;
     HKEY hkey;
+
+    static const WCHAR dot_fonW[] = {'.','f','o','n',0};
 
     /* Look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
        for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
        full path as the entry.  Also look for any .fon fonts, since ReadFontDir
        will skip these. */
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE,
-                     is_win9x() ? L"Software\\Microsoft\\Windows\\CurrentVersion\\Fonts" :
-                     L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", &hkey ))
-        return;
+    if (is_win9x())
+        hkey = reg_open_key( NULL, fonts_win9x_config_keyW, sizeof(fonts_win9x_config_keyW) );
+    else
+        hkey = reg_open_key( NULL, fonts_winnt_config_keyW, sizeof(fonts_winnt_config_keyW) );
+    if (!hkey) return;
 
-    memcpy( data, nt_prefixW, sizeof(nt_prefixW) );
-    vlen = ARRAY_SIZE(value);
-    dlen = sizeof(data) - sizeof(nt_prefixW);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, NULL, NULL ))
+    while (reg_enum_value( hkey, i++, enum_info, sizeof(value_buffer), value, sizeof(value) ))
     {
-        if (type != REG_SZ) goto next;
-        dlen /= sizeof(WCHAR);
-        if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
-        if (find_face_from_full_name( value )) goto next;
+        if (enum_info->Type != REG_SZ) continue;
+        if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, true_type_suffixW, -1 )) *tmp = 0;
+        if (find_face_from_full_name( value )) continue;
         if (tmp && !*tmp) *tmp = ' ';
 
-        path = data + ARRAYSIZE(nt_prefixW);
-        if (RegQueryValueExW( hkey, value, NULL, NULL, (LPBYTE)data + sizeof(nt_prefixW), &dlen ))
+        if (!(dlen = query_reg_value( hkey, value, info, sizeof(value_buffer) - sizeof(nt_prefixW) )) ||
+            info->Type != REG_SZ)
         {
             WARN( "Unable to get face path %s\n", debugstr_w(value) );
-            goto next;
+            continue;
         }
 
+        path = (WCHAR *)info->Data;
         if (path[0] && path[1] == ':')
         {
-            path = data;
+            memmove( path + ARRAYSIZE(nt_prefixW), path, dlen );
+            memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
             dlen += sizeof(nt_prefixW);
         }
 
         dlen /= sizeof(WCHAR);
         if (*path == '\\')
             add_font_resource( path, ADDFONT_ALLOW_BITMAP );
-        else if (dlen >= 6 && !wcsicmp( path + dlen - 5, L".fon" ))
+        else if (dlen >= 6 && !wcsicmp( path + dlen - 5, dot_fonW ))
             add_system_font_resource( path, ADDFONT_ALLOW_BITMAP );
-    next:
-        vlen = ARRAY_SIZE(value);
-        dlen = sizeof(data) - sizeof(nt_prefixW);
     }
-    RegCloseKey( hkey );
+    NtClose( hkey );
 }
 
 static const struct font_callback_funcs callback_funcs = { add_gdi_face };
@@ -6134,9 +6135,9 @@ void font_init(void)
          '\\','_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_'};
     static const WCHAR wine_fonts_keyW[] =
         {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','F','o','n','t','s'};
+    static const WCHAR cacheW[] = {'C','a','c','h','e'};
 
     if (RtlOpenCurrentUser( MAXIMUM_ALLOWED, &hkcu )) return;
-
     wine_fonts_key = reg_create_key( hkcu, wine_fonts_keyW, sizeof(wine_fonts_keyW), 0, NULL );
     if (wine_fonts_key) init_font_options( hkcu );
     NtClose( hkcu );
@@ -6157,8 +6158,8 @@ void font_init(void)
     if (NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE ) < 0) return;
     NtWaitForSingleObject( mutex, FALSE, NULL );
 
-    RegCreateKeyExW( wine_fonts_key, L"Cache", 0, NULL, REG_OPTION_VOLATILE,
-                     KEY_ALL_ACCESS, NULL, &wine_fonts_cache_key, &disposition );
+    wine_fonts_cache_key = reg_create_key( wine_fonts_key, cacheW, sizeof(cacheW),
+                                           REG_OPTION_VOLATILE, &disposition );
 
     if (disposition == REG_CREATED_NEW_KEY)
     {
