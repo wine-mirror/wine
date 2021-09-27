@@ -136,10 +136,11 @@ static inline const char *debugstr_hid_caps( struct hid_caps *caps )
     return "(unknown type)";
 }
 
+#define DEVICE_STATE_MAX_SIZE 1024
+
 struct hid_joystick
 {
     IDirectInputDeviceImpl base;
-    DIJOYSTATE2 state;
 
     HANDLE device;
     OVERLAPPED read_ovl;
@@ -160,6 +161,7 @@ struct hid_joystick
     ULONG usages_count;
 
     BYTE device_state_report_id;
+    BYTE device_state[DEVICE_STATE_MAX_SIZE];
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -660,7 +662,7 @@ static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, 
 
     EnterCriticalSection( &impl->base.crit );
     if (!impl->base.acquired) hr = DIERR_NOTACQUIRED;
-    else fill_DataFormat( ptr, len, &impl->state, &impl->base.data_format );
+    else fill_DataFormat( ptr, len, impl->device_state, &impl->base.data_format );
     LeaveCriticalSection( &impl->base.crit );
 
     return hr;
@@ -796,7 +798,8 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
 
 struct parse_device_state_params
 {
-    DIJOYSTATE2 old_state;
+    BYTE old_state[DEVICE_STATE_MAX_SIZE];
+    BYTE buttons[128];
     DWORD time;
     DWORD seq;
 };
@@ -806,12 +809,18 @@ static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_cap
 {
     IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
     struct parse_device_state_params *params = data;
-    DWORD i = DIDFT_GETINSTANCE( instance->dwType );
+    BYTE old_value, value;
 
     if (!(instance->dwType & DIDFT_BUTTON))
         FIXME( "unexpected object type %#x, expected DIDFT_BUTTON\n", instance->dwType );
-    else if (params->old_state.rgbButtons[i] != impl->state.rgbButtons[i])
-        queue_event( iface, instance->dwType, impl->state.rgbButtons[i], params->time, params->seq );
+    else
+    {
+        value = params->buttons[instance->wUsage - 1];
+        old_value = params->old_state[instance->dwOfs];
+        impl->device_state[instance->dwOfs] = value;
+        if (old_value != value)
+            queue_event( iface, instance->dwType, value, params->time, params->seq );
+    }
 
     return DIENUM_CONTINUE;
 }
@@ -842,8 +851,8 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps 
     struct parse_device_state_params *params = data;
     char *report_buf = impl->input_report_buf;
     HIDP_VALUE_CAPS *value_caps = caps->value;
+    LONG old_value, value;
     NTSTATUS status;
-    LONG value;
 
     if (!(instance->dwType & (DIDFT_POV | DIDFT_AXIS)))
         FIXME( "unexpected object type %#x, expected DIDFT_POV | DIDFT_AXIS\n", instance->dwType );
@@ -855,47 +864,10 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps 
                                                  instance->wUsagePage, instance->wUsage, status );
         value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
 
-        switch (instance->dwOfs)
-        {
-        case DIJOFS_X:
-            if (impl->state.lX == value) break;
-            impl->state.lX = value;
+        old_value = *(LONG *)(params->old_state + instance->dwOfs);
+        *(LONG *)(impl->device_state + instance->dwOfs) = value;
+        if (old_value != value)
             queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        case DIJOFS_Y:
-            if (impl->state.lY == value) break;
-            impl->state.lY = value;
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        case DIJOFS_Z:
-            if (impl->state.lZ == value) break;
-            impl->state.lZ = value;
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        case DIJOFS_RX:
-            if (impl->state.lRx == value) break;
-            impl->state.lRx = value;
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        case DIJOFS_RY:
-            if (impl->state.lRy == value) break;
-            impl->state.lRy = value;
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        case DIJOFS_RZ:
-            if (impl->state.lRz == value) break;
-            impl->state.lRz = value;
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        case DIJOFS_POV( 0 ):
-            if (impl->state.rgdwPOV[0] == value) break;
-            impl->state.rgdwPOV[0] = value;
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-            break;
-        default:
-            FIXME( "unimplemented offset %#x.\n", instance->dwOfs );
-            break;
-        }
     }
 
     return DIENUM_CONTINUE;
@@ -911,7 +883,8 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
     };
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG i, count, report_len = impl->caps.InputReportByteLength;
-    struct parse_device_state_params params = {0};
+    DIDATAFORMAT *format = impl->base.data_format.wine_df;
+    struct parse_device_state_params params = {{0}};
     char *report_buf = impl->input_report_buf;
     USAGE_AND_PAGE *usages;
     NTSTATUS status;
@@ -944,11 +917,11 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
 
         if (report_buf[0] == impl->device_state_report_id)
         {
-            params.old_state = impl->state;
             params.time = GetCurrentTime();
             params.seq = impl->base.dinput->evsequence++;
+            memcpy( params.old_state, impl->device_state, format->dwDataSize );
+            memset( impl->device_state, 0, format->dwDataSize );
 
-            memset( impl->state.rgbButtons, 0, sizeof(impl->state.rgbButtons) );
             while (count--)
             {
                 usages = impl->usages_buf + count;
@@ -957,12 +930,12 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
                 else if (usages->Usage >= 128)
                     FIXME( "ignoring extraneous button %d.\n", usages->Usage );
                 else
-                    impl->state.rgbButtons[usages->Usage - 1] = 0x80;
+                    params.buttons[usages->Usage - 1] = 0x80;
             }
 
             enum_value_objects( impl, &filter, DIDFT_ALL, read_device_state_value, &params );
             enum_button_objects( impl, &filter, DIDFT_ALL, check_device_state_button, &params );
-            if (memcmp( &params.old_state, &impl->state, sizeof(impl->state) ) && impl->base.hEvent)
+            if (impl->base.hEvent && memcmp( &params.old_state, impl->device_state, format->dwDataSize ))
                 SetEvent( impl->base.hEvent );
         }
 
@@ -1231,6 +1204,7 @@ static BOOL init_objects( struct hid_joystick *impl, struct hid_caps *caps,
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
 
     format->dwNumObjs++;
+    format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
     if (instance->dwType & DIDFT_BUTTON) impl->dev_caps.dwButtons++;
     if (instance->dwType & DIDFT_AXIS) impl->dev_caps.dwAxes++;
     if (instance->dwType & DIDFT_POV) impl->dev_caps.dwPOVs++;
@@ -1360,12 +1334,17 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     enum_button_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
 
     format = impl->base.data_format.wine_df;
+    if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
+    {
+        FIXME( "unable to create device, state is too large\n" );
+        goto failed;
+    }
+
     size = format->dwNumObjs * sizeof(*format->rgodf);
     if (!(format->rgodf = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto failed;
     format->dwSize = sizeof(*format);
     format->dwObjSize = sizeof(*format->rgodf);
     format->dwFlags = DIDF_ABSAXIS;
-    format->dwDataSize = sizeof(impl->state);
 
     index = 0;
     enum_value_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
