@@ -3042,7 +3042,7 @@ static void test_generic_composite_moniker(void)
         { "CI1I2", "A3", MKSYS_ANTIMONIKER, L"\\.." },
         { "CI1I3", "CA1I2", MKSYS_GENERICCOMPOSITE, L"!I1!I2" },
     };
-    IMoniker *moniker, *inverse, *moniker1, *moniker2;
+    IMoniker *moniker, *inverse, *moniker1, *moniker2, *moniker3;
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
     DWORD hash, cookie;
@@ -3280,6 +3280,66 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IRunningObjectTable_Release(rot);
+
+    IMoniker_Release(moniker);
+    IMoniker_Release(moniker1);
+
+    /* CommonPrefixWith() */
+    hr = create_moniker_from_desc("CI1I2", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = create_moniker_from_desc("CI1I2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    moniker2 = (void *)0xdeadbeef;
+    hr = IMoniker_CommonPrefixWith(moniker, NULL, &moniker2);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!moniker2, "Unexpected pointer.\n");
+
+    /* With itself */
+    hr = IMoniker_CommonPrefixWith(moniker, moniker, &moniker2);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(moniker2 != moniker, "Unexpected object.\n");
+    TEST_DISPLAY_NAME(moniker2, L"!I1!I2");
+    IMoniker_Release(moniker2);
+
+    /* Equal composites */
+    hr = IMoniker_CommonPrefixWith(moniker, moniker1, &moniker2);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(moniker2 != moniker && moniker2 != moniker1, "Unexpected object.\n");
+    hr = IMoniker_IsEqual(moniker, moniker2);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMoniker_Release(moniker2);
+
+    hr = create_moniker_from_desc("I2", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+    IMoniker_Release(moniker2);
+
+    hr = create_moniker_from_desc("I1", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker2, moniker3);
+todo_wine
+    ok(hr == S_OK && moniker3 != moniker2, "Unexpected object.\n");
+    IMoniker_Release(moniker3);
+
+    hr = IMoniker_CommonPrefixWith(moniker2, moniker, &moniker3);
+todo_wine
+    ok(hr == MK_S_ME, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMoniker_IsEqual(moniker2, moniker3);
+        ok(hr == S_OK && moniker3 != moniker2, "Unexpected object.\n");
+        IMoniker_Release(moniker3);
+    }
+
+    IMoniker_Release(moniker2);
 
     IMoniker_Release(moniker);
     IMoniker_Release(moniker1);
@@ -3720,11 +3780,15 @@ todo_wine {
     hr = CreateItemMoniker(L"!", L"Item", &item);
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
 
+    moniker = (void *)0xdeadbeef;
     hr = MonikerCommonPrefixWith(item, NULL, &moniker);
     ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+    ok(!moniker, "Unexpected pointer.\n");
 
+    moniker = (void *)0xdeadbeef;
     hr = MonikerCommonPrefixWith(NULL, item, &moniker);
     ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+    ok(!moniker, "Unexpected pointer.\n");
 
     hr = MonikerCommonPrefixWith(item, item, &moniker);
     ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
@@ -3796,6 +3860,18 @@ todo_wine {
 
     IMoniker_Release(composite2);
     IMoniker_Release(composite);
+
+    /* (I1,(I2,I3)) x ((I1,I2),I4) */
+    hr = create_moniker_from_desc("CI1CI2I3", &composite);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = create_moniker_from_desc("CCI1I2I4", &composite2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = MonikerCommonPrefixWith(composite, composite2, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker, MKSYS_GENERICCOMPOSITE);
+    TEST_DISPLAY_NAME(moniker, L"!I1!I2");
+    IMoniker_Release(moniker);
+
     IMoniker_Release(file2);
     IMoniker_Release(file1);
     IMoniker_Release(item);

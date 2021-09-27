@@ -934,6 +934,7 @@ CompositeMonikerImpl_CommonPrefixWith(IMoniker* iface, IMoniker* pmkOther,
         if (IMoniker_IsEqual(pmkOther,mostLeftMk1)==S_OK){
 
             *ppmkPrefix=pmkOther;
+            IMoniker_AddRef(*ppmkPrefix);
 
             return MK_S_HIM;
         }
