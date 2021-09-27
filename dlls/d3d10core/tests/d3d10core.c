@@ -19089,6 +19089,72 @@ static void test_texture_compressed_3d(void)
     release_test_context(&test_context);
 }
 
+static void fill_dynamic_vb_quad(void *data, unsigned int x, unsigned int y)
+{
+    struct vec3 *quad = (struct vec3 *)data + 4 * x;
+
+    memset(quad, 0, 4 * sizeof(*quad));
+
+    quad[0].x = quad[1].x = -1.0f + 0.01f * x;
+    quad[2].x = quad[3].x = -1.0f + 0.01f * (x + 1);
+
+    quad[0].y = quad[2].y = -1.0f + 0.01f * y;
+    quad[1].y = quad[3].y = -1.0f + 0.01f * (y + 1);
+}
+
+/* Stress-test dynamic maps, to ensure that we are applying the correct
+ * synchronization guarantees. */
+static void test_dynamic_map_synchronization(void)
+{
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    struct d3d10core_test_context test_context;
+    D3D10_BUFFER_DESC buffer_desc = {0};
+    ID3D10Device *device;
+    unsigned int x, y;
+    HRESULT hr;
+    void *data;
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    buffer_desc.ByteWidth = 200 * 4 * sizeof(struct vec3);
+    buffer_desc.Usage = D3D10_USAGE_DYNAMIC;
+    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &test_context.vb);
+    ok(hr == S_OK, "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+
+    for (y = 0; y < 200; ++y)
+    {
+        hr = ID3D10Buffer_Map(test_context.vb, D3D10_MAP_WRITE_DISCARD, 0, &data);
+        ok(hr == S_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+        fill_dynamic_vb_quad(data, 0, y);
+
+        ID3D10Buffer_Unmap(test_context.vb);
+        draw_color_quad(&test_context, &green);
+
+        for (x = 1; x < 200; ++x)
+        {
+            hr = ID3D10Buffer_Map(test_context.vb, D3D10_MAP_WRITE_NO_OVERWRITE, 0, &data);
+            ok(hr == S_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+            fill_dynamic_vb_quad(data, x, y);
+
+            ID3D10Buffer_Unmap(test_context.vb);
+            ID3D10Device_Draw(device, 4, x * 4);
+        }
+    }
+
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19215,6 +19281,7 @@ START_TEST(d3d10core)
     queue_test(test_dual_source_blend);
     queue_test(test_unbound_streams);
     queue_test(test_texture_compressed_3d);
+    queue_test(test_dynamic_map_synchronization);
 
     run_queued_tests();
 
