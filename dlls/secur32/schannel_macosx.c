@@ -1085,7 +1085,7 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
     for (i = 0; i < list->count; i++)
     {
         if (!(cert = (SecCertificateRef)CFArrayGetValueAtIndex(cert_array, i)) ||
-            (SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &data) != noErr))
+            (SecItemExport(cert, kSecFormatX509Cert, 0, NULL, &data) != noErr))
         {
             WARN("Couldn't extract certificate data\n");
             ret = SEC_E_INTERNAL_ERROR;
