@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include "oleacc_private.h"
+#include "commctrl.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -416,6 +417,12 @@ static const IEnumVARIANTVtbl WindowEnumVARIANTVtbl = {
     Window_EnumVARIANT_Clone
 };
 
+static const struct win_class_data classes[] = {
+    {WC_LISTBOXW,           0x10000, TRUE},
+    {L"#32768",             0x10001, TRUE}, /* menu */
+    {NULL}
+};
+
 HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
 {
     Window *window;
@@ -427,6 +434,8 @@ HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
     window = heap_alloc_zero(sizeof(Window));
     if(!window)
         return E_OUTOFMEMORY;
+
+    find_class_data(hwnd, classes);
 
     window->IAccessible_iface.lpVtbl = &WindowVtbl;
     window->IOleWindow_iface.lpVtbl = &WindowOleWindowVtbl;

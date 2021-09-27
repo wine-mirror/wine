@@ -18,6 +18,13 @@
 
 #include "oleacc_classes.h"
 
+struct win_class_data {
+    const WCHAR *name;
+    DWORD idx;
+    BOOL stub;
+};
+const struct win_class_data* find_class_data(HWND, const struct win_class_data*) DECLSPEC_HIDDEN;
+
 HRESULT create_client_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
 HRESULT create_window_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
 HRESULT get_accpropservices_factory(REFIID, void**) DECLSPEC_HIDDEN;

@@ -24,6 +24,8 @@
 #include <stdio.h>
 
 #include "initguid.h"
+#include <ole2.h>
+#include <commctrl.h>
 #include <oleacc.h>
 
 #define DEFINE_EXPECT(func) \
@@ -50,6 +52,7 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+DEFINE_EXPECT(winproc_GETOBJECT);
 DEFINE_EXPECT(Accessible_QI_IEnumVARIANT);
 DEFINE_EXPECT(Accessible_get_accChildCount);
 DEFINE_EXPECT(Accessible_get_accChild);
@@ -1313,6 +1316,87 @@ static void test_CAccPropServices(void)
     IAccPropServices_Release(acc_prop_services);
 }
 
+static LRESULT WINAPI test_query_class(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg != WM_GETOBJECT)
+        return 0;
+
+    CHECK_EXPECT(winproc_GETOBJECT);
+    ok(!wparam, "wparam = %lx\n", wparam);
+    ok(lparam == OBJID_QUERYCLASSNAMEIDX, "lparam = %lx\n", lparam);
+    return 0;
+}
+
+static void test_CreateStdAccessibleObject_classes(void)
+{
+    static const struct {
+        const WCHAR *class;
+        BOOL window; /* uses default window accessibility object */
+        BOOL client; /* uses default client accessibility object */
+    } tests[] =
+    {
+        { WC_LISTBOXW },
+        { L"#32768" },
+        { WC_BUTTONW, TRUE },
+        { WC_STATICW, TRUE },
+        { WC_EDITW, TRUE },
+        { WC_COMBOBOXW, TRUE },
+        { L"#32770", TRUE },
+        { L"#32769", TRUE },
+        { WC_SCROLLBARW, TRUE },
+        { STATUSCLASSNAMEW, TRUE },
+        { TOOLBARCLASSNAMEW, TRUE },
+        { PROGRESS_CLASSW, TRUE },
+        { ANIMATE_CLASSW, TRUE },
+        { WC_TABCONTROLW, TRUE },
+        { HOTKEY_CLASSW, TRUE },
+        { WC_HEADERW, TRUE },
+        { TRACKBAR_CLASSW, TRUE },
+        { WC_LISTVIEWW, TRUE },
+        { UPDOWN_CLASSW, TRUE },
+        { TOOLTIPS_CLASSW, TRUE },
+        { WC_TREEVIEWW, TRUE },
+        { MONTHCAL_CLASSW, TRUE, TRUE },
+        { DATETIMEPICK_CLASSW, TRUE },
+        { WC_IPADDRESSW, TRUE }
+    };
+
+    LRESULT (WINAPI *win_proc)(HWND, UINT, WPARAM, LPARAM);
+    IAccessible *acc;
+    HRESULT hr;
+    HWND hwnd;
+    int i;
+
+    for(i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("class = %s", wine_dbgstr_w(tests[i].class));
+        hwnd = CreateWindowW(tests[i].class, L"name", WS_OVERLAPPEDWINDOW,
+                0, 0, 0, 0, NULL, NULL, NULL, NULL);
+        ok(hwnd != NULL, "CreateWindow failed\n");
+        win_proc = (void*)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)test_query_class);
+
+        if (tests[i].client)
+            SET_EXPECT(winproc_GETOBJECT);
+        hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+        ok(hr == S_OK, "CreateStdAccessibleObject failed %x\n", hr);
+        if (tests[i].client)
+            CHECK_CALLED(winproc_GETOBJECT);
+        IAccessible_Release(acc);
+
+        if (tests[i].window)
+            SET_EXPECT(winproc_GETOBJECT);
+        hr = CreateStdAccessibleObject(hwnd, OBJID_WINDOW, &IID_IAccessible, (void**)&acc);
+        ok(hr == S_OK, "CreateStdAccessibleObject failed %x\n", hr);
+        if (tests[i].window)
+            CHECK_CALLED(winproc_GETOBJECT);
+        IAccessible_Release(acc);
+
+        SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)win_proc);
+        CloseWindow(hwnd);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(main)
 {
     int argc;
@@ -1351,6 +1435,7 @@ START_TEST(main)
     test_default_client_accessible_object();
     test_AccessibleChildren(&Accessible);
     test_AccessibleObjectFromEvent();
+    test_CreateStdAccessibleObject_classes();
 
     unregister_window_class();
     CoUninitialize();

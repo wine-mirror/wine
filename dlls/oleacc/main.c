@@ -20,13 +20,6 @@
 
 #define COBJMACROS
 
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
-#include "ole2.h"
-#include "commctrl.h"
-#include "rpcproxy.h"
-
 #include "initguid.h"
 #include "oleacc_private.h"
 #include "resource.h"
@@ -37,49 +30,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
 static const WCHAR lresult_atom_prefix[] = {'w','i','n','e','_','o','l','e','a','c','c',':'};
 
-typedef HRESULT (*accessible_create)(HWND, const IID*, void**);
-
 extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**) DECLSPEC_HIDDEN;
 extern BOOL WINAPI OLEACC_DllMain(HINSTANCE, DWORD, void*) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLEACC_DllRegisterServer(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLEACC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
-
-static struct {
-    const WCHAR *name;
-    DWORD idx;
-    accessible_create create_client;
-    accessible_create create_window;
-} builtin_classes[] = {
-    {WC_LISTBOXW,           0x10000, NULL, NULL},
-    {L"#32768",             0x10001, NULL, NULL}, /* menu */
-    {WC_BUTTONW,            0x10002, NULL, NULL},
-    {WC_STATICW,            0x10003, NULL, NULL},
-    {WC_EDITW,              0x10004, NULL, NULL},
-    {WC_COMBOBOXW,          0x10005, NULL, NULL},
-    {L"#32770",             0x10006, NULL, NULL}, /* dialog */
-    {L"#32771",             0x10007, NULL, NULL}, /* winswitcher */
-    {L"MDIClient",          0x10008, NULL, NULL},
-    {L"#32769",             0x10009, NULL, NULL}, /* desktop */
-    {WC_SCROLLBARW,         0x1000a, NULL, NULL},
-    {STATUSCLASSNAMEW,      0x1000b, NULL, NULL},
-    {TOOLBARCLASSNAMEW,     0x1000c, NULL, NULL},
-    {PROGRESS_CLASSW,       0x1000d, NULL, NULL},
-    {ANIMATE_CLASSW,        0x1000e, NULL, NULL},
-    {WC_TABCONTROLW,        0x1000f, NULL, NULL},
-    {HOTKEY_CLASSW,         0x10010, NULL, NULL},
-    {WC_HEADERW,            0x10011, NULL, NULL},
-    {TRACKBAR_CLASSW,       0x10012, NULL, NULL},
-    {WC_LISTVIEWW,          0x10013, NULL, NULL},
-    {UPDOWN_CLASSW,         0x10016, NULL, NULL},
-    {TOOLTIPS_CLASSW,       0x10018, NULL, NULL},
-    {WC_TREEVIEWW,          0x10019, NULL, NULL},
-    {MONTHCAL_CLASSW,       0,       NULL, NULL},
-    {DATETIMEPICK_CLASSW,   0,       NULL, NULL},
-    {WC_IPADDRESSW,         0,       NULL, NULL},
-    {L"RICHEDIT",           0x1001c, NULL, NULL},
-    {L"RichEdit20A",        0,       NULL, NULL},
-    {L"RichEdit20W",        0,       NULL, NULL},
-};
 
 static HINSTANCE oleacc_handle = 0;
 
@@ -94,7 +48,7 @@ int convert_child_id(VARIANT *v)
     }
 }
 
-static accessible_create get_builtin_accessible_obj(HWND hwnd, LONG objid)
+const struct win_class_data* find_class_data(HWND hwnd, const struct win_class_data *classes)
 {
     WCHAR class_name[64];
     int i, idx;
@@ -103,31 +57,21 @@ static accessible_create get_builtin_accessible_obj(HWND hwnd, LONG objid)
         return NULL;
     TRACE("got window class: %s\n", debugstr_w(class_name));
 
-    for(i=0; i<ARRAY_SIZE(builtin_classes); i++) {
-        if(!wcsicmp(class_name, builtin_classes[i].name)) {
-            accessible_create ret;
-
-            ret = (objid==OBJID_CLIENT ?
-                    builtin_classes[i].create_client :
-                    builtin_classes[i].create_window);
-            if(!ret)
+    for(i=0; classes[i].name; i++) {
+        if(!wcsicmp(class_name, classes[i].name)) {
+            if(classes[i].stub)
                 FIXME("unhandled window class: %s\n", debugstr_w(class_name));
-            return ret;
+            return &classes[i];
         }
     }
 
     idx = SendMessageW(hwnd, WM_GETOBJECT, 0, OBJID_QUERYCLASSNAMEIDX);
     if(idx) {
-        for(i=0; i<ARRAY_SIZE(builtin_classes); i++) {
-            if(idx == builtin_classes[i].idx) {
-                accessible_create ret;
-
-                ret = (objid==OBJID_CLIENT ?
-                        builtin_classes[i].create_client :
-                        builtin_classes[i].create_window);
-                if(!ret)
-                    FIXME("unhandled class name idx: %x\n", idx);
-                return ret;
+        for(i=0; classes[i].name; i++) {
+            if(idx == classes[i].idx) {
+                if(classes[i].stub)
+                    FIXME("unhandled window class: %s\n", debugstr_w(class_name));
+                return &classes[i];
             }
         }
 
@@ -140,19 +84,13 @@ static accessible_create get_builtin_accessible_obj(HWND hwnd, LONG objid)
 HRESULT WINAPI CreateStdAccessibleObject( HWND hwnd, LONG idObject,
         REFIID riidInterface, void** ppvObject )
 {
-    accessible_create create;
-
     TRACE("%p %d %s %p\n", hwnd, idObject,
           debugstr_guid( riidInterface ), ppvObject );
 
     switch(idObject) {
     case OBJID_CLIENT:
-        create = get_builtin_accessible_obj(hwnd, idObject);
-        if(create) return create(hwnd, riidInterface, ppvObject);
         return create_client_object(hwnd, riidInterface, ppvObject);
     case OBJID_WINDOW:
-        create = get_builtin_accessible_obj(hwnd, idObject);
-        if(create) return create(hwnd, riidInterface, ppvObject);
         return create_window_object(hwnd, riidInterface, ppvObject);
     default:
         FIXME("unhandled object id: %d\n", idObject);

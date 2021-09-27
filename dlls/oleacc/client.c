@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include "oleacc_private.h"
+#include "commctrl.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -650,6 +651,38 @@ static const IEnumVARIANTVtbl ClientEnumVARIANTVtbl = {
     Client_EnumVARIANT_Clone
 };
 
+static const struct win_class_data classes[] = {
+    {WC_LISTBOXW,           0x10000, TRUE},
+    {L"#32768",             0x10001, TRUE}, /* menu */
+    {WC_BUTTONW,            0x10002, TRUE},
+    {WC_STATICW,            0x10003, TRUE},
+    {WC_EDITW,              0x10004, TRUE},
+    {WC_COMBOBOXW,          0x10005, TRUE},
+    {L"#32770",             0x10006, TRUE}, /* dialog */
+    {L"#32771",             0x10007, TRUE}, /* winswitcher */
+    {L"MDIClient",          0x10008, TRUE},
+    {L"#32769",             0x10009, TRUE}, /* desktop */
+    {WC_SCROLLBARW,         0x1000a, TRUE},
+    {STATUSCLASSNAMEW,      0x1000b, TRUE},
+    {TOOLBARCLASSNAMEW,     0x1000c, TRUE},
+    {PROGRESS_CLASSW,       0x1000d, TRUE},
+    {ANIMATE_CLASSW,        0x1000e, TRUE},
+    {WC_TABCONTROLW,        0x1000f, TRUE},
+    {HOTKEY_CLASSW,         0x10010, TRUE},
+    {WC_HEADERW,            0x10011, TRUE},
+    {TRACKBAR_CLASSW,       0x10012, TRUE},
+    {WC_LISTVIEWW,          0x10013, TRUE},
+    {UPDOWN_CLASSW,         0x10016, TRUE},
+    {TOOLTIPS_CLASSW,       0x10018, TRUE},
+    {WC_TREEVIEWW,          0x10019, TRUE},
+    {DATETIMEPICK_CLASSW,   0, TRUE},
+    {WC_IPADDRESSW,         0, TRUE},
+    {L"RICHEDIT",           0x1001c, TRUE},
+    {L"RichEdit20A",        0, TRUE},
+    {L"RichEdit20W",        0, TRUE},
+    {NULL}
+};
+
 HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
 {
     Client *client;
@@ -661,6 +694,8 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
     client = heap_alloc_zero(sizeof(Client));
     if(!client)
         return E_OUTOFMEMORY;
+
+    find_class_data(hwnd, classes);
 
     client->IAccessible_iface.lpVtbl = &ClientVtbl;
     client->IOleWindow_iface.lpVtbl = &ClientOleWindowVtbl;
