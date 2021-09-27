@@ -231,13 +231,25 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
     seen[i] = TRUE;
 }
 
-static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
+static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header, DWORD flags,
                           enum_object_callback callback, void *data )
 {
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     DWORD collection = 0, axis = 0, button = 0, pov = 0, i, j;
+    DIDATAFORMAT *format = impl->base.data_format.wine_df;
+    int *offsets = impl->base.data_format.offsets;
+    DIPROPHEADER filter = *header;
     BOOL ret, seen_axis[6] = {0};
     struct hid_caps caps = {0};
+
+    if (filter.dwHow == DIPH_BYOFFSET)
+    {
+        if (!offsets) return DIENUM_CONTINUE;
+        for (i = 0; i < format->dwNumObjs; ++i)
+            if (offsets[i] == filter.dwObj) break;
+        if (i == format->dwNumObjs) return DIENUM_CONTINUE;
+        filter.dwObj = format->rgodf[i].dwOfs;
+    }
 
     for (i = 0; i < impl->caps.NumberInputValueCaps; ++i)
     {
@@ -267,14 +279,14 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
                 instance.dwOfs = DIJOFS_X;
                 set_axis_type( &instance, seen_axis, 0, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Y:
                 instance.dwOfs = DIJOFS_Y;
                 set_axis_type( &instance, seen_axis, 1, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Z:
@@ -282,28 +294,28 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
                 instance.dwOfs = DIJOFS_Z;
                 set_axis_type( &instance, seen_axis, 2, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RX:
                 instance.dwOfs = DIJOFS_RX;
                 set_axis_type( &instance, seen_axis, 3, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RY:
                 instance.dwOfs = DIJOFS_RY;
                 set_axis_type( &instance, seen_axis, 4, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RZ:
                 instance.dwOfs = DIJOFS_RZ;
                 set_axis_type( &instance, seen_axis, 5, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_DIAL:
@@ -311,14 +323,14 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
                 instance.dwOfs = DIJOFS_SLIDER( 0 );
                 instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_HATSWITCH:
                 instance.dwOfs = DIJOFS_POV( 0 );
                 instance.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( pov++ );
                 instance.dwFlags = 0;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             default:
@@ -352,7 +364,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
                 instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
                 instance.wReportId = caps.button->ReportID;
                 instance.wCollectionNumber = caps.button->LinkCollection;
-                ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
             }
         }
@@ -368,7 +380,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps.button->ReportID;
             instance.wCollectionNumber = caps.button->LinkCollection;
-            ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+            ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
     }
@@ -391,7 +403,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = 0;
             instance.wCollectionNumber = caps.node->Parent;
-            ret = enum_object( impl, filter, flags, callback, &caps, &instance, data );
+            ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
     }

@@ -3988,7 +3988,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0x14, DIPH_BYOFFSET );
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0, DIPH_BYOFFSET );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
