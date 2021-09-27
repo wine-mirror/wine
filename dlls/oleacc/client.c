@@ -45,7 +45,29 @@ typedef struct {
 struct win_class_vtbl {
     void (*init)(Client*);
     HRESULT (*get_state)(Client*, VARIANT, VARIANT*);
+    HRESULT (*get_name)(Client*, VARIANT, BSTR*);
 };
+
+static HRESULT win_get_name(HWND hwnd, BSTR *name)
+{
+    WCHAR buf[1024];
+    UINT i, len;
+
+    len = SendMessageW(hwnd, WM_GETTEXT, ARRAY_SIZE(buf), (LPARAM)buf);
+    if(!len)
+        return S_FALSE;
+
+    for(i=0; i<len; i++) {
+        if(buf[i] == '&') {
+            len--;
+            memmove(buf+i, buf+i+1, (len-i)*sizeof(WCHAR));
+            break;
+        }
+    }
+
+    *name = SysAllocStringLen(buf, len);
+    return *name ? S_OK : E_OUTOFMEMORY;
+}
 
 static inline Client* impl_from_Client(IAccessible *iface)
 {
@@ -166,32 +188,20 @@ static HRESULT WINAPI Client_get_accChild(IAccessible *iface,
     return E_INVALIDARG;
 }
 
-static HRESULT WINAPI Client_get_accName(IAccessible *iface, VARIANT varID, BSTR *pszName)
+static HRESULT WINAPI Client_get_accName(IAccessible *iface, VARIANT id, BSTR *name)
 {
     Client *This = impl_from_Client(iface);
-    WCHAR name[1024];
-    UINT i, len;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszName);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&id), name);
 
-    *pszName = NULL;
-    if(convert_child_id(&varID) != CHILDID_SELF || !IsWindow(This->hwnd))
+    *name = NULL;
+    if(This->vtbl && This->vtbl->get_name)
+        return This->vtbl->get_name(This, id, name);
+
+    if(convert_child_id(&id) != CHILDID_SELF || !IsWindow(This->hwnd))
         return E_INVALIDARG;
 
-    len = SendMessageW(This->hwnd, WM_GETTEXT, ARRAY_SIZE(name), (LPARAM)name);
-    if(!len)
-        return S_FALSE;
-
-    for(i=0; i<len; i++) {
-        if(name[i] == '&') {
-            len--;
-            memmove(name+i, name+i+1, (len-i)*sizeof(WCHAR));
-            break;
-        }
-    }
-
-    *pszName = SysAllocStringLen(name, len);
-    return *pszName ? S_OK : E_OUTOFMEMORY;
+    return win_get_name(This->hwnd, name);
 }
 
 static HRESULT WINAPI Client_get_accValue(IAccessible *iface, VARIANT varID, BSTR *pszValue)
@@ -693,9 +703,51 @@ static HRESULT edit_get_state(Client *client, VARIANT id, VARIANT *state)
     return S_OK;
 }
 
+/*
+ * Edit control objects have their name property defined by the first static
+ * text control preceding them in the order of window creation. If one is not
+ * found, the edit has no name property. In the case of the keyboard shortcut
+ * property, the first preceding visible static text control is used.
+ */
+static HWND edit_find_label(HWND hwnd, BOOL visible)
+{
+    HWND cur;
+
+    for(cur = hwnd; cur; cur = GetWindow(cur, GW_HWNDPREV)) {
+        WCHAR class_name[64];
+
+        if(!RealGetWindowClassW(cur, class_name, ARRAY_SIZE(class_name)))
+            continue;
+
+        if(!wcsicmp(class_name, WC_STATICW)) {
+            if(visible && !(GetWindowLongW(cur, GWL_STYLE) & WS_VISIBLE))
+                continue;
+            else
+                break;
+        }
+    }
+
+    return cur;
+}
+
+static HRESULT edit_get_name(Client *client, VARIANT id, BSTR *name)
+{
+    HWND label;
+
+    if(convert_child_id(&id) != CHILDID_SELF || !IsWindow(client->hwnd))
+        return E_INVALIDARG;
+
+    label = edit_find_label(client->hwnd, FALSE);
+    if(!label)
+        return S_FALSE;
+
+    return win_get_name(label, name);
+}
+
 static const win_class_vtbl edit_vtbl = {
     edit_init,
     edit_get_state,
+    edit_get_name,
 };
 
 static const struct win_class_data classes[] = {
