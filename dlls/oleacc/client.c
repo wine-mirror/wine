@@ -26,6 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
+typedef struct win_class_vtbl win_class_vtbl;
 typedef struct {
     IAccessible IAccessible_iface;
     IOleWindow IOleWindow_iface;
@@ -35,7 +36,14 @@ typedef struct {
 
     HWND hwnd;
     HWND enum_pos;
+    INT role;
+
+    const win_class_vtbl *vtbl;
 } Client;
+
+struct win_class_vtbl {
+    void (*init)(Client*);
+};
 
 static inline Client* impl_from_Client(IAccessible *iface)
 {
@@ -221,7 +229,7 @@ static HRESULT WINAPI Client_get_accRole(IAccessible *iface, VARIANT varID, VARI
     }
 
     V_VT(pvarRole) = VT_I4;
-    V_I4(pvarRole) = ROLE_SYSTEM_CLIENT;
+    V_I4(pvarRole) = This->role;
     return S_OK;
 }
 
@@ -651,12 +659,21 @@ static const IEnumVARIANTVtbl ClientEnumVARIANTVtbl = {
     Client_EnumVARIANT_Clone
 };
 
+static void edit_init(Client *client)
+{
+    client->role = ROLE_SYSTEM_TEXT;
+}
+
+static const win_class_vtbl edit_vtbl = {
+    edit_init,
+};
+
 static const struct win_class_data classes[] = {
     {WC_LISTBOXW,           0x10000, TRUE},
     {L"#32768",             0x10001, TRUE}, /* menu */
     {WC_BUTTONW,            0x10002, TRUE},
     {WC_STATICW,            0x10003, TRUE},
-    {WC_EDITW,              0x10004, TRUE},
+    {WC_EDITW,              0x10004, FALSE, &edit_vtbl},
     {WC_COMBOBOXW,          0x10005, TRUE},
     {L"#32770",             0x10006, TRUE}, /* dialog */
     {L"#32771",             0x10007, TRUE}, /* winswitcher */
@@ -685,8 +702,9 @@ static const struct win_class_data classes[] = {
 
 HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
 {
+    const struct win_class_data *data;
     Client *client;
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     if(!IsWindow(hwnd))
         return E_FAIL;
@@ -695,7 +713,7 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
     if(!client)
         return E_OUTOFMEMORY;
 
-    find_class_data(hwnd, classes);
+    data = find_class_data(hwnd, classes);
 
     client->IAccessible_iface.lpVtbl = &ClientVtbl;
     client->IOleWindow_iface.lpVtbl = &ClientOleWindowVtbl;
@@ -703,6 +721,12 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
     client->ref = 1;
     client->hwnd = hwnd;
     client->enum_pos = 0;
+    client->role = ROLE_SYSTEM_CLIENT;
+
+    if(data)
+        client->vtbl = data->vtbl;
+    if(client->vtbl && client->vtbl->init)
+        client->vtbl->init(client);
 
     hres = IAccessible_QueryInterface(&client->IAccessible_iface, iid, obj);
     IAccessible_Release(&client->IAccessible_iface);

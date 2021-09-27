@@ -22,6 +22,7 @@ struct win_class_data {
     const WCHAR *name;
     DWORD idx;
     BOOL stub;
+    const void *vtbl;
 };
 const struct win_class_data* find_class_data(HWND, const struct win_class_data*) DECLSPEC_HIDDEN;
 
