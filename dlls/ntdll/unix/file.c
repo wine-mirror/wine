@@ -3445,9 +3445,24 @@ NTSTATUS WINAPI wine_nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
 
     if (buffer)
     {
-        if (*size > strlen(buffer)) strcpy( nameA, buffer );
+        struct stat st1, st2;
+        char *name = buffer;
+
+        /* remove dosdevices prefix for z: drive if it points to the Unix root */
+        if (!strncmp( buffer, config_dir, strlen(config_dir) ) &&
+            !strncmp( buffer + strlen(config_dir), "/dosdevices/z:/", 15 ))
+        {
+            char *p = buffer + strlen(config_dir) + 14;
+            *p = 0;
+            if (!stat( buffer, &st1 ) && !stat( "/", &st2 ) &&
+                st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
+                name = p;
+            *p = '/';
+        }
+
+        if (*size > strlen(name)) strcpy( nameA, name );
         else status = STATUS_BUFFER_TOO_SMALL;
-        *size = strlen(buffer) + 1;
+        *size = strlen(name) + 1;
         free( buffer );
     }
     free( redir.Buffer );
