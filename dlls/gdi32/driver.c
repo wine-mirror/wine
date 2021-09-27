@@ -1157,3 +1157,20 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
 
     return get_display_driver()->pD3DKMTCheckVidPnExclusiveOwnership( desc );
 }
+
+/***********************************************************************
+ *      __wine_get_wgl_driver  (win32u.@)
+ */
+struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
+{
+    struct opengl_funcs *ret = NULL;
+    DC * dc = get_dc_ptr( hdc );
+
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, wine_get_wgl_driver );
+        ret = physdev->funcs->wine_get_wgl_driver( physdev, version );
+        release_dc_ptr( dc );
+    }
+    return ret;
+}

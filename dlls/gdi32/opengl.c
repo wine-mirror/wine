@@ -30,7 +30,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winnt.h"
-#include "ntgdi_private.h"
 
 
 static HMODULE opengl32;
@@ -39,23 +38,6 @@ static INT (WINAPI *wglDescribePixelFormat)(HDC,INT,UINT,PIXELFORMATDESCRIPTOR*)
 static INT (WINAPI *wglGetPixelFormat)(HDC);
 static BOOL (WINAPI *wglSetPixelFormat)(HDC,INT,const PIXELFORMATDESCRIPTOR*);
 static BOOL (WINAPI *wglSwapBuffers)(HDC);
-
-/***********************************************************************
- *      __wine_get_wgl_driver  (GDI32.@)
- */
-struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
-{
-    struct opengl_funcs *ret = NULL;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, wine_get_wgl_driver );
-        ret = physdev->funcs->wine_get_wgl_driver( physdev, version );
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
 
 /******************************************************************************
  *		ChoosePixelFormat (GDI32.@)
