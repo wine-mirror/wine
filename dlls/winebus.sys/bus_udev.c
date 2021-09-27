@@ -110,10 +110,22 @@ struct base_device
     int device_fd;
 };
 
+static inline struct base_device *impl_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(iface, struct base_device, unix_device);
+}
+
 struct hidraw_device
 {
     struct base_device base;
 };
+
+static inline struct hidraw_device *hidraw_impl_from_unix_device(struct unix_device *iface)
+{
+    return CONTAINING_RECORD(impl_from_unix_device(iface), struct hidraw_device, base);
+}
+
+#ifdef HAS_PROPER_INPUT_HEADER
 
 #define HID_REL_MAX (REL_MISC+1)
 #define HID_ABS_MAX (ABS_VOLUME+1)
@@ -130,20 +142,12 @@ struct lnxev_device
     int haptic_effect_id;
 };
 
-static inline struct base_device *impl_from_unix_device(struct unix_device *iface)
-{
-    return CONTAINING_RECORD(iface, struct base_device, unix_device);
-}
-
-static inline struct hidraw_device *hidraw_impl_from_unix_device(struct unix_device *iface)
-{
-    return CONTAINING_RECORD(impl_from_unix_device(iface), struct hidraw_device, base);
-}
-
 static inline struct lnxev_device *lnxev_impl_from_unix_device(struct unix_device *iface)
 {
     return CONTAINING_RECORD(impl_from_unix_device(iface), struct lnxev_device, base);
 }
+
+#endif /* HAS_PROPER_INPUT_HEADER */
 
 #define MAX_DEVICES 128
 static int close_fds[MAX_DEVICES];
@@ -201,6 +205,18 @@ static struct base_device *find_device_from_fd(int fd)
     return NULL;
 }
 
+static struct base_device *find_device_from_udev(struct udev_device *dev)
+{
+    struct base_device *impl;
+
+    LIST_FOR_EACH_ENTRY(impl, &device_list, struct base_device, unix_device.entry)
+        if (impl->udev_device == dev) return impl;
+
+    return NULL;
+}
+
+#ifdef HAS_PROPER_INPUT_HEADER
+
 static const char *get_device_syspath(struct udev_device *dev)
 {
     struct udev_device *parent;
@@ -223,18 +239,6 @@ static struct base_device *find_device_from_syspath(const char *path)
 
     return NULL;
 }
-
-static struct base_device *find_device_from_udev(struct udev_device *dev)
-{
-    struct base_device *impl;
-
-    LIST_FOR_EACH_ENTRY(impl, &device_list, struct base_device, unix_device.entry)
-        if (impl->udev_device == dev) return impl;
-
-    return NULL;
-}
-
-#ifdef HAS_PROPER_INPUT_HEADER
 
 static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},              /*ABS_X*/
