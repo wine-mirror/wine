@@ -17817,6 +17817,7 @@ todo_wine
 
 static const struct message WmSetLayeredStyle[] = {
     { WM_STYLECHANGING, sent },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 },
     { WM_STYLECHANGED, sent },
     { WM_GETTEXT, sent|defwinproc|optional },
     { 0 }
@@ -17827,9 +17828,16 @@ static const struct message WmSetLayeredStyle2[] = {
     { WM_STYLECHANGED, sent },
     { WM_WINDOWPOSCHANGING, sent|optional|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_NCCALCSIZE, sent|optional|wparam|defwinproc, 1 },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|optional|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_MOVE, sent|optional|defwinproc|wparam, 0 },
     { WM_SIZE, sent|optional|defwinproc|wparam, SIZE_RESTORED },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 },
+    { 0 }
+};
+
+static const struct message WmLayeredWinEmptySeq[] = {
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { 0 }
 };
 
@@ -17901,7 +17909,7 @@ static void test_layered_window(void)
 
     ret = pUpdateLayeredWindow( hwnd, 0, &pos, &size, hdc, &src, 0, NULL, ULW_OPAQUE );
     ok( ret, "UpdateLayeredWindow failed err %u\n", GetLastError() );
-    ok_sequence( WmEmptySeq, "UpdateLayeredWindow", FALSE );
+    ok_sequence( WmLayeredWinEmptySeq, "UpdateLayeredWindow", FALSE );
     GetWindowRect( hwnd, &rect );
     ok( rect.left == 300 && rect.top == 300 && rect.right == 550 && rect.bottom == 550,
         "wrong window rect %s\n", wine_dbgstr_rect( &rect ));
@@ -17913,7 +17921,7 @@ static void test_layered_window(void)
     pos.y = 200;
     ret = pUpdateLayeredWindow( hwnd, 0, &pos, &size, hdc, &src, 0, NULL, ULW_OPAQUE );
     ok( ret, "UpdateLayeredWindow failed err %u\n", GetLastError() );
-    ok_sequence( WmEmptySeq, "UpdateLayeredWindow", FALSE );
+    ok_sequence( WmLayeredWinEmptySeq, "UpdateLayeredWindow", FALSE );
     GetWindowRect( hwnd, &rect );
     ok( rect.left == 300 && rect.top == 200 && rect.right == 450 && rect.bottom == 450,
         "wrong window rect %s\n", wine_dbgstr_rect( &rect ));
@@ -17929,7 +17937,7 @@ static void test_layered_window(void)
     pos.x = 200;
     ret = pUpdateLayeredWindow( hwnd, 0, &pos, &size, hdc, &src, 0, NULL, ULW_OPAQUE );
     ok( ret, "UpdateLayeredWindow failed err %u\n", GetLastError() );
-    ok_sequence( WmEmptySeq, "UpdateLayeredWindow", FALSE );
+    ok_sequence( WmLayeredWinEmptySeq, "UpdateLayeredWindow", FALSE );
     GetWindowRect( hwnd, &rect );
     ok( rect.left == 200 && rect.top == 200 && rect.right == 400 && rect.bottom == 450,
         "wrong window rect %s\n", wine_dbgstr_rect( &rect ));
@@ -18681,6 +18689,7 @@ START_TEST(msg)
     test_clipboard_viewers();
     test_keyflags();
     test_hotkey();
+    test_layered_window();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18691,7 +18700,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_layered_window();
     test_TrackPopupMenu();
     test_TrackPopupMenuEmpty();
     test_DoubleSetCapture();
