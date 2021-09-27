@@ -103,6 +103,17 @@ static const WCHAR system_link_keyW[] =
     '\\','S','y','s','t','e','m','L','i','n','k'
 };
 
+static const WCHAR associated_charset_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','C','o','n','t','r','o','l',
+    '\\','F','o','n','t','A','s','s','o','c',
+    '\\','A','s','s','o','c','i','a','t','e','d',' ','C','h','a','r','s','e','t'
+};
+
 static const WCHAR software_config_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -4386,32 +4397,30 @@ static DWORD get_associated_charset_info(void)
 
     if (associated_charset == -1)
     {
+        char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[32 * sizeof(WCHAR)])];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
         HKEY hkey;
-        WCHAR dataW[32];
-        DWORD type, data_len;
+
+        static const WCHAR yesW[] = {'y','e','s',0};
 
         associated_charset = 0;
 
-        if (RegOpenKeyW(HKEY_LOCAL_MACHINE,
-                        L"System\\CurrentControlSet\\Control\\FontAssoc\\Associated Charset", &hkey))
+        if (!(hkey = reg_open_key( NULL, associated_charset_keyW, sizeof(associated_charset_keyW) )))
             return 0;
 
-        data_len = sizeof(dataW);
-        if (!RegQueryValueExW(hkey, L"ANSI(00)", NULL, &type, (LPBYTE)dataW, &data_len) &&
-            type == REG_SZ && !wcsicmp(dataW, L"yes"))
+        if (query_reg_ascii_value( hkey, "ANSI(00)", info, sizeof(value_buffer) ) &&
+            info->Type == REG_SZ && !wcsicmp( (const WCHAR *)info->Data, yesW ))
             associated_charset |= ASSOC_CHARSET_ANSI;
 
-        data_len = sizeof(dataW);
-        if (!RegQueryValueExW(hkey, L"OEM(FF)", NULL, &type, (LPBYTE)dataW, &data_len) &&
-            type == REG_SZ && !wcsicmp(dataW, L"yes"))
+        if (query_reg_ascii_value( hkey, "OEM(FF)", info, sizeof(value_buffer) ) &&
+            info->Type == REG_SZ && !wcsicmp( (const WCHAR *)info->Data, yesW ))
             associated_charset |= ASSOC_CHARSET_OEM;
 
-        data_len = sizeof(dataW);
-        if (!RegQueryValueExW(hkey, L"SYMBOL(02)", NULL, &type, (LPBYTE)dataW, &data_len) &&
-            type == REG_SZ && !wcsicmp(dataW, L"yes"))
+        if (query_reg_ascii_value( hkey, "SYMBOL(02)", info, sizeof(value_buffer) ) &&
+            info->Type == REG_SZ && !wcsicmp( (const WCHAR *)info->Data, yesW ))
             associated_charset |= ASSOC_CHARSET_SYMBOL;
 
-        RegCloseKey(hkey);
+        NtClose( hkey );
 
         TRACE("associated_charset = %d\n", associated_charset);
     }
