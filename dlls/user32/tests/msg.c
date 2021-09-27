@@ -2250,15 +2250,22 @@ static const struct message WmTrackPopupMenuCapture[] = {
 
 static const struct message WmTrackPopupMenuEmpty[] = {
     { HCBT_CREATEWND, hook },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_INITMENU, sent|lparam, 0, 0 },
+    { EVENT_SYSTEM_MENUSTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_INITMENUPOPUP, sent|lparam, 0, 0 },
     { 0x0093, sent|optional },
     { 0x0094, sent|optional },
     { 0x0094, sent|optional },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_SYSTEM_MENUEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent },
     { WM_EXITMENULOOP, sent|wparam|lparam, 1, 0 },
     { HCBT_DESTROYWND, hook },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_UNINITMENUPOPUP, sent|lparam, 0, 0 },
     { 0 }
 };
@@ -18745,6 +18752,7 @@ START_TEST(msg)
     test_hotkey();
     test_layered_window();
     test_TrackPopupMenu();
+    test_TrackPopupMenuEmpty();
 
     /* Fix message sequences before removing 4 lines below */
     if (pUnhookWinEvent && hEvent_hook)
@@ -18755,7 +18763,6 @@ START_TEST(msg)
     }
     hEvent_hook = 0;
 
-    test_TrackPopupMenuEmpty();
     test_DoubleSetCapture();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
