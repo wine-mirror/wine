@@ -91,6 +91,8 @@ static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 
 static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
+static const WCHAR true_type_suffixW[] = {' ','(','T','r','u','e','T','y','p','e',')',0};
+
 static const WCHAR system_link_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -5984,40 +5986,45 @@ static void update_external_font_keys(void)
     struct gdi_font_family *family;
     struct external_key *key, *next;
     struct gdi_font_face *face;
-    DWORD len, i = 0, type, dlen, vlen;
-    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH + 4], *tmp;
+    DWORD len, i = 0;
+    WCHAR value[LF_FULLFACESIZE + 12], *tmp, *path;
+    char buffer[2048];
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
     WCHAR *file;
     HKEY hkey;
 
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
-                     0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL );
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Fonts",
-                     0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL );
+    static const WCHAR external_fontsW[] = {'E','x','t','e','r','n','a','l',' ','F','o','n','t','s'};
+
+    winnt_key = reg_create_key( NULL, fonts_winnt_config_keyW, sizeof(fonts_winnt_config_keyW), 0, NULL );
+    win9x_key = reg_create_key( NULL, fonts_win9x_config_keyW, sizeof(fonts_win9x_config_keyW), 0, NULL );
 
     /* enumerate the fonts and add external ones to the two keys */
 
-    if (RegCreateKeyW( wine_fonts_key, L"External Fonts", &hkey )) return;
+    if (!(hkey = reg_create_key( wine_fonts_key, external_fontsW, sizeof(external_fontsW), 0, NULL )))
+        return;
 
-    memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
-    vlen = ARRAY_SIZE(value);
-    dlen = sizeof(path) - sizeof(nt_prefixW);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)path + sizeof(nt_prefixW), &dlen ))
+    while (reg_enum_value( hkey, i++, info, sizeof(buffer) - sizeof(nt_prefixW),
+                           value, LF_FULLFACESIZE * sizeof(WCHAR) ))
     {
-        if (type != REG_SZ) goto next;
-        if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
-        if ((face = find_face_from_full_name( value )) &&
-            !wcsicmp( face->file, path[5] == ':' ? path : path + ARRAYSIZE(nt_prefixW) ))
+        if (info->Type != REG_SZ) continue;
+
+        path = (WCHAR *)(buffer + info->DataOffset);
+        if (path[0] && path[1] == ':')
+        {
+            memmove( path, path + ARRAYSIZE(nt_prefixW), sizeof(nt_prefixW) );
+            memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
+        }
+
+        if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, true_type_suffixW, -1 )) *tmp = 0;
+        if ((face = find_face_from_full_name( value )) && !wcsicmp( face->file, path ))
         {
             face->flags |= ADDFONT_EXTERNAL_FOUND;
-            goto next;
+            continue;
         }
         if (tmp && !*tmp) *tmp = ' ';
         if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) ))) break;
         lstrcpyW( key->value, value );
         list_add_tail( &external_keys, &key->entry );
-    next:
-        vlen = ARRAY_SIZE(value);
-        dlen = sizeof(path) - sizeof(nt_prefixW);
     }
 
     WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
@@ -6028,7 +6035,7 @@ static void update_external_font_keys(void)
             if ((face->flags & ADDFONT_EXTERNAL_FOUND)) continue;
 
             lstrcpyW( value, face->full_name );
-            if (face->scalable) lstrcatW( value, L" (TrueType)" );
+            if (face->scalable) lstrcatW( value, true_type_suffixW );
 
             if (face->file[0] == '\\')
             {
@@ -6041,22 +6048,22 @@ static void update_external_font_keys(void)
                 file = face->file;
 
             len = (lstrlenW(file) + 1) * sizeof(WCHAR);
-            RegSetValueExW( winnt_key, value, 0, REG_SZ, (BYTE *)file, len );
-            RegSetValueExW( win9x_key, value, 0, REG_SZ, (BYTE *)file, len );
-            RegSetValueExW( hkey, value, 0, REG_SZ, (BYTE *)file, len );
+            set_reg_value( winnt_key, value, REG_SZ, file, len );
+            set_reg_value( win9x_key, value, REG_SZ, file, len );
+            set_reg_value( hkey, value, REG_SZ, file, len );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( key, next, &external_keys, struct external_key, entry )
     {
-        RegDeleteValueW( win9x_key, key->value );
-        RegDeleteValueW( winnt_key, key->value );
-        RegDeleteValueW( hkey, key->value );
+        reg_delete_value( win9x_key, key->value );
+        reg_delete_value( winnt_key, key->value );
+        reg_delete_value( hkey, key->value );
         list_remove( &key->entry );
         HeapFree( GetProcessHeap(), 0, key );
     }
-    RegCloseKey( win9x_key );
-    RegCloseKey( winnt_key );
-    RegCloseKey( hkey );
+    NtClose( win9x_key );
+    NtClose( winnt_key );
+    NtClose( hkey );
 }
 
 static void load_registry_fonts(void)
