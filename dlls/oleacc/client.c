@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 
+#include <assert.h>
 #include "oleacc_private.h"
 #include "commctrl.h"
 
@@ -43,6 +44,7 @@ typedef struct {
 
 struct win_class_vtbl {
     void (*init)(Client*);
+    HRESULT (*get_state)(Client*, VARIANT, VARIANT*);
 };
 
 static inline Client* impl_from_Client(IAccessible *iface)
@@ -233,34 +235,42 @@ static HRESULT WINAPI Client_get_accRole(IAccessible *iface, VARIANT varID, VARI
     return S_OK;
 }
 
-static HRESULT WINAPI Client_get_accState(IAccessible *iface, VARIANT varID, VARIANT *pvarState)
+static HRESULT client_get_state(Client *client, VARIANT id, VARIANT *state)
 {
-    Client *This = impl_from_Client(iface);
     GUITHREADINFO info;
     LONG style;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pvarState);
-
-    if(convert_child_id(&varID) != CHILDID_SELF) {
-        V_VT(pvarState) = VT_EMPTY;
+    if(convert_child_id(&id) != CHILDID_SELF) {
+        V_VT(state) = VT_EMPTY;
         return E_INVALIDARG;
     }
 
-    V_VT(pvarState) = VT_I4;
-    V_I4(pvarState) = 0;
+    V_VT(state) = VT_I4;
+    V_I4(state) = 0;
 
-    style = GetWindowLongW(This->hwnd, GWL_STYLE);
+    style = GetWindowLongW(client->hwnd, GWL_STYLE);
     if(style & WS_DISABLED)
-        V_I4(pvarState) |= STATE_SYSTEM_UNAVAILABLE;
-    else if(IsWindow(This->hwnd))
-        V_I4(pvarState) |= STATE_SYSTEM_FOCUSABLE;
+        V_I4(state) |= STATE_SYSTEM_UNAVAILABLE;
+    else if(IsWindow(client->hwnd))
+        V_I4(state) |= STATE_SYSTEM_FOCUSABLE;
 
     info.cbSize = sizeof(info);
-    if(GetGUIThreadInfo(0, &info) && info.hwndFocus == This->hwnd)
-        V_I4(pvarState) |= STATE_SYSTEM_FOCUSED;
+    if(GetGUIThreadInfo(0, &info) && info.hwndFocus == client->hwnd)
+        V_I4(state) |= STATE_SYSTEM_FOCUSED;
     if(!(style & WS_VISIBLE))
-        V_I4(pvarState) |= STATE_SYSTEM_INVISIBLE;
+        V_I4(state) |= STATE_SYSTEM_INVISIBLE;
     return S_OK;
+}
+
+static HRESULT WINAPI Client_get_accState(IAccessible *iface, VARIANT id, VARIANT *state)
+{
+    Client *This = impl_from_Client(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&id), state);
+
+    if(This->vtbl && This->vtbl->get_state)
+        return This->vtbl->get_state(This, id, state);
+    return client_get_state(This, id, state);
 }
 
 static HRESULT WINAPI Client_get_accHelp(IAccessible *iface, VARIANT varID, BSTR *pszHelp)
@@ -664,8 +674,28 @@ static void edit_init(Client *client)
     client->role = ROLE_SYSTEM_TEXT;
 }
 
+static HRESULT edit_get_state(Client *client, VARIANT id, VARIANT *state)
+{
+    HRESULT hres;
+    LONG style;
+
+    hres = client_get_state(client, id, state);
+    if(FAILED(hres))
+        return hres;
+
+    assert(V_VT(state) == VT_I4);
+
+    style = GetWindowLongW(client->hwnd, GWL_STYLE);
+    if(style & ES_READONLY)
+        V_I4(state) |= STATE_SYSTEM_READONLY;
+    if(style & ES_PASSWORD)
+        V_I4(state) |= STATE_SYSTEM_PROTECTED;
+    return S_OK;
+}
+
 static const win_class_vtbl edit_vtbl = {
     edit_init,
+    edit_get_state,
 };
 
 static const struct win_class_data classes[] = {
