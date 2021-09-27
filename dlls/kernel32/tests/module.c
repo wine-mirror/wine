@@ -1011,6 +1011,23 @@ static void testGetModuleHandleEx(void)
     ok( error == ERROR_MOD_NOT_FOUND, "got %u\n", error );
     ok( mod == NULL, "got %p\n", mod );
 
+    SetLastError( 0xdeadbeef );
+    mod = (HMODULE)0xdeadbeef;
+    ret = GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+                              | GET_MODULE_HANDLE_EX_FLAG_PIN, (LPCWSTR)mod_kernel32, &mod );
+    error = GetLastError();
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( mod == NULL, "got %p\n", mod );
+
+    SetLastError( 0xdeadbeef );
+    mod = (HMODULE)0xdeadbeef;
+    ret = GetModuleHandleExW( 8, kernel32W, &mod );
+    error = GetLastError();
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( mod == NULL, "got %p\n", mod );
+
     FreeLibrary( mod_kernel32 );
 }
 

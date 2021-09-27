@@ -384,6 +384,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExW( DWORD flags, LPCWSTR name, HMO
         return FALSE;
     }
 
+    if ((flags & ~(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+                  | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS))
+                  || (flags & (GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+                  == (GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+    {
+        *module = NULL;
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     /* if we are messing with the refcount, grab the loader lock */
     lock = (flags & GET_MODULE_HANDLE_EX_FLAG_PIN) || !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT);
     if (lock) LdrLockLoaderLock( 0, NULL, &magic );
