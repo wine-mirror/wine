@@ -3579,15 +3579,7 @@ static void test_simple_joystick(void)
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
     };
-    const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
-    {
-        {.ofs = TRUE},
-        {.ofs = TRUE},
-        {.ofs = TRUE},
-        {.ofs = TRUE},
-        {.ofs = TRUE},
-        {.ofs = TRUE},
-    };
+    const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] = {};
 
     struct check_objects_params check_objects_params =
     {
@@ -3970,7 +3962,6 @@ static void test_simple_joystick(void)
 
     check_member( objinst, expect_objects[1], "%u", dwSize );
     check_member_guid( objinst, expect_objects[1], guidType );
-    todo_wine
     check_member( objinst, expect_objects[1], "%#x", dwOfs );
     check_member( objinst, expect_objects[1], "%#x", dwType );
     check_member( objinst, expect_objects[1], "%#x", dwFlags );
@@ -3998,7 +3989,6 @@ static void test_simple_joystick(void)
 
     check_member( objinst, expect_objects[5], "%u", dwSize );
     check_member_guid( objinst, expect_objects[5], guidType );
-    todo_wine
     check_member( objinst, expect_objects[5], "%#x", dwOfs );
     check_member( objinst, expect_objects[5], "%#x", dwType );
     check_member( objinst, expect_objects[5], "%#x", dwFlags );
@@ -4031,7 +4021,6 @@ static void test_simple_joystick(void)
 
     check_member( objinst, expect_objects[0], "%u", dwSize );
     check_member_guid( objinst, expect_objects[0], guidType );
-    todo_wine
     check_member( objinst, expect_objects[0], "%#x", dwOfs );
     check_member( objinst, expect_objects[0], "%#x", dwType );
     check_member( objinst, expect_objects[0], "%#x", dwFlags );

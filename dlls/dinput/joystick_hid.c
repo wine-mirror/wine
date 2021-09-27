@@ -235,7 +235,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                           enum_object_callback callback, void *data )
 {
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
-    DWORD collection = 0, axis = 0, button = 0, pov = 0, i, j;
+    DWORD collection = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
     int *offsets = impl->base.data_format.offsets;
     DIPROPHEADER filter = *header;
@@ -250,6 +250,10 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         if (i == format->dwNumObjs) return DIENUM_CONTINUE;
         filter.dwObj = format->rgodf[i].dwOfs;
     }
+
+    button_ofs += impl->caps.NumberInputValueCaps * sizeof(LONG);
+    button_ofs += impl->caps.NumberOutputValueCaps * sizeof(LONG);
+    button_ofs += impl->caps.NumberFeatureValueCaps * sizeof(LONG);
 
     for (i = 0; i < impl->caps.NumberInputValueCaps; ++i)
     {
@@ -267,6 +271,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             TRACE( "Ignoring input value %s, usage page not implemented.\n", debugstr_hid_caps( &caps ) );
         else
         {
+            instance.dwOfs = value_ofs;
             instance.wUsagePage = caps.value->UsagePage;
             instance.wUsage = caps.value->NotRange.Usage;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
@@ -276,14 +281,12 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             switch (instance.wUsage)
             {
             case HID_USAGE_GENERIC_X:
-                instance.dwOfs = DIJOFS_X;
                 set_axis_type( &instance, seen_axis, 0, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Y:
-                instance.dwOfs = DIJOFS_Y;
                 set_axis_type( &instance, seen_axis, 1, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
@@ -291,28 +294,24 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 break;
             case HID_USAGE_GENERIC_Z:
             case HID_USAGE_GENERIC_WHEEL:
-                instance.dwOfs = DIJOFS_Z;
                 set_axis_type( &instance, seen_axis, 2, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RX:
-                instance.dwOfs = DIJOFS_RX;
                 set_axis_type( &instance, seen_axis, 3, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RY:
-                instance.dwOfs = DIJOFS_RY;
                 set_axis_type( &instance, seen_axis, 4, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RZ:
-                instance.dwOfs = DIJOFS_RZ;
                 set_axis_type( &instance, seen_axis, 5, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
@@ -320,14 +319,12 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 break;
             case HID_USAGE_GENERIC_DIAL:
             case HID_USAGE_GENERIC_SLIDER:
-                instance.dwOfs = DIJOFS_SLIDER( 0 );
                 instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_HATSWITCH:
-                instance.dwOfs = DIJOFS_POV( 0 );
                 instance.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( pov++ );
                 instance.dwFlags = 0;
                 ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
@@ -338,6 +335,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 break;
             }
         }
+
+        value_ofs += sizeof(LONG);
     }
 
     for (i = 0; i < impl->caps.NumberInputButtonCaps; ++i)
@@ -356,7 +355,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 FIXME( "Ignoring input button %s, too many buttons.\n", debugstr_hid_caps( &caps ) );
             else for (j = caps.button->Range.UsageMin; j <= caps.button->Range.UsageMax; ++j)
             {
-                instance.dwOfs = DIJOFS_BUTTON( j - 1 );
+                instance.dwOfs = button_ofs + (j - caps.button->Range.UsageMin);
                 instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
                 instance.dwFlags = 0;
                 instance.wUsagePage = caps.button->UsagePage;
@@ -372,7 +371,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             FIXME( "Ignoring input button %s, too many buttons.\n", debugstr_hid_caps( &caps ) );
         else
         {
-            instance.dwOfs = DIJOFS_BUTTON( caps.button->NotRange.Usage - 1 );
+            instance.dwOfs = button_ofs;
             instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
             instance.dwFlags = 0;
             instance.wUsagePage = caps.button->UsagePage;
@@ -383,6 +382,9 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
+
+        if (caps.button->IsRange) button_ofs += caps.button->Range.UsageMax - caps.button->Range.UsageMin;
+        button_ofs++;
     }
 
     for (i = 0; i < impl->caps.NumberLinkCollectionNodes; ++i)
