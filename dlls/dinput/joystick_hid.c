@@ -231,13 +231,13 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
     seen[i] = TRUE;
 }
 
-static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
-                                DWORD flags, enum_object_callback callback, void *data )
+static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
+                          enum_object_callback callback, void *data )
 {
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
-    struct hid_caps caps = {.type = VALUE_CAPS};
+    DWORD collection = 0, axis = 0, button = 0, pov = 0, i, j;
     BOOL ret, seen_axis[6] = {0};
-    DWORD axis = 0, pov = 0, i;
+    struct hid_caps caps = {0};
 
     for (i = 0; i < impl->caps.NumberInputValueCaps; ++i)
     {
@@ -328,17 +328,6 @@ static BOOL enum_value_objects( struct hid_joystick *impl, const DIPROPHEADER *f
         }
     }
 
-    return DIENUM_CONTINUE;
-}
-
-static BOOL enum_button_objects( struct hid_joystick *impl, const DIPROPHEADER *filter,
-                                 DWORD flags, enum_object_callback callback, void *data )
-{
-    DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
-    struct hid_caps caps = {.type = BUTTON_CAPS};
-    DWORD button = 0, i, j;
-    BOOL ret;
-
     for (i = 0; i < impl->caps.NumberInputButtonCaps; ++i)
     {
         caps.button = impl->input_button_caps + i;
@@ -383,17 +372,6 @@ static BOOL enum_button_objects( struct hid_joystick *impl, const DIPROPHEADER *
             if (ret != DIENUM_CONTINUE) return ret;
         }
     }
-
-    return DIENUM_CONTINUE;
-}
-
-static BOOL enum_collections_objects( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
-                                      enum_object_callback callback, void *data )
-{
-    DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
-    struct hid_caps caps = {.type = LINK_COLLECTION_NODE};
-    DWORD collection = 0, i;
-    BOOL ret;
 
     for (i = 0; i < impl->caps.NumberLinkCollectionNodes; ++i)
     {
@@ -489,14 +467,31 @@ static HRESULT WINAPI hid_joystick_EnumObjects( IDirectInputDevice8W *iface, LPD
     TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
+    if (flags & ~(DIDFT_AXIS | DIDFT_AXIS | DIDFT_BUTTON | DIDFT_NODATA | DIDFT_COLLECTION))
+        return DIERR_INVALIDPARAM;
 
-    ret = enum_value_objects( impl, &filter, flags, enum_objects_callback, &params );
-    if (ret != DIENUM_CONTINUE) return S_OK;
-    ret = enum_button_objects( impl, &filter, flags, enum_objects_callback, &params );
-    if (ret != DIENUM_CONTINUE) return S_OK;
-    enum_collections_objects( impl, &filter, flags, enum_objects_callback, &params );
+    if (flags == DIDFT_ALL || (flags & DIDFT_AXIS))
+    {
+        ret = enum_objects( impl, &filter, DIDFT_AXIS, enum_objects_callback, &params );
+        if (ret != DIENUM_CONTINUE) return DI_OK;
+    }
+    if (flags == DIDFT_ALL || (flags & DIDFT_POV))
+    {
+        ret = enum_objects( impl, &filter, DIDFT_POV, enum_objects_callback, &params );
+        if (ret != DIENUM_CONTINUE) return DI_OK;
+    }
+    if (flags == DIDFT_ALL || (flags & DIDFT_BUTTON))
+    {
+        ret = enum_objects( impl, &filter, DIDFT_BUTTON, enum_objects_callback, &params );
+        if (ret != DIENUM_CONTINUE) return DI_OK;
+    }
+    if (flags == DIDFT_ALL || (flags & (DIDFT_NODATA | DIDFT_COLLECTION)))
+    {
+        ret = enum_objects( impl, &filter, DIDFT_NODATA, enum_objects_callback, &params );
+        if (ret != DIENUM_CONTINUE) return DI_OK;
+    }
 
-    return S_OK;
+    return DI_OK;
 }
 
 static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_caps *caps,
@@ -524,7 +519,7 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     {
     case (DWORD_PTR)DIPROP_RANGE:
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
-        enum_value_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header );
+        enum_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header );
         return DI_OK;
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
     {
@@ -597,7 +592,7 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
     {
     case (DWORD_PTR)DIPROP_RANGE:
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
-        enum_value_objects( impl, header, DIDFT_AXIS, set_property_prop_range, (void *)header );
+        enum_objects( impl, header, DIDFT_AXIS, set_property_prop_range, (void *)header );
         return DI_OK;
     case (DWORD_PTR)DIPROP_FFLOAD:
     case (DWORD_PTR)DIPROP_GRANULARITY:
@@ -687,7 +682,6 @@ static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, D
         .dwHow = how,
         .dwObj = obj
     };
-    BOOL ret;
 
     TRACE( "iface %p, instance %p, obj %#x, how %#x.\n", iface, instance, obj, how );
 
@@ -696,12 +690,7 @@ static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, D
         instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
         return DIERR_INVALIDPARAM;
 
-    ret = enum_value_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
-    if (ret != DIENUM_CONTINUE) return S_OK;
-    ret = enum_button_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
-    if (ret != DIENUM_CONTINUE) return S_OK;
-    enum_collections_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
-
+    enum_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
     return S_OK;
 }
 
@@ -811,16 +800,11 @@ static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_cap
     struct parse_device_state_params *params = data;
     BYTE old_value, value;
 
-    if (!(instance->dwType & DIDFT_BUTTON))
-        FIXME( "unexpected object type %#x, expected DIDFT_BUTTON\n", instance->dwType );
-    else
-    {
-        value = params->buttons[instance->wUsage - 1];
-        old_value = params->old_state[instance->dwOfs];
-        impl->device_state[instance->dwOfs] = value;
-        if (old_value != value)
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-    }
+    value = params->buttons[instance->wUsage - 1];
+    old_value = params->old_state[instance->dwOfs];
+    impl->device_state[instance->dwOfs] = value;
+    if (old_value != value)
+        queue_event( iface, instance->dwType, value, params->time, params->seq );
 
     return DIENUM_CONTINUE;
 }
@@ -854,21 +838,16 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps 
     LONG old_value, value;
     NTSTATUS status;
 
-    if (!(instance->dwType & (DIDFT_POV | DIDFT_AXIS)))
-        FIXME( "unexpected object type %#x, expected DIDFT_POV | DIDFT_AXIS\n", instance->dwType );
-    else
-    {
-        status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
-                                     &logical_value, impl->preparsed, report_buf, report_len );
-        if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
-                                                 instance->wUsagePage, instance->wUsage, status );
-        value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
+    status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
+                                 &logical_value, impl->preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
+                                             instance->wUsagePage, instance->wUsage, status );
+    value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
 
-        old_value = *(LONG *)(params->old_state + instance->dwOfs);
-        *(LONG *)(impl->device_state + instance->dwOfs) = value;
-        if (old_value != value)
-            queue_event( iface, instance->dwType, value, params->time, params->seq );
-    }
+    old_value = *(LONG *)(params->old_state + instance->dwOfs);
+    *(LONG *)(impl->device_state + instance->dwOfs) = value;
+    if (old_value != value)
+        queue_event( iface, instance->dwType, value, params->time, params->seq );
 
     return DIENUM_CONTINUE;
 }
@@ -933,8 +912,8 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
                     params.buttons[usages->Usage - 1] = 0x80;
             }
 
-            enum_value_objects( impl, &filter, DIDFT_ALL, read_device_state_value, &params );
-            enum_button_objects( impl, &filter, DIDFT_ALL, check_device_state_button, &params );
+            enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, read_device_state_value, &params );
+            enum_objects( impl, &filter, DIDFT_BUTTON, check_device_state_button, &params );
             if (impl->base.hEvent && memcmp( &params.old_state, impl->device_state, format->dwDataSize ))
                 SetEvent( impl->base.hEvent );
         }
@@ -1328,10 +1307,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
                                  &impl->caps.NumberInputValueCaps, impl->preparsed );
     if (status != HIDP_STATUS_SUCCESS && status != HIDP_STATUS_USAGE_NOT_FOUND) goto failed;
 
-    /* enumerate collections first, so we can find report collections */
-    enum_collections_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
-    enum_value_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
-    enum_button_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
+    enum_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
 
     format = impl->base.data_format.wine_df;
     if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
@@ -1347,16 +1323,14 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     format->dwFlags = DIDF_ABSAXIS;
 
     index = 0;
-    enum_value_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
-    enum_button_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
-    enum_collections_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
+    enum_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
 
     _dump_DIDATAFORMAT( impl->base.data_format.wine_df );
 
     range.lMax = 65535;
-    enum_value_objects( impl, &range.diph, DIDFT_AXIS, set_property_prop_range, &range );
+    enum_objects( impl, &range.diph, DIDFT_AXIS, set_property_prop_range, &range );
     range.lMax = 36000;
-    enum_value_objects( impl, &range.diph, DIDFT_POV, set_property_prop_range, &range );
+    enum_objects( impl, &range.diph, DIDFT_POV, set_property_prop_range, &range );
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;

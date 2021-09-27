@@ -3943,7 +3943,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_EnumObjects( device, NULL, NULL, DIDFT_ALL );
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, 0x20 );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
