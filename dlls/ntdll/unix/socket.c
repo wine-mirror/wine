@@ -369,7 +369,6 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
 }
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
 static WSACMSGHDR *fill_control_message( int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len )
 {
     ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
@@ -384,11 +383,9 @@ static WSACMSGHDR *fill_control_message( int level, int type, WSACMSGHDR *curren
     memcpy(ptr, data, len);
     return (WSACMSGHDR *)(ptr + WSA_CMSG_ALIGN(len));
 }
-#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
 
 static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 {
-#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
     WSACMSGHDR *cmsg_win = (WSACMSGHDR *)control->buf, *ptr;
     ULONG ctlsize = control->len;
     struct cmsghdr *cmsg_unix;
@@ -490,10 +487,6 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 error:
     control->len = 0;
     return 0;
-#else /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
-    control->len = 0;
-    return 1;
-#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
 }
 #endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
