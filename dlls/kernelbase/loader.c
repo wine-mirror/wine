@@ -373,10 +373,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExA( DWORD flags, LPCSTR name, HMOD
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
 {
-    NTSTATUS status = STATUS_SUCCESS;
     HMODULE ret = NULL;
-    ULONG_PTR magic;
-    BOOL lock;
+    NTSTATUS status;
+    void *dummy;
 
     if (!module)
     {
@@ -394,35 +393,31 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExW( DWORD flags, LPCWSTR name, HMO
         return FALSE;
     }
 
-    /* if we are messing with the refcount, grab the loader lock */
-    lock = (flags & GET_MODULE_HANDLE_EX_FLAG_PIN) || !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT);
-    if (lock) LdrLockLoaderLock( 0, NULL, &magic );
+    if (name && !(flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS))
+    {
+        UNICODE_STRING wstr;
+        ULONG ldr_flags = 0;
 
-    if (!name)
-    {
-        ret = NtCurrentTeb()->Peb->ImageBaseAddress;
-    }
-    else if (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)
-    {
-        void *dummy;
-        if (!(ret = RtlPcToFileHeader( (void *)name, &dummy ))) status = STATUS_DLL_NOT_FOUND;
+        if (flags & GET_MODULE_HANDLE_EX_FLAG_PIN)
+            ldr_flags |= LDR_GET_DLL_HANDLE_EX_FLAG_PIN;
+        if (flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT)
+            ldr_flags |= LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
+
+        RtlInitUnicodeString( &wstr, name );
+        status = LdrGetDllHandleEx( ldr_flags, NULL, NULL, &wstr, &ret );
     }
     else
     {
-        UNICODE_STRING wstr;
-        RtlInitUnicodeString( &wstr, name );
-        status = LdrGetDllHandle( NULL, 0, &wstr, &ret );
-    }
+        ret = name ? RtlPcToFileHeader( (void *)name, &dummy ) : NtCurrentTeb()->Peb->ImageBaseAddress;
 
-    if (status == STATUS_SUCCESS)
-    {
-        if (flags & GET_MODULE_HANDLE_EX_FLAG_PIN)
-            LdrAddRefDll( LDR_ADDREF_DLL_PIN, ret );
-        else if (!(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
-            LdrAddRefDll( 0, ret );
+        if (ret)
+        {
+            if (!(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+                status = LdrAddRefDll( flags & GET_MODULE_HANDLE_EX_FLAG_PIN ? LDR_ADDREF_DLL_PIN : 0, ret );
+            else
+                status = STATUS_SUCCESS;
+        } else status = STATUS_DLL_NOT_FOUND;
     }
-
-    if (lock) LdrUnlockLoaderLock( 0, magic );
 
     *module = ret;
     return set_ntstatus( status );
