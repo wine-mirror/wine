@@ -18,20 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "wincon.h"
 #include "commctrl.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
@@ -107,74 +105,31 @@ typedef struct {
 #include "poppack.h"
 
 /***********************************************************************
- *           find_dosbox
- */
-static char *find_dosbox(void)
-{
-    const char *envpath = getenv( "PATH" );
-    struct stat st;
-    char *path, *p, *buffer, *dir;
-    size_t envpath_len;
-
-    if (!envpath) return NULL;
-
-    envpath_len = strlen( envpath );
-    path = HeapAlloc( GetProcessHeap(), 0, envpath_len + 1 );
-    buffer = HeapAlloc( GetProcessHeap(), 0, envpath_len + strlen(DOSBOX) + 2 );
-    strcpy( path, envpath );
-
-    p = path;
-    while (*p)
-    {
-        while (*p == ':') p++;
-        if (!*p) break;
-        dir = p;
-        while (*p && *p != ':') p++;
-        if (*p == ':') *p++ = 0;
-        strcpy( buffer, dir );
-        strcat( buffer, "/" DOSBOX );
-        if (!stat( buffer, &st ))
-        {
-            HeapFree( GetProcessHeap(), 0, path );
-            return buffer;
-        }
-    }
-    HeapFree( GetProcessHeap(), 0, buffer );
-    HeapFree( GetProcessHeap(), 0, path );
-    return NULL;
-}
-
-
-/***********************************************************************
  *           start_dosbox
  */
 static void start_dosbox( const char *appname, const char *args )
 {
-    static const WCHAR cfgW[] = {'c','f','g',0};
-    const char *home = getenv( "HOME" );
-    const char *prefix = getenv( "WINEPREFIX" );
+    const WCHAR *config_dir = _wgetenv( L"WINECONFIGDIR" );
     WCHAR path[MAX_PATH], config[MAX_PATH];
     HANDLE file;
-    char *p, *buffer, app[MAX_PATH];
-    int i, len;
-    int ret = 1;
+    char *p, *prefix, *buffer, app[MAX_PATH];
+    int i;
+    NTSTATUS ret = STATUS_OBJECT_NAME_NOT_FOUND;
     DWORD written, drives = GetLogicalDrives();
-    char *dosbox = find_dosbox();
 
-    if (!dosbox) return;
+    if (!config_dir || !(prefix = wine_get_unix_file_name( config_dir ))) return;
     if (!GetTempPathW( MAX_PATH, path )) return;
-    if (!GetTempFileNameW( path, cfgW, 0, config )) return;
+    if (!GetTempFileNameW( path, L"cfg", 0, config )) return;
     if (!GetCurrentDirectoryW( MAX_PATH, path )) return;
     if (!GetShortPathNameA( appname, app, MAX_PATH )) return;
     GetShortPathNameW( path, path, MAX_PATH );
     file = CreateFileW( config, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     if (file == INVALID_HANDLE_VALUE) return;
 
-    len = prefix ? strlen(prefix) : strlen(home) + strlen("/.wine");
     buffer = HeapAlloc( GetProcessHeap(), 0, sizeof("[autoexec]") +
                         sizeof("mount -z c") + sizeof("config -securemode") +
-                        25 * (len + sizeof("mount c /dosdevices/c:")) +
-                        4 * strlenW( path ) +
+                        26 * (strlen(prefix) + sizeof("mount c /dosdevices/c:")) +
+                        4 * lstrlenW( path ) +
                         6 + strlen( app ) + strlen( args ) + 20 );
     p = buffer;
     p += sprintf( p, "[autoexec]\n" );
@@ -187,13 +142,10 @@ static void start_dosbox( const char *appname, const char *args )
     for (i = 0; i <= 25; i++)
     {
         if (!(drives & (1 << i))) continue;
-        if (prefix)
-            p += sprintf( p, "mount %c %s/dosdevices/%c:\n", 'a' + i, prefix, 'a' + i );
-        else
-            p += sprintf( p, "mount %c %s/.wine/dosdevices/%c:\n", 'a' + i, home, 'a' + i );
+        p += sprintf( p, "mount %c %s/dosdevices/%c:\n", 'a' + i, prefix, 'a' + i );
     }
     p += sprintf( p, "%c:\ncd ", path[0] );
-    p += WideCharToMultiByte( CP_UNIXCP, 0, path + 2, -1, p, 4 * strlenW(path), NULL, NULL ) - 1;
+    p += WideCharToMultiByte( CP_UNIXCP, 0, path + 2, -1, p, 4 * lstrlenW(path), NULL, NULL ) - 1;
     p += sprintf( p, "\nconfig -securemode\n" );
     p += sprintf( p, "%s %s\n", app, args );
     p += sprintf( p, "exit\n" );
@@ -201,29 +153,20 @@ static void start_dosbox( const char *appname, const char *args )
     {
         const char *args[5];
         char *config_file = wine_get_unix_file_name( config );
-        args[0] = dosbox;
+        args[0] = DOSBOX;
         args[1] = "-userconf";
         args[2] = "-conf";
         args[3] = config_file;
         args[4] = NULL;
-        ret = _spawnvp( _P_WAIT, args[0], args );
+        ret = __wine_unix_spawnvp( (char **)args, TRUE );
     }
     CloseHandle( file );
     DeleteFileW( config );
     HeapFree( GetProcessHeap(), 0, buffer );
+    if (FAILED(ret)) MESSAGE( "winevdm: %s is a DOS application, you need to install DOSBox.\n", appname );
     ExitProcess( ret );
 }
 
-
-/***********************************************************************
- *           start_dos_exe
- */
-static void start_dos_exe( LPCSTR filename, LPCSTR cmdline )
-{
-    start_dosbox( filename, cmdline );
-    WINE_MESSAGE( "winevdm: %s is a DOS application, you need to install DOSBox.\n", filename );
-    ExitProcess(1);
-}
 
 /***********************************************************************
  *           read_pif_file
@@ -367,7 +310,7 @@ static VOID pif_cmd( char *filename, char *cmdline)
      * - hot key's
      * - etc.
      */ 
-    start_dos_exe( progpath, cmdline );
+    start_dosbox( progpath, cmdline );
 }
 
 /***********************************************************************
@@ -561,13 +504,8 @@ int main( int argc, char *argv[] )
             if( ( p = strrchr( appname, '.' )) && !strcasecmp( p, ".pif"))
                 pif_cmd( appname, cmdline + 1);
             else
-            {
                 /* try DOS format */
-                /* loader expects arguments to be regular C strings */
-                start_dos_exe( appname, cmdline + 1 );
-            }
-            /* if we get back here it failed */
-            instance = GetLastError();
+                start_dosbox( appname, cmdline + 1 );
         }
 
         WINE_MESSAGE( "winevdm: can't exec '%s': ", appname );
