@@ -103,6 +103,39 @@ static const WCHAR system_link_keyW[] =
     '\\','S','y','s','t','e','m','L','i','n','k'
 };
 
+static const WCHAR software_config_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m',
+    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+    '\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s',
+    '\\','C','u','r','r','e','n','t',
+    '\\','S','o','f','t','w','a','r','e',
+};
+
+static const WCHAR fonts_win9x_config_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','o','f','t','w','a','r','e',
+    '\\','M','i','c','r','o','s','o','f','t',
+    '\\','W','i','n','d','o','w','s',
+    '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+    '\\','F','o','n','t','s'
+};
+
+static const WCHAR fonts_winnt_config_keyW[] =
+{
+    '\\','R','e','g','i','s','t','r','y',
+    '\\','M','a','c','h','i','n','e',
+    '\\','S','o','f','t','w','a','r','e',
+    '\\','M','i','c','r','o','s','o','f','t',
+    '\\','W','i','n','d','o','w','s',' ','N','T',
+    '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+    '\\','F','o','n','t','s'
+};
+
 static const WCHAR font_substitutes_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -534,6 +567,14 @@ static ULONG query_reg_value( HKEY hkey, const WCHAR *name,
         return 0;
 
     return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+}
+
+static ULONG query_reg_ascii_value( HKEY hkey, const char *name,
+                                    KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+{
+    WCHAR nameW[64];
+    asciiz_to_unicode( nameW, name );
+    return query_reg_value( hkey, nameW, info, size );
 }
 
 static BOOL reg_enum_value( HKEY hkey, unsigned int index, KEY_VALUE_FULL_INFORMATION *info,
@@ -2618,73 +2659,81 @@ static void update_font_system_link_info(UINT current_ansi_codepage)
 
 static void update_codepage(void)
 {
-    char buf[40], cpbuf[40];
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[40 * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
+    char cpbuf[40];
+    WCHAR cpbufW[40];
     HKEY hkey;
-    DWORD len, type, size;
+    DWORD size;
     UINT i, ansi_cp, oem_cp;
     DWORD screen_dpi, font_dpi = 0;
-    BOOL done = FALSE;
+    BOOL done = FALSE, cp_match = FALSE;
+
+    static const WCHAR log_pixelsW[] = {'L','o','g','P','i','x','e','l','s',0};
 
     screen_dpi = get_dpi();
     if (!screen_dpi) screen_dpi = 96;
 
-    size = sizeof(DWORD);
-    if (RegQueryValueExW(wine_fonts_key, L"LogPixels", NULL, &type, (BYTE *)&font_dpi, &size) ||
-        type != REG_DWORD || size != sizeof(DWORD))
-        font_dpi = 0;
+    size = query_reg_value( wine_fonts_key, log_pixelsW, info, sizeof(value_buffer) );
+    if (size == sizeof(DWORD) && info->Type == REG_DWORD)
+        font_dpi = *(DWORD *)info->Data;
 
     ansi_cp = GetACP();
     oem_cp = GetOEMCP();
     sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
+    asciiz_to_unicode( cpbufW, cpbuf );
 
-    buf[0] = 0;
-    len = sizeof(buf);
-    if (!RegQueryValueExA(wine_fonts_key, "Codepages", 0, &type, (BYTE *)buf, &len) && type == REG_SZ)
+    if (query_reg_ascii_value( wine_fonts_key, "Codepages", info, sizeof(value_buffer) ))
     {
-        if (!strcmp( buf, cpbuf ) && screen_dpi == font_dpi) return;  /* already set correctly */
-        TRACE("updating registry, codepages/logpixels changed %s/%u -> %u,%u/%u\n",
-              buf, font_dpi, ansi_cp, oem_cp, screen_dpi);
+        cp_match = !wcscmp( (const WCHAR *)info->Data, cpbufW );
+        if (cp_match && screen_dpi == font_dpi) return;  /* already set correctly */
+        TRACE( "updating registry, codepages/logpixels changed %s/%u -> %u,%u/%u\n",
+               debugstr_w((const WCHAR *)info->Data), font_dpi, ansi_cp, oem_cp, screen_dpi );
     }
     else TRACE("updating registry, codepages/logpixels changed none -> %u,%u/%u\n",
                ansi_cp, oem_cp, screen_dpi);
 
-    RegSetValueExA(wine_fonts_key, "Codepages", 0, REG_SZ, (const BYTE *)cpbuf, strlen(cpbuf)+1);
-    RegSetValueExW(wine_fonts_key, L"LogPixels", 0, REG_DWORD, (const BYTE *)&screen_dpi, sizeof(screen_dpi));
+    set_reg_ascii_value( wine_fonts_key, "Codepages", cpbuf );
+    set_reg_value( wine_fonts_key, log_pixelsW, REG_DWORD, &screen_dpi, sizeof(screen_dpi) );
 
     for (i = 0; i < ARRAY_SIZE(nls_update_font_list); i++)
     {
         if (nls_update_font_list[i].ansi_cp == ansi_cp && nls_update_font_list[i].oem_cp == oem_cp)
         {
-            if (!RegCreateKeyW( HKEY_CURRENT_CONFIG, L"Software\\Fonts", &hkey ))
+            HKEY software_hkey;
+            if ((software_hkey = reg_create_key( NULL, software_config_keyW,
+                                                 sizeof(software_config_keyW), 0, NULL )))
             {
-                RegSetValueExA(hkey, "OEMFONT.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].oem,
-                               strlen(nls_update_font_list[i].oem)+1);
-                RegSetValueExA(hkey, "FIXEDFON.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].fixed,
-                               strlen(nls_update_font_list[i].fixed)+1);
-                RegSetValueExA(hkey, "FONTS.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].system,
-                               strlen(nls_update_font_list[i].system)+1);
-                RegCloseKey(hkey);
+                static const WCHAR fontsW[] = {'F','o','n','t','s'};
+                hkey = reg_create_key( software_hkey, fontsW, sizeof(fontsW), 0, NULL );
+                NtClose( software_hkey );
+                if (hkey)
+                {
+                    set_reg_ascii_value( hkey, "OEMFONT.FON", nls_update_font_list[i].oem );
+                    set_reg_ascii_value( hkey, "FIXEDFON.FON", nls_update_font_list[i].fixed );
+                    set_reg_ascii_value( hkey, "FONTS.FON", nls_update_font_list[i].system );
+                    NtClose( hkey );
+                }
             }
-            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
-                                L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", &hkey ))
+            if ((hkey = reg_create_key( NULL, fonts_winnt_config_keyW, sizeof(fonts_winnt_config_keyW),
+                                        0, NULL )))
             {
                 add_font_list(hkey, &nls_update_font_list[i], screen_dpi);
-                RegCloseKey(hkey);
+                NtClose( hkey );
             }
-            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
-                                L"Software\\Microsoft\\Windows\\CurrentVersion\\Fonts", &hkey ))
+            if ((hkey = reg_create_key( NULL, fonts_win9x_config_keyW,
+                                        sizeof(fonts_win9x_config_keyW), 0, NULL )))
             {
                 add_font_list(hkey, &nls_update_font_list[i], screen_dpi);
-                RegCloseKey(hkey);
+                NtClose( hkey );
             }
             /* Only update these if the Codepage changed. */
-            if (strcmp( buf, cpbuf ) && !RegCreateKeyW( HKEY_LOCAL_MACHINE,
-                                L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            if (!cp_match &&
+                (hkey = reg_create_key( NULL, font_substitutes_keyW, sizeof(font_substitutes_keyW),
+                                        0, NULL )))
             {
-                RegSetValueExA(hkey, "MS Shell Dlg", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].shelldlg,
-                               strlen(nls_update_font_list[i].shelldlg)+1);
-                RegSetValueExA(hkey, "Tms Rmn", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].tmsrmn,
-                               strlen(nls_update_font_list[i].tmsrmn)+1);
+                set_reg_ascii_value( hkey, "MS Shell Dlg", nls_update_font_list[i].shelldlg );
+                set_reg_ascii_value( hkey, "Tms Rmn", nls_update_font_list[i].tmsrmn );
 
                 set_value_key(hkey, "Fixedsys,0", nls_update_font_list[i].fixed_0);
                 set_value_key(hkey, "System,0", nls_update_font_list[i].system_0);
@@ -2699,19 +2748,20 @@ static void update_codepage(void)
                 set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, nls_update_font_list[i].courier_new_0.to);
                 set_value_key(hkey, nls_update_font_list[i].times_new_roman_0.from, nls_update_font_list[i].times_new_roman_0.to);
 
-                RegCloseKey(hkey);
+                NtClose( hkey );
             }
             done = TRUE;
         }
         else
         {
             /* Delete the FontSubstitutes from other locales */
-            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            if ((hkey = reg_create_key( NULL, font_substitutes_keyW, sizeof(font_substitutes_keyW),
+                                        0, NULL )))
             {
                 set_value_key(hkey, nls_update_font_list[i].arial_0.from, NULL);
                 set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, NULL);
                 set_value_key(hkey, nls_update_font_list[i].times_new_roman_0.from, NULL);
-                RegCloseKey(hkey);
+                NtClose( hkey );
             }
         }
     }
@@ -2720,7 +2770,7 @@ static void update_codepage(void)
 
     /* update locale dependent font association info and font system link info in registry.
        update only when codepages changed, not logpixels. */
-    if (strcmp(buf, cpbuf) != 0)
+    if (!cp_match)
     {
         update_font_association_info(ansi_cp);
         update_font_system_link_info(ansi_cp);
