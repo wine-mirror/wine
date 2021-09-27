@@ -36,6 +36,21 @@
 #include "wine/test.h"
 #include "wine/heap.h"
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
 #define CHECK_EXPECTED_METHOD(method_name) \
@@ -1896,6 +1911,13 @@ static void test_class_moniker(void)
     hr = CreateClassMoniker(&GUID_NULL, &moniker);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    check_interface(moniker, &IID_IMoniker, TRUE);
+    check_interface(moniker, &IID_IPersist, TRUE);
+    check_interface(moniker, &IID_IPersistStream, TRUE);
+    check_interface(moniker, &CLSID_ClassMoniker, TRUE);
+    check_interface(moniker, &IID_IROTData, TRUE);
+    check_interface(moniker, &IID_IMarshal, TRUE);
+
     hr = IMoniker_GetSizeMax(moniker, &size);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(size.QuadPart == 20, "Unexpected size %u.\n", size.LowPart);
@@ -2221,6 +2243,14 @@ static void test_file_monikers(void)
 
     hr = CreateFileMoniker(filename, &moniker);
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    check_interface(moniker, &IID_IMoniker, TRUE);
+todo_wine
+    check_interface(moniker, &IID_IPersist, FALSE);
+    check_interface(moniker, &IID_IPersistStream, TRUE);
+    check_interface(moniker, &CLSID_FileMoniker, TRUE);
+    check_interface(moniker, &IID_IROTData, TRUE);
+    check_interface(moniker, &IID_IMarshal, TRUE);
 
     hr = IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IStorage, (void **)&storage);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -2753,6 +2783,14 @@ static void test_anti_moniker(void)
     hr = CreateAntiMoniker(&moniker);
     ok_ole_success(hr, CreateAntiMoniker);
 
+    check_interface(moniker, &IID_IMoniker, TRUE);
+todo_wine
+    check_interface(moniker, &IID_IPersist, FALSE);
+    check_interface(moniker, &IID_IPersistStream, TRUE);
+    check_interface(moniker, &CLSID_AntiMoniker, TRUE);
+    check_interface(moniker, &IID_IROTData, TRUE);
+    check_interface(moniker, &IID_IMarshal, TRUE);
+
     hr = IMoniker_QueryInterface(moniker, &CLSID_AntiMoniker, (void **)&unknown);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
@@ -3067,6 +3105,13 @@ static void test_generic_composite_moniker(void)
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
     ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
 
+    check_interface(moniker, &IID_IMoniker, TRUE);
+todo_wine
+    check_interface(moniker, &IID_IPersist, FALSE);
+    check_interface(moniker, &IID_IPersistStream, TRUE);
+    check_interface(moniker, &IID_IROTData, TRUE);
+    check_interface(moniker, &IID_IMarshal, TRUE);
+
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
     ok(hr == S_OK, "Failed to create composite, hr %#x.\n", hr);
     TEST_MONIKER_TYPE(moniker, MKSYS_GENERICCOMPOSITE);
@@ -3253,7 +3298,6 @@ static void test_pointer_moniker(void)
     FILETIME filetime;
     IUnknown *unknown;
     IStream *stream;
-    IROTData *rotdata;
     LPOLESTR display_name;
     IMarshal *marshal;
     LARGE_INTEGER pos;
@@ -3266,6 +3310,14 @@ static void test_pointer_moniker(void)
 
     hr = CreatePointerMoniker((IUnknown *)&factory.IClassFactory_iface, &moniker);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(moniker, &IID_IMoniker, TRUE);
+todo_wine
+    check_interface(moniker, &IID_IPersist, FALSE);
+    check_interface(moniker, &IID_IPersistStream, TRUE);
+    check_interface(moniker, &CLSID_PointerMoniker, TRUE);
+    check_interface(moniker, &IID_IMarshal, TRUE);
+    check_interface(moniker, &IID_IROTData, FALSE);
 
     hr = IMoniker_QueryInterface(moniker, &IID_IMoniker, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -3317,11 +3369,6 @@ static void test_pointer_moniker(void)
 
     hr = IMoniker_IsDirty(moniker);
     ok(hr == S_FALSE, "IMoniker_IsDirty should return S_FALSE, not 0x%08x\n", hr);
-
-    /* IROTData::GetComparisonData test */
-
-    hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
-    ok(hr == E_NOINTERFACE, "IMoniker_QueryInterface(IID_IROTData) should have returned E_NOINTERFACE instead of 0x%08x\n", hr);
 
     /* Saving */
 
