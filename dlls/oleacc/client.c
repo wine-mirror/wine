@@ -48,6 +48,7 @@ struct win_class_vtbl {
     HRESULT (*get_name)(Client*, VARIANT, BSTR*);
     HRESULT (*get_kbd_shortcut)(Client*, VARIANT, BSTR*);
     HRESULT (*get_value)(Client*, VARIANT, BSTR*);
+    HRESULT (*put_value)(Client*, VARIANT, BSTR);
 };
 
 static HRESULT win_get_name(HWND hwnd, BSTR *name)
@@ -493,6 +494,9 @@ static HRESULT WINAPI Client_put_accValue(IAccessible *iface, VARIANT id, BSTR v
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&id), value);
 
+    if(This->vtbl && This->vtbl->put_value)
+        return This->vtbl->put_value(This, id, value);
+
     if(convert_child_id(&id) != CHILDID_SELF)
         return E_INVALIDARG;
     return S_FALSE;
@@ -800,12 +804,22 @@ static HRESULT edit_get_value(Client *client, VARIANT id, BSTR *value_out)
     return S_OK;
 }
 
+static HRESULT edit_put_value(Client *client, VARIANT id, BSTR value)
+{
+    if(convert_child_id(&id) != CHILDID_SELF || !IsWindow(client->hwnd))
+        return E_INVALIDARG;
+
+    SendMessageW(client->hwnd, WM_SETTEXT, 0, (LPARAM)value);
+    return S_OK;
+}
+
 static const win_class_vtbl edit_vtbl = {
     edit_init,
     edit_get_state,
     edit_get_name,
     edit_get_kbd_shortcut,
     edit_get_value,
+    edit_put_value,
 };
 
 static const struct win_class_data classes[] = {
