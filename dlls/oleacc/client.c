@@ -487,11 +487,15 @@ static HRESULT WINAPI Client_put_accName(IAccessible *iface, VARIANT varID, BSTR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Client_put_accValue(IAccessible *iface, VARIANT varID, BSTR pszValue)
+static HRESULT WINAPI Client_put_accValue(IAccessible *iface, VARIANT id, BSTR value)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%s %s)\n", This, debugstr_variant(&varID), debugstr_w(pszValue));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&id), value);
+
+    if(convert_child_id(&id) != CHILDID_SELF)
+        return E_INVALIDARG;
+    return S_FALSE;
 }
 
 static const IAccessibleVtbl ClientVtbl = {
