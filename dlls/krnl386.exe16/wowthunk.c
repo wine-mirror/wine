@@ -93,7 +93,6 @@ static BOOL fix_selector( CONTEXT *context )
     switch(instr[0])
     {
     case 0x07: /* pop es */
-    case 0x17: /* pop ss */
     case 0x1f: /* pop ds */
         break;
     case 0x0f: /* extended instruction */
