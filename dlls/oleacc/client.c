@@ -46,6 +46,7 @@ struct win_class_vtbl {
     void (*init)(Client*);
     HRESULT (*get_state)(Client*, VARIANT, VARIANT*);
     HRESULT (*get_name)(Client*, VARIANT, BSTR*);
+    HRESULT (*get_kbd_shortcut)(Client*, VARIANT, BSTR*);
 };
 
 static HRESULT win_get_name(HWND hwnd, BSTR *name)
@@ -67,6 +68,29 @@ static HRESULT win_get_name(HWND hwnd, BSTR *name)
 
     *name = SysAllocStringLen(buf, len);
     return *name ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT win_get_kbd_shortcut(HWND hwnd, BSTR *shortcut)
+{
+    WCHAR buf[1024];
+    UINT i, len;
+
+    len = SendMessageW(hwnd, WM_GETTEXT, ARRAY_SIZE(buf), (LPARAM)buf);
+    if(!len)
+        return S_FALSE;
+
+    for(i=0; i<len; i++) {
+        if(buf[i] == '&')
+            break;
+    }
+    if(i+1 >= len)
+        return S_FALSE;
+
+    *shortcut = SysAllocString(L"Alt+!");
+    if(!*shortcut)
+        return E_OUTOFMEMORY;
+    (*shortcut)[4] = buf[i+1];
+    return S_OK;
 }
 
 static inline Client* impl_from_Client(IAccessible *iface)
@@ -304,32 +328,20 @@ static HRESULT WINAPI Client_get_accHelpTopic(IAccessible *iface,
 }
 
 static HRESULT WINAPI Client_get_accKeyboardShortcut(IAccessible *iface,
-        VARIANT varID, BSTR *pszKeyboardShortcut)
+        VARIANT id, BSTR *shortcut)
 {
     Client *This = impl_from_Client(iface);
-    WCHAR name[1024];
-    UINT i, len;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszKeyboardShortcut);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&id), shortcut);
 
-    *pszKeyboardShortcut = NULL;
-    if(convert_child_id(&varID) != CHILDID_SELF)
+    *shortcut = NULL;
+    if(This->vtbl && This->vtbl->get_kbd_shortcut)
+        return This->vtbl->get_kbd_shortcut(This, id, shortcut);
+
+    if(convert_child_id(&id) != CHILDID_SELF)
         return E_INVALIDARG;
 
-    len = SendMessageW(This->hwnd, WM_GETTEXT, ARRAY_SIZE(name), (LPARAM)name);
-    for(i=0; i<len; i++) {
-        if(name[i] == '&')
-            break;
-    }
-    if(i+1 >= len)
-        return S_FALSE;
-
-    *pszKeyboardShortcut = SysAllocString(L"Alt+!");
-    if(!*pszKeyboardShortcut)
-        return E_OUTOFMEMORY;
-
-    (*pszKeyboardShortcut)[4] = name[i+1];
-    return S_OK;
+    return win_get_kbd_shortcut(This->hwnd, shortcut);
 }
 
 static HRESULT WINAPI Client_get_accFocus(IAccessible *iface, VARIANT *focus)
@@ -744,10 +756,25 @@ static HRESULT edit_get_name(Client *client, VARIANT id, BSTR *name)
     return win_get_name(label, name);
 }
 
+static HRESULT edit_get_kbd_shortcut(Client *client, VARIANT id, BSTR *shortcut)
+{
+    HWND label;
+
+    if(convert_child_id(&id) != CHILDID_SELF)
+        return E_INVALIDARG;
+
+    label = edit_find_label(client->hwnd, TRUE);
+    if(!label)
+        return S_FALSE;
+
+    return win_get_kbd_shortcut(label, shortcut);
+}
+
 static const win_class_vtbl edit_vtbl = {
     edit_init,
     edit_get_state,
     edit_get_name,
+    edit_get_kbd_shortcut,
 };
 
 static const struct win_class_data classes[] = {
