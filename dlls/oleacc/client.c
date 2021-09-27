@@ -47,6 +47,7 @@ struct win_class_vtbl {
     HRESULT (*get_state)(Client*, VARIANT, VARIANT*);
     HRESULT (*get_name)(Client*, VARIANT, BSTR*);
     HRESULT (*get_kbd_shortcut)(Client*, VARIANT, BSTR*);
+    HRESULT (*get_value)(Client*, VARIANT, BSTR*);
 };
 
 static HRESULT win_get_name(HWND hwnd, BSTR *name)
@@ -228,14 +229,17 @@ static HRESULT WINAPI Client_get_accName(IAccessible *iface, VARIANT id, BSTR *n
     return win_get_name(This->hwnd, name);
 }
 
-static HRESULT WINAPI Client_get_accValue(IAccessible *iface, VARIANT varID, BSTR *pszValue)
+static HRESULT WINAPI Client_get_accValue(IAccessible *iface, VARIANT id, BSTR *value)
 {
     Client *This = impl_from_Client(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszValue);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&id), value);
 
-    *pszValue = NULL;
-    if(convert_child_id(&varID) != CHILDID_SELF)
+    *value = NULL;
+    if(This->vtbl && This->vtbl->get_value)
+        return This->vtbl->get_value(This, id, value);
+
+    if(convert_child_id(&id) != CHILDID_SELF)
         return E_INVALIDARG;
     return S_FALSE;
 }
@@ -770,11 +774,34 @@ static HRESULT edit_get_kbd_shortcut(Client *client, VARIANT id, BSTR *shortcut)
     return win_get_kbd_shortcut(label, shortcut);
 }
 
+static HRESULT edit_get_value(Client *client, VARIANT id, BSTR *value_out)
+{
+    WCHAR *buf;
+    UINT len;
+
+    if(convert_child_id(&id) != CHILDID_SELF)
+        return E_INVALIDARG;
+
+    if(GetWindowLongW(client->hwnd, GWL_STYLE) & ES_PASSWORD)
+        return E_ACCESSDENIED;
+
+    len = SendMessageW(client->hwnd, WM_GETTEXTLENGTH, 0, 0);
+    buf = heap_alloc_zero((len + 1) * sizeof(*buf));
+    if(!buf)
+        return E_OUTOFMEMORY;
+
+    SendMessageW(client->hwnd, WM_GETTEXT, len + 1, (LPARAM)buf);
+    *value_out = SysAllocString(buf);
+    heap_free(buf);
+    return S_OK;
+}
+
 static const win_class_vtbl edit_vtbl = {
     edit_init,
     edit_get_state,
     edit_get_name,
     edit_get_kbd_shortcut,
+    edit_get_value,
 };
 
 static const struct win_class_data classes[] = {
