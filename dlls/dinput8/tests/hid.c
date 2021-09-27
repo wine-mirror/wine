@@ -3959,12 +3959,10 @@ static void test_simple_joystick(void)
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0, DIPH_DEVICE );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
 
     res = MAKELONG( HID_USAGE_GENERIC_Z, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
@@ -3988,14 +3986,12 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[1], "%u", wReportId );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0x14, DIPH_BYOFFSET );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0, DIPH_BYOFFSET );
     todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetObjectInfo returned: %#x\n", hr );
     res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 1 );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );

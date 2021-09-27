@@ -682,6 +682,7 @@ static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, D
         .dwHow = how,
         .dwObj = obj
     };
+    BOOL ret;
 
     TRACE( "iface %p, instance %p, obj %#x, how %#x.\n", iface, instance, obj, how );
 
@@ -689,9 +690,11 @@ static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, D
     if (instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W) &&
         instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
         return DIERR_INVALIDPARAM;
+    if (how == DIPH_DEVICE) return DIERR_INVALIDPARAM;
 
-    enum_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
-    return S_OK;
+    ret = enum_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
+    if (ret != DIENUM_CONTINUE) return DI_OK;
+    return DIERR_NOTFOUND;
 }
 
 static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, DIDEVICEINSTANCEW *instance )
