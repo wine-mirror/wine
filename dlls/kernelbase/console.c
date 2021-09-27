@@ -1728,7 +1728,7 @@ HRESULT WINAPI CreatePseudoConsole( COORD size, HANDLE input, HANDLE output, DWO
 
     if (!size.X || !size.Y || !ret) return E_INVALIDARG;
 
-    if (!(pseudo_console = HeapAlloc( GetProcessHeap(), 0, HEAP_ZERO_MEMORY ))) return E_OUTOFMEMORY;
+    if (!(pseudo_console = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pseudo_console) ))) return E_OUTOFMEMORY;
 
     swprintf( pipe_name, ARRAY_SIZE(pipe_name),  L"\\\\.\\pipe\\wine_pty_signal_pipe%x",
               GetCurrentThreadId() );
