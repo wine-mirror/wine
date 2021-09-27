@@ -3303,20 +3303,16 @@ todo_wine
 
     /* With itself */
     hr = IMoniker_CommonPrefixWith(moniker, moniker, &moniker2);
-todo_wine
     ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
     ok(hr == S_OK && moniker2 != moniker, "Unexpected hr %#x.\n", hr);
     IMoniker_Release(moniker2);
 
     /* Equal composites */
     hr = IMoniker_CommonPrefixWith(moniker, moniker1, &moniker2);
-todo_wine
     ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
     ok(moniker2 != moniker && moniker2 != moniker1, "Unexpected object.\n");
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IMoniker_Release(moniker2);
 
@@ -3347,6 +3343,20 @@ todo_wine
     IMoniker_Release(moniker2);
 
     IMoniker_Release(moniker);
+    IMoniker_Release(moniker1);
+
+    /* IsEqual() */
+    hr = create_moniker_from_desc("CI1I2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = create_moniker_from_desc("CI1I2", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker1, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker1, moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker1, moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMoniker_Release(moniker2);
     IMoniker_Release(moniker1);
 
     IBindCtx_Release(bindctx);

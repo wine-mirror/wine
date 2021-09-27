@@ -558,56 +558,41 @@ static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, I
     return hr;
 }
 
-/******************************************************************************
- *        CompositeMoniker_IsEqual
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+static HRESULT WINAPI CompositeMonikerImpl_IsEqual(IMoniker *iface, IMoniker *other)
 {
-    IEnumMoniker *enumMoniker1,*enumMoniker2;
-    IMoniker *tempMk1,*tempMk2;
-    HRESULT res1,res2,res;
-    BOOL done;
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
+    IMoniker **components, **other_components;
+    unsigned int i;
+    HRESULT hr;
 
-    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
+    TRACE("%p, %p.\n", iface, other);
 
-    if (pmkOtherMoniker==NULL)
+    if (!other)
+        return E_INVALIDARG;
+
+    if (!(other_moniker = unsafe_impl_from_IMoniker(other)))
         return S_FALSE;
 
-    /* This method returns S_OK if the components of both monikers are equal when compared in the */
-    /* left-to-right order.*/
-    IMoniker_Enum(pmkOtherMoniker,TRUE,&enumMoniker1);
-
-    if (enumMoniker1==NULL)
+    if (moniker->comp_count != other_moniker->comp_count)
         return S_FALSE;
 
-    IMoniker_Enum(iface,TRUE,&enumMoniker2);
+    if (FAILED(hr = composite_get_components_alloc(moniker, &components))) return hr;
+    if (FAILED(hr = composite_get_components_alloc(other_moniker, &other_components)))
+    {
+        heap_free(components);
+        return hr;
+    }
 
-    do {
+    for (i = 0; i < moniker->comp_count; ++i)
+    {
+        if ((hr = IMoniker_IsEqual(components[i], other_components[i]) != S_OK))
+            break;
+    }
 
-        res1=IEnumMoniker_Next(enumMoniker1,1,&tempMk1,NULL);
-        res2=IEnumMoniker_Next(enumMoniker2,1,&tempMk2,NULL);
+    heap_free(other_components);
+    heap_free(components);
 
-        if((res1==S_OK)&&(res2==S_OK)){
-            done = (res = IMoniker_IsEqual(tempMk1,tempMk2)) == S_FALSE;
-        }
-        else
-        {
-            res = (res1==S_FALSE) && (res2==S_FALSE);
-            done = TRUE;
-        }
-
-        if (res1==S_OK)
-            IMoniker_Release(tempMk1);
-
-        if (res2==S_OK)
-            IMoniker_Release(tempMk2);
-    } while (!done);
-
-    IEnumMoniker_Release(enumMoniker1);
-    IEnumMoniker_Release(enumMoniker2);
-
-    return res;
+    return hr;
 }
 
 static HRESULT WINAPI CompositeMonikerImpl_Hash(IMoniker *iface, DWORD *hash)
