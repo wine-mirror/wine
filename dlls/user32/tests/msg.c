@@ -18458,6 +18458,9 @@ static void test_InSendMessage(void)
 
 static const struct message DoubleSetCaptureSeq[] =
 {
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent },
     { 0 }
 };
@@ -18753,16 +18756,6 @@ START_TEST(msg)
     test_layered_window();
     test_TrackPopupMenu();
     test_TrackPopupMenuEmpty();
-
-    /* Fix message sequences before removing 4 lines below */
-    if (pUnhookWinEvent && hEvent_hook)
-    {
-        ret = pUnhookWinEvent(hEvent_hook);
-        ok( ret, "UnhookWinEvent error %d\n", GetLastError());
-        pUnhookWinEvent = 0;
-    }
-    hEvent_hook = 0;
-
     test_DoubleSetCapture();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
