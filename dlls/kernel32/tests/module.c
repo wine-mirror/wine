@@ -39,6 +39,9 @@ static BOOL (WINAPI *pK32GetModuleInformation)(HANDLE process, HMODULE module,
 
 static NTSTATUS (WINAPI *pLdrGetDllDirectory)(UNICODE_STRING*);
 static NTSTATUS (WINAPI *pLdrSetDllDirectory)(UNICODE_STRING*);
+static NTSTATUS (WINAPI *pLdrGetDllHandle)( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base );
+static NTSTATUS (WINAPI *pLdrGetDllHandleEx)( ULONG flags, LPCWSTR load_path, ULONG *dll_characteristics,
+                                              const UNICODE_STRING *name, HMODULE *base );
 
 static BOOL is_unicode_enabled = TRUE;
 
@@ -826,6 +829,8 @@ static void init_pointers(void)
     mod = GetModuleHandleA( "ntdll.dll" );
     MAKEFUNC(LdrGetDllDirectory);
     MAKEFUNC(LdrSetDllDirectory);
+    MAKEFUNC(LdrGetDllHandle);
+    MAKEFUNC(LdrGetDllHandleEx);
 #undef MAKEFUNC
 
     /* before Windows 7 this was not exported in kernel32 */
@@ -1143,6 +1148,107 @@ static void test_SetDefaultDllDirectories(void)
     pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
 }
 
+static void check_refcount( HMODULE mod, unsigned int refcount )
+{
+    unsigned int i;
+    BOOL ret;
+
+    for (i = 0; i < min( refcount, 10 ); ++i)
+    {
+        ret = FreeLibrary( mod );
+        ok( ret || broken( refcount == ~0u && GetLastError() == ERROR_MOD_NOT_FOUND && i == 2 ) /* Win8 */,
+            "Refcount test failed, i %u, error %u.\n", i, GetLastError() );
+        if (!ret) return;
+    }
+    if (refcount != ~0u)
+    {
+        ret = FreeLibrary( mod );
+        ok( !ret && GetLastError() == ERROR_MOD_NOT_FOUND, "Refcount test failed, ret %d, error %u.\n",
+                ret, GetLastError() );
+    }
+}
+
+static void test_LdrGetDllHandleEx(void)
+{
+    HMODULE mod, loaded_mod;
+    UNICODE_STRING name;
+    NTSTATUS status;
+    unsigned int i;
+
+    if (!pLdrGetDllHandleEx)
+    {
+        win_skip( "LdrGetDllHandleEx is not available.\n" );
+        return;
+    }
+
+    RtlInitUnicodeString( &name, L"unknown.dll" );
+    status = pLdrGetDllHandleEx( 0, NULL, NULL, &name, &mod );
+    ok( status == STATUS_DLL_NOT_FOUND, "Got unexpected status %#x.\n", status );
+
+    RtlInitUnicodeString( &name, L"authz.dll" );
+    loaded_mod = LoadLibraryW( name.Buffer );
+    ok( !!loaded_mod, "Failed to load module.\n" );
+    status = pLdrGetDllHandleEx( 0, NULL, NULL, &name, &mod );
+    ok( !status, "Got unexpected status %#x.\n", status );
+    ok( mod == loaded_mod, "got %p\n", mod );
+    winetest_push_context( "Flags 0" );
+    check_refcount( loaded_mod, 2 );
+    winetest_pop_context();
+
+    loaded_mod = LoadLibraryW( name.Buffer );
+    ok( !!loaded_mod, "Failed to load module.\n" );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL,
+                                 NULL, &name, &mod );
+    ok( !status, "Got unexpected status %#x.\n", status );
+    ok( mod == loaded_mod, "got %p\n", mod );
+    winetest_push_context( "LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT" );
+    check_refcount( loaded_mod, 1 );
+    winetest_pop_context();
+
+    loaded_mod = LoadLibraryW( name.Buffer );
+    ok( !!loaded_mod, "Failed to load module.\n" );
+    status = pLdrGetDllHandle( NULL, ~0u, &name, &mod );
+    ok( !status, "Got unexpected status %#x.\n", status );
+    ok( mod == loaded_mod, "got %p\n", mod );
+    winetest_push_context( "LdrGetDllHandle" );
+    check_refcount( loaded_mod, 1 );
+    winetest_pop_context();
+
+    loaded_mod = LoadLibraryW( name.Buffer );
+    ok( !!loaded_mod, "Failed to load module.\n" );
+    status = pLdrGetDllHandleEx( 4, NULL, NULL, (void *)&name, &mod );
+    ok( !status, "Got unexpected status %#x.\n", status );
+    ok( mod == loaded_mod, "got %p\n", mod );
+    winetest_push_context( "Flag 4" );
+    check_refcount( loaded_mod, 2 );
+    winetest_pop_context();
+
+    for (i = 3; i < 32; ++i)
+    {
+        loaded_mod = LoadLibraryW( name.Buffer );
+        ok( !!loaded_mod, "Failed to load module.\n" );
+        status = pLdrGetDllHandleEx( 1 << i, NULL, NULL, &name, &mod );
+        ok( status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status );
+        winetest_push_context( "Invalid flags, i %u", i );
+        check_refcount( loaded_mod, 1 );
+        winetest_pop_context();
+    }
+
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_PIN | LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                 NULL, NULL, &name, &mod );
+    ok( status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status );
+
+    loaded_mod = LoadLibraryW( name.Buffer );
+    ok( !!loaded_mod, "Failed to load module.\n" );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_PIN, NULL,
+                                 NULL, &name, &mod );
+    ok( !status, "Got unexpected status %#x.\n", status );
+    ok( mod == loaded_mod, "got %p\n", mod );
+    winetest_push_context( "LDR_GET_DLL_HANDLE_EX_FLAG_PIN" );
+    check_refcount( loaded_mod, ~0u );
+    winetest_pop_context();
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1175,4 +1281,5 @@ START_TEST(module)
     testK32GetModuleInformation();
     test_AddDllDirectory();
     test_SetDefaultDllDirectories();
+    test_LdrGetDllHandleEx();
 }

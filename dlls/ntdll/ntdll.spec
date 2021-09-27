@@ -88,6 +88,7 @@
 @ stub LdrFlushAlternateResourceModules
 @ stdcall LdrGetDllDirectory(ptr)
 @ stdcall LdrGetDllHandle(wstr long ptr ptr)
+@ stdcall LdrGetDllHandleEx(long ptr ptr ptr ptr)
 # @ stub LdrGetDllHandleEx
 @ stdcall LdrGetDllPath(wstr long ptr ptr)
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr)

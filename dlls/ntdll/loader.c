@@ -2996,16 +2996,33 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD flags,
 
 
 /******************************************************************
- *		LdrGetDllHandle (NTDLL.@)
+ *		LdrGetDllHandleEx (NTDLL.@)
  */
-NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base )
+NTSTATUS WINAPI LdrGetDllHandleEx( ULONG flags, LPCWSTR load_path, ULONG *dll_characteristics,
+                                           const UNICODE_STRING *name, HMODULE *base )
 {
-    NTSTATUS status;
+    static const ULONG supported_flags = LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+                                         | LDR_GET_DLL_HANDLE_EX_FLAG_PIN;
+    static const ULONG valid_flags = LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+                                     | LDR_GET_DLL_HANDLE_EX_FLAG_PIN | 4;
+    SECTION_IMAGE_INFORMATION image_info;
     UNICODE_STRING nt_name;
+    struct file_id id;
+    NTSTATUS status;
     WINE_MODREF *wm;
     HANDLE mapping;
-    SECTION_IMAGE_INFORMATION image_info;
-    struct file_id id;
+
+    TRACE( "flag %#x, load_path %p, dll_characteristics %p, name %p, base %p.\n",
+            flags, load_path, dll_characteristics, name, base );
+
+    if (flags & ~valid_flags) return STATUS_INVALID_PARAMETER;
+
+    if ((flags & (LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | LDR_GET_DLL_HANDLE_EX_FLAG_PIN))
+                 == (LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | LDR_GET_DLL_HANDLE_EX_FLAG_PIN))
+        return STATUS_INVALID_PARAMETER;
+
+    if (flags & ~supported_flags) FIXME( "Unsupported flags %#x.\n", flags );
+    if (dll_characteristics) FIXME( "dll_characteristics unsupported.\n" );
 
     RtlEnterCriticalSection( &loader_section );
 
@@ -3019,9 +3036,26 @@ NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_S
     }
     RtlFreeUnicodeString( &nt_name );
 
+    if (!status)
+    {
+        if (flags & LDR_GET_DLL_HANDLE_EX_FLAG_PIN)
+            LdrAddRefDll( LDR_ADDREF_DLL_PIN, *base );
+        else if (!(flags & LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+            LdrAddRefDll( 0, *base );
+    }
+
     RtlLeaveCriticalSection( &loader_section );
     TRACE( "%s -> %p (load path %s)\n", debugstr_us(name), status ? NULL : *base, debugstr_w(load_path) );
     return status;
+}
+
+
+/******************************************************************
+ *		LdrGetDllHandle (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base )
+{
+    return LdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, load_path, NULL, name, base );
 }
 
 
