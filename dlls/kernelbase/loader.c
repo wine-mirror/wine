@@ -48,6 +48,14 @@ struct exclusive_datafile
 };
 static struct list exclusive_datafile_list = LIST_INIT( exclusive_datafile_list );
 
+static CRITICAL_SECTION exclusive_datafile_list_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &exclusive_datafile_list_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": exclusive_datafile_list_section") }
+};
+static CRITICAL_SECTION exclusive_datafile_list_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  * Modules
@@ -120,7 +128,9 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
             if (!datafile) goto failed;
             datafile->module = *mod_ret;
             datafile->file   = file;
+            RtlEnterCriticalSection( &exclusive_datafile_list_section );
             list_add_head( &exclusive_datafile_list, &datafile->entry );
+            RtlLeaveCriticalSection( &exclusive_datafile_list_section );
             TRACE( "delaying close %p for module %p\n", datafile->file, datafile->module );
             return TRUE;
         }
@@ -154,14 +164,8 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     if (flags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
                  LOAD_LIBRARY_AS_IMAGE_RESOURCE))
     {
-        ULONG_PTR magic;
-
-        LdrLockLoaderLock( 0, NULL, &magic );
-        if (!LdrGetDllHandle( load_path, flags, libname, &module ))
-            LdrAddRefDll( 0, module );
-        else
+        if (LdrGetDllHandleEx( 0, load_path, NULL, libname, &module ))
             load_library_as_datafile( load_path, flags, libname->Buffer, &module );
-        LdrUnlockLoaderLock( 0, magic );
     }
     else
     {
@@ -242,9 +246,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary( HINSTANCE module )
         if ((ULONG_PTR)module & 1)
         {
             struct exclusive_datafile *file;
-            ULONG_PTR magic;
 
-            LdrLockLoaderLock( 0, NULL, &magic );
+            RtlEnterCriticalSection( &exclusive_datafile_list_section );
             LIST_FOR_EACH_ENTRY( file, &exclusive_datafile_list, struct exclusive_datafile, entry )
             {
                 if (file->module != module) continue;
@@ -254,7 +257,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary( HINSTANCE module )
                 HeapFree( GetProcessHeap(), 0, file );
                 break;
             }
-            LdrUnlockLoaderLock( 0, magic );
+            RtlLeaveCriticalSection( &exclusive_datafile_list_section );
         }
         return UnmapViewOfFile( ptr );
     }
