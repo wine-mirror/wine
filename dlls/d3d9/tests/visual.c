@@ -26912,6 +26912,113 @@ static void test_sample_mask(void)
     DestroyWindow(window);
 }
 
+struct dynamic_vb_vertex
+{
+    struct vec3 position;
+    DWORD diffuse;
+};
+
+static void fill_dynamic_vb_quad(struct dynamic_vb_vertex *quad, unsigned int x, unsigned int y)
+{
+    unsigned int i;
+
+    memset(quad, 0, 4 * sizeof(*quad));
+
+    quad[0].position.x = quad[1].position.x = -1.0f + 0.01f * x;
+    quad[2].position.x = quad[3].position.x = -1.0f + 0.01f * (x + 1);
+
+    quad[0].position.y = quad[2].position.y = -1.0f + 0.01f * y;
+    quad[1].position.y = quad[3].position.y = -1.0f + 0.01f * (y + 1);
+
+    for (i = 0; i < 4; ++i)
+        quad[i].diffuse = 0xff00ff00;
+}
+
+static void test_dynamic_map_synchronization(void)
+{
+    IDirect3DVertexBuffer9 *buffer;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *rt;
+    unsigned int x, y;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *data;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, 200 * 4 * sizeof(struct dynamic_vb_vertex),
+            D3DUSAGE_DYNAMIC, D3DFVF_XYZ, D3DPOOL_DEFAULT, &buffer, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(struct dynamic_vb_vertex));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (y = 0; y < 200; ++y)
+    {
+        hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, D3DLOCK_DISCARD);
+        ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+        fill_dynamic_vb_quad(data, 0, y);
+
+        hr = IDirect3DVertexBuffer9_Unlock(buffer);
+        ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (x = 1; x < 200; ++x)
+        {
+            hr = IDirect3DVertexBuffer9_Lock(buffer, 4 * sizeof(struct dynamic_vb_vertex) * x,
+                    4 * sizeof(struct dynamic_vb_vertex), &data, D3DLOCK_NOOVERWRITE);
+            ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+            fill_dynamic_vb_quad(data, x, y);
+
+            hr = IDirect3DVertexBuffer9_Unlock(buffer);
+            ok(hr == D3D_OK, "Failed to map buffer, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 4 * x, 2);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        }
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
+    ok(hr == S_OK, "Failed to get render target, hr %#x.\n", hr);
+    check_rt_color(rt, 0x0000ff00);
+    IDirect3DSurface9_Release(rt);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DVertexBuffer9_Release(buffer);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -27060,4 +27167,5 @@ START_TEST(visual)
     test_sample_attached_rendertarget();
     test_alpha_to_coverage();
     test_sample_mask();
+    test_dynamic_map_synchronization();
 }
