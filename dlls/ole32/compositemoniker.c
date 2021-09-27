@@ -88,6 +88,7 @@ static inline EnumMonikerImpl *impl_from_IEnumMoniker(IEnumMoniker *iface)
 
 static HRESULT EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,ULONG tabSize,ULONG currentPos,BOOL leftToRight,IEnumMoniker ** ppmk);
 static HRESULT composite_get_rightmost(CompositeMonikerImpl *composite, IMoniker **left, IMoniker **rightmost);
+static HRESULT composite_get_leftmost(CompositeMonikerImpl *composite, IMoniker **leftmost);
 
 /*******************************************************************************
  *        CompositeMoniker_QueryInterface
@@ -524,11 +525,23 @@ static void composite_get_components(IMoniker *moniker, IMoniker **components, u
     }
 }
 
+static HRESULT composite_get_components_alloc(CompositeMonikerImpl *moniker, IMoniker ***components)
+{
+    unsigned int index;
+
+    if (!(*components = heap_alloc(moniker->comp_count * sizeof(**components))))
+        return E_OUTOFMEMORY;
+
+    index = 0;
+    composite_get_components(&moniker->IMoniker_iface, *components, &index);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **ppenumMoniker)
 {
     CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
     IMoniker **monikers;
-    unsigned int index;
     HRESULT hr;
 
     TRACE("%p, %d, %p\n", iface, forward, ppenumMoniker);
@@ -536,11 +549,8 @@ static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, I
     if (!ppenumMoniker)
         return E_POINTER;
 
-    if (!(monikers = heap_alloc(moniker->comp_count * sizeof(*monikers))))
-        return E_OUTOFMEMORY;
-
-    index = 0;
-    composite_get_components(iface, monikers, &index);
+    if (FAILED(hr = composite_get_components_alloc(moniker, &monikers)))
+        return hr;
 
     hr = EnumMonikerImpl_CreateEnumMoniker(monikers, moniker->comp_count, 0, forward, ppenumMoniker);
     heap_free(monikers);
@@ -812,135 +822,102 @@ CompositeMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
     }
 }
 
-/******************************************************************************
- *        CompositeMoniker_CommonPrefixWith
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_CommonPrefixWith(IMoniker* iface, IMoniker* pmkOther,
-               IMoniker** ppmkPrefix)
+static HRESULT WINAPI CompositeMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker *other,
+        IMoniker **prefix)
 {
-    DWORD mkSys;
-    HRESULT res1,res2;
-    IMoniker *tempMk1,*tempMk2,*mostLeftMk1,*mostLeftMk2;
-    IEnumMoniker *enumMoniker1,*enumMoniker2;
-    ULONG i,nbCommonMk=0;
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
+    unsigned int i, count, prefix_len = 0;
+    IMoniker *leftmost;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p.\n", iface, other, prefix);
 
     /* If the other moniker is a composite, this method compares the components of each composite from left  */
     /* to right. The returned common prefix moniker might also be a composite moniker, depending on how many */
     /* of the leftmost components were common to both monikers.                                              */
 
-    if (ppmkPrefix==NULL)
-        return E_POINTER;
+    if (prefix)
+        *prefix = NULL;
 
-    *ppmkPrefix=0;
+    if (!other || !prefix)
+        return E_INVALIDARG;
 
-    if (pmkOther==NULL)
-        return MK_E_NOPREFIX;
+    if ((other_moniker = unsafe_impl_from_IMoniker(other)))
+    {
+        IMoniker **components, **other_components, **prefix_components;
+        IMoniker *last, *c;
 
-    IMoniker_IsSystemMoniker(pmkOther,&mkSys);
-
-    if(mkSys==MKSYS_GENERICCOMPOSITE){
-
-        IMoniker_Enum(iface,TRUE,&enumMoniker1);
-        IMoniker_Enum(pmkOther,TRUE,&enumMoniker2);
-
-        while(1){
-
-            res1=IEnumMoniker_Next(enumMoniker1,1,&mostLeftMk1,NULL);
-            res2=IEnumMoniker_Next(enumMoniker2,1,&mostLeftMk2,NULL);
-
-            if ((res1==S_FALSE) && (res2==S_FALSE)){
-
-                /* If the monikers are equal, the method returns MK_S_US and sets ppmkPrefix to this moniker.*/
-                *ppmkPrefix=iface;
-                IMoniker_AddRef(iface);
-                return  MK_S_US;
-            }
-            else if ((res1==S_OK) && (res2==S_OK)){
-
-                if (IMoniker_IsEqual(mostLeftMk1,mostLeftMk2)==S_OK)
-
-                    nbCommonMk++;
-
-                else
-                    break;
-
-            }
-            else if (res1==S_OK){
-
-                /* If the other moniker is a prefix of this moniker, the method returns MK_S_HIM and sets */
-                /* ppmkPrefix to the other moniker.                                                       */
-                *ppmkPrefix=pmkOther;
-                return MK_S_HIM;
-            }
-            else{
-                /* If this moniker is a prefix of the other, this method returns MK_S_ME and sets ppmkPrefix */
-                /* to this moniker.                                                                          */
-                *ppmkPrefix=iface;
-                return MK_S_ME;
-            }
+        if (FAILED(hr = composite_get_components_alloc(moniker, &components))) return hr;
+        if (FAILED(hr = composite_get_components_alloc(other_moniker, &other_components)))
+        {
+            heap_free(components);
+            return hr;
         }
 
-        IEnumMoniker_Release(enumMoniker1);
-        IEnumMoniker_Release(enumMoniker2);
-
-        /* If there is no common prefix, this method returns MK_E_NOPREFIX and sets ppmkPrefix to NULL. */
-        if (nbCommonMk==0)
-            return MK_E_NOPREFIX;
-
-        IEnumMoniker_Reset(enumMoniker1);
-
-        IEnumMoniker_Next(enumMoniker1,1,&tempMk1,NULL);
-
-        /* if we have more than one common moniker the result will be a composite moniker */
-        if (nbCommonMk>1){
-
-            /* initialize the common prefix moniker with the composite of two first moniker (from the left)*/
-            IEnumMoniker_Next(enumMoniker1,1,&tempMk2,NULL);
-            CreateGenericComposite(tempMk1,tempMk2,ppmkPrefix);
-            IMoniker_Release(tempMk1);
-            IMoniker_Release(tempMk2);
-
-            /* compose all common monikers in a composite moniker */
-            for(i=0;i<nbCommonMk;i++){
-
-                IEnumMoniker_Next(enumMoniker1,1,&tempMk1,NULL);
-
-                CreateGenericComposite(*ppmkPrefix,tempMk1,&tempMk2);
-
-                IMoniker_Release(*ppmkPrefix);
-
-                IMoniker_Release(tempMk1);
-
-                *ppmkPrefix=tempMk2;
-            }
-            return S_OK;
+        count = min(moniker->comp_count, other_moniker->comp_count);
+        if (!(prefix_components = heap_calloc(count, sizeof(*prefix_components))))
+        {
+            heap_free(components);
+            heap_free(other_components);
+            return E_OUTOFMEMORY;
         }
-        else{
-            /* if we have only one common moniker the result will be a simple moniker which is the most-left one*/
-            *ppmkPrefix=tempMk1;
 
-            return S_OK;
+        /* Collect prefix components */
+        for (i = 0; i < count; ++i)
+        {
+            IMoniker *p;
+
+            if (FAILED(hr = IMoniker_CommonPrefixWith(components[i], other_components[i], &p)))
+                break;
+            prefix_components[prefix_len++] = p;
+            /* S_OK means that prefix was found and is neither of tested monikers */
+            if (hr == S_OK) break;
         }
+
+        heap_free(components);
+        heap_free(other_components);
+
+        if (!prefix_len) return MK_E_NOPREFIX;
+
+        last = prefix_components[0];
+        for (i = 1; i < prefix_len; ++i)
+        {
+            hr = CreateGenericComposite(last, prefix_components[i], &c);
+            IMoniker_Release(last);
+            IMoniker_Release(prefix_components[i]);
+            if (FAILED(hr)) break;
+            last = c;
+        }
+        heap_free(prefix_components);
+
+        if (SUCCEEDED(hr))
+        {
+            *prefix = last;
+            if (IMoniker_IsEqual(iface, *prefix) == S_OK)
+                hr = MK_S_US;
+            else if (prefix_len < count)
+                hr = S_OK;
+            else
+                hr = prefix_len == moniker->comp_count ? MK_S_ME : MK_S_HIM;
+        }
+
+        return hr;
     }
-    else{
-        /* If the other moniker is not a composite, the method simply compares it to the leftmost component
-         of this moniker.*/
 
-        IMoniker_Enum(iface,TRUE,&enumMoniker1);
-
-        IEnumMoniker_Next(enumMoniker1,1,&mostLeftMk1,NULL);
-
-        if (IMoniker_IsEqual(pmkOther,mostLeftMk1)==S_OK){
-
-            *ppmkPrefix=pmkOther;
-            IMoniker_AddRef(*ppmkPrefix);
-
-            return MK_S_HIM;
+    /* For non-composite, compare to leftmost component */
+    if (SUCCEEDED(hr = composite_get_leftmost(moniker, &leftmost)))
+    {
+        if ((hr = IMoniker_IsEqual(leftmost, other)) == S_OK)
+        {
+            *prefix = leftmost;
+            IMoniker_AddRef(*prefix);
         }
-        else
-            return MK_E_NOPREFIX;
+
+        hr = hr == S_OK ? MK_S_HIM : MK_E_NOPREFIX;
+        IMoniker_Release(leftmost);
     }
+
+    return hr;
 }
 
 /***************************************************************************************************
@@ -1864,6 +1841,35 @@ static HRESULT composite_get_rightmost(CompositeMonikerImpl *composite, IMoniker
     }
 
     return hr;
+}
+
+static HRESULT composite_get_leftmost(CompositeMonikerImpl *composite, IMoniker **leftmost)
+{
+    struct comp_node *root, *node;
+    HRESULT hr;
+
+    if (!unsafe_impl_from_IMoniker(composite->left))
+    {
+        *leftmost = composite->left;
+        IMoniker_AddRef(*leftmost);
+        return S_OK;
+    }
+
+    if (FAILED(hr = moniker_get_tree_representation(&composite->IMoniker_iface, NULL, &root)))
+        return hr;
+
+    if (!(node = moniker_tree_get_leftmost(root)))
+    {
+        WARN("Couldn't get right most component.\n");
+        return E_FAIL;
+    }
+
+    *leftmost = node->moniker;
+    IMoniker_AddRef(*leftmost);
+
+    moniker_tree_release(root);
+
+    return S_OK;
 }
 
 static HRESULT moniker_simplify_composition(IMoniker *left, IMoniker *right,
