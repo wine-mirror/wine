@@ -1047,13 +1047,6 @@ static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session sess
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-#ifndef HAVE_SSLCOPYPEERCERTIFICATES
-static void cf_release(const void *arg, void *ctx)
-{
-    CFRelease(arg);
-}
-#endif
-
 static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session session, struct schan_cert_list *list)
 {
     struct mac_session *s = (struct mac_session *)session;
@@ -1068,11 +1061,7 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
 
     TRACE("(%p/%p, %p)\n", s, s->context, list);
 
-#ifdef HAVE_SSLCOPYPEERCERTIFICATES
     status = SSLCopyPeerCertificates(s->context, &cert_array);
-#else
-    status = SSLGetPeerCertificates(s->context, &cert_array);
-#endif
     if (status != noErr || !cert_array)
     {
         WARN("SSLCopyPeerCertificates failed: %d\n", status);
@@ -1118,11 +1107,6 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
         CFRelease(data);
     }
 
-done:
-#ifndef HAVE_SSLCOPYPEERCERTIFICATES
-    /* This is why SSLGetPeerCertificates was deprecated */
-    CFArrayApplyFunction(cert_array, CFRangeMake(0, CFArrayGetCount(cert_array)), cf_release, NULL);
-#endif
     CFRelease(cert_array);
     return ret;
 }

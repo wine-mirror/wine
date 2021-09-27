@@ -597,9 +597,6 @@
 /* Define to 1 if the system has the type `sigset_t'. */
 #undef HAVE_SIGSET_T
 
-/* Define to 1 if you have the `SSLCopyPeerCertificates' function. */
-#undef HAVE_SSLCOPYPEERCERTIFICATES
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
