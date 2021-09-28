@@ -1948,18 +1948,22 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     }
     else
     {
-        /* variable has been optimized away... report anyway */
-        loc.kind = loc_error;
-        loc.reg = loc_err_no_location;
         if (subpgm->func)
         {
+            /* local variable has been optimized away... report anyway */
+            loc.kind = loc_error;
+            loc.reg = loc_err_no_location;
             symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->func,
                                 is_pmt ? DataIsParam : DataIsLocal,
                                 &loc, block, param_type, name.u.string);
         }
         else
         {
-            WARN("dropping global variable %s which has been optimized away\n", debugstr_a(name.u.string));
+            struct attribute is_decl;
+            /* only warn when di doesn't represent a declaration */
+            if (!dwarf2_find_attribute(di, DW_AT_declaration, &is_decl) ||
+                !is_decl.u.uvalue || is_decl.gotten_from != attr_direct)
+                WARN("dropping global variable %s which has been optimized away\n", debugstr_a(name.u.string));
         }
     }
     if (is_pmt && subpgm->func && symt_check_tag(subpgm->func->type, SymTagFunctionType))
