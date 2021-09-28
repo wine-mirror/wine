@@ -438,20 +438,15 @@ static HRESULT WINAPI AntiMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker
     return MonikerCommonPrefixWith(iface, other, prefix);
 }
 
-/******************************************************************************
- *        AntiMoniker_RelativePathTo
- ******************************************************************************/
-static HRESULT WINAPI
-AntiMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppmkRelPath)
+static HRESULT WINAPI AntiMonikerImpl_RelativePathTo(IMoniker *iface, IMoniker *other, IMoniker **result)
 {
-    TRACE("(%p,%p,%p)\n",iface,pmOther,ppmkRelPath);
+    TRACE("%p, %p, %p.\n", iface, other, result);
 
-    if (ppmkRelPath==NULL)
-        return E_POINTER;
+    if (!other || !result)
+        return E_INVALIDARG;
 
-    IMoniker_AddRef(pmOther);
-
-    *ppmkRelPath=pmOther;
+    IMoniker_AddRef(other);
+    *result = other;
 
     return MK_S_HIM;
 }

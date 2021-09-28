@@ -3026,6 +3026,35 @@ todo_wine
     IBindCtx_Release(bindctx);
     IMoniker_Release(moniker);
     IMoniker_Release(moniker2);
+
+    /* RelativePathTo() */
+    moniker = create_antimoniker(1);
+    hr = create_moniker_from_desc("I1", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, NULL, &moniker3);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, moniker2, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker2, "Unexpected object.\n");
+    IMoniker_Release(moniker3);
+    IMoniker_Release(moniker2);
+
+    moniker2 = create_antimoniker(2);
+    hr = IMoniker_RelativePathTo(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker2, "Unexpected object.\n");
+    IMoniker_Release(moniker3);
+    hr = IMoniker_RelativePathTo(moniker2, moniker, &moniker3);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker, "Unexpected object.\n");
+    IMoniker_Release(moniker3);
+
+    IMoniker_Release(moniker2);
+    IMoniker_Release(moniker);
 }
 
 static void test_generic_composite_moniker(void)
