@@ -3324,6 +3324,11 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         const struct wined3d_gpu_description *gpu_description, enum wined3d_feature_level feature_level,
         UINT64 vram_bytes, UINT64 sysmem_bytes) DECLSPEC_HIDDEN;
 
+struct upload_bo
+{
+    struct wined3d_const_bo_address addr;
+};
+
 struct wined3d_adapter_ops
 {
     void (*adapter_destroy)(struct wined3d_adapter *adapter);
@@ -4732,9 +4737,9 @@ struct wined3d_device_context_ops
             unsigned int start_idx, unsigned int count, const void *constants);
     void *(*prepare_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
             unsigned int sub_resource_idx, const struct wined3d_box *box, unsigned int row_pitch,
-            unsigned int slice_pitch, uint32_t flags, struct wined3d_const_bo_address *address);
+            unsigned int slice_pitch, uint32_t flags, struct upload_bo *upload_bo);
     bool (*get_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
-            unsigned int sub_resource_idx, struct wined3d_box *box, struct wined3d_const_bo_address *address);
+            unsigned int sub_resource_idx, struct wined3d_box *box, struct upload_bo *upload_bo);
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
     void (*acquire_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
