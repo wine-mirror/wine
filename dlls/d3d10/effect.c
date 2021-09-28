@@ -526,6 +526,35 @@ static BOOL copy_name(const char *ptr, char **name)
     return TRUE;
 }
 
+static struct d3d10_effect_variable * d3d10_effect_get_buffer_by_name(struct d3d10_effect *effect,
+        const char *name)
+{
+    ID3D10EffectVariable *v;
+    unsigned int i;
+
+    for (i = 0; i < effect->local_buffer_count; ++i)
+    {
+        struct d3d10_effect_variable *l = &effect->local_buffers[i];
+        if (l->name && !strcmp(l->name, name))
+        {
+            TRACE("Found local buffer %s.\n", debugstr_a(name));
+            return l;
+        }
+    }
+
+    if (effect->pool)
+    {
+        if ((v = (ID3D10EffectVariable *)effect->pool->lpVtbl->GetConstantBufferByName(effect->pool, name))
+                && v->lpVtbl->IsValid(v))
+        {
+            TRACE("Found shared buffer %s.\n", debugstr_a(name));
+            return impl_from_ID3D10EffectVariable(v);
+        }
+    }
+
+    return NULL;
+}
+
 static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const void *data, size_t data_size)
 {
     struct d3d10_effect_shader_variable *sv = &v->u.shader;
@@ -557,16 +586,7 @@ static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const 
         {
             case D3D10_SIT_CBUFFER:
             case D3D10_SIT_TBUFFER:
-                for (y = 0; y < v->effect->local_buffer_count; ++y)
-                {
-                    var = &v->effect->local_buffers[y];
-
-                    if (!strcmp(bind_desc.Name, var->name))
-                    {
-                        sr->variable = var;
-                        break;
-                    }
-                }
+                sr->variable = d3d10_effect_get_buffer_by_name(v->effect, bind_desc.Name);
                 break;
 
             case D3D10_SIT_SAMPLER:
@@ -3316,23 +3336,15 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
         const char *name)
 {
     struct d3d10_effect *effect = impl_from_ID3D10Effect(iface);
-    unsigned int i;
+    struct d3d10_effect_variable *v;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    for (i = 0; i < effect->local_buffer_count; ++i)
+    if ((v = d3d10_effect_get_buffer_by_name(effect, name)))
     {
-        struct d3d10_effect_variable *l = &effect->local_buffers[i];
-
-        if (l->name && !strcmp(l->name, name))
-        {
-            TRACE("Returning buffer %p.\n", l);
-            return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
-        }
+        TRACE("Returning buffer %p.\n", v);
+        return (ID3D10EffectConstantBuffer *)&v->ID3D10EffectVariable_iface;
     }
-
-    if (effect->pool)
-        return effect->pool->lpVtbl->GetConstantBufferByName(effect->pool, name);
 
     WARN("Invalid name specified\n");
 
