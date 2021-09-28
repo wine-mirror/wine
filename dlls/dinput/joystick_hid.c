@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -585,11 +586,23 @@ static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_caps 
 {
     HIDP_VALUE_CAPS *value_caps = caps->value;
     DIPROPRANGE *value = data;
-    LONG range = value_caps->LogicalMax - value_caps->LogicalMin;
+    LONG tmp;
+
     value_caps->PhysicalMin = value->lMin;
     value_caps->PhysicalMax = value->lMax;
-    if (instance->dwType & DIDFT_POV && range > 0)
-        value_caps->PhysicalMax -= value->lMax / (range + 1);
+
+    if (instance->dwType & DIDFT_AXIS)
+    {
+        if (!value_caps->PhysicalMin) tmp = value_caps->PhysicalMax / 2;
+        else tmp = round( (value_caps->PhysicalMin + value_caps->PhysicalMax) / 2.0 );
+        *(LONG *)(impl->device_state + instance->dwOfs) = tmp;
+    }
+    else if (instance->dwType & DIDFT_POV)
+    {
+        tmp = value_caps->LogicalMax - value_caps->LogicalMin;
+        if (tmp > 0) value_caps->PhysicalMax -= value->lMax / (tmp + 1);
+        *(LONG *)(impl->device_state + instance->dwOfs) = -1;
+    }
     return DIENUM_CONTINUE;
 }
 

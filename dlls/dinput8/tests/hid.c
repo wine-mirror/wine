@@ -4098,14 +4098,13 @@ static void test_simple_joystick(void)
         winetest_push_context( "state[%d]", i );
         hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
         ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
-        todo_wine_if( i != 2 )
+        todo_wine_if( i != 0 && i != 2 )
         check_member( state, expect_state[i], "%d", lX );
-        todo_wine_if( i != 2 )
+        todo_wine_if( i != 0 && i != 2 )
         check_member( state, expect_state[i], "%d", lY );
-        todo_wine
+        todo_wine_if( i != 0 )
         check_member( state, expect_state[i], "%d", lZ );
         check_member( state, expect_state[i], "%d", lRx );
-        todo_wine_if( i == 0 )
         check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
         check_member( state, expect_state[i], "%#x", rgdwPOV[1] );
         check_member( state, expect_state[i], "%#x", rgbButtons[0] );
@@ -4306,11 +4305,8 @@ static void test_simple_joystick(void)
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
     ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
-    todo_wine
     check_member( state, expect_state_abs[1], "%d", lX );
-    todo_wine
     check_member( state, expect_state_abs[1], "%d", lY );
-    todo_wine
     check_member( state, expect_state_abs[1], "%d", lZ );
     check_member( state, expect_state_abs[1], "%d", lRx );
     check_member( state, expect_state_abs[1], "%d", rgdwPOV[0] );
@@ -4452,12 +4448,12 @@ static void test_simple_joystick(void)
         if (broken( state.lX == -10750 )) win_skip( "Ignoring 32-bit rounding\n" );
         else
         {
-            todo_wine_if( i != 2 )
+            todo_wine_if( i != 0 && i != 2 )
             check_member( state, expect_state_abs[i], "%d", lX );
-            todo_wine_if( i != 2 )
+            todo_wine_if( i != 0 && i != 2 )
             check_member( state, expect_state_abs[i], "%d", lY );
         }
-        todo_wine
+        todo_wine_if( i != 0 )
         check_member( state, expect_state_abs[i], "%d", lZ );
         check_member( state, expect_state_abs[i], "%d", lRx );
         check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );
