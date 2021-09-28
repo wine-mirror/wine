@@ -197,27 +197,14 @@ const char *find_binary( struct strarray prefix, const char *name )
 
 int spawn(struct strarray prefix, struct strarray args, int ignore_errors)
 {
-    unsigned int i;
     int status;
-    const char** argv;
 
-    strarray_add( &args, NULL);
-    argv = args.str;
-    argv[0] = find_binary( prefix, argv[0] );
+    args.str[0] = find_binary( prefix, args.str[0] );
+    if (verbose) strarray_trace( args );
 
-    if (verbose)
+    if ((status = strarray_spawn( args )) && !ignore_errors)
     {
-	for(i = 0; argv[i]; i++)
-	{
-	    if (strpbrk(argv[i], " \t\n\r")) printf("\"%s\" ", argv[i]);
-	    else printf("%s ", argv[i]);
-	}
-	printf("\n");
-    }
-
-    if ((status = _spawnvp( _P_WAIT, argv[0], argv)) && !ignore_errors)
-    {
-	if (status > 0) error("%s failed\n", argv[0]);
+	if (status > 0) error("%s failed\n", args.str[0]);
 	else perror("winegcc");
 	exit(3);
     }

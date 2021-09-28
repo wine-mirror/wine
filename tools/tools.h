@@ -25,6 +25,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <errno.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+# include <process.h>
+#else
+# include <sys/wait.h>
+# include <unistd.h>
+#endif
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(x)
@@ -200,5 +212,41 @@ static inline const char *strarray_bsearch( const struct strarray *array, const 
     return res ? *res : NULL;
 }
 
+static inline void strarray_trace( struct strarray args )
+{
+    unsigned int i;
+
+    for (i = 0; i < args.count; i++)
+    {
+        if (strpbrk( args.str[i], " \t\n\r")) printf( "\"%s\"", args.str[i] );
+        else printf( "%s", args.str[i] );
+        putchar( i < args.count - 1 ? ' ' : '\n' );
+    }
+}
+
+static inline int strarray_spawn( struct strarray args )
+{
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    strarray_add( &args, NULL );
+    return _spawnvp( _P_WAIT, args.str[0], args.str );
+#else
+    pid_t pid, wret;
+    int status;
+
+    if (!(pid = fork()))
+    {
+        strarray_add( &args, NULL );
+        execvp( args.str[0], (char **)args.str );
+        _exit(1);
+    }
+    if (pid == -1) return -1;
+
+    while (pid != (wret = waitpid( pid, &status, 0 )))
+        if (wret == -1 && errno != EINTR) break;
+
+    if (pid == wret && WIFEXITED(status)) return WEXITSTATUS(status);
+    return 255; /* abnormal exit with an abort or an interrupt */
+#endif
+}
 
 #endif /* __WINE_TOOLS_H */

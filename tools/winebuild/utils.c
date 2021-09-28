@@ -206,17 +206,13 @@ static const char *find_binary( const char *prefix, const char *name )
 
 void spawn( struct strarray args )
 {
-    unsigned int i;
     int status;
     const char *argv0 = find_binary( NULL, args.str[0] );
 
     if (argv0) args.str[0] = argv0;
-    strarray_add( &args, NULL );
-    if (verbose)
-        for (i = 0; args.str[i]; i++)
-            fprintf( stderr, "%s%c", args.str[i], args.str[i+1] ? ' ' : '\n' );
+    if (verbose) strarray_trace( args );
 
-    if ((status = _spawnvp( _P_WAIT, args.str[0], args.str )))
+    if ((status = strarray_spawn( args )))
     {
 	if (status > 0) fatal_error( "%s failed with status %u\n", args.str[0], status );
 	else fatal_perror( "winebuild" );
