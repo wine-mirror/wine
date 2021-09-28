@@ -315,23 +315,30 @@ CompositeMonikerImpl_GetSizeMax(IMoniker* iface,ULARGE_INTEGER* pcbSize)
     return S_OK;
 }
 
-static HRESULT WINAPI CompositeMonikerImpl_BindToObject(IMoniker *iface, IBindCtx *pbc,
-        IMoniker *pmkToLeft, REFIID riid, void **result)
+static HRESULT compose_with(IMoniker *left, IMoniker *right, IMoniker **c)
 {
+    HRESULT hr = IMoniker_ComposeWith(left, right, TRUE, c);
+    if (FAILED(hr) && hr != MK_E_NEEDGENERIC) return hr;
+    return CreateGenericComposite(left, right, c);
+}
+
+static HRESULT WINAPI CompositeMonikerImpl_BindToObject(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *toleft, REFIID riid, void **result)
+{
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *left, *rightmost, *c;
     IRunningObjectTable *rot;
     IUnknown *object;
     HRESULT hr;
-    IMoniker *tempMk,*antiMk,*rightMostMk;
-    IEnumMoniker *enumMoniker;
 
-    TRACE("(%p,%p,%p,%s,%p)\n", iface, pbc, pmkToLeft, debugstr_guid(riid), result);
+    TRACE("%p, %p, %p, %s, %p.\n", iface, pbc, toleft, debugstr_guid(riid), result);
 
     if (!result)
         return E_POINTER;
 
     *result = NULL;
 
-    if (!pmkToLeft)
+    if (!toleft)
     {
         hr = IBindCtx_GetRunningObjectTable(pbc, &rot);
         if (SUCCEEDED(hr))
@@ -343,24 +350,24 @@ static HRESULT WINAPI CompositeMonikerImpl_BindToObject(IMoniker *iface, IBindCt
             hr = IUnknown_QueryInterface(object, riid, result);
             IUnknown_Release(object);
         }
+
+        return hr;
     }
-    else{
-        /* If pmkToLeft is not NULL, the method recursively calls IMoniker::BindToObject on the rightmost */
-        /* component of the composite, passing the rest of the composite as the pmkToLeft parameter for that call */
 
-        IMoniker_Enum(iface,FALSE,&enumMoniker);
-        IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
-        IEnumMoniker_Release(enumMoniker);
+    /* Try to bind rightmost component with (toleft, composite->left) composite at its left side */
+    if (FAILED(hr = composite_get_rightmost(moniker, &left, &rightmost)))
+        return hr;
 
-        hr = CreateAntiMoniker(&antiMk);
-        hr = IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-        IMoniker_Release(antiMk);
+    hr = compose_with(toleft, left, &c);
+    IMoniker_Release(left);
 
-        hr = IMoniker_BindToObject(rightMostMk,pbc,tempMk,riid,result);
-
-        IMoniker_Release(tempMk);
-        IMoniker_Release(rightMostMk);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMoniker_BindToObject(rightmost, pbc, c, riid, result);
+        IMoniker_Release(c);
     }
+
+    IMoniker_Release(rightmost);
 
     return hr;
 }
@@ -681,13 +688,6 @@ CompositeMonikerImpl_IsRunning(IMoniker* iface, IBindCtx* pbc,
                 return res;
             }
         }
-}
-
-static HRESULT compose_with(IMoniker *left, IMoniker *right, IMoniker **c)
-{
-    HRESULT hr = IMoniker_ComposeWith(left, right, TRUE, c);
-    if (FAILED(hr) && hr != MK_E_NEEDGENERIC) return hr;
-    return CreateGenericComposite(left, right, c);
 }
 
 static HRESULT WINAPI CompositeMonikerImpl_GetTimeOfLastChange(IMoniker *iface, IBindCtx *pbc,

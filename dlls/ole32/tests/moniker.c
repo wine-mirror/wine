@@ -3108,7 +3108,7 @@ static void test_generic_composite_moniker(void)
         { "CI1I2", "A3", MKSYS_ANTIMONIKER, L"\\.." },
         { "CI1I3", "CA1I2", MKSYS_GENERICCOMPOSITE, L"!I1!I2" },
     };
-    IMoniker *moniker, *inverse, *moniker1, *moniker2, *moniker3;
+    IMoniker *moniker, *inverse, *moniker1, *moniker2, *moniker3, *moniker4;
     struct test_moniker *m, *m2;
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
@@ -3267,9 +3267,44 @@ todo_wine
     hr = IRunningObjectTable_Revoke(rot, cookie);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    IRunningObjectTable_Release(rot);
-
     IMoniker_Release(moniker);
+
+    /* BindToObject() with moniker at left */
+    hr = CreatePointerMoniker((IUnknown *)rot, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* (I1,P) */
+    hr = create_moniker_from_desc("I1", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateGenericComposite(moniker2, moniker, &moniker3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToObject(moniker3, bindctx, moniker2, &IID_IMoniker, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    /* Register (I1,I1,P), check if ROT is used for left != NULL case  */
+    hr = CreateGenericComposite(moniker2, moniker3, &moniker4);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    cookie = 0;
+    hr = IRunningObjectTable_Register(rot, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)moniker4,
+            moniker4, &cookie);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToObject(moniker3, bindctx, moniker2, &IID_IMoniker, (void **)&unknown);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Revoke(rot, cookie);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMoniker_Release(moniker3);
+    IMoniker_Release(moniker2);
+    IMoniker_Release(moniker);
+
+    IRunningObjectTable_Release(rot);
 
     /* Uninitialized composite */
     hr = CoCreateInstance(&CLSID_CompositeMoniker, NULL, CLSCTX_SERVER, &IID_IMoniker, (void **)&moniker);
