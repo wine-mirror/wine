@@ -2098,7 +2098,7 @@ todo_wine
 
 static void test_file_moniker(WCHAR* path)
 {
-    IMoniker *moniker1 = NULL, *moniker2 = NULL, *inverse, *reduced, *anti;
+    IMoniker *moniker1 = NULL, *moniker2 = NULL, *m3, *inverse, *reduced, *anti;
     IEnumMoniker *enummoniker;
     IBindCtx *bind_ctx;
     IStream *stream;
@@ -2142,8 +2142,18 @@ static void test_file_moniker(WCHAR* path)
     ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
 
     hr = IMoniker_Reduce(moniker1, NULL, MKRREDUCE_ALL, NULL, &reduced);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Reduce(moniker1, bind_ctx, MKRREDUCE_ALL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    m3 = anti = create_antimoniker(1);
+    hr = IMoniker_Reduce(moniker1, bind_ctx, MKRREDUCE_ALL, &m3, &reduced);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(reduced == moniker1, "Unexpected moniker.\n");
+    ok(m3 == anti, "Unexpected pointer.\n");
+    IMoniker_Release(reduced);
+    IMoniker_Release(anti);
 
     hr = IMoniker_Reduce(moniker1, bind_ctx, MKRREDUCE_ALL, NULL, &reduced);
     ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);

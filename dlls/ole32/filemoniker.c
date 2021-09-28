@@ -608,21 +608,16 @@ FileMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLef
     return E_NOTIMPL;
 }
 
-/******************************************************************************
- *        FileMoniker_Reduce
- ******************************************************************************/
-static HRESULT WINAPI
-FileMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
-                       IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
+static HRESULT WINAPI FileMonikerImpl_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD howfar,
+        IMoniker **toleft, IMoniker **reduced)
 {
-    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("%p, %p, %d, %p, %p.\n", iface, pbc, howfar, toleft, reduced);
 
-    if (ppmkReduced==NULL)
-        return E_POINTER;
+    if (!pbc || !reduced)
+        return E_INVALIDARG;
 
     IMoniker_AddRef(iface);
-
-    *ppmkReduced=iface;
+    *reduced = iface;
 
     return MK_S_REDUCED_TO_SELF;
 }
