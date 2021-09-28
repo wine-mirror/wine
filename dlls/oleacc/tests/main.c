@@ -1397,6 +1397,320 @@ static void test_CreateStdAccessibleObject_classes(void)
     }
 }
 
+typedef struct
+{
+    const WCHAR *name;
+    const WCHAR *value;
+    HRESULT value_hr;
+
+    const WCHAR *description;
+    const WCHAR *help;
+    const WCHAR *kbd_shortcut;
+    const WCHAR *default_action;
+
+    INT  role;
+    INT  state;
+    LONG child_count;
+    BOOL valid_child;
+    BOOL valid_parent;
+    INT  focus_vt;
+    INT  focus_cid;
+} acc_expected_vals;
+
+#define check_acc_vals( acc, vals) \
+        check_acc_vals_( (acc), (vals), __LINE__)
+static void check_acc_vals_(IAccessible *acc, const acc_expected_vals *vals,
+        int line)
+{
+    LONG left, top, width, height;
+    LONG child_count;
+    VARIANT vid, var;
+    IDispatch *disp;
+    HRESULT hr;
+    RECT rect;
+    HWND hwnd;
+    POINT pt;
+    BSTR str;
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
+    hr = IAccessible_get_accName(acc, vid, &str);
+    ok_(__FILE__, line) (hr == (vals->name ? S_OK : S_FALSE), "get_accName returned %#x, expected %#x\n",
+            hr, (vals->name ? S_OK : S_FALSE));
+    ok_(__FILE__, line) (!lstrcmpW(str, vals->name), "get_accName returned %s, expected %s\n",
+            wine_dbgstr_w(str), wine_dbgstr_w(vals->name));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accValue(acc, vid, &str);
+    ok_(__FILE__, line) (hr == vals->value_hr, "get_accValue returned %#x, expected %#x\n",
+            hr, vals->value_hr);
+    ok_(__FILE__, line) (!lstrcmpW(str, vals->value), "get_accValue returned %s, expected %s\n",
+            wine_dbgstr_w(str), wine_dbgstr_w(vals->value));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accDescription(acc, vid, &str);
+    ok_(__FILE__, line) (hr == (vals->description ? S_OK : S_FALSE), "get_accDescription returned %#x, expected %#x\n",
+            hr, vals->help ? S_OK : S_FALSE);
+    ok_(__FILE__, line) (!lstrcmpW(str, vals->description), "get_accDescription returned %s, expected %s\n",
+            wine_dbgstr_w(str), wine_dbgstr_w(vals->description));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accHelp(acc, vid, &str);
+    ok_(__FILE__, line) (hr == (vals->help ? S_OK : S_FALSE), "get_accHelp returned %#x, expected %#x\n",
+            hr, vals->help ? S_OK : S_FALSE);
+    ok_(__FILE__, line) (!lstrcmpW(str, vals->help), "get_accHelp returned %s, expected %s\n",
+            wine_dbgstr_w(str), wine_dbgstr_w(vals->help));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
+    ok_(__FILE__, line) (hr == (vals->kbd_shortcut ? S_OK : S_FALSE), "get_accKeyboardShortcut returned %#x, expected %#x\n",
+            hr, vals->help ? S_OK : S_FALSE);
+    ok_(__FILE__, line) (!lstrcmpW(str, vals->kbd_shortcut), "get_accKeyboardShortcut returned %s, expected %s\n",
+            wine_dbgstr_w(str), wine_dbgstr_w(vals->kbd_shortcut));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accDefaultAction(acc, vid, &str);
+    ok_(__FILE__, line) (hr == (vals->default_action ? S_OK : S_FALSE), "get_accDefaultAction returned %#x, expected %#x\n",
+            hr, vals->help ? S_OK : S_FALSE);
+    ok_(__FILE__, line) (!lstrcmpW(str, vals->default_action), "get_accDefaultAction returned %s, expected %s\n",
+            wine_dbgstr_w(str), wine_dbgstr_w(vals->default_action));
+    SysFreeString(str);
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (void*)0xdeadbeef;
+    hr = IAccessible_get_accRole(acc, vid, &var);
+    ok_(__FILE__, line) (hr == S_OK, "get_accRole returned %#x\n", hr);
+    ok_(__FILE__, line) (V_VT(&var) == VT_I4, "V_VT(&var) returned %d, expected %d\n", V_VT(&var), VT_I4);
+    ok_(__FILE__, line) (V_I4(&var) == vals->role, "get_accRole returned %d, expected %d\n",
+            V_I4(&var), vals->role);
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (void*)0xdeadbeef;
+    hr = IAccessible_get_accState(acc, vid, &var);
+    ok_(__FILE__, line) (hr == S_OK, "get_accState returned %#x\n", hr);
+    ok_(__FILE__, line) (V_VT(&var) == VT_I4, "V_VT(&var) returned %d, expected %d\n", V_VT(&var), VT_I4);
+    ok_(__FILE__, line) (V_I4(&var) == vals->state, "get_accState returned %#x, expected %#x\n",
+            V_I4(&var), vals->state);
+
+    hr = WindowFromAccessibleObject(acc, &hwnd);
+    ok_(__FILE__, line) (hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line) (GetClientRect(hwnd, &rect), "GetClientRect failed\n");
+    pt.x = rect.left;
+    pt.y = rect.top;
+    MapWindowPoints(hwnd, NULL, &pt, 1);
+    rect.left = pt.x;
+    rect.top = pt.y;
+    pt.x = rect.right;
+    pt.y = rect.bottom;
+    MapWindowPoints(hwnd, NULL, &pt, 1);
+    hr = IAccessible_accLocation(acc, &left, &top, &width, &height, vid);
+    ok_(__FILE__, line) (hr == S_OK, "got %x\n", hr);
+    ok_(__FILE__, line) (left == rect.left, "left = %d, expected %d\n", left, rect.left);
+    ok_(__FILE__, line) (top == rect.top, "top = %d, expected %d\n", top, rect.top);
+    ok_(__FILE__, line) (width == pt.x-rect.left, "width = %d, expected %d\n", width, pt.x-rect.left);
+    ok_(__FILE__, line) (height == pt.y-rect.top, "height = %d, expected %d\n", height, pt.y-rect.top);
+
+    child_count = -1;
+    hr = IAccessible_get_accChildCount(acc, &child_count);
+    ok_(__FILE__, line) (hr == S_OK, "get_accChildCount returned %#x\n", hr);
+    ok_(__FILE__, line) (child_count == vals->child_count, "get_accChildCount returned %d, expected %#x\n",
+            child_count, vals->child_count);
+
+    disp = (void *)0xdeadbeef;
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 1;
+    hr = IAccessible_get_accChild(acc, var, &disp);
+    ok_(__FILE__, line) (hr == (vals->valid_child ? S_OK : E_INVALIDARG), "get_accChild returned %#x, expected %#x\n",
+            hr, (vals->valid_child ? S_OK : E_INVALIDARG));
+    if (disp)
+    {
+        ok_(__FILE__, line) (vals->valid_child, "get_accChild unexpectedly returned a child\n");
+        IDispatch_Release(disp);
+    }
+    else
+        ok_(__FILE__, line) (!vals->valid_child, "get_accChild expected a valid child, none was returned\n");
+
+    disp = (void *)0xdeadbeef;
+    hr = IAccessible_get_accParent(acc, &disp);
+    ok_(__FILE__, line) (hr == S_OK, "get_accParent returned %#x\n", hr);
+    ok_(__FILE__, line) (disp != NULL, "get_accParent returned a NULL pareent\n");
+    IDispatch_Release(disp);
+
+    V_VT(&var) = VT_EMPTY;
+    hr = IAccessible_get_accFocus(acc, &var);
+    ok_(__FILE__, line) (hr == S_OK, "get_accFocus returned %#x\n", hr);
+    ok_(__FILE__, line) (V_VT(&var) == vals->focus_vt, "get_accFocus returned V_VT(&var) %d, expected %d\n",
+            V_VT(&var), vals->focus_vt);
+    switch(vals->focus_vt)
+    {
+    case VT_I4:
+        ok_(__FILE__, line) (V_I4(&var) == vals->focus_cid, "get_accFocus returned childID %d, expected %d\n",
+                V_I4(&var), vals->focus_cid);
+        break;
+
+    case VT_DISPATCH:
+        ok_(__FILE__, line) (V_DISPATCH(&var) != NULL, "get_accFocus returned NULL IDispatch\n");
+        IDispatch_Release(V_DISPATCH(&var));
+        break;
+
+    default:
+        break;
+    }
+}
+
+static const acc_expected_vals edit_acc_vals[] = {
+    /* edit0, readonly edit, no label. */
+    { .name           = NULL,
+      .value          = L"edit0-test",
+      .value_hr       = S_OK,
+      .description    = NULL,
+      .help           = NULL,
+      .kbd_shortcut   = NULL,
+      .default_action = NULL,
+      .role           = ROLE_SYSTEM_TEXT,
+      .state          = STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_READONLY,
+      .child_count    = 0,
+      .valid_child    = FALSE,
+      .valid_parent   = TRUE,
+      .focus_vt       = VT_EMPTY,
+      .focus_cid      = 0, },
+    /* edit1, ES_PASSWORD edit style. */
+    { .name           = L"label0:",
+      .value          = NULL,
+      .value_hr       = E_ACCESSDENIED,
+      .description    = NULL,
+      .help           = NULL,
+      .kbd_shortcut   = L"Alt+l",
+      .default_action = NULL,
+      .role           = ROLE_SYSTEM_TEXT,
+      .state          = STATE_SYSTEM_PROTECTED | STATE_SYSTEM_FOCUSABLE,
+      .child_count    = 0,
+      .valid_child    = FALSE,
+      .valid_parent   = TRUE,
+      .focus_vt       = VT_EMPTY,
+      .focus_cid      = 0, },
+    /* edit2, multi-line edit. */
+    { .name           = L"label1:",
+      .value          = L"edit2-test\r\ntest-edit2\n",
+      .value_hr       = S_OK,
+      .description    = NULL,
+      .help           = NULL,
+      .kbd_shortcut   = L"Alt+e",
+      .default_action = NULL,
+      .role           = ROLE_SYSTEM_TEXT,
+      .state          = STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_FOCUSED,
+      .child_count    = 0,
+      .valid_child    = FALSE,
+      .valid_parent   = TRUE,
+      .focus_vt       = VT_I4,
+      .focus_cid      = CHILDID_SELF, },
+    /* edit3, edit with child HWND. */
+    { .name           = L"label1:",
+      .value          = L"",
+      .value_hr       = S_OK,
+      .description    = NULL,
+      .help           = NULL,
+      .kbd_shortcut   = L"Alt+l",
+      .default_action = NULL,
+      .role           = ROLE_SYSTEM_TEXT,
+      .state          = STATE_SYSTEM_FOCUSABLE,
+      .child_count    = 1,
+      .valid_child    = FALSE,
+      .valid_parent   = TRUE,
+      .focus_vt       = VT_DISPATCH,
+      .focus_cid      = 0, },
+};
+
+static void test_default_edit_accessible_object(void)
+{
+    HWND hwnd, label0, label1, btn0, btn1;
+    IAccessible *acc;
+    HWND edit[4];
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    hwnd = CreateWindowW(L"oleacc_test", L"edit_acc_test_win", WS_OVERLAPPEDWINDOW,
+            0, 0, 220, 160, NULL, NULL, NULL, NULL);
+    ok(!!hwnd, "CreateWindow failed\n");
+
+    edit[0] = CreateWindowW(L"EDIT", L"", WS_VISIBLE | WS_CHILD | ES_READONLY, 5, 5, 190, 20,
+            hwnd, NULL, NULL, NULL);
+    ok(!!edit[0], "Failed to create edit[0] hwnd\n");
+
+    label0 = CreateWindowW(L"STATIC", L"&label0:", WS_VISIBLE | WS_CHILD, 5, 30, 55, 20,
+            hwnd, NULL, NULL, NULL);
+    ok(!!label0, "Failed to create label0 hwnd\n");
+
+    edit[1] = CreateWindowW(L"EDIT", L"", WS_VISIBLE | WS_CHILD | ES_PASSWORD,
+            65, 30, 130, 20, hwnd, NULL, NULL, NULL);
+    ok(!!edit[1], "Failed to create edit[1] hwnd\n");
+
+    label1 = CreateWindowW(L"STATIC", L"lab&el1:", WS_VISIBLE | WS_CHILD, 5, 55, 45, 20,
+            hwnd, NULL, NULL, NULL);
+    ok(!!label1, "Failed to create label1 hwnd\n");
+
+    btn0 = CreateWindowW(L"BUTTON", L"but&ton0", WS_VISIBLE | WS_CHILD, 55, 55, 45, 20,
+            hwnd, NULL, NULL, NULL);
+    ok(!!btn0, "Failed to create btn0 hwnd\n");
+
+    edit[2] = CreateWindowW(L"EDIT", L"", WS_VISIBLE | WS_CHILD | ES_MULTILINE,
+            105, 55, 90, 40, hwnd, NULL, NULL, NULL);
+    ok(!!edit[2], "Failed to create edit[2] hwnd\n");
+
+    edit[3] = CreateWindowW(L"EDIT", L"", WS_VISIBLE | WS_CHILD, 5, 100, 190, 20,
+            hwnd, NULL, NULL, NULL);
+    ok(!!edit[3], "Failed to create edit[3] hwnd\n");
+
+    /* Button embedded within an edit control window. */
+    btn1 = CreateWindowW(L"BUTTON", L"button1", WS_VISIBLE | WS_CHILD, 100, 5, 85, 10,
+            edit[3], NULL, NULL, NULL);
+    ok(!!btn1, "Failed to create btn1 hwnd\n");
+
+    hr = CreateStdAccessibleObject(edit[0], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %x\n", hr);
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = CHILDID_SELF;
+    str = SysAllocString(L"edit0-test");
+    hr = IAccessible_put_accValue(acc, v, str);
+    ok(hr == S_OK, "got %x\n", hr);
+    SysFreeString(str);
+    check_acc_vals(acc, &edit_acc_vals[0]);
+    IAccessible_Release(acc);
+
+    hr = CreateStdAccessibleObject(edit[1], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %x\n", hr);
+    str = SysAllocString(L"password");
+    hr = IAccessible_put_accValue(acc, v, str);
+    ok(hr == S_OK, "got %x\n", hr);
+    SysFreeString(str);
+    check_acc_vals(acc, &edit_acc_vals[1]);
+    IAccessible_Release(acc);
+
+    SetFocus(edit[2]);
+    hr = CreateStdAccessibleObject(edit[2], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    str = SysAllocString(L"edit2-test\r\ntest-edit2\n");
+    hr = IAccessible_put_accValue(acc, v, str);
+    ok(hr == S_OK, "got %x\n", hr);
+    SysFreeString(str);
+    check_acc_vals(acc, &edit_acc_vals[2]);
+    IAccessible_Release(acc);
+
+    /*
+     * Hiding a label with a keyboard shortcut makes get_accKeyboardShortcut
+     * on the edit no longer return the labels shortcut, however get_accName
+     * still returns the labels string.
+     */
+    ShowWindow(label1, SW_HIDE);
+    SetFocus(btn1);
+    hr = CreateStdAccessibleObject(edit[3], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %x\n", hr);
+    check_acc_vals(acc, &edit_acc_vals[3]);
+    IAccessible_Release(acc);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(main)
 {
     int argc;
@@ -1436,6 +1750,7 @@ START_TEST(main)
     test_AccessibleChildren(&Accessible);
     test_AccessibleObjectFromEvent();
     test_CreateStdAccessibleObject_classes();
+    test_default_edit_accessible_object();
 
     unregister_window_class();
     CoUninitialize();
