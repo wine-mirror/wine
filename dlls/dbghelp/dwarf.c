@@ -1880,8 +1880,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     else if (dwarf2_find_attribute(di, DW_AT_const_value, &value))
     {
         VARIANT v;
-        if (subpgm->func) WARN("Unsupported constant %s in function\n", debugstr_a(name.u.string));
-        if (is_pmt)       FIXME("Unsupported constant (parameter) %s in function\n", debugstr_a(name.u.string));
+
         switch (value.form)
         {
         case DW_FORM_data1:
@@ -1936,8 +1935,16 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                   debugstr_a(name.u.string), value.form);
             v.n1.n2.vt = VT_EMPTY;
         }
-        di->symt = &symt_new_constant(subpgm->ctx->module_ctx->module, subpgm->ctx->compiland,
-                                      name.u.string, param_type, &v)->symt;
+        if (subpgm->func)
+        {
+            if (is_pmt) FIXME("Unsupported constant (parameter) %s in function '%s'\n", debugstr_a(name.u.string), subpgm->func->hash_elt.name);
+            di->symt = &symt_add_func_constant(subpgm->ctx->module_ctx->module,
+                                               subpgm->func, block,
+                                               param_type, name.u.string, &v)->symt;
+        }
+        else
+            di->symt = &symt_new_constant(subpgm->ctx->module_ctx->module, subpgm->ctx->compiland,
+                                          name.u.string, param_type, &v)->symt;
     }
     else
     {

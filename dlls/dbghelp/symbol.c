@@ -409,6 +409,42 @@ struct symt_data* symt_add_func_local(struct module* module,
     return locsym;
 }
 
+/******************************************************************
+ *             symt_add_func_local
+ *
+ * Adds a new (local) constant to a given function
+ */
+struct symt_data* symt_add_func_constant(struct module* module,
+                                         struct symt_function* func,
+                                         struct symt_block* block,
+                                         struct symt* type, const char* name,
+                                         VARIANT* v)
+{
+    struct symt_data*   locsym;
+    struct symt**       p;
+
+    TRACE_(dbghelp_symt)("Adding local constant (%s:%s): %s %p\n",
+                         debugstr_w(module->modulename), func->hash_elt.name,
+                         name, type);
+
+    assert(func);
+    assert(func->symt.tag == SymTagFunction);
+
+    locsym = pool_alloc(&module->pool, sizeof(*locsym));
+    locsym->symt.tag      = SymTagData;
+    locsym->hash_elt.name = pool_strdup(&module->pool, name);
+    locsym->hash_elt.next = NULL;
+    locsym->kind          = DataIsConstant;
+    locsym->container     = block ? &block->symt : &func->symt;
+    locsym->type          = type;
+    locsym->u.value       = *v;
+    if (block)
+        p = vector_add(&block->vchildren, &module->pool);
+    else
+        p = vector_add(&func->vchildren, &module->pool);
+    *p = &locsym->symt;
+    return locsym;
+}
 
 struct symt_block* symt_open_func_block(struct module* module, 
                                         struct symt_function* func,
@@ -653,6 +689,9 @@ static void symt_fill_sym_info(struct module_pair* pair,
                 break;
             case DataIsConstant:
                 sym_info->Flags |= SYMFLAG_VALUEPRESENT;
+                if (data->container &&
+                    (data->container->tag == SymTagFunction || data->container->tag == SymTagBlock))
+                    sym_info->Flags |= SYMFLAG_LOCAL;
                 switch (data->u.value.n1.n2.vt)
                 {
                 case VT_I4:  sym_info->Value = (ULONG)data->u.value.n1.n2.n3.lVal; break;

@@ -756,6 +756,10 @@ extern struct symt_data*
                                         enum DataKind dt, const struct location* loc,
                                         struct symt_block* block,
                                         struct symt* type, const char* name) DECLSPEC_HIDDEN;
+extern struct symt_data*
+                    symt_add_func_constant(struct module* module,
+                                           struct symt_function* func, struct symt_block* block,
+                                           struct symt* type, const char* name, VARIANT* v) DECLSPEC_HIDDEN;
 extern struct symt_block*
                     symt_open_func_block(struct module* module, 
                                          struct symt_function* func,
