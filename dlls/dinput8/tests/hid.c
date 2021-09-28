@@ -3908,15 +3908,12 @@ static void test_simple_joystick(void)
     prop_range.lMin = 0xdeadbeef;
     prop_range.lMax = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
     prop_range.diph.dwObj = MAKELONG( 0, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
     prop_range.diph.dwObj = MAKELONG( HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_NOTFOUND, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
     prop_range.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_range.lMin = 0xdeadbeef;

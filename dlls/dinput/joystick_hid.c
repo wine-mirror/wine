@@ -515,7 +515,7 @@ static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_caps 
     DIPROPRANGE *value = data;
     value->lMin = value_caps->PhysicalMin;
     value->lMax = value_caps->PhysicalMax;
-    return DIENUM_CONTINUE;
+    return DIENUM_STOP;
 }
 
 static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
@@ -533,8 +533,9 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     {
     case (DWORD_PTR)DIPROP_RANGE:
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
-        enum_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header );
-        return DI_OK;
+        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header ) == DIENUM_STOP)
+            return DI_OK;
+        return DIERR_NOTFOUND;
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
