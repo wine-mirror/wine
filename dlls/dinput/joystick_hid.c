@@ -628,6 +628,9 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
         lstrcpynW( value->wszPath, impl->device_path, MAX_PATH );
         return DI_OK;
     }
+    case (DWORD_PTR)DIPROP_AUTOCENTER:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        return DIERR_UNSUPPORTED;
     default:
         return IDirectInputDevice2WImpl_GetProperty( iface, guid, header );
     }
@@ -684,6 +687,7 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
                                                 const DIPROPHEADER *header )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr;
 
     TRACE( "iface %p, guid %s, header %p\n", iface, debugstr_guid( guid ), header );
 
@@ -716,6 +720,17 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
         if (value->dwData > 10000) return DIERR_INVALIDPARAM;
         enum_objects( impl, header, DIDFT_AXIS, set_property_prop_saturation, (void *)header );
         return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_AUTOCENTER:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        EnterCriticalSection( &impl->base.crit );
+        if (impl->base.acquired) hr = DIERR_ACQUIRED;
+        else if (value->dwData > DIPROPAUTOCENTER_ON) hr = DIERR_INVALIDPARAM;
+        else hr = DIERR_UNSUPPORTED;
+        LeaveCriticalSection( &impl->base.crit );
+        return hr;
     }
     case (DWORD_PTR)DIPROP_FFLOAD:
     case (DWORD_PTR)DIPROP_GRANULARITY:

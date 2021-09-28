@@ -3864,7 +3864,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetProperty DIPROP_CALIBRATION returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
@@ -4347,7 +4346,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
     ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_ACQUIRED, "IDirectInputDevice8_SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
     prop_pointer.diph.dwHow = DIPH_BYUSAGE;
     prop_pointer.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
@@ -4460,7 +4458,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
     prop_dword.dwData = DIPROPAUTOCENTER_ON;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
