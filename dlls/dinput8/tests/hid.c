@@ -4098,11 +4098,8 @@ static void test_simple_joystick(void)
         winetest_push_context( "state[%d]", i );
         hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
         ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
-        todo_wine_if( i != 0 && i != 2 )
         check_member( state, expect_state[i], "%d", lX );
-        todo_wine_if( i != 0 && i != 2 )
         check_member( state, expect_state[i], "%d", lY );
-        todo_wine_if( i != 0 )
         check_member( state, expect_state[i], "%d", lZ );
         check_member( state, expect_state[i], "%d", lRx );
         check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
@@ -4114,20 +4111,17 @@ static void test_simple_joystick(void)
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
 
         res = WaitForSingleObject( event, 100 );
-        if (i == 0 || i == 3) todo_wine_if( i == 0 )
-        ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
-        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" ); ResetEvent( event );
+        if (i == 0 || i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+        ResetEvent( event );
         winetest_pop_context();
     }
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
     ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
     winetest_push_context( "state[%d]", i );
-    todo_wine
     check_member( state, expect_state[i], "%d", lX );
-    todo_wine
     check_member( state, expect_state[i], "%d", lY );
-    todo_wine
     check_member( state, expect_state[i], "%d", lZ );
     check_member( state, expect_state[i], "%d", lRx );
     check_member( state, expect_state[i], "%#x", rgdwPOV[0] );
@@ -4237,7 +4231,7 @@ static void test_simple_joystick(void)
         winetest_push_context( "objdata[%d]", i );
         todo_wine
         check_member( objdata[i], expect_objdata[6 + i], "%#x", dwOfs );
-        todo_wine_if( i != 3 && i != 4 && i != 7 )
+        todo_wine_if( i == 1 || i == 2 || i == 6 )
         check_member( objdata[i], expect_objdata[6 + i], "%#x", dwData );
         ok( objdata[i].uAppData == -1, "got %p, expected %p\n", (void *)objdata[i].uAppData, (void *)-1 );
         winetest_pop_context();
@@ -4250,11 +4244,8 @@ static void test_simple_joystick(void)
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
     ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
-    todo_wine
     check_member( state, expect_state[3], "%d", lX );
-    todo_wine
     check_member( state, expect_state[3], "%d", lY );
-    todo_wine
     check_member( state, expect_state[3], "%d", lZ );
     check_member( state, expect_state[3], "%d", lRx );
     check_member( state, expect_state[3], "%d", rgdwPOV[0] );
@@ -4448,12 +4439,11 @@ static void test_simple_joystick(void)
         if (broken( state.lX == -10750 )) win_skip( "Ignoring 32-bit rounding\n" );
         else
         {
-            todo_wine_if( i != 0 && i != 2 )
+            todo_wine_if( i == 3 || i == 4 )
             check_member( state, expect_state_abs[i], "%d", lX );
-            todo_wine_if( i != 0 && i != 2 )
+            todo_wine_if( i == 3 || i == 4 )
             check_member( state, expect_state_abs[i], "%d", lY );
         }
-        todo_wine_if( i != 0 )
         check_member( state, expect_state_abs[i], "%d", lZ );
         check_member( state, expect_state_abs[i], "%d", lRx );
         check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );
@@ -4465,20 +4455,18 @@ static void test_simple_joystick(void)
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
 
         res = WaitForSingleObject( event, 100 );
-        if (i == 0 || i == 3) todo_wine_if( i == 0 )
-        ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
-        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" ); ResetEvent( event );
+        if (i == 0 || i == 3) ok( res == WAIT_TIMEOUT, "WaitForSingleObject succeeded\n" );
+        else ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+        ResetEvent( event );
         winetest_pop_context();
     }
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
     ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
     winetest_push_context( "state[%d]", i );
-    todo_wine
     check_member( state, expect_state_abs[i], "%d", lX );
     todo_wine
     check_member( state, expect_state_abs[i], "%d", lY );
-    todo_wine
     check_member( state, expect_state_abs[i], "%d", lZ );
     check_member( state, expect_state_abs[i], "%d", lRx );
     check_member( state, expect_state_abs[i], "%d", rgdwPOV[0] );

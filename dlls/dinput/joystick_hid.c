@@ -854,13 +854,45 @@ static LONG sign_extend( ULONG value, const HIDP_VALUE_CAPS *caps )
 
 static LONG scale_value( ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG max )
 {
-    ULONG bit_max = (1 << caps->BitSize) - 1;
     LONG tmp = sign_extend( value, caps );
-
-    /* xinput HID gamepad have bogus logical value range, let's use the bit range instead */
-    if (caps->LogicalMin == 0 && caps->LogicalMax == -1) return min + MulDiv( tmp, max - min, bit_max );
     if (caps->LogicalMin > tmp || caps->LogicalMax < tmp) return -1; /* invalid / null value */
     return min + MulDiv( tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin );
+}
+
+static LONG scale_axis_value( ULONG value, const HIDP_VALUE_CAPS *caps )
+{
+    LONG tmp = sign_extend( value, caps ), log_ctr, log_min, log_max, phy_ctr, phy_min, phy_max;
+    ULONG bit_max = (1 << caps->BitSize) - 1;
+
+    log_min = caps->LogicalMin;
+    log_max = caps->LogicalMax;
+    phy_min = caps->PhysicalMin;
+    phy_max = caps->PhysicalMax;
+    /* xinput HID gamepad have bogus logical value range, let's use the bit range instead */
+    if (log_min == 0 && log_max == -1) log_max = bit_max;
+
+    if (phy_min == 0) phy_ctr = phy_max >> 1;
+    else phy_ctr = round( (phy_min + phy_max) / 2.0 );
+    if (log_min == 0) log_ctr = log_max >> 1;
+    else log_ctr = round( (log_min + log_max) / 2.0 );
+
+    tmp -= log_ctr;
+    if (tmp <= 0)
+    {
+        log_max = 0;
+        log_min -= log_ctr;
+        phy_max = phy_ctr;
+    }
+    else
+    {
+        log_min = 0;
+        log_max -= log_ctr;
+        phy_min = phy_ctr;
+    }
+
+    if (tmp <= log_min) return phy_min;
+    if (tmp >= log_max) return phy_max;
+    return phy_min + MulDiv( tmp - log_min, phy_max - phy_min, log_max - log_min );
 }
 
 static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps *caps,
@@ -878,7 +910,8 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps 
                                  &logical_value, impl->preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
                                              instance->wUsagePage, instance->wUsage, status );
-    value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
+    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, value_caps );
+    else value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
 
     old_value = *(LONG *)(params->old_state + instance->dwOfs);
     *(LONG *)(impl->device_state + instance->dwOfs) = value;
