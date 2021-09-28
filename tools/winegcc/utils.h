@@ -20,10 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
-#ifndef __GNUC__
-#define __attribute__(X)
-#endif
+#include "../tools.h"
 
 #ifndef DECLSPEC_NORETURN
 # if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
@@ -34,8 +31,6 @@
 #  define DECLSPEC_NORETURN
 # endif
 #endif
-
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 enum target_cpu
 {
@@ -54,26 +49,6 @@ enum target_platform
 };
 
 void DECLSPEC_NORETURN error(const char* s, ...);
-
-void* xmalloc(size_t size);
-void* xrealloc(void* p, size_t size);
-char *xstrdup( const char *str );
-char* strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
-int strendswith(const char* str, const char* end);
-
-struct strarray
-{
-    unsigned int count;  /* strings in use */
-    unsigned int size;   /* total allocated size */
-    const char **str;
-};
-
-static const struct strarray empty_strarray;
-
-void strarray_add( struct strarray *array, const char *str );
-void strarray_addall( struct strarray *array, struct strarray added );
-struct strarray strarray_fromstring( const char *str, const char *delim );
-char *strarray_tostring( struct strarray array, const char *sep );
 
 typedef enum { 
     file_na, file_other, file_obj, file_res, file_rc, 

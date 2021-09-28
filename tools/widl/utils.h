@@ -23,19 +23,6 @@
 
 #include "widltypes.h"
 
-#include <stddef.h>	/* size_t */
-
-void *xmalloc(size_t);
-void *xrealloc(void *, size_t);
-char *xstrdup(const char *str);
-int strendswith(const char* str, const char* end);
-
-#ifndef __GNUC__
-#define __attribute__(X)
-#endif
-
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-
 void parser_error(const char *s) __attribute__((noreturn));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void error_loc(const char *s, ...) __attribute__((format (printf, 1, 2))) __attribute__((noreturn));
@@ -44,7 +31,6 @@ void error_loc_info(const loc_info_t *, const char *s, ...) __attribute__((forma
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning_loc_info(const loc_info_t *, const char *s, ...) __attribute__((format (printf, 2, 3)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
-char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 size_t strappend(char **buf, size_t *len, size_t pos, const char* fmt, ...) __attribute__((__format__ (__printf__, 4, 5 )));
 
 char *dup_basename(const char *name, const char *ext);
@@ -78,12 +64,5 @@ extern void align_output( unsigned int align );
 #define MAKEVERSION(major, minor) ((((minor) & 0xffff) << 16) | ((major) & 0xffff))
 #define MAJORVERSION(version) ((version) & 0xffff)
 #define MINORVERSION(version) (((version) >> 16) & 0xffff)
-
-#ifndef max
-#define max(a,b)   (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a,b)   (((a) < (b)) ? (a) : (b))
-#endif
 
 #endif

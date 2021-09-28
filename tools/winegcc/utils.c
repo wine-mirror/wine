@@ -30,10 +30,6 @@
 
 #include "utils.h"
 
-#if !defined(min)
-# define min(x,y) (((x) < (y)) ? (x) : (y))
-#endif
-
 int verbose = 0;
 
 void error(const char* s, ...)
@@ -45,116 +41,6 @@ void error(const char* s, ...)
     vfprintf(stderr, s, ap);
     va_end(ap);
     exit(2);
-}
-
-void* xmalloc(size_t size)
-{
-    void* p;
-
-    if ((p = malloc (size)) == NULL)
-	error("Could not malloc %d bytes\n", size);
-
-    return p;
-}
-
-void *xrealloc(void* p, size_t size)
-{
-    void* p2 = realloc (p, size);
-    if (size && !p2)
-	error("Could not realloc %d bytes\n", size);
-
-    return p2;
-}
-
-char *xstrdup( const char *str )
-{
-    char *res = strdup( str );
-    if (!res) error("Virtual memory exhausted.\n");
-    return res;
-}
-
-int strendswith(const char* str, const char* end)
-{
-    int l = strlen(str);
-    int m = strlen(end);
-
-    return l >= m && strcmp(str + l - m, end) == 0;
-}
-
-char* strmake(const char* fmt, ...)
-{
-    int n;
-    size_t size = 100;
-    va_list ap;
-
-    while (1)
-    {
-        char *p = xmalloc (size);
-        va_start(ap, fmt);
-	n = vsnprintf (p, size, fmt, ap);
-	va_end(ap);
-        if (n == -1) size *= 2;
-        else if ((size_t)n >= size) size = n + 1;
-        else return p;
-        free(p);
-    }
-}
-
-void strarray_add( struct strarray *array, const char *str )
-{
-    if (array->count == array->size)
-    {
-	if (array->size) array->size *= 2;
-        else array->size = 16;
-	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
-    }
-    array->str[array->count++] = str;
-}
-
-void strarray_addall( struct strarray *array, struct strarray added )
-{
-    unsigned int i;
-
-    for (i = 0; i < added.count; i++) strarray_add( array, added.str[i] );
-}
-
-struct strarray strarray_fromstring( const char *str, const char *delim )
-{
-    struct strarray array = empty_strarray;
-    char *buf = xstrdup( str );
-    const char *tok;
-
-    for (tok = strtok( buf, delim ); tok; tok = strtok( NULL, delim ))
-        strarray_add( &array, xstrdup( tok ));
-    free( buf );
-    return array;
-}
-
-static struct strarray strarray_frompath( const char *path )
-{
-    if (!path) return empty_strarray;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    return strarray_fromstring( path, ";" );
-#else
-    return strarray_fromstring( path, ":" );
-#endif
-}
-
-char *strarray_tostring( struct strarray array, const char *sep )
-{
-    char *str;
-    unsigned int i, len = 1 + (array.count - 1) * strlen(sep);
-
-    if (!array.count) return xstrdup("");
-    for (i = 0; i < array.count; i++) len += strlen( array.str[i] );
-    str = xmalloc( len );
-    strcpy( str, array.str[0] );
-    for (i = 1; i < array.count; i++)
-    {
-        strcat( str, sep );
-        strcat( str, array.str[i] );
-    }
-    return str;
 }
 
 char* get_basename(const char* file)

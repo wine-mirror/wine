@@ -39,14 +39,8 @@
 #include <io.h>
 #define mkdir(path,mode) mkdir(path)
 #endif
+#include "tools.h"
 #include "wine/list.h"
-
-struct strarray
-{
-    unsigned int count;  /* strings in use */
-    unsigned int size;   /* total allocated size */
-    const char **str;
-};
 
 enum incl_type
 {
@@ -129,8 +123,6 @@ static const struct
 #define HASH_SIZE 997
 
 static struct list files[HASH_SIZE];
-
-static const struct strarray empty_strarray;
 
 enum install_rules { INSTALL_LIB, INSTALL_DEV, NB_INSTALL_RULES };
 
@@ -256,10 +248,6 @@ static const char Usage[] =
     "   -fxxx       Store output in file 'xxx' (default: Makefile)\n";
 
 
-#ifndef __GNUC__
-#define __attribute__(x)
-#endif
-
 static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static void fatal_perror( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static void output( const char *format, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
@@ -326,76 +314,6 @@ static void exit_on_signal( int sig )
 
 
 /*******************************************************************
- *         xmalloc
- */
-static void *xmalloc( size_t size )
-{
-    void *res;
-    if (!(res = malloc (size ? size : 1)))
-        fatal_error( "Virtual memory exhausted.\n" );
-    return res;
-}
-
-
-/*******************************************************************
- *         xrealloc
- */
-static void *xrealloc (void *ptr, size_t size)
-{
-    void *res;
-    assert( size );
-    if (!(res = realloc( ptr, size )))
-        fatal_error( "Virtual memory exhausted.\n" );
-    return res;
-}
-
-/*******************************************************************
- *         xstrdup
- */
-static char *xstrdup( const char *str )
-{
-    char *res = strdup( str );
-    if (!res) fatal_error( "Virtual memory exhausted.\n" );
-    return res;
-}
-
-
-/*******************************************************************
- *         strmake
- */
-static char *strmake( const char* fmt, ... )
-{
-    int n;
-    size_t size = 100;
-    va_list ap;
-
-    for (;;)
-    {
-        char *p = xmalloc (size);
-        va_start(ap, fmt);
-        n = vsnprintf (p, size, fmt, ap);
-        va_end(ap);
-        if (n == -1) size *= 2;
-        else if ((size_t)n >= size) size = n + 1;
-        else return xrealloc( p, n + 1 );
-        free(p);
-    }
-}
-
-
-/*******************************************************************
- *         strendswith
- */
-static int strendswith( const char* str, const char* end )
-{
-    size_t l = strlen( str );
-    size_t m = strlen( end );
-
-    return l >= m && strcmp(str + l - m, end) == 0;
-}
-
-
-/*******************************************************************
  *         output
  */
 static void output( const char *format, ... )
@@ -409,64 +327,6 @@ static void output( const char *format, ... )
     if (ret < 0) fatal_perror( "output" );
     if (format[0] && format[strlen(format) - 1] == '\n') output_column = 0;
     else output_column += ret;
-}
-
-
-/*******************************************************************
- *         strarray_add
- */
-static void strarray_add( struct strarray *array, const char *str )
-{
-    if (array->count == array->size)
-    {
-	if (array->size) array->size *= 2;
-        else array->size = 16;
-	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
-    }
-    array->str[array->count++] = str;
-}
-
-
-/*******************************************************************
- *         strarray_addall
- */
-static void strarray_addall( struct strarray *array, struct strarray added )
-{
-    unsigned int i;
-
-    for (i = 0; i < added.count; i++) strarray_add( array, added.str[i] );
-}
-
-
-/*******************************************************************
- *         strarray_exists
- */
-static int strarray_exists( const struct strarray *array, const char *str )
-{
-    unsigned int i;
-
-    for (i = 0; i < array->count; i++) if (!strcmp( array->str[i], str )) return 1;
-    return 0;
-}
-
-
-/*******************************************************************
- *         strarray_add_uniq
- */
-static void strarray_add_uniq( struct strarray *array, const char *str )
-{
-    if (!strarray_exists( array, str )) strarray_add( array, str );
-}
-
-
-/*******************************************************************
- *         strarray_addall_uniq
- */
-static void strarray_addall_uniq( struct strarray *array, struct strarray added )
-{
-    unsigned int i;
-
-    for (i = 0; i < added.count; i++) strarray_add_uniq( array, added.str[i] );
 }
 
 
@@ -516,15 +376,6 @@ static void strarray_set_value( struct strarray *array, const char *name, const 
     for (i = array->count - 1; i > min * 2 + 1; i--) array->str[i] = array->str[i - 2];
     array->str[min * 2] = name;
     array->str[min * 2 + 1] = value;
-}
-
-
-/*******************************************************************
- *         strarray_set_qsort
- */
-static void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) )
-{
-    if (array->count) qsort( array->str, array->count, sizeof(*array->str), (void *)func );
 }
 
 

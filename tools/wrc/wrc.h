@@ -21,6 +21,7 @@
 #ifndef __WRC_WRC_H
 #define __WRC_WRC_H
 
+#include "../tools.h"
 #include "wrctypes.h"
 
 /* From wrc.c */

@@ -4013,7 +4013,7 @@ then
 [wine_fn_output_makedep ()
 {
     AS_MKDIR_P(tools)
-    $CC -Iinclude -I$srcdir/include -D__WINESRC__ $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext $srcdir/tools/makedep.c $LDFLAGS
+    $CC -I$srcdir/tools -Iinclude -I$srcdir/include -D__WINESRC__ $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext $srcdir/tools/makedep.c $LDFLAGS
 }])
 fi
 

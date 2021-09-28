@@ -21,19 +21,9 @@
 #ifndef __WMC_UTILS_H
 #define __WMC_UTILS_H
 
-#include <stddef.h>	/* size_t */
-
+#include "../tools.h"
 #include "wmctypes.h"
 
-void *xmalloc(size_t);
-void *xrealloc(void *, size_t);
-char *xstrdup(const char *str);
-
-#ifndef __GNUC__
-#define __attribute__(X)
-#endif
-
-char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 int mcy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int xyyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int mcy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
@@ -43,7 +33,6 @@ void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
 char *dup_basename(const char *name, const char *ext);
-int strendswith( const char *str, const char *end );
 
 WCHAR *xunistrdup(const WCHAR * str);
 WCHAR *unistrcpy(WCHAR *dst, const WCHAR *src);

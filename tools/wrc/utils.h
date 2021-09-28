@@ -21,22 +21,10 @@
 #ifndef __WRC_UTILS_H
 #define __WRC_UTILS_H
 
-#include <stddef.h>	/* size_t */
-
 #include "wrctypes.h"
-
-void *xmalloc(size_t);
-void *xrealloc(void *, size_t);
-char *xstrdup(const char *str);
-
-#ifndef __GNUC__
-#define __attribute__(X)
-#endif
 
 int compare_striA( const char *str1, const char *str2 );
 int compare_striW( const WCHAR *str1, const WCHAR *str2 );
-char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
-int strendswith( const char *str, const char *end );
 int parser_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void fatal_perror( const char *msg, ... ) __attribute__((format (printf, 1, 2), noreturn));

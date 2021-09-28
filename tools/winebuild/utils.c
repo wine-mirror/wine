@@ -37,7 +37,6 @@
 #include "build.h"
 
 static struct strarray tmp_files;
-static struct strarray empty_strarray;
 static const char *output_file_source_name;
 
 static const struct
@@ -71,126 +70,11 @@ void cleanup_tmp_files(void)
 }
 
 
-void *xmalloc (size_t size)
-{
-    void *res;
-
-    res = malloc (size ? size : 1);
-    if (res == NULL)
-    {
-        fprintf (stderr, "Virtual memory exhausted.\n");
-        exit (1);
-    }
-    return res;
-}
-
-void *xrealloc (void *ptr, size_t size)
-{
-    void *res = realloc (ptr, size);
-    if (size && res == NULL)
-    {
-        fprintf (stderr, "Virtual memory exhausted.\n");
-        exit (1);
-    }
-    return res;
-}
-
-char *xstrdup( const char *str )
-{
-    char *res = strdup( str );
-    if (!res)
-    {
-        fprintf (stderr, "Virtual memory exhausted.\n");
-        exit (1);
-    }
-    return res;
-}
-
 char *strupper(char *s)
 {
     char *p;
     for (p = s; *p; p++) *p = toupper(*p);
     return s;
-}
-
-int strendswith(const char* str, const char* end)
-{
-    int l = strlen(str);
-    int m = strlen(end);
-    return l >= m && strcmp(str + l - m, end) == 0;
-}
-
-char *strmake( const char* fmt, ... )
-{
-    int n;
-    size_t size = 100;
-    va_list ap;
-
-    for (;;)
-    {
-        char *p = xmalloc( size );
-        va_start( ap, fmt );
-	n = vsnprintf( p, size, fmt, ap );
-	va_end( ap );
-        if (n == -1) size *= 2;
-        else if ((size_t)n >= size) size = n + 1;
-        else return p;
-        free( p );
-    }
-}
-
-void strarray_add( struct strarray *array, const char *str )
-{
-    if (array->count == array->size)
-    {
-	if (array->size) array->size *= 2;
-        else array->size = 16;
-	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
-    }
-    array->str[array->count++] = str;
-}
-
-void strarray_addall( struct strarray *array, struct strarray args )
-{
-    unsigned int i;
-
-    for (i = 0; i < args.count; i++) strarray_add( array, args.str[i] );
-}
-
-struct strarray strarray_fromstring( const char *str, const char *delim )
-{
-    const char *tok;
-    struct strarray array = empty_strarray;
-    char *buf = xstrdup( str );
-
-    for (tok = strtok( buf, delim ); tok; tok = strtok( NULL, delim ))
-        strarray_add( &array, xstrdup( tok ));
-    free( buf );
-    return array;
-}
-
-static struct strarray strarray_frompath( const char *path )
-{
-    if (!path) return empty_strarray;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    return strarray_fromstring( path, ";" );
-#else
-    return strarray_fromstring( path, ":" );
-#endif
-}
-
-void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) )
-{
-    if (array->count) qsort( array->str, array->count, sizeof(*array->str), (void *)func );
-}
-
-const char *strarray_bsearch( const struct strarray *array, const char *str,
-                              int (*func)(const char **, const char **) )
-{
-    char **res = NULL;
-
-    if (array->count) res = bsearch( &str, array->str, array->count, sizeof(*array->str), (void *)func );
-    return res ? *res : NULL;
 }
 
 void fatal_error( const char *msg, ... )

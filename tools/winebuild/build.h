@@ -29,16 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-#ifndef max
-#define max(a,b)   (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a,b)   (((a) < (b)) ? (a) : (b))
-#endif
-
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#include "../tools.h"
 
 typedef enum
 {
@@ -169,13 +160,6 @@ static inline int is_pe(void)
     return target_platform == PLATFORM_MINGW || target_platform == PLATFORM_WINDOWS;
 }
 
-struct strarray
-{
-    unsigned int count;  /* strings in use */
-    unsigned int size;   /* total allocated size */
-    const char **str;
-};
-
 /* entry point flags */
 #define FLAG_NORELAY   0x0001  /* don't use relay debugging for this function */
 #define FLAG_NONAME    0x0002  /* don't export function by name */
@@ -229,10 +213,6 @@ struct strarray
 
 /* global functions */
 
-#ifndef __GNUC__
-#define __attribute__(X)
-#endif
-
 #ifndef DECLSPEC_NORETURN
 # if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
@@ -240,19 +220,7 @@ struct strarray
 #  define DECLSPEC_NORETURN __attribute__((noreturn))
 # endif
 #endif
-
-extern void *xmalloc (size_t size);
-extern void *xrealloc (void *ptr, size_t size);
-extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
-extern int strendswith(const char* str, const char* end);
-extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
-extern struct strarray strarray_fromstring( const char *str, const char *delim );
-extern void strarray_add( struct strarray *array, const char *str );
-extern void strarray_addall( struct strarray *array, struct strarray args );
-extern void strarray_qsort( struct strarray *array, int (*func)(const char **, const char **) );
-extern const char *strarray_bsearch( const struct strarray *array, const char *str,
-                                     int (*func)(const char **, const char **) );
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )

@@ -145,69 +145,6 @@ char *dup_basename(const char *name, const char *ext)
 	return base;
 }
 
-void *xmalloc(size_t size)
-{
-    void *res;
-
-    assert(size > 0);
-    res = malloc(size);
-    if(res == NULL)
-    {
-	error("Virtual memory exhausted.\n");
-    }
-    memset(res, 0x55, size);
-    return res;
-}
-
-
-void *xrealloc(void *p, size_t size)
-{
-    void *res;
-
-    assert(size > 0);
-    res = realloc(p, size);
-    if(res == NULL)
-    {
-	error("Virtual memory exhausted.\n");
-    }
-    return res;
-}
-
-char *xstrdup(const char *str)
-{
-	char *s;
-
-	assert(str != NULL);
-	s = xmalloc(strlen(str)+1);
-	return strcpy(s, str);
-}
-
-char *strmake( const char* fmt, ... )
-{
-    int n;
-    size_t size = 100;
-    va_list ap;
-
-    for (;;)
-    {
-        char *p = xmalloc( size );
-        va_start( ap, fmt );
-        n = vsnprintf( p, size, fmt, ap );
-        va_end( ap );
-        if (n == -1) size *= 2;
-        else if ((size_t)n >= size) size = n + 1;
-        else return p;
-        free( p );
-    }
-}
-
-int strendswith( const char *str, const char *end )
-{
-    int l = strlen(str);
-    int m = strlen(end);
-    return l >= m && !strcmp( str + l - m, end );
-}
-
 int unistrlen(const WCHAR *s)
 {
 	int n;

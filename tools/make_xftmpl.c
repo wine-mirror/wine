@@ -34,6 +34,7 @@
 
 #include "windef.h"
 #include "guiddef.h"
+#include "tools.h"
 
 #define TOKEN_NAME         1
 #define TOKEN_STRING       2
@@ -103,10 +104,6 @@ static const char *infile_name;
 static FILE *outfile;
 static BYTE *output_data;
 static UINT output_pos, output_size;
-
-#ifndef __GNUC__
-#define __attribute__(x)
-#endif
 
 static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 
@@ -362,12 +359,12 @@ static BOOL parse_token(void)
             if (!strcmp( tok, "name" ))
             {
                 tok = strtok( NULL, " \t" );
-                if (tok && !option_inc_var_name) option_inc_var_name = strdup( tok );
+                if (tok && !option_inc_var_name) option_inc_var_name = xstrdup( tok );
             }
             else if (!strcmp( tok, "size" ))
             {
                 tok = strtok( NULL, " \t" );
-                if (tok && !option_inc_size_name) option_inc_size_name = strdup( tok );
+                if (tok && !option_inc_size_name) option_inc_size_name = xstrdup( tok );
             }
             return TRUE;
 
@@ -438,13 +435,13 @@ static char **parse_options(int argc, char **argv)
                 break;
             case 'i':
                 option_header = TRUE;
-                option_inc_var_name = strdup(optarg);
+                option_inc_var_name = xstrdup(optarg);
                 break;
             case 'o':
-                option_outfile_name = strdup(optarg);
+                option_outfile_name = xstrdup(optarg);
                 break;
             case 's':
-                option_inc_size_name = strdup(optarg);
+                option_inc_size_name = xstrdup(optarg);
                 break;
         }
     }
@@ -539,9 +536,9 @@ int main(int argc, char **argv)
 
         header_name = strrchr(option_outfile_name, '/');
         if (header_name)
-            header_name = strdup(header_name + 1);
+            header_name = xstrdup(header_name + 1);
         else
-            header_name = strdup(option_outfile_name);
+            header_name = xstrdup(option_outfile_name);
         if (!header_name) {
             fprintf(stderr, "Out of memory\n");
             goto error;

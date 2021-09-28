@@ -21,6 +21,7 @@
 #ifndef __WIDL_WIDL_H
 #define __WIDL_WIDL_H
 
+#include "../tools.h"
 #include "widltypes.h"
 
 #include <time.h>

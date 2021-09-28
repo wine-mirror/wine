@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "../tools.h"
 #include "wine/list.h"
 
 extern void wpp_del_define( const char *name );

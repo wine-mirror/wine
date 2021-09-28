@@ -45,6 +45,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "basetsd.h"
+#include "../tools.h"
 
 #include "pshpack1.h"
 
@@ -449,10 +450,6 @@ static void usage(char **argv)
     fprintf(stderr, "  -s       Single .fnt file mode\n" );
 }
 
-#ifndef __GNUC__
-#define __attribute__(X)
-#endif
-
 /* atexit handler to cleanup files */
 static void cleanup(void)
 {
@@ -580,7 +577,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
         fprintf(stderr,"Can't find EBLC table\n");
     else
     {
-        eblc = malloc(needed);
+        eblc = xmalloc(needed);
         FT_Load_Sfnt_Table(face, TTAG_EBLC, 0, (FT_Byte *)eblc, &needed);
 
         num_sizes = GET_BE_DWORD(&eblc->numSizes);
@@ -841,7 +838,7 @@ static char **parse_options( int argc, char **argv )
             option_defchar = atoi( optarg );
             break;
         case 'o':
-            option_output = strdup( optarg );
+            option_output = xstrdup( optarg );
             break;
         case 'q':
             option_quiet = 1;
@@ -903,7 +900,7 @@ int main(int argc, char **argv)
     if (option_fnt_mode && num_files > 1)
         error( "can only specify one font in .fnt mode\n" );
 
-    info = malloc( num_files * sizeof(*info) );
+    info = xmalloc( num_files * sizeof(*info) );
     for (i = 0; i < num_files; i++)
     {
         int ppem, enc, avg_width;
@@ -978,7 +975,7 @@ int main(int argc, char **argv)
         char *p = strrchr( input_file, '/' );
         if (p) p++;
         else p = input_file;
-        option_output = malloc( strlen(p) + sizeof(".fon") );
+        option_output = xmalloc( strlen(p) + sizeof(".fon") );
         strcpy( option_output, p );
         p = strrchr( option_output, '.' );
         if (!p) p = option_output + strlen(option_output);
