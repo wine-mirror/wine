@@ -2710,18 +2710,14 @@ static BOOL dwarf2_parse_compilation_unit_head(dwarf2_parse_context_t* ctx,
     if (max_supported_dwarf_version == 0)
     {
         char* env = getenv("DBGHELP_DWARF_VERSION");
-        LONG v = env ? atol(env) : 2;
-        max_supported_dwarf_version = (v >= 2 && v <= 4) ? v : 2;
+        LONG v = env ? atol(env) : 4;
+        max_supported_dwarf_version = (v >= 2 && v <= 4) ? v : 4;
     }
 
     if (ctx->head.version < 2 || ctx->head.version > max_supported_dwarf_version)
     {
-        if (max_supported_dwarf_version > 2)
-            WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2 up to %u.\n",
-                 ctx->head.version, max_supported_dwarf_version);
-        else
-            WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2.\n",
-                 ctx->head.version);
+        WARN("DWARF version %d isn't supported. Wine dbghelp only supports DWARF 2 up to %u.\n",
+             ctx->head.version, max_supported_dwarf_version);
         return FALSE;
     }
 
