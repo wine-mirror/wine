@@ -62,9 +62,9 @@ static const char* symt_get_tag_str(DWORD tag)
     case SymTagBaseClass:               return "SymTagBaseClass";
     case SymTagFriend:                  return "SymTagFriend";
     case SymTagFunctionArgType:         return "SymTagFunctionArgType,";
-    case SymTagFuncDebugStart:          return "SymTagFuncDebugStart,";
+    case SymTagFuncDebugStart:          return "SymTagFuncDebugStart";
     case SymTagFuncDebugEnd:            return "SymTagFuncDebugEnd";
-    case SymTagUsingNamespace:          return "SymTagUsingNamespace,";
+    case SymTagUsingNamespace:          return "SymTagUsingNamespace";
     case SymTagVTableShape:             return "SymTagVTableShape";
     case SymTagVTable:                  return "SymTagVTable";
     case SymTagCustom:                  return "SymTagCustom";
@@ -72,6 +72,17 @@ static const char* symt_get_tag_str(DWORD tag)
     case SymTagCustomType:              return "SymTagCustomType";
     case SymTagManagedType:             return "SymTagManagedType";
     case SymTagDimension:               return "SymTagDimension";
+    case SymTagCallSite:                return "SymTagCallSite";
+    case SymTagInlineSite:              return "SymTagInlineSite";
+    case SymTagBaseInterface:           return "SymTagBaseInterface";
+    case SymTagVectorType:              return "SymTagVectorType";
+    case SymTagMatrixType:              return "SymTagMatrixType";
+    case SymTagHLSLType:                return "SymTagHLSLType";
+    case SymTagCaller:                  return "SymTagCaller";
+    case SymTagCallee:                  return "SymTagCallee";
+    case SymTagExport:                  return "SymTagExport";
+    case SymTagHeapAllocationSite:      return "SymTagHeapAllocationSite";
+    case SymTagCoffGroup:               return "SymTagCoffGroup";
     default:                            return "---";
     }
 }
