@@ -1236,7 +1236,7 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
             if (high > *phigh) *phigh = high;
         }
         if (*plow == UMAX || *phigh == 0) {FIXME("no entry found\n"); return FALSE;}
-        if (*plow == *phigh) {FIXME("entry found, but low=high\n"); return FALSE;}
+        if (*plow == *phigh) {WARN("entry found, but low=high %lx %lx\n", low, high); return FALSE;}
 
         return TRUE;
     }
@@ -2002,7 +2002,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
 
     if (!dwarf2_read_range(subpgm->ctx, di, &low_pc, &high_pc))
     {
-        FIXME("cannot read range\n");
+        WARN("cannot read range\n");
         return;
     }
 
