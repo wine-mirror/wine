@@ -533,6 +533,7 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     {
     case (DWORD_PTR)DIPROP_RANGE:
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
         if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header ) == DIENUM_STOP)
             return DI_OK;
         return DIERR_NOTFOUND;
