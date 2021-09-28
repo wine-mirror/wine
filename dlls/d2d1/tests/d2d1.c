@@ -9897,6 +9897,154 @@ static void test_effect(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_2d_affine(BOOL d3d11)
+{
+    D2D1_MATRIX_3X2_F rotate, scale, skew;
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    D2D_RECT_F output_bounds = {0};
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int i, x, y, w, h;
+    D2D1_SIZE_U input_size;
+    ID2D1Factory1 *factory;
+    D2D1_POINT_2F offset;
+    ID2D1Bitmap1 *bitmap;
+    ID2D1Effect *effect;
+    ID2D1Image *output;
+    BOOL match;
+    HRESULT hr;
+
+    static const DWORD image_4x4[] =
+    {
+        0xfdcba987, 0xffff0000, 0x98765432, 0xffffffff,
+        0x4b4b4b4b, 0x89abcdef, 0xdeadbeef, 0xabcdef01,
+        0x7f000011, 0x40ffffff, 0x12345678, 0xaabbccdd,
+        0x44444444, 0xff7f7f7f, 0x1221abba, 0x00000000
+    };
+    DWORD image_16x16[16 * 16];
+
+    const struct effect_2d_affine_test
+    {
+        const DWORD *img_data;
+        unsigned int img_width;
+        unsigned int img_height;
+
+        D2D1_MATRIX_3X2_F *matrix;
+
+        D2D_RECT_F bounds;
+        const char *figure;
+    }
+    effect_2d_affine_tests[] =
+    {
+        {image_4x4,   4,  4,  &rotate, {-6.0f,  -3.0f, 2.0f,  4.0f},
+         "ASgBAQkBAQEBBwEBAQEBAQYBAQEBAQEHAQEBASgA"},
+        {image_4x4,   4,  4,  &scale,  {-2.0f,  -3.0f, 1.0f,  9.0f},
+         "AQ8BAQEEAQEBBAEBAQQBAQEEAQEBBAEBAQQBAQEEAQEBBAEBAQQBAQEEAQEBBAEBARAA/"},
+        {image_4x4,   4,  4,  &skew,   {-7.0f,  -3.0f, 3.0f,  7.0f},
+         "AS8CCwEBAQEJAQEBAQEBBwEBAQEBAQEBBgEBAQEBAQEBBwEBAQEBAQkCAj0A"},
+        {image_16x16, 16, 16, &rotate, {-14.0f, -3.0f, 10.0f, 21.0f},
+         "AWACGQECARcBBAEVAQYBEwEIAREBCgEPAQwBDQEOAQsBEAEJARIBBwEUAQUBARQBAQUBARIBAQcB"
+         "ARABAQkBAQ4BAQsBAQwBAQ0BAQoBAQ8BAQgBAREBAQYBARMBAQQBARUBAQIBARcBAgEZAkUA"},
+        {image_16x16, 16, 16, &scale,  {-2.0f,  -3.0f, 10.0f, 39.0f},
+         "ASEMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQM"
+         "BAwEDAQMBAwEDAQMBAwEDAQMBAwEDAQMBAwEDCIA"},
+        {image_16x16, 16, 16, &skew,   {-19.0f, -3.0f, 15.0f, 31.0f},
+         "AYMBAiMBAgEhAQQBHwEGAR0BCAEbAQoBGQEMARcBDgEVARABEwESAREBFAEPARYBDQEYAQsBGgEJ"
+         "ARwBBwEeAQYBHgEHARwBCQEaAQsBGAENARYBDwEUAREBEgETARABFQEOARcBDAEZAQoBGwEIAR0B"
+         "BgEfAQQBIQECASMChAEA"},
+    };
+
+    memset(image_16x16, 0xff, sizeof(image_16x16));
+    set_matrix_identity(&rotate);
+    set_matrix_identity(&scale);
+    set_matrix_identity(&skew);
+    translate_matrix(&rotate, -2.0f, -2.0f);
+    translate_matrix(&scale, -2.0f, -2.0f);
+    translate_matrix(&skew, -2.0f, -2.0f);
+    rotate_matrix(&rotate, M_PI_4);
+    scale_matrix(&scale, 0.75f, 2.5f);
+    skew_matrix(&skew, -1.0f, 1.0f);
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D12DAffineTransform, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(effect_2d_affine_tests); ++i)
+    {
+        const struct effect_2d_affine_test *test = &effect_2d_affine_tests[i];
+        winetest_push_context("Test %u", i);
+
+        set_size_u(&input_size, test->img_width, test->img_height);
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        bitmap_desc.dpiX = 96.0f;
+        bitmap_desc.dpiY = 96.0f;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmap(context, input_size, test->img_data,
+                sizeof(*test->img_data) * test->img_width, &bitmap_desc, &bitmap);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
+        todo_wine
+        hr = ID2D1Effect_SetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX,
+                D2D1_PROPERTY_TYPE_MATRIX_3X2, (const BYTE *)test->matrix, sizeof(*test->matrix));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Effect_GetOutput(effect, &output);
+
+        ID2D1DeviceContext_GetImageLocalBounds(context, output, &output_bounds);
+        todo_wine
+        ok(compare_rect(&output_bounds, test->bounds.left, test->bounds.top, test->bounds.right, test->bounds.bottom, 1),
+                "Got unexpected output bounds {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                output_bounds.left, output_bounds.top, output_bounds.right, output_bounds.bottom,
+                test->bounds.left, test->bounds.top, test->bounds.right, test->bounds.bottom);
+        if (output_bounds.left == output_bounds.right || output_bounds.top == output_bounds.bottom)
+        {
+            ID2D1Image_Release(output);
+            ID2D1Bitmap1_Release(bitmap);
+            winetest_pop_context();
+            continue;
+        }
+
+        ID2D1DeviceContext_BeginDraw(context);
+        ID2D1DeviceContext_Clear(context, 0);
+        offset.x = 320.0f;
+        offset.y = 240.0f;
+        ID2D1DeviceContext_DrawImage(context, output, &offset, NULL, 0, 0);
+        hr = ID2D1DeviceContext_EndDraw(context, NULL, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        x = offset.x + output_bounds.left - 2.0f;
+        y = offset.y + output_bounds.top - 2.0f;
+        w = (output_bounds.right - output_bounds.left) + 4.0f;
+        h = (output_bounds.bottom - output_bounds.top) + 4.0f;
+        match = compare_figure(&ctx, x, y, w, h, 0xff652e89, 0, test->figure);
+        todo_wine
+        ok(match, "Figure does not match.\n");
+
+        ID2D1Image_Release(output);
+        ID2D1Bitmap1_Release(bitmap);
+        winetest_pop_context();
+    }
+
+    ID2D1Effect_Release(effect);
+    ID2D1DeviceContext_Release(context);
+    ID2D1Factory1_Release(factory);
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -9959,6 +10107,7 @@ START_TEST(d2d1)
     queue_test(test_geometry_group);
     queue_test(test_mt_factory);
     queue_test(test_effect);
+    queue_test(test_effect_2d_affine);
 
     run_queued_tests();
 }
