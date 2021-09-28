@@ -519,6 +519,7 @@ struct token_enum
     WCHAR *req, *opt;
     ULONG count;
     HKEY key;
+    DWORD index;
 };
 
 static struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
@@ -704,15 +705,54 @@ static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
                                        ULONG *fetched )
 {
     struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+    struct object_token *object;
+    HRESULT hr;
+    DWORD retCode;
+    WCHAR *subkey_name;
+    HKEY sub_key;
+    DWORD size;
 
     TRACE( "(%p)->(%lu %p %p)\n", This, num, tokens, fetched );
 
     if (!This->init) return SPERR_UNINITIALIZED;
-
-    FIXME( "semi-stub: Returning an empty enumerator\n" );
-
     if (fetched) *fetched = 0;
-    return S_FALSE;
+
+    *tokens = NULL;
+
+    RegQueryInfoKeyW( This->key, NULL, NULL, NULL, NULL, &size, NULL, NULL, NULL, NULL, NULL, NULL );
+    size = (size+1) * sizeof(WCHAR);
+    subkey_name = heap_alloc(size);
+    if (!subkey_name)
+        return E_OUTOFMEMORY;
+
+    retCode = RegEnumKeyExW( This->key, This->index, subkey_name, &size, NULL, NULL, NULL, NULL );
+    if (retCode != ERROR_SUCCESS)
+    {
+        heap_free(subkey_name);
+        return S_FALSE;
+    }
+
+    This->index++;
+
+    if (RegOpenKeyExW( This->key, subkey_name, 0, KEY_READ, &sub_key ) != ERROR_SUCCESS)
+    {
+        heap_free(subkey_name);
+        return E_FAIL;
+    }
+
+    hr = token_create( NULL, &IID_ISpObjectToken, (void**)tokens );
+    if (FAILED(hr))
+    {
+        heap_free(subkey_name);
+        return hr;
+    }
+
+    object = impl_from_ISpObjectToken( *tokens );
+    object->token_key = sub_key;
+    object->token_id = subkey_name;
+
+    if (fetched) *fetched = 1;
+    return hr;
 }
 
 static HRESULT WINAPI token_enum_Skip( ISpObjectTokenEnumBuilder *iface,
@@ -887,6 +927,7 @@ HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
     This->init = FALSE;
     This->count = 0;
     This->key = NULL;
+    This->index = 0;
 
     hr = ISpObjectTokenEnumBuilder_QueryInterface( &This->ISpObjectTokenEnumBuilder_iface, iid, obj );
 
