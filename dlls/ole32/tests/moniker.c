@@ -2376,7 +2376,7 @@ static void test_item_moniker(void)
         "Moniker_IsRunning",
         NULL
     };
-    IMoniker *moniker, *moniker2, *moniker3, *reduced, *anti, *inverse, *c;
+    IMoniker *moniker, *moniker1, *moniker2, *moniker3, *reduced, *anti, *inverse, *c;
     DWORD i, hash, eaten, cookie;
     HRESULT hr;
     IBindCtx *bindctx;
@@ -2756,6 +2756,26 @@ todo_wine
 
     IMoniker_Release(moniker2);
 
+    IMoniker_Release(moniker);
+
+    /* RelativePathTo() */
+    hr = create_moniker_from_desc("I1", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = create_moniker_from_desc("I2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_RelativePathTo(moniker, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, NULL, &moniker2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, moniker1, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    moniker2 = (void *)0xdeadbeef;
+    hr = IMoniker_RelativePathTo(moniker, moniker1, &moniker2);
+    ok(hr == MK_E_NOTBINDABLE, "Unexpected hr %#x.\n", hr);
+    ok(!moniker2, "Unexpected pointer.\n");
+
+    IMoniker_Release(moniker1);
     IMoniker_Release(moniker);
 }
 
