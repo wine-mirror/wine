@@ -53,18 +53,21 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
-#define CHECK_EXPECTED_METHOD(method_name) \
-do { \
-    ok(*expected_method_list != NULL, "Extra method %s called\n", method_name); \
-        if (*expected_method_list) \
-        { \
-            ok(!strcmp(*expected_method_list, method_name), "Expected %s to be called instead of %s\n", \
-                    *expected_method_list, method_name); \
-            expected_method_list++; \
-        } \
-} while(0)
-
 static char const * const *expected_method_list;
+
+#define CHECK_EXPECTED_METHOD(method_name) check_expected_method_(__LINE__, method_name)
+static void check_expected_method_(unsigned int line, const char *method_name)
+{
+    if (!expected_method_list) return;
+    ok(*expected_method_list != NULL, "Extra method %s called\n", method_name);
+    if (*expected_method_list)
+    {
+        ok(!strcmp(*expected_method_list, method_name), "Expected %s to be called instead of %s\n",
+                *expected_method_list, method_name);
+        expected_method_list++;
+    }
+}
+
 static const WCHAR wszFileName1[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','1','.','d','o','c',0};
 static const WCHAR wszFileName2[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','2','.','d','o','c',0};
 
@@ -384,6 +387,7 @@ struct test_moniker
     IOleItemContainer IOleItemContainer_iface;
     IParseDisplayName IParseDisplayName_iface;
     LONG refcount;
+    const char *inverse;
 
     BOOL no_IROTData;
 };
@@ -665,7 +669,7 @@ Moniker_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
                             BOOL fOnlyIfNotGeneric, IMoniker** ppmkComposite)
 {
     CHECK_EXPECTED_METHOD("Moniker_ComposeWith");
-    return E_NOTIMPL;
+    return MK_E_NEEDGENERIC;
 }
 
 static HRESULT WINAPI
@@ -714,8 +718,9 @@ Moniker_GetTimeOfLastChange(IMoniker* iface, IBindCtx* pbc,
 static HRESULT WINAPI
 Moniker_Inverse(IMoniker* iface,IMoniker** ppmk)
 {
+    struct test_moniker *moniker = impl_from_IMoniker(iface);
     CHECK_EXPECTED_METHOD("Moniker_Inverse");
-    return E_NOTIMPL;
+    return create_moniker_from_desc(moniker->inverse, ppmk);
 }
 
 static HRESULT WINAPI
@@ -933,6 +938,7 @@ static void test_ROT(void)
     hr = IRunningObjectTable_IsRunning(pROT, &test_moniker->IMoniker_iface);
     ok_ole_success(hr, IRunningObjectTable_IsRunning);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+    expected_method_list = NULL;
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Revoke);
@@ -2545,6 +2551,7 @@ static void test_item_moniker(void)
     expected_method_list = methods_isrunning;
     hr = IMoniker_IsRunning(moniker, bindctx, &container_moniker->IMoniker_iface, moniker2);
     ok(hr == 0x8beef000, "Unexpected hr %#x.\n", hr);
+    expected_method_list = NULL;
 
     IMoniker_Release(moniker2);
 
@@ -3043,6 +3050,7 @@ static void test_generic_composite_moniker(void)
         { "CI1I3", "CA1I2", MKSYS_GENERICCOMPOSITE, L"!I1!I2" },
     };
     IMoniker *moniker, *inverse, *moniker1, *moniker2, *moniker3;
+    struct test_moniker *m, *m2;
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
     DWORD hash, cookie;
@@ -3376,6 +3384,64 @@ todo_wine
 
     IMoniker_Release(moniker2);
     IMoniker_Release(moniker1);
+
+    /* Inverse() */
+    hr = create_moniker_from_desc("CI1I2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_Inverse(moniker1, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_Inverse(moniker1, &inverse);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(inverse, MKSYS_GENERICCOMPOSITE);
+    TEST_DISPLAY_NAME(inverse, L"\\..\\..");
+    IMoniker_Release(inverse);
+    IMoniker_Release(moniker1);
+
+    hr = create_moniker_from_desc("CA1A2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    inverse = (void *)0xdeadbeef;
+    hr = IMoniker_Inverse(moniker1, &inverse);
+    ok(hr == MK_E_NOINVERSE, "Unexpected hr %#x.\n", hr);
+    ok(!inverse, "Unexpected pointer.\n");
+    IMoniker_Release(moniker1);
+
+    hr = create_moniker_from_desc("CI1A2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    inverse = (void *)0xdeadbeef;
+    hr = IMoniker_Inverse(moniker1, &inverse);
+    ok(hr == MK_E_NOINVERSE, "Unexpected hr %#x.\n", hr);
+    ok(!inverse, "Unexpected pointer.\n");
+    IMoniker_Release(moniker1);
+
+    /* Now with custom moniker to observe inverse order */
+    m = create_test_moniker();
+    m->inverse = "I5";
+    hr = create_moniker_from_desc("I1", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = CreateGenericComposite(moniker1, &m->IMoniker_iface, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker2, MKSYS_GENERICCOMPOSITE);
+    inverse = (void *)0xdeadbeef;
+    hr = IMoniker_Inverse(moniker2, &inverse);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!inverse, "Unexpected pointer.\n");
+    IMoniker_Release(moniker1);
+
+    /* Use custom monikers for both, so they don't invert to anti monikers. */
+    m2 = create_test_moniker();
+    m2->inverse = "I4";
+
+    hr = CreateGenericComposite(&m2->IMoniker_iface, &m->IMoniker_iface, &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_Inverse(moniker2, &inverse);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(inverse, MKSYS_GENERICCOMPOSITE);
+    TEST_DISPLAY_NAME(inverse, L"!I5!I4");
+    IMoniker_Release(inverse);
+    IMoniker_Release(moniker2);
+
+    IMoniker_Release(&m->IMoniker_iface);
+    IMoniker_Release(&m2->IMoniker_iface);
 
     IBindCtx_Release(bindctx);
 }

@@ -740,57 +740,32 @@ static HRESULT WINAPI CompositeMonikerImpl_GetTimeOfLastChange(IMoniker *iface, 
     return hr;
 }
 
-/******************************************************************************
- *        CompositeMoniker_Inverse
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
+static HRESULT WINAPI CompositeMonikerImpl_Inverse(IMoniker *iface, IMoniker **inverse)
 {
-    HRESULT res;
-    IMoniker *tempMk,*antiMk,*rightMostMk,*tempInvMk,*rightMostInvMk;
-    IEnumMoniker *enumMoniker;
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *right_inverted, *left_inverted;
+    HRESULT hr;
 
-    TRACE("(%p,%p)\n",iface,ppmk);
+    TRACE("%p, %p.\n", iface, inverse);
 
-    if (ppmk==NULL)
-        return E_POINTER;
+    if (!inverse)
+        return E_INVALIDARG;
 
-    /* This method returns a composite moniker that consists of the inverses of each of the components */
-    /* of the original composite, stored in reverse order */
+    *inverse = NULL;
 
-    *ppmk = NULL;
-
-    res=CreateAntiMoniker(&antiMk);
-    if (FAILED(res))
-        return res;
-
-    res=IMoniker_ComposeWith(iface,antiMk,FALSE,&tempMk);
-    IMoniker_Release(antiMk);
-    if (FAILED(res))
-        return res;
-
-    if (tempMk==NULL)
-
-        return IMoniker_Inverse(iface,ppmk);
-
-    else{
-
-        IMoniker_Enum(iface,FALSE,&enumMoniker);
-        IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
-        IEnumMoniker_Release(enumMoniker);
-
-        IMoniker_Inverse(rightMostMk,&rightMostInvMk);
-        CompositeMonikerImpl_Inverse(tempMk,&tempInvMk);
-
-        res=CreateGenericComposite(rightMostInvMk,tempInvMk,ppmk);
-
-        IMoniker_Release(tempMk);
-        IMoniker_Release(rightMostMk);
-        IMoniker_Release(tempInvMk);
-        IMoniker_Release(rightMostInvMk);
-
-        return res;
+    if (FAILED(hr = IMoniker_Inverse(moniker->right, &right_inverted))) return hr;
+    if (FAILED(hr = IMoniker_Inverse(moniker->left, &left_inverted)))
+    {
+        IMoniker_Release(right_inverted);
+        return hr;
     }
+
+    hr = CreateGenericComposite(right_inverted, left_inverted, inverse);
+
+    IMoniker_Release(left_inverted);
+    IMoniker_Release(right_inverted);
+
+    return hr;
 }
 
 static HRESULT WINAPI CompositeMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker *other,
