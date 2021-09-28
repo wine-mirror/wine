@@ -3497,7 +3497,7 @@ todo_wine
 
 static void test_pointer_moniker(void)
 {
-    IMoniker *moniker, *moniker2, *prefix, *inverse, *anti, *c;
+    IMoniker *moniker, *moniker2, *moniker3, *prefix, *inverse, *anti, *c;
     struct test_factory factory;
     IEnumMoniker *enummoniker;
     DWORD hash, size;
@@ -3725,6 +3725,23 @@ todo_wine
     TEST_MONIKER_TYPE(moniker2, MKSYS_ITEMMONIKER);
     IMoniker_Release(moniker2);
     IMoniker_Release(c);
+
+    /* RelativePathTo() */
+    hr = create_moniker_from_desc("I1", &moniker3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    moniker2 = (void *)0xdeadbeef;
+    hr = IMoniker_RelativePathTo(moniker, NULL, &moniker2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!moniker2, "Unexpected pointer.\n");
+    hr = IMoniker_RelativePathTo(moniker, moniker3, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    moniker2 = (void *)0xdeadbeef;
+    hr = IMoniker_RelativePathTo(moniker, moniker3, &moniker2);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(!moniker2, "Unexpected pointer.\n");
+    IMoniker_Release(moniker3);
 
     IMoniker_Release(moniker);
 }
