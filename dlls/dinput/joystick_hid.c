@@ -137,6 +137,12 @@ static inline const char *debugstr_hid_caps( struct hid_caps *caps )
     return "(unknown type)";
 }
 
+struct extra_caps
+{
+    LONG deadzone;
+    LONG saturation;
+};
+
 #define DEVICE_STATE_MAX_SIZE 1024
 
 struct hid_joystick
@@ -156,6 +162,7 @@ struct hid_joystick
     HIDP_LINK_COLLECTION_NODE *collection_nodes;
     HIDP_BUTTON_CAPS *input_button_caps;
     HIDP_VALUE_CAPS *input_value_caps;
+    struct extra_caps *input_extra_caps;
 
     char *input_report_buf;
     USAGE_AND_PAGE *usages_buf;
@@ -424,6 +431,7 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
     {
         HeapFree( GetProcessHeap(), 0, tmp.usages_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_report_buf );
+        HeapFree( GetProcessHeap(), 0, tmp.input_extra_caps );
         HeapFree( GetProcessHeap(), 0, tmp.input_value_caps );
         HeapFree( GetProcessHeap(), 0, tmp.input_button_caps );
         HeapFree( GetProcessHeap(), 0, tmp.collection_nodes );
@@ -519,6 +527,34 @@ static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_caps 
     return DIENUM_STOP;
 }
 
+static BOOL get_property_prop_deadzone( struct hid_joystick *impl, struct hid_caps *caps,
+                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct extra_caps *extra;
+    DIPROPDWORD *deadzone = data;
+    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    deadzone->dwData = extra->deadzone;
+    return DIENUM_STOP;
+}
+
+static BOOL get_property_prop_saturation( struct hid_joystick *impl, struct hid_caps *caps,
+                                          DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct extra_caps *extra;
+    DIPROPDWORD *saturation = data;
+    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    saturation->dwData = extra->saturation;
+    return DIENUM_STOP;
+}
+
+static BOOL get_property_prop_granularity( struct hid_joystick *impl, struct hid_caps *caps,
+                                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    DIPROPDWORD *granularity = data;
+    granularity->dwData = 1;
+    return DIENUM_STOP;
+}
+
 static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, const GUID *guid,
                                                 DIPROPHEADER *header )
 {
@@ -536,6 +572,24 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
         if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_range, header ) == DIENUM_STOP)
+            return DI_OK;
+        return DIERR_NOTFOUND;
+    case (DWORD_PTR)DIPROP_DEADZONE:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_deadzone, header ) == DIENUM_STOP)
+            return DI_OK;
+        return DIERR_NOTFOUND;
+    case (DWORD_PTR)DIPROP_SATURATION:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_saturation, header ) == DIENUM_STOP)
+            return DI_OK;
+        return DIERR_NOTFOUND;
+    case (DWORD_PTR)DIPROP_GRANULARITY:
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
+        if (enum_objects( impl, header, DIDFT_AXIS, get_property_prop_granularity, header ) == DIENUM_STOP)
             return DI_OK;
         return DIERR_NOTFOUND;
     case (DWORD_PTR)DIPROP_PRODUCTNAME:
@@ -606,6 +660,26 @@ static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_caps 
     return DIENUM_CONTINUE;
 }
 
+static BOOL set_property_prop_deadzone( struct hid_joystick *impl, struct hid_caps *caps,
+                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct extra_caps *extra;
+    DIPROPDWORD *deadzone = data;
+    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    extra->deadzone = deadzone->dwData;
+    return DIENUM_CONTINUE;
+}
+
+static BOOL set_property_prop_saturation( struct hid_joystick *impl, struct hid_caps *caps,
+                                          DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct extra_caps *extra;
+    DIPROPDWORD *saturation = data;
+    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    extra->saturation = saturation->dwData;
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, const GUID *guid,
                                                 const DIPROPHEADER *header )
 {
@@ -625,6 +699,22 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
         if (value->lMin > value->lMax) return DIERR_INVALIDPARAM;
         enum_objects( impl, header, DIDFT_AXIS, set_property_prop_range, (void *)header );
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_DEADZONE:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (value->dwData > 10000) return DIERR_INVALIDPARAM;
+        enum_objects( impl, header, DIDFT_AXIS, set_property_prop_deadzone, (void *)header );
+        return DI_OK;
+    }
+    case (DWORD_PTR)DIPROP_SATURATION:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        if (value->dwData > 10000) return DIERR_INVALIDPARAM;
+        enum_objects( impl, header, DIDFT_AXIS, set_property_prop_saturation, (void *)header );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_FFLOAD:
@@ -859,7 +949,7 @@ static LONG scale_value( ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LON
     return min + MulDiv( tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin );
 }
 
-static LONG scale_axis_value( ULONG value, const HIDP_VALUE_CAPS *caps )
+static LONG scale_axis_value( ULONG value, const HIDP_VALUE_CAPS *caps, struct extra_caps *extra )
 {
     LONG tmp = sign_extend( value, caps ), log_ctr, log_min, log_max, phy_ctr, phy_min, phy_max;
     ULONG bit_max = (1 << caps->BitSize) - 1;
@@ -879,14 +969,14 @@ static LONG scale_axis_value( ULONG value, const HIDP_VALUE_CAPS *caps )
     tmp -= log_ctr;
     if (tmp <= 0)
     {
-        log_max = 0;
-        log_min -= log_ctr;
+        log_max = MulDiv( log_min - log_ctr, extra->deadzone, 10000 );
+        log_min = MulDiv( log_min - log_ctr, extra->saturation, 10000 );
         phy_max = phy_ctr;
     }
     else
     {
-        log_min = 0;
-        log_max -= log_ctr;
+        log_min = MulDiv( log_max - log_ctr, extra->deadzone, 10000 );
+        log_max = MulDiv( log_max - log_ctr, extra->saturation, 10000 );
         phy_min = phy_ctr;
     }
 
@@ -903,14 +993,16 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps 
     struct parse_device_state_params *params = data;
     char *report_buf = impl->input_report_buf;
     HIDP_VALUE_CAPS *value_caps = caps->value;
+    struct extra_caps *extra;
     LONG old_value, value;
     NTSTATUS status;
 
+    extra = impl->input_extra_caps + (value_caps - impl->input_value_caps);
     status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
                                  &logical_value, impl->preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
                                              instance->wUsagePage, instance->wUsage, status );
-    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, value_caps );
+    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, value_caps, extra );
     else value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
 
     old_value = *(LONG *)(params->old_state + instance->dwOfs);
@@ -1305,9 +1397,19 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
             .dwHow = DIPH_DEVICE,
         },
     };
+    DIPROPDWORD saturation =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
     HIDP_LINK_COLLECTION_NODE *nodes;
     struct hid_joystick *impl = NULL;
+    struct extra_caps *extra;
     DIDATAFORMAT *format = NULL;
     HIDP_BUTTON_CAPS *buttons;
     HIDP_VALUE_CAPS *values;
@@ -1356,6 +1458,9 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     size = impl->caps.NumberInputValueCaps * sizeof(HIDP_VALUE_CAPS);
     if (!(values = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
     impl->input_value_caps = values;
+    size = impl->caps.NumberInputValueCaps * sizeof(struct extra_caps);
+    if (!(extra = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto failed;
+    impl->input_extra_caps = extra;
 
     size = impl->caps.InputReportByteLength;
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
@@ -1400,6 +1505,8 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     enum_objects( impl, &range.diph, DIDFT_AXIS, set_property_prop_range, &range );
     range.lMax = 36000;
     enum_objects( impl, &range.diph, DIDFT_POV, set_property_prop_range, &range );
+    saturation.dwData = 10000;
+    enum_objects( impl, &range.diph, DIDFT_AXIS, set_property_prop_saturation, &saturation );
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;

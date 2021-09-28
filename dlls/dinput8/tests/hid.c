@@ -3867,16 +3867,13 @@ static void test_simple_joystick(void)
     todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_FFLOAD returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_RANGE returned %#x\n", hr );
@@ -3885,21 +3882,15 @@ static void test_simple_joystick(void)
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 0, "got %u expected %u\n", prop_dword.dwData, 0 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 1, "got %u expected %u\n", prop_dword.dwData, 1 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
 
     prop_range.diph.dwHow = DIPH_BYUSAGE;
@@ -4368,67 +4359,51 @@ static void test_simple_joystick(void)
     prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 10001;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
     prop_dword.dwData = 6000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_dword.dwData = 2000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
     ok( prop_dword.dwData == 2000, "got %u expected %u\n", prop_dword.dwData, 2000 );
     prop_dword.dwData = 7000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 2000, "got %u expected %u\n", prop_dword.dwData, 2000 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 7000, "got %u expected %u\n", prop_dword.dwData, 7000 );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_Y, HID_USAGE_PAGE_GENERIC );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_DEADZONE returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 1000, "got %u expected %u\n", prop_dword.dwData, 1000 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_SATURATION returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 6000, "got %u expected %u\n", prop_dword.dwData, 6000 );
 
     for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
@@ -4439,9 +4414,7 @@ static void test_simple_joystick(void)
         if (broken( state.lX == -10750 )) win_skip( "Ignoring 32-bit rounding\n" );
         else
         {
-            todo_wine_if( i == 3 || i == 4 )
             check_member( state, expect_state_abs[i], "%d", lX );
-            todo_wine_if( i == 3 || i == 4 )
             check_member( state, expect_state_abs[i], "%d", lY );
         }
         check_member( state, expect_state_abs[i], "%d", lZ );
@@ -4465,7 +4438,6 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceState returned: %#x\n", hr );
     winetest_push_context( "state[%d]", i );
     check_member( state, expect_state_abs[i], "%d", lX );
-    todo_wine
     check_member( state, expect_state_abs[i], "%d", lY );
     check_member( state, expect_state_abs[i], "%d", lZ );
     check_member( state, expect_state_abs[i], "%d", lRx );
@@ -4547,11 +4519,9 @@ static void test_simple_joystick(void)
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_CALIBRATION returned %#x\n", hr );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_DEADZONE returned %#x\n", hr );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_SATURATION returned %#x\n", hr );
 
     for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
