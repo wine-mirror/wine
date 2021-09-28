@@ -607,9 +607,13 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
     switch (LOWORD( guid ))
     {
     case (DWORD_PTR)DIPROP_RANGE:
+    {
+        DIPROPRANGE *value = (DIPROPRANGE *)header;
         if (header->dwSize != sizeof(DIPROPRANGE)) return DIERR_INVALIDPARAM;
+        if (value->lMin > value->lMax) return DIERR_INVALIDPARAM;
         enum_objects( impl, header, DIDFT_AXIS, set_property_prop_range, (void *)header );
         return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_FFLOAD:
     case (DWORD_PTR)DIPROP_GRANULARITY:
     case (DWORD_PTR)DIPROP_VIDPID:

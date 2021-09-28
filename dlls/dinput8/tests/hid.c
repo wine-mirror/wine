@@ -4275,7 +4275,6 @@ static void test_simple_joystick(void)
     prop_range.lMin = -4000;
     prop_range.lMax = -14000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_RANGE, &prop_range.diph );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SetProperty DIPROP_RANGE returned %#x\n", hr );
     prop_range.lMin = -14000;
     prop_range.lMax = -4000;
