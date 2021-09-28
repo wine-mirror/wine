@@ -3637,6 +3637,10 @@ HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, str
     object->c.ops = &wined3d_deferred_context_ops;
     object->c.device = device;
 
+    /* Make sure the first command list gets the state reset when executed.
+     * Resets for subsequent command lists are encoded in wined3d_deferred_context_record_command_list(). */
+    wined3d_device_context_emit_reset_state(&object->c, true);
+
     TRACE("Created deferred context %p.\n", object);
     *context = &object->c;
 

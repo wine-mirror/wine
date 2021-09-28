@@ -32888,6 +32888,29 @@ static void test_deferred_context_rendering(void)
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);
 
+    /* Command lists do not inherit state from the immediate context. */
+
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
+    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
+
+    ID3D11DeviceContext_OMSetRenderTargets(deferred, 1, &test_context.backbuffer_rtv, NULL);
+    set_viewport(deferred, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    test_context.immediate_context = deferred;
+    draw_color_quad(&test_context, &white);
+    test_context.immediate_context = immediate;
+    hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list1);
+    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetBlendState(immediate, green_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
+    ID3D11DeviceContext_ExecuteCommandList(immediate, list1, FALSE);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+
+    ID3D11CommandList_Release(list1);
+    ID3D11DeviceContext_Release(deferred);
+
     /* The clearing of state done by FinishCommandList is captured by a
      * subsequent call to FinishCommandList... */
 
