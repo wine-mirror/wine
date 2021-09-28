@@ -359,9 +359,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             TRACE( "Ignoring input button %s, usage page not implemented.\n", debugstr_hid_caps( &caps ) );
         else if (caps.button->IsRange)
         {
-            if (caps.button->NotRange.Usage >= 128)
-                FIXME( "Ignoring input button %s, too many buttons.\n", debugstr_hid_caps( &caps ) );
-            else for (j = caps.button->Range.UsageMin; j <= caps.button->Range.UsageMax; ++j)
+            for (j = caps.button->Range.UsageMin; j <= caps.button->Range.UsageMax; ++j)
             {
                 instance.dwOfs = button_ofs + (j - caps.button->Range.UsageMin);
                 instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
@@ -375,8 +373,6 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 if (ret != DIENUM_CONTINUE) return ret;
             }
         }
-        else if (caps.button->NotRange.Usage >= 128)
-            FIXME( "Ignoring input button %s, too many buttons.\n", debugstr_hid_caps( &caps ) );
         else
         {
             instance.dwOfs = button_ofs;
