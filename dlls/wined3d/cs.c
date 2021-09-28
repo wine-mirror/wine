@@ -2463,7 +2463,8 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, 
 
     wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
 
-    if ((*map_ptr = context->ops->prepare_upload_bo(context, resource,
+    if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+            && (*map_ptr = context->ops->prepare_upload_bo(context, resource,
             sub_resource_idx, box, row_pitch, slice_pitch, flags, &addr)))
     {
         TRACE("Returning upload bo %s, map pointer %p, row pitch %u, slice pitch %u.\n",
