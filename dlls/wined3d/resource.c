@@ -586,3 +586,29 @@ VkPipelineStageFlags vk_pipeline_stage_mask_from_bind_flags(uint32_t bind_flags)
 
     return flags;
 }
+
+void *resource_offset_map_pointer(struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        uint8_t *base_memory, const struct wined3d_box *box)
+{
+    const struct wined3d_format *format = resource->format;
+    unsigned int row_pitch, slice_pitch;
+
+    wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
+
+    if ((resource->format_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
+    {
+        /* Compressed textures are block based, so calculate the offset of
+         * the block that contains the top-left pixel of the mapped box. */
+        return base_memory
+                + (box->front * slice_pitch)
+                + ((box->top / format->block_height) * row_pitch)
+                + ((box->left / format->block_width) * format->block_byte_count);
+    }
+    else
+    {
+        return base_memory
+                + (box->front * slice_pitch)
+                + (box->top * row_pitch)
+                + (box->left * format->byte_count);
+    }
+}

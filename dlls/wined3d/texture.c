@@ -3466,11 +3466,8 @@ static void texture_resource_sub_resource_get_map_pitch(struct wined3d_resource 
 static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
         void **map_ptr, const struct wined3d_box *box, DWORD flags)
 {
-    const struct wined3d_format *format = resource->format;
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_device *device = resource->device;
-    unsigned int fmt_flags = resource->format_flags;
-    unsigned int row_pitch, slice_pitch;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_bo_address data;
@@ -3537,24 +3534,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
 
     context_release(context);
 
-    texture_resource_sub_resource_get_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
-
-    if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
-    {
-        /* Compressed textures are block based, so calculate the offset of
-         * the block that contains the top-left pixel of the mapped box. */
-        *map_ptr = base_memory
-                + (box->front * slice_pitch)
-                + ((box->top / format->block_height) * row_pitch)
-                + ((box->left / format->block_width) * format->block_byte_count);
-    }
-    else
-    {
-        *map_ptr = base_memory
-                + (box->front * slice_pitch)
-                + (box->top * row_pitch)
-                + (box->left * format->byte_count);
-    }
+    *map_ptr = resource_offset_map_pointer(resource, sub_resource_idx, base_memory, box);
 
     if (texture->swapchain && texture->swapchain->front_buffer == texture)
     {
