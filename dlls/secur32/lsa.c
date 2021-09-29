@@ -39,7 +39,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-#define LSA_MAGIC ('L' << 24 | 'S' << 16 | 'A' << 8 | ' ')
+#define LSA_MAGIC_CONNECTION  ('L' << 24 | 'S' << 16 | 'A' << 8 | '0')
+#define LSA_MAGIC_CREDENTIALS ('L' << 24 | 'S' << 16 | 'A' << 8 | '1')
+#define LSA_MAGIC_CONTEXT     ('L' << 24 | 'S' << 16 | 'A' << 8 | '2')
 
 struct lsa_package
 {
@@ -54,9 +56,11 @@ struct lsa_package
 static struct lsa_package *loaded_packages;
 static ULONG loaded_packages_count;
 
-struct lsa_connection
+struct lsa_handle
 {
     DWORD magic;
+    struct lsa_package *package;
+    LSA_SEC_HANDLE handle;
 };
 
 static const char *debugstr_as(const LSA_STRING *str)
@@ -89,21 +93,21 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id
     return STATUS_INVALID_PARAMETER;
 }
 
-static struct lsa_connection *alloc_lsa_connection(void)
+static struct lsa_handle *alloc_lsa_handle(ULONG magic)
 {
-    struct lsa_connection *ret;
-    if (!(ret = malloc(sizeof(*ret)))) return NULL;
-    ret->magic = LSA_MAGIC;
+    struct lsa_handle *ret;
+    if (!(ret = calloc(1, sizeof(*ret)))) return NULL;
+    ret->magic = magic;
     return ret;
 }
 
 NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
 {
-    struct lsa_connection *lsa_conn;
+    struct lsa_handle *lsa_conn;
 
     TRACE("%p\n", LsaHandle);
 
-    if (!(lsa_conn = alloc_lsa_connection())) return STATUS_NO_MEMORY;
+    if (!(lsa_conn = alloc_lsa_handle(LSA_MAGIC_CONNECTION))) return STATUS_NO_MEMORY;
     *LsaHandle = lsa_conn;
     return STATUS_SUCCESS;
 }
@@ -111,22 +115,22 @@ NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
 NTSTATUS WINAPI LsaRegisterLogonProcess(PLSA_STRING LogonProcessName,
         PHANDLE LsaHandle, PLSA_OPERATIONAL_MODE SecurityMode)
 {
-    struct lsa_connection *lsa_conn;
+    struct lsa_handle *lsa_conn;
 
     FIXME("%s %p %p stub\n", debugstr_as(LogonProcessName), LsaHandle, SecurityMode);
 
-    if (!(lsa_conn = alloc_lsa_connection())) return STATUS_NO_MEMORY;
+    if (!(lsa_conn = alloc_lsa_handle(LSA_MAGIC_CONNECTION))) return STATUS_NO_MEMORY;
     *LsaHandle = lsa_conn;
     return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI LsaDeregisterLogonProcess(HANDLE LsaHandle)
 {
-    struct lsa_connection *lsa_conn = (struct lsa_connection *)LsaHandle;
+    struct lsa_handle *lsa_conn = (struct lsa_handle *)LsaHandle;
 
     TRACE("%p\n", LsaHandle);
 
-    if (!lsa_conn || lsa_conn->magic != LSA_MAGIC) return STATUS_INVALID_HANDLE;
+    if (!lsa_conn || lsa_conn->magic != LSA_MAGIC_CONNECTION) return STATUS_INVALID_HANDLE;
     lsa_conn->magic = 0;
     free(lsa_conn);
 
@@ -307,6 +311,7 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleW(
 {
     SECURITY_STATUS status;
     struct lsa_package *lsa_package;
+    struct lsa_handle *lsa_handle;
     UNICODE_STRING principal_us;
     LSA_SEC_HANDLE lsa_credential;
 
@@ -329,8 +334,11 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleW(
         credentials_use, logon_id, auth_data, get_key_fn, get_key_arg, &lsa_credential, ts_expiry);
     if (status == SEC_E_OK)
     {
-        credential->dwLower = (ULONG_PTR)lsa_credential;
-        credential->dwUpper = (ULONG_PTR)lsa_package;
+        if (!(lsa_handle = alloc_lsa_handle(LSA_MAGIC_CREDENTIALS))) return STATUS_NO_MEMORY;
+        lsa_handle->package = lsa_package;
+        lsa_handle->handle = lsa_credential;
+        credential->dwLower = (ULONG_PTR)lsa_handle;
+        credential->dwUpper = 0;
     }
     return status;
 }
@@ -411,21 +419,23 @@ done:
 
 static SECURITY_STATUS WINAPI lsa_FreeCredentialsHandle(CredHandle *credential)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_credential;
+    struct lsa_handle *lsa_cred;
+    SECURITY_STATUS status;
 
     TRACE("%p\n", credential);
     if (!credential) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)credential->dwUpper;
-    lsa_credential = (LSA_SEC_HANDLE)credential->dwLower;
+    lsa_cred = (struct lsa_handle *)credential->dwLower;
+    if (!lsa_cred || lsa_cred->magic != LSA_MAGIC_CREDENTIALS) return SEC_E_INVALID_HANDLE;
 
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->lsa_api || !lsa_package->lsa_api->FreeCredentialsHandle)
+    if (!lsa_cred->package->lsa_api || !lsa_cred->package->lsa_api->FreeCredentialsHandle)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->lsa_api->FreeCredentialsHandle(lsa_credential);
+    status = lsa_cred->package->lsa_api->FreeCredentialsHandle(lsa_cred->handle);
+
+    lsa_cred->magic = 0;
+    free(lsa_cred);
+    return status;
 }
 
 static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
@@ -434,10 +444,11 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
     CtxtHandle *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry)
 {
     SECURITY_STATUS status;
-    struct lsa_package *lsa_package = NULL;
-    LSA_SEC_HANDLE lsa_credential = 0, lsa_context = 0, new_lsa_context;
+    struct lsa_handle *lsa_cred = NULL, *lsa_ctx = NULL, *new_lsa_ctx;
+    struct lsa_package *package = NULL;
     UNICODE_STRING target_name_us;
     BOOLEAN mapped_context;
+    LSA_SEC_HANDLE new_handle;
 
     TRACE("%p %p %s %#x %d %d %p %d %p %p %p %p\n", credential, context,
         debugstr_w(target_name), context_req, reserved1, target_data_rep, input,
@@ -445,30 +456,34 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
 
     if (context)
     {
-        lsa_package = (struct lsa_package *)context->dwUpper;
-        lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+        lsa_ctx = (struct lsa_handle *)context->dwLower;
+        if (lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
+        package = lsa_ctx->package;
     }
     else if (credential)
     {
-        lsa_package = (struct lsa_package *)credential->dwUpper;
-        lsa_credential = (LSA_SEC_HANDLE)credential->dwLower;
+        lsa_cred = (struct lsa_handle *)credential->dwLower;
+        if (lsa_cred->magic != LSA_MAGIC_CREDENTIALS) return SEC_E_INVALID_HANDLE;
+        package = lsa_cred->package;
     }
+    if (!package || !new_context) return SEC_E_INVALID_HANDLE;
 
-    if (!lsa_package || !new_context) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->lsa_api || !lsa_package->lsa_api->InitLsaModeContext)
+    if (!package->lsa_api || !package->lsa_api->InitLsaModeContext)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
     if (target_name)
         RtlInitUnicodeString(&target_name_us, target_name);
 
-    status = lsa_package->lsa_api->InitLsaModeContext(lsa_credential, lsa_context,
-        target_name ? &target_name_us : NULL, context_req, target_data_rep, input,
-        &new_lsa_context, output, context_attr, ts_expiry, &mapped_context, NULL /* FIXME */);
+    status = package->lsa_api->InitLsaModeContext(lsa_cred ? lsa_cred->handle : 0,
+        lsa_ctx ? lsa_ctx->handle : 0, target_name ? &target_name_us : NULL, context_req, target_data_rep,
+        input, &new_handle, output, context_attr, ts_expiry, &mapped_context, NULL /* FIXME */);
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
-        new_context->dwLower = (ULONG_PTR)new_lsa_context;
-        new_context->dwUpper = (ULONG_PTR)lsa_package;
+        if (!(new_lsa_ctx = alloc_lsa_handle(LSA_MAGIC_CONTEXT))) return STATUS_NO_MEMORY;
+        new_lsa_ctx->package = package;
+        new_lsa_ctx->handle = new_handle;
+        new_context->dwLower = (ULONG_PTR)new_lsa_ctx;
+        new_context->dwUpper = 0;
     }
     return status;
 }
@@ -504,78 +519,78 @@ static SECURITY_STATUS WINAPI lsa_AcceptSecurityContext(
     SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry)
 {
     SECURITY_STATUS status;
-    struct lsa_package *lsa_package = NULL;
-    LSA_SEC_HANDLE lsa_credential = 0, lsa_context = 0, new_lsa_context;
+    struct lsa_package *package = NULL;
+    struct lsa_handle *lsa_cred = NULL, *lsa_ctx = NULL, *new_lsa_ctx;
     BOOLEAN mapped_context;
+    LSA_SEC_HANDLE new_handle;
 
     TRACE("%p %p %p %#x %#x %p %p %p %p\n", credential, context, input,
         context_req, target_data_rep, new_context, output, context_attr, ts_expiry);
 
     if (context)
     {
-        lsa_package = (struct lsa_package *)context->dwUpper;
-        lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+        lsa_ctx = (struct lsa_handle *)context->dwLower;
+        if (lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
+        package = lsa_ctx->package;
     }
     else if (credential)
     {
-        lsa_package = (struct lsa_package *)credential->dwUpper;
-        lsa_credential = (LSA_SEC_HANDLE)credential->dwLower;
+        lsa_cred = (struct lsa_handle *)credential->dwLower;
+        if (lsa_cred->magic != LSA_MAGIC_CREDENTIALS) return SEC_E_INVALID_HANDLE;
+        package = lsa_cred->package;
     }
+    if (!package || !new_context) return SEC_E_INVALID_HANDLE;
 
-    if (!lsa_package || !new_context) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->lsa_api || !lsa_package->lsa_api->AcceptLsaModeContext)
+    if (!package->lsa_api || !package->lsa_api->AcceptLsaModeContext)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    status = lsa_package->lsa_api->AcceptLsaModeContext(lsa_credential, lsa_context,
-        input, context_req, target_data_rep, &new_lsa_context, output, context_attr,
-        ts_expiry, &mapped_context, NULL /* FIXME */);
+    status = package->lsa_api->AcceptLsaModeContext(lsa_cred ? lsa_cred->handle : 0,
+        lsa_ctx ? lsa_ctx->handle : 0, input, context_req, target_data_rep, &new_handle, output,
+        context_attr, ts_expiry, &mapped_context, NULL /* FIXME */);
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
-        new_context->dwLower = (ULONG_PTR)new_lsa_context;
-        new_context->dwUpper = (ULONG_PTR)lsa_package;
+        if (!(new_lsa_ctx = alloc_lsa_handle(LSA_MAGIC_CONTEXT))) return STATUS_NO_MEMORY;
+        new_lsa_ctx->package = package;
+        new_lsa_ctx->handle = new_handle;
+        new_context->dwLower = (ULONG_PTR)new_lsa_ctx;
+        new_context->dwUpper = 0;
     }
     return status;
 }
 
 static SECURITY_STATUS WINAPI lsa_DeleteSecurityContext(CtxtHandle *context)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_context;
+    struct lsa_handle *lsa_ctx;
+    SECURITY_STATUS status;
 
     TRACE("%p\n", context);
 
     if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)context->dwUpper;
-    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
-
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->lsa_api || !lsa_package->lsa_api->DeleteContext)
+    if (!lsa_ctx->package->lsa_api || !lsa_ctx->package->lsa_api->DeleteContext)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->lsa_api->DeleteContext(lsa_context);
+    status = lsa_ctx->package->lsa_api->DeleteContext(lsa_ctx->handle);
+    free(lsa_ctx);
+    return status;
 }
 
 static SECURITY_STATUS WINAPI lsa_QueryContextAttributesW(CtxtHandle *context, ULONG attribute, void *buffer)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_context;
+    struct lsa_handle *lsa_ctx;
 
     TRACE("%p %d %p\n", context, attribute, buffer);
 
     if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)context->dwUpper;
-    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
-
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->lsa_api || !lsa_package->lsa_api->SpQueryContextAttributes)
+    if (!lsa_ctx->package->lsa_api || !lsa_ctx->package->lsa_api->SpQueryContextAttributes)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->lsa_api->SpQueryContextAttributes(lsa_context, attribute, buffer);
+    return lsa_ctx->package->lsa_api->SpQueryContextAttributes(lsa_ctx->handle, attribute, buffer);
 }
 
 static SecPkgInfoA *package_infoWtoA( const SecPkgInfoW *info )
@@ -653,85 +668,69 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, U
 static SECURITY_STATUS WINAPI lsa_MakeSignature(CtxtHandle *context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_context;
+    struct lsa_handle *lsa_ctx;
 
     TRACE("%p %#x %p %u)\n", context, quality_of_protection, message, message_seq_no);
 
     if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)context->dwUpper;
-    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
-
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->user_api || !lsa_package->user_api->MakeSignature)
+    if (!lsa_ctx->package->user_api || !lsa_ctx->package->user_api->MakeSignature)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->user_api->MakeSignature(lsa_context, quality_of_protection, message, message_seq_no);
+    return lsa_ctx->package->user_api->MakeSignature(lsa_ctx->handle, quality_of_protection, message, message_seq_no);
 }
 
 static SECURITY_STATUS WINAPI lsa_VerifySignature(CtxtHandle *context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_context;
+    struct lsa_handle *lsa_ctx;
 
     TRACE("%p %p %u %p)\n", context, message, message_seq_no, quality_of_protection);
 
     if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)context->dwUpper;
-    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
-
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->user_api || !lsa_package->user_api->VerifySignature)
+    if (!lsa_ctx->package->user_api || !lsa_ctx->package->user_api->VerifySignature)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->user_api->VerifySignature(lsa_context, message, message_seq_no, quality_of_protection);
+    return lsa_ctx->package->user_api->VerifySignature(lsa_ctx->handle, message, message_seq_no, quality_of_protection);
 }
 
 static SECURITY_STATUS WINAPI lsa_EncryptMessage(CtxtHandle *context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_context;
+    struct lsa_handle *lsa_ctx;
 
     TRACE("%p %#x %p %u)\n", context, quality_of_protection, message, message_seq_no);
 
     if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)context->dwUpper;
-    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
-
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->user_api || !lsa_package->user_api->SealMessage)
+    if (!lsa_ctx->package->user_api || !lsa_ctx->package->user_api->SealMessage)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->user_api->SealMessage(lsa_context, quality_of_protection, message, message_seq_no);
+    return lsa_ctx->package->user_api->SealMessage(lsa_ctx->handle, quality_of_protection, message, message_seq_no);
 }
 
 static SECURITY_STATUS WINAPI lsa_DecryptMessage(CtxtHandle *context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection)
 {
-    struct lsa_package *lsa_package;
-    LSA_SEC_HANDLE lsa_context;
+    struct lsa_handle *lsa_ctx;
 
     TRACE("%p %p %u %p)\n", context, message, message_seq_no, quality_of_protection);
 
     if (!context) return SEC_E_INVALID_HANDLE;
+    lsa_ctx = (struct lsa_handle *)context->dwLower;
+    if (!lsa_ctx || lsa_ctx->magic != LSA_MAGIC_CONTEXT) return SEC_E_INVALID_HANDLE;
 
-    lsa_package = (struct lsa_package *)context->dwUpper;
-    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
-
-    if (!lsa_package) return SEC_E_INVALID_HANDLE;
-
-    if (!lsa_package->user_api || !lsa_package->user_api->UnsealMessage)
+    if (!lsa_ctx->package->user_api || !lsa_ctx->package->user_api->UnsealMessage)
         return SEC_E_UNSUPPORTED_FUNCTION;
 
-    return lsa_package->user_api->UnsealMessage(lsa_context, message, message_seq_no, quality_of_protection);
+    return lsa_ctx->package->user_api->UnsealMessage(lsa_ctx->handle, message, message_seq_no, quality_of_protection);
 }
 
 static const SecurityFunctionTableW lsa_sspi_tableW =
