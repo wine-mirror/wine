@@ -120,18 +120,24 @@ static INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
     return DOSVM_DefaultHandler;
 }
 
-
-/**********************************************************************
- *          DOSVM_IntProcRelay
+/* Set up the context so that we will call __wine_call_int_handler16 upon
+ * resuming execution.
  *
- * Simple DOSRELAY that interprets its argument as INTPROC and calls it.
- */
-static void DOSVM_IntProcRelay( CONTEXT *context, LPVOID data )
+ * We can't just call the interrupt handler directly, since some code (in
+ * particular, LoadModule16) assumes that it's running on the 32-bit stack and
+ * that CURRENT_STACK16 points to the bottom of the used 16-bit stack. */
+static void return_to_interrupt_handler( CONTEXT *context, BYTE intnum )
 {
-    INTPROC proc = (INTPROC)data;
-    proc(context);
-}
+    FARPROC16 addr = GetProcAddress16( GetModuleHandle16( "KERNEL" ), "__wine_call_int_handler" );
+    WORD *stack = ldt_get_ptr( context->SegSs, context->Esp );
 
+    *--stack = intnum;
+    *--stack = context->SegCs;
+    *--stack = context->Eip;
+    context->Esp -= 3 * sizeof(WORD);
+    context->SegCs = SELECTOROF(addr);
+    context->Eip = OFFSETOF(addr);
+}
 
 /**********************************************************************
  *          DOSVM_PushFlags
@@ -205,10 +211,7 @@ static void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
         if (intnum == 0x25 || intnum == 0x26)
             DOSVM_PushFlags( context, FALSE, FALSE );
 
-        DOSVM_BuildCallFrame( context,
-                              DOSVM_IntProcRelay,
-                              DOSVM_GetBuiltinHandler(
-                                  OFFSETOF(addr)/DOSVM_STUB_PM16 ) );
+        return_to_interrupt_handler( context, OFFSETOF(addr) / DOSVM_STUB_PM16 );
     }
     else
     {
@@ -267,9 +270,7 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
         if (intnum == 0x25 || intnum == 0x26)
             DOSVM_PushFlags( context, FALSE, TRUE );
 
-        DOSVM_BuildCallFrame( context, 
-                              DOSVM_IntProcRelay, 
-                              DOSVM_GetBuiltinHandler(intnum) );
+        return_to_interrupt_handler( context, intnum );
     }
     else if (ldt_is_system(context->SegCs))
     {
@@ -399,9 +400,9 @@ static void DOSVM_CallBuiltinHandler( CONTEXT *context, BYTE intnum )
 
 
 /**********************************************************************
- *         __wine_call_int_handler    (KERNEL.@)
+ *         __wine_call_int_handler16    (KERNEL.@)
  */
-void __wine_call_int_handler( CONTEXT *context, BYTE intnum )
+void WINAPI __wine_call_int_handler16( BYTE intnum, CONTEXT *context )
 {
     DOSMEM_InitDosMemory();
     DOSVM_CallBuiltinHandler( context, intnum );

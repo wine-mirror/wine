@@ -895,7 +895,7 @@ LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs )
  */
 void WINAPI DOS3Call( CONTEXT *context )
 {
-    __wine_call_int_handler( context, 0x21 );
+    __wine_call_int_handler16( 0x21, context );
 }
 
 
@@ -904,7 +904,7 @@ void WINAPI DOS3Call( CONTEXT *context )
  */
 void WINAPI NetBIOSCall16( CONTEXT *context )
 {
-    __wine_call_int_handler( context, 0x5c );
+    __wine_call_int_handler16( 0x5c, context );
 }
 
 

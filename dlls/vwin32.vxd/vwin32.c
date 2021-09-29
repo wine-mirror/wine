@@ -55,7 +55,7 @@ typedef struct tagMID {
 } MID, *PMID;
 #include <poppack.h>
 
-extern void __wine_call_int_handler( CONTEXT *context, BYTE intnum );
+extern void WINAPI __wine_call_int_handler16( BYTE intnum, CONTEXT *context );
 
 /* Pop a DWORD from the 32-bit stack */
 static inline DWORD stack32_pop( CONTEXT *context )
@@ -155,7 +155,7 @@ BOOL WINAPI VWIN32_DeviceIoControl(DWORD dwIoControlCode,
                 break;
             }
 
-            __wine_call_int_handler( &cxt, intnum );
+            __wine_call_int_handler16( intnum, &cxt );
             CONTEXT_2_DIOCRegs( &cxt, pOut );
         }
         return TRUE;
@@ -208,7 +208,7 @@ DWORD WINAPI VWIN32_VxDCall( DWORD service, CONTEXT *context )
 
             context->Eax = callnum;
             context->Ecx = parm;
-            __wine_call_int_handler( context, 0x31 );
+            __wine_call_int_handler16( 0x31, context );
             return LOWORD(context->Eax);
         }
     case 0x002a: /* Int41 dispatch - parm = int41 service number */
