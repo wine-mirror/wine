@@ -3173,6 +3173,7 @@ static void test_generic_composite_moniker(void)
     IUnknown *unknown;
     IROTData *rotdata;
     IMarshal *marshal;
+    BYTE buffer[100];
     IStream *stream;
     unsigned int i;
     FILETIME ft;
@@ -3605,6 +3606,17 @@ todo_wine
 
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &str);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    /* Comparison data, pointer component does not support it. */
+    hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rotdata);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    len = 0;
+    hr = IROTData_GetComparisonData(rotdata, buffer, sizeof(buffer), &len);
+todo_wine {
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(!len, "Unexpected length %u.\n", len);
+}
+    IROTData_Release(rotdata);
 
     IMoniker_Release(moniker);
 
