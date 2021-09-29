@@ -580,29 +580,18 @@ typedef BOOL (WINAPI *RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
  */
 BOOL WINAPI NtGdiUpdateColors( HDC hDC )
 {
-    HMODULE mod;
     int size = NtGdiGetDeviceCaps( hDC, SIZEPALETTE );
+    HWND hwnd;
 
     if (!size) return FALSE;
+    if (!user_callbacks) return TRUE;
 
-    mod = GetModuleHandleA("user32.dll");
-    if (mod)
-    {
-        WindowFromDC_funcptr pWindowFromDC = (WindowFromDC_funcptr)GetProcAddress(mod,"WindowFromDC");
-        if (pWindowFromDC)
-        {
-            HWND hWnd = pWindowFromDC( hDC );
+    hwnd = user_callbacks->pWindowFromDC( hDC );
 
-            /* Docs say that we have to remap current drawable pixel by pixel
-             * but it would take forever given the speed of XGet/PutPixel.
-             */
-            if (hWnd && size)
-            {
-                RedrawWindow_funcptr pRedrawWindow = (void *)GetProcAddress( mod, "RedrawWindow" );
-                if (pRedrawWindow) pRedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
-            }
-        }
-    }
+    /* Docs say that we have to remap current drawable pixel by pixel
+     * but it would take forever given the speed of XGet/PutPixel.
+     */
+    if (hwnd && size) user_callbacks->pRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE );
     return TRUE;
 }
 

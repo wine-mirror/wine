@@ -579,14 +579,7 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
  */
 DWORD get_system_dpi(void)
 {
-    static UINT (WINAPI *pGetDpiForSystem)(void);
-
-    if (!pGetDpiForSystem)
-    {
-        HMODULE user = GetModuleHandleW( L"user32.dll" );
-        if (user) pGetDpiForSystem = (void *)GetProcAddress( user, "GetDpiForSystem" );
-    }
-    return pGetDpiForSystem ? pGetDpiForSystem() : 96;
+    return user_callbacks ? user_callbacks->pGetDpiForSystem() : 96;
 }
 
 static HFONT create_font( const LOGFONTW *deffont )

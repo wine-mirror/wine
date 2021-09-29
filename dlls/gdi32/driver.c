@@ -65,14 +65,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static BOOL (WINAPI *pEnumDisplayMonitors)(HDC, LPRECT, MONITORENUMPROC, LPARAM);
-static BOOL (WINAPI *pEnumDisplaySettingsW)(LPCWSTR, DWORD, LPDEVMODEW);
-static HWND (WINAPI *pGetDesktopWindow)(void);
-static BOOL (WINAPI *pGetMonitorInfoW)(HMONITOR, LPMONITORINFO);
-static INT (WINAPI *pGetSystemMetrics)(INT);
-static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
-
-
 /**********************************************************************
  *	     get_display_driver
  *
@@ -82,10 +74,7 @@ const struct gdi_dc_funcs *get_display_driver(void)
 {
     if (!driver_funcs)
     {
-        HMODULE user32 = LoadLibraryA( "user32.dll" );
-        pGetDesktopWindow = (void *)GetProcAddress( user32, "GetDesktopWindow" );
-
-        if (!pGetDesktopWindow() || !driver_funcs)
+        if (!user_callbacks || !user_callbacks->pGetDesktopWindow() || !driver_funcs)
         {
             static struct gdi_dc_funcs empty_funcs;
             WARN( "failed to load the display driver, falling back to null driver\n" );
@@ -95,7 +84,6 @@ const struct gdi_dc_funcs *get_display_driver(void)
     return driver_funcs;
 }
 
-
 /***********************************************************************
  *           __wine_set_display_driver    (win32u.@)
  */
@@ -103,7 +91,6 @@ void CDECL __wine_set_display_driver( HMODULE module )
 {
     const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int );
     const struct gdi_dc_funcs *funcs = NULL;
-    HMODULE user32;
 
     wine_get_gdi_driver = (void *)GetProcAddress( module, "wine_get_gdi_driver" );
     if (wine_get_gdi_driver) funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
@@ -113,13 +100,6 @@ void CDECL __wine_set_display_driver( HMODULE module )
         NtTerminateProcess( GetCurrentThread(), 1 );
     }
     InterlockedExchangePointer( (void **)&driver_funcs, (void *)funcs );
-
-    user32 = LoadLibraryA( "user32.dll" );
-    pGetMonitorInfoW = (void *)GetProcAddress( user32, "GetMonitorInfoW" );
-    pGetSystemMetrics = (void *)GetProcAddress( user32, "GetSystemMetrics" );
-    pEnumDisplayMonitors = (void *)GetProcAddress( user32, "EnumDisplayMonitors" );
-    pEnumDisplaySettingsW = (void *)GetProcAddress( user32, "EnumDisplaySettingsW" );
-    pSetThreadDpiAwarenessContext = (void *)GetProcAddress( user32, "SetThreadDpiAwarenessContext" );
 }
 
 struct monitor_info
@@ -134,8 +114,8 @@ static BOOL CALLBACK monitor_enum_proc( HMONITOR monitor, HDC hdc, LPRECT rect, 
     MONITORINFOEXW mi;
 
     mi.cbSize = sizeof(mi);
-    pGetMonitorInfoW( monitor, (MONITORINFO *)&mi );
-    if (!lstrcmpiW( info->name, mi.szDevice ))
+    user_callbacks->pGetMonitorInfoW( monitor, (MONITORINFO *)&mi );
+    if (!wcsicmp( info->name, mi.szDevice ))
     {
         info->rect = mi.rcMonitor;
         return FALSE;
@@ -264,33 +244,41 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     {
         DC *dc = get_nulldrv_dc( dev );
         struct monitor_info info;
+        int ret;
 
-        if (dc->display[0] && pEnumDisplayMonitors && pGetMonitorInfoW)
+        if (!user_callbacks) return 640;
+
+        if (dc->display[0])
         {
             info.name = dc->display;
             SetRectEmpty( &info.rect );
-            pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
+            user_callbacks->pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
             if (!IsRectEmpty( &info.rect ))
                 return info.rect.right - info.rect.left;
         }
 
-        return pGetSystemMetrics ? pGetSystemMetrics( SM_CXSCREEN ) : 640;
+        ret = user_callbacks->pGetSystemMetrics( SM_CXSCREEN );
+        return ret ? ret : 640;
     }
     case VERTRES:
     {
         DC *dc = get_nulldrv_dc( dev );
         struct monitor_info info;
+        int ret;
 
-        if (dc->display[0] && pEnumDisplayMonitors && pGetMonitorInfoW)
+        if (!user_callbacks) return 480;
+
+        if (dc->display[0] && user_callbacks)
         {
             info.name = dc->display;
             SetRectEmpty( &info.rect );
-            pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
+            user_callbacks->pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
             if (!IsRectEmpty( &info.rect ))
                 return info.rect.bottom - info.rect.top;
         }
 
-        return pGetSystemMetrics ? pGetSystemMetrics( SM_CYSCREEN ) : 480;
+        ret = user_callbacks->pGetSystemMetrics( SM_CYSCREEN );
+        return ret ? ret : 480;
     }
     case BITSPIXEL:
     {
@@ -298,13 +286,13 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
         WCHAR *display;
         DC *dc;
 
-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pEnumDisplaySettingsW)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
         {
             dc = get_nulldrv_dc( dev );
             display = dc->display[0] ? dc->display : NULL;
             memset( &devmode, 0, sizeof(devmode) );
             devmode.dmSize = sizeof(devmode);
-            if (pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode )
+            if (user_callbacks->pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode )
                 && devmode.dmFields & DM_BITSPERPEL && devmode.dmBitsPerPel)
                 return devmode.dmBitsPerPel;
         }
@@ -351,39 +339,39 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) != DT_RASDISPLAY)
             return 0;
 
-        if (pEnumDisplaySettingsW)
+        if (user_callbacks)
         {
             dc = get_nulldrv_dc( dev );
 
             memset( &devmode, 0, sizeof(devmode) );
             devmode.dmSize = sizeof(devmode);
             display = dc->display[0] ? dc->display : NULL;
-            if (pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode ))
+            if (user_callbacks->pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode ))
                 return devmode.dmDisplayFrequency ? devmode.dmDisplayFrequency : 1;
         }
 
         return 1;
     }
     case DESKTOPHORZRES:
-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
         {
             DPI_AWARENESS_CONTEXT context;
             UINT ret;
-            context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-            ret = pGetSystemMetrics( SM_CXVIRTUALSCREEN );
-            pSetThreadDpiAwarenessContext( context );
-            return ret;
+            context = user_callbacks->pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+            ret = user_callbacks->pGetSystemMetrics( SM_CXVIRTUALSCREEN );
+            user_callbacks->pSetThreadDpiAwarenessContext( context );
+            if (ret) return ret;
         }
         return NtGdiGetDeviceCaps( dev->hdc, HORZRES );
     case DESKTOPVERTRES:
-        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
+        if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && user_callbacks)
         {
             DPI_AWARENESS_CONTEXT context;
             UINT ret;
-            context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-            ret = pGetSystemMetrics( SM_CYVIRTUALSCREEN );
-            pSetThreadDpiAwarenessContext( context );
-            return ret;
+            context = user_callbacks->pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+            ret = user_callbacks->pGetSystemMetrics( SM_CYVIRTUALSCREEN );
+            user_callbacks->pSetThreadDpiAwarenessContext( context );
+            if (ret) return ret;
         }
         return NtGdiGetDeviceCaps( dev->hdc, VERTRES );
     case BLTALIGNMENT:    return 0;

@@ -54,7 +54,8 @@ C_SRCS = \
 	uniscribe/shaping.c \
 	uniscribe/usp10.c \
 	vertical.c \
-	vulkan.c
+	vulkan.c \
+	wrappers.c
 
 RC_SRCS = gdi32.rc
 
