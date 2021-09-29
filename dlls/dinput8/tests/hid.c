@@ -3290,7 +3290,6 @@ struct check_objects_todos
 {
     BOOL type;
     BOOL flags;
-    BOOL usage;
 };
 
 struct check_objects_params
@@ -3326,7 +3325,6 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
     check_member( *obj, *exp, "%#04x", wUsagePage );
-    todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
     check_member( *obj, *exp, "%#04x", dwDimension );
     check_member( *obj, *exp, "%#04x", wExponent );
@@ -5190,10 +5188,6 @@ static void test_force_feedback_joystick( void )
         {},
         {.type = TRUE, .flags = TRUE},
         {.type = TRUE, .flags = TRUE},
-        {},
-        {.usage = TRUE},
-        {},
-        {.usage = TRUE},
     };
 
     struct check_objects_params check_objects_params =

@@ -178,10 +178,10 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
     DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
+    struct hid_value_caps *caps, *caps_end, *nary, *nary_end;
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
     int *offsets = impl->base.data_format.offsets;
     struct hid_collection_node *node, *node_end;
-    struct hid_value_caps *caps, *caps_end;
     DIPROPHEADER filter = *header;
     BOOL ret, seen_axis[6] = {0};
 
@@ -324,6 +324,26 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             TRACE( "Ignoring output caps %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
             if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) button_ofs += caps->usage_max - caps->usage_min + 1;
             else value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
+        }
+        else if (caps->flags & HID_VALUE_CAPS_ARRAY_HAS_MORE)
+        {
+            for (nary_end = caps - 1; caps != caps_end; caps++)
+                if (!(caps->flags & HID_VALUE_CAPS_ARRAY_HAS_MORE)) break;
+
+            for (nary = caps; nary != nary_end; nary--)
+            {
+                instance.dwOfs = button_ofs;
+                instance.dwType = DIDFT_NODATA | DIDFT_MAKEINSTANCE( object++ ) | DIDFT_OUTPUT;
+                instance.dwFlags = 0x80008000;
+                instance.wUsagePage = nary->usage_page;
+                instance.wUsage = nary->usage_min;
+                instance.guidType = GUID_Unknown;
+                instance.wReportId = nary->report_id;
+                instance.wCollectionNumber = nary->link_collection;
+                ret = enum_object( impl, &filter, flags, callback, nary, &instance, data );
+                if (ret != DIENUM_CONTINUE) return ret;
+                button_ofs++;
+            }
         }
         else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
