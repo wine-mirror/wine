@@ -937,6 +937,8 @@ static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_cap
     struct parse_device_state_params *params = data;
     BYTE old_value, value;
 
+    if (instance->wReportId != impl->device_state_report_id) return DIENUM_CONTINUE;
+
     value = params->buttons[instance->wUsage - 1];
     old_value = params->old_state[instance->dwOfs];
     impl->device_state[instance->dwOfs] = value;
@@ -1007,6 +1009,8 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps 
     struct extra_caps *extra;
     LONG old_value, value;
     NTSTATUS status;
+
+    if (instance->wReportId != impl->device_state_report_id) return DIENUM_CONTINUE;
 
     extra = impl->input_extra_caps + (value_caps - impl->input_value_caps);
     status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
@@ -1360,10 +1364,15 @@ static BOOL init_objects( struct hid_joystick *impl, struct hid_caps *caps,
     if (instance->dwType & DIDFT_AXIS) impl->dev_caps.dwAxes++;
     if (instance->dwType & DIDFT_POV) impl->dev_caps.dwPOVs++;
 
-    if (!impl->device_state_report_id)
-        impl->device_state_report_id = instance->wReportId;
-    else if (impl->device_state_report_id != instance->wReportId)
-        FIXME( "multiple device state reports found!\n" );
+    if (instance->dwType & (DIDFT_BUTTON|DIDFT_AXIS|DIDFT_POV) &&
+        (instance->wUsagePage == HID_USAGE_PAGE_GENERIC ||
+         instance->wUsagePage == HID_USAGE_PAGE_BUTTON))
+    {
+        if (!impl->device_state_report_id)
+            impl->device_state_report_id = instance->wReportId;
+        else if (impl->device_state_report_id != instance->wReportId)
+            FIXME( "multiple device state reports found!\n" );
+    }
 
     return DIENUM_CONTINUE;
 }
