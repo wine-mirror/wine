@@ -368,33 +368,10 @@ void end_cplusplus_guard(FILE *fp)
   fprintf(fp, "#endif\n\n");
 }
 
-typedef struct
-{
-  char *filename;
-  struct list link;
-} filename_node_t;
-
-static void add_filename_node(struct list *list, const char *name)
-{
-  filename_node_t *node = xmalloc(sizeof *node);
-  node->filename = replace_extension( get_basename( name ), ".idl", "" );
-  list_add_tail(list, &node->link);
-}
-
-static void free_filename_nodes(struct list *list)
-{
-  filename_node_t *node, *next;
-  LIST_FOR_EACH_ENTRY_SAFE(node, next, list, filename_node_t, link) {
-    list_remove(&node->link);
-    free(node->filename);
-    free(node);
-  }
-}
-
-static void write_dlldata_list(struct list *filenames, int define_proxy_delegation)
+static void write_dlldata_list( struct strarray filenames, int define_proxy_delegation)
 {
   FILE *dlldata;
-  filename_node_t *node;
+  unsigned int i;
 
   dlldata = fopen(dlldata_name, "w");
   if (!dlldata)
@@ -408,13 +385,13 @@ static void write_dlldata_list(struct list *filenames, int define_proxy_delegati
   fprintf(dlldata, "#include <rpcproxy.h>\n\n");
   start_cplusplus_guard(dlldata);
 
-  LIST_FOR_EACH_ENTRY(node, filenames, filename_node_t, link)
-    fprintf(dlldata, "EXTERN_PROXY_FILE(%s)\n", node->filename);
+  for (i = 0; i < filenames.count; i++)
+    fprintf(dlldata, "EXTERN_PROXY_FILE(%s)\n", filenames.str[i]);
 
   fprintf(dlldata, "\nPROXYFILE_LIST_START\n");
   fprintf(dlldata, "/* Start of list */\n");
-  LIST_FOR_EACH_ENTRY(node, filenames, filename_node_t, link)
-    fprintf(dlldata, "  REFERENCE_PROXY_FILE(%s),\n", node->filename);
+  for (i = 0; i < filenames.count; i++)
+    fprintf(dlldata, "  REFERENCE_PROXY_FILE(%s),\n", filenames.str[i]);
   fprintf(dlldata, "/* End of list */\n");
   fprintf(dlldata, "PROXYFILE_LIST_END\n\n");
 
@@ -432,9 +409,8 @@ static char *eat_space(char *s)
 
 void write_dlldata(const statement_list_t *stmts)
 {
-  struct list filenames = LIST_INIT(filenames);
+  struct strarray filenames = empty_strarray;
   int define_proxy_delegation = 0;
-  filename_node_t *node;
   FILE *dlldata;
 
   if (!do_dlldata || !need_proxy_file(stmts))
@@ -465,7 +441,7 @@ void write_dlldata(const statement_list_t *stmts)
           --end;
         *end = '\0';
         if (start < end)
-          add_filename_node(&filenames, start);
+          strarray_add(&filenames, replace_extension( get_basename( start ), ".idl", "" ));
       }else if (!define_proxy_delegation && strncmp(start, delegation_define, sizeof(delegation_define)-1)) {
           define_proxy_delegation = 1;
       }
@@ -478,16 +454,12 @@ void write_dlldata(const statement_list_t *stmts)
     fclose(dlldata);
   }
 
-  LIST_FOR_EACH_ENTRY(node, &filenames, filename_node_t, link)
-    if (strcmp(proxy_token, node->filename) == 0) {
+  if (strarray_exists( &filenames, proxy_token ))
       /* We're already in the list, no need to regenerate this file.  */
-      free_filename_nodes(&filenames);
       return;
-    }
 
-  add_filename_node(&filenames, proxy_token);
-  write_dlldata_list(&filenames, define_proxy_delegation);
-  free_filename_nodes(&filenames);
+  strarray_add(&filenames, proxy_token);
+  write_dlldata_list(filenames, define_proxy_delegation);
 }
 
 static void write_id_guid(FILE *f, const char *type, const char *guid_prefix, const char *name, const UUID *uuid)
@@ -865,12 +837,11 @@ int main(int argc,char *argv[])
 
   if(optind < argc) {
     if (do_dlldata && !do_everything) {
-      struct list filenames = LIST_INIT(filenames);
+      struct strarray filenames = empty_strarray;
       for ( ; optind < argc; ++optind)
-        add_filename_node(&filenames, argv[optind]);
+          strarray_add(&filenames, replace_extension( get_basename( argv[optind] ), ".idl", "" ));
 
-      write_dlldata_list(&filenames, 0 /* FIXME */ );
-      free_filename_nodes(&filenames);
+      write_dlldata_list(filenames, 0 /* FIXME */ );
       return 0;
     }
     else if (optind != argc - 1) {
