@@ -45,6 +45,10 @@ static void *egl_handle;
 static struct opengl_funcs opengl_funcs;
 static EGLDisplay egl_display;
 
+#define USE_GL_FUNC(name) #name,
+static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
+#undef USE_GL_FUNC
+
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
 DECL_FUNCPTR(eglGetError);
 DECL_FUNCPTR(eglGetPlatformDisplay);
@@ -66,6 +70,22 @@ static BOOL has_extension(const char *list, const char *ext)
     }
 
     return FALSE;
+}
+
+static BOOL init_opengl_funcs(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(opengl_func_names); i++)
+    {
+        if (!(((void **)&opengl_funcs.gl)[i] = p_eglGetProcAddress(opengl_func_names[i])))
+        {
+            ERR("%s not found, disabling OpenGL.\n", opengl_func_names[i]);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 static void init_opengl(void)
@@ -123,6 +143,8 @@ static void init_opengl(void)
         goto err;
     }
     TRACE("EGL version %u.%u\n", egl_version[0], egl_version[1]);
+
+    if (!init_opengl_funcs()) goto err;
 
     return;
 
