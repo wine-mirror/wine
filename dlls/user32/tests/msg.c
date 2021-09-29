@@ -2665,7 +2665,8 @@ static void dump_sequence(const struct message *expected, const char *context, c
             }
 	}
 	/* silently drop winevent messages if there is no support for them */
-	else if ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hEvent_hook))
+	else if ((expected->flags & optional) || ((expected->flags & winevent_hook) && !hEvent_hook) ||
+                ((expected->flags & winevent_hook_todo) && !strcmp(winetest_platform, "wine")))
 	    expected++;
         else
         {
