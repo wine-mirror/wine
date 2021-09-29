@@ -3689,9 +3689,13 @@ todo_wine
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &display_name);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
-    hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &display_name);
-todo_wine
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    display_name = (void *)0xdeadbeef;
+    hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &display_name);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!display_name, "Unexpected pointer.\n");
 
     IBindCtx_Release(bindctx);
 
