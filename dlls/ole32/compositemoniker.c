@@ -372,52 +372,40 @@ static HRESULT WINAPI CompositeMonikerImpl_BindToObject(IMoniker *iface, IBindCt
     return hr;
 }
 
-/******************************************************************************
- *        CompositeMoniker_BindToStorage
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc,
-               IMoniker* pmkToLeft, REFIID riid, VOID** ppvResult)
+static HRESULT WINAPI CompositeMonikerImpl_BindToStorage(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *toleft, REFIID riid, void **result)
 {
-    HRESULT   res;
-    IMoniker *tempMk,*antiMk,*rightMostMk,*leftMk;
-    IEnumMoniker *enumMoniker;
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *left, *rightmost, *composed_left;
+    HRESULT hr;
 
-    TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvResult);
+    TRACE("%p, %p, %p, %s, %p.\n", iface, pbc, toleft, debugstr_guid(riid), result);
 
-    *ppvResult=0;
+    *result = NULL;
 
-    /* This method recursively calls BindToStorage on the rightmost component of the composite, */
-    /* passing the rest of the composite as the pmkToLeft parameter for that call. */
+    if (FAILED(hr = composite_get_rightmost(moniker, &left, &rightmost)))
+        return hr;
 
-    if (pmkToLeft)
+    if (toleft)
     {
-        res = IMoniker_ComposeWith(pmkToLeft, iface, FALSE, &leftMk);
-        if (FAILED(res)) return res;
+        hr = compose_with(toleft, left, &composed_left);
     }
     else
-        leftMk = iface;
+    {
+        composed_left = left;
+        IMoniker_AddRef(composed_left);
+    }
 
-    IMoniker_Enum(iface, FALSE, &enumMoniker);
-    IEnumMoniker_Next(enumMoniker, 1, &rightMostMk, NULL);
-    IEnumMoniker_Release(enumMoniker);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMoniker_BindToStorage(rightmost, pbc, composed_left, riid, result);
+        IMoniker_Release(composed_left);
+    }
 
-    res = CreateAntiMoniker(&antiMk);
-    if (FAILED(res)) return res;
-    res = IMoniker_ComposeWith(leftMk, antiMk, 0, &tempMk);
-    if (FAILED(res)) return res;
-    IMoniker_Release(antiMk);
+    IMoniker_Release(rightmost);
+    IMoniker_Release(left);
 
-    res = IMoniker_BindToStorage(rightMostMk, pbc, tempMk, riid, ppvResult);
-
-    IMoniker_Release(tempMk);
-
-    IMoniker_Release(rightMostMk);
-
-    if (pmkToLeft)
-        IMoniker_Release(leftMk);
-
-    return res;
+    return hr;
 }
 
 /******************************************************************************
