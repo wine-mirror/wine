@@ -33026,6 +33026,80 @@ static void test_deferred_context_rendering(void)
     release_test_context(&test_context);
 }
 
+static void test_deferred_context_queries(void)
+{
+    ID3D11DeviceContext *immediate, *deferred;
+    struct d3d11_test_context test_context;
+    D3D11_QUERY_DESC query_desc;
+    ID3D11Asynchronous *query;
+    ID3D11CommandList *list;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    union
+    {
+        UINT64 uint;
+        DWORD dword[2];
+    } data;
+
+    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    immediate = test_context.immediate_context;
+
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
+    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+
+    query_desc.Query = D3D11_QUERY_OCCLUSION;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+    ok(hr == S_OK, "Failed to create query, hr %#x.\n", hr);
+
+    hr = ID3D11DeviceContext_GetData(deferred, query, NULL, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetRenderTargets(deferred, 1, &test_context.backbuffer_rtv, NULL);
+    set_viewport(deferred, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+
+    ID3D11DeviceContext_Begin(deferred, query);
+
+    hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    test_context.immediate_context = deferred;
+    draw_color_quad(&test_context, &white);
+    test_context.immediate_context = immediate;
+
+    ID3D11DeviceContext_End(deferred, query);
+
+    hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(immediate, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
+
+    hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(immediate, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ExecuteCommandList(immediate, list, FALSE);
+
+    get_query_data(immediate, query, &data, sizeof(data));
+    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    ID3D11Asynchronous_Release(query);
+    ID3D11CommandList_Release(list);
+    ID3D11DeviceContext_Release(deferred);
+    release_test_context(&test_context);
+}
+
 static void test_deferred_context_map(void)
 {
     ID3D11DeviceContext *immediate, *deferred;
@@ -33984,6 +34058,7 @@ START_TEST(d3d11)
     queue_test(test_deferred_context_swap_state);
     queue_test(test_deferred_context_rendering);
     queue_test(test_deferred_context_map);
+    queue_test(test_deferred_context_queries);
     queue_test(test_unbound_streams);
     queue_test(test_texture_compressed_3d);
     queue_test(test_constant_buffer_offset);

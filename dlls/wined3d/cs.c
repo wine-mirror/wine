@@ -34,6 +34,12 @@ struct wined3d_deferred_upload
     struct wined3d_box box;
 };
 
+struct wined3d_deferred_query_issue
+{
+    struct wined3d_query *query;
+    unsigned int flags;
+};
+
 struct wined3d_command_list
 {
     LONG refcount;
@@ -54,6 +60,9 @@ struct wined3d_command_list
      * to hold a reference here (and in wined3d_deferred_context) as well. */
     SIZE_T command_list_count;
     struct wined3d_command_list **command_lists;
+
+    SIZE_T query_count;
+    struct wined3d_deferred_query_issue *queries;
 };
 
 static void wined3d_command_list_destroy_object(void *object)
@@ -70,6 +79,7 @@ static void wined3d_command_list_destroy_object(void *object)
     heap_free(list->uploads);
     heap_free(list->resources);
     heap_free(list->data);
+    heap_free(list->queries);
     heap_free(list);
 }
 
@@ -99,6 +109,8 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
             wined3d_resource_decref(list->resources[i]);
         for (i = 0; i < list->upload_count; ++i)
             wined3d_resource_decref(list->uploads[i].resource);
+        for (i = 0; i < list->query_count; ++i)
+            wined3d_query_decref(list->queries[i].query);
 
         wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
     }
@@ -2368,7 +2380,26 @@ static void wined3d_cs_issue_query(struct wined3d_device_context *context,
 
 static void wined3d_cs_acquire_command_list(struct wined3d_device_context *context, struct wined3d_command_list *list)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
     SIZE_T i;
+
+    if (list->query_count)
+    {
+        cs->queries_flushed = FALSE;
+
+        for (i = 0; i < list->query_count; ++i)
+        {
+            if (list->queries[i].flags & WINED3DISSUE_END)
+            {
+                list->queries[i].query->counter_main++;
+                list->queries[i].query->state = QUERY_SIGNALLED;
+            }
+            else
+            {
+                list->queries[i].query->state = QUERY_BUILDING;
+            }
+        }
+    }
 
     for (i = 0; i < list->resource_count; ++i)
         wined3d_resource_acquire(list->resources[i]);
@@ -3423,6 +3454,9 @@ struct wined3d_deferred_context
      * we need to hold a reference here and in wined3d_command_list as well. */
     SIZE_T command_list_count, command_lists_capacity;
     struct wined3d_command_list **command_lists;
+
+    SIZE_T query_count, queries_capacity;
+    struct wined3d_deferred_query_issue *queries;
 };
 
 static struct wined3d_deferred_context *wined3d_deferred_context_from_context(struct wined3d_device_context *context)
@@ -3570,7 +3604,25 @@ static bool wined3d_deferred_context_get_upload_bo(struct wined3d_device_context
 static void wined3d_deferred_context_issue_query(struct wined3d_device_context *context,
         struct wined3d_query *query, unsigned int flags)
 {
-    FIXME("context %p, query %p, flags %#x, stub!\n", context, query, flags);
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    struct wined3d_cs_query_issue *op;
+
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_QUERY_ISSUE;
+    op->query = query;
+    op->flags = flags;
+
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
+
+    if (!wined3d_array_reserve((void **)&deferred->queries, &deferred->queries_capacity,
+            deferred->query_count + 1, sizeof(*deferred->queries)))
+    {
+        ERR("Failed to reserve memory.\n");
+        return;
+    }
+
+    deferred->queries[deferred->query_count].flags = flags;
+    wined3d_query_incref(deferred->queries[deferred->query_count++].query = query);
 }
 
 static void wined3d_deferred_context_flush(struct wined3d_device_context *context)
@@ -3670,6 +3722,10 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
         wined3d_command_list_decref(deferred->command_lists[i]);
     heap_free(deferred->command_lists);
 
+    for (i = 0; i < deferred->query_count; ++i)
+        wined3d_query_decref(deferred->queries[i].query);
+    heap_free(deferred->queries);
+
     wined3d_state_destroy(deferred->c.state);
     heap_free(deferred->data);
     heap_free(deferred);
@@ -3713,10 +3769,17 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
             deferred->command_list_count * sizeof(*object->command_lists));
     /* Transfer our references to the command lists to the command list. */
 
+    if (!(object->queries = heap_alloc(deferred->query_count * sizeof(*object->queries))))
+        goto out_free_command_lists;
+    object->query_count = deferred->query_count;
+    memcpy(object->queries, deferred->queries, deferred->query_count * sizeof(*object->queries));
+    /* Transfer our references to the queries to the command list. */
+
     deferred->data_size = 0;
     deferred->resource_count = 0;
     deferred->upload_count = 0;
     deferred->command_list_count = 0;
+    deferred->query_count = 0;
 
     /* This is in fact recorded into a subsequent command list. */
     if (restore)
@@ -3729,6 +3792,8 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 
     return S_OK;
 
+out_free_command_lists:
+    heap_free(object->command_lists);
 out_free_uploads:
     heap_free(object->uploads);
 out_free_resources:
