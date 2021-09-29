@@ -4740,10 +4740,10 @@ struct wined3d_device_context_ops
     void (*finish)(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id);
     void (*push_constants)(struct wined3d_device_context *context, enum wined3d_push_constants p,
             unsigned int start_idx, unsigned int count, const void *constants);
-    void *(*prepare_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
+    void *(*map_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
             unsigned int sub_resource_idx, const struct wined3d_box *box, unsigned int row_pitch,
             unsigned int slice_pitch, uint32_t flags, struct upload_bo *upload_bo);
-    bool (*get_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
+    bool (*unmap_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
             unsigned int sub_resource_idx, struct wined3d_box *box, struct upload_bo *upload_bo);
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
