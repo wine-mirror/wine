@@ -341,23 +341,23 @@ static const CHARSETINFO charset_info[] = {
   { SYMBOL_CHARSET, CP_SYMBOL, {{0,0,0,0},{FS_SYMBOL,0}} }
 };
 
-static const WCHAR * const default_serif_list[3] =
+static const char * const default_serif_list[3] =
 {
-    L"Times New Roman",
-    L"Liberation Serif",
-    L"Bitstream Vera Serif"
+    "Times New Roman",
+    "Liberation Serif",
+    "Bitstream Vera Serif"
 };
-static const WCHAR * const default_fixed_list[3] =
+static const char * const default_fixed_list[3] =
 {
-    L"Courier New",
-    L"Liberation Mono",
-    L"Bitstream Vera Sans Mono"
+    "Courier New",
+    "Liberation Mono",
+    "Bitstream Vera Sans Mono"
 };
-static const WCHAR * const default_sans_list[3] =
+static const char * const default_sans_list[3] =
 {
-    L"Arial",
-    L"Liberation Sans",
-    L"Bitstream Vera Sans"
+    "Arial",
+    "Liberation Sans",
+    "Bitstream Vera Sans"
 };
 static WCHAR ff_roman_default[LF_FACESIZE];
 static WCHAR ff_modern_default[LF_FACESIZE];
@@ -518,17 +518,24 @@ static CRITICAL_SECTION font_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
-    if (GetEnvironmentVariableW( L"WINEDATADIR", path, MAX_PATH ))
-        lstrcatW( path, L"\\" WINE_FONT_DIR "\\" );
-    else if (GetEnvironmentVariableW( L"WINEBUILDDIR", path, MAX_PATH ))
-        lstrcatW( path, L"\\fonts\\" );
+    SIZE_T len;
+
+    static const WCHAR winedatadirW[]  = {'W','I','N','E','D','A','T','A','D','I','R'};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R'};
+
+    if (!RtlQueryEnvironmentVariable( NULL, winedatadirW, ARRAYSIZE(winedatadirW),
+                                      path, MAX_PATH, &len ))
+        asciiz_to_unicode( path + len, "\\" WINE_FONT_DIR "\\" );
+    else if (!RtlQueryEnvironmentVariable( NULL, winebuilddirW, ARRAYSIZE(winebuilddirW),
+                                           path, MAX_PATH, &len ))
+        asciiz_to_unicode( path + len, "\\fonts\\" );
 
     if (file) lstrcatW( path, file );
 }
 
 static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
-    lstrcpyW( path, L"\\??\\C:\\windows\\fonts\\" );
+    asciiz_to_unicode( path, "\\??\\C:\\windows\\fonts\\" );
     if (file) lstrcatW( path, file );
 }
 
@@ -989,7 +996,7 @@ static BOOL enum_fallbacks( DWORD pitch_and_family, int index, WCHAR buffer[LF_F
 {
     if (index < 3)
     {
-        const WCHAR * const *defaults;
+        const char * const *defaults;
 
         if ((pitch_and_family & FIXED_PITCH) || (pitch_and_family & 0xf0) == FF_MODERN)
             defaults = default_fixed_list;
@@ -997,7 +1004,7 @@ static BOOL enum_fallbacks( DWORD pitch_and_family, int index, WCHAR buffer[LF_F
             defaults = default_serif_list;
         else
             defaults = default_sans_list;
-        lstrcpynW( buffer, defaults[index], LF_FACESIZE );
+        asciiz_to_unicode( buffer, defaults[index] );
         return TRUE;
     }
     return font_funcs->enum_family_fallbacks( pitch_and_family, index - 3, buffer );
@@ -1348,10 +1355,12 @@ static void add_face_to_cache( struct gdi_font_face *face )
 
     if (!face->scalable)
     {
-        WCHAR name[10];
+        WCHAR nameW[10];
+        char name[10];
 
-        swprintf( name, ARRAY_SIZE(name), L"%d", face->size.y_ppem );
-        hkey_face = reg_create_key( hkey_family, name, lstrlenW( name ) * sizeof(WCHAR),
+        sprintf( name, "%d", face->size.y_ppem );
+        hkey_face = reg_create_key( hkey_family, nameW,
+                                    asciiz_to_unicode( nameW, name ) - sizeof(WCHAR),
                                     REG_OPTION_VOLATILE, NULL );
     }
     else hkey_face = hkey_family;
@@ -1385,9 +1394,11 @@ static void remove_face_from_cache( struct gdi_font_face *face )
 
     if (!face->scalable)
     {
-        WCHAR name[10];
-        swprintf( name, ARRAY_SIZE(name), L"%d", face->size.y_ppem );
-        if ((hkey = reg_open_key( hkey_family, name, lstrlenW( name ) * sizeof(WCHAR) )))
+        WCHAR nameW[10];
+        char name[10];
+        sprintf( name, "%d", face->size.y_ppem );
+        if ((hkey = reg_open_key( hkey_family, nameW,
+                                  asciiz_to_unicode( nameW, name ) - sizeof(WCHAR) )))
         {
             NtDeleteKey( hkey );
             NtClose( hkey );
@@ -1487,6 +1498,16 @@ static const WCHAR microsoft_sans_serifW[] =
     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 static const WCHAR tahomaW[] =
     {'T','a','h','o','m','a',0};
+static const WCHAR ms_ui_gothicW[] =
+    {'M','S',' ','U','I',' ','G','o','t','h','i','c',0};
+static const WCHAR sim_sunW[] =
+    {'S','i','m','S','u','n',0};
+static const WCHAR gulimW[] =
+    {'G','u','l','i','m',0};
+static const WCHAR p_ming_li_uW[] =
+    {'P','M','i','n','g','L','i','U',0};
+static const WCHAR batangW[] =
+    {'B','a','t','a','n','g',0};
 
 static const WCHAR * const font_links_list[] =
 {
@@ -1504,27 +1525,27 @@ static const struct font_links_defaults_list
 } font_links_defaults_list[] =
 {
     /* Non East-Asian */
-    { L"Tahoma", /* FIXME unverified ordering */
-      { L"MS UI Gothic", L"SimSun", L"Gulim", L"PMingLiU", NULL }
+    { tahomaW, /* FIXME unverified ordering */
+      { ms_ui_gothicW, sim_sunW, gulimW, p_ming_li_uW, NULL }
     },
     /* Below lists are courtesy of
      * http://blogs.msdn.com/michkap/archive/2005/06/18/430507.aspx
      */
     /* Japanese */
-    { L"MS UI Gothic",
-      { L"MS UI Gothic", L"PMingLiU", L"SimSun", L"Gulim", NULL }
+    { ms_ui_gothicW,
+      { ms_ui_gothicW, p_ming_li_uW, sim_sunW, gulimW, NULL }
     },
     /* Chinese Simplified */
-    { L"SimSun",
-      { L"SimSun", L"PMingLiU", L"MS UI Gothic", L"Batang", NULL }
+    { sim_sunW,
+      { sim_sunW, p_ming_li_uW, ms_ui_gothicW, batangW, NULL }
     },
     /* Korean */
-    { L"Gulim",
-      { L"Gulim", L"PMingLiU", L"MS UI Gothic", L"SimSun", NULL }
+    { gulimW,
+      { gulimW, p_ming_li_uW, ms_ui_gothicW, sim_sunW, NULL }
     },
     /* Chinese Traditional */
-    { L"PMingLiU",
-      { L"PMingLiU", L"SimSun", L"MS UI Gothic", L"Batang", NULL }
+    { p_ming_li_uW,
+      { p_ming_li_uW, sim_sunW, ms_ui_gothicW, batangW, NULL }
     }
 };
 
@@ -1574,6 +1595,10 @@ static void load_system_links(void)
     struct gdi_font_link *font_link, *system_font_link;
     struct gdi_font_face *face;
 
+    static const WCHAR ms_shell_dlgW[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
+    static const WCHAR systemW[] = {'S','y','s','t','e','m',0};
+    static const WCHAR tahoma_ttfW[] = {'t','a','h','o','m','a','.','t','t','f',0};
+
     if ((hkey = reg_open_key( NULL, system_link_keyW, sizeof(system_link_keyW) )))
     {
         char buffer[4096];
@@ -1617,7 +1642,7 @@ static void load_system_links(void)
         NtClose( hkey );
     }
 
-    if ((shelldlg_name = get_gdi_font_subst( L"MS Shell Dlg", -1, NULL )))
+    if ((shelldlg_name = get_gdi_font_subst( ms_shell_dlgW, -1, NULL )))
     {
         for (i = 0; i < ARRAY_SIZE(font_links_defaults_list); i++)
         {
@@ -1638,13 +1663,13 @@ static void load_system_links(void)
     /* Explicitly add an entry for the system font, this links to Tahoma and any links
        that Tahoma has */
 
-    system_font_link = add_gdi_font_link( L"System" );
-    if ((face = find_face_from_filename( L"tahoma.ttf", L"Tahoma" )))
+    system_font_link = add_gdi_font_link( systemW );
+    if ((face = find_face_from_filename( tahoma_ttfW, tahomaW )))
     {
         add_gdi_font_link_entry( system_font_link, face->family->family_name, face->fs );
         TRACE("Found Tahoma in %s index %u\n", debugstr_w(face->file), face->face_index);
     }
-    if ((font_link = find_gdi_font_link( L"Tahoma" )))
+    if ((font_link = find_gdi_font_link( tahomaW )))
     {
         struct gdi_font_link_entry *entry;
         LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
@@ -2440,9 +2465,9 @@ static void create_child_font_list( struct gdi_font *font )
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
     if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
-        facename_compare( font_name, L"Microsoft Sans Serif", -1 ) != 0)
+        facename_compare( font_name, microsoft_sans_serifW, -1 ) != 0)
     {
-        if ((font_link = find_gdi_font_link( L"Microsoft Sans Serif" )))
+        if ((font_link = find_gdi_font_link( microsoft_sans_serifW )))
         {
             TRACE("found entry in default fallback list\n");
             LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
@@ -3891,11 +3916,13 @@ static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bit
     CHARSETINFO csi;
     const WCHAR *orig_name = NULL;
 
+    static const WCHAR symbolW[] = {'S','y','m','b','o','l',0};
+
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
        original value lfCharSet.  Note this is a special case for
        Symbol and doesn't happen at least for "Wingdings*" */
-    if (!facename_compare( lf->lfFaceName, L"Symbol", -1 )) lf->lfCharSet = SYMBOL_CHARSET;
+    if (!facename_compare( lf->lfFaceName, symbolW, -1 )) lf->lfCharSet = SYMBOL_CHARSET;
 
     /* check the cache first */
     if ((font = find_cached_gdi_font( lf, &dcmat, can_use_bitmap )))
