@@ -298,9 +298,9 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameA( HMODULE module, LPSTR filenam
 DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameW( HMODULE module, LPWSTR filename, DWORD size )
 {
     ULONG len = 0;
-    ULONG_PTR magic;
-    LDR_DATA_TABLE_ENTRY *pldr;
     WIN16_SUBSYSTEM_TIB *win16_tib;
+    UNICODE_STRING name;
+    NTSTATUS status;
 
     if (!module && ((win16_tib = NtCurrentTeb()->Tib.SubSystemTib)) && win16_tib->exe_name)
     {
@@ -310,22 +310,11 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameW( HMODULE module, LPWSTR filena
         goto done;
     }
 
-    LdrLockLoaderLock( 0, NULL, &magic );
-
-    if (!module) module = NtCurrentTeb()->Peb->ImageBaseAddress;
-    if (set_ntstatus( LdrFindEntryForAddress( module, &pldr )))
-    {
-        len = min( size, pldr->FullDllName.Length / sizeof(WCHAR) );
-        memcpy( filename, pldr->FullDllName.Buffer, len * sizeof(WCHAR) );
-        if (len < size)
-        {
-            filename[len] = 0;
-            SetLastError( 0 );
-        }
-        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-    }
-
-    LdrUnlockLoaderLock( 0, magic );
+    name.Buffer = filename;
+    name.MaximumLength = size * sizeof(WCHAR);
+    status = LdrGetDllFullName( module, &name );
+    if (!status || status == STATUS_BUFFER_TOO_SMALL) len = name.Length / sizeof(WCHAR);
+    SetLastError( RtlNtStatusToDosError( status ));
 done:
     TRACE( "%s\n", debugstr_wn(filename, len) );
     return len;
