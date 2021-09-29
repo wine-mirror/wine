@@ -45,6 +45,7 @@
 #define COBJMACROS
 #include "wingdi.h"
 #include "dinput.h"
+#include "dinputd.h"
 
 #include "initguid.h"
 #include "ddk/wdm.h"
@@ -57,6 +58,7 @@
 
 #include "wine/test.h"
 #include "wine/mssign.h"
+#include "wine/hid.h"
 
 #include "driver_hid.h"
 
@@ -3288,7 +3290,11 @@ struct check_objects_todos
 {
     BOOL ofs;
     BOOL type;
+    BOOL flags;
     BOOL collection_number;
+    BOOL usage_page;
+    BOOL usage;
+    BOOL report_id;
 };
 
 struct check_objects_params
@@ -3317,6 +3323,7 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     check_member( *obj, *exp, "%#x", dwOfs );
     todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
+    todo_wine_if( todo->flags )
     check_member( *obj, *exp, "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
@@ -3324,10 +3331,13 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     todo_wine_if( todo->collection_number )
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
+    todo_wine_if( todo->usage_page )
     check_member( *obj, *exp, "%#04x", wUsagePage );
+    todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
     check_member( *obj, *exp, "%#04x", dwDimension );
     check_member( *obj, *exp, "%#04x", wExponent );
+    todo_wine_if( todo->report_id )
     check_member( *obj, *exp, "%u", wReportId );
 
     winetest_pop_context();
@@ -4920,6 +4930,397 @@ static void test_device_types( void )
     }
 }
 
+static void test_force_feedback_joystick( void )
+{
+#include "psh_hid_macros.h"
+    const unsigned char report_descriptor[] = {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 1),
+
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 2),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+                REPORT_COUNT(1, 6),
+                INPUT(1, Cnst|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_PID),
+            USAGE(1, PID_USAGE_DEVICE_CONTROL_REPORT),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 1),
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_EFFECT_OPERATION_REPORT),
+            COLLECTION(1, Report),
+                REPORT_ID(1, 2),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_EFFECT_OPERATION),
+                COLLECTION(1, NamedArray),
+                    USAGE(1, PID_USAGE_OP_EFFECT_START),
+                    USAGE(1, PID_USAGE_OP_EFFECT_START_SOLO),
+                    USAGE(1, PID_USAGE_OP_EFFECT_STOP),
+                    LOGICAL_MINIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MINIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 3),
+                    REPORT_SIZE(1, 8),
+                    REPORT_COUNT(1, 1),
+                    OUTPUT(1, Data|Ary|Abs),
+                END_COLLECTION,
+
+                USAGE(1, PID_USAGE_LOOP_COUNT),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+#undef REPORT_ID_OR_USAGE_PAGE
+#include "pop_hid_macros.h"
+
+    static const HIDP_CAPS hid_caps =
+    {
+        .InputReportByteLength = 4,
+    };
+    static const DIDEVCAPS expect_caps =
+    {
+        .dwSize = sizeof(DIDEVCAPS),
+        .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
+        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .dwAxes = 2,
+        .dwButtons = 2,
+        .dwFFSamplePeriod = 1000000,
+        .dwFFMinTimeResolution = 1000000,
+        .dwHardwareRevision = 1,
+        .dwFFDriverVersion = 1,
+    };
+
+    const DIDEVICEINSTANCEW expect_devinst =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = expect_guid_product,
+        .guidProduct = expect_guid_product,
+        .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
+        .tszInstanceName = L"Wine test root driver",
+        .tszProductName = L"Wine test root driver",
+        .guidFFDriver = IID_IDirectInputPIDDriver,
+        .wUsagePage = HID_USAGE_PAGE_GENERIC,
+        .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+    };
+    const DIDEVICEOBJECTINSTANCEW expect_objects[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_YAxis,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(1),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Y Axis",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_Y,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_XAxis,
+            .dwOfs = 0x4,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(0),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"X Axis",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_X,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0x10,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0)|DIDFT_FFEFFECTTRIGGER,
+            .dwFlags = DIDOI_FFEFFECTTRIGGER,
+            .tszName = L"Button 0",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_BUTTON,
+            .wUsage = 0x1,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0x11,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1)|DIDFT_FFEFFECTTRIGGER,
+            .dwFlags = DIDOI_FFEFFECTTRIGGER,
+            .tszName = L"Button 1",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_BUTTON,
+            .wUsage = 0x2,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x8,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(4)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Effect Block Index",
+            .wCollectionNumber = 3,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_EFFECT_BLOCK_INDEX,
+            .wReportId = 2,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x12,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(5)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Op Effect Start",
+            .wCollectionNumber = 4,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_OP_EFFECT_START,
+            .wReportId = 2,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x13,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(6)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Op Effect Start Solo",
+            .wCollectionNumber = 4,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_OP_EFFECT_START_SOLO,
+            .wReportId = 2,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x14,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(7)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Op Effect Stop",
+            .wCollectionNumber = 4,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_OP_EFFECT_STOP,
+            .wReportId = 2,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0xc,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(8)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Loop Count",
+            .wCollectionNumber = 3,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_LOOP_COUNT,
+            .wReportId = 2,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(0),
+            .tszName = L"Collection 0 - Joystick",
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(1),
+            .tszName = L"Collection 1 - Joystick",
+            .wUsagePage = HID_USAGE_PAGE_GENERIC,
+            .wUsage = HID_USAGE_GENERIC_JOYSTICK,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(2),
+            .tszName = L"Collection 2 - PID Device Control Report",
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_DEVICE_CONTROL_REPORT,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(3),
+            .tszName = L"Collection 3 - Effect Operation Report",
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_EFFECT_OPERATION_REPORT,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(4),
+            .tszName = L"Collection 4 - Effect Operation",
+            .wCollectionNumber = 3,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_EFFECT_OPERATION,
+        },
+    };
+    const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
+    {
+        {},
+        {},
+        {.type = TRUE, .flags = TRUE},
+        {.type = TRUE, .flags = TRUE},
+        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage_page = TRUE, .usage = TRUE, .report_id = TRUE},
+        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage_page = TRUE, .usage = TRUE, .report_id = TRUE},
+        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage = TRUE, .report_id = TRUE},
+        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage = TRUE, .report_id = TRUE},
+        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .report_id = TRUE},
+    };
+
+    struct check_objects_params check_objects_params =
+    {
+        .expect_count = ARRAY_SIZE(expect_objects),
+        .expect_objs = expect_objects,
+        .todo_objs = objects_todos,
+    };
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    DIDEVICEINSTANCEW devinst = {0};
+    IDirectInputDevice8W *device;
+    DIDEVCAPS caps = {0};
+    IDirectInput8W *di;
+    HRESULT hr;
+    ULONG ref;
+
+    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
+    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
+    SetCurrentDirectoryW( tempdir );
+
+    cleanup_registry_keys();
+    if (!dinput_driver_start( report_descriptor, sizeof(report_descriptor), &hid_caps )) goto done;
+
+    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
+    if (FAILED(hr))
+    {
+        win_skip( "DirectInput8Create returned %#x\n", hr );
+        goto done;
+    }
+
+    hr = IDirectInput8_EnumDevices( di, DI8DEVCLASS_ALL, find_test_device, &devinst, DIEDFL_ALLDEVICES );
+    ok( hr == DI_OK, "IDirectInput8_EnumDevices returned: %#x\n", hr );
+    if (!IsEqualGUID( &devinst.guidProduct, &expect_guid_product ))
+    {
+        win_skip( "device not found, skipping tests\n" );
+        IDirectInput8_Release( di );
+        goto done;
+    }
+
+    hr = IDirectInput8_CreateDevice( di, &expect_guid_product, &device, NULL );
+    ok( hr == DI_OK, "IDirectInput8_CreateDevice returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetDeviceInfo returned %#x\n", hr );
+    check_member( devinst, expect_devinst, "%d", dwSize );
+    todo_wine
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    todo_wine
+    check_member_wstr( devinst, expect_devinst, tszProductName );
+    todo_wine
+    check_member_guid( devinst, expect_devinst, guidFFDriver );
+    check_member( devinst, expect_devinst, "%04x", wUsagePage );
+    check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    caps.dwSize = sizeof(DIDEVCAPS);
+    hr = IDirectInputDevice8_GetCapabilities( device, &caps );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
+    check_member( caps, expect_caps, "%d", dwSize );
+    check_member( caps, expect_caps, "%#x", dwFlags );
+    check_member( caps, expect_caps, "%#x", dwDevType );
+    check_member( caps, expect_caps, "%d", dwAxes );
+    check_member( caps, expect_caps, "%d", dwButtons );
+    check_member( caps, expect_caps, "%d", dwPOVs );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
+    check_member( caps, expect_caps, "%d", dwFirmwareRevision );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwHardwareRevision );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwFFDriverVersion );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_GetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
+    todo_wine
+    ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
+        check_objects_params.expect_count - check_objects_params.index );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
+    ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
+
+    ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
+
+    ref = IDirectInput8_Release( di );
+    ok( ref == 0, "IDirectInput8_Release returned %d\n", ref );
+
+done:
+    pnp_driver_stop();
+    cleanup_registry_keys();
+    SetCurrentDirectoryW( cwd );
+}
+
 START_TEST( hid )
 {
     HANDLE mapping;
@@ -4962,6 +5363,7 @@ START_TEST( hid )
     CoInitialize( NULL );
     test_device_types();
     test_simple_joystick();
+    test_force_feedback_joystick();
     CoUninitialize();
 
     UnmapViewOfFile( test_data );
