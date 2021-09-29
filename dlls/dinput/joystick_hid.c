@@ -205,82 +205,47 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) continue;
 
         if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+        {
             TRACE( "Ignoring input value %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
-        else if (caps->flags & HID_VALUE_CAPS_IS_RANGE)
-            FIXME( "Ignoring input value %s, usage range not implemented.\n", debugstr_hid_value_caps( caps ) );
-        else if (caps->report_count > 1)
-            FIXME( "Ignoring input value %s, array not implemented.\n", debugstr_hid_value_caps( caps ) );
-        else if (caps->usage_page != HID_USAGE_PAGE_GENERIC)
-            TRACE( "Ignoring input value %s, usage page not implemented.\n", debugstr_hid_value_caps( caps ) );
-        else
+            value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
+        }
+        else for (j = caps->usage_min; j <= caps->usage_max; ++j)
         {
             instance.dwOfs = value_ofs;
+            switch (MAKELONG(j, caps->usage_page))
+            {
+            case MAKELONG(HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_GENERIC_Y, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_GENERIC_Z, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_GENERIC_RX, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_GENERIC_RY, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_GENERIC_RZ, HID_USAGE_PAGE_GENERIC):
+                set_axis_type( &instance, seen_axis, j - HID_USAGE_GENERIC_X, &axis );
+                instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
+            case MAKELONG(HID_USAGE_GENERIC_WHEEL, HID_USAGE_PAGE_GENERIC):
+                set_axis_type( &instance, seen_axis, 2, &axis );
+                instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
+            case MAKELONG(HID_USAGE_GENERIC_HATSWITCH, HID_USAGE_PAGE_GENERIC):
+                instance.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( pov++ );
+                instance.dwFlags = 0;
+                break;
+            default:
+                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
+                instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
+            }
             instance.wUsagePage = caps->usage_page;
-            instance.wUsage = caps->usage_min;
+            instance.wUsage = j;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps->report_id;
             instance.wCollectionNumber = caps->link_collection;
+            ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
+            if (ret != DIENUM_CONTINUE) return ret;
+            value_ofs += sizeof(LONG);
             object++;
-
-            switch (instance.wUsage)
-            {
-            case HID_USAGE_GENERIC_X:
-                set_axis_type( &instance, seen_axis, 0, &axis );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_Y:
-                set_axis_type( &instance, seen_axis, 1, &axis );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_Z:
-            case HID_USAGE_GENERIC_WHEEL:
-                set_axis_type( &instance, seen_axis, 2, &axis );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_RX:
-                set_axis_type( &instance, seen_axis, 3, &axis );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_RY:
-                set_axis_type( &instance, seen_axis, 4, &axis );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_RZ:
-                set_axis_type( &instance, seen_axis, 5, &axis );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_DIAL:
-            case HID_USAGE_GENERIC_SLIDER:
-                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
-                instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            case HID_USAGE_GENERIC_HATSWITCH:
-                instance.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( pov++ );
-                instance.dwFlags = 0;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                break;
-            default:
-                FIXME( "Ignoring input value %s, usage not implemented.\n", debugstr_hid_value_caps( caps ) );
-                break;
-            }
         }
-
-        value_ofs += sizeof(LONG);
     }
 
     for (caps = HID_INPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->input_caps_count;
@@ -290,28 +255,25 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         if (!(caps->flags & HID_VALUE_CAPS_IS_BUTTON)) continue;
 
         if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-            TRACE( "Ignoring input button %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
-        else if (caps->usage_page != HID_USAGE_PAGE_BUTTON)
-            TRACE( "Ignoring input button %s, usage page not implemented.\n", debugstr_hid_value_caps( caps ) );
-        else
         {
-            for (j = caps->usage_min; j <= caps->usage_max; ++j)
-            {
-                instance.dwOfs = button_ofs + (j - caps->usage_min);
-                instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
-                instance.dwFlags = 0;
-                instance.wUsagePage = caps->usage_page;
-                instance.wUsage = j;
-                instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
-                instance.wReportId = caps->report_id;
-                instance.wCollectionNumber = caps->link_collection;
-                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
-                if (ret != DIENUM_CONTINUE) return ret;
-                object++;
-            }
+            TRACE( "Ignoring input button %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
+            button_ofs += caps->usage_max - caps->usage_min + 1;
         }
-
-        button_ofs += caps->usage_max - caps->usage_min + 1;
+        else for (j = caps->usage_min; j <= caps->usage_max; ++j)
+        {
+            instance.dwOfs = button_ofs;
+            instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
+            instance.dwFlags = 0;
+            instance.wUsagePage = caps->usage_page;
+            instance.wUsage = j;
+            instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
+            instance.wReportId = caps->report_id;
+            instance.wCollectionNumber = caps->link_collection;
+            ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
+            if (ret != DIENUM_CONTINUE) return ret;
+            button_ofs++;
+            object++;
+        }
     }
 
     for (caps = HID_OUTPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->output_caps_count;
