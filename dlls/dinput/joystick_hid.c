@@ -22,6 +22,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -36,6 +38,7 @@
 #include "setupapi.h"
 
 #include "wine/debug.h"
+#include "wine/hid.h"
 
 #include "dinput_private.h"
 #include "device_private.h"
@@ -50,91 +53,23 @@ DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x4
 DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
 DEFINE_DEVPROPKEY( DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2 );
 
-static inline const char *debugstr_hidp_link_collection_node( HIDP_LINK_COLLECTION_NODE *node )
+static inline const char *debugstr_hid_value_caps( struct hid_value_caps *caps )
+{
+    if (!caps) return "(null)";
+    return wine_dbg_sprintf( "RId %d, Usg %02x:%02x-%02x Dat %02x-%02x, Str %d-%d, Des %d-%d, "
+                             "Bits %02x Flags %#x, LCol %d LUsg %02x:%02x, BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
+                             caps->report_id, caps->usage_page, caps->usage_min, caps->usage_max, caps->data_index_min, caps->data_index_max,
+                             caps->string_min, caps->string_max, caps->designator_min, caps->designator_max, caps->bit_field, caps->flags,
+                             caps->link_collection, caps->link_usage_page, caps->link_usage, caps->bit_size, caps->report_count,
+                             caps->units, caps->units_exp, caps->logical_min, caps->logical_max, caps->physical_min, caps->physical_max );
+}
+
+static inline const char *debugstr_hid_collection_node( struct hid_collection_node *node )
 {
     if (!node) return "(null)";
-    return wine_dbg_sprintf( "Usg %02x:%02x Par %u Nxt %u Cnt %u Chld %u Type %u Alias %d User %p",
-                             node->LinkUsagePage, node->LinkUsage, node->Parent, node->NextSibling,
-                             node->NumberOfChildren, node->FirstChild, node->CollectionType, node->IsAlias,
-                             node->UserContext );
-}
-
-static inline const char *debugstr_hidp_button_caps( HIDP_BUTTON_CAPS *caps )
-{
-    const char *str;
-    if (!caps) return "(null)";
-
-    str = wine_dbg_sprintf( "RId %d,", caps->ReportID );
-    if (!caps->IsRange)
-        str = wine_dbg_sprintf( "%s Usg %02x:%02x Dat %02x,", str, caps->UsagePage, caps->NotRange.Usage,
-                                caps->NotRange.DataIndex );
-    else
-        str = wine_dbg_sprintf( "%s Usg %02x:%02x-%02x Dat %02x-%02x,", str, caps->UsagePage, caps->Range.UsageMin,
-                                caps->Range.UsageMax, caps->Range.DataIndexMin, caps->Range.DataIndexMax );
-    if (!caps->IsStringRange)
-        str = wine_dbg_sprintf( "%s Str %d,", str, caps->NotRange.StringIndex );
-    else
-        str = wine_dbg_sprintf( "%s Str %d-%d,", str, caps->Range.StringMin, caps->Range.StringMax );
-    if (!caps->IsDesignatorRange)
-        str = wine_dbg_sprintf( "%s Des %d,", str, caps->NotRange.DesignatorIndex );
-    else
-        str = wine_dbg_sprintf( "%s Des %d-%d,", str, caps->Range.DesignatorMin, caps->Range.DesignatorMax );
-    return wine_dbg_sprintf( "%s Bits %02x Alias %d Abs %d, LCol %u LUsg %02x-%02x", str, caps->BitField, caps->IsAlias,
-                             caps->IsAbsolute, caps->LinkCollection, caps->LinkUsagePage, caps->LinkUsage );
-}
-
-static inline const char *debugstr_hidp_value_caps( HIDP_VALUE_CAPS *caps )
-{
-    const char *str;
-    if (!caps) return "(null)";
-
-    str = wine_dbg_sprintf( "RId %d,", caps->ReportID );
-    if (!caps->IsRange)
-        str = wine_dbg_sprintf( "%s Usg %02x:%02x Dat %02x,", str, caps->UsagePage, caps->NotRange.Usage,
-                                caps->NotRange.DataIndex );
-    else
-        str = wine_dbg_sprintf( "%s Usg %02x:%02x-%02x Dat %02x-%02x,", str, caps->UsagePage, caps->Range.UsageMin,
-                                caps->Range.UsageMax, caps->Range.DataIndexMin, caps->Range.DataIndexMax );
-    if (!caps->IsStringRange)
-        str = wine_dbg_sprintf( "%s Str %d,", str, caps->NotRange.StringIndex );
-    else
-        str = wine_dbg_sprintf( "%s Str %d-%d,", str, caps->Range.StringMin, caps->Range.StringMax );
-    if (!caps->IsDesignatorRange)
-        str = wine_dbg_sprintf( "%s Des %d,", str, caps->NotRange.DesignatorIndex );
-    else
-        str = wine_dbg_sprintf( "%s Des %d-%d,", str, caps->Range.DesignatorMin, caps->Range.DesignatorMax );
-    return wine_dbg_sprintf( "%s Bits %02x Alias %d Abs %d Null %d, LCol %u LUsg %02x-%02x, "
-                             "BitSz %d, RCnt %d, Unit %x E%+d, Log %+d-%+d, Phy %+d-%+d",
-                             str, caps->BitField, caps->IsAlias, caps->IsAbsolute, caps->HasNull,
-                             caps->LinkCollection, caps->LinkUsagePage, caps->LinkUsage,
-                             caps->BitSize, caps->ReportCount, caps->Units, caps->UnitsExp,
-                             caps->LogicalMin, caps->LogicalMax, caps->PhysicalMin, caps->PhysicalMax );
-}
-
-struct hid_caps
-{
-    enum { LINK_COLLECTION_NODE, BUTTON_CAPS, VALUE_CAPS } type;
-    union
-    {
-        HIDP_LINK_COLLECTION_NODE *node;
-        HIDP_BUTTON_CAPS *button;
-        HIDP_VALUE_CAPS *value;
-    };
-};
-
-static inline const char *debugstr_hid_caps( struct hid_caps *caps )
-{
-    switch (caps->type)
-    {
-    case LINK_COLLECTION_NODE:
-        return debugstr_hidp_link_collection_node( caps->node );
-    case BUTTON_CAPS:
-        return debugstr_hidp_button_caps( caps->button );
-    case VALUE_CAPS:
-        return debugstr_hidp_value_caps( caps->value );
-    }
-
-    return "(unknown type)";
+    return wine_dbg_sprintf( "Usg %02x:%02x, Parent %u, Next %u, NbChild %u, Child %u, Type %02x",
+                             node->usage_page, node->usage, node->parent, node->next_sibling,
+                             node->number_of_children, node->first_child, node->collection_type );
 }
 
 struct extra_caps
@@ -159,9 +94,6 @@ struct hid_joystick
     DIDEVCAPS dev_caps;
     HIDP_CAPS caps;
 
-    HIDP_LINK_COLLECTION_NODE *collection_nodes;
-    HIDP_BUTTON_CAPS *input_button_caps;
-    HIDP_VALUE_CAPS *input_value_caps;
     struct extra_caps *input_extra_caps;
 
     char *input_report_buf;
@@ -202,10 +134,11 @@ static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
     return &GUID_Unknown;
 }
 
-typedef BOOL (*enum_object_callback)( struct hid_joystick *impl, struct hid_caps *caps, DIDEVICEOBJECTINSTANCEW *instance, void *data );
+typedef BOOL (*enum_object_callback)( struct hid_joystick *impl, struct hid_value_caps *caps,
+                                      DIDEVICEOBJECTINSTANCEW *instance, void *data );
 
 static BOOL enum_object( struct hid_joystick *impl, const DIPROPHEADER *filter, DWORD flags,
-                         enum_object_callback callback, struct hid_caps *caps,
+                         enum_object_callback callback, struct hid_value_caps *caps,
                          DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     if (flags != DIDFT_ALL && !(flags & DIDFT_GETTYPE( instance->dwType ))) return DIENUM_CONTINUE;
@@ -242,13 +175,15 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
 static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header, DWORD flags,
                           enum_object_callback callback, void *data )
 {
-    DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     DWORD collection = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
+    DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
     int *offsets = impl->base.data_format.offsets;
+    struct hid_collection_node *node, *node_end;
+    struct hid_value_caps *caps, *caps_end;
     DIPROPHEADER filter = *header;
     BOOL ret, seen_axis[6] = {0};
-    struct hid_caps caps = {0};
 
     if (filter.dwHow == DIPH_BYOFFSET)
     {
@@ -263,83 +198,83 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
     button_ofs += impl->caps.NumberOutputValueCaps * sizeof(LONG);
     button_ofs += impl->caps.NumberFeatureValueCaps * sizeof(LONG);
 
-    for (i = 0; i < impl->caps.NumberInputValueCaps; ++i)
+    for (caps = HID_INPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->input_caps_count;
+         caps != caps_end; ++caps)
     {
-        caps.value = impl->input_value_caps + i;
+        if (!caps->usage_page) continue;
+        if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) continue;
 
-        if (caps.value->UsagePage >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-            TRACE( "Ignoring input value %s, vendor specific.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.value->IsAlias)
-            TRACE( "Ignoring input value %s, aliased.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.value->IsRange)
-            FIXME( "Ignoring input value %s, usage range not implemented.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.value->ReportCount > 1)
-            FIXME( "Ignoring input value %s, array not implemented.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.value->UsagePage != HID_USAGE_PAGE_GENERIC)
-            TRACE( "Ignoring input value %s, usage page not implemented.\n", debugstr_hid_caps( &caps ) );
+        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+            TRACE( "Ignoring input value %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
+        else if (caps->flags & HID_VALUE_CAPS_IS_RANGE)
+            FIXME( "Ignoring input value %s, usage range not implemented.\n", debugstr_hid_value_caps( caps ) );
+        else if (caps->report_count > 1)
+            FIXME( "Ignoring input value %s, array not implemented.\n", debugstr_hid_value_caps( caps ) );
+        else if (caps->usage_page != HID_USAGE_PAGE_GENERIC)
+            TRACE( "Ignoring input value %s, usage page not implemented.\n", debugstr_hid_value_caps( caps ) );
         else
         {
             instance.dwOfs = value_ofs;
-            instance.wUsagePage = caps.value->UsagePage;
-            instance.wUsage = caps.value->NotRange.Usage;
+            instance.wUsagePage = caps->usage_page;
+            instance.wUsage = caps->usage_min;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
-            instance.wReportId = caps.value->ReportID;
-            instance.wCollectionNumber = caps.value->LinkCollection;
+            instance.wReportId = caps->report_id;
+            instance.wCollectionNumber = caps->link_collection;
 
             switch (instance.wUsage)
             {
             case HID_USAGE_GENERIC_X:
                 set_axis_type( &instance, seen_axis, 0, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Y:
                 set_axis_type( &instance, seen_axis, 1, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_Z:
             case HID_USAGE_GENERIC_WHEEL:
                 set_axis_type( &instance, seen_axis, 2, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RX:
                 set_axis_type( &instance, seen_axis, 3, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RY:
                 set_axis_type( &instance, seen_axis, 4, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_RZ:
                 set_axis_type( &instance, seen_axis, 5, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_DIAL:
             case HID_USAGE_GENERIC_SLIDER:
                 instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             case HID_USAGE_GENERIC_HATSWITCH:
                 instance.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( pov++ );
                 instance.dwFlags = 0;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 break;
             default:
-                FIXME( "Ignoring input value %s, usage not implemented.\n", debugstr_hid_caps( &caps ) );
+                FIXME( "Ignoring input value %s, usage not implemented.\n", debugstr_hid_value_caps( caps ) );
                 break;
             }
         }
@@ -347,69 +282,53 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         value_ofs += sizeof(LONG);
     }
 
-    for (i = 0; i < impl->caps.NumberInputButtonCaps; ++i)
+    for (caps = HID_INPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->input_caps_count;
+         caps != caps_end; ++caps)
     {
-        caps.button = impl->input_button_caps + i;
+        if (!caps->usage_page) continue;
+        if (!(caps->flags & HID_VALUE_CAPS_IS_BUTTON)) continue;
 
-        if (caps.button->UsagePage >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-            TRACE( "Ignoring input button %s, vendor specific.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.button->IsAlias)
-            TRACE( "Ignoring input button %s, aliased.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.button->UsagePage != HID_USAGE_PAGE_BUTTON)
-            TRACE( "Ignoring input button %s, usage page not implemented.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.button->IsRange)
+        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+            TRACE( "Ignoring input button %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
+        else if (caps->usage_page != HID_USAGE_PAGE_BUTTON)
+            TRACE( "Ignoring input button %s, usage page not implemented.\n", debugstr_hid_value_caps( caps ) );
+        else
         {
-            for (j = caps.button->Range.UsageMin; j <= caps.button->Range.UsageMax; ++j)
+            for (j = caps->usage_min; j <= caps->usage_max; ++j)
             {
-                instance.dwOfs = button_ofs + (j - caps.button->Range.UsageMin);
+                instance.dwOfs = button_ofs + (j - caps->usage_min);
                 instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
                 instance.dwFlags = 0;
-                instance.wUsagePage = caps.button->UsagePage;
+                instance.wUsagePage = caps->usage_page;
                 instance.wUsage = j;
                 instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
-                instance.wReportId = caps.button->ReportID;
-                instance.wCollectionNumber = caps.button->LinkCollection;
-                ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+                instance.wReportId = caps->report_id;
+                instance.wCollectionNumber = caps->link_collection;
+                ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
             }
         }
-        else
-        {
-            instance.dwOfs = button_ofs;
-            instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
-            instance.dwFlags = 0;
-            instance.wUsagePage = caps.button->UsagePage;
-            instance.wUsage = caps.button->NotRange.Usage;
-            instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
-            instance.wReportId = caps.button->ReportID;
-            instance.wCollectionNumber = caps.button->LinkCollection;
-            ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
-            if (ret != DIENUM_CONTINUE) return ret;
-        }
 
-        if (caps.button->IsRange) button_ofs += caps.button->Range.UsageMax - caps.button->Range.UsageMin;
-        button_ofs++;
+        button_ofs += caps->usage_max - caps->usage_min + 1;
     }
 
-    for (i = 0; i < impl->caps.NumberLinkCollectionNodes; ++i)
+    for (node = HID_COLLECTION_NODES( preparsed ), node_end = node + preparsed->number_link_collection_nodes;
+         node != node_end; ++node)
     {
-        caps.node = impl->collection_nodes + i;
-
-        if (caps.node->LinkUsagePage >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
-            TRACE( "Ignoring collection %s, vendor specific.\n", debugstr_hid_caps( &caps ) );
-        else if (caps.node->IsAlias)
-            TRACE( "Ignoring collection %s, aliased.\n", debugstr_hid_caps( &caps ) );
+        if (!node->usage_page) continue;
+        if (node->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+            TRACE( "Ignoring collection %s, vendor specific.\n", debugstr_hid_collection_node( node ) );
         else
         {
             instance.dwOfs = 0;
             instance.dwType = DIDFT_COLLECTION | DIDFT_MAKEINSTANCE( collection++ ) | DIDFT_NODATA;
             instance.dwFlags = 0;
-            instance.wUsagePage = caps.node->LinkUsagePage;
-            instance.wUsage = caps.node->LinkUsage;
+            instance.wUsagePage = node->usage_page;
+            instance.wUsage = node->usage;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = 0;
-            instance.wCollectionNumber = caps.node->Parent;
-            ret = enum_object( impl, &filter, flags, callback, &caps, &instance, data );
+            instance.wCollectionNumber = node->parent;
+            ret = enum_object( impl, &filter, flags, callback, NULL, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
     }
@@ -428,9 +347,6 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
         HeapFree( GetProcessHeap(), 0, tmp.usages_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_report_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_extra_caps );
-        HeapFree( GetProcessHeap(), 0, tmp.input_value_caps );
-        HeapFree( GetProcessHeap(), 0, tmp.input_button_caps );
-        HeapFree( GetProcessHeap(), 0, tmp.collection_nodes );
         HidD_FreePreparsedData( tmp.preparsed );
         CancelIoEx( tmp.device, &tmp.read_ovl );
         CloseHandle( tmp.base.read_event );
@@ -459,7 +375,7 @@ struct enum_objects_params
     void *context;
 };
 
-static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_value_caps *caps,
                                    DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct enum_objects_params *params = data;
@@ -513,37 +429,38 @@ static HRESULT WINAPI hid_joystick_EnumObjects( IDirectInputDevice8W *iface, LPD
     return DI_OK;
 }
 
-static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    HIDP_VALUE_CAPS *value_caps = caps->value;
     DIPROPRANGE *value = data;
-    value->lMin = value_caps->PhysicalMin;
-    value->lMax = value_caps->PhysicalMax;
+    value->lMin = caps->physical_min;
+    value->lMax = caps->physical_max;
     return DIENUM_STOP;
 }
 
-static BOOL get_property_prop_deadzone( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL get_property_prop_deadzone( struct hid_joystick *impl, struct hid_value_caps *caps,
                                         DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     struct extra_caps *extra;
     DIPROPDWORD *deadzone = data;
-    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     deadzone->dwData = extra->deadzone;
     return DIENUM_STOP;
 }
 
-static BOOL get_property_prop_saturation( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL get_property_prop_saturation( struct hid_joystick *impl, struct hid_value_caps *caps,
                                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     struct extra_caps *extra;
     DIPROPDWORD *saturation = data;
-    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     saturation->dwData = extra->saturation;
     return DIENUM_STOP;
 }
 
-static BOOL get_property_prop_granularity( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL get_property_prop_granularity( struct hid_joystick *impl, struct hid_value_caps *caps,
                                            DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     DIPROPDWORD *granularity = data;
@@ -634,47 +551,48 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     return DI_OK;
 }
 
-static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    HIDP_VALUE_CAPS *value_caps = caps->value;
     DIPROPRANGE *value = data;
     LONG tmp;
 
-    value_caps->PhysicalMin = value->lMin;
-    value_caps->PhysicalMax = value->lMax;
+    caps->physical_min = value->lMin;
+    caps->physical_max = value->lMax;
 
     if (instance->dwType & DIDFT_AXIS)
     {
-        if (!value_caps->PhysicalMin) tmp = value_caps->PhysicalMax / 2;
-        else tmp = round( (value_caps->PhysicalMin + value_caps->PhysicalMax) / 2.0 );
+        if (!caps->physical_min) tmp = caps->physical_max / 2;
+        else tmp = round( (caps->physical_min + caps->physical_max) / 2.0 );
         *(LONG *)(impl->device_state + instance->dwOfs) = tmp;
     }
     else if (instance->dwType & DIDFT_POV)
     {
-        tmp = value_caps->LogicalMax - value_caps->LogicalMin;
-        if (tmp > 0) value_caps->PhysicalMax -= value->lMax / (tmp + 1);
+        tmp = caps->logical_max - caps->logical_min;
+        if (tmp > 0) caps->physical_max -= value->lMax / (tmp + 1);
         *(LONG *)(impl->device_state + instance->dwOfs) = -1;
     }
     return DIENUM_CONTINUE;
 }
 
-static BOOL set_property_prop_deadzone( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL set_property_prop_deadzone( struct hid_joystick *impl, struct hid_value_caps *caps,
                                         DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     struct extra_caps *extra;
     DIPROPDWORD *deadzone = data;
-    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     extra->deadzone = deadzone->dwData;
     return DIENUM_CONTINUE;
 }
 
-static BOOL set_property_prop_saturation( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL set_property_prop_saturation( struct hid_joystick *impl, struct hid_value_caps *caps,
                                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     struct extra_caps *extra;
     DIPROPDWORD *saturation = data;
-    extra = impl->input_extra_caps + (caps->value - impl->input_value_caps);
+    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     extra->saturation = saturation->dwData;
     return DIENUM_CONTINUE;
 }
@@ -797,7 +715,7 @@ static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, 
     return hr;
 }
 
-static BOOL get_object_info( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL get_object_info( struct hid_joystick *impl, struct hid_value_caps *caps,
                              DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     DIDEVICEOBJECTINSTANCEW *dest = data;
@@ -930,7 +848,7 @@ struct parse_device_state_params
     DWORD seq;
 };
 
-static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_value_caps *caps,
                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
@@ -948,29 +866,29 @@ static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_cap
     return DIENUM_CONTINUE;
 }
 
-static LONG sign_extend( ULONG value, const HIDP_VALUE_CAPS *caps )
+static LONG sign_extend( ULONG value, struct hid_value_caps *caps )
 {
-    UINT sign = 1 << (caps->BitSize - 1);
-    if (sign <= 1 || caps->LogicalMin >= 0) return value;
+    UINT sign = 1 << (caps->bit_size - 1);
+    if (sign <= 1 || caps->logical_min >= 0) return value;
     return value - ((value & sign) << 1);
 }
 
-static LONG scale_value( ULONG value, const HIDP_VALUE_CAPS *caps, LONG min, LONG max )
+static LONG scale_value( ULONG value, struct hid_value_caps *caps, LONG min, LONG max )
 {
     LONG tmp = sign_extend( value, caps );
-    if (caps->LogicalMin > tmp || caps->LogicalMax < tmp) return -1; /* invalid / null value */
-    return min + MulDiv( tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin );
+    if (caps->logical_min > tmp || caps->logical_max < tmp) return -1; /* invalid / null value */
+    return min + MulDiv( tmp - caps->logical_min, max - min, caps->logical_max - caps->logical_min );
 }
 
-static LONG scale_axis_value( ULONG value, const HIDP_VALUE_CAPS *caps, struct extra_caps *extra )
+static LONG scale_axis_value( ULONG value, struct hid_value_caps *caps, struct extra_caps *extra )
 {
     LONG tmp = sign_extend( value, caps ), log_ctr, log_min, log_max, phy_ctr, phy_min, phy_max;
-    ULONG bit_max = (1 << caps->BitSize) - 1;
+    ULONG bit_max = (1 << caps->bit_size) - 1;
 
-    log_min = caps->LogicalMin;
-    log_max = caps->LogicalMax;
-    phy_min = caps->PhysicalMin;
-    phy_max = caps->PhysicalMax;
+    log_min = caps->logical_min;
+    log_max = caps->logical_max;
+    phy_min = caps->physical_min;
+    phy_max = caps->physical_max;
     /* xinput HID gamepad have bogus logical value range, let's use the bit range instead */
     if (log_min == 0 && log_max == -1) log_max = bit_max;
 
@@ -998,27 +916,27 @@ static LONG scale_axis_value( ULONG value, const HIDP_VALUE_CAPS *caps, struct e
     return phy_min + MulDiv( tmp - log_min, phy_max - phy_min, log_max - log_min );
 }
 
-static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     IDirectInputDevice8W *iface = &impl->base.IDirectInputDevice8W_iface;
     ULONG logical_value, report_len = impl->caps.InputReportByteLength;
     struct parse_device_state_params *params = data;
     char *report_buf = impl->input_report_buf;
-    HIDP_VALUE_CAPS *value_caps = caps->value;
     struct extra_caps *extra;
     LONG old_value, value;
     NTSTATUS status;
 
     if (instance->wReportId != impl->device_state_report_id) return DIENUM_CONTINUE;
 
-    extra = impl->input_extra_caps + (value_caps - impl->input_value_caps);
+    extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
                                  &logical_value, impl->preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsageValue %04x:%04x returned %#x\n",
                                              instance->wUsagePage, instance->wUsage, status );
-    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, value_caps, extra );
-    else value = scale_value( logical_value, value_caps, value_caps->PhysicalMin, value_caps->PhysicalMax );
+    if (instance->dwType & DIDFT_AXIS) value = scale_axis_value( logical_value, caps, extra );
+    else value = scale_value( logical_value, caps, caps->physical_min, caps->physical_max );
 
     old_value = *(LONG *)(params->old_state + instance->dwOfs);
     *(LONG *)(impl->device_state + instance->dwOfs) = value;
@@ -1353,7 +1271,7 @@ static HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTAN
     return DI_OK;
 }
 
-static BOOL init_objects( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL init_objects( struct hid_joystick *impl, struct hid_value_caps *caps,
                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
@@ -1377,7 +1295,7 @@ static BOOL init_objects( struct hid_joystick *impl, struct hid_caps *caps,
     return DIENUM_CONTINUE;
 }
 
-static BOOL init_data_format( struct hid_joystick *impl, struct hid_caps *caps,
+static BOOL init_data_format( struct hid_joystick *impl, struct hid_value_caps *caps,
                               DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
@@ -1427,15 +1345,12 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
         },
     };
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
-    HIDP_LINK_COLLECTION_NODE *nodes;
+    struct hid_preparsed_data *preparsed;
     struct hid_joystick *impl = NULL;
     struct extra_caps *extra;
     DIDATAFORMAT *format = NULL;
-    HIDP_BUTTON_CAPS *buttons;
-    HIDP_VALUE_CAPS *values;
     USAGE_AND_PAGE *usages;
     DWORD size, index;
-    NTSTATUS status;
     char *buffer;
     HRESULT hr;
 
@@ -1469,16 +1384,9 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     impl->dev_caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     impl->dev_caps.dwDevType = instance.dwDevType;
 
-    size = impl->caps.NumberLinkCollectionNodes * sizeof(HIDP_LINK_COLLECTION_NODE);
-    if (!(nodes = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
-    impl->collection_nodes = nodes;
-    size = impl->caps.NumberInputButtonCaps * sizeof(HIDP_BUTTON_CAPS);
-    if (!(buttons = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
-    impl->input_button_caps = buttons;
-    size = impl->caps.NumberInputValueCaps * sizeof(HIDP_VALUE_CAPS);
-    if (!(values = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
-    impl->input_value_caps = values;
-    size = impl->caps.NumberInputValueCaps * sizeof(struct extra_caps);
+    preparsed = (struct hid_preparsed_data *)impl->preparsed;
+
+    size = preparsed->input_caps_count * sizeof(struct extra_caps);
     if (!(extra = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto failed;
     impl->input_extra_caps = extra;
 
@@ -1489,17 +1397,6 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     size = impl->usages_count * sizeof(USAGE_AND_PAGE);
     if (!(usages = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
     impl->usages_buf = usages;
-
-    size = impl->caps.NumberLinkCollectionNodes;
-    status = HidP_GetLinkCollectionNodes( nodes, &size, impl->preparsed );
-    if (status != HIDP_STATUS_SUCCESS) goto failed;
-    impl->caps.NumberLinkCollectionNodes = size;
-    status = HidP_GetButtonCaps( HidP_Input, impl->input_button_caps,
-                                 &impl->caps.NumberInputButtonCaps, impl->preparsed );
-    if (status != HIDP_STATUS_SUCCESS && status != HIDP_STATUS_USAGE_NOT_FOUND) goto failed;
-    status = HidP_GetValueCaps( HidP_Input, impl->input_value_caps,
-                                 &impl->caps.NumberInputValueCaps, impl->preparsed );
-    if (status != HIDP_STATUS_SUCCESS && status != HIDP_STATUS_USAGE_NOT_FOUND) goto failed;
 
     enum_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
 
