@@ -418,6 +418,15 @@ BOOL DPLAYX_ConstructData(void)
                                         FILE_MAP_WRITE,
                                         0, 0, 0, lpDesiredMemoryMapStart );
 
+  if( lpSharedStaticData == NULL && GetLastError() == ERROR_INVALID_ADDRESS )
+  {
+    /* We couldn't map the data where we wanted. Try again, allowing any
+     * location. */
+    lpSharedStaticData = MapViewOfFile( hDplayxSharedMem,
+                                        FILE_MAP_WRITE,
+                                        0, 0, 0 );
+  }
+
   if( lpSharedStaticData == NULL )
   {
     ERR( ": unable to map static data into process memory space (%d)\n",
