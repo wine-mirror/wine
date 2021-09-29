@@ -3204,11 +3204,52 @@ static UINT get_glyph_index_symbol( struct gdi_font *font, UINT glyph )
     return index;
 }
 
+static CPTABLEINFO *get_cptable( WORD cp )
+{
+    static CPTABLEINFO tables[100];
+    unsigned int i;
+    USHORT *ptr;
+    SIZE_T size;
+
+    for (i = 0; i < ARRAY_SIZE(tables) && tables[i].CodePage; i++)
+        if (tables[i].CodePage == cp) return &tables[i];
+    if (NtGetNlsSectionPtr( 11, cp, NULL, (void **)&ptr, &size )) return NULL;
+    if (i == ARRAY_SIZE(tables)) ERR( "too many code pages\n" );
+    RtlInitCodePageTable( ptr, &tables[i] );
+    return &tables[i];
+}
+
+static BOOL wc_to_index( UINT cp, WCHAR wc, unsigned char *dst, BOOL allow_default )
+{
+    const CPTABLEINFO *info;
+
+    if (!(info = get_cptable( cp ))) return FALSE;
+
+    if (info->DBCSCodePage)
+    {
+        WCHAR *uni2cp = info->WideCharTable;
+        if (uni2cp[wc] & 0xff00) return FALSE;
+        *dst = uni2cp[wc];
+    }
+    else
+    {
+        char *uni2cp = info->WideCharTable;
+        *dst = uni2cp[wc];
+    }
+
+    if (info->MultiByteTable[*dst] != wc)
+    {
+        if (!allow_default) return FALSE;
+        *dst = info->DefaultChar;
+    }
+
+    return TRUE;
+}
+
 static UINT get_glyph_index( struct gdi_font *font, UINT glyph )
 {
     WCHAR wc = glyph;
-    char ch;
-    BOOL used;
+    unsigned char ch;
 
     if (font_funcs->get_glyph_index( font, &glyph, TRUE )) return glyph;
 
@@ -3217,11 +3258,11 @@ static UINT get_glyph_index( struct gdi_font *font, UINT glyph )
         glyph = get_glyph_index_symbol( font, wc );
         if (!glyph)
         {
-            if (WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, &wc, 1, &ch, 1, NULL, NULL ))
+            if (wc_to_index( CP_ACP, wc, &ch, TRUE ))
                 glyph = get_glyph_index_symbol( font, (unsigned char)ch );
         }
     }
-    else if (WideCharToMultiByte( font->codepage, WC_NO_BEST_FIT_CHARS, &wc, 1, &ch, 1, NULL, &used ) && !used)
+    else if (wc_to_index( font->codepage, wc, &ch, FALSE ))
     {
         glyph = (unsigned char)ch;
         font_funcs->get_glyph_index( font, &glyph, FALSE );
@@ -3505,8 +3546,8 @@ static DWORD CDECL font_GetGlyphIndices( PHYSDEV dev, const WCHAR *str, INT coun
 {
     struct font_physdev *physdev = get_font_dev( dev );
     UINT default_char;
-    char ch;
-    BOOL used, got_default = FALSE;
+    unsigned char ch;
+    BOOL got_default = FALSE;
     int i;
 
     if (!physdev->font)
@@ -3535,8 +3576,7 @@ static DWORD CDECL font_GetGlyphIndices( PHYSDEV dev, const WCHAR *str, INT coun
                 if (str[i] >= 0xf020 && str[i] <= 0xf100) glyph = str[i] - 0xf000;
                 else if (str[i] < 0x100) glyph = str[i];
             }
-            else if (WideCharToMultiByte( physdev->font->codepage, WC_NO_BEST_FIT_CHARS, &str[i], 1,
-                                          &ch, 1, NULL, &used ) && !used)
+            else if (wc_to_index( physdev->font->codepage, str[i], &ch, FALSE ))
                 glyph = (unsigned char)ch;
         }
         if (!glyph)
