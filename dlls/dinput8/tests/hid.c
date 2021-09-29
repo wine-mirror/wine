@@ -3288,13 +3288,9 @@ static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *c
 
 struct check_objects_todos
 {
-    BOOL ofs;
     BOOL type;
     BOOL flags;
-    BOOL collection_number;
-    BOOL usage_page;
     BOOL usage;
-    BOOL report_id;
 };
 
 struct check_objects_params
@@ -3319,7 +3315,6 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
 
     check_member( *obj, *exp, "%u", dwSize );
     check_member_guid( *obj, *exp, guidType );
-    todo_wine_if( todo->ofs )
     check_member( *obj, *exp, "%#x", dwOfs );
     todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
@@ -3328,16 +3323,13 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
     check_member( *obj, *exp, "%u", dwFFForceResolution );
-    todo_wine_if( todo->collection_number )
     check_member( *obj, *exp, "%u", wCollectionNumber );
     check_member( *obj, *exp, "%u", wDesignatorIndex );
-    todo_wine_if( todo->usage_page )
     check_member( *obj, *exp, "%#04x", wUsagePage );
     todo_wine_if( todo->usage )
     check_member( *obj, *exp, "%#04x", wUsage );
     check_member( *obj, *exp, "%#04x", dwDimension );
     check_member( *obj, *exp, "%#04x", wExponent );
-    todo_wine_if( todo->report_id )
     check_member( *obj, *exp, "%u", wReportId );
 
     winetest_pop_context();
@@ -5198,11 +5190,10 @@ static void test_force_feedback_joystick( void )
         {},
         {.type = TRUE, .flags = TRUE},
         {.type = TRUE, .flags = TRUE},
-        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage_page = TRUE, .usage = TRUE, .report_id = TRUE},
-        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage_page = TRUE, .usage = TRUE, .report_id = TRUE},
-        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage = TRUE, .report_id = TRUE},
-        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .collection_number = TRUE, .usage = TRUE, .report_id = TRUE},
-        {.ofs = TRUE, .type = TRUE, .flags = TRUE, .usage = TRUE, .report_id = TRUE},
+        {},
+        {.usage = TRUE},
+        {},
+        {.usage = TRUE},
     };
 
     struct check_objects_params check_objects_params =
@@ -5302,7 +5293,6 @@ static void test_force_feedback_joystick( void )
 
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
-    todo_wine
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
 

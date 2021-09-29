@@ -175,7 +175,7 @@ static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD 
 static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header, DWORD flags,
                           enum_object_callback callback, void *data )
 {
-    DWORD collection = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
+    DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
@@ -220,6 +220,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps->report_id;
             instance.wCollectionNumber = caps->link_collection;
+            object++;
 
             switch (instance.wUsage)
             {
@@ -306,10 +307,42 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 instance.wCollectionNumber = caps->link_collection;
                 ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
+                object++;
             }
         }
 
         button_ofs += caps->usage_max - caps->usage_min + 1;
+    }
+
+    for (caps = HID_OUTPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->output_caps_count;
+         caps != caps_end; ++caps)
+    {
+        if (!caps->usage_page) continue;
+
+        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+        {
+            TRACE( "Ignoring output caps %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
+            if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) button_ofs += caps->usage_max - caps->usage_min + 1;
+            else value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
+        }
+        else for (j = caps->usage_min; j <= caps->usage_max; ++j)
+        {
+            if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) instance.dwOfs = button_ofs;
+            else instance.dwOfs = value_ofs;
+
+            instance.dwType = DIDFT_NODATA | DIDFT_MAKEINSTANCE( object++ ) | DIDFT_OUTPUT;
+            instance.dwFlags = 0x80008000;
+            instance.wUsagePage = caps->usage_page;
+            instance.wUsage = j;
+            instance.guidType = GUID_Unknown;
+            instance.wReportId = caps->report_id;
+            instance.wCollectionNumber = caps->link_collection;
+            ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
+            if (ret != DIENUM_CONTINUE) return ret;
+
+            if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) button_ofs++;
+            else value_ofs += sizeof(LONG);
+        }
     }
 
     for (node = HID_COLLECTION_NODES( preparsed ), node_end = node + preparsed->number_link_collection_nodes;
