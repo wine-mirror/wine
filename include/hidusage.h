@@ -197,6 +197,7 @@ typedef USHORT USAGE, *PUSAGE;
 #define HID_USAGE_PAGE_CONSUMER           ((USAGE) 0x0C)
 #define HID_USAGE_PAGE_DIGITIZER          ((USAGE) 0x0D)
 #define HID_USAGE_PAGE_HAPTICS            ((USAGE) 0x0E)
+#define HID_USAGE_PAGE_PID                ((USAGE) 0x0F)
 #define HID_USAGE_PAGE_UNICODE            ((USAGE) 0x10)
 #define HID_USAGE_PAGE_ALPHANUMERIC       ((USAGE) 0x14)
 #define HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN ((USAGE) 0xff00)
