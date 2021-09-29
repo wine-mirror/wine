@@ -32,7 +32,6 @@ void error(const char *s, ...) __attribute__((format (printf, 1, 2), noreturn));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
-char *dup_basename(const char *name, const char *ext);
 int compare_name_id(const name_id_t *n1, const name_id_t *n2);
 string_t *convert_string_unicode( const string_t *str, int codepage );
 char *convert_string_utf8( const string_t *str, int codepage );

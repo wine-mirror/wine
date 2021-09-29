@@ -251,6 +251,36 @@ static inline int strarray_spawn( struct strarray args )
 #endif
 }
 
+static inline char *get_basename( const char *file )
+{
+    const char *ret = strrchr( file, '/' );
+    return xstrdup( ret ? ret + 1 : file );
+}
+
+static inline char *get_basename_noext( const char *file )
+{
+    char *ext, *ret = get_basename( file );
+    if ((ext = strrchr( ret, '.' ))) *ext = 0;
+    return ret;
+}
+
+static inline char *get_dirname( const char *file )
+{
+    const char *end = strrchr( file, '/' );
+    if (!end) return xstrdup( "." );
+    if (end == file) end++;
+    return strmake( "%.*s", (int)(end - file), file );
+}
+
+static inline char *replace_extension( const char *name, const char *old_ext, const char *new_ext )
+{
+    int name_len = strlen( name );
+
+    if (strendswith( name, old_ext )) name_len -= strlen( old_ext );
+    return strmake( "%.*s%s", name_len, name, new_ext );
+}
+
+
 static inline int make_temp_file( const char *prefix, const char *suffix, char **name )
 {
     static unsigned int value;

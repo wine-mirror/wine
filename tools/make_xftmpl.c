@@ -534,16 +534,7 @@ int main(int argc, char **argv)
         if (!option_inc_var_name)
             fatal_error( "variable name must be specified with -i or #pragma name\n" );
 
-        header_name = strrchr(option_outfile_name, '/');
-        if (header_name)
-            header_name = xstrdup(header_name + 1);
-        else
-            header_name = xstrdup(option_outfile_name);
-        if (!header_name) {
-            fprintf(stderr, "Out of memory\n");
-            goto error;
-        }
-
+        header_name = get_basename( option_outfile_name );
         str_ptr = header_name;
         while (*str_ptr) {
             if (*str_ptr == '.')

@@ -971,16 +971,8 @@ int main(int argc, char **argv)
 #endif
 
     if (!option_output)  /* build a default output name */
-    {
-        char *p = strrchr( input_file, '/' );
-        if (p) p++;
-        else p = input_file;
-        option_output = xmalloc( strlen(p) + sizeof(".fon") );
-        strcpy( option_output, p );
-        p = strrchr( option_output, '.' );
-        if (!p) p = option_output + strlen(option_output);
-        strcpy( p, option_fnt_mode ? ".fnt" : ".fon" );
-    }
+        option_output = strmake( "%s%s", get_basename_noext( input_file ),
+                                 option_fnt_mode ? ".fnt" : ".fon" );
 
     if (!(ofp = fopen(option_output, "wb")))
     {

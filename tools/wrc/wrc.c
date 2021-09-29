@@ -333,7 +333,7 @@ static void set_target( const char *target )
 static void init_argv0_dir( const char *argv0 )
 {
 #ifndef _WIN32
-    char *p, *dir;
+    char *dir;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -343,13 +343,10 @@ static void init_argv0_dir( const char *argv0 )
     dir = realpath( argv0, NULL );
 #endif
     if (!dir) return;
-    if (!(p = strrchr( dir, '/' ))) return;
-    if (p == dir) p++;
-    *p = 0;
+    dir = get_dirname( dir );
     includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
     if (strendswith( dir, "/tools/wrc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
     else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
-    free( dir );
 #endif
 }
 
@@ -588,8 +585,8 @@ int main(int argc,char *argv[])
             {
                 if (!output_name)
                 {
-                    output_name = dup_basename( nb_files ? files[0] : NULL, ".rc" );
-                    strcat( output_name, ".pot" );
+                    const char *name = nb_files ? get_basename(files[0]) : "wrc.tab";
+                    output_name = replace_extension( name, ".rc", ".pot" );
                 }
                 write_pot_file( output_name );
             }
@@ -605,8 +602,8 @@ int main(int argc,char *argv[])
 	chat("Writing .res-file\n");
         if (!output_name)
         {
-            output_name = dup_basename( nb_files ? files[0] : NULL, ".rc" );
-            strcat(output_name, ".res");
+            const char *name = nb_files ? get_basename(files[0]) : "wrc.tab";
+            output_name = replace_extension( name, ".rc", ".res" );
         }
 	write_resfile(output_name, resource_top);
 	output_name = NULL;

@@ -119,32 +119,6 @@ void warning(const char *s, ...)
 	va_end(ap);
 }
 
-char *dup_basename(const char *name, const char *ext)
-{
-	int namelen;
-	int extlen = strlen(ext);
-	char *base;
-	char *slash;
-
-	if(!name)
-		name = "wmc.tab";
-
-	slash = strrchr(name, '/');
-	if (slash)
-		name = slash + 1;
-
-	namelen = strlen(name);
-
-	/* +4 for later extension and +1 for '\0' */
-	base = xmalloc(namelen +4 +1);
-	strcpy(base, name);
-	if(!strcasecmp(name + namelen-extlen, ext))
-	{
-		base[namelen - extlen] = '\0';
-	}
-	return base;
-}
-
 int unistrlen(const WCHAR *s)
 {
 	int n;

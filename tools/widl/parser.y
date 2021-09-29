@@ -2262,7 +2262,7 @@ char *gen_name(void)
 
   if (! file_id)
   {
-    char *dst = dup_basename(input_idl_name, ".idl");
+    char *dst = replace_extension( get_basename(input_idl_name), ".idl", "" );
     file_id = dst;
 
     for (; *dst; ++dst)

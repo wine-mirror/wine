@@ -743,7 +743,7 @@ static char *get_lib_dir( struct options *opts )
 static void init_argv0_dir( const char *argv0 )
 {
 #ifndef _WIN32
-    char *p, *dir;
+    char *dir;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -753,12 +753,9 @@ static void init_argv0_dir( const char *argv0 )
     dir = realpath( argv0, NULL );
 #endif
     if (!dir) return;
-    if (!(p = strrchr( dir, '/' ))) return;
-    if (p == dir) p++;
-    *p = 0;
-    bindir = dir;
-    includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
-    libdir = strmake( "%s/%s", dir, BIN_TO_LIBDIR );
+    bindir = get_dirname( dir );
+    includedir = strmake( "%s/%s", bindir, BIN_TO_INCLUDEDIR );
+    libdir = strmake( "%s/%s", bindir, BIN_TO_LIBDIR );
 #endif
 }
 
@@ -943,19 +940,15 @@ no_compat_defines:
 static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
 {
     struct options copts;
-    char* base_name;
 
     /* make a copy so we don't change any of the initial stuff */
     /* a shallow copy is exactly what we want in this case */
-    base_name = get_basename(file);
     copts = *opts;
-    copts.output_name = get_temp_file(base_name, ".o");
+    copts.output_name = get_temp_file(get_basename_noext(file), ".o");
     copts.compile_only = 1;
     copts.files = empty_strarray;
     strarray_add(&copts.files, file);
     compile(&copts, lang);
-    free(base_name);
-
     return copts.output_name;
 }
 
@@ -1104,8 +1097,7 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
     int fake_module = strendswith(output_file, ".fake");
 
     /* get the filename from the path */
-    if ((output_name = strrchr(output_file, '/'))) output_name++;
-    else output_name = output_file;
+    output_name = get_basename( output_file );
 
     tool = build_tool_name( opts, TOOL_CC );
     strarray_add( &spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
@@ -1231,17 +1223,14 @@ static void build(struct options* opts)
     if (strendswith(output_file, ".fake")) fake_module = 1;
 
     /* normalize the filename a bit: strip .so, ensure it has proper ext */
-    if ((output_name = strrchr(output_file, '/'))) output_name++;
-    else output_name = output_file;
-    if (!strchr(output_name, '.'))
+    if (!strchr(get_basename( output_file ), '.'))
         output_file = strmake("%s.%s", output_file, opts->shared ? "dll" : "exe");
     else if (strendswith(output_file, ".so"))
 	output_file[strlen(output_file) - 3] = 0;
     output_path = is_pe ? output_file : strmake( "%s.so", output_file );
 
     /* get the filename from the path */
-    if ((output_name = strrchr(output_file, '/'))) output_name++;
-    else output_name = output_file;
+    output_name = get_basename( output_file );
 
     /* prepare the linking path */
     if (!opts->wine_objdir)
@@ -1286,9 +1275,7 @@ static void build(struct options* opts)
 		case file_arh:
                     if (opts->use_msvcrt)
                     {
-                        const char *p = strrchr(file, '/');
-                        if (p) p++;
-                        else p = file;
+                        char *p = get_basename( file );
                         if (!strncmp(p, "libmsvcr", 8) || !strncmp(p, "libucrt", 7)) crt_lib = file;
                     }
                     strarray_add(&files, strmake("-a%s", file));
@@ -1421,22 +1408,14 @@ static void build(struct options* opts)
                     /* turn the path back into -Ldir -lfoo options
                      * this makes sure that we use the specified libs even
                      * when mingw adds its own import libs to the link */
-                    char *lib = xstrdup( name );
-                    char *p = strrchr( lib, '/' );
+                    const char *p = get_basename( name );
 
-                    *p++ = 0;
                     if (!strncmp( p, "lib", 3 ) && strcmp( p, "libmsvcrt.a" ))
                     {
-                        char *ext = strrchr( p, '.' );
-
-                        if (ext) *ext = 0;
-                        p += 3;
-                        strarray_add(&link_args, strmake("-L%s", lib ));
-                        strarray_add(&link_args, strmake("-l%s", p ));
-                        free( lib );
+                        strarray_add(&link_args, strmake("-L%s", get_dirname(name) ));
+                        strarray_add(&link_args, strmake("-l%s", get_basename_noext( p + 3 )));
                         break;
                     }
-                    free( lib );
                 }
 		strarray_add(&link_args, name);
 		break;

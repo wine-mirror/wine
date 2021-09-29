@@ -163,7 +163,7 @@ static void exit_on_signal( int sig )
 static void init_argv0_dir( const char *argv0 )
 {
 #ifndef _WIN32
-    char *p, *dir;
+    char *dir;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -173,12 +173,9 @@ static void init_argv0_dir( const char *argv0 )
     dir = realpath( argv0, NULL );
 #endif
     if (!dir) return;
-    if (!(p = strrchr( dir, '/' ))) return;
-    if (p == dir) p++;
-    *p = 0;
+    dir = get_dirname( dir );
     if (strendswith( dir, "/tools/wmc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
     else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
-    free( dir );
 #endif
 }
 
@@ -328,14 +325,14 @@ int main(int argc,char *argv[])
 	/* Generate appropriate outfile names */
 	if(!output_name)
 	{
-		output_name = dup_basename(input_name, ".mc");
-		strcat(output_name, ".rc");
+            const char *name = input_name ? get_basename(input_name) : "wmc.tab";
+            output_name = replace_extension( name, ".mc", ".rc" );
 	}
 
 	if(!header_name)
 	{
-		header_name = dup_basename(input_name, ".mc");
-		strcat(header_name, ".h");
+            const char *name = input_name ? get_basename(input_name) : "wmc.tab";
+            header_name = replace_extension( name, ".mc", ".h" );
 	}
 
 	if(input_name)

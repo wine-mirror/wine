@@ -55,7 +55,6 @@ typedef enum {
     file_arh, file_dll, file_so, file_def, file_spec
 } file_type;
 
-char* get_basename(const char* file);
 void create_file(const char* name, int mode, const char* fmt, ...);
 file_type get_file_type(const char* filename);
 file_type get_lib_type(enum target_platform platform, struct strarray path, const char *library,

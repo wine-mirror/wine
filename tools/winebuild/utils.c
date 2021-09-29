@@ -438,16 +438,9 @@ const char *get_nm_command(void)
 char *get_temp_file_name( const char *prefix, const char *suffix )
 {
     char *name;
-    const char *ext, *basename;
     int fd;
 
-    if (prefix)
-    {
-        if ((basename = strrchr( prefix, '/' ))) basename++;
-        else basename = prefix;
-        if ((ext = strchr( basename, '.' ))) prefix = strmake( "%.*s", ext - basename, basename );
-        else prefix = basename;
-    }
+    if (prefix) prefix = get_basename_noext( prefix );
     fd = make_temp_file( prefix, suffix, &name );
     close( fd );
     strarray_add( &tmp_files, name );

@@ -329,9 +329,7 @@ static char *get_dll_name( const char *name, const char *filename )
 
     if (filename)
     {
-        const char *basename = strrchr( filename, '/' );
-        if (!basename) basename = filename;
-        else basename++;
+        const char *basename = get_basename( filename );
         if (!strncmp( basename, "lib", 3 )) basename += 3;
         ret = xmalloc( strlen(basename) + 5 );
         strcpy( ret, basename );

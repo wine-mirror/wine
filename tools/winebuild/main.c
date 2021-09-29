@@ -151,8 +151,7 @@ static void set_dll_file_name( const char *name, DLLSPEC *spec )
 
     if (spec->file_name) return;
 
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
+    name = get_basename( name );
     spec->file_name = xmalloc( strlen(name) + 5 );
     strcpy( spec->file_name, name );
     if ((p = strrchr( spec->file_name, '.' )))
@@ -695,11 +694,10 @@ static struct strarray load_import_libs( struct strarray files )
 static int parse_input_file( DLLSPEC *spec )
 {
     FILE *input_file = open_input_file( NULL, spec_file_name );
-    char *extension = strrchr( spec_file_name, '.' );
     int result;
 
     spec->src_name = xstrdup( input_file_name );
-    if (extension && !strcmp( extension, ".def" ))
+    if (strendswith( spec_file_name, ".def" ))
         result = parse_def_file( input_file, spec );
     else
         result = parse_spec_file( input_file, spec );

@@ -140,35 +140,6 @@ void chat(const char *s, ...)
 	}
 }
 
-char *dup_basename(const char *name, const char *ext)
-{
-	int namelen;
-	int extlen = strlen(ext);
-	char *base;
-	char *slash;
-
-	if(!name)
-		name = "widl.tab";
-
-	slash = strrchr(name, '/');
-	if (!slash)
-		slash = strrchr(name, '\\');
-
-	if (slash)
-		name = slash + 1;
-
-	namelen = strlen(name);
-
-	/* +6 for later extension (strlen("_r.rgs")) and +1 for '\0' */
-	base = xmalloc(namelen +6 +1);
-	strcpy(base, name);
-	if(!strcasecmp(name + namelen-extlen, ext))
-	{
-		base[namelen - extlen] = '\0';
-	}
-	return base;
-}
-
 size_t widl_getline(char **linep, size_t *lenp, FILE *fp)
 {
     char *line = *linep;

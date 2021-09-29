@@ -248,16 +248,9 @@ enum stub_mode get_stub_mode(void)
 static char *make_token(const char *name)
 {
   char *token;
-  char *slash;
   int i;
 
-  slash = strrchr(name, '/');
-  if(!slash)
-    slash = strrchr(name, '\\');
-
-  if (slash) name = slash + 1;
-
-  token = xstrdup(name);
+  token = get_basename( name );
   for (i=0; token[i]; i++) {
     if (!isalnum(token[i])) token[i] = '_';
     else token[i] = tolower(token[i]);
@@ -268,7 +261,7 @@ static char *make_token(const char *name)
 /* duplicate a basename into a valid C token */
 static char *dup_basename_token(const char *name, const char *ext)
 {
-    char *p, *ret = dup_basename( name, ext );
+    char *p, *ret = replace_extension( get_basename(name), ext, "" );
     /* map invalid characters to '_' */
     for (p = ret; *p; p++) if (!isalnum(*p)) *p = '_';
     return ret;
@@ -318,14 +311,8 @@ static void set_cpu( const char *cpu, int error_out )
  * If not found, or not matching a known CPU name, just proceed silently. */
 static void init_argv0_target( const char *argv0 )
 {
-    char *p, *name;
+    char *p, *name = get_basename( argv0 );
 
-    if ((p = strrchr(argv0, '/')) != NULL)
-        argv0 = p + 1;
-    if ((p = strrchr(argv0, '\\')) != NULL)
-        argv0 = p + 1;
-
-    name = xstrdup( argv0 );
     if (!(p = strchr(name, '-')))
     {
         free( name );
@@ -390,7 +377,7 @@ typedef struct
 static void add_filename_node(struct list *list, const char *name)
 {
   filename_node_t *node = xmalloc(sizeof *node);
-  node->filename = dup_basename( name, ".idl" );
+  node->filename = replace_extension( get_basename( name ), ".idl", "" );
   list_add_tail(list, &node->link);
 }
 
@@ -603,7 +590,7 @@ void write_id_data(const statement_list_t *stmts)
 static void init_argv0_dir( const char *argv0 )
 {
 #ifndef _WIN32
-    char *p, *dir;
+    char *dir;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -613,11 +600,7 @@ static void init_argv0_dir( const char *argv0 )
     dir = realpath( argv0, NULL );
 #endif
     if (!dir) return;
-    if (!(p = strrchr( dir, '/' ))) return;
-    if (p == dir) p++;
-    *p = 0;
-    includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
-    free( dir );
+    includedir = strmake( "%s/%s", get_dirname( dir ), BIN_TO_INCLUDEDIR );
 #endif
 }
 
@@ -915,40 +898,26 @@ int main(int argc,char *argv[])
                  (debuglevel & DEBUGLEVEL_PPTRACE) != 0,
                  (debuglevel & DEBUGLEVEL_PPMSG) != 0 );
 
-  if (!header_name) {
-    header_name = dup_basename(input_name, ".idl");
-    strcat(header_name, ".h");
-  }
+  if (!header_name)
+      header_name = replace_extension( get_basename(input_name), ".idl", ".h" );
 
-  if (!typelib_name && do_typelib) {
-    typelib_name = dup_basename(input_name, ".idl");
-    strcat(typelib_name, ".tlb");
-  }
+  if (!typelib_name && do_typelib)
+      typelib_name = replace_extension( get_basename(input_name), ".idl", ".tlb" );
 
-  if (!proxy_name && do_proxies) {
-    proxy_name = dup_basename(input_name, ".idl");
-    strcat(proxy_name, "_p.c");
-  }
+  if (!proxy_name && do_proxies)
+      proxy_name = replace_extension( get_basename(input_name), ".idl", "_p.c" );
 
-  if (!client_name && do_client) {
-    client_name = dup_basename(input_name, ".idl");
-    strcat(client_name, "_c.c");
-  }
+  if (!client_name && do_client)
+      client_name = replace_extension( get_basename(input_name), ".idl", "_c.c" );
 
-  if (!server_name && do_server) {
-    server_name = dup_basename(input_name, ".idl");
-    strcat(server_name, "_s.c");
-  }
+  if (!server_name && do_server)
+      server_name = replace_extension( get_basename(input_name), ".idl", "_s.c" );
 
-  if (!regscript_name && do_regscript) {
-    regscript_name = dup_basename(input_name, ".idl");
-    strcat(regscript_name, "_r.rgs");
-  }
+  if (!regscript_name && do_regscript)
+      regscript_name = replace_extension( get_basename(input_name), ".idl", "_r.rgs" );
 
-  if (!idfile_name && do_idfile) {
-    idfile_name = dup_basename(input_name, ".idl");
-    strcat(idfile_name, "_i.c");
-  }
+  if (!idfile_name && do_idfile)
+      idfile_name = replace_extension( get_basename(input_name), ".idl", "_i.c" );
 
   if (do_proxies) proxy_token = dup_basename_token(proxy_name,"_p.c");
   if (do_client) client_token = dup_basename_token(client_name,"_c.c");

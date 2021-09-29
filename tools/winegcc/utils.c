@@ -43,20 +43,6 @@ void error(const char* s, ...)
     exit(2);
 }
 
-char* get_basename(const char* file)
-{
-    const char* name;
-    char *base_name, *p;
-
-    if ((name = strrchr(file, '/'))) name++;
-    else name = file;
-
-    base_name = strdup(name);
-    if ((p = strrchr(base_name, '.'))) *p = 0;
-
-    return base_name;
-}
-
 void create_file(const char* name, int mode, const char* fmt, ...)
 {
     va_list ap;

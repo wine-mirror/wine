@@ -479,23 +479,6 @@ static const char *get_base_name( const char *name )
 
 
 /*******************************************************************
- *         replace_extension
- */
-static char *replace_extension( const char *name, const char *old_ext, const char *new_ext )
-{
-    char *ret;
-    size_t name_len = strlen( name );
-    size_t ext_len = strlen( old_ext );
-
-    if (name_len >= ext_len && !strcmp( name + name_len - ext_len, old_ext )) name_len -= ext_len;
-    ret = xmalloc( name_len + strlen( new_ext ) + 1 );
-    memcpy( ret, name, name_len );
-    strcpy( ret + name_len, new_ext );
-    return ret;
-}
-
-
-/*******************************************************************
  *         replace_filename
  */
 static char *replace_filename( const char *path, const char *name )

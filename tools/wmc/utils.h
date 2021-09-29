@@ -32,8 +32,6 @@ void fatal_perror( const char *msg, ... ) __attribute__((format (printf, 1, 2), 
 void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
-char *dup_basename(const char *name, const char *ext);
-
 WCHAR *xunistrdup(const WCHAR * str);
 WCHAR *unistrcpy(WCHAR *dst, const WCHAR *src);
 int unistrlen(const WCHAR *s);

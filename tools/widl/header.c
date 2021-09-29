@@ -1929,12 +1929,9 @@ static void write_runtimeclass_forward(FILE *header, type_t *runtimeclass)
 
 static void write_import(FILE *header, const char *fname)
 {
-  char *hname, *p;
+  char *hname = replace_extension( get_basename(fname), ".idl", "" );
 
-  hname = dup_basename(fname, ".idl");
-  p = hname + strlen(hname) - 2;
-  if (p <= hname || strcmp( p, ".h" )) strcat(hname, ".h");
-
+  if (!strendswith( hname, ".h" )) hname = strmake( "%s.h", hname );
   fprintf(header, "#include <%s>\n", hname);
   free(hname);
 }
