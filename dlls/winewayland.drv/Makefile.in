@@ -1,11 +1,12 @@
 MODULE = winewayland.drv
 UNIXLIB = winewayland.so
-UNIX_CFLAGS = $(WAYLAND_CLIENT_CFLAGS) $(XKBCOMMON_CFLAGS) $(XKBREGISTRY_CFLAGS)
+UNIX_CFLAGS = $(EGL_CFLAGS) $(WAYLAND_CLIENT_CFLAGS) $(XKBCOMMON_CFLAGS) $(XKBREGISTRY_CFLAGS)
 UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS) $(XKBCOMMON_LIBS) $(XKBREGISTRY_LIBS) $(PTHREAD_LIBS) -lm
 
 SOURCES = \
 	display.c \
 	dllmain.c \
+	opengl.c \
 	pointer-constraints-unstable-v1.xml \
 	relative-pointer-unstable-v1.xml \
 	version.rc \

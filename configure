@@ -702,6 +702,8 @@ INOTIFY_LIBS
 INOTIFY_CFLAGS
 PCSCLITE_LIBS
 PCAP_LIBS
+EGL_LIBS
+EGL_CFLAGS
 XKBREGISTRY_LIBS
 XKBREGISTRY_CFLAGS
 XKBCOMMON_LIBS
@@ -1803,6 +1805,8 @@ XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS
 XKBREGISTRY_CFLAGS
 XKBREGISTRY_LIBS
+EGL_CFLAGS
+EGL_LIBS
 INOTIFY_CFLAGS
 INOTIFY_LIBS
 DBUS_CFLAGS
@@ -2629,6 +2633,8 @@ Some influential environment variables:
               C compiler flags for xkbregistry, overriding pkg-config
   XKBREGISTRY_LIBS
               Linker flags for xkbregistry, overriding pkg-config
+  EGL_CFLAGS  C compiler flags for egl, overriding pkg-config
+  EGL_LIBS    Linker flags for egl, overriding pkg-config
   INOTIFY_CFLAGS
               C compiler flags for libinotify, overriding pkg-config
   INOTIFY_LIBS
@@ -16172,6 +16178,110 @@ fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
 
+    if test "x$with_opengl" != "xno"
+    then
+        rm -f conftest.err
+if ${EGL_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  EGL_CFLAGS=`$PKG_CONFIG --cflags egl 2>conftest.err`
+fi
+fi
+
+if ${EGL_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  EGL_LIBS=`$PKG_CONFIG --libs egl 2>/dev/null`
+fi
+fi
+
+EGL_LIBS=${EGL_LIBS:-"-lEGL"}
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: egl cflags: $EGL_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: egl libs: $EGL_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: egl errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $EGL_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "EGL/egl.h" "ac_cv_header_EGL_egl_h" "$ac_includes_default"
+if test "x$ac_cv_header_EGL_egl_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
+printf %s "checking for -lEGL... " >&6; }
+if test ${ac_cv_lib_soname_EGL+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lEGL $EGL_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char eglGetProcAddress ();
+int
+main (void)
+{
+return eglGetProcAddress ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_EGL=`$ac_cv_path_LDD conftest.exe | grep "EGL" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_EGL=`$OTOOL -L conftest$ac_exeext | grep "libEGL\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libEGL\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_EGL=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libEGL\\.$LIBEXT" | sed -e "s/^.*\\[\\(libEGL\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_EGL:+false} :
+then :
+  ac_cv_lib_soname_EGL=`$LDD conftest$ac_exeext | grep "libEGL\\.$LIBEXT" | sed -e "s/^.*\(libEGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else $as_nop
+  ac_cv_lib_soname_EGL=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_EGL:+false} :
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf "%s\n" "not found" >&6; }
+
+else $as_nop
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_EGL" >&5
+printf "%s\n" "$ac_cv_lib_soname_EGL" >&6; }
+
+printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
+
+
+fi
+fi
+
+CPPFLAGS=$ac_save_CPPFLAGS
+
+        if test "x$with_wayland" != "x"
+        then
+            if test -z "$ac_cv_lib_soname_EGL"
+then :
+  case "x$with_opengl" in
+  x)   as_fn_append wine_notices "|EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL" ;;
+  xno) ;;
+  *)   as_fn_error $? "EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL
+This is an error since --with-opengl was requested." "$LINENO" 5 ;;
+esac
+
+fi
+        fi
+    fi
 fi
 if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"
 then :
@@ -23802,6 +23912,8 @@ XKBCOMMON_CFLAGS = $XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS = $XKBCOMMON_LIBS
 XKBREGISTRY_CFLAGS = $XKBREGISTRY_CFLAGS
 XKBREGISTRY_LIBS = $XKBREGISTRY_LIBS
+EGL_CFLAGS = $EGL_CFLAGS
+EGL_LIBS = $EGL_LIBS
 PCAP_LIBS = $PCAP_LIBS
 PCSCLITE_LIBS = $PCSCLITE_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS

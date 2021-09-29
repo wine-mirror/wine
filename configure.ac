@@ -1380,6 +1380,17 @@ then
     WINE_PACKAGE_FLAGS(XKBREGISTRY,[xkbregistry],,,,
         [AC_CHECK_HEADERS([xkbcommon/xkbregistry.h])
          AC_CHECK_LIB(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])
+    if test "x$with_opengl" != "xno"
+    then
+        WINE_PACKAGE_FLAGS(EGL,[egl],[-lEGL],,,
+            [AC_CHECK_HEADER([EGL/egl.h],
+               [WINE_CHECK_SONAME(EGL,eglGetProcAddress,,,[$EGL_LIBS])])])
+        if test "x$with_wayland" != "x"
+        then
+            WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL"],
+                [EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL])
+        fi
+    fi
 fi
 WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"],
                  [Wayland ${notice_platform}development files not found, the Wayland driver won't be supported.],

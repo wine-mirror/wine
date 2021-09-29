@@ -43,6 +43,7 @@ static const struct user_driver_funcs waylanddrv_funcs =
     .pWindowPosChanged = WAYLAND_WindowPosChanged,
     .pWindowPosChanging = WAYLAND_WindowPosChanging,
     .pwine_get_vulkan_driver = WAYLAND_wine_get_vulkan_driver,
+    .pwine_get_wgl_driver = WAYLAND_wine_get_wgl_driver,
 };
 
 static NTSTATUS waylanddrv_unix_init(void *arg)

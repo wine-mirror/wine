@@ -332,5 +332,6 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
                                const RECT *window_rect, const RECT *client_rect,
                                RECT *visible_rect, struct window_surface **surface);
 const struct vulkan_funcs *WAYLAND_wine_get_vulkan_driver(UINT version);
+struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version);
 
 #endif /* __WINE_WAYLANDDRV_H */
