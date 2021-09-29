@@ -145,6 +145,38 @@ static IMoniker *create_antimoniker(DWORD level)
     return moniker;
 }
 
+static HRESULT WINAPI pointer_moniker_obj_QueryInterface(IUnknown *iface,
+        REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI pointer_moniker_obj_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI pointer_moniker_obj_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl pointer_moniker_obj_vtbl =
+{
+    pointer_moniker_obj_QueryInterface,
+    pointer_moniker_obj_AddRef,
+    pointer_moniker_obj_Release,
+};
+
+static IUnknown pm_obj = { &pointer_moniker_obj_vtbl };
+
 static HRESULT create_moniker_parse_desc(const char *desc, unsigned int *eaten,
         IMoniker **moniker)
 {
@@ -163,6 +195,9 @@ static HRESULT create_moniker_parse_desc(const char *desc, unsigned int *eaten,
             *eaten = 2;
             *moniker = create_antimoniker(desc[1] - '0');
             return S_OK;
+        case 'P':
+            *eaten = 1;
+            return CreatePointerMoniker(&pm_obj, moniker);
         case 'C':
             *eaten = 1;
             desc++;
@@ -860,7 +895,7 @@ static void test_ROT(void)
         '1','9','0','3','-','4','A','A','E','-','B','1','A','F','-',
         '2','0','4','6','E','5','8','6','C','9','2','5',0};
     HRESULT hr;
-    IMoniker *pMoniker = NULL;
+    IMoniker *pMoniker = NULL, *moniker;
     struct test_moniker *test_moniker;
     IRunningObjectTable *pROT = NULL;
     struct test_factory factory;
@@ -987,6 +1022,25 @@ static void test_ROT(void)
 
     IMoniker_Release(pMoniker);
     IMoniker_Release(&test_moniker->IMoniker_iface);
+
+    /* Pointer moniker does not implement IROTData or display name */
+    hr = CreatePointerMoniker(NULL, &pMoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&factory.IClassFactory_iface,
+            pMoniker, &dwCookie);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    IMoniker_Release(pMoniker);
+
+    hr = create_moniker_from_desc("I1", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = CreatePointerMoniker((IUnknown *)moniker, &pMoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&factory.IClassFactory_iface,
+            pMoniker, &dwCookie);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    IMoniker_Release(pMoniker);
+    IMoniker_Release(moniker);
 
     IRunningObjectTable_Release(pROT);
 }
@@ -3537,6 +3591,23 @@ todo_wine
     IMoniker_Release(&m->IMoniker_iface);
     IMoniker_Release(&m2->IMoniker_iface);
 
+    /* Display name */
+
+    /* One component does not support it. */
+    hr = create_moniker_from_desc("CPI1", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &str);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &str);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    IMoniker_Release(moniker);
+
     IBindCtx_Release(bindctx);
 }
 
@@ -3616,7 +3687,11 @@ todo_wine
     ok_ole_success(hr, CreateBindCtx);
 
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &display_name);
-    ok(hr == E_NOTIMPL, "IMoniker_GetDisplayName should have returned E_NOTIMPL instead of 0x%08x\n", hr);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &display_name);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IBindCtx_Release(bindctx);
 

@@ -1023,17 +1023,19 @@ static HRESULT WINAPI CompositeMonikerImpl_GetDisplayName(IMoniker *iface, IBind
 {
     CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
     WCHAR *left_name = NULL, *right_name = NULL;
+    HRESULT hr;
 
     TRACE("%p, %p, %p, %p\n", iface, pbc, pmkToLeft, displayname);
 
-    if (!displayname)
-        return E_POINTER;
-
-    if (!moniker->comp_count)
+    if (!pbc || !displayname || !moniker->comp_count)
         return E_INVALIDARG;
 
-    IMoniker_GetDisplayName(moniker->left, pbc, NULL, &left_name);
-    IMoniker_GetDisplayName(moniker->right, pbc, NULL, &right_name);
+    if (FAILED(hr = IMoniker_GetDisplayName(moniker->left, pbc, NULL, &left_name))) return hr;
+    if (FAILED(hr = IMoniker_GetDisplayName(moniker->right, pbc, NULL, &right_name)))
+    {
+        CoTaskMemFree(left_name);
+        return hr;
+    }
 
     if (!(*displayname = CoTaskMemAlloc((lstrlenW(left_name) + lstrlenW(right_name) + 1) * sizeof(WCHAR))))
     {
