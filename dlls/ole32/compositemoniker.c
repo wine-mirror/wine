@@ -612,82 +612,49 @@ static HRESULT WINAPI CompositeMonikerImpl_Hash(IMoniker *iface, DWORD *hash)
     return hr;
 }
 
-/******************************************************************************
- *        CompositeMoniker_IsRunning
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_IsRunning(IMoniker* iface, IBindCtx* pbc,
-               IMoniker* pmkToLeft, IMoniker* pmkNewlyRunning)
+static HRESULT WINAPI CompositeMonikerImpl_IsRunning(IMoniker *iface, IBindCtx *pbc,
+        IMoniker *toleft, IMoniker *newly_running)
 {
-    IRunningObjectTable* rot;
-    HRESULT res;
-    IMoniker *tempMk,*antiMk,*rightMostMk;
-    IEnumMoniker *enumMoniker;
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *c, *left, *rightmost;
+    IRunningObjectTable *rot;
+    HRESULT hr;
 
-    TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pmkNewlyRunning);
+    TRACE("%p, %p, %p, %p.\n", iface, pbc, toleft, newly_running);
 
-    /* If pmkToLeft is non-NULL, this method composes pmkToLeft with this moniker and calls IsRunning on the result.*/
-    if (pmkToLeft!=NULL){
+    if (!pbc)
+        return E_INVALIDARG;
 
-        CreateGenericComposite(pmkToLeft,iface,&tempMk);
-
-        res = IMoniker_IsRunning(tempMk,pbc,NULL,pmkNewlyRunning);
-
-        IMoniker_Release(tempMk);
-
-        return res;
-    }
-    else
-        /* If pmkToLeft is NULL, this method returns S_OK if pmkNewlyRunning is non-NULL and is equal */
-        /* to this moniker */
-
-        if (pmkNewlyRunning!=NULL)
-
-            if (IMoniker_IsEqual(iface,pmkNewlyRunning)==S_OK)
-                return S_OK;
-
-            else
-                return S_FALSE;
-
-        else{
-
-            if (pbc==NULL)
-                return E_INVALIDARG;
-
-            /* If pmkToLeft and pmkNewlyRunning are both NULL, this method checks the ROT to see whether */
-            /* the moniker is running. If so, the method returns S_OK; otherwise, it recursively calls   */
-            /* IMoniker::IsRunning on the rightmost component of the composite, passing the remainder of */
-            /* the composite as the pmkToLeft parameter for that call.                                   */
-
-             res=IBindCtx_GetRunningObjectTable(pbc,&rot);
-
-            if (FAILED(res))
-                return res;
-
-            res = IRunningObjectTable_IsRunning(rot,iface);
-            IRunningObjectTable_Release(rot);
-
-            if(res==S_OK)
-                return S_OK;
-
-            else{
-
-                IMoniker_Enum(iface,FALSE,&enumMoniker);
-                IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
-                IEnumMoniker_Release(enumMoniker);
-
-                res=CreateAntiMoniker(&antiMk);
-                res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-                IMoniker_Release(antiMk);
-
-                res=IMoniker_IsRunning(rightMostMk,pbc,tempMk,pmkNewlyRunning);
-
-                IMoniker_Release(tempMk);
-                IMoniker_Release(rightMostMk);
-
-                return res;
-            }
+    if (toleft)
+    {
+        if (SUCCEEDED(hr = CreateGenericComposite(toleft, iface, &c)))
+        {
+            hr = IMoniker_IsRunning(c, pbc, NULL, newly_running);
+            IMoniker_Release(c);
         }
+
+        return hr;
+    }
+
+    if (newly_running)
+        return IMoniker_IsEqual(iface, newly_running);
+
+    if (FAILED(hr = IBindCtx_GetRunningObjectTable(pbc, &rot)))
+        return hr;
+
+    hr = IRunningObjectTable_IsRunning(rot, iface);
+    IRunningObjectTable_Release(rot);
+    if (hr == S_OK) return S_OK;
+
+    if (FAILED(hr = composite_get_rightmost(moniker, &left, &rightmost)))
+        return hr;
+
+    hr = IMoniker_IsRunning(rightmost, pbc, left, NULL);
+
+    IMoniker_Release(left);
+    IMoniker_Release(rightmost);
+
+    return hr;
 }
 
 static HRESULT WINAPI CompositeMonikerImpl_GetTimeOfLastChange(IMoniker *iface, IBindCtx *pbc,

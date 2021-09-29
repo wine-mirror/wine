@@ -3273,6 +3273,15 @@ todo_wine
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsRunning(moniker, bindctx, moniker1, moniker);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsRunning(moniker, NULL, moniker1, moniker);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
     ok(hr == MK_E_NOTBINDABLE, "IMoniker_GetTimeOfLastChange should return MK_E_NOTBINDABLE, not 0x%08x\n", hr);
 
