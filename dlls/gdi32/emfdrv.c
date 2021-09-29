@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "ntgdi_private.h"
 
 
@@ -263,7 +267,7 @@ static BOOL CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT
     return TRUE;
 }
 
-static BOOL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL CDECL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     DC *dc = get_physdev_dc( dev );
     RECTL bounds;

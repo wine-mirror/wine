@@ -1757,9 +1757,9 @@ sub dump_arabic_shaping($)
 
 ################################################################
 # dump the Vertical Orientation table
-sub dump_vertical($)
+sub dump_vertical($$)
 {
-    my $filename = shift;
+    my ($filename, $unix) = @_;
     my @vertical_table;
 
     my $INPUT = open_data_file( $UNIDATA, "VerticalOrientation.txt" );
@@ -1797,6 +1797,12 @@ sub dump_vertical($)
     print OUTPUT "/* Unicode Vertical Orientation */\n";
     print OUTPUT "/* generated from $UNIDATA:VerticalOrientation.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    if ($unix)
+    {
+        print OUTPUT "#if 0\n";
+        print OUTPUT "#pragma makedep unix\n";
+        print OUTPUT "#endif\n\n";
+    }
     print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "vertical_orientation_table", $vertical_types{'R'}, 16, @vertical_table );
@@ -2822,8 +2828,8 @@ dump_linebreak( "dlls/gdi32/uniscribe/linebreak.c" );
 dump_linebreak( "dlls/dwrite/linebreak.c" );
 dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/gdi32/uniscribe/indicsyllable.c" );
-dump_vertical( "dlls/gdi32/vertical.c" );
-dump_vertical( "dlls/wineps.drv/vertical.c" );
+dump_vertical( "dlls/gdi32/vertical.c", 1 );
+dump_vertical( "dlls/wineps.drv/vertical.c", 0 );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );

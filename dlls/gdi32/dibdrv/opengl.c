@@ -211,18 +211,17 @@ static const struct osmesa_funcs osmesa_funcs =
     osmesa_make_current
 };
 
-NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+const struct osmesa_funcs *init_opengl_lib(void)
 {
-    if (!init_opengl()) return STATUS_DLL_NOT_FOUND;
-    *(const struct osmesa_funcs **)ptr_out = &osmesa_funcs;
-    return STATUS_SUCCESS;
+    if (!init_opengl()) return NULL;
+    return &osmesa_funcs;
 }
 
 #else  /* SONAME_LIBOSMESA */
 
-NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+const struct osmesa_funcs *init_opengl_lib(void)
 {
-    return STATUS_DLL_NOT_FOUND;
+    return NULL;
 }
 
 #endif  /* SONAME_LIBOSMESA */

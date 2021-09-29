@@ -299,3 +299,5 @@ struct osmesa_funcs
     BOOL (CDECL *make_current)( struct wgl_context *context, void *bits,
                                 int width, int height, int bpp, int stride );
 };
+
+extern const struct osmesa_funcs *init_opengl_lib(void) DECLSPEC_HIDDEN;

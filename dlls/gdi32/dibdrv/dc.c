@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <assert.h>
 
 #include "ntgdi_private.h"
@@ -608,7 +612,7 @@ static struct opengl_funcs * CDECL dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT
         ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n", version, WINE_WGL_DRIVER_VERSION );
         return NULL;
     }
-    if (!osmesa_funcs && __wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, NULL, &osmesa_funcs ))
+    if (!osmesa_funcs && !(osmesa_funcs = init_opengl_lib()))
     {
         static int warned;
         if (!warned++) ERR( "OSMesa not available, no OpenGL bitmap support\n" );

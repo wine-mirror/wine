@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
@@ -84,16 +88,12 @@ const struct gdi_dc_funcs *get_display_driver(void)
     return driver_funcs;
 }
 
-/***********************************************************************
- *           __wine_set_display_driver    (win32u.@)
- */
-void CDECL __wine_set_display_driver( HMODULE module )
+void CDECL set_display_driver( void *proc )
 {
-    const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int );
+    const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int ) = proc;
     const struct gdi_dc_funcs *funcs = NULL;
 
-    wine_get_gdi_driver = (void *)GetProcAddress( module, "wine_get_gdi_driver" );
-    if (wine_get_gdi_driver) funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
+    funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
     if (!funcs)
     {
         ERR( "Could not create graphics driver\n" );

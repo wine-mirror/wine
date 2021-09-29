@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -42,8 +46,9 @@ static GDI_SHARED_MEMORY gdi_shared;
 static GDI_HANDLE_ENTRY *next_free;
 static GDI_HANDLE_ENTRY *next_unused = gdi_shared.Handles + FIRST_GDI_HANDLE;
 static LONG debug_count;
-HMODULE gdi32_module = 0;
 SYSTEM_BASIC_INFORMATION system_info;
+
+const struct user_callbacks *user_callbacks = NULL;
 
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
@@ -696,26 +701,6 @@ static void init_stock_objects( unsigned int dpi )
     }
 }
 
-/***********************************************************************
- *           DllMain
- *
- * GDI initialization.
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    unsigned int dpi;
-
-    if (reason != DLL_PROCESS_ATTACH) return TRUE;
-
-    gdi32_module = inst;
-    DisableThreadLibraryCalls( inst );
-    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
-    set_gdi_shared();
-    dpi = font_init();
-    init_stock_objects( dpi );
-    return TRUE;
-}
-
 
 static const char *gdi_obj_type( unsigned type )
 {
@@ -828,6 +813,12 @@ DWORD get_gdi_object_type( HGDIOBJ obj )
 {
     GDI_HANDLE_ENTRY *entry = handle_entry( obj );
     return entry ? entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT : 0;
+}
+
+void set_gdi_client_ptr( HGDIOBJ obj, void *ptr )
+{
+    GDI_HANDLE_ENTRY *entry = handle_entry( obj );
+    if (entry) entry->UserPointer = (UINT_PTR)ptr;
 }
 
 /***********************************************************************
@@ -1080,4 +1071,208 @@ BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
 {
     FIXME( "stub\n" );
     return FALSE;
+}
+
+
+static struct unix_funcs unix_funcs =
+{
+    NtGdiAbortDoc,
+    NtGdiAbortPath,
+    NtGdiAddFontMemResourceEx,
+    NtGdiAddFontResourceW,
+    NtGdiAlphaBlend,
+    NtGdiAngleArc,
+    NtGdiArcInternal,
+    NtGdiBeginPath,
+    NtGdiBitBlt,
+    NtGdiCloseFigure,
+    NtGdiCombineRgn,
+    NtGdiComputeXformCoefficients,
+    NtGdiCreateBitmap,
+    NtGdiCreateClientObj,
+    NtGdiCreateCompatibleBitmap,
+    NtGdiCreateCompatibleDC,
+    NtGdiCreateDIBBrush,
+    NtGdiCreateDIBSection,
+    NtGdiCreateDIBitmapInternal,
+    NtGdiCreateEllipticRgn,
+    NtGdiCreateHalftonePalette,
+    NtGdiCreateHatchBrushInternal,
+    NtGdiCreateMetafileDC,
+    NtGdiCreatePaletteInternal,
+    NtGdiCreatePatternBrushInternal,
+    NtGdiCreatePen,
+    NtGdiCreateRectRgn,
+    NtGdiCreateRoundRectRgn,
+    NtGdiCreateSolidBrush,
+    NtGdiDdDDICheckVidPnExclusiveOwnership,
+    NtGdiDdDDICloseAdapter,
+    NtGdiDdDDICreateDCFromMemory,
+    NtGdiDdDDICreateDevice,
+    NtGdiDdDDIDestroyDCFromMemory,
+    NtGdiDdDDIDestroyDevice,
+    NtGdiDdDDIEscape,
+    NtGdiDdDDIOpenAdapterFromDeviceName,
+    NtGdiDdDDIOpenAdapterFromHdc,
+    NtGdiDdDDIOpenAdapterFromLuid,
+    NtGdiDdDDIQueryStatistics,
+    NtGdiDdDDISetQueuedLimit,
+    NtGdiDdDDISetVidPnSourceOwner,
+    NtGdiDeleteClientObj,
+    NtGdiDeleteObjectApp,
+    NtGdiDescribePixelFormat,
+    NtGdiDoPalette,
+    NtGdiDrawStream,
+    NtGdiEllipse,
+    NtGdiEndDoc,
+    NtGdiEndPath,
+    NtGdiEndPage,
+    NtGdiEnumFonts,
+    NtGdiEqualRgn,
+    NtGdiExcludeClipRect,
+    NtGdiExtCreatePen,
+    NtGdiExtEscape,
+    NtGdiExtFloodFill,
+    NtGdiExtTextOutW,
+    NtGdiExtCreateRegion,
+    NtGdiExtGetObjectW,
+    NtGdiExtSelectClipRgn,
+    NtGdiFillPath,
+    NtGdiFillRgn,
+    NtGdiFlattenPath,
+    NtGdiFontIsLinked,
+    NtGdiFlush,
+    NtGdiFrameRgn,
+    NtGdiGetAndSetDCDword,
+    NtGdiGetAppClipBox,
+    NtGdiGetBitmapBits,
+    NtGdiGetBitmapDimension,
+    NtGdiGetBoundsRect,
+    NtGdiGetCharABCWidthsW,
+    NtGdiGetCharWidthW,
+    NtGdiGetCharWidthInfo,
+    NtGdiGetColorAdjustment,
+    NtGdiGetDCObject,
+    NtGdiGetDIBitsInternal,
+    NtGdiGetDeviceCaps,
+    NtGdiGetDeviceGammaRamp,
+    NtGdiGetFontData,
+    NtGdiGetFontFileData,
+    NtGdiGetFontFileInfo,
+    NtGdiGetFontUnicodeRanges,
+    NtGdiGetGlyphIndicesW,
+    NtGdiGetGlyphOutline,
+    NtGdiGetKerningPairs,
+    NtGdiGetNearestColor,
+    NtGdiGetNearestPaletteIndex,
+    NtGdiGetOutlineTextMetricsInternalW,
+    NtGdiGetPath,
+    NtGdiGetPixel,
+    NtGdiGetRandomRgn,
+    NtGdiGetRasterizerCaps,
+    NtGdiGetRealizationInfo,
+    NtGdiGetRegionData,
+    NtGdiGetRgnBox,
+    NtGdiGetSpoolMessage,
+    NtGdiGetSystemPaletteUse,
+    NtGdiGetTextCharsetInfo,
+    NtGdiGetTextExtentExW,
+    NtGdiGetTextFaceW,
+    NtGdiGetTextMetricsW,
+    NtGdiGetTransform,
+    NtGdiGradientFill,
+    NtGdiHfontCreate,
+    NtGdiInitSpool,
+    NtGdiIntersectClipRect,
+    NtGdiInvertRgn,
+    NtGdiLineTo,
+    NtGdiMaskBlt,
+    NtGdiModifyWorldTransform,
+    NtGdiMoveTo,
+    NtGdiOffsetClipRgn,
+    NtGdiOffsetRgn,
+    NtGdiOpenDCW,
+    NtGdiPatBlt,
+    NtGdiPathToRegion,
+    NtGdiPlgBlt,
+    NtGdiPolyDraw,
+    NtGdiPolyPolyDraw,
+    NtGdiPtInRegion,
+    NtGdiPtVisible,
+    NtGdiRectInRegion,
+    NtGdiRectVisible,
+    NtGdiRectangle,
+    NtGdiRemoveFontMemResourceEx,
+    NtGdiRemoveFontResourceW,
+    NtGdiResetDC,
+    NtGdiResizePalette,
+    NtGdiRestoreDC,
+    NtGdiRoundRect,
+    NtGdiSaveDC,
+    NtGdiScaleViewportExtEx,
+    NtGdiScaleWindowExtEx,
+    NtGdiSelectBitmap,
+    NtGdiSelectBrush,
+    NtGdiSelectClipPath,
+    NtGdiSelectFont,
+    NtGdiSelectPen,
+    NtGdiSetBitmapBits,
+    NtGdiSetBitmapDimension,
+    NtGdiSetBrushOrg,
+    NtGdiSetBoundsRect,
+    NtGdiSetColorAdjustment,
+    NtGdiSetDIBitsToDeviceInternal,
+    NtGdiSetDeviceGammaRamp,
+    NtGdiSetLayout,
+    NtGdiSetMagicColors,
+    NtGdiSetMetaRgn,
+    NtGdiSetPixel,
+    NtGdiSetPixelFormat,
+    NtGdiSetRectRgn,
+    NtGdiSetSystemPaletteUse,
+    NtGdiSetTextJustification,
+    NtGdiSetVirtualResolution,
+    NtGdiStartDoc,
+    NtGdiStartPage,
+    NtGdiStretchBlt,
+    NtGdiStretchDIBitsInternal,
+    NtGdiStrokeAndFillPath,
+    NtGdiStrokePath,
+    NtGdiSwapBuffers,
+    NtGdiTransparentBlt,
+    NtGdiTransformPoints,
+    NtGdiUnrealizeObject,
+    NtGdiUpdateColors,
+    NtGdiWidenPath,
+
+    GDIRealizePalette,
+    GDISelectPalette,
+    GetDCHook,
+    MirrorRgn,
+    SetDCHook,
+    SetDIBits,
+    SetHookFlags,
+    get_brush_bitmap_info,
+    get_file_outline_text_metric,
+    get_icm_profile,
+    __wine_get_vulkan_driver,
+    __wine_get_wgl_driver,
+    __wine_make_gdi_object_system,
+    set_display_driver,
+    __wine_set_visible_region,
+};
+
+NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    unsigned int dpi;
+
+    if (reason != DLL_PROCESS_ATTACH) return 0;
+
+    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
+    set_gdi_shared();
+    dpi = font_init();
+    init_stock_objects( dpi );
+    user_callbacks = ptr_in;
+    *(struct unix_funcs **)ptr_out = &unix_funcs;
+    return 0;
 }

@@ -94,6 +94,10 @@ SOFTWARE.
  * the y-x-banding that's so nice to have...
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>

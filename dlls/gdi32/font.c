@@ -20,6 +20,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -1195,11 +1199,11 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
     return NULL;
 }
 
-static int CDECL add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
-                               const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
-                               void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
-                               DWORD ntmflags, DWORD version, DWORD flags,
-                               const struct bitmap_font_size *size )
+int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
+                  const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                  void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
+                  DWORD ntmflags, DWORD version, DWORD flags,
+                  const struct bitmap_font_size *size )
 {
     struct gdi_font_face *face;
     struct gdi_font_family *family;
@@ -5784,7 +5788,7 @@ DWORD WINAPI NtGdiGetGlyphOutline( HDC hdc, UINT ch, UINT format, GLYPHMETRICS *
 }
 
 
-BOOL get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
+BOOL CDECL get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
 {
     struct gdi_font *font = NULL;
 
@@ -6203,8 +6207,6 @@ static void load_registry_fonts(void)
     NtClose( hkey );
 }
 
-static const struct font_callback_funcs callback_funcs = { add_gdi_face };
-
 /***********************************************************************
  *              font_init
  */
@@ -6230,7 +6232,7 @@ UINT font_init(void)
     if (!dpi) return 96;
     update_codepage( dpi );
 
-    if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs ))
+    if (!(font_funcs = init_freetype_lib()))
         return dpi;
 
     load_system_bitmap_fonts();

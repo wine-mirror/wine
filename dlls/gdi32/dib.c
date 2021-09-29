@@ -59,6 +59,10 @@
     Search for "Bitmap Structures" in MSDN
 */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>

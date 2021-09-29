@@ -282,8 +282,6 @@ static inline FT_Face get_ft_face( struct gdi_font *font )
     return ((struct font_private_data *)font->private)->ft_face;
 }
 
-static const struct font_callback_funcs *callback_funcs;
-
 struct font_mapping
 {
     struct list entry;
@@ -1355,9 +1353,9 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
 
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
 
-    ret = callback_funcs->add_gdi_face( unix_face->family_name, unix_face->second_name, unix_face->style_name, unix_face->full_name,
-                                        file, data_ptr, data_size, face_index, unix_face->fs, unix_face->ntm_flags,
-                                        unix_face->font_version, flags, unix_face->scalable ? NULL : &unix_face->size );
+    ret = add_gdi_face( unix_face->family_name, unix_face->second_name, unix_face->style_name, unix_face->full_name,
+                        file, data_ptr, data_size, face_index, unix_face->fs, unix_face->ntm_flags,
+                        unix_face->font_version, flags, unix_face->scalable ? NULL : &unix_face->size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n", unix_face->fs.fsCsb[0], unix_face->fs.fsCsb[1],
           unix_face->fs.fsUsb[0], unix_face->fs.fsUsb[1], unix_face->fs.fsUsb[2], unix_face->fs.fsUsb[3]);
@@ -4316,31 +4314,21 @@ static const struct font_backend_funcs font_funcs =
     freetype_destroy_font
 };
 
-static NTSTATUS init_freetype_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+const struct font_backend_funcs *init_freetype_lib(void)
 {
-    callback_funcs = ptr_in;
-    if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
+    if (!init_freetype()) return NULL;
 #ifdef SONAME_LIBFONTCONFIG
     init_fontconfig();
 #endif
     NtQueryDefaultLocale( FALSE, &system_lcid );
-    *(const struct font_backend_funcs **)ptr_out = &font_funcs;
-    return STATUS_SUCCESS;
+    return &font_funcs;
 }
 
 #else /* HAVE_FREETYPE */
 
-static NTSTATUS init_freetype_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+const struct font_backend_funcs *init_freetype_lib(void)
 {
-    return STATUS_DLL_NOT_FOUND;
+    return NULL;
 }
 
 #endif /* HAVE_FREETYPE */
-
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-
-    if (ptr_in) return init_freetype_lib( module, reason, ptr_in, ptr_out );
-    else return init_opengl_lib( module, reason, ptr_in, ptr_out );
-}

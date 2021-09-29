@@ -30,6 +30,7 @@
 #include "initguid.h"
 #include "devguid.h"
 #include "setupapi.h"
+#include "win32u_private.h"
 
 #include "wine/rbtree.h"
 #include "wine/debug.h"
@@ -40,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
 #define FIRST_GDI_HANDLE 32
+
+HMODULE gdi32_module;
 
 struct hdc_list
 {
@@ -127,6 +130,21 @@ HGDIOBJ get_full_gdi_handle( HGDIOBJ obj )
 {
     GDI_HANDLE_ENTRY *entry = handle_entry( obj );
     return entry ? entry_to_handle( entry ) : 0;
+}
+
+/***********************************************************************
+ *           DllMain
+ *
+ * GDI initialization.
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    if (reason != DLL_PROCESS_ATTACH) return TRUE;
+
+    DisableThreadLibraryCalls( inst );
+    gdi32_module = inst;
+    wrappers_init();
+    return TRUE;
 }
 
 /***********************************************************************

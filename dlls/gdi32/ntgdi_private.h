@@ -211,14 +211,13 @@ extern UINT set_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries,
                                     const RGBQUAD *colors ) DECLSPEC_HIDDEN;
 extern void dibdrv_set_window_surface( DC *dc, struct window_surface *surface ) DECLSPEC_HIDDEN;
 
-extern NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out ) DECLSPEC_HIDDEN;
-
 /* driver.c */
 extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs path_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs font_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *get_display_driver(void) DECLSPEC_HIDDEN;
+extern void CDECL set_display_driver( void *proc ) DECLSPEC_HIDDEN;
 
 /* font.c */
 
@@ -328,17 +327,14 @@ struct font_backend_funcs
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 
-struct font_callback_funcs
-{
-    int (CDECL *add_gdi_face)( const WCHAR *family_name, const WCHAR *second_name,
-                               const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
-                               void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
-                               DWORD ntmflags, DWORD version, DWORD flags,
-                               const struct bitmap_font_size *size );
-};
-
+extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
+                         const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                         void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
+                         DWORD ntmflags, DWORD version, DWORD flags,
+                         const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 extern UINT font_init(void) DECLSPEC_HIDDEN;
 extern UINT get_acp(void) DECLSPEC_HIDDEN;
+extern const struct font_backend_funcs *init_freetype_lib(void) DECLSPEC_HIDDEN;
 
 /* opentype.c */
 
@@ -647,7 +643,6 @@ extern void CDECL free_heap_bits( struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 
 void set_gdi_client_ptr( HGDIOBJ handle, void *ptr ) DECLSPEC_HIDDEN;
 
-extern HMODULE gdi32_module DECLSPEC_HIDDEN;
 extern SYSTEM_BASIC_INFORMATION system_info DECLSPEC_HIDDEN;
 extern const struct user_callbacks *user_callbacks DECLSPEC_HIDDEN;
 
