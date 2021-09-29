@@ -5550,12 +5550,16 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      * driver, but small enough to prevent it from interfering with any
      * anti-aliasing. */
 
+    /* Projection matrices are <= d3d9, which all have integer pixel centers. */
+    if (!(d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER))
+        ERR("Did not expect to enter this codepath without WINED3D_PIXEL_CENTER_INTEGER.\n");
+
     clip_control = d3d_info->clip_control;
     flip = !clip_control && context->render_offscreen;
-    if (!clip_control && d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
+    if (!clip_control)
         center_offset = 63.0f / 64.0f;
     else
-        center_offset = -1.0f / 64.0f;
+        center_offset = 0.0f;
 
     if (context->last_was_rhw)
     {
