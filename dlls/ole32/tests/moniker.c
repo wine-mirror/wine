@@ -3439,7 +3439,6 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, moniker1, &ft);
-todo_wine
     ok(hr == MK_E_NOTBINDABLE, "Unexpected hr %#x.\n", hr);
 
     hr = IRunningObjectTable_Revoke(rot, cookie);
@@ -3626,6 +3625,24 @@ todo_wine {
     ok(!len, "Unexpected length %u.\n", len);
 }
     IROTData_Release(rotdata);
+
+    IMoniker_Release(moniker);
+
+    /* Reduce() */
+    hr = create_moniker_from_desc("CI1I2", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ALL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, &moniker2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ALL, NULL, &moniker2);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(moniker2 == moniker, "Unexpected object.\n");
+    IMoniker_Release(moniker2);
 
     IMoniker_Release(moniker);
 

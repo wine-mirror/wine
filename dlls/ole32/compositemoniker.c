@@ -408,76 +408,43 @@ static HRESULT WINAPI CompositeMonikerImpl_BindToStorage(IMoniker *iface, IBindC
     return hr;
 }
 
-/******************************************************************************
- *        CompositeMoniker_Reduce
- ******************************************************************************/
-static HRESULT WINAPI
-CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
-               IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
+static HRESULT WINAPI CompositeMonikerImpl_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD howfar,
+        IMoniker **toleft, IMoniker **reduced)
 {
-    HRESULT   res;
-    IMoniker *tempMk,*antiMk,*rightMostMk,*leftReducedComposedMk,*rightMostReducedMk;
-    IEnumMoniker *enumMoniker;
+    CompositeMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IMoniker *m, *reduced_left, *reduced_right;
+    BOOL was_reduced;
+    HRESULT hr;
 
-    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("%p, %p, %d, %p, %p.\n", iface, pbc, howfar, toleft, reduced);
 
-    if (ppmkReduced==NULL)
-        return E_POINTER;
+    if (!pbc || !reduced)
+        return E_INVALIDARG;
 
-    /* This method recursively calls Reduce for each of its component monikers. */
+    if (FAILED(hr = IMoniker_Reduce(moniker->left, pbc, howfar, NULL, &reduced_left)))
+        return hr;
 
-    if (ppmkToLeft==NULL){
-
-        IMoniker_Enum(iface,FALSE,&enumMoniker);
-        IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
-        IEnumMoniker_Release(enumMoniker);
-
-        CreateAntiMoniker(&antiMk);
-        IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-        IMoniker_Release(antiMk);
-
-        res = IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,&tempMk, ppmkReduced);
-        IMoniker_Release(tempMk);
-        IMoniker_Release(rightMostMk);
-
-        return res;
+    m = moniker->left;
+    if (FAILED(hr = IMoniker_Reduce(moniker->right, pbc, howfar, &m, &reduced_right)))
+    {
+        IMoniker_Release(reduced_left);
+        return hr;
     }
-    else if (*ppmkToLeft==NULL)
 
-        return IMoniker_Reduce(iface,pbc,dwReduceHowFar,NULL,ppmkReduced);
-
-    else{
-
-        /* separate the composite moniker in to left and right moniker */
-        IMoniker_Enum(iface,FALSE,&enumMoniker);
-        IEnumMoniker_Next(enumMoniker,1,&rightMostMk,NULL);
-        IEnumMoniker_Release(enumMoniker);
-
-        CreateAntiMoniker(&antiMk);
-        IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
-        IMoniker_Release(antiMk);
-
-        /* If any of the components  reduces itself, the method returns S_OK and passes back a composite */
-        /* of the reduced components */
-        if (IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,NULL,&rightMostReducedMk) &&
-            IMoniker_Reduce(rightMostMk,pbc,dwReduceHowFar,&tempMk,&leftReducedComposedMk) ){
-            IMoniker_Release(tempMk);
-            IMoniker_Release(rightMostMk);
-
-            return CreateGenericComposite(leftReducedComposedMk,rightMostReducedMk,ppmkReduced);
-        }
-        else{
-            /* If no reduction occurred, the method passes back the same moniker and returns MK_S_REDUCED_TO_SELF.*/
-            IMoniker_Release(tempMk);
-            IMoniker_Release(rightMostMk);
-
-            IMoniker_AddRef(iface);
-
-            *ppmkReduced=iface;
-
-            return MK_S_REDUCED_TO_SELF;
-        }
+    if ((was_reduced = (reduced_left != moniker->left || reduced_right != moniker->right)))
+    {
+        hr = CreateGenericComposite(reduced_left, reduced_right, reduced);
     }
+    else
+    {
+        *reduced = iface;
+        IMoniker_AddRef(*reduced);
+    }
+
+    IMoniker_Release(reduced_left);
+    IMoniker_Release(reduced_right);
+
+    return was_reduced ? hr : MK_S_REDUCED_TO_SELF;
 }
 
 static HRESULT WINAPI CompositeMonikerImpl_ComposeWith(IMoniker *iface, IMoniker *right,
