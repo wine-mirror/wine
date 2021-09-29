@@ -21,70 +21,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include "../tools.h"
 #include "winedump.h"
-
-
-/*******************************************************************
- *         str_create
- *
- * Create a single string from many substrings
- */
-char *str_create(size_t num_str, ...)
-{
-  va_list args;
-  size_t len = 1, i = 0;
-  char *tmp, *t;
-
-  va_start (args, num_str);
-  for (i = 0; i < num_str; i++)
-    if ((t = va_arg(args, char *)))
-      len += strlen (t);
-  va_end (args);
-
-  if (!(tmp = malloc (len)))
-    fatal ("Out of memory");
-
-  tmp[0] = '\0';
-
-  va_start (args, num_str);
-  for (i = 0; i < num_str; i++)
-    if ((t = va_arg(args, char *)))
-      strcat (tmp, t);
-  va_end (args);
-  return tmp;
-}
-
-
-/*******************************************************************
- *         str_create_num
- *
- * Create a single string from many substrings, terminating in a number
- */
-char *str_create_num(size_t num_str, int num, ...)
-{
-  va_list args;
-  size_t len = 8, i = 0;
-  char *tmp, *t;
-
-  va_start (args, num);
-  for (i = 0; i < num_str; i++)
-    if ((t = va_arg(args, char *)))
-      len += strlen (t);
-  va_end (args);
-
-  if (!(tmp = malloc (len)))
-    fatal ("Out of memory");
-
-  tmp[0] = '\0';
-
-  va_start (args, num);
-  for (i = 0; i < num_str; i++)
-    if ((t = va_arg(args, char *)))
-      strcat (tmp, t);
-  va_end (args);
-  sprintf (tmp + len - 8, "%d", num);
-  return tmp;
-}
 
 
 /*******************************************************************
@@ -98,9 +36,7 @@ char *str_substring(const char *start, const char *end)
 
   assert (start && end && end > start);
 
-  if (!(newstr = malloc (end - start + 1)))
-    fatal ("Out of memory");
-
+  newstr = xmalloc (end - start + 1);
   memcpy (newstr, start, end - start);
   newstr [end - start] = '\0';
 
@@ -196,12 +132,10 @@ char *str_toupper (char *str)
  */
 FILE *open_file (const char *name, const char *ext, const char *mode)
 {
-  char  fname[128];
+  char *fname;
   FILE *fp;
 
-  if (((unsigned)snprintf (fname, sizeof (fname), "%s%s%s",
-                 *mode == 'w' ? "./" : "", name, ext) > sizeof (fname)))
-    fatal ("File name too long");
+  fname = strmake( "%s%s%s", *mode == 'w' ? "./" : "", name, ext);
 
   if (VERBOSE)
     printf ("Open file %s\n", fname);

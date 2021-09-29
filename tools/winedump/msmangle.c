@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include "../tools.h"
 #include "winedump.h"
 
 /* Type for parsing mangled types */
@@ -94,73 +95,73 @@ BOOL symbol_demangle (parsed_symbol *sym)
     /* C++ operator code (one character, or two if the first is '_') */
     switch (*++name)
     {
-    case '0': function_name = strdup ("ctor"); break;
-    case '1': function_name = strdup ("dtor"); break;
-    case '2': function_name = strdup ("operator_new"); break;
-    case '3': function_name = strdup ("operator_delete"); break;
-    case '4': function_name = strdup ("operator_equals"); break;
-    case '5': function_name = strdup ("operator_shiftright"); break;
-    case '6': function_name = strdup ("operator_shiftleft"); break;
-    case '7': function_name = strdup ("operator_not"); break;
-    case '8': function_name = strdup ("operator_equalsequals"); break;
-    case '9': function_name = strdup ("operator_notequals"); break;
-    case 'A': function_name = strdup ("operator_array"); break;
-    case 'C': function_name = strdup ("operator_dereference"); break;
-    case 'D': function_name = strdup ("operator_multiply"); break;
-    case 'E': function_name = strdup ("operator_plusplus"); break;
-    case 'F': function_name = strdup ("operator_minusminus"); break;
-    case 'G': function_name = strdup ("operator_minus"); break;
-    case 'H': function_name = strdup ("operator_plus"); break;
-    case 'I': function_name = strdup ("operator_address"); break;
-    case 'J': function_name = strdup ("operator_dereferencememberptr"); break;
-    case 'K': function_name = strdup ("operator_divide"); break;
-    case 'L': function_name = strdup ("operator_modulo"); break;
-    case 'M': function_name = strdup ("operator_lessthan"); break;
-    case 'N': function_name = strdup ("operator_lessthanequal"); break;
-    case 'O': function_name = strdup ("operator_greaterthan"); break;
-    case 'P': function_name = strdup ("operator_greaterthanequal"); break;
-    case 'Q': function_name = strdup ("operator_comma"); break;
-    case 'R': function_name = strdup ("operator_functioncall"); break;
-    case 'S': function_name = strdup ("operator_complement"); break;
-    case 'T': function_name = strdup ("operator_xor"); break;
-    case 'U': function_name = strdup ("operator_logicalor"); break;
-    case 'V': function_name = strdup ("operator_logicaland"); break;
-    case 'W': function_name = strdup ("operator_or"); break;
-    case 'X': function_name = strdup ("operator_multiplyequals"); break;
-    case 'Y': function_name = strdup ("operator_plusequals"); break;
-    case 'Z': function_name = strdup ("operator_minusequals"); break;
+    case '0': function_name = xstrdup ("ctor"); break;
+    case '1': function_name = xstrdup ("dtor"); break;
+    case '2': function_name = xstrdup ("operator_new"); break;
+    case '3': function_name = xstrdup ("operator_delete"); break;
+    case '4': function_name = xstrdup ("operator_equals"); break;
+    case '5': function_name = xstrdup ("operator_shiftright"); break;
+    case '6': function_name = xstrdup ("operator_shiftleft"); break;
+    case '7': function_name = xstrdup ("operator_not"); break;
+    case '8': function_name = xstrdup ("operator_equalsequals"); break;
+    case '9': function_name = xstrdup ("operator_notequals"); break;
+    case 'A': function_name = xstrdup ("operator_array"); break;
+    case 'C': function_name = xstrdup ("operator_dereference"); break;
+    case 'D': function_name = xstrdup ("operator_multiply"); break;
+    case 'E': function_name = xstrdup ("operator_plusplus"); break;
+    case 'F': function_name = xstrdup ("operator_minusminus"); break;
+    case 'G': function_name = xstrdup ("operator_minus"); break;
+    case 'H': function_name = xstrdup ("operator_plus"); break;
+    case 'I': function_name = xstrdup ("operator_address"); break;
+    case 'J': function_name = xstrdup ("operator_dereferencememberptr"); break;
+    case 'K': function_name = xstrdup ("operator_divide"); break;
+    case 'L': function_name = xstrdup ("operator_modulo"); break;
+    case 'M': function_name = xstrdup ("operator_lessthan"); break;
+    case 'N': function_name = xstrdup ("operator_lessthanequal"); break;
+    case 'O': function_name = xstrdup ("operator_greaterthan"); break;
+    case 'P': function_name = xstrdup ("operator_greaterthanequal"); break;
+    case 'Q': function_name = xstrdup ("operator_comma"); break;
+    case 'R': function_name = xstrdup ("operator_functioncall"); break;
+    case 'S': function_name = xstrdup ("operator_complement"); break;
+    case 'T': function_name = xstrdup ("operator_xor"); break;
+    case 'U': function_name = xstrdup ("operator_logicalor"); break;
+    case 'V': function_name = xstrdup ("operator_logicaland"); break;
+    case 'W': function_name = xstrdup ("operator_or"); break;
+    case 'X': function_name = xstrdup ("operator_multiplyequals"); break;
+    case 'Y': function_name = xstrdup ("operator_plusequals"); break;
+    case 'Z': function_name = xstrdup ("operator_minusequals"); break;
     case '_':
       switch (*++name)
       {
-      case '0': function_name = strdup ("operator_divideequals"); break;
-      case '1': function_name = strdup ("operator_moduloequals"); break;
-      case '2': function_name = strdup ("operator_shiftrightequals"); break;
-      case '3': function_name = strdup ("operator_shiftleftequals"); break;
-      case '4': function_name = strdup ("operator_andequals"); break;
-      case '5': function_name = strdup ("operator_orequals"); break;
-      case '6': function_name = strdup ("operator_xorequals"); break;
-      case '7': function_name = strdup ("vftable"); data_flags = DATA_VTABLE; break;
-      case '8': function_name = strdup ("vbtable"); data_flags = DATA_VTABLE; break;
-      case '9': function_name = strdup ("vcall"); data_flags = DATA_VTABLE; break;
-      case 'A': function_name = strdup ("typeof"); data_flags = DATA_VTABLE; break;
-      case 'B': function_name = strdup ("local_static_guard"); data_flags = DATA_VTABLE; break;
-      case 'C': function_name = strdup ("string"); data_flags = DATA_VTABLE; break;
-      case 'D': function_name = strdup ("vbase_dtor"); data_flags = DATA_VTABLE; break;
-      case 'E': function_name = strdup ("vector_dtor"); break;
-      case 'G': function_name = strdup ("scalar_dtor"); break;
-      case 'H': function_name = strdup ("vector_ctor_iter"); break;
-      case 'I': function_name = strdup ("vector_dtor_iter"); break;
-      case 'J': function_name = strdup ("vector_vbase_ctor_iter"); break;
-      case 'L': function_name = strdup ("eh_vector_ctor_iter"); break;
-      case 'M': function_name = strdup ("eh_vector_dtor_iter"); break;
-      case 'N': function_name = strdup ("eh_vector_vbase_ctor_iter"); break;
-      case 'O': function_name = strdup ("copy_ctor_closure"); break;
-      case 'S': function_name = strdup ("local_vftable"); data_flags = DATA_VTABLE; break;
-      case 'T': function_name = strdup ("local_vftable_ctor_closure"); break;
-      case 'U': function_name = strdup ("operator_new_vector"); break;
-      case 'V': function_name = strdup ("operator_delete_vector"); break;
-      case 'X': function_name = strdup ("placement_new_closure"); break;
-      case 'Y': function_name = strdup ("placement_delete_closure"); break;
+      case '0': function_name = xstrdup ("operator_divideequals"); break;
+      case '1': function_name = xstrdup ("operator_moduloequals"); break;
+      case '2': function_name = xstrdup ("operator_shiftrightequals"); break;
+      case '3': function_name = xstrdup ("operator_shiftleftequals"); break;
+      case '4': function_name = xstrdup ("operator_andequals"); break;
+      case '5': function_name = xstrdup ("operator_orequals"); break;
+      case '6': function_name = xstrdup ("operator_xorequals"); break;
+      case '7': function_name = xstrdup ("vftable"); data_flags = DATA_VTABLE; break;
+      case '8': function_name = xstrdup ("vbtable"); data_flags = DATA_VTABLE; break;
+      case '9': function_name = xstrdup ("vcall"); data_flags = DATA_VTABLE; break;
+      case 'A': function_name = xstrdup ("typeof"); data_flags = DATA_VTABLE; break;
+      case 'B': function_name = xstrdup ("local_static_guard"); data_flags = DATA_VTABLE; break;
+      case 'C': function_name = xstrdup ("string"); data_flags = DATA_VTABLE; break;
+      case 'D': function_name = xstrdup ("vbase_dtor"); data_flags = DATA_VTABLE; break;
+      case 'E': function_name = xstrdup ("vector_dtor"); break;
+      case 'G': function_name = xstrdup ("scalar_dtor"); break;
+      case 'H': function_name = xstrdup ("vector_ctor_iter"); break;
+      case 'I': function_name = xstrdup ("vector_dtor_iter"); break;
+      case 'J': function_name = xstrdup ("vector_vbase_ctor_iter"); break;
+      case 'L': function_name = xstrdup ("eh_vector_ctor_iter"); break;
+      case 'M': function_name = xstrdup ("eh_vector_dtor_iter"); break;
+      case 'N': function_name = xstrdup ("eh_vector_vbase_ctor_iter"); break;
+      case 'O': function_name = xstrdup ("copy_ctor_closure"); break;
+      case 'S': function_name = xstrdup ("local_vftable"); data_flags = DATA_VTABLE; break;
+      case 'T': function_name = xstrdup ("local_vftable_ctor_closure"); break;
+      case 'U': function_name = xstrdup ("operator_new_vector"); break;
+      case 'V': function_name = xstrdup ("operator_delete_vector"); break;
+      case 'X': function_name = xstrdup ("placement_new_closure"); break;
+      case 'Y': function_name = xstrdup ("placement_delete_closure"); break;
       default:
         return FALSE;
       }
@@ -184,7 +185,7 @@ BOOL symbol_demangle (parsed_symbol *sym)
   /* Either a class name, or '@' if the symbol is not a class member */
   if (*name == '@')
   {
-    class_name = strdup ("global"); /* Non member function (or a datatype) */
+    class_name = xstrdup ("global"); /* Non member function (or a datatype) */
     name++;
   }
   else
@@ -224,9 +225,9 @@ BOOL symbol_demangle (parsed_symbol *sym)
     }
     sym->flags |= SYM_DATA;
     sym->argc = 1;
-    sym->arg_name[0] = str_create (5, OUTPUT_UC_DLL_NAME, "_", class_name,
-                                  is_static ? "static_" : "_", function_name);
-    sym->arg_text[0] = str_create (3, ct.expression, " ", sym->arg_name[0]);
+    sym->arg_name[0] = strmake( "%s_%s%s_%s", OUTPUT_UC_DLL_NAME, class_name,
+                                  is_static ? "static" : "", function_name );
+    sym->arg_text[0] = strmake( "%s %s", ct.expression, sym->arg_name[0] );
     FREE_CT (ct);
     free (function_name);
     free (class_name);
@@ -238,9 +239,8 @@ BOOL symbol_demangle (parsed_symbol *sym)
     {
       sym->flags |= SYM_DATA;
       sym->argc = 1;
-      sym->arg_name[0] = str_create (5, OUTPUT_UC_DLL_NAME, "_", class_name,
-                                     "_", function_name);
-      sym->arg_text[0] = str_create (2, "void *", sym->arg_name[0]);
+      sym->arg_name[0] = strmake( "%s_%s_%s", OUTPUT_UC_DLL_NAME, class_name, function_name );
+      sym->arg_text[0] = strmake( "void *%s", sym->arg_name[0] );
 
       if (VERBOSE)
         puts ("Demangled symbol OK [vtable]");
@@ -272,10 +272,10 @@ BOOL symbol_demangle (parsed_symbol *sym)
   case 'Q' : /* public */
   case 'R' : /* public */
     /* Implicit 'this' pointer */
-    sym->arg_text [sym->argc] = str_create (3, "struct ", class_name, " *");
+    sym->arg_text [sym->argc] = strmake( "struct %s *", class_name );
     sym->arg_type [sym->argc] = ARG_POINTER;
     sym->arg_flag [sym->argc] = 0;
-    sym->arg_name [sym->argc++] = strdup ("_this");
+    sym->arg_name [sym->argc++] = xstrdup ("_this");
     /* New struct definitions can be 'grep'ed out for making a fixup header */
     if (VERBOSE)
       printf ("struct %s { void **vtable; /*FIXME: class definition */ };\n", class_name);
@@ -348,7 +348,7 @@ BOOL symbol_demangle (parsed_symbol *sym)
   /* Return type, or @ if 'void' */
   if (*name == '@')
   {
-    sym->return_text = strdup ("void");
+    sym->return_text = xstrdup ("void");
     sym->return_type = ARG_VOID;
     name++;
   }
@@ -385,7 +385,7 @@ BOOL symbol_demangle (parsed_symbol *sym)
         ct.expression = NULL;
         sym->arg_type [sym->argc] = get_type_constant (ct.dest_type, ct.flags);
         sym->arg_flag [sym->argc] = ct.flags;
-        sym->arg_name[sym->argc] = str_create_num (1, sym->argc, "arg");
+        sym->arg_name[sym->argc] = strmake( "arg%u", sym->argc );
         sym->argc++;
       }
       else
@@ -420,8 +420,8 @@ BOOL symbol_demangle (parsed_symbol *sym)
   case CT_VOLATILE: const_status = "_volatile"; break;
   default: const_status = "_"; break;
   }
-  sym->function_name = str_create_num (4, hash, class_name, "_",
-       function_name, is_static ? "_static" : const_status);
+  sym->function_name = strmake( "%s_%s%s%u", class_name, function_name,
+                                is_static ? "_static" : const_status, hash );
 
   assert (sym->return_text);
   assert (sym->flags);
@@ -491,7 +491,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
 
         iter++;
         /* Apply our constraints to the base type (struct xxx *) */
-        stripped = strdup (sym->arg_text [0]);
+        stripped = xstrdup (sym->arg_text [0]);
         if (!stripped)
           fatal ("Out of Memory");
 
@@ -499,8 +499,8 @@ static char *demangle_datatype (char **str, compound_type *ct,
         if (!(ct->flags & CT_BY_REFERENCE))
           stripped[ strlen (stripped) - 2] = '\0'; /* otherwise, strip it */
 
-        ct->expression = str_create (2, ct->flags & CT_CONST ? "const " :
-                         ct->flags & CT_VOLATILE ? "volatile " : "", stripped);
+        ct->expression = strmake( "%s%s", ct->flags & CT_CONST ? "const " :
+                                  ct->flags & CT_VOLATILE ? "volatile " : "", stripped);
         free (stripped);
       }
       else if (*iter != '@')
@@ -511,8 +511,8 @@ static char *demangle_datatype (char **str, compound_type *ct,
         if (*iter++ != '@')
           return NULL;
         struct_name = str_substring (struct_name, iter - 2);
-        ct->expression = str_create (4, ct->flags & CT_CONST ? "const " :
-                         ct->flags & CT_VOLATILE ? "volatile " : "", "struct ",
+        ct->expression = strmake( "%sstruct %s%s", ct->flags & CT_CONST ? "const " :
+                         ct->flags & CT_VOLATILE ? "volatile " : "",
                          struct_name, ct->flags & CT_BY_REFERENCE ? " *" : "");
         free (struct_name);
       }
@@ -540,7 +540,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
 	      iter += iter[1] == 'A' ? 2 : 3; /* FIXME */
 	      if (!demangle_datatype (&iter, &sub_ct, sym))
 		  return NULL;
-	      ct->expression = str_create(2, sub_ct.expression, " (*)(");
+	      ct->expression = strmake( "%s (*)(", sub_ct.expression );
 	      if (*iter != '@')
 	      {
 		  while (*iter != 'Z')
@@ -550,15 +550,15 @@ static char *demangle_datatype (char **str, compound_type *ct,
 		      if (!demangle_datatype (&iter, &sub_ct, sym))
 			  return NULL;
 		      if (sub_expressions)
-                              ct->expression = str_create(3, ct->expression, ", ", sub_ct.expression);
+                          ct->expression = strmake( "%s, %s", ct->expression, sub_ct.expression );
 		      else
-                              ct->expression = str_create(2, ct->expression, sub_ct.expression);
+                          ct->expression = strmake( "%s%s", ct->expression, sub_ct.expression );
 		      while (*iter == '@') iter++;
 		      sub_expressions++;
 		  }
 	      } else while (*iter == '@') iter++;
 	      iter++;
-	      ct->expression = str_create(2, ct->expression, ")");
+	      ct->expression = strmake( "%s)", ct->expression );
 	  }
 	  else
 	      return NULL;
@@ -581,7 +581,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
       if (sym->argc >= (size_t)('0' - *iter))
         return NULL;
       ct->dest_type = sym->arg_type ['0' - *iter];
-      ct->expression = strdup (sym->arg_text ['0' - *iter]);
+      ct->expression = xstrdup (sym->arg_text ['0' - *iter]);
       iter++;
       break;
     default :
@@ -739,16 +739,16 @@ static char *get_type_string (const char c, const int constraints)
     /* FIXME: T = union */
     case 'U':
     case 'V': type_string = "struct"; break;
-    case 'X': return strdup ("void");
-    case 'Z': return strdup ("...");
+    case 'X': return xstrdup ("void");
+    case 'Z': return xstrdup ("...");
     default:
       return NULL;
    }
   }
 
-  return str_create (3, constraints & CT_CONST ? "const " :
-                     constraints & CT_VOLATILE ? "volatile " : "", type_string,
-                     constraints & CT_BY_REFERENCE ? " *" : "");
+  return strmake( "%s%s%s", constraints & CT_CONST ? "const " :
+                  constraints & CT_VOLATILE ? "volatile " : "", type_string,
+                  constraints & CT_BY_REFERENCE ? " *" : "" );
 }
 
 
@@ -794,8 +794,8 @@ static char *get_pointer_type_string (compound_type *ct,
                                       const char *expression)
 {
   /* FIXME: set a compound flag for bracketing expression if needed */
-  return str_create (3, ct->flags & CT_CONST ? "const " :
-                     ct->flags & CT_VOLATILE ? "volatile " : "", expression,
-                     ct->flags & CT_BY_REFERENCE ? " **" : " *");
+    return strmake( "%s%s%s", ct->flags & CT_CONST ? "const " :
+                    ct->flags & CT_VOLATILE ? "volatile " : "", expression,
+                    ct->flags & CT_BY_REFERENCE ? " **" : " *" );
 
 }

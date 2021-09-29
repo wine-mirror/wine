@@ -41,6 +41,7 @@
 
 #define NONAMELESSUNION
 
+#include "../tools.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
@@ -75,7 +76,7 @@ static void* pdb_jg_read(const struct PDB_JG_HEADER* pdb, const WORD* block_list
     if (!size) return NULL;
 
     nBlocks = (size + pdb->block_size - 1) / pdb->block_size;
-    buffer = malloc(nBlocks * pdb->block_size);
+    buffer = xmalloc(nBlocks * pdb->block_size);
 
     for (i = 0; i < nBlocks; i++)
         memcpy(buffer + i * pdb->block_size,
@@ -861,7 +862,7 @@ static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const DWORD* block_
     if (!size) return NULL;
 
     nBlocks = (size + header->block_size - 1) / header->block_size;
-    buffer = malloc(nBlocks * header->block_size);
+    buffer = xmalloc(nBlocks * header->block_size);
 
     for (i = 0; i < nBlocks; i++)
         memcpy(buffer + i * header->block_size,

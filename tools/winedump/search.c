@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include "../tools.h"
 #include "winedump.h"
 
 static char *grep_buff = NULL;
@@ -50,13 +51,10 @@ BOOL symbol_search (parsed_symbol *sym)
     return FALSE;
 
   if (!grep_buff)
-    grep_buff = malloc (MAX_RESULT_LEN);
+    grep_buff = xmalloc (MAX_RESULT_LEN);
 
   if (!fgrep_buff)
-    fgrep_buff = malloc (MAX_RESULT_LEN);
-
-  if (!grep_buff || !fgrep_buff)
-    fatal ("Out of Memory");
+    fgrep_buff = xmalloc (MAX_RESULT_LEN);
 
   /* Use 'grep' to tell us which possible files the function is in,
    * then use 'function_grep.pl' to get the prototype. If this fails the
@@ -66,8 +64,8 @@ BOOL symbol_search (parsed_symbol *sym)
   while (attempt < 2)
   {
     FILE *f_grep;
-    char *cmd = str_create (4, "grep -d recurse -l \"", sym->symbol,
-        !attempt ? "[:blank:]*(\" " : "\" ", globals.directory);
+    char *cmd = strmake( "grep -d recurse -l \"%s%s\" %s", sym->symbol,
+                         !attempt ? "[:blank:]*(" : "", globals.directory);
 
     if (VERBOSE)
       puts (cmd);
@@ -98,8 +96,7 @@ BOOL symbol_search (parsed_symbol *sym)
       if (VERBOSE)
         puts (grep_buff);
 
-      cmd = str_create (5, "function_grep.pl ", sym->symbol,
-                        " \"", grep_buff, "\"");
+      cmd = strmake( "function_grep.pl %s \"%s\"", sym->symbol, grep_buff );
 
       if (VERBOSE)
         puts (cmd);
@@ -199,7 +196,7 @@ static BOOL symbol_from_prototype (parsed_symbol *sym, const char *proto)
   else
     sym->flags = CALLING_CONVENTION;
 
-  sym->function_name = strdup (sym->symbol);
+  sym->function_name = xstrdup (sym->symbol);
   proto = iter;
 
   /* Now should be the arguments */
@@ -301,9 +298,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
   if (iter == base_type || catch_unsigned)
   {
     /* 'unsigned' with no type */
-    char *tmp = str_create (2, type_str, " int");
-    free (type_str);
-    type_str = tmp;
+    type_str = strmake( "%s int", type_str );
   }
   symbol_clean_string (type_str);
 
@@ -320,7 +315,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
     sym->arg_flag [arg] = is_const ? CT_CONST : is_volatile ? CT_VOLATILE : 0;
 
     if (*proto_str == ',' || *proto_str == ')')
-      sym->arg_name [arg] = str_create_num (1, arg, "arg");
+      sym->arg_name [arg] = strmake( "arg%u", arg );
     else
     {
       iter = str_find_set (proto_str, " ,)");

@@ -198,10 +198,6 @@ void  output_prototype (FILE *file, const parsed_symbol *sym);
 void  output_makefile (void);
 
 /* Misc functions */
-char *str_create (size_t num_str, ...);
-
-char *str_create_num (size_t num_str, int num, ...);
-
 char *str_substring(const char *start, const char *end);
 
 char *str_replace (char *str, const char *oldstr, const char *newstr);

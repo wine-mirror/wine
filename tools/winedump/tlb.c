@@ -26,8 +26,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "windef.h"
-
+#include "../tools.h"
 #include "winedump.h"
 
 #define MSFT_MAGIC 0x5446534d
@@ -1190,7 +1189,7 @@ static const char *decode_string(const BYTE *table, const char *stream, DWORD st
     table_size = *(const DWORD *)table;
     table += sizeof(DWORD);
 
-    buf = malloc(buf_size);
+    buf = xmalloc(buf_size);
     buf[0] = 0;
 
     while ((p = lookup_code(table, table_size, &bits)))

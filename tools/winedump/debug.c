@@ -41,6 +41,7 @@
 #endif
 #include <fcntl.h>
 
+#include "../tools.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
@@ -683,7 +684,7 @@ void    dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, 
      * where the stab is continued over multiple lines.
      */
     stabbufflen = 65536;
-    stabbuff = malloc(stabbufflen);
+    stabbuff = xmalloc(stabbufflen);
 
     stabbuff[0] = '\0';
 
@@ -707,7 +708,7 @@ void    dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, 
             if (strlen(stabbuff) + len > stabbufflen)
             {
                 stabbufflen += 65536;
-                stabbuff = realloc(stabbuff, stabbufflen);
+                stabbuff = xrealloc(stabbuff, stabbufflen);
             }
             strcat(stabbuff, ptr);
             continue;
