@@ -100,6 +100,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static CFMutableArrayRef device_main_elements = NULL;
 
+/* Maps IOHIDDeviceRefs to CRITICAL_SECTION pointers. */
+static CFMutableDictionaryRef hid_device_crits = NULL;
+
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8WVtbl JoystickWvt;
 
@@ -534,8 +537,11 @@ static int find_osx_devices(void)
         CFArraySortValues(devices, CFRangeMake(0, num_devices), device_location_name_comparator, NULL);
 
         device_main_elements = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
-        if (!device_main_elements)
+        hid_device_crits = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, NULL);
+        if (!device_main_elements || !hid_device_crits)
         {
+            if (device_main_elements) CFRelease(device_main_elements);
+            if (hid_device_crits) CFRelease(hid_device_crits);
             CFRelease( devices );
             goto fail;
         }
@@ -550,6 +556,15 @@ static int find_osx_devices(void)
             TRACE("hid_device %s\n", debugstr_device(hid_device));
             top = find_top_level(hid_device, device_main_elements);
             num_main_elements += top;
+
+            if ( top ) {
+                /* This HID device has relevent elements, so it needs a critical section. */
+                CRITICAL_SECTION *cs = HeapAlloc(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
+                InitializeCriticalSection(cs);
+                cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_device_crits");
+
+                CFDictionaryAddValue(hid_device_crits, hid_device, cs);
+            }
         }
 
         CFRelease(devices);
@@ -797,6 +812,20 @@ static IOReturn get_element_values(IOHIDDeviceRef hid_device, JoystickImpl *devi
     IOHIDElementRef element;
     IOHIDValueRef valueRef;
 
+    /* If more than one thread is trying to poll the same HID device, we can
+     * crash deep inside IOKit. So we enter a per-IOHIDDevice critical section
+     * here. Note that it must be per-HID device and not just per-JoystickImpl,
+     * as there may be multiple JoystickImpls referencing the same underlying
+     * device. */
+
+    CRITICAL_SECTION *crit = (CRITICAL_SECTION *)CFDictionaryGetValue(hid_device_crits, hid_device);
+    if (!crit) {
+        ERR("missing critical section for device %s\n", debugstr_device(hid_device));
+        return kIOReturnError;
+    }
+
+    EnterCriticalSection(crit);
+
     for (i = 0; i < element_count; i++)
     {
         element = (IOHIDElementRef)CFArrayGetValueAtIndex(device->elements, i);
@@ -810,6 +839,7 @@ static IOReturn get_element_values(IOHIDDeviceRef hid_device, JoystickImpl *devi
         device->element_values[i] = IOHIDValueGetIntegerValue(valueRef);
     }
 
+    LeaveCriticalSection(crit);
     return ret;
 }
 
