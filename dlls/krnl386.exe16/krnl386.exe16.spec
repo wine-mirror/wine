@@ -747,3 +747,7 @@
 # VxDs
 @ cdecl -arch=win32 -private __wine_vxd_open(wstr long ptr)
 @ cdecl -arch=win32 -private __wine_vxd_get_proc(long)
+
+# Snoop support
+2001 pascal -register __wine_snoop_entry()
+2002 pascal -register __wine_snoop_return()

@@ -34,13 +34,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
 #include "pshpack1.h"
 
-static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT *context);
-static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT *context);
-
 typedef	struct tagSNOOP16_FUN {
 	/* code part */
 	BYTE		lcall;		/* 0x9a call absolute with segment */
-	DWORD		snr;
+	FARPROC16 snoop_entry;
 	/* unreached */
 	int		nrofargs;
 	FARPROC16	origfun;
@@ -58,7 +55,7 @@ typedef struct tagSNOOP16_DLL {
 typedef struct tagSNOOP16_RETURNENTRY {
 	/* code part */
 	BYTE		lcall;		/* 0x9a call absolute with segment */
-	DWORD		snr;
+	FARPROC16 snoop_return;
 	/* unreached */
 	FARPROC16	origreturn;
 	SNOOP16_DLL	*dll;
@@ -73,24 +70,10 @@ typedef struct tagSNOOP16_RETURNENTRIES {
 	struct tagSNOOP16_RETURNENTRIES	*next;
 } SNOOP16_RETURNENTRIES;
 
-typedef struct tagSNOOP16_RELAY {
-	WORD		pushbp;		/* 0x5566 */
-	BYTE		pusheax;	/* 0x50 */
-	WORD		pushax;		/* 0x5066 */
-	BYTE		pushl;		/* 0x68 */
-	DWORD		realfun;	/* SNOOP16_Return */
-	BYTE		lcall;		/* 0x9a call absolute with segment */
-	DWORD		callfromregs;
-	WORD		seg;
-        WORD		lret;           /* 0xcb66 */
-} SNOOP16_RELAY;
-
 #include "poppack.h"
 
 static	SNOOP16_DLL		*firstdll = NULL;
 static	SNOOP16_RETURNENTRIES 	*firstrets = NULL;
-static	SNOOP16_RELAY		*snr;
-static	HANDLE16		xsnr = 0;
 
 void
 SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
@@ -102,29 +85,6 @@ SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 
         TRACE("hmod=%x, name=%s\n", hModule, name);
 
-	if (!snr) {
-		xsnr=GLOBAL_Alloc(GMEM_ZEROINIT,2*sizeof(*snr),0,LDT_FLAGS_CODE | LDT_FLAGS_32BIT);
-		snr = GlobalLock16(xsnr);
-		snr[0].pushbp	= 0x5566;
-		snr[0].pusheax	= 0x50;
-		snr[0].pushax	= 0x5066;
-		snr[0].pushl	= 0x68;
-		snr[0].realfun	= (DWORD)SNOOP16_Entry;
-		snr[0].lcall 	= 0x9a;
-		snr[0].callfromregs = (DWORD)__wine_call_from_16_regs;
-		snr[0].seg      = get_cs();
-		snr[0].lret     = 0xcb66;
-
-		snr[1].pushbp	= 0x5566;
-		snr[1].pusheax	= 0x50;
-		snr[1].pushax	= 0x5066;
-		snr[1].pushl	= 0x68;
-		snr[1].realfun	= (DWORD)SNOOP16_Return;
-		snr[1].lcall 	= 0x9a;
-		snr[1].callfromregs = (DWORD)__wine_call_from_16_regs;
-		snr[1].seg      = get_cs();
-		snr[1].lret     = 0xcb66;
-	}
 	while (*dll) {
 		if ((*dll)->hmod == hModule)
                 {
@@ -181,7 +141,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 	fun = dll->funs+ordinal;
 	/* already done? */
 	fun->lcall 	= 0x9a;
-	fun->snr	= MAKELONG(0,xsnr);
+	fun->snoop_entry = GetProcAddress16( GetModuleHandle16( "KERNEL" ), "__wine_snoop_entry" );
 	fun->origfun	= origfun;
 	if (fun->name)
 		return (FARPROC16)(SEGPTR)MAKELONG(((char*)fun-(char*)dll->funs),dll->funhandle);
@@ -227,14 +187,15 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 		}
 	}
 	fun->lcall 	= 0x9a;
-	fun->snr	= MAKELONG(0,xsnr);
+	fun->snoop_entry = GetProcAddress16( GetModuleHandle16( "KERNEL" ), "__wine_snoop_entry" );
 	fun->origfun	= origfun;
 	fun->nrofargs	= -1;
 	return (FARPROC16)(SEGPTR)MAKELONG(((char*)fun-(char*)dll->funs),dll->funhandle);
 }
 
 #define CALLER1REF (*(DWORD*)(MapSL( MAKESEGPTR(context->SegSs,LOWORD(context->Esp)+4))))
-static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT *context) {
+void WINAPI __wine_snoop_entry( CONTEXT *context )
+{
 	DWORD		ordinal=0;
 	DWORD		entry=(DWORD)MapSL( MAKESEGPTR(context->SegCs,LOWORD(context->Eip)) )-5;
 	WORD		xcs = context->SegCs;
@@ -273,7 +234,7 @@ static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT *context) {
 	}
 	ret = &((*rets)->entry[i]);
 	ret->lcall 	= 0x9a;
-	ret->snr	= MAKELONG(sizeof(SNOOP16_RELAY),xsnr);
+	ret->snoop_return = GetProcAddress16( GetModuleHandle16( "KERNEL" ), "__wine_snoop_return" );
 	ret->origreturn	= (FARPROC16)CALLER1REF;
 	CALLER1REF	= MAKELONG((char*)&(ret->lcall)-(char*)((*rets)->entry),(*rets)->rethandle);
 	ret->dll	= dll;
@@ -301,7 +262,8 @@ static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT *context) {
 	TRACE(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
-static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT *context) {
+void WINAPI __wine_snoop_return( CONTEXT *context )
+{
 	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) MapSL( MAKESEGPTR(context->SegCs,LOWORD(context->Eip)) )-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
