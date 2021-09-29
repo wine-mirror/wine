@@ -42,6 +42,7 @@ static NTSTATUS (WINAPI *pLdrSetDllDirectory)(UNICODE_STRING*);
 static NTSTATUS (WINAPI *pLdrGetDllHandle)( LPCWSTR load_path, ULONG flags, const UNICODE_STRING *name, HMODULE *base );
 static NTSTATUS (WINAPI *pLdrGetDllHandleEx)( ULONG flags, LPCWSTR load_path, ULONG *dll_characteristics,
                                               const UNICODE_STRING *name, HMODULE *base );
+static NTSTATUS (WINAPI *pLdrGetDllFullName)( HMODULE module, UNICODE_STRING *name );
 
 static BOOL is_unicode_enabled = TRUE;
 
@@ -831,6 +832,7 @@ static void init_pointers(void)
     MAKEFUNC(LdrSetDllDirectory);
     MAKEFUNC(LdrGetDllHandle);
     MAKEFUNC(LdrGetDllHandleEx);
+    MAKEFUNC(LdrGetDllFullName);
 #undef MAKEFUNC
 
     /* before Windows 7 this was not exported in kernel32 */
@@ -1266,6 +1268,62 @@ static void test_LdrGetDllHandleEx(void)
     winetest_pop_context();
 }
 
+static void test_LdrGetDllFullName(void)
+{
+    WCHAR expected_path[MAX_PATH], path_buffer[MAX_PATH];
+    UNICODE_STRING path = {0, 0, path_buffer};
+    WCHAR expected_terminator;
+    NTSTATUS status;
+    HMODULE ntdll;
+
+    if (!pLdrGetDllFullName)
+    {
+        skip( "LdrGetDllFullName not available.\n" );
+        return;
+    }
+
+    if (0) /* crashes on Windows */
+        pLdrGetDllFullName( ntdll, NULL );
+
+    ntdll = GetModuleHandleW( L"ntdll.dll" );
+
+    memset( path_buffer, 0x23, sizeof(path_buffer) );
+
+    status = pLdrGetDllFullName( ntdll, &path );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#x.\n", status );
+    ok( path.Length == 0, "Expected length 0, got %d.\n", path.Length );
+    ok( path_buffer[0] == 0x2323, "Expected 0x2323, got 0x%x.\n", path_buffer[0] );
+
+    GetSystemDirectoryW( expected_path, ARRAY_SIZE(expected_path) );
+    path.MaximumLength = 5; /* odd numbers produce partially copied characters */
+
+    status = pLdrGetDllFullName( ntdll, &path );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#x.\n", status );
+    ok( path.Length == path.MaximumLength, "Expected length %u, got %u.\n", path.MaximumLength, path.Length );
+    expected_terminator = 0x2300 | (expected_path[path.MaximumLength / sizeof(WCHAR)] & 0xFF);
+    ok( path_buffer[path.MaximumLength / sizeof(WCHAR)] == expected_terminator,
+            "Expected 0x%x, got 0x%x.\n", expected_terminator, path_buffer[path.MaximumLength / 2] );
+    path_buffer[path.MaximumLength / sizeof(WCHAR)] = 0;
+    expected_path[path.MaximumLength / sizeof(WCHAR)] = 0;
+    ok( lstrcmpW(path_buffer, expected_path) == 0, "Expected %s, got %s.\n",
+            wine_dbgstr_w(expected_path), wine_dbgstr_w(path_buffer) );
+
+    GetSystemDirectoryW( expected_path, ARRAY_SIZE(expected_path) );
+    lstrcatW( expected_path, L"\\ntdll.dll" );
+    path.MaximumLength = sizeof(path_buffer);
+
+    status = pLdrGetDllFullName( ntdll, &path );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status );
+    ok( !lstrcmpiW(path_buffer, expected_path), "Expected %s, got %s\n",
+            wine_dbgstr_w(expected_path), wine_dbgstr_w(path_buffer) );
+
+    status = pLdrGetDllFullName( NULL, &path );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status );
+    GetModuleFileNameW( NULL, expected_path, ARRAY_SIZE(expected_path) );
+    ok( !lstrcmpiW(path_buffer, expected_path), "Expected %s, got %s.\n",
+            wine_dbgstr_w(expected_path), wine_dbgstr_w(path_buffer) );
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1299,4 +1357,5 @@ START_TEST(module)
     test_AddDllDirectory();
     test_SetDefaultDllDirectories();
     test_LdrGetDllHandleEx();
+    test_LdrGetDllFullName();
 }
