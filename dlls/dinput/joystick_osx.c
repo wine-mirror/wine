@@ -110,6 +110,7 @@ struct JoystickImpl
     /* osx private */
     int                    id;
     CFArrayRef             elements;
+    int                    *element_values;
     ObjProps               **propmap;
     FFDeviceObjectReference ff;
     struct list effects;
@@ -753,6 +754,9 @@ static void get_osx_device_elements(JoystickImpl *device, uint64_t axis_map[8])
         CFRelease(povs);
         CFRelease(buttons);
         CFRelease(elements);
+
+        device->element_values = HeapAlloc(GetProcessHeap(), 0,
+                                           CFArrayGetCount(device->elements) * sizeof(int));
     }
     else
     {
@@ -786,6 +790,29 @@ static void get_osx_device_elements_props(JoystickImpl *device)
     }
 }
 
+static IOReturn get_element_values(IOHIDDeviceRef hid_device, JoystickImpl *device)
+{
+    CFIndex i, element_count = CFArrayGetCount(device->elements);
+    IOReturn ret = kIOReturnSuccess;
+    IOHIDElementRef element;
+    IOHIDValueRef valueRef;
+
+    for (i = 0; i < element_count; i++)
+    {
+        element = (IOHIDElementRef)CFArrayGetValueAtIndex(device->elements, i);
+        ret = IOHIDDeviceGetValue(hid_device, element, &valueRef);
+        if (ret != kIOReturnSuccess)
+        {
+            ERR("error getting value of element %s: %08x\n", debugstr_element(element), ret);
+            break;
+        }
+
+        device->element_values[i] = IOHIDValueGetIntegerValue(valueRef);
+    }
+
+    return ret;
+}
+
 static void poll_osx_device_state( IDirectInputDevice8W *iface )
 {
     JoystickImpl *device = impl_from_IDirectInputDevice8W( iface );
@@ -805,6 +832,9 @@ static void poll_osx_device_state( IDirectInputDevice8W *iface )
 
     if (device->elements)
     {
+        if (get_element_values(hid_device, device) != kIOReturnSuccess)
+            return;
+
         int button_idx = 0;
         int pov_idx = 0;
         int slider_idx = 0;
@@ -813,8 +843,7 @@ static void poll_osx_device_state( IDirectInputDevice8W *iface )
 
         for ( idx = 0; idx < cnt; idx++ )
         {
-            IOHIDValueRef valueRef;
-            int val, oldVal, newVal;
+            int oldVal, newVal, val = device->element_values[idx];
             IOHIDElementRef element = ( IOHIDElementRef ) CFArrayGetValueAtIndex( device->elements, idx );
             int type = IOHIDElementGetType( element );
 
@@ -826,16 +855,10 @@ static void poll_osx_device_state( IDirectInputDevice8W *iface )
                     TRACE("kIOHIDElementTypeInput_Button\n");
                     if(button_idx < 128)
                     {
-                        valueRef = NULL;
-                        if (IOHIDDeviceGetValue(hid_device, element, &valueRef) != kIOReturnSuccess)
-                            return;
-                        if (valueRef == NULL)
-                            return;
-                        val = IOHIDValueGetIntegerValue(valueRef);
                         newVal = val ? 0x80 : 0x0;
                         oldVal = device->generic.js.rgbButtons[button_idx];
                         device->generic.js.rgbButtons[button_idx] = newVal;
-                        TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
+                        TRACE("val %d oldVal %d newVal %d\n", val, oldVal, newVal);
                         if (oldVal != newVal)
                         {
                             inst_id = DIDFT_MAKEINSTANCE(button_idx) | DIDFT_PSHBUTTON;
@@ -855,19 +878,13 @@ static void poll_osx_device_state( IDirectInputDevice8W *iface )
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Hatswitch):
                         {
                             TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
-                            valueRef = NULL;
-                            if (IOHIDDeviceGetValue(hid_device, element, &valueRef) != kIOReturnSuccess)
-                                return;
-                            if (valueRef == NULL)
-                                return;
-                            val = IOHIDValueGetIntegerValue(valueRef);
                             oldVal = device->generic.js.rgdwPOV[pov_idx];
                             if ((val > device->generic.props[idx].lDevMax) || (val < device->generic.props[idx].lDevMin))
                                 newVal = -1;
                             else
                                 newVal = (val - device->generic.props[idx].lDevMin) * 4500;
                             device->generic.js.rgdwPOV[pov_idx] = newVal;
-                            TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
+                            TRACE("val %d oldVal %d newVal %d\n", val, oldVal, newVal);
                             if (oldVal != newVal)
                             {
                                 inst_id = DIDFT_MAKEINSTANCE(pov_idx) | DIDFT_POV;
@@ -890,12 +907,6 @@ static void poll_osx_device_state( IDirectInputDevice8W *iface )
                         {
                             int wine_obj = -1;
 
-                            valueRef = NULL;
-                            if (IOHIDDeviceGetValue(hid_device, element, &valueRef) != kIOReturnSuccess)
-                                return;
-                            if (valueRef == NULL)
-                                return;
-                            val = IOHIDValueGetIntegerValue(valueRef);
                             newVal = joystick_map_axis(&device->generic.props[idx], val);
                             switch (MAKEUINT64(usage_page, usage))
                             {
@@ -945,7 +956,7 @@ static void poll_osx_device_state( IDirectInputDevice8W *iface )
                                 slider_idx ++;
                                 break;
                             }
-                            TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
+                            TRACE("val %d oldVal %d newVal %d\n", val, oldVal, newVal);
                             if ((wine_obj != -1) &&
                                  (oldVal != newVal))
                             {
