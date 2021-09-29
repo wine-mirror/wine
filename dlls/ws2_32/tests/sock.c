@@ -2066,15 +2066,12 @@ static void test_ipv4_cmsg(void)
 
     memset(control, 0, sizeof(control));
     msg.Control.len = sizeof(control);
-    rc = setsockopt(server, IPPROTO_IP, IP_RECVTCLASS, (const char *)&on, sizeof(on));
-todo_wine
-    ok(!rc, "failed to set IP_RECVTCLASS, error %u\n", WSAGetLastError());
+    rc = setsockopt(server, IPPROTO_IP, IP_RECVTOS, (const char *)&on, sizeof(on));
+    ok(!rc, "failed to set IP_RECVTOS, error %u\n", WSAGetLastError());
     state = 0;
     count = sizeof(state);
-    rc = getsockopt(server, IPPROTO_IP, IP_RECVTCLASS, (char *)&state, (INT *)&count);
-todo_wine
-    ok(!rc, "failed to get IP_RECVTCLASS, error %u\n", WSAGetLastError());
-todo_wine
+    rc = getsockopt(server, IPPROTO_IP, IP_RECVTOS, (char *)&state, (INT *)&count);
+    ok(!rc, "failed to get IP_RECVTOS, error %u\n", WSAGetLastError());
     ok(state == 1, "expected 1, got %u\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
@@ -2082,16 +2079,13 @@ todo_wine
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
     ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IP, "expected IPPROTO_IP, got %i\n", header->cmsg_level);
-todo_wine
     ok(header->cmsg_type == IP_TOS || broken(header->cmsg_type == IP_TCLASS) /* <= win10 v1607 */,
        "expected IP_TOS, got %i\n", header->cmsg_type);
-todo_wine
     ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
        "expected length %Iu, got %Iu\n", sizeof(*header) + sizeof(INT), header->cmsg_len);
     ok(*int_data == 0, "expected 0, got %i\n", *int_data);
-    rc = setsockopt(server, IPPROTO_IP, IP_RECVTCLASS, (const char *)&off, sizeof(off));
-todo_wine
-    ok(!rc, "failed to clear IP_RECVTCLASS, error %u\n", WSAGetLastError());
+    rc = setsockopt(server, IPPROTO_IP, IP_RECVTOS, (const char *)&off, sizeof(off));
+    ok(!rc, "failed to clear IP_RECVTOS, error %u\n", WSAGetLastError());
 
     closesocket(server);
     closesocket(client);
@@ -11617,7 +11611,7 @@ static void test_sockopt_validity(void)
         { IP_RTHDR,                   0,               0,          TRUE },
         { IP_GET_IFLIST,              WSAEINVAL,       0,          TRUE },
         { IP_RECVRTHDR,               WSAEINVAL,       0,          TRUE },
-        { IP_RECVTCLASS,              WSAEINVAL,       0,          TRUE },
+        { IP_RECVTOS,                 WSAEINVAL                         },
         { IP_ORIGINAL_ARRIVAL_IF,     WSAEINVAL,       0,          TRUE },
         { IP_ECN,                     WSAEINVAL,       0,          TRUE },
         { IP_PKTINFO_EX,              WSAEINVAL,       0,          TRUE },
@@ -11652,7 +11646,7 @@ static void test_sockopt_validity(void)
         { IP_RTHDR,                   0,               0,          TRUE },
         { IP_GET_IFLIST,              WSAEINVAL,       0,          TRUE },
         { IP_RECVRTHDR,               0,               0,          TRUE },
-        { IP_RECVTCLASS,              0,               0,          TRUE },
+        { IP_RECVTOS                                                    },
         { IP_ORIGINAL_ARRIVAL_IF,     0,               0,          TRUE },
         { IP_ECN,                     0,               0,          TRUE },
         { IP_PKTINFO_EX,              0,               0,          TRUE },
@@ -11687,7 +11681,7 @@ static void test_sockopt_validity(void)
         { IP_RTHDR,                   0,               0,          TRUE },
         { IP_GET_IFLIST,              WSAEINVAL,       0,          TRUE },
         { IP_RECVRTHDR,               0,               0,          TRUE },
-        { IP_RECVTCLASS,              0,               0,          TRUE },
+        { IP_RECVTOS                                                    },
         { IP_ORIGINAL_ARRIVAL_IF,     0,               0,          TRUE },
         { IP_ECN,                     0,               0,          TRUE },
         { IP_PKTINFO_EX,              0,               0,          TRUE },

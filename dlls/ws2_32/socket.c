@@ -295,6 +295,7 @@ static inline const char *debugstr_sockopt(int level, int optname)
             DEBUG_SOCKOPT(IP_OPTIONS);
             DEBUG_SOCKOPT(IP_PKTINFO);
             DEBUG_SOCKOPT(IP_RECEIVE_BROADCAST);
+            DEBUG_SOCKOPT(IP_RECVTOS);
             DEBUG_SOCKOPT(IP_RECVTTL);
             DEBUG_SOCKOPT(IP_TOS);
             DEBUG_SOCKOPT(IP_TTL);
@@ -1694,6 +1695,9 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
         case IP_PKTINFO:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_PKTINFO, optval, optlen );
 
+        case IP_RECVTOS:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_RECVTOS, optval, optlen );
+
         case IP_RECVTTL:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_RECVTTL, optval, optlen );
 
@@ -2911,6 +2915,9 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
 
         case IP_PKTINFO:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_PKTINFO, optval, optlen );
+
+        case IP_RECVTOS:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_RECVTOS, optval, optlen );
 
         case IP_RECVTTL:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_RECVTTL, optval, optlen );

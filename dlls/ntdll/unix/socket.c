@@ -426,6 +426,16 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                     }
 #endif /* IP_PKTINFO */
 
+#if defined(IP_TOS)
+                    case IP_TOS:
+                    {
+                        ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_TOS, ptr, &ctlsize,
+                                                    CMSG_DATA(cmsg_unix), sizeof(INT) );
+                        if (!ptr) goto error;
+                        break;
+                    }
+#endif /* IP_TOS */
+
 #if defined(IP_TTL)
                     case IP_TTL:
                     {
@@ -1842,6 +1852,22 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             int sock_type = get_sock_type( handle );
             if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
             return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, in_buffer, in_size );
+        }
+#endif
+
+#ifdef IP_RECVTOS
+        case IOCTL_AFD_WINE_GET_IP_RECVTOS:
+        {
+            int sock_type = get_sock_type( handle );
+            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_RECVTOS, out_buffer, out_size );
+        }
+
+        case IOCTL_AFD_WINE_SET_IP_RECVTOS:
+        {
+            int sock_type = get_sock_type( handle );
+            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVTOS, in_buffer, in_size );
         }
 #endif
 
