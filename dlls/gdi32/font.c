@@ -202,6 +202,16 @@ static UINT asciiz_to_unicode( WCHAR *dst, const char *src )
     return (p - dst) * sizeof(WCHAR);
 }
 
+UINT get_acp(void)
+{
+    return ((const WORD *)NtCurrentTeb()->Peb->AnsiCodePageData)[1];
+}
+
+static UINT get_oemcp(void)
+{
+    return ((const WORD *)NtCurrentTeb()->Peb->OemCodePageData)[1];
+}
+
 static inline WCHAR facename_tolower( WCHAR c )
 {
     if (c >= 'A' && c <= 'Z') return c - 'A' + 'a';
@@ -272,7 +282,7 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
 
 static inline BOOL is_win9x(void)
 {
-    return GetVersion() & 0x80000000;
+    return NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32s;
 }
 
 static inline WCHAR *strdupW( const WCHAR *p )
@@ -1864,7 +1874,7 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
        corresponding to the current ansi codepage */
     if (!csi->fs.fsCsb[0])
     {
-        INT acp = GetACP();
+        INT acp = get_acp();
         if (!translate_charset_info( (DWORD *)(INT_PTR)acp, csi, TCI_SRCCODEPAGE ))
         {
             FIXME( "TCI failed on codepage %d\n", acp );
@@ -2464,7 +2474,7 @@ static void create_child_font_list( struct gdi_font *font )
      * if not SYMBOL or OEM then we also get all the fonts for Microsoft
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
-    if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
+    if (is_dbcs_ansi_cp(get_acp()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
         facename_compare( font_name, microsoft_sans_serifW, -1 ) != 0)
     {
         if ((font_link = find_gdi_font_link( microsoft_sans_serifW )))
@@ -2725,8 +2735,8 @@ static void update_codepage( UINT screen_dpi )
     if (size == sizeof(DWORD) && info->Type == REG_DWORD)
         font_dpi = *(DWORD *)info->Data;
 
-    ansi_cp = GetACP();
-    oem_cp = GetOEMCP();
+    ansi_cp = get_acp();
+    oem_cp = get_oemcp();
     sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
     asciiz_to_unicode( cpbufW, cpbuf );
 
@@ -2897,7 +2907,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset *list)
     }
     else /* charset is DEFAULT_CHARSET or invalid. */
     {
-        int acp = GetACP();
+        int acp = get_acp();
         DWORD mask = 0;
 
         /* Set the current codepage's charset as the first element. */
@@ -3884,7 +3894,7 @@ static void get_nearest_charset( const WCHAR *family_name, struct gdi_font_face 
 
     int i;
 
-    if (translate_charset_info( (DWORD*)(INT_PTR)GetACP(), csi, TCI_SRCCODEPAGE ))
+    if (translate_charset_info( (DWORD*)(INT_PTR)get_acp(), csi, TCI_SRCCODEPAGE ))
     {
         const struct gdi_font_link *font_link;
 
@@ -3904,7 +3914,7 @@ static void get_nearest_charset( const WCHAR *family_name, struct gdi_font_face 
 
     FIXME("returning DEFAULT_CHARSET face->fs.fsCsb[0] = %08x file = %s\n",
 	  face->fs.fsCsb[0], debugstr_w(face->file));
-    csi->ciACP = GetACP();
+    csi->ciACP = get_acp();
     csi->ciCharset = DEFAULT_CHARSET;
 }
 
@@ -4497,10 +4507,10 @@ static void update_font_code_page( DC *dc, HANDLE font )
     else {
         switch(charset) {
         case OEM_CHARSET:
-            dc->attr->font_code_page = GetOEMCP();
+            dc->attr->font_code_page = get_oemcp();
             break;
         case DEFAULT_CHARSET:
-            dc->attr->font_code_page = GetACP();
+            dc->attr->font_code_page = get_acp();
             break;
 
         case VISCII_CHARSET:

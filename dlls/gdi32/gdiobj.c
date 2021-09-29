@@ -497,7 +497,7 @@ static UINT get_default_charset( void )
     CHARSETINFO     csi;
     UINT    uACP;
 
-    uACP = GetACP();
+    uACP = get_acp();
     csi.ciCharset = ANSI_CHARSET;
     if ( !translate_charset_info( ULongToPtr(uACP), &csi, TCI_SRCCODEPAGE ) )
     {

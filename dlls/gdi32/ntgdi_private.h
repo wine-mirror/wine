@@ -339,6 +339,7 @@ struct font_callback_funcs
 };
 
 extern UINT font_init(void) DECLSPEC_HIDDEN;
+extern UINT get_acp(void) DECLSPEC_HIDDEN;
 
 /* opentype.c */
 
