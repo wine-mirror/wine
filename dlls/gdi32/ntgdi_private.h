@@ -334,6 +334,7 @@ extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 extern UINT font_init(void) DECLSPEC_HIDDEN;
 extern UINT get_acp(void) DECLSPEC_HIDDEN;
+extern CPTABLEINFO *get_cptable( WORD cp ) DECLSPEC_HIDDEN;
 extern const struct font_backend_funcs *init_freetype_lib(void) DECLSPEC_HIDDEN;
 
 /* opentype.c */

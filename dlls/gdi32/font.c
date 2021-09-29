@@ -3208,7 +3208,7 @@ static UINT get_glyph_index_symbol( struct gdi_font *font, UINT glyph )
     return index;
 }
 
-static CPTABLEINFO *get_cptable( WORD cp )
+CPTABLEINFO *get_cptable( WORD cp )
 {
     static CPTABLEINFO tables[100];
     unsigned int i;

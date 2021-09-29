@@ -730,21 +730,6 @@ static const LANGID mac_langid_table[] =
     MAKELANGID(LANG_AZERI,SUBLANG_AZERI_LATIN),              /* TT_MAC_LANGID_AZERBAIJANI_ROMAN_SCRIPT */
 };
 
-static CPTABLEINFO *get_cptable( WORD cp )
-{
-    static CPTABLEINFO tables[100];
-    unsigned int i;
-    USHORT *ptr;
-    SIZE_T size;
-
-    for (i = 0; i < ARRAY_SIZE(tables) && tables[i].CodePage; i++)
-        if (tables[i].CodePage == cp) return &tables[i];
-    if (NtGetNlsSectionPtr( 11, cp, NULL, (void **)&ptr, &size )) return NULL;
-    if (i == ARRAY_SIZE(tables)) ERR( "too many code pages\n" );
-    RtlInitCodePageTable( ptr, &tables[i] );
-    return &tables[i];
-}
-
 static CPTABLEINFO *get_mac_code_page( const FT_SfntName *name )
 {
     int id = name->encoding_id;
