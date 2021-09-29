@@ -41,7 +41,6 @@ typedef void (WINAPI *INTPROC)(CONTEXT*);
 extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
 extern WORD int16_sel DECLSPEC_HIDDEN;
 extern WORD relay_code_sel DECLSPEC_HIDDEN;
-extern WORD relay_data_sel DECLSPEC_HIDDEN;
 
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
 
@@ -247,7 +246,6 @@ extern DWORD DOSVM_inport( int port, int size ) DECLSPEC_HIDDEN;
 extern void DOSVM_outport( int port, int size, DWORD value ) DECLSPEC_HIDDEN;
 
 /* relay.c */
-void DOSVM_RelayHandler( CONTEXT * ) DECLSPEC_HIDDEN;
 void DOSVM_BuildCallFrame( CONTEXT *, DOSRELAY, LPVOID ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DOSEXE_H */

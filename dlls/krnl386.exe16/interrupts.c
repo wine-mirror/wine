@@ -250,14 +250,7 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
 
     DOSMEM_InitDosMemory();
 
-    if (context->SegCs == relay_code_sel)
-    {
-        /*
-         * This must not be called using DOSVM_BuildCallFrame.
-         */
-        DOSVM_RelayHandler( context );
-    }
-    else if (context->SegCs == int16_sel)
+    if (context->SegCs == int16_sel)
     {
         /* Restore original flags stored into the stack by the caller. */
         WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
