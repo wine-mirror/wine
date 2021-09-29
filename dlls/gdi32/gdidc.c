@@ -25,9 +25,31 @@
 #include "ddrawgdi.h"
 #include "winnls.h"
 
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
+
+static struct list drivers = LIST_INIT( drivers );
+
+static CRITICAL_SECTION driver_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &driver_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": driver_section") }
+};
+static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+typedef const void * (CDECL *driver_entry_point)( unsigned int version );
+
+struct graphics_driver
+{
+    struct list         entry;
+    HMODULE             module;  /* module handle */
+    driver_entry_point  entry_point;
+};
+
 
 DC_ATTR *get_dc_attr( HDC hdc )
 {
@@ -39,6 +61,199 @@ DC_ATTR *get_dc_attr( HDC hdc )
         return NULL;
     }
     return dc_attr->disabled ? NULL : dc_attr;
+}
+
+static BOOL is_display_device( const WCHAR *name )
+{
+    const WCHAR *p = name;
+
+    if (!name)
+        return FALSE;
+
+    if (wcsnicmp( name, L"\\\\.\\DISPLAY", lstrlenW(L"\\\\.\\DISPLAY") )) return FALSE;
+
+    p += lstrlenW(L"\\\\.\\DISPLAY");
+
+    if (!iswdigit( *p++ ))
+        return FALSE;
+
+    for (; *p; p++)
+    {
+        if (!iswdigit( *p ))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL get_driver_name( const WCHAR *device, WCHAR *driver, DWORD size )
+{
+    WCHAR *p;
+
+    /* display is a special case */
+    if (!wcsicmp( device, L"display" ) || is_display_device( device ))
+    {
+        lstrcpynW( driver, L"display", size );
+        return TRUE;
+    }
+
+    size = GetProfileStringW(L"devices", device, L"", driver, size);
+    if (!size)
+    {
+        WARN("Unable to find %s in [devices] section of win.ini\n", debugstr_w(device));
+        return FALSE;
+    }
+    p = wcschr(driver, ',');
+    if (!p)
+    {
+        WARN("%s entry in [devices] section of win.ini is malformed.\n", debugstr_w(device));
+        return FALSE;
+    }
+    *p = 0;
+    TRACE("Found %s for %s\n", debugstr_w(driver), debugstr_w(device));
+    return TRUE;
+}
+
+static struct graphics_driver *create_driver( HMODULE module )
+{
+    struct graphics_driver *driver;
+
+    if (!(driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver)))) return NULL;
+    driver->module = module;
+
+    if (module)
+        driver->entry_point = (void *)GetProcAddress( module, "wine_get_gdi_driver" );
+    else
+        driver->entry_point = NULL;
+
+    return driver;
+}
+
+#ifdef __i386__
+static const WCHAR printer_env[] = L"w32x86";
+#elif defined __x86_64__
+static const WCHAR printer_env[] = L"x64";
+#elif defined __arm__
+static const WCHAR printer_env[] = L"arm";
+#elif defined __aarch64__
+static const WCHAR printer_env[] = L"arm64";
+#else
+#error not defined for this cpu
+#endif
+
+static driver_entry_point load_driver( LPCWSTR name )
+{
+    HMODULE module;
+    struct graphics_driver *driver, *new_driver;
+
+    if ((module = GetModuleHandleW( name )))
+    {
+        EnterCriticalSection( &driver_section );
+        LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
+        {
+            if (driver->module == module) goto done;
+        }
+        LeaveCriticalSection( &driver_section );
+    }
+
+    if (!(module = LoadLibraryW( name )))
+    {
+        WCHAR path[MAX_PATH];
+
+        GetSystemDirectoryW( path, MAX_PATH );
+        swprintf( path + wcslen(path), MAX_PATH - wcslen(path), L"\\spool\\drivers\\%s\\3\\%s",
+                  printer_env, name );
+        if (!(module = LoadLibraryW( path ))) return NULL;
+    }
+
+    if (!(new_driver = create_driver( module )))
+    {
+        FreeLibrary( module );
+        return NULL;
+    }
+
+    /* check if someone else added it in the meantime */
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
+    {
+        if (driver->module != module) continue;
+        FreeLibrary( module );
+        HeapFree( GetProcessHeap(), 0, new_driver );
+        goto done;
+    }
+    driver = new_driver;
+    list_add_head( &drivers, &driver->entry );
+    TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
+done:
+    LeaveCriticalSection( &driver_section );
+    return driver->entry_point;
+}
+
+/***********************************************************************
+ *           CreateDCW    (GDI32.@)
+ */
+HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                      const DEVMODEW *devmode )
+{
+    UNICODE_STRING device_str, output_str;
+    driver_entry_point entry_point = NULL;
+    const WCHAR *display = NULL, *p;
+    BOOL is_display = FALSE;
+    WCHAR buf[300];
+
+    if (!device || !get_driver_name( device, buf, 300 ))
+    {
+        if (!driver)
+        {
+            ERR( "no device found for %s\n", debugstr_w(device) );
+            return 0;
+        }
+        lstrcpyW(buf, driver);
+    }
+
+    if (is_display_device( driver ))
+    {
+        display = driver;
+        is_display = TRUE;
+    }
+    else if (is_display_device( device ))
+    {
+        display = device;
+        is_display = TRUE;
+    }
+    else if (!wcsicmp( buf, L"display" ) || is_display_device( buf ))
+    {
+        is_display = TRUE;
+    }
+    else if (!(entry_point = load_driver( buf )))
+    {
+        ERR( "no driver found for %s\n", debugstr_w(buf) );
+        return 0;
+    }
+
+    if (display)
+    {
+        /* Use only the display name. For example, \\.\DISPLAY1 in \\.\DISPLAY1\Monitor0 */
+        p = display + 12;
+        while (iswdigit( *p )) p++;
+
+        device_str.Length = device_str.MaximumLength = (p - display) * sizeof(WCHAR);
+        device_str.Buffer = (WCHAR *)display;
+    }
+    else if (device)
+    {
+        device_str.Length = device_str.MaximumLength = lstrlenW( device ) * sizeof(WCHAR);
+        device_str.Buffer = (WCHAR *)device;
+    }
+
+    if (output)
+    {
+        output_str.Length = output_str.MaximumLength = lstrlenW(output) * sizeof(WCHAR);
+        output_str.Buffer = (WCHAR *)output;
+    }
+
+    return NtGdiOpenDCW( device || display ? &device_str : NULL, devmode, output ? &output_str : NULL,
+                         0, is_display, entry_point, NULL, NULL );
 }
 
 /***********************************************************************

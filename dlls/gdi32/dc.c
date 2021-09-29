@@ -35,6 +35,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
+static inline const char *debugstr_us( const UNICODE_STRING *us )
+{
+    if (!us) return "<null>";
+    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
+}
+
 static BOOL DC_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs dc_funcs =
@@ -628,45 +634,43 @@ BOOL WINAPI NtGdiRestoreDC( HDC hdc, INT level )
 
 
 /***********************************************************************
- *           CreateDCW    (GDI32.@)
+ *           NtGdiOpenDCW    (win32u.@)
  */
-HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                      const DEVMODEW *initData )
+HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICODE_STRING *output,
+                         ULONG type, BOOL is_display, HANDLE hspool, DRIVER_INFO_2W *driver_info,
+                         void *pdev )
 {
-    const WCHAR *display, *p;
+    const struct gdi_dc_funcs *funcs = NULL;
     HDC hdc;
     DC * dc;
-    const struct gdi_dc_funcs *funcs;
-    WCHAR buf[300];
 
     GDI_CheckNotLock();
 
-    if (!device || !DRIVER_GetDriverName( device, buf, 300 ))
+    if (is_display)
+        funcs = get_display_driver();
+    else if (hspool)
     {
-        if (!driver)
-        {
-            ERR( "no device found for %s\n", debugstr_w(device) );
-            return 0;
-        }
-        lstrcpyW(buf, driver);
+        const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int ) = hspool;
+        funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
     }
-
-    if (!(funcs = DRIVER_load_driver( buf )))
+    if (!funcs)
     {
-        ERR( "no driver found for %s\n", debugstr_w(buf) );
+        ERR( "no driver found\n" );
         return 0;
     }
+
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
     dc->hBitmap = GDI_inc_ref_count( get_stock_object( DEFAULT_BITMAP ));
 
-    TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
-          debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
+    TRACE("(device=%s, output=%s): returning %p\n",
+          debugstr_us(device), debugstr_us(output), dc->hSelf );
 
     if (funcs->pCreateDC)
     {
-        if (!funcs->pCreateDC( &dc->physDev, device, output, initData ))
+        if (!funcs->pCreateDC( &dc->physDev, device ? device->Buffer : NULL,
+                               output ? output->Buffer : NULL, devmode ))
         {
             WARN("creation aborted by device\n" );
             free_dc_ptr( dc );
@@ -674,21 +678,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         }
     }
 
-    if (is_display_device( driver ))
-        display = driver;
-    else if (is_display_device( device ))
-        display = device;
-    else
-        display = NULL;
-
-    if (display)
+    if (is_display && device)
     {
-        /* Copy only the display name. For example, \\.\DISPLAY1 in \\.\DISPLAY1\Monitor0 */
-        p = display + 12;
-        while (iswdigit( *p ))
-            ++p;
-        lstrcpynW( dc->display, display, p - display + 1 );
-        dc->display[p - display] = '\0';
+        memcpy( dc->display, device->Buffer, device->Length );
+        dc->display[device->Length / sizeof(WCHAR)] = 0;
+
     }
 
     dc->attr->vis_rect.left   = 0;
@@ -721,7 +715,7 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
         funcs = physDev->funcs;
         release_dc_ptr( origDC );
     }
-    else funcs = DRIVER_load_driver( L"display" );
+    else funcs = get_display_driver();
 
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_MEMDC ))) return 0;
 

@@ -218,8 +218,7 @@ extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs path_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs font_driver DECLSPEC_HIDDEN;
-extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
-extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs *get_display_driver(void) DECLSPEC_HIDDEN;
 
 /* font.c */
 

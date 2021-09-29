@@ -39,13 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
-struct graphics_driver
-{
-    struct list                entry;
-    HMODULE                    module;  /* module handle */
-    const struct gdi_dc_funcs *funcs;
-};
-
 struct d3dkmt_adapter
 {
     D3DKMT_HANDLE handle;               /* Kernel mode graphics adapter handle */
@@ -58,8 +51,7 @@ struct d3dkmt_device
     struct list entry;                  /* List entry */
 };
 
-static struct list drivers = LIST_INIT( drivers );
-static struct graphics_driver *display_driver;
+const struct gdi_dc_funcs *driver_funcs;
 
 static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
 static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
@@ -80,147 +72,27 @@ static BOOL (WINAPI *pGetMonitorInfoW)(HMONITOR, LPMONITORINFO);
 static INT (WINAPI *pGetSystemMetrics)(INT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
-/**********************************************************************
- *	     create_driver
- *
- * Allocate and fill the driver structure for a given module.
- */
-static struct graphics_driver *create_driver( HMODULE module )
-{
-    static const struct gdi_dc_funcs empty_funcs;
-    const struct gdi_dc_funcs *funcs = NULL;
-    struct graphics_driver *driver;
-
-    if (!(driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver)))) return NULL;
-    driver->module = module;
-
-    if (module)
-    {
-        const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int version );
-
-        if ((wine_get_gdi_driver = (void *)GetProcAddress( module, "wine_get_gdi_driver" )))
-            funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
-    }
-    if (!funcs) funcs = &empty_funcs;
-    driver->funcs = funcs;
-    return driver;
-}
-
 
 /**********************************************************************
  *	     get_display_driver
  *
  * Special case for loading the display driver: get the name from the config file
  */
-static const struct gdi_dc_funcs *get_display_driver(void)
+const struct gdi_dc_funcs *get_display_driver(void)
 {
-    if (!display_driver)
+    if (!driver_funcs)
     {
         HMODULE user32 = LoadLibraryA( "user32.dll" );
         pGetDesktopWindow = (void *)GetProcAddress( user32, "GetDesktopWindow" );
 
-        if (!pGetDesktopWindow() || !display_driver)
+        if (!pGetDesktopWindow() || !driver_funcs)
         {
+            static struct gdi_dc_funcs empty_funcs;
             WARN( "failed to load the display driver, falling back to null driver\n" );
-            __wine_set_display_driver( 0 );
+            driver_funcs = &empty_funcs;
         }
     }
-    return display_driver->funcs;
-}
-
-
-/**********************************************************************
- *	     is_display_device
- */
-BOOL is_display_device( LPCWSTR name )
-{
-    const WCHAR *p = name;
-
-    if (!name)
-        return FALSE;
-
-    if (wcsnicmp( name, L"\\\\.\\DISPLAY", lstrlenW(L"\\\\.\\DISPLAY") )) return FALSE;
-
-    p += lstrlenW(L"\\\\.\\DISPLAY");
-
-    if (!iswdigit( *p++ ))
-        return FALSE;
-
-    for (; *p; p++)
-    {
-        if (!iswdigit( *p ))
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
-#ifdef __i386__
-static const WCHAR printer_env[] = L"w32x86";
-#elif defined __x86_64__
-static const WCHAR printer_env[] = L"x64";
-#elif defined __arm__
-static const WCHAR printer_env[] = L"arm";
-#elif defined __aarch64__
-static const WCHAR printer_env[] = L"arm64";
-#else
-#error not defined for this cpu
-#endif
-
-/**********************************************************************
- *	     DRIVER_load_driver
- */
-const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
-{
-    HMODULE module;
-    struct graphics_driver *driver, *new_driver;
-
-    /* display driver is a special case */
-    if (!wcsicmp( name, L"display" ) || is_display_device( name )) return get_display_driver();
-
-    if ((module = GetModuleHandleW( name )))
-    {
-        if (display_driver && display_driver->module == module) return display_driver->funcs;
-
-        EnterCriticalSection( &driver_section );
-        LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
-        {
-            if (driver->module == module) goto done;
-        }
-        LeaveCriticalSection( &driver_section );
-    }
-
-    if (!(module = LoadLibraryW( name )))
-    {
-        WCHAR path[MAX_PATH];
-
-        GetSystemDirectoryW( path, MAX_PATH );
-        swprintf( path + wcslen(path), MAX_PATH - wcslen(path), L"\\spool\\drivers\\%s\\3\\%s",
-                  printer_env, name );
-        if (!(module = LoadLibraryW( path ))) return NULL;
-    }
-
-    if (!(new_driver = create_driver( module )))
-    {
-        FreeLibrary( module );
-        return NULL;
-    }
-
-    /* check if someone else added it in the meantime */
-    EnterCriticalSection( &driver_section );
-    LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
-    {
-        if (driver->module != module) continue;
-        FreeLibrary( module );
-        HeapFree( GetProcessHeap(), 0, new_driver );
-        goto done;
-    }
-    driver = new_driver;
-    list_add_head( &drivers, &driver->entry );
-    TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
-done:
-    LeaveCriticalSection( &driver_section );
-    return driver->funcs;
+    return driver_funcs;
 }
 
 
@@ -229,16 +101,18 @@ done:
  */
 void CDECL __wine_set_display_driver( HMODULE module )
 {
-    struct graphics_driver *driver;
+    const struct gdi_dc_funcs * (CDECL *wine_get_gdi_driver)( unsigned int );
+    const struct gdi_dc_funcs *funcs = NULL;
     HMODULE user32;
 
-    if (!(driver = create_driver( module )))
+    wine_get_gdi_driver = (void *)GetProcAddress( module, "wine_get_gdi_driver" );
+    if (wine_get_gdi_driver) funcs = wine_get_gdi_driver( WINE_GDI_DRIVER_VERSION );
+    if (!funcs)
     {
         ERR( "Could not create graphics driver\n" );
         NtTerminateProcess( GetCurrentThread(), 1 );
     }
-    if (InterlockedCompareExchangePointer( (void **)&display_driver, driver, NULL ))
-        HeapFree( GetProcessHeap(), 0, driver );
+    InterlockedExchangePointer( (void **)&driver_funcs, (void *)funcs );
 
     user32 = LoadLibraryA( "user32.dll" );
     pGetMonitorInfoW = (void *)GetProcAddress( user32, "GetMonitorInfoW" );
@@ -289,8 +163,8 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 
 static BOOL CDECL nulldrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
-    if (!display_driver || !display_driver->funcs->pCreateCompatibleDC) return TRUE;
-    return display_driver->funcs->pCreateCompatibleDC( NULL, pdev );
+    if (!driver_funcs || !driver_funcs->pCreateCompatibleDC) return TRUE;
+    return driver_funcs->pCreateCompatibleDC( NULL, pdev );
 }
 
 static BOOL CDECL nulldrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
@@ -887,38 +761,6 @@ const struct gdi_dc_funcs null_driver =
 
     GDI_PRIORITY_NULL_DRV               /* priority */
 };
-
-
-/*****************************************************************************
- *      DRIVER_GetDriverName
- *
- */
-BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size )
-{
-    WCHAR *p;
-
-    /* display is a special case */
-    if (!wcsicmp( device, L"display" ) || is_display_device( device ))
-    {
-        lstrcpynW( driver, L"display", size );
-        return TRUE;
-    }
-
-    size = GetProfileStringW(L"devices", device, L"", driver, size);
-    if(!size) {
-        WARN("Unable to find %s in [devices] section of win.ini\n", debugstr_w(device));
-        return FALSE;
-    }
-    p = wcschr(driver, ',');
-    if(!p)
-    {
-        WARN("%s entry in [devices] section of win.ini is malformed.\n", debugstr_w(device));
-        return FALSE;
-    }
-    *p = 0;
-    TRACE("Found %s for %s\n", debugstr_w(driver), debugstr_w(device));
-    return TRUE;
-}
 
 
 /******************************************************************************

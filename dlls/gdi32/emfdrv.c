@@ -585,7 +585,7 @@ HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
     if (hdc)  /* if no ref, use current display */
         ref_dc = hdc;
     else
-        ref_dc = CreateDCW( L"DISPLAY", NULL, NULL, NULL );
+        ref_dc = NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
 
     memset( physDev->dev_caps, 0, sizeof(physDev->dev_caps) );
     for (cap = 0; cap < ARRAY_SIZE( physDev->dev_caps ); cap++)
