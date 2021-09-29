@@ -430,7 +430,6 @@ AC_CHECK_HEADERS(\
 	ApplicationServices/ApplicationServices.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
-	CommonCrypto/CommonCryptor.h \
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	EGL/egl.h \
