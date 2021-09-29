@@ -33091,6 +33091,11 @@ static void test_deferred_context_queries(void)
 
     ID3D11DeviceContext_ExecuteCommandList(immediate, list, FALSE);
 
+    hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(deferred, query, NULL, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
     get_query_data(immediate, query, &data, sizeof(data));
     ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 

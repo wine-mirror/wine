@@ -1038,12 +1038,16 @@ static void STDMETHODCALLTYPE d3d11_device_context_End(ID3D11DeviceContext1 *ifa
 static HRESULT STDMETHODCALLTYPE d3d11_device_context_GetData(ID3D11DeviceContext1 *iface,
         ID3D11Asynchronous *asynchronous, void *data, UINT data_size, UINT data_flags)
 {
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_query *query = unsafe_impl_from_ID3D11Asynchronous(asynchronous);
     unsigned int wined3d_flags;
     HRESULT hr;
 
     TRACE("iface %p, asynchronous %p, data %p, data_size %u, data_flags %#x.\n",
             iface, asynchronous, data, data_size, data_flags);
+
+    if (context->type != D3D11_DEVICE_CONTEXT_IMMEDIATE)
+        return DXGI_ERROR_INVALID_CALL;
 
     if (!data && data_size)
         return E_INVALIDARG;
