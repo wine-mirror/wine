@@ -3324,9 +3324,12 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         const struct wined3d_gpu_description *gpu_description, enum wined3d_feature_level feature_level,
         UINT64 vram_bytes, UINT64 sysmem_bytes) DECLSPEC_HIDDEN;
 
+#define UPLOAD_BO_UPLOAD_ON_UNMAP   0x1
+
 struct upload_bo
 {
     struct wined3d_const_bo_address addr;
+    uint32_t flags;
 };
 
 struct wined3d_adapter_ops
