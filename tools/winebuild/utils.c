@@ -441,26 +441,14 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
     const char *ext, *basename;
     int fd;
 
-    if (!prefix || !prefix[0]) prefix = "winebuild";
-    if (!suffix) suffix = "";
-    if ((basename = strrchr( prefix, '/' ))) basename++;
-    else basename = prefix;
-    if (!(ext = strchr( basename, '.' ))) ext = prefix + strlen(prefix);
-    name = xmalloc( sizeof("/tmp/") + (ext - prefix) + sizeof(".XXXXXX") + strlen(suffix) );
-    memcpy( name, prefix, ext - prefix );
-    strcpy( name + (ext - prefix), ".XXXXXX" );
-    strcat( name, suffix );
-
-    if ((fd = mkstemps( name, strlen(suffix) )) == -1)
+    if (prefix)
     {
-        strcpy( name, "/tmp/" );
-        memcpy( name + 5, basename, ext - basename );
-        strcpy( name + 5 + (ext - basename), ".XXXXXX" );
-        strcat( name, suffix );
-        if ((fd = mkstemps( name, strlen(suffix) )) == -1)
-            fatal_error( "could not generate a temp file\n" );
+        if ((basename = strrchr( prefix, '/' ))) basename++;
+        else basename = prefix;
+        if ((ext = strchr( basename, '.' ))) prefix = strmake( "%.*s", ext - basename, basename );
+        else prefix = basename;
     }
-
+    fd = make_temp_file( prefix, suffix, &name );
     close( fd );
     strarray_add( &tmp_files, name );
     return name;

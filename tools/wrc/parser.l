@@ -111,6 +111,7 @@ ws	[ \f\t\r]
 #define YY_NO_UNISTD_H
 #endif
 
+#include "../tools.h"
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"

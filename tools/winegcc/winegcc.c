@@ -297,25 +297,14 @@ static void exit_on_signal( int sig )
 static char* get_temp_file(const char* prefix, const char* suffix)
 {
     int fd;
-    char* tmp = strmake("%s-XXXXXX%s", prefix, suffix);
+    char *tmp;
 
 #ifdef HAVE_SIGPROCMASK
     sigset_t old_set;
     /* block signals while manipulating the temp files list */
     sigprocmask( SIG_BLOCK, &signal_mask, &old_set );
 #endif
-    fd = mkstemps( tmp, strlen(suffix) );
-    if (fd == -1)
-    {
-        /* could not create it in current directory, try in TMPDIR */
-        const char* tmpdir;
-
-        free(tmp);
-        if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
-        tmp = strmake("%s/%s-XXXXXX%s", tmpdir, prefix, suffix);
-        fd = mkstemps( tmp, strlen(suffix) );
-        if (fd == -1) error( "could not create temp file\n" );
-    }
+    fd = make_temp_file( prefix, suffix, &tmp );
     close( fd );
     strarray_add(&tmp_files, tmp);
 #ifdef HAVE_SIGPROCMASK

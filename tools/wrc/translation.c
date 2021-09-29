@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "../tools.h"
 #include "dumpres.h"
 #include "utils.h"
 #include "wrc.h"

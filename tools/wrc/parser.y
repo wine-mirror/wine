@@ -130,6 +130,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "../tools.h"
 #include "wrc.h"
 #include "utils.h"
 #include "newstruc.h"

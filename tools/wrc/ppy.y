@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "../tools.h"
 #include "utils.h"
 #include "wpp_private.h"
 

@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <fcntl.h>
+#include <time.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -247,6 +249,35 @@ static inline int strarray_spawn( struct strarray args )
     if (pid == wret && WIFEXITED(status)) return WEXITSTATUS(status);
     return 255; /* abnormal exit with an abort or an interrupt */
 #endif
+}
+
+static inline int make_temp_file( const char *prefix, const char *suffix, char **name )
+{
+    static unsigned int value;
+    int fd, count;
+    const char *tmpdir = NULL;
+
+    if (!prefix) prefix = "tmp";
+    if (!suffix) suffix = "";
+    value += time(NULL) + getpid();
+
+    for (count = 0; count < 0x8000; count++)
+    {
+        if (tmpdir)
+            *name = strmake( "%s/%s-%08x%s", tmpdir, prefix, value, suffix );
+        else
+            *name = strmake( "%s-%08x%s", prefix, value, suffix );
+        fd = open( *name, O_RDWR | O_CREAT | O_EXCL, 0600 );
+        if (fd >= 0) return fd;
+        value += 7777;
+        if (errno == EACCES && !tmpdir && !strchr( prefix, '/' ))
+        {
+            if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
+        }
+        free( *name );
+    }
+    fprintf( stderr, "failed to create temp file for %s%s\n", prefix, suffix );
+    exit(1);
 }
 
 #endif /* __WINE_TOOLS_H */

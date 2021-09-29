@@ -28,6 +28,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "../tools.h"
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"

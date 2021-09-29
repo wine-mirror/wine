@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <ctype.h>
 
+#include "../tools.h"
 #include "wrc.h"
 #include "genres.h"
 #include "utils.h"

@@ -564,10 +564,7 @@ int do_import(char *fname)
     input_name = path;
     line_number = 1;
 
-    name = xstrdup( "widl.XXXXXX" );
-    if((fd = mkstemps( name, 0 )) == -1)
-        error("Could not generate a temp name from %s\n", name);
-
+    fd = make_temp_file( "widl-pp", NULL, &name );
     temp_name = name;
     if (!(f = fdopen(fd, "wt")))
         error("Could not open fd %s for writing\n", name);
@@ -605,10 +602,7 @@ static void switch_to_acf(void)
     acf_name = NULL;
     line_number = 1;
 
-    name = xstrdup( "widl.XXXXXX" );
-    if((fd = mkstemps( name, 0 )) == -1)
-        error("Could not generate a temp name from %s\n", name);
-
+    fd = make_temp_file( "widl-acf", NULL, &name );
     temp_name = name;
     if (!(f = fdopen(fd, "wt")))
         error("Could not open fd %s for writing\n", name);

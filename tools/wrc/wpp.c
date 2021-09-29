@@ -34,6 +34,7 @@
 # include <unistd.h>
 #endif
 
+#include "../tools.h"
 #include "utils.h"
 #include "wpp_private.h"
 

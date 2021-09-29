@@ -967,14 +967,9 @@ int main(int argc,char *argv[])
     {
         FILE *output;
         int fd;
-        char *name = xmalloc( strlen(header_name) + 8 );
+        char *name;
 
-        strcpy( name, header_name );
-        strcat( name, ".XXXXXX" );
-
-        if ((fd = mkstemps( name, 0 )) == -1)
-            error("Could not generate a temp name from %s\n", name);
-
+        fd = make_temp_file( header_name, NULL, &name );
         temp_name = name;
         if (!(output = fdopen(fd, "wt")))
             error("Could not open fd %s for writing\n", name);

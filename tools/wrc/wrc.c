@@ -35,6 +35,7 @@
 # include <getopt.h>
 #endif
 
+#include "../tools.h"
 #include "wrc.h"
 #include "utils.h"
 #include "dumpres.h"
@@ -280,12 +281,7 @@ static int load_file( const char *input_name, const char *output_name )
             exit(0);
         }
 
-        if (output_name && output_name[0]) name = strmake( "%s.XXXXXX", output_name );
-        else name = xstrdup( "wrc.XXXXXX" );
-
-        if ((fd = mkstemps( name, 0 )) == -1)
-            error("Could not generate a temp name from %s\n", name);
-
+        fd = make_temp_file( output_name, "", &name );
         temp_name = name;
         if (!(output = fdopen(fd, "wt")))
             error("Could not open fd %s for writing\n", name);

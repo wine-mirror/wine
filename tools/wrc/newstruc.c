@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <ctype.h>
 
+#include "../tools.h"
 #include "wrc.h"
 #include "newstruc.h"
 #include "utils.h"

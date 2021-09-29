@@ -173,6 +173,7 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 #define YY_NO_UNISTD_H
 #endif
 
+#include "../tools.h"
 #include "utils.h"
 #include "wpp_private.h"
 #include "ppy.tab.h"
