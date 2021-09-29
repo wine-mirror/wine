@@ -1107,6 +1107,7 @@ static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session se
         CFRelease(data);
     }
 
+done:
     CFRelease(cert_array);
     return ret;
 }
