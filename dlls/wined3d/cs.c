@@ -2759,6 +2759,7 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
         const void *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
     struct wined3d_cs_update_sub_resource *op;
+    struct wined3d_box dummy_box;
     struct upload_bo bo;
     void *map_ptr;
 
@@ -2767,6 +2768,7 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
     {
         wined3d_format_copy_data(resource->format, data, row_pitch, slice_pitch, map_ptr, row_pitch, slice_pitch,
                 box->right - box->left, box->bottom - box->top, box->back - box->front);
+        context->ops->unmap_upload_bo(context, resource, sub_resource_idx, &dummy_box, &bo);
         wined3d_device_context_upload_bo(context, resource, sub_resource_idx, box, &bo, row_pitch, slice_pitch);
         return;
     }
