@@ -425,6 +425,17 @@ static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                         break;
                     }
 #endif /* IP_PKTINFO */
+
+#if defined(IP_TTL)
+                    case IP_TTL:
+                    {
+                        ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_TTL, ptr, &ctlsize,
+                                                    CMSG_DATA(cmsg_unix), sizeof(INT) );
+                        if (!ptr) goto error;
+                        break;
+                    }
+#endif /* IP_TTL */
+
                     default:
                         FIXME("Unhandled IPPROTO_IP message header type %d\n", cmsg_unix->cmsg_type);
                         break;
@@ -1831,6 +1842,22 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             int sock_type = get_sock_type( handle );
             if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
             return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, in_buffer, in_size );
+        }
+#endif
+
+#ifdef IP_RECVTTL
+        case IOCTL_AFD_WINE_GET_IP_RECVTTL:
+        {
+            int sock_type = get_sock_type( handle );
+            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_RECVTTL, out_buffer, out_size );
+        }
+
+        case IOCTL_AFD_WINE_SET_IP_RECVTTL:
+        {
+            int sock_type = get_sock_type( handle );
+            if (sock_type != SOCK_DGRAM && sock_type != SOCK_RAW) return STATUS_INVALID_PARAMETER;
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVTTL, in_buffer, in_size );
         }
 #endif
 

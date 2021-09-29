@@ -2022,14 +2022,11 @@ static void test_ipv4_cmsg(void)
     memset(control, 0, sizeof(control));
     msg.Control.len = sizeof(control);
     rc = setsockopt(server, IPPROTO_IP, IP_RECVTTL, (const char *)&on, sizeof(on));
-todo_wine
     ok(!rc, "failed to set IP_RECVTTL, error %u\n", WSAGetLastError());
     state = 0;
     count = sizeof(state);
     rc = getsockopt(server, IPPROTO_IP, IP_RECVTTL, (char *)&state, (INT *)&count);
-todo_wine
     ok(!rc, "failed to get IP_RECVTTL, error %u\n", WSAGetLastError());
-todo_wine
     ok(state == 1, "expected 1, got %u\n", state);
     rc = send(client, payload, sizeof(payload), 0);
     ok(rc == sizeof(payload), "send failed, error %u\n", WSAGetLastError());
@@ -2037,13 +2034,10 @@ todo_wine
     ok(!rc, "WSARecvMsg failed, error %u\n", WSAGetLastError());
     ok(count == sizeof(payload), "expected length %Iu, got %u\n", sizeof(payload), count);
     ok(header->cmsg_level == IPPROTO_IP, "expected IPPROTO_IP, got %i\n", header->cmsg_level);
-todo_wine
     ok(header->cmsg_type == IP_TTL || broken(header->cmsg_type == IP_HOPLIMIT) /* <= win10 v1607 */,
        "expected IP_TTL, got %i\n", header->cmsg_type);
-todo_wine
     ok(header->cmsg_len == sizeof(*header) + sizeof(INT),
        "expected length %Iu, got %Iu\n", sizeof(*header) + sizeof(INT), header->cmsg_len);
-todo_wine
     ok(*int_data >= 32, "expected at least 32, got %i\n", *int_data);
     setsockopt(server, IPPROTO_IP, IP_RECVTTL, (const char *)&off, sizeof(off));
     ok(!rc, "failed to clear IP_RECVTTL, error %u\n", WSAGetLastError());
@@ -11614,7 +11608,7 @@ static void test_sockopt_validity(void)
         { IP_DROP_MEMBERSHIP,         WSAENOPROTOOPT                    },
         { IP_DONTFRAGMENT                                               },
         { IP_PKTINFO,                 WSAEINVAL                         },
-        { IP_RECVTTL,                 WSAEINVAL,       0,          TRUE },
+        { IP_RECVTTL,                 WSAEINVAL                         },
         { IP_RECEIVE_BROADCAST,       WSAEINVAL,       0,          TRUE },
         { IP_RECVIF,                  WSAEINVAL,       0,          TRUE },
         { IP_RECVDSTADDR,             WSAEINVAL,       0,          TRUE },
@@ -11649,7 +11643,7 @@ static void test_sockopt_validity(void)
         { IP_DROP_MEMBERSHIP,         WSAENOPROTOOPT                    },
         { IP_DONTFRAGMENT                                               },
         { IP_PKTINFO                                                    },
-        { IP_RECVTTL,                 0,               0,          TRUE },
+        { IP_RECVTTL                                                    },
         { IP_RECEIVE_BROADCAST,       0,               0,          TRUE },
         { IP_RECVIF,                  0,               0,          TRUE },
         { IP_RECVDSTADDR,             0,               0,          TRUE },
@@ -11684,7 +11678,7 @@ static void test_sockopt_validity(void)
         { IP_DROP_MEMBERSHIP,         WSAENOPROTOOPT                    },
         { IP_DONTFRAGMENT                                               },
         { IP_PKTINFO                                                    },
-        { IP_RECVTTL,                 0,               0,          TRUE },
+        { IP_RECVTTL                                                    },
         { IP_RECEIVE_BROADCAST,       0,               0,          TRUE },
         { IP_RECVIF,                  0,               0,          TRUE },
         { IP_RECVDSTADDR,             0,               0,          TRUE },
