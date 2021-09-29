@@ -6019,7 +6019,7 @@ static void update_external_font_keys(void)
         path = (WCHAR *)(buffer + info->DataOffset);
         if (path[0] && path[1] == ':')
         {
-            memmove( path, path + ARRAYSIZE(nt_prefixW), sizeof(nt_prefixW) );
+            memmove( path + ARRAYSIZE(nt_prefixW), path, info->DataLength );
             memcpy( path, nt_prefixW, sizeof(nt_prefixW) );
         }
 
