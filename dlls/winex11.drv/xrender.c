@@ -937,8 +937,8 @@ static void set_color_info( XRenderPictFormat *format, BITMAPINFO *info )
 /**********************************************************************
  *	     xrenderdrv_CreateDC
  */
-static BOOL CDECL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                                       LPCWSTR output, const DEVMODEW* initData )
+static BOOL CDECL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
+                                       const DEVMODEW* initData )
 {
     return create_xrender_dc( pdev, default_format );
 }

@@ -174,14 +174,13 @@ static MACDRV_PDEVICE *create_mac_physdev(void)
 /**********************************************************************
  *              CreateDC (MACDRV.@)
  */
-static BOOL CDECL macdrv_CreateDC(PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                                  LPCWSTR output, const DEVMODEW* initData)
+static BOOL CDECL macdrv_CreateDC(PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
+                                  const DEVMODEW* initData)
 {
     MACDRV_PDEVICE *physDev = create_mac_physdev();
 
-    TRACE("pdev %p hdc %p driver %s device %s output %s initData %p\n", pdev,
-          (*pdev)->hdc, debugstr_w(driver),debugstr_w(device), debugstr_w(output),
-          initData);
+    TRACE("pdev %p hdc %p device %s output %s initData %p\n", pdev,
+          (*pdev)->hdc, debugstr_w(device), debugstr_w(output), initData);
 
     if (!physDev) return FALSE;
 

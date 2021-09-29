@@ -767,8 +767,8 @@ static BOOL CDECL pathdrv_EndPath( PHYSDEV dev )
 /***********************************************************************
  *           pathdrv_CreateDC
  */
-static BOOL CDECL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                                    LPCWSTR output, const DEVMODEW *devmode )
+static BOOL CDECL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
+                                    const DEVMODEW *devmode )
 {
     struct path_physdev *physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) );
 
@@ -823,7 +823,7 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
 
     if (src->path && src->path_open)
     {
-        if (!path_driver.pCreateDC( &dst->physDev, NULL, NULL, NULL, NULL )) return FALSE;
+        if (!path_driver.pCreateDC( &dst->physDev, NULL, NULL, NULL )) return FALSE;
         physdev = get_path_physdev( find_dc_driver( dst, &path_driver ));
         physdev->path = src->path;
         src->path_open = FALSE;
@@ -1970,7 +1970,7 @@ BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
     struct gdi_path *path = alloc_gdi_path(0);
 
     if (!path) return FALSE;
-    if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))
+    if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL ))
     {
         free_gdi_path( path );
         return FALSE;

@@ -367,14 +367,13 @@ static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                                  LPCWSTR output, const DEVMODEW* initData )
+static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
+                                  const DEVMODEW *initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
 
-    TRACE("(%s %s %s %p)\n", debugstr_w(driver), debugstr_w(device),
-                             debugstr_w(output), initData);
+    TRACE("(%s %s %p)\n", debugstr_w(device), debugstr_w(output), initData);
 
     if (!device) return FALSE;
     pi = PSDRV_FindPrinterInfo( device );

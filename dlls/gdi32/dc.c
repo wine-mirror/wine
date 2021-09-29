@@ -149,7 +149,7 @@ DC *alloc_dc_ptr( DWORD magic )
     dc->attr->hdc = dc->nulldrv.hdc = dc->hSelf;
     set_gdi_client_ptr( dc->hSelf, dc->attr );
 
-    if (!font_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))
+    if (!font_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL ))
     {
         free_dc_ptr( dc );
         return NULL;
@@ -666,7 +666,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
     if (funcs->pCreateDC)
     {
-        if (!funcs->pCreateDC( &dc->physDev, buf, device, output, initData ))
+        if (!funcs->pCreateDC( &dc->physDev, device, output, initData ))
         {
             WARN("creation aborted by device\n" );
             free_dc_ptr( dc );
@@ -743,7 +743,7 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
         return 0;
     }
 
-    if (!dib_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))
+    if (!dib_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL ))
     {
         free_dc_ptr( dc );
         return 0;

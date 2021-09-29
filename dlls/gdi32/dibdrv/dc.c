@@ -321,8 +321,8 @@ void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip )
 /**********************************************************************
  *	     dibdrv_CreateDC
  */
-static BOOL CDECL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                                   LPCWSTR output, const DEVMODEW *data )
+static BOOL CDECL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
+                                   const DEVMODEW *data )
 {
     dibdrv_physdev *pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
 
@@ -778,7 +778,7 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
         if (windev) push_dc_driver( &dc->physDev, windev, windev->funcs );
         else
         {
-            if (!window_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) return;
+            if (!window_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL )) return;
             windev = find_dc_driver( dc, &window_driver );
         }
 
@@ -868,14 +868,14 @@ static BOOL CDECL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT b
     return ret;
 }
 
-static BOOL CDECL windrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                                   LPCWSTR output, const DEVMODEW *devmode )
+static BOOL CDECL windrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
+                                   const DEVMODEW *devmode )
 {
     struct windrv_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
 
     if (!physdev) return FALSE;
 
-    if (!dib_driver.pCreateDC( dev, NULL, NULL, NULL, NULL ))
+    if (!dib_driver.pCreateDC( dev, NULL, NULL, NULL ))
     {
         HeapFree( GetProcessHeap(), 0, physdev );
         return FALSE;

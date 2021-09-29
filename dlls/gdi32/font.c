@@ -2838,8 +2838,8 @@ static void update_codepage( UINT screen_dpi )
 /*************************************************************
  * font_CreateDC
  */
-static BOOL CDECL font_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                                 LPCWSTR output, const DEVMODEW *devmode )
+static BOOL CDECL font_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
+                                 const DEVMODEW *devmode )
 {
     struct font_physdev *physdev;
 

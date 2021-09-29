@@ -151,8 +151,8 @@ static ANDROID_PDEVICE *create_android_physdev(void)
 /**********************************************************************
  *           ANDROID_CreateDC
  */
-static BOOL CDECL ANDROID_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                                    LPCWSTR output, const DEVMODEW* initData )
+static BOOL CDECL ANDROID_CreateDC( PHYSDEV *pdev, LPCWSTR device, LPCWSTR output,
+                                    const DEVMODEW *initData )
 {
     ANDROID_PDEVICE *physdev = create_android_physdev();
 

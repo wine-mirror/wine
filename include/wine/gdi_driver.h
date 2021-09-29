@@ -78,7 +78,7 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (CDECL *pCloseFigure)(PHYSDEV);
     BOOL     (CDECL *pCreateCompatibleDC)(PHYSDEV,PHYSDEV*);
-    BOOL     (CDECL *pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
+    BOOL     (CDECL *pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,const DEVMODEW*);
     BOOL     (CDECL *pDeleteDC)(PHYSDEV);
     BOOL     (CDECL *pDeleteObject)(PHYSDEV,HGDIOBJ);
     BOOL     (CDECL *pEllipse)(PHYSDEV,INT,INT,INT,INT);
@@ -166,7 +166,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 68
+#define WINE_GDI_DRIVER_VERSION 69
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
