@@ -344,7 +344,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     pt[1].x -= rect.left + width / 2;
     pt[1].y -= rect.top + height / 2;
 
-    points = HeapAlloc( GetProcessHeap(), 0, (width + height) * 3 * sizeof(*points) );
+    points = malloc( (width + height) * 3 * sizeof(*points) );
     if (!points) return FALSE;
 
     if (extra_lines == -1)
@@ -363,13 +363,13 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     }
     if (count < 2)
     {
-        HeapFree( GetProcessHeap(), 0, points );
+        free( points );
         return TRUE;
     }
 
     if (pdev->pen_uses_region && !(outline = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
     {
-        HeapFree( GetProcessHeap(), 0, points );
+        free( points );
         return FALSE;
     }
 
@@ -378,7 +378,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         get_dib_rect( &pdev->dib, &rc ) &&
         !(interior = create_polypolygon_region( points, &count, 1, WINDING, &rc )))
     {
-        HeapFree( GetProcessHeap(), 0, points );
+        free( points );
         if (outline) NtGdiDeleteObjectApp( outline );
         return FALSE;
     }
@@ -406,7 +406,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         if (ret) ret = pen_region( pdev, outline );
         NtGdiDeleteObjectApp( outline );
     }
-    HeapFree( GetProcessHeap(), 0, points );
+    free( points );
     return ret;
 }
 
@@ -600,13 +600,13 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
             {
                 if (!ptr->glyphs[i][j]) continue;
                 for (k = 0; k < GLYPH_CACHE_PAGE_SIZE; k++)
-                    HeapFree( GetProcessHeap(), 0, ptr->glyphs[i][j][k] );
-                HeapFree( GetProcessHeap(), 0, ptr->glyphs[i][j] );
+                    free( ptr->glyphs[i][j][k] );
+                free( ptr->glyphs[i][j] );
             }
         }
         list_remove( &ptr->entry );
     }
-    else if (!(ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(*ptr) )))
+    else if (!(ptr = malloc( sizeof(*ptr) )))
     {
         LeaveCriticalSection( &font_cache_cs );
         return NULL;
@@ -639,18 +639,18 @@ static struct cached_glyph *add_cached_glyph( struct cached_font *font, UINT ind
     {
         struct cached_glyph **ptr;
 
-        ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, GLYPH_CACHE_PAGE_SIZE * sizeof(*ptr) );
+        ptr = calloc( 1, GLYPH_CACHE_PAGE_SIZE * sizeof(*ptr) );
         if (!ptr)
         {
-            HeapFree( GetProcessHeap(), 0, glyph );
+            free( glyph );
             return NULL;
         }
         if (InterlockedCompareExchangePointer( (void **)&font->glyphs[type][page], ptr, NULL ))
-            HeapFree( GetProcessHeap(), 0, ptr );
+            free( ptr );
     }
     ret = InterlockedCompareExchangePointer( (void **)&font->glyphs[type][page][entry], glyph, NULL );
     if (!ret) ret = glyph;
-    else HeapFree( GetProcessHeap(), 0, glyph );
+    else free( glyph );
     return ret;
 }
 
@@ -775,7 +775,7 @@ static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font
     bit_count = get_glyph_depth( font->aa_flags );
     stride = get_dib_stride( metrics.gmBlackBoxX, bit_count );
     size = metrics.gmBlackBoxY * stride;
-    glyph = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct cached_glyph, bits[size] ));
+    glyph = malloc( FIELD_OFFSET( struct cached_glyph, bits[size] ));
     if (!glyph) return NULL;
     if (!size) goto done;  /* empty glyph */
 
@@ -785,7 +785,7 @@ static struct cached_glyph *cache_glyph_bitmap( DC *dc, struct cached_font *font
                                 &identity, FALSE );
     if (ret == GDI_ERROR)
     {
-        HeapFree( GetProcessHeap(), 0, glyph );
+        free( glyph );
         return NULL;
     }
     assert( ret <= size );
@@ -1269,7 +1269,7 @@ BOOL CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, 
 
     if (total > ARRAY_SIZE( pt_buf ))
     {
-        points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+        points = malloc( total * sizeof(*pt) );
         if (!points) return FALSE;
     }
     memcpy( points, pt, total * sizeof(*pt) );
@@ -1315,7 +1315,7 @@ BOOL CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, 
     }
 
 done:
-    if (points != pt_buf) HeapFree( GetProcessHeap(), 0, points );
+    if (points != pt_buf) free( points );
     return ret;
 }
 
@@ -1340,7 +1340,7 @@ BOOL CDECL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* count
 
     if (total > ARRAY_SIZE( pt_buf ))
     {
-        points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+        points = malloc( total * sizeof(*pt) );
         if (!points) return FALSE;
     }
     memcpy( points, pt, total * sizeof(*pt) );
@@ -1367,7 +1367,7 @@ BOOL CDECL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* count
     }
 
 done:
-    if (points != pt_buf) HeapFree( GetProcessHeap(), 0, points );
+    if (points != pt_buf) free( points );
     return ret;
 }
 
@@ -1472,12 +1472,12 @@ BOOL CDECL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
     if (ellipse_width <= 2|| ellipse_height <= 2)
         return dibdrv_Rectangle( dev, left, top, right, bottom );
 
-    points = HeapAlloc( GetProcessHeap(), 0, (ellipse_width + ellipse_height) * 2 * sizeof(*points) );
+    points = malloc( (ellipse_width + ellipse_height) * 2 * sizeof(*points) );
     if (!points) return FALSE;
 
     if (pdev->pen_uses_region && !(outline = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
     {
-        HeapFree( GetProcessHeap(), 0, points );
+        free( points );
         return FALSE;
     }
 
@@ -1485,7 +1485,7 @@ BOOL CDECL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
         !(interior = NtGdiCreateRoundRectRgn( rect.left, rect.top, rect.right + 1, rect.bottom + 1,
                                               ellipse_width, ellipse_height )))
     {
-        HeapFree( GetProcessHeap(), 0, points );
+        free( points );
         if (outline) NtGdiDeleteObjectApp( outline );
         return FALSE;
     }
@@ -1556,7 +1556,7 @@ BOOL CDECL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
         if (ret) ret = pen_region( pdev, outline );
         NtGdiDeleteObjectApp( outline );
     }
-    HeapFree( GetProcessHeap(), 0, points );
+    free( points );
     return ret;
 }
 

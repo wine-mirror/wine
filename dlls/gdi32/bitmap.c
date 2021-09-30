@@ -147,7 +147,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     }
 
     /* Create the BITMAPOBJ */
-    if (!(bmpobj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*bmpobj) )))
+    if (!(bmpobj = calloc( 1, sizeof(*bmpobj) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
@@ -159,18 +159,18 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     bmpobj->dib.dsBm.bmWidthBytes = get_bitmap_stride( width, bpp );
     bmpobj->dib.dsBm.bmPlanes     = planes;
     bmpobj->dib.dsBm.bmBitsPixel  = bpp;
-    bmpobj->dib.dsBm.bmBits       = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    bmpobj->dib.dsBm.bmBits       = calloc( 1, size );
     if (!bmpobj->dib.dsBm.bmBits)
     {
-        HeapFree( GetProcessHeap(), 0, bmpobj );
+        free( bmpobj );
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
 
     if (!(hbitmap = alloc_gdi_handle( &bmpobj->obj, NTGDI_OBJ_BITMAP, &bitmap_funcs )))
     {
-        HeapFree( GetProcessHeap(), 0, bmpobj->dib.dsBm.bmBits );
-        HeapFree( GetProcessHeap(), 0, bmpobj );
+        free( bmpobj->dib.dsBm.bmBits );
+        free( bmpobj );
         return 0;
     }
 
@@ -322,7 +322,7 @@ LONG WINAPI NtGdiSetBitmapBits(
     }
     else
     {
-        if (!(src_bits.ptr = HeapAlloc( GetProcessHeap(), 0, dst.height * dst_stride )))
+        if (!(src_bits.ptr = malloc( dst.height * dst_stride )))
         {
             GDI_ReleaseObj( hbitmap );
             return 0;
@@ -444,8 +444,8 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
     BITMAPOBJ *bmp = free_gdi_handle( handle );
 
     if (!bmp) return FALSE;
-    HeapFree( GetProcessHeap(), 0, bmp->dib.dsBm.bmBits );
-    HeapFree( GetProcessHeap(), 0, bmp );
+    free( bmp->dib.dsBm.bmBits );
+    free( bmp );
     return TRUE;
 }
 

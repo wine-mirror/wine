@@ -39,7 +39,6 @@
 #include "ntgdi_private.h"
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
@@ -809,7 +808,7 @@ NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
         if (adapter->handle == desc->hAdapter)
         {
             list_remove( &adapter->entry );
-            heap_free( adapter );
+            free( adapter );
             status = STATUS_SUCCESS;
             break;
         }
@@ -847,7 +846,7 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
     static D3DKMT_HANDLE handle_start = 0;
     struct d3dkmt_adapter *adapter;
 
-    if (!(adapter = heap_alloc( sizeof( *adapter ) ))) return STATUS_NO_MEMORY;
+    if (!(adapter = malloc( sizeof( *adapter ) ))) return STATUS_NO_MEMORY;
 
     EnterCriticalSection( &driver_section );
     desc->hAdapter = adapter->handle = ++handle_start;
@@ -888,7 +887,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
     if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout)
         FIXME("Flags unsupported.\n");
 
-    device = heap_alloc_zero( sizeof( *device ) );
+    device = calloc( 1, sizeof( *device ) );
     if (!device)
         return STATUS_NO_MEMORY;
 
@@ -924,7 +923,7 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
             set_owner_desc.hDevice = desc->hDevice;
             NtGdiDdDDISetVidPnSourceOwner( &set_owner_desc );
             list_remove( &device->entry );
-            heap_free( device );
+            free( device );
             status = STATUS_SUCCESS;
             break;
         }

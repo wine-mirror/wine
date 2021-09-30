@@ -132,10 +132,10 @@ DC *alloc_dc_ptr( DWORD magic )
 {
     DC *dc;
 
-    if (!(dc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc) ))) return NULL;
-    if (!(dc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc->attr))))
+    if (!(dc = calloc( 1, sizeof(*dc) ))) return NULL;
+    if (!(dc->attr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc->attr) )))
     {
-        HeapFree( GetProcessHeap(), 0, dc );
+        free( dc );
         return NULL;
     }
 
@@ -152,8 +152,8 @@ DC *alloc_dc_ptr( DWORD magic )
 
     if (!(dc->hSelf = alloc_gdi_handle( &dc->obj, magic, &dc_funcs )))
     {
-        HeapFree( GetProcessHeap(), 0, dc->attr );
-        HeapFree( GetProcessHeap(), 0, dc );
+        RtlFreeHeap( GetProcessHeap(), 0, dc->attr );
+        free( dc );
         return NULL;
     }
     dc->attr->hdc = dc->nulldrv.hdc = dc->hSelf;
@@ -179,8 +179,8 @@ static void free_dc_state( DC *dc )
     if (dc->hVisRgn) NtGdiDeleteObjectApp( dc->hVisRgn );
     if (dc->region) NtGdiDeleteObjectApp( dc->region );
     if (dc->path) free_gdi_path( dc->path );
-    HeapFree( GetProcessHeap(), 0, dc->attr );
-    HeapFree( GetProcessHeap(), 0, dc );
+    RtlFreeHeap( GetProcessHeap(), 0, dc->attr );
+    free( dc );
 }
 
 
@@ -472,14 +472,14 @@ INT WINAPI NtGdiSaveDC( HDC hdc )
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if (!(newdc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc ))))
+    if (!(newdc = calloc( 1, sizeof(*newdc ))))
     {
         release_dc_ptr( dc );
         return 0;
     }
-    if (!(newdc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc->attr) )))
+    if (!(newdc->attr = calloc( 1, sizeof(*newdc->attr) )))
     {
-        HeapFree( GetProcessHeap(), 0, newdc );
+        free( newdc );
         release_dc_ptr( dc );
         return 0;
     }

@@ -165,7 +165,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
 
 void CDECL free_heap_bits( struct gdi_image_bits *bits )
 {
-    HeapFree( GetProcessHeap(), 0, bits->ptr );
+    free( bits->ptr );
 }
 
 DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
@@ -180,7 +180,7 @@ DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
     dst_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
     if (top_down) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
 
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, dst_info->bmiHeader.biSizeImage )))
+    if (!(ptr = malloc( dst_info->bmiHeader.biSizeImage )))
         return ERROR_OUTOFMEMORY;
 
     err = convert_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr );
@@ -203,7 +203,7 @@ DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
     dst_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
 
     if (src_info->bmiHeader.biHeight < 0) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, dst_info->bmiHeader.biSizeImage )))
+    if (!(ptr = malloc( dst_info->bmiHeader.biSizeImage )))
         return ERROR_OUTOFMEMORY;
 
     err = stretch_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr, dst, mode );
@@ -221,7 +221,7 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
     if (!dst_bits->is_copy)
     {
         int size = dst_info->bmiHeader.biSizeImage;
-        void *ptr = HeapAlloc( GetProcessHeap(), 0, size );
+        void *ptr = malloc( size );
         if (!ptr) return ERROR_OUTOFMEMORY;
         memcpy( ptr, dst_bits->ptr, size );
         if (dst_bits->free) dst_bits->free( dst_bits );
@@ -428,7 +428,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     DWORD err;
     HRGN rgn;
 
-    if (!(pts = HeapAlloc( GetProcessHeap(), 0, nvert * sizeof(*pts) ))) return FALSE;
+    if (!(pts = malloc( nvert * sizeof(*pts) ))) return FALSE;
     for (i = 0; i < nvert; i++)
     {
         pts[i].x = vert_array[i].x;
@@ -470,7 +470,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     if (err && err != ERROR_BAD_FORMAT) goto done;
 
     info->bmiHeader.biSizeImage = get_dib_image_size( info );
-    if (!(bits.ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage )))
+    if (!(bits.ptr = calloc( 1, info->bmiHeader.biSizeImage )))
         goto done;
     bits.is_copy = TRUE;
     bits.free = free_heap_bits;
@@ -495,7 +495,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     NtGdiDeleteObjectApp( rgn );
 
 done:
-    HeapFree( GetProcessHeap(), 0, pts );
+    free( pts );
     return ret;
 }
 

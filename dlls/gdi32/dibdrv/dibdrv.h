@@ -273,7 +273,7 @@ static inline void init_clipped_rects( struct clipped_rects *clip_rects )
 
 static inline void free_clipped_rects( struct clipped_rects *clip_rects )
 {
-    if (clip_rects->rects != clip_rects->buffer) HeapFree( GetProcessHeap(), 0, clip_rects->rects );
+    if (clip_rects->rects != clip_rects->buffer) free( clip_rects->rects );
 }
 
 /* compute the x coordinate corresponding to y on the specified edge */

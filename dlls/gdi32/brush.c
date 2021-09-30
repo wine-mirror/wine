@@ -73,12 +73,12 @@ static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
     brush->bits = bits;
     if (!bits.free)
     {
-        if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
+        if (!(brush->bits.ptr = malloc( info->bmiHeader.biSizeImage ))) goto done;
         memcpy( brush->bits.ptr, bits.ptr, info->bmiHeader.biSizeImage );
         brush->bits.free = free_heap_bits;
     }
 
-    if (!(brush->info = HeapAlloc( GetProcessHeap(), 0, get_dib_info_size( info, DIB_RGB_COLORS ))))
+    if (!(brush->info = malloc( get_dib_info_size( info, DIB_RGB_COLORS ))))
     {
         if (brush->bits.free) brush->bits.free( &brush->bits );
         goto done;
@@ -141,7 +141,7 @@ BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
 void free_brush_pattern( struct brush_pattern *pattern )
 {
     if (pattern->bits.free) pattern->bits.free( &pattern->bits );
-    HeapFree( GetProcessHeap(), 0, pattern->info );
+    free( pattern->info );
 }
 
 BOOL CDECL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage )
@@ -193,7 +193,7 @@ HBRUSH create_brush( const LOGBRUSH *brush )
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
 
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(*ptr) ))) return 0;
+    if (!(ptr = malloc( sizeof(*ptr) ))) return 0;
 
     ptr->logbrush = *brush;
 
@@ -205,7 +205,7 @@ HBRUSH create_brush( const LOGBRUSH *brush )
     }
 
     free_brush_pattern( &ptr->pattern );
-    HeapFree( GetProcessHeap(), 0, ptr );
+    free( ptr );
     return 0;
 }
 
@@ -335,7 +335,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 
     if (!brush) return FALSE;
     free_brush_pattern( &brush->pattern );
-    HeapFree( GetProcessHeap(), 0, brush );
+    free( brush );
     return TRUE;
 }
 

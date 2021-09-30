@@ -111,21 +111,21 @@ HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT coun
     if (!palette) return 0;
     TRACE( "entries=%u\n", count );
 
-    if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*palettePtr) ))) return 0;
+    if (!(palettePtr = malloc( sizeof(*palettePtr) ))) return 0;
     palettePtr->unrealize = NULL;
     palettePtr->version = palette->palVersion;
     palettePtr->count   = count;
     size = palettePtr->count * sizeof(*palettePtr->entries);
-    if (!(palettePtr->entries = HeapAlloc( GetProcessHeap(), 0, size )))
+    if (!(palettePtr->entries = malloc( size )))
     {
-        HeapFree( GetProcessHeap(), 0, palettePtr );
+        free( palettePtr );
         return 0;
     }
     memcpy( palettePtr->entries, palette->palPalEntry, size );
     if (!(hpalette = alloc_gdi_handle( &palettePtr->obj, NTGDI_OBJ_PAL, &palette_funcs )))
     {
-        HeapFree( GetProcessHeap(), 0, palettePtr->entries );
-        HeapFree( GetProcessHeap(), 0, palettePtr );
+        free( palettePtr->entries );
+        free( palettePtr );
     }
     TRACE("   returning %p\n", hpalette);
     return hpalette;
@@ -228,22 +228,23 @@ static UINT set_palette_entries( HPALETTE hpalette, UINT start, UINT count,
  *
  * Resizes logical palette.
  */
-BOOL WINAPI NtGdiResizePalette( HPALETTE hPal, UINT cEntries )
+BOOL WINAPI NtGdiResizePalette( HPALETTE hPal, UINT count )
 {
     PALETTEOBJ * palPtr = GDI_GetObjPtr( hPal, NTGDI_OBJ_PAL );
     PALETTEENTRY *entries;
 
     if( !palPtr ) return FALSE;
-    TRACE("hpal = %p, prev = %i, new = %i\n", hPal, palPtr->count, cEntries );
+    TRACE("hpal = %p, prev = %i, new = %i\n", hPal, palPtr->count, count );
 
-    if (!(entries = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                 palPtr->entries, cEntries * sizeof(*palPtr->entries) )))
+    if (!(entries = realloc( palPtr->entries, count * sizeof(*palPtr->entries) )))
     {
         GDI_ReleaseObj( hPal );
         return FALSE;
     }
+    if (count > palPtr->count)
+        memset( entries + palPtr->count, 0, (count - palPtr->count) * sizeof(*palPtr->entries) );
     palPtr->entries = entries;
-    palPtr->count = cEntries;
+    palPtr->count = count;
 
     GDI_ReleaseObj( hPal );
     PALETTE_UnrealizeObject( hPal );
@@ -505,8 +506,8 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
 
     PALETTE_UnrealizeObject( handle );
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
-    HeapFree( GetProcessHeap(), 0, obj->entries );
-    HeapFree( GetProcessHeap(), 0, obj );
+    free( obj->entries );
+    free( obj );
     return TRUE;
 }
 

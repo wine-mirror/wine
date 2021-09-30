@@ -37,7 +37,6 @@
 #include "winreg.h"
 #include "ntgdi_private.h"
 #include "wine/exception.h"
-#include "wine/heap.h"
 #include "wine/rbtree.h"
 #include "wine/debug.h"
 
@@ -293,7 +292,7 @@ static inline WCHAR *strdupW( const WCHAR *p )
 {
     WCHAR *ret;
     DWORD len = (lstrlenW(p) + 1) * sizeof(WCHAR);
-    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    ret = malloc( len );
     memcpy(ret, p, len);
     return ret;
 }
@@ -720,8 +719,7 @@ static BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const 
 
     if (get_gdi_font_subst( from_name, from_charset, NULL )) return FALSE;  /* already exists */
 
-    if (!(subst = HeapAlloc( GetProcessHeap(), 0,
-                             offsetof( struct gdi_font_subst, names[len] ))))
+    if (!(subst = malloc( offsetof( struct gdi_font_subst, names[len] ) )))
         return FALSE;
     lstrcpyW( subst->names, from_name );
     lstrcpyW( get_subst_to_name(subst), to_name );
@@ -819,7 +817,7 @@ static int face_is_in_full_name_tree( const struct gdi_font_face *face )
 
 static struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name )
 {
-    struct gdi_font_family *family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
+    struct gdi_font_family *family = malloc( sizeof(*family) );
 
     family->refcount = 1;
     lstrcpynW( family->family_name, name, LF_FACESIZE );
@@ -843,7 +841,7 @@ static void release_family( struct gdi_font_family *family )
     wine_rb_remove( &family_name_tree, &family->name_entry );
     if (family->second_name[0]) wine_rb_remove( &family_second_name_tree, &family->second_name_entry );
     if (family->replacement) release_family( family->replacement );
-    HeapFree( GetProcessHeap(), 0, family );
+    free( family );
 }
 
 static struct gdi_font_family *find_family_from_name( const WCHAR *name )
@@ -1057,11 +1055,11 @@ static void release_face( struct gdi_font_face *face )
         release_family( face->family );
     }
     if (face_is_in_full_name_tree( face )) wine_rb_remove( &face_full_name_tree, &face->full_name_entry );
-    HeapFree( GetProcessHeap(), 0, face->file );
-    HeapFree( GetProcessHeap(), 0, face->style_name );
-    HeapFree( GetProcessHeap(), 0, face->full_name );
-    HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
-    HeapFree( GetProcessHeap(), 0, face );
+    free( face->file );
+    free( face->style_name );
+    free( face->full_name );
+    free( face->cached_enum_data );
+    free( face );
 }
 
 static int remove_font( const WCHAR *file, DWORD flags )
@@ -1179,7 +1177,7 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
                                           DWORD ntmflags, DWORD version, DWORD flags,
                                           const struct bitmap_font_size *size )
 {
-    struct gdi_font_face *face = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*face) );
+    struct gdi_font_face *face = calloc( 1, sizeof(*face) );
 
     face->refcount   = 1;
     face->style_name = strdupW( style );
@@ -1484,7 +1482,7 @@ static struct gdi_font_link *add_gdi_font_link( const WCHAR *name )
     struct gdi_font_link *link = find_gdi_font_link( name );
 
     if (link) return link;
-    if ((link = HeapAlloc( GetProcessHeap(), 0, sizeof(*link) )))
+    if ((link = malloc( sizeof(*link) )))
     {
         lstrcpynW( link->name, name, LF_FACESIZE );
         memset( &link->fs, 0, sizeof(link->fs) );
@@ -1498,7 +1496,7 @@ static void add_gdi_font_link_entry( struct gdi_font_link *link, const WCHAR *fa
 {
     struct gdi_font_link_entry *entry;
 
-    entry = HeapAlloc( GetProcessHeap(), 0, sizeof(*entry) );
+    entry = malloc( sizeof(*entry) );
     lstrcpynW( entry->family_name, family_name, LF_FACESIZE );
     entry->fs = fs;
     link->fs.fsCsb[0] |= fs.fsCsb[0];
@@ -1966,8 +1964,7 @@ static void free_font_handle( DWORD handle )
 static struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size )
 {
     UINT len = file ? lstrlenW(file) : 0;
-    struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                       offsetof( struct gdi_font, file[len + 1] ));
+    struct gdi_font *font = calloc( 1, offsetof( struct gdi_font, file[len + 1] ));
 
     font->refcount = 1;
     font->matrix.eM11 = font->matrix.eM22 = 1.0;
@@ -2021,15 +2018,15 @@ static void free_gdi_font( struct gdi_font *font )
         list_remove( &child->entry );
         free_gdi_font( child );
     }
-    for (i = 0; i < font->gm_size; i++) HeapFree( GetProcessHeap(), 0, font->gm[i] );
-    HeapFree( GetProcessHeap(), 0, font->otm.otmpFamilyName );
-    HeapFree( GetProcessHeap(), 0, font->otm.otmpStyleName );
-    HeapFree( GetProcessHeap(), 0, font->otm.otmpFaceName );
-    HeapFree( GetProcessHeap(), 0, font->otm.otmpFullName );
-    HeapFree( GetProcessHeap(), 0, font->gm );
-    HeapFree( GetProcessHeap(), 0, font->kern_pairs );
-    HeapFree( GetProcessHeap(), 0, font->gsub_table );
-    HeapFree( GetProcessHeap(), 0, font );
+    for (i = 0; i < font->gm_size; i++) free( font->gm[i] );
+    free( font->otm.otmpFamilyName );
+    free( font->otm.otmpStyleName );
+    free( font->otm.otmpFaceName );
+    free( font->otm.otmpFullName );
+    free( font->gm );
+    free( font->kern_pairs );
+    free( font->gsub_table );
+    free( font );
 }
 
 static inline const WCHAR *get_gdi_font_name( struct gdi_font *font )
@@ -2097,17 +2094,14 @@ static void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
     {
         struct glyph_metrics **ptr;
 
-        if (font->gm)
-            ptr = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, font->gm, (block + 1) * sizeof(*ptr) );
-        else
-            ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, (block + 1) * sizeof(*ptr) );
-        if (!ptr) return;
+        if (!(ptr = realloc( font->gm, (block + 1) * sizeof(*ptr) ))) return;
+        memset( ptr + font->gm_size, 0, (block + 1 - font->gm_size) * sizeof(*ptr) );
         font->gm_size = block + 1;
         font->gm = ptr;
     }
     if (!font->gm[block])
     {
-        font->gm[block] = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**font->gm) * GM_BLOCK_SIZE );
+        font->gm[block] = calloc( sizeof(**font->gm), GM_BLOCK_SIZE );
         if (!font->gm[block]) return;
     }
     font->gm[block][entry].gm   = *gm;
@@ -2316,7 +2310,7 @@ static void *get_GSUB_vert_feature( struct gdi_font *font )
 
     if (length == GDI_ERROR) return NULL;
 
-    header = HeapAlloc( GetProcessHeap(), 0, length );
+    header = malloc( length );
     font_funcs->get_font_data( font, MS_GSUB_TAG, 0, header, length );
     TRACE( "Loaded GSUB table of %i bytes\n", length );
 
@@ -2337,7 +2331,7 @@ static void *get_GSUB_vert_feature( struct gdi_font *font )
     }
     else TRACE("Script not found\n");
 
-    HeapFree( GetProcessHeap(), 0, header );
+    free( header );
     return NULL;
 }
 
@@ -2848,7 +2842,7 @@ static BOOL CDECL font_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
     struct font_physdev *physdev;
 
     if (!font_funcs) return TRUE;
-    if (!(physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) ))) return FALSE;
+    if (!(physdev = calloc( 1, sizeof(*physdev) ))) return FALSE;
     push_dc_driver( dev, &physdev->dev, &font_driver );
     return TRUE;
 }
@@ -2862,7 +2856,7 @@ static BOOL CDECL font_DeleteDC( PHYSDEV dev )
     struct font_physdev *physdev = get_font_dev( dev );
 
     release_gdi_font( physdev->font );
-    HeapFree( GetProcessHeap(), 0, physdev );
+    free( physdev );
     return TRUE;
 }
 
@@ -3076,10 +3070,10 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
     {
         struct gdi_font_enum_data *data;
 
-        if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )) ||
+        if (!(data = calloc( 1, sizeof(*data) )) ||
             !get_face_enum_data( face, &data->elf, &data->ntm ))
         {
-            HeapFree( GetProcessHeap(), 0, data );
+            free( data );
             return TRUE;
         }
         face->cached_enum_data = data;
@@ -4466,13 +4460,13 @@ HFONT WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *penumex, ULONG size, ULON
     }
 
     plf = &penumex->elfEnumLogfontEx.elfLogFont;
-    if (!(fontPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*fontPtr) ))) return 0;
+    if (!(fontPtr = malloc( sizeof(*fontPtr) ))) return 0;
 
     fontPtr->logfont = *plf;
 
     if (!(hFont = alloc_gdi_handle( &fontPtr->obj, NTGDI_OBJ_FONT, &fontobj_funcs )))
     {
-        HeapFree( GetProcessHeap(), 0, fontPtr );
+        free( fontPtr );
         return 0;
     }
 
@@ -4647,7 +4641,7 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
     FONTOBJ *obj;
 
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
-    HeapFree( GetProcessHeap(), 0, obj );
+    free( obj );
     return TRUE;
 }
 
@@ -4782,7 +4776,7 @@ BOOL WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max
     if (!dxs)
     {
         pos = buffer;
-        if (count > 256 && !(pos = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pos) )))
+        if (count > 256 && !(pos = malloc( count * sizeof(*pos) )))
         {
             release_dc_ptr( dc );
             return FALSE;
@@ -4812,7 +4806,7 @@ BOOL WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max
         size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
     }
 
-    if (pos != buffer && pos != dxs) HeapFree( GetProcessHeap(), 0, pos );
+    if (pos != buffer && pos != dxs) free( pos );
     release_dc_ptr( dc );
 
     TRACE("(%p, %s, %d) returning %dx%d\n", hdc, debugstr_wn(str,count), max_ext, size->cx, size->cy );
@@ -4894,7 +4888,7 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
 
     if (lpOTM && ret > cbData)
     {
-        output = HeapAlloc(GetProcessHeap(), 0, ret);
+        output = malloc( ret );
         ret = dev->funcs->pGetOutlineTextMetrics( dev, ret, output );
     }
 
@@ -4938,7 +4932,7 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
         if(output != lpOTM)
         {
             memcpy(lpOTM, output, cbData);
-            HeapFree(GetProcessHeap(), 0, output);
+            free( output );
             ret = cbData;
         }
     }
@@ -4962,21 +4956,21 @@ BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first, UINT last, WCHAR *chars,
         ABC *abc;
         unsigned int i;
 
-        if (!(abc = HeapAlloc(GetProcessHeap(), 0, count * sizeof(ABC))))
+        if (!(abc = malloc( count * sizeof(ABC) )))
             return FALSE;
 
         if (!NtGdiGetCharABCWidthsW( hdc, first, last, chars,
                                      NTGDI_GETCHARABCWIDTHS_INT | NTGDI_GETCHARABCWIDTHS_INDICES,
                                      abc ))
         {
-            HeapFree( GetProcessHeap(), 0, abc );
+            free( abc );
             return FALSE;
         }
 
         for (i = 0; i < count; i++)
             ((INT *)buf)[i] = abc[i].abcA + abc[i].abcB + abc[i].abcC;
 
-        HeapFree(GetProcessHeap(), 0, abc);
+        free( abc );
         return TRUE;
     }
 
@@ -5040,7 +5034,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
     stride = get_dib_stride( metrics->gmBlackBoxX, 1 );
     size = metrics->gmBlackBoxY * stride;
 
-    if (!(image->ptr = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
+    if (!(image->ptr = malloc( size ))) return ERROR_OUTOFMEMORY;
     image->is_copy = TRUE;
     image->free = free_heap_bits;
 
@@ -5048,7 +5042,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
                                 &identity, FALSE );
     if (ret == GDI_ERROR)
     {
-        HeapFree( GetProcessHeap(), 0, image->ptr );
+        free( image->ptr );
         return ERROR_NOT_FOUND;
     }
     return ERROR_SUCCESS;
@@ -5112,7 +5106,7 @@ static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *
     else if (!intersect_rect( &clipped_rect, &rect, clip )) return;
 
     max_count = (metrics->gmBlackBoxX + 1) * metrics->gmBlackBoxY;
-    pts = HeapAlloc( GetProcessHeap(), 0, max_count * sizeof(*pts) );
+    pts = malloc( max_count * sizeof(*pts) );
     if (!pts) return;
 
     count = 0;
@@ -5139,7 +5133,7 @@ static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *
         const UINT pts_count = 2;
         NtGdiPolyPolyDraw( dc->hSelf, pts + i, &pts_count, 1, NtGdiPolyPolyline );
     }
-    HeapFree( GetProcessHeap(), 0, pts );
+    free( pts );
 }
 
 /***********************************************************************
@@ -5211,7 +5205,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
                 src.visrect.right = src.width;
                 src.visrect.bottom = src.height;
 
-                bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
+                bits.ptr = malloc( info->bmiHeader.biSizeImage );
                 if (!bits.ptr) return ERROR_OUTOFMEMORY;
                 bits.is_copy = TRUE;
                 bits.free = free_heap_bits;
@@ -5224,7 +5218,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
             err = src_dev->funcs->pGetImage( src_dev, info, &bits, &src );
             if (!err && !bits.is_copy)
             {
-                void *ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
+                void *ptr = malloc( info->bmiHeader.biSizeImage );
                 if (!ptr)
                 {
                     if (bits.free) bits.free( &bits );
@@ -5436,7 +5430,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         UINT i;
         POINT total = {0, 0}, desired[2];
 
-        deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*deltas));
+        deltas = malloc( count * sizeof(*deltas) );
         if (lpDx)
         {
             if (flags & ETO_PDY)
@@ -5458,7 +5452,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         }
         else
         {
-            INT *dx = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dx) );
+            INT *dx = malloc( count * sizeof(*dx) );
 
             NtGdiGetTextExtentExW( hdc, str, count, -1, NULL, dx, &sz, !!(flags & ETO_GLYPH_INDEX) );
 
@@ -5469,7 +5463,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
                 deltas[i].x = dx[i] - dx[i - 1];
                 deltas[i].y = 0;
             }
-            HeapFree( GetProcessHeap(), 0, dx );
+            free( dx );
         }
 
         for(i = 0; i < count; i++)
@@ -5596,7 +5590,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
                                        str, count, (INT*)deltas );
 
 done:
-    HeapFree(GetProcessHeap(), 0, deltas);
+    free( deltas );
 
     if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {
@@ -5619,7 +5613,7 @@ done:
         }
         else
         {
-            otm = HeapAlloc(GetProcessHeap(), 0, size);
+            otm = malloc( size );
             NtGdiGetOutlineTextMetricsInternalW( hdc, size, otm, 0 );
             underlinePos = abs( INTERNAL_YWSTODS( dc, otm->otmsUnderscorePosition ));
             if (otm->otmsUnderscorePosition < 0) underlinePos = -underlinePos;
@@ -5627,7 +5621,7 @@ done:
             strikeoutPos = abs( INTERNAL_YWSTODS( dc, otm->otmsStrikeoutPosition ));
             if (otm->otmsStrikeoutPosition < 0) strikeoutPos = -strikeoutPos;
             strikeoutWidth = get_line_width( dc, otm->otmsStrikeoutSize );
-            HeapFree(GetProcessHeap(), 0, otm);
+            free( otm );
         }
 
 
@@ -6111,7 +6105,7 @@ static void update_external_font_keys(void)
             continue;
         }
         if (tmp && !*tmp) *tmp = ' ';
-        if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) ))) break;
+        if (!(key = malloc( sizeof(*key) ))) break;
         lstrcpyW( key->value, value );
         list_add_tail( &external_keys, &key->entry );
     }
@@ -6148,7 +6142,7 @@ static void update_external_font_keys(void)
         reg_delete_value( winnt_key, key->value );
         reg_delete_value( hkey, key->value );
         list_remove( &key->entry );
-        HeapFree( GetProcessHeap(), 0, key );
+        free( key );
     }
     NtClose( win9x_key );
     NtClose( winnt_key );
@@ -6299,7 +6293,7 @@ HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG 
         return NULL;
     }
     if (!font_funcs) return NULL;
-    if (!(copy = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!(copy = malloc( size ))) return NULL;
     memcpy( copy, ptr, size );
 
     EnterCriticalSection( &font_cs );
@@ -6308,7 +6302,7 @@ HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG 
 
     if (!num_fonts)
     {
-        HeapFree( GetProcessHeap(), 0, copy );
+        free( copy );
         return NULL;
     }
 

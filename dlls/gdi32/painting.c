@@ -131,7 +131,7 @@ BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count )
     if ((pts = GDI_Bezier( points, count, &n )))
     {
         ret = polyline( dev->hdc, pts, n );
-        HeapFree( GetProcessHeap(), 0, pts );
+        free( pts );
     }
     return ret;
 }
@@ -140,7 +140,7 @@ BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
 {
     DC *dc = get_nulldrv_dc( dev );
     BOOL ret = FALSE;
-    POINT *pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) );
+    POINT *pts = malloc( sizeof(POINT) * (count + 1) );
 
     if (pts)
     {
@@ -148,7 +148,7 @@ BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
         memcpy( pts + 1, points, sizeof(POINT) * count );
         count++;
         ret = NtGdiPolyPolyDraw( dev->hdc, pts, &count, 1, NtGdiPolyBezier );
-        HeapFree( GetProcessHeap(), 0, pts );
+        free( pts );
     }
     return ret;
 }
@@ -181,7 +181,7 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
     }
 
     space = count + 300;
-    line_pts = HeapAlloc( GetProcessHeap(), 0, space * sizeof(POINT) );
+    line_pts = malloc( space * sizeof(POINT) );
     num_pts = 1;
 
     line_pts[0] = dc->attr->cur_pos;
@@ -209,11 +209,11 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
                 if (space < size)
                 {
                     space = size * 2;
-                    line_pts = HeapReAlloc( GetProcessHeap(), 0, line_pts, space * sizeof(POINT) );
+                    line_pts = realloc( line_pts, space * sizeof(POINT) );
                 }
                 memcpy( &line_pts[num_pts], &bzr_pts[1], (num_bzr_pts - 1) * sizeof(POINT) );
                 num_pts += num_bzr_pts - 1;
-                HeapFree( GetProcessHeap(), 0, bzr_pts );
+                free( bzr_pts );
             }
             i += 2;
             break;
@@ -222,7 +222,7 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
     }
 
     if (num_pts >= 2) polyline( dev->hdc, line_pts, num_pts );
-    HeapFree( GetProcessHeap(), 0, line_pts );
+    free( line_pts );
     return TRUE;
 }
 
@@ -233,12 +233,12 @@ BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
     POINT *pts;
 
     if (!count) return FALSE;
-    if ((pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) )))
+    if ((pts = malloc( sizeof(POINT) * (count + 1) )))
     {
         pts[0] = dc->attr->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
         ret = polyline( dev->hdc, pts, count + 1 );
-        HeapFree( GetProcessHeap(), 0, pts );
+        free( pts );
     }
     return ret;
 }
@@ -789,8 +789,7 @@ static void GDI_InternalBezier( POINT *Points, POINT **PtsOut, INT *dwOut,
 {
     if(*nPtsOut == *dwOut) {
         *dwOut *= 2;
-	*PtsOut = HeapReAlloc( GetProcessHeap(), 0, *PtsOut,
-			       *dwOut * sizeof(POINT) );
+        *PtsOut = realloc( *PtsOut, *dwOut * sizeof(POINT) );
     }
 
     if(!level || BezierCheck(level, Points)) {
@@ -842,7 +841,7 @@ static void GDI_InternalBezier( POINT *Points, POINT **PtsOut, INT *dwOut,
  *
  *  Ptr to an array of POINTs that contain the lines that approximate the
  *  Beziers.  The array is allocated on the process heap and it is the caller's
- *  responsibility to HeapFree it. [this is not a particularly nice interface
+ *  responsibility to free it. [this is not a particularly nice interface
  *  but since we can't know in advance how many points we will generate, the
  *  alternative would be to call the function twice, once to determine the size
  *  and a second time to do the work - I decided this was too much of a pain].
@@ -857,7 +856,7 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
 	return NULL;
     }
     *nPtsOut = 0;
-    out = HeapAlloc( GetProcessHeap(), 0, dwOut * sizeof(POINT));
+    out = malloc( dwOut * sizeof(POINT) );
     for(Bezier = 0; Bezier < (count-1)/3; Bezier++) {
 	POINT ptBuf[4];
 	memcpy(ptBuf, Points + Bezier * 3, sizeof(POINT) * 4);

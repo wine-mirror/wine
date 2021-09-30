@@ -135,13 +135,13 @@ static BOOL grow_region( WINEREGION *rgn, int size )
 
     if (rgn->rects == rgn->rects_buf)
     {
-        new_rects = HeapAlloc( GetProcessHeap(), 0, size * sizeof(RECT) );
+        new_rects = malloc( size * sizeof(RECT) );
         if (!new_rects) return FALSE;
         memcpy( new_rects, rgn->rects, rgn->numRects * sizeof(RECT) );
     }
     else
     {
-        new_rects = HeapReAlloc( GetProcessHeap(), 0, rgn->rects, size * sizeof(RECT) );
+        new_rects = realloc( rgn->rects, size * sizeof(RECT) );
         if (!new_rects) return FALSE;
     }
     rgn->rects = new_rects;
@@ -413,7 +413,7 @@ static BOOL init_region( WINEREGION *pReg, INT n )
     if (n > RGN_DEFAULT_RECTS)
     {
         if (n > INT_MAX / sizeof(RECT)) return FALSE;
-        if (!(pReg->rects = HeapAlloc( GetProcessHeap(), 0, n * sizeof( RECT ) )))
+        if (!(pReg->rects = malloc( n * sizeof( RECT ) )))
             return FALSE;
     }
     else
@@ -430,7 +430,7 @@ static BOOL init_region( WINEREGION *pReg, INT n )
 static void destroy_region( WINEREGION *pReg )
 {
     if (pReg->rects != pReg->rects_buf)
-        HeapFree( GetProcessHeap(), 0, pReg->rects );
+        free( pReg->rects );
 }
 
 /***********************************************************************
@@ -439,7 +439,7 @@ static void destroy_region( WINEREGION *pReg )
 static void free_region( WINEREGION *rgn )
 {
     destroy_region( rgn );
-    HeapFree( GetProcessHeap(), 0, rgn );
+    free( rgn );
 }
 
 /***********************************************************************
@@ -447,7 +447,7 @@ static void free_region( WINEREGION *rgn )
  */
 static WINEREGION *alloc_region( INT n )
 {
-    WINEREGION *rgn = HeapAlloc( GetProcessHeap(), 0, sizeof(*rgn) );
+    WINEREGION *rgn = malloc( sizeof(*rgn) );
 
     if (rgn && !init_region( rgn, n ))
     {
@@ -1537,7 +1537,7 @@ static void REGION_compact( WINEREGION *reg )
 {
     if ((reg->numRects < reg->size / 2) && (reg->numRects > RGN_DEFAULT_RECTS))
     {
-        RECT *new_rects = HeapReAlloc( GetProcessHeap(), 0, reg->rects, reg->numRects * sizeof(RECT) );
+        RECT *new_rects = realloc( reg->rects, reg->numRects * sizeof(RECT) );
         if (new_rects)
         {
             reg->rects = new_rects;
@@ -2266,7 +2266,7 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
     {
         if (*iSLLBlock > SLLSPERBLOCK-1)
         {
-            tmpSLLBlock = HeapAlloc( GetProcessHeap(), 0, sizeof(ScanLineListBlock));
+            tmpSLLBlock = malloc( sizeof(ScanLineListBlock) );
 	    if(!tmpSLLBlock)
 	    {
 	        WARN("Can't alloc SLLB\n");
@@ -2512,7 +2512,7 @@ static void REGION_FreeStorage(ScanLineListBlock *pSLLBlock)
     while (pSLLBlock)
     {
         tmpSLLBlock = pSLLBlock->next;
-        HeapFree( GetProcessHeap(), 0, pSLLBlock );
+        free( pSLLBlock );
         pSLLBlock = tmpSLLBlock;
     }
 }
@@ -2673,7 +2673,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
 
     for(poly = total = 0; poly < nbpolygons; poly++)
         total += Count[poly];
-    if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
+    if (! (pETEs = malloc( sizeof(EdgeTableEntry) * total )))
 	return 0;
 
     nb_points = REGION_CreateEdgeTable( Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock, clip_rect );
@@ -2686,6 +2686,6 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
     }
 
     REGION_FreeStorage(SLLBlock.next);
-    HeapFree( GetProcessHeap(), 0, pETEs );
+    free( pETEs );
     return hrgn;
 }

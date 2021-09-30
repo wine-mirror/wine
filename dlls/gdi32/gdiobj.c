@@ -947,11 +947,11 @@ HANDLE WINAPI NtGdiCreateClientObj( ULONG type )
     struct gdi_obj_header *obj;
     HGDIOBJ handle;
 
-    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) )))
+    if (!(obj = malloc( sizeof(*obj) )))
         return 0;
 
     handle = alloc_gdi_handle( obj, type, NULL );
-    if (!handle) HeapFree( GetProcessHeap(), 0, obj );
+    if (!handle) free( obj );
     return handle;
 }
 
@@ -962,7 +962,7 @@ BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ handle )
 {
     void *obj;
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
-    HeapFree( GetProcessHeap(), 0, obj );
+    free( obj );
     return TRUE;
 }
 

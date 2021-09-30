@@ -329,7 +329,7 @@ static BOOL build_rle_bitmap( BITMAPINFO *info, struct gdi_image_bits *bits, HRG
 
     assert( info->bmiHeader.biBitCount == 4 || info->bmiHeader.biBitCount == 8 );
 
-    out_bits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, get_dib_image_size( info ) );
+    out_bits = calloc( 1, get_dib_image_size( info ) );
     if (!out_bits) goto fail;
 
     if (clip)
@@ -456,7 +456,7 @@ done:
 fail:
     if (run) NtGdiDeleteObjectApp( run );
     if (clip && *clip) NtGdiDeleteObjectApp( *clip );
-    HeapFree( GetProcessHeap(), 0, out_bits );
+    free( out_bits );
     return FALSE;
 }
 
@@ -1185,7 +1185,7 @@ BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage )
     if (!bitmapinfo_from_user_bitmapinfo( info, src_info, usage, FALSE )) return NULL;
 
     info_size = get_dib_info_size( info, usage );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, info_size + info->bmiHeader.biSizeImage )))
+    if ((ret = malloc( info_size + info->bmiHeader.biSizeImage )))
     {
         memcpy( ret, info, info_size );
         memcpy( (char *)ret + info_size, (char *)src_info + bitmap_info_size( src_info, usage ),
@@ -1486,7 +1486,7 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
         WARN( "%u planes not properly supported\n", info->bmiHeader.biPlanes );
     }
 
-    if (!(bmp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*bmp) ))) return 0;
+    if (!(bmp = calloc( 1, sizeof(*bmp) ))) return 0;
 
     TRACE("format (%d,%d), planes %d, bpp %d, %s, size %d %s\n",
           info->bmiHeader.biWidth, info->bmiHeader.biHeight,
@@ -1507,8 +1507,7 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
         if (usage == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( info, hdc ))
             goto error;
         bmp->dib.dsBmih.biClrUsed = info->bmiHeader.biClrUsed;
-        if (!(bmp->color_table = HeapAlloc( GetProcessHeap(), 0,
-                                            bmp->dib.dsBmih.biClrUsed * sizeof(RGBQUAD) )))
+        if (!(bmp->color_table = malloc( bmp->dib.dsBmih.biClrUsed * sizeof(RGBQUAD) )))
             goto error;
         memcpy( bmp->color_table, info->bmiColors, bmp->dib.dsBmih.biClrUsed * sizeof(RGBQUAD) );
     }
@@ -1569,8 +1568,8 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
         NtFreeVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, &size, MEM_RELEASE );
     }
 error:
-    HeapFree( GetProcessHeap(), 0, bmp->color_table );
-    HeapFree( GetProcessHeap(), 0, bmp );
+    free( bmp->color_table );
+    free( bmp );
     return 0;
 }
 
@@ -1631,7 +1630,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
     if (!desc->hDeviceDc || !(dc = NtGdiCreateCompatibleDC( desc->hDeviceDc )))
         return STATUS_INVALID_PARAMETER;
 
-    if (!(bmp = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*bmp) ))) goto error;
+    if (!(bmp = calloc( 1, sizeof(*bmp) ))) goto error;
 
     bmp->dib.dsBm.bmWidth      = desc->Width;
     bmp->dib.dsBm.bmHeight     = desc->Height;
@@ -1655,7 +1654,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 
     if (format->palette_size)
     {
-        if (!(bmp->color_table = HeapAlloc( GetProcessHeap(), 0, format->palette_size * sizeof(*bmp->color_table) )))
+        if (!(bmp->color_table = malloc( format->palette_size * sizeof(*bmp->color_table) )))
             goto error;
         if (desc->pColorTable)
         {
@@ -1682,8 +1681,8 @@ NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
     return STATUS_SUCCESS;
 
 error:
-    if (bmp) HeapFree( GetProcessHeap(), 0, bmp->color_table );
-    HeapFree( GetProcessHeap(), 0, bmp );
+    if (bmp) free( bmp->color_table );
+    free( bmp );
     NtGdiDeleteObjectApp( dc );
     return STATUS_INVALID_PARAMETER;
 }
@@ -1759,7 +1758,7 @@ static BOOL DIB_DeleteObject( HGDIOBJ handle )
         NtFreeVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, &size, MEM_RELEASE );
     }
 
-    HeapFree(GetProcessHeap(), 0, bmp->color_table);
-    HeapFree( GetProcessHeap(), 0, bmp );
+    free( bmp->color_table );
+    free( bmp );
     return TRUE;
 }

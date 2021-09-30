@@ -425,7 +425,7 @@ static char **expand_mac_font(const char *path)
 
     ret.size = 0;
     ret.max_size = 10;
-    ret.array = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, ret.max_size * sizeof(*ret.array));
+    ret.array = calloc( ret.max_size, sizeof(*ret.array) );
     if(!ret.array)
     {
         CloseResFile(res_ref);
@@ -485,7 +485,7 @@ static char **expand_mac_font(const char *path)
                 continue;
             }
 
-            output = RtlAllocateHeap(GetProcessHeap(), 0, output_len);
+            output = malloc( output_len);
             if(output)
             {
                 int fd;
@@ -507,15 +507,16 @@ static char **expand_mac_font(const char *path)
                     }
                     if(ret.size >= ret.max_size - 1) /* Always want the last element to be NULL */
                     {
+                        ret.array = realloc( ret.array, ret.max_size * sizeof(*ret.array) * 2 );
+                        memset( ret.array + ret.max_size, 0, ret.max_size * sizeof(*ret.array) );
                         ret.max_size *= 2;
-                        ret.array = RtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, ret.array, ret.max_size * sizeof(*ret.array));
                     }
                     ret.array[ret.size++] = output;
                 }
                 else
                 {
                     WARN("unable to create %s\n", output);
-                    RtlFreeHeap(GetProcessHeap(), 0, output);
+                    free( output );
                 }
             }
             ReleaseResource(sfnt);
@@ -592,7 +593,7 @@ static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
     DWORD len = (lstrlenW(p) + 1) * sizeof(WCHAR);
-    ret = RtlAllocateHeap(GetProcessHeap(), 0, len);
+    ret = malloc( len );
     memcpy(ret, p, len);
     return ret;
 }
@@ -600,7 +601,7 @@ static LPWSTR strdupW(LPCWSTR p)
 static WCHAR *towstr(const char *str)
 {
     DWORD len = strlen(str) + 1;
-    WCHAR *wstr = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    WCHAR *wstr = malloc( len * sizeof(WCHAR) );
     RtlMultiByteToUnicodeN( wstr, len * sizeof(WCHAR), &len, str, len );
     return wstr;
 }
@@ -796,14 +797,14 @@ static WCHAR *copy_name_table_string( const FT_SfntName *name )
     {
     case TT_PLATFORM_APPLE_UNICODE:
     case TT_PLATFORM_MICROSOFT:
-        ret = RtlAllocateHeap( GetProcessHeap(), 0, name->string_len + sizeof(WCHAR) );
+        ret = malloc( name->string_len + sizeof(WCHAR) );
         for (i = 0; i < name->string_len / 2; i++)
             ret[i] = (name->string[i * 2] << 8) | name->string[i * 2 + 1];
         ret[i] = 0;
         return ret;
     case TT_PLATFORM_MACINTOSH:
         if (!(cp = get_mac_code_page( name ))) return NULL;
-        ret = RtlAllocateHeap( GetProcessHeap(), 0, (name->string_len + 1) * sizeof(WCHAR) );
+        ret = malloc( (name->string_len + 1) * sizeof(WCHAR) );
         RtlCustomCPToUnicodeN( cp, ret, name->string_len * sizeof(WCHAR), &i,
                                (char *)name->string, name->string_len );
         ret[i / sizeof(WCHAR)] = 0;
@@ -877,11 +878,11 @@ static WCHAR *ft_face_get_full_name( FT_Face ft_face, LANGID langid )
     style_name = ft_face_get_style_name( ft_face, langid );
 
     length = lstrlenW( full_name ) + lstrlenW( space_w ) + lstrlenW( style_name ) + 1;
-    full_name = RtlReAllocateHeap( GetProcessHeap(), 0, full_name, length * sizeof(WCHAR) );
+    full_name = realloc( full_name, length * sizeof(WCHAR) );
 
     lstrcatW( full_name, space_w );
     lstrcatW( full_name, style_name );
-    RtlFreeHeap( GetProcessHeap(), 0, style_name );
+    free( style_name );
 
     WARN( "full name not found, using %s instead\n", debugstr_w(full_name) );
     return full_name;
@@ -1219,7 +1220,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         if (data_ptr == MAP_FAILED) return NULL;
     }
 
-    if (!(This = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This) ))) goto done;
+    if (!(This = calloc( 1, sizeof(*This) ))) goto done;
 
     if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ) &&
         opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ) &&
@@ -1259,7 +1260,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         if (!This->full_name && This->family_name && This->style_name)
         {
             length = lstrlenW( This->family_name ) + lstrlenW( space_w ) + lstrlenW( This->style_name ) + 1;
-            This->full_name = RtlAllocateHeap( GetProcessHeap(), 0, length * sizeof(WCHAR) );
+            This->full_name = malloc( length * sizeof(WCHAR) );
             lstrcpyW( This->full_name, This->family_name );
             lstrcatW( This->full_name, space_w );
             lstrcatW( This->full_name, This->style_name );
@@ -1279,12 +1280,12 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         if (!RtlCompareUnicodeStrings( This->family_name, lstrlenW( This->family_name ),
                                        This->second_name, lstrlenW( This->second_name ), TRUE ))
         {
-            RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
+            free( This->second_name );
             This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
             if (!RtlCompareUnicodeStrings( This->family_name, lstrlenW( This->family_name ),
                                            This->second_name, lstrlenW( This->second_name ), TRUE ))
             {
-                RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
+                free( This->second_name );
                 This->second_name = NULL;
             }
         }
@@ -1299,7 +1300,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
     }
     else
     {
-        RtlFreeHeap( GetProcessHeap(), 0, This );
+        free( This );
         This = NULL;
     }
 
@@ -1311,11 +1312,11 @@ done:
 static void unix_face_destroy( struct unix_face *This )
 {
     if (This->ft_face) pFT_Done_Face( This->ft_face );
-    RtlFreeHeap( GetProcessHeap(), 0, This->full_name );
-    RtlFreeHeap( GetProcessHeap(), 0, This->style_name );
-    RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
-    RtlFreeHeap( GetProcessHeap(), 0, This->family_name );
-    RtlFreeHeap( GetProcessHeap(), 0, This );
+    free( This->full_name );
+    free( This->style_name );
+    free( This->second_name );
+    free( This->family_name );
+    free( This );
 }
 
 static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_ptr, SIZE_T data_size,
@@ -1356,10 +1357,10 @@ static WCHAR *get_dos_file_name( LPCSTR str )
     ULONG len = strlen(str) + 1;
 
     len += 8;  /* \??\unix prefix */
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
+    if (!(buffer = malloc( len * sizeof(WCHAR) ))) return NULL;
     if (wine_unix_to_nt_file_name( str, buffer, &len ))
     {
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        free( buffer );
         return NULL;
     }
     return buffer;
@@ -1377,19 +1378,19 @@ static char *get_unix_file_name( LPCWSTR dosW )
     InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
     for (;;)
     {
-        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        if (!(buffer = malloc( size )))
         {
             RtlFreeUnicodeString( &nt_name );
             return NULL;
         }
         status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
         if (status != STATUS_BUFFER_TOO_SMALL) break;
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
     RtlFreeUnicodeString( &nt_name );
     if (status && status != STATUS_NO_SUCH_FILE)
     {
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        free( buffer );
         RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
         return NULL;
     }
@@ -1418,9 +1419,9 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
             {
                 had_one = TRUE;
                 AddFontToList(NULL, *cursor, NULL, 0, flags);
-                RtlFreeHeap(GetProcessHeap(), 0, *cursor);
+                free( *cursor );
             }
-            RtlFreeHeap(GetProcessHeap(), 0, mac_list);
+            free( mac_list );
             if(had_one)
                 return 1;
         }
@@ -1433,7 +1434,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
         ret += add_unix_face( unix_name, dos_name, font_data_ptr, font_data_size, face_index, flags, &num_faces );
     while (num_faces > ++face_index);
 
-    RtlFreeHeap( GetProcessHeap(), 0, filename );
+    free( filename );
     return ret;
 }
 
@@ -1448,7 +1449,7 @@ static INT CDECL freetype_add_font( const WCHAR *file, DWORD flags )
     if (unixname)
     {
         ret = AddFontToList( file, unixname, NULL, 0, flags );
-        RtlFreeHeap( GetProcessHeap(), 0, unixname );
+        free( unixname );
     }
     return ret;
 }
@@ -1595,7 +1596,7 @@ static void fontconfig_add_font( FcPattern *pattern, DWORD flags )
 
     dos_name = get_dos_file_name( unix_name );
     add_unix_face( unix_name, dos_name, NULL, 0, face_index, flags, NULL );
-    RtlFreeHeap( GetProcessHeap(), 0, dos_name );
+    free( dos_name );
 }
 
 static void init_fontconfig(void)
@@ -1729,13 +1730,13 @@ static void load_mac_font_callback(const void *value, void *context)
     char* path;
 
     len = CFStringGetMaximumSizeOfFileSystemRepresentation(pathStr);
-    path = RtlAllocateHeap(GetProcessHeap(), 0, len);
+    path = malloc( len );
     if (path && CFStringGetFileSystemRepresentation(pathStr, path, len))
     {
         TRACE("font file %s\n", path);
         AddFontToList(NULL, path, NULL, 0, ADDFONT_EXTERNAL_FONT);
     }
-    RtlFreeHeap(GetProcessHeap(), 0, path);
+    free( path );
 }
 
 static void load_mac_fonts(void)
@@ -2023,7 +2024,7 @@ static struct font_mapping *map_font_file( const char *name )
             return mapping;
         }
     }
-    if (!(mapping = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*mapping) )))
+    if (!(mapping = malloc( sizeof(*mapping) )))
         goto error;
 
     mapping->data = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 );
@@ -2031,7 +2032,7 @@ static struct font_mapping *map_font_file( const char *name )
 
     if (mapping->data == MAP_FAILED)
     {
-        RtlFreeHeap( GetProcessHeap(), 0, mapping );
+        free( mapping );
         return NULL;
     }
     mapping->refcount = 1;
@@ -2052,7 +2053,7 @@ static void unmap_font_file( struct font_mapping *mapping )
     {
         list_remove( &mapping->entry );
         munmap( mapping->data, mapping->size );
-        RtlFreeHeap( GetProcessHeap(), 0, mapping );
+        free( mapping );
     }
 }
 
@@ -2067,7 +2068,7 @@ static void CDECL freetype_destroy_font( struct gdi_font *font )
 
     if (data->ft_face) pFT_Done_Face( data->ft_face );
     if (data->mapping) unmap_font_file( data->mapping );
-    RtlFreeHeap( GetProcessHeap(), 0, data );
+    free( data );
 }
 
 /*************************************************************
@@ -2209,7 +2210,7 @@ static LONG load_VDMX(struct gdi_font *font, LONG height)
 
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
-	vTable = RtlAllocateHeap(GetProcessHeap(), 0, recs * sizeof(VDMX_vTable));
+	vTable = malloc( recs * sizeof(VDMX_vTable) );
 	result = freetype_get_font_data(font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
 	if(result == GDI_ERROR) {
 	    FIXME("Failed to retrieve vTable\n");
@@ -2271,7 +2272,7 @@ static LONG load_VDMX(struct gdi_font *font, LONG height)
 	    }
 	}
 	end:
-	RtlFreeHeap(GetProcessHeap(), 0, vTable);
+	free( vTable );
     }
 
     return ppem;
@@ -2366,7 +2367,7 @@ static BOOL get_gasp_flags( struct gdi_font *font, WORD *flags )
     if (size < 4 * sizeof(WORD)) return FALSE;
     if (size > sizeof(buf))
     {
-        ptr = alloced = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        ptr = alloced = malloc( size );
         if (!ptr) return FALSE;
     }
 
@@ -2391,7 +2392,7 @@ static BOOL get_gasp_flags( struct gdi_font *font, WORD *flags )
     ret = TRUE;
 
 done:
-    RtlFreeHeap( GetProcessHeap(), 0, alloced );
+    free( alloced );
     return ret;
 }
 
@@ -2447,14 +2448,14 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
     void *data_ptr;
     SIZE_T data_size;
 
-    if (!(data = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return FALSE;
+    if (!(data = calloc( 1, sizeof(*data) ))) return FALSE;
     font->private = data;
 
     if (font->file[0])
     {
         char *filename = get_unix_file_name( font->file );
         data->mapping = map_font_file( filename );
-        RtlFreeHeap( GetProcessHeap(), 0, filename );
+        free( filename );
         if (!data->mapping)
         {
             WARN("failed to map %s\n", debugstr_w(font->file));
@@ -4182,16 +4183,16 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAI
         return 0;
     }
 
-    buf = RtlAllocateHeap(GetProcessHeap(), 0, length);
+    buf = malloc( length );
     if (!buf) return 0;
 
     freetype_get_font_data(font, MS_KERN_TAG, 0, buf, length);
 
     /* build a glyph index to char code map */
-    glyph_to_char = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(USHORT) * 65536);
+    glyph_to_char = calloc( sizeof(USHORT), 65536 );
     if (!glyph_to_char)
     {
-        RtlFreeHeap(GetProcessHeap(), 0, buf);
+        free( buf );
         return 0;
     }
 
@@ -4260,10 +4261,7 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAI
                                                     glyph_to_char, NULL, 0);
             count += new_chunk;
 
-            if (!*pairs)
-                *pairs = RtlAllocateHeap(GetProcessHeap(), 0, count * sizeof(**pairs));
-            else
-                *pairs = RtlReAllocateHeap(GetProcessHeap(), 0, *pairs, count * sizeof(**pairs));
+            *pairs = realloc( *pairs, count * sizeof(**pairs));
 
             parse_format0_kern_subtable(font, (const struct TT_format0_kern_subtable *)(tt_kern_subtable + 1),
                         glyph_to_char, *pairs + old_total, new_chunk);
@@ -4274,8 +4272,8 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAI
         tt_kern_subtable = (const struct TT_kern_subtable *)((const char *)tt_kern_subtable + tt_kern_subtable_copy.length);
     }
 
-    RtlFreeHeap(GetProcessHeap(), 0, glyph_to_char);
-    RtlFreeHeap(GetProcessHeap(), 0, buf);
+    free( glyph_to_char );
+    free( buf );
     return count;
 }
 

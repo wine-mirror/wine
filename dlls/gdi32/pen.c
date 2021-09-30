@@ -78,7 +78,7 @@ HPEN create_pen( INT style, INT width, COLORREF color )
         return 0;
     }
 
-    if (!(penPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*penPtr) ))) return 0;
+    if (!(penPtr = calloc( 1, sizeof(*penPtr) ))) return 0;
 
     penPtr->logpen.elpPenStyle   = style;
     penPtr->logpen.elpWidth      = abs(width);
@@ -86,7 +86,7 @@ HPEN create_pen( INT style, INT width, COLORREF color )
     penPtr->logpen.elpBrushStyle = BS_SOLID;
 
     if (!(hpen = alloc_gdi_handle( &penPtr->obj, NTGDI_OBJ_PEN, &pen_funcs )))
-        HeapFree( GetProcessHeap(), 0, penPtr );
+        free( penPtr );
     return hpen;
 }
 
@@ -170,7 +170,7 @@ HPEN WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, ULONG brush_style, ULON
         if (brush_style != BS_SOLID) goto invalid;
     }
 
-    if (!(penPtr = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(PENOBJ,logpen.elpStyleEntry[style_count]))))
+    if (!(penPtr = malloc( FIELD_OFFSET(PENOBJ,logpen.elpStyleEntry[style_count]) )))
         return 0;
 
     logbrush.lbStyle = brush_style;
@@ -190,12 +190,12 @@ HPEN WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, ULONG brush_style, ULON
     if (!(hpen = alloc_gdi_handle( &penPtr->obj, NTGDI_OBJ_EXTPEN, &pen_funcs )))
     {
         free_brush_pattern( &penPtr->pattern );
-        HeapFree( GetProcessHeap(), 0, penPtr );
+        free( penPtr );
     }
     return hpen;
 
 invalid:
-    HeapFree( GetProcessHeap(), 0, penPtr );
+    free( penPtr );
     SetLastError( ERROR_INVALID_PARAMETER );
     return 0;
 }
@@ -260,7 +260,7 @@ static BOOL PEN_DeleteObject( HGDIOBJ handle )
 
     if (!pen) return FALSE;
     free_brush_pattern( &pen->pattern );
-    HeapFree( GetProcessHeap(), 0, pen );
+    free( pen );
     return TRUE;
 }
 

@@ -291,7 +291,7 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
         out++;
         if (out == &clip_rects->buffer[ARRAY_SIZE( clip_rects->buffer )])
         {
-            clip_rects->rects = HeapAlloc( GetProcessHeap(), 0, region->numRects * sizeof(RECT) );
+            clip_rects->rects = malloc( region->numRects * sizeof(RECT) );
             if (!clip_rects->rects) return 0;
             memcpy( clip_rects->rects, clip_rects->buffer, (out - clip_rects->buffer) * sizeof(RECT) );
             out = clip_rects->rects + (out - clip_rects->buffer);
@@ -328,7 +328,7 @@ void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip )
 static BOOL CDECL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
                                    const DEVMODEW *data )
 {
-    dibdrv_physdev *pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
+    dibdrv_physdev *pdev = calloc( 1, sizeof(*pdev) );
 
     if (!pdev) return FALSE;
     clear_dib_info(&pdev->dib);
@@ -348,7 +348,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
     free_pattern_brush( &pdev->brush );
     free_pattern_brush( &pdev->pen_brush );
     release_cached_font( pdev->font );
-    HeapFree( GetProcessHeap(), 0, pdev );
+    free( pdev );
     return TRUE;
 }
 
@@ -875,13 +875,13 @@ static BOOL CDECL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT b
 static BOOL CDECL windrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
                                    const DEVMODEW *devmode )
 {
-    struct windrv_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
+    struct windrv_physdev *physdev = calloc( 1, sizeof(*physdev) );
 
     if (!physdev) return FALSE;
 
     if (!dib_driver.pCreateDC( dev, NULL, NULL, NULL ))
     {
-        HeapFree( GetProcessHeap(), 0, physdev );
+        free( physdev );
         return FALSE;
     }
     physdev->dibdrv = get_dibdrv_pdev( *dev );
@@ -894,7 +894,7 @@ static BOOL CDECL windrv_DeleteDC( PHYSDEV dev )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
 
     window_surface_release( physdev->surface );
-    HeapFree( GetProcessHeap(), 0, physdev );
+    free( physdev );
     return TRUE;
 }
 

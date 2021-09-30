@@ -148,12 +148,12 @@ static struct wgl_context * CDECL osmesa_create_context( HDC hdc, const PIXELFOR
     default:
         return NULL;
     }
-    if (!(context = RtlAllocateHeap( GetProcessHeap(), 0, sizeof( *context )))) return NULL;
+    if (!(context = malloc( sizeof( *context )))) return NULL;
     context->format = gl_format;
     if (!(context->context = pOSMesaCreateContextExt( gl_format, descr->cDepthBits, descr->cStencilBits,
                                                       descr->cAccumBits, 0 )))
     {
-        RtlFreeHeap( GetProcessHeap(), 0, context );
+        free( context );
         return NULL;
     }
     return context;
@@ -165,7 +165,7 @@ static struct wgl_context * CDECL osmesa_create_context( HDC hdc, const PIXELFOR
 static BOOL CDECL osmesa_delete_context( struct wgl_context *context )
 {
     pOSMesaDestroyContext( context->context );
-    RtlFreeHeap( GetProcessHeap(), 0, context );
+    free( context );
     return TRUE;
 }
 

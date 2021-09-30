@@ -395,9 +395,6 @@ static inline LONG win32u_wcstol( LPCWSTR s, LPWSTR *end, INT base )
 #define wcsrchr(s,c)    win32u_wcsrchr(s,c)
 #define wcstol(s,e,b)   win32u_wcstol(s,e,b)
 
-#define HeapAlloc   RtlAllocateHeap
-#define HeapFree    RtlFreeHeap
-#define HeapReAlloc RtlReAllocateHeap
 #define EnterCriticalSection RtlEnterCriticalSection
 #define LeaveCriticalSection RtlLeaveCriticalSection
 

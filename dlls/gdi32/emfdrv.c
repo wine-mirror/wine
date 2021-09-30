@@ -445,7 +445,7 @@ static INT CDECL EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    HeapFree( GetProcessHeap(), 0, physDev );
+    free( physDev );
     return TRUE;
 }
 
@@ -577,7 +577,7 @@ HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
 
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_ENHMETADC ))) return 0;
 
-    physDev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev) );
+    physDev = malloc( sizeof(*physDev) );
     if (!physDev)
     {
         free_dc_ptr( dc );
