@@ -1578,6 +1578,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
     FIXME("(%p)->(%s,%p,%p,%p): stub!\n", This, debugstr_guid(rguid), lpeff, ppdef, pUnkOuter);
+    if (!ppdef) return E_POINTER;
 
     FIXME("not available in the generic implementation\n");
     *ppdef = NULL;

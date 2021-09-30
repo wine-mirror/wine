@@ -3682,6 +3682,7 @@ static void test_simple_joystick(void)
     DIEFFECTINFOW effectinfo = {0};
     DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
+    IDirectInputEffect *effect;
     DIEFFESCAPE escape = {0};
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
@@ -4673,8 +4674,20 @@ static void test_simple_joystick(void)
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendDeviceData returned %#x\n", hr );
 
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, NULL, NULL );
+    ok( hr == E_POINTER, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    hr = IDirectInputDevice8_CreateEffect( device, NULL, NULL, &effect, NULL );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_NULL, NULL, &effect, NULL );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
 
     hr = IDirectInputDevice8_Escape( device, NULL );
     todo_wine
@@ -5049,6 +5062,30 @@ static BOOL test_device_types(void)
     }
 
     return success;
+}
+
+static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
+{
+    IDirectInputEffect *effect;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, NULL, NULL );
+    ok( hr == E_POINTER, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    hr = IDirectInputDevice8_CreateEffect( device, NULL, NULL, &effect, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_NULL, NULL, &effect, NULL );
+    todo_wine
+    ok( hr == DIERR_DEVICENOTREG, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    if (hr != DI_OK) return;
+
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
 }
 
 static void test_force_feedback_joystick( void )
@@ -5796,6 +5833,8 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), &objdata, &res, 0 );
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendDeviceData returned %#x\n", hr );
+
+    test_periodic_effect( device, file );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
