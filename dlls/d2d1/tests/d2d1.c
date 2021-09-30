@@ -10045,6 +10045,95 @@ static void test_effect_2d_affine(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_crop(BOOL d3d11)
+{
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    D2D_RECT_F output_bounds;
+    D2D1_SIZE_U input_size;
+    ID2D1Factory1 *factory;
+    ID2D1Bitmap1 *bitmap;
+    DWORD image[16 * 16];
+    ID2D1Effect *effect;
+    ID2D1Image *output;
+    unsigned int i;
+    HRESULT hr;
+
+    const struct crop_effect_test
+    {
+        D2D_VECTOR_4F crop_rect; /* {x: left, y: top, z: right, w: bottom} */
+        D2D_RECT_F    bounds;
+    }
+    crop_effect_tests[] =
+    {
+        {{0.0f,   0.0f,  8.0f,  8.0f},  {0.0f,  0.0f,  8.0f,  8.0f}},
+        {{4.0f,   4.0f,  8.0f,  8.0f},  {4.0f,  4.0f,  8.0f,  8.0f}},
+        {{10.0f,  10.0f, 20.0f, 20.0f}, {10.0f, 10.0f, 16.0f, 16.0f}},
+        {{-10.0f, 10.0f, 20.0f, 12.0f}, {0.0f,  10.0f, 16.0f, 12.0f}},
+        {{3.0f,   -2.0f, 5.0f,  1.0f},  {3.0f,  0.0f,  5.0f,  1.0f}},
+        {{-1.0f,  -1.0f, 20.0f, 20.0f}, {0.0f,  0.0f,  16.0f, 16.0f}},
+        {{-5.0f,  -5.0f, -1.0f, -1.0f}, {0.0f,  0.0f,  0.0f,  0.0f}},
+    };
+    memset(image, 0xff, sizeof(image));
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Crop, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(crop_effect_tests); ++i)
+    {
+        const struct crop_effect_test *test = &crop_effect_tests[i];
+        winetest_push_context("Test %u", i);
+
+        set_size_u(&input_size, 16, 16);
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        bitmap_desc.dpiX = 96.0f;
+        bitmap_desc.dpiY = 96.0f;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmap(context, input_size, image,
+                sizeof(*image) * 16, &bitmap_desc, &bitmap);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
+        hr = ID2D1Effect_SetValue(effect, D2D1_CROP_PROP_RECT, D2D1_PROPERTY_TYPE_VECTOR4,
+                (const BYTE *)&test->crop_rect, sizeof(test->crop_rect));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Effect_GetOutput(effect, &output);
+
+        set_rect(&output_bounds, -1.0f, -1.0f, -1.0f, -1.0f);
+        ID2D1DeviceContext_GetImageLocalBounds(context, output, &output_bounds);
+        todo_wine
+        ok(compare_rect(&output_bounds, test->bounds.left, test->bounds.top, test->bounds.right, test->bounds.bottom, 0),
+                "Got unexpected output bounds {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                output_bounds.left, output_bounds.top, output_bounds.right, output_bounds.bottom,
+                test->bounds.left, test->bounds.top, test->bounds.right, test->bounds.bottom);
+
+        ID2D1Image_Release(output);
+        ID2D1Bitmap1_Release(bitmap);
+        winetest_pop_context();
+    }
+
+    ID2D1Effect_Release(effect);
+    ID2D1DeviceContext_Release(context);
+    ID2D1Factory1_Release(factory);
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -10108,6 +10197,7 @@ START_TEST(d2d1)
     queue_test(test_mt_factory);
     queue_test(test_effect);
     queue_test(test_effect_2d_affine);
+    queue_test(test_effect_crop);
 
     run_queued_tests();
 }
