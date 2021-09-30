@@ -4643,6 +4643,14 @@ static void test_simple_joystick(void)
     check_member( state, expect_state_rel[i], "%#x", rgbButtons[2] );
     winetest_pop_context();
 
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
+
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
 
@@ -5656,6 +5664,9 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    todo_wine
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
 
     escape.dwSize = sizeof(DIEFFESCAPE);
     escape.dwCommand = 0;
@@ -5685,6 +5696,10 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
     todo_wine
     ok( hr == 0x80040301, "IDirectInputDevice8_GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    res = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
+    todo_wine
+    ok( hr == 0x80040301, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
