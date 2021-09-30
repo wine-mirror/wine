@@ -3682,9 +3682,11 @@ static void test_simple_joystick(void)
     DIEFFECTINFOW effectinfo = {0};
     DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
+    DIEFFESCAPE escape = {0};
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
     HANDLE event, file;
+    char buffer[1024];
     DIJOYSTATE2 state;
     ULONG i, res, ref;
     HRESULT hr;
@@ -4644,6 +4646,26 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
 
+    hr = IDirectInputDevice8_Escape( device, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "IDirectInputDevice8_Escape returned: %#x\n", hr );
+    hr = IDirectInputDevice8_Escape( device, &escape );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_Escape returned: %#x\n", hr );
+    escape.dwSize = sizeof(DIEFFESCAPE) + 1;
+    hr = IDirectInputDevice8_Escape( device, &escape );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_Escape returned: %#x\n", hr );
+    escape.dwSize = sizeof(DIEFFESCAPE);
+    escape.dwCommand = 0;
+    escape.lpvInBuffer = buffer;
+    escape.cbInBuffer = 10;
+    escape.lpvOutBuffer = buffer + 10;
+    escape.cbOutBuffer = 10;
+    hr = IDirectInputDevice8_Escape( device, &escape );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_Escape returned: %#x\n", hr );
+
     /* FIXME: we have to wait a bit because Wine DInput internal thread keeps a reference */
     Sleep( 100 );
 
@@ -5484,8 +5506,10 @@ static void test_force_feedback_joystick( void )
     DIDEVICEINSTANCEW devinst = {0};
     DIEFFECTINFOW effectinfo = {0};
     IDirectInputDevice8W *device;
+    DIEFFESCAPE escape = {0};
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
+    char buffer[1024];
     ULONG res, ref;
     HANDLE file;
     HRESULT hr;
@@ -5633,6 +5657,16 @@ static void test_force_feedback_joystick( void )
     todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_GetProperty DIPROP_FFLOAD returned %#x\n", hr );
 
+    escape.dwSize = sizeof(DIEFFESCAPE);
+    escape.dwCommand = 0;
+    escape.lpvInBuffer = buffer;
+    escape.cbInBuffer = 10;
+    escape.lpvOutBuffer = buffer + 10;
+    escape.cbOutBuffer = 10;
+    hr = IDirectInputDevice8_Escape( device, &escape );
+    todo_wine
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_Escape returned: %#x\n", hr );
+
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
@@ -5642,6 +5676,10 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Acquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputDevice8_Escape( device, &escape );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_Escape returned: %#x\n", hr );
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
