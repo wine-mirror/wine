@@ -144,6 +144,11 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
 
     ok( tmp != &queue->spurious, "got spurious packet\n" );
 
+    winetest_push_context( "%s expect[%d]", tmp->context, tmp - queue->buffer );
+    todo_wine_if( tmp->todo )
+    ok( 1, "found code %#x id %u len %u\n", tmp->code, tmp->report_id, tmp->report_len );
+    winetest_pop_context();
+
     tmp = missing;
     while (tmp != missing_end)
     {
