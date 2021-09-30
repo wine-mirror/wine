@@ -26,6 +26,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -38,6 +40,18 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
+
+static pthread_mutex_t dc_attr_lock = PTHREAD_MUTEX_INITIALIZER;
+
+struct dc_attr_bucket
+{
+    struct list entry;
+    DC_ATTR *entries;
+    DC_ATTR *next_free;
+    DC_ATTR *next_unused;
+};
+
+static struct list dc_attr_buckets = LIST_INIT( dc_attr_buckets );
 
 static inline const char *debugstr_us( const UNICODE_STRING *us )
 {
@@ -72,6 +86,70 @@ static inline DC *get_dc_obj( HDC hdc )
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
+}
+
+/* alloc DC_ATTR from a pool of memory accessible from client */
+static DC_ATTR *alloc_dc_attr(void)
+{
+    struct dc_attr_bucket *bucket;
+    DC_ATTR *dc_attr = NULL;
+
+    pthread_mutex_lock( &dc_attr_lock );
+
+    LIST_FOR_EACH_ENTRY( bucket, &dc_attr_buckets, struct dc_attr_bucket, entry )
+    {
+        if (bucket->next_free)
+        {
+            dc_attr = bucket->next_free;
+            bucket->next_free = *(void **)bucket->next_free;
+            break;
+        }
+        if ((char *)bucket->next_unused - (char *)bucket->entries + sizeof(*dc_attr) <=
+            system_info.AllocationGranularity)
+        {
+            dc_attr = bucket->next_unused++;
+            break;
+        }
+    }
+
+    if (!dc_attr && (bucket = malloc( sizeof(*bucket) )))
+    {
+        SIZE_T size = system_info.AllocationGranularity;
+        bucket->entries = NULL;
+        if (!NtAllocateVirtualMemory( GetCurrentProcess(), (void **)&bucket->entries, 0, &size,
+                                      MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE ))
+        {
+            bucket->next_free = NULL;
+            bucket->next_unused = bucket->entries + 1;
+            dc_attr = bucket->entries;
+            list_add_head( &dc_attr_buckets, &bucket->entry );
+        }
+        else free( bucket );
+    }
+
+    if (dc_attr) memset( dc_attr, 0, sizeof( *dc_attr ));
+
+    pthread_mutex_unlock( &dc_attr_lock );
+
+    return dc_attr;
+}
+
+
+static void free_dc_attr( DC_ATTR *dc_attr )
+{
+    struct dc_attr_bucket *bucket;
+
+    pthread_mutex_lock( &dc_attr_lock );
+
+    LIST_FOR_EACH_ENTRY( bucket, &dc_attr_buckets, struct dc_attr_bucket, entry )
+    {
+        if (bucket->entries > dc_attr || dc_attr >= bucket->next_unused) continue;
+        *(void **)dc_attr = bucket->next_free;
+        bucket->next_free = dc_attr;
+        break;
+    }
+
+    pthread_mutex_unlock( &dc_attr_lock );
 }
 
 
@@ -133,7 +211,7 @@ DC *alloc_dc_ptr( DWORD magic )
     DC *dc;
 
     if (!(dc = calloc( 1, sizeof(*dc) ))) return NULL;
-    if (!(dc->attr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc->attr) )))
+    if (!(dc->attr = alloc_dc_attr()))
     {
         free( dc );
         return NULL;
@@ -152,7 +230,7 @@ DC *alloc_dc_ptr( DWORD magic )
 
     if (!(dc->hSelf = alloc_gdi_handle( &dc->obj, magic, &dc_funcs )))
     {
-        RtlFreeHeap( GetProcessHeap(), 0, dc->attr );
+        free_dc_attr( dc->attr );
         free( dc );
         return NULL;
     }
@@ -179,7 +257,7 @@ static void free_dc_state( DC *dc )
     if (dc->hVisRgn) NtGdiDeleteObjectApp( dc->hVisRgn );
     if (dc->region) NtGdiDeleteObjectApp( dc->region );
     if (dc->path) free_gdi_path( dc->path );
-    RtlFreeHeap( GetProcessHeap(), 0, dc->attr );
+    free_dc_attr( dc->attr );
     free( dc );
 }
 
