@@ -4658,6 +4658,21 @@ static void test_simple_joystick(void)
     todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
 
+    objdata[0].dwOfs = 0xd;
+    objdata[0].dwData = 0x80;
+    res = 1;
+    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0xdeadbeef );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendDeviceData returned %#x\n", hr );
+    res = 1;
+    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 1 /*DISDD_CONTINUE*/ );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendDeviceData returned %#x\n", hr );
+    res = 1;
+    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), objdata, &res, 0 );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendDeviceData returned %#x\n", hr );
+
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
 
@@ -5518,6 +5533,7 @@ static void test_force_feedback_joystick( void )
         },
     };
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
+    DIDEVICEOBJECTDATA objdata = {0};
     DIDEVICEINSTANCEW devinst = {0};
     DIEFFECTINFOW effectinfo = {0};
     IDirectInputDevice8W *device;
@@ -5736,6 +5752,13 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSOFF );
     todo_wine
     ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+
+    objdata.dwOfs = 0x16;
+    objdata.dwData = 0x80;
+    res = 1;
+    hr = IDirectInputDevice8_SendDeviceData( device, sizeof(DIDEVICEOBJECTDATA), &objdata, &res, 0 );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendDeviceData returned %#x\n", hr );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
