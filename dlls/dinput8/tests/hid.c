@@ -4651,6 +4651,13 @@ static void test_simple_joystick(void)
     todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
 
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, 0xdeadbeef );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
 
@@ -5667,6 +5674,9 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
     todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
+    todo_wine
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
 
     escape.dwSize = sizeof(DIEFFESCAPE);
     escape.dwCommand = 0;
@@ -5700,6 +5710,32 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
     todo_wine
     ok( hr == 0x80040301, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, 0xdeadbeef );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+
+    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_STOPALL );
+    todo_wine
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_PAUSE );
+    todo_wine
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_CONTINUE );
+    todo_wine
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSON );
+    todo_wine
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_SETACTUATORSOFF );
+    todo_wine
+    ok( hr == HIDP_STATUS_USAGE_NOT_FOUND, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
