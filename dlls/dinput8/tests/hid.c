@@ -3679,6 +3679,7 @@ static void test_simple_joystick(void)
     DIDEVICEOBJECTDATA objdata[32] = {{0}};
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
+    DIEFFECTINFOW effectinfo = {0};
     DIDATAFORMAT dataformat = {0};
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
@@ -4048,6 +4049,21 @@ static void test_simple_joystick(void)
     ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
     ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
         check_effects_params.expect_count - check_effects_params.index );
+
+    hr = IDirectInputDevice8_GetEffectInfo( device, NULL, &GUID_Sine );
+    todo_wine
+    ok( hr == E_POINTER, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
+    effectinfo.dwSize = sizeof(DIEFFECTINFOW) + 1;
+    hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
+    effectinfo.dwSize = sizeof(DIEFFECTINFOW);
+    hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_NULL );
+    todo_wine
+    ok( hr == DIERR_DEVICENOTREG, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
+    todo_wine
+    ok( hr == DIERR_DEVICENOTREG, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
 
     hr = IDirectInputDevice8_SetDataFormat( device, NULL );
     ok( hr == E_POINTER, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
@@ -5416,6 +5432,7 @@ static void test_force_feedback_joystick( void )
     };
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     DIDEVICEINSTANCEW devinst = {0};
+    DIEFFECTINFOW effectinfo = {0};
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
@@ -5513,6 +5530,19 @@ static void test_force_feedback_joystick( void )
     todo_wine
     ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
         check_effects_params.expect_count - check_effects_params.index );
+
+    effectinfo.dwSize = sizeof(DIEFFECTINFOW);
+    hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
+    ok( hr == DI_OK, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
+    todo_wine
+    check_member_guid( effectinfo, expect_effects[0], guid );
+    check_member( effectinfo, expect_effects[0], "%#x", dwEffType );
+    todo_wine
+    check_member( effectinfo, expect_effects[0], "%#x", dwStaticParams );
+    todo_wine
+    check_member( effectinfo, expect_effects[0], "%#x", dwDynamicParams );
+    todo_wine
+    check_member_wstr( effectinfo, expect_effects[0], tszName );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
     ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
