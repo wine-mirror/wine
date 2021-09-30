@@ -495,7 +495,7 @@ static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, I
     TRACE("%p, %d, %p\n", iface, forward, ppenumMoniker);
 
     if (!ppenumMoniker)
-        return E_POINTER;
+        return E_INVALIDARG;
 
     if (FAILED(hr = composite_get_components_alloc(moniker, &monikers)))
         return hr;
@@ -1346,44 +1346,45 @@ EnumMonikerImpl_Release(IEnumMoniker* iface)
     return ref;
 }
 
-/******************************************************************************
- *        EnumMonikerImpl_Next
- ******************************************************************************/
-static HRESULT WINAPI
-EnumMonikerImpl_Next(IEnumMoniker* iface,ULONG celt, IMoniker** rgelt,
-               ULONG* pceltFethed)
+static HRESULT WINAPI EnumMonikerImpl_Next(IEnumMoniker *iface, ULONG count,
+        IMoniker **m, ULONG *fetched)
 {
     EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
     ULONG i;
 
+    TRACE("%p, %u, %p, %p.\n", iface, count, m, fetched);
+
+    if (!m)
+        return E_INVALIDARG;
+
+    *m = NULL;
+
     /* retrieve the requested number of moniker from the current position */
-    for(i=0;((This->currentPos < This->tabSize) && (i < celt));i++)
+    for(i=0;((This->currentPos < This->tabSize) && (i < count));i++)
     {
-        rgelt[i]=This->tabMoniker[This->currentPos++];
-        IMoniker_AddRef(rgelt[i]);
+        m[i] = This->tabMoniker[This->currentPos++];
+        IMoniker_AddRef(m[i]);
     }
 
-    if (pceltFethed!=NULL)
-        *pceltFethed= i;
+    if (fetched)
+        *fetched = i;
 
-    if (i==celt)
-        return S_OK;
-    else
-        return S_FALSE;
+    return i == count ? S_OK : S_FALSE;
 }
 
-/******************************************************************************
- *        EnumMonikerImpl_Skip
- ******************************************************************************/
-static HRESULT WINAPI
-EnumMonikerImpl_Skip(IEnumMoniker* iface,ULONG celt)
+static HRESULT WINAPI EnumMonikerImpl_Skip(IEnumMoniker *iface, ULONG count)
 {
     EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
 
-    if ((This->currentPos+celt) >= This->tabSize)
+    TRACE("%p, %u.\n", iface, count);
+
+    if (!count)
+        return S_OK;
+
+    if ((This->currentPos + count) >= This->tabSize)
         return S_FALSE;
 
-    This->currentPos+=celt;
+    This->currentPos += count;
 
     return S_OK;
 }
@@ -1401,15 +1402,16 @@ EnumMonikerImpl_Reset(IEnumMoniker* iface)
     return S_OK;
 }
 
-/******************************************************************************
- *        EnumMonikerImpl_Clone
- ******************************************************************************/
-static HRESULT WINAPI
-EnumMonikerImpl_Clone(IEnumMoniker* iface,IEnumMoniker** ppenum)
+static HRESULT WINAPI EnumMonikerImpl_Clone(IEnumMoniker *iface, IEnumMoniker **ret)
 {
     EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
 
-    return EnumMonikerImpl_CreateEnumMoniker(This->tabMoniker,This->tabSize,This->currentPos,TRUE,ppenum);
+    TRACE("%p, %p.\n", iface, ret);
+
+    if (!ret)
+        return E_INVALIDARG;
+
+    return EnumMonikerImpl_CreateEnumMoniker(This->tabMoniker,This->tabSize,This->currentPos,TRUE,ret);
 }
 
 static const IEnumMonikerVtbl VT_EnumMonikerImpl =

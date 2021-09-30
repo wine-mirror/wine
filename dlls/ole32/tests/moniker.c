@@ -3163,8 +3163,8 @@ static void test_generic_composite_moniker(void)
         { "CI1I3", "CA1I2", MKSYS_GENERICCOMPOSITE, L"!I1!I2" },
     };
     IMoniker *moniker, *inverse, *moniker1, *moniker2, *moniker3, *moniker4;
+    IEnumMoniker *enummoniker, *enummoniker2;
     struct test_moniker *m, *m2;
-    IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
     DWORD hash, cookie;
     HRESULT hr;
@@ -3292,19 +3292,6 @@ todo_wine
     ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
     TEST_MONIKER_TYPE(inverse, MKSYS_GENERICCOMPOSITE);
     IMoniker_Release(inverse);
-
-    /* Enum() */
-    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
-    ok(hr == S_OK, "Failed to get enumerator, hr %#x.\n", hr);
-    IEnumMoniker_Release(enummoniker);
-
-    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
-    ok(hr == S_OK, "Failed to get enumerator, hr %#x.\n", hr);
-    IEnumMoniker_Release(enummoniker);
-
-    hr = IMoniker_Enum(moniker, FALSE, NULL);
-todo_wine
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* BindToObject() */
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
@@ -3643,6 +3630,183 @@ todo_wine {
     ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
     ok(moniker2 == moniker, "Unexpected object.\n");
     IMoniker_Release(moniker2);
+
+    IMoniker_Release(moniker);
+
+    /* Enum() */
+    hr = create_moniker_from_desc("CI1CI2I3", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Enum(moniker, FALSE, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Forward direction */
+    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Next(enummoniker, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    moniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Next(enummoniker, 0, &moniker2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!moniker2, "Unexpected pointer.\n");
+
+    len = 1;
+    moniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Next(enummoniker, 0, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!len, "Unexpected count %u.\n", len);
+    ok(!moniker2, "Unexpected pointer.\n");
+
+    hr = IEnumMoniker_Skip(enummoniker, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I1");
+    IMoniker_Release(moniker2);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I2");
+    IMoniker_Release(moniker2);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I3");
+    IMoniker_Release(moniker2);
+
+    len = 1;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(!len, "Unexpected count %u.\n", len);
+
+    hr = IEnumMoniker_Skip(enummoniker, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Skip(enummoniker, 1);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Clone(enummoniker, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    enummoniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
+todo_wine {
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker2, "Unexpected pointer.\n");
+}
+    hr = IEnumMoniker_Reset(enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Skip(enummoniker, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I3");
+    IMoniker_Release(moniker2);
+
+    enummoniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
+todo_wine {
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker2, "Unexpected pointer.\n");
+}
+    IEnumMoniker_Release(enummoniker);
+
+    /* Backward direction */
+    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
+    ok(hr == S_OK, "Failed to get enumerator, hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Next(enummoniker, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    moniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Next(enummoniker, 0, &moniker2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!moniker2, "Unexpected pointer.\n");
+
+    len = 1;
+    moniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Next(enummoniker, 0, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!len, "Unexpected count %u.\n", len);
+    ok(!moniker2, "Unexpected pointer.\n");
+
+    hr = IEnumMoniker_Skip(enummoniker, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I3");
+    IMoniker_Release(moniker2);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I2");
+    IMoniker_Release(moniker2);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I1");
+    IMoniker_Release(moniker2);
+
+    len = 1;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(!len, "Unexpected count %u.\n", len);
+
+    hr = IEnumMoniker_Skip(enummoniker, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Skip(enummoniker, 1);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Clone(enummoniker, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    enummoniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
+todo_wine {
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker2, "Unexpected pointer.\n");
+}
+    hr = IEnumMoniker_Reset(enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IEnumMoniker_Skip(enummoniker, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    len = 0;
+    hr = IEnumMoniker_Next(enummoniker, 1, &moniker2, &len);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(len == 1, "Unexpected count %u.\n", len);
+    TEST_DISPLAY_NAME(moniker2, L"!I1");
+    IMoniker_Release(moniker2);
+
+    enummoniker2 = (void *)0xdeadbeef;
+    hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
+todo_wine {
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker2, "Unexpected pointer.\n");
+}
+    IEnumMoniker_Release(enummoniker);
 
     IMoniker_Release(moniker);
 
