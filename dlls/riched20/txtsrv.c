@@ -81,7 +81,7 @@ static ULONG WINAPI ITextServicesImpl_Release(IUnknown *iface)
     {
         richole_release_children( services );
         ME_DestroyEditor( services->editor );
-        CoTaskMemFree( services );
+        heap_free( services );
     }
     return ref;
 }
@@ -580,7 +580,7 @@ HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **
     TRACE( "%p %p --> %p\n", outer, text_host, unk );
     if (text_host == NULL) return E_POINTER;
 
-    services = CoTaskMemAlloc( sizeof(*services) );
+    services = heap_alloc( sizeof(*services) );
     if (services == NULL) return E_OUTOFMEMORY;
     services->ref = 1;
     services->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
