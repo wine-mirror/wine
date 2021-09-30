@@ -332,6 +332,25 @@ static void wined3d_view_invalidate_location(struct wined3d_resource *resource,
         wined3d_texture_invalidate_location(texture, sub_resource_idx, location);
 }
 
+static void wined3d_view_load_location(struct wined3d_resource *resource,
+        const struct wined3d_view_desc *desc, struct wined3d_context *context, DWORD location)
+{
+    unsigned int i, sub_resource_idx, layer_count;
+    struct wined3d_texture *texture;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        wined3d_buffer_load_location(buffer_from_resource(resource), context, location);
+        return;
+    }
+
+    texture = texture_from_resource(resource);
+    sub_resource_idx = desc->u.texture.layer_idx * texture->level_count + desc->u.texture.level_idx;
+    layer_count = resource->type != WINED3D_RTYPE_TEXTURE_3D ? desc->u.texture.layer_count : 1;
+    for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
+        wined3d_texture_load_location(texture, sub_resource_idx, context, location);
+}
+
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);
@@ -461,21 +480,7 @@ void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, DWORD location)
 {
-    struct wined3d_resource *resource = view->resource;
-    unsigned int i, sub_resource_idx, layer_count;
-    struct wined3d_texture *texture;
-
-    if (resource->type == WINED3D_RTYPE_BUFFER)
-    {
-        wined3d_buffer_load_location(buffer_from_resource(resource), context, location);
-        return;
-    }
-
-    texture = texture_from_resource(resource);
-    sub_resource_idx = view->sub_resource_idx;
-    layer_count = resource->type != WINED3D_RTYPE_TEXTURE_3D ? view->layer_count : 1;
-    for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
-        wined3d_texture_load_location(texture, sub_resource_idx, context, location);
+    wined3d_view_load_location(view->resource, &view->desc, context, location);
 }
 
 void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view, DWORD location)
