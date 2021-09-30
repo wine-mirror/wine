@@ -96,9 +96,15 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
     {
         winetest_push_context( "%s expect[%d]", tmp->context, tmp - missing );
         if (tmp->broken)
+        {
+            todo_wine_if( tmp->todo )
             win_skip( "broken (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+        }
         else
+        {
+            todo_wine_if( tmp->todo )
             ok( 0, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+        }
         winetest_pop_context();
         tmp++;
     }
@@ -123,7 +129,8 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     tmp = queue->pos;
     while (tmp < queue->end)
     {
-        if (!tmp->broken || running_under_wine) break;
+        if (running_under_wine && !tmp->todo) break;
+        if (!running_under_wine && !tmp->broken) break;
         if (tmp->code == code && tmp->report_id == id && tmp->report_len == len &&
             (!compare_buf || RtlCompareMemory( tmp->report_buf, buf, len ) == len))
             break;
@@ -142,9 +149,15 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     {
         winetest_push_context( "%s expect[%d]", tmp->context, tmp - missing );
         if (tmp->broken)
+        {
+            todo_wine_if( tmp->todo )
             win_skip( "broken (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+        }
         else
+        {
+            todo_wine_if( tmp->todo )
             ok( 0, "missing (code %#x id %u len %u)\n", tmp->code, tmp->report_id, tmp->report_len );
+        }
         winetest_pop_context();
         tmp++;
     }
