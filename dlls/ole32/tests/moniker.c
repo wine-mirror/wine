@@ -3699,10 +3699,9 @@ todo_wine {
 
     enummoniker2 = (void *)0xdeadbeef;
     hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
-todo_wine {
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
     ok(!enummoniker2, "Unexpected pointer.\n");
-}
+
     hr = IEnumMoniker_Reset(enummoniker);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -3718,10 +3717,9 @@ todo_wine {
 
     enummoniker2 = (void *)0xdeadbeef;
     hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
-todo_wine {
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
     ok(!enummoniker2, "Unexpected pointer.\n");
-}
+
     IEnumMoniker_Release(enummoniker);
 
     /* Backward direction */
@@ -3783,10 +3781,9 @@ todo_wine {
 
     enummoniker2 = (void *)0xdeadbeef;
     hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
-todo_wine {
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
     ok(!enummoniker2, "Unexpected pointer.\n");
-}
+
     hr = IEnumMoniker_Reset(enummoniker);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -3802,10 +3799,9 @@ todo_wine {
 
     enummoniker2 = (void *)0xdeadbeef;
     hr = IEnumMoniker_Clone(enummoniker, &enummoniker2);
-todo_wine {
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
     ok(!enummoniker2, "Unexpected pointer.\n");
-}
+
     IEnumMoniker_Release(enummoniker);
 
     IMoniker_Release(moniker);

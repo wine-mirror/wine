@@ -1363,14 +1363,14 @@ EnumMonikerImpl_Reset(IEnumMoniker* iface)
 
 static HRESULT WINAPI EnumMonikerImpl_Clone(IEnumMoniker *iface, IEnumMoniker **ret)
 {
-    EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
-
     TRACE("%p, %p.\n", iface, ret);
 
     if (!ret)
         return E_INVALIDARG;
 
-    return EnumMonikerImpl_CreateEnumMoniker(This->tabMoniker,This->tabSize,This->currentPos,TRUE,ret);
+    *ret = NULL;
+
+    return E_NOTIMPL;
 }
 
 static const IEnumMonikerVtbl VT_EnumMonikerImpl =
