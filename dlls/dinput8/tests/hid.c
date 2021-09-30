@@ -4593,7 +4593,7 @@ struct device_desc
     HIDP_CAPS hid_caps;
 };
 
-static void test_device_types( void )
+static BOOL test_device_types(void)
 {
 #include "psh_hid_macros.h"
     static const unsigned char unknown_desc[] =
@@ -4837,11 +4837,12 @@ static void test_device_types( void )
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     IDirectInputDevice8W *device;
+    BOOL success = TRUE;
     IDirectInput8W *di;
     ULONG i, ref;
     HRESULT hr;
 
-    for (i = 0; i < ARRAY_SIZE(device_desc); ++i)
+    for (i = 0; i < ARRAY_SIZE(device_desc) && success; ++i)
     {
         winetest_push_context( "desc[%d]", i );
         GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
@@ -4852,7 +4853,7 @@ static void test_device_types( void )
         if (!dinput_driver_start( device_desc[i].report_desc_buf, device_desc[i].report_desc_len,
                                   &device_desc[i].hid_caps ))
         {
-            i = ARRAY_SIZE(device_desc);
+            success = FALSE;
             goto done;
         }
 
@@ -4860,7 +4861,7 @@ static void test_device_types( void )
         if (FAILED(hr))
         {
             win_skip( "DirectInput8Create returned %#x\n", hr );
-            i = ARRAY_SIZE(device_desc);
+            success = FALSE;
             goto done;
         }
 
@@ -4870,7 +4871,7 @@ static void test_device_types( void )
         {
             win_skip( "device not found, skipping tests\n" );
             IDirectInput8_Release( di );
-            i = ARRAY_SIZE(device_desc);
+            success = FALSE;
             goto done;
         }
 
@@ -4918,6 +4919,8 @@ static void test_device_types( void )
         SetCurrentDirectoryW( cwd );
         winetest_pop_context();
     }
+
+    return success;
 }
 
 static void test_force_feedback_joystick( void )
@@ -5345,9 +5348,11 @@ START_TEST( hid )
     test_hid_driver( 1, TRUE );
 
     CoInitialize( NULL );
-    test_device_types();
-    test_simple_joystick();
-    test_force_feedback_joystick();
+    if (test_device_types())
+    {
+        test_simple_joystick();
+        test_force_feedback_joystick();
+    }
     CoUninitialize();
 
     UnmapViewOfFile( test_data );
