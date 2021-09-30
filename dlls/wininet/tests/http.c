@@ -2399,11 +2399,40 @@ static DWORD CALLBACK server_thread(LPVOID param)
             recvfrom(c, buffer, buffer_size, 0, NULL, NULL);
             send(c, ok_with_length, sizeof(ok_with_length)-1, 0);
         }
-
+        if (strstr(buffer, "GET /test_no_content_content_length"))
+        {
+            static const char nocontentmsg[] = "HTTP/1.1 204 No Content\r\nConnection: close\r\n"
+                "Content-Length: 10\r\n\r\n0123456789";
+            send(c, nocontentmsg, sizeof(nocontentmsg)-1, 0);
+        }
         if (strstr(buffer, "GET /test_no_content"))
         {
-            static const char nocontentmsg[] = "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n";
+            static const char nocontentmsg[] = "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n"
+                "0123456789";
             send(c, nocontentmsg, sizeof(nocontentmsg)-1, 0);
+        }
+        if (strstr(buffer, "GET /test_not_modified_content_length"))
+        {
+            static const char notmodifiedmsg[] = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\n"
+                "Content-Length: 10\r\n\r\n0123456789";
+            send(c, notmodifiedmsg, sizeof(notmodifiedmsg)-1, 0);
+        }
+        else if (strstr(buffer, "GET /test_not_modified"))
+        {
+            static const char notmodifiedmsg[] = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\n"
+                "\r\n0123456789";
+            send(c, notmodifiedmsg, sizeof(notmodifiedmsg)-1, 0);
+        }
+        if (strstr(buffer, "HEAD /head_content_length"))
+        {
+            static const char headmsg[] = "HTTP/1.1 200 OK\r\nConnection: close\r\n"
+                "Content-Length: 10\r\n\r\n0123456789";
+            send(c, headmsg, sizeof(headmsg)-1, 0);
+        }
+        else if (strstr(buffer, "HEAD /head"))
+        {
+            static const char headmsg[] = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n0123456789";
+            send(c, headmsg, sizeof(headmsg)-1, 0);
         }
         if (strstr(buffer, "GET /test_conn_close"))
         {
@@ -3509,6 +3538,106 @@ static void test_no_content(int port)
      */
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+}
+
+static void test_not_modified(int port)
+{
+    DWORD avail;
+    HINTERNET ses, con, req;
+    BOOL ret;
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestA(con, NULL, "/test_not_modified", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 304);
+
+    avail = 0xdeadbeef;
+    ret = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(!avail, "got %d\n", avail);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequestA(con, NULL, "/test_not_modified_content_length", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 304);
+
+    avail = 0xdeadbeef;
+    ret = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(avail == 10, "got %d\n", avail);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequestA(con, NULL, "/test_no_content", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 204);
+
+    avail = 0xdeadbeef;
+    ret = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(!avail, "got %d\n", avail);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequestA(con, NULL, "/test_no_content_content_length", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 204);
+
+    avail = 0xdeadbeef;
+    ret = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(avail == 10, "got %d\n", avail);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequestA(con, "HEAD", "/head", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 200);
+
+    avail = 0xdeadbeef;
+    ret = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(!avail, "got %d\n", avail);
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequestA(con, "HEAD", "/head_content_length", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 200);
+
+    avail = 0xdeadbeef;
+    ret = InternetQueryDataAvailable(req, &avail, 0, 0);
+    ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
+    ok(!avail, "got %d\n", avail);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
 }
 
 static void test_conn_close(int port)
@@ -6084,6 +6213,7 @@ static void test_http_connection(void)
     test_HttpSendRequestW(si.port);
     test_options(si.port);
     test_no_content(si.port);
+    test_not_modified(si.port);
     test_conn_close(si.port);
     test_no_cache(si.port);
     test_cache_read_gzipped(si.port);
