@@ -3611,7 +3611,7 @@ static inline BOOL is_direction_similar(D3DXVECTOR2 *dir1, D3DXVECTOR2 *dir2, fl
 
 static inline D3DXVECTOR2 *unit_vec2(D3DXVECTOR2 *dir, const D3DXVECTOR2 *pt1, const D3DXVECTOR2 *pt2)
 {
-    return D3DXVec2Normalize(D3DXVec2Subtract(dir, pt2, pt1), dir);
+    return D3DXVec2Normalize(dir, D3DXVec2Subtract(dir, pt2, pt1));
 }
 
 static BOOL attempt_line_merge(struct outline *outline,
