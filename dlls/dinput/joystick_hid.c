@@ -417,7 +417,7 @@ static HRESULT WINAPI hid_joystick_EnumObjects( IDirectInputDevice8W *iface, LPD
     TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
-    if (flags & ~(DIDFT_AXIS | DIDFT_AXIS | DIDFT_BUTTON | DIDFT_NODATA | DIDFT_COLLECTION))
+    if (flags & ~(DIDFT_AXIS | DIDFT_POV | DIDFT_BUTTON | DIDFT_NODATA | DIDFT_COLLECTION))
         return DIERR_INVALIDPARAM;
 
     if (flags == DIDFT_ALL || (flags & DIDFT_AXIS))
