@@ -1067,6 +1067,31 @@ interface ISpVoice : ISpEventSource
 
 [
     object,
+    uuid(be7a9cc9-5f9e-11d2-960f-00c04f8ee628),
+    pointer_default(unique),
+    local,
+    restricted
+]
+interface ISpEventSink : IUnknown
+{
+    HRESULT AddEvents([in] const SPEVENT *events, [in] ULONG count);
+    HRESULT GetEventInterest([out] ULONGLONG *interest);
+};
+
+[
+    object,
+    uuid(5b559f40-e952-11d2-bb91-00c04f8ee6c0),
+    pointer_default(unique),
+    restricted
+]
+interface ISpObjectWithToken : IUnknown
+{
+    HRESULT SetObjectToken([in] ISpObjectToken *token);
+    HRESULT GetObjectToken([out] ISpObjectToken **token);
+};
+
+[
+    object,
     uuid(bed530be-2606-4f4d-a1c0-54c5cda5566f),
     pointer_default(unique),
     restricted
@@ -1096,6 +1121,21 @@ interface ISpAudio : ISpStreamFormat
     HRESULT SetVolumeLevel([in] ULONG level);
     HRESULT GetBufferNotifySize([out] ULONG *size);
     HRESULT SetBufferNotifySize([in] ULONG size);
+};
+[
+    object,
+    uuid(15806f6e-1d70-4b48-98e6-3b1a007509ab),
+    pointer_default(unique),
+    local,
+    restricted
+]
+interface ISpMMSysAudio : ISpAudio
+{
+    HRESULT GetDeviceId([out] UINT *id);
+    HRESULT SetDeviceId([in] UINT id);
+    HRESULT GetMMHandle([out] void **handle);
+    HRESULT GetLineId([out] UINT *id);
+    HRESULT SetLineId([in] UINT id);
 };
 
 [
@@ -1253,5 +1293,27 @@ library SpeechLib
     {
         interface ISpStream;
         [default] interface ISpeechFileStream;
+    };
+
+    [
+        uuid(cf3d2e50-53f2-11d2-960c-00c04f8ee628)
+    ]
+    coclass SpMMAudioIn
+    {
+        interface ISpEventSource;
+        interface ISpEventSink;
+        interface ISpObjectWithToken;
+        interface ISpMMSysAudio;
+    };
+
+    [
+        uuid(a8c680eb-3d32-11d2-9ee7-00c04f797396)
+    ]
+    coclass SpMMAudioOut
+    {
+        interface ISpEventSource;
+        interface ISpEventSink;
+        interface ISpObjectWithToken;
+        interface ISpMMSysAudio;
     };
 }
