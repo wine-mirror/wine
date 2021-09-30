@@ -3343,6 +3343,44 @@ static BOOL CALLBACK check_object_count( const DIDEVICEOBJECTINSTANCEW *obj, voi
     return DIENUM_CONTINUE;
 }
 
+struct check_effects_params
+{
+    UINT index;
+    UINT expect_count;
+    const DIEFFECTINFOW *expect_effects;
+};
+
+static BOOL CALLBACK check_effects( const DIEFFECTINFOW *effect, void *args )
+{
+    static const DIEFFECTINFOW unexpected_effect = {0};
+    struct check_effects_params *params = args;
+    const DIEFFECTINFOW *exp = params->expect_effects + params->index;
+
+    winetest_push_context( "effect[%d]", params->index );
+
+    ok( params->index < params->expect_count, "unexpected extra object\n" );
+    if (params->index >= params->expect_count) exp = &unexpected_effect;
+
+    check_member( *effect, *exp, "%u", dwSize );
+    check_member_guid( *effect, *exp, guid );
+    check_member( *effect, *exp, "%#x", dwEffType );
+    check_member( *effect, *exp, "%#x", dwStaticParams );
+    check_member( *effect, *exp, "%#x", dwDynamicParams );
+    check_member_wstr( *effect, *exp, tszName );
+
+    winetest_pop_context();
+    params->index++;
+
+    return DIENUM_CONTINUE;
+}
+
+static BOOL CALLBACK check_effect_count( const DIEFFECTINFOW *effect, void *args )
+{
+    DWORD *count = args;
+    *count = *count + 1;
+    return DIENUM_CONTINUE;
+}
+
 static void test_simple_joystick(void)
 {
 #include "psh_hid_macros.h"
@@ -3580,12 +3618,18 @@ static void test_simple_joystick(void)
         },
     };
     const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] = {};
+    const DIEFFECTINFOW expect_effects[] = {};
 
     struct check_objects_params check_objects_params =
     {
         .expect_count = ARRAY_SIZE(expect_objects),
         .expect_objs = expect_objects,
         .todo_objs = objects_todos,
+    };
+    struct check_effects_params check_effects_params =
+    {
+        .expect_count = ARRAY_SIZE(expect_effects),
+        .expect_effects = expect_effects,
     };
     DIPROPGUIDANDPATH prop_guid_path =
     {
@@ -3988,6 +4032,22 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[5], "%#04x", dwDimension );
     check_member( objinst, expect_objects[5], "%#04x", wExponent );
     check_member( objinst, expect_objects[5], "%u", wReportId );
+
+    hr = IDirectInputDevice8_EnumEffects( device, NULL, NULL, DIEFT_ALL );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    res = 0;
+    hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, 0xfe );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+    res = 0;
+    hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, DIEFT_PERIODIC );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+    hr = IDirectInputDevice8_EnumEffects( device, check_effects, &check_effects_params, DIEFT_ALL );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
+        check_effects_params.expect_count - check_effects_params.index );
 
     hr = IDirectInputDevice8_SetDataFormat( device, NULL );
     ok( hr == E_POINTER, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
@@ -5192,12 +5252,18 @@ static void test_force_feedback_joystick( void )
         {.type = TRUE, .flags = TRUE},
         {.type = TRUE, .flags = TRUE},
     };
+    const DIEFFECTINFOW expect_effects[] = {};
 
     struct check_objects_params check_objects_params =
     {
         .expect_count = ARRAY_SIZE(expect_objects),
         .expect_objs = expect_objects,
         .todo_objs = objects_todos,
+    };
+    struct check_effects_params check_effects_params =
+    {
+        .expect_count = ARRAY_SIZE(expect_effects),
+        .expect_effects = expect_effects,
     };
     DIPROPDWORD prop_dword =
     {
@@ -5213,8 +5279,8 @@ static void test_force_feedback_joystick( void )
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
     IDirectInput8W *di;
+    ULONG res, ref;
     HRESULT hr;
-    ULONG ref;
 
     GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
     GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
@@ -5292,6 +5358,19 @@ static void test_force_feedback_joystick( void )
     ok( hr == DI_OK, "IDirectInputDevice8_EnumObjects returned %#x\n", hr );
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
         check_objects_params.expect_count - check_objects_params.index );
+
+    res = 0;
+    hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, 0xfe );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+    res = 0;
+    hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, DIEFT_PERIODIC );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    ok( res == 0, "got %u expected %u\n", res, 0 );
+    hr = IDirectInputDevice8_EnumEffects( device, check_effects, &check_effects_params, DIEFT_ALL );
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
+    ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
+        check_effects_params.expect_count - check_effects_params.index );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
     ok( hr == DI_OK, "IDirectInputDevice8_SetDataFormat returned: %#x\n", hr );
