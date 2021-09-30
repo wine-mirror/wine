@@ -42,9 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 #define FIRST_GDI_HANDLE 32
 
-static GDI_SHARED_MEMORY gdi_shared;
+static GDI_SHARED_MEMORY *gdi_shared;
 static GDI_HANDLE_ENTRY *next_free;
-static GDI_HANDLE_ENTRY *next_unused = gdi_shared.Handles + FIRST_GDI_HANDLE;
+static GDI_HANDLE_ENTRY *next_unused;
 static LONG debug_count;
 SYSTEM_BASIC_INFORMATION system_info;
 
@@ -52,7 +52,7 @@ const struct user_callbacks *user_callbacks = NULL;
 
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
-    unsigned int idx = entry - gdi_shared.Handles;
+    unsigned int idx = entry - gdi_shared->Handles;
     return LongToHandle( idx | (entry->Unique << NTGDI_HANDLE_TYPE_SHIFT) );
 }
 
@@ -60,10 +60,10 @@ static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
 {
     unsigned int idx = LOWORD(handle);
 
-    if (idx < GDI_MAX_HANDLE_COUNT && gdi_shared.Handles[idx].Type)
+    if (idx < GDI_MAX_HANDLE_COUNT && gdi_shared->Handles[idx].Type)
     {
-        if (!HIWORD( handle ) || HIWORD( handle ) == gdi_shared.Handles[idx].Unique)
-            return &gdi_shared.Handles[idx];
+        if (!HIWORD( handle ) || HIWORD( handle ) == gdi_shared->Handles[idx].Unique)
+            return &gdi_shared->Handles[idx];
     }
     if (handle) WARN( "invalid handle %p\n", handle );
     return NULL;
@@ -605,19 +605,26 @@ static HFONT create_scaled_font( const LOGFONTW *deffont, unsigned int dpi )
     return create_font( &lf );
 }
 
-static void set_gdi_shared(void)
+static void init_gdi_shared(void)
 {
+    SIZE_T size = sizeof(*gdi_shared);
+
+    if (NtAllocateVirtualMemory( GetCurrentProcess(), (void **)&gdi_shared, 0, &size,
+                                 MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE ))
+        return;
+    next_unused = gdi_shared->Handles + FIRST_GDI_HANDLE;
+
 #ifndef _WIN64
     if (NtCurrentTeb()->GdiBatchCount)
     {
         TEB64 *teb64 = (TEB64 *)(UINT_PTR)NtCurrentTeb()->GdiBatchCount;
         PEB64 *peb64 = (PEB64 *)(UINT_PTR)teb64->Peb;
-        peb64->GdiSharedHandleTable = (UINT_PTR)&gdi_shared;
+        peb64->GdiSharedHandleTable = (UINT_PTR)gdi_shared;
         return;
     }
 #endif
     /* NOTE: Windows uses 32-bit for 32-bit kernel */
-    NtCurrentTeb()->Peb->GdiSharedHandleTable = &gdi_shared;
+    NtCurrentTeb()->Peb->GdiSharedHandleTable = gdi_shared;
 }
 
 HGDIOBJ get_stock_object( INT obj )
@@ -695,7 +702,7 @@ static void init_stock_objects( unsigned int dpi )
     /* clear the NOSYSTEM bit on all stock objects*/
     for (i = 0; i < STOCK_LAST + 5; i++)
     {
-        GDI_HANDLE_ENTRY *entry = &gdi_shared.Handles[FIRST_GDI_HANDLE + i];
+        GDI_HANDLE_ENTRY *entry = &gdi_shared->Handles[FIRST_GDI_HANDLE + i];
         entry_obj( entry )->system = TRUE;
         entry->StockFlag = 1;
     }
@@ -730,7 +737,7 @@ static void dump_gdi_objects( void )
     TRACE( "%u objects:\n", GDI_MAX_HANDLE_COUNT );
 
     EnterCriticalSection( &gdi_section );
-    for (entry = gdi_shared.Handles; entry < next_unused; entry++)
+    for (entry = gdi_shared->Handles; entry < next_unused; entry++)
     {
         if (!entry->Type)
             TRACE( "handle %p FREE\n", entry_to_handle( entry ));
@@ -760,7 +767,7 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct g
     entry = next_free;
     if (entry)
         next_free = (GDI_HANDLE_ENTRY *)(UINT_PTR)entry->Object;
-    else if (next_unused < gdi_shared.Handles + GDI_MAX_HANDLE_COUNT)
+    else if (next_unused < gdi_shared->Handles + GDI_MAX_HANDLE_COUNT)
         entry = next_unused++;
     else
     {
@@ -1269,7 +1276,9 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     if (reason != DLL_PROCESS_ATTACH) return 0;
 
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
-    set_gdi_shared();
+    init_gdi_shared();
+    if (!gdi_shared) return STATUS_NO_MEMORY;
+
     dpi = font_init();
     init_stock_objects( dpi );
     user_callbacks = ptr_in;
