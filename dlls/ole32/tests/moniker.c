@@ -3810,6 +3810,18 @@ todo_wine {
 
     IMoniker_Release(moniker);
 
+    /* RelativePathTo() */
+    hr = create_moniker_from_desc("CI1I2", &moniker1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = create_moniker_from_desc("CI2I3", &moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_RelativePathTo(moniker1, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    hr = IMoniker_RelativePathTo(moniker1, moniker2, &moniker3);
+    ok(hr == MK_E_NOTBINDABLE, "Unexpected hr %#x.\n", hr);
+
     IBindCtx_Release(bindctx);
 }
 
