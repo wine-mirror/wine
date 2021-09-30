@@ -72,13 +72,13 @@ static inline CompositeMonikerImpl *impl_from_IMarshal(IMarshal *iface)
     return CONTAINING_RECORD(iface, CompositeMonikerImpl, IMarshal_iface);
 }
 
-/* EnumMoniker data structure */
-typedef struct EnumMonikerImpl{
+typedef struct EnumMonikerImpl
+{
     IEnumMoniker IEnumMoniker_iface;
     LONG ref;
-    IMoniker** tabMoniker; /* dynamic table containing the enumerated monikers */
-    ULONG      tabSize; /* size of tabMoniker */
-    ULONG      currentPos;  /* index pointer on the current moniker */
+    IMoniker **monikers;
+    unsigned int count;
+    unsigned int pos;
 } EnumMonikerImpl;
 
 static inline EnumMonikerImpl *impl_from_IEnumMoniker(IEnumMoniker *iface)
@@ -86,7 +86,7 @@ static inline EnumMonikerImpl *impl_from_IEnumMoniker(IEnumMoniker *iface)
     return CONTAINING_RECORD(iface, EnumMonikerImpl, IEnumMoniker_iface);
 }
 
-static HRESULT EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,ULONG tabSize,ULONG currentPos,BOOL leftToRight,IEnumMoniker ** ppmk);
+static HRESULT create_enumerator(IMoniker **components, unsigned int count, BOOL forward, IEnumMoniker **ret);
 static HRESULT composite_get_rightmost(CompositeMonikerImpl *composite, IMoniker **left, IMoniker **rightmost);
 static HRESULT composite_get_leftmost(CompositeMonikerImpl *composite, IMoniker **leftmost);
 
@@ -492,21 +492,21 @@ static HRESULT composite_get_components_alloc(IMoniker *iface, unsigned int *cou
     return S_OK;
 }
 
-static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **ppenumMoniker)
+static HRESULT WINAPI CompositeMonikerImpl_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **ret_enum)
 {
     IMoniker **monikers;
     unsigned int count;
     HRESULT hr;
 
-    TRACE("%p, %d, %p\n", iface, forward, ppenumMoniker);
+    TRACE("%p, %d, %p\n", iface, forward, ret_enum);
 
-    if (!ppenumMoniker)
+    if (!ret_enum)
         return E_INVALIDARG;
 
     if (FAILED(hr = composite_get_components_alloc(iface, &count, &monikers)))
         return hr;
 
-    hr = EnumMonikerImpl_CreateEnumMoniker(monikers, count, 0, forward, ppenumMoniker);
+    hr = create_enumerator(monikers, count, forward, ret_enum);
     heap_free(monikers);
 
     return hr;
@@ -1280,36 +1280,30 @@ EnumMonikerImpl_AddRef(IEnumMoniker* iface)
 
 }
 
-/******************************************************************************
- *        EnumMonikerImpl_Release
- ******************************************************************************/
-static ULONG WINAPI
-EnumMonikerImpl_Release(IEnumMoniker* iface)
+static ULONG WINAPI EnumMonikerImpl_Release(IEnumMoniker *iface)
 {
-    EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
-    ULONG i;
-    ULONG ref;
-    TRACE("(%p)\n",This);
+    EnumMonikerImpl *e = impl_from_IEnumMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&e->ref);
+    unsigned int i;
 
-    ref = InterlockedDecrement(&This->ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    /* destroy the object if there are no more references to it */
-    if (ref == 0) {
-
-        for(i=0;i<This->tabSize;i++)
-            IMoniker_Release(This->tabMoniker[i]);
-
-        HeapFree(GetProcessHeap(),0,This->tabMoniker);
-        HeapFree(GetProcessHeap(),0,This);
+    if (!refcount)
+    {
+        for (i = 0; i < e->count; ++i)
+            IMoniker_Release(e->monikers[i]);
+        heap_free(e->monikers);
+        heap_free(e);
     }
-    return ref;
+
+    return refcount;
 }
 
 static HRESULT WINAPI EnumMonikerImpl_Next(IEnumMoniker *iface, ULONG count,
         IMoniker **m, ULONG *fetched)
 {
-    EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
-    ULONG i;
+    EnumMonikerImpl *e = impl_from_IEnumMoniker(iface);
+    unsigned int i;
 
     TRACE("%p, %u, %p, %p.\n", iface, count, m, fetched);
 
@@ -1319,9 +1313,9 @@ static HRESULT WINAPI EnumMonikerImpl_Next(IEnumMoniker *iface, ULONG count,
     *m = NULL;
 
     /* retrieve the requested number of moniker from the current position */
-    for(i=0;((This->currentPos < This->tabSize) && (i < count));i++)
+    for (i = 0; (e->pos < e->count) && (i < count); ++i)
     {
-        m[i] = This->tabMoniker[This->currentPos++];
+        m[i] = e->monikers[e->pos++];
         IMoniker_AddRef(m[i]);
     }
 
@@ -1333,30 +1327,28 @@ static HRESULT WINAPI EnumMonikerImpl_Next(IEnumMoniker *iface, ULONG count,
 
 static HRESULT WINAPI EnumMonikerImpl_Skip(IEnumMoniker *iface, ULONG count)
 {
-    EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
+    EnumMonikerImpl *e = impl_from_IEnumMoniker(iface);
 
     TRACE("%p, %u.\n", iface, count);
 
     if (!count)
         return S_OK;
 
-    if ((This->currentPos + count) >= This->tabSize)
+    if ((e->pos + count) >= e->count)
         return S_FALSE;
 
-    This->currentPos += count;
+    e->pos += count;
 
     return S_OK;
 }
 
-/******************************************************************************
- *        EnumMonikerImpl_Reset
- ******************************************************************************/
-static HRESULT WINAPI
-EnumMonikerImpl_Reset(IEnumMoniker* iface)
+static HRESULT WINAPI EnumMonikerImpl_Reset(IEnumMoniker* iface)
 {
-    EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
+    EnumMonikerImpl *e = impl_from_IEnumMoniker(iface);
 
-    This->currentPos=0;
+    TRACE("%p.\n", iface);
+
+    e->pos = 0;
 
     return S_OK;
 }
@@ -1384,59 +1376,34 @@ static const IEnumMonikerVtbl VT_EnumMonikerImpl =
     EnumMonikerImpl_Clone
 };
 
-/******************************************************************************
- *        EnumMonikerImpl_CreateEnumMoniker
- ******************************************************************************/
-static HRESULT
-EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker, ULONG tabSize,
-               ULONG currentPos, BOOL leftToRight, IEnumMoniker ** ppmk)
+static HRESULT create_enumerator(IMoniker **components, unsigned int count, BOOL forward, IEnumMoniker **ret)
 {
-    EnumMonikerImpl* newEnumMoniker;
-    ULONG i;
+    EnumMonikerImpl *object;
+    unsigned int i;
 
-    if (currentPos > tabSize)
-        return E_INVALIDARG;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    newEnumMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumMonikerImpl));
+    object->IEnumMoniker_iface.lpVtbl = &VT_EnumMonikerImpl;
+    object->ref = 1;
+    object->count = count;
 
-    if (newEnumMoniker == 0)
-        return STG_E_INSUFFICIENTMEMORY;
-
-    /* Initialize the virtual function table. */
-    newEnumMoniker->IEnumMoniker_iface.lpVtbl = &VT_EnumMonikerImpl;
-    newEnumMoniker->ref          = 1;
-
-    newEnumMoniker->tabSize=tabSize;
-    newEnumMoniker->currentPos=currentPos;
-
-    newEnumMoniker->tabMoniker=HeapAlloc(GetProcessHeap(),0,tabSize*sizeof(newEnumMoniker->tabMoniker[0]));
-
-    if (newEnumMoniker->tabMoniker==NULL) {
-        HeapFree(GetProcessHeap(), 0, newEnumMoniker);
+    if (!(object->monikers = heap_calloc(count, sizeof(*object->monikers))))
+    {
+        heap_free(object);
         return E_OUTOFMEMORY;
     }
 
-    if (leftToRight)
-        for (i=0;i<tabSize;i++){
+    for (i = 0; i < count; ++i)
+    {
+        object->monikers[i] = forward ? components[i] : components[count - i - 1];
+        IMoniker_AddRef(object->monikers[i]);
+    }
 
-            newEnumMoniker->tabMoniker[i]=tabMoniker[i];
-            IMoniker_AddRef(tabMoniker[i]);
-        }
-    else
-        for (i = tabSize; i > 0; i--){
-
-            newEnumMoniker->tabMoniker[tabSize-i]=tabMoniker[i - 1];
-            IMoniker_AddRef(tabMoniker[i - 1]);
-        }
-
-    *ppmk=&newEnumMoniker->IEnumMoniker_iface;
+    *ret = &object->IEnumMoniker_iface;
 
     return S_OK;
 }
-
-/********************************************************************************/
-/* Virtual function table for the CompositeMonikerImpl class which includes     */
-/* IPersist, IPersistStream and IMoniker functions.                             */
 
 static const IMonikerVtbl VT_CompositeMonikerImpl =
 {
