@@ -1078,13 +1078,6 @@ struct RTFTable
 # define RTFBorderCellBottom     0x32
 # define RTFBorderCellRight      0x33
 
-/*
- * Return pointer to new element of type t, or NULL
- * if no memory available.
- */
-
-# define        New(t)  (heap_alloc (sizeof (t)))
-
 /* Parser stack size */
 
 # define        maxStack      32

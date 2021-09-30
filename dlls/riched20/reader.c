@@ -813,7 +813,7 @@ static void ReadFontTbl(RTF_Info *info)
 			if (info->rtfClass == rtfEOF)
 				break;
 		}
-		fp = New (RTFFont);
+		fp = heap_alloc(sizeof(*fp));
 		if (fp == NULL) {
 			ERR ("cannot allocate font entry\n");
 			break;
@@ -986,7 +986,7 @@ static void ReadColorTbl(RTF_Info *info)
                         continue;
                 }
 
-		cp = New (RTFColor);
+		cp = heap_alloc(sizeof(*cp));
 		if (cp == NULL) {
 			ERR ("cannot allocate color entry\n");
 			break;
@@ -1036,7 +1036,7 @@ static void ReadStyleSheet(RTF_Info *info)
 			break;
 		if (RTFCheckCM (info, rtfGroup, rtfEndGroup))
 			break;
-		sp = New (RTFStyle);
+		sp = heap_alloc(sizeof(*sp));
 		if (sp == NULL) {
 			ERR ("cannot allocate stylesheet entry\n");
 			break;
@@ -1104,7 +1104,7 @@ static void ReadStyleSheet(RTF_Info *info)
 					sp->rtfSNextPar = info->rtfParam;
 					continue;
 				}
-				sep = New (RTFStyleElt);
+				sep = heap_alloc(sizeof(*sep));
 				if (sep == NULL)
                                 {
 					ERR ("cannot allocate style element\n");
