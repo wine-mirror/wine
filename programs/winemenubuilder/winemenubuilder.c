@@ -987,7 +987,6 @@ static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
 
 static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
 {
-    static const WCHAR openW[] = {'o','p','e','n',0};
     WCHAR *extension;
     WCHAR *icon = NULL;
     WCHAR *comma;
@@ -1012,7 +1011,7 @@ static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
     }
     else
     {
-        executable = assoc_query(ASSOCSTR_EXECUTABLE, extension, openW);
+        executable = assoc_query(ASSOCSTR_EXECUTABLE, extension, L"open");
         if (executable)
             hr = open_module_icon(executable, 0, ppStream);
     }
@@ -1025,9 +1024,7 @@ end:
 
 static HRESULT open_default_icon(IStream **ppStream)
 {
-    static const WCHAR user32W[] = {'u','s','e','r','3','2',0};
-
-    return open_module_icon(user32W, -(INT_PTR)IDI_WINLOGO, ppStream);
+    return open_module_icon(L"user32", -(INT_PTR)IDI_WINLOGO, ppStream);
 }
 
 static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream, ICONDIRENTRY **ppIconDirEntries, int *numEntries)
@@ -1069,7 +1066,6 @@ static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppSt
 
 static WCHAR *compute_native_identifier(int exeIndex, LPCWSTR icoPathW, LPCWSTR filename)
 {
-    static const WCHAR fmtW[] = {'%','0','4','X','_','%','.','*','s','.','%','d',0};
     unsigned short crc;
     const WCHAR *basename, *ext;
 
@@ -1082,7 +1078,7 @@ static WCHAR *compute_native_identifier(int exeIndex, LPCWSTR icoPathW, LPCWSTR 
     ext = wcsrchr(basename, '.');
     if (!ext) ext = basename + lstrlenW(basename);
 
-    return heap_wprintf(fmtW, crc, (int)(ext - basename), basename, exeIndex);
+    return heap_wprintf(L"%04X_%.*s.%d", crc, (int)(ext - basename), basename, exeIndex);
 }
 
 #ifdef __APPLE__
@@ -1110,7 +1106,6 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
                                    int numEntries, int exeIndex, LPCWSTR icoPathW,
                                    const WCHAR *destFilename, WCHAR **nativeIdentifier)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','%','s','.','i','c','n','s',0};
     struct {
         int index;
         int maxBits;
@@ -1178,7 +1173,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
 
     *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
     GetTempPathW( MAX_PATH, tmpdir );
-    icnsPath = heap_wprintf(fmtW, tmpdir, *nativeIdentifier);
+    icnsPath = heap_wprintf(L"%s\\%s.icns", tmpdir, *nativeIdentifier);
     zero.QuadPart = 0;
     hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
@@ -1201,7 +1196,6 @@ end:
 #else
 static void refresh_icon_cache(const WCHAR *iconsDir)
 {
-    static const WCHAR icnW[] = {'i','c','n',0};
     WCHAR buffer[MAX_PATH];
 
     /* The icon theme spec only requires the mtime on the "toplevel"
@@ -1209,7 +1203,7 @@ static void refresh_icon_cache(const WCHAR *iconsDir)
      * but on GNOME you have to create a file in that directory
      * instead. Creating a file also works on KDE, Xfce and LXDE.
      */
-    GetTempFileNameW( iconsDir, icnW, 0, buffer );
+    GetTempFileNameW( iconsDir, L"icn", 0, buffer );
     DeleteFileW( buffer );
 }
 
@@ -1217,16 +1211,13 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
                                    int numEntries, int exeIndex, LPCWSTR icoPathW,
                                    const WCHAR *destFilename, WCHAR **nativeIdentifier)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','i','c','o','n','s','\\','h','i','c','o','l','o','r',0};
-    static const WCHAR fmt2W[] = {'%','s','\\','%','d','x','%','d','\\','a','p','p','s',0};
-    static const WCHAR fmt3W[] = {'%','s','\\','%','s','.','p','n','g',0};
     int i;
     WCHAR *iconsDir;
     HRESULT hr = S_OK;
     LARGE_INTEGER zero;
 
     *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
-    iconsDir = heap_wprintf(fmtW, xdg_data_dir);
+    iconsDir = heap_wprintf(L"%s\\icons\\hicolor", xdg_data_dir);
 
     for (i = 0; i < numEntries; i++)
     {
@@ -1264,9 +1255,9 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
 
         w = iconDirEntries[bestIndex].bWidth ? iconDirEntries[bestIndex].bWidth : 256;
         h = iconDirEntries[bestIndex].bHeight ? iconDirEntries[bestIndex].bHeight : 256;
-        iconDir = heap_wprintf(fmt2W, iconsDir, w, h);
+        iconDir = heap_wprintf(L"%s\\%dx%d\\apps", iconsDir, w, h);
         create_directories(iconDir);
-        pngPath = heap_wprintf(fmt3W, iconDir, *nativeIdentifier);
+        pngPath = heap_wprintf(L"%s\\%s.png", iconDir, *nativeIdentifier);
         zero.QuadPart = 0;
         hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
         if (SUCCEEDED(hr))
@@ -1316,11 +1307,9 @@ end:
 
 static HKEY open_menus_reg_key(void)
 {
-    static const WCHAR Software_Wine_FileOpenMenuFilesW[] = {
-        'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','M','e','n','u','F','i','l','e','s',0};
     HKEY assocKey;
     DWORD ret;
-    ret = RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenMenuFilesW, &assocKey);
+    ret = RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\Wine\\MenuFiles", &assocKey);
     if (ret == ERROR_SUCCESS)
         return assocKey;
     SetLastError(ret);
@@ -1412,8 +1401,7 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const 
     name = PathFindFileNameW( linkname );
     if (!location)
     {
-        static const WCHAR fmtW[] = {'%','s','\\','%','s','.','d','e','s','k','t','o','p',0};
-        location = heap_wprintf(fmtW, xdg_desktop_dir, name);
+        location = heap_wprintf(L"%s\\%s.desktop", xdg_desktop_dir, name);
         needs_chmod = TRUE;
     }
 
@@ -1464,7 +1452,6 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const 
 
 static BOOL write_directory_entry(const WCHAR *directory, const WCHAR *location)
 {
-    static const WCHAR wineW[] = {'w','i','n','e',0};
     FILE *file;
 
     WINE_TRACE("(%s,%s)\n", wine_dbgstr_w(directory), wine_dbgstr_w(location));
@@ -1475,7 +1462,7 @@ static BOOL write_directory_entry(const WCHAR *directory, const WCHAR *location)
 
     fprintf(file, "[Desktop Entry]\n");
     fprintf(file, "Type=Directory\n");
-    if (wcscmp(directory, wineW) == 0)
+    if (wcscmp(directory, L"wine") == 0)
     {
         fprintf(file, "Name=Wine\n");
         fprintf(file, "Icon=wine\n");
@@ -1492,13 +1479,6 @@ static BOOL write_directory_entry(const WCHAR *directory, const WCHAR *location)
 
 static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','%','s',0};
-    static const WCHAR fmt2W[] = {'w','i','n','e','\\','%','s','.','d','e','s','k','t','o','p',0};
-    static const WCHAR fmt3W[] = {'%','s','\\','d','e','s','k','t','o','p','-','d','i','r','e','c','t','o','r','i','e','s','\\','%','s','%','s','.','d','i','r','e','c','t','o','r','y',0};
-    static const WCHAR mnuW[] = {'m','n','u',0};
-    static const WCHAR menuW[] = {'.','m','e','n','u',0};
-    static const WCHAR emptyW[] = {0};
-    static const WCHAR wineW[] = {'w','i','n','e','-',0};
     WCHAR tempfilename[MAX_PATH];
     FILE *tempfile = NULL;
     WCHAR *filename, *lastEntry, *menuPath;
@@ -1508,7 +1488,7 @@ static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
 
     WINE_TRACE("(%s)\n", wine_dbgstr_w(link));
 
-    GetTempFileNameW( xdg_menu_dir, mnuW, 0, tempfilename );
+    GetTempFileNameW( xdg_menu_dir, L"mnu", 0, tempfilename );
     if (!(tempfile = _wfopen( tempfilename, L"wb" ))) return FALSE;
 
     fprintf(tempfile, "<!DOCTYPE Menu PUBLIC \"-//freedesktop//DTD Menu 1.0//EN\"\n");
@@ -1516,7 +1496,7 @@ static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
     fprintf(tempfile, "<Menu>\n");
     fprintf(tempfile, "  <Name>Applications</Name>\n");
 
-    filename = heap_wprintf(fmt2W, link);
+    filename = heap_wprintf(L"wine\\%s.desktop", link);
     lastEntry = filename;
     for (i = 0; filename[i]; i++)
     {
@@ -1531,7 +1511,8 @@ static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
                     prefix, wchars_to_xml_text(filename));
             fprintf(tempfile, "    <Directory>%s%s.directory</Directory>\n",
                     prefix, wchars_to_xml_text(filename));
-            dir_file_name = heap_wprintf(fmt3W, xdg_data_dir, count ? emptyW : wineW, filename);
+            dir_file_name = heap_wprintf(L"%s\\desktop-directories\\%s%s.directory",
+                                         xdg_data_dir, count ? L"" : L"wine-", filename);
             if (GetFileAttributesW( dir_file_name ) == INVALID_FILE_ATTRIBUTES)
                 write_directory_entry(lastEntry, dir_file_name);
             heap_free(dir_file_name);
@@ -1549,8 +1530,8 @@ static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
          fprintf(tempfile, "  </Menu>\n");
     fprintf(tempfile, "</Menu>\n");
 
-    menuPath = heap_wprintf(fmtW, xdg_menu_dir, filename);
-    lstrcpyW(menuPath + lstrlenW(menuPath) - strlen(".desktop"), menuW);
+    menuPath = heap_wprintf(L"%s\\%s", xdg_menu_dir, filename);
+    lstrcpyW(menuPath + lstrlenW(menuPath) - lstrlenW(L".desktop"), L".menu");
 
     fclose(tempfile);
     ret = MoveFileExW( tempfilename, menuPath, MOVEFILE_REPLACE_EXISTING );
@@ -1566,7 +1547,6 @@ static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
 static BOOL write_menu_entry(const WCHAR *windows_link, const WCHAR *link, const WCHAR *path, const WCHAR *args,
                              const WCHAR *descr, const WCHAR *workdir, const WCHAR *icon, const WCHAR *wmclass)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','a','p','p','l','i','c','a','t','i','o','n','s','\\','w','i','n','e','\\','%','s','.','d','e','s','k','t','o','p',0};
     WCHAR *desktopPath;
     WCHAR *desktopDir;
     WCHAR *filename = NULL;
@@ -1576,7 +1556,7 @@ static BOOL write_menu_entry(const WCHAR *windows_link, const WCHAR *link, const
                wine_dbgstr_w(path), wine_dbgstr_w(args), wine_dbgstr_w(descr),
                wine_dbgstr_w(workdir), wine_dbgstr_w(icon), wine_dbgstr_w(wmclass));
 
-    desktopPath = heap_wprintf(fmtW, xdg_data_dir, link);
+    desktopPath = heap_wprintf(L"%s\\applications\\wine\\%s.desktop", xdg_data_dir, link);
     desktopDir = wcsrchr(desktopPath, '\\');
     *desktopDir = 0;
     if (!create_directories(desktopPath))
@@ -1820,12 +1800,11 @@ static BOOL next_line(FILE *file, char **line, int *size)
 
 static BOOL add_mimes(const WCHAR *dir, struct list *mime_types)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','m','i','m','e','\\','g','l','o','b','s',0};
     WCHAR *globs_filename;
     BOOL ret = TRUE;
     FILE *globs_file;
 
-    globs_filename = heap_wprintf(fmtW, dir);
+    globs_filename = heap_wprintf(L"%s\\mime\\globs", dir);
     globs_file = _wfopen( globs_filename, L"r" );
     if (globs_file) /* doesn't have to exist */
     {
@@ -1935,10 +1914,8 @@ static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
 
 static HKEY open_associations_reg_key(void)
 {
-    static const WCHAR Software_Wine_FileOpenAssociationsW[] = {
-        'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','F','i','l','e','O','p','e','n','A','s','s','o','c','i','a','t','i','o','n','s',0};
     HKEY assocKey;
-    if (RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenAssociationsW, &assocKey) == ERROR_SUCCESS)
+    if (RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\Wine\\FileOpenAssociations", &assocKey) == ERROR_SUCCESS)
         return assocKey;
     return NULL;
 }
@@ -1946,10 +1923,6 @@ static HKEY open_associations_reg_key(void)
 static BOOL has_association_changed(LPCWSTR extensionW, const WCHAR *mimeType, const WCHAR *progId,
                                     const WCHAR *appName, const WCHAR *openWithIcon)
 {
-    static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
-    static const WCHAR MimeTypeW[] = {'M','i','m','e','T','y','p','e',0};
-    static const WCHAR AppNameW[] = {'A','p','p','N','a','m','e',0};
-    static const WCHAR OpenWithIconW[] = {'O','p','e','n','W','i','t','h','I','c','o','n',0};
     HKEY assocKey;
     BOOL ret;
 
@@ -1959,22 +1932,22 @@ static BOOL has_association_changed(LPCWSTR extensionW, const WCHAR *mimeType, c
 
         ret = FALSE;
 
-        value = reg_get_valW(assocKey, extensionW, MimeTypeW);
+        value = reg_get_valW(assocKey, extensionW, L"MimeType");
         if (!value || wcscmp(value, mimeType))
             ret = TRUE;
         heap_free(value);
 
-        value = reg_get_valW(assocKey, extensionW, ProgIDW);
+        value = reg_get_valW(assocKey, extensionW, L"ProgID");
         if (!value || wcscmp(value, progId))
             ret = TRUE;
         heap_free(value);
 
-        value = reg_get_valW(assocKey, extensionW, AppNameW);
+        value = reg_get_valW(assocKey, extensionW, L"AppName");
         if (!value || wcscmp(value, appName))
             ret = TRUE;
         heap_free(value);
 
-        value = reg_get_valW(assocKey, extensionW, OpenWithIconW);
+        value = reg_get_valW(assocKey, extensionW, L"OpenWithIcon");
         if ((openWithIcon && !value) ||
             (!openWithIcon && value) ||
             (openWithIcon && value && wcscmp(value, openWithIcon)))
@@ -1994,11 +1967,6 @@ static BOOL has_association_changed(LPCWSTR extensionW, const WCHAR *mimeType, c
 static void update_association(LPCWSTR extension, const WCHAR *mimeType, const WCHAR *progId,
                                const WCHAR *appName, const WCHAR *desktopFile, const WCHAR *openWithIcon)
 {
-    static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
-    static const WCHAR MimeTypeW[] = {'M','i','m','e','T','y','p','e',0};
-    static const WCHAR AppNameW[] = {'A','p','p','N','a','m','e',0};
-    static const WCHAR DesktopFileW[] = {'D','e','s','k','t','o','p','F','i','l','e',0};
-    static const WCHAR OpenWithIconW[] = {'O','p','e','n','W','i','t','h','I','c','o','n',0};
     HKEY assocKey = NULL;
     HKEY subkey = NULL;
 
@@ -2015,14 +1983,14 @@ static void update_association(LPCWSTR extension, const WCHAR *mimeType, const W
         goto done;
     }
 
-    RegSetValueExW(subkey, MimeTypeW, 0, REG_SZ, (const BYTE*) mimeType, (lstrlenW(mimeType) + 1) * sizeof(WCHAR));
-    RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
-    RegSetValueExW(subkey, AppNameW, 0, REG_SZ, (const BYTE*) appName, (lstrlenW(appName) + 1) * sizeof(WCHAR));
-    RegSetValueExW(subkey, DesktopFileW, 0, REG_SZ, (const BYTE*) desktopFile, (lstrlenW(desktopFile) + 1) * sizeof(WCHAR));
+    RegSetValueExW(subkey, L"MimeType", 0, REG_SZ, (const BYTE*) mimeType, (lstrlenW(mimeType) + 1) * sizeof(WCHAR));
+    RegSetValueExW(subkey, L"ProgID", 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
+    RegSetValueExW(subkey, L"AppName", 0, REG_SZ, (const BYTE*) appName, (lstrlenW(appName) + 1) * sizeof(WCHAR));
+    RegSetValueExW(subkey, L"DesktopFile", 0, REG_SZ, (const BYTE*) desktopFile, (lstrlenW(desktopFile) + 1) * sizeof(WCHAR));
     if (openWithIcon)
-        RegSetValueExW(subkey, OpenWithIconW, 0, REG_SZ, (const BYTE*) openWithIcon, (lstrlenW(openWithIcon) + 1) * sizeof(WCHAR));
+        RegSetValueExW(subkey, L"OpenWithIcon", 0, REG_SZ, (const BYTE*) openWithIcon, (lstrlenW(openWithIcon) + 1) * sizeof(WCHAR));
     else
-        RegDeleteValueW(subkey, OpenWithIconW);
+        RegDeleteValueW(subkey, L"OpenWithIcon");
 
 done:
     RegCloseKey(assocKey);
@@ -2031,8 +1999,6 @@ done:
 
 static BOOL cleanup_associations(void)
 {
-    static const WCHAR openW[] = {'o','p','e','n',0};
-    static const WCHAR DesktopFileW[] = {'D','e','s','k','t','o','p','F','i','l','e',0};
     HKEY assocKey;
     BOOL hasChanged = FALSE;
     if ((assocKey = open_associations_reg_key()))
@@ -2056,10 +2022,10 @@ static BOOL cleanup_associations(void)
             if (ret == ERROR_SUCCESS)
             {
                 WCHAR *command;
-                command = assoc_query(ASSOCSTR_COMMAND, extensionW, openW);
+                command = assoc_query(ASSOCSTR_COMMAND, extensionW, L"open");
                 if (command == NULL)
                 {
-                    WCHAR *desktopFile = reg_get_valW(assocKey, extensionW, DesktopFileW);
+                    WCHAR *desktopFile = reg_get_valW(assocKey, extensionW, L"DesktopFile");
                     if (desktopFile)
                     {
                         WINE_TRACE("removing file type association for %s\n", wine_dbgstr_w(extensionW));
@@ -2091,7 +2057,6 @@ static BOOL cleanup_associations(void)
 static BOOL write_freedesktop_mime_type_entry(const WCHAR *packages_dir, const WCHAR *dot_extension,
                                               const WCHAR *mime_type, const WCHAR *comment)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','x','-','w','i','n','e','-','e','x','t','e','n','s','i','o','n','-','%','s','.','x','m','l',0};
     BOOL ret = FALSE;
     WCHAR *filename;
     FILE *packageFile;
@@ -2099,7 +2064,7 @@ static BOOL write_freedesktop_mime_type_entry(const WCHAR *packages_dir, const W
     WINE_TRACE("writing MIME type %s, extension=%s, comment=%s\n", wine_dbgstr_w(mime_type),
                wine_dbgstr_w(dot_extension), wine_dbgstr_w(comment));
 
-    filename = heap_wprintf(fmtW, packages_dir, dot_extension + 1);
+    filename = heap_wprintf(L"%s\\x-wine-extension-%s.xml", packages_dir, dot_extension + 1);
     packageFile = _wfopen( filename, L"wb" );
     if (packageFile)
     {
@@ -2122,23 +2087,17 @@ static BOOL write_freedesktop_mime_type_entry(const WCHAR *packages_dir, const W
 static BOOL is_extension_banned(LPCWSTR extension)
 {
     /* These are managed through external tools like wine.desktop, to evade malware created file type associations */
-    static const WCHAR comW[] = {'.','c','o','m',0};
-    static const WCHAR exeW[] = {'.','e','x','e',0};
-    static const WCHAR msiW[] = {'.','m','s','i',0};
-
-    if (!wcsicmp(extension, comW) ||
-        !wcsicmp(extension, exeW) ||
-        !wcsicmp(extension, msiW))
+    if (!wcsicmp(extension, L".com") ||
+        !wcsicmp(extension, L".exe") ||
+        !wcsicmp(extension, L".msi"))
         return TRUE;
     return FALSE;
 }
 
 static WCHAR *get_special_mime_type(LPCWSTR extension)
 {
-    static const WCHAR lnkW[] = {'.','l','n','k',0};
-    static const WCHAR shortcutW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','x','-','m','s','-','s','h','o','r','t','c','u','t',0};
-    if (!wcsicmp(extension, lnkW))
-        return xwcsdup(shortcutW);
+    if (!wcsicmp(extension, L".lnk"))
+        return xwcsdup(L"application/x-ms-shortcut");
     return NULL;
 }
 
@@ -2183,9 +2142,6 @@ static BOOL write_freedesktop_association_entry(const WCHAR *desktopPath, const 
 
 static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applications_dir)
 {
-    static const WCHAR wine_appW[] = {'A',' ','W','i','n','e',' ','a','p','p','l','i','c','a','t','i','o','n',0};
-    static const WCHAR progidfmtW[] = {'%','s','=','>','%','s',0};
-    static const WCHAR openW[] = {'o','p','e','n',0};
     struct wine_rb_tree mimeProgidTree = { winemenubuilder_rb_string_compare };
     struct list nativeMimeTypes = LIST_INIT(nativeMimeTypes);
     LSTATUS ret = 0;
@@ -2239,11 +2195,10 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
 
             if (mimeType == NULL)
             {
-                static const WCHAR extW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','x','-','w','i','n','e','-','e','x','t','e','n','s','i','o','n','-','%','s',0};
                 if (contentTypeW != NULL && wcschr(contentTypeW, '/'))
                     mimeType = xwcsdup(contentTypeW);
                 else if (!(mimeType = get_special_mime_type(extensionW)))
-                    mimeType = heap_wprintf(extW, &extensionW[1]);
+                    mimeType = heap_wprintf(L"application/x-wine-extension-%s", &extensionW[1]);
 
                 /* GNOME seems to ignore the <icon> tag in MIME packages,
                  * and the default name is more intuitive anyway.
@@ -2266,23 +2221,23 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
                 hasChanged = TRUE;
             }
 
-            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, openW);
+            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, L"open");
             if (commandW == NULL)
                 /* no command => no application is associated */
                 goto end;
 
-            executableW = assoc_query(ASSOCSTR_EXECUTABLE, extensionW, openW);
+            executableW = assoc_query(ASSOCSTR_EXECUTABLE, extensionW, L"open");
             if (executableW)
                 openWithIcon = compute_native_identifier(0, executableW, NULL);
 
-            friendlyAppName = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, openW);
-            if (!friendlyAppName) friendlyAppName = wine_appW;
+            friendlyAppName = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, L"open");
+            if (!friendlyAppName) friendlyAppName = L"A Wine application";
 
             progIdW = reg_get_valW(HKEY_CLASSES_ROOT, extensionW, NULL);
             if (!progIdW) goto end; /* no progID => not a file type association */
 
             /* Do not allow duplicate ProgIDs for a MIME type, it causes unnecessary duplication in Open dialogs */
-            mimeProgId = heap_wprintf(progidfmtW, mimeType, progIdW);
+            mimeProgId = heap_wprintf(L"%s=>%s", mimeType, progIdW);
             if (wine_rb_get(&mimeProgidTree, mimeProgId))
             {
                 heap_free(mimeProgId);
@@ -2298,8 +2253,8 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
 
             if (has_association_changed(extensionW, mimeType, progIdW, friendlyAppName, openWithIcon))
             {
-                static const WCHAR fmtW[] = {'%','s','\\','w','i','n','e','-','e','x','t','e','n','s','i','o','n','-','%','s','.','d','e','s','k','t','o','p',0};
-                WCHAR *desktopPath = heap_wprintf(fmtW, applications_dir, extensionW + 1 );
+                WCHAR *desktopPath = heap_wprintf(L"%s\\wine-extension-%s.desktop",
+                                                  applications_dir, extensionW + 1 );
                 if (write_freedesktop_association_entry(desktopPath, friendlyAppName, mimeType, progIdW, openWithIcon))
                 {
                     hasChanged = TRUE;
@@ -2454,7 +2409,6 @@ cleanup:
 
 static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link, BOOL bWait )
 {
-    static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
     WCHAR *link_name, *icon_name = NULL;
     DWORD csidl = -1;
     LPWSTR urlPath = NULL;
@@ -2544,9 +2498,9 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         goto cleanup;
     }
     if (in_desktop_dir(csidl))
-        r = !write_desktop_entry(NULL, NULL, link_name, startW, urlPath, NULL, NULL, icon_name, NULL);
+        r = !write_desktop_entry(NULL, NULL, link_name, L"start.exe", urlPath, NULL, NULL, icon_name, NULL);
     else
-        r = !write_menu_entry(link, link_name, startW, urlPath, NULL, NULL, icon_name, NULL);
+        r = !write_menu_entry(link, link_name, L"start.exe", urlPath, NULL, NULL, icon_name, NULL);
     ret = (r == 0);
     ReleaseSemaphore(hSem, 1, NULL);
 
@@ -2725,9 +2679,6 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
 
 static void RefreshFileTypeAssociations(void)
 {
-    static const WCHAR fmtW[] = {'%','s','\\','m','i','m','e',0};
-    static const WCHAR fmt2W[] = {'%','s','\\','p','a','c','k','a','g','e','s',0};
-    static const WCHAR fmt3W[] = {'%','s','\\','a','p','p','l','i','c','a','t','i','o','n','s',0};
     HANDLE hSem = NULL;
     WCHAR *mime_dir;
     WCHAR *packages_dir;
@@ -2742,11 +2693,11 @@ static void RefreshFileTypeAssociations(void)
         return;
     }
 
-    mime_dir = heap_wprintf(fmtW, xdg_data_dir);
-    packages_dir = heap_wprintf(fmt2W, mime_dir);
+    mime_dir = heap_wprintf(L"%s\\mime", xdg_data_dir);
+    packages_dir = heap_wprintf(L"%s\\packages", mime_dir);
     create_directories(packages_dir);
 
-    applications_dir = heap_wprintf(fmt3W, xdg_data_dir);
+    applications_dir = heap_wprintf(L"%s\\applications", xdg_data_dir);
     create_directories(applications_dir);
 
     hasChanged = generate_associations(packages_dir, applications_dir);
@@ -2993,12 +2944,6 @@ static BOOL associations_enabled(void)
  */
 int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int show)
 {
-    static const WCHAR dash_aW[] = {'-','a',0};
-    static const WCHAR dash_rW[] = {'-','r',0};
-    static const WCHAR dash_tW[] = {'-','t',0};
-    static const WCHAR dash_uW[] = {'-','u',0};
-    static const WCHAR dash_wW[] = {'-','w',0};
-
     LPWSTR token = NULL, p;
     BOOL bWait = FALSE;
     BOOL bURL = FALSE;
@@ -3020,22 +2965,22 @@ int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sh
         token = next_token( &p );
 	if( !token )
 	    break;
-        if( !wcscmp( token, dash_aW ) )
+        if( !wcscmp( token, L"-a" ) )
         {
             if (associations_enabled())
                 RefreshFileTypeAssociations();
             continue;
         }
-        if( !wcscmp( token, dash_rW ) )
+        if( !wcscmp( token, L"-r" ) )
         {
             cleanup_menus();
             continue;
         }
-        if( !wcscmp( token, dash_wW ) )
+        if( !wcscmp( token, L"-w" ) )
             bWait = TRUE;
-        else if ( !wcscmp( token, dash_uW ) )
+        else if ( !wcscmp( token, L"-u" ) )
             bURL = TRUE;
-        else if ( !wcscmp( token, dash_tW ) )
+        else if ( !wcscmp( token, L"-t" ) )
         {
             WCHAR *lnkFile = next_token( &p );
             if (lnkFile)
