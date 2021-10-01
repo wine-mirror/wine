@@ -149,12 +149,17 @@ struct wg_parser_event
 };
 C_ASSERT(sizeof(struct wg_parser_event) == 40);
 
+enum wg_parser_type
+{
+    WG_PARSER_DECODEBIN,
+    WG_PARSER_AVIDEMUX,
+    WG_PARSER_MPEGAUDIOPARSE,
+    WG_PARSER_WAVPARSE,
+};
+
 struct unix_funcs
 {
-    struct wg_parser *(CDECL *wg_decodebin_parser_create)(void);
-    struct wg_parser *(CDECL *wg_avi_parser_create)(void);
-    struct wg_parser *(CDECL *wg_mpeg_audio_parser_create)(void);
-    struct wg_parser *(CDECL *wg_wave_parser_create)(void);
+    struct wg_parser *(CDECL *wg_parser_create)(enum wg_parser_type type);
     void (CDECL *wg_parser_destroy)(struct wg_parser *parser);
 
     HRESULT (CDECL *wg_parser_connect)(struct wg_parser *parser, uint64_t file_size);

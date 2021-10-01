@@ -1421,7 +1421,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     if (FAILED(hr = MFAllocateWorkQueue(&object->async_commands_queue)))
         goto fail;
 
-    if (!(parser = unix_funcs->wg_decodebin_parser_create()))
+    if (!(parser = unix_funcs->wg_parser_create(WG_PARSER_DECODEBIN)))
     {
         hr = E_OUTOFMEMORY;
         goto fail;

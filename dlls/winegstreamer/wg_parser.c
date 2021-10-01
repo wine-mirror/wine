@@ -49,9 +49,11 @@ typedef enum
 GST_DEBUG_CATEGORY_STATIC(wine);
 #define GST_CAT_DEFAULT wine
 
+typedef BOOL (*init_gst_cb)(struct wg_parser *parser);
+
 struct wg_parser
 {
-    BOOL (*init_gst)(struct wg_parser *parser);
+    init_gst_cb init_gst;
 
     struct wg_parser_stream **streams;
     unsigned int stream_count;
@@ -1844,8 +1846,16 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     return TRUE;
 }
 
-static struct wg_parser *wg_parser_create(void)
+static struct wg_parser * CDECL wg_parser_create(enum wg_parser_type type)
 {
+    static const init_gst_cb init_funcs[] =
+    {
+        [WG_PARSER_DECODEBIN] = decodebin_parser_init_gst,
+        [WG_PARSER_AVIDEMUX] = avi_parser_init_gst,
+        [WG_PARSER_MPEGAUDIOPARSE] = mpeg_audio_parser_init_gst,
+        [WG_PARSER_WAVPARSE] = wave_parser_init_gst,
+    };
+
     struct wg_parser *parser;
 
     if (!(parser = calloc(1, sizeof(*parser))))
@@ -1856,44 +1866,9 @@ static struct wg_parser *wg_parser_create(void)
     pthread_cond_init(&parser->read_cond, NULL);
     pthread_cond_init(&parser->read_done_cond, NULL);
     parser->flushing = true;
+    parser->init_gst = init_funcs[type];
 
     GST_DEBUG("Created winegstreamer parser %p.\n", parser);
-    return parser;
-}
-
-static struct wg_parser * CDECL wg_decodebin_parser_create(void)
-{
-    struct wg_parser *parser;
-
-    if ((parser = wg_parser_create()))
-        parser->init_gst = decodebin_parser_init_gst;
-    return parser;
-}
-
-static struct wg_parser * CDECL wg_avi_parser_create(void)
-{
-    struct wg_parser *parser;
-
-    if ((parser = wg_parser_create()))
-        parser->init_gst = avi_parser_init_gst;
-    return parser;
-}
-
-static struct wg_parser * CDECL wg_mpeg_audio_parser_create(void)
-{
-    struct wg_parser *parser;
-
-    if ((parser = wg_parser_create()))
-        parser->init_gst = mpeg_audio_parser_init_gst;
-    return parser;
-}
-
-static struct wg_parser * CDECL wg_wave_parser_create(void)
-{
-    struct wg_parser *parser;
-
-    if ((parser = wg_parser_create()))
-        parser->init_gst = wave_parser_init_gst;
     return parser;
 }
 
@@ -1915,10 +1890,7 @@ static void CDECL wg_parser_destroy(struct wg_parser *parser)
 
 static const struct unix_funcs funcs =
 {
-    wg_decodebin_parser_create,
-    wg_avi_parser_create,
-    wg_mpeg_audio_parser_create,
-    wg_wave_parser_create,
+    wg_parser_create,
     wg_parser_destroy,
 
     wg_parser_connect,
