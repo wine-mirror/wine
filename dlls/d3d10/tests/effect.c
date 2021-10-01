@@ -5769,6 +5769,55 @@ static DWORD fx_test_resource_variable[] =
     0x00070000, 0x02120000, 0x00070000, 0x00000000, 0x00070000, 0x057a0000, 0x00000000,
 };
 
+#if 0
+Texture2D t_a[2];
+
+SamplerState s[2] : register(s1);
+
+float4 PS( float4 pos : SV_POSITION ) : SV_Target
+{
+    return t_a[1].Sample(s[1], float2(0, 0));
+}
+
+technique10 rsrc_test
+{
+    pass p0
+    {
+        SetPixelShader(CompileShader(ps_4_0, PS()));
+    }
+}
+#endif
+static DWORD fx_test_resource_variable2[] =
+{
+    0x43425844, 0xb62313ac, 0x8116090b, 0xdc1d2951, 0xfc18ca42, 0x00000001, 0x0000035a, 0x00000001,
+    0x00000024, 0x30315846, 0x0000032e, 0xfeff1001, 0x00000000, 0x00000000, 0x00000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x0000028a, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+    0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x74786554,
+    0x32657275, 0x00040044, 0x00020000, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x000c0000,
+    0x5f740000, 0x61530061, 0x656c706d, 0x61745372, 0x2e006574, 0x02000000, 0x02000000, 0x00000000,
+    0x00000000, 0x00000000, 0x15000000, 0x73000000, 0x72737200, 0x65745f63, 0x70007473, 0x02180030,
+    0x58440000, 0xb2424342, 0x3c889e83, 0xb8b8fc18, 0x749f2920, 0x0001877a, 0x02180000, 0x00050000,
+    0x00340000, 0x00c80000, 0x00fc0000, 0x01300000, 0x019c0000, 0x44520000, 0x008c4645, 0x00000000,
+    0x00000000, 0x00020000, 0x001c0000, 0x04000000, 0x0100ffff, 0x00620000, 0x005c0000, 0x00030000,
+    0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00020000, 0x00010000, 0x005e0000, 0x00020000,
+    0x00050000, 0x00040000, 0xffff0000, 0x0000ffff, 0x00020000, 0x000c0000, 0x00730000, 0x00615f74,
+    0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d,
+    0x31207265, 0x00312e30, 0x5349abab, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000,
+    0x00010000, 0x00030000, 0x00000000, 0x000f0000, 0x56530000, 0x534f505f, 0x4f495449, 0x534f004e,
+    0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000, 0x00000000,
+    0x000f0000, 0x56530000, 0x7261545f, 0x00746567, 0x4853abab, 0x00645244, 0x00400000, 0x00190000,
+    0x005a0000, 0x60000300, 0x00020010, 0x18580000, 0x70000400, 0x00010010, 0x55550000, 0x00650000,
+    0x20f20300, 0x00000010, 0x00450000, 0x20f20c00, 0x00000010, 0x40020000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x7e460000, 0x00010010, 0x60000000, 0x00020010, 0x003e0000, 0x54530100,
+    0x00745441, 0x00020000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,
+    0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00660000, 0x00000000,
+    0x002a0000, 0x000e0000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00570000, 0x003b0000, 0x00000000,
+    0xffff0000, 0x0000ffff, 0x00000000, 0x00000000, 0x00590000, 0x00010000, 0x00000000, 0x00630000,
+    0x00010000, 0x00000000, 0x00070000, 0x00000000, 0x00070000, 0x02820000, 0x00000000,
+};
+
 static void create_effect_texture_resource(ID3D10Device *device, ID3D10ShaderResourceView **srv,
         ID3D10Texture2D **tex)
 {
@@ -5812,10 +5861,13 @@ static ID3D10EffectShaderResourceVariable *get_effect_shader_resource_variable_(
 
 static void test_effect_resource_variable(void)
 {
+    ID3D10SamplerState *samplers[D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT];
     ID3D10ShaderResourceView *srv0, *srv_a[2], *srv_tmp[2];
     ID3D10EffectShaderResourceVariable *t0, *t_a, *t_a_0;
     ID3D10EffectTechnique *technique;
     ID3D10Texture2D *tex0, *tex_a[2];
+    ID3D10EffectSamplerVariable *s;
+    ID3D10SamplerState *sampler[2];
     D3D10_EFFECT_DESC effect_desc;
     D3D10_PASS_DESC pass_desc;
     ID3D10EffectVariable *var;
@@ -5935,6 +5987,45 @@ static void test_effect_resource_variable(void)
         ID3D10ShaderResourceView_Release(srv_a[i]);
         ID3D10Texture2D_Release(tex_a[i]);
     }
+
+    effect->lpVtbl->Release(effect);
+
+    hr = create_effect(fx_test_resource_variable2, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    technique = effect->lpVtbl->GetTechniqueByName(effect, "rsrc_test");
+    ok(!!technique, "Got unexpected technique %p.\n", technique);
+    pass = technique->lpVtbl->GetPassByName(technique, "p0");
+    ok(!!pass, "Got unexpected pass %p.\n", pass);
+
+    var = effect->lpVtbl->GetVariableByName(effect, "s");
+    ok(var->lpVtbl->IsValid(var), "Expected valid variable.\n");
+
+    s = var->lpVtbl->AsSampler(var);
+    ok(s->lpVtbl->IsValid(s), "Expected valid sample variable.\n");
+
+    hr = s->lpVtbl->GetSampler(s, 0, &sampler[0]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = s->lpVtbl->GetSampler(s, 1, &sampler[1]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetSamplers(device, 0, ARRAY_SIZE(samplers), samplers);
+    for (i = 0; i < ARRAY_SIZE(samplers); ++i)
+    {
+        if (i == 1 || i == 2)
+        {
+            ok(samplers[i] == sampler[i - 1], "Unexpected sampler at %u.\n", i);
+        }
+        else
+            ok(!samplers[i], "Unexpected sampler at %u.\n", i);
+        if (samplers[i])
+            ID3D10SamplerState_Release(samplers[i]);
+    }
+    for (i = 0; i < ARRAY_SIZE(sampler); ++i)
+        ID3D10SamplerState_Release(sampler[i]);
 
     effect->lpVtbl->Release(effect);
 

@@ -3973,6 +3973,29 @@ static void update_buffer(ID3D10Device *device, struct d3d10_effect_variable *v)
     b->changed = FALSE;
 }
 
+static void set_sampler(ID3D10Device *device, D3D10_SHADER_VARIABLE_TYPE shader_type,
+        struct d3d10_effect_variable *v, unsigned int bind_point)
+{
+    switch (shader_type)
+    {
+        case D3D10_SVT_VERTEXSHADER:
+            ID3D10Device_VSSetSamplers(device, bind_point, 1, &v->u.state.object.sampler);
+            break;
+
+        case D3D10_SVT_PIXELSHADER:
+            ID3D10Device_PSSetSamplers(device, bind_point, 1, &v->u.state.object.sampler);
+            break;
+
+        case D3D10_SVT_GEOMETRYSHADER:
+            ID3D10Device_GSSetSamplers(device, bind_point, 1, &v->u.state.object.sampler);
+            break;
+
+        default:
+            WARN("Incorrect shader type to bind sampler.\n");
+            break;
+    }
+}
+
 static void apply_shader_resources(ID3D10Device *device, struct ID3D10EffectShaderVariable *variable)
 {
     struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(variable);
@@ -3980,7 +4003,7 @@ static void apply_shader_resources(ID3D10Device *device, struct ID3D10EffectShad
     struct d3d10_effect_shader_resource *sr;
     struct d3d10_effect_variable *rsrc_v;
     ID3D10ShaderResourceView **srv;
-    unsigned int i;
+    unsigned int i, j;
 
     for (i = 0; i < sv->resource_count; ++i)
     {
@@ -4045,27 +4068,14 @@ static void apply_shader_resources(ID3D10Device *device, struct ID3D10EffectShad
                 break;
 
             case D3D10_SIT_SAMPLER:
-                switch (v->type->basetype)
+                if (!rsrc_v->type->element_count)
                 {
-                    case D3D10_SVT_VERTEXSHADER:
-                        ID3D10Device_VSSetSamplers(device, sr->bind_point, sr->bind_count,
-                                &rsrc_v->u.state.object.sampler);
-                        break;
-
-                    case D3D10_SVT_PIXELSHADER:
-                        ID3D10Device_PSSetSamplers(device, sr->bind_point, sr->bind_count,
-                                &rsrc_v->u.state.object.sampler);
-                        break;
-
-                    case D3D10_SVT_GEOMETRYSHADER:
-                        ID3D10Device_GSSetSamplers(device, sr->bind_point, sr->bind_count,
-                                &rsrc_v->u.state.object.sampler);
-                        break;
-
-                    default:
-                        WARN("Incorrect shader type to bind sampler.\n");
-                        break;
+                    set_sampler(device, v->type->basetype, rsrc_v, sr->bind_point);
+                    break;
                 }
+
+                for (j = 0; j < sr->bind_count; ++j)
+                    set_sampler(device, v->type->basetype, &rsrc_v->elements[j], sr->bind_point + j);
                 break;
 
             default:
