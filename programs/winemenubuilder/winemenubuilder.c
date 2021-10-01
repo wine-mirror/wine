@@ -189,9 +189,10 @@ struct rb_string_entry
 
 DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
 
-static char *xdg_config_dir;
-static char *xdg_data_dir;
-static char *xdg_desktop_dir;
+static WCHAR *xdg_menu_dir;
+static char *xdg_data_dir_unix;
+static WCHAR *xdg_data_dir;
+static WCHAR xdg_desktop_dir[MAX_PATH];
 
 
 /* Utility routines */
@@ -322,26 +323,6 @@ static void winemenubuilder_rb_destroy(struct wine_rb_entry *entry, void *contex
     heap_free(t);
 }
 
-static void write_xml_text(FILE *file, const char *text)
-{
-    int i;
-    for (i = 0; text[i]; i++)
-    {
-        if (text[i] == '&')
-            fputs("&amp;", file);
-        else if (text[i] == '<')
-            fputs("&lt;", file);
-        else if (text[i] == '>')
-            fputs("&gt;", file);
-        else if (text[i] == '\'')
-            fputs("&apos;", file);
-        else if (text[i] == '"')
-            fputs("&quot;", file);
-        else
-            fputc(text[i], file);
-    }
-}
-
 static BOOL create_directories(char *directory)
 {
     BOOL ret = TRUE;
@@ -362,6 +343,22 @@ static BOOL create_directories(char *directory)
     return ret;
 }
 
+static BOOL create_directoriesW(WCHAR *directory)
+{
+    WCHAR *p = PathSkipRootW( directory );
+
+    for ( ; p && *p; p++)
+    {
+        if (*p == '\\')
+        {
+            *p = 0;
+            CreateDirectoryW( directory, NULL );
+            *p = '\\';
+        }
+    }
+    return CreateDirectoryW( directory, NULL ) || GetLastError() == ERROR_ALREADY_EXISTS;
+}
+
 static char* wchars_to_utf8_chars(LPCWSTR string)
 {
     char *ret;
@@ -371,21 +368,38 @@ static char* wchars_to_utf8_chars(LPCWSTR string)
     return ret;
 }
 
-static char* wchars_to_unix_chars(LPCWSTR string)
-{
-    char *ret;
-    INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = xmalloc(size);
-    WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
-    return ret;
-}
-
 static WCHAR* utf8_chars_to_wchars(LPCSTR string)
 {
     WCHAR *ret;
     INT size = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
     ret = xmalloc(size * sizeof(WCHAR));
     MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
+    return ret;
+}
+
+static char *wchars_to_xml_text(const WCHAR *string)
+{
+    int i, pos;
+    char *text = wchars_to_utf8_chars( string );
+    char *ret = xmalloc( 6 * strlen(text) + 1 );
+
+    for (i = pos = 0; text[i]; i++)
+    {
+        if (text[i] == '&')
+            pos += sprintf(ret + pos, "&amp;");
+        else if (text[i] == '<')
+            pos += sprintf(ret + pos, "&lt;");
+        else if (text[i] == '>')
+            pos += sprintf(ret + pos, "&gt;");
+        else if (text[i] == '\'')
+            pos += sprintf(ret + pos, "&apos;");
+        else if (text[i] == '"')
+            pos += sprintf(ret + pos, "&quot;");
+        else
+            ret[pos++] = text[i];
+    }
+    heap_free( text );
+    ret[pos] = 0;
     return ret;
 }
 
@@ -1279,7 +1293,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
     LARGE_INTEGER zero;
 
     *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
-    iconsDir = heap_printf("%s/icons/hicolor", xdg_data_dir);
+    iconsDir = heap_printf("%s/icons/hicolor", xdg_data_dir_unix);
 
     for (i = 0; i < numEntries; i++)
     {
@@ -1380,26 +1394,20 @@ static HKEY open_menus_reg_key(void)
     return NULL;
 }
 
-static DWORD register_menus_entry(const char *unix_file, const WCHAR *windows_file)
+static DWORD register_menus_entry(const WCHAR *menu_file, const WCHAR *windows_file)
 {
-    WCHAR *unix_fileW;
-    INT size;
     HKEY hkey;
     DWORD ret;
 
-    size = MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, NULL, 0);
-    unix_fileW = xmalloc(size * sizeof(WCHAR));
-    MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, unix_fileW, size);
     hkey = open_menus_reg_key();
     if (hkey)
     {
-        ret = RegSetValueExW(hkey, unix_fileW, 0, REG_SZ, (const BYTE*)windows_file,
+        ret = RegSetValueExW(hkey, menu_file, 0, REG_SZ, (const BYTE*)windows_file,
                     (strlenW(windows_file) + 1) * sizeof(WCHAR));
         RegCloseKey(hkey);
     }
     else
         ret = GetLastError();
-    heap_free(unix_fileW);
     return ret;
 }
 
@@ -1453,32 +1461,38 @@ static LPSTR escape(LPCWSTR arg)
     return utf8_string;
 }
 
-static BOOL write_desktop_entry(const WCHAR *link, const char *location, const WCHAR *linkname,
+static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const WCHAR *linkname,
                                 const WCHAR *path, const WCHAR *args, const WCHAR *descr,
                                 const WCHAR *workdir, const WCHAR *icon, const WCHAR *wmclass)
 {
     FILE *file;
     char *workdir_unix;
-    char *dest_name = NULL;
-    const char *name;
+    char *dest_name;
+    int needs_chmod = FALSE;
+    const WCHAR *name;
     const char *prefix = getenv("WINEPREFIX");
     const char *home = getenv("HOME");
 
-    WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_w(link), wine_dbgstr_a(location),
+    WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_w(link), wine_dbgstr_w(location),
                wine_dbgstr_w(linkname), wine_dbgstr_w(path), wine_dbgstr_w(args),
                wine_dbgstr_w(descr), wine_dbgstr_w(workdir), wine_dbgstr_w(icon),
                wine_dbgstr_w(wmclass));
 
-    name = wchars_to_utf8_chars( PathFindFileNameW( linkname ));
+    name = PathFindFileNameW( linkname );
+    if (!location)
+    {
+        static const WCHAR fmtW[] = {'%','s','\\','%','s','.','d','e','s','k','t','o','p',0};
+        location = heap_wprintf(fmtW, xdg_desktop_dir, name);
+        needs_chmod = TRUE;
+    }
+    dest_name = wine_get_unix_file_name( location );
 
-    if (!location) location = dest_name = heap_printf("%s/%s.desktop", xdg_desktop_dir, name);
-
-    file = fopen(location, "w");
+    file = fopen(dest_name, "w");
     if (file == NULL)
         return FALSE;
 
     fprintf(file, "[Desktop Entry]\n");
-    fprintf(file, "Name=%s\n", name);
+    fprintf(file, "Name=%s\n", wchars_to_utf8_chars(name));
     fprintf(file, "Exec=" );
     if (prefix)
         fprintf(file, "env WINEPREFIX=\"%s\" ", prefix);
@@ -1500,7 +1514,7 @@ static BOOL write_desktop_entry(const WCHAR *link, const char *location, const W
 
     fclose(file);
 
-    if (dest_name) chmod( dest_name, 0755 );
+    if (needs_chmod) chmod( dest_name, 0755 );
 
     if (link)
     {
@@ -1512,26 +1526,27 @@ static BOOL write_desktop_entry(const WCHAR *link, const char *location, const W
     return TRUE;
 }
 
-static BOOL write_directory_entry(const char *directory, const char *location)
+static BOOL write_directory_entry(const WCHAR *directory, const WCHAR *location)
 {
+    static const WCHAR wineW[] = {'w','i','n','e',0};
     FILE *file;
 
-    WINE_TRACE("(%s,%s)\n", wine_dbgstr_a(directory), wine_dbgstr_a(location));
+    WINE_TRACE("(%s,%s)\n", wine_dbgstr_w(directory), wine_dbgstr_w(location));
 
-    file = fopen(location, "w");
+    file = fopen(wine_get_unix_file_name(location), "w");
     if (file == NULL)
         return FALSE;
 
     fprintf(file, "[Desktop Entry]\n");
     fprintf(file, "Type=Directory\n");
-    if (strcmp(directory, "wine") == 0)
+    if (strcmpW(directory, wineW) == 0)
     {
         fprintf(file, "Name=Wine\n");
         fprintf(file, "Icon=wine\n");
     }
     else
     {
-        fprintf(file, "Name=%s\n", directory);
+        fprintf(file, "Name=%s\n", wchars_to_utf8_chars(directory));
         fprintf(file, "Icon=folder\n");
     }
 
@@ -1539,98 +1554,75 @@ static BOOL write_directory_entry(const char *directory, const char *location)
     return TRUE;
 }
 
-static BOOL write_menu_file(const WCHAR *link, const char *filename)
+static BOOL write_menu_file(const WCHAR *windows_link, const WCHAR *link)
 {
-    char *tempfilename;
+    static const WCHAR fmtW[] = {'%','s','\\','%','s',0};
+    static const WCHAR fmt2W[] = {'w','i','n','e','\\','%','s','.','d','e','s','k','t','o','p',0};
+    static const WCHAR fmt3W[] = {'%','s','\\','d','e','s','k','t','o','p','-','d','i','r','e','c','t','o','r','i','e','s','\\','%','s','%','s','.','d','i','r','e','c','t','o','r','y',0};
+    static const WCHAR mnuW[] = {'m','n','u',0};
+    static const WCHAR menuW[] = {'.','m','e','n','u',0};
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR wineW[] = {'w','i','n','e','-',0};
+    WCHAR tempfilename[MAX_PATH];
     FILE *tempfile = NULL;
-    char *lastEntry;
-    char *name = NULL;
-    char *menuPath = NULL;
+    WCHAR *filename, *lastEntry, *menuPath;
     int i;
     int count = 0;
     BOOL ret = FALSE;
 
-    WINE_TRACE("(%s)\n", wine_dbgstr_a(filename));
+    WINE_TRACE("(%s)\n", wine_dbgstr_w(link));
 
-    while (1)
-    {
-        int tempfd;
-        tempfilename = heap_printf("%s/wine-menu-XXXXXX", xdg_config_dir);
-        tempfd = mkstemps(tempfilename, 0);
-        if (tempfd >= 0)
-        {
-            tempfile = fdopen(tempfd, "w");
-            if (tempfile)
-                break;
-            close(tempfd);
-            goto end;
-        }
-        else if (errno == EEXIST)
-        {
-            heap_free(tempfilename);
-            continue;
-        }
-        heap_free(tempfilename);
-    }
+    GetTempFileNameW( xdg_menu_dir, mnuW, 0, tempfilename );
+    if (!(tempfile = fopen( wine_get_unix_file_name( tempfilename ), "w" ))) return FALSE;
 
     fprintf(tempfile, "<!DOCTYPE Menu PUBLIC \"-//freedesktop//DTD Menu 1.0//EN\"\n");
     fprintf(tempfile, "\"http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd\">\n");
     fprintf(tempfile, "<Menu>\n");
     fprintf(tempfile, "  <Name>Applications</Name>\n");
 
-    name = xmalloc(lstrlenA(filename) + 1);
-    lastEntry = name;
+    filename = heap_wprintf(fmt2W, link);
+    lastEntry = filename;
     for (i = 0; filename[i]; i++)
     {
-        name[i] = filename[i];
-        if (filename[i] == '/')
+        if (filename[i] == '\\')
         {
-            char *dir_file_name;
-            struct stat st;
-            name[i] = 0;
+            WCHAR *dir_file_name;
+            const char *prefix = count ? "" : "wine-";
+
+            filename[i] = 0;
             fprintf(tempfile, "  <Menu>\n");
-            fprintf(tempfile, "    <Name>%s", count ? "" : "wine-");
-            write_xml_text(tempfile, name);
-            fprintf(tempfile, "</Name>\n");
-            fprintf(tempfile, "    <Directory>%s", count ? "" : "wine-");
-            write_xml_text(tempfile, name);
-            fprintf(tempfile, ".directory</Directory>\n");
-            dir_file_name = heap_printf("%s/desktop-directories/%s%s.directory",
-                xdg_data_dir, count ? "" : "wine-", name);
-            if (stat(dir_file_name, &st) != 0 && errno == ENOENT)
+            fprintf(tempfile, "    <Name>%s%s</Name>\n",
+                    prefix, wchars_to_xml_text(filename));
+            fprintf(tempfile, "    <Directory>%s%s.directory</Directory>\n",
+                    prefix, wchars_to_xml_text(filename));
+            dir_file_name = heap_wprintf(fmt3W, xdg_data_dir, count ? emptyW : wineW, filename);
+            if (GetFileAttributesW( dir_file_name ) == INVALID_FILE_ATTRIBUTES)
                 write_directory_entry(lastEntry, dir_file_name);
             heap_free(dir_file_name);
-            name[i] = '-';
-            lastEntry = &name[i+1];
+            filename[i] = '-';
+            lastEntry = &filename[i+1];
             ++count;
         }
     }
-    name[i] = 0;
+    filename[i] = 0;
 
     fprintf(tempfile, "    <Include>\n");
-    fprintf(tempfile, "      <Filename>");
-    write_xml_text(tempfile, name);
-    fprintf(tempfile, "</Filename>\n");
+    fprintf(tempfile, "      <Filename>%s</Filename>\n", wchars_to_xml_text(filename));
     fprintf(tempfile, "    </Include>\n");
     for (i = 0; i < count; i++)
          fprintf(tempfile, "  </Menu>\n");
     fprintf(tempfile, "</Menu>\n");
 
-    menuPath = heap_printf("%s/%s", xdg_config_dir, name);
-    strcpy(menuPath + strlen(menuPath) - strlen(".desktop"), ".menu");
-    ret = TRUE;
+    menuPath = heap_wprintf(fmtW, xdg_menu_dir, filename);
+    strcpyW(menuPath + strlenW(menuPath) - strlen(".desktop"), menuW);
 
-end:
-    if (tempfile)
-        fclose(tempfile);
+    fclose(tempfile);
+    ret = MoveFileExW( tempfilename, menuPath, MOVEFILE_REPLACE_EXISTING );
     if (ret)
-        ret = (rename(tempfilename, menuPath) == 0);
-    if (!ret && tempfilename)
-        remove(tempfilename);
-    heap_free(tempfilename);
-    if (ret)
-        register_menus_entry(menuPath, link);
-    heap_free(name);
+        register_menus_entry(menuPath, windows_link);
+    else
+        DeleteFileW( tempfilename );
+    heap_free(filename);
     heap_free(menuPath);
     return ret;
 }
@@ -1638,40 +1630,36 @@ end:
 static BOOL write_menu_entry(const WCHAR *windows_link, const WCHAR *link, const WCHAR *path, const WCHAR *args,
                              const WCHAR *descr, const WCHAR *workdir, const WCHAR *icon, const WCHAR *wmclass)
 {
-    char *linkname, *p;
-    char *desktopPath = NULL;
-    char *desktopDir;
-    char *filename = NULL;
+    static const WCHAR fmtW[] = {'%','s','\\','a','p','p','l','i','c','a','t','i','o','n','s','\\','w','i','n','e','\\','%','s','.','d','e','s','k','t','o','p',0};
+    WCHAR *desktopPath;
+    WCHAR *desktopDir;
+    WCHAR *filename = NULL;
     BOOL ret = TRUE;
 
     WINE_TRACE("(%s, %s, %s, %s, %s, %s, %s, %s)\n", wine_dbgstr_w(windows_link), wine_dbgstr_w(link),
                wine_dbgstr_w(path), wine_dbgstr_w(args), wine_dbgstr_w(descr),
                wine_dbgstr_w(workdir), wine_dbgstr_w(icon), wine_dbgstr_w(wmclass));
 
-    linkname = wchars_to_unix_chars( link );
-    for (p = linkname; *p; p++) if (*p == '\\') *p = '/';
-
-    desktopPath = heap_printf("%s/applications/wine/%s.desktop", xdg_data_dir, linkname);
-    desktopDir = strrchr(desktopPath, '/');
+    desktopPath = heap_wprintf(fmtW, xdg_data_dir, link);
+    desktopDir = strrchrW(desktopPath, '\\');
     *desktopDir = 0;
-    if (!create_directories(desktopPath))
+    if (!create_directoriesW(desktopPath))
     {
-        WINE_WARN("couldn't make parent directories for %s\n", wine_dbgstr_a(desktopPath));
+        WINE_WARN("couldn't make parent directories for %s\n", wine_dbgstr_w(desktopPath));
         ret = FALSE;
         goto end;
     }
-    *desktopDir = '/';
+    *desktopDir = '\\';
     if (!write_desktop_entry(windows_link, desktopPath, link, path, args, descr, workdir, icon, wmclass))
     {
-        WINE_WARN("couldn't make desktop entry %s\n", wine_dbgstr_a(desktopPath));
+        WINE_WARN("couldn't make desktop entry %s\n", wine_dbgstr_w(desktopPath));
         ret = FALSE;
         goto end;
     }
 
-    filename = heap_printf("wine/%s.desktop", linkname);
-    if (!write_menu_file(windows_link, filename))
+    if (!write_menu_file(windows_link, link))
     {
-        WINE_WARN("couldn't make menu file %s\n", wine_dbgstr_a(filename));
+        WINE_WARN("couldn't make menu file %s\n", wine_dbgstr_w(filename));
         ret = FALSE;
     }
 
@@ -2198,18 +2186,9 @@ static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const WC
     {
         fprintf(packageFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         fprintf(packageFile, "<mime-info xmlns=\"http://www.freedesktop.org/standards/shared-mime-info\">\n");
-        fprintf(packageFile, "  <mime-type type=\"");
-        write_xml_text(packageFile, wchars_to_utf8_chars(mime_type));
-        fprintf(packageFile, "\">\n");
-        fprintf(packageFile, "    <glob pattern=\"*");
-        write_xml_text(packageFile, wchars_to_utf8_chars(dot_extension));
-        fprintf(packageFile, "\"/>\n");
-        if (comment)
-        {
-            fprintf(packageFile, "    <comment>");
-            write_xml_text(packageFile, wchars_to_utf8_chars(comment));
-            fprintf(packageFile, "</comment>\n");
-        }
+        fprintf(packageFile, "  <mime-type type=\"%s\">\n", wchars_to_xml_text(mime_type));
+        fprintf(packageFile, "    <glob pattern=\"*%s\"/>\n", wchars_to_xml_text(dot_extension));
+        if (comment) fprintf(packageFile, "    <comment>%s</comment>\n", wchars_to_xml_text(comment));
         fprintf(packageFile, "  </mime-type>\n");
         fprintf(packageFile, "</mime-info>\n");
         ret = TRUE;
@@ -2840,16 +2819,16 @@ static void RefreshFileTypeAssociations(void)
         goto end;
     }
 
-    mime_dir = heap_printf("%s/mime", xdg_data_dir);
+    mime_dir = heap_printf("%s/mime", xdg_data_dir_unix);
     create_directories(mime_dir);
 
     packages_dir = heap_printf("%s/packages", mime_dir);
     create_directories(packages_dir);
 
-    applications_dir = heap_printf("%s/applications", xdg_data_dir);
+    applications_dir = heap_printf("%s/applications", xdg_data_dir_unix);
     create_directories(applications_dir);
 
-    hasChanged = generate_associations(xdg_data_dir, packages_dir, applications_dir);
+    hasChanged = generate_associations(xdg_data_dir_unix, packages_dir, applications_dir);
     hasChanged |= cleanup_associations();
     if (hasChanged)
     {
@@ -2906,17 +2885,14 @@ static void cleanup_menus(void)
             }
             if (lret == ERROR_SUCCESS)
             {
-                char *unix_file = wchars_to_unix_chars(value);
-
                 if (GetFileAttributesW( data ) == INVALID_FILE_ATTRIBUTES)
                 {
-                    WINE_TRACE("removing menu related file %s\n", unix_file);
-                    remove(unix_file);
+                    WINE_TRACE("removing menu related file %s\n", debugstr_w(value));
+                    DeleteFileW( value );
                     RegDeleteValueW(hkey, value);
                 }
                 else
                     i++;
-                heap_free(unix_file);
             }
             else if (lret != ERROR_NO_MORE_ITEMS)
                 WINE_ERR("error %d reading registry\n", lret);
@@ -2925,8 +2901,6 @@ static void cleanup_menus(void)
         }
         RegCloseKey(hkey);
     }
-    else
-        WINE_ERR("error opening registry key, menu cleanup failed\n");
 }
 
 static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
@@ -3055,31 +3029,28 @@ static WCHAR *next_token( LPWSTR *p )
 
 static BOOL init_xdg(void)
 {
-    char *buffer;
-    WCHAR shellDesktopPath[MAX_PATH];
-    HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, shellDesktopPath);
-    if (SUCCEEDED(hr))
-        xdg_desktop_dir = wine_get_unix_file_name(shellDesktopPath);
-    if (xdg_desktop_dir == NULL)
-    {
-        WINE_ERR("error looking up the desktop directory\n");
-        return FALSE;
-    }
+    static const WCHAR fmtW[] = {'%','s','\\','d','e','s','k','t','o','p','-','d','i','r','e','c','t','o','r','i','e','s',0};
+    WCHAR *buffer;
+    char *dir;
+    HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, xdg_desktop_dir);
+
+    if (FAILED(hr)) return FALSE;
 
     if (getenv("XDG_CONFIG_HOME"))
-        xdg_config_dir = heap_printf("%s/menus/applications-merged", getenv("XDG_CONFIG_HOME"));
+        dir = heap_printf("%s/menus/applications-merged", getenv("XDG_CONFIG_HOME"));
     else
-        xdg_config_dir = heap_printf("%s/.config/menus/applications-merged", getenv("HOME"));
+        dir = heap_printf("%s/.config/menus/applications-merged", getenv("HOME"));
+    xdg_menu_dir = wine_get_dos_file_name( dir );
+    create_directoriesW(xdg_menu_dir);
 
-    create_directories(xdg_config_dir);
     if (getenv("XDG_DATA_HOME"))
-        xdg_data_dir = xstrdup(getenv("XDG_DATA_HOME"));
+        xdg_data_dir_unix = xstrdup(getenv("XDG_DATA_HOME"));
     else
-        xdg_data_dir = heap_printf("%s/.local/share", getenv("HOME"));
+        xdg_data_dir_unix = heap_printf("%s/.local/share", getenv("HOME"));
+    xdg_data_dir = wine_get_dos_file_name( xdg_data_dir_unix );
 
-    create_directories(xdg_data_dir);
-    buffer = heap_printf("%s/desktop-directories", xdg_data_dir);
-    mkdir(buffer, 0777);
+    buffer = heap_wprintf(fmtW, xdg_data_dir);
+    create_directoriesW(buffer);
     heap_free(buffer);
     return TRUE;
 }
