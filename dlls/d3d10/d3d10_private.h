@@ -223,7 +223,6 @@ struct d3d10_effect_pass
 
     struct d3d10_effect_technique *technique;
     char *name;
-    DWORD start;
     DWORD object_count;
     DWORD annotation_count;
     struct d3d10_effect_object *objects;
