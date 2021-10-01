@@ -2656,12 +2656,12 @@ cleanup:
 static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
     RECT bgRect, textRect;
-    HFONT font = infoPtr->font;
-    HFONT hPrevFont = font ? SelectObject(hDC, font) : NULL;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
     WCHAR *text;
+
+    if (infoPtr->font) SelectObject(hDC, infoPtr->font);
 
     GetClientRect(infoPtr->hwnd, &bgRect);
     GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &bgRect, &textRect);
@@ -2672,7 +2672,7 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
     /* Send erase notifications */
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
-    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (IsThemeBackgroundPartiallyTransparent(theme, BP_PUSHBUTTON, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
@@ -2687,7 +2687,7 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     /* Send paint notifications */
     nmcd.dwDrawStage = CDDS_PREPAINT;
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
-    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (!(cdrf & CDRF_DOERASE) && (text = get_button_text(infoPtr)))
     {
@@ -2700,7 +2700,7 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         nmcd.dwDrawStage = CDDS_POSTPAINT;
         SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     }
-    if (cdrf & CDRF_SKIPPOSTPAINT) goto cleanup;
+    if (cdrf & CDRF_SKIPPOSTPAINT) return;
 
     if (focused)
     {
@@ -2716,9 +2716,6 @@ static void PB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
         DrawFocusRect( hDC, &focusRect );
     }
-
-cleanup:
-    if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
 static void CB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
