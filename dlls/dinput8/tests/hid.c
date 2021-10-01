@@ -5259,14 +5259,6 @@ static void test_force_feedback_joystick( void )
         .report_len = 2,
         .report_buf = {1, 0x01},
     };
-    struct hid_expect expect_dc_reset_todo =
-    {
-        .code = IOCTL_HID_WRITE_REPORT,
-        .todo = TRUE,
-        .report_id = 1,
-        .report_len = 2,
-        .report_buf = {1, 0x01},
-    };
 
     const DIDEVICEINSTANCEW expect_devinst =
     {
@@ -5775,7 +5767,7 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
     ok( hr == DI_OK, "IDirectInputDevice8_SetCooperativeLevel returned: %#x\n", hr );
 
-    set_hid_expect( file, &expect_dc_reset_todo, sizeof(expect_dc_reset_todo) );
+    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Acquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
@@ -5821,7 +5813,7 @@ static void test_force_feedback_joystick( void )
 
     test_periodic_effect( device, file );
 
-    set_hid_expect( file, &expect_dc_reset_todo, sizeof(expect_dc_reset_todo) );
+    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "IDirectInputDevice8_Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
