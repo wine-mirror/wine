@@ -120,6 +120,17 @@ static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputD
                               struct hid_joystick, base );
 }
 
+struct hid_joystick_effect
+{
+    IDirectInputEffect IDirectInputEffect_iface;
+    LONG ref;
+};
+
+static inline struct hid_joystick_effect *impl_from_IDirectInputEffect( IDirectInputEffect *iface )
+{
+    return CONTAINING_RECORD( iface, struct hid_joystick_effect, IDirectInputEffect_iface );
+}
+
 static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
 {
     switch (usage_page)
@@ -803,16 +814,39 @@ static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, D
     return S_OK;
 }
 
+static HRESULT hid_joystick_effect_create( IDirectInputEffect **out );
+
 static HRESULT WINAPI hid_joystick_CreateEffect( IDirectInputDevice8W *iface, const GUID *guid,
                                                  const DIEFFECT *params, IDirectInputEffect **out,
                                                  IUnknown *outer )
 {
-    FIXME( "iface %p, guid %s, params %p, out %p, outer %p stub!\n", iface, debugstr_guid( guid ),
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD flags = DIEP_ALLPARAMS;
+    HRESULT hr;
+
+    TRACE( "iface %p, guid %s, params %p, out %p, outer %p\n", iface, debugstr_guid( guid ),
            params, out, outer );
 
     if (!out) return E_POINTER;
+    *out = NULL;
 
-    return DIERR_UNSUPPORTED;
+    if (!(impl->dev_caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (FAILED(hr = hid_joystick_effect_create( out ))) return hr;
+
+    hr = IDirectInputEffect_Initialize( *out, DINPUT_instance, impl->base.dinput->dwVersion, guid );
+    if (FAILED(hr)) goto failed;
+
+    if (!params) return DI_OK;
+    if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE))
+        flags |= DIEP_NODOWNLOAD;
+    hr = IDirectInputEffect_SetParameters( *out, params, flags );
+    if (FAILED(hr)) goto failed;
+    return hr;
+
+failed:
+    IDirectInputEffect_Release( *out );
+    *out = NULL;
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_EnumEffects( IDirectInputDevice8W *iface, LPDIENUMEFFECTSCALLBACKW callback,
@@ -1721,3 +1755,134 @@ const struct dinput_device joystick_hid_device =
     hid_joystick_enum_device,
     hid_joystick_create_device,
 };
+
+static HRESULT WINAPI hid_joystick_effect_QueryInterface( IDirectInputEffect *iface, REFIID iid, void **out )
+{
+    TRACE( "iface %p, iid %s, out %p\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IDirectInputEffect ))
+    {
+        IDirectInputEffect_AddRef( iface );
+        *out = iface;
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI hid_joystick_effect_AddRef( IDirectInputEffect *iface )
+{
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %u.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
+{
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %u.\n", iface, ref );
+    if (!ref) HeapFree( GetProcessHeap(), 0, impl );
+    return ref;
+}
+
+static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface, HINSTANCE inst,
+                                                      DWORD version, REFGUID guid )
+{
+    FIXME( "iface %p, inst %p, version %u, guid %s stub!\n", iface, inst, version, debugstr_guid( guid ) );
+    return DI_OK;
+}
+
+static HRESULT WINAPI hid_joystick_effect_GetEffectGuid( IDirectInputEffect *iface, GUID *guid )
+{
+    FIXME( "iface %p, guid %p stub!\n", iface, guid );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *iface, DIEFFECT *params, DWORD flags )
+{
+    FIXME( "iface %p, params %p, flags %#x stub!\n", iface, params, flags );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *iface,
+                                                         const DIEFFECT *params, DWORD flags )
+{
+    FIXME( "iface %p, params %p, flags %#x stub!\n", iface, params, flags );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_Start( IDirectInputEffect *iface, DWORD iterations, DWORD flags )
+{
+    FIXME( "iface %p, iterations %u, flags %#x stub!\n", iface, iterations, flags );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_Stop( IDirectInputEffect *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *iface, DWORD *status )
+{
+    FIXME( "iface %p, status %p stub!\n", iface, status );
+
+    if (!status) return E_POINTER;
+
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_effect_Escape( IDirectInputEffect *iface, DIEFFESCAPE *escape )
+{
+    FIXME( "iface %p, escape %p stub!\n", iface, escape );
+    return DIERR_UNSUPPORTED;
+}
+
+static IDirectInputEffectVtbl hid_joystick_effect_vtbl =
+{
+    /*** IUnknown methods ***/
+    hid_joystick_effect_QueryInterface,
+    hid_joystick_effect_AddRef,
+    hid_joystick_effect_Release,
+    /*** IDirectInputEffect methods ***/
+    hid_joystick_effect_Initialize,
+    hid_joystick_effect_GetEffectGuid,
+    hid_joystick_effect_GetParameters,
+    hid_joystick_effect_SetParameters,
+    hid_joystick_effect_Start,
+    hid_joystick_effect_Stop,
+    hid_joystick_effect_GetEffectStatus,
+    hid_joystick_effect_Download,
+    hid_joystick_effect_Unload,
+    hid_joystick_effect_Escape,
+};
+
+static HRESULT hid_joystick_effect_create( IDirectInputEffect **out )
+{
+    struct hid_joystick_effect *impl;
+
+    if (!(impl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*impl) )))
+        return DIERR_OUTOFMEMORY;
+    impl->IDirectInputEffect_iface.lpVtbl = &hid_joystick_effect_vtbl;
+    impl->ref = 1;
+
+    *out = &impl->IDirectInputEffect_iface;
+    return DI_OK;
+}

@@ -5066,12 +5066,13 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     hr = IDirectInputDevice8_CreateEffect( device, NULL, NULL, &effect, NULL );
     todo_wine
     ok( hr == E_POINTER, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    if (hr == DI_OK) IDirectInputEffect_Release( effect );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_NULL, NULL, &effect, NULL );
     todo_wine
     ok( hr == DIERR_DEVICENOTREG, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
+    if (hr == DI_OK) IDirectInputEffect_Release( effect );
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
     if (hr != DI_OK) return;
 
