@@ -1179,7 +1179,6 @@ static void test_MkParseDisplayName(void)
     IEnumMoniker *spEM3  = NULL;
 
     DWORD pdwReg1=0;
-    DWORD grflags=0;
     DWORD pdwReg2=0;
     IRunningObjectTable * pprot=NULL;
 
@@ -1388,13 +1387,10 @@ todo_wine
 
     matchCnt = count_moniker_matches(pbc, spEM1);
 
-    grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
-    hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk1, &pdwReg1);
+    hr = IRunningObjectTable_Register(pprot, ROTFLAGS_REGISTRATIONKEEPSALIVE, lpEM1, pmk1, &pdwReg1);
     ok(hr == S_OK, "Failed to register object, hr %#x.\n", hr);
 
-    grflags=0;
-    grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
-    hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk2, &pdwReg2);
+    hr = IRunningObjectTable_Register(pprot, ROTFLAGS_REGISTRATIONKEEPSALIVE, lpEM1, pmk2, &pdwReg2);
     ok(hr == S_OK, "Failed to register object, hr %#x.\n", hr);
 
     hr = IRunningObjectTable_EnumRunning(pprot, &spEM2);
