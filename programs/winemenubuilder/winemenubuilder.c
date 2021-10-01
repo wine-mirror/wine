@@ -190,7 +190,6 @@ struct rb_string_entry
 DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
 
 static WCHAR *xdg_menu_dir;
-static char *xdg_data_dir_unix;
 static WCHAR *xdg_data_dir;
 static WCHAR xdg_desktop_dir[MAX_PATH];
 
@@ -323,27 +322,7 @@ static void winemenubuilder_rb_destroy(struct wine_rb_entry *entry, void *contex
     heap_free(t);
 }
 
-static BOOL create_directories(char *directory)
-{
-    BOOL ret = TRUE;
-    int i;
-
-    for (i = 0; directory[i]; i++)
-    {
-        if (i > 0 && directory[i] == '/')
-        {
-            directory[i] = 0;
-            mkdir(directory, 0777);
-            directory[i] = '/';
-        }
-    }
-    if (mkdir(directory, 0777) && errno != EEXIST)
-       ret = FALSE;
-
-    return ret;
-}
-
-static BOOL create_directoriesW(WCHAR *directory)
+static BOOL create_directories(WCHAR *directory)
 {
     WCHAR *p = PathSkipRootW( directory );
 
@@ -1325,7 +1304,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
         w = iconDirEntries[bestIndex].bWidth ? iconDirEntries[bestIndex].bWidth : 256;
         h = iconDirEntries[bestIndex].bHeight ? iconDirEntries[bestIndex].bHeight : 256;
         iconDir = heap_wprintf(fmt2W, iconsDir, w, h);
-        create_directoriesW(iconDir);
+        create_directories(iconDir);
         pngPath = heap_wprintf(fmt3W, iconDir, *nativeIdentifier);
         zero.QuadPart = 0;
         hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
@@ -1636,7 +1615,7 @@ static BOOL write_menu_entry(const WCHAR *windows_link, const WCHAR *link, const
     desktopPath = heap_wprintf(fmtW, xdg_data_dir, link);
     desktopDir = strrchrW(desktopPath, '\\');
     *desktopDir = 0;
-    if (!create_directoriesW(desktopPath))
+    if (!create_directories(desktopPath))
     {
         WINE_WARN("couldn't make parent directories for %s\n", wine_dbgstr_w(desktopPath));
         ret = FALSE;
@@ -1875,14 +1854,15 @@ static BOOL next_line(FILE *file, char **line, int *size)
     return FALSE;
 }
 
-static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
+static BOOL add_mimes(const WCHAR *dir, struct list *mime_types)
 {
-    char *globs_filename = NULL;
+    static const WCHAR fmtW[] = {'%','s','\\','m','i','m','e','\\','g','l','o','b','s',0};
+    WCHAR *globs_filename;
     BOOL ret = TRUE;
     FILE *globs_file;
 
-    globs_filename = heap_printf("%s/mime/globs", xdg_data_dir);
-    globs_file = fopen(globs_filename, "r");
+    globs_filename = heap_wprintf(fmtW, dir);
+    globs_file = fopen(wine_get_unix_file_name(globs_filename), "r");
     if (globs_file) /* doesn't have to exist */
     {
         char *line = NULL;
@@ -1920,11 +1900,12 @@ static void free_native_mime_types(struct list *native_mime_types)
     }
 }
 
-static BOOL build_native_mime_types(const char *xdg_data_home, struct list *mime_types)
+static BOOL build_native_mime_types(struct list *mime_types)
 {
     char *xdg_data_dirs;
     const char *begin;
     char *end;
+    WCHAR *dos_name;
     BOOL ret;
 
     xdg_data_dirs = getenv("XDG_DATA_DIRS");
@@ -1933,19 +1914,26 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list *mime
     else
         xdg_data_dirs = xstrdup(xdg_data_dirs);
 
-    ret = add_mimes(xdg_data_home, mime_types);
+    ret = add_mimes(xdg_data_dir, mime_types);
     if (ret)
     {
         for (begin = xdg_data_dirs; (end = strchr(begin, ':')); begin = end + 1)
         {
             *end = '\0';
-            ret = add_mimes(begin, mime_types);
+            if ((dos_name = wine_get_dos_file_name( begin )))
+            {
+                ret = add_mimes(dos_name, mime_types);
+                heap_free( dos_name );
+            }
             *end = ':';
             if (!ret)
                 break;
         }
-        if (ret)
-            ret = add_mimes(begin, mime_types);
+        if (ret && (dos_name = wine_get_dos_file_name( begin )))
+        {
+            ret = add_mimes(dos_name, mime_types);
+            heap_free( dos_name );
+        }
     }
     heap_free(xdg_data_dirs);
 
@@ -1988,18 +1976,6 @@ static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
         if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
             return ret;
         heap_free(ret);
-    }
-    return NULL;
-}
-
-static CHAR* reg_get_val_utf8(HKEY key, LPCWSTR subkey, LPCWSTR name)
-{
-    WCHAR *valW = reg_get_valW(key, subkey, name);
-    if (valW)
-    {
-        char *val = wchars_to_utf8_chars(valW);
-        heap_free(valW);
-        return val;
     }
     return NULL;
 }
@@ -2063,7 +2039,7 @@ static BOOL has_association_changed(LPCWSTR extensionW, const WCHAR *mimeType, c
 }
 
 static void update_association(LPCWSTR extension, const WCHAR *mimeType, const WCHAR *progId,
-                               const WCHAR *appName, LPCSTR desktopFile, const WCHAR *openWithIcon)
+                               const WCHAR *appName, const WCHAR *desktopFile, const WCHAR *openWithIcon)
 {
     static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
     static const WCHAR MimeTypeW[] = {'M','i','m','e','T','y','p','e',0};
@@ -2072,7 +2048,6 @@ static void update_association(LPCWSTR extension, const WCHAR *mimeType, const W
     static const WCHAR OpenWithIconW[] = {'O','p','e','n','W','i','t','h','I','c','o','n',0};
     HKEY assocKey = NULL;
     HKEY subkey = NULL;
-    WCHAR *desktopFileW = NULL;
 
     assocKey = open_associations_reg_key();
     if (assocKey == NULL)
@@ -2087,12 +2062,10 @@ static void update_association(LPCWSTR extension, const WCHAR *mimeType, const W
         goto done;
     }
 
-    desktopFileW = utf8_chars_to_wchars(desktopFile);
-
     RegSetValueExW(subkey, MimeTypeW, 0, REG_SZ, (const BYTE*) mimeType, (lstrlenW(mimeType) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, AppNameW, 0, REG_SZ, (const BYTE*) appName, (lstrlenW(appName) + 1) * sizeof(WCHAR));
-    RegSetValueExW(subkey, DesktopFileW, 0, REG_SZ, (const BYTE*) desktopFileW, (lstrlenW(desktopFileW) + 1) * sizeof(WCHAR));
+    RegSetValueExW(subkey, DesktopFileW, 0, REG_SZ, (const BYTE*) desktopFile, (lstrlenW(desktopFile) + 1) * sizeof(WCHAR));
     if (openWithIcon)
         RegSetValueExW(subkey, OpenWithIconW, 0, REG_SZ, (const BYTE*) openWithIcon, (lstrlenW(openWithIcon) + 1) * sizeof(WCHAR));
     else
@@ -2101,7 +2074,6 @@ static void update_association(LPCWSTR extension, const WCHAR *mimeType, const W
 done:
     RegCloseKey(assocKey);
     RegCloseKey(subkey);
-    heap_free(desktopFileW);
 }
 
 static BOOL cleanup_associations(void)
@@ -2134,11 +2106,11 @@ static BOOL cleanup_associations(void)
                 command = assoc_query(ASSOCSTR_COMMAND, extensionW, openW);
                 if (command == NULL)
                 {
-                    char *desktopFile = reg_get_val_utf8(assocKey, extensionW, DesktopFileW);
+                    WCHAR *desktopFile = reg_get_valW(assocKey, extensionW, DesktopFileW);
                     if (desktopFile)
                     {
                         WINE_TRACE("removing file type association for %s\n", wine_dbgstr_w(extensionW));
-                        remove(desktopFile);
+                        DeleteFileW(desktopFile);
                     }
                     RegDeleteKeyW(assocKey, extensionW);
                     hasChanged = TRUE;
@@ -2163,18 +2135,19 @@ static BOOL cleanup_associations(void)
     return hasChanged;
 }
 
-static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const WCHAR *dot_extension,
+static BOOL write_freedesktop_mime_type_entry(const WCHAR *packages_dir, const WCHAR *dot_extension,
                                               const WCHAR *mime_type, const WCHAR *comment)
 {
+    static const WCHAR fmtW[] = {'%','s','\\','x','-','w','i','n','e','-','e','x','t','e','n','s','i','o','n','-','%','s','.','x','m','l',0};
     BOOL ret = FALSE;
-    char *filename;
+    WCHAR *filename;
     FILE *packageFile;
 
     WINE_TRACE("writing MIME type %s, extension=%s, comment=%s\n", wine_dbgstr_w(mime_type),
                wine_dbgstr_w(dot_extension), wine_dbgstr_w(comment));
 
-    filename = heap_printf("%s/x-wine-extension-%s.xml", packages_dir, wchars_to_utf8_chars(dot_extension + 1));
-    packageFile = fopen(filename, "w");
+    filename = heap_wprintf(fmtW, packages_dir, dot_extension + 1);
+    packageFile = fopen(wine_get_unix_file_name(filename), "w");
     if (packageFile)
     {
         fprintf(packageFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -2188,7 +2161,7 @@ static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const WC
         fclose(packageFile);
     }
     else
-        WINE_ERR("error writing file %s\n", filename);
+        WINE_ERR("error writing file %s\n", debugstr_w(filename));
     heap_free(filename);
     return ret;
 }
@@ -2216,7 +2189,7 @@ static WCHAR *get_special_mime_type(LPCWSTR extension)
     return NULL;
 }
 
-static BOOL write_freedesktop_association_entry(const char *desktopPath, const WCHAR *friendlyAppName,
+static BOOL write_freedesktop_association_entry(const WCHAR *desktopPath, const WCHAR *friendlyAppName,
                                                 const WCHAR *mimeType, const WCHAR *progId,
                                                 const WCHAR *openWithIcon)
 {
@@ -2227,9 +2200,9 @@ static BOOL write_freedesktop_association_entry(const char *desktopPath, const W
 
     WINE_TRACE("friendlyAppName=%s, MIME type %s, progID=%s, icon=%s to file %s\n",
                wine_dbgstr_w(friendlyAppName), wine_dbgstr_w(mimeType),
-               wine_dbgstr_w(progId), wine_dbgstr_w(openWithIcon), wine_dbgstr_a(desktopPath));
+               wine_dbgstr_w(progId), wine_dbgstr_w(openWithIcon), wine_dbgstr_w(desktopPath));
 
-    desktop = fopen(desktopPath, "w");
+    desktop = fopen(wine_get_unix_file_name(desktopPath), "w");
     if (desktop)
     {
         fprintf(desktop, "[Desktop Entry]\n");
@@ -2250,11 +2223,11 @@ static BOOL write_freedesktop_association_entry(const char *desktopPath, const W
         fclose(desktop);
     }
     else
-        WINE_ERR("error writing association file %s\n", wine_dbgstr_a(desktopPath));
+        WINE_ERR("error writing association file %s\n", wine_dbgstr_w(desktopPath));
     return ret;
 }
 
-static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
+static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applications_dir)
 {
     static const WCHAR wine_appW[] = {'A',' ','W','i','n','e',' ','a','p','p','l','i','c','a','t','i','o','n',0};
     static const WCHAR progidfmtW[] = {'%','s','=','>','%','s',0};
@@ -2265,7 +2238,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
     int i;
     BOOL hasChanged = FALSE;
 
-    if (!build_native_mime_types(xdg_data_home, &nativeMimeTypes))
+    if (!build_native_mime_types(&nativeMimeTypes))
     {
         WINE_ERR("could not build native MIME types\n");
         return FALSE;
@@ -2371,7 +2344,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
             if (has_association_changed(extensionW, mimeType, progIdW, friendlyAppName, openWithIcon))
             {
-                char *desktopPath = heap_printf("%s/wine-extension-%s.desktop", applications_dir, wchars_to_utf8_chars(&extensionW[1]));
+                static const WCHAR fmtW[] = {'%','s','\\','w','i','n','e','-','e','x','t','e','n','s','i','o','n','-','%','s','.','d','e','s','k','t','o','p',0};
+                WCHAR *desktopPath = heap_wprintf(fmtW, applications_dir, extensionW + 1 );
                 if (write_freedesktop_association_entry(desktopPath, friendlyAppName, mimeType, progIdW, openWithIcon))
                 {
                     hasChanged = TRUE;
@@ -2797,10 +2771,13 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
 
 static void RefreshFileTypeAssociations(void)
 {
+    static const WCHAR fmtW[] = {'%','s','\\','m','i','m','e',0};
+    static const WCHAR fmt2W[] = {'%','s','\\','p','a','c','k','a','g','e','s',0};
+    static const WCHAR fmt3W[] = {'%','s','\\','a','p','p','l','i','c','a','t','i','o','n','s',0};
     HANDLE hSem = NULL;
-    char *mime_dir = NULL;
-    char *packages_dir = NULL;
-    char *applications_dir = NULL;
+    WCHAR *mime_dir;
+    WCHAR *packages_dir;
+    WCHAR *applications_dir;
     BOOL hasChanged;
 
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
@@ -2808,41 +2785,34 @@ static void RefreshFileTypeAssociations(void)
     {
         WINE_ERR("failed wait for semaphore\n");
         CloseHandle(hSem);
-        hSem = NULL;
-        goto end;
+        return;
     }
 
-    mime_dir = heap_printf("%s/mime", xdg_data_dir_unix);
-    create_directories(mime_dir);
-
-    packages_dir = heap_printf("%s/packages", mime_dir);
+    mime_dir = heap_wprintf(fmtW, xdg_data_dir);
+    packages_dir = heap_wprintf(fmt2W, mime_dir);
     create_directories(packages_dir);
 
-    applications_dir = heap_printf("%s/applications", xdg_data_dir_unix);
+    applications_dir = heap_wprintf(fmt3W, xdg_data_dir);
     create_directories(applications_dir);
 
-    hasChanged = generate_associations(xdg_data_dir_unix, packages_dir, applications_dir);
+    hasChanged = generate_associations(packages_dir, applications_dir);
     hasChanged |= cleanup_associations();
     if (hasChanged)
     {
         const char *argv[3];
 
         argv[0] = "update-mime-database";
-        argv[1] = mime_dir;
+        argv[1] = wine_get_unix_file_name(mime_dir);
         argv[2] = NULL;
         _spawnvp( _P_DETACH, argv[0], argv );
 
         argv[0] = "update-desktop-database";
-        argv[1] = applications_dir;
+        argv[1] = wine_get_unix_file_name(applications_dir);
         _spawnvp( _P_DETACH, argv[0], argv );
     }
 
-end:
-    if (hSem)
-    {
-        ReleaseSemaphore(hSem, 1, NULL);
-        CloseHandle(hSem);
-    }
+    ReleaseSemaphore(hSem, 1, NULL);
+    CloseHandle(hSem);
     heap_free(mime_dir);
     heap_free(packages_dir);
     heap_free(applications_dir);
@@ -3031,16 +3001,16 @@ static BOOL init_xdg(void)
     else
         dir = heap_printf("%s/.config/menus/applications-merged", getenv("HOME"));
     xdg_menu_dir = wine_get_dos_file_name( dir );
-    create_directoriesW(xdg_menu_dir);
+    create_directories(xdg_menu_dir);
 
     if (getenv("XDG_DATA_HOME"))
-        xdg_data_dir_unix = xstrdup(getenv("XDG_DATA_HOME"));
+        dir = xstrdup(getenv("XDG_DATA_HOME"));
     else
-        xdg_data_dir_unix = heap_printf("%s/.local/share", getenv("HOME"));
-    xdg_data_dir = wine_get_dos_file_name( xdg_data_dir_unix );
+        dir = heap_printf("%s/.local/share", getenv("HOME"));
+    xdg_data_dir = wine_get_dos_file_name( dir );
 
     buffer = heap_wprintf(fmtW, xdg_data_dir);
-    create_directoriesW(buffer);
+    create_directories(buffer);
     heap_free(buffer);
     return TRUE;
 }
