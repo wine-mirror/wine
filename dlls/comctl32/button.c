@@ -2835,8 +2835,8 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             created_font = TRUE;
         }
     } else {
-        font = (HFONT)SendMessageW(infoPtr->hwnd, WM_GETFONT, 0, 0);
-        hPrevFont = SelectObject(hDC, font);
+        if (infoPtr->font)
+            SelectObject(hDC, infoPtr->font);
     }
 
     GetClientRect(infoPtr->hwnd, &bgRect);
