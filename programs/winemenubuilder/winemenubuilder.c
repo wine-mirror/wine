@@ -218,27 +218,54 @@ static unsigned short crc16(const char* string)
     return crc;
 }
 
-static char *strdupA( const char *str )
+static void *xmalloc( size_t size )
+{
+    void *ret = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!ret)
+    {
+        ERR( "out of memory\n" );
+        ExitProcess(1);
+    }
+    return ret;
+}
+
+static void *xrealloc( void *ptr, size_t size )
+{
+    if (!ptr) return xmalloc( size );
+    ptr = HeapReAlloc( GetProcessHeap(), 0, ptr, size );
+    if (!ptr)
+    {
+        ERR( "out of memory\n" );
+        ExitProcess(1);
+    }
+    return ptr;
+}
+
+static char *xstrdup( const char *str )
 {
     char *ret;
 
     if (!str) return NULL;
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
+    ret = xmalloc( strlen(str) + 1 );
+    strcpy( ret, str );
     return ret;
+}
+
+static void heap_free( void *ptr )
+{
+    HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 static char* heap_printf(const char *format, ...)
 {
     va_list args;
     int size = 4096;
-    char *buffer, *ret;
+    char *buffer;
     int n;
 
     while (1)
     {
-        buffer = HeapAlloc(GetProcessHeap(), 0, size);
-        if (buffer == NULL)
-            break;
+        buffer = xmalloc(size);
         va_start(args, format);
         n = vsnprintf(buffer, size, format, args);
         va_end(args);
@@ -247,14 +274,9 @@ static char* heap_printf(const char *format, ...)
         else if (n >= size)
             size = n + 1;
         else
-            break;
-        HeapFree(GetProcessHeap(), 0, buffer);
+            return buffer;
+        heap_free(buffer);
     }
-
-    if (!buffer) return NULL;
-    ret = HeapReAlloc(GetProcessHeap(), 0, buffer, strlen(buffer) + 1 );
-    if (!ret) ret = buffer;
-    return ret;
 }
 
 static int winemenubuilder_rb_string_compare(const void *key, const struct wine_rb_entry *entry)
@@ -267,8 +289,8 @@ static int winemenubuilder_rb_string_compare(const void *key, const struct wine_
 static void winemenubuilder_rb_destroy(struct wine_rb_entry *entry, void *context)
 {
     struct rb_string_entry *t = WINE_RB_ENTRY_VALUE(entry, struct rb_string_entry, entry);
-    HeapFree(GetProcessHeap(), 0, t->string);
-    HeapFree(GetProcessHeap(), 0, t);
+    heap_free(t->string);
+    heap_free(t);
 }
 
 static void write_xml_text(FILE *file, const char *text)
@@ -315,9 +337,8 @@ static char* wchars_to_utf8_chars(LPCWSTR string)
 {
     char *ret;
     INT size = WideCharToMultiByte(CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (ret)
-        WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
+    ret = xmalloc(size);
+    WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
     return ret;
 }
 
@@ -325,9 +346,8 @@ static char* wchars_to_unix_chars(LPCWSTR string)
 {
     char *ret;
     INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (ret)
-        WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
+    ret = xmalloc(size);
+    WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
     return ret;
 }
 
@@ -335,9 +355,8 @@ static WCHAR* utf8_chars_to_wchars(LPCSTR string)
 {
     WCHAR *ret;
     INT size = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-    if (ret)
-        MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
+    ret = xmalloc(size * sizeof(WCHAR));
+    MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
     return ret;
 }
 
@@ -504,7 +523,7 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, dosOutputFileName);
+    heap_free(dosOutputFileName);
     if (factory)
         IWICImagingFactory_Release(factory);
     if (decoder)
@@ -627,20 +646,8 @@ static IStream *add_module_icons_to_stream(struct IconData16 *iconData16, HMODUL
 
     for (i = 0; i < grpIconDir->idCount; i++)
         iconsSize += grpIconDir->idEntries[i].dwBytesInRes;
-    icons = HeapAlloc(GetProcessHeap(), 0, iconsSize);
-    if (icons == NULL)
-    {
-        WINE_ERR("out of memory allocating icon\n");
-        goto end;
-    }
-
-    iconDirEntries = HeapAlloc(GetProcessHeap(), 0, grpIconDir->idCount*sizeof(ICONDIRENTRY));
-    if (iconDirEntries == NULL)
-    {
-        WINE_ERR("out of memory allocating icon dir entries\n");
-        goto end;
-    }
-
+    icons = xmalloc(iconsSize);
+    iconDirEntries = xmalloc(grpIconDir->idCount*sizeof(ICONDIRENTRY));
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     if (FAILED(hr))
     {
@@ -687,8 +694,8 @@ static IStream *add_module_icons_to_stream(struct IconData16 *iconData16, HMODUL
     hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
 end:
-    HeapFree(GetProcessHeap(), 0, icons);
-    HeapFree(GetProcessHeap(), 0, iconDirEntries);
+    heap_free(icons);
+    heap_free(iconDirEntries);
     if (FAILED(hr) && stream != NULL)
     {
         IStream_Release(stream);
@@ -925,11 +932,7 @@ static HRESULT read_ico_direntries(IStream *icoStream, ICONDIRENTRY **ppIconDirE
     }
     *numEntries = iconDir.idCount;
 
-    if ((*ppIconDirEntries = HeapAlloc(GetProcessHeap(), 0, sizeof(ICONDIRENTRY)*iconDir.idCount)) == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
+    *ppIconDirEntries = xmalloc(sizeof(ICONDIRENTRY)*iconDir.idCount);
     hr = IStream_Read(icoStream, *ppIconDirEntries, sizeof(ICONDIRENTRY)*iconDir.idCount, &bytesRead);
     if (FAILED(hr) || bytesRead != sizeof(ICONDIRENTRY)*iconDir.idCount)
     {
@@ -939,7 +942,7 @@ static HRESULT read_ico_direntries(IStream *icoStream, ICONDIRENTRY **ppIconDirE
 
 end:
     if (FAILED(hr))
-        HeapFree(GetProcessHeap(), 0, *ppIconDirEntries);
+        heap_free(*ppIconDirEntries);
     return hr;
 }
 
@@ -952,7 +955,7 @@ static HRESULT validate_ico(IStream **ppStream, ICONDIRENTRY **ppIconDirEntries,
     {
         if (*numEntries)
             return hr;
-        HeapFree(GetProcessHeap(), 0, *ppIconDirEntries);
+        heap_free(*ppIconDirEntries);
         *ppIconDirEntries = NULL;
     }
     IStream_Release(*ppStream);
@@ -996,15 +999,12 @@ static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
     hr = AssocQueryStringW(0, assocStr, name, extra, NULL, &size);
     if (SUCCEEDED(hr))
     {
-        value = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        if (value)
+        value = xmalloc(size * sizeof(WCHAR));
+        hr = AssocQueryStringW(0, assocStr, name, extra, value, &size);
+        if (FAILED(hr))
         {
-            hr = AssocQueryStringW(0, assocStr, name, extra, value, &size);
-            if (FAILED(hr))
-            {
-                HeapFree(GetProcessHeap(), 0, value);
-                value = NULL;
-            }
+            heap_free(value);
+            value = NULL;
         }
     }
     return value;
@@ -1043,8 +1043,8 @@ static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, icon);
-    HeapFree(GetProcessHeap(), 0, executable);
+    heap_free(icon);
+    heap_free(executable);
     return hr;
 }
 
@@ -1100,9 +1100,6 @@ static char* compute_native_identifier(int exeIndex, LPCWSTR icoPathW)
     char *basename, *ext;
 
     icoPathA = wchars_to_utf8_chars(icoPathW);
-    if (icoPathA == NULL)
-        return NULL;
-
     crc = crc16(icoPathA);
     basename = strrchr(icoPathA, '\\');
     if (basename == NULL)
@@ -1117,7 +1114,7 @@ static char* compute_native_identifier(int exeIndex, LPCWSTR icoPathW)
         *ext = 0;
 
     nativeIdentifier = heap_printf("%04X_%s.%d", crc, basename, exeIndex);
-    HeapFree(GetProcessHeap(), 0, icoPathA);
+    heap_free(icoPathA);
     return nativeIdentifier;
 }
 
@@ -1215,19 +1212,8 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
         *nativeIdentifier = heap_printf("%s", destFilename);
     else
         *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW);
-    if (*nativeIdentifier == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
     if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
     icnsPath = heap_printf("%s/%s.icns", tmpdir, *nativeIdentifier);
-    if (icnsPath == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        WINE_WARN("out of memory creating ICNS path\n");
-        goto end;
-    }
     zero.QuadPart = 0;
     hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
@@ -1245,7 +1231,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, icnsPath);
+    heap_free(icnsPath);
     return hr;
 }
 #else
@@ -1257,16 +1243,13 @@ static void refresh_icon_cache(const char *iconsDir)
      * instead. Creating a file also works on KDE, Xfce and LXDE.
      */
     char *filename = heap_printf("%s/.wine-refresh-XXXXXX", iconsDir);
-    if (filename != NULL)
+    int fd = mkstemps(filename, 0);
+    if (fd >= 0)
     {
-        int fd = mkstemps(filename, 0);
-        if (fd >= 0)
-        {
-            close(fd);
-            unlink(filename);
-        }
-        HeapFree(GetProcessHeap(), 0, filename);
+        close(fd);
+        unlink(filename);
     }
+    heap_free(filename);
 }
 
 static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntries,
@@ -1282,17 +1265,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
         *nativeIdentifier = heap_printf("%s", destFilename);
     else
         *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW);
-    if (*nativeIdentifier == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
     iconsDir = heap_printf("%s/icons/hicolor", xdg_data_dir);
-    if (iconsDir == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
 
     for (i = 0; i < numEntries; i++)
     {
@@ -1331,33 +1304,19 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
         w = iconDirEntries[bestIndex].bWidth ? iconDirEntries[bestIndex].bWidth : 256;
         h = iconDirEntries[bestIndex].bHeight ? iconDirEntries[bestIndex].bHeight : 256;
         iconDir = heap_printf("%s/%dx%d/apps", iconsDir, w, h);
-        if (iconDir == NULL)
-        {
-            hr = E_OUTOFMEMORY;
-            goto endloop;
-        }
         create_directories(iconDir);
         pngPath = heap_printf("%s/%s.png", iconDir, *nativeIdentifier);
-        if (pngPath == NULL)
-        {
-            hr = E_OUTOFMEMORY;
-            goto endloop;
-        }
         zero.QuadPart = 0;
         hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
-        if (FAILED(hr))
-            goto endloop;
-        hr = convert_to_native_icon(icoStream, &bestIndex, 1, &CLSID_WICPngEncoder,
-                                    pngPath, icoPathW);
+        if (SUCCEEDED(hr))
+            hr = convert_to_native_icon(icoStream, &bestIndex, 1, &CLSID_WICPngEncoder,
+                                        pngPath, icoPathW);
 
-    endloop:
-        HeapFree(GetProcessHeap(), 0, iconDir);
-        HeapFree(GetProcessHeap(), 0, pngPath);
+        heap_free(iconDir);
+        heap_free(pngPath);
     }
     refresh_icon_cache(iconsDir);
-
-end:
-    HeapFree(GetProcessHeap(), 0, iconsDir);
+    heap_free(iconsDir);
     return hr;
 }
 #endif /* defined(__APPLE__) */
@@ -1386,10 +1345,10 @@ static char *extract_icon(LPCWSTR icoPathW, int index, const char *destFilename,
 end:
     if (stream)
         IStream_Release(stream);
-    HeapFree(GetProcessHeap(), 0, pIconDirEntries);
+    heap_free(pIconDirEntries);
     if (FAILED(hr))
     {
-        HeapFree(GetProcessHeap(), 0, nativeIdentifier);
+        heap_free(nativeIdentifier);
         nativeIdentifier = NULL;
     }
     return nativeIdentifier;
@@ -1413,36 +1372,26 @@ static DWORD register_menus_entry(const char *unix_file, const char *windows_fil
     WCHAR *unix_fileW;
     WCHAR *windows_fileW;
     INT size;
+    HKEY hkey;
     DWORD ret;
 
     size = MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, NULL, 0);
-    unix_fileW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-    if (unix_fileW)
+    unix_fileW = xmalloc(size * sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, unix_fileW, size);
+    size = MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, NULL, 0);
+    windows_fileW = xmalloc(size * sizeof(WCHAR));
+    MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, windows_fileW, size);
+    hkey = open_menus_reg_key();
+    if (hkey)
     {
-        MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, unix_fileW, size);
-        size = MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, NULL, 0);
-        windows_fileW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        if (windows_fileW)
-        {
-            HKEY hkey;
-            MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, windows_fileW, size);
-            hkey = open_menus_reg_key();
-            if (hkey)
-            {
-                ret = RegSetValueExW(hkey, unix_fileW, 0, REG_SZ, (const BYTE*)windows_fileW,
+        ret = RegSetValueExW(hkey, unix_fileW, 0, REG_SZ, (const BYTE*)windows_fileW,
                     (strlenW(windows_fileW) + 1) * sizeof(WCHAR));
-                RegCloseKey(hkey);
-            }
-            else
-                ret = GetLastError();
-            HeapFree(GetProcessHeap(), 0, windows_fileW);
-        }
-        else
-            ret = ERROR_NOT_ENOUGH_MEMORY;
-        HeapFree(GetProcessHeap(), 0, unix_fileW);
+        RegCloseKey(hkey);
     }
     else
-        ret = ERROR_NOT_ENOUGH_MEMORY;
+        ret = GetLastError();
+    heap_free(windows_fileW);
+    heap_free(unix_fileW);
     return ret;
 }
 
@@ -1536,26 +1485,23 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
 
     while (1)
     {
+        int tempfd;
         tempfilename = heap_printf("%s/wine-menu-XXXXXX", xdg_config_dir);
-        if (tempfilename)
+        tempfd = mkstemps(tempfilename, 0);
+        if (tempfd >= 0)
         {
-            int tempfd = mkstemps(tempfilename, 0);
-            if (tempfd >= 0)
-            {
-                tempfile = fdopen(tempfd, "w");
-                if (tempfile)
-                    break;
-                close(tempfd);
-                goto end;
-            }
-            else if (errno == EEXIST)
-            {
-                HeapFree(GetProcessHeap(), 0, tempfilename);
-                continue;
-            }
-            HeapFree(GetProcessHeap(), 0, tempfilename);
+            tempfile = fdopen(tempfd, "w");
+            if (tempfile)
+                break;
+            close(tempfd);
+            goto end;
         }
-        return FALSE;
+        else if (errno == EEXIST)
+        {
+            heap_free(tempfilename);
+            continue;
+        }
+        heap_free(tempfilename);
     }
 
     fprintf(tempfile, "<!DOCTYPE Menu PUBLIC \"-//freedesktop//DTD Menu 1.0//EN\"\n");
@@ -1563,8 +1509,7 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
     fprintf(tempfile, "<Menu>\n");
     fprintf(tempfile, "  <Name>Applications</Name>\n");
 
-    name = HeapAlloc(GetProcessHeap(), 0, lstrlenA(filename) + 1);
-    if (name == NULL) goto end;
+    name = xmalloc(lstrlenA(filename) + 1);
     lastEntry = name;
     for (i = 0; filename[i]; i++)
     {
@@ -1583,12 +1528,9 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
             fprintf(tempfile, ".directory</Directory>\n");
             dir_file_name = heap_printf("%s/desktop-directories/%s%s.directory",
                 xdg_data_dir, count ? "" : "wine-", name);
-            if (dir_file_name)
-            {
-                if (stat(dir_file_name, &st) != 0 && errno == ENOENT)
-                    write_directory_entry(lastEntry, dir_file_name);
-                HeapFree(GetProcessHeap(), 0, dir_file_name);
-            }
+            if (stat(dir_file_name, &st) != 0 && errno == ENOENT)
+                write_directory_entry(lastEntry, dir_file_name);
+            heap_free(dir_file_name);
             name[i] = '-';
             lastEntry = &name[i+1];
             ++count;
@@ -1606,7 +1548,6 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
     fprintf(tempfile, "</Menu>\n");
 
     menuPath = heap_printf("%s/%s", xdg_config_dir, name);
-    if (menuPath == NULL) goto end;
     strcpy(menuPath + strlen(menuPath) - strlen(".desktop"), ".menu");
     ret = TRUE;
 
@@ -1617,11 +1558,11 @@ end:
         ret = (rename(tempfilename, menuPath) == 0);
     if (!ret && tempfilename)
         remove(tempfilename);
-    HeapFree(GetProcessHeap(), 0, tempfilename);
+    heap_free(tempfilename);
     if (ret)
         register_menus_entry(menuPath, unix_link);
-    HeapFree(GetProcessHeap(), 0, name);
-    HeapFree(GetProcessHeap(), 0, menuPath);
+    heap_free(name);
+    heap_free(menuPath);
     return ret;
 }
 
@@ -1645,12 +1586,6 @@ static BOOL write_menu_entry(const char *unix_link, const char *link, const char
         ++linkname;
 
     desktopPath = heap_printf("%s/applications/wine/%s.desktop", xdg_data_dir, link);
-    if (!desktopPath)
-    {
-        WINE_WARN("out of memory creating menu entry\n");
-        ret = FALSE;
-        goto end;
-    }
     desktopDir = strrchr(desktopPath, '/');
     *desktopDir = 0;
     if (!create_directories(desktopPath))
@@ -1668,15 +1603,15 @@ static BOOL write_menu_entry(const char *unix_link, const char *link, const char
     }
 
     filename = heap_printf("wine/%s.desktop", link);
-    if (!filename || !write_menu_file(unix_link, filename))
+    if (!write_menu_file(unix_link, filename))
     {
         WINE_WARN("couldn't make menu file %s\n", wine_dbgstr_a(filename));
         ret = FALSE;
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, desktopPath);
-    HeapFree(GetProcessHeap(), 0, filename);
+    heap_free(desktopPath);
+    heap_free(filename);
     return ret;
 }
 
@@ -1687,8 +1622,7 @@ static LPSTR escape(LPCWSTR arg)
     WCHAR *escaped_string;
     char *utf8_string;
 
-    escaped_string = HeapAlloc(GetProcessHeap(), 0, (4 * strlenW(arg) + 1) * sizeof(WCHAR));
-    if (escaped_string == NULL) return NULL;
+    escaped_string = xmalloc((4 * strlenW(arg) + 1) * sizeof(WCHAR));
     for (i = j = 0; arg[i]; i++)
     {
         switch (arg[i])
@@ -1726,16 +1660,8 @@ static LPSTR escape(LPCWSTR arg)
         }
     }
     escaped_string[j] = 0;
-
     utf8_string = wchars_to_utf8_chars(escaped_string);
-    if (utf8_string == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto end;
-    }
-
-end:
-    HeapFree(GetProcessHeap(), 0, escaped_string);
+    heap_free(escaped_string);
     return utf8_string;
 }
 
@@ -1767,17 +1693,14 @@ static char *relative_path( LPCWSTR link, LPCWSTR locn )
                 len_unix_link = p - unix_link;
             }
             len_rel = len_unix_link - len_unix_locn;
-            relative = HeapAlloc(GetProcessHeap(), 0, len_rel);
-            if (relative)
-            {
-                memcpy (relative, unix_link + len_unix_locn + 1, len_rel);
-            }
+            relative = xmalloc(len_rel);
+            memcpy (relative, unix_link + len_unix_locn + 1, len_rel);
         }
     }
     if (!relative)
         WINE_WARN("Could not separate the relative link path of %s in %s\n", wine_dbgstr_w(link), wine_dbgstr_w(locn));
-    HeapFree(GetProcessHeap(), 0, unix_locn);
-    HeapFree(GetProcessHeap(), 0, unix_link);
+    heap_free(unix_locn);
+    heap_free(unix_link);
     return relative;
 }
 
@@ -1875,7 +1798,7 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
         if (hr == ERROR_SUCCESS)
         {
             cmdSize++;
-            szCmdline = HeapAlloc( GetProcessHeap(), 0, cmdSize*sizeof(WCHAR) );
+            szCmdline = xmalloc(cmdSize*sizeof(WCHAR) );
             hr = CommandLineFromMsiDescriptor( dar->szwDarwinID, szCmdline, &cmdSize );
             WINE_TRACE("      command    : %s\n", wine_dbgstr_w(szCmdline));
             if (hr == ERROR_SUCCESS)
@@ -1946,7 +1869,7 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
 
                 lstrcpynW(szArgs, s, argsSize);
             }
-            HeapFree( GetProcessHeap(), 0, szCmdline );
+            heap_free(szCmdline );
         }
         LocalFree( dar );
     }
@@ -1958,20 +1881,10 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
 static char *slashes_to_minuses(const char *string)
 {
     int i;
-    char *ret = HeapAlloc(GetProcessHeap(), 0, lstrlenA(string) + 1);
-    if (ret)
-    {
-        for (i = 0; string[i]; i++)
-        {
-            if (string[i] == '/')
-                ret[i] = '-';
-            else
-                ret[i] = string[i];
-        }
-        ret[i] = 0;
-        return ret;
-    }
-    return NULL;
+    char *ret = xstrdup(string);
+
+    for (i = 0; ret[i]; i++) if (ret[i] == '/') ret[i] = '-';
+    return ret;
 }
 
 static BOOL next_line(FILE *file, char **line, int *size)
@@ -1981,13 +1894,13 @@ static BOOL next_line(FILE *file, char **line, int *size)
     if (*line == NULL)
     {
         *size = 4096;
-        *line = HeapAlloc(GetProcessHeap(), 0, *size);
+        *line = xmalloc(*size);
     }
     while (*line != NULL)
     {
         if (fgets(&(*line)[pos], *size - pos, file) == NULL)
         {
-            HeapFree(GetProcessHeap(), 0, *line);
+            heap_free(*line);
             *line = NULL;
             if (feof(file))
                 return TRUE;
@@ -1997,16 +1910,8 @@ static BOOL next_line(FILE *file, char **line, int *size)
         cr = strchr(*line, '\n');
         if (cr == NULL)
         {
-            char *line2;
             (*size) *= 2;
-            line2 = HeapReAlloc(GetProcessHeap(), 0, *line, *size);
-            if (line2)
-                *line = line2;
-            else
-            {
-                HeapFree(GetProcessHeap(), 0, *line);
-                *line = NULL;
-            }
+            *line = xrealloc(*line, *size);
         }
         else
         {
@@ -2021,55 +1926,34 @@ static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
 {
     char *globs_filename = NULL;
     BOOL ret = TRUE;
+    FILE *globs_file;
+
     globs_filename = heap_printf("%s/mime/globs", xdg_data_dir);
-    if (globs_filename)
+    globs_file = fopen(globs_filename, "r");
+    if (globs_file) /* doesn't have to exist */
     {
-        FILE *globs_file = fopen(globs_filename, "r");
-        if (globs_file) /* doesn't have to exist */
+        char *line = NULL;
+        int size = 0;
+        while (ret && (ret = next_line(globs_file, &line, &size)) && line)
         {
-            char *line = NULL;
-            int size = 0;
-            while (ret && (ret = next_line(globs_file, &line, &size)) && line)
+            char *pos, *l;
+            struct xdg_mime_type *mime_type_entry = NULL;
+            if (line[0] != '#' && (pos = strchr(line, ':')))
             {
-                char *pos;
-                struct xdg_mime_type *mime_type_entry = NULL;
-                if (line[0] != '#' && (pos = strchr(line, ':')))
-                {
-                    mime_type_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xdg_mime_type));
-                    if (mime_type_entry)
-                    {
-                        *pos = 0;
-                        mime_type_entry->mimeType = strdupA(line);
-                        mime_type_entry->glob = strdupA(pos + 1);
-                        mime_type_entry->lower_glob = strdupA(pos + 1);
-                        if (mime_type_entry->lower_glob)
-                        {
-                            char *l;
-                            for (l = mime_type_entry->lower_glob; *l; l++)
-                                *l = tolower(*l);
-                        }
-                        if (mime_type_entry->mimeType && mime_type_entry->glob && mime_type_entry->lower_glob)
-                            list_add_tail(mime_types, &mime_type_entry->entry);
-                        else
-                        {
-                            HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
-                            HeapFree(GetProcessHeap(), 0, mime_type_entry->glob);
-                            HeapFree(GetProcessHeap(), 0, mime_type_entry->lower_glob);
-                            HeapFree(GetProcessHeap(), 0, mime_type_entry);
-                            ret = FALSE;
-                        }
-                    }
-                    else
-                        ret = FALSE;
-                }
+                mime_type_entry = xmalloc(sizeof(struct xdg_mime_type));
+                *pos = 0;
+                mime_type_entry->mimeType = xstrdup(line);
+                mime_type_entry->glob = xstrdup(pos + 1);
+                mime_type_entry->lower_glob = xstrdup(pos + 1);
+                for (l = mime_type_entry->lower_glob; *l; l++)
+                    *l = tolower(*l);
+                list_add_tail(mime_types, &mime_type_entry->entry);
             }
-            HeapFree(GetProcessHeap(), 0, line);
-            fclose(globs_file);
         }
-        HeapFree(GetProcessHeap(), 0, globs_filename);
+        heap_free(line);
+        fclose(globs_file);
     }
-    else
-        ret = FALSE;
+    heap_free(globs_filename);
     return ret;
 }
 
@@ -2080,47 +1964,42 @@ static void free_native_mime_types(struct list *native_mime_types)
     LIST_FOR_EACH_ENTRY_SAFE(mime_type_entry, mime_type_entry2, native_mime_types, struct xdg_mime_type, entry)
     {
         list_remove(&mime_type_entry->entry);
-        HeapFree(GetProcessHeap(), 0, mime_type_entry->glob);
-        HeapFree(GetProcessHeap(), 0, mime_type_entry->lower_glob);
-        HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
-        HeapFree(GetProcessHeap(), 0, mime_type_entry);
+        heap_free(mime_type_entry->glob);
+        heap_free(mime_type_entry->lower_glob);
+        heap_free(mime_type_entry->mimeType);
+        heap_free(mime_type_entry);
     }
 }
 
 static BOOL build_native_mime_types(const char *xdg_data_home, struct list *mime_types)
 {
     char *xdg_data_dirs;
+    const char *begin;
+    char *end;
     BOOL ret;
 
     xdg_data_dirs = getenv("XDG_DATA_DIRS");
     if (xdg_data_dirs == NULL)
-        xdg_data_dirs = heap_printf("/usr/local/share/:/usr/share/");
+        xdg_data_dirs = xstrdup("/usr/local/share/:/usr/share/");
     else
-        xdg_data_dirs = strdupA(xdg_data_dirs);
+        xdg_data_dirs = xstrdup(xdg_data_dirs);
 
-    if (xdg_data_dirs)
+    ret = add_mimes(xdg_data_home, mime_types);
+    if (ret)
     {
-        const char *begin;
-        char *end;
-
-        ret = add_mimes(xdg_data_home, mime_types);
-        if (ret)
+        for (begin = xdg_data_dirs; (end = strchr(begin, ':')); begin = end + 1)
         {
-            for (begin = xdg_data_dirs; (end = strchr(begin, ':')); begin = end + 1)
-            {
-                *end = '\0';
-                ret = add_mimes(begin, mime_types);
-                *end = ':';
-                if (!ret)
-                    break;
-            }
-            if (ret)
-                ret = add_mimes(begin, mime_types);
+            *end = '\0';
+            ret = add_mimes(begin, mime_types);
+            *end = ':';
+            if (!ret)
+                break;
         }
-        HeapFree(GetProcessHeap(), 0, xdg_data_dirs);
+        if (ret)
+            ret = add_mimes(begin, mime_types);
     }
-    else
-        ret = FALSE;
+    heap_free(xdg_data_dirs);
+
     if (!ret)
         free_native_mime_types(mime_types);
     return ret;
@@ -2148,12 +2027,7 @@ static BOOL match_glob(struct list *native_mime_types, const char *extension,
         }
     }
 
-    if (*match != NULL)
-    {
-        *match = strdupA(*match);
-        if (*match == NULL)
-            return FALSE;
-    }
+    if (*match != NULL) *match = xstrdup(*match);
 #else
     *match = NULL;
 #endif
@@ -2166,35 +2040,19 @@ static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
                                                 char **mime_type)
 {
     WCHAR *lower_extensionW;
+    char *lower_extensionA;
     INT len;
     BOOL ret = match_glob(native_mime_types, extensionA, 0, mime_type);
     if (ret == FALSE || *mime_type != NULL)
         return ret;
     len = strlenW(extensionW);
-    lower_extensionW = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
-    if (lower_extensionW)
-    {
-        char *lower_extensionA;
-        memcpy(lower_extensionW, extensionW, (len + 1)*sizeof(WCHAR));
-        strlwrW(lower_extensionW);
-        lower_extensionA = wchars_to_utf8_chars(lower_extensionW);
-        if (lower_extensionA)
-        {
-            ret = match_glob(native_mime_types, lower_extensionA, 1, mime_type);
-            HeapFree(GetProcessHeap(), 0, lower_extensionA);
-        }
-        else
-        {
-            ret = FALSE;
-            WINE_FIXME("out of memory\n");
-        }
-        HeapFree(GetProcessHeap(), 0, lower_extensionW);
-    }
-    else
-    {
-        ret = FALSE;
-        WINE_FIXME("out of memory\n");
-    }
+    lower_extensionW = xmalloc((len + 1)*sizeof(WCHAR));
+    memcpy(lower_extensionW, extensionW, (len + 1)*sizeof(WCHAR));
+    strlwrW(lower_extensionW);
+    lower_extensionA = wchars_to_utf8_chars(lower_extensionW);
+    ret = match_glob(native_mime_types, lower_extensionA, 1, mime_type);
+    heap_free(lower_extensionA);
+    heap_free(lower_extensionW);
     return ret;
 }
 
@@ -2203,13 +2061,10 @@ static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
     DWORD size;
     if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, NULL, &size) == ERROR_SUCCESS)
     {
-        WCHAR *ret = HeapAlloc(GetProcessHeap(), 0, size);
-        if (ret)
-        {
-            if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
-                return ret;
-        }
-        HeapFree(GetProcessHeap(), 0, ret);
+        WCHAR *ret = xmalloc(size);
+        if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
+            return ret;
+        heap_free(ret);
     }
     return NULL;
 }
@@ -2220,7 +2075,7 @@ static CHAR* reg_get_val_utf8(HKEY key, LPCWSTR subkey, LPCWSTR name)
     if (valW)
     {
         char *val = wchars_to_utf8_chars(valW);
-        HeapFree(GetProcessHeap(), 0, valW);
+        heap_free(valW);
         return val;
     }
     return NULL;
@@ -2256,24 +2111,24 @@ static BOOL has_association_changed(LPCWSTR extensionW, LPCSTR mimeType, LPCWSTR
         valueA = reg_get_val_utf8(assocKey, extensionW, MimeTypeW);
         if (!valueA || lstrcmpA(valueA, mimeType))
             ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, valueA);
+        heap_free(valueA);
 
         value = reg_get_valW(assocKey, extensionW, ProgIDW);
         if (!value || strcmpW(value, progId))
             ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, value);
+        heap_free(value);
 
         valueA = reg_get_val_utf8(assocKey, extensionW, AppNameW);
         if (!valueA || lstrcmpA(valueA, appName))
             ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, valueA);
+        heap_free(valueA);
 
         valueA = reg_get_val_utf8(assocKey, extensionW, OpenWithIconW);
         if ((openWithIcon && !valueA) ||
             (!openWithIcon && valueA) ||
             (openWithIcon && valueA && lstrcmpA(valueA, openWithIcon)))
             ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, valueA);
+        heap_free(valueA);
 
         RegCloseKey(assocKey);
     }
@@ -2314,35 +2169,9 @@ static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progI
     }
 
     mimeTypeW = utf8_chars_to_wchars(mimeType);
-    if (mimeTypeW == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto done;
-    }
-
     appNameW = utf8_chars_to_wchars(appName);
-    if (appNameW == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto done;
-    }
-
     desktopFileW = utf8_chars_to_wchars(desktopFile);
-    if (desktopFileW == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto done;
-    }
-
-    if (openWithIcon)
-    {
-        openWithIconW = utf8_chars_to_wchars(openWithIcon);
-        if (openWithIconW == NULL)
-        {
-            WINE_ERR("out of memory\n");
-            goto done;
-        }
-    }
+    if (openWithIcon) openWithIconW = utf8_chars_to_wchars(openWithIcon);
 
     RegSetValueExW(subkey, MimeTypeW, 0, REG_SZ, (const BYTE*) mimeTypeW, (lstrlenW(mimeTypeW) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
@@ -2356,10 +2185,10 @@ static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progI
 done:
     RegCloseKey(assocKey);
     RegCloseKey(subkey);
-    HeapFree(GetProcessHeap(), 0, mimeTypeW);
-    HeapFree(GetProcessHeap(), 0, appNameW);
-    HeapFree(GetProcessHeap(), 0, desktopFileW);
-    HeapFree(GetProcessHeap(), 0, openWithIconW);
+    heap_free(mimeTypeW);
+    heap_free(appNameW);
+    heap_free(desktopFileW);
+    heap_free(openWithIconW);
 }
 
 static BOOL cleanup_associations(void)
@@ -2380,14 +2209,8 @@ static BOOL cleanup_associations(void)
 
             do
             {
-                HeapFree(GetProcessHeap(), 0, extensionW);
-                extensionW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-                if (extensionW == NULL)
-                {
-                    WINE_ERR("out of memory\n");
-                    ret = ERROR_OUTOFMEMORY;
-                    break;
-                }
+                heap_free(extensionW);
+                extensionW = xmalloc(size * sizeof(WCHAR));
                 ret = RegEnumKeyExW(assocKey, i, extensionW, &size, NULL, NULL, NULL, NULL);
                 size *= 2;
             } while (ret == ERROR_MORE_DATA);
@@ -2406,11 +2229,11 @@ static BOOL cleanup_associations(void)
                     }
                     RegDeleteKeyW(assocKey, extensionW);
                     hasChanged = TRUE;
-                    HeapFree(GetProcessHeap(), 0, desktopFile);
+                    heap_free(desktopFile);
                 }
                 else
                     i++;
-                HeapFree(GetProcessHeap(), 0, command);
+                heap_free(command);
             }
             else
             {
@@ -2418,7 +2241,7 @@ static BOOL cleanup_associations(void)
                     WINE_ERR("error %d while reading registry\n", ret);
                 done = TRUE;
             }
-            HeapFree(GetProcessHeap(), 0, extensionW);
+            heap_free(extensionW);
         }
         RegCloseKey(assocKey);
     }
@@ -2432,41 +2255,37 @@ static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const ch
 {
     BOOL ret = FALSE;
     char *filename;
+    FILE *packageFile;
 
     WINE_TRACE("writing MIME type %s, extension=%s, comment=%s\n", wine_dbgstr_a(mime_type),
                wine_dbgstr_a(dot_extension), wine_dbgstr_a(comment));
 
     filename = heap_printf("%s/x-wine-extension-%s.xml", packages_dir, &dot_extension[1]);
-    if (filename)
+    packageFile = fopen(filename, "w");
+    if (packageFile)
     {
-        FILE *packageFile = fopen(filename, "w");
-        if (packageFile)
+        fprintf(packageFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        fprintf(packageFile, "<mime-info xmlns=\"http://www.freedesktop.org/standards/shared-mime-info\">\n");
+        fprintf(packageFile, "  <mime-type type=\"");
+        write_xml_text(packageFile, mime_type);
+        fprintf(packageFile, "\">\n");
+        fprintf(packageFile, "    <glob pattern=\"*");
+        write_xml_text(packageFile, dot_extension);
+        fprintf(packageFile, "\"/>\n");
+        if (comment)
         {
-            fprintf(packageFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            fprintf(packageFile, "<mime-info xmlns=\"http://www.freedesktop.org/standards/shared-mime-info\">\n");
-            fprintf(packageFile, "  <mime-type type=\"");
-            write_xml_text(packageFile, mime_type);
-            fprintf(packageFile, "\">\n");
-            fprintf(packageFile, "    <glob pattern=\"*");
-            write_xml_text(packageFile, dot_extension);
-            fprintf(packageFile, "\"/>\n");
-            if (comment)
-            {
-                fprintf(packageFile, "    <comment>");
-                write_xml_text(packageFile, comment);
-                fprintf(packageFile, "</comment>\n");
-            }
-            fprintf(packageFile, "  </mime-type>\n");
-            fprintf(packageFile, "</mime-info>\n");
-            ret = TRUE;
-            fclose(packageFile);
+            fprintf(packageFile, "    <comment>");
+            write_xml_text(packageFile, comment);
+            fprintf(packageFile, "</comment>\n");
         }
-        else
-            WINE_ERR("error writing file %s\n", filename);
-        HeapFree(GetProcessHeap(), 0, filename);
+        fprintf(packageFile, "  </mime-type>\n");
+        fprintf(packageFile, "</mime-info>\n");
+        ret = TRUE;
+        fclose(packageFile);
     }
     else
-        WINE_ERR("out of memory\n");
+        WINE_ERR("error writing file %s\n", filename);
+    heap_free(filename);
     return ret;
 }
 
@@ -2552,14 +2371,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
         do
         {
-            HeapFree(GetProcessHeap(), 0, extensionW);
-            extensionW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-            if (extensionW == NULL)
-            {
-                WINE_ERR("out of memory\n");
-                ret = ERROR_OUTOFMEMORY;
-                break;
-            }
+            heap_free(extensionW);
+            extensionW = xmalloc(size * sizeof(WCHAR));
             ret = RegEnumKeyExW(HKEY_CLASSES_ROOT, i, extensionW, &size, NULL, NULL, NULL, NULL);
             size *= 2;
         } while (ret == ERROR_MORE_DATA);
@@ -2581,24 +2394,11 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             WCHAR *progIdW = NULL;
             char *progIdA = NULL;
             char *mimeProgId = NULL;
+            struct rb_string_entry *entry;
 
             extensionA = wchars_to_utf8_chars(strlwrW(extensionW));
-            if (extensionA == NULL)
-            {
-                WINE_ERR("out of memory\n");
-                goto end;
-            }
-
             friendlyDocNameW = assoc_query(ASSOCSTR_FRIENDLYDOCNAME, extensionW, NULL);
-            if (friendlyDocNameW)
-            {
-                friendlyDocNameA = wchars_to_utf8_chars(friendlyDocNameW);
-                if (friendlyDocNameA == NULL)
-                {
-                    WINE_ERR("out of memory\n");
-                    goto end;
-                }
-            }
+            if (friendlyDocNameW) friendlyDocNameA = wchars_to_utf8_chars(friendlyDocNameW);
 
             iconW = assoc_query(ASSOCSTR_DEFAULTICON, extensionW, NULL);
 
@@ -2614,40 +2414,29 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                 if (contentTypeW != NULL && strchrW(contentTypeW, '/'))
                     mimeTypeA = wchars_to_utf8_chars(contentTypeW);
                 else if ((get_special_mime_type(extensionW)))
-                    mimeTypeA = strdupA(get_special_mime_type(extensionW));
+                    mimeTypeA = xstrdup(get_special_mime_type(extensionW));
                 else
                     mimeTypeA = heap_printf("application/x-wine-extension-%s", &extensionA[1]);
 
-                if (mimeTypeA != NULL)
+                /* GNOME seems to ignore the <icon> tag in MIME packages,
+                 * and the default name is more intuitive anyway.
+                 */
+                if (iconW)
                 {
-                    /* GNOME seems to ignore the <icon> tag in MIME packages,
-                     * and the default name is more intuitive anyway.
-                     */
-                    if (iconW)
+                    char *flattened_mime = slashes_to_minuses(mimeTypeA);
+                    int index = 0;
+                    WCHAR *comma = strrchrW(iconW, ',');
+                    if (comma)
                     {
-                        char *flattened_mime = slashes_to_minuses(mimeTypeA);
-                        if (flattened_mime)
-                        {
-                            int index = 0;
-                            WCHAR *comma = strrchrW(iconW, ',');
-                            if (comma)
-                            {
-                                *comma = 0;
-                                index = atoiW(comma + 1);
-                            }
-                            iconA = extract_icon(iconW, index, flattened_mime, FALSE);
-                            HeapFree(GetProcessHeap(), 0, flattened_mime);
-                        }
+                        *comma = 0;
+                        index = atoiW(comma + 1);
                     }
+                    iconA = extract_icon(iconW, index, flattened_mime, FALSE);
+                    heap_free(flattened_mime);
+                }
 
-                    write_freedesktop_mime_type_entry(packages_dir, extensionA, mimeTypeA, friendlyDocNameA);
-                    hasChanged = TRUE;
-                }
-                else
-                {
-                    WINE_FIXME("out of memory\n");
-                    goto end;
-                }
+                write_freedesktop_mime_type_entry(packages_dir, extensionA, mimeTypeA, friendlyDocNameA);
+                hasChanged = TRUE;
             }
 
             commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, openW);
@@ -2661,98 +2450,65 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
             friendlyAppNameW = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, openW);
             if (friendlyAppNameW)
-            {
                 friendlyAppNameA = wchars_to_utf8_chars(friendlyAppNameW);
-                if (friendlyAppNameA == NULL)
-                {
-                    WINE_ERR("out of memory\n");
-                    goto end;
-                }
-            }
             else
-            {
                 friendlyAppNameA = heap_printf("A Wine application");
-                if (friendlyAppNameA == NULL)
-                {
-                    WINE_ERR("out of memory\n");
-                    goto end;
-                }
-            }
 
             progIdW = reg_get_valW(HKEY_CLASSES_ROOT, extensionW, NULL);
             if (progIdW)
-            {
                 progIdA = escape(progIdW);
-                if (progIdA == NULL)
-                {
-                    WINE_ERR("out of memory\n");
-                    goto end;
-                }
-            }
             else
                 goto end; /* no progID => not a file type association */
 
             /* Do not allow duplicate ProgIDs for a MIME type, it causes unnecessary duplication in Open dialogs */
             mimeProgId = heap_printf("%s=>%s", mimeTypeA, progIdA);
-            if (mimeProgId)
+            if (wine_rb_get(&mimeProgidTree, mimeProgId))
             {
-                struct rb_string_entry *entry;
-                if (wine_rb_get(&mimeProgidTree, mimeProgId))
-                {
-                    HeapFree(GetProcessHeap(), 0, mimeProgId);
-                    goto end;
-                }
-                entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct rb_string_entry));
-                if (!entry)
-                {
-                    WINE_ERR("out of memory allocating rb_string_entry\n");
-                    goto end;
-                }
-                entry->string = mimeProgId;
-                if (wine_rb_put(&mimeProgidTree, mimeProgId, &entry->entry))
-                {
-                    WINE_ERR("error updating rb tree\n");
-                    goto end;
-                }
+                heap_free(mimeProgId);
+                goto end;
+            }
+            entry = xmalloc(sizeof(struct rb_string_entry));
+            entry->string = mimeProgId;
+            if (wine_rb_put(&mimeProgidTree, mimeProgId, &entry->entry))
+            {
+                WINE_ERR("error updating rb tree\n");
+                goto end;
             }
 
             if (has_association_changed(extensionW, mimeTypeA, progIdW, friendlyAppNameA, openWithIconA))
             {
                 char *desktopPath = heap_printf("%s/wine-extension-%s.desktop", applications_dir, &extensionA[1]);
-                if (desktopPath)
+                if (write_freedesktop_association_entry(desktopPath, extensionA, friendlyAppNameA, mimeTypeA, progIdA, openWithIconA))
                 {
-                    if (write_freedesktop_association_entry(desktopPath, extensionA, friendlyAppNameA, mimeTypeA, progIdA, openWithIconA))
-                    {
-                        hasChanged = TRUE;
-                        update_association(extensionW, mimeTypeA, progIdW, friendlyAppNameA, desktopPath, openWithIconA);
-                    }
-                    HeapFree(GetProcessHeap(), 0, desktopPath);
+                    hasChanged = TRUE;
+                    update_association(extensionW, mimeTypeA, progIdW, friendlyAppNameA, desktopPath, openWithIconA);
                 }
+                heap_free(desktopPath);
             }
 
             if (hasChanged && openWithIconA)
             {
                 char *outputIconA = extract_icon(executableW, 0, openWithIconA, FALSE);
-                HeapFree(GetProcessHeap(), 0, outputIconA);
+                heap_free(outputIconA);
             }
 
         end:
-            HeapFree(GetProcessHeap(), 0, extensionA);
-            HeapFree(GetProcessHeap(), 0, commandW);
-            HeapFree(GetProcessHeap(), 0, executableW);
-            HeapFree(GetProcessHeap(), 0, openWithIconA);
-            HeapFree(GetProcessHeap(), 0, friendlyDocNameW);
-            HeapFree(GetProcessHeap(), 0, friendlyDocNameA);
-            HeapFree(GetProcessHeap(), 0, iconW);
-            HeapFree(GetProcessHeap(), 0, iconA);
-            HeapFree(GetProcessHeap(), 0, contentTypeW);
-            HeapFree(GetProcessHeap(), 0, mimeTypeA);
-            HeapFree(GetProcessHeap(), 0, friendlyAppNameW);
-            HeapFree(GetProcessHeap(), 0, friendlyAppNameA);
-            HeapFree(GetProcessHeap(), 0, progIdW);
-            HeapFree(GetProcessHeap(), 0, progIdA);
+            heap_free(extensionA);
+            heap_free(commandW);
+            heap_free(executableW);
+            heap_free(openWithIconA);
+            heap_free(friendlyDocNameW);
+            heap_free(friendlyDocNameA);
+            heap_free(iconW);
+            heap_free(iconA);
+            heap_free(contentTypeW);
+            heap_free(mimeTypeA);
+            heap_free(friendlyAppNameW);
+            heap_free(friendlyAppNameA);
+            heap_free(progIdW);
+            heap_free(progIdA);
         }
-        HeapFree(GetProcessHeap(), 0, extensionW);
+        heap_free(extensionW);
         if (ret != ERROR_SUCCESS)
             break;
     }
@@ -2776,16 +2532,10 @@ static char* escape_unix_link_arg(LPCSTR unix_link)
 {
     char *ret = NULL;
     WCHAR *unix_linkW = utf8_chars_to_wchars(unix_link);
-    if (unix_linkW)
-    {
-        char *escaped_lnk = escape(unix_linkW);
-        if (escaped_lnk)
-        {
-            ret = heap_printf("/Unix %s", escaped_lnk);
-            HeapFree(GetProcessHeap(), 0, escaped_lnk);
-        }
-        HeapFree(GetProcessHeap(), 0, unix_linkW);
-    }
+    char *escaped_lnk = escape(unix_linkW);
+    ret = heap_printf("/Unix %s", escaped_lnk);
+    heap_free(escaped_lnk);
+    heap_free(unix_linkW);
     return ret;
 }
 
@@ -2933,18 +2683,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     escaped_args = escape(szArgs);
     description = wchars_to_utf8_chars(szDescription);
     wmclass = wchars_to_utf8_chars(szWMClass);
-    if (escaped_path == NULL || escaped_args == NULL || description == NULL || wmclass == NULL)
-    {
-        WINE_ERR("out of memory allocating/escaping parameters\n");
-        goto cleanup;
-    }
-
     start_path = get_start_exe_path();
-    if (start_path == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto cleanup;
-    }
 
     /* building multiple menus concurrently has race conditions */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
@@ -2964,48 +2703,39 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         else
             ++lastEntry;
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
-        if (location)
+        if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY)
         {
-            if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY)
-            {
-                char *link_arg = escape_unix_link_arg(unix_link);
-                if (link_arg)
-                {
-                    r = !write_desktop_entry(unix_link, location, lastEntry,
-                        start_path, link_arg, description, work_dir, icon_name, wmclass);
-                    HeapFree(GetProcessHeap(), 0, link_arg);
-                }
-            }
-            else
-                r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name, wmclass);
-            if (r == 0)
-                chmod(location, 0755);
-            HeapFree(GetProcessHeap(), 0, location);
+            char *link_arg = escape_unix_link_arg(unix_link);
+            r = !write_desktop_entry(unix_link, location, lastEntry,
+                                     start_path, link_arg, description, work_dir, icon_name, wmclass);
+            heap_free(link_arg);
         }
+        else
+            r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name, wmclass);
+        if (r == 0)
+            chmod(location, 0755);
+        heap_free(location);
     }
     else
     {
         char *link_arg = escape_unix_link_arg(unix_link);
-        if (link_arg)
-        {
-            r = !write_menu_entry(unix_link, link_name, start_path, link_arg, description, work_dir, icon_name, wmclass);
-            HeapFree(GetProcessHeap(), 0, link_arg);
-        }
+        r = !write_menu_entry(unix_link, link_name, start_path, link_arg, description, work_dir, icon_name, wmclass);
+        heap_free(link_arg);
     }
 
     ReleaseSemaphore( hsem, 1, NULL );
 
 cleanup:
     if (hsem) CloseHandle( hsem );
-    HeapFree( GetProcessHeap(), 0, icon_name );
-    HeapFree( GetProcessHeap(), 0, work_dir );
-    HeapFree( GetProcessHeap(), 0, link_name );
-    HeapFree( GetProcessHeap(), 0, escaped_args );
-    HeapFree( GetProcessHeap(), 0, escaped_path );
-    HeapFree( GetProcessHeap(), 0, description );
-    HeapFree( GetProcessHeap(), 0, wmclass );
-    HeapFree( GetProcessHeap(), 0, unix_link );
-    HeapFree( GetProcessHeap(), 0, start_path );
+    heap_free(icon_name );
+    heap_free(work_dir );
+    heap_free(link_name );
+    heap_free(escaped_args );
+    heap_free(escaped_path );
+    heap_free(description );
+    heap_free(wmclass );
+    heap_free(unix_link );
+    heap_free(start_path );
 
     if (r && !bWait)
         WINE_ERR("failed to build the menu\n" );
@@ -3066,18 +2796,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     }
 
     escaped_urlPath = escape(urlPath);
-    if (escaped_urlPath == NULL)
-    {
-        WINE_ERR("couldn't escape url, out of memory\n");
-        goto cleanup;
-    }
-
     start_path = get_start_exe_path();
-    if (start_path == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto cleanup;
-    }
 
     ps[0].ulKind = PRSPEC_PROPID;
     ps[0].u.propid = PID_IS_ICONFILE;
@@ -3137,13 +2856,10 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         else
             ++lastEntry;
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
-        if (location)
-        {
-            r = !write_desktop_entry(NULL, location, lastEntry, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
-            if (r == 0)
-                chmod(location, 0755);
-            HeapFree(GetProcessHeap(), 0, location);
-        }
+        r = !write_desktop_entry(NULL, location, lastEntry, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
+        if (r == 0)
+            chmod(location, 0755);
+        heap_free(location);
     }
     else
         r = !write_menu_entry(unix_link, link_name, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
@@ -3153,11 +2869,11 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
 cleanup:
     if (hSem)
         CloseHandle(hSem);
-    HeapFree( GetProcessHeap(), 0, icon_name );
-    HeapFree(GetProcessHeap(), 0, link_name);
+    heap_free(icon_name );
+    heap_free(link_name);
     CoTaskMemFree( urlPath );
-    HeapFree(GetProcessHeap(), 0, escaped_urlPath);
-    HeapFree(GetProcessHeap(), 0, unix_link);
+    heap_free(escaped_urlPath);
+    heap_free(unix_link);
     return ret;
 }
 
@@ -3343,27 +3059,12 @@ static void RefreshFileTypeAssociations(void)
     }
 
     mime_dir = heap_printf("%s/mime", xdg_data_dir);
-    if (mime_dir == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto end;
-    }
     create_directories(mime_dir);
 
     packages_dir = heap_printf("%s/packages", mime_dir);
-    if (packages_dir == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto end;
-    }
     create_directories(packages_dir);
 
     applications_dir = heap_printf("%s/applications", xdg_data_dir);
-    if (applications_dir == NULL)
-    {
-        WINE_ERR("out of memory\n");
-        goto end;
-    }
     create_directories(applications_dir);
 
     hasChanged = generate_associations(xdg_data_dir, packages_dir, applications_dir);
@@ -3388,9 +3089,9 @@ end:
         ReleaseSemaphore(hSem, 1, NULL);
         CloseHandle(hSem);
     }
-    HeapFree(GetProcessHeap(), 0, mime_dir);
-    HeapFree(GetProcessHeap(), 0, packages_dir);
-    HeapFree(GetProcessHeap(), 0, applications_dir);
+    heap_free(mime_dir);
+    heap_free(packages_dir);
+    heap_free(applications_dir);
 }
 
 static void cleanup_menus(void)
@@ -3410,52 +3111,39 @@ static void cleanup_menus(void)
             DWORD dataSize = 4096;
             while (1)
             {
-                lret = ERROR_OUTOFMEMORY;
-                value = HeapAlloc(GetProcessHeap(), 0, valueSize * sizeof(WCHAR));
-                if (value == NULL)
-                    break;
-                data = HeapAlloc(GetProcessHeap(), 0, dataSize * sizeof(WCHAR));
-                if (data == NULL)
-                    break;
+                value = xmalloc(valueSize * sizeof(WCHAR));
+                data = xmalloc(dataSize * sizeof(WCHAR));
                 lret = RegEnumValueW(hkey, i, value, &valueSize, NULL, NULL, (BYTE*)data, &dataSize);
                 if (lret != ERROR_MORE_DATA)
                     break;
                 valueSize *= 2;
                 dataSize *= 2;
-                HeapFree(GetProcessHeap(), 0, value);
-                HeapFree(GetProcessHeap(), 0, data);
+                heap_free(value);
+                heap_free(data);
                 value = data = NULL;
             }
             if (lret == ERROR_SUCCESS)
             {
                 char *unix_file;
                 char *windows_file;
+                struct stat filestats;
                 unix_file = wchars_to_unix_chars(value);
                 windows_file = wchars_to_unix_chars(data);
-                if (unix_file != NULL && windows_file != NULL)
+                if (stat(windows_file, &filestats) < 0 && errno == ENOENT)
                 {
-                    struct stat filestats;
-                    if (stat(windows_file, &filestats) < 0 && errno == ENOENT)
-                    {
-                        WINE_TRACE("removing menu related file %s\n", unix_file);
-                        remove(unix_file);
-                        RegDeleteValueW(hkey, value);
-                    }
-                    else
-                        i++;
+                    WINE_TRACE("removing menu related file %s\n", unix_file);
+                    remove(unix_file);
+                    RegDeleteValueW(hkey, value);
                 }
                 else
-                {
-                    WINE_ERR("out of memory enumerating menus\n");
-                    lret = ERROR_OUTOFMEMORY;
-                }
-                HeapFree(GetProcessHeap(), 0, unix_file);
-                HeapFree(GetProcessHeap(), 0, windows_file);
+                    i++;
+                heap_free(unix_file);
+                heap_free(windows_file);
             }
             else if (lret != ERROR_NO_MORE_ITEMS)
                 WINE_ERR("error %d reading registry\n", lret);
-            HeapFree(GetProcessHeap(), 0, value);
-            HeapFree(GetProcessHeap(), 0, data);
+            heap_free(value);
+            heap_free(data);
         }
         RegCloseKey(hkey);
     }
@@ -3481,19 +3169,7 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     HRESULT hr;
 
     utf8lnkPath = wchars_to_utf8_chars(lnkPath);
-    if (utf8lnkPath == NULL)
-    {
-        WINE_ERR("out of memory converting paths\n");
-        goto end;
-    }
-
     utf8OutputPath = wchars_to_utf8_chars(outputPath);
-    if (utf8OutputPath == NULL)
-    {
-        WINE_ERR("out of memory converting paths\n");
-        goto end;
-    }
-
     winLnkPath = wine_get_dos_file_name(utf8lnkPath);
     if (winLnkPath == NULL)
     {
@@ -3551,16 +3227,16 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, utf8lnkPath);
-    HeapFree(GetProcessHeap(), 0, utf8OutputPath);
-    HeapFree(GetProcessHeap(), 0, winLnkPath);
+    heap_free(utf8lnkPath);
+    heap_free(utf8OutputPath);
+    heap_free(winLnkPath);
     if (shellLink != NULL)
         IShellLinkW_Release(shellLink);
     if (persistFile != NULL)
         IPersistFile_Release(persistFile);
     if (stream != NULL)
         IStream_Release(stream);
-    HeapFree(GetProcessHeap(), 0, pIconDirEntries);
+    heap_free(pIconDirEntries);
 }
 
 static WCHAR *next_token( LPWSTR *p )
@@ -3601,6 +3277,7 @@ static WCHAR *next_token( LPWSTR *p )
 
 static BOOL init_xdg(void)
 {
+    char *buffer;
     WCHAR shellDesktopPath[MAX_PATH];
     HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, shellDesktopPath);
     if (SUCCEEDED(hr))
@@ -3615,29 +3292,18 @@ static BOOL init_xdg(void)
         xdg_config_dir = heap_printf("%s/menus/applications-merged", getenv("XDG_CONFIG_HOME"));
     else
         xdg_config_dir = heap_printf("%s/.config/menus/applications-merged", getenv("HOME"));
-    if (xdg_config_dir)
-    {
-        create_directories(xdg_config_dir);
-        if (getenv("XDG_DATA_HOME"))
-            xdg_data_dir = strdupA(getenv("XDG_DATA_HOME"));
-        else
-            xdg_data_dir = heap_printf("%s/.local/share", getenv("HOME"));
-        if (xdg_data_dir)
-        {
-            char *buffer;
-            create_directories(xdg_data_dir);
-            buffer = heap_printf("%s/desktop-directories", xdg_data_dir);
-            if (buffer)
-            {
-                mkdir(buffer, 0777);
-                HeapFree(GetProcessHeap(), 0, buffer);
-            }
-            return TRUE;
-        }
-        HeapFree(GetProcessHeap(), 0, xdg_config_dir);
-    }
-    WINE_ERR("out of memory\n");
-    return FALSE;
+
+    create_directories(xdg_config_dir);
+    if (getenv("XDG_DATA_HOME"))
+        xdg_data_dir = xstrdup(getenv("XDG_DATA_HOME"));
+    else
+        xdg_data_dir = heap_printf("%s/.local/share", getenv("HOME"));
+
+    create_directories(xdg_data_dir);
+    buffer = heap_printf("%s/desktop-directories", xdg_data_dir);
+    mkdir(buffer, 0777);
+    heap_free(buffer);
+    return TRUE;
 }
 
 static BOOL associations_enabled(void)
