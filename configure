@@ -7481,7 +7481,6 @@ for ac_header in \
 	dlfcn.h \
 	elf.h \
 	float.h \
-	fnmatch.h \
 	getopt.h \
 	gettext-po.h \
 	grp.h \
@@ -17902,7 +17901,6 @@ for ac_func in \
         __res_getservers \
 	_spawnvp \
 	epoll_create \
-	fnmatch \
 	fork \
 	fstatfs \
 	futimens \

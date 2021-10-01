@@ -450,7 +450,6 @@ AC_CHECK_HEADERS(\
 	dlfcn.h \
 	elf.h \
 	float.h \
-	fnmatch.h \
 	getopt.h \
 	gettext-po.h \
 	grp.h \
@@ -2132,7 +2131,6 @@ AC_CHECK_FUNCS(\
         __res_getservers \
 	_spawnvp \
 	epoll_create \
-	fnmatch \
 	fork \
 	fstatfs \
 	futimens \

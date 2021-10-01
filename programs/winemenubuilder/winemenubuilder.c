@@ -73,9 +73,6 @@
 #endif
 #include <errno.h>
 #include <stdarg.h>
-#ifdef HAVE_FNMATCH_H
-#include <fnmatch.h>
-#endif
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -181,7 +178,6 @@ struct xdg_mime_type
 {
     char *mimeType;
     char *glob;
-    char *lower_glob;
     struct list entry;
 };
 
@@ -1936,7 +1932,7 @@ static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
         int size = 0;
         while (ret && (ret = next_line(globs_file, &line, &size)) && line)
         {
-            char *pos, *l;
+            char *pos;
             struct xdg_mime_type *mime_type_entry = NULL;
             if (line[0] != '#' && (pos = strchr(line, ':')))
             {
@@ -1944,9 +1940,6 @@ static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
                 *pos = 0;
                 mime_type_entry->mimeType = xstrdup(line);
                 mime_type_entry->glob = xstrdup(pos + 1);
-                mime_type_entry->lower_glob = xstrdup(pos + 1);
-                for (l = mime_type_entry->lower_glob; *l; l++)
-                    *l = tolower(*l);
                 list_add_tail(mime_types, &mime_type_entry->entry);
             }
         }
@@ -1965,7 +1958,6 @@ static void free_native_mime_types(struct list *native_mime_types)
     {
         list_remove(&mime_type_entry->entry);
         heap_free(mime_type_entry->glob);
-        heap_free(mime_type_entry->lower_glob);
         heap_free(mime_type_entry->mimeType);
         heap_free(mime_type_entry);
     }
@@ -2005,10 +1997,11 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list *mime
     return ret;
 }
 
-static BOOL match_glob(struct list *native_mime_types, const char *extension,
-                       int ignoreGlobCase, char **match)
+static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
+                                                const char *extensionA,
+                                                LPCWSTR extensionW,
+                                                char **match)
 {
-#ifdef HAVE_FNMATCH
     struct xdg_mime_type *mime_type_entry;
     int matchLength = 0;
 
@@ -2016,44 +2009,18 @@ static BOOL match_glob(struct list *native_mime_types, const char *extension,
 
     LIST_FOR_EACH_ENTRY(mime_type_entry, native_mime_types, struct xdg_mime_type, entry)
     {
-        const char *glob = ignoreGlobCase ? mime_type_entry->lower_glob : mime_type_entry->glob;
-        if (fnmatch(glob, extension, 0) == 0)
+        if (PathMatchSpecA( extensionA, mime_type_entry->glob ))
         {
-            if (*match == NULL || matchLength < strlen(glob))
+            if (*match == NULL || matchLength < strlen(mime_type_entry->glob))
             {
                 *match = mime_type_entry->mimeType;
-                matchLength = strlen(glob);
+                matchLength = strlen(mime_type_entry->glob);
             }
         }
     }
 
     if (*match != NULL) *match = xstrdup(*match);
-#else
-    *match = NULL;
-#endif
     return TRUE;
-}
-
-static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
-                                                const char *extensionA,
-                                                LPCWSTR extensionW,
-                                                char **mime_type)
-{
-    WCHAR *lower_extensionW;
-    char *lower_extensionA;
-    INT len;
-    BOOL ret = match_glob(native_mime_types, extensionA, 0, mime_type);
-    if (ret == FALSE || *mime_type != NULL)
-        return ret;
-    len = strlenW(extensionW);
-    lower_extensionW = xmalloc((len + 1)*sizeof(WCHAR));
-    memcpy(lower_extensionW, extensionW, (len + 1)*sizeof(WCHAR));
-    strlwrW(lower_extensionW);
-    lower_extensionA = wchars_to_utf8_chars(lower_extensionW);
-    ret = match_glob(native_mime_types, lower_extensionA, 1, mime_type);
-    heap_free(lower_extensionA);
-    heap_free(lower_extensionW);
-    return ret;
 }
 
 static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
