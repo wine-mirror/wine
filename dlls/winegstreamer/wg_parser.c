@@ -1846,6 +1846,28 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     return TRUE;
 }
 
+static void init_gstreamer_once(void)
+{
+    char arg0[] = "wine";
+    char arg1[] = "--gst-disable-registry-fork";
+    char *args[] = {arg0, arg1, NULL};
+    int argc = ARRAY_SIZE(args) - 1;
+    char **argv = args;
+    GError *err;
+
+    if (!gst_init_check(&argc, &argv, &err))
+    {
+        fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", debugstr_a(err->message));
+        g_error_free(err);
+        return;
+    }
+
+    GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
+
+    GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.\n",
+            gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+}
+
 static struct wg_parser * CDECL wg_parser_create(enum wg_parser_type type)
 {
     static const init_gst_cb init_funcs[] =
@@ -1856,7 +1878,11 @@ static struct wg_parser * CDECL wg_parser_create(enum wg_parser_type type)
         [WG_PARSER_WAVPARSE] = wave_parser_init_gst,
     };
 
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
     struct wg_parser *parser;
+
+    if (pthread_once(&once, init_gstreamer_once))
+        return NULL;
 
     if (!(parser = calloc(1, sizeof(*parser))))
         return NULL;
@@ -1923,27 +1949,6 @@ static const struct unix_funcs funcs =
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
 {
     if (reason == DLL_PROCESS_ATTACH)
-    {
-        char arg0[] = "wine";
-        char arg1[] = "--gst-disable-registry-fork";
-        char *args[] = {arg0, arg1, NULL};
-        int argc = ARRAY_SIZE(args) - 1;
-        char **argv = args;
-        GError *err;
-
-        if (!gst_init_check(&argc, &argv, &err))
-        {
-            fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", debugstr_a(err->message));
-            g_error_free(err);
-            return STATUS_UNSUCCESSFUL;
-        }
-
-        GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
-
-        GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.\n",
-                gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-
         *(const struct unix_funcs **)ptr_out = &funcs;
-    }
     return STATUS_SUCCESS;
 }
