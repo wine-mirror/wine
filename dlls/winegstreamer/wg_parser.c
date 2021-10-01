@@ -34,6 +34,13 @@
 #include <gst/video/video.h>
 #include <gst/audio/audio.h>
 
+typedef enum
+{
+    GST_AUTOPLUG_SELECT_TRY,
+    GST_AUTOPLUG_SELECT_EXPOSE,
+    GST_AUTOPLUG_SELECT_SKIP,
+} GstAutoplugSelectResult;
+
 /* GStreamer callbacks may be called on threads not created by Wine, and
  * therefore cannot access the Wine TEB. This means that we must use GStreamer
  * debug logging instead of Wine debug logging. In order to be safe we forbid

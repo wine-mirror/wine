@@ -36,13 +36,6 @@
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
-typedef enum
-{
-    GST_AUTOPLUG_SELECT_TRY,
-    GST_AUTOPLUG_SELECT_EXPOSE,
-    GST_AUTOPLUG_SELECT_SKIP,
-} GstAutoplugSelectResult;
-
 static inline const char *debugstr_time(REFERENCE_TIME time)
 {
     ULONGLONG abstime = time >= 0 ? time : -time;
