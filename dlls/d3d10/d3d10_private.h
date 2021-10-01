@@ -60,9 +60,11 @@ enum d3d10_effect_object_type_flags
 
 enum d3d10_effect_object_operation
 {
-    D3D10_EOO_VALUE = 1,
-    D3D10_EOO_PARSED_OBJECT = 2,
-    D3D10_EOO_PARSED_OBJECT_INDEX = 3,
+    D3D10_EOO_CONST = 1,
+    D3D10_EOO_VAR = 2,
+    D3D10_EOO_CONST_INDEX = 3,
+    D3D10_EOO_VAR_INDEX = 4,
+    D3D10_EOO_INDEX_EXPRESSION = 5,
     D3D10_EOO_ANONYMOUS_SHADER = 7,
 };
 

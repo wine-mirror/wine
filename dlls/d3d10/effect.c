@@ -1741,11 +1741,22 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
             return FALSE;
         }
 
-        if (!read_value_list(data, data_size, value_offset, property_info->type, idx,
-                property_info->size, (char *)container + property_info->offset))
+        switch (operation)
         {
-            ERR("Failed to read values for property %#x.\n", id);
-            return FALSE;
+            case D3D10_EOO_CONST:
+
+                /* Constant values output directly to backing store. */
+                if (!read_value_list(data, data_size, value_offset, property_info->type, idx,
+                        property_info->size, (char *)container + property_info->offset))
+                {
+                    ERR("Failed to read values for property %#x.\n", id);
+                    return FALSE;
+                }
+                break;
+
+            default:
+                FIXME("Unhandled operation %#x.\n", operation);
+                return E_FAIL;
         }
     }
 
@@ -1787,7 +1798,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
 
     switch(operation)
     {
-        case D3D10_EOO_VALUE:
+        case D3D10_EOO_CONST:
             TRACE("Copy variable values\n");
 
             switch (o->type)
@@ -1837,7 +1848,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             }
             break;
 
-        case D3D10_EOO_PARSED_OBJECT:
+        case D3D10_EOO_VAR:
             /* This is a local object, we've parsed in parse_fx10_local_object. */
             if (!fx10_get_string(data, data_size, offset, &name, &name_len))
             {
@@ -1849,7 +1860,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             variable = e->lpVtbl->GetVariableByName(e, name);
             break;
 
-        case D3D10_EOO_PARSED_OBJECT_INDEX:
+        case D3D10_EOO_CONST_INDEX:
             /* This is a local object, we've parsed in parse_fx10_local_object, which has an array index. */
             if (offset >= data_size || !require_space(offset, 2, sizeof(DWORD), data_size))
             {
