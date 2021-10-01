@@ -1771,8 +1771,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     status = HidP_SetUsages( HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
                              report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsages returned %#x\n", status );
-    buffer[6] = 2;
-    buffer[7] = 4;
+    buffer[13] = 2;
+    buffer[14] = 4;
     ok( !memcmp( buffer, report, caps.InputReportByteLength ), "unexpected report data\n" );
 
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_LED, 0, 6, 1, preparsed_data, report,
@@ -2460,8 +2460,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
                 REPORT_COUNT(1, 8),
                 REPORT_SIZE(1, 1),
                 INPUT(1, Cnst|Var|Abs),
-                REPORT_COUNT(1, 8),
-                REPORT_SIZE(1, 1),
+                REPORT_SIZE(1, 8),
                 INPUT(1, Cnst|Var|Abs),
                 /* needs to be 8 bit aligned as next has Buff */
 
@@ -2682,7 +2681,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     {
         .Usage = HID_USAGE_GENERIC_JOYSTICK,
         .UsagePage = HID_USAGE_PAGE_GENERIC,
-        .InputReportByteLength = report_id ? 25 : 26,
+        .InputReportByteLength = report_id ? 32 : 33,
         .OutputReportByteLength = report_id ? 2 : 3,
         .FeatureReportByteLength = report_id ? 21 : 22,
         .NumberLinkCollectionNodes = 10,

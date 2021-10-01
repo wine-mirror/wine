@@ -360,6 +360,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
 {
     struct hid_value_caps *values;
     USAGE usage_page = state->items.usage_page;
+    USHORT report_count = state->items.report_count;
     DWORD i, usages_size = max( 1, state->usages_size );
     USHORT *byte_length = &state->byte_length[type];
     ULONG start_bit, *bit_size = &state->bit_size[type][state->items.report_id];
@@ -408,6 +409,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     state->data_count[type] = state->items.data_index_max + 1;
 
     state->items.usage_page = usage_page;
+    state->items.report_count = report_count;
     reset_local_items( state );
     return TRUE;
 }
