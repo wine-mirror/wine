@@ -32,9 +32,23 @@
 #include "netiodef.h"
 #include "wine/nsi.h"
 #include "wine/debug.h"
-#include "nsiproxy_private.h"
+#include "wine/unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
+
+static unixlib_handle_t nsiproxy_handle;
+
+static NTSTATUS nsiproxy_call( unsigned int code, void *args )
+{
+    return __wine_unix_call( nsiproxy_handle, code, args );
+}
+
+enum unix_calls
+{
+    nsi_enumerate_all_ex,
+    nsi_get_all_parameters_ex,
+    nsi_get_parameter_ex,
+};
 
 static void nsiproxy_enumerate_all( IRP *irp )
 {
@@ -73,7 +87,7 @@ static void nsiproxy_enumerate_all( IRP *irp )
     enum_all.static_size = in->static_size;
     enum_all.count = in->count;
 
-    irp->IoStatus.u.Status = nsi_enumerate_all_ex( &enum_all );
+    irp->IoStatus.u.Status = nsiproxy_call( nsi_enumerate_all_ex, &enum_all );
     if (irp->IoStatus.u.Status == STATUS_SUCCESS || irp->IoStatus.u.Status == STATUS_BUFFER_OVERFLOW)
     {
         irp->IoStatus.Information = out_len;
@@ -119,7 +133,7 @@ static void nsiproxy_get_all_parameters( IRP *irp )
     get_all.static_data = out + in->rw_size + in->dynamic_size;
     get_all.static_size = in->static_size;
 
-    irp->IoStatus.u.Status = nsi_get_all_parameters_ex( &get_all );
+    irp->IoStatus.u.Status = nsiproxy_call( nsi_get_all_parameters_ex, &get_all );
     irp->IoStatus.Information = (irp->IoStatus.u.Status == STATUS_SUCCESS) ? out_len : 0;
 }
 
@@ -152,7 +166,7 @@ static void nsiproxy_get_parameter( IRP *irp )
     get_param.data_size = out_len;
     get_param.data_offset = in->data_offset;
 
-    irp->IoStatus.u.Status = nsi_get_parameter_ex( &get_param );
+    irp->IoStatus.u.Status = nsiproxy_call( nsi_get_parameter_ex, &get_param );
     irp->IoStatus.Information = irp->IoStatus.u.Status == STATUS_SUCCESS ? out_len : 0;
 }
 
@@ -193,14 +207,12 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
 static int add_device( DRIVER_OBJECT *driver )
 {
-    static const WCHAR name_str[] = {'\\','D','e','v','i','c','e','\\','N','s','i',0};
-    static const WCHAR link_str[] = {'\\','?','?','\\','N','s','i',0};
     UNICODE_STRING name, link;
     DEVICE_OBJECT *device;
     NTSTATUS status;
 
-    RtlInitUnicodeString( &name, name_str );
-    RtlInitUnicodeString( &link, link_str );
+    RtlInitUnicodeString( &name, L"\\Device\\Nsi" );
+    RtlInitUnicodeString( &link, L"\\??\\Nsi" );
 
     if (!(status = IoCreateDevice( driver, 0, &name, FILE_DEVICE_NETWORK, FILE_DEVICE_SECURE_OPEN, FALSE, &device )))
         status = IoCreateSymbolicLink( &link, &name );
@@ -215,7 +227,15 @@ static int add_device( DRIVER_OBJECT *driver )
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    HMODULE instance;
+    NTSTATUS status;
+
     TRACE( "(%p, %s)\n", driver, debugstr_w( path->Buffer ) );
+
+    RtlPcToFileHeader( &DriverEntry, (void *)&instance );
+    status = NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                                   &nsiproxy_handle, sizeof(nsiproxy_handle), NULL );
+    if (status) return status;
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = nsi_ioctl;
 
