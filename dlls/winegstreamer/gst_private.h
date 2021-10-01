@@ -203,8 +203,6 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
 BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
 
-void start_dispatch_thread(void) DECLSPEC_HIDDEN;
-
 extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
 extern HRESULT mfplat_DllRegisterServer(void) DECLSPEC_HIDDEN;
 
