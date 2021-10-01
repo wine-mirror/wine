@@ -699,14 +699,18 @@ static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
 
     TRACE( "iface %p.\n", iface );
 
-    if ((hr = IDirectInputDevice2WImpl_Acquire( iface )) != DI_OK) return hr;
+    EnterCriticalSection( &impl->base.crit );
+    hr = IDirectInputDevice2WImpl_Acquire( iface );
+    if (hr == DI_OK)
+    {
+        memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
+        impl->read_ovl.hEvent = impl->base.read_event;
+        if (ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl ))
+            impl->base.read_callback( iface );
+    }
+    LeaveCriticalSection( &impl->base.crit );
 
-    memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
-    impl->read_ovl.hEvent = impl->base.read_event;
-    if (ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl ))
-        impl->base.read_callback( iface );
-
-    return DI_OK;
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
@@ -717,12 +721,16 @@ static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
 
     TRACE( "iface %p.\n", iface );
 
-    if ((hr = IDirectInputDevice2WImpl_Unacquire( iface )) != DI_OK) return hr;
+    EnterCriticalSection( &impl->base.crit );
+    if (impl->base.acquired)
+    {
+        ret = CancelIoEx( impl->device, &impl->read_ovl );
+        if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
+    }
+    hr = IDirectInputDevice2WImpl_Unacquire( iface );
+    LeaveCriticalSection( &impl->base.crit );
 
-    ret = CancelIoEx( impl->device, &impl->read_ovl );
-    if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
-
-    return DI_OK;
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, DWORD len, void *ptr )
