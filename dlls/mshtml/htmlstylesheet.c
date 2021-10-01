@@ -795,9 +795,41 @@ static HRESULT WINAPI HTMLStyleSheet_addRule(IHTMLStyleSheet *iface, BSTR bstrSe
                                              BSTR bstrStyle, LONG lIndex, LONG *plIndex)
 {
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet(iface);
-    FIXME("(%p)->(%s %s %d %p)\n", This, debugstr_w(bstrSelector), debugstr_w(bstrStyle),
+    const WCHAR format[] = L"%s {%s}";
+    nsIDOMCSSRuleList *nslist = NULL;
+    UINT32 length, new_index;
+    nsAString nsstr;
+    nsresult nsres;
+    WCHAR *rule;
+    size_t len;
+
+    TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(bstrSelector), debugstr_w(bstrStyle),
           lIndex, plIndex);
-    return E_NOTIMPL;
+
+    if(!bstrSelector || !bstrStyle || !bstrSelector[0] || !bstrStyle[0])
+        return E_INVALIDARG;
+
+    nsres = nsIDOMCSSStyleSheet_GetCssRules(This->nsstylesheet, &nslist);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+    nsIDOMCSSRuleList_GetLength(nslist, &length);
+
+    if(lIndex > length)
+        lIndex = length;
+
+    len = ARRAY_SIZE(format) - 4 /* %s twice */ + wcslen(bstrSelector) + wcslen(bstrStyle);
+    if(!(rule = heap_alloc(len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+    swprintf(rule, len, format, bstrSelector, bstrStyle);
+
+    nsAString_InitDepend(&nsstr, rule);
+    nsres = nsIDOMCSSStyleSheet_InsertRule(This->nsstylesheet, &nsstr, lIndex, &new_index);
+    if(NS_FAILED(nsres)) WARN("failed: %08x\n", nsres);
+    nsAString_Finish(&nsstr);
+    heap_free(rule);
+
+    *plIndex = new_index;
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLStyleSheet_removeImport(IHTMLStyleSheet *iface, LONG lIndex)
