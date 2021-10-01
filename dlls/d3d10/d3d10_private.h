@@ -83,6 +83,7 @@ struct d3d10_effect_object
         ID3D10VertexShader *vs;
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;
+        IUnknown *object;
     } object;
 };
 
@@ -136,6 +137,7 @@ struct d3d10_effect_state_object_variable
         ID3D10DepthStencilState *depth_stencil;
         ID3D10BlendState *blend;
         ID3D10SamplerState *sampler;
+        IUnknown *object;
     } object;
 };
 

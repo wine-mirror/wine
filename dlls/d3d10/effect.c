@@ -3017,23 +3017,11 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
                 break;
 
             case D3D10_SVT_DEPTHSTENCIL:
-                if (v->u.state.object.depth_stencil)
-                    ID3D10DepthStencilState_Release(v->u.state.object.depth_stencil);
-                break;
-
             case D3D10_SVT_BLEND:
-                if (v->u.state.object.blend)
-                    ID3D10BlendState_Release(v->u.state.object.blend);
-                break;
-
             case D3D10_SVT_RASTERIZER:
-                if (v->u.state.object.rasterizer)
-                    ID3D10RasterizerState_Release(v->u.state.object.rasterizer);
-                break;
-
             case D3D10_SVT_SAMPLER:
-                if (v->u.state.object.sampler)
-                    ID3D10SamplerState_Release(v->u.state.object.sampler);
+                if (v->u.state.object.object)
+                    IUnknown_Release(v->u.state.object.object);
                 break;
 
             case D3D10_SVT_TEXTURE1D:
@@ -3076,33 +3064,13 @@ static void d3d10_effect_object_destroy(struct d3d10_effect_object *o)
     switch (o->type)
     {
         case D3D10_EOT_RASTERIZER_STATE:
-            if (o->object.rs)
-                ID3D10RasterizerState_Release(o->object.rs);
-            break;
-
         case D3D10_EOT_DEPTH_STENCIL_STATE:
-            if (o->object.ds)
-                ID3D10DepthStencilState_Release(o->object.ds);
-            break;
-
         case D3D10_EOT_BLEND_STATE:
-            if (o->object.bs)
-                ID3D10BlendState_Release(o->object.bs);
-            break;
-
         case D3D10_EOT_VERTEXSHADER:
-            if (o->object.vs)
-                ID3D10VertexShader_Release(o->object.vs);
-            break;
-
         case D3D10_EOT_PIXELSHADER:
-            if (o->object.ps)
-                ID3D10PixelShader_Release(o->object.ps);
-            break;
-
         case D3D10_EOT_GEOMETRYSHADER:
-            if (o->object.gs)
-                ID3D10GeometryShader_Release(o->object.gs);
+            if (o->object.object)
+                IUnknown_Release(o->object.object);
             break;
 
         default:
