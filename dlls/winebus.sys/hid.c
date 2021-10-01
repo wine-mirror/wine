@@ -35,6 +35,7 @@
 #include "ddk/hidsdi.h"
 
 #include "wine/debug.h"
+#include "wine/hid.h"
 
 #include "unix_private.h"
 
@@ -394,6 +395,64 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
     return hid_report_descriptor_append(desc, haptics_template, sizeof(haptics_template));
 }
 
+#include "pshpack1.h"
+struct pid_device_control
+{
+    BYTE control_index;
+};
+
+static const USAGE pid_device_control_usages[] =
+{
+    0, /* HID nary collection indexes start at 1 */
+    PID_USAGE_DC_ENABLE_ACTUATORS,
+    PID_USAGE_DC_DISABLE_ACTUATORS,
+    PID_USAGE_DC_STOP_ALL_EFFECTS,
+    PID_USAGE_DC_DEVICE_RESET,
+    PID_USAGE_DC_DEVICE_PAUSE,
+    PID_USAGE_DC_DEVICE_CONTINUE,
+};
+#include "poppack.h"
+
+BOOL hid_device_add_physical(struct unix_device *iface)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    const BYTE device_control_report = ++desc->next_report_id[HidP_Output];
+    const BYTE device_control_header[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_PID),
+        USAGE(1, PID_USAGE_DEVICE_CONTROL_REPORT),
+        COLLECTION(1, Logical),
+            REPORT_ID(1, device_control_report),
+
+            USAGE(1, PID_USAGE_DEVICE_CONTROL),
+            COLLECTION(1, Logical),
+    };
+    const BYTE device_control_footer[] =
+    {
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 6),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Ary|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    ULONG i;
+
+    if (!hid_report_descriptor_append(desc, device_control_header, sizeof(device_control_header)))
+        return FALSE;
+    for (i = 1; i < ARRAY_SIZE(pid_device_control_usages); ++i)
+    {
+        if (!hid_report_descriptor_append_usage(desc, pid_device_control_usages[i]))
+            return FALSE;
+    }
+    if (!hid_report_descriptor_append(desc, device_control_footer, sizeof(device_control_footer)))
+        return FALSE;
+
+    iface->hid_physical.device_control_report = device_control_report;
+    return TRUE;
+}
+
 #include "pop_hid_macros.h"
 
 static void hid_device_destroy(struct unix_device *iface)
@@ -425,6 +484,7 @@ NTSTATUS hid_device_get_report_descriptor(struct unix_device *iface, BYTE *buffe
 
 static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
+    struct hid_physical *physical = &iface->hid_physical;
     struct hid_haptics *haptics = &iface->hid_haptics;
 
     if (packet->reportId == haptics->waveform_report)
@@ -449,6 +509,21 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             duration_ms = haptics->features.waveform_cutoff_time_ms;
             io->Status = iface->hid_vtbl->haptics_start(iface, duration_ms, rumble->intensity, buzz->intensity);
         }
+    }
+    else if (packet->reportId == physical->device_control_report)
+    {
+        struct pid_device_control *report = (struct pid_device_control *)(packet->reportBuffer + 1);
+        USAGE control;
+
+        io->Information = sizeof(*report) + 1;
+        if (packet->reportBufferLen < io->Information)
+            io->Status = STATUS_BUFFER_TOO_SMALL;
+        else if (report->control_index >= ARRAY_SIZE(pid_device_control_usages))
+            io->Status = STATUS_INVALID_PARAMETER;
+        else if (!(control = pid_device_control_usages[report->control_index]))
+            io->Status = STATUS_INVALID_PARAMETER;
+        else
+            io->Status = iface->hid_vtbl->physical_device_control(iface, control);
     }
     else
     {

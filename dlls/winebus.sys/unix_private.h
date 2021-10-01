@@ -47,6 +47,7 @@ struct hid_device_vtbl
     void (*stop)(struct unix_device *iface);
     NTSTATUS (*haptics_start)(struct unix_device *iface, DWORD duration_ms,
                               USHORT rumble_intensity, USHORT buzz_intensity);
+    NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
 };
 
 struct hid_report_descriptor
@@ -87,6 +88,11 @@ struct hid_haptics
     BYTE waveform_report;
 };
 
+struct hid_physical
+{
+    BYTE device_control_report;
+};
+
 struct hid_device_state
 {
     ULONG bit_size;
@@ -115,6 +121,7 @@ struct unix_device
     struct hid_report_descriptor hid_report_descriptor;
     struct hid_device_state hid_device_state;
     struct hid_haptics hid_haptics;
+    struct hid_physical hid_physical;
 };
 
 extern void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
@@ -152,6 +159,7 @@ extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usa
                                 const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_physical(struct unix_device *iface) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
 extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;

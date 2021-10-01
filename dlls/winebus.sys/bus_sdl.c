@@ -115,6 +115,9 @@ static Uint16 (*pSDL_JoystickGetVendor)(SDL_Joystick * joystick);
 #define WINE_SDL_HAPTIC_RUMBLE    0x80000000 /* using SDL_HapticRumble API */
 
 #define EFFECT_SUPPORT_HAPTICS  (SDL_HAPTIC_LEFTRIGHT|WINE_SDL_HAPTIC_RUMBLE|WINE_SDL_JOYSTICK_RUMBLE)
+#define EFFECT_SUPPORT_PHYSICAL (SDL_HAPTIC_CONSTANT|SDL_HAPTIC_RAMP|SDL_HAPTIC_SINE|SDL_HAPTIC_TRIANGLE| \
+                                 SDL_HAPTIC_SAWTOOTHUP|SDL_HAPTIC_SAWTOOTHDOWN|SDL_HAPTIC_SPRING|SDL_HAPTIC_DAMPER|SDL_HAPTIC_INERTIA| \
+                                 SDL_HAPTIC_FRICTION|SDL_HAPTIC_CUSTOM)
 
 struct sdl_device
 {
@@ -165,14 +168,12 @@ static void set_hat_value(struct unix_device *iface, int index, int value)
 
 static BOOL descriptor_add_haptic(struct sdl_device *impl)
 {
-    unsigned int haptics_mask = SDL_HAPTIC_LEFTRIGHT;
-
     if (!pSDL_JoystickIsHaptic(impl->sdl_joystick) ||
         !(impl->sdl_haptic = pSDL_HapticOpenFromJoystick(impl->sdl_joystick)))
         impl->effect_support = 0;
     else
     {
-        impl->effect_support = pSDL_HapticQuery(impl->sdl_haptic) & haptics_mask;
+        impl->effect_support = pSDL_HapticQuery(impl->sdl_haptic);
         if (pSDL_HapticRumbleSupported(impl->sdl_haptic))
             impl->effect_support |= WINE_SDL_HAPTIC_RUMBLE;
 
@@ -186,6 +187,12 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
     if (impl->effect_support & EFFECT_SUPPORT_HAPTICS)
     {
         if (!hid_device_add_haptics(&impl->unix_device))
+            return FALSE;
+    }
+
+    if ((impl->effect_support & EFFECT_SUPPORT_PHYSICAL))
+    {
+        if (!hid_device_add_physical(&impl->unix_device))
             return FALSE;
     }
 
@@ -391,12 +398,20 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, DWORD duration_ms,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, USAGE control)
+{
+    FIXME("iface %p, control %#04x stub\n", iface, control);
+
+    return STATUS_NOT_SUPPORTED;
+}
+
 static const struct hid_device_vtbl sdl_device_vtbl =
 {
     sdl_device_destroy,
     sdl_device_start,
     sdl_device_stop,
     sdl_device_haptics_start,
+    sdl_device_physical_device_control,
 };
 
 static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *event)

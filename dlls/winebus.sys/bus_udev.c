@@ -658,6 +658,13 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
             impl->haptic_effect_id = effect.id;
     }
 
+    for (i = 0; i < FF_MAX; ++i) if (test_bit(ffbits, i)) break;
+    if (i != FF_MAX)
+    {
+        if (!hid_device_add_physical(iface))
+            return STATUS_NO_MEMORY;
+    }
+
     if (!hid_device_end_report_descriptor(iface))
         return STATUS_NO_MEMORY;
 
@@ -802,12 +809,20 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD dura
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, USAGE control)
+{
+    FIXME("iface %p, control %#04x stub!\n", iface, control);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static const struct hid_device_vtbl lnxev_device_vtbl =
 {
     lnxev_device_destroy,
     lnxev_device_start,
     lnxev_device_stop,
     lnxev_device_haptics_start,
+    lnxev_device_physical_device_control,
 };
 #endif /* HAS_PROPER_INPUT_HEADER */
 
