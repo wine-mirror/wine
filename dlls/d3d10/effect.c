@@ -1543,13 +1543,6 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
     }
     TRACE("Variable name: %s.\n", debugstr_a(v->name));
 
-    if (!copy_name(NULL, &v->semantic))
-    {
-        ERR("Failed to copy semantic.\n");
-        return E_OUTOFMEMORY;
-    }
-    TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
-
     return S_OK;
 }
 
