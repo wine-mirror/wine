@@ -66,6 +66,8 @@
 #include <net/if_types.h>
 #endif
 
+#include <pthread.h>
+
 #define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -102,15 +104,7 @@ struct if_entry
 };
 
 static struct list if_list = LIST_INIT( if_list );
-
-static CRITICAL_SECTION if_list_cs;
-static CRITICAL_SECTION_DEBUG if_list_cs_debug =
-{
-    0, 0, &if_list_cs,
-    { &if_list_cs_debug.ProcessLocksList, &if_list_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": if_list_cs") }
-};
-static CRITICAL_SECTION if_list_cs = { &if_list_cs_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t if_list_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static struct if_entry *find_entry_from_index( DWORD index )
 {
@@ -468,7 +462,7 @@ static NTSTATUS ifinfo_enumerate_all( void *key_data, DWORD key_size, void *rw_d
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
 
-    EnterCriticalSection( &if_list_cs );
+    pthread_mutex_lock( &if_list_lock );
 
     update_if_table();
 
@@ -485,7 +479,7 @@ static NTSTATUS ifinfo_enumerate_all( void *key_data, DWORD key_size, void *rw_d
         num++;
     }
 
-    LeaveCriticalSection( &if_list_cs );
+    pthread_mutex_unlock( &if_list_lock );
 
     if (!want_data || num <= *count) *count = num;
     else status = STATUS_BUFFER_OVERFLOW;
@@ -503,7 +497,7 @@ static NTSTATUS ifinfo_get_all_parameters( const void *key, DWORD key_size, void
     TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size );
 
-    EnterCriticalSection( &if_list_cs );
+    pthread_mutex_lock( &if_list_lock );
 
     update_if_table();
 
@@ -514,7 +508,7 @@ static NTSTATUS ifinfo_get_all_parameters( const void *key, DWORD key_size, void
         status = STATUS_SUCCESS;
     }
 
-    LeaveCriticalSection( &if_list_cs );
+    pthread_mutex_unlock( &if_list_lock );
 
     return status;
 }
@@ -565,7 +559,7 @@ static NTSTATUS ifinfo_get_parameter( const void *key, DWORD key_size, DWORD par
 
     TRACE( "%p %d %d %p %d %d\n", key, key_size, param_type, data, data_size, data_offset );
 
-    EnterCriticalSection( &if_list_cs );
+    pthread_mutex_lock( &if_list_lock );
 
     update_if_table();
 
@@ -583,7 +577,7 @@ static NTSTATUS ifinfo_get_parameter( const void *key, DWORD key_size, DWORD par
         }
     }
 
-    LeaveCriticalSection( &if_list_cs );
+    pthread_mutex_unlock( &if_list_lock );
 
     return status;
 }
@@ -599,7 +593,7 @@ static NTSTATUS index_luid_get_parameter( const void *key, DWORD key_size, DWORD
     if (param_type != NSI_PARAM_TYPE_STATIC || data_size != sizeof(NET_LUID) || data_offset != 0)
         return STATUS_INVALID_PARAMETER;
 
-    EnterCriticalSection( &if_list_cs );
+    pthread_mutex_lock( &if_list_lock );
 
     update_if_table();
 
@@ -609,7 +603,7 @@ static NTSTATUS index_luid_get_parameter( const void *key, DWORD key_size, DWORD
         *(NET_LUID *)data = entry->if_luid;
         status = STATUS_SUCCESS;
     }
-    LeaveCriticalSection( &if_list_cs );
+    pthread_mutex_unlock( &if_list_lock );
     return status;
 }
 
@@ -618,7 +612,7 @@ BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid )
     struct if_entry *entry;
     BOOL ret = FALSE;
 
-    EnterCriticalSection( &if_list_cs );
+    pthread_mutex_lock( &if_list_lock );
 
     update_if_table();
 
@@ -629,7 +623,7 @@ BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid )
             ret = TRUE;
             break;
         }
-    LeaveCriticalSection( &if_list_cs );
+    pthread_mutex_unlock( &if_list_lock );
 
     return ret;
 }
@@ -639,7 +633,7 @@ BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name )
     struct if_entry *entry;
     BOOL ret = FALSE;
 
-    EnterCriticalSection( &if_list_cs );
+    pthread_mutex_lock( &if_list_lock );
 
     update_if_table();
 
@@ -650,7 +644,7 @@ BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name )
             ret = TRUE;
 
         }
-    LeaveCriticalSection( &if_list_cs );
+    pthread_mutex_unlock( &if_list_lock );
 
     return ret;
 }
