@@ -4038,7 +4038,6 @@ static void test_simple_joystick(void)
     check_member( objinst, expect_objects[5], "%u", wReportId );
 
     hr = IDirectInputDevice8_EnumEffects( device, NULL, NULL, DIEFT_ALL );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
     res = 0;
     hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, 0xfe );
@@ -4054,18 +4053,14 @@ static void test_simple_joystick(void)
         check_effects_params.expect_count - check_effects_params.index );
 
     hr = IDirectInputDevice8_GetEffectInfo( device, NULL, &GUID_Sine );
-    todo_wine
     ok( hr == E_POINTER, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
     effectinfo.dwSize = sizeof(DIEFFECTINFOW) + 1;
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
     effectinfo.dwSize = sizeof(DIEFFECTINFOW);
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_NULL );
-    todo_wine
     ok( hr == DIERR_DEVICENOTREG, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
-    todo_wine
     ok( hr == DIERR_DEVICENOTREG, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
 
     hr = IDirectInputDevice8_SetDataFormat( device, NULL );
@@ -4645,18 +4640,14 @@ static void test_simple_joystick(void)
     winetest_pop_context();
 
     hr = IDirectInputDevice8_GetForceFeedbackState( device, NULL );
-    todo_wine
     ok( hr == E_POINTER, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
     res = 0xdeadbeef;
     hr = IDirectInputDevice8_GetForceFeedbackState( device, &res );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, 0xdeadbeef );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, DISFFC_RESET );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
 
     objdata[0].dwOfs = 0xd;
@@ -5713,6 +5704,7 @@ static void test_force_feedback_joystick( void )
 
     effectinfo.dwSize = sizeof(DIEFFECTINFOW);
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
+    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
     todo_wine
     check_member_guid( effectinfo, expect_effects[0], guid );
@@ -5802,7 +5794,6 @@ static void test_force_feedback_joystick( void )
     ok( hr == 0x80040301, "IDirectInputDevice8_GetForceFeedbackState returned %#x\n", hr );
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( device, 0xdeadbeef );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_SendForceFeedbackCommand returned %#x\n", hr );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );

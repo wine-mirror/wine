@@ -780,6 +780,77 @@ static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, D
     return S_OK;
 }
 
+static HRESULT WINAPI hid_joystick_CreateEffect( IDirectInputDevice8W *iface, const GUID *guid,
+                                                 const DIEFFECT *params, IDirectInputEffect **out,
+                                                 IUnknown *outer )
+{
+    FIXME( "iface %p, guid %s, params %p, out %p, outer %p stub!\n", iface, debugstr_guid( guid ),
+           params, out, outer );
+
+    if (!out) return E_POINTER;
+
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_EnumEffects( IDirectInputDevice8W *iface, LPDIENUMEFFECTSCALLBACKW callback,
+                                                void *context, DWORD type )
+{
+    FIXME( "iface %p, callback %p, context %p, type %#x stub!\n", iface, callback, context, type );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
+                                                  const GUID *guid )
+{
+    FIXME( "iface %p, info %p, guid %s stub!\n", iface, info, debugstr_guid( guid ) );
+
+    if (!info) return E_POINTER;
+    if (info->dwSize != sizeof(DIEFFECTINFOW)) return DIERR_INVALIDPARAM;
+
+    return DIERR_DEVICENOTREG;
+}
+
+static HRESULT WINAPI hid_joystick_GetForceFeedbackState( IDirectInputDevice8W *iface, DWORD *out )
+{
+    FIXME( "iface %p, out %p stub!\n", iface, out );
+
+    if (!out) return E_POINTER;
+
+    return DIERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
+{
+    FIXME( "iface %p, command %x stub!\n", iface, command );
+
+    switch (command)
+    {
+    case DISFFC_RESET:
+    case DISFFC_STOPALL:
+    case DISFFC_PAUSE:
+    case DISFFC_CONTINUE:
+    case DISFFC_SETACTUATORSON:
+    case DISFFC_SETACTUATORSOFF:
+        return DIERR_UNSUPPORTED;
+    }
+
+    return DIERR_INVALIDPARAM;
+}
+
+static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8W *iface,
+                                                             LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
+                                                             void *context, DWORD flags )
+{
+    FIXME( "iface %p, callback %p, context %p, flags %#x stub!\n", iface, callback, context, flags );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    return DIERR_UNSUPPORTED;
+}
+
 static HRESULT WINAPI hid_joystick_Poll( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -837,12 +908,12 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
     /*** IDirectInputDevice2 methods ***/
-    IDirectInputDevice2WImpl_CreateEffect,
-    IDirectInputDevice2WImpl_EnumEffects,
-    IDirectInputDevice2WImpl_GetEffectInfo,
-    IDirectInputDevice2WImpl_GetForceFeedbackState,
-    IDirectInputDevice2WImpl_SendForceFeedbackCommand,
-    IDirectInputDevice2WImpl_EnumCreatedEffectObjects,
+    hid_joystick_CreateEffect,
+    hid_joystick_EnumEffects,
+    hid_joystick_GetEffectInfo,
+    hid_joystick_GetForceFeedbackState,
+    hid_joystick_SendForceFeedbackCommand,
+    hid_joystick_EnumCreatedEffectObjects,
     IDirectInputDevice2WImpl_Escape,
     hid_joystick_Poll,
     IDirectInputDevice2WImpl_SendDeviceData,
