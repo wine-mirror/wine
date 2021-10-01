@@ -70,9 +70,9 @@
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
 #include "ddk/hidsdi.h"
+
 #include "wine/debug.h"
-#include "wine/heap.h"
-#include "wine/unicode.h"
+#include "wine/hid.h"
 
 #ifdef HAS_PROPER_INPUT_HEADER
 # include "hidusage.h"
@@ -140,6 +140,7 @@ struct lnxev_device
     BYTE button_map[KEY_MAX];
 
     int haptic_effect_id;
+    int effect_ids[256];
 };
 
 static inline struct lnxev_device *lnxev_impl_from_unix_device(struct unix_device *iface)
@@ -642,6 +643,8 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         return STATUS_NO_MEMORY;
 
     impl->haptic_effect_id = -1;
+    for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i) impl->effect_ids[i] = -1;
+
     if (test_bit(ffbits, FF_RUMBLE))
     {
         effect.id = -1;
@@ -811,9 +814,58 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD dura
 
 static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, USAGE control)
 {
-    FIXME("iface %p, control %#04x stub!\n", iface, control);
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    unsigned int i;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, control %#04x.\n", iface, control);
+
+    switch (control)
+    {
+    case PID_USAGE_DC_ENABLE_ACTUATORS:
+    {
+        struct input_event ie =
+        {
+            .type = EV_FF,
+            .code = FF_GAIN,
+            .value = 0xffff,
+        };
+        if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
+            WARN("write failed %d %s\n", errno, strerror(errno));
+        return STATUS_SUCCESS;
+    }
+    case PID_USAGE_DC_DISABLE_ACTUATORS:
+    {
+        struct input_event ie =
+        {
+            .type = EV_FF,
+            .code = FF_GAIN,
+            .value = 0,
+        };
+        if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
+            WARN("write failed %d %s\n", errno, strerror(errno));
+        return STATUS_SUCCESS;
+    }
+    case PID_USAGE_DC_STOP_ALL_EFFECTS:
+        FIXME("stop all not implemented!\n");
+        return STATUS_NOT_IMPLEMENTED;
+    case PID_USAGE_DC_DEVICE_RESET:
+        for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i)
+        {
+            if (impl->effect_ids[i] < 0) continue;
+            if (ioctl(impl->base.device_fd, EVIOCRMFF, impl->effect_ids[i]) == -1)
+                WARN("couldn't free effect, EVIOCRMFF ioctl failed: %d %s\n", errno, strerror(errno));
+            impl->effect_ids[i] = -1;
+        }
+        return STATUS_SUCCESS;
+    case PID_USAGE_DC_DEVICE_PAUSE:
+        WARN("device pause not supported\n");
+        return STATUS_NOT_SUPPORTED;
+    case PID_USAGE_DC_DEVICE_CONTINUE:
+        WARN("device continue not supported\n");
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    return STATUS_NOT_SUPPORTED;
 }
 
 static const struct hid_device_vtbl lnxev_device_vtbl =
