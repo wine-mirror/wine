@@ -6624,12 +6624,42 @@ static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_remove,
 };
 
+static inline struct token_list *token_list_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct token_list, dispex);
+}
+
+static HRESULT token_list_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    struct token_list *token_list = token_list_from_DispatchEx(dispex);
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        hres = IHTMLElement_get_className(token_list->element, &V_BSTR(res));
+        if(FAILED(hres))
+            return hres;
+        V_VT(res) = VT_BSTR;
+        break;
+    default:
+        FIXME("Unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
+    token_list_value
+};
+
 static const tid_t token_list_iface_tids[] = {
     IWineDOMTokenList_tid,
     0
 };
 static dispex_static_data_t token_list_dispex = {
-    NULL,
+    &token_list_dispex_vtbl,
     IWineDOMTokenList_tid,
     token_list_iface_tids
 };
