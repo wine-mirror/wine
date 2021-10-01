@@ -78,6 +78,13 @@ struct extra_caps
     LONG saturation;
 };
 
+struct pid_control_report
+{
+    BYTE id;
+    ULONG collection;
+    ULONG control_coll;
+};
+
 #define DEVICE_STATE_MAX_SIZE 1024
 
 struct hid_joystick
@@ -102,6 +109,8 @@ struct hid_joystick
 
     BYTE device_state_report_id;
     BYTE device_state[DEVICE_STATE_MAX_SIZE];
+
+    struct pid_control_report pid_device_control;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -1177,6 +1186,12 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
     instance->wUsage = caps->Usage;
 
     count = ARRAY_SIZE(buttons);
+    status = HidP_GetSpecificButtonCaps( HidP_Output, HID_USAGE_PAGE_PID, 0,
+                                         PID_USAGE_DC_DEVICE_RESET, buttons, &count, preparsed_data );
+    if (status == HIDP_STATUS_SUCCESS && count > 0)
+        instance->guidFFDriver = IID_IDirectInputPIDDriver;
+
+    count = ARRAY_SIZE(buttons);
     status = HidP_GetSpecificButtonCaps( HidP_Input, HID_USAGE_PAGE_BUTTON, 0, 0, buttons, &count, preparsed_data );
     if (status != HIDP_STATUS_SUCCESS) count = button_count = 0;
     while (count--)
@@ -1398,6 +1413,67 @@ static BOOL init_data_format( struct hid_joystick *impl, struct hid_value_caps *
     return DIENUM_CONTINUE;
 }
 
+static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *caps,
+                              DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct pid_control_report *device_control = &impl->pid_device_control;
+
+#define SET_COLLECTION( rep )                                          \
+    do                                                                 \
+    {                                                                  \
+        if (rep->collection) FIXME( "duplicate " #rep " report!\n" );  \
+        else rep->collection = DIDFT_GETINSTANCE( instance->dwType );  \
+    } while (0)
+
+#define SET_SUB_COLLECTION( rep, sub )                                 \
+    do {                                                               \
+        if (instance->wCollectionNumber != rep->collection)            \
+            FIXME( "unexpected " #rep "." #sub " parent!\n" );         \
+        else if (rep->sub)                                             \
+            FIXME( "duplicate " #rep "." #sub " collection!\n" );      \
+        else                                                           \
+            rep->sub = DIDFT_GETINSTANCE( instance->dwType );          \
+    } while (0)
+
+    if (instance->wUsagePage == HID_USAGE_PAGE_PID)
+    {
+        switch (instance->wUsage)
+        {
+        case PID_USAGE_DEVICE_CONTROL_REPORT: SET_COLLECTION( device_control ); break;
+        case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
+        }
+    }
+
+#undef SET_SUB_COLLECTION
+#undef SET_COLLECTION
+
+    return DIENUM_CONTINUE;
+}
+
+static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *caps,
+                           DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct pid_control_report *device_control = &impl->pid_device_control;
+
+    if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
+
+#define SET_REPORT_ID( rep )                                           \
+    do                                                                 \
+    {                                                                  \
+        if (!rep->id)                                                  \
+            rep->id = instance->wReportId;                             \
+        else if (rep->id != instance->wReportId)                       \
+            FIXME( "multiple " #rep " report ids!\n" );                \
+    } while (0)
+
+    if (instance->wCollectionNumber == device_control->control_coll)
+        SET_REPORT_ID( device_control );
+
+#undef SET_REPORT_ID
+
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
     static const DIPROPHEADER filter =
@@ -1485,6 +1561,20 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     impl->usages_buf = usages;
 
     enum_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
+    enum_objects( impl, &filter, DIDFT_COLLECTION, init_pid_reports, NULL );
+    enum_objects( impl, &filter, DIDFT_NODATA, init_pid_caps, NULL );
+
+    TRACE( "device control id %u, coll %u, control coll %u\n", impl->pid_device_control.id,
+           impl->pid_device_control.collection, impl->pid_device_control.control_coll );
+
+    if (impl->pid_device_control.id)
+    {
+        impl->dev_caps.dwFlags |= DIDC_FORCEFEEDBACK;
+        impl->dev_caps.dwFFSamplePeriod = 1000000;
+        impl->dev_caps.dwFFMinTimeResolution = 1000000;
+        impl->dev_caps.dwHardwareRevision = 1;
+        impl->dev_caps.dwFFDriverVersion = 1;
+    }
 
     format = impl->base.data_format.wine_df;
     if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)

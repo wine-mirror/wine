@@ -5646,7 +5646,6 @@ static void test_force_feedback_joystick( void )
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
     todo_wine
     check_member_wstr( devinst, expect_devinst, tszProductName );
-    todo_wine
     check_member_guid( devinst, expect_devinst, guidFFDriver );
     check_member( devinst, expect_devinst, "%04x", wUsagePage );
     check_member( devinst, expect_devinst, "%04x", wUsage );
@@ -5655,20 +5654,15 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
     ok( hr == DI_OK, "IDirectInputDevice8_GetCapabilities returned %#x\n", hr );
     check_member( caps, expect_caps, "%d", dwSize );
-    todo_wine
     check_member( caps, expect_caps, "%#x", dwFlags );
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
     check_member( caps, expect_caps, "%d", dwButtons );
     check_member( caps, expect_caps, "%d", dwPOVs );
-    todo_wine
     check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
-    todo_wine
     check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
     check_member( caps, expect_caps, "%d", dwFirmwareRevision );
-    todo_wine
     check_member( caps, expect_caps, "%d", dwHardwareRevision );
-    todo_wine
     check_member( caps, expect_caps, "%d", dwFFDriverVersion );
 
     prop_dword.dwData = 0xdeadbeef;
