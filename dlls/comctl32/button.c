@@ -2876,11 +2876,12 @@ static void GB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
 static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    HFONT old_font = infoPtr->font ? SelectObject(hDC, infoPtr->font) : NULL;
     RECT rc, content_rect, push_rect, dropdown_rect;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
+
+    if (infoPtr->font) SelectObject(hDC, infoPtr->font);
 
     GetClientRect(infoPtr->hwnd, &rc);
     init_custom_draw(&nmcd, infoPtr, hDC, &rc);
@@ -2890,7 +2891,7 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
     /* Send erase notifications */
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
-    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (IsThemeBackgroundPartiallyTransparent(theme, BP_PUSHBUTTON, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
@@ -2934,7 +2935,7 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     /* Send paint notifications */
     nmcd.dwDrawStage = CDDS_PREPAINT;
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
-    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (!(cdrf & CDRF_DOERASE))
     {
@@ -2963,7 +2964,7 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         nmcd.dwDrawStage = CDDS_POSTPAINT;
         SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     }
-    if (cdrf & CDRF_SKIPPOSTPAINT) goto cleanup;
+    if (cdrf & CDRF_SKIPPOSTPAINT) return;
 
     if (focused)
     {
@@ -2977,9 +2978,6 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         push_rect.bottom -= margins.cyBottomHeight;
         DrawFocusRect(hDC, &push_rect);
     }
-
-cleanup:
-    if (old_font) SelectObject(hDC, old_font);
 }
 
 static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
