@@ -104,6 +104,7 @@ struct hid_joystick
     struct extra_caps *input_extra_caps;
 
     char *input_report_buf;
+    char *output_report_buf;
     USAGE_AND_PAGE *usages_buf;
     ULONG usages_count;
 
@@ -369,6 +370,7 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
     if (!(ref = IDirectInputDevice2WImpl_Release( iface )))
     {
         HeapFree( GetProcessHeap(), 0, tmp.usages_buf );
+        HeapFree( GetProcessHeap(), 0, tmp.output_report_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_report_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_extra_caps );
         HidD_FreePreparsedData( tmp.preparsed );
@@ -833,20 +835,48 @@ static HRESULT WINAPI hid_joystick_GetForceFeedbackState( IDirectInputDevice8W *
 
 static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
 {
-    FIXME( "iface %p, command %x stub!\n", iface, command );
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    struct pid_control_report *report = &impl->pid_device_control;
+    ULONG report_len = impl->caps.OutputReportByteLength;
+    char *report_buf = impl->output_report_buf;
+    NTSTATUS status;
+    USAGE usage;
+    ULONG count;
+    HRESULT hr;
+
+    TRACE( "iface %p, flags %x.\n", iface, command );
 
     switch (command)
     {
-    case DISFFC_RESET:
-    case DISFFC_STOPALL:
-    case DISFFC_PAUSE:
-    case DISFFC_CONTINUE:
-    case DISFFC_SETACTUATORSON:
-    case DISFFC_SETACTUATORSOFF:
-        return DIERR_UNSUPPORTED;
+    case DISFFC_RESET: usage = PID_USAGE_DC_DEVICE_RESET; break;
+    case DISFFC_STOPALL: usage = PID_USAGE_DC_STOP_ALL_EFFECTS; break;
+    case DISFFC_PAUSE: usage = PID_USAGE_DC_DEVICE_PAUSE; break;
+    case DISFFC_CONTINUE: usage = PID_USAGE_DC_DEVICE_CONTINUE; break;
+    case DISFFC_SETACTUATORSON: usage = PID_USAGE_DC_ENABLE_ACTUATORS; break;
+    case DISFFC_SETACTUATORSOFF: usage = PID_USAGE_DC_DISABLE_ACTUATORS; break;
+    default: return DIERR_INVALIDPARAM;
     }
 
-    return DIERR_INVALIDPARAM;
+    if (!(impl->dev_caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+
+    EnterCriticalSection( &impl->base.crit );
+    if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE))
+        hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else
+    {
+        count = 1;
+        status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, report->control_coll, &usage,
+                                      &count, impl->preparsed, report_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else if (WriteFile( impl->device, report_buf, report_len, NULL, NULL )) hr = DI_OK;
+        else hr = DIERR_GENERIC;
+    }
+    LeaveCriticalSection( &impl->base.crit );
+
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8W *iface,
@@ -1555,6 +1585,9 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     size = impl->caps.InputReportByteLength;
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
     impl->input_report_buf = buffer;
+    size = impl->caps.OutputReportByteLength;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
+    impl->output_report_buf = buffer;
     impl->usages_count = HidP_MaxUsageListLength( HidP_Input, 0, impl->preparsed );
     size = impl->usages_count * sizeof(USAGE_AND_PAGE);
     if (!(usages = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
