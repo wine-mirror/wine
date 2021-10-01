@@ -129,15 +129,43 @@ static HRESULT WINAPI HTMLAreaElement_get_coords(IHTMLAreaElement *iface, BSTR *
 static HRESULT WINAPI HTMLAreaElement_put_href(IHTMLAreaElement *iface, BSTR v)
 {
     HTMLAreaElement *This = impl_from_IHTMLAreaElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMHTMLAreaElement_SetHref(This->nsarea, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAreaElement_get_href(IHTMLAreaElement *iface, BSTR *p)
 {
     HTMLAreaElement *This = impl_from_IHTMLAreaElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString href_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&href_str, NULL);
+    nsres = nsIDOMHTMLAreaElement_GetHref(This->nsarea, &href_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *href;
+
+        nsAString_GetData(&href_str, &href);
+        hres = nsuri_to_url(href, TRUE, p);
+    }else {
+        ERR("GetHref failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&href_str);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLAreaElement_put_target(IHTMLAreaElement *iface, BSTR v)
