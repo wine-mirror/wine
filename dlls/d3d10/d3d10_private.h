@@ -259,6 +259,7 @@ struct d3d10_effect_anonymous_shader
 enum d3d10_effect_flags
 {
     D3D10_EFFECT_OPTIMIZED = 0x1,
+    D3D10_EFFECT_IS_POOL   = 0x2,
 };
 
 /* ID3D10Effect */

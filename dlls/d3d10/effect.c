@@ -1405,6 +1405,9 @@ static HRESULT parse_fx10_variable_head(const char *data, size_t data_size,
 
     v->explicit_bind_point = ~0u;
 
+    if (v->effect->flags & D3D10_EFFECT_IS_POOL)
+        v->flag |= D3D10_EFFECT_VARIABLE_POOLED;
+
     return copy_variableinfo_from_type(v);
 }
 
@@ -1435,7 +1438,7 @@ static HRESULT parse_fx10_annotation(const char *data, size_t data_size,
     }
 
     /* mark the variable as annotation */
-    a->flag = D3D10_EFFECT_VARIABLE_ANNOTATION;
+    a->flag |= D3D10_EFFECT_VARIABLE_ANNOTATION;
 
     return S_OK;
 }
@@ -2083,7 +2086,7 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
 static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
         const char **ptr, BOOL local, struct d3d10_effect_variable *v)
 {
-    DWORD offset, default_value_offset;
+    DWORD offset, flags, default_value_offset;
     HRESULT hr;
 
     if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, v)))
@@ -2104,8 +2107,10 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
 
     read_dword(ptr, &default_value_offset);
 
-    read_dword(ptr, &v->flag);
-    TRACE("Variable flag: %#x.\n", v->flag);
+    read_dword(ptr, &flags);
+    TRACE("Variable flags: %#x.\n", flags);
+
+    v->flag |= flags;
 
     if (local)
     {
@@ -2450,6 +2455,9 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
 
     read_dword(ptr, &l->explicit_bind_point);
     TRACE("%s buffer explicit bind point: %#x.\n", prefix, l->explicit_bind_point);
+
+    if (l->effect->flags & D3D10_EFFECT_IS_POOL)
+        l->flag |= D3D10_EFFECT_VARIABLE_POOLED;
 
     if (local)
     {
@@ -8590,7 +8598,7 @@ static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry
 }
 
 static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *device,
-        ID3D10Effect *pool, const ID3D10EffectVtbl *vtbl, struct d3d10_effect **effect)
+        ID3D10Effect *pool, unsigned int flags, struct d3d10_effect **effect)
 {
     struct d3d10_effect *object;
     HRESULT hr;
@@ -8599,12 +8607,14 @@ static HRESULT d3d10_create_effect(void *data, SIZE_T data_size, ID3D10Device *d
         return E_OUTOFMEMORY;
 
     wine_rb_init(&object->types, d3d10_effect_type_compare);
-    object->ID3D10Effect_iface.lpVtbl = vtbl;
+    object->ID3D10Effect_iface.lpVtbl = flags & D3D10_EFFECT_IS_POOL ?
+            &d3d10_effect_pool_effect_vtbl : &d3d10_effect_vtbl;
     object->ID3D10EffectPool_iface.lpVtbl = &d3d10_effect_pool_vtbl;
     object->refcount = 1;
     ID3D10Device_AddRef(device);
     object->device = device;
     object->pool = pool;
+    object->flags = flags;
     if (pool) pool->lpVtbl->AddRef(pool);
 
     hr = d3d10_effect_parse(object, data, data_size);
@@ -8643,7 +8653,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
         }
     }
 
-    if (FAILED(hr = d3d10_create_effect(data, data_size, device, pool, &d3d10_effect_vtbl, &object)))
+    if (FAILED(hr = d3d10_create_effect(data, data_size, device, pool, 0, &object)))
     {
         WARN("Failed to create an effect, hr %#x.\n", hr);
     }
@@ -8697,7 +8707,7 @@ HRESULT WINAPI D3D10CreateEffectPoolFromMemory(void *data, SIZE_T data_size, UIN
             data, data_size, fx_flags, device, effect_pool);
 
     if (FAILED(hr = d3d10_create_effect(data, data_size, device, NULL,
-            &d3d10_effect_pool_effect_vtbl, &object)))
+            D3D10_EFFECT_IS_POOL, &object)))
     {
         WARN("Failed to create an effect, hr %#x.\n", hr);
         return hr;

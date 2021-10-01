@@ -1519,7 +1519,7 @@ static void test_effect_variable_type_class(void)
 
     ok(strcmp(vd.Name, "s") == 0, "Name is \"%s\", expected \"s\"\n", vd.Name);
     ok(vd.Semantic == NULL, "Semantic is \"%s\", expected NULL\n", vd.Semantic);
-    ok(vd.Flags == 2, "Flags is %u, expected 2\n", vd.Flags);
+    ok(vd.Flags == D3D10_EFFECT_VARIABLE_ANNOTATION, "Unexpected flags %#x.\n", vd.Flags);
     ok(vd.Annotations == 0, "Annotations is %u, expected 0\n", vd.Annotations);
     ok(vd.BufferOffset == 0, "BufferOffset is %u, expected 0\n", vd.BufferOffset);
     ok(vd.ExplicitBindPoint == 0, "ExplicitBindPoint is %u, expected 0\n", vd.ExplicitBindPoint);
@@ -6321,7 +6321,7 @@ static void test_effect_shader_object(void)
 }
 
 #if 0
-cbuffer s_cb
+cbuffer s_cb <String s = "value"; >
 {
     float f1 : COLOR0;
     float f2 : COLOR1;
@@ -6331,6 +6331,11 @@ BlendState s_blendstate;
 Texture2D s_texture;
 PixelShader ps;
 
+float4 VS( float4 pos : POSITION ) : SV_POSITION
+{
+    return f1.xxxx;
+}
+
 technique10 tech
 {
     pass P0
@@ -6339,29 +6344,54 @@ technique10 tech
         SetVertexShader(NULL);
         SetGeometryShader(NULL);
     }
+
+    pass P1
+    {
+        SetVertexShader(CompileShader(vs_4_0, VS()));
+    }
 };
 #endif
 static DWORD fx_test_pool[] =
 {
-    0x43425844, 0x92a09896, 0xbc72ed33, 0x77194b8a, 0xb1132991, 0x00000001, 0x00000242, 0x00000001,
-    0x00000024, 0x30315846, 0x00000216, 0xfeff1001, 0x00000001, 0x00000002, 0x00000003, 0x00000000,
-    0x00000000, 0x00000000, 0x00000001, 0x000000ee, 0x00000000, 0x00000001, 0x00000000, 0x00000001,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x62635f73,
-    0x6f6c6600, 0x09007461, 0x01000000, 0x00000000, 0x04000000, 0x10000000, 0x04000000, 0x09000000,
-    0x66000009, 0x4f430031, 0x30524f4c, 0x00326600, 0x4f4c4f43, 0x42003152, 0x646e656c, 0x74617453,
-    0x003f0065, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00020000, 0x5f730000,
-    0x6e656c62, 0x61747364, 0x54006574, 0x75747865, 0x44326572, 0x00007300, 0x00000200, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000c00, 0x745f7300, 0x75747865, 0x50006572, 0x6c657869,
-    0x64616853, 0xa3007265, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x05000000,
-    0x70000000, 0x65740073, 0x50006863, 0x00010030, 0x00020000, 0x00000000, 0x00010000, 0x00020000,
-    0x00000000, 0x00040000, 0x00100000, 0x00000000, 0x00020000, 0xffff0000, 0x0000ffff, 0x002b0000,
-    0x000f0000, 0x002e0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00350000, 0x000f0000,
-    0x00380000, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00660000, 0x004a0000, 0x00000000,
-    0xffff0000, 0x0000ffff, 0x00000000, 0x00990000, 0x007d0000, 0x00000000, 0xffff0000, 0x0000ffff,
-    0x00cb0000, 0x00af0000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00000000, 0x00ce0000, 0x00010000,
-    0x00000000, 0x00d30000, 0x00030000, 0x00000000, 0x00070000, 0x00000000, 0x00020000, 0x00cb0000,
-    0x00060000, 0x00000000, 0x00010000, 0x00d60000, 0x00080000, 0x00000000, 0x00010000, 0x00e20000,
-    0x00000000,
+    0x43425844, 0x5a29c5ce, 0xa6970df1, 0x3b2ae8f2, 0x7b225509, 0x00000001, 0x000004dc, 0x00000001,
+    0x00000024, 0x30315846, 0x000004b0, 0xfeff1001, 0x00000001, 0x00000002, 0x00000003, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000360, 0x00000000, 0x00000001, 0x00000000, 0x00000001,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000001, 0x00000000, 0x62635f73,
+    0x72745300, 0x00676e69, 0x00000009, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000001, 0x61760073, 0x0065756c, 0x616f6c66, 0x00340074, 0x00010000, 0x00000000, 0x00040000,
+    0x00100000, 0x00040000, 0x09090000, 0x31660000, 0x4c4f4300, 0x0030524f, 0x43003266, 0x524f4c4f,
+    0x6c420031, 0x53646e65, 0x65746174, 0x00006a00, 0x00000200, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000200, 0x625f7300, 0x646e656c, 0x74617473, 0x65540065, 0x72757478, 0x00443265,
+    0x0000009e, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000c, 0x65745f73,
+    0x72757478, 0x69500065, 0x536c6578, 0x65646168, 0x00ce0072, 0x00020000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00050000, 0x73700000, 0x63657400, 0x30500068, 0x00000100, 0x00000200,
+    0x00000000, 0x00000100, 0x00000200, 0x00000000, 0x00315000, 0x00000238, 0x43425844, 0x37b3f12d,
+    0x2579b942, 0x27ed5925, 0x4a80132c, 0x00000001, 0x00000238, 0x00000005, 0x00000034, 0x00000108,
+    0x0000013c, 0x00000170, 0x000001bc, 0x46454452, 0x000000cc, 0x00000001, 0x00000044, 0x00000001,
+    0x0000001c, 0xfffe0400, 0x00000100, 0x000000a3, 0x0000003c, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x62635f73, 0xababab00, 0x0000003c, 0x00000002,
+    0x0000005c, 0x00000010, 0x00000000, 0x00000000, 0x0000008c, 0x00000000, 0x00000004, 0x00000002,
+    0x00000090, 0x00000000, 0x000000a0, 0x00000004, 0x00000004, 0x00000000, 0x00000090, 0x00000000,
+    0xab003166, 0x00030000, 0x00010001, 0x00000000, 0x00000000, 0x4d003266, 0x6f726369, 0x74666f73,
+    0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e,
+    0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+    0x00000000, 0x0000000f, 0x49534f50, 0x4e4f4954, 0xababab00, 0x4e47534f, 0x0000002c, 0x00000001,
+    0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653,
+    0x5449534f, 0x004e4f49, 0x52444853, 0x00000044, 0x00010040, 0x00000011, 0x04000059, 0x00208e46,
+    0x00000000, 0x00000001, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x06000036, 0x001020f2,
+    0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x0100003e, 0x54415453, 0x00000074, 0x00000002,
+    0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000011c, 0x00000000, 0x00000004, 0x00000010,
+    0x00000000, 0x00000002, 0xffffffff, 0x00000001, 0x0000002c, 0x00000010, 0x0000002e, 0x00000056,
+    0x0000003a, 0x00000059, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000060, 0x0000003a,
+    0x00000063, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000091, 0x00000075, 0x00000000,
+    0xffffffff, 0x00000000, 0x00000000, 0x000000c4, 0x000000a8, 0x00000000, 0xffffffff, 0x00000000,
+    0x000000f6, 0x000000da, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x000000f9, 0x00000002,
+    0x00000000, 0x000000fe, 0x00000003, 0x00000000, 0x00000007, 0x00000000, 0x00000002, 0x000000f6,
+    0x00000006, 0x00000000, 0x00000001, 0x00000101, 0x00000008, 0x00000000, 0x00000001, 0x0000010d,
+    0x00000119, 0x00000001, 0x00000000, 0x00000006, 0x00000000, 0x00000007, 0x00000358,
 };
 
 /* Compiled as a child with /Gch (D3DCOMPILE_EFFECT_CHILD_EFFECT) */
@@ -6476,8 +6506,8 @@ static void test_effect_pool(void)
     ID3D10EffectPool *pool, *pool2;
     ID3D10EffectConstantBuffer *cb;
     ID3D10EffectShaderVariable *sv;
+    ID3D10EffectVariable *v, *a;
     ID3D10EffectTechnique *t;
-    ID3D10EffectVariable *v;
     ID3D10EffectPass *pass;
     D3D10_EFFECT_DESC desc;
     ID3D10Buffer *buffer;
@@ -6555,28 +6585,41 @@ todo_wine
     hr = cb->lpVtbl->GetDesc(cb, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
+    a = cb->lpVtbl->GetAnnotationByIndex(cb, 0);
+    ok(a->lpVtbl->IsValid(a), "Expected valid annotation.\n");
+    hr = a->lpVtbl->GetDesc(a, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(var_desc.Name, "s"), "Unexpected name %s.\n", var_desc.Name);
+    ok(var_desc.Flags == (D3D10_EFFECT_VARIABLE_POOLED | D3D10_EFFECT_VARIABLE_ANNOTATION),
+            "Unexpected flags %#x.\n", var_desc.Flags);
+
+    t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    pass = t->lpVtbl->GetPassByName(t, "P1");
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
+    hr = pass->lpVtbl->GetVertexShaderDesc(pass, &shader_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = shader_desc.pShaderVariable->lpVtbl->GetDesc(shader_desc.pShaderVariable, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!strcmp(var_desc.Name, "$Anonymous"), "Unexpected name %s.\n", var_desc.Name);
+    ok(!var_desc.Flags, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = effect->lpVtbl->GetVariableByName(effect, "s_blendstate");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_blendstate"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = effect->lpVtbl->GetVariableByName(effect, "s_texture");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_texture"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = effect->lpVtbl->GetVariableByName(effect, "ps");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "ps"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     t = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
@@ -6716,7 +6759,6 @@ todo_wine
     hr = cb->lpVtbl->GetDesc(cb, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_cb"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     /* Pool techniques are not accessible */
@@ -6749,21 +6791,18 @@ todo_wine
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "f1"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = child_effect->lpVtbl->GetVariableByIndex(child_effect, 4);
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = child_effect->lpVtbl->GetVariableByName(child_effect, "s_texture");
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "s_texture"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     v = child_effect->lpVtbl->GetVariableBySemantic(child_effect, "COLOR0");
@@ -6776,7 +6815,6 @@ todo_wine
     hr = v->lpVtbl->GetDesc(v, &var_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!strcmp(var_desc.Name, "f2"), "Unexpected name %s.\n", var_desc.Name);
-todo_wine
     ok(var_desc.Flags == D3D10_EFFECT_VARIABLE_POOLED, "Unexpected flags %#x.\n", var_desc.Flags);
 
     child_effect->lpVtbl->Release(child_effect);
