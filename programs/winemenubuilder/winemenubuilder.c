@@ -1403,43 +1403,104 @@ static DWORD register_menus_entry(const char *unix_file, const WCHAR *windows_fi
     return ret;
 }
 
-static BOOL write_desktop_entry(const WCHAR *link, const char *location, const char *linkname,
-                                const char *path, const char *args, const char *descr,
-                                const char *workdir, const WCHAR *icon, const char *wmclass)
+/* This escapes reserved characters in .desktop files' Exec keys. */
+static LPSTR escape(LPCWSTR arg)
+{
+    int i, j;
+    WCHAR *escaped_string;
+    char *utf8_string;
+
+    escaped_string = xmalloc((4 * strlenW(arg) + 1) * sizeof(WCHAR));
+    for (i = j = 0; arg[i]; i++)
+    {
+        switch (arg[i])
+        {
+        case '\\':
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            break;
+        case ' ':
+        case '\t':
+        case '\n':
+        case '"':
+        case '\'':
+        case '>':
+        case '<':
+        case '~':
+        case '|':
+        case '&':
+        case ';':
+        case '$':
+        case '*':
+        case '?':
+        case '#':
+        case '(':
+        case ')':
+        case '`':
+            escaped_string[j++] = '\\';
+            escaped_string[j++] = '\\';
+            /* fall through */
+        default:
+            escaped_string[j++] = arg[i];
+            break;
+        }
+    }
+    escaped_string[j] = 0;
+    utf8_string = wchars_to_utf8_chars(escaped_string);
+    heap_free(escaped_string);
+    return utf8_string;
+}
+
+static BOOL write_desktop_entry(const WCHAR *link, const char *location, const WCHAR *linkname,
+                                const WCHAR *path, const WCHAR *args, const WCHAR *descr,
+                                const WCHAR *workdir, const WCHAR *icon, const WCHAR *wmclass)
 {
     FILE *file;
+    char *workdir_unix;
+    char *dest_name = NULL;
+    const char *name;
     const char *prefix = getenv("WINEPREFIX");
     const char *home = getenv("HOME");
 
     WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_w(link), wine_dbgstr_a(location),
-               wine_dbgstr_a(linkname), wine_dbgstr_a(path), wine_dbgstr_a(args),
-               wine_dbgstr_a(descr), wine_dbgstr_a(workdir), wine_dbgstr_w(icon),
-               wine_dbgstr_a(wmclass));
+               wine_dbgstr_w(linkname), wine_dbgstr_w(path), wine_dbgstr_w(args),
+               wine_dbgstr_w(descr), wine_dbgstr_w(workdir), wine_dbgstr_w(icon),
+               wine_dbgstr_w(wmclass));
+
+    name = wchars_to_utf8_chars( PathFindFileNameW( linkname ));
+
+    if (!location) location = dest_name = heap_printf("%s/%s.desktop", xdg_desktop_dir, name);
 
     file = fopen(location, "w");
     if (file == NULL)
         return FALSE;
 
     fprintf(file, "[Desktop Entry]\n");
-    fprintf(file, "Name=%s\n", linkname);
+    fprintf(file, "Name=%s\n", name);
+    fprintf(file, "Exec=" );
     if (prefix)
-        fprintf(file, "Exec=env WINEPREFIX=\"%s\" wine %s %s\n", prefix, path, args);
+        fprintf(file, "env WINEPREFIX=\"%s\" ", prefix);
     else if (home)
-        fprintf(file, "Exec=env WINEPREFIX=\"%s/.wine\" wine %s %s\n", home, path, args);
-    else
-        fprintf(file, "Exec=wine %s %s\n", path, args);
+        fprintf(file, "env WINEPREFIX=\"%s/.wine\" ", home);
+    fprintf(file, "wine %s", escape(path));
+    if (args) fprintf(file, " %s", escape(args) );
+    fputc( '\n', file );
     fprintf(file, "Type=Application\n");
     fprintf(file, "StartupNotify=true\n");
     if (descr && *descr)
-        fprintf(file, "Comment=%s\n", descr);
-    if (workdir && *workdir)
-        fprintf(file, "Path=%s\n", workdir);
+        fprintf(file, "Comment=%s\n", wchars_to_utf8_chars(descr));
+    if (workdir && *workdir && (workdir_unix = wine_get_unix_file_name(workdir)))
+        fprintf(file, "Path=%s\n", workdir_unix);
     if (icon && *icon)
         fprintf(file, "Icon=%s\n", wchars_to_utf8_chars(icon));
     if (wmclass && *wmclass)
-        fprintf(file, "StartupWMClass=%s\n", wmclass);
+        fprintf(file, "StartupWMClass=%s\n", wchars_to_utf8_chars(wmclass));
 
     fclose(file);
+
+    if (dest_name) chmod( dest_name, 0755 );
 
     if (link)
     {
@@ -1574,26 +1635,23 @@ end:
     return ret;
 }
 
-static BOOL write_menu_entry(const WCHAR *windows_link, const char *link, const char *path, const char *args,
-                             const char *descr, const char *workdir, const WCHAR *icon, const char *wmclass)
+static BOOL write_menu_entry(const WCHAR *windows_link, const WCHAR *link, const WCHAR *path, const WCHAR *args,
+                             const WCHAR *descr, const WCHAR *workdir, const WCHAR *icon, const WCHAR *wmclass)
 {
-    const char *linkname;
+    char *linkname, *p;
     char *desktopPath = NULL;
     char *desktopDir;
     char *filename = NULL;
     BOOL ret = TRUE;
 
-    WINE_TRACE("(%s, %s, %s, %s, %s, %s, %s, %s)\n", wine_dbgstr_w(windows_link), wine_dbgstr_a(link),
-               wine_dbgstr_a(path), wine_dbgstr_a(args), wine_dbgstr_a(descr),
-               wine_dbgstr_a(workdir), wine_dbgstr_w(icon), wine_dbgstr_a(wmclass));
+    WINE_TRACE("(%s, %s, %s, %s, %s, %s, %s, %s)\n", wine_dbgstr_w(windows_link), wine_dbgstr_w(link),
+               wine_dbgstr_w(path), wine_dbgstr_w(args), wine_dbgstr_w(descr),
+               wine_dbgstr_w(workdir), wine_dbgstr_w(icon), wine_dbgstr_w(wmclass));
 
-    linkname = strrchr(link, '/');
-    if (linkname == NULL)
-        linkname = link;
-    else
-        ++linkname;
+    linkname = wchars_to_unix_chars( link );
+    for (p = linkname; *p; p++) if (*p == '\\') *p = '/';
 
-    desktopPath = heap_printf("%s/applications/wine/%s.desktop", xdg_data_dir, link);
+    desktopPath = heap_printf("%s/applications/wine/%s.desktop", xdg_data_dir, linkname);
     desktopDir = strrchr(desktopPath, '/');
     *desktopDir = 0;
     if (!create_directories(desktopPath))
@@ -1603,14 +1661,14 @@ static BOOL write_menu_entry(const WCHAR *windows_link, const char *link, const 
         goto end;
     }
     *desktopDir = '/';
-    if (!write_desktop_entry(windows_link, desktopPath, linkname, path, args, descr, workdir, icon, wmclass))
+    if (!write_desktop_entry(windows_link, desktopPath, link, path, args, descr, workdir, icon, wmclass))
     {
         WINE_WARN("couldn't make desktop entry %s\n", wine_dbgstr_a(desktopPath));
         ret = FALSE;
         goto end;
     }
 
-    filename = heap_printf("wine/%s.desktop", link);
+    filename = heap_printf("wine/%s.desktop", linkname);
     if (!write_menu_file(windows_link, filename))
     {
         WINE_WARN("couldn't make menu file %s\n", wine_dbgstr_a(filename));
@@ -1623,108 +1681,18 @@ end:
     return ret;
 }
 
-/* This escapes reserved characters in .desktop files' Exec keys. */
-static LPSTR escape(LPCWSTR arg)
-{
-    int i, j;
-    WCHAR *escaped_string;
-    char *utf8_string;
-
-    escaped_string = xmalloc((4 * strlenW(arg) + 1) * sizeof(WCHAR));
-    for (i = j = 0; arg[i]; i++)
-    {
-        switch (arg[i])
-        {
-        case '\\':
-            escaped_string[j++] = '\\';
-            escaped_string[j++] = '\\';
-            escaped_string[j++] = '\\';
-            escaped_string[j++] = '\\';
-            break;
-        case ' ':
-        case '\t':
-        case '\n':
-        case '"':
-        case '\'':
-        case '>':
-        case '<':
-        case '~':
-        case '|':
-        case '&':
-        case ';':
-        case '$':
-        case '*':
-        case '?':
-        case '#':
-        case '(':
-        case ')':
-        case '`':
-            escaped_string[j++] = '\\';
-            escaped_string[j++] = '\\';
-            /* fall through */
-        default:
-            escaped_string[j++] = arg[i];
-            break;
-        }
-    }
-    escaped_string[j] = 0;
-    utf8_string = wchars_to_utf8_chars(escaped_string);
-    heap_free(escaped_string);
-    return utf8_string;
-}
-
-/* Return a heap-allocated copy of the unix format difference between the two
- * Windows-format paths.
- * locn is the owning location
- * link is within locn
- */
-static char *relative_path( LPCWSTR link, LPCWSTR locn )
-{
-    char *unix_locn, *unix_link;
-    char *relative = NULL;
-
-    unix_locn = wine_get_unix_file_name(locn);
-    unix_link = wine_get_unix_file_name(link);
-    if (unix_locn && unix_link)
-    {
-        size_t len_unix_locn, len_unix_link;
-        len_unix_locn = strlen (unix_locn);
-        len_unix_link = strlen (unix_link);
-        if (len_unix_locn < len_unix_link && memcmp (unix_locn, unix_link, len_unix_locn) == 0 && unix_link[len_unix_locn] == '/')
-        {
-            size_t len_rel;
-            char *p = strrchr (unix_link + len_unix_locn, '/');
-            p = strrchr (p, '.');
-            if (p)
-            {
-                *p = '\0';
-                len_unix_link = p - unix_link;
-            }
-            len_rel = len_unix_link - len_unix_locn;
-            relative = xmalloc(len_rel);
-            memcpy (relative, unix_link + len_unix_locn + 1, len_rel);
-        }
-    }
-    if (!relative)
-        WINE_WARN("Could not separate the relative link path of %s in %s\n", wine_dbgstr_w(link), wine_dbgstr_w(locn));
-    heap_free(unix_locn);
-    heap_free(unix_link);
-    return relative;
-}
-
 /***********************************************************************
- *
- *           GetLinkLocation
+ *           get_link_location
  *
  * returns TRUE if successful
  * *loc will contain CS_DESKTOPDIRECTORY, CS_STARTMENU, CS_STARTUP etc.
  * *relative will contain the address of a heap-allocated copy of the portion
  * of the filename that is within the specified location, in unix form
  */
-static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc, char **relative )
+static BOOL get_link_location( LPCWSTR linkfile, DWORD *loc, WCHAR **relative )
 {
     WCHAR filename[MAX_PATH], shortfilename[MAX_PATH], buffer[MAX_PATH];
-    DWORD len, i, r, filelen;
+    DWORD len, i, filelen;
     const DWORD locations[] = {
         CSIDL_STARTUP, CSIDL_DESKTOPDIRECTORY, CSIDL_STARTMENU,
         CSIDL_COMMON_STARTUP, CSIDL_COMMON_DESKTOPDIRECTORY,
@@ -1757,17 +1725,13 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc, char **relative )
 
         if (len > filelen || filename[len]!='\\')
             continue;
-        /* do a lstrcmpinW */
-        filename[len] = 0;
-        r = lstrcmpiW( filename, buffer );
-        filename[len] = '\\';
-        if ( r )
-            continue;
+        if (strncmpiW( filename, buffer, len )) continue;
 
         /* return the remainder of the string and link type */
         *loc = locations[i];
-        *relative = relative_path (filename, buffer);
-        return (*relative != NULL);
+        *relative = xwcsdup( filename + len + 1 );
+        PathRemoveExtensionW( *relative );
+        return TRUE;
     }
 
     return FALSE;
@@ -2466,22 +2430,9 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
     return hasChanged;
 }
 
-static char *get_start_exe_path(void)
- {
-    static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
-                                   '\\','s','t','a','r','t','.','e','x','e',0};
-    WCHAR start_path[MAX_PATH];
-    GetWindowsDirectoryW(start_path, MAX_PATH);
-    lstrcatW(start_path, startW);
-    return escape(start_path);
-}
-
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
-    WCHAR *icon_name;
-    char *link_name = NULL, *work_dir = NULL;
-    char *description = NULL;
-    char *wmclass = NULL;
+    WCHAR *icon_name, *link_name;
     WCHAR szTmp[INFOTIPSIZE];
     WCHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
     WCHAR szArgs[INFOTIPSIZE], szIconPath[MAX_PATH], szWMClass[MAX_PATH];
@@ -2495,7 +2446,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         return FALSE;
     }
 
-    if( !GetLinkLocation( link, &csidl, &link_name ) )
+    if( !get_link_location( link, &csidl, &link_name ) )
     {
         WINE_WARN("Unknown link location %s. Ignoring.\n",wine_dbgstr_w(link));
         return TRUE;
@@ -2505,7 +2456,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         WINE_WARN("Not under desktop or start menu. Ignoring.\n");
         return TRUE;
     }
-    WINE_TRACE("Link       : %s\n", wine_dbgstr_a(link_name));
+    WINE_TRACE("Link       : %s\n", wine_dbgstr_w(link_name));
 
     szTmp[0] = 0;
     IShellLinkW_GetWorkingDirectory( sl, szTmp, MAX_PATH );
@@ -2566,14 +2517,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
             lstrcpyW(szWMClass, p);
             CharLowerW(szWMClass);
         }
-
-        /* convert app working dir */
-        if (szWorkDir[0])
-            work_dir = wine_get_unix_file_name( szWorkDir );
     }
-
-    description = wchars_to_utf8_chars(szDescription);
-    wmclass = wchars_to_utf8_chars(szWMClass);
 
     /* building multiple menus concurrently has race conditions */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
@@ -2585,36 +2529,22 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 
     if (in_desktop_dir(csidl))
     {
-        char *location;
-        const char *lastEntry;
-        lastEntry = strrchr(link_name, '/');
-        if (lastEntry == NULL)
-            lastEntry = link_name;
-        else
-            ++lastEntry;
-        location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY || !szPath[0])
-            r = !write_desktop_entry(link, location, lastEntry, escape(link), "",
-                                     description, work_dir, icon_name, wmclass);
+            r = !write_desktop_entry(link, NULL, link_name, link, NULL,
+                                     szDescription, szWorkDir, icon_name, szWMClass);
         else
-            r = !write_desktop_entry(NULL, location, lastEntry, escape(szPath), escape(szArgs), description, work_dir, icon_name, wmclass);
-        if (r == 0)
-            chmod(location, 0755);
-        heap_free(location);
+            r = !write_desktop_entry(NULL, NULL, link_name, szPath, szArgs,
+                                     szDescription, szWorkDir, icon_name, szWMClass);
     }
     else
-        r = !write_menu_entry(link, link_name, escape(link), "",
-                              description, work_dir, icon_name, wmclass);
+        r = !write_menu_entry(link, link_name, link, NULL, szDescription, szWorkDir, icon_name, szWMClass);
 
     ReleaseSemaphore( hsem, 1, NULL );
 
 cleanup:
     if (hsem) CloseHandle( hsem );
     heap_free(icon_name );
-    heap_free(work_dir );
     heap_free(link_name );
-    heap_free(description );
-    heap_free(wmclass );
 
     if (r && !bWait)
         WINE_ERR("failed to build the menu\n" );
@@ -2624,11 +2554,10 @@ cleanup:
 
 static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link, BOOL bWait )
 {
-    char *link_name = NULL;
-    WCHAR *icon_name = NULL;
+    static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
+    WCHAR *link_name, *icon_name = NULL;
     DWORD csidl = -1;
     LPWSTR urlPath = NULL;
-    char *escaped_urlPath = NULL;
     HRESULT hr;
     HANDLE hSem = NULL;
     BOOL ret = TRUE;
@@ -2637,7 +2566,6 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     IPropertyStorage *pPropStg;
     PROPSPEC ps[2];
     PROPVARIANT pv[2];
-    char *start_path = NULL;
     BOOL has_icon = FALSE;
 
     if ( !link )
@@ -2646,7 +2574,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         return TRUE;
     }
 
-    if( !GetLinkLocation( link, &csidl, &link_name ) )
+    if( !get_link_location( link, &csidl, &link_name ) )
     {
         WINE_WARN("Unknown link location %s. Ignoring.\n",wine_dbgstr_w(link));
         return TRUE;
@@ -2657,7 +2585,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         ret = TRUE;
         goto cleanup;
     }
-    WINE_TRACE("Link       : %s\n", wine_dbgstr_a(link_name));
+    WINE_TRACE("Link       : %s\n", wine_dbgstr_w(link_name));
 
     hr = url->lpVtbl->GetURL(url, &urlPath);
     if (FAILED(hr))
@@ -2666,9 +2594,6 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         goto cleanup;
     }
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(urlPath));
-
-    escaped_urlPath = escape(urlPath);
-    start_path = get_start_exe_path();
 
     ps[0].ulKind = PRSPEC_PROPID;
     ps[0].u.propid = PID_IS_ICONFILE;
@@ -2719,22 +2644,9 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         goto cleanup;
     }
     if (in_desktop_dir(csidl))
-    {
-        char *location;
-        const char *lastEntry;
-        lastEntry = strrchr(link_name, '/');
-        if (lastEntry == NULL)
-            lastEntry = link_name;
-        else
-            ++lastEntry;
-        location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
-        r = !write_desktop_entry(NULL, location, lastEntry, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
-        if (r == 0)
-            chmod(location, 0755);
-        heap_free(location);
-    }
+        r = !write_desktop_entry(NULL, NULL, link_name, startW, urlPath, NULL, NULL, icon_name, NULL);
     else
-        r = !write_menu_entry(link, link_name, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
+        r = !write_menu_entry(link, link_name, startW, urlPath, NULL, NULL, icon_name, NULL);
     ret = (r == 0);
     ReleaseSemaphore(hSem, 1, NULL);
 
@@ -2744,7 +2656,6 @@ cleanup:
     heap_free(icon_name );
     heap_free(link_name);
     CoTaskMemFree( urlPath );
-    heap_free(escaped_urlPath);
     return ret;
 }
 
