@@ -2982,11 +2982,12 @@ static void SB_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
 static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, int state, UINT dtFlags, BOOL focused)
 {
-    HFONT old_font = infoPtr->font ? SelectObject(hDC, infoPtr->font) : NULL;
     NMCUSTOMDRAW nmcd;
     LRESULT cdrf;
     HWND parent;
     RECT rc;
+
+    if (infoPtr->font) SelectObject(hDC, infoPtr->font);
 
     GetClientRect(infoPtr->hwnd, &rc);
     init_custom_draw(&nmcd, infoPtr, hDC, &rc);
@@ -2996,7 +2997,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
 
     /* Send erase notifications */
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
-    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (IsThemeBackgroundPartiallyTransparent(theme, BP_COMMANDLINK, state))
         DrawThemeParentBackground(infoPtr->hwnd, hDC, NULL);
@@ -3011,7 +3012,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
     /* Send paint notifications */
     nmcd.dwDrawStage = CDDS_PREPAINT;
     cdrf = SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
-    if (cdrf & CDRF_SKIPDEFAULT) goto cleanup;
+    if (cdrf & CDRF_SKIPDEFAULT) return;
 
     if (!(cdrf & CDRF_DOERASE))
     {
@@ -3083,7 +3084,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         nmcd.dwDrawStage = CDDS_POSTPAINT;
         SendMessageW(parent, WM_NOTIFY, nmcd.hdr.idFrom, (LPARAM)&nmcd);
     }
-    if (cdrf & CDRF_SKIPPOSTPAINT) goto cleanup;
+    if (cdrf & CDRF_SKIPPOSTPAINT) return;
 
     if (focused)
     {
@@ -3098,9 +3099,6 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
         rc.bottom -= margins.cyBottomHeight;
         DrawFocusRect(hDC, &rc);
     }
-
-cleanup:
-    if (old_font) SelectObject(hDC, old_font);
 }
 
 void BUTTON_Register(void)
