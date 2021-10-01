@@ -3702,30 +3702,24 @@ msgid "&Disable"
 msgstr "&Poista käytöstä"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
 msgid "&Reset"
-msgstr "Nollaa"
+msgstr "&Nollaa"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Enable"
-msgstr "&Ota käyttöön"
+msgstr "&Käytä"
 
 #: dlls/joy.cpl/joy.rc:43
-#, fuzzy
-#| msgid "Edit Override"
 msgid "&Override"
-msgstr "Muokkaa ohitusta"
+msgstr "&Ohita"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
 msgstr "Yhdistetty"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Voice input device:"
 msgid "Connected (xinput device)"
-msgstr "Äänen sisääntulolaite:"
+msgstr "Liitetty (xinput-laite)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -10346,13 +10340,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:390 dlls/tzres/tzres.rc:391
 msgid "UTC+12"
-msgstr ""
+msgstr "UTC+12"
 
 #: dlls/tzres/tzres.rc:392
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+12:00) Coordinated Universal Time+12"
-msgstr "UTC-aika"
+msgstr "(UTC+12:00) Koordinoitu yleisaika +12"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Nepal Standard Time"
@@ -10388,7 +10380,7 @@ msgstr "Haitin kesäaika"
 
 #: dlls/tzres/tzres.rc:185
 msgid "(UTC-05:00) Haiti"
-msgstr ""
+msgstr "(UTC-05:00) Haiti"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Central European Standard Time"
@@ -10416,25 +10408,19 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:399 dlls/tzres/tzres.rc:400
 msgid "UTC-08"
-msgstr ""
+msgstr "UTC-08"
 
 #: dlls/tzres/tzres.rc:401
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-08:00) Coordinated Universal Time-08"
-msgstr "UTC-aika"
+msgstr "(UTC-08:00) Koordinoitu yleisaika -08"
 
 #: dlls/tzres/tzres.rc:39
-#, fuzzy
-#| msgid "Atlantic Standard Time"
 msgid "Altai Standard Time"
-msgstr "Atlantin normaaliaika"
+msgstr "Altain normaaliaika"
 
 #: dlls/tzres/tzres.rc:40
-#, fuzzy
-#| msgid "Atlantic Daylight Time"
 msgid "Altai Daylight Time"
-msgstr "Atlantin kesäaika"
+msgstr "Altain kesäaika"
 
 #: dlls/tzres/tzres.rc:41
 msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
@@ -10473,26 +10459,20 @@ msgid "Saint Pierre Daylight Time"
 msgstr "Saint-Pierren kesäaika"
 
 #: dlls/tzres/tzres.rc:320
-#, fuzzy
-#| msgid "Saint Pierre Standard Time"
 msgid "(UTC-03:00) Saint Pierre and Miquelon"
-msgstr "Saint-Pierren normaaliaika"
+msgstr "(UTC-03:00) Saint-Pierre ja Miquelon"
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Sao Tome Standard Time"
-msgstr "Samoan normaaliaika"
+msgstr "Sao Tomen normaaliaika"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Sao Tome Daylight Time"
-msgstr "Samoan kesäaika"
+msgstr "Sao Tomen kesäaika"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+00:00) Sao Tome"
-msgstr ""
+msgstr "(UTC+00:00) Sao Tome"
 
 #: dlls/tzres/tzres.rc:249
 msgid "Namibia Standard Time"
@@ -10580,13 +10560,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:393 dlls/tzres/tzres.rc:394
 msgid "UTC+13"
-msgstr ""
+msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:395
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "UTC-aika"
+msgstr "(UTC+13:00) Koordinoitu yleisaika +13"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Magadan Standard Time"
@@ -10613,16 +10591,12 @@ msgid "(UTC-03:30) Newfoundland"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:345
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Sudan Standard Time"
-msgstr "Jordanian normaaliaika"
+msgstr "Sudanin normaaliaika"
 
 #: dlls/tzres/tzres.rc:346
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Sudan Daylight Time"
-msgstr "Jordanian kesäaika"
+msgstr "Sudanin kesäaika"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+02:00) Khartoum"
@@ -10793,16 +10767,12 @@ msgid "(UTC+04:00) Izhevsk, Samara"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:414
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "Volgograd Standard Time"
-msgstr "Tongan normaaliaika"
+msgstr "Volgogradin normaaliaika"
 
 #: dlls/tzres/tzres.rc:415
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "Volgograd Daylight Time"
-msgstr "Tongan kesäaika"
+msgstr "Volgogradin kesäaika"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+04:00) Volgograd"
@@ -10834,13 +10804,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:405 dlls/tzres/tzres.rc:406
 msgid "UTC-11"
-msgstr ""
+msgstr "UTC-11"
 
 #: dlls/tzres/tzres.rc:407
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-11:00) Coordinated Universal Time-11"
-msgstr "UTC-aika"
+msgstr "(UTC-11:00) Koordinoitu yleisaika -11"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Argentina Standard Time"
@@ -10855,20 +10823,16 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:375
-#, fuzzy
-#| msgid "Turkey Standard Time"
 msgid "Turks And Caicos Standard Time"
-msgstr "Turkin normaaliaika"
+msgstr "Turks- ja Caicossaarten normaaliaika"
 
 #: dlls/tzres/tzres.rc:376
-#, fuzzy
-#| msgid "Turkey Daylight Time"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Turkin kesäaika"
+msgstr "Turks- ja Caicossaarten kesäaika"
 
 #: dlls/tzres/tzres.rc:377
 msgid "(UTC-05:00) Turks and Caicos"
-msgstr ""
+msgstr "(UTC-05:00) Turks- ja Caicossaaret"
 
 #: dlls/tzres/tzres.rc:222
 msgid "Marquesas Standard Time"
@@ -10896,13 +10860,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:387 dlls/tzres/tzres.rc:388
 msgid "Coordinated Universal Time"
-msgstr "UTC-aika"
+msgstr "Koordinoitu yleisaika"
 
 #: dlls/tzres/tzres.rc:389
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC) Coordinated Universal Time"
-msgstr "UTC-aika"
+msgstr "(UTC) Koordinoitu yleisaika"
 
 #: dlls/tzres/tzres.rc:189
 msgid "India Standard Time"
@@ -10941,20 +10903,16 @@ msgid "(UTC+03:00) Istanbul"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgid "Arabian Standard Time"
 msgid "Astrakhan Standard Time"
-msgstr "Arabian normaaliaika"
+msgstr "Astrahanin normaaliaika"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgid "Arabian Daylight Time"
 msgid "Astrakhan Daylight Time"
-msgstr "Arabian kesäaika"
+msgstr "Astrahanin kesäaika"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
-msgstr ""
+msgstr "(UTC+04:00) Astrahan, Uljanovsk"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Fiji Standard Time"
@@ -10966,7 +10924,7 @@ msgstr "Fidžin kesäaika"
 
 #: dlls/tzres/tzres.rc:164
 msgid "(UTC+12:00) Fiji"
-msgstr ""
+msgstr "(UTC+12:00) Fidži"
 
 #: dlls/tzres/tzres.rc:87
 msgid "Canada Central Standard Time"
@@ -10981,20 +10939,16 @@ msgid "(UTC-06:00) Saskatchewan"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:441
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Yukon Standard Time"
-msgstr "Jakutskin normaaliaika"
+msgstr "Yukonin normaaliaika"
 
 #: dlls/tzres/tzres.rc:442
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Yukon Daylight Time"
-msgstr "Jakutskin kesäaika"
+msgstr "Yukonin kesäaika"
 
 #: dlls/tzres/tzres.rc:443
 msgid "(UTC-07:00) Yukon"
-msgstr ""
+msgstr "(UTC-07:00) Yukon"
 
 #: dlls/tzres/tzres.rc:351
 msgid "Taipei Standard Time"
@@ -11045,20 +10999,16 @@ msgid "(UTC+05:00) Islamabad, Karachi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:363
-#, fuzzy
-#| msgid "Tokyo Standard Time"
 msgid "Tomsk Standard Time"
-msgstr "Tokion normaaliaika"
+msgstr "Tomskin normaaliaika"
 
 #: dlls/tzres/tzres.rc:364
-#, fuzzy
-#| msgid "Tokyo Daylight Time"
 msgid "Tomsk Daylight Time"
-msgstr "Tokion kesäaika"
+msgstr "Tomskin kesäaika"
 
 #: dlls/tzres/tzres.rc:365
 msgid "(UTC+07:00) Tomsk"
-msgstr ""
+msgstr "(UTC+07:00) Tomsk"
 
 #: dlls/tzres/tzres.rc:93
 msgid "Caucasus Standard Time"
@@ -11070,7 +11020,7 @@ msgstr "Kaukasuksen kesäaika"
 
 #: dlls/tzres/tzres.rc:95
 msgid "(UTC+04:00) Yerevan"
-msgstr ""
+msgstr "(UTC+04:00) Jerevan"
 
 #: dlls/tzres/tzres.rc:66
 msgid "AUS Eastern Standard Time"
@@ -11109,32 +11059,24 @@ msgid "(UTC-05:00) Eastern Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:369
-#, fuzzy
-#| msgid "Tasmania Standard Time"
 msgid "Transbaikal Standard Time"
-msgstr "Tasmanian normaaliaika"
+msgstr "Taka-Baikalian normaaliaika"
 
 #: dlls/tzres/tzres.rc:370
-#, fuzzy
-#| msgid "Tasmania Daylight Time"
 msgid "Transbaikal Daylight Time"
-msgstr "Tasmanian kesäaika"
+msgstr "Taka-Baikalian kesäaika"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC+09:00) Chita"
-msgstr ""
+msgstr "(UTC+09:00) Tšita"
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgid "E. Europe Standard Time"
-msgstr "Länsi-Euroopan normaaliaika"
+msgstr "Itä-Euroopan normaaliaika"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "W. Europe Daylight Time"
 msgid "E. Europe Daylight Time"
-msgstr "Länsi-Euroopan kesäaika"
+msgstr "Itä-Euroopan kesäaika"
 
 #: dlls/tzres/tzres.rc:143
 msgid "(UTC+02:00) Chisinau"
@@ -11153,16 +11095,12 @@ msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:330
-#, fuzzy
-#| msgid "Samoa Standard Time"
 msgid "Saratov Standard Time"
-msgstr "Samoan normaaliaika"
+msgstr "Saratovin normaaliaika"
 
 #: dlls/tzres/tzres.rc:331
-#, fuzzy
-#| msgid "Samoa Daylight Time"
 msgid "Saratov Daylight Time"
-msgstr "Samoan kesäaika"
+msgstr "Saratovin kesäaika"
 
 #: dlls/tzres/tzres.rc:332
 msgid "(UTC+04:00) Saratov"
@@ -11205,20 +11143,16 @@ msgid "(UTC-05:00) Indiana (East)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "Alaskan Standard Time"
 msgid "Sakhalin Standard Time"
-msgstr "Alaskan normaaliaika"
+msgstr "Sahalinin normaaliaika"
 
 #: dlls/tzres/tzres.rc:322
-#, fuzzy
-#| msgid "Alaskan Daylight Time"
 msgid "Sakhalin Daylight Time"
-msgstr "Alaskan kesäaika"
+msgstr "Sahalinin kesäaika"
 
 #: dlls/tzres/tzres.rc:323
 msgid "(UTC+11:00) Sakhalin"
-msgstr ""
+msgstr "(UTC+11:00) Sahalin"
 
 #: dlls/tzres/tzres.rc:270
 msgid "North Korea Standard Time"
@@ -11258,13 +11192,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:396 dlls/tzres/tzres.rc:397
 msgid "UTC-02"
-msgstr ""
+msgstr "UTC-02"
 
 #: dlls/tzres/tzres.rc:398
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-02:00) Coordinated Universal Time-02"
-msgstr "UTC-aika"
+msgstr "(UTC-02:00) Koordinoitu yleisaika -02"
 
 #: dlls/tzres/tzres.rc:384
 msgid "US Mountain Standard Time"
@@ -11304,13 +11236,11 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:402 dlls/tzres/tzres.rc:403
 msgid "UTC-09"
-msgstr ""
+msgstr "UTC-09"
 
 #: dlls/tzres/tzres.rc:404
-#, fuzzy
-#| msgid "Coordinated Universal Time"
 msgid "(UTC-09:00) Coordinated Universal Time-09"
-msgstr "UTC-aika"
+msgstr "(UTC-09:00) Koordinoitu yleisaika -09"
 
 #: dlls/tzres/tzres.rc:342
 msgid "Sri Lanka Standard Time"
@@ -11453,16 +11383,12 @@ msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:432
-#, fuzzy
-#| msgid "West Asia Standard Time"
 msgid "West Bank Standard Time"
-msgstr "Länsi-Aasian normaaliaika"
+msgstr "Länsirannikon normaaliaika"
 
 #: dlls/tzres/tzres.rc:433
-#, fuzzy
-#| msgid "West Asia Daylight Time"
 msgid "West Bank Daylight Time"
-msgstr "Länsi-Aasian kesäaika"
+msgstr "Länsirannikon kesäaika"
 
 #: dlls/tzres/tzres.rc:434
 msgid "(UTC+02:00) Gaza, Hebron"
@@ -11517,20 +11443,16 @@ msgid "(UTC+08:00) Ulaanbaatar"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:261
-#, fuzzy
-#| msgid "Morocco Standard Time"
 msgid "Norfolk Standard Time"
-msgstr "Marokon normaaliaika"
+msgstr "Norfolkinsaaren normaaliaika"
 
 #: dlls/tzres/tzres.rc:262
-#, fuzzy
-#| msgid "Morocco Daylight Time"
 msgid "Norfolk Daylight Time"
-msgstr "Marokon kesäaika"
+msgstr "Norfolkinsaaren kesäaika"
 
 #: dlls/tzres/tzres.rc:263
 msgid "(UTC+11:00) Norfolk Island"
-msgstr ""
+msgstr "(UTC+11:00) Norfolkinsaari"
 
 #: dlls/tzres/tzres.rc:195
 msgid "Israel Standard Time"
@@ -11689,32 +11611,24 @@ msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "Jordan Standard Time"
 msgid "Qyzylorda Standard Time"
-msgstr "Jordanian normaaliaika"
+msgstr "Qızılordan normaaliaika"
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "Jordan Daylight Time"
 msgid "Qyzylorda Daylight Time"
-msgstr "Jordanian kesäaika"
+msgstr "Qızılordan kesäaika"
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC+05:00) Qyzylorda"
-msgstr ""
+msgstr "(UTC+05:00) Qızılorda"
 
 #: dlls/tzres/tzres.rc:426
-#, fuzzy
-#| msgid "Tonga Standard Time"
 msgid "W. Mongolia Standard Time"
-msgstr "Tongan normaaliaika"
+msgstr "Länsi-Mongolian normaaliaika"
 
 #: dlls/tzres/tzres.rc:427
-#, fuzzy
-#| msgid "Tonga Daylight Time"
 msgid "W. Mongolia Daylight Time"
-msgstr "Tongan kesäaika"
+msgstr "Länsi-Mongolian kesäaika"
 
 #: dlls/tzres/tzres.rc:428
 msgid "(UTC+07:00) Hovd"
@@ -11745,20 +11659,16 @@ msgid "(UTC-10:00) Aleutian Islands"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgid "Yakutsk Standard Time"
 msgid "Omsk Standard Time"
-msgstr "Jakutskin normaaliaika"
+msgstr "Omskin normaaliaika"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgid "Yakutsk Daylight Time"
 msgid "Omsk Daylight Time"
-msgstr "Jakutskin kesäaika"
+msgstr "Omskin kesäaika"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+06:00) Omsk"
-msgstr ""
+msgstr "(UTC+06:00) Omsk"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Central Brazilian Standard Time"
