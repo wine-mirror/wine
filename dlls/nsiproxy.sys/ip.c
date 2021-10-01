@@ -94,7 +94,6 @@
 #include "ifdef.h"
 #include "ipmib.h"
 #include "netiodef.h"
-#include "wine/heap.h"
 #include "wine/nsi.h"
 #include "wine/debug.h"
 
@@ -933,12 +932,12 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, vo
 
         if (sysctl( mib, ARRAY_SIZE(mib), NULL, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
 
-        buf = heap_alloc( needed );
+        buf = malloc( needed );
         if (!buf) return STATUS_NO_MEMORY;
 
         if (sysctl( mib, ARRAY_SIZE(mib), buf, &needed, NULL, 0 ) == -1)
         {
-            heap_free( buf );
+            free( buf );
             return STATUS_NOT_SUPPORTED;
         }
 
@@ -982,7 +981,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, vo
             }
             next += rtm->rtm_msglen;
         }
-        heap_free( buf );
+        free( buf );
     }
 #else
     FIXME( "not implemented\n" );
@@ -1122,12 +1121,12 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, DWORD key_size, void
 
         if (sysctl( mib, ARRAY_SIZE(mib), NULL, &needed, NULL, 0 ) < 0) return STATUS_NOT_SUPPORTED;
 
-        buf = heap_alloc( needed );
+        buf = malloc( needed );
         if (!buf) return STATUS_NO_MEMORY;
 
         if (sysctl( mib, 6, buf, &needed, NULL, 0 ) < 0)
         {
-            heap_free( buf );
+            free( buf );
             return STATUS_NOT_SUPPORTED;
         }
 
@@ -1225,7 +1224,7 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, DWORD key_size, void
             }
             num++;
         }
-        HeapFree( GetProcessHeap (), 0, buf );
+        free( buf );
     }
 #else
     FIXME( "not implemented\n" );

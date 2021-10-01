@@ -77,7 +77,6 @@
 #include "netiodef.h"
 #include "ws2ipdef.h"
 #include "udpmib.h"
-#include "wine/heap.h"
 #include "wine/nsi.h"
 #include "wine/debug.h"
 #include "wine/server.h"
@@ -309,7 +308,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void
             goto err;
         }
 
-        buf = heap_alloc( len );
+        buf = malloc( len );
         if (!buf)
         {
             status = STATUS_NO_MEMORY;
@@ -386,7 +385,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void
             num++;
         }
     err:
-        heap_free( buf );
+        free( buf );
     }
 #else
     FIXME( "not implemented\n" );
@@ -396,8 +395,8 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void
     if (!want_data || num <= *count) *count = num;
     else status = STATUS_BUFFER_OVERFLOW;
 
-    heap_free( pid_map );
-    heap_free( addr_scopes );
+    free( pid_map );
+    free( addr_scopes );
     return status;
 }
 

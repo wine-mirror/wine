@@ -84,7 +84,6 @@
 #include "ddk/wdm.h"
 #include "wine/nsi.h"
 #include "wine/list.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #include "nsiproxy_private.h"
@@ -253,7 +252,7 @@ static WCHAR *strdupAtoW( const char *str )
 
     if (!str) return ret;
     len = MultiByteToWideChar( CP_UNIXCP, 0, str, -1, NULL, 0 );
-    ret = heap_alloc( len * sizeof(WCHAR) );
+    ret = malloc( len * sizeof(WCHAR) );
     if (ret) MultiByteToWideChar( CP_UNIXCP, 0, str, -1, ret, len );
     return ret;
 }
@@ -264,7 +263,7 @@ static struct if_entry *add_entry( DWORD index, char *name )
     int name_len = strlen( name );
 
     if (name_len >= IFNAMSIZ - 1) return NULL;
-    entry = heap_alloc( sizeof(*entry) );
+    entry = malloc( sizeof(*entry) );
     if (!entry) return NULL;
 
     entry->if_index = index;
@@ -272,7 +271,7 @@ static struct if_entry *add_entry( DWORD index, char *name )
     entry->if_name = strdupAtoW( name );
     if (!entry->if_name)
     {
-        heap_free( entry );
+        free( entry );
         return NULL;
     }
 
@@ -385,7 +384,7 @@ static void ifinfo_fill_dynamic( struct if_entry *entry, struct nsi_ndis_ifinfo_
         struct if_data ifdata;
 
         if (sysctl( mib, ARRAY_SIZE(mib), NULL, &needed, NULL, 0 ) == -1) goto done;
-        buf = heap_alloc( needed );
+        buf = malloc( needed );
         if (!buf) goto done;
         if (sysctl( mib, ARRAY_SIZE(mib), buf, &needed, NULL, 0 ) == -1) goto done;
         for (end = buf + needed; buf < end; buf += ifm->ifm_msglen)
@@ -408,7 +407,7 @@ static void ifinfo_fill_dynamic( struct if_entry *entry, struct nsi_ndis_ifinfo_
             }
         }
     done:
-        heap_free( buf );
+        free( buf );
     }
 #endif
 }

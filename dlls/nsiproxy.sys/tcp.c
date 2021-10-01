@@ -97,7 +97,6 @@
 #include "netiodef.h"
 #include "ws2ipdef.h"
 #include "tcpmib.h"
-#include "wine/heap.h"
 #include "wine/nsi.h"
 #include "wine/debug.h"
 #include "wine/server.h"
@@ -269,7 +268,7 @@ struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
             {
                 if (!table_size) table_size = 4;
                 else table_size *= 2;
-                if (!(table = heap_realloc( table, table_size * sizeof(table[0]) )))
+                if (!(table = realloc( table, table_size * sizeof(table[0]) )))
                 {
                     fclose( fp );
                     goto failed;
@@ -301,7 +300,7 @@ struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
             {
                 if (!table_size) table_size = 4;
                 else table_size *= 2;
-                if (!(table = heap_realloc( table, table_size * sizeof(table[0]) )))
+                if (!(table = realloc( table, table_size * sizeof(table[0]) )))
                 {
                     freeifaddrs( addrs );
                     goto failed;
@@ -325,7 +324,7 @@ struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
     return table;
 
 failed:
-    heap_free( table );
+    free( table );
     return NULL;
 }
 
@@ -356,7 +355,7 @@ struct pid_map *get_pid_map( unsigned int *num_entries )
     NTSTATUS ret;
     char *buffer = NULL, *new_buffer;
 
-    if (!(buffer = heap_alloc( buffer_len ))) return NULL;
+    if (!(buffer = malloc( buffer_len ))) return NULL;
 
     for (;;)
     {
@@ -371,17 +370,17 @@ struct pid_map *get_pid_map( unsigned int *num_entries )
 
         if (ret != STATUS_INFO_LENGTH_MISMATCH) break;
 
-        if (!(new_buffer = heap_realloc( buffer, buffer_len )))
+        if (!(new_buffer = realloc( buffer, buffer_len )))
         {
-            heap_free( buffer );
+            free( buffer );
             return NULL;
         }
         buffer = new_buffer;
     }
 
-    if (!(map = heap_alloc( process_count * sizeof(*map) )))
+    if (!(map = malloc( process_count * sizeof(*map) )))
     {
-        heap_free( buffer );
+        free( buffer );
         return NULL;
     }
 
@@ -400,7 +399,7 @@ struct pid_map *get_pid_map( unsigned int *num_entries )
         pos += process->thread_count * sizeof(struct thread_info);
     }
 
-    heap_free( buffer );
+    free( buffer );
     *num_entries = process_count;
     return map;
 }
@@ -495,7 +494,7 @@ unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UIN
         int fd_len = proc_pidinfo( map[i].unix_pid, PROC_PIDLISTFDS, 0, NULL, 0 );
         if (fd_len <= 0) continue;
 
-        fds = heap_alloc( fd_len );
+        fds = malloc( fd_len );
         if (!fds) continue;
 
         proc_pidinfo( map[i].unix_pid, PROC_PIDLISTFDS, 0, fds, fd_len );
@@ -507,12 +506,12 @@ unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UIN
             proc_pidfdinfo( map[i].unix_pid, fds[j].proc_fd, PROC_PIDFDSOCKETINFO, &sock, sizeof(sock) );
             if (sock.psi.soi_pcb == inode)
             {
-                heap_free( fds );
+                free( fds );
                 return map[i].pid;
             }
         }
 
-        heap_free( fds );
+        free( fds );
     }
     return 0;
 #else
@@ -638,7 +637,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
             goto err;
         }
 
-        buf = heap_alloc( len );
+        buf = malloc( len );
         if (!buf)
         {
             status = STATUS_NO_MEMORY;
@@ -728,7 +727,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
             num++;
         }
     err:
-        heap_free( buf );
+        free( buf );
     }
 #else
     FIXME( "not implemented\n" );
@@ -738,8 +737,8 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
     if (!want_data || num <= *count) *count = num;
     else status = STATUS_BUFFER_OVERFLOW;
 
-    heap_free( pid_map );
-    heap_free( addr_scopes );
+    free( pid_map );
+    free( addr_scopes );
     return status;
 }
 
