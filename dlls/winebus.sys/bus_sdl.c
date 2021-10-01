@@ -47,9 +47,10 @@
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
 #include "ddk/hidsdi.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
 #include "hidusage.h"
+
+#include "wine/debug.h"
+#include "wine/hid.h"
 
 #include "unix_private.h"
 
@@ -95,12 +96,15 @@ MAKE_FUNCPTR(SDL_HapticClose);
 MAKE_FUNCPTR(SDL_HapticDestroyEffect);
 MAKE_FUNCPTR(SDL_HapticNewEffect);
 MAKE_FUNCPTR(SDL_HapticOpenFromJoystick);
+MAKE_FUNCPTR(SDL_HapticPause);
 MAKE_FUNCPTR(SDL_HapticQuery);
 MAKE_FUNCPTR(SDL_HapticRumbleInit);
 MAKE_FUNCPTR(SDL_HapticRumblePlay);
 MAKE_FUNCPTR(SDL_HapticRumbleSupported);
 MAKE_FUNCPTR(SDL_HapticRunEffect);
+MAKE_FUNCPTR(SDL_HapticSetGain);
 MAKE_FUNCPTR(SDL_HapticStopAll);
+MAKE_FUNCPTR(SDL_HapticUnpause);
 MAKE_FUNCPTR(SDL_JoystickIsHaptic);
 MAKE_FUNCPTR(SDL_GameControllerAddMapping);
 MAKE_FUNCPTR(SDL_RegisterEvents);
@@ -130,6 +134,7 @@ struct sdl_device
     DWORD effect_support;
     SDL_Haptic *sdl_haptic;
     int haptic_effect_id;
+    int effect_ids[256];
 };
 
 static inline struct sdl_device *impl_from_unix_device(struct unix_device *iface)
@@ -168,6 +173,8 @@ static void set_hat_value(struct unix_device *iface, int index, int value)
 
 static BOOL descriptor_add_haptic(struct sdl_device *impl)
 {
+    USHORT i;
+
     if (!pSDL_JoystickIsHaptic(impl->sdl_joystick) ||
         !(impl->sdl_haptic = pSDL_HapticOpenFromJoystick(impl->sdl_joystick)))
         impl->effect_support = 0;
@@ -197,6 +204,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
     }
 
     impl->haptic_effect_id = -1;
+    for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i) impl->effect_ids[i] = -1;
     return TRUE;
 }
 
@@ -400,7 +408,38 @@ NTSTATUS sdl_device_haptics_start(struct unix_device *iface, DWORD duration_ms,
 
 static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, USAGE control)
 {
-    FIXME("iface %p, control %#04x stub\n", iface, control);
+    struct sdl_device *impl = impl_from_unix_device(iface);
+    unsigned int i;
+
+    TRACE("iface %p, control %#04x.\n", iface, control);
+
+    switch (control)
+    {
+    case PID_USAGE_DC_ENABLE_ACTUATORS:
+        pSDL_HapticSetGain(impl->sdl_haptic, 100);
+        return STATUS_SUCCESS;
+    case PID_USAGE_DC_DISABLE_ACTUATORS:
+        pSDL_HapticSetGain(impl->sdl_haptic, 0);
+        return STATUS_SUCCESS;
+    case PID_USAGE_DC_STOP_ALL_EFFECTS:
+        pSDL_HapticStopAll(impl->sdl_haptic);
+        return STATUS_SUCCESS;
+    case PID_USAGE_DC_DEVICE_RESET:
+        pSDL_HapticStopAll(impl->sdl_haptic);
+        for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i)
+        {
+            if (impl->effect_ids[i] < 0) continue;
+            pSDL_HapticDestroyEffect(impl->sdl_haptic, impl->effect_ids[i]);
+            impl->effect_ids[i] = -1;
+        }
+        return STATUS_SUCCESS;
+    case PID_USAGE_DC_DEVICE_PAUSE:
+        pSDL_HapticPause(impl->sdl_haptic);
+        return STATUS_SUCCESS;
+    case PID_USAGE_DC_DEVICE_CONTINUE:
+        pSDL_HapticUnpause(impl->sdl_haptic);
+        return STATUS_SUCCESS;
+    }
 
     return STATUS_NOT_SUPPORTED;
 }
@@ -665,12 +704,15 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticDestroyEffect);
     LOAD_FUNCPTR(SDL_HapticNewEffect);
     LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
+    LOAD_FUNCPTR(SDL_HapticPause);
     LOAD_FUNCPTR(SDL_HapticQuery);
     LOAD_FUNCPTR(SDL_HapticRumbleInit);
     LOAD_FUNCPTR(SDL_HapticRumblePlay);
     LOAD_FUNCPTR(SDL_HapticRumbleSupported);
     LOAD_FUNCPTR(SDL_HapticRunEffect);
+    LOAD_FUNCPTR(SDL_HapticSetGain);
     LOAD_FUNCPTR(SDL_HapticStopAll);
+    LOAD_FUNCPTR(SDL_HapticUnpause);
     LOAD_FUNCPTR(SDL_JoystickIsHaptic);
     LOAD_FUNCPTR(SDL_GameControllerAddMapping);
     LOAD_FUNCPTR(SDL_RegisterEvents);
