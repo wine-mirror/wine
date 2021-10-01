@@ -2492,10 +2492,8 @@ static char *get_start_exe_path(void)
 
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
-    static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
-                                   '\\','s','t','a','r','t','.','e','x','e',0};
     char *link_name = NULL, *icon_name = NULL, *work_dir = NULL;
-    char *escaped_path = NULL, *escaped_args = NULL, *description = NULL;
+    char *description = NULL;
     char *wmclass = NULL;
     WCHAR szTmp[INFOTIPSIZE];
     WCHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
@@ -2503,7 +2501,6 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     int iIconId = 0, r = -1;
     DWORD csidl = -1;
     HANDLE hsem = NULL;
-    char *start_path = NULL;
 
     if ( !link )
     {
@@ -2574,37 +2571,11 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     /* check the path */
     if( szPath[0] )
     {
-        static const WCHAR exeW[] = {'.','e','x','e',0};
-        WCHAR *p;
+        /* FIXME: Use AppUserModelID if present. */
+        WCHAR *p = PathFindFileNameW(szPath);
 
-        /* check for .exe extension */
-        if (!(p = strrchrW( szPath, '.' )) ||
-            strchrW( p, '\\' ) || strchrW( p, '/' ) ||
-            lstrcmpiW( p, exeW ))
+        if (p)
         {
-            /* Not .exe - use 'start.exe' to launch this file */
-            p = szArgs + lstrlenW(szPath) + 2;
-            if (szArgs[0])
-            {
-                p[0] = ' ';
-                memmove( p+1, szArgs, min( (lstrlenW(szArgs) + 1) * sizeof(szArgs[0]),
-                                           sizeof(szArgs) - (p + 1 - szArgs) * sizeof(szArgs[0]) ) );
-            }
-            else
-                p[0] = 0;
-
-            szArgs[0] = '"';
-            lstrcpyW(szArgs + 1, szPath);
-            szArgs[lstrlenW(szArgs)] = '"';
-
-            GetWindowsDirectoryW(szPath, MAX_PATH);
-            lstrcatW(szPath, startW);
-        }
-        else
-        {
-            /* FIXME: Use AppUserModelID if present. */
-            WCHAR *p = PathFindFileNameW(szPath);
-
             lstrcpyW(szWMClass, p);
             CharLowerW(szWMClass);
         }
@@ -2613,20 +2584,9 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         if (szWorkDir[0])
             work_dir = wine_get_unix_file_name( szWorkDir );
     }
-    else
-    {
-        /* if there's no path... try run the link itself */
-        lstrcpynW(szArgs, link, MAX_PATH);
-        GetWindowsDirectoryW(szPath, MAX_PATH);
-        lstrcatW(szPath, startW);
-    }
 
-    /* escape the path and parameters */
-    escaped_path = escape(szPath);
-    escaped_args = escape(szArgs);
     description = wchars_to_utf8_chars(szDescription);
     wmclass = wchars_to_utf8_chars(szWMClass);
-    start_path = get_start_exe_path();
 
     /* building multiple menus concurrently has race conditions */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
@@ -2646,17 +2606,17 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         else
             ++lastEntry;
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
-        if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY)
-            r = !write_desktop_entry(link, location, lastEntry, start_path, escape(link),
+        if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY || !szPath[0])
+            r = !write_desktop_entry(link, location, lastEntry, escape(link), "",
                                      description, work_dir, icon_name, wmclass);
         else
-            r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name, wmclass);
+            r = !write_desktop_entry(NULL, location, lastEntry, escape(szPath), escape(szArgs), description, work_dir, icon_name, wmclass);
         if (r == 0)
             chmod(location, 0755);
         heap_free(location);
     }
     else
-        r = !write_menu_entry(link, link_name, start_path, escape(link),
+        r = !write_menu_entry(link, link_name, escape(link), "",
                               description, work_dir, icon_name, wmclass);
 
     ReleaseSemaphore( hsem, 1, NULL );
@@ -2666,11 +2626,8 @@ cleanup:
     heap_free(icon_name );
     heap_free(work_dir );
     heap_free(link_name );
-    heap_free(escaped_args );
-    heap_free(escaped_path );
     heap_free(description );
     heap_free(wmclass );
-    heap_free(start_path );
 
     if (r && !bWait)
         WINE_ERR("failed to build the menu\n" );
