@@ -1363,10 +1363,9 @@ static HKEY open_menus_reg_key(void)
     return NULL;
 }
 
-static DWORD register_menus_entry(const char *unix_file, const char *windows_file)
+static DWORD register_menus_entry(const char *unix_file, const WCHAR *windows_file)
 {
     WCHAR *unix_fileW;
-    WCHAR *windows_fileW;
     INT size;
     HKEY hkey;
     DWORD ret;
@@ -1374,24 +1373,20 @@ static DWORD register_menus_entry(const char *unix_file, const char *windows_fil
     size = MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, NULL, 0);
     unix_fileW = xmalloc(size * sizeof(WCHAR));
     MultiByteToWideChar(CP_UNIXCP, 0, unix_file, -1, unix_fileW, size);
-    size = MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, NULL, 0);
-    windows_fileW = xmalloc(size * sizeof(WCHAR));
-    MultiByteToWideChar(CP_UNIXCP, 0, windows_file, -1, windows_fileW, size);
     hkey = open_menus_reg_key();
     if (hkey)
     {
-        ret = RegSetValueExW(hkey, unix_fileW, 0, REG_SZ, (const BYTE*)windows_fileW,
-                    (strlenW(windows_fileW) + 1) * sizeof(WCHAR));
+        ret = RegSetValueExW(hkey, unix_fileW, 0, REG_SZ, (const BYTE*)windows_file,
+                    (strlenW(windows_file) + 1) * sizeof(WCHAR));
         RegCloseKey(hkey);
     }
     else
         ret = GetLastError();
-    heap_free(windows_fileW);
     heap_free(unix_fileW);
     return ret;
 }
 
-static BOOL write_desktop_entry(const char *unix_link, const char *location, const char *linkname,
+static BOOL write_desktop_entry(const WCHAR *link, const char *location, const char *linkname,
                                 const char *path, const char *args, const char *descr,
                                 const char *workdir, const char *icon, const char *wmclass)
 {
@@ -1399,7 +1394,7 @@ static BOOL write_desktop_entry(const char *unix_link, const char *location, con
     const char *prefix = getenv("WINEPREFIX");
     const char *home = getenv("HOME");
 
-    WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_a(unix_link), wine_dbgstr_a(location),
+    WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_w(link), wine_dbgstr_a(location),
                wine_dbgstr_a(linkname), wine_dbgstr_a(path), wine_dbgstr_a(args),
                wine_dbgstr_a(descr), wine_dbgstr_a(workdir), wine_dbgstr_a(icon),
                wine_dbgstr_a(wmclass));
@@ -1429,9 +1424,9 @@ static BOOL write_desktop_entry(const char *unix_link, const char *location, con
 
     fclose(file);
 
-    if (unix_link)
+    if (link)
     {
-        DWORD ret = register_menus_entry(location, unix_link);
+        DWORD ret = register_menus_entry(location, link);
         if (ret != ERROR_SUCCESS)
             return FALSE;
     }
@@ -1466,7 +1461,7 @@ static BOOL write_directory_entry(const char *directory, const char *location)
     return TRUE;
 }
 
-static BOOL write_menu_file(const char *unix_link, const char *filename)
+static BOOL write_menu_file(const WCHAR *link, const char *filename)
 {
     char *tempfilename;
     FILE *tempfile = NULL;
@@ -1556,13 +1551,13 @@ end:
         remove(tempfilename);
     heap_free(tempfilename);
     if (ret)
-        register_menus_entry(menuPath, unix_link);
+        register_menus_entry(menuPath, link);
     heap_free(name);
     heap_free(menuPath);
     return ret;
 }
 
-static BOOL write_menu_entry(const char *unix_link, const char *link, const char *path, const char *args,
+static BOOL write_menu_entry(const WCHAR *windows_link, const char *link, const char *path, const char *args,
                              const char *descr, const char *workdir, const char *icon, const char *wmclass)
 {
     const char *linkname;
@@ -1571,7 +1566,7 @@ static BOOL write_menu_entry(const char *unix_link, const char *link, const char
     char *filename = NULL;
     BOOL ret = TRUE;
 
-    WINE_TRACE("(%s, %s, %s, %s, %s, %s, %s, %s)\n", wine_dbgstr_a(unix_link), wine_dbgstr_a(link),
+    WINE_TRACE("(%s, %s, %s, %s, %s, %s, %s, %s)\n", wine_dbgstr_w(windows_link), wine_dbgstr_a(link),
                wine_dbgstr_a(path), wine_dbgstr_a(args), wine_dbgstr_a(descr),
                wine_dbgstr_a(workdir), wine_dbgstr_a(icon), wine_dbgstr_a(wmclass));
 
@@ -1591,7 +1586,7 @@ static BOOL write_menu_entry(const char *unix_link, const char *link, const char
         goto end;
     }
     *desktopDir = '/';
-    if (!write_desktop_entry(unix_link, desktopPath, linkname, path, args, descr, workdir, icon, wmclass))
+    if (!write_desktop_entry(windows_link, desktopPath, linkname, path, args, descr, workdir, icon, wmclass))
     {
         WINE_WARN("couldn't make desktop entry %s\n", wine_dbgstr_a(desktopPath));
         ret = FALSE;
@@ -1599,7 +1594,7 @@ static BOOL write_menu_entry(const char *unix_link, const char *link, const char
     }
 
     filename = heap_printf("wine/%s.desktop", link);
-    if (!write_menu_file(unix_link, filename))
+    if (!write_menu_file(windows_link, filename))
     {
         WINE_WARN("couldn't make menu file %s\n", wine_dbgstr_a(filename));
         ret = FALSE;
@@ -2495,17 +2490,6 @@ static char *get_start_exe_path(void)
     return escape(start_path);
 }
 
-static char* escape_unix_link_arg(LPCSTR unix_link)
-{
-    char *ret = NULL;
-    WCHAR *unix_linkW = utf8_chars_to_wchars(unix_link);
-    char *escaped_lnk = escape(unix_linkW);
-    ret = heap_printf("/Unix %s", escaped_lnk);
-    heap_free(escaped_lnk);
-    heap_free(unix_linkW);
-    return ret;
-}
-
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
     static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
@@ -2519,7 +2503,6 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     int iIconId = 0, r = -1;
     DWORD csidl = -1;
     HANDLE hsem = NULL;
-    char *unix_link = NULL;
     char *start_path = NULL;
 
     if ( !link )
@@ -2586,13 +2569,6 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         }
         WINE_ERR("failed to extract icon from %s\n",
                  wine_dbgstr_w( szIconPath[0] ? szIconPath : szPath ));
-    }
-
-    unix_link = wine_get_unix_file_name(link);
-    if (unix_link == NULL)
-    {
-        WINE_WARN("couldn't find unix path of %s\n", wine_dbgstr_w(link));
-        goto cleanup;
     }
 
     /* check the path */
@@ -2671,12 +2647,8 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
             ++lastEntry;
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY)
-        {
-            char *link_arg = escape_unix_link_arg(unix_link);
-            r = !write_desktop_entry(unix_link, location, lastEntry,
-                                     start_path, link_arg, description, work_dir, icon_name, wmclass);
-            heap_free(link_arg);
-        }
+            r = !write_desktop_entry(link, location, lastEntry, start_path, escape(link),
+                                     description, work_dir, icon_name, wmclass);
         else
             r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name, wmclass);
         if (r == 0)
@@ -2684,11 +2656,8 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         heap_free(location);
     }
     else
-    {
-        char *link_arg = escape_unix_link_arg(unix_link);
-        r = !write_menu_entry(unix_link, link_name, start_path, link_arg, description, work_dir, icon_name, wmclass);
-        heap_free(link_arg);
-    }
+        r = !write_menu_entry(link, link_name, start_path, escape(link),
+                              description, work_dir, icon_name, wmclass);
 
     ReleaseSemaphore( hsem, 1, NULL );
 
@@ -2701,7 +2670,6 @@ cleanup:
     heap_free(escaped_path );
     heap_free(description );
     heap_free(wmclass );
-    heap_free(unix_link );
     heap_free(start_path );
 
     if (r && !bWait)
@@ -2720,7 +2688,6 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
     HANDLE hSem = NULL;
     BOOL ret = TRUE;
     int r = -1;
-    char *unix_link = NULL;
     IPropertySetStorage *pPropSetStg;
     IPropertyStorage *pPropStg;
     PROPSPEC ps[2];
@@ -2754,13 +2721,6 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         goto cleanup;
     }
     WINE_TRACE("path       : %s\n", wine_dbgstr_w(urlPath));
-
-    unix_link = wine_get_unix_file_name(link);
-    if (unix_link == NULL)
-    {
-        WINE_WARN("couldn't find unix path of %s\n", wine_dbgstr_w(link));
-        goto cleanup;
-    }
 
     escaped_urlPath = escape(urlPath);
     start_path = get_start_exe_path();
@@ -2829,7 +2789,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
         heap_free(location);
     }
     else
-        r = !write_menu_entry(unix_link, link_name, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
+        r = !write_menu_entry(link, link_name, start_path, escaped_urlPath, NULL, NULL, icon_name, NULL);
     ret = (r == 0);
     ReleaseSemaphore(hSem, 1, NULL);
 
@@ -2840,7 +2800,6 @@ cleanup:
     heap_free(link_name);
     CoTaskMemFree( urlPath );
     heap_free(escaped_urlPath);
-    heap_free(unix_link);
     return ret;
 }
 
@@ -3091,12 +3050,9 @@ static void cleanup_menus(void)
             }
             if (lret == ERROR_SUCCESS)
             {
-                char *unix_file;
-                char *windows_file;
-                struct stat filestats;
-                unix_file = wchars_to_unix_chars(value);
-                windows_file = wchars_to_unix_chars(data);
-                if (stat(windows_file, &filestats) < 0 && errno == ENOENT)
+                char *unix_file = wchars_to_unix_chars(value);
+
+                if (GetFileAttributesW( data ) == INVALID_FILE_ATTRIBUTES)
                 {
                     WINE_TRACE("removing menu related file %s\n", unix_file);
                     remove(unix_file);
@@ -3105,7 +3061,6 @@ static void cleanup_menus(void)
                 else
                     i++;
                 heap_free(unix_file);
-                heap_free(windows_file);
             }
             else if (lret != ERROR_NO_MORE_ITEMS)
                 WINE_ERR("error %d reading registry\n", lret);
