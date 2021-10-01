@@ -83,6 +83,8 @@ struct wg_parser
     } read_request;
 
     bool flushing, sink_connected;
+
+    bool unlimited_buffering;
 };
 
 struct wg_parser_stream
@@ -559,13 +561,6 @@ static void CDECL wg_parser_push_data(struct wg_parser *parser,
     parser->read_request.data = NULL;
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&parser->read_done_cond);
-}
-
-static void CDECL wg_parser_set_unlimited_buffering(struct wg_parser *parser)
-{
-    g_object_set(parser->decodebin, "max-size-buffers", G_MAXUINT, NULL);
-    g_object_set(parser->decodebin, "max-size-time", G_MAXUINT64, NULL);
-    g_object_set(parser->decodebin, "max-size-bytes", G_MAXUINT, NULL);
 }
 
 static void CDECL wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format)
@@ -1728,6 +1723,13 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     gst_bin_add(GST_BIN(parser->container), element);
     parser->decodebin = element;
 
+    if (parser->unlimited_buffering)
+    {
+        g_object_set(parser->decodebin, "max-size-buffers", G_MAXUINT, NULL);
+        g_object_set(parser->decodebin, "max-size-time", G_MAXUINT64, NULL);
+        g_object_set(parser->decodebin, "max-size-bytes", G_MAXUINT, NULL);
+    }
+
     g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_select_cb), parser);
@@ -1868,7 +1870,7 @@ static void init_gstreamer_once(void)
             gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 }
 
-static struct wg_parser * CDECL wg_parser_create(enum wg_parser_type type)
+static struct wg_parser * CDECL wg_parser_create(enum wg_parser_type type, bool unlimited_buffering)
 {
     static const init_gst_cb init_funcs[] =
     {
@@ -1893,6 +1895,7 @@ static struct wg_parser * CDECL wg_parser_create(enum wg_parser_type type)
     pthread_cond_init(&parser->read_done_cond, NULL);
     parser->flushing = true;
     parser->init_gst = init_funcs[type];
+    parser->unlimited_buffering = unlimited_buffering;
 
     GST_DEBUG("Created winegstreamer parser %p.\n", parser);
     return parser;
@@ -1927,8 +1930,6 @@ static const struct unix_funcs funcs =
 
     wg_parser_get_next_read_offset,
     wg_parser_push_data,
-
-    wg_parser_set_unlimited_buffering,
 
     wg_parser_get_stream_count,
     wg_parser_get_stream,

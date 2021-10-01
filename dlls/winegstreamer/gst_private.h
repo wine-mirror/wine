@@ -159,7 +159,7 @@ enum wg_parser_type
 
 struct unix_funcs
 {
-    struct wg_parser *(CDECL *wg_parser_create)(enum wg_parser_type type);
+    struct wg_parser *(CDECL *wg_parser_create)(enum wg_parser_type type, bool unlimited_buffering);
     void (CDECL *wg_parser_destroy)(struct wg_parser *parser);
 
     HRESULT (CDECL *wg_parser_connect)(struct wg_parser *parser, uint64_t file_size);
@@ -172,8 +172,6 @@ struct unix_funcs
             uint64_t *offset, uint32_t *size);
     void (CDECL *wg_parser_push_data)(struct wg_parser *parser,
             const void *data, uint32_t size);
-
-    void (CDECL *wg_parser_set_unlimited_buffering)(struct wg_parser *parser);
 
     uint32_t (CDECL *wg_parser_get_stream_count)(struct wg_parser *parser);
     struct wg_parser_stream *(CDECL *wg_parser_get_stream)(struct wg_parser *parser, uint32_t index);

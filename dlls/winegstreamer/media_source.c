@@ -1421,7 +1421,13 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     if (FAILED(hr = MFAllocateWorkQueue(&object->async_commands_queue)))
         goto fail;
 
-    if (!(parser = unix_funcs->wg_parser_create(WG_PARSER_DECODEBIN)))
+    /* In Media Foundation, sources may read from any media source stream
+     * without fear of blocking due to buffering limits on another. Trailmakers,
+     * a Unity3D Engine game, only reads one sample from the audio stream (and
+     * never deselects it). Remove buffering limits from decodebin in order to
+     * account for this. Note that this does leak memory, but the same memory
+     * leak occurs with native. */
+    if (!(parser = unix_funcs->wg_parser_create(WG_PARSER_DECODEBIN, true)))
     {
         hr = E_OUTOFMEMORY;
         goto fail;
@@ -1434,14 +1440,6 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     if (FAILED(hr = unix_funcs->wg_parser_connect(parser, file_size)))
         goto fail;
-
-    /* In Media Foundation, sources may read from any media source stream
-     * without fear of blocking due to buffering limits on another. Trailmakers,
-     * a Unity3D Engine game, only reads one sample from the audio stream (and
-     * never deselects it). Remove buffering limits from decodebin in order to
-     * account for this. Note that this does leak memory, but the same memory
-     * leak occurs with native. */
-    unix_funcs->wg_parser_set_unlimited_buffering(parser);
 
     stream_count = unix_funcs->wg_parser_get_stream_count(parser);
 
