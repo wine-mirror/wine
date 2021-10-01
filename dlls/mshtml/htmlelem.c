@@ -6612,6 +6612,15 @@ static HRESULT WINAPI token_list_remove(IWineDOMTokenList *iface, BSTR token)
     return token_list_add_remove(iface, token, TRUE);
 }
 
+static HRESULT WINAPI token_list_toString(IWineDOMTokenList *iface, BSTR *String)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    TRACE("(%p)->(%p)\n", token_list, String);
+
+    return IHTMLElement_get_className(token_list->element, String);
+}
+
 static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_QueryInterface,
     token_list_AddRef,
@@ -6622,6 +6631,7 @@ static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_Invoke,
     token_list_add,
     token_list_remove,
+    token_list_toString
 };
 
 static inline struct token_list *token_list_from_DispatchEx(DispatchEx *iface)

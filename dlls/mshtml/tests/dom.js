@@ -528,6 +528,7 @@ sync_test("classList", function() {
     classList.add("c");
     ok(elem.className === "a b c 4", "(2) Expected className 'a b c 4', got " + elem.className);
     ok(("" + classList) === "a b c 4", "Expected classList value 'a b c 4', got " + classList);
+    ok(classList.toString() === "a b c 4", "Expected classList toString 'a b c 4', got " + classList.toString());
 
     var exception = false
 
@@ -609,4 +610,5 @@ sync_test("classList", function() {
 
     elem.className = "  testclass    foobar  ";
     ok(("" + classList) === "  testclass    foobar  ", "Expected classList value '  testclass    foobar  ', got " + classList);
+    ok(classList.toString() === "  testclass    foobar  ", "Expected classList toString '  testclass    foobar  ', got " + classList.toString());
 });
