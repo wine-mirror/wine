@@ -3004,6 +3004,8 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         {
             output_filenames( dll_flags );
             if (source->use_msvcrt) output_filenames( msvcrt_flags );
+            if (!*dll_ext && make->module && is_crt_module( make->module ))
+                output_filename( "-fno-builtin" );
         }
         output_filenames( extra_cflags );
         output_filenames( cpp_flags );
