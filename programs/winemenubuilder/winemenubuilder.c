@@ -410,9 +410,8 @@ static char *wchars_to_xml_text(const WCHAR *string)
  */
 
 static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numIndices,
-                                      const CLSID *outputFormat, const char *outputFileName)
+                                      const CLSID *outputFormat, const WCHAR *outputFileName)
 {
-    WCHAR *dosOutputFileName = NULL;
     IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder = NULL;
     IWICBitmapEncoder *encoder = NULL;
@@ -421,12 +420,6 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     int i;
     HRESULT hr = E_FAIL;
 
-    dosOutputFileName = wine_get_dos_file_name(outputFileName);
-    if (dosOutputFileName == NULL)
-    {
-        WINE_ERR("error converting %s to DOS file name\n", outputFileName);
-        goto end;
-    }
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
     if (FAILED(hr))
@@ -456,10 +449,10 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
         WINE_ERR("error 0x%08X creating bitmap encoder\n", hr);
         goto end;
     }
-    hr = SHCreateStreamOnFileW(dosOutputFileName, STGM_CREATE | STGM_WRITE, &outputFile);
+    hr = SHCreateStreamOnFileW(outputFileName, STGM_CREATE | STGM_WRITE, &outputFile);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating output file %s\n", hr, wine_dbgstr_w(dosOutputFileName));
+        WINE_ERR("error 0x%08X creating output file %s\n", hr, wine_dbgstr_w(outputFileName));
         goto end;
     }
     hr = IWICBitmapEncoder_Initialize(encoder, outputFile, WICBitmapEncoderNoCache);
@@ -566,7 +559,6 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     }
 
 end:
-    heap_free(dosOutputFileName);
     if (factory)
         IWICImagingFactory_Release(factory);
     if (decoder)
@@ -1007,7 +999,7 @@ static HRESULT validate_ico(IStream **ppStream, ICONDIRENTRY **ppIconDirEntries,
 }
 
 static HRESULT write_native_icon(IStream *iconStream, ICONDIRENTRY *pIconDirEntry,
-                                 int numEntries, const char *icon_name)
+                                 int numEntries, const WCHAR *icon_name)
 {
     int nMax = 0, nMaxBits = 0;
     int nIndex = 0;
@@ -1178,6 +1170,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
                                    int numEntries, int exeIndex, LPCWSTR icoPathW,
                                    const WCHAR *destFilename, WCHAR **nativeIdentifier)
 {
+    static const WCHAR fmtW[] = {'%','s','\\','%','s','.','i','c','n','s',0};
     struct {
         int index;
         int maxBits;
@@ -1185,8 +1178,8 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
     } best[ICNS_SLOTS];
     int indexes[ICNS_SLOTS];
     int i;
-    const char* tmpdir;
-    char *icnsPath = NULL;
+    WCHAR tmpdir[MAX_PATH];
+    WCHAR *icnsPath;
     LARGE_INTEGER zero;
     HRESULT hr;
 
@@ -1244,8 +1237,8 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
     }
 
     *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
-    if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
-    icnsPath = heap_printf("%s/%s.icns", tmpdir, wchars_to_utf8_chars(*nativeIdentifier));
+    GetTempPathW( MAX_PATH, tmpdir );
+    icnsPath = heap_wprintf(fmtW, tmpdir, *nativeIdentifier);
     zero.QuadPart = 0;
     hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
@@ -1257,7 +1250,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
     if (FAILED(hr))
     {
         WINE_WARN("converting %s to %s failed, error 0x%08X\n",
-            wine_dbgstr_w(icoPathW), wine_dbgstr_a(icnsPath), hr);
+            wine_dbgstr_w(icoPathW), wine_dbgstr_w(icnsPath), hr);
         goto end;
     }
 
@@ -1266,34 +1259,34 @@ end:
     return hr;
 }
 #else
-static void refresh_icon_cache(const char *iconsDir)
+static void refresh_icon_cache(const WCHAR *iconsDir)
 {
+    static const WCHAR icnW[] = {'i','c','n',0};
+    WCHAR buffer[MAX_PATH];
+
     /* The icon theme spec only requires the mtime on the "toplevel"
      * directory (whatever that is) to be changed for a refresh,
      * but on GNOME you have to create a file in that directory
      * instead. Creating a file also works on KDE, Xfce and LXDE.
      */
-    char *filename = heap_printf("%s/.wine-refresh-XXXXXX", iconsDir);
-    int fd = mkstemps(filename, 0);
-    if (fd >= 0)
-    {
-        close(fd);
-        unlink(filename);
-    }
-    heap_free(filename);
+    GetTempFileNameW( iconsDir, icnW, 0, buffer );
+    DeleteFileW( buffer );
 }
 
 static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntries,
                                    int numEntries, int exeIndex, LPCWSTR icoPathW,
                                    const WCHAR *destFilename, WCHAR **nativeIdentifier)
 {
+    static const WCHAR fmtW[] = {'%','s','\\','i','c','o','n','s','\\','h','i','c','o','l','o','r',0};
+    static const WCHAR fmt2W[] = {'%','s','\\','%','d','x','%','d','\\','a','p','p','s',0};
+    static const WCHAR fmt3W[] = {'%','s','\\','%','s','.','p','n','g',0};
     int i;
-    char *iconsDir = NULL;
+    WCHAR *iconsDir;
     HRESULT hr = S_OK;
     LARGE_INTEGER zero;
 
     *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
-    iconsDir = heap_printf("%s/icons/hicolor", xdg_data_dir_unix);
+    iconsDir = heap_wprintf(fmtW, xdg_data_dir);
 
     for (i = 0; i < numEntries; i++)
     {
@@ -1301,8 +1294,8 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
         int j;
         BOOLEAN duplicate = FALSE;
         int w, h;
-        char *iconDir = NULL;
-        char *pngPath = NULL;
+        WCHAR *iconDir;
+        WCHAR *pngPath;
 
         WINE_TRACE("[%d]: %d x %d @ %d\n", i, iconDirEntries[i].bWidth,
             iconDirEntries[i].bHeight, iconDirEntries[i].wBitCount);
@@ -1331,9 +1324,9 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
 
         w = iconDirEntries[bestIndex].bWidth ? iconDirEntries[bestIndex].bWidth : 256;
         h = iconDirEntries[bestIndex].bHeight ? iconDirEntries[bestIndex].bHeight : 256;
-        iconDir = heap_printf("%s/%dx%d/apps", iconsDir, w, h);
-        create_directories(iconDir);
-        pngPath = heap_printf("%s/%s.png", iconDir, wchars_to_utf8_chars(*nativeIdentifier));
+        iconDir = heap_wprintf(fmt2W, iconsDir, w, h);
+        create_directoriesW(iconDir);
+        pngPath = heap_wprintf(fmt3W, iconDir, *nativeIdentifier);
         zero.QuadPart = 0;
         hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
         if (SUCCEEDED(hr))
@@ -2906,7 +2899,6 @@ static void cleanup_menus(void)
 static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
 {
     char *utf8lnkPath = NULL;
-    char *utf8OutputPath = NULL;
     WCHAR *winLnkPath = NULL;
     IShellLinkW *shellLink = NULL;
     IPersistFile *persistFile = NULL;
@@ -2921,7 +2913,6 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     HRESULT hr;
 
     utf8lnkPath = wchars_to_utf8_chars(lnkPath);
-    utf8OutputPath = wchars_to_utf8_chars(outputPath);
     winLnkPath = wine_get_dos_file_name(utf8lnkPath);
     if (winLnkPath == NULL)
     {
@@ -2969,18 +2960,17 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     {
         hr = open_icon(szIconPath, iconId, FALSE, &stream, &pIconDirEntries, &numEntries);
         if (SUCCEEDED(hr))
-            hr = write_native_icon(stream, pIconDirEntries, numEntries, utf8OutputPath);
+            hr = write_native_icon(stream, pIconDirEntries, numEntries, outputPath);
     }
     else
     {
         hr = open_icon(szPath, iconId, FALSE, &stream, &pIconDirEntries, &numEntries);
         if (SUCCEEDED(hr))
-            hr = write_native_icon(stream, pIconDirEntries, numEntries, utf8OutputPath);
+            hr = write_native_icon(stream, pIconDirEntries, numEntries, outputPath);
     }
 
 end:
     heap_free(utf8lnkPath);
-    heap_free(utf8OutputPath);
     heap_free(winLnkPath);
     if (shellLink != NULL)
         IShellLinkW_Release(shellLink);
