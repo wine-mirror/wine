@@ -123,10 +123,10 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, DWORD key_size, v
 
         while ((ptr = fgets( buf, sizeof(buf), fp )))
         {
-            if (_strnicmp( buf, hdr, sizeof(hdr) - 1) ) continue;
+            if (ascii_strncasecmp( buf, hdr, sizeof(hdr) - 1 )) continue;
             /* last line was a header, get another */
             if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
-            if (!_strnicmp(buf, hdr, sizeof(hdr) - 1))
+            if (!ascii_strncasecmp( buf, hdr, sizeof(hdr) - 1 ))
             {
                 unsigned int in_dgrams, out_dgrams;
                 ptr += sizeof(hdr);
@@ -176,7 +176,7 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, DWORD key_size, v
             if ((ptr = strchr( value, '\n' ))) *ptr='\0';
 
             for (i = 0; i < ARRAY_SIZE(udp_stat_list); i++)
-                if (!_strnicmp( buf, udp_stat_list[i].name, -1 ) && sscanf( value, "%d", &res ))
+                if (!ascii_strcasecmp( buf, udp_stat_list[i].name ) && sscanf( value, "%d", &res ))
                     *udp_stat_list[i].elem = res;
         }
         dyn.in_dgrams = in_dgrams;

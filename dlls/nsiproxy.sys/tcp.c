@@ -147,10 +147,10 @@ static NTSTATUS tcp_stats_get_all_parameters( const void *key, DWORD key_size, v
 
         while ((ptr = fgets( buf, sizeof(buf), fp )))
         {
-            if (_strnicmp( buf, hdr, sizeof(hdr) - 1 )) continue;
+            if (ascii_strncasecmp( buf, hdr, sizeof(hdr) - 1 )) continue;
             /* last line was a header, get another */
             if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
-            if (!_strnicmp( buf, hdr, sizeof(hdr) - 1 ))
+            if (!ascii_strncasecmp( buf, hdr, sizeof(hdr) - 1 ))
             {
                 DWORD in_segs, out_segs;
                 ptr += sizeof(hdr);

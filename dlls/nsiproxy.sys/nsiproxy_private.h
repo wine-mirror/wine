@@ -135,3 +135,24 @@ extern const struct module ipv4_module DECLSPEC_HIDDEN;
 extern const struct module ipv6_module DECLSPEC_HIDDEN;
 extern const struct module tcp_module DECLSPEC_HIDDEN;
 extern const struct module udp_module DECLSPEC_HIDDEN;
+
+static inline int ascii_strncasecmp( const char *s1, const char *s2, size_t n )
+{
+    int l1, l2;
+
+    while (n--)
+    {
+        l1 = (unsigned char)((*s1 >= 'A' && *s1 <= 'Z') ? *s1 + ('a' - 'A') : *s1);
+        l2 = (unsigned char)((*s2 >= 'A' && *s2 <= 'Z') ? *s2 + ('a' - 'A') : *s2);
+        if (l1 != l2) return l1 - l2;
+        if (!l1) return 0;
+        s1++;
+        s2++;
+    }
+    return 0;
+}
+
+static inline int ascii_strcasecmp( const char *s1, const char *s2 )
+{
+    return ascii_strncasecmp( s1, s2, -1 );
+}

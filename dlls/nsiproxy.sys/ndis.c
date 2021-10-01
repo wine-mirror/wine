@@ -354,7 +354,7 @@ static void ifinfo_fill_dynamic( struct if_entry *entry, struct nsi_ndis_ifinfo_
             while ((ptr = fgets( buf, sizeof(buf), fp )))
             {
                 while (*ptr && isspace( *ptr )) ptr++;
-                if (!_strnicmp( ptr, entry->if_unix_name, name_len ) && ptr[name_len] == ':')
+                if (!ascii_strncasecmp( ptr, entry->if_unix_name, name_len ) && ptr[name_len] == ':')
                 {
                     unsigned long long values[9];
                     ptr += name_len + 1;
