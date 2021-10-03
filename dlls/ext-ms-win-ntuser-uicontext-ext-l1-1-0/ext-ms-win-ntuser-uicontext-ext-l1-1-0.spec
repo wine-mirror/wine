@@ -51,5 +51,5 @@
 @ stub SoundSentry
 @ stdcall UnhookWindowsHookEx(long) user32.UnhookWindowsHookEx
 @ stdcall UpdateLayeredWindow(long long ptr ptr long ptr long ptr long) user32.UpdateLayeredWindow
-@ stub WindowFromPhysicalPoint
+@ stdcall WindowFromPhysicalPoint(int64) user32.WindowFromPhysicalPoint
 @ stdcall WindowFromPoint(int64) user32.WindowFromPoint

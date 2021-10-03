@@ -4507,6 +4507,14 @@ BOOL WINAPI SetPhysicalCursorPos( INT x, INT y )
 }
 
 /***********************************************************************
+ *		WindowFromPhysicalPoint (USER32.@)
+ */
+HWND WINAPI WindowFromPhysicalPoint( POINT pt )
+{
+    return WindowFromPoint( pt );
+}
+
+/***********************************************************************
  *		LogicalToPhysicalPoint (USER32.@)
  */
 BOOL WINAPI LogicalToPhysicalPoint( HWND hwnd, POINT *point )

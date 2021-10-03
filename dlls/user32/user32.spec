@@ -820,6 +820,7 @@
 # @ stub WinOldAppHackoMatic
 @ stdcall WindowFromDC(long)
 @ stdcall WindowFromPoint(int64)
+@ stdcall WindowFromPhysicalPoint(int64)
 # @ stub YieldTask
 # @ stub _SetProcessDefaultLayout
 @ stdcall keybd_event(long long long long)
