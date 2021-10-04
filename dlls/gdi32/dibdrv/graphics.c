@@ -23,6 +23,7 @@
 #endif
 
 #include <assert.h>
+#include <pthread.h>
 #include "ntgdi_private.h"
 #include "dibdrv.h"
 
@@ -59,14 +60,7 @@ struct cached_font
 
 static struct list font_cache = LIST_INIT( font_cache );
 
-static CRITICAL_SECTION font_cache_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &font_cache_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": font_cache_cs") }
-};
-static CRITICAL_SECTION font_cache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t font_cache_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 static BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN clip )
@@ -575,7 +569,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
     font.aa_flags = aa_flags;
     font.hash = font_cache_hash( &font );
 
-    EnterCriticalSection( &font_cache_cs );
+    pthread_mutex_lock( &font_cache_lock );
     LIST_FOR_EACH_ENTRY( ptr, &font_cache, struct cached_font, entry )
     {
         if (!font_cache_cmp( &font, ptr ))
@@ -608,7 +602,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
     }
     else if (!(ptr = malloc( sizeof(*ptr) )))
     {
-        LeaveCriticalSection( &font_cache_cs );
+        pthread_mutex_unlock( &font_cache_lock );
         return NULL;
     }
 
@@ -617,7 +611,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
     memset( ptr->glyphs, 0, sizeof(ptr->glyphs) );
 done:
     list_add_head( &font_cache, &ptr->entry );
-    LeaveCriticalSection( &font_cache_cs );
+    pthread_mutex_unlock( &font_cache_lock );
     TRACE( "%d %s -> %p\n", ptr->lf.lfHeight, debugstr_w(ptr->lf.lfFaceName), ptr );
     return ptr;
 }
