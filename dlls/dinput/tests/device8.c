@@ -2000,7 +2000,6 @@ static void test_hid_touch_screen(void)
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
 
     res = msg_wait_for_events( 1, &touchdown_event, 10 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchleave_event, 500 );
     todo_wine
@@ -2139,7 +2138,6 @@ static void test_hid_touch_screen(void)
     bus_send_hid_input( file, &desc, &touch_single, sizeof(touch_single) );
 
     res = msg_wait_for_events( 1, &touchdown_event, 1000 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchleave_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
@@ -2174,18 +2172,15 @@ static void test_hid_touch_screen(void)
     res = msg_wait_for_events( 1, &touchdown_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     ok( pointer_enter_count == 0, "got pointer_enter_count %u\n", pointer_enter_count );
-    todo_wine
     ok( pointer_up_count == 1, "got pointer_up_count %u\n", pointer_up_count );
 
     expect_flags = POINTER_MESSAGE_FLAG_PRIMARY | POINTER_MESSAGE_FLAG_CONFIDENCE;
-    todo_wine
     ok( HIWORD( pointer_wparam[0] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
+    todo_wine
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
-    todo_wine
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( pointer_wparam[1] == 0, "got wparam %#Ix\n", pointer_wparam[1] );
     ok( pointer_lparam[1] == 0, "got lparam %#Ix\n", pointer_lparam[1] );
@@ -2197,10 +2192,8 @@ static void test_hid_touch_screen(void)
     bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
 
     res = msg_wait_for_events( 1, &touchdown_event, 1000 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchdown_event, 1000 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchleave_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
@@ -2249,30 +2242,24 @@ static void test_hid_touch_screen(void)
     res = msg_wait_for_events( 1, &touchdown_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     ok( pointer_enter_count == 0, "got pointer_enter_count %u\n", pointer_enter_count );
-    todo_wine
     ok( pointer_up_count == 2, "got pointer_up_count %u\n", pointer_up_count );
 
     expect_flags = POINTER_MESSAGE_FLAG_PRIMARY | POINTER_MESSAGE_FLAG_CONFIDENCE;
-    todo_wine
     ok( HIWORD( pointer_wparam[0] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
+    todo_wine
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
-    todo_wine
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
 
     expect_flags = POINTER_MESSAGE_FLAG_CONFIDENCE;
-    todo_wine
     ok( HIWORD( pointer_wparam[1] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
     todo_wine
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
-    todo_wine
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
-    todo_wine
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
 
 
