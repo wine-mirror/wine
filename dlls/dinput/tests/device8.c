@@ -1997,7 +1997,6 @@ static void test_hid_touch_screen(void)
     bus_send_hid_input( file, &desc, &touch_single, sizeof(touch_single) );
 
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
-    todo_wine
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
 
     res = msg_wait_for_events( 1, &touchdown_event, 10 );
@@ -2049,7 +2048,6 @@ static void test_hid_touch_screen(void)
     bus_wait_hid_input( file, &desc, 5000 );
 
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
-    todo_wine
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
 
     memset( rawbuffer, 0, sizeof(rawbuffer) );
@@ -2088,11 +2086,9 @@ static void test_hid_touch_screen(void)
 
     bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
-    todo_wine
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
     bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
-    todo_wine
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
 
     rawinput = (RAWINPUT *)rawbuffer;

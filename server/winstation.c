@@ -296,6 +296,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             memset( desktop->keystate, 0, sizeof(desktop->keystate) );
             list_add_tail( &winstation->desktops, &desktop->entry );
             list_init( &desktop->hotkeys );
+            list_init( &desktop->pointers );
         }
         else
         {
@@ -357,6 +358,7 @@ static void desktop_destroy( struct object *obj )
     }
 
     free_hotkeys( desktop, 0 );
+    free_pointers( desktop );
     if (desktop->top_window) free_window_handle( desktop->top_window );
     if (desktop->msg_window) free_window_handle( desktop->msg_window );
     if (desktop->global_hooks) release_object( desktop->global_hooks );

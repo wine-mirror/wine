@@ -633,6 +633,7 @@ static inline int filter_contains_hw_range( unsigned int first, unsigned int las
 /* get the QS_* bit corresponding to a given hardware message */
 static inline int get_hardware_msg_bit( unsigned int message )
 {
+    if (message >= WM_POINTERUPDATE && message <= WM_POINTERLEAVE) return QS_POINTER;
     if (message == WM_INPUT_DEVICE_CHANGE || message == WM_INPUT) return QS_RAWINPUT;
     if (message == WM_MOUSEMOVE || message == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
     if (message >= WM_KEYFIRST && message <= WM_KEYLAST) return QS_KEY;
@@ -1614,6 +1615,7 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     *msg_code = msg->msg;
     switch (get_hardware_msg_bit( msg->msg ))
     {
+    case QS_POINTER:
     case QS_RAWINPUT:
         if (!(win = msg->win) && input) win = input->focus;
         break;
@@ -2216,12 +2218,72 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     return wait;
 }
 
+struct pointer
+{
+    struct list entry;
+    struct desktop *desktop;
+    user_handle_t win;
+    int primary;
+    hw_input_t input;
+};
+
+static void queue_pointer_message( struct pointer *pointer )
+{
+    struct hw_msg_source source = { IMDT_UNAVAILABLE, IMDT_TOUCH };
+    struct desktop *desktop = pointer->desktop;
+    const hw_input_t *input = &pointer->input;
+    unsigned int wparam = input->hw.wparam;
+    user_handle_t win = pointer->win;
+    rectangle_t top_rect;
+    struct message *msg;
+    int x, y;
+
+    get_top_window_rectangle( desktop, &top_rect );
+    x = LOWORD(input->hw.lparam) * (top_rect.right - top_rect.left) / 65535;
+    y = HIWORD(input->hw.lparam) * (top_rect.bottom - top_rect.top) / 65535;
+
+    if (pointer->primary) wparam |= POINTER_MESSAGE_FLAG_PRIMARY << 16;
+
+    if (!(msg = alloc_hardware_message( 0, source, get_tick_count(), 0 ))) return;
+
+    msg->win       = get_user_full_handle( win );
+    msg->msg       = input->hw.msg;
+    msg->wparam    = wparam;
+    msg->lparam    = MAKELONG(x, y);
+    msg->x         = desktop->cursor.x;
+    msg->y         = desktop->cursor.y;
+
+    queue_hardware_message( desktop, msg, 1 );
+
+    if (input->hw.msg == WM_POINTERUP)
+    {
+        list_remove( &pointer->entry );
+        free( pointer );
+    }
+}
+
+static struct pointer *find_pointer_from_id( struct desktop *desktop, unsigned int id )
+{
+    struct pointer *pointer;
+
+    LIST_FOR_EACH_ENTRY( pointer, &desktop->pointers, struct pointer, entry )
+        if (LOWORD(pointer->input.hw.wparam) == id) return pointer;
+
+    pointer = mem_alloc( sizeof(struct pointer) );
+    pointer->desktop = desktop;
+    pointer->primary = list_empty( &desktop->pointers );
+    list_add_tail( &desktop->pointers, &pointer->entry );
+
+    return pointer;
+}
+
 /* queue a hardware message for a custom type of event */
 static void queue_custom_hardware_message( struct desktop *desktop, user_handle_t win,
                                            unsigned int origin, const hw_input_t *input )
 {
     struct hw_msg_source source = { IMDT_UNAVAILABLE, origin };
     struct thread *foreground;
+    struct pointer *pointer;
     struct message *msg;
 
     switch (input->hw.msg)
@@ -2243,6 +2305,16 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
             dispatch_rawinput_message( desktop, &raw_msg );
             release_object( foreground );
         }
+        return;
+    }
+
+    if (input->hw.msg == WM_POINTERDOWN || input->hw.msg == WM_POINTERUP || input->hw.msg == WM_POINTERUPDATE)
+    {
+        pointer = find_pointer_from_id( desktop, LOWORD(input->hw.wparam) );
+        pointer->input = *input;
+        pointer->win = win;
+
+        queue_pointer_message( pointer );
         return;
     }
 
@@ -2394,7 +2466,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
 
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
-        if ((get_hardware_msg_bit( msg->msg ) == QS_RAWINPUT && (flags & PM_REMOVE)) ||
+        if ((get_hardware_msg_bit( msg->msg ) & (QS_RAWINPUT | QS_POINTER) && (flags & PM_REMOVE)) ||
             is_internal_hardware_message( msg->msg ))
             release_hardware_message( current->queue, data->hw_id );
         return 1;
@@ -2569,6 +2641,17 @@ void post_win_event( struct thread *thread, unsigned int event,
         }
         else
             free( msg );
+    }
+}
+
+void free_pointers( struct desktop *desktop )
+{
+    struct pointer *pointer, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( pointer, next, &desktop->pointers, struct pointer, entry )
+    {
+        list_remove( &pointer->entry );
+        free( pointer );
     }
 }
 
