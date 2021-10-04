@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -59,14 +61,7 @@ const struct gdi_dc_funcs *driver_funcs;
 static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
 static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
 
-static CRITICAL_SECTION driver_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &driver_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": driver_section") }
-};
-static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t driver_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /**********************************************************************
  *	     get_display_driver
@@ -802,7 +797,7 @@ NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
     if (!desc || !desc->hAdapter)
         return STATUS_INVALID_PARAMETER;
 
-    EnterCriticalSection( &driver_section );
+    pthread_mutex_lock( &driver_lock );
     LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
     {
         if (adapter->handle == desc->hAdapter)
@@ -813,7 +808,7 @@ NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
             break;
         }
     }
-    LeaveCriticalSection( &driver_section );
+    pthread_mutex_unlock( &driver_lock );
 
     return status;
 }
@@ -848,10 +843,10 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
 
     if (!(adapter = malloc( sizeof( *adapter ) ))) return STATUS_NO_MEMORY;
 
-    EnterCriticalSection( &driver_section );
+    pthread_mutex_lock( &driver_lock );
     desc->hAdapter = adapter->handle = ++handle_start;
     list_add_tail( &d3dkmt_adapters, &adapter->entry );
-    LeaveCriticalSection( &driver_section );
+    pthread_mutex_unlock( &driver_lock );
     return STATUS_SUCCESS;
 }
 
@@ -870,7 +865,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
     if (!desc)
         return STATUS_INVALID_PARAMETER;
 
-    EnterCriticalSection( &driver_section );
+    pthread_mutex_lock( &driver_lock );
     LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
     {
         if (adapter->handle == desc->hAdapter)
@@ -879,7 +874,7 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
             break;
         }
     }
-    LeaveCriticalSection( &driver_section );
+    pthread_mutex_unlock( &driver_lock );
 
     if (!found)
         return STATUS_INVALID_PARAMETER;
@@ -891,10 +886,10 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
     if (!device)
         return STATUS_NO_MEMORY;
 
-    EnterCriticalSection( &driver_section );
+    pthread_mutex_lock( &driver_lock );
     device->handle = ++handle_start;
     list_add_tail( &d3dkmt_devices, &device->entry );
-    LeaveCriticalSection( &driver_section );
+    pthread_mutex_unlock( &driver_lock );
 
     desc->hDevice = device->handle;
     return STATUS_SUCCESS;
@@ -914,7 +909,7 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
     if (!desc || !desc->hDevice)
         return STATUS_INVALID_PARAMETER;
 
-    EnterCriticalSection( &driver_section );
+    pthread_mutex_lock( &driver_lock );
     LIST_FOR_EACH_ENTRY( device, &d3dkmt_devices, struct d3dkmt_device, entry )
     {
         if (device->handle == desc->hDevice)
@@ -928,7 +923,7 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
             break;
         }
     }
-    LeaveCriticalSection( &driver_section );
+    pthread_mutex_unlock( &driver_lock );
 
     return status;
 }
