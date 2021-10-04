@@ -380,6 +380,7 @@ struct nsi_udp_endpoint_static
 #define IOCTL_NSIPROXY_WINE_ENUMERATE_ALL         CTL_CODE(FILE_DEVICE_NETWORK, 0x400, METHOD_BUFFERED, 0)
 #define IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS    CTL_CODE(FILE_DEVICE_NETWORK, 0x401, METHOD_BUFFERED, 0)
 #define IOCTL_NSIPROXY_WINE_GET_PARAMETER         CTL_CODE(FILE_DEVICE_NETWORK, 0x402, METHOD_BUFFERED, 0)
+#define IOCTL_NSIPROXY_WINE_ICMP_ECHO             CTL_CODE(FILE_DEVICE_NETWORK, 0x403, METHOD_BUFFERED, 0)
 
 /* input for IOCTL_NSIPROXY_WINE_ENUMERATE_ALL */
 struct nsiproxy_enumerate_all
@@ -418,6 +419,39 @@ struct nsiproxy_get_parameter
     DWORD param_type;
     DWORD data_offset;
     BYTE key[1]; /* key_size */
+};
+
+/* input for IOCTL_NSIPROXY_WINE_ICMP_ECHO */
+struct nsiproxy_icmp_echo
+{
+    SOCKADDR_INET src;
+    SOCKADDR_INET dst;
+    BYTE ttl;
+    BYTE tos;
+    BYTE flags;
+    DWORD opt_size;
+    DWORD req_size;
+    DWORD timeout;
+    BYTE data[1]; /* ((opt_size + 3) & ~3) + req_size */
+};
+
+/* output for IOCTL_NSIPROXY_WINE_ICMP_ECHO - cf. ICMP_ECHO_REPLY */
+struct nsiproxy_icmp_echo_reply
+{
+    SOCKADDR_INET addr;
+    ULONG status;
+    ULONG round_trip_time;
+    USHORT data_size;
+    USHORT num_of_pkts;
+    DWORD data_offset;
+    struct
+    {
+        BYTE ttl;
+        BYTE tos;
+        BYTE flags;
+        BYTE options_size;
+        DWORD options_offset;
+    } opts;
 };
 
 /* Undocumented Nsi api */
