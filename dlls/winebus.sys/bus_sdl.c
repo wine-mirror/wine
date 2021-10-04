@@ -104,6 +104,7 @@ MAKE_FUNCPTR(SDL_HapticRumbleSupported);
 MAKE_FUNCPTR(SDL_HapticRunEffect);
 MAKE_FUNCPTR(SDL_HapticSetGain);
 MAKE_FUNCPTR(SDL_HapticStopAll);
+MAKE_FUNCPTR(SDL_HapticStopEffect);
 MAKE_FUNCPTR(SDL_HapticUnpause);
 MAKE_FUNCPTR(SDL_JoystickIsHaptic);
 MAKE_FUNCPTR(SDL_GameControllerAddMapping);
@@ -447,9 +448,27 @@ static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, US
 static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BYTE index,
                                                    USAGE control, BYTE iterations)
 {
-    FIXME("iface %p, index %u, control %04x, iterations %u stub!\n", iface, index, control, iterations);
+    struct sdl_device *impl = impl_from_unix_device(iface);
+    int id = impl->effect_ids[index];
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, index %u, control %04x, iterations %u.\n", iface, index, control, iterations);
+
+    if (impl->effect_ids[index] < 0) return STATUS_UNSUCCESSFUL;
+
+    switch (control)
+    {
+    case PID_USAGE_OP_EFFECT_START_SOLO:
+        pSDL_HapticStopAll(impl->sdl_haptic);
+        /* fallthrough */
+    case PID_USAGE_OP_EFFECT_START:
+        pSDL_HapticRunEffect(impl->sdl_haptic, id, iterations);
+        break;
+    case PID_USAGE_OP_EFFECT_STOP:
+        pSDL_HapticStopEffect(impl->sdl_haptic, id);
+        break;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static const struct hid_device_vtbl sdl_device_vtbl =
@@ -721,6 +740,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticRunEffect);
     LOAD_FUNCPTR(SDL_HapticSetGain);
     LOAD_FUNCPTR(SDL_HapticStopAll);
+    LOAD_FUNCPTR(SDL_HapticStopEffect);
     LOAD_FUNCPTR(SDL_HapticUnpause);
     LOAD_FUNCPTR(SDL_JoystickIsHaptic);
     LOAD_FUNCPTR(SDL_GameControllerAddMapping);
