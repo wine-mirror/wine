@@ -48,6 +48,7 @@ struct hid_device_vtbl
     NTSTATUS (*haptics_start)(struct unix_device *iface, DWORD duration_ms,
                               USHORT rumble_intensity, USHORT buzz_intensity);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
+    NTSTATUS (*physical_effect_control)(struct unix_device *iface, BYTE index, USAGE control, BYTE iterations);
 };
 
 struct hid_report_descriptor
@@ -91,6 +92,7 @@ struct hid_haptics
 struct hid_physical
 {
     BYTE device_control_report;
+    BYTE effect_control_report;
 };
 
 struct hid_device_state

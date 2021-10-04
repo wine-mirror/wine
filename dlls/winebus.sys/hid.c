@@ -411,6 +411,21 @@ static const USAGE pid_device_control_usages[] =
     PID_USAGE_DC_DEVICE_PAUSE,
     PID_USAGE_DC_DEVICE_CONTINUE,
 };
+
+struct pid_effect_control
+{
+    BYTE index;
+    BYTE control_index;
+    BYTE iterations;
+};
+
+static const USAGE pid_effect_control_usages[] =
+{
+    0, /* HID nary collection indexes start at 1 */
+    PID_USAGE_OP_EFFECT_START,
+    PID_USAGE_OP_EFFECT_START_SOLO,
+    PID_USAGE_OP_EFFECT_STOP,
+};
 #include "poppack.h"
 
 BOOL hid_device_add_physical(struct unix_device *iface)
@@ -437,6 +452,42 @@ BOOL hid_device_add_physical(struct unix_device *iface)
             END_COLLECTION,
         END_COLLECTION,
     };
+
+    const BYTE effect_control_report = ++desc->next_report_id[HidP_Output];
+    const BYTE effect_control_header[] =
+    {
+        /* Control effect state */
+        USAGE(1, PID_USAGE_EFFECT_OPERATION_REPORT),
+        COLLECTION(1, Logical),
+            REPORT_ID(1, effect_control_report),
+
+            USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+            LOGICAL_MAXIMUM(1, 0x7f),
+            LOGICAL_MINIMUM(1, 0x00),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_EFFECT_OPERATION),
+            COLLECTION(1, Logical),
+    };
+    const BYTE effect_control_footer[] =
+    {
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 3),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Ary|Abs),
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_LOOP_COUNT),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(2, 0x00ff),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+    };
     ULONG i;
 
     if (!hid_report_descriptor_append(desc, device_control_header, sizeof(device_control_header)))
@@ -449,7 +500,18 @@ BOOL hid_device_add_physical(struct unix_device *iface)
     if (!hid_report_descriptor_append(desc, device_control_footer, sizeof(device_control_footer)))
         return FALSE;
 
+    if (!hid_report_descriptor_append(desc, effect_control_header, sizeof(effect_control_header)))
+        return FALSE;
+    for (i = 1; i < ARRAY_SIZE(pid_effect_control_usages); ++i)
+    {
+        if (!hid_report_descriptor_append_usage(desc, pid_effect_control_usages[i]))
+            return FALSE;
+    }
+    if (!hid_report_descriptor_append(desc, effect_control_footer, sizeof(effect_control_footer)))
+        return FALSE;
+
     iface->hid_physical.device_control_report = device_control_report;
+    iface->hid_physical.effect_control_report = effect_control_report;
     return TRUE;
 }
 
@@ -524,6 +586,21 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             io->Status = STATUS_INVALID_PARAMETER;
         else
             io->Status = iface->hid_vtbl->physical_device_control(iface, control);
+    }
+    else if (packet->reportId == physical->effect_control_report)
+    {
+        struct pid_effect_control *report = (struct pid_effect_control *)(packet->reportBuffer + 1);
+        USAGE control;
+
+        io->Information = sizeof(*report) + 1;
+        if (packet->reportBufferLen < io->Information)
+            io->Status = STATUS_BUFFER_TOO_SMALL;
+        else if (report->control_index >= ARRAY_SIZE(pid_effect_control_usages))
+            io->Status = STATUS_INVALID_PARAMETER;
+        else if (!(control = pid_effect_control_usages[report->control_index]))
+            io->Status = STATUS_INVALID_PARAMETER;
+        else
+            io->Status = iface->hid_vtbl->physical_effect_control(iface, report->index, control, report->iterations);
     }
     else
     {

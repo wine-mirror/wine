@@ -444,6 +444,14 @@ static NTSTATUS sdl_device_physical_device_control(struct unix_device *iface, US
     return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BYTE index,
+                                                   USAGE control, BYTE iterations)
+{
+    FIXME("iface %p, index %u, control %04x, iterations %u stub!\n", iface, index, control, iterations);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static const struct hid_device_vtbl sdl_device_vtbl =
 {
     sdl_device_destroy,
@@ -451,6 +459,7 @@ static const struct hid_device_vtbl sdl_device_vtbl =
     sdl_device_stop,
     sdl_device_haptics_start,
     sdl_device_physical_device_control,
+    sdl_device_physical_effect_control,
 };
 
 static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *event)
