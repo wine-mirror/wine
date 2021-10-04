@@ -4708,10 +4708,8 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, NULL, effect, 0 );
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, effect, 0xdeadbeef );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, (void *)0xdeadbeef, 0 );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
 
     hr = IDirectInputDevice8_Escape( device, NULL );
@@ -5112,13 +5110,10 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     if (hr != DI_OK) return;
 
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, effect, 0xdeadbeef );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
     check_params.expect_effect = effect;
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_created_effect_objects, &check_params, 0 );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
-    todo_wine
     ok( check_params.count == 1, "got count %u, expected 1\n", check_params.count );
 
     ref = IDirectInputEffect_Release( effect );

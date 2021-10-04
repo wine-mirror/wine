@@ -112,6 +112,7 @@ struct hid_joystick
     BYTE device_state_report_id;
     BYTE device_state[DEVICE_STATE_MAX_SIZE];
 
+    struct list effect_list;
     struct pid_control_report pid_device_control;
 };
 
@@ -126,6 +127,7 @@ struct hid_joystick_effect
     IDirectInputEffect IDirectInputEffect_iface;
     LONG ref;
 
+    struct list entry;
     struct hid_joystick *joystick;
 };
 
@@ -1014,11 +1016,18 @@ static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8
                                                              LPDIENUMCREATEDEFFECTOBJECTSCALLBACK callback,
                                                              void *context, DWORD flags )
 {
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    struct hid_joystick_effect *effect, *next;
+
     FIXME( "iface %p, callback %p, context %p, flags %#x stub!\n", iface, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
+    if (flags) return DIERR_INVALIDPARAM;
 
-    return DIERR_UNSUPPORTED;
+    LIST_FOR_EACH_ENTRY_SAFE(effect, next, &impl->effect_list, struct hid_joystick_effect, entry)
+        if (callback( &effect->IDirectInputEffect_iface, context ) != DIENUM_CONTINUE) break;
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_Poll( IDirectInputDevice8W *iface )
@@ -1707,6 +1716,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     impl->dev_caps.dwSize = sizeof(impl->dev_caps);
     impl->dev_caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     impl->dev_caps.dwDevType = instance.dwDevType;
+    list_init( &impl->effect_list );
 
     preparsed = (struct hid_preparsed_data *)impl->preparsed;
 
@@ -1813,6 +1823,9 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
     TRACE( "iface %p, ref %u.\n", iface, ref );
     if (!ref)
     {
+        EnterCriticalSection( &impl->joystick->base.crit );
+        list_remove( &impl->entry );
+        LeaveCriticalSection( &impl->joystick->base.crit );
         hid_joystick_private_decref( impl->joystick );
         HeapFree( GetProcessHeap(), 0, impl );
     }
@@ -1913,6 +1926,10 @@ static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirec
     impl->ref = 1;
     impl->joystick = joystick;
     hid_joystick_private_incref( joystick );
+
+    EnterCriticalSection( &joystick->base.crit );
+    list_add_tail( &joystick->effect_list, &impl->entry );
+    LeaveCriticalSection( &joystick->base.crit );
 
     *out = &impl->IDirectInputEffect_iface;
     return DI_OK;
