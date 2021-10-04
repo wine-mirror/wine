@@ -659,6 +659,12 @@ static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const 
         {
             case D3D10_SIT_CBUFFER:
             case D3D10_SIT_TBUFFER:
+                if (sr->bind_count != 1)
+                {
+                    WARN("Unexpected bind count %u for a buffer %s.\n", bind_desc.BindCount,
+                            debugstr_a(bind_desc.Name));
+                    return E_UNEXPECTED;
+                }
                 sr->variable = d3d10_effect_get_buffer_by_name(v->effect, bind_desc.Name);
                 break;
 
@@ -4019,17 +4025,17 @@ static void apply_shader_resources(ID3D10Device *device, struct ID3D10EffectShad
                 switch (v->type->basetype)
                 {
                     case D3D10_SVT_VERTEXSHADER:
-                        ID3D10Device_VSSetConstantBuffers(device, sr->bind_point, sr->bind_count,
+                        ID3D10Device_VSSetConstantBuffers(device, sr->bind_point, 1,
                                 &rsrc_v->u.buffer.buffer);
                         break;
 
                     case D3D10_SVT_PIXELSHADER:
-                        ID3D10Device_PSSetConstantBuffers(device, sr->bind_point, sr->bind_count,
+                        ID3D10Device_PSSetConstantBuffers(device, sr->bind_point, 1,
                                 &rsrc_v->u.buffer.buffer);
                         break;
 
                     case D3D10_SVT_GEOMETRYSHADER:
-                        ID3D10Device_GSSetConstantBuffers(device, sr->bind_point, sr->bind_count,
+                        ID3D10Device_GSSetConstantBuffers(device, sr->bind_point, 1,
                                 &rsrc_v->u.buffer.buffer);
                         break;
 
