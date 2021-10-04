@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -177,7 +175,7 @@ static void module_print_info(const struct info_module *module, BOOL is_embedded
                is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
 }
 
-static int      module_compare(const void* p1, const void* p2)
+static int __cdecl module_compare(const void* p1, const void* p2)
 {
     struct info_module *left = (struct info_module *)p1;
     struct info_module *right = (struct info_module *)p2;

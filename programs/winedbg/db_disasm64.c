@@ -33,12 +33,12 @@
 #include "debugger.h"
 
 #if defined(__GNUC__) && (__GNUC__ >= 3)
-static int             (*db_printf)(const char* format, ...) __attribute__((format (printf,1,2)));
+static int WINAPIV (*db_printf)(const char* format, ...) __attribute__((format (printf,1,2)));
 #else
-static int             (*db_printf)(const char* format, ...);
+static int WINAPIV (*db_printf)(const char* format, ...);
 #endif
 
-static int             no_printf(const char* format, ...) {return 0;}
+static int WINAPIV no_printf(const char* format, ...) {return 0;}
 
 typedef DWORD_PTR db_addr_t;
 typedef BOOL boolean_t;

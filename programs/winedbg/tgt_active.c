@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +29,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
@@ -308,11 +305,11 @@ void fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bu
             /* FIXME: proper NT->Dos conversion */
             static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
 
-            if (!strncmpW( buffer, nt_prefixW, 4 ))
+            if (!wcsncmp( buffer, nt_prefixW, 4 ))
                 memmove( buffer, buffer + 4, (lstrlenW(buffer + 4) + 1) * sizeof(WCHAR) );
         }
         else
-            snprintfW(buffer, bufsz, dlladdr, (ULONG_PTR)mod_addr);
+            swprintf(buffer, bufsz, dlladdr, (ULONG_PTR)mod_addr);
     }
 }
 
@@ -376,7 +373,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         if (!QueryFullProcessImageNameW( dbg_curr_process->handle, 0, u.buffer, &size ))
         {
             static const WCHAR pcspid[] = {'P','r','o','c','e','s','s','_','%','0','8','x',0};
-            snprintfW( u.buffer, ARRAY_SIZE(u.buffer), pcspid, dbg_curr_pid);
+            swprintf( u.buffer, ARRAY_SIZE(u.buffer), pcspid, dbg_curr_pid);
         }
 
         WINE_TRACE("%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",

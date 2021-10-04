@@ -22,7 +22,6 @@
 %option noinput nounput always-interactive 8bit prefix="dbg_"
 
 %{
-#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>

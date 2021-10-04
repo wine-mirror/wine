@@ -21,7 +21,6 @@
  * upon which full support for datatype handling will eventually be built.
  */
 
-#include "config.h"
 #include <stdlib.h>
 
 #include "debugger.h"

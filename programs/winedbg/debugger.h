@@ -447,9 +447,9 @@ extern struct dbg_type  types_find_type(DWORD64 linear, const char* name, enum S
 extern void	        dbg_outputW(const WCHAR* buffer, int len);
 extern const char*      dbg_W2A(const WCHAR* buffer, unsigned len);
 #ifdef __GNUC__
-extern int	        dbg_printf(const char* format, ...) __attribute__((format (printf,1,2)));
+extern int WINAPIV      dbg_printf(const char* format, ...) __attribute__((format (printf,1,2)));
 #else
-extern int	        dbg_printf(const char* format, ...);
+extern int WINAPIV      dbg_printf(const char* format, ...);
 #endif
 extern const struct dbg_internal_var* dbg_get_internal_var(const char*);
 extern BOOL             dbg_interrupt_debuggee(void);

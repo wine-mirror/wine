@@ -26,8 +26,6 @@
 #include "shellapi.h"
 #include "psapi.h"
 
-#include "wine/unicode.h"
-
 #include "resource.h"
 
 #define MAX_PROGRAM_NAME_LENGTH 80
@@ -79,7 +77,7 @@ static WCHAR *get_program_name(HANDLE hProcess)
         return unidentified;
     }
 
-    programname = strrchrW(image_name, '\\');
+    programname = wcsrchr(image_name, '\\');
     if (programname != NULL)
         programname++;
     else
@@ -89,7 +87,7 @@ static WCHAR *get_program_name(HANDLE hProcess)
      * user-friendly program name */
 
     /* don't display a too long string to the user */
-    if (strlenW(programname) >= MAX_PROGRAM_NAME_LENGTH)
+    if (lstrlenW(programname) >= MAX_PROGRAM_NAME_LENGTH)
     {
         programname[MAX_PROGRAM_NAME_LENGTH - 4] = '.';
         programname[MAX_PROGRAM_NAME_LENGTH - 3] = '.';
@@ -382,7 +380,7 @@ int display_crash_dialog(void)
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dbg_curr_pid);
     g_ProgramName = get_program_name(hProcess);
     CloseHandle(hProcess);
-    if (!strcmpW( g_ProgramName, winedeviceW )) return TRUE;
+    if (!wcscmp( g_ProgramName, winedeviceW )) return TRUE;
     InitCommonControlsEx( &init );
     return DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CRASH_DLG), NULL, crash_dlg_proc);
 }

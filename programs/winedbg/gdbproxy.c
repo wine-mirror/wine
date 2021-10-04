@@ -24,27 +24,20 @@
  * http://sources.redhat.com/gdb/onlinedocs/gdb/Maintenance-Commands.html
  */
 
-#include "config.h"
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "winsock2.h"
 
 #include <assert.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "debugger.h"
 
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
 #include "tlhelp32.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -1283,15 +1276,15 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
     if (!backend->get_context(thread->handle, &ctx))
         return packet_error;
 
-    if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
+    if (sscanf(gdbctx->in_packet, "%Ix", &reg) != 1)
         return packet_error;
     if (reg >= backend->gdb_num_regs)
     {
-        WARN("Unhandled register %zu\n", reg);
+        WARN("Unhandled register %Iu\n", reg);
         return packet_error;
     }
 
-    TRACE("%zu => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, &ctx, reg)));
+    TRACE("%Iu => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, &ctx, reg)));
 
     packet_reply_open(gdbctx);
     packet_reply_register_hex_to(gdbctx, &ctx, reg);
@@ -1318,18 +1311,18 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
         return packet_error;
     *ptr++ = '\0';
 
-    if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
+    if (sscanf(gdbctx->in_packet, "%Ix", &reg) != 1)
         return packet_error;
     if (reg >= backend->gdb_num_regs)
     {
         /* FIXME: if just the reg is above cpu_num_regs, don't tell gdb
          *        it wouldn't matter too much, and it fakes our support for all regs
          */
-        WARN("Unhandled register %zu\n", reg);
+        WARN("Unhandled register %Iu\n", reg);
         return packet_ok;
     }
 
-    TRACE("%zu <= %s\n", reg, debugstr_an(ptr, (int)(gdbctx->in_packet_len - (ptr - gdbctx->in_packet))));
+    TRACE("%Iu <= %s\n", reg, debugstr_an(ptr, (int)(gdbctx->in_packet_len - (ptr - gdbctx->in_packet))));
 
     cpu_register_hex_from(gdbctx, &ctx, reg, (const char**)&ptr);
     if (!backend->set_context(thread->handle, &ctx))
@@ -1747,7 +1740,7 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
                                          "</flags>");
         }
 
-        snprintf(buffer, ARRAY_SIZE(buffer), "<reg name=\"%s\" bitsize=\"%zu\"",
+        snprintf(buffer, ARRAY_SIZE(buffer), "<reg name=\"%s\" bitsize=\"%Iu\"",
                  cpu->gdb_register_map[i].name, 8 * cpu->gdb_register_map[i].length);
         packet_reply_add(gdbctx, buffer);
 
@@ -2111,19 +2104,17 @@ static int fetch_data(struct gdb_context* gdbctx)
 
 static BOOL gdb_exec(unsigned port, unsigned flags)
 {
-    char            buf[MAX_PATH];
-    int             fd;
-    const char      *gdb_path, *tmp_path;
-    FILE*           f;
+    WCHAR tmp[MAX_PATH], buf[MAX_PATH];
     const char *argv[6];
+    char *unix_tmp;
+    const char      *gdb_path;
+    FILE*           f;
 
     if (!(gdb_path = getenv("WINE_GDB"))) gdb_path = "gdb";
-    if (!(tmp_path = getenv("TMPDIR"))) tmp_path = "/tmp";
-    strcpy(buf, tmp_path);
-    strcat(buf, "/winegdb.XXXXXX");
-    fd = mkstemps(buf, 0);
-    if (fd == -1) return FALSE;
-    if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
+    GetTempPathW( MAX_PATH, buf );
+    GetTempFileNameW( buf, L"gdb", 0, tmp );
+    if ((f = _wfopen( tmp, L"w+" )) == NULL) return FALSE;
+    unix_tmp = wine_get_unix_file_name( tmp );
     fprintf(f, "target remote localhost:%d\n", ntohs(port));
     fprintf(f, "set prompt Wine-gdb>\\ \n");
     /* gdb 5.1 seems to require it, won't hurt anyway */
@@ -2137,18 +2128,19 @@ static BOOL gdb_exec(unsigned port, unsigned flags)
      */
     fprintf(f, "set step-mode on\n");
     /* tell gdb to delete this file when done handling it... */
-    fprintf(f, "shell rm -f \"%s\"\n", buf);
+    fprintf(f, "shell rm -f \"%s\"\n", unix_tmp);
     fclose(f);
     argv[0] = "xterm";
     argv[1] = "-e";
     argv[2] = gdb_path;
     argv[3] = "-x";
-    argv[4] = buf;
+    argv[4] = unix_tmp;
     argv[5] = NULL;
     if (flags & FLAG_WITH_XTERM)
         __wine_unix_spawnvp( (char **)argv, FALSE );
     else
         __wine_unix_spawnvp( (char **)argv + 2, FALSE );
+    HeapFree( GetProcessHeap(), 0, unix_tmp );
     return TRUE;
 }
 
