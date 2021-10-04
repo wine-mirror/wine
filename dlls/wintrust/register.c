@@ -835,6 +835,23 @@ error_close_key:
     return Func;
 }
 
+static CRITICAL_SECTION cache_cs;
+static CRITICAL_SECTION_DEBUG cache_cs_debug =
+{
+    0, 0, &cache_cs,
+    { &cache_cs_debug.ProcessLocksList, &cache_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": cache_cs") }
+};
+static CRITICAL_SECTION cache_cs = { &cache_cs_debug, -1, 0, 0, 0, 0 };
+
+static struct provider_cache_entry
+{
+    GUID guid;
+    CRYPT_PROVIDER_FUNCTIONS provider_functions;
+}
+*provider_cache;
+static unsigned int provider_cache_size;
+
 /***********************************************************************
  *              WintrustLoadFunctionPointers (WINTRUST.@)
  */
@@ -842,6 +859,8 @@ BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
                                           CRYPT_PROVIDER_FUNCTIONS* pPfns )
 {
     WCHAR GuidString[39];
+    BOOL cached = FALSE;
+    unsigned int i;
 
     TRACE("(%s %p)\n", debugstr_guid(pgActionID), pPfns);
 
@@ -852,6 +871,20 @@ BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
         return FALSE;
     }
     if (pPfns->cbStruct != sizeof(CRYPT_PROVIDER_FUNCTIONS)) return FALSE;
+
+    EnterCriticalSection( &cache_cs );
+    for (i = 0; i < provider_cache_size; ++i)
+    {
+        if (IsEqualGUID( &provider_cache[i].guid, pgActionID ))
+        {
+            TRACE( "Using cached data.\n" );
+            *pPfns = provider_cache[i].provider_functions;
+            cached = TRUE;
+            break;
+        }
+    }
+    LeaveCriticalSection( &cache_cs );
+    if (cached) return TRUE;
 
     /* Create this string only once, instead of in the helper function */
     WINTRUST_Guid2Wstr( pgActionID, GuidString);
@@ -872,6 +905,25 @@ BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
     pPfns->pfnFinalPolicy = (PFN_PROVIDER_FINALPOLICY_CALL)WINTRUST_ReadProviderFromReg(GuidString, FinalPolicy);
     pPfns->pfnTestFinalPolicy = (PFN_PROVIDER_TESTFINALPOLICY_CALL)WINTRUST_ReadProviderFromReg(GuidString, DiagnosticPolicy);
     pPfns->pfnCleanupPolicy = (PFN_PROVIDER_CLEANUP_CALL)WINTRUST_ReadProviderFromReg(GuidString, Cleanup);
+
+    EnterCriticalSection( &cache_cs );
+    for (i = 0; i < provider_cache_size; ++i)
+        if (IsEqualGUID( &provider_cache[i].guid, pgActionID )) break;
+
+    if (i == provider_cache_size)
+    {
+        struct provider_cache_entry *new;
+
+        new = realloc( provider_cache, (provider_cache_size + 1) * sizeof(*new) );
+        if (new)
+        {
+            provider_cache = new;
+            provider_cache[provider_cache_size].guid = *pgActionID;
+            provider_cache[provider_cache_size].provider_functions = *pPfns;
+            ++provider_cache_size;
+        }
+    }
+    LeaveCriticalSection( &cache_cs );
 
     return TRUE;
 }
