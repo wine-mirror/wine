@@ -968,9 +968,8 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object, D
 
 static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset, struct d3d10_effect_type *t)
 {
-    DWORD typeinfo, type_flags;
+    DWORD typeinfo, type_flags, type_kind;
     const char *ptr;
-    DWORD unknown0;
     unsigned int i;
 
     if (offset >= data_size || !require_space(offset, 6, sizeof(DWORD), data_size))
@@ -990,8 +989,8 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
     }
     TRACE("Type name: %s.\n", debugstr_a(t->name));
 
-    read_dword(&ptr, &unknown0);
-    TRACE("Unknown 0: %u.\n", unknown0);
+    read_dword(&ptr, &type_kind);
+    TRACE("Kind: %u.\n", type_kind);
 
     read_dword(&ptr, &t->element_count);
     TRACE("Element count: %u.\n", t->element_count);
@@ -1005,9 +1004,11 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
     read_dword(&ptr, &t->size_packed);
     TRACE("Packed size %#x.\n", t->size_packed);
 
-    switch (unknown0)
+    switch (type_kind)
     {
         case 1:
+            TRACE("Type is numeric.\n");
+
             if (!require_space(ptr - data, 1, sizeof(typeinfo), data_size))
             {
                 WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
@@ -1122,7 +1123,7 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
             break;
 
         default:
-            FIXME("Unhandled case %#x.\n", unknown0);
+            FIXME("Unhandled type kind %#x.\n", type_kind);
             return E_FAIL;
     }
 
