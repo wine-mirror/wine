@@ -20,7 +20,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -50,7 +49,7 @@ enum unix_calls
     nsi_get_parameter_ex,
 };
 
-static void nsiproxy_enumerate_all( IRP *irp )
+static NTSTATUS nsiproxy_enumerate_all( IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_enumerate_all *in = (struct nsiproxy_enumerate_all *)irp->AssociatedIrp.SystemBuffer;
@@ -58,18 +57,12 @@ static void nsiproxy_enumerate_all( IRP *irp )
     void *out = irp->AssociatedIrp.SystemBuffer;
     DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
     struct nsi_enumerate_all_ex enum_all;
+    NTSTATUS status;
 
-    if (in_len != sizeof(*in))
-    {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
+    if (in_len != sizeof(*in)) return STATUS_INVALID_PARAMETER;
 
     if (out_len < sizeof(DWORD) + (in->key_size + in->rw_size + in->dynamic_size + in->static_size) * in->count)
-    {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
+        return STATUS_INVALID_PARAMETER;
 
     enum_all.unknown[0] = 0;
     enum_all.unknown[1] = 0;
@@ -87,16 +80,18 @@ static void nsiproxy_enumerate_all( IRP *irp )
     enum_all.static_size = in->static_size;
     enum_all.count = in->count;
 
-    irp->IoStatus.u.Status = nsiproxy_call( nsi_enumerate_all_ex, &enum_all );
-    if (irp->IoStatus.u.Status == STATUS_SUCCESS || irp->IoStatus.u.Status == STATUS_BUFFER_OVERFLOW)
+    status = nsiproxy_call( nsi_enumerate_all_ex, &enum_all );
+    if (status == STATUS_SUCCESS || status == STATUS_BUFFER_OVERFLOW)
     {
         irp->IoStatus.Information = out_len;
         *(DWORD *)out = enum_all.count;
     }
     else irp->IoStatus.Information = 0;
+
+    return status;
 }
 
-static void nsiproxy_get_all_parameters( IRP *irp )
+static NTSTATUS nsiproxy_get_all_parameters( IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_get_all_parameters *in = (struct nsiproxy_get_all_parameters *)irp->AssociatedIrp.SystemBuffer;
@@ -104,19 +99,14 @@ static void nsiproxy_get_all_parameters( IRP *irp )
     BYTE *out = irp->AssociatedIrp.SystemBuffer;
     DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
     struct nsi_get_all_parameters_ex get_all;
+    NTSTATUS status;
 
-    if (in_len < FIELD_OFFSET(struct nsiproxy_get_all_parameters, key[0]) ||
-        in_len < FIELD_OFFSET(struct nsiproxy_get_all_parameters, key[in->key_size]))
-    {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
+    if (in_len < offsetof(struct nsiproxy_get_all_parameters, key[0]) ||
+        in_len < offsetof(struct nsiproxy_get_all_parameters, key[in->key_size]))
+        return STATUS_INVALID_PARAMETER;
 
     if (out_len < in->rw_size + in->dynamic_size + in->static_size)
-    {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
+        return STATUS_INVALID_PARAMETER;
 
     get_all.unknown[0] = 0;
     get_all.unknown[1] = 0;
@@ -133,11 +123,13 @@ static void nsiproxy_get_all_parameters( IRP *irp )
     get_all.static_data = out + in->rw_size + in->dynamic_size;
     get_all.static_size = in->static_size;
 
-    irp->IoStatus.u.Status = nsiproxy_call( nsi_get_all_parameters_ex, &get_all );
-    irp->IoStatus.Information = (irp->IoStatus.u.Status == STATUS_SUCCESS) ? out_len : 0;
+    status = nsiproxy_call( nsi_get_all_parameters_ex, &get_all );
+    irp->IoStatus.Information = (status == STATUS_SUCCESS) ? out_len : 0;
+
+    return status;
 }
 
-static void nsiproxy_get_parameter( IRP *irp )
+static NTSTATUS nsiproxy_get_parameter( IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_get_parameter *in = (struct nsiproxy_get_parameter *)irp->AssociatedIrp.SystemBuffer;
@@ -145,13 +137,11 @@ static void nsiproxy_get_parameter( IRP *irp )
     void *out = irp->AssociatedIrp.SystemBuffer;
     DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
     struct nsi_get_parameter_ex get_param;
+    NTSTATUS status;
 
-    if (in_len < FIELD_OFFSET(struct nsiproxy_get_parameter, key[0]) ||
-        in_len < FIELD_OFFSET(struct nsiproxy_get_parameter, key[in->key_size]))
-    {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
+    if (in_len < offsetof(struct nsiproxy_get_parameter, key[0]) ||
+        in_len < offsetof(struct nsiproxy_get_parameter, key[in->key_size]))
+        return STATUS_INVALID_PARAMETER;
 
     get_param.unknown[0] = 0;
     get_param.unknown[1] = 0;
@@ -166,8 +156,10 @@ static void nsiproxy_get_parameter( IRP *irp )
     get_param.data_size = out_len;
     get_param.data_offset = in->data_offset;
 
-    irp->IoStatus.u.Status = nsiproxy_call( nsi_get_parameter_ex, &get_param );
-    irp->IoStatus.Information = irp->IoStatus.u.Status == STATUS_SUCCESS ? out_len : 0;
+    status = nsiproxy_call( nsi_get_parameter_ex, &get_param );
+    irp->IoStatus.Information = (status == STATUS_SUCCESS) ? out_len : 0;
+
+    return status;
 }
 
 static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
@@ -183,25 +175,28 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
     switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
     case IOCTL_NSIPROXY_WINE_ENUMERATE_ALL:
-        nsiproxy_enumerate_all( irp );
+        status = nsiproxy_enumerate_all( irp );
         break;
 
     case IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS:
-        nsiproxy_get_all_parameters( irp );
+        status = nsiproxy_get_all_parameters( irp );
         break;
 
     case IOCTL_NSIPROXY_WINE_GET_PARAMETER:
-        nsiproxy_get_parameter( irp );
+        status = nsiproxy_get_parameter( irp );
         break;
 
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
-        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        status = STATUS_NOT_SUPPORTED;
         break;
     }
 
-    status = irp->IoStatus.u.Status;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    if (status != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = status;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
     return status;
 }
 
