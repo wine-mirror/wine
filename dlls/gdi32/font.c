@@ -6196,6 +6196,28 @@ static void load_registry_fonts(void)
     NtClose( hkey );
 }
 
+static HKEY open_hkcu(void)
+{
+    char buffer[256];
+    WCHAR bufferW[256];
+    DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+    DWORD i, len = sizeof(sid_data);
+    SID *sid;
+
+    if (NtQueryInformationToken( GetCurrentThreadEffectiveToken(), TokenUser, sid_data, len, &len ))
+        return 0;
+
+    sid = ((TOKEN_USER *)sid_data)->User.Sid;
+    len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
+                 MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
+                           MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
+    for (i = 0; i < sid->SubAuthorityCount; i++)
+        len += sprintf( buffer + len, "-%u", sid->SubAuthority[i] );
+    ascii_to_unicode( bufferW, buffer, len + 1 );
+
+    return reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
+}
+
 /***********************************************************************
  *              font_init
  */
@@ -6214,7 +6236,7 @@ UINT font_init(void)
         {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','F','o','n','t','s'};
     static const WCHAR cacheW[] = {'C','a','c','h','e'};
 
-    if (RtlOpenCurrentUser( MAXIMUM_ALLOWED, &hkcu )) return 0;
+    if (!(hkcu = open_hkcu())) return 0;
     wine_fonts_key = reg_create_key( hkcu, wine_fonts_keyW, sizeof(wine_fonts_keyW), 0, NULL );
     if (wine_fonts_key) dpi = init_font_options( hkcu );
     NtClose( hkcu );
