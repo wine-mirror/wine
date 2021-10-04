@@ -609,13 +609,13 @@ static inline int be_x86_64_get_unused_DR(dbg_ctx_t *pctx, DWORD64** r)
 
 static BOOL be_x86_64_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                     dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                    void* addr, unsigned long* val, unsigned size)
+                                    void* addr, unsigned *val, unsigned size)
 {
     unsigned char       ch;
     SIZE_T              sz;
     DWORD64            *pr;
     int                 reg;
-    unsigned long       bits;
+    unsigned int        bits;
 
     switch (type)
     {
@@ -661,7 +661,7 @@ static BOOL be_x86_64_insert_Xpoint(HANDLE hProcess, const struct be_process_io*
 
 static BOOL be_x86_64_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                     dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                    void* addr, unsigned long val, unsigned size)
+                                    void* addr, unsigned val, unsigned size)
 {
     SIZE_T              sz;
     unsigned char       ch;

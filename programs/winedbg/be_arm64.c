@@ -171,7 +171,7 @@ static BOOL be_arm64_is_jump(const void* insn, ADDRESS64* jumpee)
 
 static BOOL be_arm64_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                    dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                   void* addr, unsigned long* val, unsigned size)
+                                   void* addr, unsigned *val, unsigned size)
 {
     SIZE_T              sz;
 
@@ -189,7 +189,7 @@ static BOOL be_arm64_insert_Xpoint(HANDLE hProcess, const struct be_process_io* 
 
 static BOOL be_arm64_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                    dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                   void* addr, unsigned long val, unsigned size)
+                                   void* addr, unsigned val, unsigned size)
 {
     SIZE_T              sz;
 

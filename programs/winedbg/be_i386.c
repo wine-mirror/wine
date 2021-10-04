@@ -70,7 +70,7 @@ static void* be_i386_linearize(HANDLE hThread, const ADDRESS64* addr)
 }
 
 static BOOL be_i386_build_addr(HANDLE hThread, const dbg_ctx_t *ctx, ADDRESS64* addr,
-                               unsigned seg, unsigned long offset)
+                               unsigned seg, DWORD64 offset)
 {
     addr->Mode    = AddrModeFlat;
     addr->Segment = seg;
@@ -682,13 +682,13 @@ static inline int be_i386_get_unused_DR(dbg_ctx_t *pctx, DWORD** r)
 
 static BOOL be_i386_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                   dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                  void* addr, unsigned long* val, unsigned size)
+                                  void* addr, unsigned *val, unsigned size)
 {
     unsigned char       ch;
     SIZE_T              sz;
     DWORD              *pr;
     int                 reg;
-    unsigned long       bits;
+    unsigned int        bits;
 
     switch (type)
     {
@@ -733,7 +733,7 @@ static BOOL be_i386_insert_Xpoint(HANDLE hProcess, const struct be_process_io* p
 
 static BOOL be_i386_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
                                   dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                  void* addr, unsigned long val, unsigned size)
+                                  void* addr, unsigned val, unsigned size)
 {
     SIZE_T              sz;
     unsigned char       ch;

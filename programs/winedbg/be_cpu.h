@@ -49,7 +49,7 @@ struct backend_cpu
      */
     BOOL                (*build_addr)(HANDLE hThread, const dbg_ctx_t *ctx,
                                       ADDRESS64* addr, unsigned seg,
-                                      unsigned long offset);
+                                      DWORD64 offset);
     /* Retrieves in addr an address related to the context (program counter, stack
      * pointer, frame pointer)
      */
@@ -100,11 +100,11 @@ struct backend_cpu
     /* Inserts an Xpoint in the CPU context and/or debuggee address space */
     BOOL                (*insert_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
                                          dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                         void* addr, unsigned long* val, unsigned size);
+                                         void* addr, unsigned *val, unsigned size);
     /* Removes an Xpoint in the CPU context and/or debuggee address space */
     BOOL                (*remove_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
                                          dbg_ctx_t *ctx, enum be_xpoint_type type,
-                                         void* addr, unsigned long val, unsigned size);
+                                         void* addr, unsigned val, unsigned size);
     /* Checks whether a given watchpoint has been triggered */
     BOOL                (*is_watchpoint_set)(const dbg_ctx_t *ctx, unsigned idx);
     /* Clears the watchpoint indicator */
@@ -135,4 +135,4 @@ struct backend_cpu
 /* some handy functions for non segmented CPUs */
 void*    be_cpu_linearize(HANDLE hThread, const ADDRESS64*);
 BOOL be_cpu_build_addr(HANDLE hThread, const dbg_ctx_t *ctx, ADDRESS64* addr,
-                       unsigned seg, unsigned long offset);
+                       unsigned seg, DWORD64 offset);

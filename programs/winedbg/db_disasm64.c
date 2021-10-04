@@ -1290,7 +1290,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	int	rep;
 	int	imm;
 	int	imm2;
-	long	imm64;
+	LONG64	imm64;
 	int	len;
 	struct i_addr	address;
         db_addr_t addr;
@@ -1603,7 +1603,10 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		case Ilq:
 		    len = db_lengths[rex & REX_W ? QUAD : LONG];
 		    get_value_inc(imm64, loc, len, FALSE);
-		    db_printf("$%#lx", imm64);
+                    if (imm64 >> 32)
+                        db_printf("$0x%x%08x", (DWORD)(imm64 >> 32), (DWORD)imm64);
+                    else
+                        db_printf("$%#x", (DWORD)imm64);
 		    break;
 
 		case O:

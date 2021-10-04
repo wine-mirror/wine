@@ -512,7 +512,7 @@ BOOL symbol_is_local(const char* name)
  *
  * Read a symbol file into the hash table.
  */
-void symbol_read_symtable(const char* filename, unsigned long offset)
+void symbol_read_symtable(const char* filename, ULONG_PTR offset)
 {
     dbg_printf("No longer supported\n");
 

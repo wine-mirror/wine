@@ -59,7 +59,7 @@ struct gdb_xpoint
     enum be_xpoint_type type;
     void *addr;
     int size;
-    unsigned long value;
+    unsigned int value;
 };
 
 struct gdb_context
@@ -88,7 +88,7 @@ struct gdb_context
     /* Win32 information */
     struct dbg_process*         process;
     /* Unix environment */
-    unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
+    ULONG_PTR                   wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
     BOOL                        no_ack_mode;
 };
 
@@ -132,7 +132,7 @@ static void gdbctx_insert_xpoint(struct gdb_context *gdbctx, struct dbg_thread *
     struct dbg_process *process = thread->process;
     struct backend_cpu *cpu = process->be_cpu;
     struct gdb_xpoint *x;
-    unsigned long value;
+    unsigned int value;
 
     if (!cpu->insert_Xpoint(process->handle, process->process_io, ctx, type, addr, &value, size))
     {
@@ -742,7 +742,7 @@ static inline void packet_reply_hex_to_str(struct gdb_context* gdbctx, const cha
     packet_reply_hex_to(gdbctx, src, strlen(src));
 }
 
-static void packet_reply_val(struct gdb_context* gdbctx, unsigned long val, int len)
+static void packet_reply_val(struct gdb_context* gdbctx, ULONG_PTR val, int len)
 {
     int i, shift;
 
@@ -863,13 +863,13 @@ static void packet_reply_status_xpoints(struct gdb_context* gdbctx, struct dbg_t
         if (x->type == be_xpoint_watch_write)
         {
             packet_reply_add(gdbctx, "watch:");
-            packet_reply_val(gdbctx, (unsigned long)x->addr, sizeof(x->addr));
+            packet_reply_val(gdbctx, (ULONG_PTR)x->addr, sizeof(x->addr));
             packet_reply_add(gdbctx, ";");
         }
         if (x->type == be_xpoint_watch_read)
         {
             packet_reply_add(gdbctx, "rwatch:");
-            packet_reply_val(gdbctx, (unsigned long)x->addr, sizeof(x->addr));
+            packet_reply_val(gdbctx, (ULONG_PTR)x->addr, sizeof(x->addr));
             packet_reply_add(gdbctx, ";");
         }
     }
@@ -1609,7 +1609,7 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
     {
         if ((char *)(sec + i) >= buffer + size) break;
         packet_reply_add(gdbctx, "<segment address=\"0x");
-        packet_reply_val(gdbctx, mod.BaseOfImage + sec[i].VirtualAddress, sizeof(unsigned long));
+        packet_reply_val(gdbctx, mod.BaseOfImage + sec[i].VirtualAddress, sizeof(ULONG_PTR));
         packet_reply_add(gdbctx, "\"/>");
     }
 

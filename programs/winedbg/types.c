@@ -136,7 +136,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
+INT_PTR types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
     return types_extract_as_longlong(lvalue, NULL, NULL);
 }
@@ -182,7 +182,7 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
  * Implement a structure derefencement
  */
 static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, 
-                                         const struct dbg_type* type, long int* tmpbuf)
+                                         const struct dbg_type* type, ULONG *tmpbuf)
 {
     DWORD       offset, bitoffset;
     DWORD       bt;
@@ -237,7 +237,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
  *		types_udt_find_element
  *
  */
-BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long int* tmpbuf)
+BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, ULONG *tmpbuf)
 {
     DWORD                       tag, count;
     char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
@@ -345,11 +345,11 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
 
 struct type_find_t
 {
-    unsigned long       result; /* out: the found type */
+    ULONG               result; /* out: the found type */
     enum SymTagEnum     tag;    /* in: the tag to look for */
     union
     {
-        unsigned long           typeid; /* when tag is SymTagUDT */
+        ULONG                   typeid; /* when tag is SymTagUDT */
         const char*             name;   /* when tag is SymTagPointerType */
     } u;
 };
@@ -413,7 +413,7 @@ struct dbg_type types_find_pointer(const struct dbg_type* type)
  * Should look up in the module based at linear address whether a type
  * named 'name' and with the correct tag exists
  */
-struct dbg_type types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag)
+struct dbg_type types_find_type(DWORD64 linear, const char* name, enum SymTagEnum tag)
 
 {
     struct type_find_t  f;
@@ -478,7 +478,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
             char                        tmp[256];
-            long int                    tmpbuf;
+            ULONG                       tmpbuf;
             struct dbg_type             sub_type;
 
             dbg_printf("{");
@@ -572,7 +572,7 @@ static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
     struct dbg_type     type;
     type.module = sym->ModBase;
     type.id = sym->TypeIndex;
-    dbg_printf("Mod: %08lx ID: %08lx\n", type.module, type.id);
+    dbg_printf("Mod: %08lx ID: %08x\n", type.module, type.id);
     types_print_type(&type, TRUE);
     dbg_printf("\n");
     return TRUE;
@@ -604,7 +604,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
 
     if (type->id == dbg_itype_none || !types_get_info(type, TI_GET_SYMTAG, &tag))
     {
-        dbg_printf("--invalid--<%lxh>--", type->id);
+        dbg_printf("--invalid--<%xh>--", type->id);
         return FALSE;
     }
 
@@ -931,7 +931,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for XMM register\n", ti); return FALSE;
         }
         break;
-    default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
+    default: WINE_FIXME("unsupported type id 0x%x\n", type->id);
     }
 
 #undef X
