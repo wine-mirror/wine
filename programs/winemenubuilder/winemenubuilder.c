@@ -1874,29 +1874,26 @@ static BOOL build_native_mime_types(struct list *mime_types)
     return ret;
 }
 
-static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
-                                                LPCWSTR extensionW,
-                                                WCHAR **match)
+static WCHAR *freedesktop_mime_type_for_extension(struct list *native_mime_types,
+                                                  const WCHAR *extensionW)
 {
     struct xdg_mime_type *mime_type_entry;
     int matchLength = 0;
-
-    *match = NULL;
+    const WCHAR* match = NULL;
 
     LIST_FOR_EACH_ENTRY(mime_type_entry, native_mime_types, struct xdg_mime_type, entry)
     {
         if (PathMatchSpecW( extensionW, mime_type_entry->glob ))
         {
-            if (*match == NULL || matchLength < lstrlenW(mime_type_entry->glob))
+            if (match == NULL || matchLength < lstrlenW(mime_type_entry->glob))
             {
-                *match = mime_type_entry->mimeType;
+                match = mime_type_entry->mimeType;
                 matchLength = lstrlenW(mime_type_entry->glob);
             }
         }
     }
 
-    if (*match != NULL) *match = xwcsdup(*match);
-    return TRUE;
+    return match ? xwcsdup(match) : NULL;
 }
 
 static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
@@ -2190,8 +2187,7 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
             if (contentTypeW)
                 wcslwr(contentTypeW);
 
-            if (!freedesktop_mime_type_for_extension(&nativeMimeTypes, extensionW, &mimeType))
-                goto end;
+            mimeType = freedesktop_mime_type_for_extension(&nativeMimeTypes, extensionW);
 
             if (mimeType == NULL)
             {
