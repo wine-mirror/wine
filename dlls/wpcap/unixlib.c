@@ -27,6 +27,7 @@
 #include <pcap/pcap.h>
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -40,39 +41,46 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static const struct pcap_callbacks *callbacks;
 
-static int CDECL wrap_activate( void *handle )
+static int CDECL wrap_activate( struct pcap *pcap )
 {
-    return pcap_activate( handle );
+    return pcap_activate( pcap->handle );
 }
 
-static void CDECL wrap_breakloop( void *handle )
+static void CDECL wrap_breakloop( struct pcap *pcap )
 {
-    return pcap_breakloop( handle );
+    return pcap_breakloop( pcap->handle );
 }
 
-static int CDECL wrap_can_set_rfmon( void *handle )
+static int CDECL wrap_can_set_rfmon( struct pcap *pcap )
 {
-    return pcap_can_set_rfmon( handle );
+    return pcap_can_set_rfmon( pcap->handle );
 }
 
-static void CDECL wrap_close( void *handle )
+static void CDECL wrap_close( struct pcap *pcap )
 {
-    pcap_close( handle );
+    pcap_close( pcap->handle );
+    free( pcap );
 }
 
-static int CDECL wrap_compile( void *handle, void *program, const char *buf, int optimize, unsigned int mask )
+static int CDECL wrap_compile( struct pcap *pcap, void *program, const char *buf, int optimize, unsigned int mask )
 {
-    return pcap_compile( handle, program, buf, optimize, mask );
+    return pcap_compile( pcap->handle, program, buf, optimize, mask );
 }
 
-static void * CDECL wrap_create( const char *src, char *errbuf )
+static struct pcap * CDECL wrap_create( const char *src, char *errbuf )
 {
-    return pcap_create( src, errbuf );
+    struct pcap *ret = malloc( sizeof(*ret) );
+    if (ret && !(ret->handle = pcap_create( src, errbuf )))
+    {
+        free( ret );
+        return NULL;
+    }
+    return ret;
 }
 
-static int CDECL wrap_datalink( void *handle )
+static int CDECL wrap_datalink( struct pcap *pcap )
 {
-    return pcap_datalink( handle );
+    return pcap_datalink( pcap->handle );
 }
 
 static int CDECL wrap_datalink_name_to_val( const char *name )
@@ -96,7 +104,7 @@ static void wrap_pcap_handler( unsigned char *user, const struct pcap_pkthdr *hd
     callbacks->handler( cb, hdr, packet );
 }
 
-static int CDECL wrap_dispatch( void *handle, int count,
+static int CDECL wrap_dispatch( struct pcap *pcap, int count,
                                 void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
                                 unsigned char *user )
 {
@@ -105,9 +113,9 @@ static int CDECL wrap_dispatch( void *handle, int count,
         struct handler_callback cb;
         cb.callback = callback;
         cb.user     = user;
-        return pcap_dispatch( handle, count, wrap_pcap_handler, (unsigned char *)&cb );
+        return pcap_dispatch( pcap->handle, count, wrap_pcap_handler, (unsigned char *)&cb );
     }
-    return pcap_dispatch( handle, count, NULL, user );
+    return pcap_dispatch( pcap->handle, count, NULL, user );
 }
 
 static void CDECL wrap_dump( unsigned char *user, const void *hdr, const unsigned char *packet )
@@ -115,9 +123,9 @@ static void CDECL wrap_dump( unsigned char *user, const void *hdr, const unsigne
     return pcap_dump( user, hdr, packet );
 }
 
-static void * CDECL wrap_dump_open( void *handle, const char *name )
+static void * CDECL wrap_dump_open( struct pcap *pcap, const char *name )
 {
-    return pcap_dump_open( handle, name );
+    return pcap_dump_open( pcap->handle, name );
 }
 
 static int CDECL wrap_findalldevs( struct pcap_if_hdr **devs, char *errbuf )
@@ -149,19 +157,19 @@ static void CDECL wrap_freecode( void *program )
     return pcap_freecode( program );
 }
 
-static int CDECL wrap_get_tstamp_precision( void *handle )
+static int CDECL wrap_get_tstamp_precision( struct pcap *pcap )
 {
-    return pcap_get_tstamp_precision( handle );
+    return pcap_get_tstamp_precision( pcap->handle );
 }
 
-static char * CDECL wrap_geterr( void *handle )
+static char * CDECL wrap_geterr( struct pcap *pcap )
 {
-    return pcap_geterr( handle );
+    return pcap_geterr( pcap->handle );
 }
 
-static int CDECL wrap_getnonblock( void *handle, char *errbuf )
+static int CDECL wrap_getnonblock( struct pcap *pcap, char *errbuf )
 {
-    return pcap_getnonblock( handle, errbuf );
+    return pcap_getnonblock( pcap->handle, errbuf );
 }
 
 static const char * CDECL wrap_lib_version( void )
@@ -169,14 +177,14 @@ static const char * CDECL wrap_lib_version( void )
     return pcap_lib_version();
 }
 
-static int CDECL wrap_list_datalinks( void *handle, int **buf )
+static int CDECL wrap_list_datalinks( struct pcap *pcap, int **buf )
 {
-    return pcap_list_datalinks( handle, buf );
+    return pcap_list_datalinks( pcap->handle, buf );
 }
 
-static int CDECL wrap_list_tstamp_types( void *handle, int **types )
+static int CDECL wrap_list_tstamp_types( struct pcap *pcap, int **types )
 {
-    return pcap_list_tstamp_types( handle, types );
+    return pcap_list_tstamp_types( pcap->handle, types );
 }
 
 static int CDECL wrap_lookupnet( const char *device, unsigned int *net, unsigned int *mask, char *errbuf )
@@ -184,7 +192,7 @@ static int CDECL wrap_lookupnet( const char *device, unsigned int *net, unsigned
     return pcap_lookupnet( device, net, mask, errbuf );
 }
 
-static int CDECL wrap_loop( void *handle, int count,
+static int CDECL wrap_loop( struct pcap *pcap, int count,
                             void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
                             unsigned char *user )
 {
@@ -193,99 +201,105 @@ static int CDECL wrap_loop( void *handle, int count,
         struct handler_callback cb;
         cb.callback = callback;
         cb.user     = user;
-        return pcap_loop( handle, count, wrap_pcap_handler, (unsigned char *)&cb );
+        return pcap_loop( pcap->handle, count, wrap_pcap_handler, (unsigned char *)&cb );
     }
-    return pcap_loop( handle, count, NULL, user );
+    return pcap_loop( pcap->handle, count, NULL, user );
 }
 
-static int CDECL wrap_major_version( void *handle )
+static int CDECL wrap_major_version( struct pcap *pcap )
 {
-    return pcap_major_version( handle );
+    return pcap_major_version( pcap->handle );
 }
 
-static int CDECL wrap_minor_version( void *handle )
+static int CDECL wrap_minor_version( struct pcap *pcap )
 {
-    return pcap_minor_version( handle );
+    return pcap_minor_version( pcap->handle );
 }
 
-static const unsigned char * CDECL wrap_next( void *handle, void *hdr )
+static const unsigned char * CDECL wrap_next( struct pcap *pcap, void *hdr )
 {
-    return pcap_next( handle, hdr );
+    return pcap_next( pcap->handle, hdr );
 }
 
-static int CDECL wrap_next_ex( void *handle, void **hdr, const unsigned char **data )
+static int CDECL wrap_next_ex( struct pcap *pcap, void **hdr, const unsigned char **data )
 {
-    return pcap_next_ex( handle, (struct pcap_pkthdr **)hdr, data );
+    return pcap_next_ex( pcap->handle, (struct pcap_pkthdr **)hdr, data );
 }
 
-static void * CDECL wrap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )
+static struct pcap * CDECL wrap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )
 {
-    return pcap_open_live( source, snaplen, promisc, to_ms, errbuf );
+    struct pcap *ret = malloc( sizeof(*ret) );
+    if (ret && !(ret->handle = pcap_open_live( source, snaplen, promisc, to_ms, errbuf )))
+    {
+        free( ret );
+        return NULL;
+    }
+    return ret;
 }
 
-static int CDECL wrap_sendpacket( void *handle, const unsigned char *buf, int size )
+static int CDECL wrap_sendpacket( struct pcap *pcap, const unsigned char *buf, int size )
 {
-    return pcap_sendpacket( handle, buf, size );
+    return pcap_sendpacket( pcap->handle, buf, size );
 }
 
-static int CDECL wrap_set_buffer_size( void *handle, int size )
+static int CDECL wrap_set_buffer_size( struct pcap *pcap, int size )
 {
-    return pcap_set_buffer_size( handle, size );
+    return pcap_set_buffer_size( pcap->handle, size );
 }
 
-static int CDECL wrap_set_datalink( void *handle, int link )
+static int CDECL wrap_set_datalink( struct pcap *pcap, int link )
 {
-    return pcap_set_datalink( handle, link );
+    return pcap_set_datalink( pcap->handle, link );
 }
 
-static int CDECL wrap_set_promisc( void *handle, int enable )
+static int CDECL wrap_set_promisc( struct pcap *pcap, int enable )
 {
-    return pcap_set_promisc( handle, enable );
+    return pcap_set_promisc( pcap->handle, enable );
 }
 
-static int CDECL wrap_set_rfmon( void *handle, int enable )
+static int CDECL wrap_set_rfmon( struct pcap *pcap, int enable )
 {
-    return pcap_set_rfmon( handle, enable );
+    return pcap_set_rfmon( pcap->handle, enable );
 }
 
-static int CDECL wrap_set_snaplen( void *handle, int len )
+static int CDECL wrap_set_snaplen( struct pcap *pcap, int len )
 {
-    return pcap_set_snaplen( handle, len );
+    return pcap_set_snaplen( pcap->handle, len );
 }
 
-static int CDECL wrap_set_timeout( void *handle, int timeout )
+static int CDECL wrap_set_timeout( struct pcap *pcap, int timeout )
 {
-    return pcap_set_timeout( handle, timeout );
+    return pcap_set_timeout( pcap->handle, timeout );
 }
 
-static int CDECL wrap_set_tstamp_precision( void *handle, int precision )
+static int CDECL wrap_set_tstamp_precision( struct pcap *pcap, int precision )
 {
-    return pcap_set_tstamp_precision( handle, precision );
+    return pcap_set_tstamp_precision( pcap->handle, precision );
 }
 
-static int CDECL wrap_set_tstamp_type( void *handle, int type )
+static int CDECL wrap_set_tstamp_type( struct pcap *pcap, int type )
 {
-    return pcap_set_tstamp_type( handle, type );
+    return pcap_set_tstamp_type( pcap->handle, type );
 }
 
-static int CDECL wrap_setfilter( void *handle, void *program )
+static int CDECL wrap_setfilter( struct pcap *pcap, void *program )
 {
-    return pcap_setfilter( handle, program );
+    return pcap_setfilter( pcap->handle, program );
 }
 
-static int CDECL wrap_setnonblock( void *handle, int nonblock, char *errbuf )
+static int CDECL wrap_setnonblock( struct pcap *pcap, int nonblock, char *errbuf )
 {
-    return pcap_setnonblock( handle, nonblock, errbuf );
+    return pcap_setnonblock( pcap->handle, nonblock, errbuf );
 }
 
-static int CDECL wrap_snapshot( void *handle )
+static int CDECL wrap_snapshot( struct pcap *pcap )
 {
-    return pcap_snapshot( handle );
+    return pcap_snapshot( pcap->handle );
 }
 
-static int CDECL wrap_stats( void *handle, void *stats )
+static int CDECL wrap_stats( struct pcap *pcap, void *stats )
 {
-    return pcap_stats( handle, stats );
+    return pcap_stats( pcap->handle, stats );
 }
 
 static const char * CDECL wrap_statustostr( int status )

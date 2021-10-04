@@ -33,46 +33,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 
 const struct pcap_funcs *pcap_funcs = NULL;
 
-int CDECL pcap_activate( void *handle )
+int CDECL pcap_activate( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->activate( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->activate( pcap );
 }
 
-void CDECL pcap_breakloop( void *handle )
+void CDECL pcap_breakloop( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    pcap_funcs->breakloop( handle );
+    TRACE( "%p\n", pcap );
+    pcap_funcs->breakloop( pcap );
 }
 
-int CDECL pcap_can_set_rfmon( void *handle )
+int CDECL pcap_can_set_rfmon( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->can_set_rfmon( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->can_set_rfmon( pcap );
 }
 
-void CDECL pcap_close( void *handle )
+void CDECL pcap_close( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    pcap_funcs->close( handle );
+    TRACE( "%p\n", pcap );
+    pcap_funcs->close( pcap );
 }
 
-int CDECL pcap_compile( void *handle, void *program, const char *buf, int optimize, unsigned int mask )
+int CDECL pcap_compile( struct pcap *pcap, void *program, const char *buf, int optimize, unsigned int mask )
 {
-    TRACE( "%p, %p, %s, %d, %u\n", handle, program, debugstr_a(buf), optimize, mask );
-    return pcap_funcs->compile( handle, program, buf, optimize, mask );
+    TRACE( "%p, %p, %s, %d, %u\n", pcap, program, debugstr_a(buf), optimize, mask );
+    return pcap_funcs->compile( pcap, program, buf, optimize, mask );
 }
 
-void * CDECL pcap_create( const char *src, char *errbuf )
+struct pcap * CDECL pcap_create( const char *src, char *errbuf )
 {
     TRACE( "%s, %p\n", src, errbuf );
     return pcap_funcs->create( src, errbuf );
 }
 
-int CDECL pcap_datalink( void *handle )
+int CDECL pcap_datalink( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->datalink( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->datalink( pcap );
 }
 
 int CDECL pcap_datalink_name_to_val( const char *name )
@@ -93,12 +93,12 @@ const char * CDECL pcap_datalink_val_to_name( int link )
     return pcap_funcs->datalink_val_to_name( link );
 }
 
-int CDECL pcap_dispatch( void *handle, int count,
+int CDECL pcap_dispatch( struct pcap *pcap, int count,
                          void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
                          unsigned char *user )
 {
-    TRACE( "%p, %d, %p, %p\n", handle, count, callback, user );
-    return pcap_funcs->dispatch( handle, count, callback, user );
+    TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
+    return pcap_funcs->dispatch( pcap, count, callback, user );
 }
 
 void CDECL pcap_dump( unsigned char *user, const void *hdr, const unsigned char *packet )
@@ -118,13 +118,13 @@ static inline WCHAR *strdupAW( const char *str )
     return ret;
 }
 
-void * CDECL pcap_dump_open( void *handle, const char *filename )
+void * CDECL pcap_dump_open( struct pcap *pcap, const char *filename )
 {
     void *dumper;
     WCHAR *filenameW;
     char *unix_path;
 
-    TRACE( "%p, %s\n", handle, debugstr_a(filename) );
+    TRACE( "%p, %s\n", pcap, debugstr_a(filename) );
 
     if (!(filenameW = strdupAW( filename ))) return NULL;
     unix_path = wine_get_unix_file_name( filenameW );
@@ -133,7 +133,7 @@ void * CDECL pcap_dump_open( void *handle, const char *filename )
 
     TRACE( "unix_path %s\n", debugstr_a(unix_path) );
 
-    dumper = pcap_funcs->dump_open( handle, unix_path );
+    dumper = pcap_funcs->dump_open( pcap, unix_path );
     RtlFreeHeap( GetProcessHeap(), 0, unix_path );
     return dumper;
 }
@@ -174,28 +174,28 @@ void CDECL pcap_freecode( void *program )
     pcap_funcs->freecode( program );
 }
 
-void * CDECL pcap_get_airpcap_handle( void *handle )
+void * CDECL pcap_get_airpcap_handle( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
+    TRACE( "%p\n", pcap );
     return NULL;
 }
 
-int CDECL pcap_get_tstamp_precision( void *handle )
+int CDECL pcap_get_tstamp_precision( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->get_tstamp_precision( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->get_tstamp_precision( pcap );
 }
 
-char * CDECL pcap_geterr( void *handle )
+char * CDECL pcap_geterr( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->geterr( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->geterr( pcap );
 }
 
-int CDECL pcap_getnonblock( void *handle, char *errbuf )
+int CDECL pcap_getnonblock( struct pcap *pcap, char *errbuf )
 {
-    TRACE( "%p, %p\n", handle, errbuf );
-    return pcap_funcs->getnonblock( handle, errbuf );
+    TRACE( "%p, %p\n", pcap, errbuf );
+    return pcap_funcs->getnonblock( pcap, errbuf );
 }
 
 static char lib_version[256];
@@ -214,16 +214,16 @@ const char * CDECL pcap_lib_version( void )
     return lib_version;
 }
 
-int CDECL pcap_list_datalinks( void *handle, int **buf )
+int CDECL pcap_list_datalinks( struct pcap *pcap, int **buf )
 {
-    TRACE( "%p, %p\n", handle, buf );
-    return pcap_funcs->list_datalinks( handle, buf );
+    TRACE( "%p, %p\n", pcap, buf );
+    return pcap_funcs->list_datalinks( pcap, buf );
 }
 
-int CDECL pcap_list_tstamp_types( void *handle, int **types )
+int CDECL pcap_list_tstamp_types( struct pcap *pcap, int **types )
 {
-    TRACE( "%p, %p\n", handle, types );
-    return pcap_funcs->list_tstamp_types( handle, types );
+    TRACE( "%p, %p\n", pcap, types );
+    return pcap_funcs->list_tstamp_types( pcap, types );
 }
 
 char * CDECL pcap_lookupdev( char *errbuf )
@@ -248,46 +248,46 @@ int CDECL pcap_lookupnet( const char *device, unsigned int *net, unsigned int *m
     return pcap_funcs->lookupnet( device, net, mask, errbuf );
 }
 
-int CDECL pcap_loop( void *handle, int count,
+int CDECL pcap_loop( struct pcap *pcap, int count,
                      void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
                      unsigned char *user)
 {
-    TRACE( "%p, %d, %p, %p\n", handle, count, callback, user );
-    return pcap_funcs->loop( handle, count, callback, user );
+    TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
+    return pcap_funcs->loop( pcap, count, callback, user );
 }
 
-int CDECL pcap_major_version( void *handle )
+int CDECL pcap_major_version( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->major_version( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->major_version( pcap );
 }
 
-int CDECL pcap_minor_version( void *handle )
+int CDECL pcap_minor_version( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->minor_version( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->minor_version( pcap );
 }
 
-const unsigned char * CDECL pcap_next( void *handle, void *hdr )
+const unsigned char * CDECL pcap_next( struct pcap *pcap, void *hdr )
 {
-    TRACE( "%p, %p\n", handle, hdr );
-    return pcap_funcs->next( handle, hdr );
+    TRACE( "%p, %p\n", pcap, hdr );
+    return pcap_funcs->next( pcap, hdr );
 }
 
-int CDECL pcap_next_ex( void *handle, void **hdr, const unsigned char **data )
+int CDECL pcap_next_ex( struct pcap *pcap, void **hdr, const unsigned char **data )
 {
-    TRACE( "%p, %p, %p\n", handle, hdr, data );
-    return pcap_funcs->next_ex( handle, hdr, data );
+    TRACE( "%p, %p, %p\n", pcap, hdr, data );
+    return pcap_funcs->next_ex( pcap, hdr, data );
 }
 
 #define PCAP_OPENFLAG_PROMISCUOUS 1
-void * CDECL pcap_open( const char *source, int snaplen, int flags, int timeout, void *auth, char *errbuf )
+struct pcap * CDECL pcap_open( const char *source, int snaplen, int flags, int timeout, void *auth, char *errbuf )
 {
     FIXME( "%s, %d, %d, %d, %p, %p: partial stub\n", debugstr_a(source), snaplen, flags, timeout, auth, errbuf );
     return pcap_funcs->open_live( source, snaplen, flags & PCAP_OPENFLAG_PROMISCUOUS, timeout, errbuf );
 }
 
-void * CDECL pcap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )
+struct pcap * CDECL pcap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )
 {
     TRACE( "%s, %d, %d, %d, %p\n", debugstr_a(source), snaplen, promisc, to_ms, errbuf );
     return pcap_funcs->open_live( source, snaplen, promisc, to_ms, errbuf );
@@ -334,88 +334,88 @@ int CDECL pcap_parsesrcstr( const char *source, int *type, char *host, char *por
     return 0;
 }
 
-int CDECL pcap_sendpacket( void *handle, const unsigned char *buf, int size )
+int CDECL pcap_sendpacket( struct pcap *pcap, const unsigned char *buf, int size )
 {
-    TRACE( "%p, %p, %d\n", handle, buf, size );
-    return pcap_funcs->sendpacket( handle, buf, size );
+    TRACE( "%p, %p, %d\n", pcap, buf, size );
+    return pcap_funcs->sendpacket( pcap, buf, size );
 }
 
-int CDECL pcap_set_buffer_size( void *handle, int size )
+int CDECL pcap_set_buffer_size( struct pcap *pcap, int size )
 {
-    TRACE( "%p, %d\n", handle, size );
-    return pcap_funcs->set_buffer_size( handle, size );
+    TRACE( "%p, %d\n", pcap, size );
+    return pcap_funcs->set_buffer_size( pcap, size );
 }
 
-int CDECL pcap_set_datalink( void *handle, int link )
+int CDECL pcap_set_datalink( struct pcap *pcap, int link )
 {
-    TRACE( "%p, %d\n", handle, link );
-    return pcap_funcs->set_datalink( handle, link );
+    TRACE( "%p, %d\n", pcap, link );
+    return pcap_funcs->set_datalink( pcap, link );
 }
 
-int CDECL pcap_set_promisc( void *handle, int enable )
+int CDECL pcap_set_promisc( struct pcap *pcap, int enable )
 {
-    TRACE( "%p, %d\n", handle, enable );
-    return pcap_funcs->set_promisc( handle, enable );
+    TRACE( "%p, %d\n", pcap, enable );
+    return pcap_funcs->set_promisc( pcap, enable );
 }
 
-int CDECL pcap_set_rfmon( void *handle, int enable )
+int CDECL pcap_set_rfmon( struct pcap *pcap, int enable )
 {
-    TRACE( "%p, %d\n", handle, enable );
-    return pcap_funcs->set_rfmon( handle, enable );
+    TRACE( "%p, %d\n", pcap, enable );
+    return pcap_funcs->set_rfmon( pcap, enable );
 }
 
-int CDECL pcap_set_snaplen( void *handle, int len )
+int CDECL pcap_set_snaplen( struct pcap *pcap, int len )
 {
-    TRACE( "%p, %d\n", handle, len );
-    return pcap_funcs->set_snaplen( handle, len );
+    TRACE( "%p, %d\n", pcap, len );
+    return pcap_funcs->set_snaplen( pcap, len );
 }
 
-int CDECL pcap_set_timeout( void *handle, int timeout )
+int CDECL pcap_set_timeout( struct pcap *pcap, int timeout )
 {
-    TRACE( "%p, %d\n", handle, timeout );
-    return pcap_funcs->set_timeout( handle, timeout );
+    TRACE( "%p, %d\n", pcap, timeout );
+    return pcap_funcs->set_timeout( pcap, timeout );
 }
 
-int CDECL pcap_set_tstamp_precision( void *handle, int precision )
+int CDECL pcap_set_tstamp_precision( struct pcap *pcap, int precision )
 {
-    TRACE( "%p, %d\n", handle, precision );
-    return pcap_funcs->set_tstamp_precision( handle, precision );
+    TRACE( "%p, %d\n", pcap, precision );
+    return pcap_funcs->set_tstamp_precision( pcap, precision );
 }
 
-int CDECL pcap_set_tstamp_type( void *handle, int type )
+int CDECL pcap_set_tstamp_type( struct pcap *pcap, int type )
 {
-    TRACE( "%p, %d\n", handle, type );
-    return pcap_funcs->set_tstamp_type( handle, type );
+    TRACE( "%p, %d\n", pcap, type );
+    return pcap_funcs->set_tstamp_type( pcap, type );
 }
 
-int CDECL pcap_setbuff( void *handle, int size )
+int CDECL pcap_setbuff( struct pcap *pcap, int size )
 {
-    FIXME( "%p, %d\n", handle, size );
+    FIXME( "%p, %d\n", pcap, size );
     return 0;
 }
 
-int CDECL pcap_setfilter( void *handle, void *program )
+int CDECL pcap_setfilter( struct pcap *pcap, void *program )
 {
-    TRACE( "%p, %p\n", handle, program );
-    return pcap_funcs->setfilter( handle, program );
+    TRACE( "%p, %p\n", pcap, program );
+    return pcap_funcs->setfilter( pcap, program );
 }
 
-int CDECL pcap_setnonblock( void *handle, int nonblock, char *errbuf )
+int CDECL pcap_setnonblock( struct pcap *pcap, int nonblock, char *errbuf )
 {
-    TRACE( "%p, %d, %p\n", handle, nonblock, errbuf );
-    return pcap_funcs->setnonblock( handle, nonblock, errbuf );
+    TRACE( "%p, %d, %p\n", pcap, nonblock, errbuf );
+    return pcap_funcs->setnonblock( pcap, nonblock, errbuf );
 }
 
-int CDECL pcap_snapshot( void *handle )
+int CDECL pcap_snapshot( struct pcap *pcap )
 {
-    TRACE( "%p\n", handle );
-    return pcap_funcs->snapshot( handle );
+    TRACE( "%p\n", pcap );
+    return pcap_funcs->snapshot( pcap );
 }
 
-int CDECL pcap_stats( void *handle, void *stats )
+int CDECL pcap_stats( struct pcap *pcap, void *stats )
 {
-    TRACE( "%p, %p\n", handle, stats );
-    return pcap_funcs->stats( handle, stats );
+    TRACE( "%p, %p\n", pcap, stats );
+    return pcap_funcs->stats( pcap, stats );
 }
 
 const char * CDECL pcap_statustostr( int status )
