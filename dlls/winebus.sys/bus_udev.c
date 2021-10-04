@@ -812,6 +812,27 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD dura
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS lnxev_device_physical_effect_run(struct lnxev_device *impl, BYTE index,
+                                                 int iterations)
+{
+    struct input_event ie =
+    {
+        .type = EV_FF,
+        .value = iterations,
+    };
+
+    if (impl->effect_ids[index] < 0) return STATUS_UNSUCCESSFUL;
+    ie.code = impl->effect_ids[index];
+
+    if (write(impl->base.device_fd, &ie, sizeof(ie)) == -1)
+    {
+        WARN("couldn't stop effect, write failed %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, USAGE control)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
@@ -846,8 +867,12 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
         return STATUS_SUCCESS;
     }
     case PID_USAGE_DC_STOP_ALL_EFFECTS:
-        FIXME("stop all not implemented!\n");
-        return STATUS_NOT_IMPLEMENTED;
+        for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i)
+        {
+            if (impl->effect_ids[i] < 0) continue;
+            lnxev_device_physical_effect_run(impl, i, 0);
+        }
+        return STATUS_SUCCESS;
     case PID_USAGE_DC_DEVICE_RESET:
         for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i)
         {
@@ -871,9 +896,24 @@ static NTSTATUS lnxev_device_physical_device_control(struct unix_device *iface, 
 static NTSTATUS lnxev_device_physical_effect_control(struct unix_device *iface, BYTE index,
                                                      USAGE control, BYTE iterations)
 {
-    FIXME("iface %p, index %u, control %04x, iterations %u stub!\n", iface, index, control, iterations);
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    NTSTATUS status;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, index %u, control %04x, iterations %u.\n", iface, index, control, iterations);
+
+    switch (control)
+    {
+    case PID_USAGE_OP_EFFECT_START_SOLO:
+        if ((status = lnxev_device_physical_device_control(iface, PID_USAGE_DC_STOP_ALL_EFFECTS)))
+            return status;
+        /* fallthrough */
+    case PID_USAGE_OP_EFFECT_START:
+        return lnxev_device_physical_effect_run(impl, index, iterations);
+    case PID_USAGE_OP_EFFECT_STOP:
+        return lnxev_device_physical_effect_run(impl, index, 0);
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static const struct hid_device_vtbl lnxev_device_vtbl =
