@@ -1364,7 +1364,7 @@ static WCHAR *get_dos_file_name( LPCSTR str )
     return buffer;
 }
 
-static char *get_unix_file_name( LPCWSTR dosW )
+static char *get_unix_file_name( LPCWSTR path )
 {
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
@@ -1372,24 +1372,19 @@ static char *get_unix_file_name( LPCWSTR dosW )
     ULONG size = 256;
     char *buffer;
 
-    if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
+    nt_name.Buffer = (WCHAR *)path;
+    nt_name.MaximumLength = nt_name.Length = lstrlenW( path ) * sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
     for (;;)
     {
-        if (!(buffer = malloc( size )))
-        {
-            RtlFreeUnicodeString( &nt_name );
-            return NULL;
-        }
+        if (!(buffer = malloc( size ))) return NULL;
         status = wine_nt_to_unix_file_name( &attr, buffer, &size, FILE_OPEN_IF );
         if (status != STATUS_BUFFER_TOO_SMALL) break;
         free( buffer );
     }
-    RtlFreeUnicodeString( &nt_name );
     if (status && status != STATUS_NO_SUCH_FILE)
     {
         free( buffer );
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
         return NULL;
     }
     return buffer;
