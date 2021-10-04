@@ -216,7 +216,6 @@ static struct hid_report *hid_queue_pop_report( struct hid_queue *queue )
 static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *packet )
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     const BOOL polled = ext->u.pdo.information.Polled;
     struct hid_report *last_report, *report;
     struct hid_queue *queue;
@@ -270,7 +269,7 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
             if (!(irp = hid_queue_pop_irp( queue ))) break;
             if (!(report = hid_queue_pop_report( queue ))) hid_report_incref( (report = last_report) );
 
-            memcpy( irp->AssociatedIrp.SystemBuffer, report->buffer, desc->InputLength );
+            memcpy( irp->AssociatedIrp.SystemBuffer, report->buffer, report->length );
             irp->IoStatus.Information = report->length;
             irp->IoStatus.Status = STATUS_SUCCESS;
             hid_report_decref( report );
@@ -652,7 +651,7 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
     irp->IoStatus.Information = 0;
     if ((report = hid_queue_pop_report( queue )))
     {
-        memcpy( irp->AssociatedIrp.SystemBuffer, report->buffer, desc->InputLength );
+        memcpy( irp->AssociatedIrp.SystemBuffer, report->buffer, report->length );
         irp->IoStatus.Information = report->length;
         irp->IoStatus.Status = STATUS_SUCCESS;
         hid_report_decref( report );
