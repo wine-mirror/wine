@@ -2094,8 +2094,8 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
     stackLin[3] = 0;
     stackLin[4] = OFFSETOF(stack) + 12;
     stackLin[5] = SELECTOROF(stack);
-    stackLin[6] = OFFSETOF(CALL32_CBClientEx_RetAddr);  /* overwrite return address */
-    stackLin[7] = SELECTOROF(CALL32_CBClientEx_RetAddr);
+    stackLin[6] = OFFSETOF(CALL32_CBClient_RetAddr);  /* overwrite return address */
+    stackLin[7] = SELECTOROF(CALL32_CBClient_RetAddr);
     context->Eax = CALL32_CBClient( proc, args, stackLin + 4, &context->Esi );
     stack16_pop( 12 );
 }
