@@ -1951,10 +1951,134 @@ void WINAPI CBClientGlueSL( CONTEXT *context )
     context->Eip   = OFFSETOF  ( glue );
 }
 
+/*******************************************************************
+ *         CALL32_CBClient
+ *
+ * Call a CBClient relay stub from 32-bit code (KERNEL.620).
+ *
+ * Since the relay stub is itself 32-bit, this should not be a problem;
+ * unfortunately, the relay stubs are expected to switch back to a
+ * 16-bit stack (and 16-bit code) after completion :-(
+ *
+ * This would conflict with our 16- vs. 32-bit stack handling, so
+ * we simply switch *back* to our 32-bit stack before returning to
+ * the caller ...
+ *
+ * The CBClient relay stub expects to be called with the following
+ * 16-bit stack layout, and with ebp and ebx pointing into the 16-bit
+ * stack at the designated places:
+ *
+ *    ...
+ *  (ebp+14) original arguments to the callback routine
+ *  (ebp+10) far return address to original caller
+ *  (ebp+6)  Thunklet target address
+ *  (ebp+2)  Thunklet relay ID code
+ *  (ebp)    BP (saved by CBClientGlueSL)
+ *  (ebp-2)  SI (saved by CBClientGlueSL)
+ *  (ebp-4)  DI (saved by CBClientGlueSL)
+ *  (ebp-6)  DS (saved by CBClientGlueSL)
+ *
+ *   ...     buffer space used by the 16-bit side glue for temp copies
+ *
+ *  (ebx+4)  far return address to 16-bit side glue code
+ *  (ebx)    saved 16-bit ss:sp (pointing to ebx+4)
+ *
+ * The 32-bit side glue code accesses both the original arguments (via ebp)
+ * and the temporary copies prepared by the 16-bit side glue (via ebx).
+ * After completion, the stub will load ss:sp from the buffer at ebx
+ * and perform a far return to 16-bit code.
+ *
+ * To trick the relay stub into returning to us, we replace the 16-bit
+ * return address to the glue code by a cs:ip pair pointing to our
+ * return entry point (the original return address is saved first).
+ * Our return stub thus called will then reload the 32-bit ss:esp and
+ * return to 32-bit code (by using and ss:esp value that we have also
+ * pushed onto the 16-bit stack before and a cs:eip values found at
+ * that position on the 32-bit stack).  The ss:esp to be restored is
+ * found relative to the 16-bit stack pointer at:
+ *
+ *  (ebx-4)   ss  (flat)
+ *  (ebx-8)   sp  (32-bit stack pointer)
+ *
+ * The second variant of this routine, CALL32_CBClientEx, which is used
+ * to implement KERNEL.621, has to cope with yet another problem: Here,
+ * the 32-bit side directly returns to the caller of the CBClient thunklet,
+ * restoring registers saved by CBClientGlueSL and cleaning up the stack.
+ * As we have to return to our 32-bit code first, we have to adapt the
+ * layout of our temporary area so as to include values for the registers
+ * that are to be restored, and later (in the implementation of KERNEL.621)
+ * we *really* restore them. The return stub restores DS, DI, SI, and BP
+ * from the stack, skips the next 8 bytes (CBClient relay code / target),
+ * and then performs a lret NN, where NN is the number of arguments to be
+ * removed. Thus, we prepare our temporary area as follows:
+ *
+ *     (ebx+22) 16-bit cs  (this segment)
+ *     (ebx+20) 16-bit ip  ('16-bit' return entry point)
+ *     (ebx+16) 32-bit ss  (flat)
+ *     (ebx+12) 32-bit sp  (32-bit stack pointer)
+ *     (ebx+10) 16-bit bp  (points to ebx+24)
+ *     (ebx+8)  16-bit si  (ignored)
+ *     (ebx+6)  16-bit di  (ignored)
+ *     (ebx+4)  16-bit ds  (we actually use the flat DS here)
+ *     (ebx+2)  16-bit ss  (16-bit stack segment)
+ *     (ebx+0)  16-bit sp  (points to ebx+4)
+ *
+ * Note that we ensure that DS is not changed and remains the flat segment,
+ * and the 32-bit stack pointer our own return stub needs fits just
+ * perfectly into the 8 bytes that are skipped by the Windows stub.
+ * One problem is that we have to determine the number of removed arguments,
+ * as these have to be really removed in KERNEL.621. Thus, the BP value
+ * that we place in the temporary area to be restored, contains the value
+ * that SP would have if no arguments were removed. By comparing the actual
+ * value of SP with this value in our return stub we can compute the number
+ * of removed arguments. This is then returned to KERNEL.621.
+ *
+ * The stack layout of this function:
+ * (ebp+20)  nArgs     pointer to variable receiving nr. of args (Ex only)
+ * (ebp+16)  esi       pointer to caller's esi value
+ * (ebp+12)  arg       ebp value to be set for relay stub
+ * (ebp+8)   func      CBClient relay stub address
+ * (ebp+4)   ret addr
+ * (ebp)     ebp
+ */
+extern DWORD CALL32_CBClient( FARPROC proc, LPWORD args, WORD *stackLin, DWORD *esi );
+__ASM_GLOBAL_FUNC( CALL32_CBClient,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %edi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %edi,-4\n\t")
+                   "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   "pushl %ebx\n\t"
+                   __ASM_CFI(".cfi_rel_offset %ebx,-12\n\t")
+                   "movl 16(%ebp),%ebx\n\t"
+                   "leal -8(%esp),%eax\n\t"
+                   "movl %eax,-8(%ebx)\n\t"
+                   "movl 20(%ebp),%esi\n\t"
+                   "movl (%esi),%esi\n\t"
+                   "movl 8(%ebp),%eax\n\t"
+                   "movl 12(%ebp),%ebp\n\t"
+                   "pushl %cs\n\t"
+                   "call *%eax\n\t"
+                   "movl 32(%esp),%edi\n\t"
+                   "movl %esi,(%edi)\n\t"
+                   "popl %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret\n\t" )
+
 /***********************************************************************
  *     CBClientThunkSL                      (KERNEL.620)
  */
-extern DWORD CALL32_CBClient( FARPROC proc, LPWORD args, WORD *stackLin, DWORD *esi );
 void WINAPI CBClientThunkSL( CONTEXT *context )
 {
     /* Call 32-bit relay code */
@@ -1976,10 +2100,46 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
     stack16_pop( 12 );
 }
 
+extern DWORD CALL32_CBClientEx( FARPROC proc, LPWORD args, WORD *stackLin, DWORD *esi, INT *nArgs );
+__ASM_GLOBAL_FUNC( CALL32_CBClientEx,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %edi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %edi,-4\n\t")
+                   "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   "pushl %ebx\n\t"
+                   __ASM_CFI(".cfi_rel_offset %ebx,-12\n\t")
+                   "movl 16(%ebp),%ebx\n\t"
+                   "leal -8(%esp),%eax\n\t"
+                   "movl %eax,12(%ebx)\n\t"
+                   "movl 20(%ebp),%esi\n\t"
+                   "movl (%esi),%esi\n\t"
+                   "movl 8(%ebp),%eax\n\t"
+                   "movl 12(%ebp),%ebp\n\t"
+                   "pushl %cs\n\t"
+                   "call *%eax\n\t"
+                   "movl 32(%esp),%edi\n\t"
+                   "movl %esi,(%edi)\n\t"
+                   "movl 36(%esp),%ebx\n\t"
+                   "movl %ebp,(%ebx)\n\t"
+                   "popl %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret\n\t" )
+
 /***********************************************************************
  *     CBClientThunkSLEx                    (KERNEL.621)
  */
-extern DWORD CALL32_CBClientEx( FARPROC proc, LPWORD args, WORD *stackLin, DWORD *esi, INT *nArgs );
 void WINAPI CBClientThunkSLEx( CONTEXT *context )
 {
     /* Call 32-bit relay code */
