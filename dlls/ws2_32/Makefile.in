@@ -2,7 +2,6 @@ MODULE    = ws2_32.dll
 UNIXLIB   = ws2_32.so
 IMPORTLIB = ws2_32
 DELAYIMPORTS = advapi32 iphlpapi user32
-EXTRALIBS = $(POLL_LIBS)
 
 C_SRCS = \
 	async.c \

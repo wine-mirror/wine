@@ -628,7 +628,6 @@ ALL_VARS_RULES
 LDAP_LIBS
 LDAP_CFLAGS
 RT_LIBS
-POLL_LIBS
 TOOLSEXT
 MSVCRTFLAGS
 EXTRACFLAGS
@@ -17914,7 +17913,6 @@ for ac_func in \
 	lstat \
 	mach_continuous_time \
 	pipe2 \
-	poll \
 	port_create \
 	posix_fadvise \
 	posix_fallocate \
@@ -18014,52 +18012,6 @@ fi
 done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
-
-if test "$ac_cv_func_poll" = no
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poll in -lpoll" >&5
-$as_echo_n "checking for poll in -lpoll... " >&6; }
-if ${ac_cv_lib_poll_poll+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpoll  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char poll ();
-int
-main ()
-{
-return poll ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_poll_poll=yes
-else
-  ac_cv_lib_poll_poll=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_poll_poll" >&5
-$as_echo "$ac_cv_lib_poll_poll" >&6; }
-if test "x$ac_cv_lib_poll_poll" = xyes; then :
-  $as_echo "#define HAVE_POLL 1" >>confdefs.h
- POLL_LIBS="-lpoll"
-
-fi
-
-fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname" >&5
 $as_echo_n "checking for library containing gethostbyname... " >&6; }
@@ -19859,7 +19811,6 @@ VKD3D_CFLAGS = $VKD3D_CFLAGS
 VKD3D_LIBS = $VKD3D_LIBS
 VKD3D_SHADER_CFLAGS = $VKD3D_SHADER_CFLAGS
 VKD3D_SHADER_LIBS = $VKD3D_SHADER_LIBS
-POLL_LIBS = $POLL_LIBS
 RT_LIBS = $RT_LIBS
 LDAP_CFLAGS = $LDAP_CFLAGS
 LDAP_LIBS = $LDAP_LIBS

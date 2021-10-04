@@ -2144,7 +2144,6 @@ AC_CHECK_FUNCS(\
 	lstat \
 	mach_continuous_time \
 	pipe2 \
-	poll \
 	port_create \
 	posix_fadvise \
 	posix_fallocate \
@@ -2165,12 +2164,6 @@ CFLAGS="$ac_save_CFLAGS"
 dnl Check for -ldl
 AC_SEARCH_LIBS(dlopen, dl)
 WINE_CHECK_LIB_FUNCS(dladdr dlinfo,[$DL_LIBS])
-
-dnl Check for -lpoll for Mac OS X/Darwin
-if test "$ac_cv_func_poll" = no
-then
-    AC_CHECK_LIB(poll,poll,[AC_DEFINE(HAVE_POLL,1) AC_SUBST(POLL_LIBS,"-lpoll")])
-fi
 
 dnl Check for -lnsl for Solaris
 AC_SEARCH_LIBS(gethostbyname, nsl)
