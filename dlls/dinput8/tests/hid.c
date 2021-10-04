@@ -3380,6 +3380,32 @@ static BOOL CALLBACK check_effect_count( const DIEFFECTINFOW *effect, void *args
     return DIENUM_CONTINUE;
 }
 
+static BOOL CALLBACK check_no_created_effect_objects( IDirectInputEffect *effect, void *context )
+{
+    ok( 0, "unexpected effect %p\n", effect );
+    return DIENUM_CONTINUE;
+}
+
+struct check_created_effect_params
+{
+    IDirectInputEffect *expect_effect;
+    DWORD count;
+};
+
+static BOOL CALLBACK check_created_effect_objects( IDirectInputEffect *effect, void *context )
+{
+    struct check_created_effect_params *params = context;
+    ULONG ref;
+
+    ok( effect == params->expect_effect, "got effect %p, expected %p\n", effect, params->expect_effect );
+    params->count++;
+
+    IDirectInputEffect_AddRef( effect );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 1, "got ref %u, expected 1\n", ref );
+    return DIENUM_CONTINUE;
+}
+
 static void test_simple_joystick(void)
 {
 #include "psh_hid_macros.h"
@@ -4679,6 +4705,15 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
     ok( hr == DIERR_UNSUPPORTED, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
 
+    hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, NULL, effect, 0 );
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
+    hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, effect, 0xdeadbeef );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
+    hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, (void *)0xdeadbeef, 0 );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
+
     hr = IDirectInputDevice8_Escape( device, NULL );
     todo_wine
     ok( hr == E_POINTER, "IDirectInputDevice8_Escape returned: %#x\n", hr );
@@ -5056,6 +5091,7 @@ static BOOL test_device_types(void)
 
 static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
 {
+    struct check_created_effect_params check_params = {0};
     IDirectInputEffect *effect;
     HRESULT hr;
     ULONG ref;
@@ -5074,6 +5110,16 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
     ok( hr == DI_OK, "IDirectInputDevice8_CreateEffect returned %#x\n", hr );
     if (hr != DI_OK) return;
+
+    hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_no_created_effect_objects, effect, 0xdeadbeef );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
+    check_params.expect_effect = effect;
+    hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_created_effect_objects, &check_params, 0 );
+    todo_wine
+    ok( hr == DI_OK, "IDirectInputDevice8_EnumCreatedEffectObjects returned %#x\n", hr );
+    todo_wine
+    ok( check_params.count == 1, "got count %u, expected 1\n", check_params.count );
 
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "IDirectInputDeviceW_Release returned %d\n", ref );
