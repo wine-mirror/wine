@@ -137,8 +137,8 @@ struct SLApiDB
     DWORD                  errorReturnValue;
 };
 
-SEGPTR CALL32_CBClient_RetAddr = 0;
-SEGPTR CALL32_CBClientEx_RetAddr = 0;
+WORD cbclient_selector = 0;
+WORD cbclientex_selector = 0;
 
 extern int call_entry_point( void *func, int nb_args, const DWORD *args );
 extern void __wine_call_from_16_thunk(void);
@@ -2094,8 +2094,8 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
     stackLin[3] = 0;
     stackLin[4] = OFFSETOF(stack) + 12;
     stackLin[5] = SELECTOROF(stack);
-    stackLin[6] = OFFSETOF(CALL32_CBClient_RetAddr);  /* overwrite return address */
-    stackLin[7] = SELECTOROF(CALL32_CBClient_RetAddr);
+    stackLin[6] = 0; /* overwrite return address */
+    stackLin[7] = cbclient_selector;
     context->Eax = CALL32_CBClient( proc, args, stackLin + 4, &context->Esi );
     stack16_pop( 12 );
 }
@@ -2159,8 +2159,8 @@ void WINAPI CBClientThunkSLEx( CONTEXT *context )
     /* stackLin[6] and stackLin[7] reserved for the 32-bit stack ptr */
     stackLin[8] = get_ds();
     stackLin[9] = 0;
-    stackLin[10] = OFFSETOF(CALL32_CBClientEx_RetAddr);
-    stackLin[11] = SELECTOROF(CALL32_CBClientEx_RetAddr);
+    stackLin[10] = 0;
+    stackLin[11] = cbclientex_selector;
 
     context->Eax = CALL32_CBClientEx( proc, args, stackLin, &context->Esi, &nArgs );
     stack16_pop( 24 );

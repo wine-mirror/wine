@@ -564,28 +564,6 @@ static void BuildRet16Func(void)
 }
 
 
-static void BuildCallTo32CBClient( int isEx )
-{
-    /* '16-bit' return stub */
-
-    function_header( isEx ? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret" );
-    if ( !isEx )
-    {
-        output( "\tmovzwl %%sp, %%ebx\n" );
-        output( "\tlssl %%ss:-16(%%ebx), %%esp\n" );
-    }
-    else
-    {
-        output( "\tmovzwl %%bp, %%ebx\n" );
-        output( "\tsubw %%bp, %%sp\n" );
-        output( "\tmovzwl %%sp, %%ebp\n" );
-        output( "\tlssl %%ss:-12(%%ebx), %%esp\n" );
-    }
-    output( "\tlret\n" );
-    output_function_size( isEx ? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret" );
-}
-
-
 /*******************************************************************
  *         output_asm_relays16
  *
@@ -617,12 +595,6 @@ void output_asm_relays16(void)
 
     /* Standard CallTo16 return stub */
     BuildRet16Func();
-
-    /* CBClientThunkSL routine */
-    BuildCallTo32CBClient( 0 );
-
-    /* CBClientThunkSLEx routine */
-    BuildCallTo32CBClient( 1  );
 
     output( "%s\n", asm_globl("__wine_call16_end") );
     output_function_size( "__wine_spec_thunk_text_16" );

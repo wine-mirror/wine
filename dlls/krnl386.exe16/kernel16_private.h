@@ -291,8 +291,9 @@ extern WORD DOSMEM_BiosDataSeg DECLSPEC_HIDDEN;
 extern WORD DOSMEM_BiosSysSeg DECLSPEC_HIDDEN;
 extern DWORD CallTo16_DataSelector DECLSPEC_HIDDEN;
 extern DWORD CallTo16_TebSelector DECLSPEC_HIDDEN;
-extern SEGPTR CALL32_CBClient_RetAddr DECLSPEC_HIDDEN;
-extern SEGPTR CALL32_CBClientEx_RetAddr DECLSPEC_HIDDEN;
+
+extern WORD cbclient_selector DECLSPEC_HIDDEN;
+extern WORD cbclientex_selector DECLSPEC_HIDDEN;
 
 struct tagSYSLEVEL;
 

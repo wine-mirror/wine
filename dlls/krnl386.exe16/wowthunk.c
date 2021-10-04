@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "ntgdi.h"
 #include "kernel16_private.h"
+#include "wine/asm.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -41,12 +42,28 @@ WINE_DECLARE_DEBUG_CHANNEL(snoop);
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void WINAPI wine_call_to_16_regs( CONTEXT *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void __wine_call_to_16_ret(void);
-extern void CALL32_CBClient_Ret(void);
-extern void CALL32_CBClientEx_Ret(void);
 extern BYTE __wine_call16_start[];
 extern BYTE __wine_call16_end[];
 
 static SEGPTR call16_ret_addr;  /* segptr to __wine_call_to_16_ret routine */
+
+extern const BYTE cbclient_ret[], cbclient_ret_end[];
+__ASM_GLOBAL_FUNC( cbclient_ret,
+                   "movzwl %sp,%ebx\n\t"
+                   "lssl %ss:-16(%ebx),%esp\n\t"
+                   "lretl\n\t"
+                   ".globl " __ASM_NAME("cbclient_ret_end") "\n"
+                   __ASM_NAME("cbclient_ret_end") ":" )
+
+extern const BYTE cbclientex_ret[], cbclientex_ret_end[];
+__ASM_GLOBAL_FUNC( cbclientex_ret,
+                   "movzwl %bp,%ebx\n\t"
+                   "subw %bp,%sp\n\t"
+                   "movzwl %sp,%ebp\n\t"
+                   "lssl %ss:-12(%ebx),%esp\n\t"
+                   "lretl\n\t"
+                   ".globl " __ASM_NAME("cbclientex_ret_end") "\n"
+                   __ASM_NAME("cbclientex_ret_end") ":" )
 
 /***********************************************************************
  *           WOWTHUNK_Init
@@ -57,16 +74,18 @@ BOOL WOWTHUNK_Init(void)
     WORD codesel = SELECTOR_AllocBlock( __wine_call16_start,
                                         (BYTE *)(&CallTo16_TebSelector + 1) - __wine_call16_start,
                                         LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
-    if (!codesel) return FALSE;
+
+    cbclient_selector = SELECTOR_AllocBlock( cbclient_ret, cbclient_ret_end - cbclient_ret,
+                                             LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+    cbclientex_selector = SELECTOR_AllocBlock( cbclientex_ret, cbclientex_ret_end - cbclientex_ret,
+                                               LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+    if (!codesel || cbclient_selector || !cbclientex_selector)
+        return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */
 
     CallTo16_DataSelector = get_ds();
     call16_ret_addr = MAKESEGPTR( codesel, (BYTE *)__wine_call_to_16_ret - __wine_call16_start );
-    CALL32_CBClient_RetAddr =
-        MAKESEGPTR( codesel, (BYTE *)CALL32_CBClient_Ret - __wine_call16_start );
-    CALL32_CBClientEx_RetAddr =
-        MAKESEGPTR( codesel, (BYTE *)CALL32_CBClientEx_Ret - __wine_call16_start );
 
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY16_InitDebugLists();
 
