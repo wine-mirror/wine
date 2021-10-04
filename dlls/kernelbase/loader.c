@@ -311,7 +311,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameW( HMODULE module, LPWSTR filena
     }
 
     name.Buffer = filename;
-    name.MaximumLength = size * sizeof(WCHAR);
+    name.MaximumLength = min( size, UNICODE_STRING_MAX_CHARS ) * sizeof(WCHAR);
     status = LdrGetDllFullName( module, &name );
     if (!status || status == STATUS_BUFFER_TOO_SMALL) len = name.Length / sizeof(WCHAR);
     SetLastError( RtlNtStatusToDosError( status ));

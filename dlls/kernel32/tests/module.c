@@ -190,6 +190,11 @@ static void testGetModuleFileName(const char* name)
 
     ok(len1A / 2 == len2A,
        "Correct length in GetModuleFilenameA with buffer too small (%d/%d)\n", len1A / 2, len2A);
+
+    len1A = GetModuleFileNameA(hMod, bufA, 0x10000);
+    ok(len1A > 0, "Getting module filename for handle %p\n", hMod);
+    len1W = GetModuleFileNameW(hMod, bufW, 0x10000);
+    ok(len1W > 0, "Getting module filename for handle %p\n", hMod);
 }
 
 static void testGetModuleFileName_Wrong(void)
