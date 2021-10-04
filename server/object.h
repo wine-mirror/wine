@@ -21,10 +21,7 @@
 #ifndef __WINE_SERVER_OBJECT_H
 #define __WINE_SERVER_OBJECT_H
 
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
-
+#include <poll.h>
 #include <sys/time.h>
 #include "wine/server_protocol.h"
 #include "wine/list.h"

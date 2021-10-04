@@ -39,12 +39,7 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
 #include <unistd.h>
 #ifdef HAVE_SCHED_H
 # include <sched.h>

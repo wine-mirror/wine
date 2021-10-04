@@ -25,9 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef HAVE_POLL_H
-# include <poll.h>
-#endif
+#include <poll.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

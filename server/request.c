@@ -47,9 +47,7 @@
 #include <sys/un.h>
 #endif
 #include <unistd.h>
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
 #ifdef __APPLE__
 # include <mach/mach_time.h>
 #endif

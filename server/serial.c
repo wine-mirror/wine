@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <poll.h>
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
@@ -40,9 +41,6 @@
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
 #endif
 
 #include "ntstatus.h"

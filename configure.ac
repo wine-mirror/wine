@@ -465,7 +465,6 @@ AC_CHECK_HEADERS(\
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
 	pcap/pcap.h \
-	poll.h \
 	port.h \
 	pthread.h \
 	pwd.h \
@@ -488,7 +487,6 @@ AC_CHECK_HEADERS(\
 	sys/modem.h \
 	sys/mtio.h \
 	sys/param.h \
-	sys/poll.h \
 	sys/prctl.h \
 	sys/protosw.h \
 	sys/ptrace.h \

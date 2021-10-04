@@ -35,9 +35,7 @@
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

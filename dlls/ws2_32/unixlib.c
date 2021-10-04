@@ -63,12 +63,7 @@
 #ifdef HAVE_IFADDRS_H
 # include <ifaddrs.h>
 #endif
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif

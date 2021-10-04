@@ -23,12 +23,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <sys/time.h>
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif

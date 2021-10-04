@@ -7473,7 +7473,6 @@ for ac_header in \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
 	pcap/pcap.h \
-	poll.h \
 	port.h \
 	pthread.h \
 	pwd.h \
@@ -7496,7 +7495,6 @@ for ac_header in \
 	sys/modem.h \
 	sys/mtio.h \
 	sys/param.h \
-	sys/poll.h \
 	sys/prctl.h \
 	sys/protosw.h \
 	sys/ptrace.h \

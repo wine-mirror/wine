@@ -39,9 +39,7 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
-#ifdef HAVE_POLL_H
-# include <poll.h>
-#endif
+#include <poll.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H

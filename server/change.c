@@ -32,9 +32,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
-#ifdef HAVE_POLL_H
-# include <poll.h>
-#endif
+#include <poll.h>
 #ifdef HAVE_SYS_INOTIFY_H
 #include <sys/inotify.h>
 #endif
