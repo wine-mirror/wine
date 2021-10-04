@@ -28,6 +28,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -37,6 +38,7 @@
 #include "wine/debug.h"
 #include "unixlib.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static const struct pcap_callbacks *callbacks;
@@ -101,12 +103,19 @@ static const char * CDECL wrap_datalink_val_to_name( int link )
 static void wrap_pcap_handler( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *packet )
 {
     struct handler_callback *cb = (struct handler_callback *)user;
-    callbacks->handler( cb, hdr, packet );
+    struct pcap_pkthdr_win32 hdr_win32;
+
+    if (hdr->ts.tv_sec > INT_MAX || hdr->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
+    hdr_win32.ts.tv_sec  = hdr->ts.tv_sec;
+    hdr_win32.ts.tv_usec = hdr->ts.tv_usec;
+    hdr_win32.caplen     = hdr->caplen;
+    hdr_win32.len        = hdr->len;
+    callbacks->handler( cb, &hdr_win32, packet );
 }
 
 static int CDECL wrap_dispatch( struct pcap *pcap, int count,
-                                void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
-                                unsigned char *user )
+                                void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *,
+                                                          const unsigned char *), unsigned char *user )
 {
     if (callback)
     {
@@ -118,9 +127,15 @@ static int CDECL wrap_dispatch( struct pcap *pcap, int count,
     return pcap_dispatch( pcap->handle, count, NULL, user );
 }
 
-static void CDECL wrap_dump( unsigned char *user, const void *hdr, const unsigned char *packet )
+static void CDECL wrap_dump( unsigned char *user, const struct pcap_pkthdr_win32 *hdr, const unsigned char *packet )
 {
-    return pcap_dump( user, hdr, packet );
+    struct pcap_pkthdr hdr_unix;
+
+    hdr_unix.ts.tv_sec  = hdr->ts.tv_sec;
+    hdr_unix.ts.tv_usec = hdr->ts.tv_usec;
+    hdr_unix.caplen     = hdr->caplen;
+    hdr_unix.len        = hdr->len;
+    return pcap_dump( user, &hdr_unix, packet );
 }
 
 static void * CDECL wrap_dump_open( struct pcap *pcap, const char *name )
@@ -193,8 +208,8 @@ static int CDECL wrap_lookupnet( const char *device, unsigned int *net, unsigned
 }
 
 static int CDECL wrap_loop( struct pcap *pcap, int count,
-                            void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
-                            unsigned char *user )
+                            void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *,
+                                                      const unsigned char *), unsigned char *user )
 {
     if (callback)
     {
@@ -216,14 +231,37 @@ static int CDECL wrap_minor_version( struct pcap *pcap )
     return pcap_minor_version( pcap->handle );
 }
 
-static const unsigned char * CDECL wrap_next( struct pcap *pcap, void *hdr )
+static const unsigned char * CDECL wrap_next( struct pcap *pcap, struct pcap_pkthdr_win32 *hdr )
 {
-    return pcap_next( pcap->handle, hdr );
+    struct pcap_pkthdr hdr_unix;
+    const unsigned char *ret;
+
+    if ((ret = pcap_next( pcap->handle, &hdr_unix )))
+    {
+        if (hdr_unix.ts.tv_sec > INT_MAX || hdr_unix.ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
+        hdr->ts.tv_sec  = hdr_unix.ts.tv_sec;
+        hdr->ts.tv_usec = hdr_unix.ts.tv_usec;
+        hdr->caplen     = hdr_unix.caplen;
+        hdr->len        = hdr_unix.len;
+    }
+    return ret;
 }
 
-static int CDECL wrap_next_ex( struct pcap *pcap, void **hdr, const unsigned char **data )
+static int CDECL wrap_next_ex( struct pcap *pcap, struct pcap_pkthdr_win32 **hdr, const unsigned char **data )
 {
-    return pcap_next_ex( pcap->handle, (struct pcap_pkthdr **)hdr, data );
+    struct pcap_pkthdr *hdr_unix;
+    int ret;
+
+    if ((ret = pcap_next_ex( pcap->handle, &hdr_unix, data )) == 1)
+    {
+        if (hdr_unix->ts.tv_sec > INT_MAX || hdr_unix->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
+        pcap->hdr.ts.tv_sec  = hdr_unix->ts.tv_sec;
+        pcap->hdr.ts.tv_usec = hdr_unix->ts.tv_usec;
+        pcap->hdr.caplen     = hdr_unix->caplen;
+        pcap->hdr.len        = hdr_unix->len;
+        *hdr = &pcap->hdr;
+    }
+    return ret;
 }
 
 static struct pcap * CDECL wrap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )

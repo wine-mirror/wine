@@ -23,14 +23,26 @@ struct pcap_if_hdr
     char *name;
 };
 
+struct pcap_pkthdr_win32
+{
+    struct
+    {
+        int tv_sec;
+        int tv_usec;
+    } ts;
+    unsigned int caplen;
+    unsigned int len;
+};
+
 struct pcap
 {
     void *handle;
+    struct pcap_pkthdr_win32 hdr;
 };
 
 struct handler_callback
 {
-    void (CALLBACK *callback)( unsigned char *, const void *, const unsigned char * );
+    void (CALLBACK *callback)( unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char * );
     void *user;
 };
 
@@ -47,9 +59,9 @@ struct pcap_funcs
     const char * (CDECL *datalink_val_to_description)( int );
     const char * (CDECL *datalink_val_to_name)( int );
     int (CDECL *dispatch)( struct pcap *, int,
-                           void (CALLBACK *)(unsigned char *, const void *, const unsigned char *),
+                           void (CALLBACK *)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                            unsigned char * );
-    void (CDECL *dump)( unsigned char *, const void *, const unsigned char * );
+    void (CDECL *dump)( unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char * );
     void * (CDECL *dump_open)( struct pcap *, const char * );
     int (CDECL *findalldevs)( struct pcap_if_hdr **, char * );
     void (CDECL *free_datalinks)( int * );
@@ -64,12 +76,12 @@ struct pcap_funcs
     int (CDECL *list_tstamp_types)( struct pcap *, int ** );
     int (CDECL *lookupnet)( const char *, unsigned int *, unsigned int *, char * );
     int (CDECL *loop)( struct pcap *, int,
-                       void (CALLBACK *)(unsigned char *, const void *, const unsigned char *),
+                       void (CALLBACK *)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                        unsigned char * );
     int (CDECL *major_version)( struct pcap * );
     int (CDECL *minor_version)( struct pcap * );
-    const unsigned char * (CDECL *next)( struct pcap *, void * );
-    int (CDECL *next_ex)( struct pcap *, void **, const unsigned char ** );
+    const unsigned char * (CDECL *next)( struct pcap *, struct pcap_pkthdr_win32 * );
+    int (CDECL *next_ex)( struct pcap *, struct pcap_pkthdr_win32 **, const unsigned char ** );
     struct pcap * (CDECL *open_live)( const char *, int, int, int, char * );
     int (CDECL *sendpacket)( struct pcap *, const unsigned char *, int );
     int (CDECL *set_buffer_size)( struct pcap *, int );
@@ -92,5 +104,5 @@ struct pcap_funcs
 
 struct pcap_callbacks
 {
-    void (CDECL *handler)( struct handler_callback *, const void *, const unsigned char * );
+    void (CDECL *handler)( struct handler_callback *, const struct pcap_pkthdr_win32 *, const unsigned char * );
 };

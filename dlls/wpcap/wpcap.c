@@ -94,14 +94,14 @@ const char * CDECL pcap_datalink_val_to_name( int link )
 }
 
 int CDECL pcap_dispatch( struct pcap *pcap, int count,
-                         void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
+                         void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                          unsigned char *user )
 {
     TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
     return pcap_funcs->dispatch( pcap, count, callback, user );
 }
 
-void CDECL pcap_dump( unsigned char *user, const void *hdr, const unsigned char *packet )
+void CDECL pcap_dump( unsigned char *user, const struct pcap_pkthdr_win32 *hdr, const unsigned char *packet )
 {
     TRACE( "%p, %p, %p\n", user, hdr, packet );
     pcap_funcs->dump( user, hdr, packet );
@@ -249,7 +249,7 @@ int CDECL pcap_lookupnet( const char *device, unsigned int *net, unsigned int *m
 }
 
 int CDECL pcap_loop( struct pcap *pcap, int count,
-                     void (CALLBACK *callback)(unsigned char *, const void *, const unsigned char *),
+                     void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                      unsigned char *user)
 {
     TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
@@ -268,13 +268,13 @@ int CDECL pcap_minor_version( struct pcap *pcap )
     return pcap_funcs->minor_version( pcap );
 }
 
-const unsigned char * CDECL pcap_next( struct pcap *pcap, void *hdr )
+const unsigned char * CDECL pcap_next( struct pcap *pcap, struct pcap_pkthdr_win32 *hdr )
 {
     TRACE( "%p, %p\n", pcap, hdr );
     return pcap_funcs->next( pcap, hdr );
 }
 
-int CDECL pcap_next_ex( struct pcap *pcap, void **hdr, const unsigned char **data )
+int CDECL pcap_next_ex( struct pcap *pcap, struct pcap_pkthdr_win32 **hdr, const unsigned char **data )
 {
     TRACE( "%p, %p, %p\n", pcap, hdr, data );
     return pcap_funcs->next_ex( pcap, hdr, data );
@@ -450,7 +450,8 @@ int CDECL wsockinit( void )
     return 0;
 }
 
-static void CDECL pcap_handler_cb( struct handler_callback *cb, const void *hdr, const unsigned char *packet )
+static void CDECL pcap_handler_cb( struct handler_callback *cb, const struct pcap_pkthdr_win32 *hdr,
+                                   const unsigned char *packet )
 {
     TRACE( "%p, %p, %p\n", cb, hdr, packet );
     cb->callback( cb->user, hdr, packet );
