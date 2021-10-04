@@ -1,7 +1,6 @@
 MODULE    = winedbg.exe
 IMPORTS   = dbghelp advapi32
-DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32
-EXTRALIBS = $(POLL_LIBS)
+DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32 ws2_32
 
 EXTRADLLFLAGS = -mconsole -mcygwin
 
