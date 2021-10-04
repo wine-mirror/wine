@@ -349,7 +349,8 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportBuffer = buffer;
             packet->reportBufferLen = io.Information;
 
-            if (polled || io.Information == desc->InputLength)
+            report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE );
+            if (polled || (report && report->InputLength == io.Information))
                 hid_device_queue_input( device, packet );
         }
 
