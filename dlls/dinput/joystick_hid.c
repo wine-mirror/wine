@@ -114,6 +114,7 @@ struct hid_joystick
 
     struct list effect_list;
     struct pid_control_report pid_device_control;
+    struct pid_control_report pid_effect_control;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -1587,6 +1588,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
                               DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct pid_control_report *device_control = &impl->pid_device_control;
+    struct pid_control_report *effect_control = &impl->pid_effect_control;
 
 #define SET_COLLECTION( rep )                                          \
     do                                                                 \
@@ -1610,7 +1612,10 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         switch (instance->wUsage)
         {
         case PID_USAGE_DEVICE_CONTROL_REPORT: SET_COLLECTION( device_control ); break;
+        case PID_USAGE_EFFECT_OPERATION_REPORT: SET_COLLECTION( effect_control ); break;
+
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
+        case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
         }
     }
 
@@ -1624,6 +1629,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
                            DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct pid_control_report *device_control = &impl->pid_device_control;
+    struct pid_control_report *effect_control = &impl->pid_effect_control;
 
     if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
@@ -1638,6 +1644,8 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
 
     if (instance->wCollectionNumber == device_control->control_coll)
         SET_REPORT_ID( device_control );
+    if (instance->wCollectionNumber == effect_control->control_coll)
+        SET_REPORT_ID( effect_control );
 
 #undef SET_REPORT_ID
 
@@ -1741,6 +1749,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
 
     TRACE( "device control id %u, coll %u, control coll %u\n", impl->pid_device_control.id,
            impl->pid_device_control.collection, impl->pid_device_control.control_coll );
+    TRACE( "effect control id %u, coll %u\n", impl->pid_effect_control.id, impl->pid_effect_control.collection );
 
     if (impl->pid_device_control.id)
     {
