@@ -1082,7 +1082,7 @@ dispinterfaceref:
 module:   tMODULE typename			{ $$ = type_module_declare($2); }
 	;
 
-moduledef: attributes module '{' int_statements '}' semicolon_opt
+moduledef: m_attributes module '{' int_statements '}' semicolon_opt
 						{ $$ = type_module_define($2, $1, $4); }
 	;
 
