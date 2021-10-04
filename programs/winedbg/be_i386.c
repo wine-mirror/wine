@@ -133,7 +133,6 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
                                              "DM", "ZM", "OM", "UM", "PM", "R-", "R+", "FZ" };
     const WOW64_CONTEXT *ctx = &pctx->x86;
     XSAVE_FORMAT *xmm_area;
-    long double ST[8];                         /* These are for floating regs */
     int         cnt;
 
     /* Break out the FPU state and the floating point registers    */
@@ -185,16 +184,12 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
 
     /* Now for the floating point registers */
     dbg_printf("Floating Point Registers:\n");
-    for (cnt = 0; cnt < 4; cnt++) 
+    for (cnt = 0; cnt < 8; cnt++)
     {
-        memcpy(&ST[cnt], &ctx->FloatSave.RegisterArea[cnt * 10], 10);
-        dbg_printf(" ST%d:%Lf ", cnt, ST[cnt]);
-    }
-    dbg_printf("\n");
-    for (cnt = 4; cnt < 8; cnt++) 
-    {
-        memcpy(&ST[cnt], &ctx->FloatSave.RegisterArea[cnt * 10], 10);
-        dbg_printf(" ST%d:%Lf ", cnt, ST[cnt]);
+        const BYTE *p = &ctx->FloatSave.RegisterArea[cnt * 10];
+        if (cnt == 4) dbg_printf("\n");
+        dbg_printf(" ST%d:%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x ", cnt,
+                   p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9] );
     }
 
     xmm_area = (XSAVE_FORMAT *) &ctx->ExtendedRegisters;
@@ -802,20 +797,17 @@ static BOOL be_i386_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size
     return TRUE;
 }
 
-static BOOL be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
-                                long double* ret)
+static BOOL be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
 {
-    char        tmp[sizeof(long double)];
+    char tmp[sizeof(double)];
 
     /* FIXME: this assumes that debuggee and debugger use the same 
      * representation for reals
      */
     if (!memory_read_value(lvalue, size, tmp)) return FALSE;
 
-    /* float & double types have to be promoted to a long double */
-    if (size == 4) *ret = *(float*)tmp;
-    else if (size == 8) *ret = *(double*)tmp;
-    else if (size == 10) *ret = *(long double*)tmp;
+    if (size == sizeof(float)) *ret = *(float*)tmp;
+    else if (size == sizeof(double)) *ret = *(double*)tmp;
     else return FALSE;
 
     return TRUE;

@@ -248,10 +248,9 @@ static BOOL be_arm64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned siz
     return TRUE;
 }
 
-static BOOL be_arm64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
-                                 long double* ret)
+static BOOL be_arm64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
 {
-    char tmp[sizeof(long double)];
+    char tmp[sizeof(double)];
 
     /* FIXME: this assumes that debuggee and debugger use the same
      * representation for reals
@@ -260,7 +259,6 @@ static BOOL be_arm64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 
     if (size == sizeof(float)) *ret = *(float*)tmp;
     else if (size == sizeof(double)) *ret = *(double*)tmp;
-    else if (size == sizeof(long double)) *ret = *(long double*)tmp;
     else return FALSE;
 
     return TRUE;

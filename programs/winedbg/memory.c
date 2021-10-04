@@ -350,7 +350,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
 {
     LONGLONG            val_int;
     void*               val_ptr;
-    long double         val_real;
+    double              val_real;
     DWORD64             size64;
     DWORD               tag, size, count, bt;
     struct dbg_type     type = lvalue->type;
@@ -385,7 +385,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             break;
         case btFloat:
             if (!dbg_curr_process->be_cpu->fetch_float(lvalue, size, &val_real)) return;
-            dbg_printf("%Lf", val_real);
+            dbg_printf("%f", val_real);
             break;
         case btChar:
         case btWChar:

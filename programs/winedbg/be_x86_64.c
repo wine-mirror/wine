@@ -73,14 +73,6 @@ static void be_x86_64_single_step(dbg_ctx_t *ctx, BOOL enable)
     else ctx->ctx.EFlags &= ~STEP_FLAG;
 }
 
-static inline long double m128a_to_longdouble(const M128A m)
-{
-    /* gcc uses the same IEEE-754 representation as M128A for long double
-     * but 16 byte aligned (hence only the first 10 bytes out of the 16 are used)
-     */
-    return *(long double*)&m;
-}
-
 static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
                                     int all_regs)
 {
@@ -154,14 +146,12 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
                ctx->u.FltSave.ErrorSelector, ctx->u.FltSave.ErrorOffset,
                ctx->u.FltSave.DataSelector, ctx->u.FltSave.DataOffset );
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < 8; i++)
     {
-        dbg_printf(" st%u:%-16Lg ", i, m128a_to_longdouble(ctx->u.FltSave.FloatRegisters[i]));
-    }
-    dbg_printf("\n");
-    for (i = 4; i < 8; i++)
-    {
-        dbg_printf(" st%u:%-16Lg ", i, m128a_to_longdouble(ctx->u.FltSave.FloatRegisters[i]));
+        M128A reg = ctx->u.FltSave.FloatRegisters[i];
+        if (i == 4) dbg_printf("\n");
+        dbg_printf(" ST%u:%08x%08x%08x%08x ", i,
+                   (DWORD)(reg.High >> 32), (DWORD)reg.High, (DWORD)(reg.Low >> 32), (DWORD)reg.Low );
     }
     dbg_printf("\n");
 
@@ -731,20 +721,17 @@ static BOOL be_x86_64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned si
     return TRUE;
 }
 
-static BOOL be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
-                                  long double* ret)
+static BOOL be_x86_64_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, double *ret)
 {
-    char        tmp[sizeof(long double)];
+    char tmp[sizeof(double)];
 
     /* FIXME: this assumes that debuggee and debugger use the same
      * representation for reals
      */
     if (!memory_read_value(lvalue, size, tmp)) return FALSE;
 
-    /* float & double types have to be promoted to a long double */
-    if (size == 4) *ret = *(float*)tmp;
-    else if (size == 8) *ret = *(double*)tmp;
-    else if (size == 10) *ret = *(long double*)tmp;
+    if (size == sizeof(float)) *ret = *(float*)tmp;
+    else if (size == sizeof(double)) *ret = *(double*)tmp;
     else return FALSE;
 
     return TRUE;

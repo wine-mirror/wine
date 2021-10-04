@@ -121,7 +121,7 @@ struct backend_cpu
     /* Reads an integer from memory and stores it inside a long long int */
     BOOL                (*fetch_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG*);
     /* Reads a real from memory and stores it inside a long double */
-    BOOL                (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, long double*);
+    BOOL                (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, double*);
     /* Writes an integer to memory */
     BOOL                (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG);
 
