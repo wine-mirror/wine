@@ -105,7 +105,7 @@
 #include "wine/debug.h"
 #include "wine/server.h"
 
-#include "nsiproxy_private.h"
+#include "unix_private.h"
 
 #ifndef HAVE_NETINET_TCP_FSM_H
 #define TCPS_ESTABLISHED  1

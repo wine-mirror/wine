@@ -91,7 +91,7 @@
 #include "wine/debug.h"
 #include "wine/unixlib.h"
 
-#include "nsiproxy_private.h"
+#include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 

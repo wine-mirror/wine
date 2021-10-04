@@ -1,5 +1,5 @@
 /*
- * nsiproxy.sys
+ * nsiproxy.sys unixlib private header
  *
  * Copyright 2021 Huw Davies
  *
