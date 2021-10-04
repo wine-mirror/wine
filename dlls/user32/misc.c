@@ -440,35 +440,6 @@ BOOL WINAPI UnregisterSuspendResumeNotification(HPOWERNOTIFY handle)
     return TRUE;
 }
 
-/*****************************************************************************
- * GetGestureConfig (USER32.@)
- */
-BOOL WINAPI GetGestureConfig( HWND hwnd, DWORD reserved, DWORD flags, UINT *count, GESTURECONFIG *config, UINT size )
-{
-    FIXME("(%p %08lx %08lx %p %p %u): stub\n", hwnd, reserved, flags, count, config, size);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/**********************************************************************
- * SetGestureConfig [USER32.@]
- */
-BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT id, PGESTURECONFIG config, UINT size )
-{
-    FIXME("(%p %08lx %u %p %u): stub\n", hwnd, reserved, id, config, size);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/**********************************************************************
- * IsTouchWindow [USER32.@]
- */
-BOOL WINAPI IsTouchWindow( HWND hwnd, PULONG flags )
-{
-    FIXME("(%p %p): stub\n", hwnd, flags);
-    return FALSE;
-}
-
 /**********************************************************************
  * IsWindowRedirectedForPrint [USER32.@]
  */

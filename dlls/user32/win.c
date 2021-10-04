@@ -1480,56 +1480,6 @@ LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 #endif /* _WIN64 */
 
 /*****************************************************************************
- *              RegisterTouchWindow (USER32.@)
- */
-BOOL WINAPI RegisterTouchWindow(HWND hwnd, ULONG flags)
-{
-    FIXME("(%p %08lx): stub\n", hwnd, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/*****************************************************************************
- *              UnregisterTouchWindow (USER32.@)
- */
-BOOL WINAPI UnregisterTouchWindow(HWND hwnd)
-{
-    FIXME("(%p): stub\n", hwnd);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/*****************************************************************************
- *              CloseTouchInputHandle (USER32.@)
- */
-BOOL WINAPI CloseTouchInputHandle(HTOUCHINPUT handle)
-{
-    FIXME("(%p): stub\n", handle);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/*****************************************************************************
- *              GetTouchInputInfo (USER32.@)
- */
-BOOL WINAPI GetTouchInputInfo(HTOUCHINPUT handle, UINT count, TOUCHINPUT *ptr, int size)
-{
-    FIXME("(%p %u %p %u): stub\n", handle, count, ptr, size);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/*****************************************************************************
- *              GetGestureInfo (USER32.@)
- */
-BOOL WINAPI GetGestureInfo(HGESTUREINFO handle, PGESTUREINFO ptr)
-{
-    FIXME("(%p %p): stub\n", handle, ptr);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/*****************************************************************************
  *              GetWindowDisplayAffinity (USER32.@)
  */
 BOOL WINAPI GetWindowDisplayAffinity(HWND hwnd, DWORD *affinity)
