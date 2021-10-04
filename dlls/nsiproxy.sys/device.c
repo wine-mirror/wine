@@ -33,6 +33,8 @@
 #include "wine/debug.h"
 #include "wine/unixlib.h"
 
+#include "nsiproxy_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
 static unixlib_handle_t nsiproxy_handle;
@@ -56,6 +58,7 @@ static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 
 enum unix_calls
 {
+    icmp_send_echo,
     nsi_enumerate_all_ex,
     nsi_get_all_parameters_ex,
     nsi_get_parameter_ex,
@@ -289,6 +292,36 @@ static int add_device( DRIVER_OBJECT *driver )
     return 1;
 }
 
+static void handle_queued_send_echo( IRP *irp )
+{
+    struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
+    struct nsiproxy_icmp_echo_reply *reply = (struct nsiproxy_icmp_echo_reply *)irp->AssociatedIrp.SystemBuffer;
+    struct icmp_send_echo_params params;
+    NTSTATUS status;
+
+    TRACE( "\n" );
+    params.request = in->data + ((in->opt_size + 3) & ~3);
+    params.request_size = in->req_size;
+    params.ttl = in->ttl;
+    params.tos = in->tos;
+    params.dst = &in->dst;
+
+    status = nsiproxy_call( icmp_send_echo, &params );
+    TRACE( "icmp_send_echo rets %08x\n", status );
+
+    if (1)
+    {
+        irp->IoStatus.Status = status;
+        if (status == STATUS_SUCCESS)
+        {
+            memset( reply, 0, sizeof(*reply) );
+            reply->status = params.ip_status;
+            irp->IoStatus.Information = sizeof(*reply);
+        }
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+}
+
 static DWORD WINAPI request_thread_proc( void *arg )
 {
     LIST_ENTRY *entry;
@@ -309,9 +342,7 @@ static DWORD WINAPI request_thread_proc( void *arg )
                 continue;
             }
 
-            /* FIXME */
-            irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
-            IoCompleteRequest( irp, IO_NO_INCREMENT );
+            handle_queued_send_echo( irp );
         }
         LeaveCriticalSection( &nsiproxy_cs );
     }

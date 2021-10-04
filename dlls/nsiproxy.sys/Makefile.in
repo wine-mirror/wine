@@ -7,6 +7,7 @@ EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	device.c \
+	icmp_echo.c \
 	ip.c \
 	ndis.c \
 	nsi.c \
