@@ -190,10 +190,12 @@ static void hid_queue_push_report( struct hid_queue *queue, struct hid_report *r
     KeAcquireSpinLock( &queue->lock, &irql );
     prev = queue->reports[i];
     queue->reports[i] = report;
-    if (next != queue->read_idx) queue->write_idx = next;
+    if (next == queue->read_idx) queue->read_idx = next + 1;
+    if (queue->read_idx >= queue->length) queue->read_idx = 0;
     KeReleaseSpinLock( &queue->lock, irql );
 
     hid_report_decref( prev );
+    queue->write_idx = next;
 }
 
 static struct hid_report *hid_queue_pop_report( struct hid_queue *queue )
