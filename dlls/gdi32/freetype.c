@@ -1277,13 +1277,11 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
 
         /* try to find another secondary name, preferring the lowest langids */
-        if (!RtlCompareUnicodeStrings( This->family_name, lstrlenW( This->family_name ),
-                                       This->second_name, lstrlenW( This->second_name ), TRUE ))
+        if (!wcsicmp( This->family_name, This->second_name ))
         {
             free( This->second_name );
             This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
-            if (!RtlCompareUnicodeStrings( This->family_name, lstrlenW( This->family_name ),
-                                           This->second_name, lstrlenW( This->second_name ), TRUE ))
+            if (!wcsicmp( This->family_name, This->second_name ))
             {
                 free( This->second_name );
                 This->second_name = NULL;
