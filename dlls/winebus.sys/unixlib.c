@@ -364,8 +364,8 @@ BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event)
     tmp = LIST_ENTRY(entry, struct bus_event, entry);
     list_remove(entry);
 
-    if (event->type != BUS_EVENT_TYPE_INPUT_REPORT) size = sizeof(*event);
-    else size = offsetof(struct bus_event, input_report.buffer[event->input_report.length]);
+    if (tmp->type != BUS_EVENT_TYPE_INPUT_REPORT) size = sizeof(*tmp);
+    else size = offsetof(struct bus_event, input_report.buffer[tmp->input_report.length]);
 
     memcpy(event, tmp, size);
     free(tmp);
