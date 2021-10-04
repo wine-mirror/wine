@@ -8631,7 +8631,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
     ID3D10Effect *pool = NULL;
     HRESULT hr;
 
-    FIXME("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p stub!\n",
+    TRACE("data %p, data_size %lu, flags %#x, device %p, effect_pool %p, effect %p.\n",
             data, data_size, flags, device, effect_pool, effect);
 
     if (!(flags & D3D10_EFFECT_COMPILE_CHILD_EFFECT) != !effect_pool)
