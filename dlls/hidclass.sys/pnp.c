@@ -114,6 +114,8 @@ static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param
     RAWINPUT rawinput;
     INPUT input;
 
+    if (!IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID )) return;
+
     rawinput.header.dwType = RIM_TYPEHID;
     rawinput.header.dwSize = offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]);
     rawinput.header.hDevice = ULongToHandle(ext->u.pdo.rawinput_handle);
