@@ -289,15 +289,30 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     hid_report_decref( last_report );
 }
 
+static HIDP_REPORT_IDS *find_report_with_type_and_id( BASE_DEVICE_EXTENSION *ext, BYTE type, BYTE id, BOOL any_id )
+{
+    HIDP_REPORT_IDS *report, *reports = ext->u.pdo.device_desc.ReportIDs;
+    ULONG report_count = ext->u.pdo.device_desc.ReportIDsLength;
+
+    for (report = reports; report != reports + report_count; report++)
+    {
+        if (!any_id && report->ReportID && report->ReportID != id) continue;
+        if (type == HidP_Input && report->InputLength) return report;
+        if (type == HidP_Output && report->OutputLength) return report;
+        if (type == HidP_Feature && report->FeatureLength) return report;
+    }
+
+    return NULL;
+}
+
 static DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
-    HIDP_REPORT_IDS *reports = ext->u.pdo.device_desc.ReportIDs;
-    ULONG report_count = ext->u.pdo.device_desc.ReportIDsLength;
     BOOL polled = ext->u.pdo.information.Polled;
-    ULONG i, report_id = 0, timeout = 0;
+    ULONG report_id = 0, timeout = 0;
+    HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
     IO_STATUS_BLOCK io;
     BYTE *buffer;
@@ -309,14 +324,9 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
     if (polled) timeout = ext->u.pdo.poll_interval;
 
-    for (i = 0; i < report_count; ++i)
-    {
-        if (!reports[i].ReportID || reports[i].InputLength)
-            break;
-    }
-
-    if (i == report_count) WARN("no input report found.\n");
-    else report_id = reports[i].ReportID;
+    report = find_report_with_type_and_id( ext, HidP_Input, 0, TRUE );
+    if (!report) WARN("no input report found.\n");
+    else report_id = report->ReportID;
 
     do
     {
@@ -414,10 +424,9 @@ static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, SHOR
 
 static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
 {
-    HIDP_REPORT_IDS *reports = ext->u.pdo.device_desc.ReportIDs;
-    ULONG report_count = ext->u.pdo.device_desc.ReportIDsLength;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
-    ULONG i, offset = 0, report_len = 0, buffer_len = 0;
+    ULONG offset = 0, report_len = 0, buffer_len = 0;
+    HIDP_REPORT_IDS *report = NULL;
     HID_XFER_PACKET packet;
     BYTE *buffer = NULL;
 
@@ -444,39 +453,32 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         return;
     }
 
-    for (i = 0; i < report_count; ++i)
-    {
-        if (!reports[i].ReportID || reports[i].ReportID == buffer[0])
-            break;
-    }
-    if (i == report_count)
-    {
-        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
-    if (!reports[i].ReportID) offset = 1;
-
     switch (code)
     {
     case IOCTL_HID_GET_INPUT_REPORT:
-        report_len = reports[i].InputLength;
+        report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE );
+        if (report) report_len = report->InputLength;
         break;
     case IOCTL_HID_SET_OUTPUT_REPORT:
     case IOCTL_HID_WRITE_REPORT:
-        report_len = reports[i].OutputLength;
+        report = find_report_with_type_and_id( ext, HidP_Output, buffer[0], FALSE );
+        if (report) report_len = report->OutputLength;
         break;
     case IOCTL_HID_GET_FEATURE:
     case IOCTL_HID_SET_FEATURE:
-        report_len = reports[i].FeatureLength;
+        report = find_report_with_type_and_id( ext, HidP_Feature, buffer[0], FALSE );
+        if (report) report_len = report->FeatureLength;
         break;
     }
-    if (buffer_len < report_len)
+
+    if (!report || buffer_len < report_len)
     {
         irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
         return;
     }
 
-    packet.reportId = reports[i].ReportID;
+    if (!report->ReportID) offset = 1;
+    packet.reportId = report->ReportID;
     packet.reportBuffer = buffer + offset;
 
     switch (code)
