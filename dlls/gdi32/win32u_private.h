@@ -395,4 +395,9 @@ static inline LONG win32u_wcstol( LPCWSTR s, LPWSTR *end, INT base )
 #define wcsrchr(s,c)    win32u_wcsrchr(s,c)
 #define wcstol(s,e,b)   win32u_wcstol(s,e,b)
 
+DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
+                     DWORD srclen ) DECLSPEC_HIDDEN;
+DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src,
+                     DWORD srclen ) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_WIN32U_PRIVATE */

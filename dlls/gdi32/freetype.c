@@ -602,7 +602,7 @@ static WCHAR *towstr(const char *str)
 {
     DWORD len = strlen(str) + 1;
     WCHAR *wstr = malloc( len * sizeof(WCHAR) );
-    RtlMultiByteToUnicodeN( wstr, len * sizeof(WCHAR), &len, str, len );
+    win32u_mbtowc( NULL, wstr, len * sizeof(WCHAR), str, len );
     return wstr;
 }
 
@@ -805,8 +805,8 @@ static WCHAR *copy_name_table_string( const FT_SfntName *name )
     case TT_PLATFORM_MACINTOSH:
         if (!(cp = get_mac_code_page( name ))) return NULL;
         ret = malloc( (name->string_len + 1) * sizeof(WCHAR) );
-        RtlCustomCPToUnicodeN( cp, ret, name->string_len * sizeof(WCHAR), &i,
-                               (char *)name->string, name->string_len );
+        i = win32u_mbtowc( cp, ret, name->string_len * sizeof(WCHAR),
+                           (char *)name->string, name->string_len );
         ret[i / sizeof(WCHAR)] = 0;
         return ret;
     }
@@ -1165,7 +1165,7 @@ static WCHAR *decode_opentype_name( struct opentype_name *name )
     {
         CPTABLEINFO *cptable = get_cptable( name->codepage );
         if (!cptable) return NULL;
-        RtlCustomCPToUnicodeN( cptable, buffer, sizeof(buffer), &len, name->bytes, name->length );
+        len = win32u_mbtowc( cptable, buffer, sizeof(buffer), name->bytes, name->length );
         len /= sizeof(WCHAR);
     }
 
@@ -2577,7 +2577,7 @@ static BOOL CDECL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, 
             DWORD len;
             char ch;
 
-            RtlUnicodeToMultiByteN( &ch, 1, &len, &wc, sizeof(wc) );
+            len = win32u_wctomb( NULL, &ch, 1, &wc, sizeof(wc) );
             if (len) *glyph = get_glyph_index_symbol( font, (unsigned char)ch );
         }
         return TRUE;
