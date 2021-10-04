@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -88,14 +89,7 @@ static const LOGBRUSH DkGrayBrush = { BS_SOLID, RGB(64,64,64), 0 };
 
 static const LOGBRUSH DCBrush = { BS_SOLID, RGB(255,255,255), 0 };
 
-static CRITICAL_SECTION gdi_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &gdi_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": gdi_section") }
-};
-static CRITICAL_SECTION gdi_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t gdi_lock;
 
 
 /****************************************************************************
@@ -469,9 +463,9 @@ void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
 {
     GDI_HANDLE_ENTRY *entry;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( handle ))) entry_obj( entry )->system = !!set;
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
 }
 
 /******************************************************************************
@@ -525,9 +519,9 @@ UINT GDI_get_ref_count( HGDIOBJ handle )
     GDI_HANDLE_ENTRY *entry;
     UINT ret = 0;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( handle ))) ret = entry_obj( entry )->selcount;
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
     return ret;
 }
 
@@ -541,10 +535,10 @@ HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle )
 {
     GDI_HANDLE_ENTRY *entry;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( handle ))) entry_obj( entry )->selcount++;
     else handle = 0;
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
     return handle;
 }
 
@@ -558,7 +552,7 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
 {
     GDI_HANDLE_ENTRY *entry;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( handle )))
     {
         assert( entry_obj( entry )->selcount );
@@ -566,13 +560,13 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
         {
             /* handle delayed DeleteObject*/
             entry_obj( entry )->deleted = 0;
-            LeaveCriticalSection( &gdi_section );
+            pthread_mutex_unlock( &gdi_lock );
             TRACE( "executing delayed DeleteObject for %p\n", handle );
             NtGdiDeleteObjectApp( handle );
             return TRUE;
         }
     }
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
     return entry != NULL;
 }
 
@@ -736,7 +730,7 @@ static void dump_gdi_objects( void )
 
     TRACE( "%u objects:\n", GDI_MAX_HANDLE_COUNT );
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     for (entry = gdi_shared->Handles; entry < next_unused; entry++)
     {
         if (!entry->Type)
@@ -747,7 +741,7 @@ static void dump_gdi_objects( void )
                    gdi_obj_type( entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT ),
                    entry_obj( entry )->selcount, entry_obj( entry )->deleted );
     }
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
 }
 
 /***********************************************************************
@@ -762,7 +756,7 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct g
 
     assert( type );  /* type 0 is reserved to mark free entries */
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
 
     entry = next_free;
     if (entry)
@@ -771,7 +765,7 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct g
         entry = next_unused++;
     else
     {
-        LeaveCriticalSection( &gdi_section );
+        pthread_mutex_unlock( &gdi_lock );
         ERR( "out of GDI object handles, expect a crash\n" );
         if (TRACE_ON(gdi)) dump_gdi_objects();
         return 0;
@@ -785,7 +779,7 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct g
     entry->Type    = entry->ExtType & 0x1f;
     if (++entry->Generation == 0xff) entry->Generation = 1;
     ret = entry_to_handle( entry );
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
     TRACE( "allocated %s %p %u/%u\n", gdi_obj_type(type), ret,
            InterlockedIncrement( &debug_count ), GDI_MAX_HANDLE_COUNT );
     return ret;
@@ -802,7 +796,7 @@ void *free_gdi_handle( HGDIOBJ handle )
     void *object = NULL;
     GDI_HANDLE_ENTRY *entry;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( handle )))
     {
         TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT ),
@@ -812,7 +806,7 @@ void *free_gdi_handle( HGDIOBJ handle )
         entry->Object = (UINT_PTR)next_free;
         next_free = entry;
     }
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
     return object;
 }
 
@@ -840,7 +834,7 @@ void *get_any_obj_ptr( HGDIOBJ handle, DWORD *type )
     void *ptr = NULL;
     GDI_HANDLE_ENTRY *entry;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
 
     if ((entry = handle_entry( handle )))
     {
@@ -848,7 +842,7 @@ void *get_any_obj_ptr( HGDIOBJ handle, DWORD *type )
         *type = entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT;
     }
 
-    if (!ptr) LeaveCriticalSection( &gdi_section );
+    if (!ptr) pthread_mutex_unlock( &gdi_lock );
     return ptr;
 }
 
@@ -877,20 +871,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, DWORD type )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    LeaveCriticalSection( &gdi_section );
-}
-
-
-/***********************************************************************
- *           GDI_CheckNotLock
- */
-void GDI_CheckNotLock(void)
-{
-    if (RtlIsCriticalSectionLockedByThread(&gdi_section))
-    {
-        ERR( "BUG: holding GDI lock\n" );
-        assert( 0 );
-    }
+    pthread_mutex_unlock( &gdi_lock );
 }
 
 
@@ -914,10 +895,10 @@ BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
     const struct gdi_obj_funcs *funcs = NULL;
     struct gdi_obj_header *header;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if (!(entry = handle_entry( obj )))
     {
-        LeaveCriticalSection( &gdi_section );
+        pthread_mutex_unlock( &gdi_lock );
         return FALSE;
     }
 
@@ -925,7 +906,7 @@ BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
     if (header->system)
     {
 	TRACE("Preserving system object %p\n", obj);
-        LeaveCriticalSection( &gdi_section );
+        pthread_mutex_unlock( &gdi_lock );
 	return TRUE;
     }
 
@@ -938,7 +919,7 @@ BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
     }
     else funcs = header->funcs;
 
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
 
     TRACE("%p\n", obj );
 
@@ -985,13 +966,13 @@ INT WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer )
 
     TRACE("%p %d %p\n", handle, count, buffer );
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( handle )))
     {
         funcs = entry_obj( entry )->funcs;
         handle = entry_to_handle( entry );  /* make it a full handle */
     }
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
 
     if (funcs && funcs->pGetObjectW)
     {
@@ -1040,13 +1021,13 @@ BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )
     const struct gdi_obj_funcs *funcs = NULL;
     GDI_HANDLE_ENTRY *entry;
 
-    EnterCriticalSection( &gdi_section );
+    pthread_mutex_lock( &gdi_lock );
     if ((entry = handle_entry( obj )))
     {
         funcs = entry_obj( entry )->funcs;
         obj = entry_to_handle( entry );  /* make it a full handle */
     }
-    LeaveCriticalSection( &gdi_section );
+    pthread_mutex_unlock( &gdi_lock );
 
     if (funcs && funcs->pUnrealizeObject) return funcs->pUnrealizeObject( obj );
     return funcs != NULL;
@@ -1271,9 +1252,15 @@ static struct unix_funcs unix_funcs =
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
+    pthread_mutexattr_t attr;
     unsigned int dpi;
 
     if (reason != DLL_PROCESS_ATTACH) return 0;
+
+    pthread_mutexattr_init( &attr );
+    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+    pthread_mutex_init( &gdi_lock, &attr );
+    pthread_mutexattr_destroy( &attr );
 
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
     init_gdi_shared();

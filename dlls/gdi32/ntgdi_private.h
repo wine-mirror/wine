@@ -373,7 +373,6 @@ extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, DWORD ) DECLSPEC_HIDDEN;
 extern void *get_any_obj_ptr( HGDIOBJ, DWORD * ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
-extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;

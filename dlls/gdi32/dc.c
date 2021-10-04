@@ -518,8 +518,6 @@ static BOOL DC_DeleteObject( HGDIOBJ handle )
 
     TRACE( "%p\n", handle );
 
-    GDI_CheckNotLock();
-
     if (!(dc = get_dc_ptr( handle ))) return FALSE;
     if (dc->refcount != 1)
     {
@@ -528,7 +526,8 @@ static BOOL DC_DeleteObject( HGDIOBJ handle )
         return FALSE;
     }
 
-    /* Call hook procedure to check whether is it OK to delete this DC */
+    /* Call hook procedure to check whether is it OK to delete this DC,
+     * gdi_lock should not be locked */
     if (dc->hookProc && !dc->hookProc( dc->hSelf, DCHC_DELETEDC, dc->dwHookData, 0 ))
     {
         release_dc_ptr( dc );
@@ -726,8 +725,7 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
     HDC hdc;
     DC * dc;
 
-    GDI_CheckNotLock();
-
+    /* gdi_lock should not be locked */
     if (is_display)
         funcs = get_display_driver();
     else if (hspool)
@@ -788,7 +786,7 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
     const struct gdi_dc_funcs *funcs;
     PHYSDEV physDev = NULL;
 
-    GDI_CheckNotLock();
+    /* gdi_lock should not be locked */
 
     if (hdc)
     {

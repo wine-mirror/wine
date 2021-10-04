@@ -747,7 +747,7 @@ static inline struct windrv_physdev *get_windrv_physdev( PHYSDEV dev )
 
 static inline void lock_surface( struct windrv_physdev *dev )
 {
-    GDI_CheckNotLock();
+    /* gdi_lock should not be locked */
     dev->surface->funcs->lock( dev->surface );
     if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = NtGetTickCount();
 }
