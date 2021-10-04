@@ -58,6 +58,7 @@ static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 
 enum unix_calls
 {
+    icmp_close,
     icmp_send_echo,
     nsi_enumerate_all_ex,
     nsi_get_all_parameters_ex,
@@ -309,7 +310,7 @@ static void handle_queued_send_echo( IRP *irp )
     status = nsiproxy_call( icmp_send_echo, &params );
     TRACE( "icmp_send_echo rets %08x\n", status );
 
-    if (1)
+    if (status != STATUS_PENDING)
     {
         irp->IoStatus.Status = status;
         if (status == STATUS_SUCCESS)
@@ -318,6 +319,13 @@ static void handle_queued_send_echo( IRP *irp )
             reply->status = params.ip_status;
             irp->IoStatus.Information = sizeof(*reply);
         }
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+    else
+    {
+        /* FIXME */
+        nsiproxy_call( icmp_close, params.handle );
+        irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
 }

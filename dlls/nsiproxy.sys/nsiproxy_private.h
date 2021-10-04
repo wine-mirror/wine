@@ -24,5 +24,6 @@ struct icmp_send_echo_params
     void *request;
     DWORD request_size;
     BYTE ttl, tos;
+    HANDLE handle;
     ULONG ip_status;
 };
