@@ -2043,8 +2043,6 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
         msg_data->rawinput = input->hw.rawinput;
 
         enum_processes( queue_rawinput_message, &raw_msg );
-
-        if (raw_msg.foreground) release_object( raw_msg.foreground );
         return;
     }
 
