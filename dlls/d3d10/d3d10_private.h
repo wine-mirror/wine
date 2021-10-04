@@ -124,6 +124,12 @@ struct d3d10_effect_shader_variable
     unsigned int isinline : 1;
 };
 
+struct d3d10_effect_sampler_desc
+{
+    D3D10_SAMPLER_DESC desc;
+    struct d3d10_effect_variable *texture;
+};
+
 struct d3d10_effect_state_object_variable
 {
     union
@@ -131,7 +137,7 @@ struct d3d10_effect_state_object_variable
         D3D10_RASTERIZER_DESC rasterizer;
         D3D10_DEPTH_STENCIL_DESC depth_stencil;
         D3D10_BLEND_DESC blend;
-        D3D10_SAMPLER_DESC sampler;
+        struct d3d10_effect_sampler_desc sampler;
     } desc;
     union
     {
