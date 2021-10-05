@@ -25,9 +25,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -90,8 +87,6 @@ static const struct keyword reserved_words[] = {
     {"VOID", TOKEN_VOID},
     {"WORD", TOKEN_WORD}
 };
-
-extern int getopt(int argc, char *const *argv, const char *optstring);
 
 static BOOL option_header;
 static char *option_inc_var_name = NULL;
@@ -419,50 +414,47 @@ static void usage(void)
                     program_name);
 }
 
-static char **parse_options(int argc, char **argv)
+static void option_callback( int optc, char *optarg )
 {
-    int optc;
-
-    while ((optc = getopt(argc, argv, "hHi:o:s:")) != -1)
+    switch (optc)
     {
-        switch (optc)
-        {
-            case 'h':
-                usage();
-                exit(0);
-            case 'H':
-                option_header = TRUE;
-                break;
-            case 'i':
-                option_header = TRUE;
-                option_inc_var_name = xstrdup(optarg);
-                break;
-            case 'o':
-                option_outfile_name = xstrdup(optarg);
-                break;
-            case 's':
-                option_inc_size_name = xstrdup(optarg);
-                break;
-        }
+    case 'h':
+        usage();
+        exit(0);
+    case 'H':
+        option_header = TRUE;
+        break;
+    case 'i':
+        option_header = TRUE;
+        option_inc_var_name = xstrdup(optarg);
+        break;
+    case 'o':
+        option_outfile_name = xstrdup(optarg);
+        break;
+    case 's':
+        option_inc_size_name = xstrdup(optarg);
+        break;
+    case '?':
+        fprintf( stderr, "%s: %s\n", program_name, optarg );
+        exit(1);
     }
-    return &argv[optind];
 }
 
 int main(int argc, char **argv)
 {
     char header[16];
-    char **args;
+    struct strarray args;
     char *header_name = NULL;
 
     program_name = argv[0];
 
-    args = parse_options(argc, argv);
-    infile_name = *args++;
-    if (!infile_name || *args)
+    args = parse_options(argc, argv, "hHi:o:s:", NULL, 0, option_callback );
+    if (!args.count)
     {
         usage();
         return 1;
     }
+    infile_name = args.str[0];
 
     infile = stdin;
     outfile = NULL;
