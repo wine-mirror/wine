@@ -125,9 +125,9 @@ static const struct device_desc mouse_device_desc =
     .vid = 0x845e,
     .pid = 0x0001,
     .input = -1,
-    .manufacturer = {"The Wine Project"},
-    .product = {"Wine HID mouse"},
-    .serialnumber = {"0000"},
+    .manufacturer = {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0},
+    .product = {'W','i','n','e',' ','H','I','D',' ','m','o','u','s','e',0},
+    .serialnumber = {'0','0','0','0',0},
 };
 
 static NTSTATUS mouse_device_create(void *args)
@@ -202,9 +202,9 @@ static const struct device_desc keyboard_device_desc =
     .vid = 0x845e,
     .pid = 0x0002,
     .input = -1,
-    .manufacturer = {"The Wine Project"},
-    .product = {"Wine HID keyboard"},
-    .serialnumber = {"0000"},
+    .manufacturer = {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0},
+    .product = {'W','i','n','e',' ','H','I','D',' ','k','e','y','b','o','a','r','d',0},
+    .serialnumber = {'0','0','0','0',0},
 };
 
 static NTSTATUS keyboard_device_create(void *args)

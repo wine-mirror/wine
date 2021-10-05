@@ -130,6 +130,13 @@ static struct iohid_device *find_device_from_iohid(IOHIDDeviceRef IOHIDDevice)
     return NULL;
 }
 
+static void CFStringToWSTR(CFStringRef cstr, LPWSTR wstr, int length)
+{
+    int len = min(CFStringGetLength(cstr), length - 1);
+    CFStringGetCharacters(cstr, CFRangeMake(0, len), (UniChar*)wstr);
+    wstr[len] = 0;
+}
+
 static DWORD CFNumberToDWORD(CFNumberRef num)
 {
     int dwNum = 0;
@@ -265,10 +272,10 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     struct device_desc desc =
     {
         .input = -1,
-        .serialnumber = {"0000"},
+        .serialnumber = {'0','0','0','0',0},
     };
     struct iohid_device *impl;
-    CFStringRef str = NULL;
+    CFStringRef str;
 
     desc.vid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVendorIDKey)));
     desc.pid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductIDKey)));
@@ -283,11 +290,11 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     IOHIDDeviceScheduleWithRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDManufacturerKey));
-    if (str) lstrcpynA(desc.manufacturer, str, sizeof(desc.manufacturer));
+    if (str) CFStringToWSTR(str, desc.manufacturer, ARRAY_SIZE(desc.manufacturer));
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductKey));
-    if (str) lstrcpynA(desc.product, str, sizeof(desc.product));
+    if (str) CFStringToWSTR(str, desc.product, ARRAY_SIZE(desc.product));
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDSerialNumberKey));
-    if (str) lstrcpynA(desc.serialnumber, str, sizeof(desc.serialnumber));
+    if (str) CFStringToWSTR(str, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
 
     if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
        IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))

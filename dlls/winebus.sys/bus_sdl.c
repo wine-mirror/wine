@@ -51,6 +51,7 @@
 
 #include "wine/debug.h"
 #include "wine/hid.h"
+#include "wine/unixlib.h"
 
 #include "unix_private.h"
 
@@ -693,8 +694,8 @@ static void sdl_add_device(unsigned int index)
     struct device_desc desc =
     {
         .input = -1,
-        .manufacturer = {"SDL"},
-        .serialnumber = {"0000"},
+        .manufacturer = {'S','D','L',0},
+        .serialnumber = {'0','0','0','0',0},
     };
     struct sdl_device *impl;
 
@@ -702,6 +703,8 @@ static void sdl_add_device(unsigned int index)
     SDL_JoystickID id;
     SDL_JoystickGUID guid;
     SDL_GameController *controller = NULL;
+    const char *str;
+    char guid_str[33];
 
     if ((joystick = pSDL_JoystickOpen(index)) == NULL)
     {
@@ -712,8 +715,9 @@ static void sdl_add_device(unsigned int index)
     if (options.map_controllers && pSDL_IsGameController(index))
         controller = pSDL_GameControllerOpen(index);
 
-    if (controller) lstrcpynA(desc.product, pSDL_GameControllerName(controller), sizeof(desc.product));
-    else lstrcpynA(desc.product, pSDL_JoystickName(joystick), sizeof(desc.product));
+    if (controller) str = pSDL_GameControllerName(controller);
+    else str = pSDL_JoystickName(joystick);
+    if (str) ntdll_umbstowcs(str, strlen(str) + 1, desc.product, ARRAY_SIZE(desc.product));
 
     id = pSDL_JoystickInstanceID(joystick);
 
@@ -730,7 +734,8 @@ static void sdl_add_device(unsigned int index)
     }
 
     guid = pSDL_JoystickGetGUID(joystick);
-    pSDL_JoystickGetGUIDString(guid, desc.serialnumber, sizeof(desc.serialnumber));
+    pSDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
+    ntdll_umbstowcs(guid_str, strlen(guid_str) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
 
     if (controller) desc.is_gamepad = TRUE;
     else

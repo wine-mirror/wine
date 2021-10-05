@@ -73,6 +73,7 @@
 
 #include "wine/debug.h"
 #include "wine/hid.h"
+#include "wine/unixlib.h"
 
 #ifdef HAS_PROPER_INPUT_HEADER
 # include "hidusage.h"
@@ -1061,8 +1062,10 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 
             if (!strncmp(ptr, "HID_UNIQ=", 9))
             {
+                char buffer[MAX_PATH];
                 if (desc->serialnumber[0]) continue;
-                sscanf(ptr, "HID_UNIQ=%256s\n", desc->serialnumber);
+                if (sscanf(ptr, "HID_UNIQ=%256s\n", buffer) == 1)
+                    ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
             }
             if (!strncmp(ptr, "HID_PHYS=", 9) || !strncmp(ptr, "PHYS=\"", 6))
             {
@@ -1086,13 +1089,13 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
     }
 
     if (!desc->manufacturer[0] && (tmp = udev_device_get_sysattr_value(dev, "manufacturer")))
-        lstrcpynA(desc->manufacturer, tmp, sizeof(desc->manufacturer));
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->manufacturer, ARRAY_SIZE(desc->manufacturer));
 
     if (!desc->product[0] && (tmp = udev_device_get_sysattr_value(dev, "product")))
-        lstrcpynA(desc->product, tmp, sizeof(desc->product));
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
 
     if (!desc->serialnumber[0] && (tmp = udev_device_get_sysattr_value(dev, "serial")))
-        lstrcpynA(desc->serialnumber, tmp, sizeof(desc->serialnumber));
+        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
 }
 
 static void udev_add_device(struct udev_device *dev)
@@ -1133,17 +1136,22 @@ static void udev_add_device(struct udev_device *dev)
     subsystem = udev_device_get_subsystem(dev);
     if (!strcmp(subsystem, "hidraw"))
     {
-        if (!desc.manufacturer[0]) strcpy(desc.manufacturer, "hidraw");
+        static const WCHAR hidraw[] = {'h','i','d','r','a','w',0};
+        char product[MAX_PATH];
+
+        if (!desc.manufacturer[0]) memcpy(desc.manufacturer, hidraw, sizeof(hidraw));
 
 #ifdef HAVE_LINUX_HIDRAW_H
-        if (!desc.product[0] && ioctl(fd, HIDIOCGRAWNAME(sizeof(desc.product) - 1), desc.product) < 0)
-            desc.product[0] = 0;
+        if (!desc.product[0] && ioctl(fd, HIDIOCGRAWNAME(sizeof(product) - 1), product) >= 0)
+            ntdll_umbstowcs(product, strlen(product) + 1, desc.product, ARRAY_SIZE(desc.product));
 #endif
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (!strcmp(subsystem, "input"))
     {
+        static const WCHAR evdev[] = {'e','v','d','e','v',0};
         struct input_id device_id = {0};
+        char buffer[MAX_PATH];
 
         if (ioctl(fd, EVIOCGID, &device_id) < 0)
             WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
@@ -1154,17 +1162,21 @@ static void udev_add_device(struct udev_device *dev)
             desc.version = device_id.version;
         }
 
-        if (!desc.manufacturer[0]) strcpy(desc.manufacturer, "evdev");
+        if (!desc.manufacturer[0]) memcpy(desc.manufacturer, evdev, sizeof(evdev));
 
-        if (!desc.product[0] && ioctl(fd, EVIOCGNAME(sizeof(desc.product) - 1), desc.product) <= 0)
-            desc.product[0] = 0;
+        if (!desc.product[0] && ioctl(fd, EVIOCGNAME(sizeof(buffer) - 1), buffer) > 0)
+            ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
 
-        if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(desc.serialnumber)), desc.serialnumber) < 0)
-            desc.serialnumber[0] = 0;
+        if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(buffer)), buffer) >= 0)
+            ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
     }
 #endif
 
-    if (!desc.serialnumber[0]) strcpy(desc.serialnumber, "0000");
+    if (!desc.serialnumber[0])
+    {
+        static const WCHAR zeros[] = {'0','0','0','0',0};
+        memcpy(desc.serialnumber, zeros, sizeof(zeros));
+    }
 
     if (is_xbox_gamepad(desc.vid, desc.pid))
         desc.is_gamepad = TRUE;

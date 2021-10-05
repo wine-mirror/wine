@@ -70,10 +70,6 @@ struct device_extension
     struct device_desc desc;
     DWORD index;
 
-    WCHAR manufacturer[MAX_PATH];
-    WCHAR product[MAX_PATH];
-    WCHAR serialnumber[MAX_PATH];
-
     BYTE *last_report;
     DWORD last_report_size;
     BOOL last_report_read;
@@ -180,11 +176,11 @@ static DWORD get_device_index(struct device_desc *desc)
 static WCHAR *get_instance_id(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    DWORD len = wcslen(ext->serialnumber) + 33;
+    DWORD len = wcslen(ext->desc.serialnumber) + 33;
     WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
-        swprintf(dst, len, L"%i&%s&%x&%i", ext->desc.version, ext->serialnumber, ext->desc.uid, ext->index);
+        swprintf(dst, len, L"%i&%s&%x&%i", ext->desc.version, ext->desc.serialnumber, ext->desc.uid, ext->index);
 
     return dst;
 }
@@ -298,10 +294,6 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
     ext->last_report_read   = TRUE;
     ext->buffer_size        = 0;
     ext->unix_device        = unix_device;
-
-    MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.manufacturer, -1, ext->manufacturer, MAX_PATH);
-    MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.product, -1, ext->product, MAX_PATH);
-    MultiByteToWideChar(CP_UNIXCP, 0, ext->desc.serialnumber, -1, ext->serialnumber, MAX_PATH);
 
     InitializeListHead(&ext->irp_queue);
     InitializeCriticalSection(&ext->cs);
@@ -894,19 +886,19 @@ static NTSTATUS hid_get_device_string(DEVICE_OBJECT *device, DWORD index, WCHAR 
     switch (index)
     {
     case HID_STRING_ID_IMANUFACTURER:
-        len = (wcslen(ext->manufacturer) + 1) * sizeof(WCHAR);
+        len = (wcslen(ext->desc.manufacturer) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
-        else memcpy(buffer, ext->manufacturer, len);
+        else memcpy(buffer, ext->desc.manufacturer, len);
         return STATUS_SUCCESS;
     case HID_STRING_ID_IPRODUCT:
-        len = (wcslen(ext->product) + 1) * sizeof(WCHAR);
+        len = (wcslen(ext->desc.product) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
-        else memcpy(buffer, ext->product, len);
+        else memcpy(buffer, ext->desc.product, len);
         return STATUS_SUCCESS;
     case HID_STRING_ID_ISERIALNUMBER:
-        len = (wcslen(ext->serialnumber) + 1) * sizeof(WCHAR);
+        len = (wcslen(ext->desc.serialnumber) + 1) * sizeof(WCHAR);
         if (len > buffer_len) return STATUS_BUFFER_TOO_SMALL;
-        else memcpy(buffer, ext->serialnumber, len);
+        else memcpy(buffer, ext->desc.serialnumber, len);
         return STATUS_SUCCESS;
     }
 
