@@ -106,6 +106,7 @@ MAKE_FUNCPTR(SDL_HapticSetGain);
 MAKE_FUNCPTR(SDL_HapticStopAll);
 MAKE_FUNCPTR(SDL_HapticStopEffect);
 MAKE_FUNCPTR(SDL_HapticUnpause);
+MAKE_FUNCPTR(SDL_HapticUpdateEffect);
 MAKE_FUNCPTR(SDL_JoystickIsHaptic);
 MAKE_FUNCPTR(SDL_GameControllerAddMapping);
 MAKE_FUNCPTR(SDL_RegisterEvents);
@@ -478,12 +479,99 @@ static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BY
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_effect_type_from_usage(SDL_HapticEffect *effect, USAGE type)
+{
+    switch (type)
+    {
+    case PID_USAGE_ET_SINE:
+        effect->type = SDL_HAPTIC_SINE;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_TRIANGLE:
+        effect->type = SDL_HAPTIC_TRIANGLE;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SAWTOOTH_UP:
+        effect->type = SDL_HAPTIC_SAWTOOTHUP;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SAWTOOTH_DOWN:
+        effect->type = SDL_HAPTIC_SAWTOOTHDOWN;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SPRING:
+        effect->type = SDL_HAPTIC_SPRING;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_DAMPER:
+        effect->type = SDL_HAPTIC_DAMPER;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_INERTIA:
+        effect->type = SDL_HAPTIC_INERTIA;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_FRICTION:
+        effect->type = SDL_HAPTIC_FRICTION;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_CONSTANT_FORCE:
+        effect->type = SDL_HAPTIC_CONSTANT;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_RAMP:
+        effect->type = SDL_HAPTIC_RAMP;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+        effect->type = SDL_HAPTIC_CUSTOM;
+        return STATUS_SUCCESS;
+    default:
+        return STATUS_NOT_SUPPORTED;
+    }
+}
+
 static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYTE index,
                                                   struct effect_params *params)
 {
-    FIXME("iface %p, index %u, params %p stub!\n", iface, index, params);
+    struct sdl_device *impl = impl_from_unix_device(iface);
+    int id = impl->effect_ids[index];
+    SDL_HapticEffect effect = {0};
+    NTSTATUS status;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, index %u, params %p.\n", iface, index, params);
+
+    if ((status = set_effect_type_from_usage(&effect, params->effect_type))) return status;
+
+    switch (params->effect_type)
+    {
+    case PID_USAGE_ET_SINE:
+    case PID_USAGE_ET_SQUARE:
+    case PID_USAGE_ET_TRIANGLE:
+    case PID_USAGE_ET_SAWTOOTH_UP:
+    case PID_USAGE_ET_SAWTOOTH_DOWN:
+        FIXME("periodic effect semi-stub!");
+        effect.periodic.length = params->duration;
+        effect.periodic.delay = params->start_delay;
+        effect.periodic.button = params->trigger_button;
+        effect.periodic.interval = params->trigger_repeat_interval;
+        effect.periodic.direction.type = SDL_HAPTIC_SPHERICAL;
+        effect.periodic.direction.dir[0] = params->direction[0] * 36000 / 256;
+        effect.periodic.direction.dir[1] = params->direction[1] * 36000 / 256;
+        break;
+
+    case PID_USAGE_ET_SPRING:
+    case PID_USAGE_ET_DAMPER:
+    case PID_USAGE_ET_INERTIA:
+    case PID_USAGE_ET_FRICTION:
+        FIXME("not implemented!");
+        break;
+
+    case PID_USAGE_ET_CONSTANT_FORCE:
+        FIXME("not implemented!");
+        break;
+    case PID_USAGE_ET_RAMP:
+        FIXME("not implemented!");
+        break;
+    case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+        FIXME("not implemented!");
+        break;
+    }
+
+    if (id < 0) impl->effect_ids[index] = pSDL_HapticNewEffect(impl->sdl_haptic, &effect);
+    else pSDL_HapticUpdateEffect(impl->sdl_haptic, id, &effect);
+
+    return STATUS_SUCCESS;
 }
 
 static const struct hid_device_vtbl sdl_device_vtbl =
@@ -758,6 +846,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticStopAll);
     LOAD_FUNCPTR(SDL_HapticStopEffect);
     LOAD_FUNCPTR(SDL_HapticUnpause);
+    LOAD_FUNCPTR(SDL_HapticUpdateEffect);
     LOAD_FUNCPTR(SDL_JoystickIsHaptic);
     LOAD_FUNCPTR(SDL_GameControllerAddMapping);
     LOAD_FUNCPTR(SDL_RegisterEvents);
