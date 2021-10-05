@@ -25,9 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
 
 #include "wmc.h"
 #include "utils.h"
@@ -107,7 +104,7 @@ static int dodebug = 0;
 static char *po_dir;
 
 char *output_name = NULL;	/* The name given by the -o option */
-char *input_name = NULL;	/* The name given on the command-line */
+const char *input_name = NULL;	/* The name given on the command-line */
 char *header_name = NULL;	/* The name given by the -H option */
 
 const char *nlsdirs[3] = { NULL, NLSDIR, NULL };
@@ -136,15 +133,16 @@ enum long_options_values
 };
 
 static const char short_options[] = "B:cdDhH:io:O:P:uUvVW";
-static const struct option long_options[] =
+static const struct long_option long_options[] =
 {
-	{ "help", 0, NULL, 'h' },
-	{ "nls-dir", 1, NULL, LONG_OPT_NLS_DIR },
-	{ "output", 1, NULL, 'o' },
-	{ "output-format", 1, NULL, 'O' },
-	{ "pedantic", 0, NULL, 'W' },
-	{ "po-dir", 1, NULL, 'P' },
-	{ "version", 0, NULL, 'v' }
+	{ "help", 0, 'h' },
+	{ "nls-dir", 1, LONG_OPT_NLS_DIR },
+	{ "output", 1, 'o' },
+	{ "output-format", 1, 'O' },
+	{ "pedantic", 0, 'W' },
+	{ "po-dir", 1, 'P' },
+	{ "version", 0, 'v' },
+        { NULL }
 };
 
 static void segvhandler(int sig);
@@ -179,14 +177,91 @@ static void init_argv0_dir( const char *argv0 )
 #endif
 }
 
+static void option_callback( int optc, char *optarg )
+{
+    switch(optc)
+    {
+    case 'B':
+        switch(optarg[0])
+        {
+        case 'n':
+        case 'N':
+            byteorder = WMC_BO_NATIVE;
+            break;
+        case 'l':
+        case 'L':
+            byteorder = WMC_BO_LITTLE;
+            break;
+        case 'b':
+        case 'B':
+            byteorder = WMC_BO_BIG;
+            break;
+        default:
+            error("Byteordering must be n[ative], l[ittle] or b[ig]\n");
+        }
+        break;
+    case 'c':
+        custombit = 1;
+        break;
+    case 'd':
+        decimal = 1;
+        break;
+    case 'D':
+        dodebug = 1;
+        break;
+    case 'h':
+        printf("%s", usage);
+        exit(0);
+        /* No return */
+    case 'H':
+        header_name = xstrdup(optarg);
+        break;
+    case 'i':
+        rcinline = 1;
+        break;
+    case 'o':
+        output_name = xstrdup(optarg);
+        break;
+    case 'O':
+        if (!strcmp( optarg, "rc" )) output_format = FORMAT_RC;
+        else if (!strcmp( optarg, "res" )) output_format = FORMAT_RES;
+        else if (!strcmp( optarg, "pot" )) output_format = FORMAT_POT;
+        else error("Output format must be rc or res\n" );
+        break;
+    case 'P':
+        po_dir = xstrdup( optarg );
+        break;
+    case 'u':
+        unicodein = 1;
+        break;
+    case 'U':  /* ignored for backwards compatibility */
+        break;
+    case 'v':
+        show_languages();
+        exit(0);
+        /* No return */
+    case 'V':
+        printf(version_string);
+        exit(0);
+        /* No return */
+    case 'W':
+        pedantic = 1;
+        break;
+    case LONG_OPT_NLS_DIR:
+        nlsdirs[0] = xstrdup( optarg );
+        break;
+    case '?':
+        fprintf(stderr, "wmc: %s\n\n%s", optarg, usage);
+        exit(1);
+    }
+}
+
 int main(int argc,char *argv[])
 {
-	int optc;
-	int opti = 0;
-	int lose = 0;
 	int ret;
 	int i;
 	int cmdlen;
+        struct strarray files;
 
 	atexit( cleanup_files );
 	signal(SIGSEGV, segvhandler);
@@ -211,95 +286,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF)
-	{
-		switch(optc)
-		{
-		case 'B':
-			switch(optarg[0])
-			{
-			case 'n':
-			case 'N':
-				byteorder = WMC_BO_NATIVE;
-				break;
-			case 'l':
-			case 'L':
-				byteorder = WMC_BO_LITTLE;
-				break;
-			case 'b':
-			case 'B':
-				byteorder = WMC_BO_BIG;
-				break;
-			default:
-				fprintf(stderr, "Byteordering must be n[ative], l[ittle] or b[ig]\n");
-				lose++;
-			}
-			break;
-		case 'c':
-			custombit = 1;
-			break;
-		case 'd':
-			decimal = 1;
-			break;
-		case 'D':
-			dodebug = 1;
-			break;
-		case 'h':
-			printf("%s", usage);
-			exit(0);
-			/* No return */
-		case 'H':
-			header_name = xstrdup(optarg);
-			break;
-		case 'i':
-			rcinline = 1;
-			break;
-		case 'o':
-			output_name = xstrdup(optarg);
-			break;
-		case 'O':
-			if (!strcmp( optarg, "rc" )) output_format = FORMAT_RC;
-			else if (!strcmp( optarg, "res" )) output_format = FORMAT_RES;
-			else if (!strcmp( optarg, "pot" )) output_format = FORMAT_POT;
-			else
-                        {
-                            fprintf(stderr, "Output format must be rc or res\n" );
-                            lose++;
-                        }
-                        break;
-		case 'P':
-			po_dir = xstrdup( optarg );
-                        break;
-		case 'u':
-			unicodein = 1;
-			break;
-		case 'U':  /* ignored for backwards compatibility */
-			break;
-		case 'v':
-			show_languages();
-			exit(0);
-			/* No return */
-		case 'V':
-			printf(version_string);
-			exit(0);
-			/* No return */
-		case 'W':
-			pedantic = 1;
-			break;
-		case LONG_OPT_NLS_DIR:
-			nlsdirs[0] = xstrdup( optarg );
-			break;
-		default:
-			lose++;
-			break;
-		}
-	}
-
-	if(lose)
-	{
-		fprintf(stderr, "%s", usage);
-		return 1;
-	}
+        files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
 
 	mcy_debug = dodebug;
 	if(dodebug)
@@ -309,10 +296,7 @@ int main(int argc,char *argv[])
 	}
 
 	/* Check for input file on command-line */
-	if(optind < argc)
-	{
-		input_name = argv[optind];
-	}
+        if (files.count) input_name = files.str[0];
 
         /* Guess output format */
         if (output_format == FORMAT_UNKNOWN)
