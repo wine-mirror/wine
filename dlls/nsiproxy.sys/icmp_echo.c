@@ -297,6 +297,30 @@ static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int recvd,
 static int ipv4_parse_icmp_hdr_( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_size,
                                  struct nsiproxy_icmp_echo_reply *reply, int ping_socket )
 {
+    static const IP_STATUS unreach_codes[] =
+    {
+        IP_DEST_NET_UNREACHABLE,  /* ICMP_UNREACH_NET */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_HOST */
+        IP_DEST_PROT_UNREACHABLE, /* ICMP_UNREACH_PROTOCOL */
+        IP_DEST_PORT_UNREACHABLE, /* ICMP_UNREACH_PORT */
+        IP_PACKET_TOO_BIG,        /* ICMP_UNREACH_NEEDFRAG */
+        IP_BAD_ROUTE,             /* ICMP_UNREACH_SRCFAIL */
+        IP_DEST_NET_UNREACHABLE,  /* ICMP_UNREACH_NET_UNKNOWN */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_HOST_UNKNOWN */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_ISOLATED */
+        IP_DEST_NET_UNREACHABLE,  /* ICMP_UNREACH_NET_PROHIB */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_HOST_PROHIB */
+        IP_DEST_NET_UNREACHABLE,  /* ICMP_UNREACH_TOSNET */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_TOSHOST */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_FILTER_PROHIB */
+        IP_DEST_HOST_UNREACHABLE, /* ICMP_UNREACH_HOST_PRECEDENCE */
+        IP_DEST_HOST_UNREACHABLE  /* ICMP_UNREACH_PRECEDENCE_CUTOFF */
+    };
+    const struct ip_hdr *orig_ip_hdr;
+    const struct icmp_hdr *orig_icmp_hdr;
+    int orig_ip_hdr_len;
+    IP_STATUS status;
+
     switch (icmp->type)
     {
     case ICMP4_ECHO_REPLY:
@@ -306,11 +330,48 @@ static int ipv4_parse_icmp_hdr_( struct icmp_data *data, struct icmp_hdr *icmp, 
         reply->status = IP_SUCCESS;
         return icmp_size - sizeof(*icmp);
 
-    /* FIXME: handle other icmp messages */
+    case ICMP4_DST_UNREACH:
+        if (icmp->code < ARRAY_SIZE(unreach_codes))
+            status = unreach_codes[icmp->code];
+        else
+            status = IP_DEST_HOST_UNREACHABLE;
+        break;
+
+    case ICMP4_TIME_EXCEEDED:
+        if (icmp->code == 1) /* ICMP_TIMXCEED_REASS */
+            status = IP_TTL_EXPIRED_REASSEM;
+        else
+            status = IP_TTL_EXPIRED_TRANSIT;
+        break;
+
+    case ICMP4_PARAM_PROB:
+        status = IP_PARAM_PROBLEM;
+        break;
+
+    case ICMP4_SOURCE_QUENCH:
+        status = IP_SOURCE_QUENCH;
+        break;
 
     default:
         return -1;
     }
+
+    /* Check that the appended packet is really ours -
+     * all handled icmp replies have an 8-byte header
+     * followed by the original ip hdr. */
+    if (icmp_size < sizeof(*icmp) + sizeof(*orig_ip_hdr)) return -1;
+    orig_ip_hdr = (struct ip_hdr *)(icmp + 1);
+    if (orig_ip_hdr->v_hl >> 4 != 4 || orig_ip_hdr->protocol != IPPROTO_ICMP) return -1;
+    orig_ip_hdr_len = (orig_ip_hdr->v_hl & 0xf) << 2;
+    if (icmp_size < sizeof(*icmp) + orig_ip_hdr_len + sizeof(*orig_icmp_hdr)) return -1;
+    orig_icmp_hdr = (const struct icmp_hdr *)((const BYTE *)orig_ip_hdr + orig_ip_hdr_len);
+    if (orig_icmp_hdr->type != ICMP4_ECHO_REQUEST ||
+        orig_icmp_hdr->code != 0 ||
+        (!ping_socket && orig_icmp_hdr->un.echo.id != data->id) ||
+        orig_icmp_hdr->un.echo.sequence != data->seq) return -1;
+
+    reply->status = status;
+    return 0;
 }
 
 static int ipv4_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_size,
