@@ -924,12 +924,111 @@ static NTSTATUS lnxev_device_physical_effect_control(struct unix_device *iface, 
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_effect_type_from_usage(struct ff_effect *effect, USAGE type)
+{
+    switch (type)
+    {
+    case PID_USAGE_ET_SINE:
+        effect->type = FF_PERIODIC;
+        effect->u.periodic.waveform = FF_SINE;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SQUARE:
+        effect->type = FF_PERIODIC;
+        effect->u.periodic.waveform = FF_SQUARE;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_TRIANGLE:
+        effect->type = FF_PERIODIC;
+        effect->u.periodic.waveform = FF_TRIANGLE;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SAWTOOTH_UP:
+        effect->type = FF_PERIODIC;
+        effect->u.periodic.waveform = FF_SAW_UP;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SAWTOOTH_DOWN:
+        effect->type = FF_PERIODIC;
+        effect->u.periodic.waveform = FF_SAW_DOWN;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_SPRING:
+        effect->type = FF_SPRING;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_DAMPER:
+        effect->type = FF_DAMPER;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_INERTIA:
+        effect->type = FF_INERTIA;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_FRICTION:
+        effect->type = FF_FRICTION;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_CONSTANT_FORCE:
+        effect->type = FF_CONSTANT;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_RAMP:
+        effect->type = FF_RAMP;
+        return STATUS_SUCCESS;
+    case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+        effect->type = FF_CUSTOM;
+        return STATUS_SUCCESS;
+    default:
+        return STATUS_NOT_SUPPORTED;
+    }
+}
+
 static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, BYTE index,
                                                     struct effect_params *params)
 {
-    FIXME("iface %p, index %u, params %p stub!\n", iface, index, params);
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+    struct ff_effect effect = {.id = impl->effect_ids[index]};
+    NTSTATUS status;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("iface %p, index %u, params %p.\n", iface, index, params);
+
+    if ((status = set_effect_type_from_usage(&effect, params->effect_type))) return status;
+
+    effect.replay.length = params->duration;
+    effect.replay.delay = params->start_delay;
+    effect.trigger.button = params->trigger_button;
+    effect.trigger.interval = params->trigger_repeat_interval;
+    /* only supports polar with one direction angle */
+    effect.direction = params->direction[0] * 256;
+
+    switch (params->effect_type)
+    {
+    case PID_USAGE_ET_SINE:
+    case PID_USAGE_ET_SQUARE:
+    case PID_USAGE_ET_TRIANGLE:
+    case PID_USAGE_ET_SAWTOOTH_UP:
+    case PID_USAGE_ET_SAWTOOTH_DOWN:
+        FIXME("periodic effect semi-stub!");
+        break;
+
+    case PID_USAGE_ET_SPRING:
+    case PID_USAGE_ET_DAMPER:
+    case PID_USAGE_ET_INERTIA:
+    case PID_USAGE_ET_FRICTION:
+        FIXME("not implemented!");
+        break;
+
+    case PID_USAGE_ET_CONSTANT_FORCE:
+        FIXME("not implemented!");
+        break;
+    case PID_USAGE_ET_RAMP:
+        FIXME("not implemented!");
+        break;
+    case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+        FIXME("not implemented!");
+        break;
+    }
+
+    if (ioctl(impl->base.device_fd, EVIOCSFF, &effect) != -1)
+        impl->effect_ids[index] = effect.id;
+    else
+    {
+        WARN("couldn't create effect, EVIOCSFF ioctl failed: %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static const struct hid_device_vtbl lnxev_device_vtbl =
