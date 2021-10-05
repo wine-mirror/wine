@@ -174,7 +174,8 @@ static void set_hat_value(struct unix_device *iface, int index, int value)
 
 static BOOL descriptor_add_haptic(struct sdl_device *impl)
 {
-    USHORT i;
+    USHORT i, count = 0;
+    USAGE usages[16];
 
     if (!pSDL_JoystickIsHaptic(impl->sdl_joystick) ||
         !(impl->sdl_haptic = pSDL_HapticOpenFromJoystick(impl->sdl_joystick)))
@@ -200,7 +201,13 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
 
     if ((impl->effect_support & EFFECT_SUPPORT_PHYSICAL))
     {
-        if (!hid_device_add_physical(&impl->unix_device))
+        /* SDL_HAPTIC_SQUARE doesn't exist */
+        if (impl->effect_support & SDL_HAPTIC_SINE) usages[count++] = PID_USAGE_ET_SINE;
+        if (impl->effect_support & SDL_HAPTIC_TRIANGLE) usages[count++] = PID_USAGE_ET_TRIANGLE;
+        if (impl->effect_support & SDL_HAPTIC_SAWTOOTHUP) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
+        if (impl->effect_support & SDL_HAPTIC_SAWTOOTHDOWN) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+
+        if (!hid_device_add_physical(&impl->unix_device, usages, count))
             return FALSE;
     }
 
@@ -471,6 +478,14 @@ static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BY
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYTE index,
+                                                  struct effect_params *params)
+{
+    FIXME("iface %p, index %u, params %p stub!\n", iface, index, params);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static const struct hid_device_vtbl sdl_device_vtbl =
 {
     sdl_device_destroy,
@@ -479,6 +494,7 @@ static const struct hid_device_vtbl sdl_device_vtbl =
     sdl_device_haptics_start,
     sdl_device_physical_device_control,
     sdl_device_physical_effect_control,
+    sdl_device_physical_effect_update,
 };
 
 static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *event)

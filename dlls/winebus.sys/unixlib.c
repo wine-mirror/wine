@@ -99,6 +99,12 @@ static NTSTATUS mouse_physical_effect_control(struct unix_device *iface, BYTE in
     return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS mouse_physical_effect_update(struct unix_device *iface, BYTE index,
+                                             struct effect_params *params)
+{
+    return STATUS_NOT_SUPPORTED;
+}
+
 static const struct hid_device_vtbl mouse_vtbl =
 {
     mouse_destroy,
@@ -107,6 +113,7 @@ static const struct hid_device_vtbl mouse_vtbl =
     mouse_haptics_start,
     mouse_physical_device_control,
     mouse_physical_effect_control,
+    mouse_physical_effect_update,
 };
 
 static const struct device_desc mouse_device_desc =
@@ -169,6 +176,12 @@ static NTSTATUS keyboard_physical_effect_control(struct unix_device *iface, BYTE
     return STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS keyboard_physical_effect_update(struct unix_device *iface, BYTE index,
+                                                struct effect_params *params)
+{
+    return STATUS_NOT_SUPPORTED;
+}
+
 static const struct hid_device_vtbl keyboard_vtbl =
 {
     keyboard_destroy,
@@ -177,6 +190,7 @@ static const struct hid_device_vtbl keyboard_vtbl =
     keyboard_haptics_start,
     keyboard_physical_device_control,
     keyboard_physical_effect_control,
+    keyboard_physical_effect_update,
 };
 
 static const struct device_desc keyboard_device_desc =

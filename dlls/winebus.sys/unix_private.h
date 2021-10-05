@@ -29,6 +29,20 @@
 
 #include "wine/list.h"
 
+struct effect_params
+{
+    USAGE effect_type;
+    UINT16 duration;
+    UINT16 trigger_repeat_interval;
+    UINT16 sample_period;
+    UINT16 start_delay;
+    BYTE gain;
+    BYTE trigger_button;
+    BOOL axis_enabled[2];
+    BOOL direction_enabled;
+    BYTE direction[2];
+};
+
 struct raw_device_vtbl
 {
     void (*destroy)(struct unix_device *iface);
@@ -49,6 +63,7 @@ struct hid_device_vtbl
                               USHORT rumble_intensity, USHORT buzz_intensity);
     NTSTATUS (*physical_device_control)(struct unix_device *iface, USAGE control);
     NTSTATUS (*physical_effect_control)(struct unix_device *iface, BYTE index, USAGE control, BYTE iterations);
+    NTSTATUS (*physical_effect_update)(struct unix_device *iface, BYTE index, struct effect_params *params);
 };
 
 struct hid_report_descriptor
@@ -91,8 +106,12 @@ struct hid_haptics
 
 struct hid_physical
 {
+    USAGE effect_types[32];
+    struct effect_params effect_params[256];
+
     BYTE device_control_report;
     BYTE effect_control_report;
+    BYTE effect_update_report;
 };
 
 struct hid_device_state
@@ -161,7 +180,7 @@ extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usa
                                 const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
-extern BOOL hid_device_add_physical(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count) DECLSPEC_HIDDEN;
 
 extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
 extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;

@@ -567,6 +567,8 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     BYTE ffbits[(FF_MAX+7)/8];
     struct ff_effect effect;
     USAGE_AND_PAGE usage;
+    USHORT count = 0;
+    USAGE usages[16];
     INT i, button_count, abs_count, rel_count, hat_count;
     const BYTE *device_usage = what_am_I(dev);
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
@@ -664,7 +666,13 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
     for (i = 0; i < FF_MAX; ++i) if (test_bit(ffbits, i)) break;
     if (i != FF_MAX)
     {
-        if (!hid_device_add_physical(iface))
+        if (test_bit(ffbits, FF_SINE)) usages[count++] = PID_USAGE_ET_SINE;
+        if (test_bit(ffbits, FF_SQUARE)) usages[count++] = PID_USAGE_ET_SQUARE;
+        if (test_bit(ffbits, FF_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
+        if (test_bit(ffbits, FF_SAW_UP)) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
+        if (test_bit(ffbits, FF_SAW_DOWN)) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+
+        if (!hid_device_add_physical(iface, usages, count))
             return STATUS_NO_MEMORY;
     }
 
@@ -916,6 +924,14 @@ static NTSTATUS lnxev_device_physical_effect_control(struct unix_device *iface, 
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, BYTE index,
+                                                    struct effect_params *params)
+{
+    FIXME("iface %p, index %u, params %p stub!\n", iface, index, params);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static const struct hid_device_vtbl lnxev_device_vtbl =
 {
     lnxev_device_destroy,
@@ -924,6 +940,7 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
     lnxev_device_haptics_start,
     lnxev_device_physical_device_control,
     lnxev_device_physical_effect_control,
+    lnxev_device_physical_effect_update,
 };
 #endif /* HAS_PROPER_INPUT_HEADER */
 
