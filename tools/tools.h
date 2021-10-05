@@ -310,4 +310,114 @@ static inline int make_temp_file( const char *prefix, const char *suffix, char *
     exit(1);
 }
 
+
+/* command-line option parsing */
+/* partly based on the Glibc getopt() implementation */
+
+struct long_option
+{
+    const char *name;
+    int has_arg;
+    int val;
+};
+
+static inline struct strarray parse_options( int argc, char **argv, const char *short_opts,
+                                             const struct long_option *long_opts, int long_only,
+                                             void (*callback)( int, char* ) )
+{
+    struct strarray ret = empty_strarray;
+    const char *flag;
+    char *start, *end;
+    int i;
+
+#define OPT_ERR(fmt) { callback( '?', strmake( fmt, argv[1] )); continue; }
+
+    for (i = 1; i < argc; i++)
+    {
+        if (argv[i][0] != '-' || !argv[i][1])  /* not an option */
+        {
+            strarray_add( &ret, argv[i] );
+            continue;
+        }
+        if (!strcmp( argv[i], "--" ))
+        {
+            /* add remaining args */
+            while (++i < argc) strarray_add( &ret, argv[i] );
+            break;
+        }
+        start = argv[i] + 1 + (argv[i][1] == '-');
+
+        if (argv[i][1] == '-' || (long_only && (argv[i][2] || !strchr( short_opts, argv[i][1] ))))
+        {
+            /* handle long option */
+            const struct long_option *opt, *found = NULL;
+            int count = 0;
+
+            if (!(end = strchr( start, '=' ))) end = start + strlen(start);
+            for (opt = long_opts; opt && opt->name; opt++)
+            {
+                if (strncmp( opt->name, start, end - start )) continue;
+                if (!opt->name[end - start])  /* exact match */
+                {
+                    found = opt;
+                    count = 1;
+                    break;
+                }
+                if (!found)
+                {
+                    found = opt;
+                    count++;
+                }
+                else if (long_only || found->has_arg != opt->has_arg || found->val != opt->val)
+                {
+                    count++;
+                }
+            }
+
+            if (count > 1) OPT_ERR( "option '%s' is ambiguous" );
+
+            if (found)
+            {
+                if (*end)
+                {
+                    if (!found->has_arg) OPT_ERR( "argument not allowed in '%s'" );
+                    end++;  /* skip '=' */
+                }
+                else if (found->has_arg == 1)
+                {
+                    if (i == argc - 1) OPT_ERR( "option '%s' requires an argument" );
+                    end = argv[++i];
+                }
+                else end = NULL;
+
+                callback( found->val, end );
+                continue;
+            }
+            if (argv[i][1] == '-' || !long_only || !strchr( short_opts, argv[i][1] ))
+                OPT_ERR( "unrecognized option '%s'" );
+        }
+
+        /* handle short option */
+        for ( ; *start; start++)
+        {
+            if (!(flag = strchr( short_opts, *start ))) OPT_ERR( "invalid option '%s'" );
+            if (flag[1] == ':')
+            {
+                end = start + 1;
+                if (!*end) end = NULL;
+                if (flag[2] != ':' && !end)
+                {
+                    if (i == argc - 1) OPT_ERR( "option '%s' requires an argument" );
+                    end = argv[++i];
+                }
+                callback( *start, end );
+                break;
+            }
+            callback( *start, NULL );
+        }
+    }
+    return ret;
+#undef OPT_ERR
+}
+
 #endif /* __WINE_TOOLS_H */

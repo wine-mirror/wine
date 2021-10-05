@@ -257,11 +257,11 @@ void do_usage (const char *arg)
 
 
 /*******************************************************************
- *          parse_options
+ *          parse_cmdline
  *
  * Parse options from the argv array
  */
-static void parse_options (char *argv[])
+static void parse_cmdline (char *argv[])
 {
   const struct my_option *opt;
   char *const *ptr;
@@ -388,7 +388,7 @@ int   main (int argc, char *argv[])
     globals.input_name = NULL;
     globals.dumpsect = NULL;
 
-    parse_options (argv);
+    parse_cmdline (argv);
 
     memset (&symbol, 0, sizeof (parsed_symbol));
 
