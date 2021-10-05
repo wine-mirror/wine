@@ -100,6 +100,7 @@ struct icmp_data
 {
     LARGE_INTEGER send_time;
     int socket;
+    int cancel_pipe[2];
     unsigned short id;
     unsigned short seq;
     const struct family_ops *ops;
@@ -522,8 +523,14 @@ static NTSTATUS icmp_data_create( ADDRESS_FAMILY win_family, struct icmp_data **
         if (ops->family == AF_INET) ops = &ipv4_linux_ping;
 #endif
     }
-    data->ops = ops;
+    if (pipe( data->cancel_pipe ))
+    {
+        close( data->socket );
+        free( data );
+        return STATUS_ACCESS_DENIED;
+    }
 
+    data->ops = ops;
     *icmp_data = data;
     return STATUS_SUCCESS;
 }
@@ -531,6 +538,8 @@ static NTSTATUS icmp_data_create( ADDRESS_FAMILY win_family, struct icmp_data **
 static void icmp_data_free( struct icmp_data *data )
 {
     close( data->socket );
+    close( data->cancel_pipe[0] );
+    close( data->cancel_pipe[1] );
     free( data );
 }
 
@@ -668,7 +677,7 @@ NTSTATUS icmp_listen( void *args )
 {
     struct icmp_listen_params *params = args;
     struct icmp_data *data;
-    struct pollfd fds[1];
+    struct pollfd fds[2];
     NTSTATUS status;
     int ret;
 
@@ -677,9 +686,17 @@ NTSTATUS icmp_listen( void *args )
 
     fds[0].fd = data->socket;
     fds[0].events = POLLIN;
+    fds[1].fd = data->cancel_pipe[0];
+    fds[1].events = POLLIN;
 
     while ((ret = poll( fds, ARRAY_SIZE(fds), get_timeout( data->send_time, params->timeout ) )) > 0)
     {
+        if (fds[1].revents & POLLIN)
+        {
+            TRACE( "cancelled\n" );
+            return STATUS_CANCELLED;
+        }
+
         status = recv_msg( data, params );
         if (status == STATUS_RETRY) continue;
         return status;
@@ -692,6 +709,16 @@ NTSTATUS icmp_listen( void *args )
     }
     /* ret < 0 */
     return set_reply_ip_status( params, errno_to_ip_status( errno ) );
+}
+
+NTSTATUS icmp_cancel_listen( void *args )
+{
+    HANDLE handle = args;
+    struct icmp_data *data = handle_data( handle );
+
+    if (!data) return STATUS_INVALID_PARAMETER;
+    write( data->cancel_pipe[1], "x", 1 );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS icmp_close( void *args )

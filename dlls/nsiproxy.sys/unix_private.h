@@ -157,6 +157,7 @@ static inline int ascii_strcasecmp( const char *s1, const char *s2 )
     return ascii_strncasecmp( s1, s2, -1 );
 }
 
+NTSTATUS icmp_cancel_listen( void *args ) DECLSPEC_HIDDEN;
 NTSTATUS icmp_close( void *args ) DECLSPEC_HIDDEN;
 NTSTATUS icmp_listen( void *args ) DECLSPEC_HIDDEN;
 NTSTATUS icmp_send_echo( void *args ) DECLSPEC_HIDDEN;

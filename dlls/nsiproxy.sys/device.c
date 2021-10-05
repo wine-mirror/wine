@@ -58,6 +58,7 @@ static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 
 enum unix_calls
 {
+    icmp_cancel_listen,
     icmp_close,
     icmp_listen,
     icmp_send_echo,
@@ -191,12 +192,23 @@ static inline HANDLE irp_set_icmp_handle( IRP *irp, HANDLE handle )
 
 static void WINAPI icmp_echo_cancel( DEVICE_OBJECT *device, IRP *irp )
 {
+    HANDLE handle;
+
     TRACE( "device %p, irp %p.\n", device, irp );
 
     IoReleaseCancelSpinLock( irp->CancelIrql );
 
-    /* FIXME: at the moment just let the request thread bail */
-    return;
+    EnterCriticalSection( &nsiproxy_cs );
+
+    /* If the handle is not set, either the irp is still
+       in the request queue, in which case the request thread will
+       cancel it, or the irp has already finished.  If the handle
+       does exist then notify the listen thread.  In all cases the irp
+       will be completed elsewhere. */
+    handle = irp_get_icmp_handle( irp );
+    if (handle) nsiproxy_call( icmp_cancel_listen, handle );
+
+    LeaveCriticalSection( &nsiproxy_cs );
 }
 
 static NTSTATUS nsiproxy_icmp_echo( IRP *irp )
