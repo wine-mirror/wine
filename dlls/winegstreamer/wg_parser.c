@@ -25,14 +25,21 @@
 #endif
 
 #include "config.h"
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "gst_private.h"
-#include "winternl.h"
+
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/audio/audio.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "winternl.h"
+#include "dshow.h"
+
+#include "unixlib.h"
 
 typedef enum
 {
@@ -1859,7 +1866,7 @@ static void init_gstreamer_once(void)
 
     if (!gst_init_check(&argc, &argv, &err))
     {
-        fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", debugstr_a(err->message));
+        fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", err->message);
         g_error_free(err);
         return;
     }
