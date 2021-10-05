@@ -33,9 +33,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
 
 #include "widl.h"
 #include "utils.h"
@@ -153,6 +150,8 @@ char *temp_name;
 const char *prefix_client = "";
 const char *prefix_server = "";
 static const char *includedir;
+static char *output_name;
+static const char *sysroot = "";
 
 int line_number = 1;
 
@@ -186,29 +185,29 @@ enum {
 
 static const char short_options[] =
     "b:cC:d:D:EhH:I:m:No:O:pP:rsS:tT:uU:VW";
-static const struct option long_options[] = {
-    { "acf", 1, NULL, ACF_OPTION },
-    { "app_config", 0, NULL, APP_CONFIG_OPTION },
-    { "dlldata", 1, NULL, DLLDATA_OPTION },
-    { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
-    { "help", 0, NULL, PRINT_HELP },
-    { "local-stubs", 1, NULL, LOCAL_STUBS_OPTION },
-    { "nostdinc", 0, NULL, NOSTDINC_OPTION },
-    { "ns_prefix", 0, NULL, RT_NS_PREFIX },
-    { "oldnames", 0, NULL, OLDNAMES_OPTION },
-    { "output", 0, NULL, 'o' },
-    { "prefix-all", 1, NULL, PREFIX_ALL_OPTION },
-    { "prefix-client", 1, NULL, PREFIX_CLIENT_OPTION },
-    { "prefix-server", 1, NULL, PREFIX_SERVER_OPTION },
-    { "robust", 0, NULL, ROBUST_OPTION },
-    { "sysroot", 1, NULL, SYSROOT_OPTION },
-    { "target", 0, NULL, 'b' },
-    { "winrt", 0, NULL, RT_OPTION },
-    { "win32", 0, NULL, WIN32_OPTION },
-    { "win64", 0, NULL, WIN64_OPTION },
-    { "win32-align", 1, NULL, WIN32_ALIGN_OPTION },
-    { "win64-align", 1, NULL, WIN64_ALIGN_OPTION },
-    { NULL, 0, NULL, 0 }
+static const struct long_option long_options[] = {
+    { "acf", 1, ACF_OPTION },
+    { "app_config", 0, APP_CONFIG_OPTION },
+    { "dlldata", 1, DLLDATA_OPTION },
+    { "dlldata-only", 0, DLLDATA_ONLY_OPTION },
+    { "help", 0, PRINT_HELP },
+    { "local-stubs", 1, LOCAL_STUBS_OPTION },
+    { "nostdinc", 0, NOSTDINC_OPTION },
+    { "ns_prefix", 0, RT_NS_PREFIX },
+    { "oldnames", 0, OLDNAMES_OPTION },
+    { "output", 0, 'o' },
+    { "prefix-all", 1, PREFIX_ALL_OPTION },
+    { "prefix-client", 1, PREFIX_CLIENT_OPTION },
+    { "prefix-server", 1, PREFIX_SERVER_OPTION },
+    { "robust", 0, ROBUST_OPTION },
+    { "sysroot", 1, SYSROOT_OPTION },
+    { "target", 0, 'b' },
+    { "winrt", 0, RT_OPTION },
+    { "win32", 0, WIN32_OPTION },
+    { "win64", 0, WIN64_OPTION },
+    { "win32-align", 1, WIN32_ALIGN_OPTION },
+    { "win64-align", 1, WIN64_ALIGN_OPTION },
+    { NULL }
 };
 
 static const struct
@@ -576,26 +575,10 @@ static void init_argv0_dir( const char *argv0 )
 #endif
 }
 
-int main(int argc,char *argv[])
+static void option_callback( int optc, char *optarg )
 {
-  int i, optc;
-  int ret = 0;
-  int opti = 0;
-  char *output_name = NULL;
-  const char *sysroot = "";
-
-  signal( SIGTERM, exit_on_signal );
-  signal( SIGINT, exit_on_signal );
-#ifdef SIGHUP
-  signal( SIGHUP, exit_on_signal );
-#endif
-  init_argv0_dir( argv[0] );
-  init_argv0_target( argv[0] );
-
-  now = time(NULL);
-
-  while((optc = getopt_long_only(argc, argv, short_options, long_options, &opti)) != EOF) {
-    switch(optc) {
+    switch (optc)
+    {
     case DLLDATA_OPTION:
       dlldata_name = xstrdup(optarg);
       break;
@@ -625,7 +608,7 @@ int main(int argc,char *argv[])
       break;
     case PRINT_HELP:
       fprintf(stderr, "%s", usage);
-      return 0;
+      exit(0);
     case RT_OPTION:
       winrt_mode = 1;
       break;
@@ -743,15 +726,33 @@ int main(int argc,char *argv[])
       break;
     case 'V':
       printf("%s", version_string);
-      return 0;
+      exit(0);
     case 'W':
       pedantic = 1;
       break;
-    default:
-      fprintf(stderr, "%s", usage);
-      return 1;
+    case '?':
+      fprintf(stderr, "widl: %s\n\n%s", optarg, usage);
+      exit(1);
     }
-  }
+}
+
+int main(int argc,char *argv[])
+{
+  int i;
+  int ret = 0;
+  struct strarray files;
+
+  signal( SIGTERM, exit_on_signal );
+  signal( SIGINT, exit_on_signal );
+#ifdef SIGHUP
+  signal( SIGHUP, exit_on_signal );
+#endif
+  init_argv0_dir( argv[0] );
+  init_argv0_target( argv[0] );
+
+  now = time(NULL);
+
+  files = parse_options( argc, argv, short_options, long_options, 1, option_callback );
 
   if (stdinc)
   {
@@ -835,21 +836,21 @@ int main(int argc,char *argv[])
   if (!dlldata_name && do_dlldata)
     dlldata_name = xstrdup("dlldata.c");
 
-  if(optind < argc) {
+  if (files.count) {
     if (do_dlldata && !do_everything) {
       struct strarray filenames = empty_strarray;
-      for ( ; optind < argc; ++optind)
-          strarray_add(&filenames, replace_extension( get_basename( argv[optind] ), ".idl", "" ));
+      for (i = 0; i < files.count; i++)
+          strarray_add(&filenames, replace_extension( get_basename( files.str[i] ), ".idl", "" ));
 
       write_dlldata_list(filenames, 0 /* FIXME */ );
       return 0;
     }
-    else if (optind != argc - 1) {
+    else if (files.count > 1) {
       fprintf(stderr, "%s", usage);
       return 1;
     }
     else
-      input_idl_name = input_name = xstrdup(argv[optind]);
+      input_idl_name = input_name = xstrdup(files.str[0]);
   }
   else {
     fprintf(stderr, "%s", usage);
