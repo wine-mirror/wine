@@ -331,6 +331,10 @@ static const struct device_strings device_strings[] =
     { .id = L"VID_045E&PID_02EA", .product = L"Controller (Xbox One For Windows)" },
     { .id = L"VID_045E&PID_02FD", .product = L"Controller (Xbox One For Windows)" },
     { .id = L"VID_045E&PID_0719", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_0B00", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0B05", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0B12", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0B13", .product = L"Controller (Xbox One For Windows)" },
 };
 
 static const WCHAR *find_product_string(const WCHAR *device_id)
