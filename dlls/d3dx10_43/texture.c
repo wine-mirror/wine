@@ -589,6 +589,22 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE module, const char *resource,
+        D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
+{
+    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+            device, module, debugstr_a(resource), load_info, pump, texture, hresult);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE module, const WCHAR *resource,
+        D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
+{
+    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
+            device, module, debugstr_w(resource), load_info, pump, texture, hresult);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data, SIZE_T src_data_size,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
