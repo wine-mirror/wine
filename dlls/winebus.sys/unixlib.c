@@ -53,6 +53,10 @@ BOOL is_xbox_gamepad(WORD vid, WORD pid)
     if (pid == 0x02e6) return TRUE; /* Wireless XBox Controller Dongle */
     if (pid == 0x02ea) return TRUE; /* Xbox One S Controller */
     if (pid == 0x02fd) return TRUE; /* Xbox One S Controller (Firmware 2017) */
+    if (pid == 0x0b00) return TRUE; /* Xbox Elite 2 */
+    if (pid == 0x0b05) return TRUE; /* Xbox Elite 2 Wireless */
+    if (pid == 0x0b12) return TRUE; /* Xbox Series */
+    if (pid == 0x0b13) return TRUE; /* Xbox Series Wireless */
     if (pid == 0x0719) return TRUE; /* Xbox 360 Wireless Adapter */
     return FALSE;
 }
