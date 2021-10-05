@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <pthread.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -564,11 +566,13 @@ static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
     return ret;
 }
 
+/* wrapper for NtCreateKey that creates the key recursively if necessary */
 static HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
                             DWORD options, DWORD *disposition )
 {
     UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
     OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
     HANDLE ret;
 
     attr.Length = sizeof(attr);
@@ -578,7 +582,34 @@ static HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if (NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition )) return 0;
+    status = NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition );
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        static const WCHAR registry_rootW[] = { '\\','R','e','g','i','s','t','r','y','\\' };
+        DWORD pos = 0, i = 0, len = name_len / sizeof(WCHAR);
+
+        /* don't try to create registry root */
+        if (!root && len > ARRAY_SIZE(registry_rootW) &&
+            !memcmp( name, registry_rootW, sizeof(registry_rootW) ))
+            i += ARRAY_SIZE(registry_rootW);
+
+        while (i < len && name[i] != '\\') i++;
+        if (i == len) return 0;
+        for (;;)
+        {
+            nameW.Buffer = (WCHAR *)name + pos;
+            nameW.Length = (i - pos) * sizeof(WCHAR);
+            status = NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition );
+
+            if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
+            if (!NT_SUCCESS(status)) return 0;
+            if (i == len) break;
+            attr.RootDirectory = ret;
+            while (i < len && name[i] == '\\') i++;
+            pos = i;
+            while (i < len && name[i] != '\\') i++;
+        }
+    }
     return ret;
 }
 
