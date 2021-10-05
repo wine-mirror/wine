@@ -2,7 +2,6 @@ STATICLIB = libwine_port.a
 
 C_SRCS = \
 	lstat.c \
-	mkstemps.c \
 	readlink.c \
 	spawn.c \
 	symlink.c

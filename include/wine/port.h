@@ -177,6 +177,4 @@ int readlink( const char *path, char *buf, size_t size );
 int symlink(const char *from, const char *to);
 #endif
 
-extern int mkstemps(char *template, int suffix_len);
-
 #endif /* !defined(__WINE_WINE_PORT_H) */
