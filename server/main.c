@@ -28,9 +28,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
 
 #include "object.h"
 #include "file.h"
@@ -60,64 +57,154 @@ static void usage( FILE *fh )
     fprintf(fh, "\n");
 }
 
-static void parse_args( int argc, char *argv[] )
+static void option_callback( int optc, char *optarg )
 {
-    int ret, optc;
+    int ret;
 
-    static struct option long_options[] =
+    switch (optc)
     {
-        {"debug",       2, NULL, 'd'},
-        {"foreground",  0, NULL, 'f'},
-        {"help",        0, NULL, 'h'},
-        {"kill",        2, NULL, 'k'},
-        {"persistent",  2, NULL, 'p'},
-        {"version",     0, NULL, 'v'},
-        {"wait",        0, NULL, 'w'},
-        { NULL,         0, NULL, 0}
-    };
+    case 'd':
+        if (optarg && isdigit(*optarg))
+            debug_level = atoi( optarg );
+        else
+            debug_level++;
+        break;
+    case 'f':
+        foreground = 1;
+        break;
+    case 'h':
+        usage(stdout);
+        exit(0);
+        break;
+    case 'k':
+        if (optarg && isdigit(*optarg))
+            ret = kill_lock_owner( atoi( optarg ) );
+        else
+            ret = kill_lock_owner(-1);
+        exit( !ret );
+    case 'p':
+        if (optarg && isdigit(*optarg))
+            master_socket_timeout = (timeout_t)atoi( optarg ) * -TICKS_PER_SEC;
+        else
+            master_socket_timeout = TIMEOUT_INFINITE;
+        break;
+    case 'v':
+        fprintf( stderr, "%s\n", PACKAGE_STRING );
+        exit(0);
+    case 'w':
+        wait_for_lock();
+        exit(0);
+    }
+}
 
-    server_argv0 = argv[0];
+/* command-line option parsing */
+/* partly based on the GLibc getopt() implementation */
 
-    while ((optc = getopt_long( argc, argv, "d::fhk::p::vw", long_options, NULL )) != -1)
+static struct long_option
+{
+    const char *name;
+    int has_arg;
+    int val;
+} long_options[] =
+{
+    {"debug",       2, 'd'},
+    {"foreground",  0, 'f'},
+    {"help",        0, 'h'},
+    {"kill",        2, 'k'},
+    {"persistent",  2, 'p'},
+    {"version",     0, 'v'},
+    {"wait",        0, 'w'},
+    { NULL }
+};
+
+static void parse_options( int argc, char **argv, const char *short_opts,
+                           const struct long_option *long_opts, void (*callback)( int, char* ) )
+{
+    const char *flag;
+    char *start, *end;
+    int i;
+
+    for (i = 1; i < argc; i++)
     {
-        switch(optc)
+        if (argv[i][0] != '-' || !argv[i][1])  /* not an option */
+            continue;
+        if (!strcmp( argv[i], "--" ))
+            break;
+        start = argv[i] + 1 + (argv[i][1] == '-');
+
+        if (argv[i][1] == '-')
         {
-            case 'd':
-                if (optarg && isdigit(*optarg))
-                    debug_level = atoi( optarg );
-                else
-                    debug_level++;
+            /* handle long option */
+            const struct long_option *opt, *found = NULL;
+            int count = 0;
+
+            if (!(end = strchr( start, '=' ))) end = start + strlen(start);
+            for (opt = long_opts; opt && opt->name; opt++)
+            {
+                if (strncmp( opt->name, start, end - start )) continue;
+                if (!opt->name[end - start])  /* exact match */
+                {
+                    found = opt;
+                    count = 1;
+                    break;
+                }
+                if (!found)
+                {
+                    found = opt;
+                    count++;
+                }
+                else if (found->has_arg != opt->has_arg || found->val != opt->val)
+                {
+                    count++;
+                }
+            }
+
+            if (count > 1) goto error;
+
+            if (found)
+            {
+                if (*end)
+                {
+                    if (!found->has_arg) goto error;
+                    end++;  /* skip '=' */
+                }
+                else if (found->has_arg == 1)
+                {
+                    if (i == argc - 1) goto error;
+                    end = argv[++i];
+                }
+                else end = NULL;
+
+                callback( found->val, end );
+                continue;
+            }
+            goto error;
+        }
+
+        /* handle short option */
+        for ( ; *start; start++)
+        {
+            if (!(flag = strchr( short_opts, *start ))) goto error;
+            if (flag[1] == ':')
+            {
+                end = start + 1;
+                if (!*end) end = NULL;
+                if (flag[2] != ':' && !end)
+                {
+                    if (i == argc - 1) goto error;
+                    end = argv[++i];
+                }
+                callback( *start, end );
                 break;
-            case 'f':
-                foreground = 1;
-                break;
-            case 'h':
-                usage(stdout);
-                exit(0);
-                break;
-            case 'k':
-                if (optarg && isdigit(*optarg))
-                    ret = kill_lock_owner( atoi( optarg ) );
-                else
-                    ret = kill_lock_owner(-1);
-                exit( !ret );
-            case 'p':
-                if (optarg && isdigit(*optarg))
-                    master_socket_timeout = (timeout_t)atoi( optarg ) * -TICKS_PER_SEC;
-                else
-                    master_socket_timeout = TIMEOUT_INFINITE;
-                break;
-            case 'v':
-                fprintf( stderr, "%s\n", PACKAGE_STRING );
-                exit(0);
-            case 'w':
-                wait_for_lock();
-                exit(0);
-            default:
-                usage(stderr);
-                exit(1);
+            }
+            callback( *start, NULL );
         }
     }
+    return;
+
+error:
+    usage( stderr );
+    exit(1);
 }
 
 static void sigterm_handler( int signum )
@@ -128,7 +215,8 @@ static void sigterm_handler( int signum )
 int main( int argc, char *argv[] )
 {
     setvbuf( stderr, NULL, _IOLBF, 0 );
-    parse_args( argc, argv );
+    server_argv0 = argv[0];
+    parse_options( argc, argv, "d::fhk::p::vw", long_options, option_callback );
 
     /* setup temporary handlers before the real signal initialization is done */
     signal( SIGPIPE, SIG_IGN );
