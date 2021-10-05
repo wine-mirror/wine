@@ -404,25 +404,14 @@ static void handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR( IRP *irp, BASE_DEVICE_EX
     }
 }
 
-static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, SHORT index )
+static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, ULONG index )
 {
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    WCHAR buffer[127];
-    ULONG InputBuffer;
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    WCHAR *output_buf = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
+    ULONG output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
 
-    InputBuffer = MAKELONG(index, 0);
-
-    call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( InputBuffer ),
-                     sizeof(InputBuffer), buffer, sizeof(buffer), &irp->IoStatus );
-
-    if (irp->IoStatus.Status == STATUS_SUCCESS)
-    {
-        WCHAR *out_buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
-        int length = irpsp->Parameters.DeviceIoControl.OutputBufferLength/sizeof(WCHAR);
-        TRACE("got string %s from minidriver\n",debugstr_w(buffer));
-        lstrcpynW(out_buffer, buffer, length);
-        irp->IoStatus.Information = (lstrlenW(buffer)+1) * sizeof(WCHAR);
-    }
+    call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( index ),
+                     sizeof(index), output_buf, output_len, &irp->IoStatus );
 }
 
 static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
