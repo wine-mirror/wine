@@ -404,14 +404,62 @@ static void handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR( IRP *irp, BASE_DEVICE_EX
     }
 }
 
+struct device_strings
+{
+    const WCHAR *id;
+    const WCHAR *product;
+};
+
+static const struct device_strings device_strings[] =
+{
+    { .id = L"VID_045E&PID_028E", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_028F", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_02D1", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02DD", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02E3", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02EA", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02FD", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0719", .product = L"Controller (XBOX 360 For Windows)" },
+    { .id = L"VID_045E&PID_0B00", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0B05", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0B12", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_0B13", .product = L"Controller (Xbox One For Windows)" },
+};
+
+static const WCHAR *find_product_string( const WCHAR *device_id )
+{
+    const WCHAR *match_id = wcsrchr( device_id, '\\' ) + 1;
+    DWORD i;
+
+    for (i = 0; i < ARRAY_SIZE(device_strings); ++i)
+        if (!wcsnicmp( device_strings[i].id, match_id, 17 ))
+            return device_strings[i].product;
+
+    return NULL;
+}
+
 static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, ULONG index )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     WCHAR *output_buf = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
     ULONG output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    const WCHAR *str = NULL;
 
-    call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( index ),
-                     sizeof(index), output_buf, output_len, &irp->IoStatus );
+    if (index == HID_STRING_ID_IPRODUCT) str = find_product_string( ext->device_id );
+
+    if (!str) call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( index ),
+                               sizeof(index), output_buf, output_len, &irp->IoStatus );
+    else
+    {
+        irp->IoStatus.Information = (wcslen( str ) + 1) * sizeof(WCHAR);
+        if (irp->IoStatus.Information > output_len)
+            irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            memcpy( output_buf, str, irp->IoStatus.Information );
+            irp->IoStatus.Status = STATUS_SUCCESS;
+        }
+    }
 }
 
 static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
