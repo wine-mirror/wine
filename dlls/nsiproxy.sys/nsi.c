@@ -148,6 +148,7 @@ static NTSTATUS unix_nsi_get_parameter_ex( void *args )
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     icmp_close,
+    icmp_listen,
     icmp_send_echo,
     unix_nsi_enumerate_all_ex,
     unix_nsi_get_all_parameters_ex,

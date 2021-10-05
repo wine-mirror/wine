@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <pthread.h>
+#include <poll.h>
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -380,6 +381,55 @@ NTSTATUS icmp_send_echo( void *args )
     params->handle = handle_alloc( data );
     if (!params->handle) icmp_data_free( data );
     return params->handle ? STATUS_PENDING : STATUS_NO_MEMORY;
+}
+
+static NTSTATUS set_reply_ip_status( struct icmp_listen_params *params, IP_STATUS ip_status )
+{
+    struct nsiproxy_icmp_echo_reply *reply = params->reply;
+
+    memset( reply, 0, sizeof(*reply) );
+    reply->status = ip_status;
+    params->reply_len = sizeof(*reply);
+    return STATUS_SUCCESS;
+}
+
+static int get_timeout( LARGE_INTEGER start, DWORD timeout )
+{
+    LARGE_INTEGER now, end;
+
+    end.QuadPart = start.QuadPart + (ULONGLONG)timeout * 10000;
+    NtQueryPerformanceCounter( &now, NULL );
+    if (now.QuadPart >= end.QuadPart) return 0;
+
+    return min( (end.QuadPart - now.QuadPart) / 10000, INT_MAX );
+}
+
+NTSTATUS icmp_listen( void *args )
+{
+    struct icmp_listen_params *params = args;
+    struct icmp_data *data;
+    struct pollfd fds[1];
+    int ret;
+
+    data = handle_data( params->handle );
+    if (!data) return STATUS_INVALID_PARAMETER;
+
+    fds[0].fd = data->socket;
+    fds[0].events = POLLIN;
+
+    while ((ret = poll( fds, ARRAY_SIZE(fds), get_timeout( data->send_time, params->timeout ) )) > 0)
+    {
+        /* FIXME */
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    if (!ret) /* timeout */
+    {
+        TRACE( "timeout\n" );
+        return set_reply_ip_status( params, IP_REQ_TIMED_OUT );
+    }
+    /* ret < 0 */
+    return set_reply_ip_status( params, errno_to_ip_status( errno ) );
 }
 
 NTSTATUS icmp_close( void *args )

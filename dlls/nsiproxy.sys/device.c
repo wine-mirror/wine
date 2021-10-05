@@ -59,6 +59,7 @@ static NTSTATUS nsiproxy_call( unsigned int code, void *args )
 enum unix_calls
 {
     icmp_close,
+    icmp_listen,
     icmp_send_echo,
     nsi_enumerate_all_ex,
     nsi_get_all_parameters_ex,
@@ -306,16 +307,30 @@ static int add_device( DRIVER_OBJECT *driver )
 static DWORD WINAPI listen_thread_proc( void *arg )
 {
     IRP *irp = arg;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    struct nsiproxy_icmp_echo *in = irp->AssociatedIrp.SystemBuffer;
+    struct icmp_listen_params params;
+    NTSTATUS status;
 
     TRACE( "\n" );
 
-    /* FIXME */
+    params.handle = irp_get_icmp_handle( irp );
+    params.timeout = in->timeout;
+    params.reply = irp->AssociatedIrp.SystemBuffer;
+    params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+
+    status = nsiproxy_call( icmp_listen, &params );
+    TRACE( "icmp_listen rets %08x\n", status );
 
     EnterCriticalSection( &nsiproxy_cs );
 
     nsiproxy_call( icmp_close, irp_set_icmp_handle( irp, NULL ) );
 
-    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    irp->IoStatus.Status = status;
+    if (status == STATUS_SUCCESS)
+        irp->IoStatus.Information = params.reply_len;
+    else
+        irp->IoStatus.Information = 0;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
 
     LeaveCriticalSection( &nsiproxy_cs );
