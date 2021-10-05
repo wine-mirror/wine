@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#ifdef _NTSYSTEM_
+#if defined(_NTSYSTEM_) || defined(WINE_UNIX_LIB)
 #define NTSYSAPI
 #else
 #define NTSYSAPI DECLSPEC_IMPORT
