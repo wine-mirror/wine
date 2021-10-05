@@ -92,18 +92,6 @@ typedef int ssize_t;
 #  endif
 #endif
 
-/* Process creation flags */
-#ifndef _P_WAIT
-# define _P_WAIT    0
-# define _P_NOWAIT  1
-# define _P_OVERLAY 2
-# define _P_NOWAITO 3
-# define _P_DETACH  4
-#endif
-#ifndef HAVE__SPAWNVP
-extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
-#endif
-
 #endif  /* _WIN32 */
 
 /****************************************************************

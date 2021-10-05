@@ -2127,7 +2127,6 @@ CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
         __res_get_state \
         __res_getservers \
-	_spawnvp \
 	epoll_create \
 	fork \
 	fstatfs \
