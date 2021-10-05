@@ -3363,7 +3363,9 @@ static BOOL CALLBACK check_effects( const DIEFFECTINFOW *effect, void *args )
     check_member( *effect, *exp, "%u", dwSize );
     check_member_guid( *effect, *exp, guid );
     check_member( *effect, *exp, "%#x", dwEffType );
+    todo_wine
     check_member( *effect, *exp, "%#x", dwStaticParams );
+    todo_wine
     check_member( *effect, *exp, "%#x", dwDynamicParams );
     check_member_wstr( *effect, *exp, tszName );
 
@@ -5728,27 +5730,21 @@ static void test_force_feedback_joystick( void )
     res = 0;
     hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, DIEFT_PERIODIC );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
-    todo_wine
     ok( res == 1, "got %u expected %u\n", res, 1 );
     hr = IDirectInputDevice8_EnumEffects( device, check_effects, &check_effects_params, DIEFT_ALL );
     ok( hr == DI_OK, "IDirectInputDevice8_EnumEffects returned %#x\n", hr );
-    todo_wine
     ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
         check_effects_params.expect_count - check_effects_params.index );
 
     effectinfo.dwSize = sizeof(DIEFFECTINFOW);
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
-    todo_wine
     ok( hr == DI_OK, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
-    todo_wine
     check_member_guid( effectinfo, expect_effects[0], guid );
-    todo_wine
     check_member( effectinfo, expect_effects[0], "%#x", dwEffType );
     todo_wine
     check_member( effectinfo, expect_effects[0], "%#x", dwStaticParams );
     todo_wine
     check_member( effectinfo, expect_effects[0], "%#x", dwDynamicParams );
-    todo_wine
     check_member_wstr( effectinfo, expect_effects[0], tszName );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );

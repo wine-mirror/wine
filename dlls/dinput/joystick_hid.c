@@ -175,6 +175,52 @@ static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
     return &GUID_Unknown;
 }
 
+static inline USAGE effect_guid_to_usage( const GUID *guid )
+{
+    if (IsEqualGUID( guid, &GUID_CustomForce )) return PID_USAGE_ET_CUSTOM_FORCE_DATA;
+    if (IsEqualGUID( guid, &GUID_ConstantForce )) return PID_USAGE_ET_CONSTANT_FORCE;
+    if (IsEqualGUID( guid, &GUID_RampForce )) return PID_USAGE_ET_RAMP;
+    if (IsEqualGUID( guid, &GUID_Square )) return PID_USAGE_ET_SQUARE;
+    if (IsEqualGUID( guid, &GUID_Sine )) return PID_USAGE_ET_SINE;
+    if (IsEqualGUID( guid, &GUID_Triangle )) return PID_USAGE_ET_TRIANGLE;
+    if (IsEqualGUID( guid, &GUID_SawtoothUp )) return PID_USAGE_ET_SAWTOOTH_UP;
+    if (IsEqualGUID( guid, &GUID_SawtoothDown )) return PID_USAGE_ET_SAWTOOTH_DOWN;
+    if (IsEqualGUID( guid, &GUID_Spring )) return PID_USAGE_ET_SPRING;
+    if (IsEqualGUID( guid, &GUID_Damper )) return PID_USAGE_ET_DAMPER;
+    if (IsEqualGUID( guid, &GUID_Inertia )) return PID_USAGE_ET_INERTIA;
+    if (IsEqualGUID( guid, &GUID_Friction )) return PID_USAGE_ET_FRICTION;
+    return 0;
+}
+
+static const WCHAR *effect_guid_to_string( const GUID *guid )
+{
+    static const WCHAR guid_customforce_w[] = {'G','U','I','D','_','C','u','s','t','o','m','F','o','r','c','e',0};
+    static const WCHAR guid_constantforce_w[] = {'G','U','I','D','_','C','o','n','s','t','a','n','t','F','o','r','c','e',0};
+    static const WCHAR guid_rampforce_w[] = {'G','U','I','D','_','R','a','m','p','F','o','r','c','e',0};
+    static const WCHAR guid_square_w[] = {'G','U','I','D','_','S','q','u','a','r','e',0};
+    static const WCHAR guid_sine_w[] = {'G','U','I','D','_','S','i','n','e',0};
+    static const WCHAR guid_triangle_w[] = {'G','U','I','D','_','T','r','i','a','n','g','l','e',0};
+    static const WCHAR guid_sawtoothup_w[] = {'G','U','I','D','_','S','a','w','t','o','o','t','h','U','p',0};
+    static const WCHAR guid_sawtoothdown_w[] = {'G','U','I','D','_','S','a','w','t','o','o','t','h','D','o','w','n',0};
+    static const WCHAR guid_spring_w[] = {'G','U','I','D','_','S','p','r','i','n','g',0};
+    static const WCHAR guid_damper_w[] = {'G','U','I','D','_','D','a','m','p','e','r',0};
+    static const WCHAR guid_inertia_w[] = {'G','U','I','D','_','I','n','e','r','t','i','a',0};
+    static const WCHAR guid_friction_w[] = {'G','U','I','D','_','F','r','i','c','t','i','o','n',0};
+    if (IsEqualGUID( guid, &GUID_CustomForce )) return guid_customforce_w;
+    if (IsEqualGUID( guid, &GUID_ConstantForce )) return guid_constantforce_w;
+    if (IsEqualGUID( guid, &GUID_RampForce )) return guid_rampforce_w;
+    if (IsEqualGUID( guid, &GUID_Square )) return guid_square_w;
+    if (IsEqualGUID( guid, &GUID_Sine )) return guid_sine_w;
+    if (IsEqualGUID( guid, &GUID_Triangle )) return guid_triangle_w;
+    if (IsEqualGUID( guid, &GUID_SawtoothUp )) return guid_sawtoothup_w;
+    if (IsEqualGUID( guid, &GUID_SawtoothDown )) return guid_sawtoothdown_w;
+    if (IsEqualGUID( guid, &GUID_Spring )) return guid_spring_w;
+    if (IsEqualGUID( guid, &GUID_Damper )) return guid_damper_w;
+    if (IsEqualGUID( guid, &GUID_Inertia )) return guid_inertia_w;
+    if (IsEqualGUID( guid, &GUID_Friction )) return guid_friction_w;
+    return NULL;
+}
+
 typedef BOOL (*enum_object_callback)( struct hid_joystick *impl, struct hid_value_caps *caps,
                                       DIDEVICEOBJECTINSTANCEW *instance, void *data );
 
@@ -964,12 +1010,86 @@ static HRESULT WINAPI hid_joystick_EnumEffects( IDirectInputDevice8W *iface, LPD
 static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, DIEFFECTINFOW *info,
                                                   const GUID *guid )
 {
-    FIXME( "iface %p, info %p, guid %s stub!\n", iface, info, debugstr_guid( guid ) );
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    struct pid_effect_update *effect_update = &impl->pid_effect_update;
+    PHIDP_PREPARSED_DATA preparsed = impl->preparsed;
+    HIDP_BUTTON_CAPS button;
+    ULONG type, collection;
+    NTSTATUS status;
+    USAGE usage = 0;
+    USHORT count;
+
+    TRACE( "iface %p, info %p, guid %s.\n", iface, info, debugstr_guid( guid ) );
 
     if (!info) return E_POINTER;
     if (info->dwSize != sizeof(DIEFFECTINFOW)) return DIERR_INVALIDPARAM;
+    if (!(impl->dev_caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_DEVICENOTREG;
 
-    return DIERR_DEVICENOTREG;
+    switch ((usage = effect_guid_to_usage( guid )))
+    {
+    case PID_USAGE_ET_SQUARE:
+    case PID_USAGE_ET_SINE:
+    case PID_USAGE_ET_TRIANGLE:
+    case PID_USAGE_ET_SAWTOOTH_UP:
+    case PID_USAGE_ET_SAWTOOTH_DOWN:
+        type = DIEFT_PERIODIC;
+        break;
+    case PID_USAGE_ET_SPRING:
+    case PID_USAGE_ET_DAMPER:
+    case PID_USAGE_ET_INERTIA:
+    case PID_USAGE_ET_FRICTION:
+        type = DIEFT_CONDITION;
+        break;
+    case PID_USAGE_ET_CONSTANT_FORCE:
+        type = DIEFT_CONSTANTFORCE;
+        break;
+    case PID_USAGE_ET_RAMP:
+        type = DIEFT_RAMPFORCE;
+        break;
+    case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+        type = DIEFT_CUSTOMFORCE;
+        break;
+    default:
+        return DIERR_DEVICENOTREG;
+    }
+
+    if (!(collection = effect_update->collection)) return DIERR_DEVICENOTREG;
+
+    if (effect_update->duration_caps) info->dwDynamicParams |= DIEP_DURATION;
+    if (effect_update->gain_caps) info->dwDynamicParams |= DIEP_GAIN;
+    if (effect_update->sample_period_caps) info->dwDynamicParams |= DIEP_SAMPLEPERIOD;
+    if (effect_update->start_delay_caps)
+    {
+        type |= DIEFT_STARTDELAY;
+        info->dwDynamicParams |= DIEP_STARTDELAY;
+    }
+    if (effect_update->trigger_button_caps) info->dwDynamicParams |= DIEP_TRIGGERBUTTON;
+    if (effect_update->trigger_repeat_interval_caps) info->dwDynamicParams |= DIEP_TRIGGERREPEATINTERVAL;
+
+    if (!(collection = effect_update->type_coll)) return DIERR_DEVICENOTREG;
+    else
+    {
+        count = 1;
+        status = HidP_GetSpecificButtonCaps( HidP_Output, HID_USAGE_PAGE_PID, collection,
+                                             usage, &button, &count, preparsed );
+        if (status != HIDP_STATUS_SUCCESS)
+        {
+            WARN( "HidP_GetSpecificValueCaps %#x returned %#x\n", usage, status );
+            return DIERR_DEVICENOTREG;
+        }
+        else if (!count)
+        {
+            WARN( "effect usage %#x not found\n", usage );
+            return DIERR_DEVICENOTREG;
+        }
+    }
+
+    info->guid = *guid;
+    info->dwEffType = type;
+    info->dwStaticParams = info->dwDynamicParams;
+    lstrcpynW( info->tszName, effect_guid_to_string( guid ), MAX_PATH );
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_GetForceFeedbackState( IDirectInputDevice8W *iface, DWORD *out )
