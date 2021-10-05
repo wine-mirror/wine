@@ -1393,6 +1393,11 @@ void WINAPI vkGetDeviceAccelerationStructureCompatibilityKHR(VkDevice device, co
     unix_funcs->p_vkGetDeviceAccelerationStructureCompatibilityKHR(device, pVersionInfo, pCompatibility);
 }
 
+void WINAPI vkGetDeviceBufferMemoryRequirementsKHR(VkDevice device, const VkDeviceBufferMemoryRequirementsKHR *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
+{
+    unix_funcs->p_vkGetDeviceBufferMemoryRequirementsKHR(device, pInfo, pMemoryRequirements);
+}
+
 void WINAPI vkGetDeviceGroupPeerMemoryFeatures(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures)
 {
     unix_funcs->p_vkGetDeviceGroupPeerMemoryFeatures(device, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
@@ -1411,6 +1416,16 @@ VkResult WINAPI vkGetDeviceGroupPresentCapabilitiesKHR(VkDevice device, VkDevice
 VkResult WINAPI vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfaceKHR surface, VkDeviceGroupPresentModeFlagsKHR *pModes)
 {
     return unix_funcs->p_vkGetDeviceGroupSurfacePresentModesKHR(device, surface, pModes);
+}
+
+void WINAPI vkGetDeviceImageMemoryRequirementsKHR(VkDevice device, const VkDeviceImageMemoryRequirementsKHR *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
+{
+    unix_funcs->p_vkGetDeviceImageMemoryRequirementsKHR(device, pInfo, pMemoryRequirements);
+}
+
+void WINAPI vkGetDeviceImageSparseMemoryRequirementsKHR(VkDevice device, const VkDeviceImageMemoryRequirementsKHR *pInfo, uint32_t *pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements)
+{
+    unix_funcs->p_vkGetDeviceImageSparseMemoryRequirementsKHR(device, pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
 }
 
 void WINAPI vkGetDeviceMemoryCommitment(VkDevice device, VkDeviceMemory memory, VkDeviceSize *pCommittedMemoryInBytes)
@@ -2281,10 +2296,13 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetDescriptorSetLayoutSupport", &vkGetDescriptorSetLayoutSupport},
     {"vkGetDescriptorSetLayoutSupportKHR", &vkGetDescriptorSetLayoutSupportKHR},
     {"vkGetDeviceAccelerationStructureCompatibilityKHR", &vkGetDeviceAccelerationStructureCompatibilityKHR},
+    {"vkGetDeviceBufferMemoryRequirementsKHR", &vkGetDeviceBufferMemoryRequirementsKHR},
     {"vkGetDeviceGroupPeerMemoryFeatures", &vkGetDeviceGroupPeerMemoryFeatures},
     {"vkGetDeviceGroupPeerMemoryFeaturesKHR", &vkGetDeviceGroupPeerMemoryFeaturesKHR},
     {"vkGetDeviceGroupPresentCapabilitiesKHR", &vkGetDeviceGroupPresentCapabilitiesKHR},
     {"vkGetDeviceGroupSurfacePresentModesKHR", &vkGetDeviceGroupSurfacePresentModesKHR},
+    {"vkGetDeviceImageMemoryRequirementsKHR", &vkGetDeviceImageMemoryRequirementsKHR},
+    {"vkGetDeviceImageSparseMemoryRequirementsKHR", &vkGetDeviceImageSparseMemoryRequirementsKHR},
     {"vkGetDeviceMemoryCommitment", &vkGetDeviceMemoryCommitment},
     {"vkGetDeviceMemoryOpaqueCaptureAddress", &vkGetDeviceMemoryOpaqueCaptureAddress},
     {"vkGetDeviceMemoryOpaqueCaptureAddressKHR", &vkGetDeviceMemoryOpaqueCaptureAddressKHR},

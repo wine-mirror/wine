@@ -1160,6 +1160,17 @@ typedef VkMemoryRequirements2 VkMemoryRequirements2_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkDeviceBufferMemoryRequirementsKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    const VkBufferCreateInfo_host *pCreateInfo;
+} VkDeviceBufferMemoryRequirementsKHR_host;
+#else
+typedef VkDeviceBufferMemoryRequirementsKHR VkDeviceBufferMemoryRequirementsKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDeviceMemoryOpaqueCaptureAddressInfo_host
 {
     VkStructureType sType;
@@ -1983,10 +1994,13 @@ struct vulkan_device_funcs
     void (*p_vkGetDescriptorSetLayoutSupport)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, VkDescriptorSetLayoutSupport *);
     void (*p_vkGetDescriptorSetLayoutSupportKHR)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, VkDescriptorSetLayoutSupport *);
     void (*p_vkGetDeviceAccelerationStructureCompatibilityKHR)(VkDevice, const VkAccelerationStructureVersionInfoKHR *, VkAccelerationStructureCompatibilityKHR *);
+    void (*p_vkGetDeviceBufferMemoryRequirementsKHR)(VkDevice, const VkDeviceBufferMemoryRequirementsKHR_host *, VkMemoryRequirements2_host *);
     void (*p_vkGetDeviceGroupPeerMemoryFeatures)(VkDevice, uint32_t, uint32_t, uint32_t, VkPeerMemoryFeatureFlags *);
     void (*p_vkGetDeviceGroupPeerMemoryFeaturesKHR)(VkDevice, uint32_t, uint32_t, uint32_t, VkPeerMemoryFeatureFlags *);
     VkResult (*p_vkGetDeviceGroupPresentCapabilitiesKHR)(VkDevice, VkDeviceGroupPresentCapabilitiesKHR *);
     VkResult (*p_vkGetDeviceGroupSurfacePresentModesKHR)(VkDevice, VkSurfaceKHR, VkDeviceGroupPresentModeFlagsKHR *);
+    void (*p_vkGetDeviceImageMemoryRequirementsKHR)(VkDevice, const VkDeviceImageMemoryRequirementsKHR *, VkMemoryRequirements2_host *);
+    void (*p_vkGetDeviceImageSparseMemoryRequirementsKHR)(VkDevice, const VkDeviceImageMemoryRequirementsKHR *, uint32_t *, VkSparseImageMemoryRequirements2 *);
     void (*p_vkGetDeviceMemoryCommitment)(VkDevice, VkDeviceMemory, VkDeviceSize *);
     uint64_t (*p_vkGetDeviceMemoryOpaqueCaptureAddress)(VkDevice, const VkDeviceMemoryOpaqueCaptureAddressInfo_host *);
     uint64_t (*p_vkGetDeviceMemoryOpaqueCaptureAddressKHR)(VkDevice, const VkDeviceMemoryOpaqueCaptureAddressInfo_host *);
@@ -2389,10 +2403,13 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetDescriptorSetLayoutSupport) \
     USE_VK_FUNC(vkGetDescriptorSetLayoutSupportKHR) \
     USE_VK_FUNC(vkGetDeviceAccelerationStructureCompatibilityKHR) \
+    USE_VK_FUNC(vkGetDeviceBufferMemoryRequirementsKHR) \
     USE_VK_FUNC(vkGetDeviceGroupPeerMemoryFeatures) \
     USE_VK_FUNC(vkGetDeviceGroupPeerMemoryFeaturesKHR) \
     USE_VK_FUNC(vkGetDeviceGroupPresentCapabilitiesKHR) \
     USE_VK_FUNC(vkGetDeviceGroupSurfacePresentModesKHR) \
+    USE_VK_FUNC(vkGetDeviceImageMemoryRequirementsKHR) \
+    USE_VK_FUNC(vkGetDeviceImageSparseMemoryRequirementsKHR) \
     USE_VK_FUNC(vkGetDeviceMemoryCommitment) \
     USE_VK_FUNC(vkGetDeviceMemoryOpaqueCaptureAddress) \
     USE_VK_FUNC(vkGetDeviceMemoryOpaqueCaptureAddressKHR) \
