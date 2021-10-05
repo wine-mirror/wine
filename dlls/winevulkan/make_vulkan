@@ -3445,11 +3445,17 @@ class VkRegistry(object):
                 enum.create_alias(enum_elem.attrib["name"], enum_elem.attrib["alias"])
 
         elif "value" in enum_elem.keys():
-            # Constants are not aliased, no need to add them here, they'll get added later on.
+            # Constant with an explicit value
             if only_aliased:
                 return
 
             self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
+        elif "alias" in enum_elem.keys():
+            # Aliased constant
+            if not only_aliased:
+                return
+
+            self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["alias"]))
 
     @staticmethod
     def _require_type(type_info):
