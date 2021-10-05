@@ -85,6 +85,19 @@ struct pid_control_report
     ULONG control_coll;
 };
 
+struct pid_effect_update
+{
+    BYTE id;
+    ULONG collection;
+    ULONG type_coll;
+    struct hid_value_caps *duration_caps;
+    struct hid_value_caps *gain_caps;
+    struct hid_value_caps *sample_period_caps;
+    struct hid_value_caps *start_delay_caps;
+    struct hid_value_caps *trigger_button_caps;
+    struct hid_value_caps *trigger_repeat_interval_caps;
+};
+
 #define DEVICE_STATE_MAX_SIZE 1024
 
 struct hid_joystick
@@ -115,6 +128,7 @@ struct hid_joystick
     struct list effect_list;
     struct pid_control_report pid_device_control;
     struct pid_control_report pid_effect_control;
+    struct pid_effect_update pid_effect_update;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -1589,6 +1603,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
 {
     struct pid_control_report *device_control = &impl->pid_device_control;
     struct pid_control_report *effect_control = &impl->pid_effect_control;
+    struct pid_effect_update *effect_update = &impl->pid_effect_update;
 
 #define SET_COLLECTION( rep )                                          \
     do                                                                 \
@@ -1613,9 +1628,14 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         {
         case PID_USAGE_DEVICE_CONTROL_REPORT: SET_COLLECTION( device_control ); break;
         case PID_USAGE_EFFECT_OPERATION_REPORT: SET_COLLECTION( effect_control ); break;
+        case PID_USAGE_SET_EFFECT_REPORT: SET_COLLECTION( effect_update ); break;
 
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
         case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
+        case PID_USAGE_EFFECT_TYPE:
+            if (instance->wCollectionNumber == effect_update->collection)
+                SET_SUB_COLLECTION( effect_update, type_coll );
+            break;
         }
     }
 
@@ -1630,6 +1650,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
 {
     struct pid_control_report *device_control = &impl->pid_device_control;
     struct pid_control_report *effect_control = &impl->pid_effect_control;
+    struct pid_effect_update *effect_update = &impl->pid_effect_update;
 
     if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
@@ -1646,6 +1667,24 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         SET_REPORT_ID( device_control );
     if (instance->wCollectionNumber == effect_control->control_coll)
         SET_REPORT_ID( effect_control );
+    if (instance->wCollectionNumber == effect_update->type_coll)
+        SET_REPORT_ID( effect_update );
+    if (instance->wCollectionNumber == effect_update->collection)
+    {
+        SET_REPORT_ID( effect_update );
+        if (instance->wUsage == PID_USAGE_DURATION)
+            effect_update->duration_caps = caps;
+        if (instance->wUsage == PID_USAGE_GAIN)
+            effect_update->gain_caps = caps;
+        if (instance->wUsage == PID_USAGE_SAMPLE_PERIOD)
+            effect_update->sample_period_caps = caps;
+        if (instance->wUsage == PID_USAGE_START_DELAY)
+            effect_update->start_delay_caps = caps;
+        if (instance->wUsage == PID_USAGE_TRIGGER_BUTTON)
+            effect_update->trigger_button_caps = caps;
+        if (instance->wUsage == PID_USAGE_TRIGGER_REPEAT_INTERVAL)
+            effect_update->trigger_repeat_interval_caps = caps;
+    }
 
 #undef SET_REPORT_ID
 
@@ -1750,10 +1789,14 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     TRACE( "device control id %u, coll %u, control coll %u\n", impl->pid_device_control.id,
            impl->pid_device_control.collection, impl->pid_device_control.control_coll );
     TRACE( "effect control id %u, coll %u\n", impl->pid_effect_control.id, impl->pid_effect_control.collection );
+    TRACE( "effect update id %u, coll %u, type_coll %u\n", impl->pid_effect_update.id,
+           impl->pid_effect_update.collection, impl->pid_effect_update.type_coll );
 
     if (impl->pid_device_control.id)
     {
         impl->dev_caps.dwFlags |= DIDC_FORCEFEEDBACK;
+        if (impl->pid_effect_update.start_delay_caps)
+            impl->dev_caps.dwFlags |= DIDC_STARTDELAY;
         impl->dev_caps.dwFFSamplePeriod = 1000000;
         impl->dev_caps.dwFFMinTimeResolution = 1000000;
         impl->dev_caps.dwHardwareRevision = 1;
