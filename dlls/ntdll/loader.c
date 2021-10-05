@@ -1343,7 +1343,7 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
  */
 static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 {
-    WCHAR mod_name[32];
+    WCHAR mod_name[64];
     NTSTATUS status = STATUS_SUCCESS;
     DLLENTRYPROC entry = wm->ldr.EntryPoint;
     void *module = wm->ldr.DllBase;
