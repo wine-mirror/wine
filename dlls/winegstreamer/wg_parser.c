@@ -686,7 +686,7 @@ static uint64_t CDECL wg_parser_stream_get_duration(struct wg_parser_stream *str
     return stream->duration;
 }
 
-static bool CDECL wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
+static void CDECL wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
         uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags)
 {
     GstSeekType start_type = GST_SEEK_TYPE_SET, stop_type = GST_SEEK_TYPE_SET;
@@ -704,8 +704,9 @@ static bool CDECL wg_parser_stream_seek(struct wg_parser_stream *stream, double 
     if ((stop_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
         stop_type = GST_SEEK_TYPE_NONE;
 
-    return gst_pad_push_event(stream->my_sink, gst_event_new_seek(rate,
-            GST_FORMAT_TIME, flags, start_type, start_pos * 100, stop_type, stop_pos * 100));
+    if (!gst_pad_push_event(stream->my_sink, gst_event_new_seek(rate, GST_FORMAT_TIME,
+            flags, start_type, start_pos * 100, stop_type, stop_pos * 100)))
+        GST_ERROR("Failed to seek.\n");
 }
 
 static void CDECL wg_parser_stream_notify_qos(struct wg_parser_stream *stream,

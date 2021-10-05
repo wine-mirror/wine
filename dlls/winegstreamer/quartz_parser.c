@@ -1233,7 +1233,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 {
     struct parser_source *pin = impl_from_IMediaSeeking(iface);
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
-    HRESULT hr = S_OK;
     int i;
 
     TRACE("pin %p, current %s, current_flags %#x, stop %s, stop_flags %#x.\n",
@@ -1270,13 +1269,8 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     SourceSeekingImpl_SetPositions(iface, current, current_flags, stop, stop_flags);
 
-    if (!unix_funcs->wg_parser_stream_seek(pin->wg_stream, pin->seek.dRate,
-            pin->seek.llCurrent, pin->seek.llStop, current_flags, stop_flags))
-    {
-        ERR("Failed to seek (current %s, stop %s).\n",
-                debugstr_time(pin->seek.llCurrent), debugstr_time(pin->seek.llStop));
-        hr = E_FAIL;
-    }
+    unix_funcs->wg_parser_stream_seek(pin->wg_stream, pin->seek.dRate,
+            pin->seek.llCurrent, pin->seek.llStop, current_flags, stop_flags);
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
@@ -1299,7 +1293,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
             LeaveCriticalSection(&pin->flushing_cs);
     }
 
-    return hr;
+    return S_OK;
 }
 
 static const IMediaSeekingVtbl GST_Seeking_Vtbl =
