@@ -450,7 +450,6 @@ AC_CHECK_HEADERS(\
 	dlfcn.h \
 	elf.h \
 	float.h \
-	getopt.h \
 	gettext-po.h \
 	grp.h \
 	gsm.h \
@@ -2138,7 +2137,6 @@ AC_CHECK_FUNCS(\
 	getattrlist \
 	getauxval \
 	getifaddrs \
-	getopt_long_only \
 	getrandom \
 	kqueue \
 	lstat \
@@ -2362,12 +2360,6 @@ AC_CHECK_MEMBERS([struct mtget.mt_blksiz, struct mtget.mt_gstat, struct mtget.mt
 [#include <sys/types.h>
 #ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
-#endif])
-
-dnl Check for struct option
-AC_CHECK_MEMBERS([struct option.name],,,
-[#ifdef HAVE_GETOPT_H
-#include <getopt.h>
 #endif])
 
 dnl Check for stat.st_blocks and ns-resolved times

@@ -135,12 +135,6 @@
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
-/* Define to 1 if you have the <getopt.h> header file. */
-#undef HAVE_GETOPT_H
-
-/* Define to 1 if you have the `getopt_long_only' function. */
-#undef HAVE_GETOPT_LONG_ONLY
-
 /* Define to 1 if you have the `getrandom' function. */
 #undef HAVE_GETRANDOM
 
@@ -629,9 +623,6 @@
 
 /* Define to 1 if `mt_gstat' is a member of `struct mtget'. */
 #undef HAVE_STRUCT_MTGET_MT_GSTAT
-
-/* Define to 1 if `name' is a member of `struct option'. */
-#undef HAVE_STRUCT_OPTION_NAME
 
 /* Define to 1 if `sin6_scope_id' is a member of `struct sockaddr_in6'. */
 #undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID

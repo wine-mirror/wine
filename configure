@@ -7480,7 +7480,6 @@ for ac_header in \
 	dlfcn.h \
 	elf.h \
 	float.h \
-	getopt.h \
 	gettext-po.h \
 	grp.h \
 	gsm.h \
@@ -17907,7 +17906,6 @@ for ac_func in \
 	getattrlist \
 	getauxval \
 	getifaddrs \
-	getopt_long_only \
 	getrandom \
 	kqueue \
 	lstat \
@@ -18868,20 +18866,6 @@ if test "x$ac_cv_member_struct_mtget_mt_blkno" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_MTGET_MT_BLKNO 1
-_ACEOF
-
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "struct option" "name" "ac_cv_member_struct_option_name" "#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-"
-if test "x$ac_cv_member_struct_option_name" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_OPTION_NAME 1
 _ACEOF
 
 
