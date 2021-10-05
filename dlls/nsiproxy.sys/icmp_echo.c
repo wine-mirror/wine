@@ -233,6 +233,100 @@ static void ipv4_linux_ping_set_socket_opts( struct icmp_data *data, struct icmp
 }
 #endif
 
+static int ipv4_reply_buffer_len( int reply_len )
+{
+    return sizeof(struct ip_hdr) + sizeof(struct icmp_hdr) + reply_len - sizeof(struct nsiproxy_icmp_echo_reply);
+}
+
+#ifdef __linux__
+static int ipv4_linux_ping_reply_buffer_len( int reply_len )
+{
+    return sizeof(struct icmp_hdr) + reply_len - sizeof(struct nsiproxy_icmp_echo_reply);
+}
+#endif
+
+static BOOL ipv4_parse_ip_hdr( struct msghdr *msg, int recvd,
+                               int *ip_hdr_len, struct nsiproxy_icmp_echo_reply *reply, void **opts )
+{
+    struct ip_hdr *ip_hdr;
+
+    if (recvd < sizeof(*ip_hdr)) return FALSE;
+    ip_hdr = msg->msg_iov[0].iov_base;
+    if (ip_hdr->v_hl >> 4 != 4 || ip_hdr->protocol != IPPROTO_ICMP) return FALSE;
+    *ip_hdr_len = (ip_hdr->v_hl & 0xf) << 2;
+    if (*ip_hdr_len < sizeof(*ip_hdr)) return FALSE;
+    *opts = ip_hdr + 1;
+    reply->opts.ttl = ip_hdr->ttl;
+    reply->opts.tos = ip_hdr->tos;
+    reply->opts.flags = ip_hdr->frag_off >> 13;
+    reply->opts.options_size = *ip_hdr_len - sizeof(*ip_hdr);
+
+    return TRUE;
+}
+
+#ifdef __linux__
+static BOOL ipv4_linux_ping_parse_ip_hdr( struct msghdr *msg, int recvd,
+                                          int *ip_hdr_len, struct nsiproxy_icmp_echo_reply *reply, void **opts )
+{
+    struct cmsghdr *cmsg;
+
+    *ip_hdr_len = 0;
+    *opts = NULL;
+    reply->opts.ttl = 0;
+    reply->opts.tos = 0;
+    reply->opts.flags = 0;
+    reply->opts.options_size = 0; /* FIXME from IP_OPTIONS but will require checking for space in the reply */
+
+    for (cmsg = CMSG_FIRSTHDR( msg ); cmsg; cmsg = CMSG_NXTHDR( msg, cmsg ))
+    {
+        if (cmsg->cmsg_level != IPPROTO_IP) continue;
+        switch (cmsg->cmsg_type)
+        {
+        case IP_TTL:
+            reply->opts.ttl = *(BYTE *)CMSG_DATA( cmsg );
+            break;
+        case IP_TOS:
+            reply->opts.tos = *(BYTE *)CMSG_DATA( cmsg );
+            break;
+        }
+    }
+    return TRUE;
+}
+#endif
+
+static int ipv4_parse_icmp_hdr_( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_size,
+                                 struct nsiproxy_icmp_echo_reply *reply, int ping_socket )
+{
+    switch (icmp->type)
+    {
+    case ICMP4_ECHO_REPLY:
+        if ((!ping_socket && icmp->un.echo.id != data->id) ||
+            icmp->un.echo.sequence != data->seq) return -1;
+
+        reply->status = IP_SUCCESS;
+        return icmp_size - sizeof(*icmp);
+
+    /* FIXME: handle other icmp messages */
+
+    default:
+        return -1;
+    }
+}
+
+static int ipv4_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_size,
+                                struct nsiproxy_icmp_echo_reply *reply )
+{
+    return ipv4_parse_icmp_hdr_( data, icmp, icmp_size, reply, 0 );
+}
+
+#ifdef __linux__
+static int ipv4_linux_ping_parse_icmp_hdr( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_size,
+                                           struct nsiproxy_icmp_echo_reply *reply )
+{
+    return ipv4_parse_icmp_hdr_( data, icmp, icmp_size, reply, 1 );
+}
+#endif
+
 struct family_ops
 {
     int family;
@@ -240,6 +334,11 @@ struct family_ops
     void (*init_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp_hdr );
     unsigned short (*chksum)( BYTE *data, unsigned int count );
     void (*set_socket_opts)( struct icmp_data *data, struct icmp_send_echo_params *params );
+    int (*reply_buffer_len)( int reply_len );
+    BOOL (*parse_ip_hdr)( struct msghdr *msg, int recvd,
+                          int *ip_hdr_len, struct nsiproxy_icmp_echo_reply *reply, void **opts );
+    int (*parse_icmp_hdr)( struct icmp_data *data, struct icmp_hdr *icmp, int icmp_len,
+                           struct nsiproxy_icmp_echo_reply *reply );
 };
 
 static const struct family_ops ipv4 =
@@ -249,6 +348,9 @@ static const struct family_ops ipv4 =
     ipv4_init_icmp_hdr,
     chksum,
     ipv4_set_socket_opts,
+    ipv4_reply_buffer_len,
+    ipv4_parse_ip_hdr,
+    ipv4_parse_icmp_hdr,
 };
 
 #ifdef __linux__
@@ -260,6 +362,9 @@ static const struct family_ops ipv4_linux_ping =
     ipv4_init_icmp_hdr,
     null_chksum,
     ipv4_linux_ping_set_socket_opts,
+    ipv4_linux_ping_reply_buffer_len,
+    ipv4_linux_ping_parse_ip_hdr,
+    ipv4_linux_ping_parse_icmp_hdr,
 };
 #endif
 
@@ -300,6 +405,34 @@ static int SOCKADDR_INET_to_sockaddr( const SOCKADDR_INET *in, struct sockaddr *
     }
     }
     return 0;
+}
+
+static BOOL sockaddr_to_SOCKADDR_INET( const struct sockaddr *in, SOCKADDR_INET *out )
+{
+    switch (in->sa_family)
+    {
+    case AF_INET:
+    {
+        struct sockaddr_in *sa = (struct sockaddr_in *)in;
+
+        out->Ipv4.sin_family = WS_AF_INET;
+        out->Ipv4.sin_port = sa->sin_port;
+        out->Ipv4.sin_addr.WS_s_addr = sa->sin_addr.s_addr;
+        return TRUE;
+    }
+    case AF_INET6:
+    {
+        struct sockaddr_in6 *sa = (struct sockaddr_in6 *)in;
+
+        out->Ipv6.sin6_family = WS_AF_INET6;
+        out->Ipv6.sin6_port = sa->sin6_port;
+        out->Ipv6.sin6_flowinfo = sa->sin6_flowinfo;
+        memcpy( out->Ipv6.sin6_addr.WS_s6_addr, sa->sin6_addr.s6_addr, sizeof(sa->sin6_addr.s6_addr) );
+        out->Ipv6.sin6_scope_id = sa->sin6_scope_id;
+        return TRUE;
+    }
+    }
+    return FALSE;
 }
 
 static NTSTATUS icmp_data_create( ADDRESS_FAMILY win_family, struct icmp_data **icmp_data )
@@ -404,11 +537,78 @@ static int get_timeout( LARGE_INTEGER start, DWORD timeout )
     return min( (end.QuadPart - now.QuadPart) / 10000, INT_MAX );
 }
 
+static ULONG get_rtt( LARGE_INTEGER start )
+{
+    LARGE_INTEGER now;
+
+    NtQueryPerformanceCounter( &now, NULL );
+    return (now.QuadPart - start.QuadPart) / 10000;
+}
+
+static NTSTATUS recv_msg( struct icmp_data *data, struct icmp_listen_params *params )
+{
+    struct nsiproxy_icmp_echo_reply *reply = (struct nsiproxy_icmp_echo_reply *)params->reply;
+    struct sockaddr_storage addr;
+    struct iovec iov[1];
+    BYTE cmsg_buf[1024];
+    struct msghdr msg = { .msg_name = &addr, .msg_namelen = sizeof(addr),
+                          .msg_iov = iov, .msg_iovlen = ARRAY_SIZE(iov),
+                          .msg_control = cmsg_buf, .msg_controllen = sizeof(cmsg_buf) };
+    int ip_hdr_len, recvd, reply_buf_len, data_size;
+    char *reply_buf;
+    void *opts;
+    struct icmp_hdr *icmp_hdr;
+
+    reply_buf_len = data->ops->reply_buffer_len( params->reply_len );
+    reply_buf = malloc( reply_buf_len );
+    if (!reply_buf) return STATUS_NO_MEMORY;
+
+    iov[0].iov_base = reply_buf;
+    iov[0].iov_len = reply_buf_len;
+
+    recvd = recvmsg( data->socket, &msg, 0 );
+    TRACE( "recvmsg() rets %d errno %d addr_len %d iovlen %d msg_flags %x\n",
+           recvd, errno, msg.msg_namelen, (int)iov[0].iov_len, msg.msg_flags );
+
+    if (!data->ops->parse_ip_hdr( &msg, recvd, &ip_hdr_len, reply, &opts )) goto skip;
+    if (recvd < ip_hdr_len + sizeof(*icmp_hdr)) goto skip;
+
+    icmp_hdr = (struct icmp_hdr *)(reply_buf + ip_hdr_len);
+    if ((data_size = data->ops->parse_icmp_hdr( data, icmp_hdr, recvd - ip_hdr_len, reply )) < 0) goto skip;
+    reply->data_size = data_size;
+    if (reply->data_size && msg.msg_flags & MSG_TRUNC)
+    {
+        free( reply_buf );
+        return set_reply_ip_status( params, IP_GENERAL_FAILURE );
+    }
+
+    sockaddr_to_SOCKADDR_INET( (struct sockaddr *)&addr, &reply->addr );
+    reply->round_trip_time = get_rtt( data->send_time );
+    reply->num_of_pkts = 1;
+    reply->opts.options_offset = sizeof(*reply);
+    reply->data_offset = sizeof(*reply) + ((reply->opts.options_size + 3) & ~3);
+    if (reply->opts.options_size)
+        memcpy( (char *)reply + reply->opts.options_offset, opts, reply->opts.options_size );
+    if (reply->opts.options_size & 3)
+        memset( (char *)reply + reply->opts.options_offset + reply->opts.options_size, 0, 4 - (reply->opts.options_size & 3) );
+    if (reply->data_size)
+        memcpy( (char *)reply + reply->data_offset, icmp_hdr + 1, reply->data_size );
+
+    params->reply_len = reply->data_offset + reply->data_size;
+    free( reply_buf );
+    return STATUS_SUCCESS;
+
+skip:
+    free( reply_buf );
+    return STATUS_RETRY;
+}
+
 NTSTATUS icmp_listen( void *args )
 {
     struct icmp_listen_params *params = args;
     struct icmp_data *data;
     struct pollfd fds[1];
+    NTSTATUS status;
     int ret;
 
     data = handle_data( params->handle );
@@ -419,8 +619,9 @@ NTSTATUS icmp_listen( void *args )
 
     while ((ret = poll( fds, ARRAY_SIZE(fds), get_timeout( data->send_time, params->timeout ) )) > 0)
     {
-        /* FIXME */
-        return STATUS_NOT_SUPPORTED;
+        status = recv_msg( data, params );
+        if (status == STATUS_RETRY) continue;
+        return status;
     }
 
     if (!ret) /* timeout */
