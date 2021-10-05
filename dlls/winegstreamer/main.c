@@ -27,16 +27,209 @@
 #include "initguid.h"
 #include "gst_guids.h"
 
+static unixlib_handle_t unix_handle;
+
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-const struct unix_funcs *unix_funcs = NULL;
+struct wg_parser *wg_parser_create(enum wg_parser_type type, bool unlimited_buffering)
+{
+    struct wg_parser_create_params params =
+    {
+        .type = type,
+        .unlimited_buffering = unlimited_buffering,
+    };
+
+    if (__wine_unix_call(unix_handle, unix_wg_parser_create, &params))
+        return NULL;
+    return params.parser;
+}
+
+void wg_parser_destroy(struct wg_parser *parser)
+{
+    __wine_unix_call(unix_handle, unix_wg_parser_destroy, parser);
+}
+
+HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size)
+{
+    struct wg_parser_connect_params params =
+    {
+        .parser = parser,
+        .file_size = file_size,
+    };
+
+    return __wine_unix_call(unix_handle, unix_wg_parser_connect, &params);
+}
+
+void wg_parser_disconnect(struct wg_parser *parser)
+{
+    __wine_unix_call(unix_handle, unix_wg_parser_disconnect, parser);
+}
+
+void wg_parser_begin_flush(struct wg_parser *parser)
+{
+    __wine_unix_call(unix_handle, unix_wg_parser_begin_flush, parser);
+}
+
+void wg_parser_end_flush(struct wg_parser *parser)
+{
+    __wine_unix_call(unix_handle, unix_wg_parser_end_flush, parser);
+}
+
+bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, uint32_t *size)
+{
+    struct wg_parser_get_next_read_offset_params params =
+    {
+        .parser = parser,
+    };
+
+    if (__wine_unix_call(unix_handle, unix_wg_parser_get_next_read_offset, &params))
+        return false;
+    *offset = params.offset;
+    *size = params.size;
+    return true;
+}
+
+void wg_parser_push_data(struct wg_parser *parser, const void *data, uint32_t size)
+{
+    struct wg_parser_push_data_params params =
+    {
+        .parser = parser,
+        .data = data,
+        .size = size,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_push_data, &params);
+}
+
+uint32_t wg_parser_get_stream_count(struct wg_parser *parser)
+{
+    struct wg_parser_get_stream_count_params params =
+    {
+        .parser = parser,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_get_stream_count, &params);
+    return params.count;
+}
+
+struct wg_parser_stream *wg_parser_get_stream(struct wg_parser *parser, uint32_t index)
+{
+    struct wg_parser_get_stream_params params =
+    {
+        .parser = parser,
+        .index = index,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_get_stream, &params);
+    return params.stream;
+}
+
+void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format)
+{
+    struct wg_parser_stream_get_preferred_format_params params =
+    {
+        .stream = stream,
+        .format = format,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_get_preferred_format, &params);
+}
+
+void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format)
+{
+    struct wg_parser_stream_enable_params params =
+    {
+        .stream = stream,
+        .format = format,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_enable, &params);
+}
+
+void wg_parser_stream_disable(struct wg_parser_stream *stream)
+{
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_disable, stream);
+}
+
+bool wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event)
+{
+    struct wg_parser_stream_get_event_params params =
+    {
+        .stream = stream,
+        .event = event,
+    };
+
+    return !__wine_unix_call(unix_handle, unix_wg_parser_stream_get_event, &params);
+}
+
+bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
+        void *data, uint32_t offset, uint32_t size)
+{
+    struct wg_parser_stream_copy_buffer_params params =
+    {
+        .stream = stream,
+        .data = data,
+        .offset = offset,
+        .size = size,
+    };
+
+    return !__wine_unix_call(unix_handle, unix_wg_parser_stream_copy_buffer, &params);
+}
+
+void wg_parser_stream_release_buffer(struct wg_parser_stream *stream)
+{
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_release_buffer, stream);
+}
+
+void wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
+        bool underflow, double proportion, int64_t diff, uint64_t timestamp)
+{
+    struct wg_parser_stream_notify_qos_params params =
+    {
+        .stream = stream,
+        .underflow = underflow,
+        .proportion = proportion,
+        .diff = diff,
+        .timestamp = timestamp,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_notify_qos, &params);
+}
+
+uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream)
+{
+    struct wg_parser_stream_get_duration_params params =
+    {
+        .stream = stream,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_get_duration, &params);
+    return params.duration;
+}
+
+void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
+        uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags)
+{
+    struct wg_parser_stream_seek_params params =
+    {
+        .stream = stream,
+        .rate = rate,
+        .start_pos = start_pos,
+        .stop_pos = stop_pos,
+        .start_flags = start_flags,
+        .stop_flags = stop_flags,
+    };
+
+    __wine_unix_call(unix_handle, unix_wg_parser_stream_seek, &params);
+}
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(instance);
-        __wine_init_unix_lib(instance, reason, NULL, &unix_funcs);
+        NtQueryVirtualMemory(GetCurrentProcess(), instance, MemoryWineUnixFuncs,
+                &unix_handle, sizeof(unix_handle), NULL);
     }
     return TRUE;
 }

@@ -24,8 +24,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "windef.h"
+#include "winternl.h"
 #include "wtypes.h"
 #include "mmreg.h"
+
+#include "wine/unixlib.h"
 
 struct wg_format
 {
@@ -125,41 +128,123 @@ enum wg_parser_type
     WG_PARSER_WAVPARSE,
 };
 
-struct unix_funcs
+struct wg_parser_create_params
 {
-    struct wg_parser *(CDECL *wg_parser_create)(enum wg_parser_type type, bool unlimited_buffering);
-    void (CDECL *wg_parser_destroy)(struct wg_parser *parser);
+    struct wg_parser *parser;
+    enum wg_parser_type type;
+    bool unlimited_buffering;
+};
 
-    HRESULT (CDECL *wg_parser_connect)(struct wg_parser *parser, uint64_t file_size);
-    void (CDECL *wg_parser_disconnect)(struct wg_parser *parser);
+struct wg_parser_connect_params
+{
+    struct wg_parser *parser;
+    UINT64 file_size;
+};
 
-    void (CDECL *wg_parser_begin_flush)(struct wg_parser *parser);
-    void (CDECL *wg_parser_end_flush)(struct wg_parser *parser);
+struct wg_parser_get_next_read_offset_params
+{
+    struct wg_parser *parser;
+    UINT32 size;
+    UINT64 offset;
+};
 
-    bool (CDECL *wg_parser_get_next_read_offset)(struct wg_parser *parser,
-            uint64_t *offset, uint32_t *size);
-    void (CDECL *wg_parser_push_data)(struct wg_parser *parser,
-            const void *data, uint32_t size);
+struct wg_parser_push_data_params
+{
+    struct wg_parser *parser;
+    const void *data;
+    UINT32 size;
+};
 
-    uint32_t (CDECL *wg_parser_get_stream_count)(struct wg_parser *parser);
-    struct wg_parser_stream *(CDECL *wg_parser_get_stream)(struct wg_parser *parser, uint32_t index);
+struct wg_parser_get_stream_count_params
+{
+    struct wg_parser *parser;
+    UINT32 count;
+};
 
-    void (CDECL *wg_parser_stream_get_preferred_format)(struct wg_parser_stream *stream, struct wg_format *format);
-    void (CDECL *wg_parser_stream_enable)(struct wg_parser_stream *stream, const struct wg_format *format);
-    void (CDECL *wg_parser_stream_disable)(struct wg_parser_stream *stream);
+struct wg_parser_get_stream_params
+{
+    struct wg_parser *parser;
+    UINT32 index;
+    struct wg_parser_stream *stream;
+};
 
-    bool (CDECL *wg_parser_stream_get_event)(struct wg_parser_stream *stream, struct wg_parser_event *event);
-    bool (CDECL *wg_parser_stream_copy_buffer)(struct wg_parser_stream *stream,
-            void *data, uint32_t offset, uint32_t size);
-    void (CDECL *wg_parser_stream_release_buffer)(struct wg_parser_stream *stream);
-    void (CDECL *wg_parser_stream_notify_qos)(struct wg_parser_stream *stream,
-            bool underflow, double proportion, int64_t diff, uint64_t timestamp);
+struct wg_parser_stream_get_preferred_format_params
+{
+    struct wg_parser_stream *stream;
+    struct wg_format *format;
+};
 
-    /* Returns the duration in 100-nanosecond units. */
-    uint64_t (CDECL *wg_parser_stream_get_duration)(struct wg_parser_stream *stream);
-    /* start_pos and stop_pos are in 100-nanosecond units. */
-    void (CDECL *wg_parser_stream_seek)(struct wg_parser_stream *stream, double rate,
-            uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);
+struct wg_parser_stream_enable_params
+{
+    struct wg_parser_stream *stream;
+    const struct wg_format *format;
+};
+
+struct wg_parser_stream_get_event_params
+{
+    struct wg_parser_stream *stream;
+    struct wg_parser_event *event;
+};
+
+struct wg_parser_stream_copy_buffer_params
+{
+    struct wg_parser_stream *stream;
+    void *data;
+    UINT32 offset;
+    UINT32 size;
+};
+
+struct wg_parser_stream_notify_qos_params
+{
+    struct wg_parser_stream *stream;
+    bool underflow;
+    DOUBLE proportion;
+    INT64 diff;
+    UINT64 timestamp;
+};
+
+struct wg_parser_stream_get_duration_params
+{
+    struct wg_parser_stream *stream;
+    UINT64 duration;
+};
+
+struct wg_parser_stream_seek_params
+{
+    struct wg_parser_stream *stream;
+    DOUBLE rate;
+    UINT64 start_pos, stop_pos;
+    DWORD start_flags, stop_flags;
+};
+
+enum unix_funcs
+{
+    unix_wg_parser_create,
+    unix_wg_parser_destroy,
+
+    unix_wg_parser_connect,
+    unix_wg_parser_disconnect,
+
+    unix_wg_parser_begin_flush,
+    unix_wg_parser_end_flush,
+
+    unix_wg_parser_get_next_read_offset,
+    unix_wg_parser_push_data,
+
+    unix_wg_parser_get_stream_count,
+    unix_wg_parser_get_stream,
+
+    unix_wg_parser_stream_get_preferred_format,
+    unix_wg_parser_stream_enable,
+    unix_wg_parser_stream_disable,
+
+    unix_wg_parser_stream_get_event,
+    unix_wg_parser_stream_copy_buffer,
+    unix_wg_parser_stream_release_buffer,
+    unix_wg_parser_stream_notify_qos,
+
+    unix_wg_parser_stream_get_duration,
+    unix_wg_parser_stream_seek,
 };
 
 #endif /* __WINE_WINEGSTREAMER_UNIXLIB_H */

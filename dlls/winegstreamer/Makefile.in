@@ -1,4 +1,5 @@
 MODULE    = winegstreamer.dll
+UNIXLIB   = winegstreamer.so
 IMPORTS   = strmbase strmiids uuid ole32 mfuuid
 DELAYIMPORTS = mfplat
 EXTRAINCL = $(GSTREAMER_CFLAGS)

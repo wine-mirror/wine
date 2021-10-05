@@ -357,7 +357,7 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
             IMFMediaTypeHandler_GetCurrentMediaType(mth, &current_mt);
 
             mf_media_type_to_wg_format(current_mt, &format);
-            unix_funcs->wg_parser_stream_enable(stream->wg_stream, &format);
+            wg_parser_stream_enable(stream->wg_stream, &format);
 
             IMFMediaType_Release(current_mt);
             IMFMediaTypeHandler_Release(mth);
@@ -385,9 +385,9 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     source->state = SOURCE_RUNNING;
 
     if (position->vt == VT_I8)
-        unix_funcs->wg_parser_stream_seek(source->streams[0]->wg_stream, 1.0,
-                position->hVal.QuadPart, 0, AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
-    unix_funcs->wg_parser_end_flush(source->wg_parser);
+        wg_parser_stream_seek(source->streams[0]->wg_stream, 1.0, position->hVal.QuadPart, 0,
+                AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
+    wg_parser_end_flush(source->wg_parser);
 
     for (i = 0; i < source->stream_count; i++)
         flush_token_queue(source->streams[i], position->vt == VT_EMPTY);
@@ -415,7 +415,7 @@ static void stop_pipeline(struct media_source *source)
 {
     unsigned int i;
 
-    unix_funcs->wg_parser_begin_flush(source->wg_parser);
+    wg_parser_begin_flush(source->wg_parser);
 
     for (i = 0; i < source->stream_count; i++)
     {
@@ -423,7 +423,7 @@ static void stop_pipeline(struct media_source *source)
         if (stream->state != STREAM_INACTIVE)
         {
             IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamStopped, &GUID_NULL, S_OK, NULL);
-            unix_funcs->wg_parser_stream_disable(stream->wg_stream);
+            wg_parser_stream_disable(stream->wg_stream);
         }
     }
 
@@ -490,13 +490,13 @@ static void send_buffer(struct media_stream *stream, const struct wg_parser_even
         goto out;
     }
 
-    if (!unix_funcs->wg_parser_stream_copy_buffer(stream->wg_stream, data, 0, event->u.buffer.size))
+    if (!wg_parser_stream_copy_buffer(stream->wg_stream, data, 0, event->u.buffer.size))
     {
-        unix_funcs->wg_parser_stream_release_buffer(stream->wg_stream);
+        wg_parser_stream_release_buffer(stream->wg_stream);
         IMFMediaBuffer_Unlock(buffer);
         goto out;
     }
-    unix_funcs->wg_parser_stream_release_buffer(stream->wg_stream);
+    wg_parser_stream_release_buffer(stream->wg_stream);
 
     if (FAILED(hr = IMFMediaBuffer_Unlock(buffer)))
     {
@@ -536,7 +536,7 @@ static void wait_on_sample(struct media_stream *stream, IUnknown *token)
 
     for (;;)
     {
-        if (!unix_funcs->wg_parser_stream_get_event(stream->wg_stream, &event))
+        if (!wg_parser_stream_get_event(stream->wg_stream, &event))
             return;
 
         TRACE("Got event of type %#x.\n", event.type);
@@ -628,7 +628,7 @@ static DWORD CALLBACK read_thread(void *arg)
         uint32_t size;
         HRESULT hr;
 
-        if (!unix_funcs->wg_parser_get_next_read_offset(source->wg_parser, &offset, &size))
+        if (!wg_parser_get_next_read_offset(source->wg_parser, &offset, &size))
             continue;
 
         if (offset >= file_size)
@@ -650,7 +650,7 @@ static DWORD CALLBACK read_thread(void *arg)
             ERR("Failed to read %u bytes at offset %I64u, hr %#x.\n", size, offset, hr);
         else if (ret_size != size)
             ERR("Unexpected short read: requested %u bytes, got %u.\n", size, ret_size);
-        unix_funcs->wg_parser_push_data(source->wg_parser, SUCCEEDED(hr) ? data : NULL, ret_size);
+        wg_parser_push_data(source->wg_parser, SUCCEEDED(hr) ? data : NULL, ret_size);
     }
 
     free(data);
@@ -867,7 +867,7 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
     unsigned int i;
     HRESULT hr;
 
-    unix_funcs->wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
 
     if (format.major_type == WG_MAJOR_TYPE_VIDEO)
     {
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
     source->state = SOURCE_SHUTDOWN;
 
-    unix_funcs->wg_parser_disconnect(source->wg_parser);
+    wg_parser_disconnect(source->wg_parser);
 
     source->read_thread_shutdown = true;
     WaitForSingleObject(source->read_thread, INFINITE);
@@ -1350,7 +1350,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
     }
 
-    unix_funcs->wg_parser_destroy(source->wg_parser);
+    wg_parser_destroy(source->wg_parser);
 
     free(source->streams);
 
@@ -1427,7 +1427,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
      * never deselects it). Remove buffering limits from decodebin in order to
      * account for this. Note that this does leak memory, but the same memory
      * leak occurs with native. */
-    if (!(parser = unix_funcs->wg_parser_create(WG_PARSER_DECODEBIN, true)))
+    if (!(parser = wg_parser_create(WG_PARSER_DECODEBIN, true)))
     {
         hr = E_OUTOFMEMORY;
         goto fail;
@@ -1438,10 +1438,10 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     object->state = SOURCE_OPENING;
 
-    if (FAILED(hr = unix_funcs->wg_parser_connect(parser, file_size)))
+    if (FAILED(hr = wg_parser_connect(parser, file_size)))
         goto fail;
 
-    stream_count = unix_funcs->wg_parser_get_stream_count(parser);
+    stream_count = wg_parser_get_stream_count(parser);
 
     if (!(object->streams = calloc(stream_count, sizeof(*object->streams))))
     {
@@ -1451,7 +1451,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     for (i = 0; i < stream_count; ++i)
     {
-        if (FAILED(hr = new_media_stream(object, unix_funcs->wg_parser_get_stream(parser, i), i, &object->streams[i])))
+        if (FAILED(hr = new_media_stream(object, wg_parser_get_stream(parser, i), i, &object->streams[i])))
             goto fail;
 
         if (FAILED(hr = media_stream_init_desc(object->streams[i])))
@@ -1487,7 +1487,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     for (i = 0; i < object->stream_count; i++)
         total_pres_time = max(total_pres_time,
-                unix_funcs->wg_parser_stream_get_duration(object->streams[i]->wg_stream));
+                wg_parser_stream_get_duration(object->streams[i]->wg_stream));
 
     if (object->stream_count)
         IMFPresentationDescriptor_SetUINT64(object->pres_desc, &MF_PD_DURATION, total_pres_time);
@@ -1518,7 +1518,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     }
     free(object->streams);
     if (stream_count != UINT_MAX)
-        unix_funcs->wg_parser_disconnect(object->wg_parser);
+        wg_parser_disconnect(object->wg_parser);
     if (object->read_thread)
     {
         object->read_thread_shutdown = true;
@@ -1526,7 +1526,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         CloseHandle(object->read_thread);
     }
     if (object->wg_parser)
-        unix_funcs->wg_parser_destroy(object->wg_parser);
+        wg_parser_destroy(object->wg_parser);
     if (object->async_commands_queue)
         MFUnlockWorkQueue(object->async_commands_queue);
     if (object->event_queue)
