@@ -325,11 +325,11 @@ static const struct device_strings device_strings[] =
 {
     { .id = L"VID_045E&PID_028E", .product = L"Controller (XBOX 360 For Windows)" },
     { .id = L"VID_045E&PID_028F", .product = L"Controller (XBOX 360 For Windows)" },
-    { .id = L"VID_045E&PID_02D1", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02DD", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02E3", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02EA", .product = L"Controller (XBOX One For Windows)" },
-    { .id = L"VID_045E&PID_02FD", .product = L"Controller (XBOX One For Windows)" },
+    { .id = L"VID_045E&PID_02D1", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02DD", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02E3", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02EA", .product = L"Controller (Xbox One For Windows)" },
+    { .id = L"VID_045E&PID_02FD", .product = L"Controller (Xbox One For Windows)" },
     { .id = L"VID_045E&PID_0719", .product = L"Controller (XBOX 360 For Windows)" },
 };
 
