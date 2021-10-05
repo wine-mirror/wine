@@ -3363,9 +3363,7 @@ static BOOL CALLBACK check_effects( const DIEFFECTINFOW *effect, void *args )
     check_member( *effect, *exp, "%u", dwSize );
     check_member_guid( *effect, *exp, guid );
     check_member( *effect, *exp, "%#x", dwEffType );
-    todo_wine
     check_member( *effect, *exp, "%#x", dwStaticParams );
-    todo_wine
     check_member( *effect, *exp, "%#x", dwDynamicParams );
     check_member_wstr( *effect, *exp, tszName );
 
@@ -5741,9 +5739,7 @@ static void test_force_feedback_joystick( void )
     ok( hr == DI_OK, "IDirectInputDevice8_GetEffectInfo returned %#x\n", hr );
     check_member_guid( effectinfo, expect_effects[0], guid );
     check_member( effectinfo, expect_effects[0], "%#x", dwEffType );
-    todo_wine
     check_member( effectinfo, expect_effects[0], "%#x", dwStaticParams );
-    todo_wine
     check_member( effectinfo, expect_effects[0], "%#x", dwDynamicParams );
     check_member_wstr( effectinfo, expect_effects[0], tszName );
 

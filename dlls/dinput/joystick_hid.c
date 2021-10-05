@@ -90,6 +90,9 @@ struct pid_effect_update
     BYTE id;
     ULONG collection;
     ULONG type_coll;
+    ULONG axes_coll;
+    ULONG axis_count;
+    struct hid_value_caps *axis_caps[6];
     struct hid_value_caps *duration_caps;
     struct hid_value_caps *gain_caps;
     struct hid_value_caps *sample_period_caps;
@@ -1055,6 +1058,8 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
 
     if (!(collection = effect_update->collection)) return DIERR_DEVICENOTREG;
 
+    info->dwDynamicParams = DIEP_TYPESPECIFICPARAMS;
+    if (effect_update->axis_count) info->dwDynamicParams |= DIEP_AXES;
     if (effect_update->duration_caps) info->dwDynamicParams |= DIEP_DURATION;
     if (effect_update->gain_caps) info->dwDynamicParams |= DIEP_GAIN;
     if (effect_update->sample_period_caps) info->dwDynamicParams |= DIEP_SAMPLEPERIOD;
@@ -1065,6 +1070,7 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
     }
     if (effect_update->trigger_button_caps) info->dwDynamicParams |= DIEP_TRIGGERBUTTON;
     if (effect_update->trigger_repeat_interval_caps) info->dwDynamicParams |= DIEP_TRIGGERREPEATINTERVAL;
+    if (effect_update->axes_coll) info->dwDynamicParams |= DIEP_AXES;
 
     if (!(collection = effect_update->type_coll)) return DIERR_DEVICENOTREG;
     else
@@ -1756,6 +1762,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
             if (instance->wCollectionNumber == effect_update->collection)
                 SET_SUB_COLLECTION( effect_update, type_coll );
             break;
+        case PID_USAGE_AXES_ENABLE: SET_SUB_COLLECTION( effect_update, axes_coll ); break;
         }
     }
 
@@ -1804,6 +1811,13 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
             effect_update->trigger_button_caps = caps;
         if (instance->wUsage == PID_USAGE_TRIGGER_REPEAT_INTERVAL)
             effect_update->trigger_repeat_interval_caps = caps;
+    }
+    if (instance->wCollectionNumber == effect_update->axes_coll)
+    {
+        SET_REPORT_ID( effect_update );
+        if (effect_update->axis_count >= 6) FIXME( "more than 6 PID axes detected\n" );
+        else effect_update->axis_caps[effect_update->axis_count] = caps;
+        effect_update->axis_count++;
     }
 
 #undef SET_REPORT_ID
