@@ -178,6 +178,16 @@ static NTSTATUS nsiproxy_get_parameter( IRP *irp )
     return status;
 }
 
+static inline HANDLE irp_get_icmp_handle( IRP *irp )
+{
+    return irp->Tail.Overlay.DriverContext[0];
+}
+
+static inline HANDLE irp_set_icmp_handle( IRP *irp, HANDLE handle )
+{
+    return InterlockedExchangePointer( irp->Tail.Overlay.DriverContext, handle );
+}
+
 static void WINAPI icmp_echo_cancel( DEVICE_OBJECT *device, IRP *irp )
 {
     TRACE( "device %p, irp %p.\n", device, irp );
@@ -293,6 +303,26 @@ static int add_device( DRIVER_OBJECT *driver )
     return 1;
 }
 
+static DWORD WINAPI listen_thread_proc( void *arg )
+{
+    IRP *irp = arg;
+
+    TRACE( "\n" );
+
+    /* FIXME */
+
+    EnterCriticalSection( &nsiproxy_cs );
+
+    nsiproxy_call( icmp_close, irp_set_icmp_handle( irp, NULL ) );
+
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+
+    LeaveCriticalSection( &nsiproxy_cs );
+
+    return 0;
+}
+
 static void handle_queued_send_echo( IRP *irp )
 {
     struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
@@ -323,10 +353,8 @@ static void handle_queued_send_echo( IRP *irp )
     }
     else
     {
-        /* FIXME */
-        nsiproxy_call( icmp_close, params.handle );
-        irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
-        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        irp_set_icmp_handle( irp, params.handle );
+        RtlQueueWorkItem( listen_thread_proc, irp, WT_EXECUTELONGFUNCTION );
     }
 }
 
