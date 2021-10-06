@@ -1988,7 +1988,7 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
         name.u.string = NULL;
 
     loc.kind = loc_absolute;
-    loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue;
+    loc.offset = subpgm->ctx->module_ctx->load_offset + low_pc.u.uvalue - subpgm->func->address;
     symt_add_function_point(subpgm->ctx->module_ctx->module, subpgm->func, SymTagLabel,
                             &loc, name.u.string);
 }
