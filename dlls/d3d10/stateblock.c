@@ -73,8 +73,8 @@ static const char *debug_d3d10_device_state_types(D3D10_DEVICE_STATE_TYPES t)
     {
         WINE_D3D10_TO_STR(D3D10_DST_SO_BUFFERS);
         WINE_D3D10_TO_STR(D3D10_DST_OM_RENDER_TARGETS);
-        WINE_D3D10_TO_STR(D3D10_DST_DEPTH_STENCIL_STATE);
-        WINE_D3D10_TO_STR(D3D10_DST_BLEND_STATE);
+        WINE_D3D10_TO_STR(D3D10_DST_OM_DEPTH_STENCIL_STATE);
+        WINE_D3D10_TO_STR(D3D10_DST_OM_BLEND_STATE);
         WINE_D3D10_TO_STR(D3D10_DST_VS);
         WINE_D3D10_TO_STR(D3D10_DST_VS_SAMPLERS);
         WINE_D3D10_TO_STR(D3D10_DST_VS_SHADER_RESOURCES);
@@ -696,9 +696,9 @@ HRESULT WINAPI D3D10StateBlockMaskDisableCapture(D3D10_STATE_BLOCK_MASK *mask,
             return stateblock_mask_clear_bits(&mask->SOBuffers, 1, start_idx, count);
         case D3D10_DST_OM_RENDER_TARGETS:
             return stateblock_mask_clear_bits(&mask->OMRenderTargets, 1, start_idx, count);
-        case D3D10_DST_DEPTH_STENCIL_STATE:
+        case D3D10_DST_OM_DEPTH_STENCIL_STATE:
             return stateblock_mask_clear_bits(&mask->OMDepthStencilState, 1, start_idx, count);
-        case D3D10_DST_BLEND_STATE:
+        case D3D10_DST_OM_BLEND_STATE:
             return stateblock_mask_clear_bits(&mask->OMBlendState, 1, start_idx, count);
         case D3D10_DST_VS:
             return stateblock_mask_clear_bits(&mask->VS, 1, start_idx, count);
@@ -783,9 +783,9 @@ HRESULT WINAPI D3D10StateBlockMaskEnableCapture(D3D10_STATE_BLOCK_MASK *mask,
             return stateblock_mask_set_bits(&mask->SOBuffers, 1, start_idx, count);
         case D3D10_DST_OM_RENDER_TARGETS:
             return stateblock_mask_set_bits(&mask->OMRenderTargets, 1, start_idx, count);
-        case D3D10_DST_DEPTH_STENCIL_STATE:
+        case D3D10_DST_OM_DEPTH_STENCIL_STATE:
             return stateblock_mask_set_bits(&mask->OMDepthStencilState, 1, start_idx, count);
-        case D3D10_DST_BLEND_STATE:
+        case D3D10_DST_OM_BLEND_STATE:
             return stateblock_mask_set_bits(&mask->OMBlendState, 1, start_idx, count);
         case D3D10_DST_VS:
             return stateblock_mask_set_bits(&mask->VS, 1, start_idx, count);
@@ -858,9 +858,9 @@ BOOL WINAPI D3D10StateBlockMaskGetSetting(D3D10_STATE_BLOCK_MASK *mask,
             return stateblock_mask_get_bit(&mask->SOBuffers, 1, idx);
         case D3D10_DST_OM_RENDER_TARGETS:
             return stateblock_mask_get_bit(&mask->OMRenderTargets, 1, idx);
-        case D3D10_DST_DEPTH_STENCIL_STATE:
+        case D3D10_DST_OM_DEPTH_STENCIL_STATE:
             return stateblock_mask_get_bit(&mask->OMDepthStencilState, 1, idx);
-        case D3D10_DST_BLEND_STATE:
+        case D3D10_DST_OM_BLEND_STATE:
             return stateblock_mask_get_bit(&mask->OMBlendState, 1, idx);
         case D3D10_DST_VS:
             return stateblock_mask_get_bit(&mask->VS, 1, idx);
