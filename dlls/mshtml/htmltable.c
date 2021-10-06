@@ -520,6 +520,7 @@ static const tid_t HTMLTableCell_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLTableCell_dispex = {
+    L"HTMLTableDataCellElement",
     NULL,
     DispHTMLTableCell_tid,
     HTMLTableCell_iface_tids,
@@ -964,6 +965,7 @@ static const tid_t HTMLTableRow_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLTableRow_dispex = {
+    L"HTMLTableRowElement",
     NULL,
     DispHTMLTableRow_tid,
     HTMLTableRow_iface_tids,
@@ -1996,6 +1998,7 @@ static const tid_t HTMLTable_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLTable_dispex = {
+    L"HTMLTableElement",
     NULL,
     DispHTMLTable_tid,
     HTMLTable_iface_tids,

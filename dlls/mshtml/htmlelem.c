@@ -527,6 +527,7 @@ static const tid_t HTMLRect_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLRect_dispex = {
+    L"ClientRect",
     NULL,
     IHTMLRect_tid,
     HTMLRect_iface_tids
@@ -788,6 +789,7 @@ static const tid_t HTMLRectCollection_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLRectCollection_dispex = {
+    L"ClientRectList",
     &HTMLRectCollection_dispex_vtbl,
     IHTMLRectCollection_tid,
     HTMLRectCollection_iface_tids
@@ -6669,6 +6671,7 @@ static const tid_t token_list_iface_tids[] = {
     0
 };
 static dispex_static_data_t token_list_dispex = {
+    L"DOMTokenList",
     &token_list_dispex_vtbl,
     IWineDOMTokenList_tid,
     token_list_iface_tids
@@ -6779,6 +6782,7 @@ static const IWineHTMLElementPrivateVtbl WineHTMLElementPrivateVtbl = {
 };
 
 static dispex_static_data_t HTMLElement_dispex = {
+    L"HTMLElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLUnknownElement_tid,
     HTMLElement_iface_tids,
@@ -7053,6 +7057,7 @@ static const tid_t HTMLFiltersCollection_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLFiltersCollection_dispex = {
+    L"FiltersCollection",
     &HTMLFiltersCollection_dispex_vtbl,
     IHTMLFiltersCollection_tid,
     HTMLFiltersCollection_iface_tids
@@ -7626,6 +7631,7 @@ static const tid_t HTMLAttributeCollection_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLAttributeCollection_dispex = {
+    L"NamedNodeMap",
     &HTMLAttributeCollection_dispex_vtbl,
     DispHTMLAttributeCollection_tid,
     HTMLAttributeCollection_iface_tids

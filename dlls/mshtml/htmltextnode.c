@@ -358,6 +358,7 @@ static const tid_t HTMLDOMTextNode_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLDOMTextNode_dispex = {
+    L"Text",
     NULL,
     DispHTMLDOMTextNode_tid,
     HTMLDOMTextNode_iface_tids,

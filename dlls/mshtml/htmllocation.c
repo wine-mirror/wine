@@ -631,6 +631,7 @@ static const tid_t HTMLLocation_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLLocation_dispex = {
+    L"Object",
     NULL,
     DispHTMLLocation_tid,
     HTMLLocation_iface_tids

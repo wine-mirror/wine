@@ -477,6 +477,7 @@ static const tid_t HTMLAreaElement_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLAreaElement_dispex = {
+    L"HTMLAreaElement",
     NULL,
     DispHTMLAreaElement_tid,
     HTMLAreaElement_iface_tids,

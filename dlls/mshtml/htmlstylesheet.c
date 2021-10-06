@@ -202,6 +202,7 @@ static const tid_t HTMLStyleSheetRule_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLStyleSheetRule_dispex = {
+    L"CSSStyleRule",
     NULL,
     DispHTMLStyleSheetRule_tid,
     HTMLStyleSheetRule_iface_tids
@@ -376,6 +377,7 @@ static const tid_t HTMLStyleSheetRulesCollection_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLStyleSheetRulesCollection_dispex = {
+    L"MSCSSRuleList",
     NULL,
     DispHTMLStyleSheetRulesCollection_tid,
     HTMLStyleSheetRulesCollection_iface_tids
@@ -575,6 +577,7 @@ static const tid_t HTMLStyleSheetsCollection_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLStyleSheetsCollection_dispex = {
+    L"StyleSheetList",
     NULL,
     DispHTMLStyleSheetsCollection_tid,
     HTMLStyleSheetsCollection_iface_tids
@@ -1144,6 +1147,7 @@ static const tid_t HTMLStyleSheet_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLStyleSheet_dispex = {
+    L"CSSStyleSheet",
     NULL,
     DispHTMLStyleSheet_tid,
     HTMLStyleSheet_iface_tids,

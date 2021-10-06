@@ -886,6 +886,7 @@ static const dispex_static_data_vtbl_t function_dispex_vtbl = {
 static const tid_t function_iface_tids[] = {0};
 
 static dispex_static_data_t function_dispex = {
+    L"Function",
     &function_dispex_vtbl,
     NULL_tid,
     function_iface_tids
@@ -1480,6 +1481,34 @@ compat_mode_t dispex_compat_mode(DispatchEx *dispex)
     return dispex->info != dispex->info->desc->delayed_init_info
         ? dispex->info->compat_mode
         : dispex->info->desc->vtbl->get_compat_mode(dispex);
+}
+
+HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
+{
+    static const WCHAR prefix[8] = L"[object ";
+    static const WCHAR suffix[] = L"]";
+    WCHAR buf[ARRAY_SIZE(prefix) + 28 + ARRAY_SIZE(suffix)], *p = buf;
+    compat_mode_t compat_mode = dispex_compat_mode(dispex);
+    const WCHAR *name = dispex->info->desc->name;
+    unsigned len;
+
+    if(!ret)
+        return E_INVALIDARG;
+
+    memcpy(p, prefix, sizeof(prefix));
+    p += ARRAY_SIZE(prefix);
+    if(compat_mode < COMPAT_MODE_IE9)
+        p--;
+    else {
+        len = wcslen(name);
+        assert(len <= 28);
+        memcpy(p, name, len * sizeof(WCHAR));
+        p += len;
+    }
+    memcpy(p, suffix, sizeof(suffix));
+
+    *ret = SysAllocString(buf);
+    return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
 static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode_t compat_mode)

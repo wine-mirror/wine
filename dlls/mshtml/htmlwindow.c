@@ -3687,6 +3687,7 @@ static const tid_t HTMLWindow_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLWindow_dispex = {
+    L"Window",
     &HTMLWindow_event_target_vtbl.dispex_vtbl,
     DispHTMLWindow2_tid,
     HTMLWindow_iface_tids,

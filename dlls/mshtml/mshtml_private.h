@@ -327,6 +327,7 @@ typedef struct {
 } dispex_static_data_vtbl_t;
 
 typedef struct {
+    const WCHAR *name;
     const dispex_static_data_vtbl_t *vtbl;
     const tid_t disp_tid;
     const tid_t* const iface_tids;
@@ -393,6 +394,7 @@ HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**) DECLSPEC_HIDDEN;
 const void *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
 void dispex_info_add_interface(dispex_data_t*,tid_t,const dispex_hook_t*) DECLSPEC_HIDDEN;
 compat_mode_t dispex_compat_mode(DispatchEx*) DECLSPEC_HIDDEN;
+HRESULT dispex_to_string(DispatchEx*,BSTR*) DECLSPEC_HIDDEN;
 
 typedef enum {
     DISPEXPROP_CUSTOM,
