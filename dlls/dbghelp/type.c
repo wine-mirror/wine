@@ -158,11 +158,11 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
     case SymTagThunk:
         *addr = ((const struct symt_thunk*)type)->address;
         break;
-    case SymTagCompiland:
-        *addr = ((const struct symt_compiland*)type)->address;
-        break;
     default:
         FIXME("Unsupported sym-tag %s for get-address\n", symt_get_tag_str(type->tag));
+        /* fall through */
+    case SymTagExe:
+    case SymTagCompiland:
         return FALSE;
     }
     return TRUE;
@@ -689,6 +689,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             FIXME("Unsupported sym-tag %s for get-length\n", 
                   symt_get_tag_str(type->tag));
             /* fall through */
+        case SymTagExe:
+        case SymTagCompiland:
         case SymTagFunctionType:
             return FALSE;
         }
