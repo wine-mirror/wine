@@ -4555,3 +4555,26 @@ DWORD WINAPI IcmpParseReplies( void *reply, DWORD reply_size )
     if (!num_pkts) SetLastError( icmp_reply->Status );
     return num_pkts;
 }
+
+/***********************************************************************
+ *    Icmp6CreateFile (IPHLPAPI.@)
+ */
+HANDLE WINAPI Icmp6CreateFile( void )
+{
+    FIXME( "stub\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *    Icmp6SendEcho2 (IPHLPAPI.@)
+ */
+DWORD WINAPI Icmp6SendEcho2( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine, void *apc_ctxt,
+                             struct sockaddr_in6 *src, struct sockaddr_in6 *dst, void *request, WORD request_size,
+                             IP_OPTION_INFORMATION *opts, void *reply, DWORD reply_size, DWORD timeout )
+{
+    FIXME( "(%p, %p, %p, %p, %p, %p, %p, %d, %p, %p, %d, %d): stub\n", handle, event,
+           apc_routine, apc_ctxt, src, dst, request, request_size, opts, reply, reply_size, timeout );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
