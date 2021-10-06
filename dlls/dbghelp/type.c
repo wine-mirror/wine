@@ -141,6 +141,9 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         default: return FALSE;
         }
         break;
+    case SymTagBlock:
+        *addr = ((const struct symt_block*)type)->address;
+        break;
     case SymTagFunction:
         *addr = ((const struct symt_function*)type)->address;
         break;
@@ -663,6 +666,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             break;
         case SymTagFunction:
             X(DWORD64) = ((const struct symt_function*)type)->size;
+            break;
+        case SymTagBlock:
+            X(DWORD64) = ((const struct symt_block*)type)->size;
             break;
         case SymTagPointerType:
             X(DWORD64) = ((const struct symt_pointer*)type)->size;
