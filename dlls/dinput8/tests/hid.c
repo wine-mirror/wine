@@ -3292,18 +3292,11 @@ static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *c
     return DIENUM_CONTINUE;
 }
 
-struct check_objects_todos
-{
-    BOOL dimension;
-    BOOL exponent;
-};
-
 struct check_objects_params
 {
     UINT index;
     UINT expect_count;
     const DIDEVICEOBJECTINSTANCEW *expect_objs;
-    const struct check_objects_todos *todo_objs;
 };
 
 static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
@@ -3311,7 +3304,6 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     static const DIDEVICEOBJECTINSTANCEW unexpected_obj = {0};
     struct check_objects_params *params = args;
     const DIDEVICEOBJECTINSTANCEW *exp = params->expect_objs + params->index;
-    const struct check_objects_todos *todo = params->todo_objs + params->index;
 
     winetest_push_context( "obj[%d]", params->index );
 
@@ -3330,9 +3322,7 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     check_member( *obj, *exp, "%u", wDesignatorIndex );
     check_member( *obj, *exp, "%#04x", wUsagePage );
     check_member( *obj, *exp, "%#04x", wUsage );
-    todo_wine_if( todo->dimension )
     check_member( *obj, *exp, "%#04x", dwDimension );
-    todo_wine_if( todo->exponent )
     check_member( *obj, *exp, "%#04x", wExponent );
     check_member( *obj, *exp, "%u", wReportId );
 
@@ -3652,14 +3642,12 @@ static void test_simple_joystick(void)
             .wUsage = HID_USAGE_GENERIC_JOYSTICK,
         },
     };
-    const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] = {};
     const DIEFFECTINFOW expect_effects[] = {};
 
     struct check_objects_params check_objects_params =
     {
         .expect_count = ARRAY_SIZE(expect_objects),
         .expect_objs = expect_objects,
-        .todo_objs = objects_todos,
     };
     struct check_effects_params check_effects_params =
     {
@@ -6386,35 +6374,6 @@ static void test_force_feedback_joystick( void )
             .wUsage = PID_USAGE_SET_ENVELOPE_REPORT,
         },
     };
-    const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
-    {
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {.dimension = TRUE, .exponent = TRUE},
-        {.dimension = TRUE, .exponent = TRUE},
-        {},
-        {},
-        {},
-        {},
-        {.dimension = TRUE, .exponent = TRUE},
-        {.dimension = TRUE, .exponent = TRUE},
-    };
     const DIEFFECTINFOW expect_effects[] =
     {
         {
@@ -6443,7 +6402,6 @@ static void test_force_feedback_joystick( void )
     {
         .expect_count = ARRAY_SIZE(expect_objects),
         .expect_objs = expect_objects,
-        .todo_objs = objects_todos,
     };
     struct check_effects_params check_effects_params =
     {

@@ -348,6 +348,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps->report_id;
             instance.wCollectionNumber = caps->link_collection;
+            instance.dwDimension = caps->units;
+            instance.wExponent = caps->units_exp;
             check_pid_effect_axis_caps( impl, &instance );
             ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
@@ -384,6 +386,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps->report_id;
             instance.wCollectionNumber = caps->link_collection;
+            instance.dwDimension = caps->units;
+            instance.wExponent = caps->units_exp;
             ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
             button_ofs++;
@@ -417,6 +421,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 instance.guidType = GUID_Unknown;
                 instance.wReportId = nary->report_id;
                 instance.wCollectionNumber = nary->link_collection;
+                instance.dwDimension = caps->units;
+                instance.wExponent = caps->units_exp;
                 ret = enum_object( impl, &filter, flags, callback, nary, &instance, data );
                 if (ret != DIENUM_CONTINUE) return ret;
                 button_ofs++;
@@ -434,6 +440,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.guidType = GUID_Unknown;
             instance.wReportId = caps->report_id;
             instance.wCollectionNumber = caps->link_collection;
+            instance.dwDimension = caps->units;
+            instance.wExponent = caps->units_exp;
             ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
 
@@ -458,6 +466,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = 0;
             instance.wCollectionNumber = node->parent;
+            instance.dwDimension = 0;
+            instance.wExponent = 0;
             ret = enum_object( impl, &filter, flags, callback, NULL, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
         }
