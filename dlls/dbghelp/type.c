@@ -111,6 +111,10 @@ const char* symt_get_name(const struct symt* sym)
     case SymTagArrayType:
     case SymTagPointerType:
     case SymTagFunctionType:
+    case SymTagFunctionArgType:
+    case SymTagBlock:
+    case SymTagFuncDebugStart:
+    case SymTagFuncDebugEnd:
         return NULL;
     }
 }
@@ -167,6 +171,14 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         /* fall through */
     case SymTagExe:
     case SymTagCompiland:
+    case SymTagFunctionType:
+    case SymTagFunctionArgType:
+    case SymTagBaseType:
+    case SymTagUDT:
+    case SymTagEnum:
+    case SymTagTypedef:
+    case SymTagPointerType:
+    case SymTagArrayType:
         return FALSE;
     }
     return TRUE;
@@ -728,6 +740,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagExe:
         case SymTagCompiland:
         case SymTagFunctionType:
+        case SymTagFunctionArgType:
             return FALSE;
         }
         break;
@@ -798,6 +811,20 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         default:
             FIXME("Unsupported sym-tag %s for get-offset\n", 
                   symt_get_tag_str(type->tag));
+            /* fall through */
+        case SymTagExe:
+        case SymTagCompiland:
+        case SymTagUDT:
+        case SymTagFunctionType:
+        case SymTagFunctionArgType:
+        case SymTagPointerType:
+        case SymTagArrayType:
+        case SymTagBaseType:
+        case SymTagTypedef:
+        case SymTagBlock:
+        case SymTagFuncDebugStart:
+        case SymTagFuncDebugEnd:
+        case SymTagLabel:
             return FALSE;
         }
         break;
@@ -862,7 +889,14 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         /* fall through */
         case SymTagPublicSymbol:
         case SymTagThunk:
+        case SymTagBlock:
+        case SymTagFuncDebugStart:
+        case SymTagFuncDebugEnd:
         case SymTagLabel:
+        case SymTagExe:
+        case SymTagCompiland:
+        case SymTagUDT:
+        case SymTagBaseType:
             return FALSE;
         }
         break;
