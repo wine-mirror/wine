@@ -2145,7 +2145,6 @@ AC_CHECK_FUNCS(\
 	posix_fallocate \
 	prctl \
 	proc_pidinfo \
-	sched_yield \
 	setproctitle \
 	setprogname \
 	sigprocmask \

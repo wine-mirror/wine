@@ -17913,7 +17913,6 @@ for ac_func in \
 	posix_fallocate \
 	prctl \
 	proc_pidinfo \
-	sched_yield \
 	setproctitle \
 	setprogname \
 	sigprocmask \
