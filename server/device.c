@@ -440,8 +440,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
         mode_t mode = 0666;
         access = file->obj.ops->map_access( &file->obj, access );
         nt_name.str = device->obj.ops->get_full_name( &device->obj, &nt_name.len );
-        file->fd = open_fd( NULL, device->unix_path, nt_name, O_NONBLOCK | O_LARGEFILE,
-                            &mode, access, sharing, options );
+        file->fd = open_fd( NULL, device->unix_path, nt_name, O_NONBLOCK, &mode, access, sharing, options );
         if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );
     }
     else file->fd = alloc_pseudo_fd( &device_file_fd_ops, &file->obj, options );

@@ -82,11 +82,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
 #define RTLD_GLOBAL  0x100
 #endif
 
-/* So we open files in 64 bit access mode on Linux */
-#ifndef O_LARGEFILE
-# define O_LARGEFILE 0
-#endif
-
 /****************************************************************
  * Constants
  */

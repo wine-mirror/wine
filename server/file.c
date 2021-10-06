@@ -269,7 +269,7 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
     access = map_access( access, &file_type.mapping );
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
-    fd = open_fd( root, name, nt_name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );
+    fd = open_fd( root, name, nt_name, flags | O_NONBLOCK, &mode, access, sharing, options );
     if (!fd) goto done;
 
     if (S_ISDIR(mode))
