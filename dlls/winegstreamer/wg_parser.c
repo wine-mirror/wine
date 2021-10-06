@@ -1006,6 +1006,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
         case GST_QUERY_CAPS:
         {
             GstCaps *caps, *filter, *temp;
+            gchar *str;
 
             gst_query_parse_caps(query, &filter);
 
@@ -1015,6 +1016,10 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
                 caps = gst_caps_new_any();
             if (!caps)
                 return FALSE;
+
+            str = gst_caps_to_string(caps);
+            GST_LOG("Stream caps are \"%s\".", str);
+            g_free(str);
 
             if (filter)
             {
