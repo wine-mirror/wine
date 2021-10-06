@@ -3414,7 +3414,6 @@ static void init_format_filter_info(struct wined3d_adapter *adapter,
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             || !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
-        WARN("No FBO support, or no FBO ORM, guessing filter info from GL caps\n");
         if (vendor == HW_VENDOR_NVIDIA && gl_info->supported[ARB_TEXTURE_FLOAT])
         {
             TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");
