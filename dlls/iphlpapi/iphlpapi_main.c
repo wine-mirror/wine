@@ -2,6 +2,7 @@
  * iphlpapi dll implementation
  *
  * Copyright (C) 2003,2006 Juan Lang
+ * Copyright 2021 Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -4540,4 +4541,17 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
     }
 
     return ERROR_INVALID_PARAMETER;
+}
+
+/******************************************************************
+ *    IcmpParseReplies (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpParseReplies( void *reply, DWORD reply_size )
+{
+    ICMP_ECHO_REPLY *icmp_reply = reply;
+    DWORD num_pkts = icmp_reply->Reserved;
+
+    icmp_reply->Reserved = 0;
+    if (!num_pkts) SetLastError( icmp_reply->Status );
+    return num_pkts;
 }

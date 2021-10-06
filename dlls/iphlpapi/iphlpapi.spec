@@ -157,7 +157,7 @@
 @ stdcall Icmp6SendEcho2(ptr ptr ptr ptr ptr ptr ptr long ptr ptr long long)
 @ stdcall IcmpCloseHandle(ptr)
 @ stdcall IcmpCreateFile()
-@ stub IcmpParseReplies
+@ stdcall IcmpParseReplies(ptr long)
 @ stdcall IcmpSendEcho2Ex(ptr ptr ptr ptr long long ptr long ptr ptr long long)
 @ stdcall IcmpSendEcho2(ptr ptr ptr ptr long ptr long ptr ptr long long)
 @ stdcall IcmpSendEcho(ptr long ptr long ptr ptr long long)
