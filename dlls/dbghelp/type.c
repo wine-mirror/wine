@@ -775,6 +775,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagBaseType:
         case SymTagTypedef:
         case SymTagBaseClass:
+        case SymTagPublicSymbol:
             X(DWORD) = symt_ptr2index(module, &module->top->symt);
             break;
         default:
