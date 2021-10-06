@@ -3207,19 +3207,13 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, LPARAM lParam)
 static inline LRESULT
 REBAR_NCCalcSize (const REBAR_INFO *infoPtr, RECT *rect)
 {
-    HTHEME theme;
-
     if (infoPtr->dwStyle & WS_BORDER) {
         rect->left   = min(rect->left + GetSystemMetrics(SM_CXEDGE), rect->right);
         rect->right  = max(rect->right - GetSystemMetrics(SM_CXEDGE), rect->left);
         rect->top    = min(rect->top + GetSystemMetrics(SM_CYEDGE), rect->bottom);
         rect->bottom = max(rect->bottom - GetSystemMetrics(SM_CYEDGE), rect->top);
     }
-    else if ((theme = GetWindowTheme (infoPtr->hwndSelf)))
-    {
-        /* FIXME: should use GetThemeInt */
-        rect->top = min(rect->top + 1, rect->bottom);
-    }
+
     TRACE("new client=(%s)\n", wine_dbgstr_rect(rect));
     return 0;
 }
