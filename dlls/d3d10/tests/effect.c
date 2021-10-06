@@ -4331,13 +4331,10 @@ static void test_effect_state_groups(void)
     hr = pass->lpVtbl->ComputeStateBlockMask(pass, &mask);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_RS_RASTERIZER_STATE, 0);
-todo_wine
     ok(ret, "Unexpected mask.\n");
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_OM_DEPTH_STENCIL_STATE, 0);
-todo_wine
     ok(ret, "Unexpected mask.\n");
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_OM_BLEND_STATE, 0);
-todo_wine
     ok(ret, "Unexpected mask.\n");
 
     hr = pass->lpVtbl->Apply(pass, 0);

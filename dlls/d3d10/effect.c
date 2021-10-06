@@ -4157,6 +4157,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_ComputeStateBlockMask(ID3D10E
         D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_PS, 0, 1);
     if (pass->gs.shader != &null_shader_variable)
         D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_GS, 0, 1);
+    if (pass->rasterizer)
+        D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_RS_RASTERIZER_STATE, 0, 1);
+    if (pass->depth_stencil)
+        D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_OM_DEPTH_STENCIL_STATE, 0, 1);
+    if (pass->blend)
+        D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_OM_BLEND_STATE, 0, 1);
 
     return S_OK;
 }
