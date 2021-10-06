@@ -726,6 +726,9 @@ static void ff_handle_effectchange(HWND hwnd, struct Joystick *joy)
     if (sel < 0) return;
 
     joy->chosen_effect = sel;
+    IDirectInputDevice8_Unacquire(joy->device);
+    IDirectInputDevice8_SetCooperativeLevel(joy->device, GetAncestor(hwnd, GA_ROOT), DISCL_BACKGROUND|DISCL_EXCLUSIVE);
+    IDirectInputDevice8_Acquire(joy->device);
 }
 
 static DWORD WINAPI ff_input_thread(void *param)
