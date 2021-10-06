@@ -791,7 +791,7 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, DWORD dura
     };
     struct input_event event;
 
-    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u stub!\n", iface,
+    TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u.\n", iface,
           duration_ms, rumble_intensity, buzz_intensity);
 
     effect.replay.length = duration_ms;
