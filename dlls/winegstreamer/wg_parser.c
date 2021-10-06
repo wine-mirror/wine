@@ -1272,7 +1272,7 @@ static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
     GstMapInfo map_info;
     bool ret;
 
-    GST_LOG("pad %p, offset %" G_GINT64_MODIFIER "u, length %u, buffer %p.", pad, offset, size, *buffer);
+    GST_LOG("pad %p, offset %" G_GINT64_MODIFIER "u, size %u, buffer %p.", pad, offset, size, *buffer);
 
     if (offset == GST_BUFFER_OFFSET_NONE)
         offset = parser->next_pull_offset;
@@ -1280,6 +1280,16 @@ static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
 
     if (!*buffer)
         *buffer = new_buffer = gst_buffer_new_and_alloc(size);
+
+    if (!size)
+    {
+        /* asfreader occasionally asks for zero bytes. gst_buffer_map() will
+         * return NULL in this case. Avoid confusing the read thread by asking
+         * it for zero bytes. */
+        gst_buffer_set_size(*buffer, 0);
+        GST_LOG("Returning empty buffer.");
+        return GST_FLOW_OK;
+    }
 
     gst_buffer_map(*buffer, &map_info, GST_MAP_WRITE);
 
