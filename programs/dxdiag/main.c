@@ -159,6 +159,12 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
 
             break;
 
+        case '6':
+            if (wcsnicmp(cmdline, L"64bit", 5))
+                return FALSE;
+            cmdline += 5;
+            break;
+
         case 'd':
         case 'D':
             if (wcsnicmp(cmdline, L"dontskip", 8))
