@@ -3296,6 +3296,8 @@ struct check_objects_todos
 {
     BOOL type;
     BOOL flags;
+    BOOL dimension;
+    BOOL exponent;
 };
 
 struct check_objects_params
@@ -3332,7 +3334,9 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     check_member( *obj, *exp, "%u", wDesignatorIndex );
     check_member( *obj, *exp, "%#04x", wUsagePage );
     check_member( *obj, *exp, "%#04x", wUsage );
+    todo_wine_if( todo->dimension )
     check_member( *obj, *exp, "%#04x", dwDimension );
+    todo_wine_if( todo->exponent )
     check_member( *obj, *exp, "%#04x", wExponent );
     check_member( *obj, *exp, "%u", wReportId );
 
@@ -3369,8 +3373,11 @@ static BOOL CALLBACK check_effects( const DIEFFECTINFOW *effect, void *args )
 
     check_member( *effect, *exp, "%u", dwSize );
     check_member_guid( *effect, *exp, guid );
+    todo_wine
     check_member( *effect, *exp, "%#x", dwEffType );
+    todo_wine
     check_member( *effect, *exp, "%#x", dwStaticParams );
+    todo_wine
     check_member( *effect, *exp, "%#x", dwDynamicParams );
     check_member_wstr( *effect, *exp, tszName );
 
@@ -5852,6 +5859,29 @@ static void test_force_feedback_joystick( void )
                 OUTPUT(1, Data|Var|Abs),
                 REPORT_COUNT(1, 4),
                 OUTPUT(1, Cnst|Var|Abs),
+
+                USAGE(1, PID_USAGE_DURATION),
+                USAGE(1, PID_USAGE_START_DELAY),
+                UNIT(2, 0x1003),      /* Eng Lin:Time */
+                UNIT_EXPONENT(1, -3), /* 10^-3 */
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x7fff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x7fff),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+                UNIT(1, 0),
+                UNIT_EXPONENT(1, 0),
+
+                USAGE(1, PID_USAGE_TRIGGER_BUTTON),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x08),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x08),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
             END_COLLECTION,
 
             USAGE(1, PID_USAGE_SET_PERIODIC_REPORT),
@@ -5867,6 +5897,36 @@ static void test_force_feedback_joystick( void )
                 REPORT_COUNT(1, 1),
                 OUTPUT(1, Data|Var|Abs),
             END_COLLECTION,
+
+            USAGE(1, PID_USAGE_SET_ENVELOPE_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 6),
+
+                USAGE(1, PID_USAGE_ATTACK_LEVEL),
+                USAGE(1, PID_USAGE_FADE_LEVEL),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_ATTACK_TIME),
+                USAGE(1, PID_USAGE_FADE_TIME),
+                UNIT(2, 0x1003),      /* Eng Lin:Time */
+                UNIT_EXPONENT(1, -3), /* 10^-3 */
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x7fff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x7fff),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+                PHYSICAL_MAXIMUM(1, 0),
+                UNIT_EXPONENT(1, 0),
+                UNIT(1, 0),
+            END_COLLECTION,
         END_COLLECTION,
     };
 #undef REPORT_ID_OR_USAGE_PAGE
@@ -5879,7 +5939,7 @@ static void test_force_feedback_joystick( void )
     static const DIDEVCAPS expect_caps =
     {
         .dwSize = sizeof(DIDEVCAPS),
-        .dwFlags = DIDC_FORCEFEEDBACK | DIDC_ATTACHED | DIDC_EMULATED,
+        .dwFlags = DIDC_FORCEFEEDBACK | DIDC_ATTACHED | DIDC_EMULATED | DIDC_STARTDELAY | DIDC_FFFADE | DIDC_FFATTACK,
         .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
         .dwAxes = 3,
         .dwButtons = 2,
@@ -5948,7 +6008,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = 0x1c,
+            .dwOfs = 0x38,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0)|DIDFT_FFEFFECTTRIGGER,
             .dwFlags = DIDOI_FFEFFECTTRIGGER,
             .tszName = L"Button 0",
@@ -5960,7 +6020,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = 0x1d,
+            .dwOfs = 0x39,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1)|DIDFT_FFEFFECTTRIGGER,
             .dwFlags = DIDOI_FFEFFECTTRIGGER,
             .tszName = L"Button 1",
@@ -5972,7 +6032,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x1e,
+            .dwOfs = 0x3a,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(5)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"DC Device Reset",
@@ -5996,7 +6056,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x1f,
+            .dwOfs = 0x3b,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(7)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Op Effect Start",
@@ -6008,7 +6068,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x20,
+            .dwOfs = 0x3c,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(8)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Op Effect Start Solo",
@@ -6020,7 +6080,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x21,
+            .dwOfs = 0x3d,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(9)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Op Effect Stop",
@@ -6056,7 +6116,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x22,
+            .dwOfs = 0x3e,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(12)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"ET Square",
@@ -6068,7 +6128,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x23,
+            .dwOfs = 0x3f,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(13)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"ET Sine",
@@ -6080,7 +6140,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x24,
+            .dwOfs = 0x40,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(14)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Z Axis",
@@ -6092,7 +6152,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x25,
+            .dwOfs = 0x41,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(15)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Y Axis",
@@ -6104,7 +6164,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x26,
+            .dwOfs = 0x42,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(16)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"X Axis",
@@ -6116,7 +6176,7 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x27,
+            .dwOfs = 0x43,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(17)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Direction Enable",
@@ -6131,11 +6191,103 @@ static void test_force_feedback_joystick( void )
             .dwOfs = 0x18,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(18)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
+            .tszName = L"Start Delay",
+            .wCollectionNumber = 7,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_START_DELAY,
+            .wReportId = 3,
+            .dwDimension = 0x1003,
+            .wExponent = -3,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x1c,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(19)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Duration",
+            .wCollectionNumber = 7,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_DURATION,
+            .wReportId = 3,
+            .dwDimension = 0x1003,
+            .wExponent = -3,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x20,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(20)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Trigger Button",
+            .wCollectionNumber = 7,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_TRIGGER_BUTTON,
+            .wReportId = 3,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x24,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(21)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
             .tszName = L"Magnitude",
             .wCollectionNumber = 10,
             .wUsagePage = HID_USAGE_PAGE_PID,
             .wUsage = PID_USAGE_MAGNITUDE,
             .wReportId = 5,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x28,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(22)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Fade Level",
+            .wCollectionNumber = 11,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_FADE_LEVEL,
+            .wReportId = 6,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x2c,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(23)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Attack Level",
+            .wCollectionNumber = 11,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_ATTACK_LEVEL,
+            .wReportId = 6,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x30,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(24)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Fade Time",
+            .wCollectionNumber = 11,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_FADE_TIME,
+            .wReportId = 6,
+            .dwDimension = 0x1003,
+            .wExponent = -3,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x34,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(25)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
+            .tszName = L"Attack Time",
+            .wCollectionNumber = 11,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_ATTACK_TIME,
+            .wReportId = 6,
+            .dwDimension = 0x1003,
+            .wExponent = -3,
         },
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
@@ -6229,6 +6381,14 @@ static void test_force_feedback_joystick( void )
             .wUsagePage = HID_USAGE_PAGE_PID,
             .wUsage = PID_USAGE_SET_PERIODIC_REPORT,
         },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_COLLECTION|DIDFT_NODATA|DIDFT_MAKEINSTANCE(11),
+            .tszName = L"Collection 11 - Set Envelope Report",
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_SET_ENVELOPE_REPORT,
+        },
     };
     const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
     {
@@ -6237,23 +6397,48 @@ static void test_force_feedback_joystick( void )
         {.type = TRUE, .flags = TRUE},
         {.type = TRUE, .flags = TRUE},
         {.type = TRUE, .flags = TRUE},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {.dimension = TRUE, .exponent = TRUE},
+        {.dimension = TRUE, .exponent = TRUE},
+        {},
+        {},
+        {},
+        {},
+        {.dimension = TRUE, .exponent = TRUE},
+        {.dimension = TRUE, .exponent = TRUE},
     };
     const DIEFFECTINFOW expect_effects[] =
     {
         {
             .dwSize = sizeof(DIEFFECTINFOW),
             .guid = GUID_Square,
-            .dwEffType = DIEFT_PERIODIC,
-            .dwStaticParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS,
-            .dwDynamicParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS,
+            .dwEffType = DIEFT_PERIODIC | DIEFT_STARTDELAY | DIEFT_FFFADE | DIEFT_FFATTACK,
+            .dwStaticParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS | DIEP_STARTDELAY |
+                              DIEP_DURATION | DIEP_TRIGGERBUTTON | DIEP_ENVELOPE,
+            .dwDynamicParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS | DIEP_STARTDELAY |
+                              DIEP_DURATION | DIEP_TRIGGERBUTTON | DIEP_ENVELOPE,
             .tszName = L"GUID_Square",
         },
         {
             .dwSize = sizeof(DIEFFECTINFOW),
             .guid = GUID_Sine,
-            .dwEffType = DIEFT_PERIODIC,
-            .dwStaticParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS,
-            .dwDynamicParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS,
+            .dwEffType = DIEFT_PERIODIC | DIEFT_STARTDELAY | DIEFT_FFFADE | DIEFT_FFATTACK,
+            .dwStaticParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS | DIEP_STARTDELAY |
+                              DIEP_DURATION | DIEP_TRIGGERBUTTON | DIEP_ENVELOPE,
+            .dwDynamicParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS | DIEP_STARTDELAY |
+                              DIEP_DURATION | DIEP_TRIGGERBUTTON | DIEP_ENVELOPE,
             .tszName = L"GUID_Sine",
         }
     };
@@ -6346,6 +6531,7 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
     ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
     check_member( caps, expect_caps, "%d", dwSize );
+    todo_wine
     check_member( caps, expect_caps, "%#x", dwFlags );
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
@@ -6390,8 +6576,11 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
     ok( hr == DI_OK, "GetEffectInfo returned %#x\n", hr );
     check_member_guid( effectinfo, expect_effects[1], guid );
+    todo_wine
     check_member( effectinfo, expect_effects[1], "%#x", dwEffType );
+    todo_wine
     check_member( effectinfo, expect_effects[1], "%#x", dwStaticParams );
+    todo_wine
     check_member( effectinfo, expect_effects[1], "%#x", dwDynamicParams );
     check_member_wstr( effectinfo, expect_effects[1], tszName );
 
