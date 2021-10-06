@@ -79,7 +79,6 @@ struct d3d10_effect_object
     enum d3d10_effect_object_type type;
     union
     {
-        ID3D10BlendState *bs;
         ID3D10VertexShader *vs;
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;
@@ -247,6 +246,7 @@ struct d3d10_effect_pass
     struct d3d10_effect_pass_shader_desc gs;
     struct d3d10_effect_variable *rasterizer;
     struct d3d10_effect_variable *depth_stencil;
+    struct d3d10_effect_variable *blend;
     UINT stencil_ref;
     UINT sample_mask;
     float blend_factor[4];

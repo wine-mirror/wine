@@ -1956,8 +1956,19 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
         case D3D10_EOT_BLEND_STATE:
         {
             ID3D10EffectBlendVariable *bv = variable->lpVtbl->AsBlend(variable);
-            if (FAILED(hr = bv->lpVtbl->GetBlendState(bv, variable_idx, &o->object.bs)))
-                return hr;
+            if (!bv->lpVtbl->IsValid(bv))
+            {
+                WARN("Invalid variable type.\n");
+                return E_FAIL;
+            }
+            v = impl_from_ID3D10EffectVariable(variable);
+            if (v->type->element_count)
+            {
+                if (variable_idx >= v->type->element_count) return E_FAIL;
+                o->pass->blend = &v->elements[variable_idx];
+            }
+            else
+                o->pass->blend = v;
             break;
         }
 
@@ -2926,11 +2937,11 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
     {
         case D3D10_EOT_RASTERIZER_STATE:
         case D3D10_EOT_DEPTH_STENCIL_STATE:
-            break;
-
         case D3D10_EOT_BLEND_STATE:
-            ID3D10Device_OMSetBlendState(device, o->object.bs, o->pass->blend_factor, o->pass->sample_mask);
-            return S_OK;
+        case D3D10_EOT_STENCIL_REF:
+        case D3D10_EOT_BLEND_FACTOR:
+        case D3D10_EOT_SAMPLE_MASK:
+            break;
 
         case D3D10_EOT_VERTEXSHADER:
             ID3D10Device_VSSetShader(device, o->object.vs);
@@ -2942,11 +2953,6 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
 
         case D3D10_EOT_GEOMETRYSHADER:
             ID3D10Device_GSSetShader(device, o->object.gs);
-            return S_OK;
-
-        case D3D10_EOT_STENCIL_REF:
-        case D3D10_EOT_BLEND_FACTOR:
-        case D3D10_EOT_SAMPLE_MASK:
             return S_OK;
 
         default:
@@ -4125,6 +4131,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
     if (pass->depth_stencil)
         ID3D10Device_OMSetDepthStencilState(device, pass->depth_stencil->u.state.object.depth_stencil,
                 pass->stencil_ref);
+    if (pass->blend)
+        ID3D10Device_OMSetBlendState(device, pass->blend->u.state.object.blend,
+                pass->blend_factor, pass->sample_mask);
 
     for (i = 0; i < pass->object_count; ++i)
     {
