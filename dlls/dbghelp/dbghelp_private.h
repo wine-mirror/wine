@@ -294,7 +294,6 @@ struct symt_function_arg_type
 {
     struct symt                 symt;
     struct symt*                arg_type;
-    struct symt*                container;
 };
 
 struct symt_pointer

@@ -411,7 +411,6 @@ BOOL symt_add_function_signature_parameter(struct module* module,
     if (!arg) return FALSE;
     arg->symt.tag = SymTagFunctionArgType;
     arg->arg_type = param;
-    arg->container = &sig_type->symt;
     p = vector_add(&sig_type->vchildren, &module->pool);
     if (!p) return FALSE; /* FIXME we leak arg */
     *p = &arg->symt;
@@ -733,11 +732,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagThunk:
             X(DWORD) = symt_ptr2index(module, ((const struct symt_thunk*)type)->container);
             break;
-        case SymTagFunctionArgType:
-            X(DWORD) = symt_ptr2index(module, ((const struct symt_function_arg_type*)type)->container);
-            break;
         case SymTagUDT:
         case SymTagEnum:
+        case SymTagFunctionArgType:
             X(DWORD) = symt_ptr2index(module, &module->top->symt);
             break;
         default:
