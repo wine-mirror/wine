@@ -549,6 +549,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
 
             switch (type->tag)
             {
+            case SymTagCompiland:    v = &((const struct symt_compiland*)type)->vchildren; break;
             case SymTagUDT:          v = &((const struct symt_udt*)type)->vchildren; break;
             case SymTagEnum:         v = &((const struct symt_enum*)type)->vchildren; break;
             case SymTagFunctionType: v = &((const struct symt_function_signature*)type)->vchildren; break;
@@ -594,6 +595,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
     case TI_GET_CHILDRENCOUNT:
         switch (type->tag)
         {
+        case SymTagCompiland:
+            X(DWORD) = vector_length(&((const struct symt_compiland*)type)->vchildren);
+            break;
         case SymTagUDT:
             X(DWORD) = vector_length(&((const struct symt_udt*)type)->vchildren);
             break;
