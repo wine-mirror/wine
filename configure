@@ -1786,7 +1786,6 @@ enable_xpsprint
 enable_xpssvcs
 enable_fonts
 enable_include
-enable_port
 enable_wine
 enable_loader
 enable_nls
@@ -21012,7 +21011,6 @@ wine_fn_config_makefile dlls/xpsprint enable_xpsprint
 wine_fn_config_makefile dlls/xpssvcs enable_xpssvcs
 wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
-wine_fn_config_makefile libs/port enable_port
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls

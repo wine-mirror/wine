@@ -2024,7 +2024,6 @@ static struct strarray add_unix_libraries( const struct makefile *make, struct s
     struct strarray all_libs = empty_strarray;
     unsigned int i, j;
 
-    strarray_add( &all_libs, "-lwine_port" );
     if (make->native_unix_lib && strcmp( make->unixlib, "ntdll.so" )) strarray_add( &all_libs, "-lntdll" );
     strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
     strarray_addall( &all_libs, libs );
