@@ -20,8 +20,6 @@
  */
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -746,7 +744,7 @@ static void address_entry_size( void *ptr, ULONG offset, void *ctxt )
     IP_ADAPTER_DNS_SERVER_ADDRESS *src_addr = ptr; /* all list types are super-sets of this type */
     ULONG *total = (ULONG *)ctxt, align = sizeof(ULONGLONG) - 1;
 
-    *total = (*total + src_addr->u.s.Length + src_addr->Address.iSockaddrLength + align) & ~align;
+    *total = (*total + src_addr->Length + src_addr->Address.iSockaddrLength + align) & ~align;
 }
 
 struct address_entry_copy_params
@@ -764,8 +762,8 @@ static void address_entry_copy( void *ptr, ULONG offset, void *ctxt )
     IP_ADAPTER_DNS_SERVER_ADDRESS *dst_addr = (IP_ADAPTER_DNS_SERVER_ADDRESS *)params->ptr;
     ULONG align = sizeof(ULONGLONG) - 1;
 
-    memcpy( dst_addr, src_addr, src_addr->u.s.Length );
-    params->ptr += src_addr->u.s.Length;
+    memcpy( dst_addr, src_addr, src_addr->Length );
+    params->ptr += src_addr->Length;
     dst_addr->Address.lpSockaddr = (SOCKADDR *)params->ptr;
     memcpy( dst_addr->Address.lpSockaddr, src_addr->Address.lpSockaddr, src_addr->Address.iSockaddrLength );
     params->ptr += (src_addr->Address.iSockaddrLength + align) & ~align;
@@ -957,7 +955,7 @@ static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, UL
                 err = ERROR_NOT_ENOUGH_MEMORY;
                 goto err;
             }
-            addr->u.s.Length = sizeof(*addr);
+            addr->Length = sizeof(*addr);
             addr->Address.lpSockaddr = (SOCKADDR *)(addr + 1);
             addr->Address.iSockaddrLength = sockaddr_size;
             addr->Address.lpSockaddr->sa_family = family;
@@ -979,7 +977,7 @@ static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, UL
             addr->PreferredLifetime = rw[i].preferred_lifetime;
             addr->LeaseLifetime = rw[i].valid_lifetime; /* FIXME */
             addr->OnLinkPrefixLength = rw[i].on_link_prefix;
-            if (unicast_is_dns_eligible( addr )) addr->u.s.Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
+            if (unicast_is_dns_eligible( addr )) addr->Flags |= IP_ADAPTER_ADDRESS_DNS_ELIGIBLE;
 
             *next = addr;
             next = &addr->Next;
@@ -1051,7 +1049,7 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
                         err = ERROR_NOT_ENOUGH_MEMORY;
                         goto err;
                     }
-                    gw->u.s.Length = sizeof(*gw);
+                    gw->Length = sizeof(*gw);
                     gw->Address.lpSockaddr = (SOCKADDR *)(gw + 1);
                     gw->Address.iSockaddrLength = sockaddr_size;
                     memcpy( gw->Address.lpSockaddr, &sockaddr, sockaddr_size );
@@ -1091,7 +1089,7 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
                         err = ERROR_NOT_ENOUGH_MEMORY;
                         goto err;
                     }
-                    prefix->u.s.Length = sizeof(*prefix);
+                    prefix->Length = sizeof(*prefix);
                     prefix->Address.lpSockaddr = (SOCKADDR *)(prefix + 1);
                     prefix->Address.iSockaddrLength = sockaddr_size;
                     memcpy( prefix->Address.lpSockaddr, &sockaddr, sockaddr_size );
@@ -1177,7 +1175,7 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
                         err = ERROR_NOT_ENOUGH_MEMORY;
                         break;
                     }
-                    dns->u.s.Length = sizeof(*dns);
+                    dns->Length = sizeof(*dns);
                     dns->Address.lpSockaddr = (SOCKADDR *)(dns + 1);
                     dns->Address.iSockaddrLength = sockaddr_len;
                     memcpy( dns->Address.lpSockaddr, servers->AddrArray[i].MaxSa, sockaddr_len );
@@ -1239,8 +1237,8 @@ static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADD
     str_ptr = (char *)(aa + count);
     for (i = 0; i < count; i++)
     {
-        aa[i].u.s.Length = sizeof(*aa);
-        aa[i].u.s.IfIndex = stat[i].if_index;
+        aa[i].Length = sizeof(*aa);
+        aa[i].IfIndex = stat[i].if_index;
         if (i < count - 1) aa[i].Next = aa + i + 1;
         ConvertInterfaceLuidToGuid( luids + i, &guid );
         ConvertGuidToStringA( &guid, str_ptr, CHARS_IN_GUID );
@@ -1404,7 +1402,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
     DWORD ndx, matchedBits, matchedNdx = table->dwNumEntries;
 
     for (ndx = 0, matchedBits = 0; ndx < table->dwNumEntries; ndx++) {
-      if (table->table[ndx].u1.ForwardType != MIB_IPROUTE_TYPE_INVALID &&
+      if (table->table[ndx].ForwardType != MIB_IPROUTE_TYPE_INVALID &&
        (dwDestAddr & table->table[ndx].dwForwardMask) ==
        (table->table[ndx].dwForwardDest & table->table[ndx].dwForwardMask)) {
         DWORD numShifts, mask;
@@ -2039,7 +2037,7 @@ static int ipforward_row_cmp( const void *a, const void *b )
     int ret;
 
     if ((ret = rowA->dwForwardDest - rowB->dwForwardDest) != 0) return ret;
-    if ((ret = rowA->u2.dwForwardProto - rowB->u2.dwForwardProto) != 0) return ret;
+    if ((ret = rowA->dwForwardProto - rowB->dwForwardProto) != 0) return ret;
     if ((ret = rowA->dwForwardPolicy - rowB->dwForwardPolicy) != 0) return ret;
     return rowA->dwForwardNextHop - rowB->dwForwardNextHop;
 }
@@ -2097,7 +2095,7 @@ DWORD WINAPI GetIpForwardTable( MIB_IPFORWARDTABLE *table, ULONG *size, BOOL sor
         ConvertLengthToIpv4Mask( keys[i].prefix_len, &row->dwForwardMask );
         row->dwForwardPolicy = 0;
         row->dwForwardNextHop = keys[i].next_hop.s_addr;
-        row->u1.dwForwardType = row->dwForwardNextHop ? MIB_IPROUTE_TYPE_INDIRECT : MIB_IPROUTE_TYPE_DIRECT;
+        row->dwForwardType = row->dwForwardNextHop ? MIB_IPROUTE_TYPE_INDIRECT : MIB_IPROUTE_TYPE_DIRECT;
         if (!row->dwForwardNextHop) /* find the interface's addr */
         {
             for (addr = 0; addr < uni_count; addr++)
@@ -2110,7 +2108,7 @@ DWORD WINAPI GetIpForwardTable( MIB_IPFORWARDTABLE *table, ULONG *size, BOOL sor
             }
         }
         row->dwForwardIfIndex = stat[i].if_index;
-        row->u2.dwForwardProto = rw[i].protocol;
+        row->dwForwardProto = rw[i].protocol;
         row->dwForwardAge = dyn[i].age;
         row->dwForwardNextHopAS = 0;
         row->dwForwardMetric1 = rw[i].metric; /* FIXME: add interface metric */
@@ -2347,19 +2345,19 @@ DWORD WINAPI GetIpNetTable( MIB_IPNETTABLE *table, ULONG *size, BOOL sort )
         {
         case NlnsUnreachable:
         case NlnsIncomplete:
-            row->u.Type = MIB_IPNET_TYPE_INVALID;
+            row->Type = MIB_IPNET_TYPE_INVALID;
             break;
         case NlnsProbe:
         case NlnsDelay:
         case NlnsStale:
         case NlnsReachable:
-            row->u.Type = MIB_IPNET_TYPE_DYNAMIC;
+            row->Type = MIB_IPNET_TYPE_DYNAMIC;
             break;
         case NlnsPermanent:
-            row->u.Type = MIB_IPNET_TYPE_STATIC;
+            row->Type = MIB_IPNET_TYPE_STATIC;
             break;
         default:
-            row->u.Type = MIB_IPNET_TYPE_OTHER;
+            row->Type = MIB_IPNET_TYPE_OTHER;
         }
     }
 
@@ -2426,9 +2424,9 @@ static void ipnet_row2_fill( MIB_IPNET_ROW2 *row, USHORT fam, void *key, struct 
     memset( row->PhysicalAddress + row->PhysicalAddressLength, 0,
             sizeof(row->PhysicalAddress) - row->PhysicalAddressLength );
     row->State = dyn->state;
-    row->u.Flags = 0;
-    row->u.s.IsRouter = dyn->flags.is_router;
-    row->u.s.IsUnreachable = dyn->flags.is_unreachable;
+    row->Flags = 0;
+    row->IsRouter = dyn->flags.is_router;
+    row->IsUnreachable = dyn->flags.is_unreachable;
     row->ReachabilityTime.LastReachable = dyn->time;
 }
 
@@ -2544,7 +2542,7 @@ DWORD WINAPI GetIpStatisticsEx( MIB_IPSTATS *stats, DWORD family )
                                &cmpt_dyn, sizeof(cmpt_dyn), NULL, 0 );
     if (err) return err;
 
-    stats->u.Forwarding = cmpt_rw.not_forwarding + 1;
+    stats->Forwarding = cmpt_rw.not_forwarding + 1;
     stats->dwDefaultTTL = cmpt_rw.default_ttl;
     stats->dwInReceives = dyn.in_recv;
     stats->dwInHdrErrors = dyn.in_hdr_errs;
@@ -2685,7 +2683,7 @@ DWORD WINAPI GetNetworkParams( FIXED_INFO *info, ULONG *size )
     }
 
     if (!GetIpStatistics( &ip_stats ))
-        info->EnableRouting = (ip_stats.u.Forwarding == MIB_IP_FORWARDING);
+        info->EnableRouting = (ip_stats.Forwarding == MIB_IP_FORWARDING);
 
     return ERROR_SUCCESS;
 }
@@ -2827,7 +2825,7 @@ DWORD WINAPI GetTcpStatisticsEx( MIB_TCPSTATS *stats, DWORD family )
                                &dyn, sizeof(dyn), &stat, sizeof(stat) );
     if (err) return err;
 
-    stats->u.RtoAlgorithm = stat.rto_algo;
+    stats->RtoAlgorithm = stat.rto_algo;
     stats->dwRtoMin = stat.rto_min;
     stats->dwRtoMax = stat.rto_max;
     stats->dwMaxConn = stat.max_conns;
@@ -2923,7 +2921,7 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
         case TCP_TABLE_BASIC_ALL:
         {
             MIB_TCPROW *row = ((MIB_TCPTABLE *)table)->table + num;
-            row->u.dwState = dyn->state;
+            row->dwState = dyn->state;
             row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
             row->dwRemoteAddr = key->remote.Ipv4.sin_addr.s_addr;
@@ -3568,7 +3566,7 @@ static void unicast_row_fill( MIB_UNICASTIPADDRESS_ROW *row, USHORT fam, void *k
     row->OnLinkPrefixLength = rw->on_link_prefix;
     row->SkipAsSource = 0;
     row->DadState = dyn->dad_state;
-    row->ScopeId.u.Value = dyn->scope_id;
+    row->ScopeId.Value = dyn->scope_id;
     row->CreationTimeStamp.QuadPart = stat->creation_time;
 }
 
@@ -3771,7 +3769,7 @@ DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
   FIXME("(Handle %p, overlapped %p): stub\n", Handle, overlapped);
   if (Handle) *Handle = INVALID_HANDLE_VALUE;
-  if (overlapped) ((IO_STATUS_BLOCK *) overlapped)->u.Status = STATUS_PENDING;
+  if (overlapped) ((IO_STATUS_BLOCK *) overlapped)->Status = STATUS_PENDING;
   return ERROR_IO_PENDING;
 }
 
@@ -4473,8 +4471,8 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
             if (info)
             {
                 info->Format = NET_ADDRESS_IPV4;
-                info->u.Ipv4Address.sin_addr = temp_addr4;
-                info->u.Ipv4Address.sin_port = 0;
+                info->Ipv4Address.sin_addr = temp_addr4;
+                info->Ipv4Address.sin_port = 0;
             }
             if (port) *port = 0;
             if (prefix_len) *prefix_len = 255;
@@ -4489,8 +4487,8 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
             if (info)
             {
                 info->Format = NET_ADDRESS_IPV4;
-                info->u.Ipv4Address.sin_addr = temp_addr4;
-                info->u.Ipv4Address.sin_port = temp_port;
+                info->Ipv4Address.sin_addr = temp_addr4;
+                info->Ipv4Address.sin_port = temp_port;
             }
             if (port) *port = ntohs(temp_port);
             if (prefix_len) *prefix_len = 255;
@@ -4505,9 +4503,9 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
             if (info)
             {
                 info->Format = NET_ADDRESS_IPV6;
-                info->u.Ipv6Address.sin6_addr = temp_addr6;
-                info->u.Ipv6Address.sin6_scope_id = temp_scope;
-                info->u.Ipv6Address.sin6_port = 0;
+                info->Ipv6Address.sin6_addr = temp_addr6;
+                info->Ipv6Address.sin6_scope_id = temp_scope;
+                info->Ipv6Address.sin6_port = 0;
             }
             if (port) *port = 0;
             if (prefix_len) *prefix_len = 255;
@@ -4522,9 +4520,9 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
             if (info)
             {
                 info->Format = NET_ADDRESS_IPV6;
-                info->u.Ipv6Address.sin6_addr = temp_addr6;
-                info->u.Ipv6Address.sin6_scope_id = temp_scope;
-                info->u.Ipv6Address.sin6_port = temp_port;
+                info->Ipv6Address.sin6_addr = temp_addr6;
+                info->Ipv6Address.sin6_scope_id = temp_scope;
+                info->Ipv6Address.sin6_port = temp_port;
             }
             if (port) *port = ntohs(temp_port);
             if (prefix_len) *prefix_len = 255;
@@ -4711,7 +4709,7 @@ DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_r
                                     out, out_size );
 
     if (status == STATUS_PENDING && !WaitForSingleObject( request_event, INFINITE ))
-        status = iosb.u.Status;
+        status = iosb.Status;
 
     if (!status)
     {
