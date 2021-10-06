@@ -4113,9 +4113,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_ComputeStateBlockMask(ID3D10EffectPass *iface,
         D3D10_STATE_BLOCK_MASK *mask)
 {
-    FIXME("iface %p, mask %p stub!\n", iface, mask);
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
 
-    return E_NOTIMPL;
+    FIXME("iface %p, mask %p semi-stub!\n", iface, mask);
+
+    if (pass->vs.shader != &null_shader_variable)
+        D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_VS, 0, 1);
+    if (pass->ps.shader != &null_shader_variable)
+        D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_PS, 0, 1);
+    if (pass->gs.shader != &null_shader_variable)
+        D3D10StateBlockMaskEnableCapture(mask, D3D10_DST_GS, 0, 1);
+
+    return S_OK;
 }
 
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl =

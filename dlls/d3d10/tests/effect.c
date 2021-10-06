@@ -3016,7 +3016,6 @@ if (0)
     hr = D3D10StateBlockMaskDisableAll(&mask);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = p->lpVtbl->ComputeStateBlockMask(p, &mask);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_VS, 0);
     ok(!ret, "Unexpected mask.\n");
@@ -3164,7 +3163,6 @@ todo_wine
     hr = D3D10StateBlockMaskDisableAll(&mask);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = p->lpVtbl->ComputeStateBlockMask(p, &mask);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_VS, 0);
     ok(ret, "Unexpected mask.\n");
@@ -3172,7 +3170,7 @@ todo_wine {
     ok(ret, "Unexpected mask.\n");
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_GS, 0);
     ok(ret, "Unexpected mask.\n");
-}
+
     /* pass 2 */
     p = t->lpVtbl->GetPassByIndex(t, 2);
 
