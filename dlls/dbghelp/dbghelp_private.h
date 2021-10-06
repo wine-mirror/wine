@@ -169,6 +169,7 @@ struct symt_block
 struct symt_module /* in fact any of .exe, .dll... */
 {
     struct symt                 symt;           /* module */
+    struct vector               vchildren;      /* compilation units */
     struct module*              module;
 };
 

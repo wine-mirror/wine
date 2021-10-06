@@ -191,6 +191,7 @@ struct symt_module* symt_new_module(struct module* module)
     {
         sym->symt.tag = SymTagExe;
         sym->module   = module;
+        vector_init(&sym->vchildren, sizeof(struct symt*), 8);
     }
     return sym;
 }
@@ -199,6 +200,7 @@ struct symt_compiland* symt_new_compiland(struct module* module,
                                           ULONG_PTR address, unsigned src_idx)
 {
     struct symt_compiland*    sym;
+    struct symt_compiland**   p;
 
     TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n",
                          debugstr_w(module->modulename), source_get(module, src_idx));
@@ -210,6 +212,8 @@ struct symt_compiland* symt_new_compiland(struct module* module,
         sym->source    = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
         sym->user      = NULL;
+        p = vector_add(&module->top->vchildren, &module->pool);
+        *p = sym;
     }
     return sym;
 }

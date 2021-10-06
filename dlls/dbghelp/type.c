@@ -549,6 +549,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
 
             switch (type->tag)
             {
+            case SymTagExe:          v = &((const struct symt_module*)type)->vchildren; break;
             case SymTagCompiland:    v = &((const struct symt_compiland*)type)->vchildren; break;
             case SymTagUDT:          v = &((const struct symt_udt*)type)->vchildren; break;
             case SymTagEnum:         v = &((const struct symt_enum*)type)->vchildren; break;
@@ -595,6 +596,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
     case TI_GET_CHILDRENCOUNT:
         switch (type->tag)
         {
+        case SymTagExe:
+            X(DWORD) = vector_length(&((const struct symt_module*)type)->vchildren);
+            break;
         case SymTagCompiland:
             X(DWORD) = vector_length(&((const struct symt_compiland*)type)->vchildren);
             break;
@@ -703,6 +707,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
     case TI_GET_LEXICALPARENT:
         switch (type->tag)
         {
+        case SymTagCompiland:
+            X(DWORD) = symt_ptr2index(module, &((const struct symt_compiland*)type)->container->symt);
+            break;
         case SymTagBlock:
             X(DWORD) = symt_ptr2index(module, ((const struct symt_block*)type)->container);
             break;
