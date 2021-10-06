@@ -164,8 +164,8 @@ static void test_reflection_interfaces(void)
 
     expected_hr = D3D_COMPILER_VERSION < 46 ? E_NOINTERFACE : D3D_COMPILER_VERSION == 46 ? E_INVALIDARG : S_OK;
     hr = call_reflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D12ShaderReflection, (void **)&ref12);
-    /* Broken with older d3dcompiler_47. */
-    ok(hr == expected_hr || broken(expected_hr == S_OK && hr == E_NOINTERFACE), "Got unexpected hr %#x.\n", hr);
+    /* Broken with older d3dcompiler_46, d3dcompiler_47. */
+    ok(hr == expected_hr || broken(hr == E_NOINTERFACE), "Got unexpected hr %#x.\n", hr);
 
     if (hr != S_OK)
         return;
