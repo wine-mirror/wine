@@ -27,6 +27,8 @@ typedef UINT64 unixlib_handle_t;
 extern NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args );
 
 /* some useful helpers from ntdll */
+extern const char *ntdll_get_build_dir(void);
+extern const char *ntdll_get_data_dir(void);
 extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen );
 extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
 extern NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **dispatcher );

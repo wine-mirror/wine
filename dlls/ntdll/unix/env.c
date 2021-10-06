@@ -784,6 +784,24 @@ int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BO
 
 
 /***********************************************************************
+ *           ntdll_get_build_dir
+ */
+const char *ntdll_get_build_dir(void)
+{
+    return build_dir;
+}
+
+
+/***********************************************************************
+ *           ntdll_get_data_dir
+ */
+const char *ntdll_get_data_dir(void)
+{
+    return data_dir;
+}
+
+
+/***********************************************************************
  *           build_envp
  *
  * Build the environment of a new child process.
