@@ -17,26 +17,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
-#include "config.h"
-
 #include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#define USE_WS_PREFIX
 #include "winsock2.h"
 #include "winternl.h"
 #include "ws2ipdef.h"
@@ -57,14 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
-#ifndef IF_NAMESIZE
-#define IF_NAMESIZE 16
-#endif
-
-#ifndef INADDR_NONE
-#define INADDR_NONE ~0UL
-#endif
-
 #define CHARS_IN_GUID 39
 
 static const WCHAR device_tcpip[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
@@ -73,8 +52,8 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL s
 
 static const NPI_MODULEID *ip_module_id( USHORT family )
 {
-    if (family == WS_AF_INET) return &NPI_MS_IPV4_MODULEID;
-    if (family == WS_AF_INET6) return &NPI_MS_IPV6_MODULEID;
+    if (family == AF_INET) return &NPI_MS_IPV4_MODULEID;
+    if (family == AF_INET6) return &NPI_MS_IPV6_MODULEID;
     return NULL;
 }
 
@@ -245,7 +224,7 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
   return ERROR_NOT_SUPPORTED;
 }
 
-static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
+static char *debugstr_ipv6(const struct sockaddr_in6 *sin, char *buf)
 {
     const IN6_ADDR *addr = &sin->sin6_addr;
     char *p = buf;
@@ -278,14 +257,14 @@ static BOOL map_address_6to4( const SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
 {
     ULONG i;
 
-    if (addr6->sin6_family != WS_AF_INET6) return FALSE;
+    if (addr6->sin6_family != AF_INET6) return FALSE;
 
     for (i = 0; i < 5; i++)
         if (addr6->sin6_addr.u.Word[i]) return FALSE;
 
     if (addr6->sin6_addr.u.Word[5] != 0xffff) return FALSE;
 
-    addr4->sin_family = WS_AF_INET;
+    addr4->sin_family = AF_INET;
     addr4->sin_port   = addr6->sin6_port;
     addr4->sin_addr.S_un.S_addr = addr6->sin6_addr.u.Word[6] << 16 | addr6->sin6_addr.u.Word[7];
     memset( &addr4->sin_zero, 0, sizeof(addr4->sin_zero) );
@@ -305,7 +284,7 @@ static BOOL find_src_address( MIB_IPADDRTABLE *table, const SOCKADDR_IN *dst, SO
         /* take the first address */
         if (table->table[i].dwIndex == row.dwForwardIfIndex)
         {
-            src->sin6_family   = WS_AF_INET6;
+            src->sin6_family   = AF_INET6;
             src->sin6_port     = 0;
             src->sin6_flowinfo = 0;
             for (j = 0; j < 5; j++) src->sin6_addr.u.Word[j] = 0;
@@ -368,7 +347,7 @@ DWORD WINAPI CreateSortedAddressPairs( const PSOCKADDR_IN6 src_list, DWORD src_c
             char buf[46];
             FIXME( "source address for %s not found\n", debugstr_ipv6(&dst_list[i], buf) );
             memset( pairs[i].SourceAddress, 0, sizeof(*pairs[i].SourceAddress) );
-            pairs[i].SourceAddress->sin6_family = WS_AF_INET6;
+            pairs[i].SourceAddress->sin6_family = AF_INET6;
         }
 
         pairs[i].DestinationAddress = ptr++;
@@ -580,7 +559,7 @@ static DWORD get_wins_servers( SOCKADDR_INET **servers )
         size = sizeof(buf);
         if (!RegQueryValueExA( key, values[i], NULL, NULL, (LPBYTE)buf, &size ))
             if (!RtlIpv4StringToAddressA( buf, TRUE, NULL, addrs + count ) &&
-                addrs[count].WS_s_addr != INADDR_NONE && addrs[count].WS_s_addr != INADDR_ANY)
+                addrs[count].s_addr != INADDR_NONE && addrs[count].s_addr != INADDR_ANY)
                 count++;
     }
     RegCloseKey( key );
@@ -591,7 +570,7 @@ static DWORD get_wins_servers( SOCKADDR_INET **servers )
         if (!*servers) return 0;
         for (i = 0; i < count; i++)
         {
-            (*servers)[i].Ipv4.sin_family = WS_AF_INET;
+            (*servers)[i].Ipv4.sin_family = AF_INET;
             (*servers)[i].Ipv4.sin_addr = addrs[i];
         }
     }
@@ -705,21 +684,21 @@ DWORD WINAPI GetAdaptersInfo( IP_ADAPTER_INFO *info, ULONG *size )
                 cursor->Next = extra_ip_addrs++;
                 cursor = cursor->Next;
             }
-            ConvertLengthToIpv4Mask( uni_rw[uni].on_link_prefix, &mask.WS_s_addr );
+            ConvertLengthToIpv4Mask( uni_rw[uni].on_link_prefix, &mask.s_addr );
             ip_addr_string_init( cursor, &uni_keys[uni].addr, &mask, 0 );
         }
         if (!cursor)
         {
-            mask.WS_s_addr = INADDR_ANY;
+            mask.s_addr = INADDR_ANY;
             ip_addr_string_init( &info->IpAddressList, &mask, &mask, 0 );
         }
 
-        gw.WS_s_addr = INADDR_ANY;
-        mask.WS_s_addr = INADDR_NONE;
+        gw.s_addr = INADDR_ANY;
+        mask.s_addr = INADDR_NONE;
         for (fwd = 0; fwd < fwd_count; fwd++)
         { /* find the first router on this interface */
             if (fwd_keys[fwd].luid.Value == if_keys[i].Value &&
-                fwd_keys[fwd].next_hop.WS_s_addr != INADDR_ANY &&
+                fwd_keys[fwd].next_hop.s_addr != INADDR_ANY &&
                 !fwd_keys[fwd].prefix_len)
             {
                 gw = fwd_keys[fwd].next_hop;
@@ -735,7 +714,7 @@ DWORD WINAPI GetAdaptersInfo( IP_ADAPTER_INFO *info, ULONG *size )
         ip_addr_string_init( &info->SecondaryWinsServer, NULL, NULL, 0 );
         if (info->HaveWins)
         {
-            mask.WS_s_addr = INADDR_NONE;
+            mask.s_addr = INADDR_NONE;
             ip_addr_string_init( &info->PrimaryWinsServer, &wins_servers[0].Ipv4.sin_addr, &mask, 0 );
             if (wins_server_count > 1)
                 ip_addr_string_init( &info->SecondaryWinsServer, &wins_servers[1].Ipv4.sin_addr, &mask, 0 );
@@ -912,25 +891,25 @@ static void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRE
 
 static BOOL sockaddr_is_loopback( SOCKADDR *sock )
 {
-    if (sock->sa_family == WS_AF_INET)
+    if (sock->sa_family == AF_INET)
     {
         SOCKADDR_IN *sin = (SOCKADDR_IN *)sock;
-        return (sin->sin_addr.WS_s_addr & 0xff) == 127;
+        return (sin->sin_addr.s_addr & 0xff) == 127;
     }
-    else if (sock->sa_family == WS_AF_INET6)
+    else if (sock->sa_family == AF_INET6)
     {
         SOCKADDR_IN6 *sin6 = (SOCKADDR_IN6 *)sock;
-        return WS_IN6_IS_ADDR_LOOPBACK( &sin6->sin6_addr );
+        return IN6_IS_ADDR_LOOPBACK( &sin6->sin6_addr );
     }
     return FALSE;
 }
 
 static BOOL sockaddr_is_linklocal( SOCKADDR *sock )
 {
-    if (sock->sa_family == WS_AF_INET6)
+    if (sock->sa_family == AF_INET6)
     {
         SOCKADDR_IN6 *sin6 = (SOCKADDR_IN6 *)sock;
-        return WS_IN6_IS_ADDR_LINKLOCAL( &sin6->sin6_addr );
+        return IN6_IS_ADDR_LINKLOCAL( &sin6->sin6_addr );
     }
     return FALSE;
 }
@@ -949,8 +928,8 @@ static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, UL
     struct nsi_ip_unicast_dynamic *dyn;
     struct nsi_ip_unicast_static *stat;
     IP_ADAPTER_UNICAST_ADDRESS *addr, **next;
-    DWORD err, count, i, key_size = (family == WS_AF_INET) ? sizeof(*key4) : sizeof(*key6);
-    DWORD sockaddr_size = (family == WS_AF_INET) ? sizeof(SOCKADDR_IN) : sizeof(SOCKADDR_IN6);
+    DWORD err, count, i, key_size = (family == AF_INET) ? sizeof(*key4) : sizeof(*key6);
+    DWORD sockaddr_size = (family == AF_INET) ? sizeof(SOCKADDR_IN) : sizeof(SOCKADDR_IN6);
     NET_LUID *luid;
     void *key;
 
@@ -969,7 +948,7 @@ static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, UL
         {
             key4 = (struct nsi_ipv4_unicast_key *)key + i;
             key6 = (struct nsi_ipv6_unicast_key *)key + i;
-            luid = (family == WS_AF_INET) ? &key4->luid : &key6->luid;
+            luid = (family == AF_INET) ? &key4->luid : &key6->luid;
             if (luid->Value != aa->Luid.Value) continue;
             addr = heap_alloc_zero( sizeof(*addr) + sockaddr_size );
             if (!addr)
@@ -981,7 +960,7 @@ static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, UL
             addr->Address.lpSockaddr = (SOCKADDR *)(addr + 1);
             addr->Address.iSockaddrLength = sockaddr_size;
             addr->Address.lpSockaddr->sa_family = family;
-            if (family == WS_AF_INET)
+            if (family == AF_INET)
             {
                 SOCKADDR_IN *in = (SOCKADDR_IN *)addr->Address.lpSockaddr;
                 in->sin_addr = key4->addr;
@@ -1018,8 +997,8 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
     struct nsi_ipv6_forward_key *key6;
     IP_ADAPTER_GATEWAY_ADDRESS *gw, **gw_next;
     IP_ADAPTER_PREFIX *prefix, **prefix_next;
-    DWORD err, count, i, prefix_len, key_size = (family == WS_AF_INET) ? sizeof(*key4) : sizeof(*key6);
-    DWORD sockaddr_size = (family == WS_AF_INET) ? sizeof(SOCKADDR_IN) : sizeof(SOCKADDR_IN6);
+    DWORD err, count, i, prefix_len, key_size = (family == AF_INET) ? sizeof(*key4) : sizeof(*key6);
+    DWORD sockaddr_size = (family == AF_INET) ? sizeof(SOCKADDR_IN) : sizeof(SOCKADDR_IN6);
     SOCKADDR_INET sockaddr;
     NET_LUID *luid;
     void *key;
@@ -1039,15 +1018,15 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
         {
             key4 = (struct nsi_ipv4_forward_key *)key + i;
             key6 = (struct nsi_ipv6_forward_key *)key + i;
-            luid = (family == WS_AF_INET) ? &key4->luid : &key6->luid;
+            luid = (family == AF_INET) ? &key4->luid : &key6->luid;
             if (luid->Value != aa->Luid.Value) continue;
 
             if (flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
             {
                 memset( &sockaddr, 0, sizeof(sockaddr) );
-                if (family == WS_AF_INET)
+                if (family == AF_INET)
                 {
-                    if (key4->next_hop.WS_s_addr != 0)
+                    if (key4->next_hop.s_addr != 0)
                     {
                         sockaddr.si_family = family;
                         sockaddr.Ipv4.sin_addr = key4->next_hop;
@@ -1083,9 +1062,9 @@ static DWORD gateway_and_prefix_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG
             if (flags & GAA_FLAG_INCLUDE_PREFIX)
             {
                 memset( &sockaddr, 0, sizeof(sockaddr) );
-                if (family == WS_AF_INET)
+                if (family == AF_INET)
                 {
-                    if (!key4->next_hop.WS_s_addr)
+                    if (!key4->next_hop.s_addr)
                     {
                         sockaddr.si_family = family;
                         sockaddr.Ipv4.sin_addr = key4->prefix;
@@ -1134,15 +1113,15 @@ static DWORD call_families( DWORD (*fn)( IP_ADAPTER_ADDRESSES *aa, ULONG family,
 {
     DWORD err;
 
-    if (family != WS_AF_INET)
+    if (family != AF_INET)
     {
-        err = fn( aa, WS_AF_INET6, flags );
+        err = fn( aa, AF_INET6, flags );
         if (err) return err;
     }
 
-    if (family != WS_AF_INET6)
+    if (family != AF_INET6)
     {
-        err = fn( aa, WS_AF_INET, flags );
+        err = fn( aa, AF_INET, flags );
         if (err) return err;
     }
     return err;
@@ -1150,8 +1129,8 @@ static DWORD call_families( DWORD (*fn)( IP_ADAPTER_ADDRESSES *aa, ULONG family,
 
 static DWORD dns_servers_query_code( ULONG family )
 {
-    if (family == WS_AF_INET) return DnsConfigDnsServersIpv4;
-    if (family == WS_AF_INET6) return DnsConfigDnsServersIpv6;
+    if (family == AF_INET) return DnsConfigDnsServersIpv4;
+    if (family == AF_INET6) return DnsConfigDnsServersIpv6;
     return DnsConfigDnsServersUnspec;
 }
 
@@ -1351,11 +1330,11 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses( ULONG family, ULONG flags, 
  */
 DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
 {
-    struct WS_sockaddr_in sa_in;
+    struct sockaddr_in sa_in;
     memset(&sa_in, 0, sizeof(sa_in));
-    sa_in.sin_family = WS_AF_INET;
+    sa_in.sin_family = AF_INET;
     sa_in.sin_addr.S_un.S_addr = dwDestAddr;
-    return GetBestInterfaceEx((struct WS_sockaddr *)&sa_in, pdwBestIfIndex);
+    return GetBestInterfaceEx((struct sockaddr *)&sa_in, pdwBestIfIndex);
 }
 
 /******************************************************************
@@ -1371,7 +1350,7 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetBestInterfaceEx(struct WS_sockaddr *pDestAddr, PDWORD pdwBestIfIndex)
+DWORD WINAPI GetBestInterfaceEx(struct sockaddr *pDestAddr, PDWORD pdwBestIfIndex)
 {
   DWORD ret;
 
@@ -1381,8 +1360,8 @@ DWORD WINAPI GetBestInterfaceEx(struct WS_sockaddr *pDestAddr, PDWORD pdwBestIfI
   else {
     MIB_IPFORWARDROW ipRow;
 
-    if (pDestAddr->sa_family == WS_AF_INET) {
-      ret = GetBestRoute(((struct WS_sockaddr_in *)pDestAddr)->sin_addr.S_un.S_addr, 0, &ipRow);
+    if (pDestAddr->sa_family == AF_INET) {
+      ret = GetBestRoute(((struct sockaddr_in *)pDestAddr)->sin_addr.S_un.S_addr, 0, &ipRow);
       if (ret == ERROR_SUCCESS)
         *pdwBestIfIndex = ipRow.dwForwardIfIndex;
     } else {
@@ -1510,7 +1489,7 @@ static void icmp_stats_ex_to_icmp_stats( MIBICMPSTATS_EX *stats_ex, MIBICMPSTATS
 DWORD WINAPI GetIcmpStatistics( MIB_ICMP *stats )
 {
     MIB_ICMP_EX stats_ex;
-    DWORD err = GetIcmpStatisticsEx( &stats_ex, WS_AF_INET );
+    DWORD err = GetIcmpStatisticsEx( &stats_ex, AF_INET );
 
     if (err) return err;
 
@@ -1999,7 +1978,7 @@ DWORD WINAPI GetIpAddrTable( MIB_IPADDRTABLE *table, ULONG *size, BOOL sort )
 
             if (!!loopback != (keys[i].luid.Info.IfType == MIB_IF_TYPE_LOOPBACK)) continue;
 
-            row->dwAddr = keys[i].addr.WS_s_addr;
+            row->dwAddr = keys[i].addr.s_addr;
             ConvertInterfaceLuidToIndex( &keys[i].luid, &row->dwIndex );
             ConvertLengthToIpv4Mask( rw[i].on_link_prefix, &row->dwMask );
             row->dwBCastAddr = 1;
@@ -2113,10 +2092,10 @@ DWORD WINAPI GetIpForwardTable( MIB_IPFORWARDTABLE *table, ULONG *size, BOOL sor
     {
         MIB_IPFORWARDROW *row = table->table + i;
 
-        row->dwForwardDest = keys[i].prefix.WS_s_addr;
+        row->dwForwardDest = keys[i].prefix.s_addr;
         ConvertLengthToIpv4Mask( keys[i].prefix_len, &row->dwForwardMask );
         row->dwForwardPolicy = 0;
-        row->dwForwardNextHop = keys[i].next_hop.WS_s_addr;
+        row->dwForwardNextHop = keys[i].next_hop.s_addr;
         row->u1.dwForwardType = row->dwForwardNextHop ? MIB_IPROUTE_TYPE_INDIRECT : MIB_IPROUTE_TYPE_DIRECT;
         if (!row->dwForwardNextHop) /* find the interface's addr */
         {
@@ -2124,7 +2103,7 @@ DWORD WINAPI GetIpForwardTable( MIB_IPFORWARDTABLE *table, ULONG *size, BOOL sor
             {
                 if (uni_keys[addr].luid.Value == keys[i].luid.Value)
                 {
-                    row->dwForwardNextHop = uni_keys[addr].addr.WS_s_addr;
+                    row->dwForwardNextHop = uni_keys[addr].addr.s_addr;
                     break;
                 }
             }
@@ -2193,7 +2172,7 @@ static void forward_row2_fill( MIB_IPFORWARD_ROW2 *row, USHORT fam, void *key, s
     struct nsi_ipv4_forward_dynamic *dyn4 = (struct nsi_ipv4_forward_dynamic *)dyn;
     struct nsi_ipv6_forward_dynamic *dyn6 = (struct nsi_ipv6_forward_dynamic *)dyn;
 
-    if (fam == WS_AF_INET)
+    if (fam == AF_INET)
     {
         row->InterfaceLuid = key4->luid;
         row->DestinationPrefix.Prefix.Ipv4.sin_family = fam;
@@ -2251,19 +2230,19 @@ DWORD WINAPI GetIpForwardTable2( ADDRESS_FAMILY family, MIB_IPFORWARD_TABLE2 **t
     struct nsi_ip_forward_rw *rw[2] = { NULL, NULL };
     void *dyn[2] = { NULL, NULL };
     struct nsi_ip_forward_static *stat[2] = { NULL, NULL };
-    static const USHORT fam[2] = { WS_AF_INET, WS_AF_INET6 };
+    static const USHORT fam[2] = { AF_INET, AF_INET6 };
     static const DWORD key_size[2] = { sizeof(struct nsi_ipv4_forward_key), sizeof(struct nsi_ipv6_forward_key) };
     static const DWORD dyn_size[2] = { sizeof(struct nsi_ipv4_forward_dynamic), sizeof(struct nsi_ipv6_forward_dynamic) };
     DWORD err = ERROR_SUCCESS, i, size, count[2] = { 0, 0 };
 
     TRACE( "%u, %p\n", family, table );
 
-    if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
+    if (!table || (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC))
         return ERROR_INVALID_PARAMETER;
 
     for (i = 0; i < 2; i++)
     {
-        if (family != WS_AF_UNSPEC && family != fam[i]) continue;
+        if (family != AF_UNSPEC && family != fam[i]) continue;
 
         err = NsiAllocateAndGetTable( 1, ip_module_id( fam[i] ), NSI_IP_FORWARD_TABLE, key + i, key_size[i],
                                       (void **)rw + i, sizeof(**rw), dyn + i, dyn_size[i],
@@ -2362,7 +2341,7 @@ DWORD WINAPI GetIpNetTable( MIB_IPNETTABLE *table, ULONG *size, BOOL sort )
         memcpy( row->bPhysAddr, rw[i].phys_addr, row->dwPhysAddrLen );
         memset( row->bPhysAddr + row->dwPhysAddrLen, 0,
                 sizeof(row->bPhysAddr) - row->dwPhysAddrLen );
-        row->dwAddr = keys[i].addr.WS_s_addr;
+        row->dwAddr = keys[i].addr.s_addr;
         switch (dyn->state)
         {
         case NlnsUnreachable:
@@ -2419,7 +2398,7 @@ static void ipnet_row2_fill( MIB_IPNET_ROW2 *row, USHORT fam, void *key, struct 
     struct nsi_ipv4_neighbour_key *key4 = (struct nsi_ipv4_neighbour_key *)key;
     struct nsi_ipv6_neighbour_key *key6 = (struct nsi_ipv6_neighbour_key *)key;
 
-    if (fam == WS_AF_INET)
+    if (fam == AF_INET)
     {
         row->Address.Ipv4.sin_family = fam;
         row->Address.Ipv4.sin_port = 0;
@@ -2460,18 +2439,18 @@ DWORD WINAPI GetIpNetTable2( ADDRESS_FAMILY family, MIB_IPNET_TABLE2 **table )
     void *key[2] = { NULL, NULL };
     struct nsi_ip_neighbour_rw *rw[2] = { NULL, NULL };
     struct nsi_ip_neighbour_dynamic *dyn[2] = { NULL, NULL };
-    static const USHORT fam[2] = { WS_AF_INET, WS_AF_INET6 };
+    static const USHORT fam[2] = { AF_INET, AF_INET6 };
     static const DWORD key_size[2] = { sizeof(struct nsi_ipv4_neighbour_key), sizeof(struct nsi_ipv6_neighbour_key) };
     DWORD err = ERROR_SUCCESS, i, size, count[2] = { 0, 0 };
 
     TRACE( "%u, %p\n", family, table );
 
-    if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
+    if (!table || (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC))
         return ERROR_INVALID_PARAMETER;
 
     for (i = 0; i < 2; i++)
     {
-        if (family != WS_AF_UNSPEC && family != fam[i]) continue;
+        if (family != AF_UNSPEC && family != fam[i]) continue;
 
         err = NsiAllocateAndGetTable( 1, ip_module_id( fam[i] ), NSI_IP_NEIGHBOUR_TABLE, key + i, key_size[i],
                                       (void **)rw + i, sizeof(**rw), (void **)dyn + i, sizeof(**dyn),
@@ -2523,7 +2502,7 @@ err:
  */
 DWORD WINAPI GetIpStatistics( MIB_IPSTATS *stats )
 {
-    return GetIpStatisticsEx( stats, WS_AF_INET );
+    return GetIpStatisticsEx( stats, AF_INET );
 }
 
 /******************************************************************
@@ -2817,7 +2796,7 @@ BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHo
  */
 DWORD WINAPI GetTcpStatistics( MIB_TCPSTATS *stats )
 {
-    return GetTcpStatisticsEx( stats, WS_AF_INET );
+    return GetTcpStatisticsEx( stats, AF_INET );
 }
 
 /******************************************************************
@@ -2901,27 +2880,27 @@ static DWORD tcp_table_size( ULONG family, ULONG table_class, DWORD row_count, D
     case TCP_TABLE_BASIC_LISTENER:
     case TCP_TABLE_BASIC_CONNECTIONS:
     case TCP_TABLE_BASIC_ALL:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW) : sizeof(MIB_TCP6ROW);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_TCPROW) : sizeof(MIB_TCP6ROW);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE, table[row_count]) :
             FIELD_OFFSET(MIB_TCP6TABLE, table[row_count]);
 
     case TCP_TABLE_OWNER_PID_LISTENER:
     case TCP_TABLE_OWNER_PID_CONNECTIONS:
     case TCP_TABLE_OWNER_PID_ALL:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW_OWNER_PID) : sizeof(MIB_TCP6ROW_OWNER_PID);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_PID, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_TCPROW_OWNER_PID) : sizeof(MIB_TCP6ROW_OWNER_PID);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_PID, table[row_count]) :
             FIELD_OFFSET(MIB_TCP6TABLE_OWNER_PID, table[row_count]);
 
     case TCP_TABLE_OWNER_MODULE_LISTENER:
     case TCP_TABLE_OWNER_MODULE_CONNECTIONS:
     case TCP_TABLE_OWNER_MODULE_ALL:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW_OWNER_MODULE) : sizeof(MIB_TCP6ROW_OWNER_MODULE);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_MODULE, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_TCPROW_OWNER_MODULE) : sizeof(MIB_TCP6ROW_OWNER_MODULE);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE_OWNER_MODULE, table[row_count]) :
             FIELD_OFFSET(MIB_TCP6TABLE_OWNER_MODULE, table[row_count]);
 
     case TCP_TABLE2:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_TCPROW2) : sizeof(MIB_TCP6ROW2);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE2, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_TCPROW2) : sizeof(MIB_TCP6ROW2);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_TCPTABLE2, table[row_count]) :
             FIELD_OFFSET(MIB_TCP6TABLE2, table[row_count]);
 
     default:
@@ -2934,7 +2913,7 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
                           struct nsi_tcp_conn_key *key, struct nsi_tcp_conn_dynamic *dyn,
                           struct nsi_tcp_conn_static *stat )
 {
-    if (family == WS_AF_INET)
+    if (family == AF_INET)
     {
         switch (table_class)
         {
@@ -2944,9 +2923,9 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
         {
             MIB_TCPROW *row = ((MIB_TCPTABLE *)table)->table + num;
             row->u.dwState = dyn->state;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
-            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.s_addr;
             row->dwRemotePort = key->remote.Ipv4.sin_port;
             return;
         }
@@ -2956,9 +2935,9 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
         {
             MIB_TCPROW_OWNER_PID *row = ((MIB_TCPTABLE_OWNER_PID *)table)->table + num;
             row->dwState = dyn->state;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
-            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.s_addr;
             row->dwRemotePort = key->remote.Ipv4.sin_port;
             row->dwOwningPid = stat->pid;
             return;
@@ -2969,9 +2948,9 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
         {
             MIB_TCPROW_OWNER_MODULE *row = ((MIB_TCPTABLE_OWNER_MODULE *)table)->table + num;
             row->dwState = dyn->state;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
-            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.s_addr;
             row->dwRemotePort = key->remote.Ipv4.sin_port;
             row->dwOwningPid = stat->pid;
             row->liCreateTimestamp.QuadPart = stat->create_time;
@@ -2983,9 +2962,9 @@ static void tcp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
         {
             MIB_TCPROW2 *row = ((MIB_TCPTABLE2 *)table)->table + num;
             row->dwState = dyn->state;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
-            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.WS_s_addr;
+            row->dwRemoteAddr = key->remote.Ipv4.sin_addr.s_addr;
             row->dwRemotePort = key->remote.Ipv4.sin_port;
             row->dwOwningPid = stat->pid;
             row->dwOffloadState = 0; /* FIXME */
@@ -3156,7 +3135,7 @@ static DWORD get_extended_tcp_table( void *table, DWORD *size, BOOL sort, ULONG 
         int (*fn)(const void *, const void *);
         DWORD offset;
 
-        if (family == WS_AF_INET) fn = tcp_row_cmp;
+        if (family == AF_INET) fn = tcp_row_cmp;
         else if (row_size == sizeof(MIB_TCP6ROW)) fn = tcp6_row_basic_cmp;
         else fn = tcp6_row_owner_cmp;
 
@@ -3206,7 +3185,7 @@ DWORD WINAPI GetExtendedTcpTable( void *table, DWORD *size, BOOL sort, ULONG fam
 DWORD WINAPI GetTcpTable( MIB_TCPTABLE *table, DWORD *size, BOOL sort )
 {
     TRACE( "table %p, size %p, sort %d\n", table, size, sort );
-    return get_extended_tcp_table( table, size, sort, WS_AF_INET, TCP_TABLE_BASIC_ALL );
+    return get_extended_tcp_table( table, size, sort, AF_INET, TCP_TABLE_BASIC_ALL );
 }
 
 /******************************************************************
@@ -3215,7 +3194,7 @@ DWORD WINAPI GetTcpTable( MIB_TCPTABLE *table, DWORD *size, BOOL sort )
 ULONG WINAPI GetTcp6Table( MIB_TCP6TABLE *table, ULONG *size, BOOL sort )
 {
     TRACE( "table %p, size %p, sort %d\n", table, size, sort );
-    return get_extended_tcp_table( table, size, sort, WS_AF_INET6, TCP_TABLE_BASIC_ALL );
+    return get_extended_tcp_table( table, size, sort, AF_INET6, TCP_TABLE_BASIC_ALL );
 }
 
 /******************************************************************
@@ -3224,7 +3203,7 @@ ULONG WINAPI GetTcp6Table( MIB_TCP6TABLE *table, ULONG *size, BOOL sort )
 ULONG WINAPI GetTcpTable2( MIB_TCPTABLE2 *table, ULONG *size, BOOL sort )
 {
     TRACE( "table %p, size %p, sort %d\n", table, size, sort );
-    return get_extended_tcp_table( table, size, sort, WS_AF_INET, TCP_TABLE2 );
+    return get_extended_tcp_table( table, size, sort, AF_INET, TCP_TABLE2 );
 }
 
 /******************************************************************
@@ -3233,7 +3212,7 @@ ULONG WINAPI GetTcpTable2( MIB_TCPTABLE2 *table, ULONG *size, BOOL sort )
 ULONG WINAPI GetTcp6Table2( MIB_TCP6TABLE2 *table, ULONG *size, BOOL sort )
 {
     TRACE( "table %p, size %p, sort %d\n", table, size, sort );
-    return get_extended_tcp_table( table, size, sort, WS_AF_INET6, TCP_TABLE2 );
+    return get_extended_tcp_table( table, size, sort, AF_INET6, TCP_TABLE2 );
 }
 
 static DWORD allocate_tcp_table( void **table, BOOL sort, HANDLE heap, DWORD flags,
@@ -3263,7 +3242,7 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack( MIB_TCPTABLE **table, BOOL sort, H
 
     if (!table) return ERROR_INVALID_PARAMETER;
 
-    return allocate_tcp_table( (void **)table, sort, heap, flags, WS_AF_INET, TCP_TABLE_BASIC_ALL );
+    return allocate_tcp_table( (void **)table, sort, heap, flags, AF_INET, TCP_TABLE_BASIC_ALL );
 }
 
 /******************************************************************
@@ -3274,7 +3253,7 @@ DWORD WINAPI AllocateAndGetTcpExTableFromStack( void **table, BOOL sort, HANDLE 
     TRACE( "table %p, sort %d, heap %p, flags 0x%08x, family %u\n", table, sort, heap, flags, family );
 
     if (!table || !ip_module_id( family )) return ERROR_INVALID_PARAMETER;
-    if (family == WS_AF_INET6) return ERROR_NOT_SUPPORTED;
+    if (family == AF_INET6) return ERROR_NOT_SUPPORTED;
 
     return allocate_tcp_table( table, sort, heap, flags, family, TCP_TABLE_OWNER_PID_ALL );
 }
@@ -3289,7 +3268,7 @@ DWORD WINAPI AllocateAndGetTcpExTableFromStack( void **table, BOOL sort, HANDLE 
  */
 DWORD WINAPI GetUdpStatistics( MIB_UDPSTATS *stats )
 {
-    return GetUdpStatisticsEx( stats, WS_AF_INET );
+    return GetUdpStatisticsEx( stats, AF_INET );
 }
 
 /******************************************************************
@@ -3339,7 +3318,7 @@ DWORD WINAPI GetUdpStatisticsEx( MIB_UDPSTATS *stats, DWORD family )
  */
 DWORD WINAPI GetUdpTable( MIB_UDPTABLE *table, DWORD *size, BOOL sort )
 {
-    return GetExtendedUdpTable( table, size, sort, WS_AF_INET, UDP_TABLE_BASIC, 0 );
+    return GetExtendedUdpTable( table, size, sort, AF_INET, UDP_TABLE_BASIC, 0 );
 }
 
 /******************************************************************
@@ -3347,7 +3326,7 @@ DWORD WINAPI GetUdpTable( MIB_UDPTABLE *table, DWORD *size, BOOL sort )
  */
 DWORD WINAPI GetUdp6Table( MIB_UDP6TABLE *table, DWORD *size, BOOL sort )
 {
-    return GetExtendedUdpTable( table, size, sort, WS_AF_INET6, UDP_TABLE_BASIC, 0 );
+    return GetExtendedUdpTable( table, size, sort, AF_INET6, UDP_TABLE_BASIC, 0 );
 }
 
 static DWORD udp_table_size( ULONG family, ULONG table_class, DWORD row_count, DWORD *row_size )
@@ -3355,18 +3334,18 @@ static DWORD udp_table_size( ULONG family, ULONG table_class, DWORD row_count, D
     switch (table_class)
     {
     case UDP_TABLE_BASIC:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_UDPROW) : sizeof(MIB_UDP6ROW);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_UDPROW) : sizeof(MIB_UDP6ROW);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE, table[row_count]) :
             FIELD_OFFSET(MIB_UDP6TABLE, table[row_count]);
 
     case UDP_TABLE_OWNER_PID:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_UDPROW_OWNER_PID) : sizeof(MIB_UDP6ROW_OWNER_PID);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE_OWNER_PID, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_UDPROW_OWNER_PID) : sizeof(MIB_UDP6ROW_OWNER_PID);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE_OWNER_PID, table[row_count]) :
             FIELD_OFFSET(MIB_UDP6TABLE_OWNER_PID, table[row_count]);
 
     case UDP_TABLE_OWNER_MODULE:
-        *row_size = (family == WS_AF_INET) ? sizeof(MIB_UDPROW_OWNER_MODULE) : sizeof(MIB_UDP6ROW_OWNER_MODULE);
-        return (family == WS_AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE_OWNER_MODULE, table[row_count]) :
+        *row_size = (family == AF_INET) ? sizeof(MIB_UDPROW_OWNER_MODULE) : sizeof(MIB_UDP6ROW_OWNER_MODULE);
+        return (family == AF_INET) ? FIELD_OFFSET(MIB_UDPTABLE_OWNER_MODULE, table[row_count]) :
             FIELD_OFFSET(MIB_UDP6TABLE_OWNER_MODULE, table[row_count]);
 
     default:
@@ -3379,21 +3358,21 @@ static void udp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
                           struct nsi_udp_endpoint_key *key,
                           struct nsi_udp_endpoint_static *stat )
 {
-    if (family == WS_AF_INET)
+    if (family == AF_INET)
     {
         switch (table_class)
         {
         case UDP_TABLE_BASIC:
         {
             MIB_UDPROW *row = ((MIB_UDPTABLE *)table)->table + num;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
             return;
         }
         case UDP_TABLE_OWNER_PID:
         {
             MIB_UDPROW_OWNER_PID *row = ((MIB_UDPTABLE_OWNER_PID *)table)->table + num;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
             row->dwOwningPid = stat->pid;
             return;
@@ -3401,7 +3380,7 @@ static void udp_row_fill( void *table, DWORD num, ULONG family, ULONG table_clas
         case UDP_TABLE_OWNER_MODULE:
         {
             MIB_UDPROW_OWNER_MODULE *row = ((MIB_UDPTABLE_OWNER_MODULE *)table)->table + num;
-            row->dwLocalAddr = key->local.Ipv4.sin_addr.WS_s_addr;
+            row->dwLocalAddr = key->local.Ipv4.sin_addr.s_addr;
             row->dwLocalPort = key->local.Ipv4.sin_port;
             row->dwOwningPid = stat->pid;
             row->liCreateTimestamp.QuadPart = stat->create_time;
@@ -3525,7 +3504,7 @@ DWORD WINAPI GetExtendedUdpTable( void *table, DWORD *size, BOOL sort, ULONG fam
         int (*fn)(const void *, const void *);
         DWORD offset = udp_table_size( family, table_class, 0, &row_size );
 
-        if (family == WS_AF_INET) fn = udp_row_cmp;
+        if (family == AF_INET) fn = udp_row_cmp;
         else fn = udp6_row_cmp;
 
         qsort( (BYTE *)table + offset, num, row_size, fn );
@@ -3547,7 +3526,7 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack( MIB_UDPTABLE **table, BOOL sort, H
     {
         *table = HeapAlloc( heap, flags, size );
         if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
-        err = GetExtendedUdpTable( *table, &size, sort, WS_AF_INET, UDP_TABLE_BASIC, 0 );
+        err = GetExtendedUdpTable( *table, &size, sort, AF_INET, UDP_TABLE_BASIC, 0 );
         if (!err) break;
         HeapFree( heap, flags, *table );
         *table = NULL;
@@ -3562,7 +3541,7 @@ static void unicast_row_fill( MIB_UNICASTIPADDRESS_ROW *row, USHORT fam, void *k
     struct nsi_ipv4_unicast_key *key4 = (struct nsi_ipv4_unicast_key *)key;
     struct nsi_ipv6_unicast_key *key6 = (struct nsi_ipv6_unicast_key *)key;
 
-    if (fam == WS_AF_INET)
+    if (fam == AF_INET)
     {
         row->Address.Ipv4.sin_family = fam;
         row->Address.Ipv4.sin_port = 0;
@@ -3615,7 +3594,7 @@ DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW *row)
         if (err) return err;
     }
 
-    if (row->Address.si_family == WS_AF_INET)
+    if (row->Address.si_family == AF_INET)
     {
         key4.luid = row->InterfaceLuid;
         key4.addr = row->Address.Ipv4.sin_addr;
@@ -3623,7 +3602,7 @@ DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW *row)
         key = &key4;
         key_size = sizeof(key4);
     }
-    else if (row->Address.si_family == WS_AF_INET6)
+    else if (row->Address.si_family == AF_INET6)
     {
         key6.luid = row->InterfaceLuid;
         key6.addr = row->Address.Ipv6.sin6_addr;
@@ -3644,18 +3623,18 @@ DWORD WINAPI GetUnicastIpAddressTable(ADDRESS_FAMILY family, MIB_UNICASTIPADDRES
     struct nsi_ip_unicast_rw *rw[2] = { NULL, NULL };
     struct nsi_ip_unicast_dynamic *dyn[2] = { NULL, NULL };
     struct nsi_ip_unicast_static *stat[2] = { NULL, NULL };
-    static const USHORT fam[2] = { WS_AF_INET, WS_AF_INET6 };
+    static const USHORT fam[2] = { AF_INET, AF_INET6 };
     static const DWORD key_size[2] = { sizeof(struct nsi_ipv4_unicast_key), sizeof(struct nsi_ipv6_unicast_key) };
     DWORD err, i, size, count[2] = { 0, 0 };
 
     TRACE( "%u, %p\n", family, table );
 
-    if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
+    if (!table || (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC))
         return ERROR_INVALID_PARAMETER;
 
     for (i = 0; i < 2; i++)
     {
-        if (family != WS_AF_UNSPEC && family != fam[i]) continue;
+        if (family != AF_UNSPEC && family != fam[i]) continue;
 
         err = NsiAllocateAndGetTable( 1, ip_module_id( fam[i] ), NSI_IP_UNICAST_TABLE, key + i, key_size[i],
                                       (void **)rw + i, sizeof(**rw), (void **)dyn + i, sizeof(**dyn),
