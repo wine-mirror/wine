@@ -613,9 +613,12 @@ static DWORD CALLBACK read_thread(void *arg)
 {
     struct media_source *source = arg;
     IMFByteStream *byte_stream = source->byte_stream;
-    size_t buffer_size = 0;
+    size_t buffer_size = 4096;
     uint64_t file_size;
-    void *data = NULL;
+    void *data;
+
+    if (!(data = malloc(buffer_size)))
+        return 0;
 
     IMFByteStream_GetLength(byte_stream, &file_size);
 

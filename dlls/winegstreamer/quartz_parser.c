@@ -786,8 +786,11 @@ static DWORD CALLBACK read_thread(void *arg)
 {
     struct parser *filter = arg;
     LONGLONG file_size, unused;
-    size_t buffer_size = 0;
+    size_t buffer_size = 4096;
     void *data = NULL;
+
+    if (!(data = malloc(buffer_size)))
+        return 0;
 
     IAsyncReader_Length(filter->reader, &file_size, &unused);
 
