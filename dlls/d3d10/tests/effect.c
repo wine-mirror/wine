@@ -2911,6 +2911,7 @@ static void test_effect_local_shader(void)
         *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs, *gs, *ps, *vs;
     D3D10_EFFECT_SHADER_DESC shaderdesc;
     D3D10_SIGNATURE_PARAMETER_DESC sign;
+    D3D10_STATE_BLOCK_MASK mask;
     ID3D10Device *device;
     ULONG refcount;
 
@@ -3010,6 +3011,20 @@ if (0)
 
     /* pass 0 */
     p = t->lpVtbl->GetPassByIndex(t, 0);
+
+    /* Pass without Set*Shader() instructions */
+    hr = D3D10StateBlockMaskDisableAll(&mask);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = p->lpVtbl->ComputeStateBlockMask(p, &mask);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_VS, 0);
+    ok(!ret, "Unexpected mask.\n");
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_PS, 0);
+    ok(!ret, "Unexpected mask.\n");
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_GS, 0);
+    ok(!ret, "Unexpected mask.\n");
+
     hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
     ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
     ok(pdesc.pShaderVariable == null_shader, "Got %p, expected %p\n", pdesc.pShaderVariable, null_shader);
@@ -3145,6 +3160,19 @@ if (0)
     ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
     ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
 
+    /* Pass is using Set*Shader(NULL) */
+    hr = D3D10StateBlockMaskDisableAll(&mask);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = p->lpVtbl->ComputeStateBlockMask(p, &mask);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_VS, 0);
+    ok(ret, "Unexpected mask.\n");
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_PS, 0);
+    ok(ret, "Unexpected mask.\n");
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_GS, 0);
+    ok(ret, "Unexpected mask.\n");
+}
     /* pass 2 */
     p = t->lpVtbl->GetPassByIndex(t, 2);
 

@@ -1944,8 +1944,8 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
             if (FAILED(hr = sv->lpVtbl->GetVertexShader(sv, variable_idx, &o->object.vs)))
                 return hr;
-            o->pass->vs.pShaderVariable = sv;
-            o->pass->vs.ShaderIndex = variable_idx;
+            o->pass->vs.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
+            o->pass->vs.index = variable_idx;
             break;
         }
 
@@ -1954,8 +1954,8 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
             if (FAILED(hr = sv->lpVtbl->GetPixelShader(sv, variable_idx, &o->object.ps)))
                 return hr;
-            o->pass->ps.pShaderVariable = sv;
-            o->pass->ps.ShaderIndex = variable_idx;
+            o->pass->ps.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
+            o->pass->ps.index = variable_idx;
             break;
         }
 
@@ -1964,8 +1964,8 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
             if (FAILED(hr = sv->lpVtbl->GetGeometryShader(sv, variable_idx, &o->object.gs)))
                 return hr;
-            o->pass->gs.pShaderVariable = sv;
-            o->pass->gs.ShaderIndex = variable_idx;
+            o->pass->gs.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
+            o->pass->gs.index = variable_idx;
             break;
         }
 
@@ -2018,9 +2018,9 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
         return E_OUTOFMEMORY;
     }
 
-    p->vs.pShaderVariable = (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface;
-    p->ps.pShaderVariable = (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface;
-    p->gs.pShaderVariable = (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface;
+    p->vs.shader = &null_shader_variable;
+    p->ps.shader = &null_shader_variable;
+    p->gs.shader = &null_shader_variable;
 
     for (i = 0; i < p->object_count; ++i)
     {
@@ -3819,7 +3819,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         return E_INVALIDARG;
     }
 
-    s = &impl_from_ID3D10EffectShaderVariable(pass->vs.pShaderVariable)->u.shader;
+    s = &pass->vs.shader->u.shader;
 
     desc->Name = pass->name;
     desc->Annotations = pass->annotation_count;
@@ -3843,23 +3843,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
 
-    TRACE("iface %p, desc %p\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
-    if (This == &null_pass)
+    if (pass == &null_pass)
     {
-        WARN("Null pass specified\n");
+        WARN("Null pass specified.\n");
         return E_FAIL;
     }
 
     if (!desc)
     {
-        WARN("Invalid argument specified\n");
+        WARN("Invalid argument specified.\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->vs;
+    desc->pShaderVariable = (ID3D10EffectShaderVariable *)&pass->vs.shader->ID3D10EffectVariable_iface;
+    desc->ShaderIndex = pass->vs.index;
 
     return S_OK;
 }
@@ -3867,23 +3868,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetVertexShaderDesc(ID3D10Eff
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetGeometryShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
 
-    TRACE("iface %p, desc %p\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
-    if (This == &null_pass)
+    if (pass == &null_pass)
     {
-        WARN("Null pass specified\n");
+        WARN("Null pass specified.\n");
         return E_FAIL;
     }
 
     if (!desc)
     {
-        WARN("Invalid argument specified\n");
+        WARN("Invalid argument specified.\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->gs;
+    desc->pShaderVariable = (ID3D10EffectShaderVariable *)&pass->gs.shader->ID3D10EffectVariable_iface;
+    desc->ShaderIndex = pass->gs.index;
 
     return S_OK;
 }
@@ -3891,23 +3893,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetGeometryShaderDesc(ID3D10E
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetPixelShaderDesc(ID3D10EffectPass *iface,
         D3D10_PASS_SHADER_DESC *desc)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
 
-    TRACE("iface %p, desc %p\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
-    if (This == &null_pass)
+    if (pass == &null_pass)
     {
-        WARN("Null pass specified\n");
+        WARN("Null pass specified.\n");
         return E_FAIL;
     }
 
     if (!desc)
     {
-        WARN("Invalid argument specified\n");
+        WARN("Invalid argument specified.\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->ps;
+    desc->pShaderVariable = (ID3D10EffectShaderVariable *)&pass->ps.shader->ID3D10EffectVariable_iface;
+    desc->ShaderIndex = pass->ps.index;
 
     return S_OK;
 }
@@ -3992,9 +3995,8 @@ static void set_sampler(ID3D10Device *device, D3D10_SHADER_VARIABLE_TYPE shader_
     }
 }
 
-static void apply_shader_resources(ID3D10Device *device, struct ID3D10EffectShaderVariable *variable)
+static void apply_shader_resources(ID3D10Device *device, struct d3d10_effect_variable *v)
 {
-    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(variable);
     struct d3d10_effect_shader_variable *sv = &v->u.shader;
     struct d3d10_effect_shader_resource *sr;
     struct d3d10_effect_variable *rsrc_v;
@@ -4092,12 +4094,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
 
     if (flags) FIXME("Ignoring flags (%#x)\n", flags);
 
-    if (pass->vs.pShaderVariable != (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface)
-        apply_shader_resources(device, pass->vs.pShaderVariable);
-    if (pass->gs.pShaderVariable != (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface)
-        apply_shader_resources(device, pass->gs.pShaderVariable);
-    if (pass->ps.pShaderVariable != (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface)
-        apply_shader_resources(device, pass->ps.pShaderVariable);
+    if (pass->vs.shader != &null_shader_variable)
+        apply_shader_resources(device, pass->vs.shader);
+    if (pass->gs.shader != &null_shader_variable)
+        apply_shader_resources(device, pass->gs.shader);
+    if (pass->ps.shader != &null_shader_variable)
+        apply_shader_resources(device, pass->ps.shader);
 
     for (i = 0; i < pass->object_count; ++i)
     {

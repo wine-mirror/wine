@@ -226,6 +226,12 @@ struct d3d10_effect_variable
     } u;
 };
 
+struct d3d10_effect_pass_shader_desc
+{
+    struct d3d10_effect_variable *shader;
+    unsigned int index;
+};
+
 /* ID3D10EffectPass */
 struct d3d10_effect_pass
 {
@@ -238,9 +244,9 @@ struct d3d10_effect_pass
     struct d3d10_effect_object *objects;
     struct d3d10_effect_variable *annotations;
 
-    D3D10_PASS_SHADER_DESC vs;
-    D3D10_PASS_SHADER_DESC ps;
-    D3D10_PASS_SHADER_DESC gs;
+    struct d3d10_effect_pass_shader_desc vs;
+    struct d3d10_effect_pass_shader_desc ps;
+    struct d3d10_effect_pass_shader_desc gs;
     UINT stencil_ref;
     UINT sample_mask;
     float blend_factor[4];
