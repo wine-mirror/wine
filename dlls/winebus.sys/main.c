@@ -309,20 +309,11 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, struct uni
 static DEVICE_OBJECT *bus_find_unix_device(struct unix_device *unix_device)
 {
     struct device_extension *ext;
-    DEVICE_OBJECT *ret = NULL;
 
-    RtlEnterCriticalSection(&device_list_cs);
     LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
-    {
-        if (ext->unix_device == unix_device)
-        {
-            ret = ext->device;
-            break;
-        }
-    }
-    RtlLeaveCriticalSection(&device_list_cs);
+        if (ext->unix_device == unix_device) return ext->device;
 
-    return ret;
+    return NULL;
 }
 
 static void bus_unlink_hid_device(DEVICE_OBJECT *device)
