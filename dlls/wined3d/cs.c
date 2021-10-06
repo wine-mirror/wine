@@ -76,11 +76,6 @@ static void wined3d_command_list_destroy_object(void *object)
     for (i = 0; i < list->upload_count; ++i)
         heap_free(list->uploads[i].sysmem);
 
-    heap_free(list->command_lists);
-    heap_free(list->uploads);
-    heap_free(list->resources);
-    heap_free(list->data);
-    heap_free(list->queries);
     heap_free(list);
 }
 
@@ -3734,44 +3729,53 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
     struct wined3d_command_list *object;
+    void *memory;
 
     TRACE("context %p, list %p.\n", context, list);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    memory = heap_alloc(sizeof(*object) + deferred->resource_count * sizeof(*object->resources)
+            + deferred->upload_count * sizeof(*object->uploads)
+            + deferred->command_list_count * sizeof(*object->command_lists)
+            + deferred->query_count * sizeof(*object->queries)
+            + deferred->data_size);
+
+    if (!memory)
         return E_OUTOFMEMORY;
 
+    object = memory;
+    memory = &object[1];
+    memset(object, 0, sizeof(*object));
     object->refcount = 1;
     object->device = deferred->c.device;
 
-    if (!(object->data = heap_alloc(deferred->data_size)))
-        goto out_free_list;
-    object->data_size = deferred->data_size;
-    memcpy(object->data, deferred->data, deferred->data_size);
-
-    if (!(object->resources = heap_alloc(deferred->resource_count * sizeof(*object->resources))))
-        goto out_free_data;
+    object->resources = memory;
+    memory = &object->resources[deferred->resource_count];
     object->resource_count = deferred->resource_count;
     memcpy(object->resources, deferred->resources, deferred->resource_count * sizeof(*object->resources));
     /* Transfer our references to the resources to the command list. */
 
-    if (!(object->uploads = heap_alloc(deferred->upload_count * sizeof(*object->uploads))))
-        goto out_free_resources;
+    object->uploads = memory;
+    memory = &object->uploads[deferred->upload_count];
     object->upload_count = deferred->upload_count;
     memcpy(object->uploads, deferred->uploads, deferred->upload_count * sizeof(*object->uploads));
     /* Transfer our references to the resources to the command list. */
 
-    if (!(object->command_lists = heap_alloc(deferred->command_list_count * sizeof(*object->command_lists))))
-        goto out_free_uploads;
+    object->command_lists = memory;
+    memory = &object->command_lists[deferred->command_list_count];
     object->command_list_count = deferred->command_list_count;
     memcpy(object->command_lists, deferred->command_lists,
             deferred->command_list_count * sizeof(*object->command_lists));
     /* Transfer our references to the command lists to the command list. */
 
-    if (!(object->queries = heap_alloc(deferred->query_count * sizeof(*object->queries))))
-        goto out_free_command_lists;
+    object->queries = memory;
+    memory = &object->queries[deferred->query_count];
     object->query_count = deferred->query_count;
     memcpy(object->queries, deferred->queries, deferred->query_count * sizeof(*object->queries));
     /* Transfer our references to the queries to the command list. */
+
+    object->data = memory;
+    object->data_size = deferred->data_size;
+    memcpy(object->data, deferred->data, deferred->data_size);
 
     deferred->data_size = 0;
     deferred->resource_count = 0;
@@ -3789,16 +3793,4 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     *list = object;
 
     return S_OK;
-
-out_free_command_lists:
-    heap_free(object->command_lists);
-out_free_uploads:
-    heap_free(object->uploads);
-out_free_resources:
-    heap_free(object->resources);
-out_free_data:
-    heap_free(object->data);
-out_free_list:
-    heap_free(object);
-    return E_OUTOFMEMORY;
 }
