@@ -715,15 +715,17 @@ HRESULT dispex_get_dynid(DispatchEx *This, const WCHAR *name, DISPID *id)
 static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
+    HRESULT hres;
+
     if(This->info->desc->vtbl && This->info->desc->vtbl->value)
         return This->info->desc->vtbl->value(This, lcid, flags, params, res, ei, caller);
 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
         V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocString(L"[object]");
-        if(!V_BSTR(res))
-            return E_OUTOFMEMORY;
+        hres = dispex_to_string(This, &V_BSTR(res));
+        if(FAILED(hres))
+            return hres;
         break;
     default:
         FIXME("Unimplemented flags %x\n", flags);
@@ -1305,9 +1307,9 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
         if(func->id == DISPID_VALUE) {
             BSTR ret;
 
-            ret = SysAllocString(L"[object]");
-            if(!ret)
-                return E_OUTOFMEMORY;
+            hres = dispex_to_string(This, &ret);
+            if(FAILED(hres))
+                return hres;
 
             V_VT(res) = VT_BSTR;
             V_BSTR(res) = ret;

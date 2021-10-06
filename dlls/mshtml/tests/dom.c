@@ -107,7 +107,11 @@ static const char noscript_str[] =
     "<body><noscript><div>test</div></noscript></body></html>";
 static const char doctype_str[] =
     "<!DOCTYPE html>"
-    "<html><head><title>emptydiv test</title></head>"
+    "<html>"
+    "  <head>"
+    "    <meta http-equiv=\"x-ua-compatible\" content=\"IE=8\" />"
+    "    <title>emptydiv test</title>"
+    "  </head>"
     "<body><div id=\"divid\"></div></body></html>";
 
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
