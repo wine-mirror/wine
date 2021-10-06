@@ -593,7 +593,7 @@ static SYSTEMTIME may2007 = { 2007, 5, 2, 1, 0, 0, 0, 0 };
 
 static void test_verifyRevocation(void)
 {
-    CERT_REVOCATION_STATUS status = {sizeof(status)};
+    CERT_REVOCATION_STATUS status;
     CERT_REVOCATION_PARA params = {sizeof(params)};
     const CERT_CONTEXT *certs[2];
     FILETIME time;
@@ -608,7 +608,8 @@ static void test_verifyRevocation(void)
     }
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
@@ -617,7 +618,8 @@ static void test_verifyRevocation(void)
     todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0, 0, NULL, 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
@@ -626,7 +628,8 @@ static void test_verifyRevocation(void)
     todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 0, NULL, 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
@@ -637,7 +640,8 @@ static void test_verifyRevocation(void)
     certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)certs, 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
@@ -652,7 +656,8 @@ static void test_verifyRevocation(void)
 
     /* The root cert itself can't be checked for revocation */
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certs[0], 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
@@ -662,7 +667,8 @@ static void test_verifyRevocation(void)
 
     /* Neither can the end cert */
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certs[1], 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
@@ -672,7 +678,8 @@ static void test_verifyRevocation(void)
 
     /* Both certs together can't, either (they're not CRLs) */
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 2, (void **)certs, 0, NULL, &status);
     ok(!ret, "expected failure\n");
     ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
@@ -688,7 +695,8 @@ static void test_verifyRevocation(void)
     ok(ret, "failed to add CRL, error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             2, (void **)certs, 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -699,7 +707,8 @@ static void test_verifyRevocation(void)
 
     /* Specifying CERT_VERIFY_REV_CHAIN_FLAG doesn't change things either */
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             2, (void **)certs, CERT_VERIFY_REV_CHAIN_FLAG, &params, &status);
     ok(!ret, "expected failure\n");
@@ -711,7 +720,8 @@ static void test_verifyRevocation(void)
     /* Again, specifying the issuer cert: no change */
     params.pIssuerCert = certs[0];
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -725,7 +735,8 @@ static void test_verifyRevocation(void)
     params.pftTimeToUse = &time;
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -749,7 +760,8 @@ static void test_verifyRevocation(void)
     params.pftTimeToUse = NULL;
 
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -761,7 +773,8 @@ static void test_verifyRevocation(void)
     SystemTimeToFileTime(&oct2007, &time);
     params.pftTimeToUse = &time;
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -772,7 +785,8 @@ static void test_verifyRevocation(void)
 
     SystemTimeToFileTime(&may2007, &time);
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -790,7 +804,8 @@ static void test_verifyRevocation(void)
 
     params.pftTimeToUse = NULL;
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -802,7 +817,8 @@ static void test_verifyRevocation(void)
     SystemTimeToFileTime(&oct2007, &time);
     params.pftTimeToUse = &time;
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -813,7 +829,8 @@ static void test_verifyRevocation(void)
 
     SystemTimeToFileTime(&may2007, &time);
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -826,7 +843,8 @@ static void test_verifyRevocation(void)
 
     /* Test with the wrong encoding type. */
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
@@ -837,7 +855,8 @@ static void test_verifyRevocation(void)
 
     /* Test with the wrong context type. */
     SetLastError(0xdeadbeef);
-    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    memset(&status, 0xcc, sizeof(status));
+    status.cbSize = sizeof(status);
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0xdeadbeef,
             1, (void **)&certs[1], 0, &params, &status);
     ok(!ret, "expected failure\n");
