@@ -5100,6 +5100,7 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     IDirectInputEffect *effect;
     HRESULT hr;
     ULONG ref;
+    GUID guid;
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, NULL, NULL );
     ok( hr == E_POINTER, "CreateEffect returned %#x\n", hr );
@@ -5122,6 +5123,34 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_created_effect_objects, &check_params, 0 );
     ok( hr == DI_OK, "EnumCreatedEffectObjects returned %#x\n", hr );
     ok( check_params.count == 1, "got count %u, expected 1\n", check_params.count );
+
+    hr = IDirectInputEffect_Initialize( effect, NULL, DIRECTINPUT_VERSION, &GUID_Sine );
+    todo_wine
+    ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#x\n", hr );
+    hr = IDirectInputEffect_Initialize( effect, instance, 0, &GUID_Sine );
+    todo_wine
+    ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#x\n", hr );
+    hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "Initialize returned %#x\n", hr );
+
+    hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, &GUID_NULL );
+    todo_wine
+    ok( hr == DIERR_DEVICENOTREG, "Initialize returned %#x\n", hr );
+    hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, &GUID_Sine );
+    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+    hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, &GUID_Square );
+    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+
+    hr = IDirectInputEffect_GetEffectGuid( effect, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "GetEffectGuid returned %#x\n", hr );
+    hr = IDirectInputEffect_GetEffectGuid( effect, &guid );
+    todo_wine
+    ok( hr == DI_OK, "GetEffectGuid returned %#x\n", hr );
+    todo_wine
+    ok( IsEqualGUID( &guid, &GUID_Square ), "got guid %s, expected %s\n", debugstr_guid( &guid ),
+        debugstr_guid( &GUID_Square ) );
 
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
@@ -5238,11 +5267,12 @@ static void test_force_feedback_joystick( void )
 
                 USAGE(1, PID_USAGE_EFFECT_TYPE),
                 COLLECTION(1, NamedArray),
+                    USAGE(1, PID_USAGE_ET_SQUARE),
                     USAGE(1, PID_USAGE_ET_SINE),
                     LOGICAL_MINIMUM(1, 1),
-                    LOGICAL_MAXIMUM(1, 1),
+                    LOGICAL_MAXIMUM(1, 2),
                     PHYSICAL_MINIMUM(1, 1),
-                    PHYSICAL_MAXIMUM(1, 1),
+                    PHYSICAL_MAXIMUM(1, 2),
                     REPORT_SIZE(1, 8),
                     REPORT_COUNT(1, 1),
                     OUTPUT(1, Data|Ary|Abs),
@@ -5459,6 +5489,18 @@ static void test_force_feedback_joystick( void )
             .dwOfs = 0x1e,
             .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(11)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
+            .tszName = L"ET Square",
+            .wCollectionNumber = 8,
+            .wUsagePage = HID_USAGE_PAGE_PID,
+            .wUsage = PID_USAGE_ET_SQUARE,
+            .wReportId = 3,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x1f,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(12)|DIDFT_OUTPUT,
+            .dwFlags = 0x80008000,
             .tszName = L"ET Sine",
             .wCollectionNumber = 8,
             .wUsagePage = HID_USAGE_PAGE_PID,
@@ -5468,8 +5510,8 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x1f,
-            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(12)|DIDFT_OUTPUT,
+            .dwOfs = 0x20,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(13)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"X Axis",
             .wCollectionNumber = 9,
@@ -5480,8 +5522,8 @@ static void test_force_feedback_joystick( void )
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
-            .dwOfs = 0x20,
-            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(13)|DIDFT_OUTPUT,
+            .dwOfs = 0x21,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(14)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Direction Enable",
             .wCollectionNumber = 7,
@@ -5493,7 +5535,7 @@ static void test_force_feedback_joystick( void )
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Unknown,
             .dwOfs = 0x14,
-            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(14)|DIDFT_OUTPUT,
+            .dwType = DIDFT_NODATA|DIDFT_MAKEINSTANCE(15)|DIDFT_OUTPUT,
             .dwFlags = 0x80008000,
             .tszName = L"Magnitude",
             .wCollectionNumber = 10,
@@ -5603,6 +5645,14 @@ static void test_force_feedback_joystick( void )
     };
     const DIEFFECTINFOW expect_effects[] =
     {
+        {
+            .dwSize = sizeof(DIEFFECTINFOW),
+            .guid = GUID_Square,
+            .dwEffType = DIEFT_PERIODIC,
+            .dwStaticParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS,
+            .dwDynamicParams = DIEP_AXES | DIEP_TYPESPECIFICPARAMS,
+            .tszName = L"GUID_Square",
+        },
         {
             .dwSize = sizeof(DIEFFECTINFOW),
             .guid = GUID_Sine,
@@ -5735,7 +5785,7 @@ static void test_force_feedback_joystick( void )
     res = 0;
     hr = IDirectInputDevice8_EnumEffects( device, check_effect_count, &res, DIEFT_PERIODIC );
     ok( hr == DI_OK, "EnumEffects returned %#x\n", hr );
-    ok( res == 1, "got %u expected %u\n", res, 1 );
+    ok( res == 2, "got %u expected %u\n", res, 2 );
     hr = IDirectInputDevice8_EnumEffects( device, check_effects, &check_effects_params, DIEFT_ALL );
     ok( hr == DI_OK, "EnumEffects returned %#x\n", hr );
     ok( check_effects_params.index >= check_effects_params.expect_count, "missing %u effects\n",
@@ -5744,11 +5794,11 @@ static void test_force_feedback_joystick( void )
     effectinfo.dwSize = sizeof(DIEFFECTINFOW);
     hr = IDirectInputDevice8_GetEffectInfo( device, &effectinfo, &GUID_Sine );
     ok( hr == DI_OK, "GetEffectInfo returned %#x\n", hr );
-    check_member_guid( effectinfo, expect_effects[0], guid );
-    check_member( effectinfo, expect_effects[0], "%#x", dwEffType );
-    check_member( effectinfo, expect_effects[0], "%#x", dwStaticParams );
-    check_member( effectinfo, expect_effects[0], "%#x", dwDynamicParams );
-    check_member_wstr( effectinfo, expect_effects[0], tszName );
+    check_member_guid( effectinfo, expect_effects[1], guid );
+    check_member( effectinfo, expect_effects[1], "%#x", dwEffType );
+    check_member( effectinfo, expect_effects[1], "%#x", dwStaticParams );
+    check_member( effectinfo, expect_effects[1], "%#x", dwDynamicParams );
+    check_member_wstr( effectinfo, expect_effects[1], tszName );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
     ok( hr == DI_OK, "SetDataFormat returned: %#x\n", hr );
