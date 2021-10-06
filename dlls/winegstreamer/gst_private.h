@@ -38,6 +38,8 @@
 
 #include "unixlib.h"
 
+bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size) DECLSPEC_HIDDEN;
+
 static inline const char *debugstr_time(REFERENCE_TIME time)
 {
     ULONGLONG abstime = time >= 0 ? time : -time;

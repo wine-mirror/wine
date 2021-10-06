@@ -613,7 +613,7 @@ static DWORD CALLBACK read_thread(void *arg)
 {
     struct media_source *source = arg;
     IMFByteStream *byte_stream = source->byte_stream;
-    uint32_t buffer_size = 0;
+    size_t buffer_size = 0;
     uint64_t file_size;
     void *data = NULL;
 
@@ -636,10 +636,10 @@ static DWORD CALLBACK read_thread(void *arg)
         else if (offset + size >= file_size)
             size = file_size - offset;
 
-        if (size > buffer_size)
+        if (!array_reserve(&data, &buffer_size, size, 1))
         {
-            buffer_size = size;
-            data = realloc(data, size);
+            free(data);
+            return 0;
         }
 
         ret_size = 0;

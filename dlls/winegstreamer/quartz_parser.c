@@ -786,7 +786,7 @@ static DWORD CALLBACK read_thread(void *arg)
 {
     struct parser *filter = arg;
     LONGLONG file_size, unused;
-    uint32_t buffer_size = 0;
+    size_t buffer_size = 0;
     void *data = NULL;
 
     IAsyncReader_Length(filter->reader, &file_size, &unused);
@@ -807,10 +807,10 @@ static DWORD CALLBACK read_thread(void *arg)
         else if (offset + size >= file_size)
             size = file_size - offset;
 
-        if (size > buffer_size)
+        if (!array_reserve(&data, &buffer_size, size, 1))
         {
-            buffer_size = size;
-            data = realloc(data, size);
+            free(data);
+            return 0;
         }
 
         hr = IAsyncReader_SyncRead(filter->reader, offset, size, data);
