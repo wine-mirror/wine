@@ -894,15 +894,6 @@ static void testIcmpSendEcho(void)
         "expected 87, got %d\n", error);
 
     icmp = IcmpCreateFile();
-    if (icmp == INVALID_HANDLE_VALUE)
-    {
-        error = GetLastError();
-        if (error == ERROR_ACCESS_DENIED)
-        {
-            skip ("ICMP is not available.\n");
-            return;
-        }
-    }
     ok (icmp != INVALID_HANDLE_VALUE, "IcmpCreateFile failed unexpectedly with error %d\n", GetLastError());
 
     address = 0;
@@ -924,6 +915,11 @@ static void testIcmpSendEcho(void)
     SetLastError(0xdeadbeef);
     ret = IcmpSendEcho(icmp, address, senddata, 0, NULL, replydata, replysz, 1000);
     error = GetLastError();
+    if (!ret && error == ERROR_ACCESS_DENIED)
+    {
+        skip( "ICMP is not available.\n" );
+        return;
+    }
     ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
 
     SetLastError(0xdeadbeef);

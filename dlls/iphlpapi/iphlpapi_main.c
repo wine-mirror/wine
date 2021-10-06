@@ -37,6 +37,7 @@
 #include "tcpestats.h"
 #include "ip2string.h"
 #include "netiodef.h"
+#include "icmpapi.h"
 
 #include "wine/nsi.h"
 #include "wine/debug.h"
@@ -4543,6 +4544,48 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
     return ERROR_INVALID_PARAMETER;
 }
 
+struct icmp_handle_data
+{
+    HANDLE nsi_device;
+};
+
+/***********************************************************************
+ *    IcmpCloseHandle (IPHLPAPI.@)
+ */
+BOOL WINAPI IcmpCloseHandle( HANDLE handle )
+{
+    struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
+
+    CloseHandle( data->nsi_device );
+    heap_free( data );
+    return TRUE;
+}
+
+/***********************************************************************
+ *    IcmpCreateFile (IPHLPAPI.@)
+ */
+HANDLE WINAPI IcmpCreateFile( void )
+{
+    struct icmp_handle_data *data = heap_alloc( sizeof(*data) );
+    static const WCHAR device_name[] = {'\\','\\','.','\\','N','s','i',0};
+
+    if (!data)
+    {
+        SetLastError( IP_NO_RESOURCES );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    data->nsi_device = CreateFileW( device_name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                                    FILE_FLAG_OVERLAPPED, NULL );
+    if (data->nsi_device == INVALID_HANDLE_VALUE)
+    {
+        heap_free( data );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    return (HANDLE)data;
+}
+
 /******************************************************************
  *    IcmpParseReplies (IPHLPAPI.@)
  */
@@ -4554,6 +4597,135 @@ DWORD WINAPI IcmpParseReplies( void *reply, DWORD reply_size )
     icmp_reply->Reserved = 0;
     if (!num_pkts) SetLastError( icmp_reply->Status );
     return num_pkts;
+}
+
+/*************************************************************************
+ *    icmpv4_echo_reply_fixup
+ *
+ * Convert struct nsiproxy_icmpv4_echo_reply into ICMP_ECHO_REPLY.
+ *
+ * This is necessary due to the different sizes of ICMP_ECHO_REPLY on
+ * 32 and 64-bits.  Despite mention of ICMP_ECHO_REPLY32, 64-bit Windows
+ * actually does return a full 64-bit version.
+ */
+static void icmpv4_echo_reply_fixup( ICMP_ECHO_REPLY *dst, struct nsiproxy_icmp_echo_reply *reply )
+{
+    dst->Address = reply->addr.Ipv4.sin_addr.s_addr;
+    dst->Status = reply->status;
+    dst->RoundTripTime = reply->round_trip_time;
+    dst->DataSize = reply->data_size;
+    dst->Reserved = reply->num_of_pkts;
+    dst->Data = (BYTE *)(dst + 1) + ((reply->opts.options_size + 3) & ~3);
+    dst->Options.Ttl = reply->opts.ttl;
+    dst->Options.Tos = reply->opts.tos;
+    dst->Options.Flags = reply->opts.flags;
+    dst->Options.OptionsSize = reply->opts.options_size;
+    dst->Options.OptionsData = (BYTE *)(reply + 1);
+
+    memcpy( dst->Options.OptionsData, (BYTE *)reply + reply->opts.options_offset, reply->opts.options_size );
+    memcpy( dst->Data, (BYTE *)reply + reply->data_offset, reply->data_size );
+}
+
+/***********************************************************************
+ *    IcmpSendEcho (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho( HANDLE handle, IPAddr dst, void *request, WORD request_size,
+                           IP_OPTION_INFORMATION *opts, void *reply, DWORD reply_size,
+                           DWORD timeout )
+{
+    return IcmpSendEcho2Ex( handle, NULL, NULL, NULL, INADDR_ANY, dst, request, request_size,
+                            opts, reply, reply_size, timeout );
+}
+
+/***********************************************************************
+ *    IcmpSendEcho2 (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho2( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine, void *apc_ctxt,
+                            IPAddr dst, void *request, WORD request_size, IP_OPTION_INFORMATION *opts,
+                            void *reply, DWORD reply_size, DWORD timeout )
+{
+    return IcmpSendEcho2Ex( handle, event, apc_routine, apc_ctxt, INADDR_ANY, dst, request, request_size,
+                            opts, reply, reply_size, timeout );
+}
+
+/***********************************************************************
+ *    IcmpSendEcho2Ex (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho2Ex( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine, void *apc_ctxt,
+                              IPAddr src, IPAddr dst, void *request, WORD request_size, IP_OPTION_INFORMATION *opts,
+                              void *reply, DWORD reply_size, DWORD timeout )
+{
+    struct icmp_handle_data *data = (struct icmp_handle_data *)handle;
+    DWORD opt_size, in_size, ret = 0, out_size;
+    struct nsiproxy_icmp_echo *in;
+    struct nsiproxy_icmp_echo_reply *out;
+    HANDLE request_event;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    if (event || apc_routine)
+    {
+        FIXME( "Async requests not yet supported\n" );
+        return 0;
+    }
+
+    if (handle == INVALID_HANDLE_VALUE || !reply)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    opt_size = opts ? (opts->OptionsSize + 3) & ~3 : 0;
+    in_size = FIELD_OFFSET(struct nsiproxy_icmp_echo, data[opt_size + request_size]);
+    in = heap_alloc_zero( in_size );
+    out_size = reply_size - sizeof(ICMP_ECHO_REPLY) + sizeof(*out);
+    out = heap_alloc( out_size );
+
+    if (!in || !out)
+    {
+        heap_free( out );
+        heap_free( in );
+        SetLastError( IP_NO_RESOURCES );
+        return 0;
+    }
+
+    in->src.Ipv4.sin_family = AF_INET;
+    in->src.Ipv4.sin_addr.s_addr = src;
+    in->dst.Ipv4.sin_family = AF_INET;
+    in->dst.Ipv4.sin_addr.s_addr = dst;
+    if (opts)
+    {
+        in->ttl = opts->Ttl;
+        in->tos = opts->Tos;
+        in->flags = opts->Flags;
+        memcpy( in->data, opts->OptionsData, opts->OptionsSize );
+        in->opt_size = opts->OptionsSize;
+    }
+    in->req_size = request_size;
+    in->timeout = timeout;
+    memcpy( in->data + opt_size, request, request_size );
+
+    request_event = CreateEventW( NULL, 0, 0, NULL );
+
+    status = NtDeviceIoControlFile( data->nsi_device, request_event, NULL, NULL,
+                                    &iosb, IOCTL_NSIPROXY_WINE_ICMP_ECHO, in, in_size,
+                                    out, out_size );
+
+    if (status == STATUS_PENDING && !WaitForSingleObject( request_event, INFINITE ))
+        status = iosb.u.Status;
+
+    if (!status)
+    {
+        icmpv4_echo_reply_fixup( reply, out );
+        ret = IcmpParseReplies( reply, reply_size );
+    }
+
+    CloseHandle( request_event );
+    heap_free( out );
+    heap_free( in );
+
+    if (status) SetLastError( RtlNtStatusToDosError( status ) );
+    return ret;
 }
 
 /***********************************************************************
