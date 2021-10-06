@@ -2558,7 +2558,7 @@ static VkResult wined3d_context_vk_create_vk_descriptor_pool(struct wined3d_devi
     return vr;
 }
 
-static VkResult wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
+VkResult wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
         VkDescriptorSetLayout vk_set_layout, VkDescriptorSet *vk_descriptor_set)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);

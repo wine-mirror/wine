@@ -719,6 +719,8 @@ static HRESULT adapter_vk_init_3d(struct wined3d_device *device)
     wined3d_device_create_default_samplers(device, &context_vk->c);
     wined3d_device_vk_create_null_resources(device_vk, context_vk);
     wined3d_device_vk_create_null_views(device_vk, context_vk);
+    if (device->adapter->d3d_info.feature_level >= WINED3D_FEATURE_LEVEL_11)
+        wined3d_device_vk_uav_clear_state_init(device_vk);
 
     return WINED3D_OK;
 }
@@ -740,6 +742,8 @@ static void adapter_vk_uninit_3d_cs(void *object)
         device->shader_backend->shader_destroy(shader);
     }
 
+    if (device->adapter->d3d_info.feature_level >= WINED3D_FEATURE_LEVEL_11)
+        wined3d_device_vk_uav_clear_state_cleanup(device_vk);
     device->blitter->ops->blitter_destroy(device->blitter, NULL);
     device->shader_backend->shader_free_private(device, &context_vk->c);
     wined3d_device_vk_destroy_null_views(device_vk, context_vk);
@@ -1037,7 +1041,7 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
     wined3d_bo_vk_unmap(bo, context_vk);
 }
 
-static void adapter_vk_copy_bo_address(struct wined3d_context *context,
+void adapter_vk_copy_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);

@@ -11490,6 +11490,13 @@ static BOOL shader_glsl_has_ffp_proj_control(void *shader_priv)
     return priv->ffp_proj_control;
 }
 
+static uint64_t shader_glsl_shader_compile(struct wined3d_context *context, const struct wined3d_shader_desc *shader_desc,
+        enum wined3d_shader_type shader_type)
+{
+    ERR("Not implemented.\n");
+    return 0;
+}
+
 const struct wined3d_shader_backend_ops glsl_shader_backend =
 {
     shader_glsl_handle_instruction,
@@ -11509,6 +11516,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
     shader_glsl_has_ffp_proj_control,
+    shader_glsl_shader_compile,
 };
 
 static void glsl_vertex_pipe_vp_enable(const struct wined3d_context *context, BOOL enable) {}

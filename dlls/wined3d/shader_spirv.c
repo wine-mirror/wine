@@ -303,7 +303,7 @@ static void shader_spirv_init_shader_interface_vk(struct wined3d_shader_spirv_sh
     iface->vkd3d_interface.uav_counter_count = b->uav_counter_count;
 }
 
-static VkShaderModule shader_spirv_compile(struct wined3d_context_vk *context_vk,
+static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *context_vk,
         const struct wined3d_shader_desc *shader_desc, enum wined3d_shader_type shader_type,
         const struct shader_spirv_compile_arguments *args, const struct shader_spirv_resource_bindings *bindings,
         const struct wined3d_stream_output_desc *so_desc)
@@ -416,7 +416,7 @@ static struct shader_spirv_graphics_program_variant_vk *shader_spirv_find_graphi
     shader_desc.byte_code = shader->byte_code;
     shader_desc.byte_code_size = shader->byte_code_size;
 
-    if (!(variant_vk->vk_module = shader_spirv_compile(context_vk, &shader_desc, shader_type, &args,
+    if (!(variant_vk->vk_module = shader_spirv_compile_shader(context_vk, &shader_desc, shader_type, &args,
             bindings, so_desc)))
         return NULL;
     ++program_vk->variant_count;
@@ -445,7 +445,7 @@ static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program
     shader_desc.byte_code = shader->byte_code;
     shader_desc.byte_code_size = shader->byte_code_size;
 
-    if (!(program->vk_module = shader_spirv_compile(context_vk, &shader_desc, WINED3D_SHADER_TYPE_COMPUTE,
+    if (!(program->vk_module = shader_spirv_compile_shader(context_vk, &shader_desc, WINED3D_SHADER_TYPE_COMPUTE,
             NULL, bindings, NULL)))
         return NULL;
 
@@ -1126,6 +1126,13 @@ static BOOL shader_spirv_has_ffp_proj_control(void *shader_priv)
     return priv->ffp_proj_control;
 }
 
+static uint64_t shader_spirv_compile(struct wined3d_context *context, const struct wined3d_shader_desc *shader_desc,
+        enum wined3d_shader_type shader_type)
+{
+    struct shader_spirv_resource_bindings bindings = {0};
+    return (uint64_t)shader_spirv_compile_shader(wined3d_context_vk(context), shader_desc, shader_type, NULL, &bindings, NULL);
+}
+
 static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
 {
     .shader_handle_instruction = shader_spirv_handle_instruction,
@@ -1145,6 +1152,7 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
     .shader_get_caps = shader_spirv_get_caps,
     .shader_color_fixup_supported = shader_spirv_color_fixup_supported,
     .shader_has_ffp_proj_control = shader_spirv_has_ffp_proj_control,
+    .shader_compile = shader_spirv_compile,
 };
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void)

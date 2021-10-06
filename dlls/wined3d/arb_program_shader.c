@@ -5637,6 +5637,13 @@ static BOOL shader_arb_has_ffp_proj_control(void *shader_priv)
 
 static void shader_arb_precompile(void *shader_priv, struct wined3d_shader *shader) {}
 
+static uint64_t shader_arb_shader_compile(struct wined3d_context *context, const struct wined3d_shader_desc *shader_desc,
+        enum wined3d_shader_type shader_type)
+{
+    ERR("Not implemented.\n");
+    return 0;
+}
+
 const struct wined3d_shader_backend_ops arb_program_shader_backend =
 {
     shader_arb_handle_instruction,
@@ -5656,6 +5663,7 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
     shader_arb_has_ffp_proj_control,
+    shader_arb_shader_compile,
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
