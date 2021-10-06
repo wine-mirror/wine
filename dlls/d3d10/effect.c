@@ -1937,8 +1937,19 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
         case D3D10_EOT_DEPTH_STENCIL_STATE:
         {
             ID3D10EffectDepthStencilVariable *dv = variable->lpVtbl->AsDepthStencil(variable);
-            if (FAILED(hr = dv->lpVtbl->GetDepthStencilState(dv, variable_idx, &o->object.ds)))
-                return hr;
+            if (!dv->lpVtbl->IsValid(dv))
+            {
+                WARN("Invalid variable type.\n");
+                return E_FAIL;
+            }
+            v = impl_from_ID3D10EffectVariable(variable);
+            if (v->type->element_count)
+            {
+                if (variable_idx >= v->type->element_count) return E_FAIL;
+                o->pass->depth_stencil = &v->elements[variable_idx];
+            }
+            else
+                o->pass->depth_stencil = v;
             break;
         }
 
@@ -2914,11 +2925,8 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
     switch(o->type)
     {
         case D3D10_EOT_RASTERIZER_STATE:
-            break;
-
         case D3D10_EOT_DEPTH_STENCIL_STATE:
-            ID3D10Device_OMSetDepthStencilState(device, o->object.ds, o->pass->stencil_ref);
-            return S_OK;
+            break;
 
         case D3D10_EOT_BLEND_STATE:
             ID3D10Device_OMSetBlendState(device, o->object.bs, o->pass->blend_factor, o->pass->sample_mask);
@@ -4114,6 +4122,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
         apply_shader_resources(device, pass->ps.shader);
     if (pass->rasterizer)
         ID3D10Device_RSSetState(device, pass->rasterizer->u.state.object.rasterizer);
+    if (pass->depth_stencil)
+        ID3D10Device_OMSetDepthStencilState(device, pass->depth_stencil->u.state.object.depth_stencil,
+                pass->stencil_ref);
 
     for (i = 0; i < pass->object_count; ++i)
     {
