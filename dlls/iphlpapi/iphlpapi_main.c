@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 #define CHARS_IN_GUID 39
 
-static const WCHAR device_tcpip[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
+static const WCHAR *device_tcpip = L"\\DEVICE\\TCPIP_";
 
 DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
 
@@ -67,12 +67,8 @@ DWORD WINAPI ConvertGuidToStringA( const GUID *guid, char *str, DWORD len )
 
 DWORD WINAPI ConvertGuidToStringW( const GUID *guid, WCHAR *str, DWORD len )
 {
-    static const WCHAR fmt[] = { '{','%','0','8','X','-','%','0','4','X','-','%','0','4','X','-',
-                                 '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X',
-                                 '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','}',0 };
-
     if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
-    swprintf( str, len, fmt,
+    swprintf( str, len, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
               guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
               guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
     return ERROR_SUCCESS;
@@ -1536,8 +1532,8 @@ DWORD WINAPI GetIcmpStatisticsEx( MIB_ICMP_EX *stats, DWORD family )
 static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
                          struct nsi_ndis_ifinfo_static *stat )
 {
-    memcpy( row->wszName, device_tcpip, sizeof(device_tcpip) );
-    ConvertGuidToStringW( &stat->if_guid, row->wszName + ARRAY_SIZE(device_tcpip) - 1, CHARS_IN_GUID );
+    wcscpy( row->wszName, device_tcpip );
+    ConvertGuidToStringW( &stat->if_guid, row->wszName + wcslen( device_tcpip ), CHARS_IN_GUID );
     row->dwIndex = stat->if_index;
     row->dwType = stat->type;
     row->dwMtu = dyn->mtu;
@@ -1917,8 +1913,8 @@ DWORD WINAPI GetInterfaceInfo( IP_INTERFACE_INFO *table, ULONG *size )
         if (stat[i].type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
         row = table->Adapter + num++;
         row->Index = stat[i].if_index;
-        memcpy( row->Name, device_tcpip, sizeof(device_tcpip) );
-        ConvertGuidToStringW( &stat[i].if_guid, row->Name + ARRAY_SIZE(device_tcpip) - 1, CHARS_IN_GUID );
+        wcscpy( row->Name, device_tcpip );
+        ConvertGuidToStringW( &stat[i].if_guid, row->Name + wcslen( device_tcpip ), CHARS_IN_GUID );
     }
 done:
     NsiFreeTable( keys, NULL, NULL, stat );
@@ -4244,16 +4240,6 @@ DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_
     return err;
 }
 
-static const WCHAR otherW[] = {'o','t','h','e','r',0};
-static const WCHAR ethernetW[] = {'e','t','h','e','r','n','e','t',0};
-static const WCHAR tokenringW[] = {'t','o','k','e','n','r','i','n','g',0};
-static const WCHAR pppW[] = {'p','p','p',0};
-static const WCHAR loopbackW[] = {'l','o','o','p','b','a','c','k',0};
-static const WCHAR atmW[] = {'a','t','m',0};
-static const WCHAR wirelessW[] = {'w','i','r','e','l','e','s','s',0};
-static const WCHAR tunnelW[] = {'t','u','n','n','e','l',0};
-static const WCHAR ieee1394W[] = {'i','e','e','e','1','3','9','4',0};
-
 struct name_prefix
 {
     const WCHAR *prefix;
@@ -4261,15 +4247,15 @@ struct name_prefix
 };
 static const struct name_prefix name_prefixes[] =
 {
-    { otherW, IF_TYPE_OTHER },
-    { ethernetW, IF_TYPE_ETHERNET_CSMACD },
-    { tokenringW, IF_TYPE_ISO88025_TOKENRING },
-    { pppW, IF_TYPE_PPP },
-    { loopbackW, IF_TYPE_SOFTWARE_LOOPBACK },
-    { atmW, IF_TYPE_ATM },
-    { wirelessW, IF_TYPE_IEEE80211 },
-    { tunnelW, IF_TYPE_TUNNEL },
-    { ieee1394W, IF_TYPE_IEEE1394 }
+    { L"other", IF_TYPE_OTHER },
+    { L"ethernet", IF_TYPE_ETHERNET_CSMACD },
+    { L"tokenring", IF_TYPE_ISO88025_TOKENRING },
+    { L"ppp", IF_TYPE_PPP },
+    { L"loopback", IF_TYPE_SOFTWARE_LOOPBACK },
+    { L"atm", IF_TYPE_ATM },
+    { L"wireless", IF_TYPE_IEEE80211 },
+    { L"tunnel", IF_TYPE_TUNNEL },
+    { L"ieee1394", IF_TYPE_IEEE1394 }
 };
 
 /******************************************************************
@@ -4280,8 +4266,6 @@ DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE
     DWORD i, needed;
     const WCHAR *prefix = NULL;
     WCHAR buf[IF_MAX_STRING_SIZE + 1];
-    static const WCHAR prefix_fmt[] = {'%','s','_','%','d',0};
-    static const WCHAR unk_fmt[] = {'i','f','t','y','p','e','%','d','_','%','d',0};
 
     TRACE( "(%p %p %u)\n", luid, name, (DWORD)len );
 
@@ -4296,8 +4280,8 @@ DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE
         }
     }
 
-    if (prefix) needed = swprintf( buf, len, prefix_fmt, prefix, luid->Info.NetLuidIndex );
-    else needed = swprintf( buf, len, unk_fmt, luid->Info.IfType, luid->Info.NetLuidIndex );
+    if (prefix) needed = swprintf( buf, len, L"%s_%d", prefix, luid->Info.NetLuidIndex );
+    else needed = swprintf( buf, len, L"iftype%d_%d", luid->Info.IfType, luid->Info.NetLuidIndex );
 
     if (needed >= len) return ERROR_NOT_ENOUGH_MEMORY;
     memcpy( name, buf, (needed + 1) * sizeof(WCHAR) );
@@ -4326,8 +4310,8 @@ DWORD WINAPI ConvertInterfaceNameToLuidA(const char *name, NET_LUID *luid)
 DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
 {
     const WCHAR *sep;
-    static const WCHAR iftype[] = {'i','f','t','y','p','e',0};
     DWORD type = ~0u, i;
+    int iftype_len = wcslen( L"iftype" );
     WCHAR buf[IF_MAX_STRING_SIZE + 1];
 
     TRACE( "(%s %p)\n", debugstr_w(name), luid );
@@ -4339,9 +4323,9 @@ DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
     memcpy( buf, name, (sep - name) * sizeof(WCHAR) );
     buf[sep - name] = '\0';
 
-    if (sep - name > ARRAY_SIZE(iftype) - 1 && !memcmp( buf, iftype, (ARRAY_SIZE(iftype) - 1) * sizeof(WCHAR) ))
+    if (sep - name > iftype_len && !memcmp( buf, L"iftype", iftype_len * sizeof(WCHAR) ))
     {
-        type = wcstol( buf + ARRAY_SIZE(iftype) - 1, NULL, 10 );
+        type = wcstol( buf + iftype_len, NULL, 10 );
     }
     else
     {
@@ -4564,7 +4548,6 @@ BOOL WINAPI IcmpCloseHandle( HANDLE handle )
 HANDLE WINAPI IcmpCreateFile( void )
 {
     struct icmp_handle_data *data = heap_alloc( sizeof(*data) );
-    static const WCHAR device_name[] = {'\\','\\','.','\\','N','s','i',0};
 
     if (!data)
     {
@@ -4572,7 +4555,7 @@ HANDLE WINAPI IcmpCreateFile( void )
         return INVALID_HANDLE_VALUE;
     }
 
-    data->nsi_device = CreateFileW( device_name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+    data->nsi_device = CreateFileW( L"\\\\.\\Nsi", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                                     FILE_FLAG_OVERLAPPED, NULL );
     if (data->nsi_device == INVALID_HANDLE_VALUE)
     {
