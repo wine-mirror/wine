@@ -102,7 +102,6 @@ static inline LPCSTR debugstr_t(LPCWSTR text, BOOL isW)
 static UINT
 STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
 {
-    HTHEME theme;
     UINT height;
     TEXTMETRICW tm;
     int margin;
@@ -110,21 +109,6 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
     COMCTL32_GetFontMetrics(infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont, &tm);
     margin = (tm.tmInternalLeading ? tm.tmInternalLeading : 2);
     height = max(tm.tmHeight + margin + 2*GetSystemMetrics(SM_CYBORDER), infoPtr->minHeight) + infoPtr->verticalBorder;
-
-    if ((theme = GetWindowTheme(infoPtr->Self)))
-    {
-        /* Determine bar height from theme such that the content area is
-         * textHeight pixels large */
-        HDC hdc = GetDC(infoPtr->Self);
-        RECT r;
-
-        SetRect(&r, 0, 0, 0, max(infoPtr->minHeight, tm.tmHeight));
-        if (SUCCEEDED(GetThemeBackgroundExtent(theme, hdc, SP_PANE, 0, &r, &r)))
-        {
-            height = r.bottom - r.top;
-        }
-        ReleaseDC(infoPtr->Self, hdc);
-    }
 
     TRACE("    textHeight=%d+%d, final height=%d\n", tm.tmHeight, tm.tmInternalLeading, height);
     return height;
