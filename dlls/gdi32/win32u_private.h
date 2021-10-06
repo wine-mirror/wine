@@ -296,12 +296,6 @@ struct unix_funcs
 UINT WINAPI GDIRealizePalette( HDC hdc );
 HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
 
-extern BOOL CDECL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
-                                         UINT *usage ) DECLSPEC_HIDDEN;
-extern BOOL CDECL get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size,
-                                   WCHAR *filename ) DECLSPEC_HIDDEN;
-extern BOOL CDECL get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm );
-
 BOOL wrappers_init(void) DECLSPEC_HIDDEN;
 
 

@@ -2682,7 +2682,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, const WCHAR *resource_fil
         if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL )) goto done;
     }
     else if (!RtlDosPathNameToNtPathName_U( font_file, &nt_name, NULL, NULL )) goto done;
-    ret = get_file_outline_text_metric( nt_name.Buffer, &otm );
+    ret = __wine_get_file_outline_text_metric( nt_name.Buffer, &otm );
     RtlFreeUnicodeString( &nt_name );
     if (!ret) goto done;
     if (!(otm.otmTextMetrics.tmPitchAndFamily & TMPF_TRUETYPE)) goto done;

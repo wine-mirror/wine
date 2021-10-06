@@ -980,7 +980,7 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
     return unix_funcs->pSetHookFlags( hdc, flags );
 }
 
-BOOL CDECL get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
+BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
 {
     return unix_funcs->get_icm_profile( hdc, allow_default, size, filename );
 }
@@ -996,12 +996,12 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, 
     return unix_funcs->set_visible_region( hdc, hrgn, vis_rect, device_rect, surface );
 }
 
-BOOL CDECL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage )
+BOOL CDECL __wine_get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage )
 {
     return unix_funcs->get_brush_bitmap_info( handle, info, bits, usage );
 }
 
-BOOL CDECL get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
+BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTMETRICW *otm )
 {
     return unix_funcs->get_file_outline_text_metric( path, otm );
 }

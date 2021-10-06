@@ -279,13 +279,6 @@ extern BOOL EMFDC_WidenPath( DC_ATTR *dc_attr ) DECLSPEC_HIDDEN;
 extern HENHMETAFILE EMF_Create_HENHMETAFILE( ENHMETAHEADER *emh, DWORD filesize,
                                              BOOL on_disk ) DECLSPEC_HIDDEN;
 
-extern BOOL CDECL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits,
-                                         UINT *usage ) DECLSPEC_HIDDEN;
-extern BOOL CDECL get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size,
-                                   WCHAR *filename ) DECLSPEC_HIDDEN;
-extern BOOL CDECL get_file_outline_text_metric( const WCHAR *path,
-                                                OUTLINETEXTMETRICW *otm ) DECLSPEC_HIDDEN;
-
 static inline int get_dib_stride( int width, int bpp )
 {
     return ((width * bpp + 31) >> 3) & ~3;

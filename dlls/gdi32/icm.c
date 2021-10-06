@@ -74,7 +74,7 @@ INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
     TRACE( "%p, %p, 0x%08lx\n", hdc, func, lparam );
 
     if (!func) return -1;
-    if (!get_icm_profile( hdc, FALSE, &size, profile )) return -1;
+    if (!__wine_get_icm_profile( hdc, FALSE, &size, profile )) return -1;
     /* FIXME: support multiple profiles */
     return func( profile, lparam );
 }
@@ -131,7 +131,7 @@ BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
 {
     TRACE("%p, %p, %p\n", hdc, size, filename);
 
-    return get_icm_profile( hdc, TRUE, size, filename );
+    return __wine_get_icm_profile( hdc, TRUE, size, filename );
 }
 
 /**********************************************************************

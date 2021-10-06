@@ -547,7 +547,7 @@ static INT16 metadc_create_brush( struct metadc *metadc, HBRUSH brush )
             DWORD info_size;
             UINT usage;
 
-            if (!get_brush_bitmap_info( brush, src_info, NULL, &usage )) goto done;
+            if (!__wine_get_brush_bitmap_info( brush, src_info, NULL, &usage )) goto done;
 
             info_size = get_dib_info_size( src_info, usage );
             size = FIELD_OFFSET( METARECORD, rdParm[2] ) +
@@ -559,7 +559,7 @@ static INT16 metadc_create_brush( struct metadc *metadc, HBRUSH brush )
             mr->rdParm[0] = logbrush.lbStyle;
             mr->rdParm[1] = usage;
             dst_info = (BITMAPINFO *)(mr->rdParm + 2);
-            get_brush_bitmap_info( brush, dst_info, (char *)dst_info + info_size, NULL );
+            __wine_get_brush_bitmap_info( brush, dst_info, (char *)dst_info + info_size, NULL );
             if (dst_info->bmiHeader.biClrUsed == 1 << dst_info->bmiHeader.biBitCount)
                 dst_info->bmiHeader.biClrUsed = 0;
             break;

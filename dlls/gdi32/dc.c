@@ -1333,9 +1333,9 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
 }
 
 /**********************************************************************
- *           get_icm_profile     (win32u.@)
+ *           __wine_get_icm_profile     (win32u.@)
  */
-BOOL CDECL get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
+BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
 {
     PHYSDEV physdev;
     DC *dc;
