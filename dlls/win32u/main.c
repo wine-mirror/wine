@@ -24,8 +24,8 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
-#include "winnt.h"
-#include "winternl.h"
+#include "ntgdi.h"
+#include "win32u_private.h"
 #include "wine/unixlib.h"
 
 extern void *__wine_syscall_dispatcher DECLSPEC_HIDDEN;
@@ -57,6 +57,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
                                    &win32u_handle, sizeof(win32u_handle), NULL ))
         {
             __wine_unix_call( win32u_handle, 0, &__wine_syscall_dispatcher );
+            wrappers_init( win32u_handle );
         }
         break;
     }

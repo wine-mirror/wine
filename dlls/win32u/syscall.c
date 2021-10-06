@@ -28,17 +28,9 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
-#include "winternl.h"
+#include "ntgdi_private.h"
 #include "wine/unixlib.h"
 
-
-/***********************************************************************
- *           NtGdiFlush    (win32u.@)
- */
-BOOL WINAPI NtGdiFlush(void)
-{
-    return TRUE;
-}
 
 static void * const syscalls[] =
 {
@@ -57,7 +49,13 @@ static SYSTEM_SERVICE_TABLE syscall_table =
 
 static NTSTATUS init( void *dispatcher )
 {
-    return ntdll_init_syscalls( 1, &syscall_table, dispatcher );
+    NTSTATUS status;
+    if ((status = ntdll_init_syscalls( 1, &syscall_table, dispatcher ))) return status;
+    return gdi_init();
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] = { init };
+unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    init,
+    callbacks_init,
+};

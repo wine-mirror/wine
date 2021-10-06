@@ -18,7 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "gdi_private.h"
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "ntgdi.h"
 #include "win32u_private.h"
 #include "wine/unixlib.h"
 #include "wine/debug.h"
@@ -312,11 +315,6 @@ BOOL WINAPI NtGdiFlattenPath( HDC hdc )
 BOOL WINAPI NtGdiFontIsLinked( HDC hdc )
 {
     return unix_funcs->pNtGdiFontIsLinked( hdc );
-}
-
-BOOL WINAPI NtGdiFlush(void)
-{
-    return unix_funcs->pNtGdiFlush();
 }
 
 BOOL WINAPI NtGdiFrameRgn( HDC hdc, HRGN hrgn, HBRUSH brush, INT width, INT height )
@@ -1022,10 +1020,12 @@ struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
 void CDECL __wine_set_display_driver( HMODULE module )
 {
     void *wine_get_gdi_driver;
+    ANSI_STRING name_str;
 
     if (!module) return;
 
-    wine_get_gdi_driver = (void *)GetProcAddress( module, "wine_get_gdi_driver" );
+    RtlInitAnsiString( &name_str, "wine_get_gdi_driver" );
+    LdrGetProcedureAddress( module, &name_str, 0, &wine_get_gdi_driver );
     if (!wine_get_gdi_driver)
     {
         ERR( "Could not create graphics driver %p\n", module );
@@ -1150,16 +1150,8 @@ static const struct user_callbacks user_callbacks =
     call_WindowFromDC,
 };
 
-BOOL wrappers_init(void)
+extern void wrappers_init( unixlib_handle_t handle )
 {
-    unixlib_handle_t handle;
     const void *args = &user_callbacks;
-
-    if (NtQueryVirtualMemory( GetCurrentProcess(), gdi32_module, MemoryWineUnixFuncs,
-                              &handle, sizeof(handle), NULL ))
-        return FALSE;
-
-    if (__wine_unix_call( handle, 0, &args )) return FALSE;
-    unix_funcs = args;
-    return TRUE;
+    if (!__wine_unix_call( handle, 1, &args )) unix_funcs = args;
 }

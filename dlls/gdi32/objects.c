@@ -30,7 +30,6 @@
 #include "initguid.h"
 #include "devguid.h"
 #include "setupapi.h"
-#include "win32u_private.h"
 
 #include "wine/rbtree.h"
 #include "wine/debug.h"
@@ -143,7 +142,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     DisableThreadLibraryCalls( inst );
     gdi32_module = inst;
-    wrappers_init();
     return TRUE;
 }
 

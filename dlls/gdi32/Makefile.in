@@ -1,46 +1,18 @@
 EXTRADEFS = -D_GDI32_
 MODULE    = gdi32.dll
-UNIXLIB   = gdi32.so
 IMPORTLIB = gdi32
-IMPORTS   = advapi32
-EXTRAINCL = $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS)
-EXTRALIBS = $(CARBON_LIBS) $(APPKIT_LIBS) $(PTHREAD_LIBS) -lm
+IMPORTS   = advapi32 win32u
 DELAYIMPORTS = setupapi
 
 C_SRCS = \
-	bitblt.c \
-	bitmap.c \
-	brush.c \
-	clipping.c \
-	dc.c \
-	dib.c \
-	dibdrv/bitblt.c \
-	dibdrv/dc.c \
-	dibdrv/graphics.c \
-	dibdrv/objects.c \
-	dibdrv/opengl.c \
-	dibdrv/primitives.c \
-	driver.c \
 	emfdc.c \
-	emfdrv.c \
 	enhmetafile.c \
-	font.c \
-	freetype.c \
 	gdidc.c \
-	gdiobj.c \
 	icm.c \
-	mapping.c \
 	metadc.c \
 	metafile.c \
 	objects.c \
 	opengl.c \
-	opentype.c \
-	painting.c \
-	palette.c \
-	path.c \
-	pen.c \
-	printdrv.c \
-	region.c \
 	text.c \
 	uniscribe/bidi.c \
 	uniscribe/bracket.c \
@@ -53,11 +25,7 @@ C_SRCS = \
 	uniscribe/opentype.c \
 	uniscribe/shape.c \
 	uniscribe/shaping.c \
-	uniscribe/usp10.c \
-	vertical.c \
-	vulkan.c \
-	wrappers.c
+	uniscribe/usp10.c
+
 
 RC_SRCS = gdi32.rc
-
-font_EXTRADEFS = -DWINE_FONT_DIR=\"`${MAKEDEP} -R ${datadir}/wine ${fontdir}`\"

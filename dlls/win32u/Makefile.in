@@ -1,10 +1,42 @@
 MODULE    = win32u.dll
 UNIXLIB   = win32u.so
 IMPORTLIB = win32u
+EXTRAINCL = $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS)
+EXTRALIBS = $(CARBON_LIBS) $(APPKIT_LIBS) $(PTHREAD_LIBS) -lm
 IMPORTS   = ntdll winecrt0
 
 EXTRADLLFLAGS = -nodefaultlibs -Wb,--syscall-table,1
 
 C_SRCS = \
+	bitblt.c \
+	bitmap.c \
+	brush.c \
+	clipping.c \
+	dc.c \
+	dib.c \
+	dibdrv/bitblt.c \
+	dibdrv/dc.c \
+	dibdrv/graphics.c \
+	dibdrv/objects.c \
+	dibdrv/opengl.c \
+	dibdrv/primitives.c \
+	driver.c \
+	emfdrv.c \
+	font.c \
+	freetype.c \
+	gdiobj.c \
 	main.c \
-	syscall.c
+	mapping.c \
+	opentype.c \
+	painting.c \
+	palette.c \
+	path.c \
+	pen.c \
+	printdrv.c \
+	region.c \
+	syscall.c \
+	vertical.c \
+	vulkan.c \
+	wrappers.c
+
+font_EXTRADEFS = -DWINE_FONT_DIR=\"`${MAKEDEP} -R ${datadir}/wine ${fontdir}`\"

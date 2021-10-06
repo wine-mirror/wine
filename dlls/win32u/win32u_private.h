@@ -21,8 +21,9 @@
 #ifndef __WINE_WIN32U_PRIVATE
 #define __WINE_WIN32U_PRIVATE
 
-#include "wine/gdi_driver.h"
 #include "winuser.h"
+#include "wine/gdi_driver.h"
+#include "wine/unixlib.h"
 
 struct user_callbacks
 {
@@ -129,7 +130,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiFillRgn)( HDC hdc, HRGN hrgn, HBRUSH hbrush );
     BOOL     (WINAPI *pNtGdiFlattenPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiFontIsLinked)( HDC hdc );
-    BOOL     (WINAPI *pNtGdiFlush)(void);
     BOOL     (WINAPI *pNtGdiFrameRgn)( HDC hdc, HRGN hrgn, HBRUSH brush, INT width, INT height );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
     INT      (WINAPI *pNtGdiGetAppClipBox)( HDC hdc, RECT *rect );
@@ -296,7 +296,9 @@ struct unix_funcs
 UINT WINAPI GDIRealizePalette( HDC hdc );
 HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
 
-BOOL wrappers_init(void) DECLSPEC_HIDDEN;
+extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
+extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;
+extern NTSTATUS callbacks_init( void *args ) DECLSPEC_HIDDEN;
 
 
 static inline WCHAR *win32u_wcsrchr( const WCHAR *str, WCHAR ch )

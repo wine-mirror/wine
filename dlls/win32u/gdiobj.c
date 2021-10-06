@@ -1130,7 +1130,6 @@ static struct unix_funcs unix_funcs =
     NtGdiFillRgn,
     NtGdiFlattenPath,
     NtGdiFontIsLinked,
-    NtGdiFlush,
     NtGdiFrameRgn,
     NtGdiGetAndSetDCDword,
     NtGdiGetAppClipBox,
@@ -1251,7 +1250,7 @@ static struct unix_funcs unix_funcs =
     __wine_set_visible_region,
 };
 
-NTSTATUS initialize( void *args )
+NTSTATUS gdi_init(void)
 {
     pthread_mutexattr_t attr;
     unsigned int dpi;
@@ -1267,12 +1266,12 @@ NTSTATUS initialize( void *args )
 
     dpi = font_init();
     init_stock_objects( dpi );
+    return 0;
+}
+
+NTSTATUS callbacks_init( void *args )
+{
     user_callbacks = *(const struct user_callbacks **)args;
     *(const struct unix_funcs **)args = &unix_funcs;
     return 0;
 }
-
-const unixlib_entry_t __wine_unix_call_funcs[] =
-{
-    initialize
-};

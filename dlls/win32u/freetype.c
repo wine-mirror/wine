@@ -127,8 +127,6 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
-#include "resource.h"
-
 #ifdef HAVE_FREETYPE
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
