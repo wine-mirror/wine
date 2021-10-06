@@ -555,6 +555,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             case SymTagEnum:         v = &((const struct symt_enum*)type)->vchildren; break;
             case SymTagFunctionType: v = &((const struct symt_function_signature*)type)->vchildren; break;
             case SymTagFunction:     v = &((const struct symt_function*)type)->vchildren; break;
+            case SymTagBlock:        v = &((const struct symt_block*)type)->vchildren; break;
             default:
                 FIXME("Unsupported sym-tag %s for find-children\n", 
                       symt_get_tag_str(type->tag));
@@ -613,6 +614,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             break;
         case SymTagFunction:
             X(DWORD) = vector_length(&((const struct symt_function*)type)->vchildren);
+            break;
+        case SymTagBlock:
+            X(DWORD) = vector_length(&((const struct symt_block*)type)->vchildren);
             break;
         case SymTagPointerType: /* MS does it that way */
         case SymTagArrayType: /* MS does it that way */
