@@ -970,17 +970,15 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
 
 #undef X
 
-    case TI_GET_ADDRESSOFFSET:
-    case TI_GET_SYMINDEX:
-    case TI_GET_THISADJUST:
-    case TI_GET_VIRTUALBASECLASS:
-    case TI_GET_VIRTUALBASEPOINTEROFFSET:
-    case TI_GET_VIRTUALTABLESHAPEID:
-    case TI_IS_EQUIV_TO:
-        FIXME("Unsupported GetInfo request (%u)\n", req);
-        return FALSE;
     default:
-        FIXME("Unknown GetInfo request (%u)\n", req);
+        {
+            static DWORD64 once;
+            if (!(once & ((DWORD64)1 << req)))
+            {
+                FIXME("Unsupported GetInfo request (%u)\n", req);
+                once |= (DWORD64)1 << req;
+            }
+        }
         return FALSE;
     }
 
