@@ -730,9 +730,6 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagThunk:
             X(DWORD64) = ((const struct symt_thunk*)type)->size;
             break;
-        case SymTagLabel:
-            X(DWORD64) = 0;
-            break;
         default:
             FIXME("Unsupported sym-tag %s for get-length\n", 
                   symt_get_tag_str(type->tag));
@@ -741,6 +738,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagCompiland:
         case SymTagFunctionType:
         case SymTagFunctionArgType:
+        case SymTagLabel:
             return FALSE;
         }
         break;
