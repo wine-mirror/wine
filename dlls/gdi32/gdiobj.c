@@ -38,6 +38,7 @@
 
 #include "ntgdi_private.h"
 #include "wine/debug.h"
+#include "wine/unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -1250,12 +1251,10 @@ static struct unix_funcs unix_funcs =
     __wine_set_visible_region,
 };
 
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+NTSTATUS initialize( void *args )
 {
     pthread_mutexattr_t attr;
     unsigned int dpi;
-
-    if (reason != DLL_PROCESS_ATTACH) return 0;
 
     pthread_mutexattr_init( &attr );
     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
@@ -1268,7 +1267,12 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
 
     dpi = font_init();
     init_stock_objects( dpi );
-    user_callbacks = ptr_in;
-    *(struct unix_funcs **)ptr_out = &unix_funcs;
+    user_callbacks = *(const struct user_callbacks **)args;
+    *(const struct unix_funcs **)args = &unix_funcs;
     return 0;
 }
+
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    initialize
+};

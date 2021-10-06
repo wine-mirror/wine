@@ -27,9 +27,9 @@
 #include "ntgdi_private.h"
 #include "dibdrv.h"
 
+#include "wine/unixlib.h"
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
-#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
@@ -232,7 +232,7 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
         dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect, FALSE );
         ret = TRUE;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT
     {
         WARN( "invalid bits pointer %p\n", src_bits );
         ret = FALSE;

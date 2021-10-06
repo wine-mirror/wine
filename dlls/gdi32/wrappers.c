@@ -20,11 +20,12 @@
 
 #include "gdi_private.h"
 #include "win32u_private.h"
+#include "wine/unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
-static struct unix_funcs *unix_funcs;
+static const struct unix_funcs *unix_funcs;
 
 INT WINAPI NtGdiAbortDoc( HDC hdc )
 {
@@ -1151,5 +1152,14 @@ static const struct user_callbacks user_callbacks =
 
 BOOL wrappers_init(void)
 {
-    return !__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &user_callbacks, &unix_funcs );
+    unixlib_handle_t handle;
+    const void *args = &user_callbacks;
+
+    if (NtQueryVirtualMemory( GetCurrentProcess(), gdi32_module, MemoryWineUnixFuncs,
+                              &handle, sizeof(handle), NULL ))
+        return FALSE;
+
+    if (__wine_unix_call( handle, 0, &args )) return FALSE;
+    unix_funcs = args;
+    return TRUE;
 }

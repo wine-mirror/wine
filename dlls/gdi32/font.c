@@ -40,7 +40,8 @@
 #include "winternl.h"
 #include "winreg.h"
 #include "ntgdi_private.h"
-#include "wine/exception.h"
+
+#include "wine/unixlib.h"
 #include "wine/rbtree.h"
 #include "wine/debug.h"
 
@@ -528,17 +529,19 @@ static pthread_mutex_t font_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
-    SIZE_T len;
+    const char *dir;
+    ULONG len = MAX_PATH;
 
-    static const WCHAR winedatadirW[]  = {'W','I','N','E','D','A','T','A','D','I','R'};
-    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R'};
-
-    if (!RtlQueryEnvironmentVariable( NULL, winedatadirW, ARRAYSIZE(winedatadirW),
-                                      path, MAX_PATH, &len ))
-        asciiz_to_unicode( path + len, "\\" WINE_FONT_DIR "\\" );
-    else if (!RtlQueryEnvironmentVariable( NULL, winebuilddirW, ARRAYSIZE(winebuilddirW),
-                                           path, MAX_PATH, &len ))
-        asciiz_to_unicode( path + len, "\\fonts\\" );
+    if ((dir = ntdll_get_data_dir()))
+    {
+        wine_unix_to_nt_file_name( dir, path, &len );
+        asciiz_to_unicode( path + len - 1, "\\" WINE_FONT_DIR "\\" );
+    }
+    else if ((dir = ntdll_get_build_dir()))
+    {
+        wine_unix_to_nt_file_name( dir, path, &len );
+        asciiz_to_unicode( path + len - 1, "\\fonts\\" );
+    }
 
     if (file) lstrcatW( path, file );
 }
@@ -6456,7 +6459,7 @@ HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG 
     {
         *count = num_fonts;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT
     {
         WARN( "page fault while writing to *count (%p)\n", count );
         NtGdiRemoveFontMemResourceEx( ret );
