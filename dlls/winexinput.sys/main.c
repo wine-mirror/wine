@@ -400,7 +400,7 @@ static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
     TRACE("device %p, irp %p, code %#x, bus_device %p.\n", device, irp, code, fdo->bus_device);
 
     if (code == IOCTL_HID_READ_REPORT) return try_complete_pending_read(device, irp);
-    if (impl->is_gamepad || code == IOCTL_HID_GET_STRING) return gamepad_internal_ioctl(device, irp);
+    if (impl->is_gamepad) return gamepad_internal_ioctl(device, irp);
 
     IoSkipCurrentIrpStackLocation(irp);
     return IoCallDriver(fdo->bus_device, irp);
