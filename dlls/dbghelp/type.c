@@ -732,6 +732,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         default:
             FIXME("Unsupported sym-tag %s for get-lexical-parent\n", 
                   symt_get_tag_str(type->tag));
+            /* fall through */
+        case SymTagExe:
             return FALSE;
         }
         break;
