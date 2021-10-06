@@ -761,6 +761,11 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagThunk:
             X(DWORD) = symt_ptr2index(module, ((const struct symt_thunk*)type)->container);
             break;
+        case SymTagFuncDebugStart:
+        case SymTagFuncDebugEnd:
+        case SymTagLabel:
+            X(DWORD) = symt_ptr2index(module, ((const struct symt_hierarchy_point*)type)->parent);
+            break;
         case SymTagUDT:
         case SymTagEnum:
         case SymTagFunctionType:
