@@ -15253,6 +15253,10 @@ static void test_stream_output(void)
         {
             {"SV_POSITION", 0, 0, 4, 0},
             {NULL,          0, 0, 8, 0},
+        },
+        {
+            {"SV_POSITION", 0, 0, 4, 0},
+            {NULL,          0, 0, 8, 0},
             {"ATTRIB",      1, 0, 4, 0},
         },
         {
@@ -15260,6 +15264,13 @@ static void test_stream_output(void)
             {NULL,          0, 0, 4, 0},
             {NULL,          0, 0, 4, 0},
             {"ATTRIB",      1, 0, 4, 0},
+        },
+        {
+            {"attrib",      1, 0, 4, 0},
+            {"attrib",      2, 0, 3, 0},
+            {"attrib",      3, 0, 2, 0},
+            {NULL,          0, 0, 1, 0},
+            {"attrib",      4, 0, 1, 0},
         },
         /* ComponentCount */
         {
@@ -15315,13 +15326,6 @@ static void test_stream_output(void)
         {
             {"attrib",      1, 0, 4, 0},
             {"attrib",      2, 0, 3, 3},
-        },
-        {
-            {"attrib",      1, 0, 4, 0},
-            {"attrib",      2, 0, 3, 0},
-            {"attrib",      3, 0, 2, 0},
-            {NULL,          0, 0, 1, 0},
-            {"attrib",      4, 0, 1, 0},
         },
         /* Multiple occurrences of the same output */
         {
@@ -15460,6 +15464,8 @@ static void test_stream_output(void)
     for (i = 0; i < ARRAY_SIZE(valid_so_declarations); ++i)
     {
         unsigned int max_output_slot = 0;
+
+        winetest_push_context("Test %u", i);
         for (count = 0; count < ARRAY_SIZE(valid_so_declarations[i]); ++count)
         {
             const D3D10_SO_DECLARATION_ENTRY *e = &valid_so_declarations[i][count];
@@ -15470,10 +15476,12 @@ static void test_stream_output(void)
 
         check_so_desc(device, gs_code, sizeof(gs_code), valid_so_declarations[i], count, 0, !!max_output_slot);
         check_so_desc(device, gs_code, sizeof(gs_code), valid_so_declarations[i], count, 64, !max_output_slot);
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(invalid_so_declarations); ++i)
     {
+        winetest_push_context("Test %u", i);
         for (count = 0; count < ARRAY_SIZE(invalid_so_declarations[i]); ++count)
         {
             const D3D10_SO_DECLARATION_ENTRY *e = &invalid_so_declarations[i][count];
@@ -15483,6 +15491,7 @@ static void test_stream_output(void)
 
         check_so_desc(device, gs_code, sizeof(gs_code), invalid_so_declarations[i], count, 0, FALSE);
         check_so_desc(device, gs_code, sizeof(gs_code), invalid_so_declarations[i], count, 64, FALSE);
+        winetest_pop_context();
     }
 
     /* Buffer stride */
