@@ -41,7 +41,6 @@
 
 #include "wine/nsi.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
@@ -75,7 +74,7 @@ DWORD WINAPI ConvertGuidToStringW( const GUID *guid, WCHAR *str, DWORD len )
                                  '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','}',0 };
 
     if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
-    sprintfW( str, fmt,
+    swprintf( str, len, fmt,
               guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
               guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
     return ERROR_SUCCESS;
@@ -536,8 +535,8 @@ DWORD WINAPI GetAdapterIndex( WCHAR *adapter_name, ULONG *index )
 
     TRACE( "name %s, index %p\n", debugstr_w( adapter_name ), index );
 
-    if (strlenW( adapter_name ) < strlenW( device_tcpip )) return ERROR_INVALID_PARAMETER;
-    err = ConvertStringToGuidW( adapter_name + strlenW( device_tcpip ), &guid );
+    if (wcslen( adapter_name ) < wcslen( device_tcpip )) return ERROR_INVALID_PARAMETER;
+    err = ConvertStringToGuidW( adapter_name + wcslen( device_tcpip ), &guid );
     if (err) return err;
     err = ConvertInterfaceGuidToLuid( &guid, &luid );
     if (err) return err;
@@ -834,8 +833,8 @@ static ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
     for (aa = info; aa; aa = aa->Next)
     {
         size += sizeof(*aa) + ((strlen( aa->AdapterName ) + 1 + 1) & ~1);
-        size += (strlenW( aa->Description ) + 1 + strlenW( aa->DnsSuffix ) + 1) * sizeof(WCHAR);
-        if (aa->FriendlyName) size += (strlenW(aa->FriendlyName) + 1) * sizeof(WCHAR);
+        size += (wcslen( aa->Description ) + 1 + wcslen( aa->DnsSuffix ) + 1) * sizeof(WCHAR);
+        if (aa->FriendlyName) size += (wcslen( aa->FriendlyName ) + 1) * sizeof(WCHAR);
         size = (size + align) & ~align;
         address_lists_iterate( aa, address_entry_size, &size );
     }
@@ -858,17 +857,17 @@ static void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRE
         memcpy( dst->AdapterName, src->AdapterName, len );
         ptr += (len + 1) & ~1;
         dst->Description = (WCHAR *)ptr;
-        len = (strlenW( src->Description ) + 1) * sizeof(WCHAR);
+        len = (wcslen( src->Description ) + 1) * sizeof(WCHAR);
         memcpy( dst->Description, src->Description, len );
         ptr += len;
         dst->DnsSuffix = (WCHAR *)ptr;
-        len = (strlenW( src->DnsSuffix ) + 1) * sizeof(WCHAR);
+        len = (wcslen( src->DnsSuffix ) + 1) * sizeof(WCHAR);
         memcpy( dst->DnsSuffix, src->DnsSuffix, len );
         ptr += len;
         if (src->FriendlyName)
         {
             dst->FriendlyName = (WCHAR *)ptr;
-            len = (strlenW( src->FriendlyName ) + 1) * sizeof(WCHAR);
+            len = (wcslen( src->FriendlyName ) + 1) * sizeof(WCHAR);
             memcpy( dst->FriendlyName, src->FriendlyName, len );
             ptr += len;
         }
@@ -1198,9 +1197,9 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
             (search = heap_alloc( size )))
         {
             if (!DnsQueryConfig( DnsConfigSearchList, 0, name, NULL, search, &size ) &&
-                search->dwStringCount && strlenW( search->pStringArray[0] ) < MAX_DNS_SUFFIX_STRING_LENGTH)
+                search->dwStringCount && wcslen( search->pStringArray[0] ) < MAX_DNS_SUFFIX_STRING_LENGTH)
             {
-                strcpyW( aa->DnsSuffix, search->pStringArray[0] );
+                wcscpy( aa->DnsSuffix, search->pStringArray[0] );
             }
             heap_free( search );
         }
@@ -4097,7 +4096,7 @@ DWORD WINAPI ConvertInterfaceAliasToLuid( const WCHAR *alias, NET_LUID *luid )
 
     if (!alias || !*alias || !luid) return ERROR_INVALID_PARAMETER;
     luid->Value = 0;
-    len = strlenW( alias );
+    len = wcslen( alias );
 
     err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
                                   (void **)&data, sizeof(*data), NULL, 0, NULL, 0, &count, 0 );
@@ -4299,8 +4298,8 @@ DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE
         }
     }
 
-    if (prefix) needed = snprintfW( buf, len, prefix_fmt, prefix, luid->Info.NetLuidIndex );
-    else needed = snprintfW( buf, len, unk_fmt, luid->Info.IfType, luid->Info.NetLuidIndex );
+    if (prefix) needed = swprintf( buf, len, prefix_fmt, prefix, luid->Info.NetLuidIndex );
+    else needed = swprintf( buf, len, unk_fmt, luid->Info.IfType, luid->Info.NetLuidIndex );
 
     if (needed >= len) return ERROR_NOT_ENOUGH_MEMORY;
     memcpy( name, buf, (needed + 1) * sizeof(WCHAR) );
@@ -4338,19 +4337,19 @@ DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
     if (!luid) return ERROR_INVALID_PARAMETER;
     memset( luid, 0, sizeof(*luid) );
 
-    if (!name || !(sep = strchrW( name, '_' )) || sep >= name + ARRAY_SIZE(buf)) return ERROR_INVALID_NAME;
+    if (!name || !(sep = wcschr( name, '_' )) || sep >= name + ARRAY_SIZE(buf)) return ERROR_INVALID_NAME;
     memcpy( buf, name, (sep - name) * sizeof(WCHAR) );
     buf[sep - name] = '\0';
 
     if (sep - name > ARRAY_SIZE(iftype) - 1 && !memcmp( buf, iftype, (ARRAY_SIZE(iftype) - 1) * sizeof(WCHAR) ))
     {
-        type = atoiW( buf + ARRAY_SIZE(iftype) - 1 );
+        type = wcstol( buf + ARRAY_SIZE(iftype) - 1, NULL, 10 );
     }
     else
     {
         for (i = 0; i < ARRAY_SIZE(name_prefixes); i++)
         {
-            if (!strcmpW( buf, name_prefixes[i].prefix ))
+            if (!wcscmp( buf, name_prefixes[i].prefix ))
             {
                 type = name_prefixes[i].type;
                 break;
@@ -4359,7 +4358,7 @@ DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
     }
     if (type == ~0u) return ERROR_INVALID_NAME;
 
-    luid->Info.NetLuidIndex = atoiW( sep + 1 );
+    luid->Info.NetLuidIndex = wcstol( sep + 1, NULL, 10 );
     luid->Info.IfType = type;
     return ERROR_SUCCESS;
 }
