@@ -60,7 +60,6 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "wine/asm.h"
-#include "wine/exception.h"
 #include "unix_private.h"
 #include "wine/debug.h"
 

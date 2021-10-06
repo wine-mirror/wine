@@ -1737,6 +1737,16 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
 }
 
 
+/***********************************************************************
+ *              ntdll_set_exception_jmp_buf
+ */
+void ntdll_set_exception_jmp_buf( __wine_jmp_buf *jmp )
+{
+    assert( !jmp || !ntdll_get_thread_data()->jmp_buf );
+    ntdll_get_thread_data()->jmp_buf = jmp;
+}
+
+
 BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
 {
 #ifdef linux

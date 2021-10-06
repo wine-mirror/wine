@@ -61,7 +61,6 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "wine/exception.h"
 #include "wine/asm.h"
 #include "unix_private.h"
 #include "wine/debug.h"

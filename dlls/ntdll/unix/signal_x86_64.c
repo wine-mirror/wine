@@ -75,7 +75,6 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
-#include "wine/exception.h"
 #include "wine/list.h"
 #include "wine/asm.h"
 #include "unix_private.h"

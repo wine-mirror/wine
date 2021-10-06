@@ -59,7 +59,6 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "wine/exception.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
 #include "unix_private.h"
@@ -103,35 +102,6 @@ struct file_view
     size_t        size;          /* size in bytes */
     unsigned int  protect;       /* protection for all pages at allocation time and SEC_* flags */
 };
-
-#undef __TRY
-#undef __EXCEPT
-#undef __ENDTRY
-
-#define __TRY \
-    do { __wine_jmp_buf __jmp; \
-         int __first = 1; \
-         assert( !ntdll_get_thread_data()->jmp_buf ); \
-         for (;;) if (!__first) \
-         { \
-             do {
-
-#define __EXCEPT \
-             } while(0); \
-             ntdll_get_thread_data()->jmp_buf = NULL; \
-             break; \
-         } else { \
-             if (__wine_setjmpex( &__jmp, NULL )) { \
-                 do {
-
-#define __ENDTRY \
-                 } while (0); \
-                 break; \
-             } \
-             ntdll_get_thread_data()->jmp_buf = &__jmp; \
-             __first = 0; \
-         } \
-    } while (0);
 
 /* per-page protection flags */
 #define VPROT_READ       0x01
