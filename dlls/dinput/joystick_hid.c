@@ -255,6 +255,23 @@ static BOOL enum_object( struct hid_joystick *impl, const DIPROPHEADER *filter, 
     return DIENUM_CONTINUE;
 }
 
+static void check_pid_effect_axis_caps( struct hid_joystick *impl, DIDEVICEOBJECTINSTANCEW *instance )
+{
+    struct pid_effect_update *effect_update = &impl->pid_effect_update;
+    ULONG i;
+
+    for (i = 0; i < effect_update->axis_count; ++i)
+    {
+        if (effect_update->axis_caps[i]->usage_page != instance->wUsagePage) continue;
+        if (effect_update->axis_caps[i]->usage_min > instance->wUsage) continue;
+        if (effect_update->axis_caps[i]->usage_max >= instance->wUsage) break;
+    }
+
+    if (i == effect_update->axis_count) return;
+    instance->dwType |= DIDFT_FFACTUATOR;
+    instance->dwFlags |= DIDOI_FFACTUATOR;
+}
+
 static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD i, DWORD *count )
 {
     if (!seen[i]) instance->dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( i );
@@ -331,6 +348,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );
             instance.wReportId = caps->report_id;
             instance.wCollectionNumber = caps->link_collection;
+            check_pid_effect_axis_caps( impl, &instance );
             ret = enum_object( impl, &filter, flags, callback, caps, &instance, data );
             if (ret != DIENUM_CONTINUE) return ret;
             value_ofs += sizeof(LONG);

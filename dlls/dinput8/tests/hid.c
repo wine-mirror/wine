@@ -6392,9 +6392,9 @@ static void test_force_feedback_joystick( void )
     };
     const struct check_objects_todos objects_todos[ARRAY_SIZE(expect_objects)] =
     {
-        {.type = TRUE, .flags = TRUE},
-        {.type = TRUE, .flags = TRUE},
-        {.type = TRUE, .flags = TRUE},
+        {},
+        {},
+        {},
         {.type = TRUE, .flags = TRUE},
         {.type = TRUE, .flags = TRUE},
         {},
