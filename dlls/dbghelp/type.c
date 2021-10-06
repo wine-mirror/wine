@@ -160,7 +160,7 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
     case SymTagLabel:
         if (!((const struct symt_hierarchy_point*)type)->parent ||
             !symt_get_address(((const struct symt_hierarchy_point*)type)->parent, addr))
-            return FALSE;
+            *addr = 0;
         *addr += ((const struct symt_hierarchy_point*)type)->loc.offset;
         break;
     case SymTagThunk:
