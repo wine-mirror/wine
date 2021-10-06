@@ -1697,7 +1697,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD i, *stack;
 
-    if (!is_inside_syscall( sigcontext )) return FALSE;
+    if (!is_inside_syscall( sigcontext ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
 
     TRACE( "code=%x flags=%x addr=%p ip=%08x tid=%04x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,

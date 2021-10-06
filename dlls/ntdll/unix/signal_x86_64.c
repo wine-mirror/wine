@@ -2478,7 +2478,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     DWORD i;
 
-    if (!is_inside_syscall( sigcontext )) return FALSE;
+    if (!is_inside_syscall( sigcontext ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
 
     TRACE_(seh)( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,

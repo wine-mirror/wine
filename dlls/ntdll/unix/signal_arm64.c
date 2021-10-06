@@ -794,7 +794,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
     DWORD i;
 
-    if (!is_inside_syscall( context )) return FALSE;
+    if (!is_inside_syscall( context ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
 
     TRACE( "code=%x flags=%x addr=%p pc=%p tid=%04x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
