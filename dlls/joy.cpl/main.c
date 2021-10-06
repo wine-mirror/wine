@@ -809,7 +809,7 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
     ZeroMemory(&dieffect, sizeof(dieffect));
 
     dieffect.dwSize = sizeof(dieffect);
-    dieffect.dwFlags = DIEFF_CARTESIAN;
+    dieffect.dwFlags = DIEFF_CARTESIAN|DIEFF_OBJECTOFFSETS;
     dieffect.dwDuration = FF_PLAY_TIME;
 
     dieffect.cAxes = 2;
