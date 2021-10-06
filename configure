@@ -1021,6 +1021,7 @@ enable_api_ms_win_core_psapi_obsolete_l1_1_0
 enable_api_ms_win_core_psm_appnotify_l1_1_0
 enable_api_ms_win_core_quirks_l1_1_0
 enable_api_ms_win_core_realtime_l1_1_0
+enable_api_ms_win_core_realtime_l1_1_1
 enable_api_ms_win_core_registry_l1_1_0
 enable_api_ms_win_core_registry_l2_1_0
 enable_api_ms_win_core_registry_l2_2_0
@@ -19850,6 +19851,7 @@ wine_fn_config_makefile dlls/api-ms-win-core-psapi-obsolete-l1-1-0 enable_api_ms
 wine_fn_config_makefile dlls/api-ms-win-core-psm-appnotify-l1-1-0 enable_api_ms_win_core_psm_appnotify_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-quirks-l1-1-0 enable_api_ms_win_core_quirks_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-realtime-l1-1-0 enable_api_ms_win_core_realtime_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-realtime-l1-1-1 enable_api_ms_win_core_realtime_l1_1_1
 wine_fn_config_makefile dlls/api-ms-win-core-registry-l1-1-0 enable_api_ms_win_core_registry_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-registry-l2-1-0 enable_api_ms_win_core_registry_l2_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-registry-l2-2-0 enable_api_ms_win_core_registry_l2_2_0
