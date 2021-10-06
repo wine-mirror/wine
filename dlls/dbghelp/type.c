@@ -763,7 +763,13 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             break;
         case SymTagUDT:
         case SymTagEnum:
+        case SymTagFunctionType:
         case SymTagFunctionArgType:
+        case SymTagPointerType:
+        case SymTagArrayType:
+        case SymTagBaseType:
+        case SymTagTypedef:
+        case SymTagBaseClass:
             X(DWORD) = symt_ptr2index(module, &module->top->symt);
             break;
         default:
