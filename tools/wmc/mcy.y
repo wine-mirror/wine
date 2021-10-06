@@ -44,8 +44,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "utils.h"
 #include "wmc.h"
+#include "utils.h"
 #include "lang.h"
 
 static const char err_syntax[]	= "Syntax error\n";

@@ -250,7 +250,7 @@ static void tlb_read(int fd, void *buf, int count)
         error("error while reading importlib.\n");
 }
 
-static void tlb_lseek(int fd, off_t offset)
+static void tlb_lseek(int fd, int offset)
 {
     if(lseek(fd, offset, SEEK_SET) == -1)
         error("lseek failed\n");

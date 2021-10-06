@@ -31,14 +31,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#include <direct.h>
-#include <io.h>
-#define mkdir(path,mode) mkdir(path)
-#endif
+
 #include "tools.h"
 #include "wine/list.h"
 

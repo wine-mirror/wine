@@ -2442,7 +2442,7 @@ static	void	do_grab_sym( void )
 	{
 	    char ordinal_text[256];
 	    /* Ordinal only entry */
-            snprintf (ordinal_text, sizeof(ordinal_text), "%s_%u",
+            sprintf (ordinal_text, "%s_%u",
 		      globals.forward_dll ? globals.forward_dll : OUTPUT_UC_DLL_NAME,
 		      exportDir->Base + i);
 	    str_toupper(ordinal_text);

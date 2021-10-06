@@ -53,17 +53,12 @@
 #include <io.h>
 #include <process.h>
 
-#define mkdir(path,mode) mkdir(path)
-
 static inline void *dlopen(const char *name, int flags) { return NULL; }
 static inline void *dlsym(void *handle, const char *name) { return NULL; }
 static inline int dlclose(void *handle) { return 0; }
 static inline const char *dlerror(void) { return "No dlopen support on Windows"; }
 
 #ifdef _MSC_VER
-
-#define popen _popen
-#define pclose _pclose
 /* The UCRT headers in the Windows SDK #error out if we #define snprintf.
  * The C headers that came with previous Visual Studio versions do not have
  * snprintf. Check for VS 2015, which appears to be the first version to
@@ -71,25 +66,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
 #if _MSC_VER < 1900
 # define snprintf _snprintf
 #endif
-#define strtoll _strtoi64
-#define strtoull _strtoui64
-#define strncasecmp _strnicmp
-#define strcasecmp _stricmp
-
-typedef long off_t;
-typedef int pid_t;
-typedef int ssize_t;
-
-#endif /* _MSC_VER */
-
-#else  /* _WIN32 */
-
-#ifndef __int64
-#  if defined(__x86_64__) || defined(__aarch64__) || defined(__powerpc64__) || defined(_WIN64)
-#    define __int64 long
-#  else
-#    define __int64 long long
-#  endif
 #endif
 
 #endif  /* _WIN32 */
@@ -106,35 +82,10 @@ typedef int ssize_t;
 #define RTLD_GLOBAL  0x100
 #endif
 
-#ifndef S_ISLNK
-# define S_ISLNK(mod) (0)
-#endif
-
-#ifndef S_ISDIR
-# define S_ISDIR(mod) (((mod) & _S_IFMT) == _S_IFDIR)
-#endif
-
-#ifndef S_ISCHR
-# define S_ISCHR(mod) (((mod) & _S_IFMT) == _S_IFCHR)
-#endif
-
-#ifndef S_ISREG
-# define S_ISREG(mod) (((mod) & _S_IFMT) == _S_IFREG)
-#endif
-
 /* So we open files in 64 bit access mode on Linux */
 #ifndef O_LARGEFILE
 # define O_LARGEFILE 0
 #endif
-
-#ifndef O_NONBLOCK
-# define O_NONBLOCK 0
-#endif
-
-#ifndef O_BINARY
-# define O_BINARY 0
-#endif
-
 
 /****************************************************************
  * Constants

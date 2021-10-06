@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
 #include <errno.h>
@@ -34,10 +35,34 @@
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+# include <direct.h>
+# include <io.h>
 # include <process.h>
+# define mkdir(path,mode) mkdir(path)
+# ifndef S_ISREG
+#  define S_ISREG(mod) (((mod) & _S_IFMT) == _S_IFREG)
+# endif
+# ifdef _MSC_VER
+#  define popen _popen
+#  define pclose _pclose
+#  define strtoll _strtoi64
+#  define strtoull _strtoui64
+#  define strncasecmp _strnicmp
+#  define strcasecmp _stricmp
+# endif
 #else
 # include <sys/wait.h>
 # include <unistd.h>
+# ifndef O_BINARY
+#  define O_BINARY 0
+# endif
+# ifndef __int64
+#   if defined(__x86_64__) || defined(__aarch64__) || defined(__powerpc64__)
+#     define __int64 long
+#   else
+#     define __int64 long long
+#   endif
+# endif
 #endif
 
 #if !defined(__GNUC__) && !defined(__attribute__)

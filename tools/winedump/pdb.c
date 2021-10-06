@@ -279,9 +279,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         printf("-Unknown symbol info version %d\n", symbols->version);
     }
     if (symbols->flags & 0x8000) /* new */
-        snprintf(tcver, sizeof(tcver), "%u.%u", (symbols->flags >> 8) & 0x7f, symbols->flags & 0xff);
+        sprintf(tcver, "%u.%u", (symbols->flags >> 8) & 0x7f, symbols->flags & 0xff);
     else
-        snprintf(tcver, sizeof(tcver), "old-%x", symbols->flags);
+        sprintf(tcver, "old-%x", symbols->flags);
     printf("Symbols:\n"
            "\tsignature:       %08x\n"
            "\tversion:         %u\n"

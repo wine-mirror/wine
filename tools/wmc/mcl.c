@@ -26,8 +26,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "utils.h"
 #include "wmc.h"
+#include "utils.h"
 #include "lang.h"
 
 #include "mcy.tab.h"

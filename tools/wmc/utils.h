@@ -21,7 +21,6 @@
 #ifndef __WMC_UTILS_H
 #define __WMC_UTILS_H
 
-#include "../tools.h"
 #include "wmctypes.h"
 
 int mcy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));

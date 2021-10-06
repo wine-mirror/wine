@@ -21,6 +21,7 @@
 #ifndef __WMC_WMC_H
 #define __WMC_WMC_H
 
+#include "../tools.h"
 #include "wmctypes.h"
 
 /*
