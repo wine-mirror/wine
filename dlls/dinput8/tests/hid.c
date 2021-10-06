@@ -499,10 +499,14 @@ static BOOL pnp_driver_start( const WCHAR *resource )
     WCHAR path[MAX_PATH], filename[MAX_PATH];
     SC_HANDLE manager, service;
     const CERT_CONTEXT *cert;
+    int old_mute_threshold;
     BOOL ret, need_reboot;
     HANDLE catalog;
     HDEVINFO set;
     FILE *f;
+
+    old_mute_threshold = winetest_mute_threshold;
+    winetest_mute_threshold = 1;
 
     load_resource( resource, filename );
     ret = MoveFileExW( filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
@@ -536,6 +540,7 @@ static BOOL pnp_driver_start( const WCHAR *resource )
         ok( ret, "Failed to delete file, error %u\n", GetLastError() );
         ret = DeleteFileW( L"winetest.sys" );
         ok( ret, "Failed to delete file, error %u\n", GetLastError() );
+        winetest_mute_threshold = old_mute_threshold;
         return FALSE;
     }
 
@@ -584,6 +589,8 @@ static BOOL pnp_driver_start( const WCHAR *resource )
 
     CloseServiceHandle( service );
     CloseServiceHandle( manager );
+
+    winetest_mute_threshold = old_mute_threshold;
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
