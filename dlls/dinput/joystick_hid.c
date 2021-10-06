@@ -285,7 +285,7 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
     DWORD collection = 0, object = 0, axis = 0, button = 0, pov = 0, value_ofs = 0, button_ofs = 0, i, j;
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)impl->preparsed;
     DIDEVICEOBJECTINSTANCEW instance = {.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW)};
-    struct hid_value_caps *caps, *caps_end, *nary, *nary_end;
+    struct hid_value_caps *caps, *caps_end, *nary, *nary_end, *effect_caps;
     DIDATAFORMAT *format = impl->base.data_format.wine_df;
     int *offsets = impl->base.data_format.offsets;
     struct hid_collection_node *node, *node_end;
@@ -356,6 +356,8 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         }
     }
 
+    effect_caps = impl->pid_effect_update.trigger_button_caps;
+
     for (caps = HID_INPUT_VALUE_CAPS( preparsed ), caps_end = caps + preparsed->input_caps_count;
          caps != caps_end; ++caps)
     {
@@ -372,6 +374,11 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
             instance.dwOfs = button_ofs;
             instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( button++ );
             instance.dwFlags = 0;
+            if (effect_caps && effect_caps->logical_min <= j && effect_caps->logical_max >= j)
+            {
+                instance.dwType |= DIDFT_FFEFFECTTRIGGER;
+                instance.dwFlags |= DIDOI_FFEFFECTTRIGGER;
+            }
             instance.wUsagePage = caps->usage_page;
             instance.wUsage = j;
             instance.guidType = *object_usage_to_guid( instance.wUsagePage, instance.wUsage );

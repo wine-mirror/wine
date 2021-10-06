@@ -3294,8 +3294,6 @@ static BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *c
 
 struct check_objects_todos
 {
-    BOOL type;
-    BOOL flags;
     BOOL dimension;
     BOOL exponent;
 };
@@ -3323,9 +3321,7 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
     check_member( *obj, *exp, "%u", dwSize );
     check_member_guid( *obj, *exp, guidType );
     check_member( *obj, *exp, "%#x", dwOfs );
-    todo_wine_if( todo->type )
     check_member( *obj, *exp, "%#x", dwType );
-    todo_wine_if( todo->flags )
     check_member( *obj, *exp, "%#x", dwFlags );
     if (!localized) todo_wine check_member_wstr( *obj, *exp, tszName );
     check_member( *obj, *exp, "%u", dwFFMaxForce );
@@ -6395,8 +6391,8 @@ static void test_force_feedback_joystick( void )
         {},
         {},
         {},
-        {.type = TRUE, .flags = TRUE},
-        {.type = TRUE, .flags = TRUE},
+        {},
+        {},
         {},
         {},
         {},
