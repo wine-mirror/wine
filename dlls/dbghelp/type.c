@@ -559,6 +559,17 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             case SymTagFunctionType: v = &((const struct symt_function_signature*)type)->vchildren; break;
             case SymTagFunction:     v = &((const struct symt_function*)type)->vchildren; break;
             case SymTagBlock:        v = &((const struct symt_block*)type)->vchildren; break;
+            case SymTagPointerType:
+            case SymTagArrayType:
+            case SymTagFunctionArgType:
+            case SymTagThunk:
+            case SymTagLabel:
+            case SymTagFuncDebugStart:
+            case SymTagFuncDebugEnd:
+            case SymTagTypedef:
+            case SymTagBaseType:
+                /* for those, CHILDRENCOUNT returns 0 */
+                return tifp->Count == 0;
             default:
                 FIXME("Unsupported sym-tag %s for find-children\n", 
                       symt_get_tag_str(type->tag));
@@ -621,18 +632,25 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagBlock:
             X(DWORD) = vector_length(&((const struct symt_block*)type)->vchildren);
             break;
-        case SymTagPointerType: /* MS does it that way */
-        case SymTagArrayType: /* MS does it that way */
-        case SymTagThunk: /* MS does it that way */
+        /* some SymTag:s return 0 */
+        case SymTagPointerType:
+        case SymTagArrayType:
+        case SymTagFunctionArgType:
+        case SymTagThunk:
+        case SymTagFuncDebugStart:
+        case SymTagFuncDebugEnd:
+        case SymTagLabel:
+        case SymTagTypedef:
+        case SymTagBaseType:
             X(DWORD) = 0;
             break;
         default:
             FIXME("Unsupported sym-tag %s for get-children-count\n", 
                   symt_get_tag_str(type->tag));
             /* fall through */
+            /* some others return error */
         case SymTagData:
         case SymTagPublicSymbol:
-        case SymTagBaseType:
             return FALSE;
         }
         break;
