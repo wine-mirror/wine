@@ -18,11 +18,9 @@
  */
 
 #include <assert.h>
-#include <stdarg.h>
 
 #include <windows.h>
 #include <commctrl.h>
-#include <uxtheme.h>
 
 #include "wine/heap.h"
 #include "wine/test.h"
