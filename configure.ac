@@ -2150,7 +2150,6 @@ AC_CHECK_FUNCS(\
 	setproctitle \
 	setprogname \
 	sigprocmask \
-	symlink \
 	sysinfo \
 	tcdrain \
 	thr_kill2

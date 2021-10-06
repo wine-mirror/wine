@@ -50,6 +50,7 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <direct.h>
+#include <errno.h>
 #include <io.h>
 #include <process.h>
 
@@ -57,6 +58,7 @@ static inline void *dlopen(const char *name, int flags) { return NULL; }
 static inline void *dlsym(void *handle, const char *name) { return NULL; }
 static inline int dlclose(void *handle) { return 0; }
 static inline const char *dlerror(void) { return "No dlopen support on Windows"; }
+static inline int symlink(const char *from, const char *to) { errno = ENOSYS; return -1; }
 
 #ifdef _MSC_VER
 /* The UCRT headers in the Windows SDK #error out if we #define snprintf.
@@ -92,15 +94,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
 
 #ifndef M_PI_2
 #define M_PI_2 1.570796326794896619
-#endif
-
-
-/****************************************************************
- * Function definitions (only when using libwine_port)
- */
-
-#ifndef HAVE_SYMLINK
-int symlink(const char *from, const char *to);
 #endif
 
 #endif /* !defined(__WINE_WINE_PORT_H) */

@@ -687,9 +687,6 @@
 /* Define to 1 if `_u._ext.nscount6' is a member of `struct __res_state'. */
 #undef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6
 
-/* Define to 1 if you have the `symlink' function. */
-#undef HAVE_SYMLINK
-
 /* Define to 1 if you have the <syscall.h> header file. */
 #undef HAVE_SYSCALL_H
 
