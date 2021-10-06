@@ -348,9 +348,6 @@
 /* Define to 1 if you have the <linux/videodev2.h> header file. */
 #undef HAVE_LINUX_VIDEODEV2_H
 
-/* Define to 1 if you have the `lstat' function. */
-#undef HAVE_LSTAT
-
 /* Define to 1 if you have the <lwp.h> header file. */
 #undef HAVE_LWP_H
 

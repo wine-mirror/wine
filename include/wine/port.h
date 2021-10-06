@@ -99,10 +99,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
  * Function definitions (only when using libwine_port)
  */
 
-#ifndef HAVE_LSTAT
-int lstat(const char *file_name, struct stat *buf);
-#endif /* HAVE_LSTAT */
-
 #ifndef HAVE_READLINK
 int readlink( const char *path, char *buf, size_t size );
 #endif /* HAVE_READLINK */
