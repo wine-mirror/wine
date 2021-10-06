@@ -1,4 +1,4 @@
-MODULE    = libwinecrt0.a
+STATICLIB = libwinecrt0.a
 
 C_SRCS = \
 	crt_dllmain.c \

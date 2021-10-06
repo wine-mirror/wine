@@ -1,4 +1,4 @@
-MODULE    = libdxguid.a
+STATICLIB = libdxguid.a
 
 C_SRCS = \
 	dx10guid.c \

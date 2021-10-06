@@ -1,4 +1,4 @@
-MODULE    = libuuid.a
+STATICLIB = libuuid.a
 
 C_SRCS = \
 	d2d.c \

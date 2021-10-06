@@ -1,4 +1,4 @@
-MODULE    = libstrmbase.a
+STATICLIB = libstrmbase.a
 
 C_SRCS = \
 	dispatch.c \

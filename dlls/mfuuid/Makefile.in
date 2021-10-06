@@ -1,4 +1,4 @@
-MODULE    = libmfuuid.a
+STATICLIB = libmfuuid.a
 
 C_SRCS = \
 	mfplay.c \

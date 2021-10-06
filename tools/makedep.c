@@ -2965,12 +2965,12 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
                       find_src_file( make, replace_extension( source->name, ".c", ".spec" )));
     int need_cross = (crosstarget &&
                       !(source->file->flags & FLAG_C_UNIX) &&
-                      (make->is_cross || (make->module && make->staticlib) ||
+                      (make->is_cross || make->staticlib ||
                        (source->file->flags & FLAG_C_IMPLIB)));
     int need_obj = ((*dll_ext || !(source->file->flags & FLAG_C_UNIX)) &&
                     (!need_cross ||
                      (source->file->flags & FLAG_C_IMPLIB) ||
-                     (make->module && make->staticlib)));
+                     make->staticlib));
 
     if ((source->file->flags & FLAG_GENERATED) &&
         (!make->testdll || !strendswith( source->filename, "testlist.c" )))
@@ -2988,11 +2988,11 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
-        if (make->sharedlib || (make->staticlib && !make->module) || (source->file->flags & FLAG_C_UNIX))
+        if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
         {
             output_filenames( unix_dllflags );
         }
-        else if (make->module || make->staticlib || make->testdll)
+        else if (make->module || make->testdll)
         {
             output_filenames( dll_flags );
             if (source->use_msvcrt) output_filenames( msvcrt_flags );
@@ -4084,7 +4084,7 @@ static void load_sources( struct makefile *make )
     make->install_dev   = get_expanded_make_var_array( make, "INSTALL_DEV" );
     make->extra_targets = get_expanded_make_var_array( make, "EXTRA_TARGETS" );
 
-    if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
+    if (make->staticlib) make->module = make->staticlib;
 
     make->disabled   = make->obj_dir && strarray_exists( &disabled_dirs, make->obj_dir );
     make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );

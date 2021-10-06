@@ -1,4 +1,4 @@
-MODULE    = libwmcodecdspuuid.a
+STATICLIB = libwmcodecdspuuid.a
 
 C_SRCS = \
 	wmcodecdspuuid.c

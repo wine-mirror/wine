@@ -1,4 +1,4 @@
-MODULE    = libstrmiids.a
+STATICLIB = libstrmiids.a
 
 C_SRCS = \
 	evr.c \

@@ -1,4 +1,4 @@
-MODULE    = libadsiid.a
+STATICLIB = libadsiid.a
 
 C_SRCS = \
 	adsiid.c
