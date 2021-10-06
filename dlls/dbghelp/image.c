@@ -26,8 +26,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
-
 /***********************************************************************
  *		GetTimestampForLoadedLibrary (DBGHELP.@)
  */
@@ -36,6 +34,9 @@ DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
     IMAGE_NT_HEADERS*   nth = RtlImageNtHeader(Module);
     return (nth) ? nth->FileHeader.TimeDateStamp : 0;
 }
+
+#ifndef _WIN64
+WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 /***********************************************************************
  *		MapDebugInformation (DBGHELP.@)
@@ -57,3 +58,4 @@ BOOL WINAPI UnmapDebugInformation(PIMAGE_DEBUG_INFORMATION DebugInfo)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+#endif

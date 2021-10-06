@@ -25,7 +25,7 @@
 @ stdcall ImagehlpApiVersion()
 @ stdcall ImagehlpApiVersionEx(ptr)
 @ stdcall MakeSureDirectoryPathExists(str)
-@ stdcall MapDebugInformation(long str str long)
+@ stdcall -arch=win32 MapDebugInformation(long str str long)
 @ stdcall MiniDumpReadDumpStream(ptr long ptr ptr ptr)
 @ stdcall MiniDumpWriteDump(ptr long ptr long ptr ptr ptr)
 @ stdcall SearchTreeForFile(str str ptr)
@@ -187,7 +187,7 @@
 @ stdcall SymUnloadModule64(long int64)
 @ stdcall UnDecorateSymbolName(str ptr long long)
 @ stdcall UnDecorateSymbolNameW(wstr ptr long long)
-@ stdcall UnmapDebugInformation(ptr)
+@ stdcall -arch=win32 UnmapDebugInformation(ptr)
 @ stdcall WinDbgExtensionDllInit(ptr long long)
 #@ stub block
 #@ stub chksym
