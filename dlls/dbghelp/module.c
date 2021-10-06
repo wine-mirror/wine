@@ -243,6 +243,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->num_symbols       = 0;
 
     vector_init(&module->vsymt, sizeof(struct symt*), 128);
+    vector_init(&module->vcustom_symt, sizeof(struct symt*), 16);
     /* FIXME: this seems a bit too high (on a per module basis)
      * need some statistics about this
      */

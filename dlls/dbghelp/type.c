@@ -99,6 +99,7 @@ const char* symt_get_name(const struct symt* sym)
     case SymTagBaseType:        return ((const struct symt_basic*)sym)->hash_elt.name;
     case SymTagLabel:           return ((const struct symt_hierarchy_point*)sym)->hash_elt.name;
     case SymTagThunk:           return ((const struct symt_thunk*)sym)->hash_elt.name;
+    case SymTagCustom:          return ((const struct symt_custom*)sym)->hash_elt.name;
     /* hierarchy tree */
     case SymTagEnum:            return ((const struct symt_enum*)sym)->hash_elt.name;
     case SymTagTypedef:         return ((const struct symt_typedef*)sym)->hash_elt.name;
@@ -165,6 +166,9 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
         break;
     case SymTagThunk:
         *addr = ((const struct symt_thunk*)type)->address;
+        break;
+    case SymTagCustom:
+        *addr = ((const struct symt_custom*)type)->address;
         break;
     default:
         FIXME("Unsupported sym-tag %s for get-address\n", symt_get_tag_str(type->tag));
@@ -580,6 +584,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             case SymTagFuncDebugEnd:
             case SymTagTypedef:
             case SymTagBaseType:
+            case SymTagCustom:
                 /* for those, CHILDRENCOUNT returns 0 */
                 return tifp->Count == 0;
             default:
@@ -654,6 +659,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagLabel:
         case SymTagTypedef:
         case SymTagBaseType:
+        case SymTagCustom:
             X(DWORD) = 0;
             break;
         default:
@@ -730,6 +736,9 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagThunk:
             X(DWORD64) = ((const struct symt_thunk*)type)->size;
             break;
+        case SymTagCustom:
+            X(DWORD64) = ((const struct symt_custom*)type)->size;
+            break;
         default:
             FIXME("Unsupported sym-tag %s for get-length\n", 
                   symt_get_tag_str(type->tag));
@@ -776,6 +785,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagTypedef:
         case SymTagBaseClass:
         case SymTagPublicSymbol:
+        case SymTagCustom:
             X(DWORD) = symt_ptr2index(module, &module->top->symt);
             break;
         default:
@@ -835,6 +845,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
         case SymTagLabel:
+        case SymTagCustom:
             return FALSE;
         }
         break;
@@ -907,6 +918,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagCompiland:
         case SymTagUDT:
         case SymTagBaseType:
+        case SymTagCustom:
             return FALSE;
         }
         break;

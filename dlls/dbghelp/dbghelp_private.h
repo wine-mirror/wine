@@ -256,6 +256,14 @@ struct symt_thunk
     THUNK_ORDINAL               ordinal;        /* FIXME: doesn't seem to be accessible */
 };
 
+struct symt_custom
+{
+    struct symt                 symt;
+    struct hash_table_elt       hash_elt;
+    DWORD64                     address;
+    DWORD                       size;
+};
+
 /* class tree */
 struct symt_array
 {
@@ -382,6 +390,7 @@ struct module
 
     /* symbols & symbol tables */
     struct vector               vsymt;
+    struct vector               vcustom_symt;
     int                         sortlist_valid;
     unsigned                    num_sorttab;    /* number of symbols with addresses */
     unsigned                    num_symbols;
@@ -791,6 +800,9 @@ extern struct symt_hierarchy_point*
                                    const char* name, ULONG_PTR address) DECLSPEC_HIDDEN;
 extern struct symt* symt_index2ptr(struct module* module, DWORD id) DECLSPEC_HIDDEN;
 extern DWORD        symt_ptr2index(struct module* module, const struct symt* sym) DECLSPEC_HIDDEN;
+extern struct symt_custom*
+                    symt_new_custom(struct module* module, const char* name,
+                                    DWORD64 addr, DWORD size) DECLSPEC_HIDDEN;
 
 /* type.c */
 extern void         symt_init_basic(struct module* module) DECLSPEC_HIDDEN;
