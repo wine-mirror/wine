@@ -7251,7 +7251,7 @@ static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG
             return E_UNEXPECTED;
         }
 
-        hres = HTMLDOMAttribute_Create(NULL, This->elem, id, attr);
+        hres = HTMLDOMAttribute_Create(NULL, This->elem, id, dispex_compat_mode(&This->elem->node.event_target.dispex), attr);
         if(FAILED(hres))
             return hres;
     }

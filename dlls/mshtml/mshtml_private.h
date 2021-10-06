@@ -1090,7 +1090,7 @@ typedef struct {
 
 HTMLDOMAttribute *unsafe_impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute*) DECLSPEC_HIDDEN;
 
-HRESULT HTMLDOMAttribute_Create(const WCHAR*,HTMLElement*,DISPID,HTMLDOMAttribute**) DECLSPEC_HIDDEN;
+HRESULT HTMLDOMAttribute_Create(const WCHAR*,HTMLElement*,DISPID,compat_mode_t,HTMLDOMAttribute**) DECLSPEC_HIDDEN;
 
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**) DECLSPEC_HIDDEN;

@@ -2856,7 +2856,7 @@ static HRESULT WINAPI HTMLDocument5_createAttribute(IHTMLDocument5 *iface, BSTR 
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrattrName), ppattribute);
 
-    hres = HTMLDOMAttribute_Create(bstrattrName, NULL, 0, &attr);
+    hres = HTMLDOMAttribute_Create(bstrattrName, NULL, 0, dispex_compat_mode(&This->doc_node->node.event_target.dispex), &attr);
     if(FAILED(hres))
         return hres;
 
