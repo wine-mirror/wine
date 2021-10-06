@@ -639,6 +639,14 @@ static DWORD CALLBACK read_thread(void *arg)
         else if (offset + size >= file_size)
             size = file_size - offset;
 
+        /* Some IMFByteStreams (including the standard file-based stream) return
+         * an error when reading past the file size. */
+        if (!size)
+        {
+            wg_parser_push_data(source->wg_parser, data, 0);
+            continue;
+        }
+
         if (!array_reserve(&data, &buffer_size, size, 1))
         {
             free(data);
