@@ -2930,14 +2930,9 @@ REBAR_Create (REBAR_INFO *infoPtr, LPCREATESTRUCTW cs)
 	      cs->x, cs->y, cs->cx, cs->cy);
     }
 
+    OpenThemeData(infoPtr->hwndSelf, themeClass);
+
     TRACE("created!\n");
-
-    if (OpenThemeData (infoPtr->hwndSelf, themeClass))
-    {
-        /* native seems to clear WS_BORDER when themed */
-        infoPtr->dwStyle &= ~WS_BORDER;
-    }
-
     return 0;
 }
 
@@ -3508,8 +3503,6 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, INT nType, const STYLESTRUCT *lpStyle)
     if (nType == GWL_STYLE)
     {
         infoPtr->orgStyle = infoPtr->dwStyle = lpStyle->styleNew;
-        if (GetWindowTheme (infoPtr->hwndSelf))
-            infoPtr->dwStyle &= ~WS_BORDER;
         /* maybe it should be COMMON_STYLES like in toolbar */
         if ((lpStyle->styleNew ^ lpStyle->styleOld) & CCS_VERT)
             REBAR_Layout(infoPtr);
@@ -3522,11 +3515,7 @@ static LRESULT theme_changed (REBAR_INFO* infoPtr)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     CloseThemeData (theme);
-    theme = OpenThemeData (infoPtr->hwndSelf, themeClass);
-    /* WS_BORDER disappears when theming is enabled and reappears when
-     * disabled... */
-    infoPtr->dwStyle &= ~WS_BORDER;
-    infoPtr->dwStyle |= theme ? 0 : (infoPtr->orgStyle & WS_BORDER);
+    OpenThemeData(infoPtr->hwndSelf, themeClass);
     return 0;
 }
 
