@@ -1918,8 +1918,19 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
         case D3D10_EOT_RASTERIZER_STATE:
         {
             ID3D10EffectRasterizerVariable *rv = variable->lpVtbl->AsRasterizer(variable);
-            if (FAILED(hr = rv->lpVtbl->GetRasterizerState(rv, variable_idx, &o->object.rs)))
-                return hr;
+            if (!rv->lpVtbl->IsValid(rv))
+            {
+                WARN("Invalid variable type.\n");
+                return E_FAIL;
+            }
+            v = impl_from_ID3D10EffectVariable(variable);
+            if (v->type->element_count)
+            {
+                if (variable_idx >= v->type->element_count) return E_FAIL;
+                o->pass->rasterizer = &v->elements[variable_idx];
+            }
+            else
+                o->pass->rasterizer = v;
             break;
         }
 
@@ -2903,8 +2914,7 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
     switch(o->type)
     {
         case D3D10_EOT_RASTERIZER_STATE:
-            ID3D10Device_RSSetState(device, o->object.rs);
-            return S_OK;
+            break;
 
         case D3D10_EOT_DEPTH_STENCIL_STATE:
             ID3D10Device_OMSetDepthStencilState(device, o->object.ds, o->pass->stencil_ref);
@@ -2935,6 +2945,8 @@ static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
             FIXME("Unhandled effect object type %#x.\n", o->type);
             return E_FAIL;
     }
+
+    return S_OK;
 }
 
 static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_variable *s,
@@ -4100,6 +4112,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
         apply_shader_resources(device, pass->gs.shader);
     if (pass->ps.shader != &null_shader_variable)
         apply_shader_resources(device, pass->ps.shader);
+    if (pass->rasterizer)
+        ID3D10Device_RSSetState(device, pass->rasterizer->u.state.object.rasterizer);
 
     for (i = 0; i < pass->object_count; ++i)
     {

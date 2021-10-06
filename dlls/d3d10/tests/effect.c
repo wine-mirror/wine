@@ -4195,6 +4195,7 @@ static void test_effect_state_groups(void)
     UINT sample_mask, stencil_ref;
     ID3D10EffectBlendVariable *b;
     D3D10_BLEND_DESC blend_desc;
+    D3D10_STATE_BLOCK_MASK mask;
     D3D10_PASS_DESC pass_desc;
     ID3D10EffectVariable *v;
     ID3D10EffectPass *pass;
@@ -4203,6 +4204,7 @@ static void test_effect_state_groups(void)
     ID3D10Device *device;
     ULONG refcount;
     HRESULT hr;
+    BOOL ret;
 
     if (!(device = create_device()))
     {
@@ -4323,6 +4325,21 @@ static void test_effect_state_groups(void)
     ok(pass_desc.BlendFactor[1] == 0.6f, "Got unexpected BlendFactor[1] %.8e.\n", pass_desc.BlendFactor[1]);
     ok(pass_desc.BlendFactor[2] == 0.7f, "Got unexpected BlendFactor[2] %.8e.\n", pass_desc.BlendFactor[2]);
     ok(pass_desc.BlendFactor[3] == 0.8f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
+
+    hr = D3D10StateBlockMaskDisableAll(&mask);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = pass->lpVtbl->ComputeStateBlockMask(pass, &mask);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_RS_RASTERIZER_STATE, 0);
+todo_wine
+    ok(ret, "Unexpected mask.\n");
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_OM_DEPTH_STENCIL_STATE, 0);
+todo_wine
+    ok(ret, "Unexpected mask.\n");
+    ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_OM_BLEND_STATE, 0);
+todo_wine
+    ok(ret, "Unexpected mask.\n");
+
     hr = pass->lpVtbl->Apply(pass, 0);
     ok(SUCCEEDED(hr), "Failed to apply pass, hr %#x.\n", hr);
 
