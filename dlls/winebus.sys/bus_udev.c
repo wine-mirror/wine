@@ -1048,6 +1048,7 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 {
     struct udev_device *parent = NULL;
     const char *ptr, *next, *tmp;
+    char buffer[MAX_PATH];
     DWORD bus = 0;
 
     if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, subsystem, NULL))) return;
@@ -1062,10 +1063,15 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
 
             if (!strncmp(ptr, "HID_UNIQ=", 9))
             {
-                char buffer[MAX_PATH];
                 if (desc->serialnumber[0]) continue;
                 if (sscanf(ptr, "HID_UNIQ=%256s\n", buffer) == 1)
                     ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
+            }
+            if (!strncmp(ptr, "HID_NAME=", 7))
+            {
+                if (desc->product[0]) continue;
+                if (sscanf(ptr, "HID_NAME=%256s\n", buffer) == 1)
+                    ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc->product, ARRAY_SIZE(desc->product));
             }
             if (!strncmp(ptr, "HID_PHYS=", 9) || !strncmp(ptr, "PHYS=\"", 6))
             {
