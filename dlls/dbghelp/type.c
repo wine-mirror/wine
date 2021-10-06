@@ -83,6 +83,7 @@ static const char* symt_get_tag_str(DWORD tag)
     case SymTagExport:                  return "SymTagExport";
     case SymTagHeapAllocationSite:      return "SymTagHeapAllocationSite";
     case SymTagCoffGroup:               return "SymTagCoffGroup";
+    case SymTagInlinee:                 return "SymTagInlinee";
     default:                            return "---";
     }
 }

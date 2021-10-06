@@ -66,6 +66,7 @@ enum SymTagEnum
    SymTagExport,
    SymTagHeapAllocationSite,
    SymTagCoffGroup,
+   SymTagInlinee,
    SymTagMax
 };
 
