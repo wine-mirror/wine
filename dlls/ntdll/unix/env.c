@@ -644,37 +644,11 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
     }
     else  /* utf-8 */
     {
-        unsigned int res;
-        const char *srcend = src + srclen;
-        WCHAR *dstend = dst + dstlen;
-
-        while ((dst < dstend) && (src < srcend))
-        {
-            unsigned char ch = *src++;
-            if (ch < 0x80)  /* special fast case for 7-bit ASCII */
-            {
-                *dst++ = ch;
-                continue;
-            }
-            if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
-            {
-                *dst++ = res;
-            }
-            else if (res <= 0x10ffff)  /* we need surrogates */
-            {
-                res -= 0x10000;
-                *dst++ = 0xd800 | (res >> 10);
-                if (dst == dstend) break;
-                *dst++ = 0xdc00 | (res & 0x3ff);
-            }
-            else
-            {
-                *dst++ = 0xfffd;
-            }
-        }
-        reslen = dstlen - (dstend - dst);
+        reslen = 0;
+        RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
+        reslen /= sizeof(WCHAR);
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces NFD */
-        if (reslen && nfc_table) reslen = compose_string( nfc_table, dst - reslen, reslen );
+        if (reslen && nfc_table) reslen = compose_string( nfc_table, dst, reslen );
 #endif
     }
     return reslen;
@@ -2485,4 +2459,71 @@ NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
 {
     *lang = system_ui_language;
     return STATUS_SUCCESS;
+}
+
+WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
+{
+    return ntdll_towupper( wch );
+}
+
+WCHAR WINAPI RtlDowncaseUnicodeChar( WCHAR wch )
+{
+    return ntdll_towlower( wch );
+}
+
+NTSTATUS WINAPI RtlUTF8ToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen, const char *src, DWORD srclen )
+{
+    unsigned int res, len;
+    NTSTATUS status = STATUS_SUCCESS;
+    const char *srcend = src + srclen;
+    WCHAR *dstend;
+
+    if (!src) return STATUS_INVALID_PARAMETER_4;
+    if (!reslen) return STATUS_INVALID_PARAMETER;
+
+    dstlen /= sizeof(WCHAR);
+    dstend = dst + dstlen;
+    if (!dst)
+    {
+        for (len = 0; src < srcend; len++)
+        {
+            unsigned char ch = *src++;
+            if (ch < 0x80) continue;
+            if ((res = decode_utf8_char( ch, &src, srcend )) > 0x10ffff)
+                status = STATUS_SOME_NOT_MAPPED;
+            else
+                if (res > 0xffff) len++;
+        }
+        *reslen = len * sizeof(WCHAR);
+        return status;
+    }
+
+    while ((dst < dstend) && (src < srcend))
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
+        {
+            *dst++ = res;
+        }
+        else if (res <= 0x10ffff)  /* we need surrogates */
+        {
+            res -= 0x10000;
+            *dst++ = 0xd800 | (res >> 10);
+            if (dst == dstend) break;
+            *dst++ = 0xdc00 | (res & 0x3ff);
+        }
+        else
+        {
+            *dst++ = 0xfffd;
+            status = STATUS_SOME_NOT_MAPPED;
+        }
+    }
+    if (src < srcend) status = STATUS_BUFFER_TOO_SMALL;  /* overflow */
+    *reslen = (dstlen - (dstend - dst)) * sizeof(WCHAR);
+    return status;
 }
