@@ -7074,7 +7074,7 @@ static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFilters
     collection->ref = 1;
 
     init_dispatch(&collection->dispex, (IUnknown*)&collection->IHTMLFiltersCollection_iface,
-                  &HTMLFiltersCollection_dispex, compat_mode);
+                  &HTMLFiltersCollection_dispex, min(compat_mode, COMPAT_MODE_IE8));
 
     *ret = &collection->IHTMLFiltersCollection_iface;
     return S_OK;
