@@ -594,9 +594,9 @@ static void export_gnutls_datum( UCHAR *buffer, ULONG length, gnutls_datum_t *d,
     memcpy( buffer + offset, src, size );
 }
 
-static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
+static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, ULONG *pubkey_len )
 {
-    BCRYPT_RSAKEY_BLOB *rsa_blob;
+    BCRYPT_RSAKEY_BLOB *rsa_blob = pubkey;
     gnutls_datum_t m, e;
     UCHAR *dst;
     int ret;
@@ -607,11 +607,12 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (!(rsa_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*rsa_blob) + e.size + m.size )))
+    if (*pubkey_len < sizeof(*rsa_blob) + e.size + m.size)
     {
+        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, (ULONG)sizeof(*rsa_blob) + e.size + m.size );
         pgnutls_perror( ret );
         free( e.data ); free( m.data );
-        return STATUS_NO_MEMORY;
+        return STATUS_BUFFER_TOO_SMALL;
     }
 
     dst = (UCHAR *)(rsa_blob + 1);
@@ -625,17 +626,16 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
     rsa_blob->cbPrime1    = 0;
     rsa_blob->cbPrime2    = 0;
 
-    *pubkey = (UCHAR *)rsa_blob;
     *pubkey_len = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
 
     free( e.data ); free( m.data );
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_id alg_id, UCHAR **pubkey,
+static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_id alg_id, void *pubkey,
                                           ULONG *pubkey_len )
 {
-    BCRYPT_ECCKEY_BLOB *ecc_blob;
+    BCRYPT_ECCKEY_BLOB *ecc_blob = pubkey;
     gnutls_ecc_curve_t curve;
     gnutls_datum_t x, y;
     DWORD magic, size;
@@ -670,11 +670,12 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(ecc_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*ecc_blob) + size * 2 )))
+    if (*pubkey_len < sizeof(*ecc_blob) + size * 2)
     {
+        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, (ULONG)sizeof(*ecc_blob) + size * 2 );
         pgnutls_perror( ret );
         free( x.data ); free( y.data );
-        return STATUS_NO_MEMORY;
+        return STATUS_BUFFER_TOO_SMALL;
     }
 
     ecc_blob->dwMagic = magic;
@@ -686,16 +687,15 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
     dst += size;
     export_gnutls_datum( dst, size, &y, NULL );
 
-    *pubkey = (UCHAR *)ecc_blob;
     *pubkey_len = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
 
     free( x.data ); free( y.data );
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
+static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bitlen, void *pubkey, ULONG *pubkey_len )
 {
-    BCRYPT_DSA_KEY_BLOB *dsa_blob;
+    BCRYPT_DSA_KEY_BLOB *dsa_blob = pubkey;
     gnutls_datum_t p, q, g, y;
     UCHAR *dst;
     int ret;
@@ -712,8 +712,9 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(dsa_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*dsa_blob) + bitlen / 8 * 3 )))
+    if (*pubkey_len < sizeof(*dsa_blob) + bitlen / 8 * 3)
     {
+        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, (ULONG)sizeof(*dsa_blob) + bitlen / 8 * 3 );
         pgnutls_perror( ret );
         free( p.data ); free( q.data ); free( g.data ); free( y.data );
         return STATUS_NO_MEMORY;
@@ -736,7 +737,6 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
     memset( dsa_blob->Count, 0, sizeof(dsa_blob->Count) ); /* FIXME */
     memset( dsa_blob->Seed, 0, sizeof(dsa_blob->Seed) ); /* FIXME */
 
-    *pubkey = (UCHAR *)dsa_blob;
     *pubkey_len = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
 
     free( p.data ); free( q.data ); free( g.data ); free( y.data );
@@ -758,9 +758,9 @@ static void reverse_bytes( UCHAR *buf, ULONG len )
 
 #define Q_SIZE 20
 static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, const DSSSEED *seed, ULONG bitlen,
-                                               UCHAR **pubkey, ULONG *pubkey_len )
+                                               void *pubkey, ULONG *pubkey_len )
 {
-    BLOBHEADER *hdr;
+    BLOBHEADER *hdr = pubkey;
     DSSPUBKEY *dsskey;
     gnutls_datum_t p, q, g, y;
     UCHAR *dst;
@@ -778,8 +778,9 @@ static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, cons
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (!(hdr = RtlAllocateHeap( GetProcessHeap(), 0, size + bitlen / 8 * 3 + Q_SIZE )))
+    if (*pubkey_len < size + bitlen / 8 * 3 + Q_SIZE)
     {
+        FIXME( "wrong pubkey len %u / %u\n", *pubkey_len, size + bitlen / 8 * 3 + Q_SIZE );
         pgnutls_perror( ret );
         free( p.data ); free( q.data ); free( g.data ); free( y.data );
         return STATUS_NO_MEMORY;
@@ -813,7 +814,6 @@ static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, cons
 
     memcpy( dst, seed, sizeof(*seed) );
 
-    *pubkey = (UCHAR *)hdr;
     *pubkey_len = size + bitlen / 8 * 3 + Q_SIZE;
 
     free( p.data ); free( q.data ); free( g.data ); free( y.data );
@@ -870,15 +870,15 @@ static NTSTATUS CDECL key_asymmetric_generate( struct key *key )
     switch (pk_alg)
     {
     case GNUTLS_PK_RSA:
-        status = export_gnutls_pubkey_rsa( handle, key->u.a.bitlen, &key->u.a.pubkey, &key->u.a.pubkey_len );
+        status = export_gnutls_pubkey_rsa( handle, key->u.a.bitlen, key->u.a.pubkey, &key->u.a.pubkey_len );
         break;
 
     case GNUTLS_PK_ECC:
-        status = export_gnutls_pubkey_ecc( handle, key->alg_id, &key->u.a.pubkey, &key->u.a.pubkey_len );
+        status = export_gnutls_pubkey_ecc( handle, key->alg_id, key->u.a.pubkey, &key->u.a.pubkey_len );
         break;
 
     case GNUTLS_PK_DSA:
-        status = export_gnutls_pubkey_dsa( handle, key->u.a.bitlen, &key->u.a.pubkey, &key->u.a.pubkey_len );
+        status = export_gnutls_pubkey_dsa( handle, key->u.a.bitlen, key->u.a.pubkey, &key->u.a.pubkey_len );
         break;
 
     default:
@@ -997,7 +997,7 @@ static NTSTATUS CDECL key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
         return STATUS_INTERNAL_ERROR;
     }
 
-    if ((status = export_gnutls_pubkey_ecc( handle, key->alg_id, &key->u.a.pubkey, &key->u.a.pubkey_len )))
+    if ((status = export_gnutls_pubkey_ecc( handle, key->alg_id, key->u.a.pubkey, &key->u.a.pubkey_len )))
     {
         pgnutls_privkey_deinit( handle );
         return status;
@@ -1158,8 +1158,8 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
         return STATUS_INTERNAL_ERROR;
     }
 
-    if ((status = export_gnutls_pubkey_dsa_capi( handle, &key->u.a.dss_seed, key->u.a.bitlen, &key->u.a.pubkey,
-                                                 &key->u.a.pubkey_len )))
+    if ((status = export_gnutls_pubkey_dsa_capi( handle, &key->u.a.dss_seed, key->u.a.bitlen,
+                                                 key->u.a.pubkey, &key->u.a.pubkey_len )))
     {
         pgnutls_privkey_deinit( handle );
         return status;
