@@ -274,86 +274,34 @@ static BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_pubkey_init);
 #undef LOAD_FUNCPTR
 
-    if (!(pgnutls_cipher_tag = dlsym( libgnutls_handle, "gnutls_cipher_tag" )))
-    {
-        WARN("gnutls_cipher_tag not found\n");
-        pgnutls_cipher_tag = compat_gnutls_cipher_tag;
+#define LOAD_FUNCPTR_OPT(f) \
+    if (!(p##f = dlsym( libgnutls_handle, #f ))) \
+    { \
+        WARN( "failed to load %s\n", #f ); \
+        p##f =  compat_##f; \
     }
-    if (!(pgnutls_cipher_add_auth = dlsym( libgnutls_handle, "gnutls_cipher_add_auth" )))
-    {
-        WARN("gnutls_cipher_add_auth not found\n");
-        pgnutls_cipher_add_auth = compat_gnutls_cipher_add_auth;
-    }
+
+    LOAD_FUNCPTR_OPT(gnutls_cipher_tag)
+    LOAD_FUNCPTR_OPT(gnutls_cipher_add_auth)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_import_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_dsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_pk_to_sign)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_verify_hash2)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_dsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_generate)
+    LOAD_FUNCPTR_OPT(gnutls_decode_rs_value)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_decrypt_data)
+#undef LOAD_FUNCPTR_OPT
 
     if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror( ret );
         goto fail;
-    }
-    if (!(pgnutls_pubkey_import_ecc_raw = dlsym( libgnutls_handle, "gnutls_pubkey_import_ecc_raw" )))
-    {
-        WARN("gnutls_pubkey_import_ecc_raw not found\n");
-        pgnutls_pubkey_import_ecc_raw = compat_gnutls_pubkey_import_ecc_raw;
-    }
-    if (!(pgnutls_privkey_export_rsa_raw = dlsym( libgnutls_handle, "gnutls_privkey_export_rsa_raw" )))
-    {
-        WARN("gnutls_privkey_export_rsa_raw not found\n");
-        pgnutls_privkey_export_rsa_raw = compat_gnutls_privkey_export_rsa_raw;
-    }
-    if (!(pgnutls_privkey_export_ecc_raw = dlsym( libgnutls_handle, "gnutls_privkey_export_ecc_raw" )))
-    {
-        WARN("gnutls_privkey_export_ecc_raw not found\n");
-        pgnutls_privkey_export_ecc_raw = compat_gnutls_privkey_export_ecc_raw;
-    }
-    if (!(pgnutls_privkey_import_ecc_raw = dlsym( libgnutls_handle, "gnutls_privkey_import_ecc_raw" )))
-    {
-        WARN("gnutls_privkey_import_ecc_raw not found\n");
-        pgnutls_privkey_import_ecc_raw = compat_gnutls_privkey_import_ecc_raw;
-    }
-    if (!(pgnutls_privkey_export_dsa_raw = dlsym( libgnutls_handle, "gnutls_privkey_export_dsa_raw" )))
-    {
-        WARN("gnutls_privkey_export_dsa_raw not found\n");
-        pgnutls_privkey_export_dsa_raw = compat_gnutls_privkey_export_dsa_raw;
-    }
-    if (!(pgnutls_pk_to_sign = dlsym( libgnutls_handle, "gnutls_pk_to_sign" )))
-    {
-        WARN("gnutls_pk_to_sign not found\n");
-        pgnutls_pk_to_sign = compat_gnutls_pk_to_sign;
-    }
-    if (!(pgnutls_pubkey_verify_hash2 = dlsym( libgnutls_handle, "gnutls_pubkey_verify_hash2" )))
-    {
-        WARN("gnutls_pubkey_verify_hash2 not found\n");
-        pgnutls_pubkey_verify_hash2 = compat_gnutls_pubkey_verify_hash2;
-    }
-    if (!(pgnutls_pubkey_import_rsa_raw = dlsym( libgnutls_handle, "gnutls_pubkey_import_rsa_raw" )))
-    {
-        WARN("gnutls_pubkey_import_rsa_raw not found\n");
-        pgnutls_pubkey_import_rsa_raw = compat_gnutls_pubkey_import_rsa_raw;
-    }
-    if (!(pgnutls_pubkey_import_dsa_raw = dlsym( libgnutls_handle, "gnutls_pubkey_import_dsa_raw" )))
-    {
-        WARN("gnutls_pubkey_import_dsa_raw not found\n");
-        pgnutls_pubkey_import_dsa_raw = compat_gnutls_pubkey_import_dsa_raw;
-    }
-    if (!(pgnutls_privkey_generate = dlsym( libgnutls_handle, "gnutls_privkey_generate" )))
-    {
-        WARN("gnutls_privkey_generate not found\n");
-        pgnutls_privkey_generate = compat_gnutls_privkey_generate;
-    }
-    if (!(pgnutls_decode_rs_value = dlsym( libgnutls_handle, "gnutls_decode_rs_value" )))
-    {
-        WARN("gnutls_decode_rs_value not found\n");
-        pgnutls_decode_rs_value = compat_gnutls_decode_rs_value;
-    }
-    if (!(pgnutls_privkey_import_rsa_raw = dlsym( libgnutls_handle, "gnutls_privkey_import_rsa_raw" )))
-    {
-        WARN("gnutls_privkey_import_rsa_raw not found\n");
-        pgnutls_privkey_import_rsa_raw = compat_gnutls_privkey_import_rsa_raw;
-    }
-    if (!(pgnutls_privkey_decrypt_data = dlsym( libgnutls_handle, "gnutls_privkey_decrypt_data" )))
-    {
-        WARN("gnutls_privkey_decrypt_data not found\n");
-        pgnutls_privkey_decrypt_data = compat_gnutls_privkey_decrypt_data;
     }
 
     if (TRACE_ON( bcrypt ))
