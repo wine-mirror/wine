@@ -191,6 +191,8 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
         *ppv = &This->IProvideMultipleClassInfo_iface;
     }else if(IsEqualGUID(&IID_IWineHTMLWindowPrivate, riid)) {
         *ppv = &This->IWineHTMLWindowPrivate_iface;
+    }else if(IsEqualGUID(&IID_IWineHTMLWindowCompatPrivate, riid)) {
+        *ppv = &This->IWineHTMLWindowCompatPrivate_iface;
     }else if(IsEqualGUID(&IID_IMarshal, riid)) {
         *ppv = NULL;
         FIXME("(%p)->(IID_IMarshal %p)\n", This, ppv);
@@ -3145,6 +3147,94 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_get_console,
 };
 
+static inline HTMLWindow *impl_from_IWineHTMLWindowCompatPrivateVtbl(IWineHTMLWindowCompatPrivate *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, IWineHTMLWindowCompatPrivate_iface);
+}
+
+static HRESULT WINAPI window_compat_private_QueryInterface(IWineHTMLWindowCompatPrivate *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IHTMLWindow2_QueryInterface(&This->IHTMLWindow2_iface, riid, ppv);
+}
+
+static ULONG WINAPI window_compat_private_AddRef(IWineHTMLWindowCompatPrivate *iface)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+}
+
+static ULONG WINAPI window_compat_private_Release(IWineHTMLWindowCompatPrivate *iface)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
+}
+
+static HRESULT WINAPI window_compat_private_GetTypeInfoCount(IWineHTMLWindowCompatPrivate *iface, UINT *pctinfo)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI window_compat_private_GetTypeInfo(IWineHTMLWindowCompatPrivate *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI window_compat_private_GetIDsOfNames(IWineHTMLWindowCompatPrivate *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+}
+
+static HRESULT WINAPI window_compat_private_Invoke(IWineHTMLWindowCompatPrivate *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI window_compat_private_put_performance(IWineHTMLWindowCompatPrivate *iface, VARIANT v)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IHTMLWindow7_put_performance(&This->IHTMLWindow7_iface, v);
+}
+
+static HRESULT WINAPI window_compat_private_get_performance(IWineHTMLWindowCompatPrivate *iface, VARIANT *p)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowCompatPrivateVtbl(iface);
+
+    return IHTMLWindow7_get_performance(&This->IHTMLWindow7_iface, p);
+}
+
+static const IWineHTMLWindowCompatPrivateVtbl WineHTMLWindowCompatPrivateVtbl = {
+    window_compat_private_QueryInterface,
+    window_compat_private_AddRef,
+    window_compat_private_Release,
+    window_compat_private_GetTypeInfoCount,
+    window_compat_private_GetTypeInfo,
+    window_compat_private_GetIDsOfNames,
+    window_compat_private_Invoke,
+    window_compat_private_put_performance,
+    window_compat_private_get_performance,
+};
+
 static inline HTMLWindow *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLWindow, IDispatchEx_iface);
@@ -3649,6 +3739,8 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
 {
     if(compat_mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLWindow7_tid, NULL);
+    else
+        dispex_info_add_interface(info, IWineHTMLWindowCompatPrivate_tid, NULL);
     if(compat_mode >= COMPAT_MODE_IE10)
         dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, NULL);
 
@@ -3715,6 +3807,7 @@ static void *alloc_window(size_t size)
     window->IObjectIdentity_iface.lpVtbl = &ObjectIdentityVtbl;
     window->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
     window->IWineHTMLWindowPrivate_iface.lpVtbl = &WineHTMLWindowPrivateVtbl;
+    window->IWineHTMLWindowCompatPrivate_iface.lpVtbl = &WineHTMLWindowCompatPrivateVtbl;
     window->ref = 1;
 
     return window;

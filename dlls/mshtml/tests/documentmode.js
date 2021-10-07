@@ -354,8 +354,7 @@ sync_test("window_props", function() {
     test_exposed("requestAnimationFrame", v >= 10);
     test_exposed("Map", v >= 11);
     test_exposed("Set", v >= 11);
-    if(v >= 9) /* FIXME: native exposes it in all compat modes */
-        test_exposed("performance", true);
+    test_exposed("performance", true);
     test_exposed("console", v >= 10);
 });
 

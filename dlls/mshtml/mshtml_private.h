@@ -276,6 +276,7 @@ typedef struct EventTarget EventTarget;
     XIID(IWineDOMTokenList) \
     XIID(IWineHTMLElementPrivate) \
     XIID(IWineHTMLWindowPrivate) \
+    XIID(IWineHTMLWindowCompatPrivate) \
     XIID(IWineMSHTMLConsole)
 
 typedef enum {
@@ -496,6 +497,7 @@ struct HTMLWindow {
     IObjectIdentity    IObjectIdentity_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
     IWineHTMLWindowPrivate IWineHTMLWindowPrivate_iface;
+    IWineHTMLWindowCompatPrivate IWineHTMLWindowCompatPrivate_iface;
 
     IWineMSHTMLConsole *console;
 

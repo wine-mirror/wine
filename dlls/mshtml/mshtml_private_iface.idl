@@ -18,6 +18,8 @@
 
 #pragma makedep typelib
 
+#include <mshtmdid.h>
+
 import "ocidl.idl";
 
 [
@@ -87,6 +89,22 @@ interface IWineHTMLWindowPrivate : IDispatch
     HRESULT requestAnimationFrame([in] VARIANT *expr, [retval, out] VARIANT *timer_id);
     [propget, id(51)]
     HRESULT console([retval, out] IDispatch **console);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(1b5939fc-8f84-43f3-8d89-f9a92069fad6)
+]
+interface IWineHTMLWindowCompatPrivate : IDispatch
+{
+    [propput, id(DISPID_IHTMLWINDOW7_PERFORMANCE)]
+    HRESULT performance([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW7_PERFORMANCE)]
+    HRESULT performance([out, retval] VARIANT *p);
 }
 
 [
