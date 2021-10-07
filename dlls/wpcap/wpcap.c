@@ -23,8 +23,9 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "winnls.h"
-#define USE_WS_PREFIX
 #include "winsock2.h"
+#include "ws2ipdef.h"
+#include "iphlpapi.h"
 
 #include "wine/debug.h"
 #include "unixlib.h"
@@ -138,16 +139,254 @@ void * CDECL pcap_dump_open( struct pcap *pcap, const char *filename )
     return dumper;
 }
 
-int CDECL pcap_findalldevs( struct pcap_if_hdr **devs, char *errbuf )
+static void free_addresses( struct pcap_address *addrs )
 {
-    TRACE( "%p, %p\n", devs, errbuf );
-    return pcap_funcs->findalldevs( devs, errbuf );
+    struct pcap_address *next, *cur = addrs;
+    if (!addrs) return;
+    do
+    {
+        free( cur->addr );
+        free( cur->netmask );
+        free( cur->broadaddr );
+        free( cur->dstaddr );
+        next = cur->next;
+        free( cur );
+        cur = next;
+    } while (next);
 }
 
-int CDECL pcap_findalldevs_ex( char *source, void *auth, struct pcap_if_hdr **devs, char *errbuf )
+static void free_devices( struct pcap_interface *devs )
+{
+    struct pcap_interface *next, *cur = devs;
+    if (!devs) return;
+    do
+    {
+        free( cur->name );
+        free( cur->description );
+        free_addresses( cur->addresses );
+        next = cur->next;
+        free( cur );
+        cur = next;
+    } while (next);
+}
+
+static IP_ADAPTER_ADDRESSES *get_adapters( void )
+{
+    DWORD size = 0;
+    IP_ADAPTER_ADDRESSES *ret;
+    ULONG flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER;
+
+    if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, NULL, &size ) != ERROR_BUFFER_OVERFLOW) return NULL;
+    if (!(ret = malloc( size ))) return NULL;
+    if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size ))
+    {
+        free( ret );
+        return NULL;
+    }
+    return ret;
+}
+
+static IP_ADAPTER_ADDRESSES *find_adapter( IP_ADAPTER_ADDRESSES *list, const char *name )
+{
+    IP_ADAPTER_ADDRESSES *ret;
+    WCHAR *nameW;
+
+    if (!(nameW = strdupAW( name ))) return NULL;
+    for (ret = list; ret; ret = ret->Next)
+    {
+        if (!wcscmp( nameW, ret->FriendlyName )) break;
+    }
+    free( nameW);
+    return ret;
+}
+
+static char *build_win32_name( const char *source, const char *adapter_name )
+{
+    const char prefix[] = "\\Device\\NPF_";
+    int len = sizeof(prefix) + strlen(adapter_name);
+    char *ret;
+
+    if (source) len += strlen( source );
+    if ((ret = malloc( len )))
+    {
+        ret[0] = 0;
+        if (source) strcat( ret, source );
+        strcat( ret, prefix );
+        strcat( ret, adapter_name );
+    }
+    return ret;
+}
+
+static char *build_win32_description( const struct pcap_interface *unix_dev )
+{
+    int len = strlen(unix_dev->name) + 1;
+    char *ret, *ptr;
+
+    if (unix_dev->description && unix_dev->description[0]) len += strlen(unix_dev->description) + 1;
+    if ((ret = ptr = malloc( len )))
+    {
+        if (unix_dev->description)
+        {
+            strcpy( ret, unix_dev->description );
+            strcat( ret, " " );
+            strcat( ret, unix_dev->name );
+        }
+        else strcpy( ret, unix_dev->name );
+    }
+    return ret;
+}
+
+static struct sockaddr_hdr *dup_sockaddr( const struct sockaddr_hdr *addr )
+{
+    struct sockaddr_hdr *ret;
+
+    switch (addr->sa_family)
+    {
+    case AF_INET:
+    {
+        struct sockaddr_in *dst, *src = (struct sockaddr_in *)addr;
+        if (!(dst = calloc( 1, sizeof(*dst) ))) return NULL;
+        dst->sin_family = src->sin_family;
+        dst->sin_port   = src->sin_port;
+        dst->sin_addr   = src->sin_addr;
+        ret = (struct sockaddr_hdr *)dst;
+        break;
+    }
+    case AF_INET6:
+    {
+        struct sockaddr_in6 *dst, *src = (struct sockaddr_in6 *)addr;
+        if (!(dst = malloc( sizeof(*dst) ))) return NULL;
+        dst->sin6_family   = src->sin6_family;
+        dst->sin6_port     = src->sin6_port;
+        dst->sin6_flowinfo = src->sin6_flowinfo;
+        dst->sin6_addr     = src->sin6_addr;
+        dst->sin6_scope_id = src->sin6_scope_id;
+        ret = (struct sockaddr_hdr *)dst;
+        break;
+    }
+    default:
+        FIXME( "address family %u not supported\n", addr->sa_family );
+        return NULL;
+    }
+
+    return ret;
+}
+
+static struct pcap_address *build_win32_address( struct pcap_address *src )
+{
+    struct pcap_address *dst;
+
+    if (!(dst = calloc( 1, sizeof(*dst) ))) return NULL;
+    if (src->addr && !(dst->addr = dup_sockaddr( src->addr ))) goto err;
+    if (src->netmask && !(dst->netmask = dup_sockaddr( src->netmask ))) goto err;
+    if (src->broadaddr && !(dst->broadaddr = dup_sockaddr( src->broadaddr ))) goto err;
+    if (src->dstaddr && !(dst->dstaddr = dup_sockaddr( src->dstaddr ))) goto err;
+    return dst;
+
+err:
+    free( dst->addr );
+    free( dst->netmask );
+    free( dst->broadaddr );
+    free( dst->dstaddr );
+    free( dst );
+    return NULL;
+}
+
+static void add_win32_address( struct pcap_address **list, struct pcap_address *addr )
+{
+    struct pcap_address *cur = *list;
+    if (!cur) *list = addr;
+    else
+    {
+        while (cur->next) { cur = cur->next; }
+        cur->next = addr;
+    }
+}
+
+static struct pcap_address *build_win32_addresses( struct pcap_address *addrs )
+{
+    struct pcap_address *src, *dst, *ret = NULL;
+    src = addrs;
+    while (src)
+    {
+        if ((dst = build_win32_address( src ))) add_win32_address( &ret, dst );
+        src = src->next;
+    }
+    return ret;
+}
+
+static struct pcap_interface *build_win32_device( const struct pcap_interface *unix_dev, const char *source,
+                                                  const char *adapter_name )
+{
+    struct pcap_interface *ret;
+
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
+    if (!(ret->name = build_win32_name( source, adapter_name ))) goto err;
+    if (!(ret->description = build_win32_description( unix_dev ))) goto err;
+    if (!(ret->addresses = build_win32_addresses( unix_dev->addresses ))) goto err;
+    ret->flags = unix_dev->flags;
+    return ret;
+
+err:
+    free( ret->name );
+    free( ret->description );
+    free_addresses( ret->addresses );
+    free( ret );
+    return NULL;
+}
+
+static void add_win32_device( struct pcap_interface **list, struct pcap_interface *dev )
+{
+    struct pcap_interface *cur = *list;
+    if (!cur) *list = dev;
+    else
+    {
+        while (cur->next) { cur = cur->next; }
+        cur->next = dev;
+    }
+}
+
+static int find_all_devices( const char *source, struct pcap_interface **devs, char *errbuf )
+{
+    struct pcap_interface *unix_devs, *win32_devs = NULL, *cur, *dev;
+    IP_ADAPTER_ADDRESSES *ptr, *adapters = get_adapters();
+    int ret;
+
+    if (!adapters)
+    {
+        if (errbuf) sprintf( errbuf, "Out of memory." );
+        return -1;
+    }
+
+    if (!(ret = pcap_funcs->findalldevs( &unix_devs, errbuf )))
+    {
+        cur = unix_devs;
+        while (cur)
+        {
+            if ((ptr = find_adapter( adapters, cur->name )) && (dev = build_win32_device( cur, source, ptr->AdapterName )))
+            {
+                add_win32_device( &win32_devs, dev );
+            }
+            cur = cur->next;
+        }
+        *devs = win32_devs;
+        pcap_funcs->freealldevs( unix_devs );
+    }
+
+    free( adapters );
+    return ret;
+}
+
+int CDECL pcap_findalldevs( struct pcap_interface **devs, char *errbuf )
+{
+    TRACE( "%p, %p\n", devs, errbuf );
+    return find_all_devices( NULL, devs, errbuf );
+}
+
+int CDECL pcap_findalldevs_ex( char *source, void *auth, struct pcap_interface **devs, char *errbuf )
 {
     FIXME( "%s, %p, %p, %p: partial stub\n", debugstr_a(source), auth, devs, errbuf );
-    return pcap_funcs->findalldevs( devs, errbuf );
+    return find_all_devices( source, devs, errbuf );
 }
 
 void CDECL pcap_free_datalinks( int *links )
@@ -162,10 +401,10 @@ void CDECL pcap_free_tstamp_types( int *types )
     pcap_funcs->free_tstamp_types( types );
 }
 
-void CDECL pcap_freealldevs( struct pcap_if_hdr *devs )
+void CDECL pcap_freealldevs( struct pcap_interface *devs )
 {
     TRACE( "%p\n", devs );
-    pcap_funcs->freealldevs( devs );
+    free_devices( devs );
 }
 
 void CDECL pcap_freecode( void *program )
@@ -229,15 +468,14 @@ int CDECL pcap_list_tstamp_types( struct pcap *pcap, int **types )
 char * CDECL pcap_lookupdev( char *errbuf )
 {
     static char *ret;
-    struct pcap_if_hdr *devs;
+    struct pcap_interface *devs;
 
     TRACE( "%p\n", errbuf );
     if (!ret)
     {
-        if (pcap_funcs->findalldevs( &devs, errbuf ) == -1) return NULL;
-        if (!devs) return NULL;
+        if (pcap_findalldevs( &devs, errbuf ) == -1 || devs) return NULL;
         if ((ret = malloc( strlen(devs->name) + 1 ))) strcpy( ret, devs->name );
-        pcap_funcs->freealldevs( devs );
+        pcap_freealldevs( devs );
     }
     return ret;
 }
@@ -280,17 +518,60 @@ int CDECL pcap_next_ex( struct pcap *pcap, struct pcap_pkthdr_win32 **hdr, const
     return pcap_funcs->next_ex( pcap, hdr, data );
 }
 
+static char *strdupWA( const WCHAR *src )
+{
+    char *dst;
+    int len = WideCharToMultiByte( CP_ACP, 0, src, -1, NULL, 0, NULL, NULL );
+    if ((dst = malloc( len ))) WideCharToMultiByte( CP_ACP, 0, src, -1, dst, len, NULL, NULL );
+    return dst;
+}
+
+static char *map_win32_device_name( const char *dev )
+{
+    IP_ADAPTER_ADDRESSES *ptr, *adapters = get_adapters();
+    const char *name = strchr( dev, '{' );
+    char *ret = NULL;
+
+    if (!adapters || !name) return NULL;
+    for (ptr = adapters; ptr; ptr = ptr->Next)
+    {
+        if (!strcmp( name, ptr->AdapterName ))
+        {
+            ret = strdupWA( ptr->FriendlyName );
+            break;
+        }
+    }
+    free( adapters );
+    return ret;
+}
+
+static struct pcap *open_live( const char *source, int snaplen, int promisc, int timeout, char *errbuf )
+{
+    char *unix_dev;
+    struct pcap *ret;
+
+    if (!(unix_dev = map_win32_device_name( source )))
+    {
+        if (errbuf) sprintf( errbuf, "Unable to open the adapter." );
+        return NULL;
+    }
+
+    ret = pcap_funcs->open_live( unix_dev, snaplen, promisc, timeout, errbuf );
+    free( unix_dev );
+    return ret;
+}
+
 #define PCAP_OPENFLAG_PROMISCUOUS 1
 struct pcap * CDECL pcap_open( const char *source, int snaplen, int flags, int timeout, void *auth, char *errbuf )
 {
     FIXME( "%s, %d, %d, %d, %p, %p: partial stub\n", debugstr_a(source), snaplen, flags, timeout, auth, errbuf );
-    return pcap_funcs->open_live( source, snaplen, flags & PCAP_OPENFLAG_PROMISCUOUS, timeout, errbuf );
+    return open_live( source, snaplen, flags & PCAP_OPENFLAG_PROMISCUOUS, timeout, errbuf );
 }
 
 struct pcap * CDECL pcap_open_live( const char *source, int snaplen, int promisc, int to_ms, char *errbuf )
 {
     TRACE( "%s, %d, %d, %d, %p\n", debugstr_a(source), snaplen, promisc, to_ms, errbuf );
-    return pcap_funcs->open_live( source, snaplen, promisc, to_ms, errbuf );
+    return open_live( source, snaplen, promisc, to_ms, errbuf );
 }
 
 #define PCAP_SRC_FILE    2

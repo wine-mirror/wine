@@ -17,10 +17,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-struct pcap_if_hdr
+struct sockaddr_hdr
 {
-    struct pcap_if_hdr *next;
+    unsigned short sa_family;
+};
+
+struct pcap_address
+{
+    struct pcap_address *next;
+    struct sockaddr_hdr *addr;
+    struct sockaddr_hdr *netmask;
+    struct sockaddr_hdr *broadaddr;
+    struct sockaddr_hdr *dstaddr;
+};
+
+struct pcap_interface
+{
+    struct pcap_interface *next;
     char *name;
+    char *description;
+    struct pcap_address *addresses;
+    unsigned int flags;
 };
 
 struct pcap_pkthdr_win32
@@ -63,10 +80,10 @@ struct pcap_funcs
                            unsigned char * );
     void (CDECL *dump)( unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char * );
     void * (CDECL *dump_open)( struct pcap *, const char * );
-    int (CDECL *findalldevs)( struct pcap_if_hdr **, char * );
+    int (CDECL *findalldevs)( struct pcap_interface **, char * );
     void (CDECL *free_datalinks)( int * );
     void (CDECL *free_tstamp_types)( int * );
-    void (CDECL *freealldevs)( struct pcap_if_hdr * );
+    void (CDECL *freealldevs)( struct pcap_interface * );
     void (CDECL *freecode)( void * );
     int (CDECL *get_tstamp_precision)( struct pcap * );
     char * (CDECL *geterr)( struct pcap * );

@@ -143,7 +143,7 @@ static void * CDECL wrap_dump_open( struct pcap *pcap, const char *name )
     return pcap_dump_open( pcap->handle, name );
 }
 
-static int CDECL wrap_findalldevs( struct pcap_if_hdr **devs, char *errbuf )
+static int CDECL wrap_findalldevs( struct pcap_interface **devs, char *errbuf )
 {
     int ret;
     ret = pcap_findalldevs( (pcap_if_t **)devs, errbuf );
@@ -162,7 +162,7 @@ static void CDECL wrap_free_tstamp_types( int *types )
     pcap_free_tstamp_types( types );
 }
 
-static void CDECL wrap_freealldevs( struct pcap_if_hdr *devs )
+static void CDECL wrap_freealldevs( struct pcap_interface *devs )
 {
     pcap_freealldevs( (pcap_if_t *)devs );
 }
