@@ -20,13 +20,11 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "../tools.h"
 #include "winedump.h"
 
 #define MSFT_MAGIC 0x5446534d

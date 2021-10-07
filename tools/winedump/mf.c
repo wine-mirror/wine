@@ -19,9 +19,8 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-#include "winedump.h"
 
+#include "winedump.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

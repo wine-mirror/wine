@@ -19,9 +19,7 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
-#include "../tools.h"
 #include "winedump.h"
 
 static char *grep_buff = NULL;

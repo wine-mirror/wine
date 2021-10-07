@@ -19,15 +19,11 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "windef.h"
 #include "guiddef.h"

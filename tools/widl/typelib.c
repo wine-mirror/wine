@@ -20,21 +20,16 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <string.h>
 #include <ctype.h>
 
+#include "widl.h"
 #include "windef.h"
 #include "winbase.h"
-
-#include "widl.h"
 #include "utils.h"
 #include "wpp_private.h"
 #include "parser.h"

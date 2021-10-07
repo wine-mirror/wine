@@ -42,6 +42,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#include "../tools.h"
 #include "windef.h"
 #include "winbase.h"
 

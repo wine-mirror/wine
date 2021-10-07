@@ -23,11 +23,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "windef.h"
-#include "winbase.h"
+#include "winedump.h"
 #include "winver.h"
 #include "dbghelp.h"
-#include "winedump.h"
 
 static void dump_mdmp_data(const MINIDUMP_LOCATION_DESCRIPTOR* md, const char* pfx)
 {

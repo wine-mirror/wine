@@ -28,7 +28,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -39,12 +38,11 @@
 
 #define NONAMELESSUNION
 
+#include "widl.h"
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
-
-#include "widl.h"
 #include "typelib.h"
 #include "typelib_struct.h"
 #include "utils.h"
