@@ -13,6 +13,7 @@ C_SRCS = \
 	mfplat.c \
 	quartz_parser.c \
 	wg_parser.c \
+	wm_asyncreader.c \
 	wm_syncreader.c
 
 IDL_SRCS = \

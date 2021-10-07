@@ -6,7 +6,6 @@ DELAYIMPORTS = winegstreamer
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
-	reader.c \
 	wmvcore_main.c \
 	writer.c
 

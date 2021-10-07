@@ -25,7 +25,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
+HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader);
 HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader);
+
+HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **reader)
+{
+    TRACE("reserved %p, rights %#x, reader %p.\n", reserved, rights, reader);
+
+    return winegstreamer_create_wm_async_reader(reader);
+}
+
+HRESULT WINAPI WMCreateReaderPriv(IWMReader **reader)
+{
+    TRACE("reader %p.\n", reader);
+
+    return winegstreamer_create_wm_async_reader(reader);
+}
 
 HRESULT WINAPI WMCreateSyncReader(IUnknown *reserved, DWORD rights, IWMSyncReader **reader)
 {

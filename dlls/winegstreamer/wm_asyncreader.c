@@ -16,11 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wmvcore.h"
-
+#include "gst_private.h"
 #include "wmsdk.h"
-#include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
@@ -153,7 +150,7 @@ static ULONG WINAPI WMReader_Release(IWMReader *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -2039,36 +2036,31 @@ static const IWMPacketSize2Vtbl WMPacketSize2Vtbl =
     packetsize_SetMinPacketSize
 };
 
-HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
+HRESULT WINAPI winegstreamer_create_wm_async_reader(IWMReader **reader)
 {
-    WMReader *reader;
+    WMReader *object;
 
-    TRACE("(%p, %x, %p)\n", reserved, rights, ret_reader);
+    TRACE("reader %p.\n", reader);
 
-    reader = heap_alloc(sizeof(*reader));
-    if(!reader)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    reader->IWMReader_iface.lpVtbl = &WMReaderVtbl;
-    reader->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
-    reader->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
-    reader->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
-    reader->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
-    reader->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
-    reader->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
-    reader->IWMReaderPlaylistBurn_iface.lpVtbl = &WMReaderPlaylistBurnVtbl;
-    reader->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
-    reader->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
-    reader->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
-    reader->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
-    reader->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
-    reader->ref = 1;
+    object->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
+    object->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
+    object->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
+    object->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
+    object->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
+    object->IWMReader_iface.lpVtbl = &WMReaderVtbl;
+    object->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
+    object->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
+    object->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
+    object->IWMReaderPlaylistBurn_iface.lpVtbl = &WMReaderPlaylistBurnVtbl;
+    object->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
+    object->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
+    object->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
+    object->ref = 1;
 
-    *ret_reader = &reader->IWMReader_iface;
+    TRACE("Created async reader %p.\n", object);
+    *reader = (IWMReader *)&object->IWMReader_iface;
     return S_OK;
-}
-
-HRESULT WINAPI WMCreateReaderPriv(IWMReader **ret_reader)
-{
-    return WMCreateReader(NULL, 0, ret_reader);
 }
