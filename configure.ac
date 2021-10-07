@@ -723,7 +723,6 @@ case $host_os in
                                      [LDDLLFLAGS="-Wl,--disable-stdcall-fixup"]) ;;
     esac
     dnl Disable modules that can't be used on Windows
-    enable_iphlpapi=${enable_iphlpapi:-no}
     enable_mountmgr_sys=${enable_mountmgr_sys:-no}
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}

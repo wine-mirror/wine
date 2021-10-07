@@ -8339,8 +8339,7 @@ if test "x$ac_cv_cflags__Wl___disable_stdcall_fixup" = xyes; then :
   LDDLLFLAGS="-Wl,--disable-stdcall-fixup"
 fi ;;
     esac
-        enable_iphlpapi=${enable_iphlpapi:-no}
-    enable_mountmgr_sys=${enable_mountmgr_sys:-no}
+        enable_mountmgr_sys=${enable_mountmgr_sys:-no}
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
         with_x=${with_x:-no}
