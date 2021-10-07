@@ -92,7 +92,10 @@ struct pid_effect_update
     ULONG type_coll;
     ULONG axes_coll;
     ULONG axis_count;
+    ULONG direction_coll;
+    ULONG direction_count;
     struct hid_value_caps *axis_caps[6];
+    struct hid_value_caps *direction_caps[6];
     struct hid_value_caps *duration_caps;
     struct hid_value_caps *gain_caps;
     struct hid_value_caps *sample_period_caps;
@@ -1138,6 +1141,7 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
     }
     if (effect_update->trigger_button_caps) info->dwDynamicParams |= DIEP_TRIGGERBUTTON;
     if (effect_update->trigger_repeat_interval_caps) info->dwDynamicParams |= DIEP_TRIGGERREPEATINTERVAL;
+    if (effect_update->direction_coll) info->dwDynamicParams |= DIEP_DIRECTION;
     if (effect_update->axes_coll) info->dwDynamicParams |= DIEP_AXES;
 
     if (!(collection = effect_update->type_coll)) return DIERR_DEVICENOTREG;
@@ -1831,6 +1835,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
                 SET_SUB_COLLECTION( effect_update, type_coll );
             break;
         case PID_USAGE_AXES_ENABLE: SET_SUB_COLLECTION( effect_update, axes_coll ); break;
+        case PID_USAGE_DIRECTION: SET_SUB_COLLECTION( effect_update, direction_coll ); break;
         }
     }
 
@@ -1886,6 +1891,13 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         if (effect_update->axis_count >= 6) FIXME( "more than 6 PID axes detected\n" );
         else effect_update->axis_caps[effect_update->axis_count] = caps;
         effect_update->axis_count++;
+    }
+    if (instance->wCollectionNumber == effect_update->direction_coll)
+    {
+        SET_REPORT_ID( effect_update );
+        if (effect_update->direction_count >= 6) FIXME( "more than 6 PID directions detected\n" );
+        else effect_update->direction_caps[effect_update->direction_count] = caps;
+        effect_update->direction_count++;
     }
 
 #undef SET_REPORT_ID
