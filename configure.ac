@@ -451,7 +451,6 @@ AC_CHECK_HEADERS(\
 	elf.h \
 	float.h \
 	gettext-po.h \
-	grp.h \
 	gsm.h \
 	gsm/gsm.h \
 	ieeefp.h \
@@ -2125,8 +2124,6 @@ dnl **** Check for functions ****
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
-        __res_get_state \
-        __res_getservers \
 	epoll_create \
 	fork \
 	fstatfs \
@@ -2157,7 +2154,7 @@ CFLAGS="$ac_save_CFLAGS"
 
 dnl Check for -ldl
 AC_SEARCH_LIBS(dlopen, dl)
-WINE_CHECK_LIB_FUNCS(dladdr dlinfo,[$DL_LIBS])
+WINE_CHECK_LIB_FUNCS(dlinfo,[$DL_LIBS])
 
 dnl Check for -lnsl for Solaris
 AC_SEARCH_LIBS(gethostbyname, nsl)
@@ -2262,22 +2259,6 @@ AC_CHECK_MEMBERS([struct ff_effect.direction],,,
 #include <linux/input.h>
 #endif])
 
-AC_CACHE_CHECK([for if_nameindex],wine_cv_have_if_nameindex,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NET_IF_H
-# include <net/if.h>
-#endif]],
-                              [[struct if_nameindex *p = if_nameindex(); return p->if_index;]])],[wine_cv_have_if_nameindex=yes],[wine_cv_have_if_nameindex=no]))
-if test "$wine_cv_have_if_nameindex" = "yes"
-then
-  AC_DEFINE(HAVE_IF_NAMEINDEX, 1, [Define to 1 if you have the `if_nameindex' function.])
-fi
-
 AC_CACHE_CHECK([for sigaddset],wine_cv_have_sigaddset,
                AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <signal.h>]], [[sigset_t set; sigaddset(&set,SIGTERM);]])],[wine_cv_have_sigaddset=yes],[wine_cv_have_sigaddset=no]))
 if test "$wine_cv_have_sigaddset" = "yes"
@@ -2332,7 +2313,7 @@ then
 fi
 
 dnl Check for socket structure members
-AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr.sa_len, struct sockaddr_un.sun_len],,,
+AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr_un.sun_len],,,
 [#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -2360,7 +2341,6 @@ AC_CHECK_MEMBERS([struct mtget.mt_blksiz, struct mtget.mt_gstat, struct mtget.mt
 
 dnl Check for stat.st_blocks and ns-resolved times
 AC_CHECK_MEMBERS([
-	struct stat.st_blocks,
 	struct stat.st_mtim,
 	struct stat.st_mtimespec,
 	struct stat.st_ctim,
@@ -2398,18 +2378,6 @@ dnl Check for _u._ext.nscount6
 AC_CHECK_MEMBERS([struct __res_state._u._ext.nscount6],,,
 [#ifdef HAVE_RESOLV_H
 #include <resolv.h>
-#endif])
-
-dnl Check for ns_msg ptr member
-AC_CHECK_MEMBERS([ns_msg._msg_ptr],,,
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-# include <arpa/nameser.h>
 #endif])
 
 dnl Check for struct icmpstat

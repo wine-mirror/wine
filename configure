@@ -7480,7 +7480,6 @@ for ac_header in \
 	elf.h \
 	float.h \
 	gettext-po.h \
-	grp.h \
 	gsm.h \
 	gsm/gsm.h \
 	ieeefp.h \
@@ -17893,8 +17892,6 @@ esac
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 for ac_func in \
-        __res_get_state \
-        __res_getservers \
 	epoll_create \
 	fork \
 	fstatfs \
@@ -17992,13 +17989,12 @@ fi
 
 ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $DL_LIBS"
-for ac_func in dladdr dlinfo
+for ac_func in dlinfo
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "dlinfo" "ac_cv_func_dlinfo"
+if test "x$ac_cv_func_dlinfo" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_DLINFO 1
 _ACEOF
 
 fi
@@ -18569,47 +18565,6 @@ _ACEOF
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for if_nameindex" >&5
-$as_echo_n "checking for if_nameindex... " >&6; }
-if ${wine_cv_have_if_nameindex+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NET_IF_H
-# include <net/if.h>
-#endif
-int
-main ()
-{
-struct if_nameindex *p = if_nameindex(); return p->if_index;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  wine_cv_have_if_nameindex=yes
-else
-  wine_cv_have_if_nameindex=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_if_nameindex" >&5
-$as_echo "$wine_cv_have_if_nameindex" >&6; }
-if test "$wine_cv_have_if_nameindex" = "yes"
-then
-
-$as_echo "#define HAVE_IF_NAMEINDEX 1" >>confdefs.h
-
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigaddset" >&5
 $as_echo_n "checking for sigaddset... " >&6; }
 if ${wine_cv_have_sigaddset+:} false; then :
@@ -18752,22 +18707,6 @@ _ACEOF
 
 
 fi
-ac_fn_c_check_member "$LINENO" "struct sockaddr" "sa_len" "ac_cv_member_struct_sockaddr_sa_len" "#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_UN_H
-# include <sys/un.h>
-#endif
-"
-if test "x$ac_cv_member_struct_sockaddr_sa_len" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKADDR_SA_LEN 1
-_ACEOF
-
-
-fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr_un" "sun_len" "ac_cv_member_struct_sockaddr_un_sun_len" "#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -18867,15 +18806,6 @@ _ACEOF
 fi
 
 
-ac_fn_c_check_member "$LINENO" "struct stat" "st_blocks" "ac_cv_member_struct_stat_st_blocks" "$ac_includes_default"
-if test "x$ac_cv_member_struct_stat_st_blocks" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STAT_ST_BLOCKS 1
-_ACEOF
-
-
-fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_mtim" "ac_cv_member_struct_stat_st_mtim" "$ac_includes_default"
 if test "x$ac_cv_member_struct_stat_st_mtim" = xyes; then :
 
@@ -19022,26 +18952,6 @@ if test "x$ac_cv_member_struct___res_state__u__ext_nscount6" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6 1
-_ACEOF
-
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "ns_msg" "_msg_ptr" "ac_cv_member_ns_msg__msg_ptr" "#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-# include <arpa/nameser.h>
-#endif
-"
-if test "x$ac_cv_member_ns_msg__msg_ptr" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_NS_MSG__MSG_PTR 1
 _ACEOF
 
 

@@ -59,9 +59,6 @@
    file. */
 #undef HAVE_DISKARBITRATION_DISKARBITRATION_H
 
-/* Define to 1 if you have the `dladdr' function. */
-#undef HAVE_DLADDR
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -150,9 +147,6 @@
 /* Define if we have the libgphoto2_port development environment */
 #undef HAVE_GPHOTO2_PORT
 
-/* Define to 1 if you have the <grp.h> header file. */
-#undef HAVE_GRP_H
-
 /* Define to 1 if you have the <gsm/gsm.h> header file. */
 #undef HAVE_GSM_GSM_H
 
@@ -170,9 +164,6 @@
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
-
-/* Define to 1 if you have the `if_nameindex' function. */
-#undef HAVE_IF_NAMEINDEX
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -447,9 +438,6 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
-/* Define to 1 if `_msg_ptr' is a member of `ns_msg'. */
-#undef HAVE_NS_MSG__MSG_PTR
-
 /* Define to 1 if OpenAL is available */
 #undef HAVE_OPENAL
 
@@ -621,9 +609,6 @@
 /* Define to 1 if `sin6_scope_id' is a member of `struct sockaddr_in6'. */
 #undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
 
-/* Define to 1 if `sa_len' is a member of `struct sockaddr'. */
-#undef HAVE_STRUCT_SOCKADDR_SA_LEN
-
 /* Define to 1 if `sun_len' is a member of `struct sockaddr_un'. */
 #undef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
 
@@ -641,9 +626,6 @@
 
 /* Define to 1 if `st_birthtimespec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC
-
-/* Define to 1 if `st_blocks' is a member of `struct stat'. */
-#undef HAVE_STRUCT_STAT_ST_BLOCKS
 
 /* Define to 1 if `st_ctim' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_CTIM
@@ -962,12 +944,6 @@
 /* Define to 1 if you have the `__clear_cache' (potentially built-in)
    function. */
 #undef HAVE___CLEAR_CACHE
-
-/* Define to 1 if you have the `__res_getservers' function. */
-#undef HAVE___RES_GETSERVERS
-
-/* Define to 1 if you have the `__res_get_state' function. */
-#undef HAVE___RES_GET_STATE
 
 /* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
    */

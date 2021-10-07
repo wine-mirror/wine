@@ -109,7 +109,6 @@ static char *build_path( const char *dir, const char *name )
 /* return the directory that contains the library at run-time */
 static char *get_runtime_libdir(void)
 {
-#ifdef HAVE_DLADDR
     Dl_info info;
     char *libdir;
 
@@ -123,7 +122,6 @@ static char *get_runtime_libdir(void)
         libdir[len] = 0;
         return libdir;
     }
-#endif /* HAVE_DLADDR */
     return NULL;
 }
 
