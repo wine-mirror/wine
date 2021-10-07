@@ -222,6 +222,7 @@ sync_test("builtin_toString", function() {
     test("styleSheetRules", sheet.rules, "MSCSSRuleList");
     test("styleSheets", document.styleSheets, "StyleSheetList");
     test("textRange", txtRange, "TextRange");
+    test("window", window, "Window", "[object Window]");
     test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest");
     if(v < 10) {
         test("namespaces", document.namespaces, "MSNamespaceInfoCollection");

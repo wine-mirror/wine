@@ -1457,7 +1457,7 @@ static HRESULT WINAPI HTMLWindow2_toString(IHTMLWindow2 *iface, BSTR *String)
     if(!String)
         return E_INVALIDARG;
 
-    *String = SysAllocString(L"[object]");
+    *String = SysAllocString(L"[object Window]");
     return *String ? S_OK : E_OUTOFMEMORY;
 }
 
