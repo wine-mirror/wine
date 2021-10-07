@@ -16,11 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wmvcore.h"
-
+#include "gst_private.h"
+#include "initguid.h"
 #include "wmsdk.h"
-#include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
@@ -85,7 +83,7 @@ static ULONG WINAPI WMSyncReader_Release(IWMSyncReader2 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -605,27 +603,20 @@ static const IWMProfile3Vtbl WMProfile3Vtbl =
     WMProfile3_GetExpectedPacketCount
 };
 
-HRESULT WINAPI WMCreateSyncReader(IUnknown *pcert, DWORD rights, IWMSyncReader **syncreader)
+HRESULT WINAPI winegstreamer_create_wm_sync_reader(IWMSyncReader **reader)
 {
-    WMSyncReader *sync;
+    WMSyncReader *object;
 
-    TRACE("(%p, %x, %p)\n", pcert, rights, syncreader);
+    TRACE("reader %p.\n", reader);
 
-    sync = heap_alloc(sizeof(*sync));
-
-    if (!sync)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    sync->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
-    sync->IWMSyncReader2_iface.lpVtbl = &WMSyncReader2Vtbl;
-    sync->ref = 1;
+    object->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
+    object->IWMSyncReader2_iface.lpVtbl = &WMSyncReader2Vtbl;
+    object->ref = 1;
 
-    *syncreader = (IWMSyncReader *)&sync->IWMSyncReader2_iface;
-
+    TRACE("Created sync reader %p.\n", object);
+    *reader = (IWMSyncReader *)&object->IWMSyncReader2_iface;
     return S_OK;
-}
-
-HRESULT WINAPI WMCreateSyncReaderPriv(IWMSyncReader **syncreader)
-{
-    return WMCreateSyncReader(NULL, 0, syncreader);
 }
