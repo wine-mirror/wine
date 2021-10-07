@@ -4432,6 +4432,35 @@ typedef struct
     DWORD exstyle;
 } test_style;
 
+static LRESULT WINAPI cbt_proc(int ncode, WPARAM wparam, LPARAM lparam)
+{
+    CBT_CREATEWNDW* c = (CBT_CREATEWNDW*)lparam;
+    HWND hwnd = (HWND)wparam;
+    test_style *ts;
+    DWORD style;
+
+    if (ncode !=  HCBT_CREATEWND)
+        return CallNextHookEx(NULL, ncode, wparam, lparam);
+
+    ts = c->lpcs->lpCreateParams;
+    ok(ts != NULL, "lpCreateParams not set\n");
+    todo_wine_if(!(ts->cs_style & WS_CHILD) || (ts->cs_style & WS_POPUP))
+        ok(c->lpcs->style == ts->cs_style, "style = 0x%08x, expected 0x%08x\n",
+                c->lpcs->style, ts->cs_style);
+    ok(c->lpcs->dwExStyle == ts->cs_exstyle, "exstyle = 0x%08x, expected 0x%08x\n",
+            c->lpcs->dwExStyle, ts->cs_exstyle);
+
+    style = GetWindowLongW(hwnd, GWL_STYLE);
+    todo_wine_if(!(ts->cs_style & WS_CHILD) || (ts->cs_style & WS_POPUP))
+        ok(style == ts->cs_style, "style = 0x%08x, expected 0x%08x\n",
+                style, ts->cs_style);
+    style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+    todo_wine_if(ts->exstyle != ts->cs_exstyle)
+        ok(style == (ts->cs_exstyle & ~WS_EX_LAYERED),
+                "exstyle = 0x%08x, expected 0x%08x\n", style, ts->cs_exstyle);
+    return CallNextHookEx(NULL, ncode, wparam, lparam);
+}
+
 static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     CREATESTRUCTA *cs;
@@ -4491,6 +4520,7 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
     test_style ts;
     HWND hwnd;
     HWND hwndParent = NULL;
+    HHOOK hook;
 
     ts.cs_style = dwStyleIn;
     ts.cs_exstyle = dwExStyleIn;
@@ -4507,11 +4537,14 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
     {
         hwndParent = CreateWindowExA(0, "static", NULL,
             WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+        ok(hwndParent != NULL, "CreateWindowExA failed\n");
     }
 
+    hook = SetWindowsHookExW(WH_CBT, cbt_proc, 0, GetCurrentThreadId());
     hwnd = CreateWindowExA(dwExStyleIn, (LPCSTR)MAKEINTATOM(atomStyleCheckClass), NULL,
                     dwStyleIn, 0, 0, 0, 0, hwndParent, NULL, NULL, &ts);
-    assert(hwnd);
+    ok(hwnd != NULL, "CreateWindowExA failed\n");
+    UnhookWindowsHookEx(hook);
 
     flush_events( TRUE );
 
