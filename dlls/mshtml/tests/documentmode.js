@@ -171,6 +171,82 @@ sync_test("builtin_toString", function() {
     ok(e.toString() === "", "tag 'area' (without href) toString returned " + e.toString());
     e.href = "https://www.winehq.org/";
     test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/");
+
+    e = document.createElement("style");
+    document.body.appendChild(e);
+    var sheet = v >= 9 ? e.sheet : e.styleSheet;
+    if(v >= 9)
+        sheet.insertRule("div { border: none }", 0);
+    else
+        sheet.addRule("div", "border: none", 0);
+
+    e = document.createElement("p");
+    e.className = "testclass    another ";
+    e.textContent = "Test content";
+    e.style.border = "1px solid black";
+    document.body.appendChild(e);
+
+    var txtRange = document.body.createTextRange();
+    txtRange.moveToElementText(e);
+
+    var clientRects = e.getClientRects();
+    if(!clientRects) win_skip("getClientRects() is buggy and not available, skipping");
+
+    var currentStyle = e.currentStyle;
+    if(!currentStyle) win_skip("currentStyle is buggy and not available, skipping");
+
+    // w10pro64 testbot VM throws WININET_E_INTERNAL_ERROR for some reason
+    var localStorage;
+    try {
+        localStorage = window.localStorage;
+    }catch(e) {
+        ok(e.number === 0x72ee4 - 0x80000000, "localStorage threw " + e.number + ": " + e);
+    }
+    if(!localStorage) win_skip("localStorage is buggy and not available, skipping");
+
+    test("attribute", document.createAttribute("class"), "Attr");
+    if(false /* todo_wine */) test("attributes", e.attributes, "NamedNodeMap");
+    test("childNodes", document.body.childNodes, "NodeList");
+    if(clientRects) test("clientRect", clientRects[0], "ClientRect");
+    if(clientRects) test("clientRects", clientRects, "ClientRectList");
+    if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties");
+    test("history", window.history, "History");
+    test("implementation", document.implementation, "DOMImplementation");
+    if(localStorage) test("localStorage", localStorage, "Storage");
+    test("location", window.location, "Object", window.location.href);
+    test("navigator", window.navigator, "Navigator");
+    test("screen", window.screen, "Screen");
+    test("sessionStorage", window.sessionStorage, "Storage");
+    test("styleSheet", sheet, "CSSStyleSheet");
+    test("styleSheetRule", sheet.rules.item(0), "CSSStyleRule");
+    test("styleSheetRules", sheet.rules, "MSCSSRuleList");
+    test("styleSheets", document.styleSheets, "StyleSheetList");
+    test("textRange", txtRange, "TextRange");
+    test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest");
+    if(v < 10) {
+        test("namespaces", document.namespaces, "MSNamespaceInfoCollection");
+    }
+    if(v < 11) {
+        test("eventObject", document.createEventObject(), "MSEventObj");
+        test("selection", document.selection, "MSSelection");
+    }
+    if(v >= 9) {
+        test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
+
+        test("Event", document.createEvent("Event"), "Event");
+        test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
+        test("KeyboardEvent", document.createEvent("KeyboardEvent"), "KeyboardEvent");
+        test("MouseEvent", document.createEvent("MouseEvent"), "MouseEvent");
+        test("UIEvent", document.createEvent("UIEvent"), "UIEvent");
+    }
+    if(v >= 10) {
+        test("classList", e.classList, "DOMTokenList", "testclass    another ");
+        test("console", window.console, "Console");
+    }
+    if(v >= 9) {
+        document.body.innerHTML = "<!--...-->";
+        test("comment", document.body.firstChild, "Comment");
+    }
 });
 
 sync_test("elem_props", function() {
