@@ -1011,8 +1011,9 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         {
             if (context.irp_data->complete)
             {
-                IoCompleteRequest( context.irp_data->irp, IO_NO_INCREMENT );
+                IRP *irp = context.irp_data->irp;
                 free_dispatch_irp( context.irp_data );
+                IoCompleteRequest( irp, IO_NO_INCREMENT );
             }
             else
             {
