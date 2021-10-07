@@ -155,6 +155,8 @@ struct hid_joystick_effect
     DIENVELOPE envelope;
     DIPERIODIC periodic;
     DIEFFECT params;
+    BOOL modified;
+    DWORD flags;
 
     char *effect_control_buf;
     char *effect_update_buf;
@@ -2193,7 +2195,6 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
     if (flags & DIEP_DIRECTION)
     {
         if (!direction_flags) return DIERR_INVALIDPARAM;
-        params->dwFlags &= ~(DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
 
         count = params->cAxes = impl->params.cAxes;
         if (capacity < params->cAxes) return DIERR_MOREDATA;
@@ -2218,7 +2219,8 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
             }
         }
 
-        if (!params->rglDirection) return DIERR_INVALIDPARAM;
+        if (!count) params->rglDirection = NULL;
+        else if (!params->rglDirection) return DIERR_INVALIDPARAM;
         else memcpy( params->rglDirection, directions, count * sizeof(LONG) );
     }
 
@@ -2277,11 +2279,177 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
     return DI_OK;
 }
 
+static BOOL set_parameters_object( struct hid_joystick *impl, struct hid_value_caps *caps,
+                                   DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    DWORD usages = MAKELONG( instance->wUsage, instance->wUsagePage );
+    *(DWORD *)data = usages;
+    return DIENUM_STOP;
+}
+
 static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *iface,
                                                          const DIEFFECT *params, DWORD flags )
 {
-    FIXME( "iface %p, params %p, flags %#x stub!\n", iface, params, flags );
-    return DIERR_UNSUPPORTED;
+    DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(DIPROPHEADER),
+        .dwHeaderSize = sizeof(DIPROPHEADER),
+        .dwHow = DIPH_BYUSAGE,
+    };
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    ULONG i, count, old_value, object_flags, direction_flags;
+    LONG directions[6] = {0};
+    HRESULT hr;
+    BOOL ret;
+
+    TRACE( "iface %p, params %p, flags %#x.\n", iface, params, flags );
+
+    if (!params) return E_POINTER;
+    if (params->dwSize != sizeof(DIEFFECT)) return DIERR_INVALIDPARAM;
+    object_flags = params->dwFlags & (DIEFF_OBJECTIDS | DIEFF_OBJECTOFFSETS);
+    direction_flags = params->dwFlags & (DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
+
+    if (object_flags & DIEFF_OBJECTIDS) filter.dwHow = DIPH_BYID;
+    else filter.dwHow = DIPH_BYOFFSET;
+
+    if (flags & DIEP_AXES)
+    {
+        if (!object_flags) return DIERR_INVALIDPARAM;
+        if (!params->rgdwAxes) return DIERR_INVALIDPARAM;
+        if (impl->params.cAxes) return DIERR_ALREADYINITIALIZED;
+        count = impl->joystick->pid_effect_update.axis_count;
+        if (params->cAxes > count) return DIERR_INVALIDPARAM;
+
+        impl->params.cAxes = params->cAxes;
+        for (i = 0; i < params->cAxes; ++i)
+        {
+            filter.dwObj = params->rgdwAxes[i];
+            ret = enum_objects( impl->joystick, &filter, DIDFT_AXIS, set_parameters_object,
+                                &impl->params.rgdwAxes[i] );
+            if (ret != DIENUM_STOP) impl->params.rgdwAxes[i] = 0;
+        }
+
+        impl->modified = TRUE;
+    }
+
+    if (flags & DIEP_DIRECTION)
+    {
+        if (!direction_flags) return DIERR_INVALIDPARAM;
+        if (!params->rglDirection) return DIERR_INVALIDPARAM;
+
+        count = impl->params.cAxes;
+        if (params->cAxes < count) return DIERR_INVALIDPARAM;
+        if ((direction_flags & DIEFF_POLAR) && count != 2) return DIERR_INVALIDPARAM;
+        if ((direction_flags & DIEFF_CARTESIAN) && count < 2) return DIERR_INVALIDPARAM;
+
+        if (!count) memset( directions, 0, sizeof(directions) );
+        else if (direction_flags & DIEFF_POLAR)
+        {
+            directions[0] = (params->rglDirection[0] % 36000) - 9000;
+            if (directions[0] < 0) directions[0] += 36000;
+            for (i = 1; i < count; ++i) directions[i] = 0;
+        }
+        else if (direction_flags & DIEFF_CARTESIAN)
+        {
+            for (i = 1; i < count; ++i)
+                directions[i - 1] = atan2( params->rglDirection[i], params->rglDirection[0] );
+            directions[count - 1] = 0;
+        }
+        else
+        {
+            for (i = 0; i < count; ++i)
+            {
+                directions[i] = params->rglDirection[i] % 36000;
+                if (directions[i] < 0) directions[i] += 36000;
+            }
+        }
+
+        if (memcmp( impl->params.rglDirection, directions, count * sizeof(LONG) ))
+            impl->modified = TRUE;
+        memcpy( impl->params.rglDirection, directions, count * sizeof(LONG) );
+    }
+
+    if (flags & DIEP_TYPESPECIFICPARAMS)
+    {
+        switch (impl->type)
+        {
+        case PID_USAGE_ET_SQUARE:
+        case PID_USAGE_ET_SINE:
+        case PID_USAGE_ET_TRIANGLE:
+        case PID_USAGE_ET_SAWTOOTH_UP:
+        case PID_USAGE_ET_SAWTOOTH_DOWN:
+            if (!params->lpvTypeSpecificParams) return E_POINTER;
+            if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
+            if (memcmp( &impl->periodic, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) ))
+                impl->modified = TRUE;
+            memcpy( &impl->periodic, params->lpvTypeSpecificParams, sizeof(DIPERIODIC) );
+            break;
+        case PID_USAGE_ET_SPRING:
+        case PID_USAGE_ET_DAMPER:
+        case PID_USAGE_ET_INERTIA:
+        case PID_USAGE_ET_FRICTION:
+        case PID_USAGE_ET_CONSTANT_FORCE:
+        case PID_USAGE_ET_RAMP:
+        case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+            FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
+            return DIERR_UNSUPPORTED;
+        }
+    }
+
+    if ((flags & DIEP_ENVELOPE) && params->lpEnvelope)
+    {
+        if (params->lpEnvelope->dwSize != sizeof(DIENVELOPE)) return DIERR_INVALIDPARAM;
+        if (memcmp( &impl->envelope, params->lpEnvelope, sizeof(DIENVELOPE) ))
+            impl->modified = TRUE;
+        memcpy( &impl->envelope, params->lpEnvelope, sizeof(DIENVELOPE) );
+    }
+
+    if (flags & DIEP_DURATION)
+    {
+        if (impl->params.dwDuration != params->dwDuration) impl->modified = TRUE;
+        impl->params.dwDuration = params->dwDuration;
+    }
+    if (flags & DIEP_GAIN)
+    {
+        if (impl->params.dwGain != params->dwGain) impl->modified = TRUE;
+        impl->params.dwGain = params->dwGain;
+    }
+    if (flags & DIEP_SAMPLEPERIOD)
+    {
+        if (impl->params.dwSamplePeriod != params->dwSamplePeriod) impl->modified = TRUE;
+        impl->params.dwSamplePeriod = params->dwSamplePeriod;
+    }
+    if (flags & DIEP_STARTDELAY)
+    {
+        if (impl->params.dwStartDelay != params->dwStartDelay) impl->modified = TRUE;
+        impl->params.dwStartDelay = params->dwStartDelay;
+    }
+    if (flags & DIEP_TRIGGERREPEATINTERVAL)
+    {
+        if (impl->params.dwTriggerRepeatInterval != params->dwTriggerRepeatInterval)
+            impl->modified = TRUE;
+        impl->params.dwTriggerRepeatInterval = params->dwTriggerRepeatInterval;
+    }
+
+    if (flags & DIEP_TRIGGERBUTTON)
+    {
+        if (!object_flags) return DIERR_INVALIDPARAM;
+
+        filter.dwObj = params->dwTriggerButton;
+        old_value = impl->params.dwTriggerButton;
+        ret = enum_objects( impl->joystick, &filter, DIDFT_BUTTON, set_parameters_object,
+                            &impl->params.dwTriggerButton );
+        if (ret != DIENUM_STOP) impl->params.dwTriggerButton = -1;
+        if (impl->params.dwTriggerButton != old_value) impl->modified = TRUE;
+    }
+
+    impl->flags |= flags;
+
+    if (flags & DIEP_NODOWNLOAD) return DI_DOWNLOADSKIPPED;
+    if (flags & DIEP_START) return IDirectInputEffect_Start( iface, 1, 0 );
+    if (FAILED(hr = IDirectInputEffect_Download( iface ))) return hr;
+    if (hr == DI_NOEFFECT) return DI_DOWNLOADSKIPPED;
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_effect_Start( IDirectInputEffect *iface, DWORD iterations, DWORD flags )

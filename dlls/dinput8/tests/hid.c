@@ -5370,7 +5370,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc_init, "%u", cAxes );
     desc.dwFlags |= DIEFF_CARTESIAN;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
     ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
     desc.dwFlags |= DIEFF_POLAR;
@@ -5379,7 +5378,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
     desc.dwFlags |= DIEFF_SPHERICAL;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
     check_member( desc, expect_desc_init, "%u", cAxes );
     ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
@@ -5393,7 +5391,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc_init, "%u", cAxes );
     check_member( desc, expect_desc_init, "%u", rgdwAxes[0] );
     check_member( desc, expect_desc_init, "%u", rgdwAxes[1] );
-    todo_wine
     check_member( desc, expect_desc_init, "%p", rglDirection );
     ok( desc.dwFlags == DIEFF_OBJECTIDS, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_OBJECTIDS );
 
@@ -5411,7 +5408,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc_init, "%u", cAxes );
     check_member( desc, expect_desc_init, "%u", rgdwAxes[0] );
     check_member( desc, expect_desc_init, "%u", rgdwAxes[1] );
-    todo_wine
     check_member( desc, expect_desc_init, "%p", rglDirection );
     todo_wine
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
@@ -5439,15 +5435,12 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, NULL, DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == E_POINTER, "SetParameters returned %#x\n", hr );
     memset( &desc, 0, sizeof(desc) );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
     desc.dwSize = sizeof(DIEFFECT);
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
@@ -5455,7 +5448,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Acquire( device );
@@ -5463,13 +5455,11 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DURATION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
     desc.dwTriggerButton = -1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DURATION );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( desc, expect_desc, "%u", dwDuration );
     check_member( desc, expect_desc_init, "%u", dwSamplePeriod );
     check_member( desc, expect_desc_init, "%u", dwGain );
@@ -5491,26 +5481,20 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc,
                                            DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_STARTDELAY |
                                                DIEP_TRIGGERREPEATINTERVAL | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     desc.dwDuration = 0;
     flags = DIEP_DURATION | DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_STARTDELAY | DIEP_TRIGGERREPEATINTERVAL;
     hr = IDirectInputEffect_GetParameters( effect, &desc, flags );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( desc, expect_desc, "%u", dwDuration );
-    todo_wine
     check_member( desc, expect_desc, "%u", dwSamplePeriod );
-    todo_wine
     check_member( desc, expect_desc, "%u", dwGain );
     check_member( desc, expect_desc_init, "%#x", dwTriggerButton );
-    todo_wine
     check_member( desc, expect_desc, "%u", dwTriggerRepeatInterval );
     check_member( desc, expect_desc_init, "%u", cAxes );
     check_member( desc, expect_desc_init, "%p", rglDirection );
     check_member( desc, expect_desc_init, "%p", lpEnvelope );
     check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
-    todo_wine
     check_member( desc, expect_desc, "%u", dwStartDelay );
 
     hr = IDirectInputEffect_Download( effect );
@@ -5522,29 +5506,22 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
 
     desc.lpEnvelope = NULL;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     desc.lpEnvelope = &envelope;
     envelope.dwSize = 0;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
     desc.lpEnvelope = &envelope;
     envelope.dwSize = sizeof(DIENVELOPE);
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_ENVELOPE );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( envelope, expect_envelope, "%u", dwAttackLevel );
-    todo_wine
     check_member( envelope, expect_envelope, "%u", dwAttackTime );
-    todo_wine
     check_member( envelope, expect_envelope, "%u", dwFadeLevel );
-    todo_wine
     check_member( envelope, expect_envelope, "%u", dwFadeTime );
 
     hr = IDirectInputEffect_Download( effect );
@@ -5562,13 +5539,10 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     desc.cbTypeSpecificParams = 0;
     desc.lpvTypeSpecificParams = NULL;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_ALLPARAMS | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TRIGGERBUTTON | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
 
     desc.dwFlags = DIEFF_OBJECTOFFSETS;
@@ -5577,45 +5551,32 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     desc.rgdwAxes[0] = DIJOFS_X;
     desc.dwTriggerButton = DIJOFS_BUTTON( 1 );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_AXES | DIEP_TRIGGERBUTTON | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_ALREADYINITIALIZED, "SetParameters returned %#x\n", hr );
 
     desc.cAxes = 0;
     desc.dwFlags = DIEFF_OBJECTIDS;
     desc.rgdwAxes = axes;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON );
-    todo_wine
     ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( desc, expect_desc, "%u", cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( desc, expect_desc, "%#x", dwTriggerButton );
-    todo_wine
     check_member( desc, expect_desc, "%u", cAxes );
-    todo_wine
     check_member( desc, expect_desc, "%u", rgdwAxes[0] );
-    todo_wine
     check_member( desc, expect_desc, "%u", rgdwAxes[1] );
-    todo_wine
     check_member( desc, expect_desc, "%u", rgdwAxes[2] );
 
     desc.dwFlags = DIEFF_OBJECTOFFSETS;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_AXES | DIEP_TRIGGERBUTTON );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     ok( desc.dwTriggerButton == 0x30, "got %#x expected %#x\n", desc.dwTriggerButton, 0x30 );
-    todo_wine
     ok( desc.rgdwAxes[0] == 8, "got %#x expected %#x\n", desc.rgdwAxes[0], 8 );
     ok( desc.rgdwAxes[1] == 0, "got %#x expected %#x\n", desc.rgdwAxes[1], 0 );
-    todo_wine
     ok( desc.rgdwAxes[2] == 4, "got %#x expected %#x\n", desc.rgdwAxes[2], 4 );
 
     hr = IDirectInputEffect_Download( effect );
@@ -5629,56 +5590,41 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     desc.cAxes = 0;
     desc.rglDirection = directions;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
     desc.cAxes = 3;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     desc.dwFlags = DIEFF_POLAR;
     desc.cAxes = 3;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
     desc.dwFlags = DIEFF_SPHERICAL;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    todo_wine
+    ok( desc.dwFlags == DIEFF_SPHERICAL, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_SPHERICAL );
     check_member( desc, expect_desc, "%u", cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( desc, expect_desc, "%u", cAxes );
-    todo_wine
     ok( desc.rglDirection[0] == 3000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 3000 );
-    todo_wine
     ok( desc.rglDirection[1] == 30000, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 30000 );
     ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
     desc.dwFlags = DIEFF_CARTESIAN;
     desc.cAxes = 2;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    todo_wine
+    ok( desc.dwFlags == DIEFF_CARTESIAN, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_CARTESIAN );
     check_member( desc, expect_desc, "%u", cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( desc, expect_desc, "%u", cAxes );
-    todo_wine
     ok( desc.rglDirection[0] == 4330, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 4330 );
-    todo_wine
     ok( desc.rglDirection[1] == 2500, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 2500 );
-    todo_wine
     ok( desc.rglDirection[2] == -8660, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], -8660 );
     desc.dwFlags = DIEFF_POLAR;
     desc.cAxes = 3;
@@ -5695,25 +5641,18 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     desc.cbTypeSpecificParams = 0;
     desc.lpvTypeSpecificParams = &periodic;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "SetParameters returned %#x\n", hr );
     desc.cbTypeSpecificParams = sizeof(DIPERIODIC);
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
 
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS );
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     check_member( periodic, expect_periodic, "%u", dwMagnitude );
-    todo_wine
     check_member( periodic, expect_periodic, "%d", lOffset );
-    todo_wine
     check_member( periodic, expect_periodic, "%u", dwPhase );
-    todo_wine
     check_member( periodic, expect_periodic, "%u", dwPeriod );
 
     hr = IDirectInputEffect_Start( effect, 1, DIES_NODOWNLOAD );
@@ -5821,23 +5760,18 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     desc.rglDirection[1] = 0;
     desc.rglDirection[2] = 0;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_AXES | DIEP_DIRECTION | DIEP_NODOWNLOAD );
-    todo_wine
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#x\n", hr );
     desc.rglDirection[0] = 0;
 
     desc.dwFlags = DIEFF_SPHERICAL;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    todo_wine
+    ok( desc.dwFlags == DIEFF_SPHERICAL, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_SPHERICAL );
     ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
-    todo_wine
     ok( desc.rglDirection[0] == 30000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 30000 );
     ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );
     ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
@@ -5845,34 +5779,25 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     desc.dwFlags = DIEFF_CARTESIAN;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    todo_wine
+    ok( desc.dwFlags == DIEFF_CARTESIAN, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_CARTESIAN );
     ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
-    todo_wine
     ok( desc.rglDirection[0] == 5000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 5000 );
-    todo_wine
     ok( desc.rglDirection[1] == -8660, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], -8660 );
     ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
 
     desc.dwFlags = DIEFF_POLAR;
     desc.cAxes = 1;
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DIERR_MOREDATA, "GetParameters returned %#x\n", hr );
-    todo_wine
+    ok( desc.dwFlags == DIEFF_POLAR, "got flags %#x, expected %#x\n", desc.dwFlags, DIEFF_POLAR );
     ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
     hr = IDirectInputEffect_GetParameters( effect, &desc, DIEP_DIRECTION );
-    todo_wine
     ok( hr == DI_OK, "GetParameters returned %#x\n", hr );
-    todo_wine
     ok( desc.cAxes == 2, "got cAxes %u expected 2\n", desc.cAxes );
-    todo_wine
     ok( desc.rglDirection[0] == 3000, "got rglDirection[0] %d expected %d\n", desc.rglDirection[0], 3000 );
     ok( desc.rglDirection[1] == 0, "got rglDirection[1] %d expected %d\n", desc.rglDirection[1], 0 );
     ok( desc.rglDirection[2] == 0, "got rglDirection[2] %d expected %d\n", desc.rglDirection[2], 0 );
