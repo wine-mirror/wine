@@ -150,6 +150,12 @@ struct hid_joystick_effect
     struct list entry;
     struct hid_joystick *joystick;
 
+    DWORD axes[6];
+    LONG directions[6];
+    DIENVELOPE envelope;
+    DIPERIODIC periodic;
+    DIEFFECT params;
+
     char *effect_control_buf;
     char *effect_update_buf;
 };
@@ -2120,10 +2126,155 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectGuid( IDirectInputEffect *ifa
     return DI_OK;
 }
 
+static BOOL get_parameters_object_id( struct hid_joystick *impl, struct hid_value_caps *caps,
+                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    *(DWORD *)data = instance->dwType;
+    return DIENUM_STOP;
+}
+
+static BOOL get_parameters_object_ofs( struct hid_joystick *impl, struct hid_value_caps *caps,
+                                       DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    DIDATAFORMAT *format = impl->base.data_format.wine_df;
+    int *offsets = impl->base.data_format.offsets;
+    ULONG i;
+
+    if (!offsets) return DIENUM_CONTINUE;
+    for (i = 0; i < format->dwNumObjs; ++i)
+        if (format->rgodf[i].dwOfs == instance->dwOfs) break;
+    if (i == format->dwNumObjs) return DIENUM_CONTINUE;
+    *(DWORD *)data = offsets[i];
+
+    return DIENUM_STOP;
+}
+
 static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *iface, DIEFFECT *params, DWORD flags )
 {
-    FIXME( "iface %p, params %p, flags %#x stub!\n", iface, params, flags );
-    return DIERR_UNSUPPORTED;
+    DIPROPHEADER filter =
+    {
+        .dwSize = sizeof(DIPROPHEADER),
+        .dwHeaderSize = sizeof(DIPROPHEADER),
+        .dwHow = DIPH_BYUSAGE,
+    };
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    ULONG i, j, count, capacity, object_flags, direction_flags;
+    LONG tmp, directions[6] = {0};
+    BOOL ret;
+
+    TRACE( "iface %p, params %p, flags %#x.\n", iface, params, flags );
+
+    if (!params) return DI_OK;
+    if (params->dwSize != sizeof(DIEFFECT)) return DIERR_INVALIDPARAM;
+    capacity = params->cAxes;
+    object_flags = params->dwFlags & (DIEFF_OBJECTIDS | DIEFF_OBJECTOFFSETS);
+    direction_flags = params->dwFlags & (DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
+
+    if (flags & DIEP_AXES)
+    {
+        if (!object_flags) return DIERR_INVALIDPARAM;
+        params->cAxes = impl->params.cAxes;
+        if (capacity < impl->params.cAxes) return DIERR_MOREDATA;
+
+        for (i = 0; i < impl->params.cAxes; ++i)
+        {
+            if (!params->rgdwAxes) return DIERR_INVALIDPARAM;
+            filter.dwObj = impl->params.rgdwAxes[i];
+            if (object_flags & DIEFF_OBJECTIDS)
+                ret = enum_objects( impl->joystick, &filter, DIDFT_AXIS, get_parameters_object_id,
+                                    &params->rgdwAxes[i] );
+            else
+                ret = enum_objects( impl->joystick, &filter, DIDFT_AXIS, get_parameters_object_ofs,
+                                    &params->rgdwAxes[i] );
+            if (ret != DIENUM_STOP) params->rgdwAxes[i] = 0;
+        }
+    }
+
+    if (flags & DIEP_DIRECTION)
+    {
+        if (!direction_flags) return DIERR_INVALIDPARAM;
+        params->dwFlags &= ~(DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
+
+        count = params->cAxes = impl->params.cAxes;
+        if (capacity < params->cAxes) return DIERR_MOREDATA;
+        if (!count) params->dwFlags &= ~(DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL);
+
+        if (direction_flags & DIEFF_SPHERICAL)
+            memcpy( directions, impl->params.rglDirection, count * sizeof(LONG) );
+        else if (direction_flags & DIEFF_POLAR)
+        {
+            if (count != 2) return DIERR_INVALIDPARAM;
+            directions[0] = (impl->params.rglDirection[0] + 9000) % 36000;
+            if (directions[0] < 0) directions[0] += 36000;
+        }
+        else if (direction_flags & DIEFF_CARTESIAN)
+        {
+            directions[0] = 10000;
+            for (i = 1; i <= count; ++i)
+            {
+                tmp = cos( impl->params.rglDirection[i - 1] * M_PI / 18000 ) * 10000;
+                for (j = 0; j < i; ++j) directions[j] = round( directions[j] * tmp / 10000.0 );
+                directions[i] = sin( impl->params.rglDirection[i - 1] * M_PI / 18000 ) * 10000;
+            }
+        }
+
+        if (!params->rglDirection) return DIERR_INVALIDPARAM;
+        else memcpy( params->rglDirection, directions, count * sizeof(LONG) );
+    }
+
+    if (flags & DIEP_TYPESPECIFICPARAMS)
+    {
+        switch (impl->type)
+        {
+        case PID_USAGE_ET_SQUARE:
+        case PID_USAGE_ET_SINE:
+        case PID_USAGE_ET_TRIANGLE:
+        case PID_USAGE_ET_SAWTOOTH_UP:
+        case PID_USAGE_ET_SAWTOOTH_DOWN:
+            if (!params->lpvTypeSpecificParams) return E_POINTER;
+            if (params->cbTypeSpecificParams != sizeof(DIPERIODIC)) return DIERR_INVALIDPARAM;
+            memcpy( params->lpvTypeSpecificParams, &impl->periodic, sizeof(DIPERIODIC) );
+            break;
+        case PID_USAGE_ET_SPRING:
+        case PID_USAGE_ET_DAMPER:
+        case PID_USAGE_ET_INERTIA:
+        case PID_USAGE_ET_FRICTION:
+        case PID_USAGE_ET_CONSTANT_FORCE:
+        case PID_USAGE_ET_RAMP:
+        case PID_USAGE_ET_CUSTOM_FORCE_DATA:
+            FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
+            return DIERR_UNSUPPORTED;
+        }
+    }
+
+    if (flags & DIEP_ENVELOPE)
+    {
+        if (!params->lpEnvelope) return E_POINTER;
+        if (params->lpEnvelope->dwSize != sizeof(DIENVELOPE)) return DIERR_INVALIDPARAM;
+        memcpy( params->lpEnvelope, &impl->envelope, sizeof(DIENVELOPE) );
+    }
+
+    if (flags & DIEP_DURATION) params->dwDuration = impl->params.dwDuration;
+    if (flags & DIEP_GAIN) params->dwGain = impl->params.dwGain;
+    if (flags & DIEP_SAMPLEPERIOD) params->dwSamplePeriod = impl->params.dwSamplePeriod;
+    if (flags & DIEP_STARTDELAY) params->dwStartDelay = impl->params.dwStartDelay;
+    if (flags & DIEP_TRIGGERREPEATINTERVAL) params->dwTriggerRepeatInterval = impl->params.dwTriggerRepeatInterval;
+
+    if (flags & DIEP_TRIGGERBUTTON)
+    {
+        if (!object_flags) return DIERR_INVALIDPARAM;
+
+        filter.dwObj = impl->params.dwTriggerButton;
+        if (object_flags & DIEFF_OBJECTIDS)
+            ret = enum_objects( impl->joystick, &filter, DIDFT_BUTTON, get_parameters_object_id,
+                                &params->dwTriggerButton );
+        else
+            ret = enum_objects( impl->joystick, &filter, DIDFT_BUTTON, get_parameters_object_ofs,
+                                &params->dwTriggerButton );
+        if (ret != DIENUM_STOP) params->dwTriggerButton = -1;
+    }
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *iface,
@@ -2293,6 +2444,13 @@ static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirec
     report_len = joystick->caps.OutputReportByteLength;
     if (!(impl->effect_control_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
     if (!(impl->effect_update_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
+
+    impl->envelope.dwSize = sizeof(DIENVELOPE);
+    impl->params.dwSize = sizeof(DIEFFECT);
+    impl->params.lpEnvelope = &impl->envelope;
+    impl->params.rgdwAxes = impl->axes;
+    impl->params.rglDirection = impl->directions;
+    impl->params.dwTriggerButton = -1;
 
     *out = &impl->IDirectInputEffect_iface;
     return DI_OK;
