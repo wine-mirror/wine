@@ -1801,8 +1801,10 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_msFirstPaint(IHTMLPerformanceTim
 static HRESULT WINAPI HTMLPerformanceTiming_toString(IHTMLPerformanceTiming *iface, BSTR *string)
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
-    FIXME("(%p)->(%p)\n", This, string);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, string);
+
+    return dispex_to_string(&This->dispex, string);
 }
 
 static HRESULT WINAPI HTMLPerformanceTiming_toJSON(IHTMLPerformanceTiming *iface, VARIANT *p)
