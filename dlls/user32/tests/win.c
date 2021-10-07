@@ -4548,8 +4548,7 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
     else
         dwExStyleOut = dwExStyleIn & ~WS_EX_WINDOWEDGE;
     ok(dwActualStyle == dwStyleOut, "expected style %#x, got %#x\n", dwStyleOut, dwActualStyle);
-    todo_wine_if (!dwStyleIn)
-        ok(dwActualExStyle == dwExStyleOut, "expected ex_style %#x, got %#x\n", dwExStyleOut, dwActualExStyle);
+    ok(dwActualExStyle == dwExStyleOut, "expected ex_style %#x, got %#x\n", dwExStyleOut, dwActualExStyle);
 
     DestroyWindow(hwnd);
     if (hwndParent) DestroyWindow(hwndParent);
@@ -4701,7 +4700,7 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
         WORD class_atom;
         WCHAR caption[1];
     } dlg_data;
-    DWORD style, ex_style, ex_style_out2;
+    DWORD style, ex_style;
     HWND hwnd, grand_parent = 0, parent = 0;
     struct dialog_param param;
 
@@ -4763,13 +4762,12 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
     ok(style == style_out, "expected style %#x, got %#x\n", style_out, style);
     /* WS_EX_WINDOWEDGE can't always be changed */
     if (ex_style_in & WS_EX_DLGMODALFRAME)
-        ex_style_out2 = ex_style_in | WS_EX_WINDOWEDGE;
+        ex_style_out = ex_style_in | WS_EX_WINDOWEDGE;
     else if ((style & (WS_DLGFRAME | WS_THICKFRAME)) && !(ex_style_in & WS_EX_STATICEDGE))
-        ex_style_out2 = ex_style_in | WS_EX_WINDOWEDGE;
+        ex_style_out = ex_style_in | WS_EX_WINDOWEDGE;
     else
-        ex_style_out2 = ex_style_in & ~WS_EX_WINDOWEDGE;
-    todo_wine_if (ex_style_out != ex_style_out2)
-        ok(ex_style == ex_style_out2, "expected ex_style %#x, got %#x\n", ex_style_out2, ex_style);
+        ex_style_out = ex_style_in & ~WS_EX_WINDOWEDGE;
+    ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
 
     DestroyWindow(hwnd);
 

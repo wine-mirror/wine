@@ -2619,8 +2619,6 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         if (wndPtr->parent == GetDesktopWindow()) newval |= WS_CLIPSIBLINGS;
         /* WS_MINIMIZE can't be reset */
         if (wndPtr->dwStyle & WS_MINIMIZE) newval |= WS_MINIMIZE;
-        /* FIXME: changing WS_DLGFRAME | WS_THICKFRAME is supposed to change
-           WS_EX_WINDOWEDGE too */
         break;
     case GWL_EXSTYLE:
         style.styleOld = wndPtr->dwExStyle;
@@ -2699,8 +2697,9 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         switch(offset)
         {
         case GWL_STYLE:
-            req->flags = SET_WIN_STYLE;
+            req->flags = SET_WIN_STYLE | SET_WIN_EXSTYLE;
             req->style = newval;
+            req->ex_style = fix_exstyle(newval, wndPtr->dwExStyle);
             break;
         case GWL_EXSTYLE:
             req->flags = SET_WIN_EXSTYLE;
@@ -2734,6 +2733,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             {
             case GWL_STYLE:
                 wndPtr->dwStyle = newval;
+                wndPtr->dwExStyle = fix_exstyle(wndPtr->dwStyle, wndPtr->dwExStyle);
                 retval = reply->old_style;
                 break;
             case GWL_EXSTYLE:
