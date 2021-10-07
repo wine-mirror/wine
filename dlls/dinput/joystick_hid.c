@@ -1195,7 +1195,7 @@ static HRESULT WINAPI hid_joystick_EnumCreatedEffectObjects( IDirectInputDevice8
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct hid_joystick_effect *effect, *next;
 
-    FIXME( "iface %p, callback %p, context %p, flags %#x stub!\n", iface, callback, context, flags );
+    TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
 
     if (!callback) return DIERR_INVALIDPARAM;
     if (flags) return DIERR_INVALIDPARAM;
