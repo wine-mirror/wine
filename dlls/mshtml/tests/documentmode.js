@@ -19,6 +19,160 @@
 var compat_version;
 var tests = [];
 
+sync_test("builtin_toString", function() {
+    var tags = [
+        [ "abbr",            "Phrase" ],
+        [ "acronym",         "Phrase" ],
+        [ "address",         "Block" ],
+     // [ "applet",          "Applet" ],  // makes Windows pop up a dialog box
+        [ "article",         "" ],
+        [ "aside",           "" ],
+        [ "audio",           "Audio" ],
+        [ "b",               "Phrase" ],
+        [ "base",            "Base" ],
+        [ "basefont",        "BaseFont" ],
+        [ "bdi",             "Unknown" ],
+        [ "bdo",             "Phrase" ],
+        [ "big",             "Phrase" ],
+        [ "blockquote",      "Block" ],
+        [ "body",            "Body" ],
+        [ "br",              "BR" ],
+        [ "button",          "Button" ],
+        [ "canvas",          "Canvas" ],
+        [ "caption",         "TableCaption" ],
+        [ "center",          "Block" ],
+        [ "cite",            "Phrase" ],
+        [ "code",            "Phrase" ],
+        [ "col",             "TableCol" ],
+        [ "colgroup",        "TableCol" ],
+        [ "data",            "Unknown" ],
+        [ "datalist",        "DataList", 10 ],
+        [ "dd",              "DD" ],
+        [ "del",             "Mod" ],
+        [ "details",         "Unknown" ],
+        [ "dfn",             "Phrase" ],
+        [ "dialog",          "Unknown" ],
+        [ "dir",             "Directory" ],
+        [ "div",             "Div" ],
+        [ "dl",              "DList" ],
+        [ "dt",              "DT" ],
+        [ "em",              "Phrase" ],
+        [ "embed",           "Embed" ],
+        [ "fieldset",        "FieldSet" ],
+        [ "figcaption",      "" ],
+        [ "figure",          "" ],
+        [ "font",            "Font" ],
+        [ "footer",          "" ],
+        [ "form",            "Form" ],
+        [ "frame",           "Frame" ],
+        [ "frameset",        "FrameSet" ],
+        [ "h1",              "Heading" ],
+        [ "h2",              "Heading" ],
+        [ "h3",              "Heading" ],
+        [ "h4",              "Heading" ],
+        [ "h5",              "Heading" ],
+        [ "h6",              "Heading" ],
+        [ "h7",              "Unknown" ],
+        [ "head",            "Head" ],
+        [ "header",          "" ],
+        [ "hr",              "HR" ],
+        [ "html",            "Html" ],
+        [ "i",               "Phrase" ],
+        [ "iframe",          "IFrame" ],
+        [ "img",             "Image" ],
+        [ "input",           "Input" ],
+        [ "ins",             "Mod" ],
+        [ "kbd",             "Phrase" ],
+        [ "label",           "Label" ],
+        [ "legend",          "Legend" ],
+        [ "li",              "LI" ],
+        [ "link",            "Link" ],
+        [ "main",            "Unknown" ],
+        [ "map",             "Map" ],
+        [ "mark",            "" ],
+        [ "meta",            "Meta" ],
+        [ "meter",           "Unknown" ],
+        [ "nav",             "" ],
+        [ "noframes",        "" ],
+        [ "noscript",        "" ],
+        [ "object",          "Object" ],
+        [ "ol",              "OList" ],
+        [ "optgroup",        "OptGroup" ],
+        [ "option",          "Option" ],
+        [ "output",          "Unknown" ],
+        [ "p",               "Paragraph" ],
+        [ "param",           "Param" ],
+        [ "picture",         "Unknown" ],
+        [ "pre",             "Pre" ],
+        [ "progress",        "Progress", 10 ],
+        [ "q",               "Quote" ],
+        [ "rp",              "Phrase" ],
+        [ "rt",              "Phrase" ],
+        [ "ruby",            "Phrase" ],
+        [ "s",               "Phrase" ],
+        [ "samp",            "Phrase" ],
+        [ "script",          "Script" ],
+        [ "section",         "" ],
+        [ "select",          "Select" ],
+        [ "small",           "Phrase" ],
+        [ "source",          "Source" ],
+        [ "span",            "Span" ],
+        [ "strike",          "Phrase" ],
+        [ "strong",          "Phrase" ],
+        [ "style",           "Style" ],
+        [ "sub",             "Phrase" ],
+        [ "summary",         "Unknown" ],
+        [ "sup",             "Phrase" ],
+        [ "svg",             "Unknown" ],
+        [ "table",           "Table" ],
+        [ "tbody",           "TableSection" ],
+        [ "td",              "TableDataCell" ],
+        [ "template",        "Unknown" ],
+        [ "textarea",        "TextArea" ],
+        [ "tfoot",           "TableSection" ],
+        [ "th",              "TableHeaderCell" ],
+        [ "thead",           "TableSection" ],
+        [ "time",            "Unknown" ],
+        [ "title",           "Title" ],
+        [ "tr",              "TableRow" ],
+        [ "track",           "Track", 10 ],
+        [ "tt",              "Phrase" ],
+        [ "u",               "Phrase" ],
+        [ "ul",              "UList" ],
+        [ "var",             "Phrase" ],
+        [ "video",           "Video" ],
+        [ "wbr",             "" ],
+        [ "winetest",        "Unknown" ]
+    ];
+    var v = document.documentMode, e;
+
+    function test(msg, obj, name, tostr) {
+        var s;
+        if(obj.toString) {
+            s = obj.toString();
+            todo_wine_if(name !== "HTMLElement" && s === "[object HTMLElement]").
+            ok(s === (tostr ? tostr : (v < 9 ? "[object]" : "[object " + name + "]")), msg + " toString returned " + s);
+        }
+        s = Object.prototype.toString.call(obj);
+        todo_wine_if(v >= 9 && name != "Object").
+        ok(s === (v < 9 ? "[object Object]" : "[object " + name + "]"), msg + " Object.toString returned " + s);
+    }
+
+    for(var i = 0; i < tags.length; i++)
+        if(tags[i].length < 3 || v >= tags[i][2])
+            test("tag '" + tags[i][0] + "'", document.createElement(tags[i][0]), "HTML" + tags[i][1] + "Element");
+
+    e = document.createElement("a");
+    ok(e.toString() === "", "tag 'a' (without href) toString returned " + e.toString());
+    e.href = "https://www.winehq.org/";
+    test("tag 'a'", e, "HTMLAnchorElement", "https://www.winehq.org/");
+
+    e = document.createElement("area");
+    ok(e.toString() === "", "tag 'area' (without href) toString returned " + e.toString());
+    e.href = "https://www.winehq.org/";
+    test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/");
+});
+
 sync_test("elem_props", function() {
     var elem = document.documentElement;
 
