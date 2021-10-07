@@ -32,8 +32,6 @@
 #include "winuser.h"
 #include "winerror.h"
 
-#include "wine/exception.h"
-
 
 /***********************************************************************
  *           CharNextExW   (USER32.@)

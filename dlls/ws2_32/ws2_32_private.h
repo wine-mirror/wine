@@ -50,7 +50,6 @@
 #include "ip2string.h"
 #include "wine/afd.h"
 #include "wine/debug.h"
-#include "wine/exception.h"
 #include "wine/unixlib.h"
 
 #define DECLARE_CRITICAL_SECTION(cs) \

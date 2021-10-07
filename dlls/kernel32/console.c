@@ -38,9 +38,7 @@
 #include "winerror.h"
 #include "wincon.h"
 #include "wine/condrv.h"
-#include "wine/exception.h"
 #include "wine/debug.h"
-#include "excpt.h"
 #include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);

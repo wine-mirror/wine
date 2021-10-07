@@ -42,7 +42,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "winternl.h"
-#include "wine/exception.h"
 #include "wine/server.h"
 #include "controls.h"
 #include "win.h"

@@ -38,7 +38,6 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/debug.h"
-#include "wine/exception.h"
 
 /*
  * Note:

@@ -24,8 +24,6 @@
 #include "winnls.h"
 
 #include "wine/test.h"
-#include "wine/exception.h"
-#include "winbase.h"
 
 typedef unsigned char MSVCP_bool;
 

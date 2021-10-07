@@ -28,7 +28,6 @@
 #include "resource.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 

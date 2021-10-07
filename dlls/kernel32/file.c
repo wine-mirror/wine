@@ -39,7 +39,6 @@
 #include "fileapi.h"
 #include "shlwapi.h"
 
-#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);

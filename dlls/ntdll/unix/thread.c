@@ -67,7 +67,6 @@
 #include "ddk/wdm.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "wine/exception.h"
 #include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);

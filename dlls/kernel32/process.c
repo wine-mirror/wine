@@ -35,7 +35,6 @@
 #include "kernel_private.h"
 #include "psapi.h"
 #include "ddk/wdm.h"
-#include "wine/exception.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 

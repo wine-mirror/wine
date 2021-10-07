@@ -26,7 +26,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/exception.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 #if _MSVCP_VER >= 110

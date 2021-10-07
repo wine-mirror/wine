@@ -23,8 +23,6 @@
 #include "debugger.h"
 
 #include "winternl.h"
-#include "wine/exception.h"
-
 #include "wine/debug.h"
 
 /* TODO list:

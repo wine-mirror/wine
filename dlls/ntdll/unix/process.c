@@ -61,7 +61,6 @@
 #include "winioctl.h"
 #include "unix_private.h"
 #include "wine/condrv.h"
-#include "wine/exception.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

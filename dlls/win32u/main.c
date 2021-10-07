@@ -26,7 +26,6 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "wine/exception.h"
 #include "wine/unixlib.h"
 
 extern void *__wine_syscall_dispatcher DECLSPEC_HIDDEN;

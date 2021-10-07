@@ -3438,6 +3438,37 @@ typedef struct _RTL_PROCESS_MODULE_INFORMATION_EX
 #define THREAD_CREATE_FLAGS_ACCESS_CHECK_IN_TARGET  0x00000020
 #define THREAD_CREATE_FLAGS_INITIAL_THREAD          0x00000080
 
+#define EH_NONCONTINUABLE   0x01
+#define EH_UNWINDING        0x02
+#define EH_EXIT_UNWIND      0x04
+#define EH_STACK_INVALID    0x08
+#define EH_NESTED_CALL      0x10
+#define EH_TARGET_UNWIND    0x20
+#define EH_COLLIDED_UNWIND  0x40
+
+#ifdef __WINESRC__
+
+/* Wine-specific exceptions codes */
+
+#define EXCEPTION_WINE_STUB       0x80000100  /* stub entry point called */
+#define EXCEPTION_WINE_ASSERTION  0x80000101  /* assertion failed */
+
+/* Wine extension; Windows doesn't have a name for this code.  This is an
+   undocumented exception understood by MS VC debugger, allowing the program
+   to name a particular thread. */
+#define EXCEPTION_WINE_NAME_THREAD     0x406D1388
+
+/* used for C++ exceptions in msvcrt
+ * parameters:
+ * [0] CXX_FRAME_MAGIC
+ * [1] pointer to exception object
+ * [2] pointer to type
+ */
+#define EXCEPTION_WINE_CXX_EXCEPTION   0xe06d7363
+#define EXCEPTION_WINE_CXX_FRAME_MAGIC 0x19930520
+
+#endif
+
 typedef LONG (CALLBACK *PRTL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
 
 typedef void (CALLBACK *PTP_IO_CALLBACK)(PTP_CALLBACK_INSTANCE,void*,void*,IO_STATUS_BLOCK*,PTP_IO);

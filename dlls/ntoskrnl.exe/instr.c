@@ -31,7 +31,6 @@
 #include "ddk/wdm.h"
 #include "excpt.h"
 #include "wine/debug.h"
-#include "wine/exception.h"
 
 #define KSHARED_USER_DATA_PAGE_SIZE 0x1000
 

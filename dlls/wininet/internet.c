@@ -52,8 +52,6 @@
 #include "iphlpapi.h"
 #include "dhcpcsdk.h"
 
-#include "wine/exception.h"
-
 #include "internet.h"
 #include "resource.h"
 
