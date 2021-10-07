@@ -4424,34 +4424,39 @@ static void test_SetParent(void)
     ok(!IsWindow(popup), "popup still exists\n");
 }
 
+typedef struct
+{
+    DWORD cs_style;
+    DWORD cs_exstyle;
+    DWORD style;
+    DWORD exstyle;
+} test_style;
+
 static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    LPCREATESTRUCTA lpcs;
-    LPSTYLESTRUCT lpss;
+    CREATESTRUCTA *cs;
+    test_style *ts;
+    DWORD style;
 
     switch (msg)
     {
     case WM_NCCREATE:
     case WM_CREATE:
-        lpcs = (LPCREATESTRUCTA)lparam;
-        lpss = lpcs->lpCreateParams;
-        if (lpss)
-        {
-            if ((lpcs->dwExStyle & WS_EX_DLGMODALFRAME) ||
-                ((!(lpcs->dwExStyle & WS_EX_STATICEDGE)) &&
-                    (lpcs->style & (WS_DLGFRAME | WS_THICKFRAME))))
-                ok(lpcs->dwExStyle & WS_EX_WINDOWEDGE, "Window should have WS_EX_WINDOWEDGE style\n");
-            else
-                ok(!(lpcs->dwExStyle & WS_EX_WINDOWEDGE), "Window shouldn't have WS_EX_WINDOWEDGE style\n");
+        cs = (LPCREATESTRUCTA)lparam;
+        ts = cs->lpCreateParams;
 
-            ok((lpss->styleOld & ~WS_EX_WINDOWEDGE) == (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE),
-                "Ex style (0x%08x) should match what the caller passed to CreateWindowEx (0x%08x)\n",
-                lpss->styleOld, lpcs->dwExStyle);
+        ok(ts != NULL, "lpCreateParams not set\n");
+        ok(cs->style == ts->cs_style, "style = 0x%08x, expected 0x%08x\n",
+                cs->style, ts->cs_style);
+        ok(cs->dwExStyle == ts->cs_exstyle, "exstyle = 0x%08x, expected 0x%08x\n",
+                cs->dwExStyle, ts->cs_exstyle);
 
-            ok(lpss->styleNew == lpcs->style,
-                "Style (0x%08x) should match what the caller passed to CreateWindowEx (0x%08x)\n",
-                lpss->styleNew, lpcs->style);
-        }
+        style = GetWindowLongW(hwnd, GWL_STYLE);
+        ok(style == ts->style, "style = 0x%08x, expected 0x%08x\n",
+                style, ts->style);
+        style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+        ok(style == ts->exstyle, "exstyle = 0x%08x, expected 0x%08x\n",
+                style, ts->exstyle);
         break;
     }
     return DefWindowProcA(hwnd, msg, wparam, lparam);
@@ -4483,21 +4488,29 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
 {
     DWORD dwActualStyle;
     DWORD dwActualExStyle;
-    STYLESTRUCT ss;
+    test_style ts;
     HWND hwnd;
     HWND hwndParent = NULL;
 
-    ss.styleNew = dwStyleIn;
-    ss.styleOld = dwExStyleIn;
+    ts.cs_style = dwStyleIn;
+    ts.cs_exstyle = dwExStyleIn;
+    if ((dwExStyleIn & WS_EX_DLGMODALFRAME) ||
+            ((!(dwExStyleIn & WS_EX_STATICEDGE)) &&
+             (dwStyleIn & (WS_DLGFRAME | WS_THICKFRAME))))
+        ts.cs_exstyle |= WS_EX_WINDOWEDGE;
+    else
+        ts.cs_exstyle &= ~WS_EX_WINDOWEDGE;
+    ts.style = dwStyleOut;
+    ts.exstyle = dwExStyleOut;
 
     if (dwStyleIn & WS_CHILD)
     {
-        hwndParent = CreateWindowExA(0, (LPCSTR)MAKEINTATOM(atomStyleCheckClass), NULL,
+        hwndParent = CreateWindowExA(0, "static", NULL,
             WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
     }
 
     hwnd = CreateWindowExA(dwExStyleIn, (LPCSTR)MAKEINTATOM(atomStyleCheckClass), NULL,
-                    dwStyleIn, 0, 0, 0, 0, hwndParent, NULL, NULL, &ss);
+                    dwStyleIn, 0, 0, 0, 0, hwndParent, NULL, NULL, &ts);
     assert(hwnd);
 
     flush_events( TRUE );
