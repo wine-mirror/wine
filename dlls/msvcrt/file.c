@@ -1586,6 +1586,9 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
       *open_flags |=  _O_TEXT;
       *open_flags &= ~_O_BINARY;
       break;
+    case 'x':
+      *open_flags |= _O_EXCL;
+      break;
     case 'D':
       *open_flags |= _O_TEMPORARY;
       break;
