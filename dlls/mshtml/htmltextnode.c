@@ -128,8 +128,16 @@ static HRESULT WINAPI HTMLDOMTextNode_get_data(IHTMLDOMTextNode *iface, BSTR *p)
 static HRESULT WINAPI HTMLDOMTextNode_toString(IHTMLDOMTextNode *iface, BSTR *String)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode(iface);
-    FIXME("(%p)->(%p)\n", This, String);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, String);
+
+    if(!String)
+        return E_INVALIDARG;
+
+    if(dispex_compat_mode(&This->node.event_target.dispex) < COMPAT_MODE_IE9)
+        return IHTMLDOMTextNode_get_data(&This->IHTMLDOMTextNode_iface, String);
+
+    return dispex_to_string(&This->node.event_target.dispex, String);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode_get_length(IHTMLDOMTextNode *iface, LONG *p)

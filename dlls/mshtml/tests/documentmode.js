@@ -223,6 +223,7 @@ sync_test("builtin_toString", function() {
     test("styleSheetRule", sheet.rules.item(0), "CSSStyleRule");
     test("styleSheetRules", sheet.rules, "MSCSSRuleList");
     test("styleSheets", document.styleSheets, "StyleSheetList");
+    test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null);
     test("textRange", txtRange, "TextRange");
     test("window", window, "Window", "[object Window]");
     test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest");
