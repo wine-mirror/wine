@@ -147,6 +147,9 @@ struct hid_joystick_effect
 
     struct list entry;
     struct hid_joystick *joystick;
+
+    char *effect_control_buf;
+    char *effect_update_buf;
 };
 
 static inline struct hid_joystick_effect *impl_from_IDirectInputEffect( IDirectInputEffect *iface )
@@ -2048,6 +2051,8 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
         hid_joystick_private_decref( impl->joystick );
+        HeapFree( GetProcessHeap(), 0, impl->effect_update_buf );
+        HeapFree( GetProcessHeap(), 0, impl->effect_control_buf );
         HeapFree( GetProcessHeap(), 0, impl );
     }
     return ref;
@@ -2140,6 +2145,7 @@ static IDirectInputEffectVtbl hid_joystick_effect_vtbl =
 static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirectInputEffect **out )
 {
     struct hid_joystick_effect *impl;
+    ULONG report_len;
 
     if (!(impl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*impl) )))
         return DIERR_OUTOFMEMORY;
@@ -2152,6 +2158,14 @@ static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirec
     list_add_tail( &joystick->effect_list, &impl->entry );
     LeaveCriticalSection( &joystick->base.crit );
 
+    report_len = joystick->caps.OutputReportByteLength;
+    if (!(impl->effect_control_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
+    if (!(impl->effect_update_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
+
     *out = &impl->IDirectInputEffect_iface;
     return DI_OK;
+
+failed:
+    IDirectInputEffect_Release( &impl->IDirectInputEffect_iface );
+    return DIERR_OUTOFMEMORY;
 }
