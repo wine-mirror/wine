@@ -1222,10 +1222,9 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	    /* WS_VISIBLE should be turned off yet */
 	    style = createwnd->lpcs->style & ~WS_VISIBLE;
-            todo_wine_if(!(style & WS_CLIPSIBLINGS) && (!(style & WS_CHILD) || (style & WS_POPUP)))
-                ok(style == GetWindowLongA(hwnd, GWL_STYLE),
-                        "style of hwnd and style in the CREATESTRUCT do not match: %08x != %08x\n",
-                        GetWindowLongA(hwnd, GWL_STYLE), style);
+            ok(style == GetWindowLongA(hwnd, GWL_STYLE),
+                    "style of hwnd and style in the CREATESTRUCT do not match: %08x != %08x\n",
+                    GetWindowLongA(hwnd, GWL_STYLE), style);
 
             if (0)
             {
@@ -4451,13 +4450,11 @@ static LRESULT WINAPI cbt_proc(int ncode, WPARAM wparam, LPARAM lparam)
             c->lpcs->dwExStyle, ts->cs_exstyle);
 
     style = GetWindowLongW(hwnd, GWL_STYLE);
-    todo_wine_if(!(ts->cs_style & WS_CHILD) || (ts->cs_style & WS_POPUP))
-        ok(style == ts->cs_style, "style = 0x%08x, expected 0x%08x\n",
-                style, ts->cs_style);
+    ok(style == ts->cs_style, "style = 0x%08x, expected 0x%08x\n",
+            style, ts->cs_style);
     style = GetWindowLongW(hwnd, GWL_EXSTYLE);
-    todo_wine_if(ts->exstyle != ts->cs_exstyle)
-        ok(style == (ts->cs_exstyle & ~WS_EX_LAYERED),
-                "exstyle = 0x%08x, expected 0x%08x\n", style, ts->cs_exstyle);
+    ok(style == (ts->cs_exstyle & ~WS_EX_LAYERED),
+            "exstyle = 0x%08x, expected 0x%08x\n", style, ts->cs_exstyle);
     return CallNextHookEx(NULL, ncode, wparam, lparam);
 }
 

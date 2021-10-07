@@ -3021,6 +3021,8 @@ struct create_window_request
     mod_handle_t   instance;
     int            dpi;
     int            awareness;
+    unsigned int   style;
+    unsigned int   ex_style;
     /* VARARG(class,unicode_str); */
 };
 struct create_window_reply
@@ -6257,7 +6259,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 732
+#define SERVER_PROTOCOL_VERSION 733
 
 /* ### protocol_version end ### */
 

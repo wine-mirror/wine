@@ -2929,6 +2929,8 @@ static void dump_create_window_request( const struct create_window_request *req 
     dump_uint64( ", instance=", &req->instance );
     fprintf( stderr, ", dpi=%d", req->dpi );
     fprintf( stderr, ", awareness=%d", req->awareness );
+    fprintf( stderr, ", style=%08x", req->style );
+    fprintf( stderr, ", ex_style=%08x", req->ex_style );
     dump_varargs_unicode_str( ", class=", cur_size );
 }
 

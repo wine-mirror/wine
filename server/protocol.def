@@ -2241,6 +2241,8 @@ enum message_type
     mod_handle_t   instance;    /* module instance */
     int            dpi;         /* system DPI */
     int            awareness;   /* thread DPI awareness */
+    unsigned int   style;       /* window style */
+    unsigned int   ex_style;    /* window extended style */
     VARARG(class,unicode_str);  /* class name */
 @REPLY
     user_handle_t  handle;      /* created window */

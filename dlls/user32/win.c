@@ -192,7 +192,8 @@ void *free_user_handle( HANDLE handle, enum user_obj_type type )
  * Create a window handle with the server.
  */
 static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
-                                  HINSTANCE instance, BOOL unicode )
+                                  HINSTANCE instance, BOOL unicode,
+                                  DWORD style, DWORD ex_style )
 {
     WORD index;
     WND *win;
@@ -209,6 +210,8 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
         req->instance = wine_server_client_ptr( instance );
         req->dpi      = GetDpiForSystem();
         req->awareness = awareness;
+        req->style    = style;
+        req->ex_style = ex_style;
         if (!(req->atom = get_int_atom_value( name )) && name)
             wine_server_add_data( req, name, lstrlenW(name)*sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
@@ -1482,7 +1485,7 @@ static DWORD fix_exstyle( DWORD style, DWORD exstyle )
  */
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
-    INT cx, cy, style, sw = SW_SHOW;
+    INT cx, cy, style, ex_style, sw = SW_SHOW;
     LRESULT result;
     RECT rect;
     WND *wndPtr;
@@ -1614,13 +1617,17 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( parent, owner, className, module, unicode )))
+    style = cs->style & ~WS_VISIBLE;
+    ex_style = cs->dwExStyle & ~WS_EX_LAYERED;
+    if (!(wndPtr = create_window_handle( parent, owner, className, module,
+                    unicode, style, ex_style )))
     {
         WNDCLASSW wc;
         /* if it's a comctl32 class, GetClassInfo will load it, then we can retry */
         if (GetLastError() != ERROR_INVALID_HANDLE ||
             !GetClassInfoW( 0, className, &wc ) ||
-            !(wndPtr = create_window_handle( parent, owner, className, module, unicode )))
+            !(wndPtr = create_window_handle( parent, owner, className, module,
+                    unicode, style, ex_style )))
             return 0;
     }
     hwnd = wndPtr->obj.handle;
@@ -1630,8 +1637,8 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     wndPtr->tid            = GetCurrentThreadId();
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
-    wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
-    wndPtr->dwExStyle      = cs->dwExStyle;
+    wndPtr->dwStyle        = style;
+    wndPtr->dwExStyle      = ex_style;
     wndPtr->wIDmenu        = 0;
     wndPtr->helpContext    = 0;
     wndPtr->pScroll        = NULL;
@@ -1647,6 +1654,19 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
 
+    /* call the WH_CBT hook */
+
+    WIN_ReleasePtr( wndPtr );
+    cbcs = *cs;
+    cbtc.lpcs = &cbcs;
+    cbtc.hwndInsertAfter = HWND_TOP;
+    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ) ||
+            !(wndPtr = WIN_GetPtr( hwnd )))
+    {
+        free_window_handle( hwnd );
+        return 0;
+    }
+
     /*
      * Correct the window styles.
      *
@@ -1660,6 +1680,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
             wndPtr->dwStyle |= WS_CAPTION;
     }
 
+    wndPtr->dwExStyle = cs->dwExStyle;
     /* WS_EX_WINDOWEDGE depends on some other styles */
     if ((wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)) &&
             !(wndPtr->dwStyle & (WS_CHILD | WS_POPUP)))
@@ -1712,13 +1733,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     if (parent) map_dpi_create_struct( cs, thread_dpi, win_dpi );
 
     context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-    /* call the WH_CBT hook */
-
-    cbcs = *cs;
-    cbtc.lpcs = &cbcs;
-    cbtc.hwndInsertAfter = HWND_TOP;
-    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode )) goto failed;
 
     /* send the WM_GETMINMAXINFO message and fix the size if needed */
 
