@@ -199,6 +199,26 @@ static inline USAGE effect_guid_to_usage( const GUID *guid )
     return 0;
 }
 
+static inline const GUID *effect_usage_to_guid( USAGE usage )
+{
+    switch (usage)
+    {
+    case PID_USAGE_ET_CUSTOM_FORCE_DATA: return &GUID_CustomForce;
+    case PID_USAGE_ET_CONSTANT_FORCE: return &GUID_ConstantForce;
+    case PID_USAGE_ET_RAMP: return &GUID_RampForce;
+    case PID_USAGE_ET_SQUARE: return &GUID_Square;
+    case PID_USAGE_ET_SINE: return &GUID_Sine;
+    case PID_USAGE_ET_TRIANGLE: return &GUID_Triangle;
+    case PID_USAGE_ET_SAWTOOTH_UP: return &GUID_SawtoothUp;
+    case PID_USAGE_ET_SAWTOOTH_DOWN: return &GUID_SawtoothDown;
+    case PID_USAGE_ET_SPRING: return &GUID_Spring;
+    case PID_USAGE_ET_DAMPER: return &GUID_Damper;
+    case PID_USAGE_ET_INERTIA: return &GUID_Inertia;
+    case PID_USAGE_ET_FRICTION: return &GUID_Friction;
+    }
+    return &GUID_Unknown;
+}
+
 static const WCHAR *effect_guid_to_string( const GUID *guid )
 {
     static const WCHAR guid_customforce_w[] = {'G','U','I','D','_','C','u','s','t','o','m','F','o','r','c','e',0};
@@ -2064,9 +2084,8 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
 {
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
     struct hid_joystick *joystick = impl->joystick;
-    ULONG report_len = joystick->caps.OutputReportByteLength;
+    ULONG count, report_len = joystick->caps.OutputReportByteLength;
     NTSTATUS status;
-    ULONG count;
     USAGE type;
 
     TRACE( "iface %p, inst %p, version %u, guid %s\n", iface, inst, version, debugstr_guid( guid ) );
@@ -2090,8 +2109,14 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
 
 static HRESULT WINAPI hid_joystick_effect_GetEffectGuid( IDirectInputEffect *iface, GUID *guid )
 {
-    FIXME( "iface %p, guid %p stub!\n", iface, guid );
-    return DIERR_UNSUPPORTED;
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+
+    TRACE( "iface %p, guid %p.\n", iface, guid );
+
+    if (!guid) return E_POINTER;
+    *guid = *effect_usage_to_guid( impl->type );
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *iface, DIEFFECT *params, DWORD flags )

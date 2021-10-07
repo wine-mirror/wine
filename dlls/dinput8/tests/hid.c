@@ -5190,12 +5190,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( hr == DI_OK, "Initialize returned %#x\n", hr );
 
     hr = IDirectInputEffect_GetEffectGuid( effect, NULL );
-    todo_wine
     ok( hr == E_POINTER, "GetEffectGuid returned %#x\n", hr );
     hr = IDirectInputEffect_GetEffectGuid( effect, &guid );
-    todo_wine
     ok( hr == DI_OK, "GetEffectGuid returned %#x\n", hr );
-    todo_wine
     ok( IsEqualGUID( &guid, &GUID_Square ), "got guid %s, expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_Square ) );
 
