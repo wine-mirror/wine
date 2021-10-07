@@ -480,52 +480,6 @@ static void buffer_append_asn1_r_s( struct buffer *buffer, BYTE *r, DWORD r_len,
     buffer_free( &value );
 }
 
-static NTSTATUS CDECL key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
-{
-    if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
-    {
-        if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
-        {
-            key->u.s.mode = MODE_ID_ECB;
-            return STATUS_SUCCESS;
-        }
-        else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
-        {
-            key->u.s.mode = MODE_ID_CBC;
-            return STATUS_SUCCESS;
-        }
-        else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
-        {
-            key->u.s.mode = MODE_ID_GCM;
-            return STATUS_SUCCESS;
-        }
-        else
-        {
-            FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
-            return STATUS_NOT_IMPLEMENTED;
-        }
-    }
-
-    FIXME( "unsupported key property %s\n", debugstr_w(prop) );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS CDECL key_symmetric_init( struct key *key )
-{
-    if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
-
-    switch (key->alg_id)
-    {
-    case ALG_ID_3DES:
-    case ALG_ID_AES:
-        return STATUS_SUCCESS;
-
-    default:
-        FIXME( "algorithm %u not supported\n", key->alg_id );
-        return STATUS_NOT_SUPPORTED;
-    }
-}
-
 static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
 {
     switch (key->alg_id)
@@ -1271,26 +1225,6 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS CDECL key_asymmetric_init( struct key *key )
-{
-    if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
-
-    switch (key->alg_id)
-    {
-    case ALG_ID_ECDH_P256:
-    case ALG_ID_ECDSA_P256:
-    case ALG_ID_ECDSA_P384:
-    case ALG_ID_RSA:
-    case ALG_ID_RSA_SIGN:
-    case ALG_ID_DSA:
-        return STATUS_SUCCESS;
-
-    default:
-        FIXME( "algorithm %u not supported\n", key->alg_id );
-        return STATUS_NOT_SUPPORTED;
-    }
-}
-
 static NTSTATUS import_gnutls_pubkey_ecc( struct key *key, gnutls_pubkey_t *gnutls_key )
 {
     BCRYPT_ECCKEY_BLOB *ecc_blob;
@@ -1871,15 +1805,12 @@ static NTSTATUS CDECL key_asymmetric_decrypt( struct key *key, UCHAR *input, ULO
 
 static const struct key_funcs key_funcs =
 {
-    key_set_property,
-    key_symmetric_init,
     key_symmetric_vector_reset,
     key_symmetric_set_auth_data,
     key_symmetric_encrypt,
     key_symmetric_decrypt,
     key_symmetric_get_tag,
     key_symmetric_destroy,
-    key_asymmetric_init,
     key_asymmetric_generate,
     key_asymmetric_decrypt,
     key_asymmetric_duplicate,

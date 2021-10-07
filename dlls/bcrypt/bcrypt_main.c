@@ -672,6 +672,36 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
     }
 }
 
+static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+{
+    if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
+    {
+        if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
+        {
+            key->u.s.mode = MODE_ID_ECB;
+            return STATUS_SUCCESS;
+        }
+        else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
+        {
+            key->u.s.mode = MODE_ID_CBC;
+            return STATUS_SUCCESS;
+        }
+        else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
+        {
+            key->u.s.mode = MODE_ID_GCM;
+            return STATUS_SUCCESS;
+        }
+        else
+        {
+            FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+    }
+
+    FIXME( "unsupported key property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS get_hash_property( const struct hash *hash, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
@@ -933,7 +963,6 @@ static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *a
                                        const UCHAR *pubkey, ULONG pubkey_len )
 {
     struct key *key;
-    NTSTATUS status;
 
     if (!key_funcs)
     {
@@ -955,12 +984,6 @@ static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *a
         }
         memcpy( key->u.a.pubkey, pubkey, pubkey_len );
         key->u.a.pubkey_len = pubkey_len;
-    }
-    if ((status = key_funcs->key_asymmetric_init( key )))
-    {
-        heap_free( key->u.a.pubkey );
-        heap_free( key );
-        return status;
     }
     *ret_key = key;
     return STATUS_SUCCESS;
@@ -1446,7 +1469,6 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     struct algorithm *alg = algorithm;
     struct key *key;
     ULONG block_size;
-    NTSTATUS status;
 
     TRACE( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len, secret, secret_len, flags );
 
@@ -1476,13 +1498,6 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     memcpy( key->u.s.secret, secret, secret_len );
     key->u.s.secret_len = secret_len;
 
-    if ((status = key_funcs->key_symmetric_init( key )))
-    {
-        heap_free( key->u.s.secret );
-        heap_free( key );
-        return status;
-    }
-
     *handle = key;
     return STATUS_SUCCESS;
 }
@@ -1499,8 +1514,22 @@ NTSTATUS WINAPI BCryptGenerateKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_H
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
     if (!handle) return STATUS_INVALID_PARAMETER;
 
-    if (!(status = key_asymmetric_create( &key, alg, key_len, NULL, 0 ))) *handle = key;
-    return status;
+    switch (alg->id)
+    {
+    case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDSA_P256:
+    case ALG_ID_ECDSA_P384:
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+    case ALG_ID_DSA:
+        if (!(status = key_asymmetric_create( &key, alg, key_len, NULL, 0 ))) *handle = key;
+        return status;
+
+    default:
+        FIXME( "algorithm %u not supported\n", alg->id );
+        return STATUS_NOT_SUPPORTED;
+    }
+
 }
 
 NTSTATUS WINAPI BCryptFinalizeKeyPair( BCRYPT_KEY_HANDLE handle, ULONG flags )
@@ -1767,7 +1796,7 @@ NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHA
     case MAGIC_KEY:
     {
         struct key *key = (struct key *)object;
-        return key_funcs->key_set_property( key, prop, value, size, flags );
+        return set_key_property( key, prop, value, size, flags );
     }
     default:
         WARN( "unknown magic %08x\n", object->magic );

@@ -197,15 +197,12 @@ struct secret
 
 struct key_funcs
 {
-    NTSTATUS (CDECL *key_set_property)( struct key *, const WCHAR *, UCHAR *, ULONG, ULONG );
-    NTSTATUS (CDECL *key_symmetric_init)( struct key * );
     void     (CDECL *key_symmetric_vector_reset)( struct key * );
     NTSTATUS (CDECL *key_symmetric_set_auth_data)( struct key *, UCHAR *, ULONG );
     NTSTATUS (CDECL *key_symmetric_encrypt)( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG );
     NTSTATUS (CDECL *key_symmetric_decrypt)( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG );
     NTSTATUS (CDECL *key_symmetric_get_tag)( struct key *, UCHAR *, ULONG );
     void     (CDECL *key_symmetric_destroy)( struct key * );
-    NTSTATUS (CDECL *key_asymmetric_init)( struct key * );
     NTSTATUS (CDECL *key_asymmetric_generate)( struct key * );
     NTSTATUS (CDECL *key_asymmetric_decrypt)( struct key *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG * );
     NTSTATUS (CDECL *key_asymmetric_duplicate)( struct key *, struct key * );
