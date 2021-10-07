@@ -19,11 +19,12 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "windef.h"
 #include "winternl.h"

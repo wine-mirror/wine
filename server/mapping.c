@@ -19,12 +19,13 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>

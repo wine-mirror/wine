@@ -19,12 +19,12 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #ifdef HAVE_POLL_H
 # include <poll.h>
 #endif

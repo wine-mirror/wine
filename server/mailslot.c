@@ -21,9 +21,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
 
 #include <assert.h>
 #include <fcntl.h>
@@ -33,7 +30,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
-
+#include <unistd.h>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -43,6 +40,9 @@
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
 #endif
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 

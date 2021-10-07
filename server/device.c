@@ -19,8 +19,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-#include "wine/rbtree.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -33,6 +31,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
+#include "wine/rbtree.h"
 
 #include "object.h"
 #include "file.h"

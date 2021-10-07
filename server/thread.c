@@ -19,8 +19,8 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
+#define _GNU_SOURCE /* sched_affinity */
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>

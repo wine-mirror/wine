@@ -20,7 +20,6 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -32,6 +31,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <errno.h>
+#include <unistd.h>
 #ifdef HAVE_POLL_H
 # include <poll.h>
 #endif
