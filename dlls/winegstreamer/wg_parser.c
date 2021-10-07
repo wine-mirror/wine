@@ -159,7 +159,10 @@ static uint32_t wg_channel_position_from_gst(GstAudioChannelPosition position)
         SPEAKER_TOP_BACK_CENTER,
     };
 
-    if (position < ARRAY_SIZE(position_map))
+    if (position == GST_AUDIO_CHANNEL_POSITION_MONO)
+        return SPEAKER_FRONT_CENTER;
+
+    if (position >= 0 && position < ARRAY_SIZE(position_map))
         return position_map[position];
     return 0;
 }
