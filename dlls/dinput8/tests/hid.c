@@ -5087,6 +5087,57 @@ static BOOL test_device_types(void)
 
 static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
 {
+    struct hid_expect expect_download[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .todo = TRUE,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x19},
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .todo = TRUE,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .todo = TRUE,
+            .report_id = 3,
+            .report_len = 9,
+            .report_buf = {0x03,0x01,0x01,0x08,0x01,0x00,0x06,0x00,0x01},
+        },
+        /* start command when DIEP_START is set */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .todo = TRUE,
+            .report_id = 2,
+            .report_len = 4,
+            .report_buf = {0x02,0x01,0x01,0x01},
+        },
+    };
+    struct hid_expect expect_unload[] =
+    {
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .todo = TRUE,
+            .report_id = 2,
+            .report_len = 4,
+            .report_buf = {0x02,0x01,0x03,0x00},
+        },
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 1,
+            .report_len = 2,
+            .report_buf = {1,0x01},
+        },
+    };
     struct hid_expect expect_dc_reset =
     {
         .code = IOCTL_HID_WRITE_REPORT,
@@ -5368,6 +5419,25 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     todo_wine
     check_member( desc, expect_desc_init, "%u", dwStartDelay );
 
+    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Download returned %#x\n", hr );
+    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+
     hr = IDirectInputEffect_SetParameters( effect, NULL, DIEP_NODOWNLOAD );
     todo_wine
     ok( hr == E_POINTER, "SetParameters returned %#x\n", hr );
@@ -5412,6 +5482,13 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
     check_member( desc, expect_desc_init, "%u", dwStartDelay );
 
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc,
                                            DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_STARTDELAY |
                                                DIEP_TRIGGERREPEATINTERVAL | DIEP_NODOWNLOAD );
@@ -5437,6 +5514,13 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc_init, "%u", cbTypeSpecificParams );
     todo_wine
     check_member( desc, expect_desc, "%u", dwStartDelay );
+
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     desc.lpEnvelope = NULL;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_ENVELOPE | DIEP_NODOWNLOAD );
@@ -5465,6 +5549,13 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( envelope, expect_envelope, "%u", dwFadeLevel );
     todo_wine
     check_member( envelope, expect_envelope, "%u", dwFadeTime );
+
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     desc.dwFlags = 0;
     desc.cAxes = 0;
@@ -5532,6 +5623,13 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     todo_wine
     ok( desc.rgdwAxes[2] == 4, "got %#x expected %#x\n", desc.rgdwAxes[2], 4 );
 
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+
     desc.dwFlags = DIEFF_CARTESIAN;
     desc.cAxes = 0;
     desc.rglDirection = directions;
@@ -5593,6 +5691,13 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     todo_wine
     ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
 
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
+
     desc.cbTypeSpecificParams = 0;
     desc.lpvTypeSpecificParams = &periodic;
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_TYPESPECIFICPARAMS | DIEP_NODOWNLOAD );
@@ -5617,6 +5722,54 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( periodic, expect_periodic, "%u", dwPhase );
     todo_wine
     check_member( periodic, expect_periodic, "%u", dwPeriod );
+
+    set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DI_OK, "Download returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Download returned %#x\n", hr );
+
+    set_hid_expect( file, expect_unload, sizeof(struct hid_expect) );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_OK, "Unload returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_download, 4 * sizeof(struct hid_expect) );
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_START );
+    todo_wine
+    ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_unload, sizeof(struct hid_expect) );
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_OK, "Unload returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
+    hr = IDirectInputEffect_Download( effect );
+    todo_wine
+    ok( hr == DI_OK, "Download returned %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, expect_unload, 2 * sizeof(struct hid_expect) );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned: %#x\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputEffect_Unload( effect );
+    todo_wine
+    ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     ref = IDirectInputEffect_Release( effect );
     ok( ref == 0, "Release returned %d\n", ref );
