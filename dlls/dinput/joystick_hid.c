@@ -145,6 +145,7 @@ struct hid_joystick_effect
     IDirectInputEffect IDirectInputEffect_iface;
     LONG ref;
     USAGE type;
+    ULONG index;
 
     struct list entry;
     struct hid_joystick *joystick;
@@ -2134,14 +2135,97 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
 
 static HRESULT WINAPI hid_joystick_effect_Start( IDirectInputEffect *iface, DWORD iterations, DWORD flags )
 {
-    FIXME( "iface %p, iterations %u, flags %#x stub!\n", iface, iterations, flags );
-    return DIERR_UNSUPPORTED;
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    struct pid_control_report *effect_control = &impl->joystick->pid_effect_control;
+    ULONG count, report_len = impl->joystick->caps.OutputReportByteLength;
+    PHIDP_PREPARSED_DATA preparsed = impl->joystick->preparsed;
+    HANDLE device = impl->joystick->device;
+    NTSTATUS status;
+    USAGE control;
+    HRESULT hr;
+
+    TRACE( "iface %p, iterations %u, flags %#x.\n", iface, iterations, flags );
+
+    if ((flags & ~(DIES_NODOWNLOAD|DIES_SOLO))) return DIERR_INVALIDPARAM;
+    if (flags & DIES_SOLO) control = PID_USAGE_OP_EFFECT_START_SOLO;
+    else control = PID_USAGE_OP_EFFECT_START;
+
+    EnterCriticalSection( &impl->joystick->base.crit );
+    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+        hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else if ((flags & DIES_NODOWNLOAD) && !impl->index)
+        hr = DIERR_NOTDOWNLOADED;
+    else if ((flags & DIES_NODOWNLOAD) || !FAILED(hr = IDirectInputEffect_Download( iface )))
+    {
+        count = 1;
+        status = HidP_InitializeReportForID( HidP_Output, effect_control->id, preparsed,
+                                             impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                          impl->index, preparsed, impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, effect_control->control_coll,
+                                      &control, &count, preparsed, impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_LOOP_COUNT,
+                                          iterations, preparsed, impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else if (WriteFile( device, impl->effect_control_buf, report_len, NULL, NULL )) hr = DI_OK;
+        else hr = DIERR_INPUTLOST;
+    }
+    LeaveCriticalSection( &impl->joystick->base.crit );
+
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_effect_Stop( IDirectInputEffect *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return DIERR_UNSUPPORTED;
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    struct pid_control_report *effect_control = &impl->joystick->pid_effect_control;
+    ULONG count, report_len = impl->joystick->caps.OutputReportByteLength;
+    PHIDP_PREPARSED_DATA preparsed = impl->joystick->preparsed;
+    HANDLE device = impl->joystick->device;
+    NTSTATUS status;
+    USAGE control;
+    HRESULT hr;
+
+    TRACE( "iface %p.\n", iface );
+
+    EnterCriticalSection( &impl->joystick->base.crit );
+    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+        hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else if (!impl->index)
+        hr = DIERR_NOTDOWNLOADED;
+    else
+    {
+        count = 1;
+        control = PID_USAGE_OP_EFFECT_STOP;
+        status = HidP_InitializeReportForID( HidP_Output, effect_control->id, preparsed,
+                                             impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                          impl->index, preparsed, impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, effect_control->control_coll,
+                                      &control, &count, preparsed, impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_LOOP_COUNT,
+                                          0, preparsed, impl->effect_control_buf, report_len );
+
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else if (WriteFile( device, impl->effect_control_buf, report_len, NULL, NULL )) hr = DI_OK;
+        else hr = DIERR_INPUTLOST;
+    }
+    LeaveCriticalSection( &impl->joystick->base.crit );
+
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *iface, DWORD *status )

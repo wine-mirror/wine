@@ -5765,10 +5765,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( periodic, expect_periodic, "%u", dwPeriod );
 
     hr = IDirectInputEffect_Start( effect, 1, DIES_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_NOTDOWNLOADED, "Start returned %#x\n", hr );
     hr = IDirectInputEffect_Stop( effect );
-    todo_wine
     ok( hr == DIERR_NOTDOWNLOADED, "Stop returned %#x\n", hr );
 
     set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
@@ -5782,7 +5780,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( hr == DI_NOEFFECT, "Download returned %#x\n", hr );
 
     hr = IDirectInputEffect_Start( effect, 1, 0xdeadbeef );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "Start returned %#x\n", hr );
 
     set_hid_expect( file, &expect_start_solo, sizeof(expect_start_solo) );
@@ -5845,10 +5842,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_Start( effect, 1, DIES_NODOWNLOAD );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Start returned %#x\n", hr );
     hr = IDirectInputEffect_Stop( effect );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Stop returned %#x\n", hr );
 
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
