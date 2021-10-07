@@ -748,7 +748,6 @@ static void adapter_vk_uninit_3d_cs(void *object)
     device->shader_backend->shader_free_private(device, &context_vk->c);
     wined3d_device_vk_destroy_null_views(device_vk, context_vk);
     wined3d_device_vk_destroy_null_resources(device_vk, context_vk);
-    wined3d_device_destroy_default_samplers(device, &context_vk->c);
 }
 
 static void adapter_vk_uninit_3d(struct wined3d_device *device)
@@ -761,6 +760,7 @@ static void adapter_vk_uninit_3d(struct wined3d_device *device)
     device_vk = wined3d_device_vk(device);
     context_vk = &device_vk->context_vk;
 
+    wined3d_device_destroy_default_samplers(device);
     wined3d_cs_destroy_object(device->cs, adapter_vk_uninit_3d_cs, device_vk);
     wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 

@@ -4575,6 +4575,7 @@ static void adapter_gl_uninit_3d(struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
 
+    wined3d_device_destroy_default_samplers(device);
     wined3d_cs_destroy_object(device->cs, wined3d_device_delete_opengl_contexts_cs, device);
     wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 }
