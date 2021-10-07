@@ -951,12 +951,14 @@ then
     then
         ac_save_CC="$CC"
         saved_CFLAGS=$CFLAGS
+        saved_LDFLAGS=$LDFLAGS
         AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-"-g -O2"})
         AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSS_PE -Wall")
         AC_SUBST(CROSSLDFLAGS)
 
         CC="$CROSSCC"
         CFLAGS=$CROSSCFLAGS
+        LDFLAGS=$CROSSLDFLAGS
         AC_CACHE_CHECK([whether $CROSSCC works], wine_cv_crosscc,
             [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],[wine_cv_crosscc=yes],[wine_cv_crosscc=no])])
         if test $wine_cv_crosscc = yes
@@ -1051,6 +1053,7 @@ then
         fi
 
         CFLAGS=$saved_CFLAGS
+        LDFLAGS=$saved_LDFLAGS
         CC="$ac_save_CC"
     fi
 fi

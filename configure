@@ -9621,6 +9621,7 @@ test -n "$CROSSCC" || CROSSCC="false"
     then
         ac_save_CC="$CC"
         saved_CFLAGS=$CFLAGS
+        saved_LDFLAGS=$LDFLAGS
         CROSSCFLAGS=${CROSSCFLAGS:-"-g -O2"}
 
         EXTRACROSSCFLAGS="-DWINE_CROSS_PE -Wall"
@@ -9629,6 +9630,7 @@ test -n "$CROSSCC" || CROSSCC="false"
 
         CC="$CROSSCC"
         CFLAGS=$CROSSCFLAGS
+        LDFLAGS=$CROSSLDFLAGS
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
 $as_echo_n "checking whether $CROSSCC works... " >&6; }
 if ${wine_cv_crosscc+:} false; then :
@@ -10676,6 +10678,7 @@ fi
         fi
 
         CFLAGS=$saved_CFLAGS
+        LDFLAGS=$saved_LDFLAGS
         CC="$ac_save_CC"
     fi
 fi
