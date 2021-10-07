@@ -2434,6 +2434,17 @@ static DWORD CALLBACK server_thread(LPVOID param)
             static const char headmsg[] = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n0123456789";
             send(c, headmsg, sizeof(headmsg)-1, 0);
         }
+        if (strstr(buffer, "GET /test_large_header"))
+        {
+            static const char allokmsg[] =  "HTTP/1.1 200 OK\r\nServer: winetest\r\n";
+            char header[4000 + sizeof("wine-header: ") - 1];
+
+            memset(header, 'A', sizeof(header));
+            memcpy(header, "wine-header: ", sizeof("wine-header: ") - 1);
+            send(c, allokmsg, sizeof(allokmsg) - 1, 0);
+            send(c, header, sizeof(header), 0);
+            send(c, "\r\n\r\n", 4, 0);
+        }
         if (strstr(buffer, "GET /test_conn_close"))
         {
             static const char conn_close_response[] = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nsome content";
@@ -3634,6 +3645,41 @@ static void test_not_modified(int port)
     ret = InternetQueryDataAvailable(req, &avail, 0, 0);
     ok(ret, "InternetQueryDataAvailable failed: %u\n", GetLastError());
     ok(!avail, "got %d\n", avail);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
+static void test_large_header(int port)
+{
+    HINTERNET ses, con, req;
+    BOOL ret;
+    DWORD size, index, error;
+    char buffer[13];
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestA(con, NULL, "/test_large_header", NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestW(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req, 200);
+
+    index = 0;
+    size = sizeof(buffer);
+    strcpy(buffer, "wine-header");
+    ret = HttpQueryInfoA(req, HTTP_QUERY_CUSTOM, buffer, &size, &index);
+    error = GetLastError();
+    ok(!ret, "HttpQueryInfoA succeeded\n");
+    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
+    ok(size == 4001, "got %u\n", size);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
@@ -6214,6 +6260,7 @@ static void test_http_connection(void)
     test_options(si.port);
     test_no_content(si.port);
     test_not_modified(si.port);
+    test_large_header(si.port);
     test_conn_close(si.port);
     test_no_cache(si.port);
     test_cache_read_gzipped(si.port);
