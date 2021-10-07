@@ -1653,16 +1653,9 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     }
 
     /* WS_EX_WINDOWEDGE depends on some other styles */
-    if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
+    if ((wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)) &&
+            !(wndPtr->dwStyle & (WS_CHILD | WS_POPUP)))
         wndPtr->dwExStyle |= WS_EX_WINDOWEDGE;
-    else if (wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME))
-    {
-        if (!((wndPtr->dwExStyle & WS_EX_STATICEDGE) &&
-            (wndPtr->dwStyle & (WS_CHILD | WS_POPUP))))
-            wndPtr->dwExStyle |= WS_EX_WINDOWEDGE;
-    }
-    else
-        wndPtr->dwExStyle &= ~WS_EX_WINDOWEDGE;
 
     if (!(wndPtr->dwStyle & (WS_CHILD | WS_POPUP)))
         wndPtr->flags |= WIN_NEED_SIZE;
