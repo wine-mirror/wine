@@ -216,6 +216,7 @@ sync_test("builtin_toString", function() {
     if(localStorage) test("localStorage", localStorage, "Storage");
     test("location", window.location, "Object", window.location.href);
     test("navigator", window.navigator, "Navigator");
+    test("performance", window.performance, "Performance");
     test("screen", window.screen, "Screen");
     test("sessionStorage", window.sessionStorage, "Storage");
     test("style", document.body.style, "MSStyleCSSProperties");

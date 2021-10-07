@@ -2161,8 +2161,10 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
 static HRESULT WINAPI HTMLPerformance_toString(IHTMLPerformance *iface, BSTR *string)
 {
     HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
-    FIXME("(%p)->(%p)\n", This, string);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, string);
+
+    return dispex_to_string(&This->dispex, string);
 }
 
 static HRESULT WINAPI HTMLPerformance_toJSON(IHTMLPerformance *iface, VARIANT *var)
