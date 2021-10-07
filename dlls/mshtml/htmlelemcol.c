@@ -301,8 +301,10 @@ static HRESULT WINAPI HTMLElementCollection_toString(IHTMLElementCollection *ifa
                                                      BSTR *String)
 {
     HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    FIXME("(%p)->(%p)\n", This, String);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, String);
+
+    return dispex_to_string(&This->dispex, String);
 }
 
 static HRESULT WINAPI HTMLElementCollection_put_length(IHTMLElementCollection *iface,
