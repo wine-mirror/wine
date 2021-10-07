@@ -4157,8 +4157,8 @@ struct wined3d_resource
 
     struct list resource_list_entry;
 
-    uint32_t srv_bind_count_device;
-    uint32_t rtv_bind_count_device;
+    int32_t srv_bind_count_device;
+    int32_t rtv_bind_count_device;
 };
 
 static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
@@ -6329,22 +6329,22 @@ static inline bool wined3d_rtv_all_subresources(const struct wined3d_rendertarge
 
 static inline void wined3d_srv_bind_count_inc(struct wined3d_shader_resource_view *srv)
 {
-    ++srv->resource->srv_bind_count_device;
+    InterlockedIncrement(&srv->resource->srv_bind_count_device);
 }
 
 static inline void wined3d_srv_bind_count_dec(struct wined3d_shader_resource_view *srv)
 {
-    --srv->resource->srv_bind_count_device;
+    InterlockedDecrement(&srv->resource->srv_bind_count_device);
 }
 
 static inline void wined3d_rtv_bind_count_inc(struct wined3d_rendertarget_view *rtv)
 {
-    ++rtv->resource->rtv_bind_count_device;
+    InterlockedIncrement(&rtv->resource->rtv_bind_count_device);
 }
 
 static inline void wined3d_rtv_bind_count_dec(struct wined3d_rendertarget_view *rtv)
 {
-    --rtv->resource->rtv_bind_count_device;
+    InterlockedDecrement(&rtv->resource->rtv_bind_count_device);
 }
 
 static inline bool wined3d_rtv_overlaps_srv(const struct wined3d_rendertarget_view *rtv,
