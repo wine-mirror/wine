@@ -1462,6 +1462,20 @@ static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_from, UINT dpi_to
 }
 
 /***********************************************************************
+ *           fix_exstyle
+ */
+static DWORD fix_exstyle( DWORD style, DWORD exstyle )
+{
+    if ((exstyle & WS_EX_DLGMODALFRAME) ||
+            (!(exstyle & WS_EX_STATICEDGE) &&
+             (style & (WS_DLGFRAME | WS_THICKFRAME))))
+        exstyle |= WS_EX_WINDOWEDGE;
+    else
+        exstyle &= ~WS_EX_WINDOWEDGE;
+    return exstyle;
+}
+
+/***********************************************************************
  *           WIN_CreateWindowEx
  *
  * Implementation of CreateWindowEx().
@@ -1596,13 +1610,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     }
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
-
-    if ((cs->dwExStyle & WS_EX_DLGMODALFRAME) ||
-        ((!(cs->dwExStyle & WS_EX_STATICEDGE)) &&
-          (cs->style & (WS_DLGFRAME | WS_THICKFRAME))))
-        cs->dwExStyle |= WS_EX_WINDOWEDGE;
-    else
-        cs->dwExStyle &= ~WS_EX_WINDOWEDGE;
+    cs->dwExStyle = fix_exstyle(cs->style, cs->dwExStyle);
 
     /* Create the window structure */
 
@@ -2622,13 +2630,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
         /* WS_EX_TOPMOST can only be changed through SetWindowPos */
         newval = (style.styleNew & ~WS_EX_TOPMOST) | (wndPtr->dwExStyle & WS_EX_TOPMOST);
-        /* WS_EX_WINDOWEDGE depends on some other styles */
-        if (newval & WS_EX_DLGMODALFRAME)
-            newval |= WS_EX_WINDOWEDGE;
-        else if (!(newval & WS_EX_STATICEDGE) && (wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)))
-            newval |= WS_EX_WINDOWEDGE;
-        else
-            newval &= ~WS_EX_WINDOWEDGE;
+        newval = fix_exstyle(wndPtr->dwStyle, newval);
         break;
     case GWLP_HWNDPARENT:
         if (wndPtr->parent == GetDesktopWindow())
