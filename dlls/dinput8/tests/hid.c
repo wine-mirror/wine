@@ -5159,13 +5159,9 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, NULL, NULL );
     ok( hr == E_POINTER, "CreateEffect returned %#x\n", hr );
     hr = IDirectInputDevice8_CreateEffect( device, NULL, NULL, &effect, NULL );
-    todo_wine
     ok( hr == E_POINTER, "CreateEffect returned %#x\n", hr );
-    if (hr == DI_OK) IDirectInputEffect_Release( effect );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_NULL, NULL, &effect, NULL );
-    todo_wine
     ok( hr == DIERR_DEVICENOTREG, "CreateEffect returned %#x\n", hr );
-    if (hr == DI_OK) IDirectInputEffect_Release( effect );
 
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
     ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
@@ -5179,17 +5175,14 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( check_params.count == 1, "got count %u, expected 1\n", check_params.count );
 
     hr = IDirectInputEffect_Initialize( effect, NULL, DIRECTINPUT_VERSION, &GUID_Sine );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#x\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, 0, &GUID_Sine );
     todo_wine
     ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#x\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, NULL );
-    todo_wine
     ok( hr == E_POINTER, "Initialize returned %#x\n", hr );
 
     hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, &GUID_NULL );
-    todo_wine
     ok( hr == DIERR_DEVICENOTREG, "Initialize returned %#x\n", hr );
     hr = IDirectInputEffect_Initialize( effect, instance, DIRECTINPUT_VERSION, &GUID_Sine );
     ok( hr == DI_OK, "Initialize returned %#x\n", hr );

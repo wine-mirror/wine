@@ -144,6 +144,7 @@ struct hid_joystick_effect
 {
     IDirectInputEffect IDirectInputEffect_iface;
     LONG ref;
+    USAGE type;
 
     struct list entry;
     struct hid_joystick *joystick;
@@ -2061,7 +2062,29 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
 static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface, HINSTANCE inst,
                                                       DWORD version, REFGUID guid )
 {
-    FIXME( "iface %p, inst %p, version %u, guid %s stub!\n", iface, inst, version, debugstr_guid( guid ) );
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    struct hid_joystick *joystick = impl->joystick;
+    ULONG report_len = joystick->caps.OutputReportByteLength;
+    NTSTATUS status;
+    ULONG count;
+    USAGE type;
+
+    TRACE( "iface %p, inst %p, version %u, guid %s\n", iface, inst, version, debugstr_guid( guid ) );
+
+    if (!inst) return DIERR_INVALIDPARAM;
+    if (!guid) return E_POINTER;
+    if (!(type = effect_guid_to_usage( guid ))) return DIERR_DEVICENOTREG;
+
+    status = HidP_InitializeReportForID( HidP_Output, joystick->pid_effect_update.id,
+                                         joystick->preparsed, impl->effect_update_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+
+    count = 1;
+    status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, joystick->pid_effect_update.type_coll,
+                             &type, &count, joystick->preparsed, impl->effect_update_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+
+    impl->type = type;
     return DI_OK;
 }
 
