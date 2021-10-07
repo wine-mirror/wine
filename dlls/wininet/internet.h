@@ -462,7 +462,7 @@ void free_authorization_cache(void) DECLSPEC_HIDDEN;
 
 void init_winsock(void) DECLSPEC_HIDDEN;
 
-#define MAX_REPLY_LEN	 	0x5B4
+#define MAX_REPLY_LEN   0x1000
 
 /* Used for debugging - maybe need to be shared in the Wine debugging code ? */
 typedef struct
