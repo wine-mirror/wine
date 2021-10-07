@@ -218,6 +218,7 @@ sync_test("builtin_toString", function() {
     test("navigator", window.navigator, "Navigator");
     test("screen", window.screen, "Screen");
     test("sessionStorage", window.sessionStorage, "Storage");
+    test("style", document.body.style, "MSStyleCSSProperties");
     test("styleSheet", sheet, "CSSStyleSheet");
     test("styleSheetRule", sheet.rules.item(0), "CSSStyleRule");
     test("styleSheetRules", sheet.rules, "MSCSSRuleList");

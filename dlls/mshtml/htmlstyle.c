@@ -3025,8 +3025,10 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 static HRESULT WINAPI HTMLStyle_toString(IHTMLStyle *iface, BSTR *String)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, String);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, String);
+
+    return dispex_to_string(&This->css_style.dispex, String);
 }
 
 static const IHTMLStyleVtbl HTMLStyleVtbl = {
