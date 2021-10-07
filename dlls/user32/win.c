@@ -1706,7 +1706,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     }
     else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
 
-    style = wndPtr->dwStyle;
     win_dpi = wndPtr->dpi;
     WIN_ReleasePtr( wndPtr );
 
@@ -1716,12 +1715,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     /* call the WH_CBT hook */
 
-    /* the window style passed to the hook must be the real window style,
-     * rather than just the window style that the caller to CreateWindowEx
-     * passed in, so we have to copy the original CREATESTRUCT and get the
-     * the real style. */
     cbcs = *cs;
-    cbcs.style = style;
     cbtc.lpcs = &cbcs;
     cbtc.hwndInsertAfter = HWND_TOP;
     if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode )) goto failed;
