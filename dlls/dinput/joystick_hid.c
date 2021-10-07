@@ -131,6 +131,7 @@ struct hid_joystick
     BYTE device_state_report_id;
     BYTE device_state[DEVICE_STATE_MAX_SIZE];
 
+    BYTE effect_inuse[255];
     struct list effect_list;
     struct pid_control_report pid_device_control;
     struct pid_control_report pid_effect_control;
@@ -258,6 +259,19 @@ static const WCHAR *effect_guid_to_string( const GUID *guid )
     if (IsEqualGUID( guid, &GUID_Inertia )) return guid_inertia_w;
     if (IsEqualGUID( guid, &GUID_Friction )) return guid_friction_w;
     return NULL;
+}
+
+static HRESULT find_next_effect_id( struct hid_joystick *impl, ULONG *index )
+{
+    ULONG i;
+
+    for (i = 0; i < ARRAY_SIZE(impl->effect_inuse); ++i)
+        if (!impl->effect_inuse[i]) break;
+    if (i == ARRAY_SIZE(impl->effect_inuse)) return DIERR_DEVICEFULL;
+    impl->effect_inuse[i] = TRUE;
+    *index = i + 1;
+
+    return DI_OK;
 }
 
 typedef BOOL (*enum_object_callback)( struct hid_joystick *impl, struct hid_value_caps *caps,
@@ -1179,6 +1193,12 @@ static HRESULT WINAPI hid_joystick_GetForceFeedbackState( IDirectInputDevice8W *
     return DIERR_UNSUPPORTED;
 }
 
+static BOOL CALLBACK unload_effect_object( IDirectInputEffect *effect, void *context )
+{
+    IDirectInputEffect_Unload( effect );
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8W *iface, DWORD command )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -1210,6 +1230,8 @@ static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8
         hr = DIERR_NOTEXCLUSIVEACQUIRED;
     else
     {
+        if (command == DISFFC_RESET) IDirectInputDevice8_EnumCreatedEffectObjects( iface, unload_effect_object, NULL, 0 );
+
         count = 1;
         status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) hr = status;
@@ -1875,7 +1897,11 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
         if (instance->wUsage == PID_USAGE_DURATION)
             effect_update->duration_caps = caps;
         if (instance->wUsage == PID_USAGE_GAIN)
+        {
+            caps->physical_min = 0;
+            caps->physical_max = 10000;
             effect_update->gain_caps = caps;
+        }
         if (instance->wUsage == PID_USAGE_SAMPLE_PERIOD)
             effect_update->sample_period_caps = caps;
         if (instance->wUsage == PID_USAGE_START_DELAY)
@@ -1895,6 +1921,8 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     if (instance->wCollectionNumber == effect_update->direction_coll)
     {
         SET_REPORT_ID( effect_update );
+        caps->physical_min = 0;
+        caps->physical_max = 36000 - 36000 / (caps->logical_max - caps->logical_min);
         if (effect_update->direction_count >= 6) FIXME( "more than 6 PID directions detected\n" );
         else effect_update->direction_caps[effect_update->direction_count] = caps;
         effect_update->direction_count++;
@@ -2089,6 +2117,7 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
     TRACE( "iface %p, ref %u.\n", iface, ref );
     if (!ref)
     {
+        IDirectInputEffect_Unload( iface );
         EnterCriticalSection( &impl->joystick->base.crit );
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
@@ -2568,16 +2597,136 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
     return DIERR_UNSUPPORTED;
 }
 
+static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,
+                                 struct hid_value_caps *caps, LONG value )
+{
+    ULONG report_len = impl->joystick->caps.OutputReportByteLength;
+    PHIDP_PREPARSED_DATA preparsed = impl->joystick->preparsed;
+    LONG log_min, log_max, phy_min, phy_max;
+    NTSTATUS status;
+
+    if (!caps) return;
+
+    log_min = caps->logical_min;
+    log_max = caps->logical_max;
+    phy_min = caps->physical_min;
+    phy_max = caps->physical_max;
+
+    if (value > phy_max || value < phy_min) value = -1;
+    else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
+    status = HidP_SetUsageValue( HidP_Output, caps->usage_page, caps->link_collection,
+                                 caps->usage_min, value, preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue %04x:%04x returned %#x\n",
+                                             caps->usage_page, caps->usage_min, status );
+}
+
+static void set_parameter_value_us( struct hid_joystick_effect *impl, char *report_buf,
+                                    struct hid_value_caps *caps, LONG value )
+{
+    LONG exp;
+    if (!caps) return;
+    exp = caps->units_exp;
+    if (caps->units != 0x1003) WARN( "unknown time unit caps %x\n", caps->units );
+    else if (exp < -6) while (exp++ < -6) value *= 10;
+    else if (exp > -6) while (exp-- > -6) value /= 10;
+    set_parameter_value( impl, report_buf, caps, value );
+}
+
 static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return DIERR_UNSUPPORTED;
+    static const DWORD complete_mask = DIEP_AXES | DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS;
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    struct pid_effect_update *effect_update = &impl->joystick->pid_effect_update;
+    ULONG report_len = impl->joystick->caps.OutputReportByteLength;
+    HANDLE device = impl->joystick->device;
+    struct hid_value_caps *caps;
+    DWORD i, tmp, count;
+    NTSTATUS status;
+    USAGE usage;
+    HRESULT hr;
+
+    TRACE( "iface %p\n", iface );
+
+    EnterCriticalSection( &impl->joystick->base.crit );
+    if (impl->modified) hr = DI_OK;
+    else hr = DI_NOEFFECT;
+
+    if (!impl->joystick->base.acquired || !(impl->joystick->base.dwCoopLevel & DISCL_EXCLUSIVE))
+        hr = DIERR_NOTEXCLUSIVEACQUIRED;
+    else if ((impl->flags & complete_mask) != complete_mask)
+        hr = DIERR_INCOMPLETEEFFECT;
+    else if (!impl->index && !FAILED(hr = find_next_effect_id( impl->joystick, &impl->index )))
+    {
+        status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_EFFECT_BLOCK_INDEX,
+                                     impl->index, impl->joystick->preparsed, impl->effect_update_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) hr = status;
+        else hr = DI_OK;
+    }
+
+    if (hr == DI_OK)
+    {
+        set_parameter_value_us( impl, impl->effect_update_buf, effect_update->duration_caps,
+                                impl->params.dwDuration );
+        set_parameter_value( impl, impl->effect_update_buf, effect_update->gain_caps,
+                             impl->params.dwGain );
+        set_parameter_value_us( impl, impl->effect_update_buf, effect_update->sample_period_caps,
+                                impl->params.dwSamplePeriod );
+        set_parameter_value_us( impl, impl->effect_update_buf, effect_update->start_delay_caps,
+                                impl->params.dwStartDelay );
+        set_parameter_value_us( impl, impl->effect_update_buf, effect_update->trigger_repeat_interval_caps,
+                                impl->params.dwTriggerRepeatInterval );
+
+        if (impl->flags & DIEP_DIRECTION)
+        {
+            count = 1;
+            usage = PID_USAGE_DIRECTION_ENABLE;
+            status = HidP_SetUsages( HidP_Output, HID_USAGE_PAGE_PID, 0, &usage, &count,
+                                     impl->joystick->preparsed, impl->effect_update_buf, report_len );
+            if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsages returned %#x\n", status );
+
+            if (!effect_update->direction_count) WARN( "no PID effect direction caps found\n" );
+            else for (i = 0; i < impl->params.cAxes - 1; ++i)
+            {
+                tmp = impl->directions[i] + (i == 0 ? 9000 : 0);
+                caps = effect_update->direction_caps[effect_update->direction_count - i - 1];
+                set_parameter_value( impl, impl->effect_update_buf, caps, tmp % 36000 );
+            }
+        }
+
+        status = HidP_SetUsageValue( HidP_Output, HID_USAGE_PAGE_PID, 0, PID_USAGE_TRIGGER_BUTTON,
+                                     impl->params.dwTriggerButton, impl->joystick->preparsed,
+                                     impl->effect_update_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue returned %#x\n", status );
+
+        if (WriteFile( device, impl->effect_update_buf, report_len, NULL, NULL )) hr = DI_OK;
+        else hr = DIERR_INPUTLOST;
+
+        impl->modified = FALSE;
+    }
+    LeaveCriticalSection( &impl->joystick->base.crit );
+
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_effect_Unload( IDirectInputEffect *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return DIERR_UNSUPPORTED;
+    struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
+    struct hid_joystick *joystick = impl->joystick;
+    HRESULT hr = DI_OK;
+
+    TRACE( "iface %p\n", iface );
+
+    EnterCriticalSection( &joystick->base.crit );
+    if (!impl->index)
+        hr = DI_NOEFFECT;
+    else if (!FAILED(hr = IDirectInputEffect_Stop( iface )))
+    {
+        impl->joystick->effect_inuse[impl->index - 1] = FALSE;
+        impl->index = 0;
+    }
+    LeaveCriticalSection( &joystick->base.crit );
+
+    return hr;
 }
 
 static HRESULT WINAPI hid_joystick_effect_Escape( IDirectInputEffect *iface, DIEFFESCAPE *escape )

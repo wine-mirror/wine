@@ -5108,7 +5108,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 3,
             .report_len = 9,
             .report_buf = {0x03,0x01,0x01,0x08,0x01,0x00,0x06,0x00,0x01},
@@ -5116,7 +5115,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
         /* start command when DIEP_START is set */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 2,
             .report_len = 4,
             .report_buf = {0x02,0x01,0x01,0x01},
@@ -5125,7 +5123,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     struct hid_expect expect_start =
     {
         .code = IOCTL_HID_WRITE_REPORT,
-        .todo = TRUE,
         .report_id = 2,
         .report_len = 4,
         .report_buf = {0x02, 0x01, 0x01, 0x01},
@@ -5133,7 +5130,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     struct hid_expect expect_start_solo =
     {
         .code = IOCTL_HID_WRITE_REPORT,
-        .todo = TRUE,
         .report_id = 2,
         .report_len = 4,
         .report_buf = {0x02, 0x01, 0x02, 0x01},
@@ -5141,7 +5137,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     struct hid_expect expect_start_0 =
     {
         .code = IOCTL_HID_WRITE_REPORT,
-        .todo = TRUE,
         .report_id = 2,
         .report_len = 4,
         .report_buf = {0x02, 0x01, 0x01, 0x00},
@@ -5149,7 +5144,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     struct hid_expect expect_start_4 =
     {
         .code = IOCTL_HID_WRITE_REPORT,
-        .todo = TRUE,
         .report_id = 2,
         .report_len = 4,
         .report_buf = {0x02, 0x01, 0x01, 0x04},
@@ -5157,7 +5151,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     struct hid_expect expect_stop =
     {
         .code = IOCTL_HID_WRITE_REPORT,
-        .todo = TRUE,
         .report_id = 2,
         .report_len = 4,
         .report_buf = {0x02, 0x01, 0x03, 0x00},
@@ -5166,7 +5159,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     {
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 2,
             .report_len = 4,
             .report_buf = {0x02,0x01,0x03,0x00},
@@ -5420,7 +5412,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_NOTEXCLUSIVEACQUIRED, "Download returned %#x\n", hr );
     set_hid_expect( file, &expect_dc_reset, sizeof(expect_dc_reset) );
     hr = IDirectInputDevice8_Acquire( device );
@@ -5428,10 +5419,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, NULL, DIEP_NODOWNLOAD );
@@ -5472,10 +5461,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc_init, "%u", dwStartDelay );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc,
@@ -5498,10 +5485,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( desc, expect_desc, "%u", dwStartDelay );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     desc.lpEnvelope = NULL;
@@ -5525,10 +5510,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     check_member( envelope, expect_envelope, "%u", dwFadeTime );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     desc.dwFlags = 0;
@@ -5580,10 +5563,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( desc.rgdwAxes[2] == 4, "got %#x expected %#x\n", desc.rgdwAxes[2], 4 );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     desc.dwFlags = DIEFF_CARTESIAN;
@@ -5632,10 +5613,8 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     ok( hr == DIERR_INVALIDPARAM, "GetParameters returned %#x\n", hr );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DIERR_INCOMPLETEEFFECT, "Download returned %#x\n", hr );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     desc.cbTypeSpecificParams = 0;
@@ -5662,12 +5641,10 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
 
     set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DI_OK, "Download returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Download returned %#x\n", hr );
 
     hr = IDirectInputEffect_Start( effect, 1, 0xdeadbeef );
@@ -5675,55 +5652,46 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
 
     set_hid_expect( file, &expect_start_solo, sizeof(expect_start_solo) );
     hr = IDirectInputEffect_Start( effect, 1, DIES_SOLO );
-    todo_wine
     ok( hr == DI_OK, "Start returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
     hr = IDirectInputEffect_Stop( effect );
-    todo_wine
     ok( hr == DI_OK, "Stop returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start, sizeof(expect_start) );
     hr = IDirectInputEffect_Start( effect, 1, 0 );
-    todo_wine
     ok( hr == DI_OK, "Start returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start_4, sizeof(expect_start_4) );
     hr = IDirectInputEffect_Start( effect, 4, 0 );
-    todo_wine
     ok( hr == DI_OK, "Start returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_start_0, sizeof(expect_start_4) );
     hr = IDirectInputEffect_Start( effect, 0, 0 );
-    todo_wine
     ok( hr == DI_OK, "Start returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_unload, sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_OK, "Unload returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_download, 4 * sizeof(struct hid_expect) );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_START );
-    todo_wine
     ok( hr == DI_OK, "SetParameters returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_unload, sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_OK, "Unload returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_download, 3 * sizeof(struct hid_expect) );
     hr = IDirectInputEffect_Download( effect );
-    todo_wine
     ok( hr == DI_OK, "Download returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
 
@@ -5743,7 +5711,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
     set_hid_expect( file, NULL, 0 );
 
     hr = IDirectInputEffect_Unload( effect );
-    todo_wine
     ok( hr == DI_NOEFFECT, "Unload returned %#x\n", hr );
 
     ref = IDirectInputEffect_Release( effect );
