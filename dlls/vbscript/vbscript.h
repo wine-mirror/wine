@@ -242,6 +242,7 @@ typedef enum {
     X(gteq,           1, 0,           0)          \
     X(icall,          1, ARG_BSTR,    ARG_UINT)   \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
+    X(ident,          1, ARG_BSTR,    0)          \
     X(idiv,           1, 0,           0)          \
     X(imp,            1, 0,           0)          \
     X(incc,           1, ARG_BSTR,    0)          \

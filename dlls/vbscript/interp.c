@@ -615,10 +615,8 @@ static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
+static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned arg_cnt)
 {
-    BSTR identifier = ctx->instr->arg1.bstr;
-    const unsigned arg_cnt = ctx->instr->arg2.uint;
     DISPPARAMS dp;
     ref_t ref;
     HRESULT hres;
@@ -687,12 +685,14 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 
 static HRESULT interp_icall(exec_ctx_t *ctx)
 {
+    BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = do_icall(ctx, &v);
+    hres = do_icall(ctx, &v, identifier, arg_cnt);
     if(FAILED(hres))
         return hres;
 
@@ -701,8 +701,12 @@ static HRESULT interp_icall(exec_ctx_t *ctx)
 
 static HRESULT interp_icallv(exec_ctx_t *ctx)
 {
+    BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
+
     TRACE("\n");
-    return do_icall(ctx, NULL);
+
+    return do_icall(ctx, NULL, identifier, arg_cnt);
 }
 
 static HRESULT interp_vcall(exec_ctx_t *ctx)
@@ -786,6 +790,21 @@ static HRESULT interp_mcallv(exec_ctx_t *ctx)
     TRACE("\n");
 
     return do_mcall(ctx, NULL);
+}
+
+static HRESULT interp_ident(exec_ctx_t *ctx)
+{
+    BSTR identifier = ctx->instr->arg1.bstr;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(identifier));
+
+    hres = do_icall(ctx, &v, identifier, 0);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 }
 
 static HRESULT assign_value(exec_ctx_t *ctx, VARIANT *dst, VARIANT *src, WORD flags)

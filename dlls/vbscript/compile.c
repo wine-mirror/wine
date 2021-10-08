@@ -446,7 +446,8 @@ static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *re
     return S_OK;
 }
 
-static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr, unsigned arg_cnt, BOOL ret_val)
+static HRESULT compile_member_call_expression(compile_ctx_t *ctx, member_expression_t *expr,
+                                              unsigned arg_cnt, BOOL ret_val)
 {
     HRESULT hres;
 
@@ -471,6 +472,20 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
     return hres;
 }
 
+static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr)
+{
+    expression_t *const_expr;
+
+    if (expr->obj_expr) /* FIXME: we should probably have a dedicated opcode as well */
+        return compile_member_call_expression(ctx, expr, 0, TRUE);
+
+    const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
+    if(const_expr)
+        return compile_expression(ctx, const_expr);
+
+    return push_instr_bstr(ctx, OP_ident, expr->identifier);
+}
+
 static HRESULT compile_call_expression(compile_ctx_t *ctx, call_expression_t *expr, BOOL ret_val)
 {
     unsigned arg_cnt = 0;
@@ -484,7 +499,7 @@ static HRESULT compile_call_expression(compile_ctx_t *ctx, call_expression_t *ex
     for(call = expr->call_expr; call->type == EXPR_BRACKETS; call = ((unary_expression_t*)call)->subexpr);
 
     if(call->type == EXPR_MEMBER)
-        return compile_member_expression(ctx, (member_expression_t*)call, arg_cnt, ret_val);
+        return compile_member_call_expression(ctx, (member_expression_t*)call, arg_cnt, ret_val);
 
     hres = compile_expression(ctx, call);
     if(FAILED(hres))
@@ -582,7 +597,7 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     case EXPR_ME:
         return push_instr(ctx, OP_me) ? S_OK : E_OUTOFMEMORY;
     case EXPR_MEMBER:
-        return compile_member_expression(ctx, (member_expression_t*)expr, 0, TRUE);
+        return compile_member_expression(ctx, (member_expression_t*)expr);
     case EXPR_MOD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_mod);
     case EXPR_MUL:
