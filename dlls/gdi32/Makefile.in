@@ -5,9 +5,9 @@ IMPORTS   = advapi32 win32u
 DELAYIMPORTS = setupapi
 
 C_SRCS = \
+	dc.c \
 	emfdc.c \
 	enhmetafile.c \
-	gdidc.c \
 	icm.c \
 	metadc.c \
 	metafile.c \

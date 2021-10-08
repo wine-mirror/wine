@@ -4,6 +4,7 @@
  * Copyright 1993, 1994 Alexandre Julliard
  * Copyright 1997 Bertho A. Stultiens
  *           1999 Huw D M Davies
+ * Copyright 2021 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
