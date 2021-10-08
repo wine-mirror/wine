@@ -20,6 +20,7 @@
 
 #ifdef __x86_64__
 
+#include <stdarg.h>
 #include <stdlib.h>
 
 #include "wine/exception.h"
