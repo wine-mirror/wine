@@ -55,6 +55,11 @@ struct effect_condition
     BYTE dead_band;
 };
 
+struct effect_constant_force
+{
+    UINT16 magnitude;
+};
+
 struct effect_params
 {
     USAGE effect_type;
@@ -74,6 +79,7 @@ struct effect_params
     {
         struct effect_periodic periodic;
         struct effect_condition condition[2];
+        struct effect_constant_force constant_force;
     };
 };
 
@@ -149,6 +155,7 @@ struct hid_physical
     BYTE set_periodic_report;
     BYTE set_envelope_report;
     BYTE set_condition_report;
+    BYTE set_constant_force_report;
 };
 
 struct hid_device_state
