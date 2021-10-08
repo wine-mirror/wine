@@ -37,6 +37,14 @@ struct effect_periodic
     UINT16 period;
 };
 
+struct effect_envelope
+{
+    BYTE attack_level;
+    BYTE fade_level;
+    UINT16 attack_time;
+    UINT16 fade_time;
+};
+
 struct effect_params
 {
     USAGE effect_type;
@@ -49,6 +57,8 @@ struct effect_params
     BOOL axis_enabled[2];
     BOOL direction_enabled;
     BYTE direction[2];
+    /* only for periodic, constant or ramp forces */
+    struct effect_envelope envelope;
     union
     {
         struct effect_periodic periodic;
@@ -125,6 +135,7 @@ struct hid_physical
     BYTE effect_control_report;
     BYTE effect_update_report;
     BYTE set_periodic_report;
+    BYTE set_envelope_report;
 };
 
 struct hid_device_state

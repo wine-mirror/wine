@@ -1000,11 +1000,14 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     case PID_USAGE_ET_TRIANGLE:
     case PID_USAGE_ET_SAWTOOTH_UP:
     case PID_USAGE_ET_SAWTOOTH_DOWN:
-        FIXME("periodic effect semi-stub!");
         effect.u.periodic.period = params->periodic.period;
         effect.u.periodic.magnitude = params->periodic.magnitude * 128;
         effect.u.periodic.offset = params->periodic.offset;
         effect.u.periodic.phase = params->periodic.phase;
+        effect.u.periodic.envelope.attack_length = params->envelope.attack_time;
+        effect.u.periodic.envelope.attack_level = params->envelope.attack_level;
+        effect.u.periodic.envelope.fade_length = params->envelope.fade_time;
+        effect.u.periodic.envelope.fade_level = params->envelope.fade_level;
         break;
 
     case PID_USAGE_ET_SPRING:

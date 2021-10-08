@@ -541,7 +541,6 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
     case PID_USAGE_ET_TRIANGLE:
     case PID_USAGE_ET_SAWTOOTH_UP:
     case PID_USAGE_ET_SAWTOOTH_DOWN:
-        FIXME("periodic effect semi-stub!");
         effect.periodic.length = params->duration;
         effect.periodic.delay = params->start_delay;
         effect.periodic.button = params->trigger_button;
@@ -553,6 +552,10 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.periodic.magnitude = params->periodic.magnitude * 128;
         effect.periodic.offset = params->periodic.offset;
         effect.periodic.phase = params->periodic.phase;
+        effect.periodic.attack_length = params->envelope.attack_time;
+        effect.periodic.attack_level = params->envelope.attack_level;
+        effect.periodic.fade_length = params->envelope.fade_time;
+        effect.periodic.fade_level = params->envelope.fade_level;
         break;
 
     case PID_USAGE_ET_SPRING:
