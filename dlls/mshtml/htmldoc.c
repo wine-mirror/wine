@@ -1703,12 +1703,7 @@ static HRESULT WINAPI HTMLDocument_toString(IHTMLDocument2 *iface, BSTR *String)
 
     TRACE("(%p)->(%p)\n", This, String);
 
-    if(!String)
-        return E_INVALIDARG;
-
-    *String = SysAllocString(L"[object]");
-    return *String ? S_OK : E_OUTOFMEMORY;
-
+    return dispex_to_string(&This->doc_node->node.event_target.dispex, String);
 }
 
 static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR bstrHref,
