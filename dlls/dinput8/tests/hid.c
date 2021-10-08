@@ -5778,7 +5778,6 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file )
         /* set condition */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 7,
             .report_len = 8,
             .report_buf = {0x07,0x00,0xf9,0x19,0xd9,0xff,0xff,0x99},
@@ -5786,7 +5785,6 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file )
         /* set condition */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 7,
             .report_len = 8,
             .report_buf = {0x07,0x00,0x4c,0x3f,0xcc,0x4c,0x33,0x19},
@@ -5794,7 +5792,6 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file )
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 3,
             .report_len = 11,
             .report_buf = {0x03,0x01,0x03,0x08,0x01,0x00,0x06,0x00,0x01,0x55,0x00},
@@ -5927,10 +5924,8 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file )
 
     set_hid_expect( file, expect_create, sizeof(expect_create) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &expect_desc, &effect, NULL );
-    todo_wine
     ok( hr == DI_OK, "CreateEffect returned %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
-    if (hr != DI_OK) return;
 
     check_params.expect_effect = effect;
     hr = IDirectInputDevice8_EnumCreatedEffectObjects( device, check_created_effect_objects, &check_params, 0 );
