@@ -1669,13 +1669,59 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
     return TRUE;
 }
 
+static BOOL is_object_property(const struct d3d10_effect_state_property_info *property_info)
+{
+    switch (property_info->type)
+    {
+        case D3D10_SVT_RASTERIZER:
+        case D3D10_SVT_DEPTHSTENCIL:
+        case D3D10_SVT_BLEND:
+        case D3D10_SVT_RENDERTARGETVIEW:
+        case D3D10_SVT_DEPTHSTENCILVIEW:
+        case D3D10_SVT_VERTEXSHADER:
+        case D3D10_SVT_PIXELSHADER:
+        case D3D10_SVT_GEOMETRYSHADER:
+        case D3D10_SVT_TEXTURE:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
+static BOOL is_object_property_type_matching(const struct d3d10_effect_state_property_info *property_info,
+        const struct d3d10_effect_variable *v)
+{
+    if (property_info->type == v->type->basetype) return TRUE;
+
+    switch (v->type->basetype)
+    {
+        case D3D10_SVT_TEXTURE1D:
+        case D3D10_SVT_TEXTURE1DARRAY:
+        case D3D10_SVT_TEXTURE2D:
+        case D3D10_SVT_TEXTURE2DARRAY:
+        case D3D10_SVT_TEXTURE2DMS:
+        case D3D10_SVT_TEXTURE2DMSARRAY:
+        case D3D10_SVT_TEXTURE3D:
+        case D3D10_SVT_TEXTURECUBE:
+            if (property_info->type == D3D10_SVT_TEXTURE) return TRUE;
+            /* fallthrough */
+        default:
+            return FALSE;
+    }
+}
+
 static BOOL parse_fx10_state_group(const char *data, size_t data_size,
-        const char **ptr, enum d3d10_effect_container_type container_type, void *container)
+        const char **ptr, enum d3d10_effect_container_type container_type,
+        struct d3d10_effect *effect, void *container)
 {
     const struct d3d10_effect_state_property_info *property_info;
+    struct d3d10_effect_variable *variable;
     UINT value_offset, operation;
+    const char *name;
+    size_t name_len;
     unsigned int i;
     DWORD count;
+    void *dst;
     UINT idx;
     UINT id;
 
@@ -1710,17 +1756,60 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
             return FALSE;
         }
 
+        dst = (char *)container + property_info->offset;
+
         switch (operation)
         {
             case D3D10_EOO_CONST:
 
                 /* Constant values output directly to backing store. */
                 if (!read_value_list(data, data_size, value_offset, property_info->type, idx,
-                        property_info->size, (char *)container + property_info->offset))
+                        property_info->size, dst))
                 {
                     ERR("Failed to read values for property %#x.\n", id);
                     return FALSE;
                 }
+                break;
+
+            case D3D10_EOO_VAR:
+
+                /* Variable. */
+                if (!fx10_get_string(data, data_size, value_offset, &name, &name_len))
+                {
+                    WARN("Failed to get variable name.\n");
+                    return E_FAIL;
+                }
+                TRACE("Variable name %s.\n", debugstr_a(name));
+
+                if (!(variable = d3d10_effect_get_variable_by_name(effect, name)))
+                {
+                    WARN("Couldn't find variable %s.\n", debugstr_a(name));
+                    return FALSE;
+                }
+
+                if (is_object_property(property_info))
+                {
+                    if (variable->type->element_count)
+                    {
+                        WARN("Unexpected array variable value %s.\n", debugstr_a(name));
+                        return FALSE;
+                    }
+
+                    if (!is_object_property_type_matching(property_info, variable))
+                    {
+                        WARN("Object type mismatch. Variable type %#x, property type %#x.\n",
+                                variable->type->basetype, property_info->type);
+                        return FALSE;
+                    }
+
+                    *(void **)dst = variable;
+                }
+                else
+                {
+                    FIXME("Assigning variables to numeric fields is not supported.\n");
+                    return FALSE;
+                }
+
                 break;
 
             default:
@@ -2329,7 +2418,7 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
 
                     memcpy(&var->u.state.desc, storage_info->default_state, storage_info->size);
                     if (!parse_fx10_state_group(data, data_size, ptr, get_var_container_type(var),
-                            &var->u.state.desc))
+                            var->effect, &var->u.state.desc))
                     {
                         ERR("Failed to read property list.\n");
                         return E_FAIL;
