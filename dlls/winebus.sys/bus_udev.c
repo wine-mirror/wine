@@ -677,6 +677,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         if (test_bit(ffbits, FF_INERTIA)) usages[count++] = PID_USAGE_ET_INERTIA;
         if (test_bit(ffbits, FF_FRICTION)) usages[count++] = PID_USAGE_ET_FRICTION;
         if (test_bit(ffbits, FF_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
+        if (test_bit(ffbits, FF_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
 
         if (!hid_device_add_physical(iface, usages, count))
             return STATUS_NO_MEMORY;
@@ -1048,8 +1049,14 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
         break;
 
     case PID_USAGE_ET_RAMP:
-        FIXME("not implemented!");
+        effect.u.ramp.start_level = params->ramp_force.ramp_start;
+        effect.u.ramp.end_level = params->ramp_force.ramp_end;
+        effect.u.ramp.envelope.attack_length = params->envelope.attack_time;
+        effect.u.ramp.envelope.attack_level = params->envelope.attack_level;
+        effect.u.ramp.envelope.fade_length = params->envelope.fade_time;
+        effect.u.ramp.envelope.fade_level = params->envelope.fade_level;
         break;
+
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME("not implemented!");
         break;

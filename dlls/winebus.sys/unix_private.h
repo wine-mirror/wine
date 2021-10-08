@@ -60,6 +60,12 @@ struct effect_constant_force
     UINT16 magnitude;
 };
 
+struct effect_ramp_force
+{
+    BYTE ramp_start;
+    BYTE ramp_end;
+};
+
 struct effect_params
 {
     USAGE effect_type;
@@ -80,6 +86,7 @@ struct effect_params
         struct effect_periodic periodic;
         struct effect_condition condition[2];
         struct effect_constant_force constant_force;
+        struct effect_ramp_force ramp_force;
     };
 };
 
@@ -156,6 +163,7 @@ struct hid_physical
     BYTE set_envelope_report;
     BYTE set_condition_report;
     BYTE set_constant_force_report;
+    BYTE set_ramp_force_report;
 };
 
 struct hid_device_state

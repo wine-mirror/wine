@@ -213,6 +213,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
         if (impl->effect_support & SDL_HAPTIC_INERTIA) usages[count++] = PID_USAGE_ET_INERTIA;
         if (impl->effect_support & SDL_HAPTIC_FRICTION) usages[count++] = PID_USAGE_ET_FRICTION;
         if (impl->effect_support & SDL_HAPTIC_CONSTANT) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
+        if (impl->effect_support & SDL_HAPTIC_RAMP) usages[count++] = PID_USAGE_ET_RAMP;
 
         if (!hid_device_add_physical(&impl->unix_device, usages, count))
             return FALSE;
@@ -610,8 +611,21 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         break;
 
     case PID_USAGE_ET_RAMP:
-        FIXME("not implemented!");
+        effect.ramp.length = params->duration;
+        effect.ramp.delay = params->start_delay;
+        effect.ramp.button = params->trigger_button;
+        effect.ramp.interval = params->trigger_repeat_interval;
+        effect.ramp.direction.type = SDL_HAPTIC_SPHERICAL;
+        effect.ramp.direction.dir[0] = params->direction[0] * 36000 / 256;
+        effect.ramp.direction.dir[1] = params->direction[1] * 36000 / 256;
+        effect.ramp.start = params->ramp_force.ramp_start;
+        effect.ramp.end = params->ramp_force.ramp_end;
+        effect.ramp.attack_length = params->envelope.attack_time;
+        effect.ramp.attack_level = params->envelope.attack_level;
+        effect.ramp.fade_length = params->envelope.fade_time;
+        effect.ramp.fade_level = params->envelope.fade_level;
         break;
+
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME("not implemented!");
         break;
