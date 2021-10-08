@@ -937,6 +937,7 @@ static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG report_len = impl->caps.InputReportByteLength;
     HRESULT hr = DI_OK;
+    BOOL ret;
 
     TRACE( "iface %p.\n", iface );
 
@@ -947,15 +948,29 @@ static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
         hr = DIERR_INVALIDPARAM;
     else if ((impl->base.dwCoopLevel & DISCL_FOREGROUND) && impl->base.win != GetForegroundWindow())
         hr = DIERR_OTHERAPPHASPRIO;
-    else
+    else if (impl->device == INVALID_HANDLE_VALUE)
+    {
+        impl->device = CreateFileW( impl->device_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                    NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
+        if (impl->device == INVALID_HANDLE_VALUE) hr = DIERR_INPUTLOST;
+    }
+
+    if (hr == DI_OK)
     {
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
         impl->read_ovl.hEvent = impl->base.read_event;
-        if (ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl ))
-            impl->base.read_callback( iface );
-
-        impl->base.acquired = TRUE;
-        IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
+        ret = ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl );
+        if (!ret && GetLastError() != ERROR_IO_PENDING)
+        {
+            CloseHandle( impl->device );
+            impl->device = INVALID_HANDLE_VALUE;
+            hr = DIERR_INPUTLOST;
+        }
+        else
+        {
+            impl->base.acquired = TRUE;
+            IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
+        }
     }
     LeaveCriticalSection( &impl->base.crit );
     if (hr != DI_OK) return hr;
@@ -978,9 +993,12 @@ static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
     if (!impl->base.acquired) hr = DI_NOEFFECT;
     else
     {
-        ret = CancelIoEx( impl->device, &impl->read_ovl );
-        if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
-        else WaitForSingleObject( impl->base.read_event, INFINITE );
+        if (impl->device != INVALID_HANDLE_VALUE)
+        {
+            ret = CancelIoEx( impl->device, &impl->read_ovl );
+            if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
+            else WaitForSingleObject( impl->base.read_event, INFINITE );
+        }
         IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
         impl->base.acquired = FALSE;
     }
@@ -1583,11 +1601,11 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
     char *report_buf = impl->input_report_buf;
     USAGE_AND_PAGE *usages;
     NTSTATUS status;
+    HRESULT hr;
     BOOL ret;
 
     ret = GetOverlappedResult( impl->device, &impl->read_ovl, &count, FALSE );
-    if (!ret) WARN( "ReadFile failed, error %u\n", GetLastError() );
-    else if (TRACE_ON(dinput))
+    if (ret && TRACE_ON(dinput))
     {
         TRACE( "read size %u report:\n", count );
         for (i = 0; i < report_len;)
@@ -1603,7 +1621,7 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
     }
 
     EnterCriticalSection( &impl->base.crit );
-    do
+    while (ret)
     {
         count = impl->usages_count;
         memset( impl->usages_buf, 0, count * sizeof(*impl->usages_buf) );
@@ -1637,10 +1655,21 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
 
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
         impl->read_ovl.hEvent = impl->base.read_event;
-    } while (ReadFile( impl->device, report_buf, report_len, &count, &impl->read_ovl ));
+        ret = ReadFile( impl->device, report_buf, report_len, &count, &impl->read_ovl );
+    }
+
+    if (GetLastError() == ERROR_IO_PENDING || GetLastError() == ERROR_OPERATION_ABORTED) hr = DI_OK;
+    else
+    {
+        WARN( "GetOverlappedResult/ReadFile failed, error %u\n", GetLastError() );
+        CloseHandle(impl->device);
+        impl->device = INVALID_HANDLE_VALUE;
+        impl->base.acquired = FALSE;
+        hr = DIERR_INPUTLOST;
+    }
     LeaveCriticalSection( &impl->base.crit );
 
-    return DI_OK;
+    return hr;
 }
 
 static DWORD device_type_for_version( DWORD type, DWORD version )
