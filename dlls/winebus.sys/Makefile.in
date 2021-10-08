@@ -1,6 +1,6 @@
 MODULE    = winebus.sys
 UNIXLIB   = winebus.so
-IMPORTS   = ntoskrnl advapi32
+IMPORTS   = ntoskrnl hidparse
 EXTRALIBS = $(IOKIT_LIBS) $(UDEV_LIBS) $(PTHREAD_LIBS)
 EXTRAINCL = $(UDEV_CFLAGS) $(SDL2_CFLAGS)
 

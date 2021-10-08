@@ -32,6 +32,7 @@
 #include "ddk/wdm.h"
 #include "ddk/hidport.h"
 #include "ddk/hidtypes.h"
+#include "ddk/hidpddi.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -70,6 +71,10 @@ struct device_extension
 
     struct device_desc desc;
     DWORD index;
+
+    BYTE *report_desc;
+    ULONG report_desc_length;
+    HIDP_DEVICE_DESC collection_desc;
 
     BYTE *last_report;
     DWORD last_report_size;
@@ -827,8 +832,27 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             RtlEnterCriticalSection(&ext->cs);
             if (ext->state != DEVICE_STATE_STOPPED) status = STATUS_SUCCESS;
             else if (ext->state == DEVICE_STATE_REMOVED) status = STATUS_DELETE_PENDING;
-            else if (!(status = unix_device_start(device))) ext->state = DEVICE_STATE_STARTED;
-            else ERR("failed to start device %p, status %#x\n", device, status);
+            else if ((status = unix_device_start(device)))
+                ERR("Failed to start device %p, status %#x\n", device, status);
+            else
+            {
+                status = unix_device_get_report_descriptor(device, NULL, 0, &ext->report_desc_length);
+                if (status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+                    ERR("Failed to get device %p report descriptor, status %#x\n", device, status);
+                else if (!(ext->report_desc = RtlAllocateHeap(GetProcessHeap(), 0, ext->report_desc_length)))
+                    status = STATUS_NO_MEMORY;
+                else if ((status = unix_device_get_report_descriptor(device, ext->report_desc, ext->report_desc_length,
+                                                                     &ext->report_desc_length)))
+                    ERR("Failed to get device %p report descriptor, status %#x\n", device, status);
+                else if ((status = HidP_GetCollectionDescription(ext->report_desc, ext->report_desc_length,
+                                                                 PagedPool, &ext->collection_desc)) != HIDP_STATUS_SUCCESS)
+                    ERR("Failed to parse device %p report descriptor, status %#x\n", device, status);
+                else
+                {
+                    ext->state = DEVICE_STATE_STARTED;
+                    status = STATUS_SUCCESS;
+                }
+            }
             RtlLeaveCriticalSection(&ext->cs);
             break;
 
@@ -853,6 +877,9 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
             irp->IoStatus.Status = STATUS_SUCCESS;
             IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+            HidP_FreeCollectionDescription(&ext->collection_desc);
+            RtlFreeHeap(GetProcessHeap(), 0, ext->report_desc);
 
             IoDeleteDevice(device);
             return STATUS_SUCCESS;
@@ -955,40 +982,31 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_GET_DEVICE_DESCRIPTOR:
         {
             HID_DESCRIPTOR *descriptor = (HID_DESCRIPTOR *)irp->UserBuffer;
-            DWORD length;
-            TRACE("IOCTL_HID_GET_DEVICE_DESCRIPTOR\n");
-
-            if (buffer_len < sizeof(*descriptor))
-            {
-                irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-                break;
-            }
-
-            irp->IoStatus.Status = unix_device_get_report_descriptor(device, NULL, 0, &length);
-            if (irp->IoStatus.Status != STATUS_SUCCESS &&
-                irp->IoStatus.Status != STATUS_BUFFER_TOO_SMALL)
-            {
-                WARN("Failed to get platform report descriptor length\n");
-                break;
-            }
-
-            memset(descriptor, 0, sizeof(*descriptor));
-            descriptor->bLength = sizeof(*descriptor);
-            descriptor->bDescriptorType = HID_HID_DESCRIPTOR_TYPE;
-            descriptor->bcdHID = HID_REVISION;
-            descriptor->bCountry = 0;
-            descriptor->bNumDescriptors = 1;
-            descriptor->DescriptorList[0].bReportType = HID_REPORT_DESCRIPTOR_TYPE;
-            descriptor->DescriptorList[0].wReportLength = length;
-
-            irp->IoStatus.Status = STATUS_SUCCESS;
             irp->IoStatus.Information = sizeof(*descriptor);
+            if (buffer_len < sizeof(*descriptor)) irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+            else
+            {
+                memset(descriptor, 0, sizeof(*descriptor));
+                descriptor->bLength = sizeof(*descriptor);
+                descriptor->bDescriptorType = HID_HID_DESCRIPTOR_TYPE;
+                descriptor->bcdHID = HID_REVISION;
+                descriptor->bCountry = 0;
+                descriptor->bNumDescriptors = 1;
+                descriptor->DescriptorList[0].bReportType = HID_REPORT_DESCRIPTOR_TYPE;
+                descriptor->DescriptorList[0].wReportLength = ext->report_desc_length;
+                irp->IoStatus.Status = STATUS_SUCCESS;
+            }
             break;
         }
         case IOCTL_HID_GET_REPORT_DESCRIPTOR:
-            TRACE("IOCTL_HID_GET_REPORT_DESCRIPTOR\n");
-            irp->IoStatus.Status = unix_device_get_report_descriptor(device, irp->UserBuffer, buffer_len, &buffer_len);
-            irp->IoStatus.Information = buffer_len;
+            irp->IoStatus.Information = ext->report_desc_length;
+            if (buffer_len < irp->IoStatus.Information)
+                irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+            else
+            {
+                memcpy(irp->UserBuffer, ext->report_desc, ext->report_desc_length);
+                irp->IoStatus.Status = STATUS_SUCCESS;
+            }
             break;
         case IOCTL_HID_GET_STRING:
         {
