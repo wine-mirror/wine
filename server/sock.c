@@ -795,6 +795,7 @@ static void free_poll_req( void *private )
     release_object( req->async );
     release_object( req->iosb );
     list_remove( &req->entry );
+    free( req->output );
     free( req );
 }
 
@@ -849,6 +850,7 @@ static void complete_async_poll( struct poll_req *req, unsigned int status )
 
     /* pass 0 as result; client will set actual result size */
     async_request_complete( req->async, status, 0, req->count * sizeof(*req->output), req->output );
+    req->output = NULL;
 }
 
 static void complete_async_polls( struct sock *sock, int event, int error )
