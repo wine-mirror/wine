@@ -79,7 +79,7 @@ BOOL WOWTHUNK_Init(void)
                                              LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
     cbclientex_selector = SELECTOR_AllocBlock( cbclientex_ret, cbclientex_ret_end - cbclientex_ret,
                                                LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
-    if (!codesel || cbclient_selector || !cbclientex_selector)
+    if (!codesel || !cbclient_selector || !cbclientex_selector)
         return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */
