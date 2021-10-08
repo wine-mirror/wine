@@ -547,8 +547,6 @@
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
-@ stdcall GetDCHook(long ptr)
-@ stdcall SetDCHook(long ptr long)
 @ stdcall SetHookFlags(long long)
 
 ################################################################
@@ -558,11 +556,7 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # GDI objects
-@ cdecl __wine_make_gdi_object_system(long long)
 @ cdecl __wine_set_visible_region(long long ptr ptr ptr)
-
-# Graphics drivers
-@ cdecl __wine_set_display_driver(long)
 
 # OpenGL
 @ cdecl __wine_get_wgl_driver(long long)
