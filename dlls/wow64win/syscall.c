@@ -28,13 +28,6 @@
 #include "winternl.h"
 #include "wow64win_private.h"
 
-extern BOOL WINAPI NtGdiFlush(void);
-
-NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
-{
-    return NtGdiFlush();
-}
-
 static void * const win32_syscalls[] =
 {
 #define SYSCALL_ENTRY(func) wow64_ ## func,

@@ -66,8 +66,6 @@ struct unix_funcs
     HANDLE   (WINAPI *pNtGdiCreateClientObj)( ULONG type );
     HBITMAP  (WINAPI *pNtGdiCreateCompatibleBitmap)( HDC hdc, INT width, INT height );
     HDC      (WINAPI *pNtGdiCreateCompatibleDC)( HDC hdc );
-    HBRUSH   (WINAPI *pNtGdiCreateDIBBrush)( const void *data, UINT coloruse, UINT size,
-                                             BOOL is_8x8, BOOL pen, const void *client );
     HBITMAP  (WINAPI *pNtGdiCreateDIBSection)( HDC hdc, HANDLE section, DWORD offset, const BITMAPINFO *bmi,
                                                UINT usage, UINT header_size, ULONG flags,
                                                ULONG_PTR color_space, void **bits );
@@ -77,15 +75,12 @@ struct unix_funcs
                                                      ULONG flags, HANDLE xform );
     HRGN     (WINAPI *pNtGdiCreateEllipticRgn)( INT left, INT top, INT right, INT bottom );
     HPALETTE (WINAPI *pNtGdiCreateHalftonePalette)( HDC hdc );
-    HBRUSH   (WINAPI *pNtGdiCreateHatchBrushInternal)( INT style, COLORREF color, BOOL pen );
     HDC      (WINAPI *pNtGdiCreateMetafileDC)( HDC hdc );
     HPALETTE (WINAPI *pNtGdiCreatePaletteInternal)( const LOGPALETTE *palette, UINT count );
-    HBRUSH   (WINAPI *pNtGdiCreatePatternBrushInternal)( HBITMAP hbitmap, BOOL pen, BOOL is_8x8 );
     HPEN     (WINAPI *pNtGdiCreatePen)( INT style, INT width, COLORREF color, HBRUSH brush );
     HRGN     (WINAPI *pNtGdiCreateRectRgn)( INT left, INT top, INT right, INT bottom );
     HRGN     (WINAPI *pNtGdiCreateRoundRectRgn)( INT left, INT top, INT right, INT bottom,
                                                  INT ellipse_width, INT ellipse_height );
-    HBRUSH   (WINAPI *pNtGdiCreateSolidBrush)( COLORREF color, HBRUSH brush );
     NTSTATUS (WINAPI *pNtGdiDdDDICheckVidPnExclusiveOwnership)( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc );
     NTSTATUS (WINAPI *pNtGdiDdDDICloseAdapter)( const D3DKMT_CLOSEADAPTER *desc );
     NTSTATUS (WINAPI *pNtGdiDdDDICreateDCFromMemory)( D3DKMT_CREATEDCFROMMEMORY *desc );

@@ -118,12 +118,6 @@ HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
     return unix_funcs->pNtGdiCreateCompatibleDC( hdc );
 }
 
-HBRUSH WINAPI NtGdiCreateDIBBrush( const void *data, UINT coloruse, UINT size,
-                                   BOOL is_8x8, BOOL pen, const void *client )
-{
-    return unix_funcs->pNtGdiCreateDIBBrush( data, coloruse, size, is_8x8, pen, client );
-}
-
 HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, const BITMAPINFO *bmi,
                                       UINT usage, UINT header_size, ULONG flags,
                                       ULONG_PTR color_space, void **bits )
@@ -151,11 +145,6 @@ HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc )
     return unix_funcs->pNtGdiCreateHalftonePalette( hdc );
 }
 
-HBRUSH WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen )
-{
-    return unix_funcs->pNtGdiCreateHatchBrushInternal( style, color, pen );
-}
-
 HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
 {
     return unix_funcs->pNtGdiCreateMetafileDC( hdc );
@@ -164,11 +153,6 @@ HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
 HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT count )
 {
     return unix_funcs->pNtGdiCreatePaletteInternal( palette, count );
-}
-
-HBRUSH WINAPI NtGdiCreatePatternBrushInternal( HBITMAP hbitmap, BOOL pen, BOOL is_8x8 )
-{
-    return unix_funcs->pNtGdiCreatePatternBrushInternal( hbitmap, pen, is_8x8 );
 }
 
 HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
@@ -185,11 +169,6 @@ HRGN WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
                                      INT ellipse_width, INT ellipse_height )
 {
     return unix_funcs->pNtGdiCreateRoundRectRgn( left, top, right, bottom, ellipse_width, ellipse_height );
-}
-
-HBRUSH WINAPI NtGdiCreateSolidBrush( COLORREF color, HBRUSH brush )
-{
-    return unix_funcs->pNtGdiCreateSolidBrush( color, brush );
 }
 
 BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ obj )

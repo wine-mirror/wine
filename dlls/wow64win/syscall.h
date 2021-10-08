@@ -22,6 +22,10 @@
 #define __WOW64WIN_SYSCALL_H
 
 #define ALL_WIN32_SYSCALLS \
+    SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
+    SYSCALL_ENTRY( NtGdiCreateHatchBrushInternal ) \
+    SYSCALL_ENTRY( NtGdiCreatePatternBrushInternal ) \
+    SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
     SYSCALL_ENTRY( NtGdiFlush )
 
 #endif /* __WOW64WIN_SYSCALL_H */

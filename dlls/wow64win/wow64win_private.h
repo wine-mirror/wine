@@ -27,4 +27,8 @@
 ALL_WIN32_SYSCALLS
 #undef SYSCALL_ENTRY
 
+static inline ULONG get_ulong( UINT **args ) { return *(*args)++; }
+static inline HANDLE get_handle( UINT **args ) { return LongToHandle( *(*args)++ ); }
+static inline void *get_ptr( UINT **args ) { return ULongToPtr( *(*args)++ ); }
+
 #endif /* __WOW64WIN_PRIVATE_H */

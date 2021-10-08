@@ -34,6 +34,10 @@
 
 static void * const syscalls[] =
 {
+    NtGdiCreateDIBBrush,
+    NtGdiCreateHatchBrushInternal,
+    NtGdiCreatePatternBrushInternal,
+    NtGdiCreateSolidBrush,
     NtGdiFlush,
 };
 

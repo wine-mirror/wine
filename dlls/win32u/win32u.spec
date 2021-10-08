@@ -147,23 +147,23 @@
 @ stub NtGdiCreateColorTransform
 @ stdcall NtGdiCreateCompatibleBitmap(long long long)
 @ stdcall NtGdiCreateCompatibleDC(long)
-@ stdcall NtGdiCreateDIBBrush(ptr long long long long ptr)
+@ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
 @ stdcall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
 @ stdcall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
 @ stdcall NtGdiCreateEllipticRgn(long long long long)
 @ stdcall NtGdiCreateHalftonePalette(long)
-@ stdcall NtGdiCreateHatchBrushInternal(long long long)
+@ stdcall -syscall NtGdiCreateHatchBrushInternal(long long long)
 @ stdcall NtGdiCreateMetafileDC(long)
 @ stub NtGdiCreateOPMProtectedOutput
 @ stub NtGdiCreateOPMProtectedOutputs
 @ stdcall NtGdiCreatePaletteInternal(ptr long)
-@ stdcall NtGdiCreatePatternBrushInternal(long long long)
+@ stdcall -syscall NtGdiCreatePatternBrushInternal(long long long)
 @ stdcall NtGdiCreatePen(long long long long)
 @ stdcall NtGdiCreateRectRgn(long long long long)
 @ stdcall NtGdiCreateRoundRectRgn(long long long long long long)
 @ stub NtGdiCreateServerMetaFile
 @ stub NtGdiCreateSessionMappedDIBSection
-@ stdcall NtGdiCreateSolidBrush(long long)
+@ stdcall -syscall NtGdiCreateSolidBrush(long long)
 @ stub NtGdiDDCCIGetCapabilitiesString
 @ stub NtGdiDDCCIGetCapabilitiesStringLength
 @ stub NtGdiDDCCIGetTimingReport
