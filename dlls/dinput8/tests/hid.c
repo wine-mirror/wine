@@ -5092,7 +5092,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
         /* set periodic */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 5,
             .report_len = 2,
             .report_buf = {0x05,0x19},
