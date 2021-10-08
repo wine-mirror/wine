@@ -642,7 +642,7 @@ static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, void **funcs )
     {
         if (builtin->module != module) continue;
         *funcs = dlsym( builtin->unix_handle, ptr_name );
-        status = STATUS_SUCCESS;
+        status = *funcs ? STATUS_SUCCESS : STATUS_ENTRYPOINT_NOT_FOUND;
         break;
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
