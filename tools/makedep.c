@@ -3344,7 +3344,7 @@ static void output_module( struct makefile *make )
  */
 static void output_static_lib( struct makefile *make )
 {
-    strarray_add( &make->all_targets, make->staticlib );
+    strarray_add( &make->clean_files, make->staticlib );
     output( "%s:", obj_dir_path( make, make->staticlib ));
     output_filenames_obj_dir( make, make->object_files );
     output_filenames_obj_dir( make, make->unixobj_files );
@@ -3357,7 +3357,7 @@ static void output_static_lib( struct makefile *make )
     {
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
 
-        strarray_add( &make->all_targets, name );
+        strarray_add( &make->clean_files, name );
         output( "%s: %s", obj_dir_path( make, name ), tools_path( make, "winebuild" ));
         output_filenames_obj_dir( make, make->crossobj_files );
         output( "\n" );
