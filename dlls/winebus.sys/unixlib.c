@@ -329,7 +329,11 @@ BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *devi
     struct bus_event *event = malloc(size);
     if (!event) return FALSE;
 
-    if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
+    if (unix_device_incref(device) == 1) /* being destroyed */
+    {
+        free(event);
+        return FALSE;
+    }
 
     event->type = BUS_EVENT_TYPE_DEVICE_REMOVED;
     event->device = device;
@@ -344,7 +348,11 @@ BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *devi
     struct bus_event *event = malloc(size);
     if (!event) return FALSE;
 
-    if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
+    if (unix_device_incref(device) == 1) /* being destroyed */
+    {
+        free(event);
+        return FALSE;
+    }
 
     event->type = BUS_EVENT_TYPE_DEVICE_CREATED;
     event->device = device;
@@ -360,7 +368,11 @@ BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device
     struct bus_event *event = malloc(size);
     if (!event) return FALSE;
 
-    if (unix_device_incref(device) == 1) return FALSE; /* being destroyed */
+    if (unix_device_incref(device) == 1) /* being destroyed */
+    {
+        free(event);
+        return FALSE;
+    }
 
     event->type = BUS_EVENT_TYPE_INPUT_REPORT;
     event->device = device;
