@@ -176,7 +176,7 @@ struct d3d10_effect_state_property_info
     LONG index_offset;
 };
 
-static const struct d3d10_effect_state_property_info property_info[] =
+static const struct d3d10_effect_state_property_info property_infos[] =
 {
     {0x00, "Pass.RasterizerState",                        D3D10_SVT_RASTERIZER,       1, 1, D3D10_C_PASS, FIELD_OFFSET(struct d3d10_effect_pass, rasterizer)    },
     {0x01, "Pass.DepthStencilState",                      D3D10_SVT_DEPTHSTENCIL,     1, 1, D3D10_C_PASS, FIELD_OFFSET(struct d3d10_effect_pass, depth_stencil) },
@@ -1540,19 +1540,6 @@ static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_
     return S_OK;
 }
 
-static const struct d3d10_effect_state_property_info *get_property_info(UINT id)
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(property_info); ++i)
-    {
-        if (property_info[i].id == id)
-            return &property_info[i];
-    }
-
-    return NULL;
-}
-
 static const struct d3d10_effect_state_storage_info *get_storage_info(D3D_SHADER_VARIABLE_TYPE id)
 {
     unsigned int i;
@@ -1764,14 +1751,14 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
     read_dword(ptr, &operation);
     read_dword(ptr, &value_offset);
 
-    if (!(property_info = get_property_info(id)))
+    if (id >= ARRAY_SIZE(property_infos))
     {
-        FIXME("Failed to find property info for property %#x.\n", id);
+        FIXME("Unknown property id %#x.\n", id);
         return E_FAIL;
     }
+    property_info = &property_infos[id];
 
-    TRACE("Property %s[%#x] = value list @ offset %#x.\n",
-            property_info->name, idx, value_offset);
+    TRACE("Property %s[%#x] = value list @ offset %#x.\n", property_info->name, idx, value_offset);
 
     if (property_info->container_type != container_type)
     {
