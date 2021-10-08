@@ -1710,17 +1710,19 @@ static BOOL is_object_property_type_matching(const struct d3d10_effect_state_pro
     }
 }
 
-static BOOL parse_fx10_state_group(const char *data, size_t data_size,
+static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size,
         const char **ptr, enum d3d10_effect_container_type container_type,
         struct d3d10_effect *effect, void *container)
 {
     const struct d3d10_effect_state_property_info *property_info;
+    UINT value_offset, sodecl_offset, operation;
     struct d3d10_effect_variable *variable;
-    UINT value_offset, operation;
+    unsigned int i, variable_idx;
+    const char *data_ptr;
     const char *name;
     size_t name_len;
-    unsigned int i;
     DWORD count;
+    HRESULT hr;
     void *dst;
     UINT idx;
     UINT id;
@@ -1738,7 +1740,7 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
         if (!(property_info = get_property_info(id)))
         {
             FIXME("Failed to find property info for property %#x.\n", id);
-            return FALSE;
+            return E_FAIL;
         }
 
         TRACE("Property %s[%#x] = value list @ offset %#x.\n",
@@ -1747,13 +1749,13 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
         if (property_info->container_type != container_type)
         {
             ERR("Invalid container type %#x for property %#x.\n", container_type, id);
-            return FALSE;
+            return E_FAIL;
         }
 
         if (idx >= property_info->count)
         {
             ERR("Invalid index %#x for property %#x.\n", idx, id);
-            return FALSE;
+            return E_FAIL;
         }
 
         dst = (char *)container + property_info->offset;
@@ -1767,7 +1769,7 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
                         property_info->size, dst))
                 {
                     ERR("Failed to read values for property %#x.\n", id);
-                    return FALSE;
+                    return E_FAIL;
                 }
                 break;
 
@@ -1784,7 +1786,7 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
                 if (!(variable = d3d10_effect_get_variable_by_name(effect, name)))
                 {
                     WARN("Couldn't find variable %s.\n", debugstr_a(name));
-                    return FALSE;
+                    return E_FAIL;
                 }
 
                 if (is_object_property(property_info))
@@ -1792,14 +1794,14 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
                     if (variable->type->element_count)
                     {
                         WARN("Unexpected array variable value %s.\n", debugstr_a(name));
-                        return FALSE;
+                        return E_FAIL;
                     }
 
                     if (!is_object_property_type_matching(property_info, variable))
                     {
                         WARN("Object type mismatch. Variable type %#x, property type %#x.\n",
                                 variable->type->basetype, property_info->type);
-                        return FALSE;
+                        return E_FAIL;
                     }
 
                     *(void **)dst = variable;
@@ -1807,8 +1809,118 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
                 else
                 {
                     FIXME("Assigning variables to numeric fields is not supported.\n");
-                    return FALSE;
+                    return E_FAIL;
                 }
+
+                break;
+
+            case D3D10_EOO_CONST_INDEX:
+
+                /* Array variable, constant index. */
+                if (value_offset >= data_size || !require_space(value_offset, 2, sizeof(DWORD), data_size))
+                {
+                    WARN("Invalid offset %#x (data size %#lx).\n", value_offset, (long)data_size);
+                    return E_FAIL;
+                }
+                data_ptr = data + value_offset;
+                read_dword(&data_ptr, &value_offset);
+                read_dword(&data_ptr, &variable_idx);
+
+                if (!fx10_get_string(data, data_size, value_offset, &name, &name_len))
+                {
+                    WARN("Failed to get variable name.\n");
+                    return E_FAIL;
+                }
+
+                TRACE("Variable name %s[%u].\n", debugstr_a(name), variable_idx);
+
+                if (!(variable = d3d10_effect_get_variable_by_name(effect, name)))
+                {
+                    WARN("Couldn't find variable %s.\n", debugstr_a(name));
+                    return E_FAIL;
+                }
+
+                /* Has to be an array */
+                if (!variable->type->element_count || variable_idx >= variable->type->element_count)
+                {
+                    WARN("Invalid array size %u.\n", variable->type->element_count);
+                    return E_FAIL;
+                }
+
+                if (is_object_property(property_info))
+                {
+                    if (!is_object_property_type_matching(property_info, variable))
+                    {
+                        WARN("Object type mismatch. Variable type %#x, property type %#x.\n",
+                                variable->type->basetype, property_info->type);
+                        return E_FAIL;
+                    }
+
+                    *(void **)dst = &variable->elements[variable_idx];
+                }
+                else
+                {
+                    FIXME("Assigning indexed variables to numeric fields is not supported.\n");
+                    return E_FAIL;
+                }
+
+                break;
+
+            case D3D10_EOO_ANONYMOUS_SHADER:
+
+                /* Anonymous shader */
+                if (effect->anonymous_shader_current >= effect->anonymous_shader_count)
+                {
+                    ERR("Anonymous shader count is wrong!\n");
+                    return E_FAIL;
+                }
+
+                if (value_offset >= data_size || !require_space(value_offset, 2, sizeof(DWORD), data_size))
+                {
+                    WARN("Invalid offset %#x (data size %#lx).\n", value_offset, (long)data_size);
+                    return E_FAIL;
+                }
+                data_ptr = data + value_offset;
+                read_dword(&data_ptr, &value_offset);
+                read_dword(&data_ptr, &sodecl_offset);
+
+                TRACE("Effect object starts at offset %#x.\n", value_offset);
+
+                if (FAILED(hr = parse_fx10_anonymous_shader(effect,
+                        &effect->anonymous_shaders[effect->anonymous_shader_current], property_info->id)))
+                    return hr;
+
+                variable = &effect->anonymous_shaders[effect->anonymous_shader_current].shader;
+                ++effect->anonymous_shader_current;
+
+                if (sodecl_offset)
+                {
+                    TRACE("Anonymous shader stream output declaration at offset %#x.\n", sodecl_offset);
+                    if (!fx10_copy_string(data, data_size, sodecl_offset,
+                            &variable->u.shader.stream_output_declaration))
+                    {
+                        ERR("Failed to copy stream output declaration.\n");
+                        return E_FAIL;
+                    }
+
+                    TRACE("Stream output declaration: %s.\n", debugstr_a(variable->u.shader.stream_output_declaration));
+                }
+
+                switch (property_info->id)
+                {
+                    case D3D10_EOT_VERTEXSHADER:
+                    case D3D10_EOT_PIXELSHADER:
+                    case D3D10_EOT_GEOMETRYSHADER:
+                        if (FAILED(hr = parse_fx10_shader(data, data_size, value_offset, variable)))
+                            return hr;
+                        break;
+
+                    default:
+                        FIXME("Unhandled object type %#x\n", property_info->id);
+                        return E_FAIL;
+                }
+
+                *(void **)dst = variable;
 
                 break;
 
@@ -1818,7 +1930,7 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
         }
     }
 
-    return TRUE;
+    return S_OK;
 }
 
 static HRESULT parse_fx10_object(const char *data, size_t data_size,
@@ -2417,11 +2529,11 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
                         var = v;
 
                     memcpy(&var->u.state.desc, storage_info->default_state, storage_info->size);
-                    if (!parse_fx10_state_group(data, data_size, ptr, get_var_container_type(var),
-                            var->effect, &var->u.state.desc))
+                    if (FAILED(hr = parse_fx10_property_assignment(data, data_size, ptr,
+                            get_var_container_type(var), var->effect, &var->u.state.desc)))
                     {
                         ERR("Failed to read property list.\n");
-                        return E_FAIL;
+                        return hr;
                     }
 
                     if (FAILED(hr = create_state_object(var)))
