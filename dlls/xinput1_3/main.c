@@ -331,9 +331,14 @@ static DWORD HID_set_state(struct xinput_controller *controller, XINPUT_VIBRATIO
     return ERROR_SUCCESS;
 }
 
+static void controller_destroy(struct xinput_controller *controller, BOOL already_removed);
+
 static void controller_enable(struct xinput_controller *controller)
 {
+    ULONG report_len = controller->hid.caps.InputReportByteLength;
+    char *report_buf = controller->hid.input_report_buf;
     XINPUT_VIBRATION state = controller->vibration;
+    BOOL ret;
 
     if (controller->enabled) return;
     if (controller->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED) HID_set_state(controller, &state);
@@ -341,8 +346,9 @@ static void controller_enable(struct xinput_controller *controller)
 
     memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
     controller->hid.read_ovl.hEvent = controller->hid.read_event;
-    ReadFile(controller->device, controller->hid.input_report_buf, controller->hid.caps.InputReportByteLength, NULL, &controller->hid.read_ovl);
-    SetEvent(update_event);
+    ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
+    if (!ret && GetLastError() != ERROR_IO_PENDING) controller_destroy(controller, TRUE);
+    else SetEvent(update_event);
 }
 
 static void controller_disable(struct xinput_controller *controller)
@@ -498,13 +504,13 @@ static void update_controller_list(void)
     SetupDiDestroyDeviceInfoList(set);
 }
 
-static void controller_destroy(struct xinput_controller *controller)
+static void controller_destroy(struct xinput_controller *controller, BOOL already_removed)
 {
     EnterCriticalSection(&controller->crit);
 
     if (controller->device)
     {
-        controller_disable(controller);
+        if (!already_removed) controller_disable(controller);
         CloseHandle(controller->device);
         controller->device = NULL;
 
@@ -529,7 +535,7 @@ static void stop_update_thread(void)
     CloseHandle(done_event);
     CloseHandle(update_event);
 
-    for (i = 0; i < XUSER_MAX_COUNT; i++) controller_destroy(&controllers[i]);
+    for (i = 0; i < XUSER_MAX_COUNT; i++) controller_destroy(&controllers[i], FALSE);
 }
 
 static LONG sign_extend(ULONG value, const HIDP_VALUE_CAPS *caps)
@@ -555,11 +561,12 @@ static void read_controller_state(struct xinput_controller *controller)
     NTSTATUS status;
     USAGE buttons[11];
     ULONG i, button_length, value;
+    BOOL ret;
 
     if (!GetOverlappedResult(controller->device, &controller->hid.read_ovl, &read_len, TRUE))
     {
         if (GetLastError() == ERROR_OPERATION_ABORTED) return;
-        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE) controller_destroy(controller);
+        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE) controller_destroy(controller, TRUE);
         else ERR("Failed to read input report, GetOverlappedResult failed with error %u\n", GetLastError());
         return;
     }
@@ -636,7 +643,8 @@ static void read_controller_state(struct xinput_controller *controller)
         controller->state = state;
         memset(&controller->hid.read_ovl, 0, sizeof(controller->hid.read_ovl));
         controller->hid.read_ovl.hEvent = controller->hid.read_event;
-        ReadFile(controller->device, controller->hid.input_report_buf, controller->hid.caps.InputReportByteLength, NULL, &controller->hid.read_ovl);
+        ret = ReadFile(controller->device, report_buf, report_len, NULL, &controller->hid.read_ovl);
+        if (!ret && GetLastError() != ERROR_IO_PENDING) controller_destroy(controller, TRUE);
     }
     LeaveCriticalSection(&controller->crit);
 }
