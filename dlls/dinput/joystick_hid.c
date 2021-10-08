@@ -1603,6 +1603,7 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
         }
     }
 
+    EnterCriticalSection( &impl->base.crit );
     do
     {
         count = impl->usages_count;
@@ -1638,6 +1639,7 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
         impl->read_ovl.hEvent = impl->base.read_event;
     } while (ReadFile( impl->device, report_buf, report_len, &count, &impl->read_ovl ));
+    LeaveCriticalSection( &impl->base.crit );
 
     return DI_OK;
 }
