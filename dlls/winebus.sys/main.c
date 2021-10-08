@@ -76,6 +76,7 @@ struct device_extension
     ULONG report_desc_length;
     HIDP_DEVICE_DESC collection_desc;
 
+    BYTE *last_reports[256];
     BYTE *last_report;
     DWORD last_report_size;
     BOOL last_report_read;
@@ -443,6 +444,9 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length
     memcpy(ext->last_report, report, length);
     ext->last_report_size = length;
     ext->last_report_read = FALSE;
+
+    if (!ext->collection_desc.ReportIDs[0].ReportID) memcpy(ext->last_reports[0], report, length);
+    else memcpy(ext->last_reports[report[0]], report, length);
 
     if ((irp = pop_pending_read(ext)))
     {
@@ -815,6 +819,8 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     struct device_extension *ext = device->DeviceExtension;
     NTSTATUS status = irp->IoStatus.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    HIDP_REPORT_IDS *reports;
+    ULONG i, size;
 
     TRACE("device %p, irp %p, minor function %#x.\n", device, irp, irpsp->MinorFunction);
 
@@ -849,8 +855,14 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
                     ERR("Failed to parse device %p report descriptor, status %#x\n", device, status);
                 else
                 {
-                    ext->state = DEVICE_STATE_STARTED;
                     status = STATUS_SUCCESS;
+                    reports = ext->collection_desc.ReportIDs;
+                    for (i = 0; i < ext->collection_desc.ReportIDsLength; ++i)
+                    {
+                        if (!(size = reports[i].InputLength)) continue;
+                        if (!(ext->last_reports[reports[i].ReportID] = RtlAllocateHeap(GetProcessHeap(), 0, size))) status = STATUS_NO_MEMORY;
+                    }
+                    if (!status) ext->state = DEVICE_STATE_STARTED;
                 }
             }
             RtlLeaveCriticalSection(&ext->cs);
@@ -878,6 +890,12 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.Status = STATUS_SUCCESS;
             IoCompleteRequest(irp, IO_NO_INCREMENT);
 
+            reports = ext->collection_desc.ReportIDs;
+            for (i = 0; i < ext->collection_desc.ReportIDsLength; ++i)
+            {
+                if (!reports[i].InputLength) continue;
+                RtlFreeHeap(GetProcessHeap(), 0, ext->last_reports[reports[i].ReportID]);
+            }
             HidP_FreeCollectionDescription(&ext->collection_desc);
             RtlFreeHeap(GetProcessHeap(), 0, ext->report_desc);
 
@@ -1020,14 +1038,10 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         }
         case IOCTL_HID_GET_INPUT_REPORT:
         {
-            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
-            TRACE_(hid_report)("IOCTL_HID_GET_INPUT_REPORT\n");
-            irp->IoStatus.Status = deliver_last_report(ext,
-                packet->reportBufferLen, packet->reportBuffer,
-                &irp->IoStatus.Information);
-
-            if (irp->IoStatus.Status == STATUS_SUCCESS)
-                packet->reportBufferLen = irp->IoStatus.Information;
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
+            memcpy(packet->reportBuffer, ext->last_reports[packet->reportId], packet->reportBufferLen);
+            irp->IoStatus.Information = packet->reportBufferLen;
+            irp->IoStatus.Status = STATUS_SUCCESS;
             break;
         }
         case IOCTL_HID_READ_REPORT:
