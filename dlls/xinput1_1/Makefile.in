@@ -1,5 +1,5 @@
 MODULE    = xinput1_1.dll
-IMPORTS   = hid setupapi advapi32
+IMPORTS   = hid setupapi advapi32 user32
 PARENTSRC = ../xinput1_3
 
 C_SRCS = \

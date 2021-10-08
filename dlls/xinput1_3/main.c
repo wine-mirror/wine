@@ -33,6 +33,7 @@
 #include "winnls.h"
 #include "winternl.h"
 
+#include "dbt.h"
 #include "setupapi.h"
 #include "devpkey.h"
 #include "hidusage.h"
@@ -118,6 +119,7 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
     {{ &controller_critsect_debug[3], -1, 0, 0, 0, 0 }},
 };
 
+static HMODULE xinput_instance;
 static HANDLE start_event;
 static HANDLE stop_event;
 static HANDLE done_event;
@@ -641,17 +643,45 @@ static void read_controller_state(struct xinput_controller *controller)
     LeaveCriticalSection(&controller->crit);
 }
 
+static LRESULT CALLBACK xinput_devnotify_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_DEVICECHANGE && wparam == DBT_DEVICEARRIVAL) update_controller_list();
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
 static DWORD WINAPI hid_update_thread_proc(void *param)
 {
     struct xinput_controller *devices[XUSER_MAX_COUNT + 2];
     HANDLE events[XUSER_MAX_COUNT + 2];
     DWORD i, count = 2, ret = WAIT_TIMEOUT;
+    DEV_BROADCAST_DEVICEINTERFACE_W filter =
+    {
+        .dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE_W),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+        .dbcc_classguid = GUID_DEVINTERFACE_WINEXINPUT,
+    };
+    WNDCLASSEXW cls =
+    {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .hInstance = xinput_instance,
+        .lpszClassName = L"__wine_xinput_devnotify",
+        .lpfnWndProc = xinput_devnotify_wndproc,
+    };
+    HDEVNOTIFY notif;
+    HWND hwnd;
+    MSG msg;
+
+    RegisterClassExW(&cls);
+    hwnd = CreateWindowExW(0, cls.lpszClassName, NULL, 0, 0, 0, 0, 0,
+                           HWND_MESSAGE, NULL, NULL, NULL);
+    notif = RegisterDeviceNotificationW(hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE);
 
     update_controller_list();
     SetEvent(start_event);
 
     do
     {
+        if (ret == count) while (PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)) DispatchMessageW(&msg);
         if (ret == WAIT_TIMEOUT) update_controller_list();
         if (ret < count - 2) read_controller_state(devices[ret]);
 
@@ -671,7 +701,12 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
         events[count++] = update_event;
         events[count++] = stop_event;
     }
-    while ((ret = WaitForMultipleObjectsEx( count, events, FALSE, 2000, TRUE )) < count - 1 || ret == WAIT_TIMEOUT);
+    while ((ret = MsgWaitForMultipleObjectsEx(count, events, 2000, QS_ALLINPUT, MWMO_ALERTABLE)) < count - 1 ||
+            ret == count || ret == WAIT_TIMEOUT);
+
+    UnregisterDeviceNotification(notif);
+    DestroyWindow(hwnd);
+    UnregisterClassW(cls.lpszClassName, xinput_instance);
 
     if (ret != count - 1) ERR("update thread exited unexpectedly, ret %u\n", ret);
     SetEvent(done_event);
@@ -733,6 +768,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        xinput_instance = inst;
         DisableThreadLibraryCalls(inst);
         break;
     case DLL_PROCESS_DETACH:
