@@ -134,7 +134,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     DISPID id;
     HRESULT hres;
 
-    if((ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
+    if(invoke_type != VBDISP_CALLGET
+       && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
        && !wcsicmp(name, ctx->func->name)) {
         ref->type = REF_VAR;
         ref->u.v = &ctx->ret_val;
@@ -799,6 +800,13 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(identifier));
+
+    if((ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
+       && !wcsicmp(identifier, ctx->func->name)) {
+        V_VT(&v) = VT_BYREF|VT_VARIANT;
+        V_BYREF(&v) = &ctx->ret_val;
+        return stack_push(ctx, &v);
+    }
 
     hres = do_icall(ctx, &v, identifier, 0);
     if(FAILED(hres))

@@ -1882,6 +1882,30 @@ set arr(0) = new TestPropSyntax
 arr(0).prop = 1
 ok arr(0).prop = 1, "arr(0) = " & arr(0).prop
 
+function recursingfunction(x)
+    if (x) then exit function
+    recursingfunction = 2
+    dim y
+    y = recursingfunction
+    call ok(y = 2, "y = " & y)
+    recursingfunction = 1
+    call recursingfunction(True)
+end function
+call ok(recursingfunction(False) = 1, "unexpected return value " & recursingfunction(False))
+
+x = false
+function recursingfunction2
+    if (x) then exit function
+    recursingfunction2 = 2
+    dim y
+    y = recursingfunction2
+    call ok(y = 2, "y = " & y)
+    recursingfunction2 = 1
+    x = true
+    recursingfunction2()
+end function
+call ok(recursingfunction2() = 1, "unexpected return value " & recursingfunction2())
+
 function f2(x,y)
 end function
 
