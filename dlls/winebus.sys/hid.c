@@ -440,7 +440,84 @@ struct pid_effect_update
     BYTE enable_bits;
     BYTE direction[2];
 };
+
+struct pid_set_periodic
+{
+    BYTE index;
+    BYTE magnitude;
+    BYTE offset;
+    BYTE phase;
+    UINT16 period;
+};
 #include "poppack.h"
+
+static BOOL hid_descriptor_add_set_periodic(struct unix_device *iface)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    const BYTE report_id = ++desc->next_report_id[HidP_Output];
+    const BYTE template[] =
+    {
+        /* Periodic Report Definition */
+        USAGE(1, PID_USAGE_SET_PERIODIC_REPORT),
+        COLLECTION(1, Logical),
+            REPORT_ID(1, report_id),
+
+            USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+            LOGICAL_MAXIMUM(1, 0x7f),
+            LOGICAL_MINIMUM(1, 0x00),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_MAGNITUDE),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(2, 0x00ff),
+            PHYSICAL_MINIMUM(1, 0),
+            PHYSICAL_MAXIMUM(2, 10000),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_OFFSET),
+            LOGICAL_MINIMUM(1, 0x80),
+            LOGICAL_MAXIMUM(1, 0x7f),
+            PHYSICAL_MINIMUM(2, -10000),
+            PHYSICAL_MAXIMUM(2, 10000),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_PHASE),
+            UNIT(1, 0x14), /* Eng Rot:Angular Pos */
+            UNIT_EXPONENT(1, -2),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(2, 0xff),
+            PHYSICAL_MINIMUM(1, 0),
+            PHYSICAL_MAXIMUM(4, 36000),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_PERIOD),
+            UNIT(2, 0x1003), /* Eng Lin:Time */
+            UNIT_EXPONENT(1, -3), /* 10^-3 */
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(2, 0x7fff),
+            PHYSICAL_MINIMUM(1, 0),
+            PHYSICAL_MAXIMUM(2, 0x7fff),
+            REPORT_SIZE(1, 16),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            PHYSICAL_MAXIMUM(1, 0),
+            UNIT_EXPONENT(1, 0),
+            UNIT(1, 0), /* None */
+        END_COLLECTION,
+    };
+
+    iface->hid_physical.set_periodic_report = report_id;
+    return hid_report_descriptor_append(desc, template, sizeof(template));
+}
 
 BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count)
 {
@@ -592,6 +669,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
             UNIT(1, 0), /* None */
         END_COLLECTION,
     };
+    BOOL periodic = FALSE;
     ULONG i;
 
     if (!hid_report_descriptor_append(desc, device_control_header, sizeof(device_control_header)))
@@ -622,6 +700,19 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
             return FALSE;
     }
     if (!hid_report_descriptor_append(desc, effect_update_footer, sizeof(effect_update_footer)))
+        return FALSE;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (usages[i] == PID_USAGE_ET_SINE ||
+            usages[i] == PID_USAGE_ET_SQUARE ||
+            usages[i] == PID_USAGE_ET_TRIANGLE ||
+            usages[i] == PID_USAGE_ET_SAWTOOTH_UP ||
+            usages[i] == PID_USAGE_ET_SAWTOOTH_DOWN)
+            periodic = TRUE;
+    }
+
+    if (periodic && !hid_descriptor_add_set_periodic(iface))
         return FALSE;
 
     /* HID nary collection indexes start at 1 */
@@ -749,6 +840,22 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             params->direction[1] = report->direction[1];
 
             io->Status = iface->hid_vtbl->physical_effect_update(iface, report->index, params);
+        }
+    }
+    else if (packet->reportId == physical->set_periodic_report)
+    {
+        struct pid_set_periodic *report = (struct pid_set_periodic *)(packet->reportBuffer + 1);
+        struct effect_params *params = iface->hid_physical.effect_params + report->index;
+
+        io->Information = sizeof(*report) + 1;
+        if (packet->reportBufferLen < io->Information)
+            io->Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            params->periodic.magnitude = report->magnitude;
+            params->periodic.offset = report->offset;
+            params->periodic.phase = report->phase;
+            params->periodic.period = report->period;
         }
     }
     else

@@ -29,6 +29,14 @@
 
 #include "wine/list.h"
 
+struct effect_periodic
+{
+    BYTE magnitude;
+    BYTE offset;
+    BYTE phase;
+    UINT16 period;
+};
+
 struct effect_params
 {
     USAGE effect_type;
@@ -41,6 +49,10 @@ struct effect_params
     BOOL axis_enabled[2];
     BOOL direction_enabled;
     BYTE direction[2];
+    union
+    {
+        struct effect_periodic periodic;
+    };
 };
 
 struct raw_device_vtbl
@@ -112,6 +124,7 @@ struct hid_physical
     BYTE device_control_report;
     BYTE effect_control_report;
     BYTE effect_update_report;
+    BYTE set_periodic_report;
 };
 
 struct hid_device_state

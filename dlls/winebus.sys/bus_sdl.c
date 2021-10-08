@@ -549,6 +549,10 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.periodic.direction.type = SDL_HAPTIC_SPHERICAL;
         effect.periodic.direction.dir[0] = params->direction[0] * 36000 / 256;
         effect.periodic.direction.dir[1] = params->direction[1] * 36000 / 256;
+        effect.periodic.period = params->periodic.period;
+        effect.periodic.magnitude = params->periodic.magnitude * 128;
+        effect.periodic.offset = params->periodic.offset;
+        effect.periodic.phase = params->periodic.phase;
         break;
 
     case PID_USAGE_ET_SPRING:
