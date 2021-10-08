@@ -73,20 +73,20 @@
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)
-@ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) NtGdiDdDDICheckVidPnExclusiveOwnership
-@ stdcall D3DKMTCloseAdapter(ptr) NtGdiDdDDICloseAdapter
-@ stdcall D3DKMTCreateDCFromMemory(ptr) NtGdiDdDDICreateDCFromMemory
-@ stdcall D3DKMTCreateDevice(ptr) NtGdiDdDDICreateDevice
-@ stdcall D3DKMTDestroyDCFromMemory(ptr) NtGdiDdDDIDestroyDCFromMemory
-@ stdcall D3DKMTDestroyDevice(ptr) NtGdiDdDDIDestroyDevice
-@ stdcall D3DKMTEscape(ptr) NtGdiDdDDIEscape
-@ stdcall D3DKMTOpenAdapterFromDeviceName(ptr) NtGdiDdDDIOpenAdapterFromDeviceName
+@ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) win32u.NtGdiDdDDICheckVidPnExclusiveOwnership
+@ stdcall D3DKMTCloseAdapter(ptr) win32u.NtGdiDdDDICloseAdapter
+@ stdcall D3DKMTCreateDCFromMemory(ptr) win32u.NtGdiDdDDICreateDCFromMemory
+@ stdcall D3DKMTCreateDevice(ptr) win32u.NtGdiDdDDICreateDevice
+@ stdcall D3DKMTDestroyDCFromMemory(ptr) win32u.NtGdiDdDDIDestroyDCFromMemory
+@ stdcall D3DKMTDestroyDevice(ptr) win32u.NtGdiDdDDIDestroyDevice
+@ stdcall D3DKMTEscape(ptr) win32u.NtGdiDdDDIEscape
+@ stdcall D3DKMTOpenAdapterFromDeviceName(ptr) win32u.NtGdiDdDDIOpenAdapterFromDeviceName
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
-@ stdcall D3DKMTOpenAdapterFromHdc(ptr) NtGdiDdDDIOpenAdapterFromHdc
-@ stdcall D3DKMTOpenAdapterFromLuid(ptr) NtGdiDdDDIOpenAdapterFromLuid
-@ stdcall D3DKMTQueryStatistics(ptr) NtGdiDdDDIQueryStatistics
-@ stdcall D3DKMTSetQueuedLimit(ptr) NtGdiDdDDISetQueuedLimit
-@ stdcall D3DKMTSetVidPnSourceOwner(ptr) NtGdiDdDDISetVidPnSourceOwner
+@ stdcall D3DKMTOpenAdapterFromHdc(ptr) win32u.NtGdiDdDDIOpenAdapterFromHdc
+@ stdcall D3DKMTOpenAdapterFromLuid(ptr) win32u.NtGdiDdDDIOpenAdapterFromLuid
+@ stdcall D3DKMTQueryStatistics(ptr) win32u.NtGdiDdDDIQueryStatistics
+@ stdcall D3DKMTSetQueuedLimit(ptr) win32u.NtGdiDdDDISetQueuedLimit
+@ stdcall D3DKMTSetVidPnSourceOwner(ptr) win32u.NtGdiDdDDISetVidPnSourceOwner
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
 @ stdcall DeleteDC(long)
