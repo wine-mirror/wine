@@ -114,6 +114,16 @@ struct pid_set_periodic
     struct hid_value_caps *offset_caps;
 };
 
+struct pid_set_envelope
+{
+    BYTE id;
+    ULONG collection;
+    struct hid_value_caps *attack_level_caps;
+    struct hid_value_caps *attack_time_caps;
+    struct hid_value_caps *fade_level_caps;
+    struct hid_value_caps *fade_time_caps;
+};
+
 #define DEVICE_STATE_MAX_SIZE 1024
 
 struct hid_joystick
@@ -147,6 +157,7 @@ struct hid_joystick
     struct pid_control_report pid_effect_control;
     struct pid_effect_update pid_effect_update;
     struct pid_set_periodic pid_set_periodic;
+    struct pid_set_envelope pid_set_envelope;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -175,7 +186,7 @@ struct hid_joystick_effect
 
     char *effect_control_buf;
     char *effect_update_buf;
-    char *type_specific_buf[1];
+    char *type_specific_buf[2];
 };
 
 static inline struct hid_joystick_effect *impl_from_IDirectInputEffect( IDirectInputEffect *iface )
@@ -1113,6 +1124,7 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
+    struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
     PHIDP_PREPARSED_DATA preparsed = impl->preparsed;
     HIDP_BUTTON_CAPS button;
     ULONG type, collection;
@@ -1195,6 +1207,16 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
         if (set_periodic->offset_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
         if (set_periodic->period_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
         if (set_periodic->phase_caps) info->dwDynamicParams |= DIEP_TYPESPECIFICPARAMS;
+    }
+
+    if ((type == DIEFT_PERIODIC || type == DIEFT_RAMPFORCE || type == DIEFT_CONSTANTFORCE) &&
+        (collection = set_envelope->collection))
+    {
+        info->dwDynamicParams |= DIEP_ENVELOPE;
+        if (set_envelope->attack_level_caps) type |= DIEFT_FFATTACK;
+        if (set_envelope->attack_time_caps) type |= DIEFT_FFATTACK;
+        if (set_envelope->fade_level_caps) type |= DIEFT_FFFADE;
+        if (set_envelope->fade_time_caps) type |= DIEFT_FFFADE;
     }
 
     info->guid = *guid;
@@ -1846,6 +1868,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
     struct pid_control_report *effect_control = &impl->pid_effect_control;
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
+    struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
 
 #define SET_COLLECTION( rep )                                          \
     do                                                                 \
@@ -1872,6 +1895,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         case PID_USAGE_EFFECT_OPERATION_REPORT: SET_COLLECTION( effect_control ); break;
         case PID_USAGE_SET_EFFECT_REPORT: SET_COLLECTION( effect_update ); break;
         case PID_USAGE_SET_PERIODIC_REPORT: SET_COLLECTION( set_periodic ); break;
+        case PID_USAGE_SET_ENVELOPE_REPORT: SET_COLLECTION( set_envelope ); break;
 
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
         case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
@@ -1897,6 +1921,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
     struct pid_control_report *effect_control = &impl->pid_effect_control;
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
     struct pid_set_periodic *set_periodic = &impl->pid_set_periodic;
+    struct pid_set_envelope *set_envelope = &impl->pid_set_envelope;
 
     if (!(instance->dwType & DIDFT_OUTPUT)) return DIENUM_CONTINUE;
 
@@ -1974,6 +1999,26 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
             caps->physical_max = 10000;
             set_periodic->offset_caps = caps;
         }
+    }
+    if (instance->wCollectionNumber == set_envelope->collection)
+    {
+        SET_REPORT_ID( set_envelope );
+        if (instance->wUsage == PID_USAGE_ATTACK_LEVEL)
+        {
+            caps->physical_min = 0;
+            caps->physical_max = 10000;
+            set_envelope->attack_level_caps = caps;
+        }
+        if (instance->wUsage == PID_USAGE_ATTACK_TIME)
+            set_envelope->attack_time_caps = caps;
+        if (instance->wUsage == PID_USAGE_FADE_LEVEL)
+        {
+            caps->physical_min = 0;
+            caps->physical_max = 10000;
+            set_envelope->fade_level_caps = caps;
+        }
+        if (instance->wUsage == PID_USAGE_FADE_TIME)
+            set_envelope->fade_time_caps = caps;
     }
 
 #undef SET_REPORT_ID
@@ -2082,12 +2127,19 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     TRACE( "effect update id %u, coll %u, type_coll %u\n", impl->pid_effect_update.id,
            impl->pid_effect_update.collection, impl->pid_effect_update.type_coll );
     TRACE( "set periodic id %u, coll %u\n", impl->pid_set_periodic.id, impl->pid_set_periodic.collection );
+    TRACE( "set envelope id %u, coll %u\n", impl->pid_set_envelope.id, impl->pid_set_envelope.collection );
 
     if (impl->pid_device_control.id)
     {
         impl->dev_caps.dwFlags |= DIDC_FORCEFEEDBACK;
         if (impl->pid_effect_update.start_delay_caps)
             impl->dev_caps.dwFlags |= DIDC_STARTDELAY;
+        if (impl->pid_set_envelope.attack_level_caps ||
+            impl->pid_set_envelope.attack_time_caps)
+            impl->dev_caps.dwFlags |= DIDC_FFATTACK;
+        if (impl->pid_set_envelope.fade_level_caps ||
+            impl->pid_set_envelope.fade_time_caps)
+            impl->dev_caps.dwFlags |= DIDC_FFFADE;
         impl->dev_caps.dwFFSamplePeriod = 1000000;
         impl->dev_caps.dwFFMinTimeResolution = 1000000;
         impl->dev_caps.dwHardwareRevision = 1;
@@ -2171,6 +2223,7 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
         hid_joystick_private_decref( impl->joystick );
+        HeapFree( GetProcessHeap(), 0, impl->type_specific_buf[1] );
         HeapFree( GetProcessHeap(), 0, impl->type_specific_buf[0] );
         HeapFree( GetProcessHeap(), 0, impl->effect_update_buf );
         HeapFree( GetProcessHeap(), 0, impl->effect_control_buf );
@@ -2208,6 +2261,9 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
         status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_periodic.id,
                                              joystick->preparsed, impl->type_specific_buf[0], report_len );
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_envelope.id, joystick->preparsed,
+                                             impl->type_specific_buf[1], report_len );
+        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_SPRING:
     case PID_USAGE_ET_DAMPER:
@@ -2218,6 +2274,7 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME( "effect type %#x not implemented!\n", type );
         impl->type_specific_buf[0][0] = 0;
+        impl->type_specific_buf[1][0] = 0;
         break;
     }
 
@@ -2711,6 +2768,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
     struct pid_effect_update *effect_update = &impl->joystick->pid_effect_update;
     struct pid_set_periodic *set_periodic = &impl->joystick->pid_set_periodic;
+    struct pid_set_envelope *set_envelope = &impl->joystick->pid_set_envelope;
     ULONG report_len = impl->joystick->caps.OutputReportByteLength;
     HANDLE device = impl->joystick->device;
     struct hid_value_caps *caps;
@@ -2761,6 +2819,18 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
                                  impl->periodic.lOffset );
 
             if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
+            else hr = DIERR_INPUTLOST;
+
+            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->attack_level_caps,
+                                 impl->envelope.dwAttackLevel );
+            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->attack_time_caps,
+                                    impl->envelope.dwAttackTime );
+            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->fade_level_caps,
+                                 impl->envelope.dwFadeLevel );
+            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->fade_time_caps,
+                                    impl->envelope.dwFadeTime );
+
+            if (WriteFile( device, impl->type_specific_buf[1], report_len, NULL, NULL )) hr = DI_OK;
             else hr = DIERR_INPUTLOST;
             break;
         }
@@ -2874,6 +2944,7 @@ static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirec
     if (!(impl->effect_control_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
     if (!(impl->effect_update_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
     if (!(impl->type_specific_buf[0] = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
+    if (!(impl->type_specific_buf[1] = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
 
     impl->envelope.dwSize = sizeof(DIENVELOPE);
     impl->params.dwSize = sizeof(DIEFFECT);

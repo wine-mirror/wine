@@ -5099,7 +5099,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file )
         /* set envelope */
         {
             .code = IOCTL_HID_WRITE_REPORT,
-            .todo = TRUE,
             .report_id = 6,
             .report_len = 7,
             .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
@@ -6555,7 +6554,6 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
     ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
     check_member( caps, expect_caps, "%d", dwSize );
-    todo_wine
     check_member( caps, expect_caps, "%#x", dwFlags );
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
