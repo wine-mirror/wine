@@ -1289,11 +1289,11 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 static DWORD WINAPI hook_thread_proc(void *param)
 {
     static HHOOK kbd_hook, mouse_hook;
-    IDirectInputDeviceImpl *impl;
-    IDirectInputDevice8W *iface;
+    IDirectInputDeviceImpl *impl, *next;
     SIZE_T events_count = 0;
     HANDLE finished_event;
     HANDLE events[128];
+    HRESULT hr;
     DWORD ret;
     MSG msg;
 
@@ -1310,24 +1310,17 @@ static DWORD WINAPI hook_thread_proc(void *param)
 
         if (ret < events_count)
         {
-            iface = NULL;
             EnterCriticalSection( &dinput_hook_crit );
-            LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, IDirectInputDeviceImpl, entry )
+            LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_device_list, IDirectInputDeviceImpl, entry )
             {
                 if (impl->read_event == events[ret])
                 {
-                    iface = &impl->IDirectInputDevice8W_iface;
-                    IDirectInputDevice8_AddRef( iface );
+                    hr = impl->read_callback( &impl->IDirectInputDevice8W_iface );
+                    if (FAILED(hr)) list_remove( &impl->entry );
                     break;
                 }
             }
             LeaveCriticalSection( &dinput_hook_crit );
-
-            if (iface)
-            {
-                impl->read_callback( iface );
-                IDirectInputDevice8_Release( iface );
-            }
         }
 
         while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
