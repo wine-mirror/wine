@@ -85,16 +85,6 @@ struct xinput_controller
     } hid;
 };
 
-/* xinput_crit guards controllers array */
-static CRITICAL_SECTION xinput_crit;
-static CRITICAL_SECTION_DEBUG xinput_critsect_debug =
-{
-    0, 0, &xinput_crit,
-    { &xinput_critsect_debug.ProcessLocksList, &xinput_critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": xinput_crit") }
-};
-static CRITICAL_SECTION xinput_crit = { &xinput_critsect_debug, -1, 0, 0, 0, 0 };
-
 static struct xinput_controller controllers[XUSER_MAX_COUNT];
 static CRITICAL_SECTION_DEBUG controller_critsect_debug[XUSER_MAX_COUNT] =
 {
@@ -128,6 +118,7 @@ static struct xinput_controller controllers[XUSER_MAX_COUNT] =
     {{ &controller_critsect_debug[3], -1, 0, 0, 0, 0 }},
 };
 
+static HANDLE start_event;
 static HANDLE stop_event;
 static HANDLE done_event;
 static HANDLE update_event;
@@ -531,6 +522,7 @@ static void stop_update_thread(void)
     SetEvent(stop_event);
     WaitForSingleObject(done_event, INFINITE);
 
+    CloseHandle(start_event);
     CloseHandle(stop_event);
     CloseHandle(done_event);
     CloseHandle(update_event);
@@ -655,9 +647,11 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
     HANDLE events[XUSER_MAX_COUNT + 2];
     DWORD i, count = 2, ret = WAIT_TIMEOUT;
 
+    update_controller_list();
+    SetEvent(start_event);
+
     do
     {
-        EnterCriticalSection(&xinput_crit);
         if (ret == WAIT_TIMEOUT) update_controller_list();
         if (ret < count - 2) read_controller_state(devices[ret]);
 
@@ -676,7 +670,6 @@ static DWORD WINAPI hid_update_thread_proc(void *param)
         }
         events[count++] = update_event;
         events[count++] = stop_event;
-        LeaveCriticalSection(&xinput_crit);
     }
     while ((ret = WaitForMultipleObjectsEx( count, events, FALSE, 2000, TRUE )) < count - 1 || ret == WAIT_TIMEOUT);
 
@@ -689,11 +682,14 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
 {
     HANDLE thread;
 
+    start_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    if (!start_event) ERR("failed to create start event, error %u\n", GetLastError());
+
     stop_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (!stop_event) ERR("failed to create stop event, error %u\n", GetLastError());
 
     done_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (!done_event) ERR("failed to create stop event, error %u\n", GetLastError());
+    if (!done_event) ERR("failed to create done event, error %u\n", GetLastError());
 
     update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (!update_event) ERR("failed to create update event, error %u\n", GetLastError());
@@ -702,11 +698,7 @@ static BOOL WINAPI start_update_thread_once( INIT_ONCE *once, void *param, void 
     if (!thread) ERR("failed to create update thread, error %u\n", GetLastError());
     CloseHandle(thread);
 
-    /* do it once now, to resolve delayed imports and populate the initial list */
-    EnterCriticalSection(&xinput_crit);
-    update_controller_list();
-    LeaveCriticalSection(&xinput_crit);
-
+    WaitForSingleObject(start_event, INFINITE);
     return TRUE;
 }
 
