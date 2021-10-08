@@ -3541,6 +3541,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct sockaddr *addr, int *addrlen,
 
         status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, IOCTL_AFD_WINE_DEFER,
                                         &server_handle, sizeof(server_handle), NULL, 0 );
+        closesocket( cs );
         SetLastError( status ? RtlNtStatusToDosError( status ) : WSATRY_AGAIN );
         return -1;
     }
