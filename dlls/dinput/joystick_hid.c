@@ -937,22 +937,32 @@ static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG report_len = impl->caps.InputReportByteLength;
-    HRESULT hr;
+    HRESULT hr = DI_OK;
 
     TRACE( "iface %p.\n", iface );
 
     EnterCriticalSection( &impl->base.crit );
-    hr = IDirectInputDevice2WImpl_Acquire( iface );
-    if (hr == DI_OK)
+    if (impl->base.acquired)
+        hr = DI_NOEFFECT;
+    else if (!impl->base.data_format.user_df)
+        hr = DIERR_INVALIDPARAM;
+    else if ((impl->base.dwCoopLevel & DISCL_FOREGROUND) && impl->base.win != GetForegroundWindow())
+        hr = DIERR_OTHERAPPHASPRIO;
+    else
     {
         memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
         impl->read_ovl.hEvent = impl->base.read_event;
         if (ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl ))
             impl->base.read_callback( iface );
 
+        impl->base.acquired = TRUE;
         IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
     }
     LeaveCriticalSection( &impl->base.crit );
+    if (hr != DI_OK) return hr;
+
+    dinput_hooks_acquire_device( iface );
+    check_dinput_hooks( iface, TRUE );
 
     return hr;
 }
@@ -960,21 +970,26 @@ static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
 static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    HRESULT hr;
+    HRESULT hr = DI_OK;
     BOOL ret;
 
     TRACE( "iface %p.\n", iface );
 
     EnterCriticalSection( &impl->base.crit );
-    if (impl->base.acquired)
+    if (!impl->base.acquired) hr = DI_NOEFFECT;
+    else
     {
         ret = CancelIoEx( impl->device, &impl->read_ovl );
         if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
 
         IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
+        impl->base.acquired = FALSE;
     }
-    hr = IDirectInputDevice2WImpl_Unacquire( iface );
     LeaveCriticalSection( &impl->base.crit );
+    if (hr != DI_OK) return hr;
+
+    dinput_hooks_unacquire_device( iface );
+    check_dinput_hooks( iface, FALSE );
 
     return hr;
 }
