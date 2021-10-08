@@ -599,7 +599,6 @@ static ULONG hid_joystick_private_decref( struct hid_joystick *impl )
         HeapFree( GetProcessHeap(), 0, tmp.input_report_buf );
         HeapFree( GetProcessHeap(), 0, tmp.input_extra_caps );
         HidD_FreePreparsedData( tmp.preparsed );
-        CancelIoEx( tmp.device, &tmp.read_ovl );
         CloseHandle( tmp.base.read_event );
         CloseHandle( tmp.device );
     }
@@ -981,7 +980,7 @@ static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
     {
         ret = CancelIoEx( impl->device, &impl->read_ovl );
         if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
-
+        else WaitForSingleObject( impl->base.read_event, INFINITE );
         IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
         impl->base.acquired = FALSE;
     }
@@ -2244,7 +2243,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     if (FAILED(hr)) return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
-    impl->base.read_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
     impl->base.read_callback = hid_joystick_read_state;
 
     hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
