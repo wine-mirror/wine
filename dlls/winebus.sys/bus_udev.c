@@ -1108,7 +1108,7 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
                 if (sscanf(ptr, "HID_UNIQ=%256s\n", buffer) == 1)
                     ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
             }
-            if (!strncmp(ptr, "HID_NAME=", 7))
+            if (!strncmp(ptr, "HID_NAME=", 9))
             {
                 if (desc->product[0]) continue;
                 if (sscanf(ptr, "HID_NAME=%256s\n", buffer) == 1)
