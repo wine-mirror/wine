@@ -143,6 +143,14 @@ struct pid_set_constant_force
     struct hid_value_caps *magnitude_caps;
 };
 
+struct pid_set_ramp_force
+{
+    BYTE id;
+    ULONG collection;
+    struct hid_value_caps *start_caps;
+    struct hid_value_caps *end_caps;
+};
+
 #define DEVICE_STATE_MAX_SIZE 1024
 
 struct hid_joystick
@@ -179,6 +187,7 @@ struct hid_joystick
     struct pid_set_envelope pid_set_envelope;
     struct pid_set_condition pid_set_condition;
     struct pid_set_constant_force pid_set_constant_force;
+    struct pid_set_ramp_force pid_set_ramp_force;
 };
 
 static inline struct hid_joystick *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -200,6 +209,7 @@ struct hid_joystick_effect
     DWORD axes[6];
     LONG directions[6];
     DICONSTANTFORCE constant_force;
+    DIRAMPFORCE ramp_force;
     DICONDITION condition[2];
     DIENVELOPE envelope;
     DIPERIODIC periodic;
@@ -1920,6 +1930,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
                               DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct pid_set_constant_force *set_constant_force = &impl->pid_set_constant_force;
+    struct pid_set_ramp_force *set_ramp_force = &impl->pid_set_ramp_force;
     struct pid_control_report *device_control = &impl->pid_device_control;
     struct pid_control_report *effect_control = &impl->pid_effect_control;
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
@@ -1955,6 +1966,7 @@ static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *
         case PID_USAGE_SET_ENVELOPE_REPORT: SET_COLLECTION( set_envelope ); break;
         case PID_USAGE_SET_CONDITION_REPORT: SET_COLLECTION( set_condition ); break;
         case PID_USAGE_SET_CONSTANT_FORCE_REPORT: SET_COLLECTION( set_constant_force ); break;
+        case PID_USAGE_SET_RAMP_FORCE_REPORT: SET_COLLECTION( set_ramp_force ); break;
 
         case PID_USAGE_DEVICE_CONTROL: SET_SUB_COLLECTION( device_control, control_coll ); break;
         case PID_USAGE_EFFECT_OPERATION: SET_SUB_COLLECTION( effect_control, control_coll ); break;
@@ -1977,6 +1989,7 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
                            DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
     struct pid_set_constant_force *set_constant_force = &impl->pid_set_constant_force;
+    struct pid_set_ramp_force *set_ramp_force = &impl->pid_set_ramp_force;
     struct pid_control_report *device_control = &impl->pid_device_control;
     struct pid_control_report *effect_control = &impl->pid_effect_control;
     struct pid_effect_update *effect_update = &impl->pid_effect_update;
@@ -2133,6 +2146,22 @@ static BOOL init_pid_caps( struct hid_joystick *impl, struct hid_value_caps *cap
             set_constant_force->magnitude_caps = caps;
         }
     }
+    if (instance->wCollectionNumber == set_ramp_force->collection)
+    {
+        SET_REPORT_ID( set_ramp_force );
+        if (instance->wUsage == PID_USAGE_RAMP_START)
+        {
+            caps->physical_min = -10000;
+            caps->physical_max = 10000;
+            set_ramp_force->start_caps = caps;
+        }
+        if (instance->wUsage == PID_USAGE_RAMP_END)
+        {
+            caps->physical_min = -10000;
+            caps->physical_max = 10000;
+            set_ramp_force->start_caps = caps;
+        }
+    }
 
 #undef SET_REPORT_ID
 
@@ -2244,6 +2273,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     TRACE( "set condition id %u, coll %u\n", impl->pid_set_condition.id, impl->pid_set_condition.collection );
     TRACE( "set constant force id %u, coll %u\n", impl->pid_set_constant_force.id,
            impl->pid_set_constant_force.collection );
+    TRACE( "set ramp force id %u, coll %u\n", impl->pid_set_ramp_force.id, impl->pid_set_ramp_force.collection );
 
     if (impl->pid_device_control.id)
     {
@@ -2409,6 +2439,13 @@ static HRESULT WINAPI hid_joystick_effect_Initialize( IDirectInputEffect *iface,
         if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
         break;
     case PID_USAGE_ET_RAMP:
+        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_ramp_force.id, joystick->preparsed,
+                                             impl->type_specific_buf[0], report_len );
+        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        status = HidP_InitializeReportForID( HidP_Output, joystick->pid_set_envelope.id, joystick->preparsed,
+                                             impl->type_specific_buf[1], report_len );
+        if (status != HIDP_STATUS_SUCCESS) return DIERR_DEVICENOTREG;
+        break;
     case PID_USAGE_ET_CUSTOM_FORCE_DATA:
         FIXME( "effect type %#x not implemented!\n", type );
         impl->type_specific_buf[0][0] = 0;
@@ -2562,6 +2599,10 @@ static HRESULT WINAPI hid_joystick_effect_GetParameters( IDirectInputEffect *ifa
             memcpy( params->lpvTypeSpecificParams, &impl->constant_force, sizeof(DICONSTANTFORCE) );
             break;
         case PID_USAGE_ET_RAMP:
+            if (!params->lpvTypeSpecificParams) return E_POINTER;
+            if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
+            memcpy( params->lpvTypeSpecificParams, &impl->constant_force, sizeof(DIRAMPFORCE) );
+            break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
             FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
             return DIERR_UNSUPPORTED;
@@ -2727,6 +2768,13 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
             impl->params.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
             break;
         case PID_USAGE_ET_RAMP:
+            if (!params->lpvTypeSpecificParams) return E_POINTER;
+            if (params->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) return DIERR_INVALIDPARAM;
+            if (memcmp( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) ))
+                impl->modified = TRUE;
+            memcpy( &impl->constant_force, params->lpvTypeSpecificParams, sizeof(DIRAMPFORCE) );
+            impl->params.cbTypeSpecificParams = sizeof(DIRAMPFORCE);
+            break;
         case PID_USAGE_ET_CUSTOM_FORCE_DATA:
             FIXME( "DIEP_TYPESPECIFICPARAMS not implemented!\n" );
             return DIERR_UNSUPPORTED;
@@ -2933,6 +2981,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     static const DWORD complete_mask = DIEP_AXES | DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS;
     struct hid_joystick_effect *impl = impl_from_IDirectInputEffect( iface );
     struct pid_set_constant_force *set_constant_force = &impl->joystick->pid_set_constant_force;
+    struct pid_set_ramp_force *set_ramp_force = &impl->joystick->pid_set_ramp_force;
     struct pid_effect_update *effect_update = &impl->joystick->pid_effect_update;
     struct pid_set_condition *set_condition = &impl->joystick->pid_set_condition;
     struct pid_set_periodic *set_periodic = &impl->joystick->pid_set_periodic;
@@ -3027,6 +3076,27 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_CONSTANT_FORCE:
             set_parameter_value( impl, impl->type_specific_buf[0], set_constant_force->magnitude_caps,
                                  impl->constant_force.lMagnitude );
+
+            if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
+            else hr = DIERR_INPUTLOST;
+
+            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->attack_level_caps,
+                                 impl->envelope.dwAttackLevel );
+            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->attack_time_caps,
+                                    impl->envelope.dwAttackTime );
+            set_parameter_value( impl, impl->type_specific_buf[1], set_envelope->fade_level_caps,
+                                 impl->envelope.dwFadeLevel );
+            set_parameter_value_us( impl, impl->type_specific_buf[1], set_envelope->fade_time_caps,
+                                    impl->envelope.dwFadeTime );
+
+            if (WriteFile( device, impl->type_specific_buf[1], report_len, NULL, NULL )) hr = DI_OK;
+            else hr = DIERR_INPUTLOST;
+            break;
+        case PID_USAGE_ET_RAMP:
+            set_parameter_value( impl, impl->type_specific_buf[0], set_ramp_force->start_caps,
+                                 impl->ramp_force.lStart );
+            set_parameter_value( impl, impl->type_specific_buf[0], set_ramp_force->end_caps,
+                                 impl->ramp_force.lEnd );
 
             if (WriteFile( device, impl->type_specific_buf[0], report_len, NULL, NULL )) hr = DI_OK;
             else hr = DIERR_INPUTLOST;
