@@ -543,23 +543,3 @@
 @ extern pfnRealizePalette
 @ extern pfnSelectPalette
 @ stub pstackConnect
-
-################################################################
-# Wine extensions: Win16 functions that are needed by other dlls
-#
-@ stdcall SetHookFlags(long long)
-
-################################################################
-# Wine internal extensions
-#
-# All functions must be prefixed with '__wine_' (for internal functions)
-# or 'wine_' (for user-visible functions) to avoid namespace conflicts.
-
-# GDI objects
-@ cdecl __wine_set_visible_region(long long ptr ptr ptr)
-
-# OpenGL
-@ cdecl __wine_get_wgl_driver(long long)
-
-# Vulkan
-@ cdecl __wine_get_vulkan_driver(long long)

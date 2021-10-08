@@ -1,6 +1,6 @@
 MODULE    = wined3d.dll
 IMPORTLIB = wined3d
-IMPORTS   = opengl32 user32 gdi32 advapi32
+IMPORTS   = opengl32 user32 gdi32 advapi32 win32u
 EXTRAINCL = $(VKD3D_SHADER_CFLAGS)
 
 EXTRADLLFLAGS = -mcygwin
