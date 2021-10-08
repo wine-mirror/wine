@@ -354,6 +354,7 @@ static void controller_disable(struct xinput_controller *controller)
     controller->enabled = FALSE;
 
     CancelIoEx(controller->device, &controller->hid.read_ovl);
+    WaitForSingleObject(controller->hid.read_ovl.hEvent, INFINITE);
     SetEvent(update_event);
 }
 
@@ -365,7 +366,7 @@ static BOOL controller_init(struct xinput_controller *controller, PHIDP_PREPARSE
     controller->hid.caps = *caps;
     if (!(controller->hid.feature_report_buf = calloc(1, controller->hid.caps.FeatureReportByteLength))) goto failed;
     if (!controller_check_caps(controller, device, preparsed)) goto failed;
-    if (!(event = CreateEventA(NULL, FALSE, FALSE, NULL))) goto failed;
+    if (!(event = CreateEventW(NULL, TRUE, FALSE, NULL))) goto failed;
 
     TRACE("Found gamepad %s\n", debugstr_w(device_path));
 
