@@ -1439,21 +1439,20 @@ static HRESULT parse_fx10_annotation(const char *data, size_t data_size,
 }
 
 static HRESULT parse_fx10_annotations(const char *data, size_t data_size, const char **ptr,
-        struct d3d10_effect *effect, unsigned int annotation_count,
-        struct d3d10_effect_variable **annotations)
+        struct d3d10_effect *effect, struct d3d10_effect_annotations *annotations)
 {
     unsigned int i;
     HRESULT hr;
 
-    if (!(*annotations = heap_calloc(annotation_count, sizeof(**annotations))))
+    if (!(annotations->elements = heap_calloc(annotations->count, sizeof(*annotations->elements))))
     {
         ERR("Failed to allocate annotations memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    for (i = 0; i < annotation_count; ++i)
+    for (i = 0; i < annotations->count; ++i)
     {
-        struct d3d10_effect_variable *a = &(*annotations)[i];
+        struct d3d10_effect_variable *a = &annotations->elements[i];
 
         a->effect = effect;
         a->buffer = &null_local_buffer;
@@ -2029,11 +2028,11 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
     read_dword(ptr, &object_count);
     TRACE("Pass has %u effect objects.\n", object_count);
 
-    read_dword(ptr, &p->annotation_count);
-    TRACE("Pass has %u annotations.\n", p->annotation_count);
+    read_dword(ptr, &p->annotations.count);
+    TRACE("Pass has %u annotations.\n", p->annotations.count);
 
     if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, p->technique->effect,
-            p->annotation_count, &p->annotations)))
+            &p->annotations)))
     {
         ERR("Failed to parse pass annotations, hr %#x.\n", hr);
         return hr;
@@ -2072,11 +2071,11 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
     read_dword(ptr, &t->pass_count);
     TRACE("Technique has %u passes\n", t->pass_count);
 
-    read_dword(ptr, &t->annotation_count);
-    TRACE("Technique has %u annotations.\n", t->annotation_count);
+    read_dword(ptr, &t->annotations.count);
+    TRACE("Technique has %u annotations.\n", t->annotations.count);
 
     if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, t->effect,
-            t->annotation_count, &t->annotations)))
+            &t->annotations)))
     {
         ERR("Failed to parse technique annotations, hr %#x.\n", hr);
         return hr;
@@ -2136,11 +2135,11 @@ static HRESULT parse_fx10_numeric_variable(const char *data, size_t data_size,
         if (default_value_offset)
             FIXME("Set default variable value.\n");
 
-        read_dword(ptr, &v->annotation_count);
-        TRACE("Variable has %u annotations.\n", v->annotation_count);
+        read_dword(ptr, &v->annotations.count);
+        TRACE("Variable has %u annotations.\n", v->annotations.count);
 
         if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, v->effect,
-                v->annotation_count, &v->annotations)))
+                &v->annotations)))
         {
             ERR("Failed to parse variable annotations, hr %#x.\n", hr);
             return hr;
@@ -2347,11 +2346,11 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
             return E_FAIL;
     }
 
-    read_dword(ptr, &v->annotation_count);
-    TRACE("Variable has %u annotations.\n", v->annotation_count);
+    read_dword(ptr, &v->annotations.count);
+    TRACE("Variable has %u annotations.\n", v->annotations.count);
 
     if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, v->effect,
-            v->annotation_count, &v->annotations)))
+            &v->annotations)))
     {
         ERR("Failed to parse variable annotations, hr %#x.\n", hr);
         return hr;
@@ -2481,11 +2480,11 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
 
     if (local)
     {
-        read_dword(ptr, &l->annotation_count);
-        TRACE("Local buffer has %u annotations.\n", l->annotation_count);
+        read_dword(ptr, &l->annotations.count);
+        TRACE("Local buffer has %u annotations.\n", l->annotations.count);
 
         if (FAILED(hr = parse_fx10_annotations(data, data_size, ptr, l->effect,
-                l->annotation_count, &l->annotations)))
+                &l->annotations)))
         {
             ERR("Failed to parse buffer annotations, hr %#x.\n", hr);
             return hr;
@@ -2947,6 +2946,19 @@ static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_vari
         heap_free(s->resources);
 }
 
+static void d3d10_effect_annotations_destroy(struct d3d10_effect_annotations *a)
+{
+    unsigned int i;
+
+    if (!a->elements) return;
+
+    for (i = 0; i < a->count; ++i)
+        d3d10_effect_variable_destroy(&a->elements[i]);
+    heap_free(a->elements);
+    a->elements = NULL;
+    a->count = 0;
+}
+
 static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 {
     unsigned int i, elem_count;
@@ -2955,14 +2967,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 
     heap_free(v->name);
     heap_free(v->semantic);
-    if (v->annotations)
-    {
-        for (i = 0; i < v->annotation_count; ++i)
-        {
-            d3d10_effect_variable_destroy(&v->annotations[i]);
-        }
-        heap_free(v->annotations);
-    }
+    d3d10_effect_annotations_destroy(&v->annotations);
 
     if (v->members)
     {
@@ -3037,20 +3042,10 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 
 static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 {
-    unsigned int i;
-
     TRACE("pass %p\n", p);
 
     heap_free(p->name);
-
-    if (p->annotations)
-    {
-        for (i = 0; i < p->annotation_count; ++i)
-        {
-            d3d10_effect_variable_destroy(&p->annotations[i]);
-        }
-        heap_free(p->annotations);
-    }
+    d3d10_effect_annotations_destroy(&p->annotations);
 }
 
 static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
@@ -3069,14 +3064,7 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
         heap_free(t->passes);
     }
 
-    if (t->annotations)
-    {
-        for (i = 0; i < t->annotation_count; ++i)
-        {
-            d3d10_effect_variable_destroy(&t->annotations[i]);
-        }
-        heap_free(t->annotations);
-    }
+    d3d10_effect_annotations_destroy(&t->annotations);
 }
 
 static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
@@ -3098,15 +3086,7 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
     if (l->type)
         d3d10_effect_type_destroy(&l->type->entry, NULL);
 
-    if (l->annotations)
-    {
-        for (i = 0; i < l->annotation_count; ++i)
-        {
-            d3d10_effect_variable_destroy(&l->annotations[i]);
-        }
-        heap_free(l->annotations);
-    }
-
+    d3d10_effect_annotations_destroy(&l->annotations);
     heap_free(l->u.buffer.local_buffer);
 
     if (l->u.buffer.buffer)
@@ -3596,71 +3576,85 @@ static BOOL STDMETHODCALLTYPE d3d10_effect_technique_IsValid(ID3D10EffectTechniq
 static HRESULT STDMETHODCALLTYPE d3d10_effect_technique_GetDesc(ID3D10EffectTechnique *iface,
         D3D10_TECHNIQUE_DESC *desc)
 {
-    struct d3d10_effect_technique *This = impl_from_ID3D10EffectTechnique(iface);
+    struct d3d10_effect_technique *tech = impl_from_ID3D10EffectTechnique(iface);
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
-    if(This == &null_technique)
+    if (tech == &null_technique)
     {
         WARN("Null technique specified\n");
         return E_FAIL;
     }
 
-    if(!desc)
+    if (!desc)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
-    desc->Name = This->name;
-    desc->Passes = This->pass_count;
-    desc->Annotations = This->annotation_count;
+    desc->Name = tech->name;
+    desc->Passes = tech->pass_count;
+    desc->Annotations = tech->annotations.count;
 
     return S_OK;
 }
 
-static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByIndex(
-        ID3D10EffectTechnique *iface, UINT index)
+static ID3D10EffectVariable * d3d10_annotation_get_by_index(const struct d3d10_effect_annotations *annotations,
+        unsigned int index)
 {
-    struct d3d10_effect_technique *This = impl_from_ID3D10EffectTechnique(iface);
     struct d3d10_effect_variable *a;
 
-    TRACE("iface %p, index %u\n", iface, index);
-
-    if (index >= This->annotation_count)
+    if (index >= annotations->count)
     {
         WARN("Invalid index specified\n");
         return &null_variable.ID3D10EffectVariable_iface;
     }
 
-    a = &This->annotations[index];
+    a = &annotations->elements[index];
 
-    TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
+    TRACE("Returning annotation %p, name %s.\n", a, debugstr_a(a->name));
 
     return &a->ID3D10EffectVariable_iface;
+}
+
+static ID3D10EffectVariable * d3d10_annotation_get_by_name(const struct d3d10_effect_annotations *annotations,
+        const char *name)
+{
+    unsigned int i;
+
+    for (i = 0; i < annotations->count; ++i)
+    {
+        struct d3d10_effect_variable *a = &annotations->elements[i];
+        if (a->name && !strcmp(a->name, name))
+        {
+            TRACE("Returning annotation %p.\n", a);
+            return &a->ID3D10EffectVariable_iface;
+        }
+    }
+
+    WARN("Invalid name specified.\n");
+
+    return &null_variable.ID3D10EffectVariable_iface;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByIndex(
+        ID3D10EffectTechnique *iface, UINT index)
+{
+    struct d3d10_effect_technique *tech = impl_from_ID3D10EffectTechnique(iface);
+
+    TRACE("iface %p, index %u\n", iface, index);
+
+    return d3d10_annotation_get_by_index(&tech->annotations, index);
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_GetAnnotationByName(
         ID3D10EffectTechnique *iface, const char *name)
 {
-    struct d3d10_effect_technique *This = impl_from_ID3D10EffectTechnique(iface);
-    unsigned int i;
+    struct d3d10_effect_technique *tech = impl_from_ID3D10EffectTechnique(iface);
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    for (i = 0; i < This->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &This->annotations[i];
-        if (a->name && !strcmp(a->name, name))
-        {
-            TRACE("Returning annotation %p\n", a);
-            return &a->ID3D10EffectVariable_iface;
-        }
-    }
-
-    WARN("Invalid name specified\n");
-
-    return &null_variable.ID3D10EffectVariable_iface;
+    return d3d10_annotation_get_by_name(&tech->annotations, name);
 }
 
 static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPassByIndex(ID3D10EffectTechnique *iface,
@@ -3768,7 +3762,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
     s = &pass->vs.shader->u.shader;
 
     desc->Name = pass->name;
-    desc->Annotations = pass->annotation_count;
+    desc->Annotations = pass->annotations.count;
     if (s->input_signature)
     {
         desc->pIAInputSignature = ID3D10Blob_GetBufferPointer(s->input_signature);
@@ -3864,45 +3858,21 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetPixelShaderDesc(ID3D10Effe
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByIndex(ID3D10EffectPass *iface,
         UINT index)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
-    struct d3d10_effect_variable *a;
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
 
     TRACE("iface %p, index %u\n", iface, index);
 
-    if (index >= This->annotation_count)
-    {
-        WARN("Invalid index specified\n");
-        return &null_variable.ID3D10EffectVariable_iface;
-    }
-
-    a = &This->annotations[index];
-
-    TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
-
-    return &a->ID3D10EffectVariable_iface;
+    return d3d10_annotation_get_by_index(&pass->annotations, index);
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnnotationByName(ID3D10EffectPass *iface,
         const char *name)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
-    unsigned int i;
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    for (i = 0; i < This->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &This->annotations[i];
-        if (a->name && !strcmp(a->name, name))
-        {
-            TRACE("Returning annotation %p\n", a);
-            return &a->ID3D10EffectVariable_iface;
-        }
-    }
-
-    WARN("Invalid name specified\n");
-
-    return &null_variable.ID3D10EffectVariable_iface;
+    return d3d10_annotation_get_by_name(&pass->annotations, name);
 }
 
 static void update_buffer(ID3D10Device *device, struct d3d10_effect_variable *v)
@@ -4169,7 +4139,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVaria
     desc->Name = v->name;
     desc->Semantic = v->semantic;
     desc->Flags = v->flag;
-    desc->Annotations = v->annotation_count;
+    desc->Annotations = v->annotations.count;
     desc->BufferOffset = v->buffer_offset;
 
     if (v->flag & D3D10_EFFECT_VARIABLE_EXPLICIT_BIND_POINT)
@@ -4181,45 +4151,21 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVaria
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByIndex(
         ID3D10EffectVariable *iface, UINT index)
 {
-    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
-    struct d3d10_effect_variable *a;
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p, index %u\n", iface, index);
 
-    if (index >= This->annotation_count)
-    {
-        WARN("Invalid index specified\n");
-        return &null_variable.ID3D10EffectVariable_iface;
-    }
-
-    a = &This->annotations[index];
-
-    TRACE("Returning annotation %p, %s\n", a, debugstr_a(a->name));
-
-    return &a->ID3D10EffectVariable_iface;
+    return d3d10_annotation_get_by_index(&var->annotations, index);
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByName(
         ID3D10EffectVariable *iface, const char *name)
 {
-    struct d3d10_effect_variable *This = impl_from_ID3D10EffectVariable(iface);
-    unsigned int i;
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectVariable(iface);
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    for (i = 0; i < This->annotation_count; ++i)
-    {
-        struct d3d10_effect_variable *a = &This->annotations[i];
-        if (a->name && !strcmp(a->name, name))
-        {
-            TRACE("Returning annotation %p\n", a);
-            return &a->ID3D10EffectVariable_iface;
-        }
-    }
-
-    WARN("Invalid name specified\n");
-
-    return &null_variable.ID3D10EffectVariable_iface;
+    return d3d10_annotation_get_by_name(&var->annotations, name);
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByIndex(

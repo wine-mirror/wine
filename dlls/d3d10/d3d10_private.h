@@ -181,6 +181,12 @@ struct d3d10_effect_type_member
     struct d3d10_effect_type *type;
 };
 
+struct d3d10_effect_annotations
+{
+    struct d3d10_effect_variable *elements;
+    unsigned int count;
+};
+
 /* ID3D10EffectVariable */
 struct d3d10_effect_variable
 {
@@ -192,14 +198,13 @@ struct d3d10_effect_variable
     char *name;
     char *semantic;
     DWORD buffer_offset;
-    DWORD annotation_count;
     DWORD flag;
     DWORD data_size;
     DWORD explicit_bind_point;
     struct d3d10_effect *effect;
     struct d3d10_effect_variable *elements;
     struct d3d10_effect_variable *members;
-    struct d3d10_effect_variable *annotations;
+    struct d3d10_effect_annotations annotations;
 
     union
     {
@@ -223,8 +228,7 @@ struct d3d10_effect_pass
 
     struct d3d10_effect_technique *technique;
     char *name;
-    DWORD annotation_count;
-    struct d3d10_effect_variable *annotations;
+    struct d3d10_effect_annotations annotations;
 
     struct d3d10_effect_pass_shader_desc vs;
     struct d3d10_effect_pass_shader_desc ps;
@@ -244,10 +248,9 @@ struct d3d10_effect_technique
 
     struct d3d10_effect *effect;
     char *name;
+    struct d3d10_effect_annotations annotations;
     DWORD pass_count;
-    DWORD annotation_count;
     struct d3d10_effect_pass *passes;
-    struct d3d10_effect_variable *annotations;
 };
 
 struct d3d10_effect_anonymous_shader
