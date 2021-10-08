@@ -45,6 +45,16 @@ struct effect_envelope
     UINT16 fade_time;
 };
 
+struct effect_condition
+{
+    BYTE center_point_offset;
+    BYTE positive_coefficient;
+    BYTE negative_coefficient;
+    BYTE positive_saturation;
+    BYTE negative_saturation;
+    BYTE dead_band;
+};
+
 struct effect_params
 {
     USAGE effect_type;
@@ -57,11 +67,13 @@ struct effect_params
     BOOL axis_enabled[2];
     BOOL direction_enabled;
     BYTE direction[2];
+    BYTE condition_count;
     /* only for periodic, constant or ramp forces */
     struct effect_envelope envelope;
     union
     {
         struct effect_periodic periodic;
+        struct effect_condition condition[2];
     };
 };
 
@@ -136,6 +148,7 @@ struct hid_physical
     BYTE effect_update_report;
     BYTE set_periodic_report;
     BYTE set_envelope_report;
+    BYTE set_condition_report;
 };
 
 struct hid_device_state

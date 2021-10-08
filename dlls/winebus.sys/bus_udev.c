@@ -672,6 +672,10 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         if (test_bit(ffbits, FF_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
         if (test_bit(ffbits, FF_SAW_UP)) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
         if (test_bit(ffbits, FF_SAW_DOWN)) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+        if (test_bit(ffbits, FF_SPRING)) usages[count++] = PID_USAGE_ET_SPRING;
+        if (test_bit(ffbits, FF_DAMPER)) usages[count++] = PID_USAGE_ET_DAMPER;
+        if (test_bit(ffbits, FF_INERTIA)) usages[count++] = PID_USAGE_ET_INERTIA;
+        if (test_bit(ffbits, FF_FRICTION)) usages[count++] = PID_USAGE_ET_FRICTION;
 
         if (!hid_device_add_physical(iface, usages, count))
             return STATUS_NO_MEMORY;
@@ -1014,7 +1018,24 @@ static NTSTATUS lnxev_device_physical_effect_update(struct unix_device *iface, B
     case PID_USAGE_ET_DAMPER:
     case PID_USAGE_ET_INERTIA:
     case PID_USAGE_ET_FRICTION:
-        FIXME("not implemented!");
+        if (params->condition_count >= 1)
+        {
+            effect.u.condition[0].right_saturation = params->condition[0].positive_saturation;
+            effect.u.condition[0].left_saturation = params->condition[0].negative_saturation;
+            effect.u.condition[0].right_coeff = params->condition[0].positive_coefficient;
+            effect.u.condition[0].left_coeff = params->condition[0].negative_coefficient;
+            effect.u.condition[0].deadband = params->condition[0].dead_band;
+            effect.u.condition[0].center = params->condition[0].center_point_offset;
+        }
+        if (params->condition_count >= 2)
+        {
+            effect.u.condition[1].right_saturation = params->condition[1].positive_saturation;
+            effect.u.condition[1].left_saturation = params->condition[1].negative_saturation;
+            effect.u.condition[1].right_coeff = params->condition[1].positive_coefficient;
+            effect.u.condition[1].left_coeff = params->condition[1].negative_coefficient;
+            effect.u.condition[1].deadband = params->condition[1].dead_band;
+            effect.u.condition[1].center = params->condition[1].center_point_offset;
+        }
         break;
 
     case PID_USAGE_ET_CONSTANT_FORCE:

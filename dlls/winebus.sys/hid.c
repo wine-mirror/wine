@@ -458,6 +458,18 @@ struct pid_set_envelope
     UINT16 attack_time;
     UINT16 fade_time;
 };
+
+struct pid_set_condition
+{
+    BYTE index;
+    BYTE condition_index;
+    BYTE center_point_offset;
+    BYTE positive_coefficient;
+    BYTE negative_coefficient;
+    BYTE positive_saturation;
+    BYTE negative_saturation;
+    BYTE dead_band;
+};
 #include "poppack.h"
 
 static BOOL hid_descriptor_add_set_periodic(struct unix_device *iface)
@@ -574,6 +586,52 @@ static BOOL hid_descriptor_add_set_envelope(struct unix_device *iface)
     };
 
     iface->hid_physical.set_envelope_report = report_id;
+    return hid_report_descriptor_append(desc, template, sizeof(template));
+}
+
+static BOOL hid_descriptor_add_set_condition(struct unix_device *iface)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    const BYTE report_id = ++desc->next_report_id[HidP_Output];
+    const BYTE template[] =
+    {
+        /* Condition Report Definition */
+        USAGE(1, PID_USAGE_SET_CONDITION_REPORT),
+        COLLECTION(1, Logical),
+            REPORT_ID(1, report_id),
+
+            USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+            LOGICAL_MAXIMUM(1, 0x7f),
+            LOGICAL_MINIMUM(1, 0x00),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_CP_OFFSET),
+            USAGE(1, PID_USAGE_POSITIVE_COEFFICIENT),
+            USAGE(1, PID_USAGE_NEGATIVE_COEFFICIENT),
+            LOGICAL_MINIMUM(1, -128),
+            LOGICAL_MAXIMUM(1, +127),
+            PHYSICAL_MINIMUM(2, -10000),
+            PHYSICAL_MAXIMUM(2, +10000),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 3),
+            OUTPUT(1, Data|Var|Abs),
+
+            USAGE(1, PID_USAGE_POSITIVE_SATURATION),
+            USAGE(1, PID_USAGE_NEGATIVE_SATURATION),
+            USAGE(1, PID_USAGE_DEAD_BAND),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(2, 0x00ff),
+            PHYSICAL_MINIMUM(1, 0),
+            PHYSICAL_MAXIMUM(2, +10000),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 3),
+            OUTPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+    };
+
+    iface->hid_physical.set_condition_report = report_id;
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
@@ -729,6 +787,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
     };
     BOOL periodic = FALSE;
     BOOL envelope = FALSE;
+    BOOL condition = FALSE;
     ULONG i;
 
     if (!hid_report_descriptor_append(desc, device_control_header, sizeof(device_control_header)))
@@ -769,11 +828,18 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
             usages[i] == PID_USAGE_ET_SAWTOOTH_UP ||
             usages[i] == PID_USAGE_ET_SAWTOOTH_DOWN)
             periodic = envelope = TRUE;
+        if (usages[i] == PID_USAGE_ET_SPRING ||
+            usages[i] == PID_USAGE_ET_DAMPER ||
+            usages[i] == PID_USAGE_ET_INERTIA ||
+            usages[i] == PID_USAGE_ET_FRICTION)
+            condition = TRUE;
     }
 
     if (periodic && !hid_descriptor_add_set_periodic(iface))
         return FALSE;
     if (envelope && !hid_descriptor_add_set_envelope(iface))
+        return FALSE;
+    if (condition && !hid_descriptor_add_set_condition(iface))
         return FALSE;
 
     /* HID nary collection indexes start at 1 */
@@ -901,6 +967,8 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             params->direction[1] = report->direction[1];
 
             io->Status = iface->hid_vtbl->physical_effect_update(iface, report->index, params);
+
+            params->condition_count = 0;
         }
     }
     else if (packet->reportId == physical->set_periodic_report)
@@ -933,6 +1001,29 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             params->envelope.fade_level = report->fade_level;
             params->envelope.attack_time = report->attack_time;
             params->envelope.fade_time = report->fade_time;
+        }
+    }
+    else if (packet->reportId == physical->set_condition_report)
+    {
+        struct pid_set_condition *report = (struct pid_set_condition *)(packet->reportBuffer + 1);
+        struct effect_params *params = iface->hid_physical.effect_params + report->index;
+        struct effect_condition *condition;
+        UINT index;
+
+        io->Information = sizeof(*report) + 1;
+        if (packet->reportBufferLen < io->Information)
+            io->Status = STATUS_BUFFER_TOO_SMALL;
+        else if ((index = params->condition_count++) >= ARRAY_SIZE(params->condition))
+            io->Status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            condition = params->condition + index;
+            condition->center_point_offset = report->center_point_offset;
+            condition->positive_coefficient = report->positive_coefficient;
+            condition->negative_coefficient = report->negative_coefficient;
+            condition->positive_saturation = report->positive_saturation;
+            condition->negative_saturation = report->negative_saturation;
+            condition->dead_band = report->dead_band;
         }
     }
     else

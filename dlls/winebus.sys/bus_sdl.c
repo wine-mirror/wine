@@ -208,6 +208,10 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
         if (impl->effect_support & SDL_HAPTIC_TRIANGLE) usages[count++] = PID_USAGE_ET_TRIANGLE;
         if (impl->effect_support & SDL_HAPTIC_SAWTOOTHUP) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
         if (impl->effect_support & SDL_HAPTIC_SAWTOOTHDOWN) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+        if (impl->effect_support & SDL_HAPTIC_SPRING) usages[count++] = PID_USAGE_ET_SPRING;
+        if (impl->effect_support & SDL_HAPTIC_DAMPER) usages[count++] = PID_USAGE_ET_DAMPER;
+        if (impl->effect_support & SDL_HAPTIC_INERTIA) usages[count++] = PID_USAGE_ET_INERTIA;
+        if (impl->effect_support & SDL_HAPTIC_FRICTION) usages[count++] = PID_USAGE_ET_FRICTION;
 
         if (!hid_device_add_physical(&impl->unix_device, usages, count))
             return FALSE;
@@ -562,7 +566,31 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
     case PID_USAGE_ET_DAMPER:
     case PID_USAGE_ET_INERTIA:
     case PID_USAGE_ET_FRICTION:
-        FIXME("not implemented!");
+        effect.condition.length = params->duration;
+        effect.condition.delay = params->start_delay;
+        effect.condition.button = params->trigger_button;
+        effect.condition.interval = params->trigger_repeat_interval;
+        effect.condition.direction.type = SDL_HAPTIC_SPHERICAL;
+        effect.condition.direction.dir[0] = params->direction[0] * 36000 / 256;
+        effect.condition.direction.dir[1] = params->direction[1] * 36000 / 256;
+        if (params->condition_count >= 1)
+        {
+            effect.condition.right_sat[0] = params->condition[0].positive_saturation;
+            effect.condition.left_sat[0] = params->condition[0].negative_saturation;
+            effect.condition.right_coeff[0] = params->condition[0].positive_coefficient;
+            effect.condition.left_coeff[0] = params->condition[0].negative_coefficient;
+            effect.condition.deadband[0] = params->condition[0].dead_band;
+            effect.condition.center[0] = params->condition[0].center_point_offset;
+        }
+        if (params->condition_count >= 2)
+        {
+            effect.condition.right_sat[1] = params->condition[1].positive_saturation;
+            effect.condition.left_sat[1] = params->condition[1].negative_saturation;
+            effect.condition.right_coeff[1] = params->condition[1].positive_coefficient;
+            effect.condition.left_coeff[1] = params->condition[1].negative_coefficient;
+            effect.condition.deadband[1] = params->condition[1].dead_band;
+            effect.condition.center[1] = params->condition[1].center_point_offset;
+        }
         break;
 
     case PID_USAGE_ET_CONSTANT_FORCE:
