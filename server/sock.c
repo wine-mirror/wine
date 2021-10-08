@@ -2289,9 +2289,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             if (!send_len) return;
         }
 
-        if (!(req = mem_alloc( sizeof(*req) )))
-            return;
-
         sock->state = SOCK_CONNECTING;
 
         if (params->synchronous && sock->nonblocking)
@@ -2300,6 +2297,9 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( STATUS_DEVICE_NOT_READY );
             return;
         }
+
+        if (!(req = mem_alloc( sizeof(*req) )))
+            return;
 
         req->async = (struct async *)grab_object( async );
         req->iosb = async_get_iosb( async );
