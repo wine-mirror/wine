@@ -132,8 +132,7 @@ static int lv_get_item_data(HWND dialog, int index)
 
 static void lv_set_action(HWND dialog, int item, int action, LPDIACTIONFORMATW lpdiaf)
 {
-    static const WCHAR no_action[] = {'-','\0'};
-    const WCHAR *action_text = no_action;
+    const WCHAR *action_text = L"-";
     LVITEMW lvItem;
 
     if (item < 0) return;

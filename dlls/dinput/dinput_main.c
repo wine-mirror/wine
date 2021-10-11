@@ -83,7 +83,6 @@ static const struct dinput_device *dinput_devices[] =
 
 HINSTANCE DINPUT_instance;
 
-static const WCHAR di_em_win_w[] = {'D','I','E','m','W','i','n',0};
 static HWND di_em_win;
 
 static BOOL check_hook_thread(void);
@@ -498,7 +497,7 @@ static void register_di_em_win_class(void)
     class.cbSize = sizeof(class);
     class.lpfnWndProc = di_em_win_wndproc;
     class.hInstance = DINPUT_instance;
-    class.lpszClassName = di_em_win_w;
+    class.lpszClassName = L"DIEmWin";
 
     if (!RegisterClassExW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
         WARN( "Unable to register message window class\n" );
@@ -506,7 +505,7 @@ static void register_di_em_win_class(void)
 
 static void unregister_di_em_win_class(void)
 {
-    if (!UnregisterClassW( di_em_win_w, NULL ) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
+    if (!UnregisterClassW( L"DIEmWin", NULL ) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
         WARN( "Unable to unregister message window class\n" );
 }
 
@@ -611,7 +610,7 @@ static HRESULT WINAPI IDirectInputWImpl_GetDeviceStatus( IDirectInput7W *iface, 
 static HRESULT WINAPI IDirectInputWImpl_RunControlPanel( IDirectInput7W *iface, HWND hwndOwner, DWORD dwFlags )
 {
     IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
-    WCHAR control_exeW[] = {'c','o','n','t','r','o','l','.','e','x','e',0};
+    WCHAR control_exe[] = {L"control.exe"};
     STARTUPINFOW si = {0};
     PROCESS_INFORMATION pi;
 
@@ -626,7 +625,7 @@ static HRESULT WINAPI IDirectInputWImpl_RunControlPanel( IDirectInput7W *iface, 
     if (!This->initialized)
         return DIERR_NOTINITIALIZED;
 
-    if (!CreateProcessW(NULL, control_exeW, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
+    if (!CreateProcessW( NULL, control_exe, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
         return HRESULT_FROM_WIN32(GetLastError());
 
     return DI_OK;
@@ -1294,8 +1293,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
     DWORD ret;
     MSG msg;
 
-    di_em_win = CreateWindowW( di_em_win_w, di_em_win_w, 0, 0, 0, 0, 0,
-                               HWND_MESSAGE, 0, DINPUT_instance, NULL );
+    di_em_win = CreateWindowW( L"DIEmWin", L"DIEmWin", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, DINPUT_instance, NULL );
 
     /* Force creation of the message queue */
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );

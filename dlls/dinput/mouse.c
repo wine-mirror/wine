@@ -136,9 +136,6 @@ static HRESULT mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEIN
 
 static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseImpl **out )
 {
-    static const WCHAR mouse_wrap_override_w[] = {'M','o','u','s','e','W','a','r','p','O','v','e','r','r','i','d','e',0};
-    static const WCHAR disable_w[] = {'d','i','s','a','b','l','e',0};
-    static const WCHAR force_w[] = {'f','o','r','c','e',0};
     SysMouseImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     unsigned i;
@@ -154,10 +151,10 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     get_app_key(&hkey, &appkey);
-    if (!get_config_key(hkey, appkey, mouse_wrap_override_w, buffer, sizeof(buffer)))
+    if (!get_config_key( hkey, appkey, L"MouseWarpOverride", buffer, sizeof(buffer) ))
     {
-        if (!wcsnicmp( buffer, disable_w, -1 )) newDevice->warp_override = WARP_DISABLE;
-        else if (!wcsnicmp( buffer, force_w, -1 )) newDevice->warp_override = WARP_FORCE_ON;
+        if (!wcsnicmp( buffer, L"disable", -1 )) newDevice->warp_override = WARP_DISABLE;
+        else if (!wcsnicmp( buffer, L"force", -1 )) newDevice->warp_override = WARP_FORCE_ON;
     }
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
@@ -687,23 +684,19 @@ static HRESULT WINAPI SysMouseWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface,
 static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
         LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow)
 {
-    static const WCHAR x_axisW[] = {'X','-','A','x','i','s',0};
-    static const WCHAR y_axisW[] = {'Y','-','A','x','i','s',0};
-    static const WCHAR wheelW[] = {'W','h','e','e','l',0};
-    static const WCHAR buttonW[] = {'B','u','t','t','o','n',' ','%','d',0};
     HRESULT res;
 
     res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
     if (res != DI_OK) return res;
 
     if (IsEqualGUID( &pdidoi->guidType, &GUID_XAxis ))
-        wcscpy( pdidoi->tszName, x_axisW );
+        wcscpy( pdidoi->tszName, L"X-Axis" );
     else if (IsEqualGUID( &pdidoi->guidType, &GUID_YAxis ))
-        wcscpy( pdidoi->tszName, y_axisW );
+        wcscpy( pdidoi->tszName, L"Y-Axis" );
     else if (IsEqualGUID( &pdidoi->guidType, &GUID_ZAxis ))
-        wcscpy( pdidoi->tszName, wheelW );
+        wcscpy( pdidoi->tszName, L"Wheel" );
     else if (pdidoi->dwType & DIDFT_BUTTON)
-        swprintf( pdidoi->tszName, MAX_PATH, buttonW, DIDFT_GETINSTANCE( pdidoi->dwType ) - 3 );
+        swprintf( pdidoi->tszName, MAX_PATH, L"Button %d", DIDFT_GETINSTANCE( pdidoi->dwType ) - 3 );
 
     if(pdidoi->dwType & DIDFT_AXIS)
         pdidoi->dwFlags |= DIDOI_ASPECTPOSITION;

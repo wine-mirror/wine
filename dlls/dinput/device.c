@@ -686,11 +686,7 @@ static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
  */
 static HKEY get_mapping_key(const WCHAR *device, const WCHAR *username, const WCHAR *guid)
 {
-    static const WCHAR subkey[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'W','i','n','e','\\',
-        'D','i','r','e','c','t','I','n','p','u','t','\\',
-        'M','a','p','p','i','n','g','s','\\','%','s','\\','%','s','\\','%','s','\0'};
+    static const WCHAR *subkey = L"Software\\Wine\\DirectInput\\Mappings\\%s\\%s\\%s";
     HKEY hkey;
     WCHAR *keyname;
 
@@ -733,13 +729,12 @@ static HRESULT save_mapping_settings(IDirectInputDevice8W *iface, LPDIACTIONFORM
     */
     for (i = 0; i < lpdiaf->dwNumActions; i++)
     {
-        static const WCHAR format[] = {'%','x','\0'};
         WCHAR label[9];
 
         if (IsEqualGUID(&didev.guidInstance, &lpdiaf->rgoAction[i].guidInstance) &&
             lpdiaf->rgoAction[i].dwHow != DIAH_UNMAPPED)
         {
-            swprintf( label, 9, format, lpdiaf->rgoAction[i].dwSemantic );
+            swprintf( label, 9, L"%x", lpdiaf->rgoAction[i].dwSemantic );
             RegSetValueExW( hkey, label, 0, REG_DWORD, (const BYTE *)&lpdiaf->rgoAction[i].dwObjID,
                             sizeof(DWORD) );
         }
@@ -775,11 +770,10 @@ static BOOL load_mapping_settings(IDirectInputDeviceImpl *This, LPDIACTIONFORMAT
     /* Try to read each action in the DIACTIONFORMAT from registry */
     for (i = 0; i < lpdiaf->dwNumActions; i++)
     {
-        static const WCHAR format[] = {'%','x','\0'};
         DWORD id, size = sizeof(DWORD);
         WCHAR label[9];
 
-        swprintf( label, 9, format, lpdiaf->rgoAction[i].dwSemantic );
+        swprintf( label, 9, L"%x", lpdiaf->rgoAction[i].dwSemantic );
 
         if (!RegQueryValueExW(hkey, label, 0, NULL, (LPBYTE) &id, &size))
         {
