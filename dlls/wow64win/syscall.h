@@ -22,6 +22,8 @@
 #define __WOW64WIN_SYSCALL_H
 
 #define ALL_WIN32_SYSCALLS \
+    SYSCALL_ENTRY( NtGdiAddFontMemResourceEx ) \
+    SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
     SYSCALL_ENTRY( NtGdiCombineRgn ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
@@ -39,12 +41,17 @@
     SYSCALL_ENTRY( NtGdiFlush ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiGetFontFileData ) \
+    SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
     SYSCALL_ENTRY( NtGdiGetTransform ) \
+    SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \
+    SYSCALL_ENTRY( NtGdiRemoveFontMemResourceEx ) \
+    SYSCALL_ENTRY( NtGdiRemoveFontResourceW ) \
     SYSCALL_ENTRY( NtGdiSaveDC ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
@@ -52,6 +59,7 @@
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
     SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \
+    SYSCALL_ENTRY( NtGdiSetTextJustification ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers )
 
 #endif /* __WOW64WIN_SYSCALL_H */

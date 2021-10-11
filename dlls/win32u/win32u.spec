@@ -107,8 +107,8 @@
 @ stdcall NtGdiAbortDoc(long)
 @ stdcall NtGdiAbortPath(long)
 @ stub NtGdiAddEmbFontToDC
-@ stdcall NtGdiAddFontMemResourceEx(ptr long ptr long ptr)
-@ stdcall NtGdiAddFontResourceW(wstr long long long long ptr)
+@ stdcall -syscall NtGdiAddFontMemResourceEx(ptr long ptr long ptr)
+@ stdcall -syscall NtGdiAddFontResourceW(wstr long long long long ptr)
 @ stub NtGdiAddInitialFonts
 @ stub NtGdiAddRemoteFontToDC
 @ stub NtGdiAddRemoteMMInstanceToDC
@@ -478,8 +478,8 @@
 @ stub NtGdiGetEntry
 @ stub NtGdiGetEudcTimeStampEx
 @ stdcall NtGdiGetFontData(long long long ptr long)
-@ stdcall NtGdiGetFontFileData(long long ptr ptr long)
-@ stdcall NtGdiGetFontFileInfo(long long ptr long ptr)
+@ stdcall -syscall NtGdiGetFontFileData(long long ptr ptr long)
+@ stdcall -syscall NtGdiGetFontFileInfo(long long ptr long ptr)
 @ stub NtGdiGetFontResourceInfoInternalW
 @ stdcall NtGdiGetFontUnicodeRanges(long ptr)
 @ stub NtGdiGetGammaRampCapability
@@ -529,7 +529,7 @@
 @ stub NtGdiHLSurfSetInformation
 @ stub NtGdiHT_Get8BPPFormatPalette
 @ stub NtGdiHT_Get8BPPMaskPalette
-@ stdcall NtGdiHfontCreate(ptr long long long ptr)
+@ stdcall -syscall NtGdiHfontCreate(ptr long long long ptr)
 @ stub NtGdiIcmBrushInfo
 @ stub NtGdiInit
 @ stdcall NtGdiInitSpool()
@@ -567,8 +567,8 @@
 @ stdcall -syscall NtGdiRectInRegion(long ptr)
 @ stdcall NtGdiRectVisible(long ptr)
 @ stdcall NtGdiRectangle(long long long long long)
-@ stdcall NtGdiRemoveFontMemResourceEx(long)
-@ stdcall NtGdiRemoveFontResourceW(wstr long long long long ptr)
+@ stdcall -syscall NtGdiRemoveFontMemResourceEx(long)
+@ stdcall -syscall NtGdiRemoveFontResourceW(wstr long long long long ptr)
 @ stub NtGdiRemoveMergeFont
 @ stdcall NtGdiResetDC(long ptr ptr ptr ptr)
 @ stdcall NtGdiResizePalette(long long)
@@ -615,7 +615,7 @@
 @ stdcall -syscall NtGdiSetRectRgn(long long long long long)
 @ stub NtGdiSetSizeDevice
 @ stdcall NtGdiSetSystemPaletteUse(long long)
-@ stdcall NtGdiSetTextJustification(long long long)
+@ stdcall -syscall NtGdiSetTextJustification(long long long)
 @ stub NtGdiSetUMPDSandboxState
 @ stdcall NtGdiSetVirtualResolution(long long long long long)
 @ stdcall NtGdiStartDoc(long ptr ptr long)

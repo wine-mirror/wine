@@ -314,6 +314,95 @@ NTSTATUS WINAPI wow64_NtGdiDrawStream( UINT *args )
     return NtGdiDrawStream( hdc, in, pvin );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSetTextJustification( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT extra = get_ulong( &args );
+    INT breaks = get_ulong( &args );
+
+    return NtGdiSetTextJustification( hdc, extra, breaks );
+}
+
+NTSTATUS WINAPI wow64_NtGdiHfontCreate( UINT *args )
+{
+    const ENUMLOGFONTEXDVW *enumex = get_ptr( &args );
+    ULONG unk2 = get_ulong( &args );
+    ULONG unk3 = get_ulong( &args );
+    ULONG unk4 = get_ulong( &args );
+    void *data = get_ptr( &args );
+
+    return HandleToUlong( NtGdiHfontCreate( enumex, unk2, unk3, unk4, data ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetFontFileData( UINT *args )
+{
+    DWORD instance_id = get_ulong( &args );
+    DWORD file_index = get_ulong( &args );
+    UINT64 *offset = get_ptr( &args );
+    void *buff = get_ptr( &args );
+    DWORD buff_size = get_ulong( &args );
+
+    return NtGdiGetFontFileData( instance_id, file_index, offset, buff, buff_size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetFontFileInfo( UINT *args )
+{
+    DWORD instance_id = get_ulong( &args );
+    DWORD file_index = get_ulong( &args );
+    struct font_fileinfo *info = get_ptr( &args );
+    SIZE_T size = get_ulong( &args );
+    ULONG *needed32 = get_ptr( &args );
+
+    SIZE_T needed;
+    BOOL ret;
+
+    ret = NtGdiGetFontFileInfo( instance_id, file_index, info, size, size_32to64( &needed, needed32 ));
+    put_size( needed32, needed );
+    return ret;
+}
+
+NTSTATUS WINAPI wow64_NtGdiAddFontMemResourceEx( UINT *args )
+{
+    void *ptr = get_ptr( &args );
+    DWORD size = get_ulong( &args );
+    void *dv = get_ptr( &args );
+    ULONG dv_size = get_ulong( &args );
+    DWORD *count = get_ptr( &args );
+
+    return HandleToUlong( NtGdiAddFontMemResourceEx( ptr, size, dv, dv_size, count ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiAddFontResourceW( UINT *args )
+{
+    const WCHAR *str = get_ptr( &args );
+    ULONG size = get_ulong( &args );
+    ULONG files = get_ulong( &args );
+    DWORD flags = get_ulong( &args );
+    DWORD tid = get_ulong( &args );
+    void *dv = get_ptr( &args );
+
+    return NtGdiAddFontResourceW( str, size, files, flags, tid, dv );
+}
+
+NTSTATUS WINAPI wow64_NtGdiRemoveFontMemResourceEx( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtGdiRemoveFontMemResourceEx( handle );
+}
+
+NTSTATUS WINAPI wow64_NtGdiRemoveFontResourceW( UINT *args )
+{
+    const WCHAR *str = get_ptr( &args );
+    ULONG size = get_ulong( &args );
+    ULONG files = get_ulong( &args );
+    DWORD flags = get_ulong( &args );
+    DWORD tid = get_ulong( &args );
+    void *dv = get_ptr( &args );
+
+    return NtGdiRemoveFontResourceW( str, size, files, flags, tid, dv );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();

@@ -44,10 +44,6 @@ struct unix_funcs
     /* win32u functions */
     INT      (WINAPI *pNtGdiAbortDoc)( HDC hdc );
     BOOL     (WINAPI *pNtGdiAbortPath)( HDC hdc );
-    HANDLE   (WINAPI *pNtGdiAddFontMemResourceEx)( void *ptr, DWORD size, void *dv, ULONG dv_size,
-                                                   DWORD *count );
-    INT      (WINAPI *pNtGdiAddFontResourceW)( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
-                                               DWORD tid, void *dv );
     BOOL     (WINAPI *pNtGdiAlphaBlend)( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                                          HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                          BLENDFUNCTION blend_function, HANDLE xform );
@@ -127,10 +123,6 @@ struct unix_funcs
     INT      (WINAPI *pNtGdiGetDeviceCaps)( HDC hdc, INT cap );
     BOOL     (WINAPI *pNtGdiGetDeviceGammaRamp)( HDC hdc, void *ptr );
     DWORD    (WINAPI *pNtGdiGetFontData)( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length );
-    BOOL     (WINAPI *pNtGdiGetFontFileData)( DWORD instance_id, DWORD file_index, UINT64 *offset,
-                                              void *buff, DWORD buff_size );
-    BOOL     (WINAPI *pNtGdiGetFontFileInfo)( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
-                                              SIZE_T size, SIZE_T *needed );
     DWORD    (WINAPI *pNtGdiGetFontUnicodeRanges)( HDC hdc, GLYPHSET *lpgs );
     DWORD    (WINAPI *pNtGdiGetGlyphIndicesW)( HDC hdc, const WCHAR *str, INT count,
                                                WORD *indices, DWORD flags );
@@ -156,8 +148,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiGetTextMetricsW)( HDC hdc, TEXTMETRICW *metrics, ULONG flags );
     BOOL     (WINAPI *pNtGdiGradientFill)( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                                            void *grad_array, ULONG ngrad, ULONG mode );
-    HFONT    (WINAPI *pNtGdiHfontCreate)( const ENUMLOGFONTEXDVW *enumex, ULONG unk2, ULONG unk3,
-                                          ULONG unk4, void *data );
     DWORD    (WINAPI *pNtGdiInitSpool)(void);
     INT      (WINAPI *pNtGdiIntersectClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     BOOL     (WINAPI *pNtGdiInvertRgn)( HDC hdc, HRGN hrgn );
@@ -182,9 +172,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiRectVisible)( HDC hdc, const RECT *rect );
     BOOL     (WINAPI *pNtGdiRectangle)( HDC hdc, INT left, INT top, INT right, INT bottom );
-    BOOL     (WINAPI *pNtGdiRemoveFontMemResourceEx)( HANDLE handle );
-    BOOL     (WINAPI *pNtGdiRemoveFontResourceW)( const WCHAR *str, ULONG size, ULONG files,
-                                                  DWORD flags, DWORD tid, void *dv );
     BOOL     (WINAPI *pNtGdiResetDC)( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
                                       DRIVER_INFO_2W *driver_info, void *dev );
     BOOL     (WINAPI *pNtGdiResizePalette)( HPALETTE palette, UINT count );
@@ -212,7 +199,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiSetMagicColors)( HDC hdc, DWORD magic, ULONG index );
     COLORREF (WINAPI *pNtGdiSetPixel)( HDC hdc, INT x, INT y, COLORREF color );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
-    BOOL     (WINAPI *pNtGdiSetTextJustification)( HDC hdc, INT extra, INT breaks );
     BOOL     (WINAPI *pNtGdiSetVirtualResolution)( HDC hdc, DWORD horz_res, DWORD vert_res,
                                                    DWORD horz_size, DWORD vert_size );
     INT      (WINAPI *pNtGdiStartDoc)( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job );

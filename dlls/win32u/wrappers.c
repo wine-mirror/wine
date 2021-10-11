@@ -40,18 +40,6 @@ BOOL WINAPI NtGdiAbortPath( HDC hdc )
     return unix_funcs->pNtGdiAbortPath( hdc );
 }
 
-HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG dv_size,
-                                         DWORD *count )
-{
-    return unix_funcs->pNtGdiAddFontMemResourceEx( ptr, size, dv, dv_size, count );
-}
-
-INT WINAPI NtGdiAddFontResourceW( const WCHAR *str, ULONG size, ULONG files, DWORD flags,
-                                  DWORD tid, void *dv )
-{
-    return unix_funcs->pNtGdiAddFontResourceW( str, size, files, flags, tid, dv );
-}
-
 BOOL WINAPI NtGdiAlphaBlend( HDC hdc_dst, int x_dst, int y_dst, int width_dst, int height_dst,
                              HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                              BLENDFUNCTION blend_function, HANDLE xform )
@@ -312,18 +300,6 @@ DWORD WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer,
     return unix_funcs->pNtGdiGetFontData( hdc, table, offset, buffer, length );
 }
 
-BOOL WINAPI NtGdiGetFontFileData( DWORD instance_id, DWORD file_index, UINT64 *offset,
-                                  void *buff, DWORD buff_size )
-{
-    return unix_funcs->pNtGdiGetFontFileData( instance_id, file_index, offset, buff, buff_size );
-}
-
-BOOL WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
-                                  SIZE_T size, SIZE_T *needed )
-{
-    return unix_funcs->pNtGdiGetFontFileInfo( instance_id, file_index, info, size, needed );
-}
-
 DWORD WINAPI NtGdiGetFontUnicodeRanges( HDC hdc, GLYPHSET *lpgs )
 {
     return unix_funcs->pNtGdiGetFontUnicodeRanges( hdc, lpgs );
@@ -425,12 +401,6 @@ BOOL WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
     return unix_funcs->pNtGdiGradientFill( hdc, vert_array, nvert, grad_array, ngrad, mode );
 }
 
-HFONT WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *enumex, ULONG unk2, ULONG unk3,
-                               ULONG unk4, void *data )
-{
-    return unix_funcs->pNtGdiHfontCreate( enumex, unk2, unk3, unk4, data );
-}
-
 DWORD WINAPI NtGdiInitSpool(void)
 {
     return unix_funcs->pNtGdiInitSpool();
@@ -524,17 +494,6 @@ BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
 BOOL WINAPI NtGdiRectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     return unix_funcs->pNtGdiRectangle( hdc, left, top, right, bottom );
-}
-
-BOOL WINAPI NtGdiRemoveFontMemResourceEx( HANDLE handle )
-{
-    return unix_funcs->pNtGdiRemoveFontMemResourceEx( handle );
-}
-
-BOOL WINAPI NtGdiRemoveFontResourceW( const WCHAR *str, ULONG size, ULONG files,
-                                      DWORD flags, DWORD tid, void *dv )
-{
-    return unix_funcs->pNtGdiRemoveFontResourceW( str, size, files, flags, tid, dv );
 }
 
 BOOL WINAPI NtGdiResetDC( HDC hdc, const DEVMODEW *devmode, BOOL *banding,
@@ -640,11 +599,6 @@ COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
 UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
 {
     return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
-}
-
-BOOL WINAPI NtGdiSetTextJustification( HDC hdc, INT extra, INT breaks )
-{
-    return unix_funcs->pNtGdiSetTextJustification( hdc, extra, breaks );
 }
 
 BOOL WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,

@@ -38,9 +38,21 @@ static inline void **addr_32to64( void **addr, ULONG *addr32 )
     return addr;
 }
 
+static inline SIZE_T *size_32to64( SIZE_T *size, ULONG *size32 )
+{
+    if (!size32) return NULL;
+    *size = *size32;
+    return size;
+}
+
 static inline void put_addr( ULONG *addr32, void *addr )
 {
     if (addr32) *addr32 = PtrToUlong( addr );
+}
+
+static inline void put_size( ULONG *size32, SIZE_T size )
+{
+    if (size32) *size32 = min( size, MAXDWORD );
 }
 
 #endif /* __WOW64WIN_PRIVATE_H */

@@ -34,6 +34,8 @@
 
 static void * const syscalls[] =
 {
+    NtGdiAddFontMemResourceEx,
+    NtGdiAddFontResourceW,
     NtGdiCombineRgn,
     NtGdiCreateBitmap,
     NtGdiCreateDIBBrush,
@@ -51,12 +53,17 @@ static void * const syscalls[] =
     NtGdiFlush,
     NtGdiGetBitmapBits,
     NtGdiGetBitmapDimension,
+    NtGdiGetFontFileData,
+    NtGdiGetFontFileInfo,
     NtGdiGetRegionData,
     NtGdiGetRgnBox,
     NtGdiGetTransform,
+    NtGdiHfontCreate,
     NtGdiOffsetRgn,
     NtGdiPtInRegion,
     NtGdiRectInRegion,
+    NtGdiRemoveFontMemResourceEx,
+    NtGdiRemoveFontResourceW,
     NtGdiSaveDC,
     NtGdiSetBitmapBits,
     NtGdiSetBitmapDimension,
@@ -64,6 +71,7 @@ static void * const syscalls[] =
     NtGdiSetMetaRgn,
     NtGdiSetPixelFormat,
     NtGdiSetRectRgn,
+    NtGdiSetTextJustification,
     NtGdiSwapBuffers,
 };
 
