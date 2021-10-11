@@ -1644,7 +1644,6 @@ enable_user32
 enable_userenv
 enable_usp10
 enable_utildll
-enable_uuid
 enable_uxtheme
 enable_vbscript
 enable_vcomp
@@ -1786,6 +1785,7 @@ enable_dxerr9
 enable_dxguid
 enable_mfuuid
 enable_strmiids
+enable_uuid
 enable_wine
 enable_loader
 enable_nls
@@ -20721,7 +20721,6 @@ wine_fn_config_makefile dlls/userenv/tests enable_tests
 wine_fn_config_makefile dlls/usp10 enable_usp10
 wine_fn_config_makefile dlls/usp10/tests enable_tests
 wine_fn_config_makefile dlls/utildll enable_utildll
-wine_fn_config_makefile dlls/uuid enable_uuid
 wine_fn_config_makefile dlls/uxtheme enable_uxtheme
 wine_fn_config_makefile dlls/uxtheme/tests enable_tests
 wine_fn_config_makefile dlls/vbscript enable_vbscript
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/strmiids enable_strmiids
+wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
