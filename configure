@@ -912,7 +912,6 @@ enable_aclui
 enable_activeds_tlb
 enable_activeds
 enable_actxprxy
-enable_adsiid
 enable_adsldp
 enable_adsldpc
 enable_advapi32
@@ -1786,6 +1785,7 @@ enable_xpsprint
 enable_xpssvcs
 enable_fonts
 enable_include
+enable_adsiid
 enable_wine
 enable_loader
 enable_nls
@@ -19737,7 +19737,6 @@ wine_fn_config_makefile dlls/activeds.tlb enable_activeds_tlb
 wine_fn_config_makefile dlls/activeds enable_activeds
 wine_fn_config_makefile dlls/activeds/tests enable_tests
 wine_fn_config_makefile dlls/actxprxy enable_actxprxy
-wine_fn_config_makefile dlls/adsiid enable_adsiid
 wine_fn_config_makefile dlls/adsldp enable_adsldp
 wine_fn_config_makefile dlls/adsldp/tests enable_tests
 wine_fn_config_makefile dlls/adsldpc enable_adsldpc
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile dlls/xpsprint enable_xpsprint
 wine_fn_config_makefile dlls/xpssvcs enable_xpssvcs
 wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
+wine_fn_config_makefile libs/adsiid enable_adsiid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
