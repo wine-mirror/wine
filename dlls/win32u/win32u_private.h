@@ -193,8 +193,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiSetMagicColors)( HDC hdc, DWORD magic, ULONG index );
     COLORREF (WINAPI *pNtGdiSetPixel)( HDC hdc, INT x, INT y, COLORREF color );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
-    BOOL     (WINAPI *pNtGdiSetVirtualResolution)( HDC hdc, DWORD horz_res, DWORD vert_res,
-                                                   DWORD horz_size, DWORD vert_size );
     INT      (WINAPI *pNtGdiStartDoc)( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job );
     INT      (WINAPI *pNtGdiStartPage)( HDC hdc );
     BOOL     (WINAPI *pNtGdiStretchBlt)( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
@@ -210,8 +208,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiTransparentBlt)( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
                                              HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                              UINT color );
-    BOOL     (WINAPI *pNtGdiTransformPoints)( HDC hdc, const POINT *points_in, POINT *points_out,
-                                              INT count, UINT mode );
     BOOL     (WINAPI *pNtGdiUnrealizeObject)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiUpdateColors)( HDC hdc );
     BOOL     (WINAPI *pNtGdiWidenPath)( HDC hdc );

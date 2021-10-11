@@ -78,7 +78,9 @@ static void * const syscalls[] =
     NtGdiSetPixelFormat,
     NtGdiSetRectRgn,
     NtGdiSetTextJustification,
+    NtGdiSetVirtualResolution,
     NtGdiSwapBuffers,
+    NtGdiTransformPoints,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

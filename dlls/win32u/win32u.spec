@@ -617,7 +617,7 @@
 @ stdcall NtGdiSetSystemPaletteUse(long long)
 @ stdcall -syscall NtGdiSetTextJustification(long long long)
 @ stub NtGdiSetUMPDSandboxState
-@ stdcall NtGdiSetVirtualResolution(long long long long long)
+@ stdcall -syscall NtGdiSetVirtualResolution(long long long long long)
 @ stdcall NtGdiStartDoc(long ptr ptr long)
 @ stdcall NtGdiStartPage(long)
 @ stdcall NtGdiStretchBlt(long long long long long long long long long long long long)
@@ -625,7 +625,7 @@
 @ stdcall NtGdiStrokeAndFillPath(long)
 @ stdcall NtGdiStrokePath(long)
 @ stdcall -syscall NtGdiSwapBuffers(long)
-@ stdcall NtGdiTransformPoints(long ptr ptr long long)
+@ stdcall -syscall NtGdiTransformPoints(long ptr ptr long long)
 @ stdcall NtGdiTransparentBlt(long long long long long long long long long long long)
 @ stub NtGdiUMPDEngFreeUserMem
 @ stub NtGdiUnloadPrinterDriver

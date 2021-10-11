@@ -66,6 +66,8 @@
     SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \
     SYSCALL_ENTRY( NtGdiSetTextJustification ) \
-    SYSCALL_ENTRY( NtGdiSwapBuffers )
+    SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
+    SYSCALL_ENTRY( NtGdiSwapBuffers ) \
+    SYSCALL_ENTRY( NtGdiTransformPoints )
 
 #endif /* __WOW64WIN_SYSCALL_H */

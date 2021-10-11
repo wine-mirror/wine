@@ -450,6 +450,28 @@ NTSTATUS WINAPI wow64_NtGdiSetColorAdjustment( UINT *args )
     return NtGdiSetColorAdjustment( hdc, ca );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSetVirtualResolution( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    DWORD horz_res = get_ulong( &args );
+    DWORD vert_res = get_ulong( &args );
+    DWORD horz_size = get_ulong( &args );
+    DWORD vert_size = get_ulong( &args );
+
+    return NtGdiSetVirtualResolution( hdc, horz_res, vert_res, horz_size, vert_size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiTransformPoints( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const POINT *points_in = get_ptr( &args );
+    POINT *points_out = get_ptr( &args );
+    INT count = get_ulong( &args );
+    UINT mode = get_ulong( &args );
+
+    return NtGdiTransformPoints( hdc, points_in, points_out, count, mode );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();

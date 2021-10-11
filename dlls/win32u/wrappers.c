@@ -571,12 +571,6 @@ UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )
     return unix_funcs->pNtGdiSetSystemPaletteUse( hdc, use );
 }
 
-BOOL WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,
-                                       DWORD horz_size, DWORD vert_size )
-{
-    return unix_funcs->pNtGdiSetVirtualResolution( hdc, horz_res, vert_res, horz_size, vert_size );
-}
-
 INT WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job )
 {
     return unix_funcs->pNtGdiStartDoc( hdc, doc, banding, job );
@@ -622,12 +616,6 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdc, int x_dst, int y_dst, int width_dst, i
 {
     return unix_funcs->pNtGdiTransparentBlt( hdc, x_dst, y_dst, width_dst, height_dst, hdc_src,
                                              x_src, y_src, width_src, height_src, color );
-}
-
-BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points_out,
-                                  INT count, UINT mode )
-{
-    return unix_funcs->pNtGdiTransformPoints( hdc, points_in, points_out, count, mode );
 }
 
 BOOL WINAPI NtGdiUnrealizeObject( HGDIOBJ obj )
