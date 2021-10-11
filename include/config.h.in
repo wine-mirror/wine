@@ -59,9 +59,6 @@
    file. */
 #undef HAVE_DISKARBITRATION_DISKARBITRATION_H
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
 /* Define to 1 if you have the `dlinfo' function. */
 #undef HAVE_DLINFO
 

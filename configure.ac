@@ -447,7 +447,6 @@ AC_CHECK_HEADERS(\
 	asm/types.h \
 	asm/user.h \
 	dirent.h \
-	dlfcn.h \
 	elf.h \
 	float.h \
 	gettext-po.h \

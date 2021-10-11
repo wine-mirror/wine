@@ -7476,7 +7476,6 @@ for ac_header in \
 	asm/types.h \
 	asm/user.h \
 	dirent.h \
-	dlfcn.h \
 	elf.h \
 	float.h \
 	gettext-po.h \
