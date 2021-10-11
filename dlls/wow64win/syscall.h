@@ -32,6 +32,8 @@
     SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
+    SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
+    SYSCALL_ENTRY( NtGdiDrawStream ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
@@ -39,12 +41,17 @@
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
+    SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \
+    SYSCALL_ENTRY( NtGdiSaveDC ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
-    SYSCALL_ENTRY( NtGdiSetRectRgn )
+    SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
+    SYSCALL_ENTRY( NtGdiSetRectRgn ) \
+    SYSCALL_ENTRY( NtGdiSwapBuffers )
 
 #endif /* __WOW64WIN_SYSCALL_H */

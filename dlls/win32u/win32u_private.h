@@ -86,11 +86,8 @@ struct unix_funcs
     NTSTATUS (WINAPI *pNtGdiDdDDISetVidPnSourceOwner)( const D3DKMT_SETVIDPNSOURCEOWNER *desc );
     BOOL     (WINAPI *pNtGdiDeleteClientObj)( HGDIOBJ obj );
     BOOL     (WINAPI *pNtGdiDeleteObjectApp)( HGDIOBJ obj );
-    INT      (WINAPI *pNtGdiDescribePixelFormat)( HDC hdc, INT format, UINT size,
-                                                  PIXELFORMATDESCRIPTOR *descr );
     LONG     (WINAPI *pNtGdiDoPalette)( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                         DWORD func, BOOL inbound );
-    BOOL     (WINAPI *pNtGdiDrawStream)( HDC hdc, ULONG in, void *pvin );
     BOOL     (WINAPI *pNtGdiEllipse)( HDC hdc, INT left, INT top, INT right, INT bottom );
     INT      (WINAPI *pNtGdiEndDoc)(HDC hdc);
     BOOL     (WINAPI *pNtGdiEndPath)( HDC hdc );
@@ -157,7 +154,6 @@ struct unix_funcs
                                                INT *nfit, INT *dxs, SIZE *size, UINT flags );
     INT      (WINAPI *pNtGdiGetTextFaceW)( HDC hdc, INT count, WCHAR *name, BOOL alias_name );
     BOOL     (WINAPI *pNtGdiGetTextMetricsW)( HDC hdc, TEXTMETRICW *metrics, ULONG flags );
-    BOOL     (WINAPI *pNtGdiGetTransform)( HDC hdc, DWORD which, XFORM *xform );
     BOOL     (WINAPI *pNtGdiGradientFill)( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                                            void *grad_array, ULONG ngrad, ULONG mode );
     HFONT    (WINAPI *pNtGdiHfontCreate)( const ENUMLOGFONTEXDVW *enumex, ULONG unk2, ULONG unk3,
@@ -195,7 +191,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiRestoreDC)( HDC hdc, INT level );
     BOOL     (WINAPI *pNtGdiRoundRect)( HDC hdc, INT left, INT top, INT right,
                                         INT bottom, INT ell_width, INT ell_height );
-    INT      (WINAPI *pNtGdiSaveDC)( HDC hdc );
     BOOL     (WINAPI *pNtGdiScaleViewportExtEx)( HDC hdc, INT x_num, INT x_denom,
                                                  INT y_num, INT y_denom, SIZE *size );
     BOOL     (WINAPI *pNtGdiScaleWindowExtEx)( HDC hdc, INT x_num, INT x_denom,
@@ -205,7 +200,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiSelectClipPath)( HDC hdc, INT mode );
     HGDIOBJ  (WINAPI *pNtGdiSelectFont)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectPen)( HDC hdc, HGDIOBJ handle );
-    BOOL     (WINAPI *pNtGdiSetBrushOrg)( HDC hdc, INT x, INT y, POINT *prev_org );
     UINT     (WINAPI *pNtGdiSetBoundsRect)( HDC hdc, const RECT *rect, UINT flags );
     BOOL     (WINAPI *pNtGdiSetColorAdjustment)( HDC hdc, const COLORADJUSTMENT *ca );
     INT      (WINAPI *pNtGdiSetDIBitsToDeviceInternal)( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
@@ -217,7 +211,6 @@ struct unix_funcs
     DWORD    (WINAPI *pNtGdiSetLayout)( HDC hdc, LONG wox, DWORD layout );
     BOOL     (WINAPI *pNtGdiSetMagicColors)( HDC hdc, DWORD magic, ULONG index );
     COLORREF (WINAPI *pNtGdiSetPixel)( HDC hdc, INT x, INT y, COLORREF color );
-    BOOL     (WINAPI *pNtGdiSetPixelFormat)( HDC hdc, INT format );
     UINT     (WINAPI *pNtGdiSetSystemPaletteUse)( HDC hdc, UINT use );
     BOOL     (WINAPI *pNtGdiSetTextJustification)( HDC hdc, INT extra, INT breaks );
     BOOL     (WINAPI *pNtGdiSetVirtualResolution)( HDC hdc, DWORD horz_res, DWORD vert_res,
@@ -234,7 +227,6 @@ struct unix_funcs
                                                     HANDLE xform );
     BOOL     (WINAPI *pNtGdiStrokeAndFillPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiStrokePath)( HDC hdc );
-    BOOL     (WINAPI *pNtGdiSwapBuffers)( HDC hdc );
     BOOL     (WINAPI *pNtGdiTransparentBlt)( HDC hdc, int x_dst, int y_dst, int width_dst, int height_dst,
                                              HDC hdc_src, int x_src, int y_src, int width_src, int height_src,
                                              UINT color );

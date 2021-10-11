@@ -368,13 +368,13 @@
 @ stub NtGdiDeleteColorSpace
 @ stub NtGdiDeleteColorTransform
 @ stdcall NtGdiDeleteObjectApp(long )
-@ stdcall NtGdiDescribePixelFormat(long long long ptr)
+@ stdcall -syscall NtGdiDescribePixelFormat(long long long ptr)
 @ stub NtGdiDestroyOPMProtectedOutput
 @ stub NtGdiDestroyPhysicalMonitor
 @ stub NtGdiDoBanding
 @ stdcall NtGdiDoPalette(long long long ptr long long)
 @ stub NtGdiDrawEscape
-@ stdcall NtGdiDrawStream(long long ptr)
+@ stdcall -syscall NtGdiDrawStream(long long ptr)
 @ stub NtGdiDwmCreatedBitmapRemotingOutput
 @ stdcall NtGdiEllipse(long long long long long)
 @ stub NtGdiEnableEudc
@@ -520,7 +520,7 @@
 @ stdcall NtGdiGetTextExtentExW(long wstr long long ptr ptr ptr long)
 @ stdcall NtGdiGetTextFaceW(long long ptr long)
 @ stdcall NtGdiGetTextMetricsW(long ptr long)
-@ stdcall NtGdiGetTransform(long long ptr)
+@ stdcall -syscall NtGdiGetTransform(long long ptr)
 @ stub NtGdiGetUFI
 @ stub NtGdiGetUFIPathname
 @ stub NtGdiGetWidthTable
@@ -579,7 +579,7 @@
 @ stub NtGdiSTROBJ_bGetAdvanceWidths
 @ stub NtGdiSTROBJ_dwGetCodePage
 @ stub NtGdiSTROBJ_vEnumStart
-@ stdcall NtGdiSaveDC(long)
+@ stdcall -syscall NtGdiSaveDC(long)
 @ stub NtGdiScaleRgn
 @ stub NtGdiScaleValues
 @ stdcall NtGdiScaleViewportExtEx(long long long long long ptr)
@@ -594,7 +594,7 @@
 @ stdcall -syscall NtGdiSetBitmapDimension(long long long ptr)
 @ stdcall NtGdiSetBoundsRect(long ptr long)
 @ stub NtGdiSetBrushAttributes
-@ stdcall NtGdiSetBrushOrg(long long long ptr)
+@ stdcall -syscall NtGdiSetBrushOrg(long long long ptr)
 @ stdcall NtGdiSetColorAdjustment(long ptr)
 @ stub NtGdiSetColorSpace
 @ stdcall NtGdiSetDIBitsToDeviceInternal(long long long long long long long long long ptr ptr long long long long long)
@@ -610,7 +610,7 @@
 @ stub NtGdiSetOPMSigningKeyAndSequenceNumbers
 @ stub NtGdiSetPUMPDOBJ
 @ stdcall NtGdiSetPixel(long long long long)
-@ stdcall NtGdiSetPixelFormat(long long)
+@ stdcall -syscall NtGdiSetPixelFormat(long long)
 @ stub NtGdiSetPrivateDeviceGammaRamp
 @ stdcall -syscall NtGdiSetRectRgn(long long long long long)
 @ stub NtGdiSetSizeDevice
@@ -624,7 +624,7 @@
 @ stdcall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall NtGdiStrokeAndFillPath(long)
 @ stdcall NtGdiStrokePath(long)
-@ stdcall NtGdiSwapBuffers(long)
+@ stdcall -syscall NtGdiSwapBuffers(long)
 @ stdcall NtGdiTransformPoints(long ptr ptr long long)
 @ stdcall NtGdiTransparentBlt(long long long long long long long long long long long)
 @ stub NtGdiUMPDEngFreeUserMem

@@ -254,6 +254,66 @@ NTSTATUS WINAPI wow64_NtGdiSetMetaRgn( UINT *args )
     return NtGdiSetMetaRgn( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiSaveDC( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiSaveDC( hdc );
+}
+
+BOOL WINAPI wow64_NtGdiSetBrushOrg( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    POINT *prev_org = get_ptr( &args );
+
+    return NtGdiSetBrushOrg( hdc, x, y, prev_org );
+}
+
+BOOL WINAPI wow64_NtGdiGetTransform( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    DWORD which = get_ulong( &args );
+    XFORM *xform = get_ptr( &args );
+
+    return NtGdiGetTransform( hdc, which, xform );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDescribePixelFormat( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT format = get_ulong( &args );
+    UINT size = get_ulong( &args );
+    PIXELFORMATDESCRIPTOR *descr = get_ptr( &args );
+
+    return NtGdiDescribePixelFormat( hdc, format, size, descr );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetPixelFormat( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    INT format = get_ulong( &args );
+
+    return NtGdiSetPixelFormat( hdc, format );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSwapBuffers( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiSwapBuffers( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDrawStream( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    ULONG in = get_ulong( &args );
+    void *pvin = get_ptr( &args );
+
+    return NtGdiDrawStream( hdc, in, pvin );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();
