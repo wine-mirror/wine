@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
+#include <math.h>
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif

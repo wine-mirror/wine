@@ -30,7 +30,6 @@
 #endif
 
 #include <fcntl.h>
-#include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -69,17 +68,5 @@ static inline int symlink(const char *from, const char *to) { errno = ENOSYS; re
 #include <dlfcn.h>
 
 #endif  /* _WIN32 */
-
-/****************************************************************
- * Constants
- */
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#ifndef M_PI_2
-#define M_PI_2 1.570796326794896619
-#endif
 
 #endif /* !defined(__WINE_WINE_PORT_H) */

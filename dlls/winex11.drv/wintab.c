@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
