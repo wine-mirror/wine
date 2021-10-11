@@ -1371,6 +1371,54 @@ static void test_thread_storage(void)
             "can't find se_translator in thread storage\n");
 }
 
+static void test_fopen_exclusive( void )
+{
+    char path[MAX_PATH*2];
+    DWORD len;
+    FILE *fp;
+
+    if (!GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "__std_terminate"))
+    {
+        win_skip("skipping fopen x mode tests.\n");
+        return;
+    }
+
+    len = GetTempPathA(MAX_PATH, path);
+    ok(len, "GetTempPathA failed\n");
+    strcat(path, "\\fileexcl.tst");
+
+    fp = fopen(path, "wx");
+    ok(fp != NULL, "creating file with mode wx failed\n");
+    fclose(fp);
+
+    fp = fopen(path, "wx");
+    ok(!fp, "overwrote existing file with mode wx\n");
+    unlink(path);
+
+    fp = fopen(path, "w+x");
+    ok(fp != NULL, "creating file with mode w+x failed\n");
+    fclose(fp);
+
+    fp = fopen(path, "w+x");
+    ok(!fp, "overwrote existing file with mode w+x\n");
+
+    SET_EXPECT(global_invalid_parameter_handler);
+    fp = fopen(path, "rx");
+    CHECK_CALLED(global_invalid_parameter_handler);
+    ok(!fp, "opening file with mode rx succeeded\n");
+    unlink(path);
+
+    SET_EXPECT(global_invalid_parameter_handler);
+    fp = fopen(path, "xw");
+    CHECK_CALLED(global_invalid_parameter_handler);
+    ok(!fp, "creating file with mode xw succeeded\n");
+
+    fp = fopen(path, "wbx");
+    ok(fp != NULL, "creating file with mode wx failed\n");
+    fclose(fp);
+    unlink(path);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1411,4 +1459,5 @@ START_TEST(misc)
     test__o_malloc();
     test_clock();
     test_thread_storage();
+    test_fopen_exclusive();
 }
