@@ -27,6 +27,37 @@
 #include "ntgdi.h"
 #include "wow64win_private.h"
 
+NTSTATUS WINAPI wow64_NtGdiCreateClientObj( UINT *args )
+{
+    ULONG type = get_ulong( &args );
+
+    return HandleToUlong( NtGdiCreateClientObj( type ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiDeleteClientObj( UINT *args )
+{
+    HGDIOBJ obj = get_handle( &args );
+
+    return NtGdiDeleteClientObj( obj );
+}
+
+NTSTATUS WINAPI wow64_NtGdiExtGetObjectW( UINT *args )
+{
+    HGDIOBJ handle = get_handle( &args );
+    INT count = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+
+    return NtGdiExtGetObjectW( handle, count, buffer );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetDCObject( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT type = get_ulong( &args );
+
+    return HandleToUlong( NtGdiGetDCObject( hdc, type ));
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateBitmap( UINT *args )
 {
     INT width = get_ulong( &args );
@@ -401,6 +432,22 @@ NTSTATUS WINAPI wow64_NtGdiRemoveFontResourceW( UINT *args )
     void *dv = get_ptr( &args );
 
     return NtGdiRemoveFontResourceW( str, size, files, flags, tid, dv );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetColorAdjustment( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    COLORADJUSTMENT *ca = get_ptr( &args );
+
+    return NtGdiGetColorAdjustment( hdc, ca );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetColorAdjustment( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    const COLORADJUSTMENT *ca = get_ptr( &args );
+
+    return NtGdiSetColorAdjustment( hdc, ca );
 }
 
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )

@@ -142,7 +142,7 @@
 @ stdcall -syscall NtGdiCreateBitmap(long long long long ptr)
 @ stub NtGdiCreateBitmapFromDxSurface
 @ stub NtGdiCreateBitmapFromDxSurface2
-@ stdcall NtGdiCreateClientObj(long)
+@ stdcall -syscall NtGdiCreateClientObj(long)
 @ stub NtGdiCreateColorSpace
 @ stub NtGdiCreateColorTransform
 @ stdcall NtGdiCreateCompatibleBitmap(long long long)
@@ -364,7 +364,7 @@
 @ stub NtGdiDdDestroyFullscreenSprite
 @ stub NtGdiDdNotifyFullscreenSpriteUpdate
 @ stub NtGdiDdQueryVisRgnUniqueness
-@ stdcall NtGdiDeleteClientObj(long)
+@ stdcall -syscall NtGdiDeleteClientObj(long)
 @ stub NtGdiDeleteColorSpace
 @ stub NtGdiDeleteColorTransform
 @ stdcall NtGdiDeleteObjectApp(long )
@@ -422,7 +422,7 @@
 @ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
 @ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
 @ stdcall NtGdiExtFloodFill(long long long long long)
-@ stdcall NtGdiExtGetObjectW(long long ptr)
+@ stdcall -syscall NtGdiExtGetObjectW(long long ptr)
 @ stdcall NtGdiExtSelectClipRgn(long long long)
 @ stdcall NtGdiExtTextOutW(long long long long ptr ptr long ptr long)
 @ stub NtGdiFONTOBJ_cGetAllGlyphHandles
@@ -458,12 +458,12 @@
 @ stdcall NtGdiGetCharWidthInfo(long ptr)
 @ stdcall NtGdiGetCharWidthW(long long long ptr long ptr)
 @ stub NtGdiGetCharacterPlacementW
-@ stdcall NtGdiGetColorAdjustment(long ptr)
+@ stdcall -syscall NtGdiGetColorAdjustment(long ptr)
 @ stub NtGdiGetColorSpaceforBitmap
 @ stub NtGdiGetCurrentDpiInfo
 @ stub NtGdiGetDCDpiScaleValue
 @ stub NtGdiGetDCDword
-@ stdcall NtGdiGetDCObject(long long)
+@ stdcall -syscall NtGdiGetDCObject(long long)
 @ stub NtGdiGetDCPoint
 @ stub NtGdiGetDCforBitmap
 @ stdcall NtGdiGetDIBitsInternal(long long long long ptr ptr long long long)
@@ -595,7 +595,7 @@
 @ stdcall NtGdiSetBoundsRect(long ptr long)
 @ stub NtGdiSetBrushAttributes
 @ stdcall -syscall NtGdiSetBrushOrg(long long long ptr)
-@ stdcall NtGdiSetColorAdjustment(long ptr)
+@ stdcall -syscall NtGdiSetColorAdjustment(long ptr)
 @ stub NtGdiSetColorSpace
 @ stdcall NtGdiSetDIBitsToDeviceInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall NtGdiSetDeviceGammaRamp(ptr ptr)

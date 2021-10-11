@@ -26,6 +26,7 @@
     SYSCALL_ENTRY( NtGdiAddFontResourceW ) \
     SYSCALL_ENTRY( NtGdiCombineRgn ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
+    SYSCALL_ENTRY( NtGdiCreateClientObj ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
     SYSCALL_ENTRY( NtGdiCreateDIBSection ) \
     SYSCALL_ENTRY( NtGdiCreateEllipticRgn ) \
@@ -34,13 +35,17 @@
     SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
+    SYSCALL_ENTRY( NtGdiDeleteClientObj ) \
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
+    SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiGetColorAdjustment ) \
+    SYSCALL_ENTRY( NtGdiGetDCObject ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
@@ -56,6 +61,7 @@
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
+    SYSCALL_ENTRY( NtGdiSetColorAdjustment ) \
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
     SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \

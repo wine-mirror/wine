@@ -81,11 +81,6 @@ BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
     return unix_funcs->pNtGdiComputeXformCoefficients( hdc );
 }
 
-HANDLE WINAPI NtGdiCreateClientObj( ULONG type )
-{
-    return unix_funcs->pNtGdiCreateClientObj( type );
-}
-
 HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
 {
     return unix_funcs->pNtGdiCreateCompatibleBitmap( hdc, width, height );
@@ -123,11 +118,6 @@ HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT coun
 HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
 {
     return unix_funcs->pNtGdiCreatePen( style, width, color, brush );
-}
-
-BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ obj )
-{
-    return unix_funcs->pNtGdiDeleteClientObj( obj );
 }
 
 BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
@@ -200,11 +190,6 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rec
     return unix_funcs->pNtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, cp );
 }
 
-INT WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer )
-{
-    return unix_funcs->pNtGdiExtGetObjectW( handle, count, buffer );
-}
-
 INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN region, INT mode )
 {
     return unix_funcs->pNtGdiExtSelectClipRgn( hdc, region, mode );
@@ -265,16 +250,6 @@ BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first_char, UINT last_char, WCHAR 
 BOOL WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info )
 {
     return unix_funcs->pNtGdiGetCharWidthInfo( hdc, info );
-}
-
-BOOL WINAPI NtGdiGetColorAdjustment( HDC hdc, COLORADJUSTMENT *ca )
-{
-    return unix_funcs->pNtGdiGetColorAdjustment( hdc, ca );
-}
-
-HANDLE WINAPI NtGdiGetDCObject( HDC hdc, UINT type )
-{
-    return unix_funcs->pNtGdiGetDCObject( hdc, type );
 }
 
 INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UINT lines,
@@ -558,11 +533,6 @@ HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
 UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
 {
     return unix_funcs->pNtGdiSetBoundsRect( hdc, rect, flags );
-}
-
-BOOL WINAPI NtGdiSetColorAdjustment( HDC hdc, const COLORADJUSTMENT *ca )
-{
-    return unix_funcs->pNtGdiSetColorAdjustment( hdc, ca );
 }
 
 INT WINAPI NtGdiSetDIBitsToDeviceInternal( HDC hdc, INT x_dst, INT y_dst, DWORD cx,
