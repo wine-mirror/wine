@@ -1300,7 +1300,6 @@ enable_dwmapi
 enable_dwrite
 enable_dx8vb
 enable_dxdiagn
-enable_dxerr8
 enable_dxerr9
 enable_dxgi
 enable_dxguid
@@ -1786,6 +1785,7 @@ enable_fonts
 enable_include
 enable_adsiid
 enable_dmoguids
+enable_dxerr8
 enable_wine
 enable_loader
 enable_nls
@@ -20212,7 +20212,6 @@ wine_fn_config_makefile dlls/dwrite/tests enable_tests
 wine_fn_config_makefile dlls/dx8vb enable_dx8vb
 wine_fn_config_makefile dlls/dxdiagn enable_dxdiagn
 wine_fn_config_makefile dlls/dxdiagn/tests enable_tests
-wine_fn_config_makefile dlls/dxerr8 enable_dxerr8
 wine_fn_config_makefile dlls/dxerr9 enable_dxerr9
 wine_fn_config_makefile dlls/dxgi enable_dxgi
 wine_fn_config_makefile dlls/dxgi/tests enable_tests
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/adsiid enable_adsiid
 wine_fn_config_makefile libs/dmoguids enable_dmoguids
+wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
