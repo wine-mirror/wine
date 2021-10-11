@@ -2322,6 +2322,19 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         *(ULONG*)buffer = hdr->ErrorMask;
         *size = sizeof(ULONG);
         return ERROR_SUCCESS;
+    case INTERNET_OPTION_SERVER_CERT_CHAIN_CONTEXT:
+        TRACE("INTERNET_OPTION_SERVER_CERT_CHAIN_CONTEXT\n");
+
+        if (*size < sizeof(PCCERT_CHAIN_CONTEXT))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        if (!req->server->cert_chain)
+            return ERROR_INTERNET_INCORRECT_HANDLE_STATE;
+
+        *(PCCERT_CHAIN_CONTEXT *)buffer = CertDuplicateCertificateChain(req->server->cert_chain);
+        *size = sizeof(PCCERT_CHAIN_CONTEXT);
+
+        return ERROR_SUCCESS;
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);
