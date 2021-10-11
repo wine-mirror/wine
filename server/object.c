@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <sys/types.h>
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
