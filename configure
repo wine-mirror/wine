@@ -1711,7 +1711,6 @@ enable_wlanapi
 enable_wlanui
 enable_wldap32
 enable_wmasf
-enable_wmcodecdspuuid
 enable_wmi
 enable_wmiutils
 enable_wmp
@@ -1787,6 +1786,7 @@ enable_strmiids
 enable_uuid
 enable_wbemuuid
 enable_wine
+enable_wmcodecdspuuid
 enable_loader
 enable_nls
 enable_po
@@ -20833,7 +20833,6 @@ wine_fn_config_makefile dlls/wlanui enable_wlanui
 wine_fn_config_makefile dlls/wldap32 enable_wldap32
 wine_fn_config_makefile dlls/wldap32/tests enable_tests
 wine_fn_config_makefile dlls/wmasf enable_wmasf
-wine_fn_config_makefile dlls/wmcodecdspuuid enable_wmcodecdspuuid
 wine_fn_config_makefile dlls/wmi enable_wmi
 wine_fn_config_makefile dlls/wmiutils enable_wmiutils
 wine_fn_config_makefile dlls/wmiutils/tests enable_tests
@@ -20923,6 +20922,7 @@ wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
 wine_fn_config_makefile libs/wine enable_wine
+wine_fn_config_makefile libs/wmcodecdspuuid enable_wmcodecdspuuid
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
 wine_fn_config_makefile po enable_po
