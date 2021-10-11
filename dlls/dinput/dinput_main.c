@@ -121,7 +121,7 @@ void dinput_hooks_unacquire_device(LPDIRECTINPUTDEVICE8W iface)
 
 static HRESULT create_directinput_instance(REFIID riid, LPVOID *ppDI, IDirectInputImpl **out)
 {
-    IDirectInputImpl *This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectInputImpl) );
+    IDirectInputImpl *This = calloc( 1, sizeof(IDirectInputImpl) );
     HRESULT hr;
 
     if (!This)
@@ -136,7 +136,7 @@ static HRESULT create_directinput_instance(REFIID riid, LPVOID *ppDI, IDirectInp
     hr = IDirectInput_QueryInterface( &This->IDirectInput7A_iface, riid, ppDI );
     if (FAILED(hr))
     {
-        HeapFree( GetProcessHeap(), 0, This );
+        free( This );
         return hr;
     }
 
@@ -412,7 +412,7 @@ static ULONG WINAPI IDirectInputWImpl_Release( IDirectInput7W *iface )
     if (ref == 0)
     {
         uninitialize_directinput_instance( This );
-        HeapFree( GetProcessHeap(), 0, This );
+        free( This );
     }
 
     return ref;
@@ -547,7 +547,7 @@ static void uninitialize_directinput_instance(IDirectInputImpl *This)
 
         LIST_FOR_EACH_ENTRY_SAFE( device_player, device_player2,
                 &This->device_players, struct DevicePlayer, entry )
-            HeapFree(GetProcessHeap(), 0, device_player);
+            free( device_player );
 
         check_hook_thread();
 
@@ -833,10 +833,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
             if (enumSuccess == S_OK &&
                 should_enumerate_device(ptszUserName, dwFlags, &This->device_players, &didevi.guidInstance))
             {
-                if (device_count++)
-                    didevis = HeapReAlloc(GetProcessHeap(), 0, didevis, sizeof(DIDEVICEINSTANCEW)*device_count);
-                else
-                    didevis = HeapAlloc(GetProcessHeap(), 0, sizeof(DIDEVICEINSTANCEW)*device_count);
+                didevis = realloc( didevis, sizeof(DIDEVICEINSTANCEW) * device_count++ );
                 didevis[device_count-1] = didevi;
             }
         }
@@ -860,14 +857,14 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
 
         if (lpCallback(&didevis[i], lpdid, callbackFlags, --remain, pvRef) == DIENUM_STOP)
         {
-            HeapFree(GetProcessHeap(), 0, didevis);
+            free( didevis );
             IDirectInputDevice_Release(lpdid);
             return DI_OK;
         }
         IDirectInputDevice_Release(lpdid);
     }
 
-    HeapFree(GetProcessHeap(), 0, didevis);
+    free( didevis );
 
     if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
 

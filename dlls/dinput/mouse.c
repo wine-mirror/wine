@@ -161,7 +161,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
 
     /* Create copy of default data format */
     memcpy(df, &c_dfDIMouse2, c_dfDIMouse2.dwSize);
-    if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto failed;
+    if (!(df->rgodf = malloc( df->dwNumObjs * df->dwObjSize ))) goto failed;
     memcpy(df->rgodf, c_dfDIMouse2.rgodf, df->dwNumObjs * df->dwObjSize);
 
     /* Because we don't do any detection yet just modify instance and type */
@@ -182,9 +182,9 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     return DI_OK;
 
 failed:
-    if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
-    HeapFree(GetProcessHeap(), 0, df);
-    HeapFree(GetProcessHeap(), 0, newDevice);
+    if (df) free( df->rgodf );
+    free( df );
+    free( newDevice );
     return DIERR_OUTOFMEMORY;
 }
 

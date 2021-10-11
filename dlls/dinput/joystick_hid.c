@@ -593,10 +593,10 @@ static ULONG hid_joystick_private_decref( struct hid_joystick *impl )
 
     if (!(ref = IDirectInputDevice2WImpl_Release( &impl->base.IDirectInputDevice8W_iface )))
     {
-        HeapFree( GetProcessHeap(), 0, tmp.usages_buf );
-        HeapFree( GetProcessHeap(), 0, tmp.output_report_buf );
-        HeapFree( GetProcessHeap(), 0, tmp.input_report_buf );
-        HeapFree( GetProcessHeap(), 0, tmp.input_extra_caps );
+        free( tmp.usages_buf );
+        free( tmp.output_report_buf );
+        free( tmp.input_report_buf );
+        free( tmp.input_extra_caps );
         HidD_FreePreparsedData( tmp.preparsed );
         CloseHandle( tmp.base.read_event );
         CloseHandle( tmp.device );
@@ -2287,18 +2287,18 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     preparsed = (struct hid_preparsed_data *)impl->preparsed;
 
     size = preparsed->input_caps_count * sizeof(struct extra_caps);
-    if (!(extra = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto failed;
+    if (!(extra = calloc( 1, size ))) goto failed;
     impl->input_extra_caps = extra;
 
     size = impl->caps.InputReportByteLength;
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
+    if (!(buffer = malloc( size ))) goto failed;
     impl->input_report_buf = buffer;
     size = impl->caps.OutputReportByteLength;
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
+    if (!(buffer = malloc( size ))) goto failed;
     impl->output_report_buf = buffer;
     impl->usages_count = HidP_MaxUsageListLength( HidP_Input, 0, impl->preparsed );
     size = impl->usages_count * sizeof(USAGE_AND_PAGE);
-    if (!(usages = HeapAlloc( GetProcessHeap(), 0, size ))) goto failed;
+    if (!(usages = malloc( size ))) goto failed;
     impl->usages_buf = usages;
 
     enum_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
@@ -2350,7 +2350,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     }
 
     size = format->dwNumObjs * sizeof(*format->rgodf);
-    if (!(format->rgodf = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto failed;
+    if (!(format->rgodf = calloc( 1, size ))) goto failed;
     format->dwSize = sizeof(*format);
     format->dwObjSize = sizeof(*format->rgodf);
     format->dwFlags = DIDF_ABSAXIS;
@@ -2419,11 +2419,11 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
         hid_joystick_private_decref( impl->joystick );
-        HeapFree( GetProcessHeap(), 0, impl->type_specific_buf[1] );
-        HeapFree( GetProcessHeap(), 0, impl->type_specific_buf[0] );
-        HeapFree( GetProcessHeap(), 0, impl->effect_update_buf );
-        HeapFree( GetProcessHeap(), 0, impl->effect_control_buf );
-        HeapFree( GetProcessHeap(), 0, impl );
+        free( impl->type_specific_buf[1] );
+        free( impl->type_specific_buf[0] );
+        free( impl->effect_update_buf );
+        free( impl->effect_control_buf );
+        free( impl );
     }
     return ref;
 }
@@ -3251,8 +3251,7 @@ static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirec
     struct hid_joystick_effect *impl;
     ULONG report_len;
 
-    if (!(impl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*impl) )))
-        return DIERR_OUTOFMEMORY;
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return DIERR_OUTOFMEMORY;
     impl->IDirectInputEffect_iface.lpVtbl = &hid_joystick_effect_vtbl;
     impl->ref = 1;
     impl->joystick = joystick;
@@ -3263,10 +3262,10 @@ static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirec
     LeaveCriticalSection( &joystick->base.crit );
 
     report_len = joystick->caps.OutputReportByteLength;
-    if (!(impl->effect_control_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
-    if (!(impl->effect_update_buf = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
-    if (!(impl->type_specific_buf[0] = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
-    if (!(impl->type_specific_buf[1] = HeapAlloc( GetProcessHeap(), 0, report_len ))) goto failed;
+    if (!(impl->effect_control_buf = malloc( report_len ))) goto failed;
+    if (!(impl->effect_update_buf = malloc( report_len ))) goto failed;
+    if (!(impl->type_specific_buf[0] = malloc( report_len ))) goto failed;
+    if (!(impl->type_specific_buf[1] = malloc( report_len ))) goto failed;
 
     impl->envelope.dwSize = sizeof(DIENVELOPE);
     impl->params.dwSize = sizeof(DIEFFECT);

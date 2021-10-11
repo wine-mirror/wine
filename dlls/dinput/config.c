@@ -190,7 +190,7 @@ static void init_devices(HWND dialog, IDirectInput8W *lpDI, DIDevicesData *data,
     IDirectInput8_EnumDevicesBySemantics(lpDI, NULL, lpdiaf, count_devices, (LPVOID) data, 0);
 
     /* Allocate devices */
-    data->devices = HeapAlloc(GetProcessHeap(), 0, sizeof(DeviceData) * data->ndevices);
+    data->devices = malloc( sizeof(DeviceData) * data->ndevices );
 
     /* Collect and insert */
     data->ndevices = 0;
@@ -210,11 +210,11 @@ static void destroy_data(HWND dialog)
     for (i=0; i < devices_data->ndevices; i++)
         IDirectInputDevice8_Release(devices_data->devices[i].lpdid);
 
-    HeapFree(GetProcessHeap(), 0, devices_data->devices);
+    free( devices_data->devices );
 
     /* Free the backup LPDIACTIONFORMATW  */
-    HeapFree(GetProcessHeap(), 0, data->original_lpdiaf->rgoAction);
-    HeapFree(GetProcessHeap(), 0, data->original_lpdiaf);
+    free( data->original_lpdiaf->rgoAction );
+    free( data->original_lpdiaf );
 }
 
 static void fill_device_object_list(HWND dialog)
@@ -365,9 +365,9 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
             init_listview_columns(dialog);
 
             /* Create a backup action format for CANCEL and RESET operations */
-            data->original_lpdiaf = HeapAlloc(GetProcessHeap(), 0, sizeof(*data->original_lpdiaf));
+            data->original_lpdiaf = malloc( sizeof(*data->original_lpdiaf) );
             data->original_lpdiaf->dwNumActions = data->lpdiaf->dwNumActions;
-            data->original_lpdiaf->rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*data->lpdiaf->dwNumActions);
+            data->original_lpdiaf->rgoAction = malloc( sizeof(DIACTIONW) * data->lpdiaf->dwNumActions );
             copy_actions(data->original_lpdiaf, data->lpdiaf);
 
             /* Select the first device and show its actions */

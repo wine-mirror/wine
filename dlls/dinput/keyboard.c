@@ -207,7 +207,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
 
     /* Create copy of default data format */
     memcpy(df, &c_dfDIKeyboard, c_dfDIKeyboard.dwSize);
-    if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto failed;
+    if (!(df->rgodf = malloc( df->dwNumObjs * df->dwObjSize ))) goto failed;
 
     for (i = 0; i < df->dwNumObjs; i++)
     {
@@ -227,9 +227,9 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     return DI_OK;
 
 failed:
-    if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
-    HeapFree(GetProcessHeap(), 0, df);
-    HeapFree(GetProcessHeap(), 0, newDevice);
+    if (df) free( df->rgodf );
+    free( df );
+    free( newDevice );
     return DIERR_OUTOFMEMORY;
 }
 

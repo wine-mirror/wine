@@ -129,7 +129,7 @@ static HRESULT string_atow( const char *in, WCHAR **out )
     if (!in) return DI_OK;
 
     len = MultiByteToWideChar( CP_ACP, 0, in, -1, NULL, 0 );
-    if (!(*out = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return DIERR_OUTOFMEMORY;
+    if (!(*out = malloc( len * sizeof(WCHAR) ))) return DIERR_OUTOFMEMORY;
 
     MultiByteToWideChar( CP_ACP, 0, in, -1, *out, len );
     return DI_OK;
@@ -252,7 +252,7 @@ static HRESULT diconfiguredevicesparams_atow( const DICONFIGUREDEVICESPARAMSA *i
         len_a = name_a - in->lptszUserNames + 1;
         len_w = MultiByteToWideChar( CP_ACP, 0, in->lptszUserNames, len_a, NULL, 0 );
 
-        out->lptszUserNames = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len_w * sizeof(WCHAR) );
+        out->lptszUserNames = calloc( len_w, sizeof(WCHAR) );
         if (!out->lptszUserNames) return DIERR_OUTOFMEMORY;
 
         MultiByteToWideChar( CP_ACP, 0, in->lptszUserNames, len_a, out->lptszUserNames, len_w );
@@ -572,17 +572,17 @@ static HRESULT WINAPI dinput_device_a_BuildActionMap( IDirectInputDevice8A *ifac
     if (FAILED(hr = string_atow( username_a, &username_w ))) return hr;
 
     format_w.dwNumActions = format_a->dwNumActions;
-    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    format_w.rgoAction = calloc( format_a->dwNumActions, sizeof(DIACTIONW) );
     if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
     else
     {
         diactionformat_atow( format_a, &format_w, FALSE );
         hr = IDirectInputDevice8_BuildActionMap( iface_w, &format_w, username_w, flags );
         diactionformat_wtoa( &format_w, format_a );
-        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+        free( format_w.rgoAction );
     }
 
-    HeapFree( GetProcessHeap(), 0, username_w );
+    free( username_w );
     return hr;
 }
 
@@ -601,17 +601,17 @@ static HRESULT WINAPI dinput_device_a_SetActionMap( IDirectInputDevice8A *iface_
     if (FAILED(hr = string_atow( username_a, &username_w ))) return hr;
 
     format_w.dwNumActions = format_a->dwNumActions;
-    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    format_w.rgoAction = calloc( format_a->dwNumActions, sizeof(DIACTIONW) );
     if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
     else
     {
         diactionformat_atow( format_a, &format_w, FALSE );
         hr = IDirectInputDevice8_SetActionMap( iface_w, &format_w, username_w, flags );
         diactionformat_wtoa( &format_w, format_a );
-        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+        free( format_w.rgoAction );
     }
 
-    HeapFree( GetProcessHeap(), 0, username_w );
+    free( username_w );
     return hr;
 }
 
@@ -627,12 +627,12 @@ static HRESULT WINAPI dinput_device_a_GetImageInfo( IDirectInputDevice8A *iface_
     if (header_a->dwSizeImageInfo != sizeof(DIDEVICEIMAGEINFOA)) return DIERR_INVALIDPARAM;
 
     header_w.dwBufferSize = (header_a->dwBufferSize / sizeof(DIDEVICEIMAGEINFOA)) * sizeof(DIDEVICEIMAGEINFOW);
-    header_w.lprgImageInfoArray = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, header_w.dwBufferSize );
+    header_w.lprgImageInfoArray = calloc( header_w.dwBufferSize, 1 );
     if (!header_w.lprgImageInfoArray) return DIERR_OUTOFMEMORY;
 
     hr = IDirectInputDevice8_GetImageInfo( iface_w, &header_w );
     dideviceimageinfoheader_wtoa( &header_w, header_a );
-    HeapFree( GetProcessHeap(), 0, header_w.lprgImageInfoArray );
+    free( header_w.lprgImageInfoArray );
     return hr;
 }
 
@@ -770,7 +770,7 @@ static HRESULT WINAPI dinput8_a_FindDevice( IDirectInput8A *iface_a, REFGUID gui
     if (FAILED(hr = string_atow( name_a, &name_w ))) return hr;
 
     hr = IDirectInput8_FindDevice( iface_w, guid, name_w, instance_guid );
-    HeapFree( GetProcessHeap(), 0, name_w );
+    free( name_w );
     return hr;
 }
 
@@ -805,17 +805,17 @@ static HRESULT WINAPI dinput8_a_EnumDevicesBySemantics( IDirectInput8A *iface_a,
     if (FAILED(hr = string_atow( username_a, &username_w ))) return hr;
 
     format_w.dwNumActions = format_a->dwNumActions;
-    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    format_w.rgoAction = calloc( format_a->dwNumActions, sizeof(DIACTIONW) );
     if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
     else
     {
         diactionformat_atow( format_a, &format_w, FALSE );
         hr = IDirectInput8_EnumDevicesBySemantics( iface_w, username_w, &format_w, enum_devices_by_semantics_wtoa_callback,
                                                    &params, flags );
-        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+        free( format_w.rgoAction );
     }
 
-    HeapFree( GetProcessHeap(), 0, username_w );
+    free( username_w );
     return hr;
 }
 
@@ -834,7 +834,7 @@ static HRESULT WINAPI dinput8_a_ConfigureDevices( IDirectInput8A *iface_a, LPDIC
     if (FAILED(hr = diconfiguredevicesparams_atow( params_a, &params_w ))) return hr;
 
     format_w.dwNumActions = format_a->dwNumActions;
-    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    format_w.rgoAction = calloc( format_a->dwNumActions, sizeof(DIACTIONW) );
     if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
     else
     {
@@ -843,11 +843,15 @@ static HRESULT WINAPI dinput8_a_ConfigureDevices( IDirectInput8A *iface_a, LPDIC
 
         if (SUCCEEDED(hr)) hr = IDirectInput8_ConfigureDevices( iface_w, callback, &params_w, flags, ref );
 
-        if (!format_w.hInstString) for (i = 0; i < format_w.dwNumActions; ++i) HeapFree( GetProcessHeap(), 0, (void *)format_w.rgoAction[i].lptszActionName );
-        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+        if (!format_w.hInstString)
+        {
+            for (i = 0; i < format_w.dwNumActions; ++i)
+                free( (void *)format_w.rgoAction[i].lptszActionName );
+        }
+        free( format_w.rgoAction );
     }
 
-    HeapFree( GetProcessHeap(), 0, params_w.lptszUserNames );
+    free( params_w.lptszUserNames );
     return hr;
 }
 
@@ -946,7 +950,7 @@ static HRESULT WINAPI dinput7_a_FindDevice( IDirectInput7A *iface_a, REFGUID gui
     if (FAILED(hr = string_atow( name_a, &name_w ))) return hr;
 
     hr = IDirectInput7_FindDevice( iface_w, guid, name_w, instance_guid );
-    HeapFree( GetProcessHeap(), 0, name_w );
+    free( name_w );
     return hr;
 }
 
