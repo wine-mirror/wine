@@ -1878,6 +1878,9 @@ static void test_fopen_fclose_fcloseall( void )
     ret = fclose(stream3);
     ok(ret == EOF, "Closing file '%s' returned %d\n", fname3, ret);
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    ret = fclose(NULL);
+    ok(ret == EOF, "Closing NULL file returned %d\n", ret);
+    ok(errno = EINVAL, "errno = %d\n", errno);
 
     /* testing fcloseall() */
     numclosed = _fcloseall();

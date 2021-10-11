@@ -3616,6 +3616,8 @@ int CDECL fclose(FILE* file)
 {
   int ret;
 
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return EOF;
+
   _lock_file(file);
   ret = _fclose_nolock(file);
   _unlock_file(file);
@@ -3629,6 +3631,8 @@ int CDECL fclose(FILE* file)
 int CDECL _fclose_nolock(FILE* file)
 {
   int r, flag;
+
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return EOF;
 
   if(!(file->_flag & (_IOREAD | _IOWRT | _IORW)))
   {
