@@ -1620,7 +1620,6 @@ enable_stdole32_tlb
 enable_sti
 enable_strmbase
 enable_strmdll
-enable_strmiids
 enable_svrapi
 enable_sxs
 enable_t2embed
@@ -1786,6 +1785,7 @@ enable_dxerr8
 enable_dxerr9
 enable_dxguid
 enable_mfuuid
+enable_strmiids
 enable_wine
 enable_loader
 enable_nls
@@ -20680,7 +20680,6 @@ wine_fn_config_makefile dlls/storage.dll16 enable_win16
 wine_fn_config_makefile dlls/stress.dll16 enable_win16
 wine_fn_config_makefile dlls/strmbase enable_strmbase
 wine_fn_config_makefile dlls/strmdll enable_strmdll
-wine_fn_config_makefile dlls/strmiids enable_strmiids
 wine_fn_config_makefile dlls/svrapi enable_svrapi
 wine_fn_config_makefile dlls/sxs enable_sxs
 wine_fn_config_makefile dlls/sxs/tests enable_tests
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
+wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
