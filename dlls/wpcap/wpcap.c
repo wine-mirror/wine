@@ -323,7 +323,7 @@ static struct pcap_interface *build_win32_device( const struct pcap_interface *u
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     if (!(ret->name = build_win32_name( source, adapter_name ))) goto err;
     if (!(ret->description = build_win32_description( unix_dev ))) goto err;
-    if (!(ret->addresses = build_win32_addresses( unix_dev->addresses ))) goto err;
+    ret->addresses = build_win32_addresses( unix_dev->addresses );
     ret->flags = unix_dev->flags;
     return ret;
 
