@@ -98,6 +98,7 @@ extern const IDirectInputDevice8AVtbl dinput_device_a_vtbl DECLSPEC_HIDDEN;
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
+extern BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override ) DECLSPEC_HIDDEN;
 
 /* Routines to do DataFormat / WineFormat conversions */
 extern void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df)  DECLSPEC_HIDDEN;
