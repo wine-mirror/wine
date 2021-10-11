@@ -98,11 +98,6 @@ BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
     return unix_funcs->pNtGdiComputeXformCoefficients( hdc );
 }
 
-HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes, UINT bpp, const void *bits )
-{
-    return unix_funcs->pNtGdiCreateBitmap( width, height, planes, bpp, bits );
-}
-
 HANDLE WINAPI NtGdiCreateClientObj( ULONG type )
 {
     return unix_funcs->pNtGdiCreateClientObj( type );
@@ -116,14 +111,6 @@ HBITMAP WINAPI NtGdiCreateCompatibleBitmap( HDC hdc, INT width, INT height )
 HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
 {
     return unix_funcs->pNtGdiCreateCompatibleDC( hdc );
-}
-
-HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, const BITMAPINFO *bmi,
-                                      UINT usage, UINT header_size, ULONG flags,
-                                      ULONG_PTR color_space, void **bits )
-{
-    return unix_funcs->pNtGdiCreateDIBSection( hdc, section, offset, bmi, usage, header_size, flags,
-                                               color_space, bits );
 }
 
 HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWORD init,
@@ -309,16 +296,6 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *res
 INT WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect )
 {
     return unix_funcs->pNtGdiGetAppClipBox( hdc, rect );
-}
-
-LONG WINAPI NtGdiGetBitmapBits( HBITMAP bitmap, LONG count, void *bits )
-{
-    return unix_funcs->pNtGdiGetBitmapBits( bitmap, count, bits );
-}
-
-BOOL WINAPI NtGdiGetBitmapDimension( HBITMAP bitmap, SIZE *size )
-{
-    return unix_funcs->pNtGdiGetBitmapDimension( bitmap, size );
 }
 
 UINT WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags )
@@ -693,16 +670,6 @@ HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
 HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
 {
     return unix_funcs->pNtGdiSelectPen( hdc, handle );
-}
-
-LONG WINAPI NtGdiSetBitmapBits( HBITMAP hbitmap, LONG count, const void *bits )
-{
-    return unix_funcs->pNtGdiSetBitmapBits( hbitmap, count, bits );
-}
-
-BOOL WINAPI NtGdiSetBitmapDimension( HBITMAP hbitmap, INT x, INT y, SIZE *prev_size )
-{
-    return unix_funcs->pNtGdiSetBitmapDimension( hbitmap, x, y, prev_size );
 }
 
 BOOL WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *prev_org )

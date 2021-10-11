@@ -27,6 +27,74 @@
 #include "ntgdi.h"
 #include "wow64win_private.h"
 
+NTSTATUS WINAPI wow64_NtGdiCreateBitmap( UINT *args )
+{
+    INT width = get_ulong( &args );
+    INT height = get_ulong( &args );
+    UINT planes = get_ulong( &args );
+    UINT bpp = get_ulong( &args );
+    const void *bits = get_ptr( &args );
+
+    return HandleToUlong( NtGdiCreateBitmap( width, height, planes, bpp, bits ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetBitmapBits( UINT *args )
+{
+    HBITMAP bitmap = get_handle( &args );
+    LONG count = get_ulong( &args );
+    void *bits = get_ptr( &args );
+
+    return NtGdiGetBitmapBits( bitmap, count, bits );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetBitmapBits( UINT *args )
+{
+    HBITMAP hbitmap = get_handle( &args );
+    LONG count = get_ulong( &args );
+    const void *bits = get_ptr( &args );
+
+    return NtGdiSetBitmapBits( hbitmap, count, bits );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetBitmapDimension( UINT *args )
+{
+    HBITMAP bitmap = get_handle( &args );
+    SIZE *size = get_ptr( &args );
+
+    return NtGdiGetBitmapDimension( bitmap, size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetBitmapDimension( UINT *args )
+{
+    HBITMAP hbitmap = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+    SIZE *prev_size = get_ptr( &args );
+
+    return NtGdiSetBitmapDimension( hbitmap, x, y, prev_size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiCreateDIBSection( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    HANDLE section = get_handle( &args );
+    DWORD offset = get_ulong( &args );
+    const BITMAPINFO *bmi = get_ptr( &args );
+    UINT usage = get_ulong( &args );
+    UINT header_size = get_ulong( &args );
+    ULONG flags = get_ulong( &args );
+    ULONG_PTR color_space = get_ulong( &args );
+    void *bits32 = get_ptr( &args );
+
+    void *bits;
+    HBITMAP ret;
+
+    ret = NtGdiCreateDIBSection( hdc, section, offset, bmi, usage, header_size,
+                                 flags, color_space, addr_32to64( &bits, bits32 ));
+    if (ret) put_addr( bits32, bits );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateDIBBrush( UINT *args )
 {
     const void *data = get_ptr( &args );

@@ -139,7 +139,7 @@
 @ stdcall NtGdiComputeXformCoefficients(long)
 @ stub NtGdiConfigureOPMProtectedOutput
 @ stub NtGdiConvertMetafileRect
-@ stdcall NtGdiCreateBitmap(long long long long ptr)
+@ stdcall -syscall NtGdiCreateBitmap(long long long long ptr)
 @ stub NtGdiCreateBitmapFromDxSurface
 @ stub NtGdiCreateBitmapFromDxSurface2
 @ stdcall NtGdiCreateClientObj(long)
@@ -148,7 +148,7 @@
 @ stdcall NtGdiCreateCompatibleBitmap(long long long)
 @ stdcall NtGdiCreateCompatibleDC(long)
 @ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
-@ stdcall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
+@ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
 @ stdcall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
 @ stdcall NtGdiCreateEllipticRgn(long long long long)
 @ stdcall NtGdiCreateHalftonePalette(long)
@@ -444,8 +444,8 @@
 @ stdcall NtGdiGetAndSetDCDword(long long long ptr)
 @ stdcall NtGdiGetAppClipBox(long ptr)
 @ stub NtGdiGetAppliedDeviceGammaRamp
-@ stdcall NtGdiGetBitmapBits(long long ptr)
-@ stdcall NtGdiGetBitmapDimension(long ptr)
+@ stdcall -syscall NtGdiGetBitmapBits(long long ptr)
+@ stdcall -syscall NtGdiGetBitmapDimension(long ptr)
 @ stub NtGdiGetBitmapDpiScaleValue
 @ stdcall NtGdiGetBoundsRect(long ptr long)
 @ stub NtGdiGetCOPPCompatibleOPMInformation
@@ -590,8 +590,8 @@
 @ stdcall NtGdiSelectFont(long long)
 @ stdcall NtGdiSelectPen(long long)
 @ stub NtGdiSetBitmapAttributes
-@ stdcall NtGdiSetBitmapBits(long long ptr)
-@ stdcall NtGdiSetBitmapDimension(long long long ptr)
+@ stdcall -syscall NtGdiSetBitmapBits(long long ptr)
+@ stdcall -syscall NtGdiSetBitmapDimension(long long long ptr)
 @ stdcall NtGdiSetBoundsRect(long ptr long)
 @ stub NtGdiSetBrushAttributes
 @ stdcall NtGdiSetBrushOrg(long long long ptr)

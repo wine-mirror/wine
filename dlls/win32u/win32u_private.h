@@ -61,14 +61,9 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiCloseFigure)( HDC hdc );
     INT      (WINAPI *pNtGdiCombineRgn)( HRGN dest, HRGN src1, HRGN src2, INT mode );
     BOOL     (WINAPI *pNtGdiComputeXformCoefficients)( HDC hdc );
-    HBITMAP  (WINAPI *pNtGdiCreateBitmap)( INT width, INT height, UINT planes,
-                                           UINT bpp, const void *bits );
     HANDLE   (WINAPI *pNtGdiCreateClientObj)( ULONG type );
     HBITMAP  (WINAPI *pNtGdiCreateCompatibleBitmap)( HDC hdc, INT width, INT height );
     HDC      (WINAPI *pNtGdiCreateCompatibleDC)( HDC hdc );
-    HBITMAP  (WINAPI *pNtGdiCreateDIBSection)( HDC hdc, HANDLE section, DWORD offset, const BITMAPINFO *bmi,
-                                               UINT usage, UINT header_size, ULONG flags,
-                                               ULONG_PTR color_space, void **bits );
     HBITMAP  (WINAPI *pNtGdiCreateDIBitmapInternal)( HDC hdc, INT width, INT height, DWORD init,
                                                      const void *bits, const BITMAPINFO *data,
                                                      UINT coloruse, UINT max_info, UINT max_bits,
@@ -128,8 +123,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiFrameRgn)( HDC hdc, HRGN hrgn, HBRUSH brush, INT width, INT height );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
     INT      (WINAPI *pNtGdiGetAppClipBox)( HDC hdc, RECT *rect );
-    LONG     (WINAPI *pNtGdiGetBitmapBits)( HBITMAP bitmap, LONG count, void *bits );
-    BOOL     (WINAPI *pNtGdiGetBitmapDimension)( HBITMAP bitmap, SIZE *size );
     UINT     (WINAPI *pNtGdiGetBoundsRect)( HDC hdc, RECT *rect, UINT flags );
     BOOL     (WINAPI *pNtGdiGetCharABCWidthsW)( HDC hdc, UINT first, UINT last, WCHAR *chars,
                                                 ULONG flags, void *buffer );
@@ -224,8 +217,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiSelectClipPath)( HDC hdc, INT mode );
     HGDIOBJ  (WINAPI *pNtGdiSelectFont)( HDC hdc, HGDIOBJ handle );
     HGDIOBJ  (WINAPI *pNtGdiSelectPen)( HDC hdc, HGDIOBJ handle );
-    LONG     (WINAPI *pNtGdiSetBitmapBits)( HBITMAP hbitmap, LONG count, const void *bits );
-    BOOL     (WINAPI *pNtGdiSetBitmapDimension)( HBITMAP hbitmap, INT x, INT y, SIZE *prev_size );
     BOOL     (WINAPI *pNtGdiSetBrushOrg)( HDC hdc, INT x, INT y, POINT *prev_org );
     UINT     (WINAPI *pNtGdiSetBoundsRect)( HDC hdc, const RECT *rect, UINT flags );
     BOOL     (WINAPI *pNtGdiSetColorAdjustment)( HDC hdc, const COLORADJUSTMENT *ca );
