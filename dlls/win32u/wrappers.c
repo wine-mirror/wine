@@ -100,19 +100,9 @@ HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWOR
                                                      coloruse, max_info, max_bits, flags, xform );
 }
 
-HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc )
-{
-    return unix_funcs->pNtGdiCreateHalftonePalette( hdc );
-}
-
 HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
 {
     return unix_funcs->pNtGdiCreateMetafileDC( hdc );
-}
-
-HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT count )
-{
-    return unix_funcs->pNtGdiCreatePaletteInternal( palette, count );
 }
 
 HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
@@ -303,11 +293,6 @@ COLORREF WINAPI NtGdiGetNearestColor( HDC hdc, COLORREF color )
     return unix_funcs->pNtGdiGetNearestColor( hdc, color );
 }
 
-UINT WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
-{
-    return unix_funcs->pNtGdiGetNearestPaletteIndex( hpalette, color );
-}
-
 UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
                                                  OUTLINETEXTMETRICW *otm, ULONG opts )
 {
@@ -342,11 +327,6 @@ BOOL WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info
 DWORD WINAPI NtGdiGetSpoolMessage( void *ptr1, DWORD data2, void *ptr3, DWORD data4 )
 {
     return unix_funcs->pNtGdiGetSpoolMessage( ptr1, data2, ptr3, data4 );
-}
-
-UINT WINAPI NtGdiGetSystemPaletteUse( HDC hdc )
-{
-    return unix_funcs->pNtGdiGetSystemPaletteUse( hdc );
 }
 
 UINT WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags )
@@ -554,11 +534,6 @@ BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
 DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
 {
     return unix_funcs->pNtGdiSetLayout( hdc, wox, layout );
-}
-
-BOOL WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index )
-{
-    return unix_funcs->pNtGdiSetMagicColors( hdc, magic, index );
 }
 
 COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )

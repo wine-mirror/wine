@@ -30,7 +30,9 @@
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
     SYSCALL_ENTRY( NtGdiCreateDIBSection ) \
     SYSCALL_ENTRY( NtGdiCreateEllipticRgn ) \
+    SYSCALL_ENTRY( NtGdiCreateHalftonePalette ) \
     SYSCALL_ENTRY( NtGdiCreateHatchBrushInternal ) \
+    SYSCALL_ENTRY( NtGdiCreatePaletteInternal ) \
     SYSCALL_ENTRY( NtGdiCreatePatternBrushInternal ) \
     SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
@@ -48,8 +50,10 @@
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
+    SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
+    SYSCALL_ENTRY( NtGdiGetSystemPaletteUse ) \
     SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
@@ -62,6 +66,7 @@
     SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiSetBrushOrg ) \
     SYSCALL_ENTRY( NtGdiSetColorAdjustment ) \
+    SYSCALL_ENTRY( NtGdiSetMagicColors ) \
     SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
     SYSCALL_ENTRY( NtGdiSetPixelFormat ) \
     SYSCALL_ENTRY( NtGdiSetRectRgn ) \

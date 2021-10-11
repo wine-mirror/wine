@@ -472,6 +472,45 @@ NTSTATUS WINAPI wow64_NtGdiTransformPoints( UINT *args )
     return NtGdiTransformPoints( hdc, points_in, points_out, count, mode );
 }
 
+NTSTATUS WINAPI wow64_NtGdiCreatePaletteInternal( UINT *args )
+{
+    const LOGPALETTE *palette = get_ptr( &args );
+    UINT count = get_ulong( &args );
+
+    return HandleToUlong( NtGdiCreatePaletteInternal( palette, count ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiCreateHalftonePalette( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return HandleToUlong( NtGdiCreateHalftonePalette( hdc ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetNearestPaletteIndex( UINT *args )
+{
+    HPALETTE hpalette = get_handle( &args );
+    COLORREF color = get_ulong( &args );
+
+    return NtGdiGetNearestPaletteIndex( hpalette, color );
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetSystemPaletteUse( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiGetSystemPaletteUse( hdc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetMagicColors( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    DWORD magic = get_ulong( &args );
+    ULONG index = get_ulong( &args );
+
+    return NtGdiSetMagicColors( hdc, magic, index );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();

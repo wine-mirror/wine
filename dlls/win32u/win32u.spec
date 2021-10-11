@@ -151,12 +151,12 @@
 @ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
 @ stdcall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
 @ stdcall -syscall NtGdiCreateEllipticRgn(long long long long)
-@ stdcall NtGdiCreateHalftonePalette(long)
+@ stdcall -syscall NtGdiCreateHalftonePalette(long)
 @ stdcall -syscall NtGdiCreateHatchBrushInternal(long long long)
 @ stdcall NtGdiCreateMetafileDC(long)
 @ stub NtGdiCreateOPMProtectedOutput
 @ stub NtGdiCreateOPMProtectedOutputs
-@ stdcall NtGdiCreatePaletteInternal(ptr long)
+@ stdcall -syscall NtGdiCreatePaletteInternal(ptr long)
 @ stdcall -syscall NtGdiCreatePatternBrushInternal(long long long)
 @ stdcall NtGdiCreatePen(long long long long)
 @ stdcall -syscall NtGdiCreateRectRgn(long long long long)
@@ -491,7 +491,7 @@
 @ stub NtGdiGetMiterLimit
 @ stub NtGdiGetMonitorID
 @ stdcall NtGdiGetNearestColor(long long)
-@ stdcall NtGdiGetNearestPaletteIndex(long long)
+@ stdcall -syscall NtGdiGetNearestPaletteIndex(long long)
 @ stub NtGdiGetNumberOfPhysicalMonitors
 @ stub NtGdiGetOPMInformation
 @ stub NtGdiGetOPMRandomNumber
@@ -514,7 +514,7 @@
 @ stub NtGdiGetStats
 @ stub NtGdiGetStringBitmapW
 @ stub NtGdiGetSuggestedOPMProtectedOutputArraySize
-@ stdcall NtGdiGetSystemPaletteUse(long)
+@ stdcall -syscall NtGdiGetSystemPaletteUse(long)
 @ stdcall NtGdiGetTextCharsetInfo(long ptr long)
 @ stub NtGdiGetTextExtent
 @ stdcall NtGdiGetTextExtentExW(long wstr long long ptr ptr ptr long)
@@ -604,7 +604,7 @@
 @ stub NtGdiSetIcmMode
 @ stdcall NtGdiSetLayout(long long long)
 @ stub NtGdiSetLinkedUFIs
-@ stdcall NtGdiSetMagicColors(long long long)
+@ stdcall -syscall NtGdiSetMagicColors(long long long)
 @ stdcall -syscall NtGdiSetMetaRgn(long)
 @ stub NtGdiSetMiterLimit
 @ stub NtGdiSetOPMSigningKeyAndSequenceNumbers
