@@ -1662,7 +1662,6 @@ enable_vssapi
 enable_vulkan_1
 enable_wbemdisp
 enable_wbemprox
-enable_wbemuuid
 enable_wdscore
 enable_webservices
 enable_websocket
@@ -1786,6 +1785,7 @@ enable_dxguid
 enable_mfuuid
 enable_strmiids
 enable_uuid
+enable_wbemuuid
 enable_wine
 enable_loader
 enable_nls
@@ -20757,7 +20757,6 @@ wine_fn_config_makefile dlls/wbemdisp enable_wbemdisp
 wine_fn_config_makefile dlls/wbemdisp/tests enable_tests
 wine_fn_config_makefile dlls/wbemprox enable_wbemprox
 wine_fn_config_makefile dlls/wbemprox/tests enable_tests
-wine_fn_config_makefile dlls/wbemuuid enable_wbemuuid
 wine_fn_config_makefile dlls/wdscore enable_wdscore
 wine_fn_config_makefile dlls/webservices enable_webservices
 wine_fn_config_makefile dlls/webservices/tests enable_tests
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile libs/dxguid enable_dxguid
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/uuid enable_uuid
+wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
