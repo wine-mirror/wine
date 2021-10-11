@@ -1274,7 +1274,6 @@ enable_dmband
 enable_dmcompos
 enable_dmime
 enable_dmloader
-enable_dmoguids
 enable_dmscript
 enable_dmstyle
 enable_dmsynth
@@ -1786,6 +1785,7 @@ enable_xpssvcs
 enable_fonts
 enable_include
 enable_adsiid
+enable_dmoguids
 enable_wine
 enable_loader
 enable_nls
@@ -20171,7 +20171,6 @@ wine_fn_config_makefile dlls/dmime enable_dmime
 wine_fn_config_makefile dlls/dmime/tests enable_tests
 wine_fn_config_makefile dlls/dmloader enable_dmloader
 wine_fn_config_makefile dlls/dmloader/tests enable_tests
-wine_fn_config_makefile dlls/dmoguids enable_dmoguids
 wine_fn_config_makefile dlls/dmscript enable_dmscript
 wine_fn_config_makefile dlls/dmscript/tests enable_tests
 wine_fn_config_makefile dlls/dmstyle enable_dmstyle
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile dlls/xpssvcs enable_xpssvcs
 wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/adsiid enable_adsiid
+wine_fn_config_makefile libs/dmoguids enable_dmoguids
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
