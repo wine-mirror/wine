@@ -45,7 +45,7 @@
 @ stub __report_gsfailure
 @ cdecl __std_exception_copy(ptr ptr) ucrtbase.__std_exception_copy
 @ cdecl __std_exception_destroy(ptr) ucrtbase.__std_exception_destroy
-@ cdecl __std_terminate() ucrtbase.terminate
+@ cdecl __std_terminate() ucrtbase.__std_terminate
 @ cdecl __std_type_info_compare(ptr ptr) ucrtbase.__std_type_info_compare
 @ cdecl __std_type_info_destroy_list(ptr) ucrtbase.__std_type_info_destroy_list
 @ cdecl __std_type_info_hash(ptr) ucrtbase.__std_type_info_hash

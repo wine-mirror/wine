@@ -142,6 +142,7 @@
 @ cdecl __setusermatherr(ptr)
 @ cdecl __std_exception_copy(ptr ptr)
 @ cdecl __std_exception_destroy(ptr)
+@ cdecl __std_terminate() terminate
 @ cdecl __std_type_info_compare(ptr ptr)
 @ cdecl __std_type_info_destroy_list(ptr)
 @ cdecl __std_type_info_hash(ptr)
