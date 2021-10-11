@@ -22,7 +22,6 @@
 #include "config.h"
 
 #include <stdarg.h>
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <math.h>
 

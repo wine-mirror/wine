@@ -9111,6 +9111,9 @@ fi
     ;;
 
   linux-android*)
+
+$as_echo "#define _GNU_SOURCE 1" >>confdefs.h
+
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
     LDEXECFLAGS="-Wl,-pie"
@@ -9290,6 +9293,9 @@ fi
     ;;
 
   *)
+
+$as_echo "#define _GNU_SOURCE 1" >>confdefs.h
+
     case $host_cpu in
       *i[3456789]86*)
         DLLFLAGS="$DLLFLAGS -fno-PIC"
@@ -18424,7 +18430,6 @@ if ${wine_cv_have_sched_setaffinity+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#define _GNU_SOURCE
 #include <sched.h>
 int
 main ()
@@ -19029,7 +19034,6 @@ fi
 
 
 ac_fn_c_check_member "$LINENO" "struct in6_pktinfo" "ipi6_addr" "ac_cv_member_struct_in6_pktinfo_ipi6_addr" "#ifdef HAVE_NETINET_IN_H
-#define _GNU_SOURCE
 #include <netinet/in.h>
 #endif
 "
@@ -19198,7 +19202,6 @@ if ${ac_cv_have_isfinite+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#define _GNU_SOURCE
 #include <math.h>
 int
 main ()

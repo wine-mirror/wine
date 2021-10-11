@@ -23,7 +23,6 @@
 #endif
 
 #include "config.h"
-#define _GNU_SOURCE /* for struct in6_pktinfo */
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
