@@ -129,6 +129,26 @@ F:	dlls/mscoree/
 GDI
 M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/gdi32/
+F:	dlls/win32u/bitblt.c
+F:	dlls/win32u/bitmap.c
+F:	dlls/win32u/brush.c
+F:	dlls/win32u/clipping.c
+F:	dlls/win32u/dc.c
+F:	dlls/win32u/dib.c
+F:	dlls/win32u/dibdrv/
+F:	dlls/win32u/driver.c
+F:	dlls/win32u/emfdrv.c
+F:	dlls/win32u/font.c
+F:	dlls/win32u/freetype.c
+F:	dlls/win32u/gdiobj.c
+F:	dlls/win32u/mapping.c
+F:	dlls/win32u/opentype.c
+F:	dlls/win32u/painting.c
+F:	dlls/win32u/palette.c
+F:	dlls/win32u/path.c
+F:	dlls/win32u/pen.c
+F:	dlls/win32u/printdrv.c
+F:	dlls/win32u/region.c
 
 GDIPlus
 M:	Esme Povirk <vincent@codeweavers.com>
