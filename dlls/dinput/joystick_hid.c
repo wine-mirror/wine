@@ -43,7 +43,6 @@
 #include "initguid.h"
 #include "devpkey.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/hid.h"
 
@@ -1857,7 +1856,7 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
         if (override)
         {
             if (!SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) ||
-                !(tmp = strstrW( device_id, ig_w )))
+                !(tmp = wcsstr( device_id, ig_w )))
                 goto next;
             memcpy( tmp, xi_w, sizeof(xi_w) - sizeof(WCHAR) );
             if (!SetupDiOpenDeviceInfoW( xi_set, device_id, NULL, 0, &devinfo ))

@@ -24,12 +24,10 @@
 
    It also contains all the helper functions.
 */
-#include "config.h"
 
 #include <stdarg.h>
 #include <string.h>
-#include "wine/debug.h"
-#include "wine/unicode.h"
+
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -41,6 +39,8 @@
 #include "initguid.h"
 #include "device_private.h"
 #include "dinput_private.h"
+
+#include "wine/debug.h"
 
 #define WM_WINE_NOTIFY_ACTIVITY WM_USER
 
@@ -348,12 +348,12 @@ BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override )
     /* Look for the "controllername"="disabled" key */
     if (!get_config_key( hkey, appkey, instance->tszInstanceName, buffer, sizeof(buffer) ))
     {
-        if (!strcmpW( disabled_str, buffer ))
+        if (!wcscmp( disabled_str, buffer ))
         {
             TRACE( "Disabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
             disable = TRUE;
         }
-        else if (override && !strcmpW( override_str, buffer ))
+        else if (override && !wcscmp( override_str, buffer ))
         {
             TRACE( "Force enabling joystick '%s' based on registry key.\n", debugstr_w(instance->tszInstanceName) );
             *override = TRUE;
@@ -694,9 +694,9 @@ static HKEY get_mapping_key(const WCHAR *device, const WCHAR *username, const WC
     HKEY hkey;
     WCHAR *keyname;
 
-    keyname = HeapAlloc(GetProcessHeap(), 0,
-        sizeof(WCHAR) * (lstrlenW(subkey) + strlenW(username) + strlenW(device) + strlenW(guid)));
-    sprintfW(keyname, subkey, username, device, guid);
+    SIZE_T len = wcslen( subkey ) + wcslen( username ) + wcslen( device ) + wcslen( guid ) + 1;
+    keyname = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * len );
+    swprintf( keyname, len, subkey, username, device, guid );
 
     /* The key used is HKCU\Software\Wine\DirectInput\Mappings\[username]\[device]\[mapping_guid] */
     if (RegCreateKeyW(HKEY_CURRENT_USER, keyname, &hkey))
@@ -739,8 +739,9 @@ static HRESULT save_mapping_settings(IDirectInputDevice8W *iface, LPDIACTIONFORM
         if (IsEqualGUID(&didev.guidInstance, &lpdiaf->rgoAction[i].guidInstance) &&
             lpdiaf->rgoAction[i].dwHow != DIAH_UNMAPPED)
         {
-             sprintfW(label, format, lpdiaf->rgoAction[i].dwSemantic);
-             RegSetValueExW(hkey, label, 0, REG_DWORD, (const BYTE*) &lpdiaf->rgoAction[i].dwObjID, sizeof(DWORD));
+            swprintf( label, 9, format, lpdiaf->rgoAction[i].dwSemantic );
+            RegSetValueExW( hkey, label, 0, REG_DWORD, (const BYTE *)&lpdiaf->rgoAction[i].dwObjID,
+                            sizeof(DWORD) );
         }
     }
 
@@ -778,7 +779,7 @@ static BOOL load_mapping_settings(IDirectInputDeviceImpl *This, LPDIACTIONFORMAT
         DWORD id, size = sizeof(DWORD);
         WCHAR label[9];
 
-        sprintfW(label, format, lpdiaf->rgoAction[i].dwSemantic);
+        swprintf( label, 9, format, lpdiaf->rgoAction[i].dwSemantic );
 
         if (!RegQueryValueExW(hkey, label, 0, NULL, (LPBYTE) &id, &size))
         {

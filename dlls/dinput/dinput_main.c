@@ -30,7 +30,6 @@
  * - Fallout : works great in X and DGA mode
  */
 
-#include "config.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
@@ -38,9 +37,6 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
-#include "wine/debug.h"
-#include "wine/unicode.h"
-#include "wine/asm.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -49,9 +45,13 @@
 #include "rpcproxy.h"
 #include "initguid.h"
 #include "devguid.h"
+#include "dinputd.h"
+
 #include "dinput_private.h"
 #include "device_private.h"
-#include "dinputd.h"
+
+#include "wine/asm.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
@@ -769,7 +769,7 @@ static BOOL should_enumerate_device(const WCHAR *username, DWORD dwFlags,
         {
             if (IsEqualGUID(&device_player->instance_guid, guid))
             {
-                if (*device_player->username && !lstrcmpW(username, device_player->username))
+                if (*device_player->username && !wcscmp( username, device_player->username ))
                     return TRUE; /* Device username matches */
                 break;
             }

@@ -4,8 +4,6 @@ IMPORTS   = dinput8 dxguid uuid comctl32 ole32 user32 advapi32 hid setupapi
 EXTRADEFS = -DDIRECTINPUT_VERSION=0x0800
 PARENTSRC = ../dinput
 
-EXTRADLLFLAGS = -mcygwin
-
 C_SRCS = \
 	ansi.c \
 	config.c \
