@@ -34,17 +34,30 @@
 
 static void * const syscalls[] =
 {
+    NtGdiCombineRgn,
     NtGdiCreateBitmap,
     NtGdiCreateDIBBrush,
     NtGdiCreateDIBSection,
+    NtGdiCreateEllipticRgn,
     NtGdiCreateHatchBrushInternal,
     NtGdiCreatePatternBrushInternal,
+    NtGdiCreateRectRgn,
+    NtGdiCreateRoundRectRgn,
     NtGdiCreateSolidBrush,
+    NtGdiEqualRgn,
+    NtGdiExtCreateRegion,
     NtGdiFlush,
     NtGdiGetBitmapBits,
     NtGdiGetBitmapDimension,
+    NtGdiGetRegionData,
+    NtGdiGetRgnBox,
+    NtGdiOffsetRgn,
+    NtGdiPtInRegion,
+    NtGdiRectInRegion,
     NtGdiSetBitmapBits,
     NtGdiSetBitmapDimension,
+    NtGdiSetMetaRgn,
+    NtGdiSetRectRgn,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

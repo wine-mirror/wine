@@ -88,11 +88,6 @@ BOOL WINAPI NtGdiCloseFigure( HDC hdc )
     return unix_funcs->pNtGdiCloseFigure( hdc );
 }
 
-INT WINAPI NtGdiCombineRgn( HRGN dest, HRGN src1, HRGN src2, INT mode )
-{
-    return unix_funcs->pNtGdiCombineRgn( dest, src1, src2, mode );
-}
-
 BOOL WINAPI NtGdiComputeXformCoefficients( HDC hdc )
 {
     return unix_funcs->pNtGdiComputeXformCoefficients( hdc );
@@ -122,11 +117,6 @@ HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWOR
                                                      coloruse, max_info, max_bits, flags, xform );
 }
 
-HRGN WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom )
-{
-    return unix_funcs->pNtGdiCreateEllipticRgn( left, top, right, bottom );
-}
-
 HPALETTE WINAPI NtGdiCreateHalftonePalette( HDC hdc )
 {
     return unix_funcs->pNtGdiCreateHalftonePalette( hdc );
@@ -145,17 +135,6 @@ HPALETTE WINAPI NtGdiCreatePaletteInternal( const LOGPALETTE *palette, UINT coun
 HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
 {
     return unix_funcs->pNtGdiCreatePen( style, width, color, brush );
-}
-
-HRGN WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom )
-{
-    return unix_funcs->pNtGdiCreateRectRgn( left, top, right, bottom );
-}
-
-HRGN WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
-                                     INT ellipse_width, INT ellipse_height )
-{
-    return unix_funcs->pNtGdiCreateRoundRectRgn( left, top, right, bottom, ellipse_width, ellipse_height );
 }
 
 BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ obj )
@@ -211,11 +190,6 @@ BOOL WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_
                                         charset, count, buf );
 }
 
-BOOL WINAPI NtGdiEqualRgn( HRGN hrgn1, HRGN hrgn2 )
-{
-    return unix_funcs->pNtGdiEqualRgn( hrgn1, hrgn2 );
-}
-
 INT WINAPI NtGdiExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     return unix_funcs->pNtGdiExcludeClipRect( hdc, left, top, right, bottom );
@@ -246,11 +220,6 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rec
                               const WCHAR *str, UINT count, const INT *dx, DWORD cp )
 {
     return unix_funcs->pNtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, cp );
-}
-
-HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA *data )
-{
-    return unix_funcs->pNtGdiExtCreateRegion( xform, count, data );
 }
 
 INT WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer )
@@ -429,16 +398,6 @@ BOOL WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info
     return unix_funcs->pNtGdiGetRealizationInfo( hdc, info );
 }
 
-DWORD WINAPI NtGdiGetRegionData( HRGN hrgn, DWORD count, RGNDATA *data )
-{
-    return unix_funcs->pNtGdiGetRegionData( hrgn, count, data );
-}
-
-INT WINAPI NtGdiGetRgnBox( HRGN hrgn, RECT *rect )
-{
-    return unix_funcs->pNtGdiGetRgnBox( hrgn, rect );
-}
-
 DWORD WINAPI NtGdiGetSpoolMessage( void *ptr1, DWORD data2, void *ptr3, DWORD data4 )
 {
     return unix_funcs->pNtGdiGetSpoolMessage( ptr1, data2, ptr3, data4 );
@@ -530,11 +489,6 @@ INT WINAPI NtGdiOffsetClipRgn( HDC hdc, INT x, INT y )
     return unix_funcs->pNtGdiOffsetClipRgn( hdc, x, y );
 }
 
-INT WINAPI NtGdiOffsetRgn( HRGN hrgn, INT x, INT y )
-{
-    return unix_funcs->pNtGdiOffsetRgn( hrgn, x, y );
-}
-
 HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode,
                          UNICODE_STRING *output, ULONG type, BOOL is_display,
                          HANDLE hspool, DRIVER_INFO_2W *driver_info, void *pdev )
@@ -572,19 +526,9 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
     return unix_funcs->pNtGdiPolyPolyDraw( hdc, points, counts, count, function );
 }
 
-BOOL WINAPI NtGdiPtInRegion( HRGN hrgn, INT x, INT y )
-{
-    return unix_funcs->pNtGdiPtInRegion( hrgn, x, y );
-}
-
 BOOL WINAPI NtGdiPtVisible( HDC hdc, INT x, INT y )
 {
     return unix_funcs->pNtGdiPtVisible( hdc, x, y );
-}
-
-BOOL WINAPI NtGdiRectInRegion( HRGN hrgn, const RECT *rect )
-{
-    return unix_funcs->pNtGdiRectInRegion( hrgn, rect );
 }
 
 BOOL WINAPI NtGdiRectVisible( HDC hdc, const RECT *rect )
@@ -713,11 +657,6 @@ BOOL WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index )
     return unix_funcs->pNtGdiSetMagicColors( hdc, magic, index );
 }
 
-INT WINAPI NtGdiSetMetaRgn( HDC hdc )
-{
-    return unix_funcs->pNtGdiSetMetaRgn( hdc );
-}
-
 COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
 {
     return unix_funcs->pNtGdiSetPixel( hdc, x, y, color );
@@ -726,11 +665,6 @@ COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
 BOOL WINAPI NtGdiSetPixelFormat( HDC hdc, INT format )
 {
     return unix_funcs->pNtGdiSetPixelFormat( hdc, format );
-}
-
-BOOL WINAPI NtGdiSetRectRgn( HRGN hrgn, INT left, INT top, INT right, INT bottom )
-{
-    return unix_funcs->pNtGdiSetRectRgn( hrgn, left, top, right, bottom );
 }
 
 UINT WINAPI NtGdiSetSystemPaletteUse( HDC hdc, UINT use )

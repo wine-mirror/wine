@@ -134,7 +134,7 @@
 @ stub NtGdiClearBrushAttributes
 @ stdcall NtGdiCloseFigure(long)
 @ stub NtGdiColorCorrectPalette
-@ stdcall NtGdiCombineRgn(long long long long)
+@ stdcall -syscall NtGdiCombineRgn(long long long long)
 @ stub NtGdiCombineTransform
 @ stdcall NtGdiComputeXformCoefficients(long)
 @ stub NtGdiConfigureOPMProtectedOutput
@@ -150,7 +150,7 @@
 @ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
 @ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
 @ stdcall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
-@ stdcall NtGdiCreateEllipticRgn(long long long long)
+@ stdcall -syscall NtGdiCreateEllipticRgn(long long long long)
 @ stdcall NtGdiCreateHalftonePalette(long)
 @ stdcall -syscall NtGdiCreateHatchBrushInternal(long long long)
 @ stdcall NtGdiCreateMetafileDC(long)
@@ -159,8 +159,8 @@
 @ stdcall NtGdiCreatePaletteInternal(ptr long)
 @ stdcall -syscall NtGdiCreatePatternBrushInternal(long long long)
 @ stdcall NtGdiCreatePen(long long long long)
-@ stdcall NtGdiCreateRectRgn(long long long long)
-@ stdcall NtGdiCreateRoundRectRgn(long long long long long long)
+@ stdcall -syscall NtGdiCreateRectRgn(long long long long)
+@ stdcall -syscall NtGdiCreateRoundRectRgn(long long long long long long)
 @ stub NtGdiCreateServerMetaFile
 @ stub NtGdiCreateSessionMappedDIBSection
 @ stdcall -syscall NtGdiCreateSolidBrush(long long)
@@ -415,11 +415,11 @@
 @ stub NtGdiEnsureDpiDepDefaultGuiFontForPlateau
 @ stdcall NtGdiEnumFonts(long long long long wstr long ptr ptr)
 @ stub NtGdiEnumObjects
-@ stdcall NtGdiEqualRgn(long long)
+@ stdcall -syscall NtGdiEqualRgn(long long)
 @ stub NtGdiEudcLoadUnloadLink
 @ stdcall NtGdiExcludeClipRect(long long long long long)
 @ stdcall NtGdiExtCreatePen(long long long long long long long ptr long long long)
-@ stdcall NtGdiExtCreateRegion(ptr long ptr)
+@ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
 @ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
 @ stdcall NtGdiExtFloodFill(long long long long long)
 @ stdcall NtGdiExtGetObjectW(long long ptr)
@@ -507,8 +507,8 @@
 @ stdcall NtGdiGetRandomRgn(long long long)
 @ stdcall NtGdiGetRasterizerCaps(ptr long)
 @ stdcall NtGdiGetRealizationInfo(long ptr)
-@ stdcall NtGdiGetRegionData(long long ptr)
-@ stdcall NtGdiGetRgnBox(long ptr)
+@ stdcall -syscall NtGdiGetRegionData(long long ptr)
+@ stdcall -syscall NtGdiGetRgnBox(long ptr)
 @ stub NtGdiGetServerMetaFileBits
 @ stdcall NtGdiGetSpoolMessage(ptr long ptr long)
 @ stub NtGdiGetStats
@@ -546,7 +546,7 @@
 @ stub NtGdiMonoBitmap
 @ stdcall NtGdiMoveTo(long long long ptr)
 @ stdcall NtGdiOffsetClipRgn(long long long)
-@ stdcall NtGdiOffsetRgn(long long long)
+@ stdcall -syscall NtGdiOffsetRgn(long long long)
 @ stdcall NtGdiOpenDCW(ptr ptr ptr long long ptr ptr ptr)
 @ stub NtGdiPATHOBJ_bEnum
 @ stub NtGdiPATHOBJ_bEnumClipLines
@@ -560,11 +560,11 @@
 @ stub NtGdiPolyPatBlt
 @ stdcall NtGdiPolyPolyDraw(long ptr ptr long long)
 @ stub NtGdiPolyTextOutW
-@ stdcall NtGdiPtInRegion(long long long)
+@ stdcall -syscall NtGdiPtInRegion(long long long)
 @ stdcall NtGdiPtVisible(long long long)
 @ stub NtGdiQueryFontAssocInfo
 @ stub NtGdiQueryFonts
-@ stdcall NtGdiRectInRegion(long ptr)
+@ stdcall -syscall NtGdiRectInRegion(long ptr)
 @ stdcall NtGdiRectVisible(long ptr)
 @ stdcall NtGdiRectangle(long long long long long)
 @ stdcall NtGdiRemoveFontMemResourceEx(long)
@@ -605,14 +605,14 @@
 @ stdcall NtGdiSetLayout(long long long)
 @ stub NtGdiSetLinkedUFIs
 @ stdcall NtGdiSetMagicColors(long long long)
-@ stdcall NtGdiSetMetaRgn(long)
+@ stdcall -syscall NtGdiSetMetaRgn(long)
 @ stub NtGdiSetMiterLimit
 @ stub NtGdiSetOPMSigningKeyAndSequenceNumbers
 @ stub NtGdiSetPUMPDOBJ
 @ stdcall NtGdiSetPixel(long long long long)
 @ stdcall NtGdiSetPixelFormat(long long)
 @ stub NtGdiSetPrivateDeviceGammaRamp
-@ stdcall NtGdiSetRectRgn(long long long long long)
+@ stdcall -syscall NtGdiSetRectRgn(long long long long long)
 @ stub NtGdiSetSizeDevice
 @ stdcall NtGdiSetSystemPaletteUse(long long)
 @ stdcall NtGdiSetTextJustification(long long long)

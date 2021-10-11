@@ -133,6 +133,127 @@ NTSTATUS WINAPI wow64_NtGdiCreateSolidBrush( UINT *args )
     return HandleToUlong( NtGdiCreateSolidBrush( color, brush ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiCreateRectRgn( UINT *args )
+{
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+
+    return HandleToUlong( NtGdiCreateRectRgn( left, top, right, bottom ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiCreateRoundRectRgn( UINT *args )
+{
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+    INT ellipse_width = get_ulong( &args );
+    INT ellipse_height = get_ulong( &args );
+
+    return HandleToUlong( NtGdiCreateRoundRectRgn( left, top, right, bottom,
+                                                   ellipse_width, ellipse_height ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiCreateEllipticRgn( UINT *args )
+{
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+
+    return HandleToUlong( NtGdiCreateEllipticRgn( left, top, right, bottom ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiExtCreateRegion( UINT *args )
+{
+    const XFORM *xform = get_ptr( &args );
+    DWORD count = get_ulong( &args );
+    const RGNDATA *data = get_ptr( &args );
+
+    return HandleToUlong( NtGdiExtCreateRegion( xform, count, data ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiGetRegionData( UINT *args )
+{
+    HRGN hrgn = get_ptr( &args );
+    DWORD count = get_ulong( &args );
+    RGNDATA *data = get_ptr( &args );
+
+    return NtGdiGetRegionData( hrgn, count, data );
+}
+
+NTSTATUS WINAPI wow64_NtGdiEqualRgn( UINT *args )
+{
+    HRGN hrgn1 = get_handle( &args );
+    HRGN hrgn2 = get_handle( &args );
+
+    return NtGdiEqualRgn( hrgn1, hrgn2 );
+}
+
+INT WINAPI wow64_NtGdiGetRgnBox( UINT *args )
+{
+    HRGN hrgn = get_handle( &args );
+    RECT *rect = get_ptr( &args );
+
+    return NtGdiGetRgnBox( hrgn, rect );
+}
+
+BOOL WINAPI wow64_NtGdiSetRectRgn( UINT *args )
+{
+    HRGN hrgn = get_handle( &args );
+    INT left = get_ulong( &args );
+    INT top = get_ulong( &args );
+    INT right = get_ulong( &args );
+    INT bottom = get_ulong( &args );
+
+    return NtGdiSetRectRgn( hrgn, left, top, right, bottom );
+}
+
+INT WINAPI wow64_NtGdiOffsetRgn( UINT *args )
+{
+    HRGN hrgn = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+
+    return NtGdiOffsetRgn( hrgn, x, y );
+}
+
+NTSTATUS WINAPI wow64_NtGdiCombineRgn( UINT *args )
+{
+    HRGN dest = get_handle( &args );
+    HRGN src1 = get_handle( &args );
+    HRGN src2 = get_handle( &args );
+    INT mode = get_ulong( &args );
+
+    return NtGdiCombineRgn( dest, src1, src2, mode );
+}
+
+NTSTATUS WINAPI wow64_NtGdiPtInRegion( UINT *args )
+{
+    HRGN hrgn = get_handle( &args );
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+
+    return NtGdiPtInRegion( hrgn, x, y );
+}
+
+BOOL WINAPI wow64_NtGdiRectInRegion( UINT *args )
+{
+    HRGN hrgn = get_handle( &args );
+    const RECT *rect = get_ptr( &args );
+
+    return NtGdiRectInRegion( hrgn, rect );
+}
+
+NTSTATUS WINAPI wow64_NtGdiSetMetaRgn( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiSetMetaRgn( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();

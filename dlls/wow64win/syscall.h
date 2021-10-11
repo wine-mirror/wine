@@ -22,16 +22,29 @@
 #define __WOW64WIN_SYSCALL_H
 
 #define ALL_WIN32_SYSCALLS \
+    SYSCALL_ENTRY( NtGdiCombineRgn ) \
     SYSCALL_ENTRY( NtGdiCreateBitmap ) \
     SYSCALL_ENTRY( NtGdiCreateDIBBrush ) \
     SYSCALL_ENTRY( NtGdiCreateDIBSection ) \
+    SYSCALL_ENTRY( NtGdiCreateEllipticRgn ) \
     SYSCALL_ENTRY( NtGdiCreateHatchBrushInternal ) \
     SYSCALL_ENTRY( NtGdiCreatePatternBrushInternal ) \
+    SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
+    SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
+    SYSCALL_ENTRY( NtGdiEqualRgn ) \
+    SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiGetRegionData ) \
+    SYSCALL_ENTRY( NtGdiGetRgnBox ) \
+    SYSCALL_ENTRY( NtGdiOffsetRgn ) \
+    SYSCALL_ENTRY( NtGdiPtInRegion ) \
+    SYSCALL_ENTRY( NtGdiRectInRegion ) \
     SYSCALL_ENTRY( NtGdiSetBitmapBits ) \
-    SYSCALL_ENTRY( NtGdiSetBitmapDimension )
+    SYSCALL_ENTRY( NtGdiSetBitmapDimension ) \
+    SYSCALL_ENTRY( NtGdiSetMetaRgn ) \
+    SYSCALL_ENTRY( NtGdiSetRectRgn )
 
 #endif /* __WOW64WIN_SYSCALL_H */
