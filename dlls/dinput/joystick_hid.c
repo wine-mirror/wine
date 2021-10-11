@@ -1737,7 +1737,7 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
 
     instance->guidInstance = hid_joystick_guid;
     instance->guidInstance.Data1 ^= handle;
-    instance->guidProduct = DInput_PIDVID_Product_GUID;
+    instance->guidProduct = dinput_pidvid_guid;
     instance->guidProduct.Data1 = MAKELONG( attrs->VendorID, attrs->ProductID );
     instance->guidFFDriver = GUID_NULL;
     instance->wUsagePage = caps->UsagePage;
@@ -2258,9 +2258,9 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
 
     *out = NULL;
-    instance.guidProduct.Data1 = DInput_PIDVID_Product_GUID.Data1;
+    instance.guidProduct.Data1 = dinput_pidvid_guid.Data1;
     instance.guidInstance.Data1 = hid_joystick_guid.Data1;
-    if (IsEqualGUID( &DInput_PIDVID_Product_GUID, &instance.guidProduct ))
+    if (IsEqualGUID( &dinput_pidvid_guid, &instance.guidProduct ))
         instance.guidProduct = *guid;
     else if (IsEqualGUID( &hid_joystick_guid, &instance.guidInstance ))
         instance.guidInstance = *guid;

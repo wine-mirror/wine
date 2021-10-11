@@ -52,14 +52,6 @@ static const WORD PID_XBOX_CONTROLLERS[] =  {
     0x0719, /* Xbox 360 Wireless Adapter */
 };
 
-/* Windows uses this GUID for guidProduct on non-keyboard/mouse devices.
- * Data1 contains the device VID (low word) and PID (high word).
- * Data4 ends with the ASCII bytes "PIDVID".
- */
-const GUID DInput_PIDVID_Product_GUID = { /* device_pidvid-0000-0000-0000-504944564944 */
-    0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
-};
-
 static inline JoystickGenericImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), JoystickGenericImpl, base);

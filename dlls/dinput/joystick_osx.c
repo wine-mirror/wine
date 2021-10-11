@@ -1058,7 +1058,7 @@ static HRESULT joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
         /* Return joystick */
         lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidInstance.Data3 = id;
-        lpddi->guidProduct = DInput_PIDVID_Product_GUID;
+        lpddi->guidProduct = dinput_pidvid_guid;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
         lpddi->dwDevType = get_device_type(version, is_joystick);
         lpddi->dwDevType |= DIDEVTYPE_HID;
@@ -1131,7 +1131,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
 
     newDevice->generic.guidInstance = DInput_Wine_OsX_Joystick_GUID;
     newDevice->generic.guidInstance.Data3 = index;
-    newDevice->generic.guidProduct = DInput_PIDVID_Product_GUID;
+    newDevice->generic.guidProduct = dinput_pidvid_guid;
     newDevice->generic.guidProduct.Data1 = make_vid_pid(device);
     newDevice->generic.joy_polldev = poll_osx_device_state;
 
@@ -1309,7 +1309,7 @@ static unsigned short get_joystick_index(REFGUID guid)
     if(IsEqualGUID(&wine_joystick, &dev_guid)) return guid->Data3;
 
     prod_guid.Data1 = 0;
-    if(IsEqualGUID(&DInput_PIDVID_Product_GUID, &prod_guid))
+    if(IsEqualGUID(&dinput_pidvid_guid, &prod_guid))
     {
         joystick_devices_count = find_joystick_devices();
         for(i = 0; i < joystick_devices_count; i++)

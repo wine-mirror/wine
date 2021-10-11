@@ -320,7 +320,7 @@ static void find_joydevs(void)
             joydev.bus_type = device_id.bustype;
 
             /* Concatenate product_id with vendor_id to mimic Windows behaviour */
-            joydev.guid_product       = DInput_PIDVID_Product_GUID;
+            joydev.guid_product       = dinput_pidvid_guid;
             joydev.guid_product.Data1 = MAKELONG(joydev.vendor_id, joydev.product_id);
         }
 

@@ -36,12 +36,21 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "dinput.h"
+#include "dinputd.h"
+
+#include "initguid.h"
 #include "device_private.h"
 #include "dinput_private.h"
 
 #define WM_WINE_NOTIFY_ACTIVITY WM_USER
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
+
+/* Windows uses this GUID for guidProduct on non-keyboard/mouse devices.
+ * Data1 contains the device VID (low word) and PID (high word).
+ * Data4 ends with the ASCII bytes "PIDVID".
+ */
+DEFINE_GUID( dinput_pidvid_guid, 0x00000000, 0x0000, 0x0000, 0x00, 0x00, 'P', 'I', 'D', 'V', 'I', 'D' );
 
 static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
