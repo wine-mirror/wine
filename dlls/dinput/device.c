@@ -187,11 +187,6 @@ void _dump_DIPROPHEADER(LPCDIPROPHEADER diph) {
     }
 }
 
-void _dump_OBJECTINSTANCEA(const DIDEVICEOBJECTINSTANCEA *ddoi) {
-    TRACE("    - enumerating : %s ('%s') - %2d - 0x%08x - %s - 0x%x\n",
-        debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, ddoi->tszName, ddoi->dwFlags);
-}
-
 void _dump_OBJECTINSTANCEW(const DIDEVICEOBJECTINSTANCEW *ddoi) {
     TRACE("    - enumerating : %s ('%s'), - %2d - 0x%08x - %s - 0x%x\n",
         debugstr_guid(&ddoi->guidType), _dump_dinput_GUID(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, debugstr_w(ddoi->tszName), ddoi->dwFlags);
@@ -437,7 +432,7 @@ void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df
     }
 }
 
-void release_DataFormat(DataFormat * format)
+static void release_DataFormat( DataFormat *format )
 {
     TRACE("Deleting DataFormat: %p\n", format);
 
@@ -637,20 +632,7 @@ static int verify_offset(const DataFormat *df, int offset)
     return -1;
 }
 
-/* find an object by its offset in a data format */
-static int offset_to_object(const DataFormat *df, int offset)
-{
-    int i;
-
-    if (!df->offsets) return -1;
-
-    for (i = 0; i < df->wine_df->dwNumObjs; i++)
-        if (df->offsets[i] == offset) return i;
-
-    return -1;
-}
-
-int id_to_object(LPCDIDATAFORMAT df, int id)
+static int id_to_object( LPCDIDATAFORMAT df, int id )
 {
     int i;
 
@@ -667,18 +649,6 @@ static int id_to_offset(const DataFormat *df, int id)
     int obj = id_to_object(df->wine_df, id);
 
     return obj >= 0 && df->offsets ? df->offsets[obj] : -1;
-}
-
-int find_property(const DataFormat *df, LPCDIPROPHEADER ph)
-{
-    switch (ph->dwHow)
-    {
-        case DIPH_BYID:     return id_to_object(df->wine_df, ph->dwObj);
-        case DIPH_BYOFFSET: return offset_to_object(df, ph->dwObj);
-    }
-    FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
-
-    return -1;
 }
 
 static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)

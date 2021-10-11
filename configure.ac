@@ -740,7 +740,6 @@ case $host_os in
     dnl declare needed frameworks
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
-    AC_SUBST(FORCEFEEDBACK_LIBS,"-framework ForceFeedback -framework CoreFoundation")
     AC_SUBST(APPLICATIONSERVICES_LIBS,"-framework ApplicationServices")
     AC_SUBST(CORESERVICES_LIBS,"-framework CoreServices")
     AC_SUBST(APPKIT_LIBS,"-framework AppKit")

@@ -37,15 +37,15 @@
 #include "dinput.h"
 #include "setupapi.h"
 
-#include "wine/debug.h"
-#include "wine/hid.h"
-
 #include "dinput_private.h"
 #include "device_private.h"
-#include "joystick_private.h"
 
 #include "initguid.h"
 #include "devpkey.h"
+
+#include "wine/unicode.h"
+#include "wine/debug.h"
+#include "wine/hid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 

@@ -68,9 +68,6 @@ struct DevicePlayer {
 extern const struct dinput_device mouse_device DECLSPEC_HIDDEN;
 extern const struct dinput_device keyboard_device DECLSPEC_HIDDEN;
 extern const struct dinput_device joystick_hid_device DECLSPEC_HIDDEN;
-extern const struct dinput_device joystick_linux_device DECLSPEC_HIDDEN;
-extern const struct dinput_device joystick_linuxinput_device DECLSPEC_HIDDEN;
-extern const struct dinput_device joystick_osx_device DECLSPEC_HIDDEN;
 
 extern void dinput_hooks_acquire_device(LPDIRECTINPUTDEVICE8W iface);
 extern void dinput_hooks_unacquire_device(LPDIRECTINPUTDEVICE8W iface);
