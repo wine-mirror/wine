@@ -1431,7 +1431,6 @@ enable_mfmediaengine
 enable_mfplat
 enable_mfplay
 enable_mfreadwrite
-enable_mfuuid
 enable_mgmtapi
 enable_midimap
 enable_mlang
@@ -1786,6 +1785,7 @@ enable_dmoguids
 enable_dxerr8
 enable_dxerr9
 enable_dxguid
+enable_mfuuid
 enable_wine
 enable_loader
 enable_nls
@@ -20383,7 +20383,6 @@ wine_fn_config_makefile dlls/mfplay enable_mfplay
 wine_fn_config_makefile dlls/mfplay/tests enable_tests
 wine_fn_config_makefile dlls/mfreadwrite enable_mfreadwrite
 wine_fn_config_makefile dlls/mfreadwrite/tests enable_tests
-wine_fn_config_makefile dlls/mfuuid enable_mfuuid
 wine_fn_config_makefile dlls/mgmtapi enable_mgmtapi
 wine_fn_config_makefile dlls/midimap enable_midimap
 wine_fn_config_makefile dlls/mlang enable_mlang
@@ -20922,6 +20921,7 @@ wine_fn_config_makefile libs/dmoguids enable_dmoguids
 wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
+wine_fn_config_makefile libs/mfuuid enable_mfuuid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
