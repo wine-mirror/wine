@@ -1607,14 +1607,14 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
     if (ret && TRACE_ON(dinput))
     {
         TRACE( "read size %u report:\n", count );
-        for (i = 0; i < report_len;)
+        for (i = 0; i < count;)
         {
             char buffer[256], *buf = buffer;
             buf += sprintf(buf, "%08x ", i);
             do
             {
                 buf += sprintf(buf, " %02x", (BYTE)report_buf[i] );
-            } while (++i % 16 && i < report_len);
+            } while (++i % 16 && i < count);
             TRACE("%s\n", buffer);
         }
     }
