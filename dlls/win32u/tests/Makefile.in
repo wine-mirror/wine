@@ -1,0 +1,5 @@
+TESTDLL   = win32u.dll
+IMPORTS   = user32 win32u
+
+C_SRCS = \
+	win32u.c
