@@ -2183,16 +2183,12 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
         SetLastError( 0xdeadbeef );
         ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
-        todo_wine
         ok( !ret, "ReadFile succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
 
         SetLastError( 0xdeadbeef );
         ret = ReadFile( async_file, buffer, caps.InputReportByteLength, NULL, &overlapped2 );
-        todo_wine
         ok( !ret, "ReadFile succeeded\n" );
-        todo_wine
         ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
 
         /* wait for second report to be ready */
@@ -2205,7 +2201,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
         ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
             value, (report_id ? 3 : 4) );
-        todo_wine
         ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );
 
         CloseHandle( overlapped.hEvent );

@@ -264,7 +264,7 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
     LIST_FOR_EACH_ENTRY( queue, &ext->u.pdo.queues, struct hid_queue, entry )
     {
-        hid_queue_push_report( queue, last_report );
+        if (!polled) hid_queue_push_report( queue, last_report );
 
         do
         {
