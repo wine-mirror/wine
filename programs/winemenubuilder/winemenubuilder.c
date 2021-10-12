@@ -181,8 +181,6 @@ struct rb_string_entry
     struct wine_rb_entry entry;
 };
 
-DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
-
 static WCHAR *xdg_menu_dir;
 static WCHAR *xdg_data_dir;
 static WCHAR xdg_desktop_dir[MAX_PATH];
@@ -355,7 +353,6 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder = NULL;
     IWICBitmapEncoder *encoder = NULL;
-    IWICBitmapScaler *scaler = NULL;
     IStream *outputFile = NULL;
     int i;
     HRESULT hr = E_FAIL;
@@ -373,14 +370,6 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
     {
         WINE_ERR("error 0x%08X creating IWICBitmapDecoder\n", hr);
         goto end;
-    }
-    if (IsEqualCLSID(outputFormat,&CLSID_WICIcnsEncoder))
-    {
-        hr = IWICImagingFactory_CreateBitmapScaler(factory, &scaler);
-        if (FAILED(hr))
-        {
-            WINE_WARN("error 0x%08X creating IWICBitmapScaler\n", hr);
-        }
     }
     hr = CoCreateInstance(outputFormat, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
@@ -421,22 +410,6 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
         {
             WINE_ERR("error 0x%08X converting bitmap to 32bppBGRA\n", hr);
             goto endloop;
-        }
-        if ( scaler)
-        {
-            IWICBitmapSource_GetSize(sourceBitmap, &width, &height);
-            if (width == 64) /* Classic Mode */
-            {
-                hr = IWICBitmapScaler_Initialize( scaler, sourceBitmap, 128, 128,
-                                  WICBitmapInterpolationModeNearestNeighbor);
-                if (FAILED(hr))
-                    WINE_ERR("error 0x%08X scaling bitmap\n", hr);
-                else
-                {
-                    IWICBitmapSource_Release(sourceBitmap);
-                    IWICBitmapScaler_QueryInterface(scaler, &IID_IWICBitmapSource, (LPVOID)&sourceBitmap);
-                }
-            }
         }
         hr = IWICBitmapEncoder_CreateNewFrame(encoder, &dstFrame, &options);
         if (FAILED(hr))
@@ -503,8 +476,6 @@ end:
         IWICImagingFactory_Release(factory);
     if (decoder)
         IWICBitmapDecoder_Release(decoder);
-    if (scaler)
-        IWICBitmapScaler_Release(scaler);
     if (encoder)
         IWICBitmapEncoder_Release(encoder);
     if (outputFile)
@@ -1081,119 +1052,6 @@ static WCHAR *compute_native_identifier(int exeIndex, LPCWSTR icoPathW, LPCWSTR 
     return heap_wprintf(L"%04X_%.*s.%d", crc, (int)(ext - basename), basename, exeIndex);
 }
 
-#ifdef __APPLE__
-#define ICNS_SLOTS 6
-
-static inline int size_to_slot(int size)
-{
-    switch (size)
-    {
-        case 16: return 0;
-        case 32: return 1;
-        case 48: return 2;
-        case 64: return -2;  /* Classic Mode */
-        case 128: return 3;
-        case 256: return 4;
-        case 512: return 5;
-    }
-
-    return -1;
-}
-
-#define CLASSIC_SLOT 3
-
-static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntries,
-                                   int numEntries, int exeIndex, LPCWSTR icoPathW,
-                                   const WCHAR *destFilename, WCHAR **nativeIdentifier)
-{
-    struct {
-        int index;
-        int maxBits;
-        BOOL scaled;
-    } best[ICNS_SLOTS];
-    int indexes[ICNS_SLOTS];
-    int i;
-    WCHAR tmpdir[MAX_PATH];
-    WCHAR *icnsPath;
-    LARGE_INTEGER zero;
-    HRESULT hr;
-
-    for (i = 0; i < ICNS_SLOTS; i++)
-    {
-        best[i].index = -1;
-        best[i].maxBits = 0;
-    }
-    for (i = 0; i < numEntries; i++)
-    {
-        int slot;
-        int width = iconDirEntries[i].bWidth ? iconDirEntries[i].bWidth : 256;
-        int height = iconDirEntries[i].bHeight ? iconDirEntries[i].bHeight : 256;
-        BOOL scaled = FALSE;
-
-        WINE_TRACE("[%d]: %d x %d @ %d\n", i, width, height, iconDirEntries[i].wBitCount);
-        if (height != width)
-            continue;
-        slot = size_to_slot(width);
-        if (slot == -2)
-        {
-            scaled = TRUE;
-            slot = CLASSIC_SLOT;
-        }
-        else if (slot < 0)
-            continue;
-        if (scaled && best[slot].maxBits && !best[slot].scaled)
-            continue; /* don't replace unscaled with scaled */
-        if (iconDirEntries[i].wBitCount >= best[slot].maxBits || (!scaled && best[slot].scaled))
-        {
-            best[slot].index = i;
-            best[slot].maxBits = iconDirEntries[i].wBitCount;
-            best[slot].scaled = scaled;
-        }
-    }
-    /* remove the scaled icon if a larger unscaled icon exists */
-    if (best[CLASSIC_SLOT].scaled)
-    {
-        for (i = CLASSIC_SLOT+1; i < ICNS_SLOTS; i++)
-            if (best[i].index >= 0 && !best[i].scaled)
-            {
-                best[CLASSIC_SLOT].index = -1;
-                break;
-            }
-    }
-
-    numEntries = 0;
-    for (i = 0; i < ICNS_SLOTS; i++)
-    {
-        if (best[i].index >= 0)
-        {
-            indexes[numEntries] = best[i].index;
-            numEntries++;
-        }
-    }
-
-    *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
-    GetTempPathW( MAX_PATH, tmpdir );
-    icnsPath = heap_wprintf(L"%s\\%s.icns", tmpdir, *nativeIdentifier);
-    zero.QuadPart = 0;
-    hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr))
-    {
-        WINE_WARN("seeking icon stream failed, error 0x%08X\n", hr);
-        goto end;
-    }
-    hr = convert_to_native_icon(icoStream, indexes, numEntries, &CLSID_WICIcnsEncoder, icnsPath);
-    if (FAILED(hr))
-    {
-        WINE_WARN("converting %s to %s failed, error 0x%08X\n",
-            wine_dbgstr_w(icoPathW), wine_dbgstr_w(icnsPath), hr);
-        goto end;
-    }
-
-end:
-    heap_free(icnsPath);
-    return hr;
-}
-#else
 static void refresh_icon_cache(const WCHAR *iconsDir)
 {
     WCHAR buffer[MAX_PATH];
@@ -1270,7 +1128,6 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
     heap_free(iconsDir);
     return hr;
 }
-#endif /* defined(__APPLE__) */
 
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
 static WCHAR *extract_icon(LPCWSTR icoPathW, int index, const WCHAR *destFilename, BOOL bWait)
