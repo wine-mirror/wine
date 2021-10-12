@@ -195,11 +195,6 @@ BOOL WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     return unix_funcs->pNtGdiFillRgn( hdc, hrgn, hbrush );
 }
 
-BOOL WINAPI NtGdiFlattenPath( HDC hdc )
-{
-    return unix_funcs->pNtGdiFlattenPath( hdc );
-}
-
 BOOL WINAPI NtGdiFontIsLinked( HDC hdc )
 {
     return unix_funcs->pNtGdiFontIsLinked( hdc );
@@ -297,11 +292,6 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
                                                  OUTLINETEXTMETRICW *otm, ULONG opts )
 {
     return unix_funcs->pNtGdiGetOutlineTextMetricsInternalW( hdc, cbData, otm, opts );
-}
-
-INT WINAPI NtGdiGetPath( HDC hdc, POINT *points, BYTE *types, INT size )
-{
-    return unix_funcs->pNtGdiGetPath( hdc, points, types, size );
 }
 
 COLORREF WINAPI NtGdiGetPixel( HDC hdc, INT x, INT y )
@@ -410,11 +400,6 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode,
 BOOL WINAPI NtGdiPatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop )
 {
     return unix_funcs->pNtGdiPatBlt( hdc, left, top, width, height, rop );
-}
-
-HRGN WINAPI NtGdiPathToRegion( HDC hdc )
-{
-    return unix_funcs->pNtGdiPathToRegion( hdc );
 }
 
 BOOL WINAPI NtGdiPlgBlt( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,

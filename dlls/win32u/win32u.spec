@@ -435,7 +435,7 @@
 @ stub NtGdiFONTOBJ_vGetInfo
 @ stdcall NtGdiFillPath(long)
 @ stdcall NtGdiFillRgn(long long long)
-@ stdcall NtGdiFlattenPath(long)
+@ stdcall -syscall NtGdiFlattenPath(long)
 @ stdcall -syscall NtGdiFlush()
 @ stdcall NtGdiFontIsLinked(long)
 @ stub NtGdiForceUFIMapping
@@ -497,7 +497,7 @@
 @ stub NtGdiGetOPMRandomNumber
 @ stub NtGdiGetObjectBitmapHandle
 @ stdcall NtGdiGetOutlineTextMetricsInternalW(long long ptr long)
-@ stdcall NtGdiGetPath(long ptr ptr long)
+@ stdcall -syscall NtGdiGetPath(long ptr ptr long)
 @ stub NtGdiGetPerBandInfo
 @ stub NtGdiGetPhysicalMonitorDescription
 @ stub NtGdiGetPhysicalMonitors
@@ -554,7 +554,7 @@
 @ stub NtGdiPATHOBJ_vEnumStartClipLines
 @ stub NtGdiPATHOBJ_vGetBounds
 @ stdcall NtGdiPatBlt(long long long long long long)
-@ stdcall NtGdiPathToRegion(long)
+@ stdcall -syscall NtGdiPathToRegion(long)
 @ stdcall NtGdiPlgBlt(long ptr long long long long long long long long long)
 @ stdcall NtGdiPolyDraw(long ptr ptr long)
 @ stub NtGdiPolyPatBlt

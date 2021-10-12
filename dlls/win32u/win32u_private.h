@@ -99,7 +99,6 @@ struct unix_funcs
     INT      (WINAPI *pNtGdiExtSelectClipRgn)( HDC hdc, HRGN region, INT mode );
     BOOL     (WINAPI *pNtGdiFillPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiFillRgn)( HDC hdc, HRGN hrgn, HBRUSH hbrush );
-    BOOL     (WINAPI *pNtGdiFlattenPath)( HDC hdc );
     BOOL     (WINAPI *pNtGdiFontIsLinked)( HDC hdc );
     BOOL     (WINAPI *pNtGdiFrameRgn)( HDC hdc, HRGN hrgn, HBRUSH brush, INT width, INT height );
     BOOL     (WINAPI *pNtGdiGetAndSetDCDword)( HDC hdc, UINT method, DWORD value, DWORD *result );
@@ -126,7 +125,6 @@ struct unix_funcs
     COLORREF (WINAPI *pNtGdiGetNearestColor)( HDC hdc, COLORREF color );
     UINT     (WINAPI *pNtGdiGetOutlineTextMetricsInternalW)( HDC hdc, UINT cbData,
                                                              OUTLINETEXTMETRICW *otm, ULONG opts );
-    INT      (WINAPI *pNtGdiGetPath)( HDC hdc, POINT *points, BYTE *types, INT size );
     COLORREF (WINAPI *pNtGdiGetPixel)( HDC hdc, INT x, INT y );
     INT      (WINAPI *pNtGdiGetRandomRgn)( HDC hdc, HRGN region, INT code );
     BOOL     (WINAPI *pNtGdiGetRasterizerCaps)( RASTERIZER_STATUS *status, UINT size );
@@ -153,7 +151,6 @@ struct unix_funcs
                                       UNICODE_STRING *output, ULONG type, BOOL is_display,
                                       HANDLE hspool, DRIVER_INFO_2W *driver_info, void *pdev );
     BOOL     (WINAPI *pNtGdiPatBlt)( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop );
-    HRGN     (WINAPI *pNtGdiPathToRegion)( HDC hdc );
     BOOL     (WINAPI *pNtGdiPlgBlt)( HDC hdc, const POINT *point, HDC hdc_src, INT x_src, INT y_src,
                                      INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask,
                                      DWORD bk_color );

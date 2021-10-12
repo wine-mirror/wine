@@ -511,6 +511,30 @@ NTSTATUS WINAPI wow64_NtGdiSetMagicColors( UINT *args )
     return NtGdiSetMagicColors( hdc, magic, index );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    POINT *points = get_ptr( &args );
+    BYTE *types = get_ptr( &args );
+    INT size = get_ulong( &args );
+
+    return NtGdiGetPath( hdc, points, types, size );
+}
+
+NTSTATUS WINAPI wow64_NtGdiPathToRegion( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return HandleToUlong( NtGdiPathToRegion( hdc ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiFlattenPath( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtGdiFlattenPath( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();

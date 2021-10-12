@@ -43,6 +43,7 @@
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
+    SYSCALL_ENTRY( NtGdiFlattenPath ) \
     SYSCALL_ENTRY( NtGdiFlush ) \
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
@@ -51,12 +52,14 @@
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
+    SYSCALL_ENTRY( NtGdiGetPath ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
     SYSCALL_ENTRY( NtGdiGetSystemPaletteUse ) \
     SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
+    SYSCALL_ENTRY( NtGdiPathToRegion ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \
     SYSCALL_ENTRY( NtGdiRectInRegion ) \
     SYSCALL_ENTRY( NtGdiRemoveFontMemResourceEx ) \
