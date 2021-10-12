@@ -154,11 +154,11 @@ STRING     \"[^\n"]+\"
 "["					{ return *yytext; }
 "]"					{ return *yytext; }
 
-"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%lx", &dbg_lval.integer); return tNUM; }
-{DIGIT}+             			{ sscanf(yytext, "%ld", &dbg_lval.integer); return tNUM; }
+"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%Ix", &dbg_lval.integer); return tNUM; }
+{DIGIT}+             			{ sscanf(yytext, "%Id", &dbg_lval.integer); return tNUM; }
 "'\\''"                                 { dbg_lval.integer = '\''; return tNUM;}
-"'\\0"{OCTDIGIT}*"'"                    { sscanf(yytext + 3, "%lo", &dbg_lval.integer); return tNUM;}
-"'\\x"{HEXDIGIT}+"'"                    { sscanf(yytext + 3, "%lx", &dbg_lval.integer); return tNUM;}
+"'\\0"{OCTDIGIT}*"'"                    { sscanf(yytext + 3, "%Io", &dbg_lval.integer); return tNUM;}
+"'\\x"{HEXDIGIT}+"'"                    { sscanf(yytext + 3, "%Ix", &dbg_lval.integer); return tNUM;}
 "'\\"[a-z]"'"                           { dbg_lval.integer = yytext[2] - 'a'; return tNUM;}
 "'"."'"                                 { dbg_lval.integer = yytext[1]; return tNUM;}
 
