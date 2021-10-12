@@ -2493,25 +2493,18 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags)
 {
-    unsigned int row_pitch, slice_pitch;
     struct wined3d_cs_map *op;
-    void *map_ptr;
     HRESULT hr;
 
     /* Mapping resources from the worker thread isn't an issue by itself, but
      * increasing the map count would be visible to applications. */
     wined3d_not_from_cs(context->device->cs);
 
-    wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
-
     if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-            && (map_ptr = context->ops->map_upload_bo(context, resource,
-            sub_resource_idx, box, row_pitch, slice_pitch, flags)))
+            && context->ops->map_upload_bo(context, resource, sub_resource_idx, map_desc, box, flags))
     {
-        TRACE("Returning map pointer %p, row pitch %u, slice pitch %u.\n", map_ptr, row_pitch, slice_pitch);
-        map_desc->data = map_ptr;
-        map_desc->row_pitch = row_pitch;
-        map_desc->slice_pitch = slice_pitch;
+        TRACE("Returning map pointer %p, row pitch %u, slice pitch %u.\n",
+                map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
         return WINED3D_OK;
     }
 
@@ -2522,7 +2515,7 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
     op->opcode = WINED3D_CS_OP_MAP;
     op->resource = resource;
     op->sub_resource_idx = sub_resource_idx;
-    op->map_ptr = &map_ptr;
+    op->map_ptr = &map_desc->data;
     op->box = box;
     op->flags = flags;
     op->hr = &hr;
@@ -2530,12 +2523,9 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_MAP);
     wined3d_device_context_finish(context, WINED3D_CS_QUEUE_MAP);
 
-    if (FAILED(hr))
-        return hr;
-
-    map_desc->data = map_ptr;
-    map_desc->row_pitch = row_pitch;
-    map_desc->slice_pitch = slice_pitch;
+    if (SUCCEEDED(hr))
+        wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx,
+                &map_desc->row_pitch, &map_desc->slice_pitch);
     return hr;
 }
 
@@ -2771,17 +2761,17 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
         const void *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
     struct wined3d_cs_update_sub_resource *op;
+    struct wined3d_map_desc map_desc;
     struct wined3d_box dummy_box;
     struct upload_bo bo;
-    void *map_ptr;
 
-    if ((map_ptr = context->ops->map_upload_bo(context, resource, sub_resource_idx, box,
-            row_pitch, slice_pitch, WINED3D_MAP_WRITE)))
+    if (context->ops->map_upload_bo(context, resource, sub_resource_idx, &map_desc, box, WINED3D_MAP_WRITE))
     {
-        wined3d_format_copy_data(resource->format, data, row_pitch, slice_pitch, map_ptr, row_pitch, slice_pitch,
-                box->right - box->left, box->bottom - box->top, box->back - box->front);
+        wined3d_format_copy_data(resource->format, data, row_pitch, slice_pitch, map_desc.data, map_desc.row_pitch,
+                map_desc.slice_pitch, box->right - box->left, box->bottom - box->top, box->back - box->front);
         context->ops->unmap_upload_bo(context, resource, sub_resource_idx, &dummy_box, &bo);
-        wined3d_device_context_upload_bo(context, resource, sub_resource_idx, box, &bo, row_pitch, slice_pitch);
+        wined3d_device_context_upload_bo(context, resource, sub_resource_idx,
+                box, &bo, map_desc.row_pitch, map_desc.slice_pitch);
         return;
     }
 
@@ -3095,12 +3085,11 @@ static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wi
 {
 }
 
-static void *wined3d_cs_map_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, const struct wined3d_box *box, unsigned int row_pitch,
-        unsigned int slice_pitch, uint32_t flags)
+static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
 {
     /* FIXME: We would like to return mapped or newly allocated memory here. */
-    return NULL;
+    return false;
 }
 
 static bool wined3d_cs_unmap_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
@@ -3540,9 +3529,9 @@ static struct wined3d_deferred_upload *deferred_context_get_upload(struct wined3
     return NULL;
 }
 
-static void *wined3d_deferred_context_map_upload_bo(struct wined3d_device_context *context,
-        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
-        unsigned int row_pitch, unsigned int slice_pitch, uint32_t flags)
+static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
     const struct wined3d_format *format = resource->format;
@@ -3550,39 +3539,41 @@ static void *wined3d_deferred_context_map_upload_bo(struct wined3d_device_contex
     uint8_t *sysmem;
     size_t size;
 
-    size = (box->back - box->front - 1) * slice_pitch
-            + ((box->bottom - box->top - 1) / format->block_height) * row_pitch
+    wined3d_format_calculate_pitch(format, 1, box->right - box->left,
+            box->bottom - box->top, &map_desc->row_pitch, &map_desc->slice_pitch);
+
+    size = (box->back - box->front - 1) * map_desc->slice_pitch
+            + ((box->bottom - box->top - 1) / format->block_height) * map_desc->row_pitch
             + ((box->right - box->left + format->block_width - 1) / format->block_width) * format->block_byte_count;
 
     if (!(flags & WINED3D_MAP_WRITE))
     {
         WARN("Flags %#x are not valid on a deferred context.\n", flags);
-        return NULL;
+        return false;
     }
 
     if (flags & ~(WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
         FIXME("Unhandled flags %#x.\n", flags);
-        return NULL;
+        return false;
     }
 
     if (flags & WINED3D_MAP_NOOVERWRITE)
     {
-        if ((upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
-        {
-            upload->upload_flags = 0;
-            return (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
-        }
+        if (!(upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
+            return false;
 
-        return NULL;
+        upload->upload_flags = 0;
+        map_desc->data = (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+        return true;
     }
 
     if (!wined3d_array_reserve((void **)&deferred->uploads, &deferred->uploads_capacity,
             deferred->upload_count + 1, sizeof(*deferred->uploads)))
-        return NULL;
+        return false;
 
     if (!(sysmem = heap_alloc(size + RESOURCE_ALIGNMENT - 1)))
-        return NULL;
+        return false;
 
     upload = &deferred->uploads[deferred->upload_count++];
     upload->upload_flags = UPLOAD_BO_UPLOAD_ON_UNMAP;
@@ -3592,7 +3583,8 @@ static void *wined3d_deferred_context_map_upload_bo(struct wined3d_device_contex
     upload->sysmem = sysmem;
     upload->box = *box;
 
-    return (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+    map_desc->data = (void *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+    return true;
 }
 
 static bool wined3d_deferred_context_unmap_upload_bo(struct wined3d_device_context *context,
