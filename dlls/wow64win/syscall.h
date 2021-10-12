@@ -57,9 +57,11 @@
     SYSCALL_ENTRY( NtGdiGetPath ) \
     SYSCALL_ENTRY( NtGdiGetRegionData ) \
     SYSCALL_ENTRY( NtGdiGetRgnBox ) \
+    SYSCALL_ENTRY( NtGdiGetSpoolMessage ) \
     SYSCALL_ENTRY( NtGdiGetSystemPaletteUse ) \
     SYSCALL_ENTRY( NtGdiGetTransform ) \
     SYSCALL_ENTRY( NtGdiHfontCreate ) \
+    SYSCALL_ENTRY( NtGdiInitSpool ) \
     SYSCALL_ENTRY( NtGdiOffsetRgn ) \
     SYSCALL_ENTRY( NtGdiPathToRegion ) \
     SYSCALL_ENTRY( NtGdiPtInRegion ) \

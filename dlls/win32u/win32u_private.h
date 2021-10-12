@@ -124,7 +124,6 @@ struct unix_funcs
     INT      (WINAPI *pNtGdiGetRandomRgn)( HDC hdc, HRGN region, INT code );
     BOOL     (WINAPI *pNtGdiGetRasterizerCaps)( RASTERIZER_STATUS *status, UINT size );
     BOOL     (WINAPI *pNtGdiGetRealizationInfo)( HDC hdc, struct font_realization_info *info );
-    DWORD    (WINAPI *pNtGdiGetSpoolMessage)( void *ptr1, DWORD data2, void *ptr3, DWORD data4 );
     UINT     (WINAPI *pNtGdiGetTextCharsetInfo)( HDC hdc, FONTSIGNATURE *fs, DWORD flags );
     BOOL     (WINAPI *pNtGdiGetTextExtentExW)( HDC hdc, const WCHAR *str, INT count, INT max_ext,
                                                INT *nfit, INT *dxs, SIZE *size, UINT flags );
@@ -132,7 +131,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiGetTextMetricsW)( HDC hdc, TEXTMETRICW *metrics, ULONG flags );
     BOOL     (WINAPI *pNtGdiGradientFill)( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                                            void *grad_array, ULONG ngrad, ULONG mode );
-    DWORD    (WINAPI *pNtGdiInitSpool)(void);
     INT      (WINAPI *pNtGdiIntersectClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
     BOOL     (WINAPI *pNtGdiInvertRgn)( HDC hdc, HRGN hrgn );
     BOOL     (WINAPI *pNtGdiLineTo)( HDC hdc, INT x, INT y );

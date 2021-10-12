@@ -564,6 +564,21 @@ NTSTATUS WINAPI wow64_NtGdiFlattenPath( UINT *args )
     return NtGdiFlattenPath( hdc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetSpoolMessage( UINT *args )
+{
+    void *ptr1 = get_ptr( &args );
+    DWORD data2 = get_ulong( &args );
+    void *ptr3 = get_ptr( &args );
+    DWORD data4 = get_ulong( &args );
+
+    return NtGdiGetSpoolMessage( ptr1, data2, ptr3, data4 );
+}
+
+NTSTATUS WINAPI wow64_NtGdiInitSpool( UINT *args )
+{
+    return NtGdiInitSpool();
+}
+
 NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();

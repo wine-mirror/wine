@@ -300,11 +300,6 @@ BOOL WINAPI NtGdiGetRealizationInfo( HDC hdc, struct font_realization_info *info
     return unix_funcs->pNtGdiGetRealizationInfo( hdc, info );
 }
 
-DWORD WINAPI NtGdiGetSpoolMessage( void *ptr1, DWORD data2, void *ptr3, DWORD data4 )
-{
-    return unix_funcs->pNtGdiGetSpoolMessage( ptr1, data2, ptr3, data4 );
-}
-
 UINT WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags )
 {
     return unix_funcs->pNtGdiGetTextCharsetInfo( hdc, fs, flags );
@@ -330,11 +325,6 @@ BOOL WINAPI NtGdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                                void *grad_array, ULONG ngrad, ULONG mode )
 {
     return unix_funcs->pNtGdiGradientFill( hdc, vert_array, nvert, grad_array, ngrad, mode );
-}
-
-DWORD WINAPI NtGdiInitSpool(void)
-{
-    return unix_funcs->pNtGdiInitSpool();
 }
 
 INT WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )

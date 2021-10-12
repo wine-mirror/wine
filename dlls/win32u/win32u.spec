@@ -510,7 +510,7 @@
 @ stdcall -syscall NtGdiGetRegionData(long long ptr)
 @ stdcall -syscall NtGdiGetRgnBox(long ptr)
 @ stub NtGdiGetServerMetaFileBits
-@ stdcall NtGdiGetSpoolMessage(ptr long ptr long)
+@ stdcall -syscall NtGdiGetSpoolMessage(ptr long ptr long)
 @ stub NtGdiGetStats
 @ stub NtGdiGetStringBitmapW
 @ stub NtGdiGetSuggestedOPMProtectedOutputArraySize
@@ -532,7 +532,7 @@
 @ stdcall -syscall NtGdiHfontCreate(ptr long long long ptr)
 @ stub NtGdiIcmBrushInfo
 @ stub NtGdiInit
-@ stdcall NtGdiInitSpool()
+@ stdcall -syscall NtGdiInitSpool()
 @ stdcall NtGdiIntersectClipRect(long long long long long)
 @ stdcall NtGdiInvertRgn(long long)
 @ stdcall NtGdiLineTo(long long long)
