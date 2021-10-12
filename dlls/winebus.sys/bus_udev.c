@@ -1085,12 +1085,12 @@ static const struct hid_device_vtbl lnxev_device_vtbl =
 };
 #endif /* HAS_PROPER_INPUT_HEADER */
 
-static void get_device_subsystem_info(struct udev_device *dev, char const *subsystem, struct device_desc *desc)
+static void get_device_subsystem_info(struct udev_device *dev, char const *subsystem, struct device_desc *desc,
+                                      int *bus)
 {
     struct udev_device *parent = NULL;
     const char *ptr, *next, *tmp;
     char buffer[MAX_PATH];
-    DWORD bus = 0;
 
     if (!(parent = udev_device_get_parent_with_subsystem_devtype(dev, subsystem, NULL))) return;
 
@@ -1121,16 +1121,16 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
             }
             if (!strncmp(ptr, "HID_ID=", 7))
             {
-                if (bus || desc->vid || desc->pid) continue;
-                sscanf(ptr, "HID_ID=%x:%x:%x\n", &bus, &desc->vid, &desc->pid);
+                if (*bus || desc->vid || desc->pid) continue;
+                sscanf(ptr, "HID_ID=%x:%x:%x\n", bus, &desc->vid, &desc->pid);
             }
-            if (!strncmp(ptr, "PRODUCT=", 8))
+            if (!strncmp(ptr, "PRODUCT=", 8) && *bus != BUS_BLUETOOTH)
             {
                 if (desc->version) continue;
                 if (!strcmp(subsystem, "usb"))
                     sscanf(ptr, "PRODUCT=%x/%x/%x\n", &desc->vid, &desc->pid, &desc->version);
                 else
-                    sscanf(ptr, "PRODUCT=%x/%x/%x/%x\n", &bus, &desc->vid, &desc->pid, &desc->version);
+                    sscanf(ptr, "PRODUCT=%x/%x/%x/%x\n", bus, &desc->vid, &desc->pid, &desc->version);
             }
         }
     }
@@ -1154,7 +1154,7 @@ static void udev_add_device(struct udev_device *dev)
     struct base_device *impl;
     const char *subsystem;
     const char *devnode;
-    int fd;
+    int fd, bus = 0;
 
     if (!(devnode = udev_device_get_devnode(dev)))
         return;
@@ -1176,9 +1176,9 @@ static void udev_add_device(struct udev_device *dev)
     }
 #endif
 
-    get_device_subsystem_info(dev, "hid", &desc);
-    get_device_subsystem_info(dev, "input", &desc);
-    get_device_subsystem_info(dev, "usb", &desc);
+    get_device_subsystem_info(dev, "hid", &desc, &bus);
+    get_device_subsystem_info(dev, "input", &desc, &bus);
+    get_device_subsystem_info(dev, "usb", &desc, &bus);
 
     subsystem = udev_device_get_subsystem(dev);
     if (!strcmp(subsystem, "hidraw"))
