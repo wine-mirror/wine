@@ -1677,7 +1677,7 @@ if ($ARGV[0] && $ARGV[0] eq "-l")
     print_map( %map );
 }
 
-my $file = "dlls/ntdll/error.c";
+my $file = "dlls/ntdll/error.h";
 
 open INPUT, "<$file" or die "cannot open $file";
 open OUTPUT, ">$file.new" or die "cannot create $file.new";
