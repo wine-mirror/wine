@@ -2174,6 +2174,40 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
             "expected different report\n" );
         ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );
 
+        value = 10;
+        SetLastError( 0xdeadbeef );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &value, sizeof(ULONG), NULL, NULL );
+        ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %u\n", GetLastError() );
+
+        Sleep( 600 );
+
+        SetLastError( 0xdeadbeef );
+        ret = ReadFile( async_file, report, caps.InputReportByteLength, NULL, &overlapped );
+        todo_wine
+        ok( !ret, "ReadFile succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = ReadFile( async_file, buffer, caps.InputReportByteLength, NULL, &overlapped2 );
+        todo_wine
+        ok( !ret, "ReadFile succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFile returned error %u\n", GetLastError() );
+
+        /* wait for second report to be ready */
+        ret = GetOverlappedResult( async_file, &overlapped2, &value, TRUE );
+        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+            value, (report_id ? 3 : 4) );
+        /* first report should be ready and the same */
+        ret = GetOverlappedResult( async_file, &overlapped, &value, FALSE );
+        ok( ret, "GetOverlappedResult failed, last error %u\n", GetLastError() );
+        ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %u, expected %u\n",
+            value, (report_id ? 3 : 4) );
+        todo_wine
+        ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );
+
         CloseHandle( overlapped.hEvent );
         CloseHandle( overlapped2.hEvent );
     }
