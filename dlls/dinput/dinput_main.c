@@ -833,7 +833,8 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
             if (enumSuccess == S_OK &&
                 should_enumerate_device(ptszUserName, dwFlags, &This->device_players, &didevi.guidInstance))
             {
-                didevis = realloc( didevis, sizeof(DIDEVICEINSTANCEW) * device_count++ );
+                device_count++;
+                didevis = realloc( didevis, sizeof(DIDEVICEINSTANCEW) * device_count );
                 didevis[device_count-1] = didevi;
             }
         }
