@@ -4643,6 +4643,43 @@ VarDecAdd_AsPositive:
       DEC_LO32(pDecOut)  = VARIANT_Add(DEC_LO32(pDecLeft),  DEC_LO32(pDecRight),  &overflow);
       DEC_MID32(pDecOut) = VARIANT_Add(DEC_MID32(pDecLeft), DEC_MID32(pDecRight), &overflow);
       DEC_HI32(pDecOut)  = VARIANT_Add(DEC_HI32(pDecLeft),  DEC_HI32(pDecRight),  &overflow);
+
+      if (overflow)
+      {
+        int i;
+        DWORD n[4];
+        unsigned char remainder;
+
+        if (!DEC_SCALE(pDecLeft))
+          return DISP_E_OVERFLOW;
+
+        DEC_SCALE(pDecOut) = DEC_SCALE(pDecLeft) - 1;
+        DEC_SIGN(pDecOut) = sign;
+
+        n[0] = DEC_LO32(pDecOut);
+        n[1] = DEC_MID32(pDecOut);
+        n[2] = DEC_HI32(pDecOut);
+        n[3] = overflow;
+
+        remainder = VARIANT_int_divbychar(n,4,10);
+
+        /* round up the result */
+        if (remainder >= 5)
+        {
+          for (remainder = 1, i = 0; i < ARRAY_SIZE(n) && remainder; i++)
+          {
+            ULONGLONG digit = n[i] + 1;
+            remainder = (digit > 0xFFFFFFFF) ? 1 : 0;
+            n[i] = digit & 0xFFFFFFFF;
+          }
+        }
+
+        DEC_LO32(pDecOut) = n[0] ;
+        DEC_MID32(pDecOut) = n[1];
+        DEC_HI32(pDecOut) = n[2];
+
+        return S_OK;
+      }
     }
 
     if (overflow)
