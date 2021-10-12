@@ -59,6 +59,7 @@
 #include "wine/condrv.h"
 #include "wine/debug.h"
 #include "unix_private.h"
+#include "error.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
@@ -2461,16 +2462,25 @@ NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
     return STATUS_SUCCESS;
 }
 
+/**********************************************************************
+ *      RtlUpcaseUnicodeChar  (ntdll.so)
+ */
 WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
 {
     return ntdll_towupper( wch );
 }
 
+/**********************************************************************
+ *      RtlDowncaseUnicodeChar  (ntdll.so)
+ */
 WCHAR WINAPI RtlDowncaseUnicodeChar( WCHAR wch )
 {
     return ntdll_towlower( wch );
 }
 
+/**********************************************************************
+ *      RtlUTF8ToUnicodeN  (ntdll.so)
+ */
 NTSTATUS WINAPI RtlUTF8ToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen, const char *src, DWORD srclen )
 {
     unsigned int res, len;
@@ -2526,4 +2536,21 @@ NTSTATUS WINAPI RtlUTF8ToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen, cons
     if (src < srcend) status = STATUS_BUFFER_TOO_SMALL;  /* overflow */
     *reslen = (dstlen - (dstend - dst)) * sizeof(WCHAR);
     return status;
+}
+
+/**********************************************************************
+ *      RtlNtStatusToDosError  (ntdll.so)
+ */
+ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
+{
+    NtCurrentTeb()->LastStatusValue = status;
+
+    if (!status || (status & 0x20000000)) return status;
+    if ((status & 0xf0000000) == 0xd0000000) status &= ~0x10000000;
+
+    /* now some special cases */
+    if (HIWORD(status) == 0xc001 || HIWORD(status) == 0x8007 || HIWORD(status) == 0xc007)
+        return LOWORD( status );
+
+    return map_status( status );
 }
