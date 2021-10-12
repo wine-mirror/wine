@@ -181,8 +181,8 @@ M:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/jscript/
 
 Joystick input
+M:	Rémi Bernon <rbernon@codeweavers.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
-P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/dinput*/
 F:	dlls/windows.gaming.input/
 F:	dlls/winebus.sys/
