@@ -1757,12 +1757,21 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
 
 #ifdef IP_BOUND_IF
 
-static int bind_to_index( int fd, in_addr_t bind_addr, unsigned int index )
+static int bind_to_iface_name( int fd, in_addr_t bind_addr, const char *name )
 {
-    return setsockopt( fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index) );
+    static const int enable = 1;
+    unsigned int index;
+
+    if (!(index = if_nametoindex( name )))
+        return -1;
+
+    if (setsockopt( fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index) ))
+        return -1;
+
+    return setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable) );
 }
 
-#elif defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
+#elif defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER) && defined(SO_BINDTODEVICE)
 
 struct interface_filter
 {
@@ -1795,27 +1804,43 @@ static struct interface_filter generic_interface_filter =
     BPF_STMT(BPF_RET+BPF_K, 0)          /* dump packet */
 };
 
-static int bind_to_index( int fd, in_addr_t bind_addr, unsigned int index )
+static int bind_to_iface_name( int fd, in_addr_t bind_addr, const char *name )
 {
-    in_addr_t ifindex = htonl( index );
     struct interface_filter specific_interface_filter;
     struct sock_fprog filter_prog;
-    int ret;
+    static const int enable = 1;
+    unsigned int index;
+    in_addr_t ifindex;
 
-    if ((ret = setsockopt( fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex) )) < 0)
-        return ret;
+    if (!setsockopt( fd, SOL_SOCKET, SO_BINDTODEVICE, name, strlen( name ) + 1 ))
+        return 0;
+
+    /* SO_BINDTODEVICE requires NET_CAP_RAW until Linux 5.7. */
+    if (debug_level)
+        fprintf( stderr, "setsockopt SO_BINDTODEVICE fd %d, name %s failed: %s, falling back to SO_REUSE_ADDR\n",
+                 fd, name, strerror( errno ));
+
+    if (!(index = if_nametoindex( name )))
+        return -1;
+
+    ifindex = htonl( index );
+    if (setsockopt( fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex) ) < 0)
+        return -1;
 
     specific_interface_filter = generic_interface_filter;
     specific_interface_filter.iface_rule.k = index;
     specific_interface_filter.ip_rule.k = htonl( bind_addr );
     filter_prog.len = sizeof(generic_interface_filter) / sizeof(struct sock_filter);
     filter_prog.filter = (struct sock_filter *)&specific_interface_filter;
-    return setsockopt( fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog, sizeof(filter_prog) );
+    if (setsockopt( fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog, sizeof(filter_prog) ))
+        return -1;
+
+    return setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable) );
 }
 
 #else
 
-static int bind_to_index( int fd, in_addr_t bind_addr, unsigned int index )
+static int bind_to_iface_name( int fd, in_addr_t bind_addr, const char *name )
 {
     errno = EOPNOTSUPP;
     return -1;
@@ -1841,8 +1866,7 @@ static int bind_to_interface( struct sock *sock, const struct sockaddr_in *addr 
     in_addr_t bind_addr = addr->sin_addr.s_addr;
     struct ifaddrs *ifaddrs, *ifaddr;
     int fd = get_unix_fd( sock->fd );
-    static const int enable = 1;
-    unsigned int index;
+    int err = 0;
 
     if (bind_addr == htonl( INADDR_ANY ) || bind_addr == htonl( INADDR_LOOPBACK ))
         return 0;
@@ -1856,36 +1880,16 @@ static int bind_to_interface( struct sock *sock, const struct sockaddr_in *addr 
         if (ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET
                 && ((struct sockaddr_in *)ifaddr->ifa_addr)->sin_addr.s_addr == bind_addr)
         {
-            index = if_nametoindex( ifaddr->ifa_name );
-            if (!index)
-            {
-                if (debug_level)
-                    fprintf( stderr, "Unable to look up interface index for %s: %s\n",
-                             ifaddr->ifa_name, strerror( errno ) );
-                continue;
-            }
-
-            freeifaddrs( ifaddrs );
-
-            if (bind_to_index( fd, bind_addr, index ) < 0)
+            if ((err = bind_to_iface_name( fd, bind_addr, ifaddr->ifa_name )) < 0)
             {
                 if (debug_level)
                     fprintf( stderr, "failed to bind to interface: %s\n", strerror( errno ) );
-                return 0;
             }
-
-            if (setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable) ) < 0)
-            {
-                if (debug_level)
-                    fprintf( stderr, "failed to reuse address: %s\n", strerror( errno ) );
-                return 0;
-            }
-            return 1;
+            break;
         }
     }
-
     freeifaddrs( ifaddrs );
-    return 0;
+    return !err;
 }
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
