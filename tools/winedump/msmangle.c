@@ -531,7 +531,6 @@ static char *demangle_datatype (char **str, compound_type *ct,
 	  if (*iter == '6')
 	  {
 	      int sub_expressions = 0;
-              /* FIXME: there are tons of memory leaks here */
 	      /* FIXME: this is still broken in some cases and it has to be
 	       * merged with the function prototype parsing above...
 	       */
