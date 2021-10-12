@@ -2489,26 +2489,31 @@ static void wined3d_cs_exec_map(struct wined3d_cs *cs, const void *data)
             op->sub_resource_idx, op->map_ptr, op->box, op->flags);
 }
 
-HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, void **map_ptr, const struct wined3d_box *box, unsigned int flags)
+HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags)
 {
     unsigned int row_pitch, slice_pitch;
     struct wined3d_cs_map *op;
+    void *map_ptr;
     HRESULT hr;
-
-    wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
-
-    if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-            && (*map_ptr = context->ops->map_upload_bo(context, resource,
-            sub_resource_idx, box, row_pitch, slice_pitch, flags)))
-    {
-        TRACE("Returning map pointer %p, row pitch %u, slice pitch %u.\n", *map_ptr, row_pitch, slice_pitch);
-        return WINED3D_OK;
-    }
 
     /* Mapping resources from the worker thread isn't an issue by itself, but
      * increasing the map count would be visible to applications. */
     wined3d_not_from_cs(context->device->cs);
+
+    wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
+
+    if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+            && (map_ptr = context->ops->map_upload_bo(context, resource,
+            sub_resource_idx, box, row_pitch, slice_pitch, flags)))
+    {
+        TRACE("Returning map pointer %p, row pitch %u, slice pitch %u.\n", map_ptr, row_pitch, slice_pitch);
+        map_desc->data = map_ptr;
+        map_desc->row_pitch = row_pitch;
+        map_desc->slice_pitch = slice_pitch;
+        return WINED3D_OK;
+    }
 
     wined3d_resource_wait_idle(resource);
 
@@ -2517,7 +2522,7 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, 
     op->opcode = WINED3D_CS_OP_MAP;
     op->resource = resource;
     op->sub_resource_idx = sub_resource_idx;
-    op->map_ptr = map_ptr;
+    op->map_ptr = &map_ptr;
     op->box = box;
     op->flags = flags;
     op->hr = &hr;
@@ -2525,6 +2530,12 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_MAP);
     wined3d_device_context_finish(context, WINED3D_CS_QUEUE_MAP);
 
+    if (FAILED(hr))
+        return hr;
+
+    map_desc->data = map_ptr;
+    map_desc->row_pitch = row_pitch;
+    map_desc->slice_pitch = slice_pitch;
     return hr;
 }
 

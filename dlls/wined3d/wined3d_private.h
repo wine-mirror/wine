@@ -4867,7 +4867,7 @@ void wined3d_device_context_emit_execute_command_list(struct wined3d_device_cont
 void wined3d_device_context_emit_generate_mipmaps(struct wined3d_device_context *context,
         struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
-        struct wined3d_resource *resource, unsigned int sub_resource_idx, void **map_ptr,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx, struct wined3d_map_desc *map_desc,
         const struct wined3d_box *box, unsigned int flags) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_reset_state(struct wined3d_device_context *context, bool invalidate) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_blend_state(struct wined3d_device_context *context,
