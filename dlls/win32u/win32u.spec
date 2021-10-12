@@ -158,7 +158,7 @@
 @ stub NtGdiCreateOPMProtectedOutputs
 @ stdcall -syscall NtGdiCreatePaletteInternal(ptr long)
 @ stdcall -syscall NtGdiCreatePatternBrushInternal(long long long)
-@ stdcall NtGdiCreatePen(long long long long)
+@ stdcall -syscall NtGdiCreatePen(long long long long)
 @ stdcall -syscall NtGdiCreateRectRgn(long long long long)
 @ stdcall -syscall NtGdiCreateRoundRectRgn(long long long long long long)
 @ stub NtGdiCreateServerMetaFile
@@ -418,7 +418,7 @@
 @ stdcall -syscall NtGdiEqualRgn(long long)
 @ stub NtGdiEudcLoadUnloadLink
 @ stdcall NtGdiExcludeClipRect(long long long long long)
-@ stdcall NtGdiExtCreatePen(long long long long long long long ptr long long long)
+@ stdcall -syscall NtGdiExtCreatePen(long long long long long long long ptr long long long)
 @ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
 @ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
 @ stdcall NtGdiExtFloodFill(long long long long long)

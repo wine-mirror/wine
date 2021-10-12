@@ -164,6 +164,35 @@ NTSTATUS WINAPI wow64_NtGdiCreateSolidBrush( UINT *args )
     return HandleToUlong( NtGdiCreateSolidBrush( color, brush ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiCreatePen( UINT *args )
+{
+    INT style = get_ulong( &args );
+    INT width = get_ulong( &args );
+    COLORREF color = get_ulong( &args );
+    HBRUSH brush = get_handle( &args );
+
+    return HandleToUlong( NtGdiCreatePen( style, width, color, brush ));
+}
+
+NTSTATUS WINAPI wow64_NtGdiExtCreatePen( UINT *args )
+{
+    DWORD style = get_ulong( &args );
+    DWORD width = get_ulong( &args );
+    ULONG brush_style = get_ulong( &args );
+    ULONG color = get_ulong( &args );
+    ULONG_PTR client_hatch = get_ulong( &args );
+    ULONG_PTR hatch = get_ulong( &args );
+    DWORD style_count = get_ulong( &args );
+    const DWORD *style_bits = get_ptr( &args );
+    ULONG dib_size = get_ulong( &args );
+    BOOL old_style = get_ulong( &args );
+    HBRUSH brush = get_handle( &args );
+
+    return HandleToUlong( NtGdiExtCreatePen( style, width, brush_style, color, client_hatch,
+                                             hatch, style_count, style_bits, dib_size,
+                                             old_style, brush ));
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateRectRgn( UINT *args )
 {
     INT left = get_ulong( &args );

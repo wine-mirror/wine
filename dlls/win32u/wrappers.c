@@ -105,11 +105,6 @@ HDC WINAPI NtGdiCreateMetafileDC( HDC hdc )
     return unix_funcs->pNtGdiCreateMetafileDC( hdc );
 }
 
-HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
-{
-    return unix_funcs->pNtGdiCreatePen( style, width, color, brush );
-}
-
 BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
 {
     return unix_funcs->pNtGdiDeleteObjectApp( obj );
@@ -151,15 +146,6 @@ BOOL WINAPI NtGdiEnumFonts( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_
 INT WINAPI NtGdiExcludeClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     return unix_funcs->pNtGdiExcludeClipRect( hdc, left, top, right, bottom );
-}
-
-HPEN WINAPI NtGdiExtCreatePen( DWORD style, DWORD width, ULONG brush_style, ULONG color,
-                               ULONG_PTR client_hatch, ULONG_PTR hatch, DWORD style_count,
-                               const DWORD *style_bits, ULONG dib_size, BOOL old_style,
-                               HBRUSH brush )
-{
-    return unix_funcs->pNtGdiExtCreatePen( style, width, brush_style, color, client_hatch, hatch, style_count,
-                                           style_bits, dib_size, old_style, brush );
 }
 
 INT WINAPI NtGdiExtEscape( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,

@@ -34,6 +34,7 @@
     SYSCALL_ENTRY( NtGdiCreateHatchBrushInternal ) \
     SYSCALL_ENTRY( NtGdiCreatePaletteInternal ) \
     SYSCALL_ENTRY( NtGdiCreatePatternBrushInternal ) \
+    SYSCALL_ENTRY( NtGdiCreatePen ) \
     SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
@@ -41,6 +42,7 @@
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \
     SYSCALL_ENTRY( NtGdiEqualRgn ) \
+    SYSCALL_ENTRY( NtGdiExtCreatePen ) \
     SYSCALL_ENTRY( NtGdiExtCreateRegion ) \
     SYSCALL_ENTRY( NtGdiExtGetObjectW ) \
     SYSCALL_ENTRY( NtGdiFlattenPath ) \

@@ -63,7 +63,6 @@ struct unix_funcs
                                                      UINT coloruse, UINT max_info, UINT max_bits,
                                                      ULONG flags, HANDLE xform );
     HDC      (WINAPI *pNtGdiCreateMetafileDC)( HDC hdc );
-    HPEN     (WINAPI *pNtGdiCreatePen)( INT style, INT width, COLORREF color, HBRUSH brush );
     NTSTATUS (WINAPI *pNtGdiDdDDICheckVidPnExclusiveOwnership)( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc );
     NTSTATUS (WINAPI *pNtGdiDdDDICloseAdapter)( const D3DKMT_CLOSEADAPTER *desc );
     NTSTATUS (WINAPI *pNtGdiDdDDICreateDCFromMemory)( D3DKMT_CREATEDCFROMMEMORY *desc );
@@ -87,10 +86,6 @@ struct unix_funcs
     BOOL     (WINAPI *pNtGdiEnumFonts)( HDC hdc, ULONG type, ULONG win32_compat, ULONG face_name_len,
                                         const WCHAR *face_name, ULONG charset, ULONG *count, void *buf );
     INT      (WINAPI *pNtGdiExcludeClipRect)( HDC hdc, INT left, INT top, INT right, INT bottom );
-    HPEN     (WINAPI *pNtGdiExtCreatePen)( DWORD style, DWORD width, ULONG brush_style, ULONG color,
-                                           ULONG_PTR client_hatch, ULONG_PTR hatch, DWORD style_count,
-                                           const DWORD *style_bits, ULONG dib_size, BOOL old_style,
-                                           HBRUSH brush );
     INT      (WINAPI *pNtGdiExtEscape)( HDC hdc, WCHAR *driver, INT driver_id, INT escape, INT input_size,
                                         const char *input, INT output_size, char *output );
     BOOL     (WINAPI *pNtGdiExtFloodFill)( HDC hdc, INT x, INT y, COLORREF color, UINT type );
