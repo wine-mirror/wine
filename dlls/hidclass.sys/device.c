@@ -313,9 +313,9 @@ static DWORD CALLBACK hid_device_thread(void *args)
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
     BOOL polled = ext->u.pdo.information.Polled;
-    ULONG report_id = 0, timeout = 0;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
+    ULONG report_id = 0;
     IO_STATUS_BLOCK io;
     BYTE *buffer;
     DWORD res;
@@ -323,8 +323,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
     packet = malloc( sizeof(*packet) + desc->InputLength );
     buffer = (BYTE *)(packet + 1);
     packet->reportBuffer = buffer;
-
-    if (polled) timeout = ext->u.pdo.poll_interval;
 
     report = find_report_with_type_and_id( ext, HidP_Input, 0, TRUE );
     if (!report) WARN("no input report found.\n");
@@ -356,7 +354,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 hid_device_queue_input( device, packet );
         }
 
-        res = WaitForSingleObject(ext->u.pdo.halt_event, timeout);
+        res = WaitForSingleObject(ext->u.pdo.halt_event, polled ? ext->u.pdo.poll_interval : 0);
     } while (res == WAIT_TIMEOUT);
 
     TRACE("device thread exiting, res %#x\n", res);
