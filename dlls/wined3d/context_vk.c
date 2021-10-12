@@ -901,6 +901,9 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
 
     TRACE("context_vk %p, bo %p.\n", context_vk, bo);
 
+    if (bo->command_buffer_id == context_vk->current_command_buffer.id)
+        context_vk->retired_bo_size += bo->size;
+
     if ((slab_vk = bo->slab))
     {
         if (bo->map_ptr)
@@ -923,9 +926,6 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
     if (bo->map_ptr)
         VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
     wined3d_context_vk_destroy_vk_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
-
-    if (bo->command_buffer_id == context_vk->current_command_buffer.id)
-        context_vk->retired_bo_size += bo->size;
 }
 
 void wined3d_context_vk_poll_command_buffers(struct wined3d_context_vk *context_vk)
