@@ -628,7 +628,7 @@ struct hid_preparsed_data *parse_descriptor( BYTE *descriptor, unsigned int leng
 
         default:
             FIXME( "item type %x not implemented!\n", *ptr );
-            goto done;
+            break;
         }
 #undef SHORT_ITEM
     }
