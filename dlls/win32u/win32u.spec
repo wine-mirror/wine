@@ -795,7 +795,7 @@
 @ stub NtUserClipCursor
 @ stub NtUserCloseClipboard
 @ stub NtUserCloseDesktop
-@ stub NtUserCloseWindowStation
+@ stdcall -syscall NtUserCloseWindowStation(long)
 @ stub NtUserCompositionInputSinkLuidFromPoint
 @ stub NtUserCompositionInputSinkViewInstanceIdFromPoint
 @ stub NtUserConfigureActivationObject

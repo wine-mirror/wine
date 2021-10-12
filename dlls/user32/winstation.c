@@ -203,22 +203,6 @@ HWINSTA WINAPI OpenWindowStationW( LPCWSTR name, BOOL inherit, ACCESS_MASK acces
 }
 
 
-/***********************************************************************
- *              CloseWindowStation  (USER32.@)
- */
-BOOL WINAPI CloseWindowStation( HWINSTA handle )
-{
-    BOOL ret;
-    SERVER_START_REQ( close_winstation )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
 /******************************************************************************
  *              GetProcessWindowStation  (USER32.@)
  */

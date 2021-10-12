@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "ntgdi_private.h"
+#include "ntuser.h"
 #include "wine/unixlib.h"
 
 
@@ -93,6 +94,7 @@ static void * const syscalls[] =
     NtGdiSetVirtualResolution,
     NtGdiSwapBuffers,
     NtGdiTransformPoints,
+    NtUserCloseWindowStation,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

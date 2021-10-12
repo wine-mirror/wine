@@ -77,7 +77,7 @@
 @ stdcall CloseDesktop(long)
 @ stdcall CloseTouchInputHandle(long)
 @ stdcall CloseWindow(long)
-@ stdcall CloseWindowStation(long)
+@ stdcall CloseWindowStation(long) NtUserCloseWindowStation
 @ stdcall CopyAcceleratorTableA(long ptr long)
 @ stdcall CopyAcceleratorTableW(long ptr long)
 @ stdcall CopyIcon(long)

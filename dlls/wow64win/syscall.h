@@ -80,6 +80,7 @@
     SYSCALL_ENTRY( NtGdiSetTextJustification ) \
     SYSCALL_ENTRY( NtGdiSetVirtualResolution ) \
     SYSCALL_ENTRY( NtGdiSwapBuffers ) \
-    SYSCALL_ENTRY( NtGdiTransformPoints )
+    SYSCALL_ENTRY( NtGdiTransformPoints ) \
+    SYSCALL_ENTRY( NtUserCloseWindowStation )
 
 #endif /* __WOW64WIN_SYSCALL_H */

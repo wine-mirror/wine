@@ -37,6 +37,7 @@ C_SRCS = \
 	syscall.c \
 	vertical.c \
 	vulkan.c \
+	winstation.c \
 	wrappers.c
 
 font_EXTRADEFS = -DWINE_FONT_DIR=\"`${MAKEDEP} -R ${datadir}/wine ${fontdir}`\"
