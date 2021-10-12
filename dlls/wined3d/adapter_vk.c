@@ -988,7 +988,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
             range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
             range.pNext = NULL;
             range.memory = bo->vk_memory;
-            range.offset = bo->memory_offset + (uintptr_t)data->addr;
+            range.offset = bo->b.memory_offset + (uintptr_t)data->addr;
             range.size = size;
             VK_CALL(vkInvalidateMappedMemoryRanges(device_vk->vk_device, 1, &range));
         }
@@ -1005,7 +1005,7 @@ map:
         return NULL;
     }
 
-    return (uint8_t *)map_ptr + bo->memory_offset + (uintptr_t)data->addr;
+    return (uint8_t *)map_ptr + bo->b.memory_offset + (uintptr_t)data->addr;
 }
 
 static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
@@ -1032,7 +1032,7 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
 
         for (i = 0; i < range_count; ++i)
         {
-            range.offset = bo->memory_offset + ranges[i].offset;
+            range.offset = bo->b.memory_offset + ranges[i].offset;
             range.size = ranges[i].size;
             VK_CALL(vkFlushMappedMemoryRanges(device_vk->vk_device, 1, &range));
         }

@@ -411,7 +411,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
     bo->memory = NULL;
     bo->slab = slab;
     bo->buffer_offset = idx * object_size;
-    bo->memory_offset = slab->bo.memory_offset + bo->buffer_offset;
+    bo->b.memory_offset = slab->bo.b.memory_offset + bo->buffer_offset;
     bo->size = size;
     list_init(&bo->b.users);
     bo->command_buffer_id = 0;
@@ -473,10 +473,10 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
         VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
         return FALSE;
     }
-    bo->memory_offset = bo->memory ? bo->memory->offset : 0;
+    bo->b.memory_offset = bo->memory ? bo->memory->offset : 0;
 
     if ((vr = VK_CALL(vkBindBufferMemory(device_vk->vk_device, bo->vk_buffer,
-            bo->vk_memory, bo->memory_offset))) < 0)
+            bo->vk_memory, bo->b.memory_offset))) < 0)
     {
         ERR("Failed to bind buffer memory, vr %s.\n", wined3d_debug_vkresult(vr));
         if (bo->memory)

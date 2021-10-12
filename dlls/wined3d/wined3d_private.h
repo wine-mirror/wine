@@ -1591,6 +1591,7 @@ do {                                                                \
 struct wined3d_bo
 {
     struct list users;
+    size_t memory_offset;
 };
 
 struct wined3d_bo_gl
@@ -1630,7 +1631,6 @@ struct wined3d_bo_vk
     void *map_ptr;
 
     VkDeviceSize buffer_offset;
-    VkDeviceSize memory_offset;
     VkDeviceSize size;
     VkBufferUsageFlags usage;
     VkMemoryPropertyFlags memory_type;
