@@ -476,7 +476,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         exp2 = expr_eval(exp->un.binop.exp2);
         if (exp1.type.id == dbg_itype_none || exp2.type.id == dbg_itype_none)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-        rtn.type.id = dbg_itype_signed_int;
+        rtn.type.id = dbg_itype_signed_long_int;
         rtn.type.module = 0;
         rtn.addr.Offset = (ULONG_PTR)&exp->un.binop.result;
         type1 = exp1.type;
@@ -609,7 +609,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         exp1 = expr_eval(exp->un.unop.exp1);
         if (exp1.type.id == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         rtn.addr.Offset = (ULONG_PTR)&exp->un.unop.result;
-        rtn.type.id     = dbg_itype_signed_int;
+        rtn.type.id     = dbg_itype_signed_long_int;
         rtn.type.module = 0;
         switch (exp->un.unop.unop_type)
 	{
