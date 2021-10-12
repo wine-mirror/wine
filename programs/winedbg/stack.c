@@ -286,7 +286,7 @@ static void stack_print_addr_and_args(int nf)
         DWORD           disp;
 
         dbg_printf(" %s", si->Name);
-        if (disp64) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
+        if (disp64) dbg_printf("+0x%I64x", disp64);
 
         SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
         se.first = TRUE;
@@ -301,8 +301,8 @@ static void stack_print_addr_and_args(int nf)
             dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }
-    else dbg_printf(" in %s (+0x%lx)", 
-                    im.ModuleName, (DWORD_PTR)(ihsf.InstructionOffset - im.BaseOfImage));
+    else dbg_printf(" in %s (+0x%I64x)",
+                    im.ModuleName, ihsf.InstructionOffset - im.BaseOfImage);
 }
 
 /******************************************************************

@@ -336,10 +336,8 @@ static void dbg_print_hex(DWORD size, ULONGLONG sv)
 {
     if (!sv)
         dbg_printf("0");
-    else if (size > 4 && (sv >> 32))
-        dbg_printf("0x%x%08x", (DWORD)(sv >> 32), (DWORD)sv);
     else
-        dbg_printf("0x%x", (DWORD)sv);
+        dbg_printf("%#I64x", sv);
 }
 
 static void print_typed_basic(const struct dbg_lvalue* lvalue)
@@ -595,7 +593,7 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
     si->MaxNameLen   = 256;
     if (!SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp64, si)) return;
     dbg_printf(" %s", si->Name);
-    if (disp64) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
+    if (disp64) dbg_printf("+0x%I64x", disp64);
     if (with_line)
     {
         IMAGEHLP_LINE64             il;

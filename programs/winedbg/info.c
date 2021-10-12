@@ -284,7 +284,7 @@ void info_win32_module(DWORD64 base)
     HeapFree(GetProcessHeap(), 0, im.modules);
 
     if (base && !num_printed)
-        dbg_printf("'0x%x%08x' is not a valid module address\n", (DWORD)(base >> 32), (DWORD)base);
+        dbg_printf("'0x%0*I64x' is not a valid module address\n", ADDRWIDTH, base);
 }
 
 struct class_walker

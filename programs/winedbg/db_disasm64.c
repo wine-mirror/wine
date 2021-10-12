@@ -1603,10 +1603,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		case Ilq:
 		    len = db_lengths[rex & REX_W ? QUAD : LONG];
 		    get_value_inc(imm64, loc, len, FALSE);
-                    if (imm64 >> 32)
-                        db_printf("$0x%x%08x", (DWORD)(imm64 >> 32), (DWORD)imm64);
-                    else
-                        db_printf("$%#x", (DWORD)imm64);
+                    db_printf("$%#I64x", imm64);
 		    break;
 
 		case O:
