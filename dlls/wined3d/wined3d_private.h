@@ -1588,8 +1588,15 @@ do {                                                                \
 #define checkGLcall(A) do {} while(0)
 #endif
 
+struct wined3d_bo
+{
+    struct list users;
+};
+
 struct wined3d_bo_gl
 {
+    struct wined3d_bo b;
+
     GLuint id;
     GLsizeiptr size;
     GLenum binding;
@@ -1597,7 +1604,6 @@ struct wined3d_bo_gl
 
     GLbitfield flags;
     bool coherent;
-    struct list users;
     uint64_t command_fence_id;
 };
 
@@ -1614,6 +1620,8 @@ struct wined3d_bo_user
 
 struct wined3d_bo_vk
 {
+    struct wined3d_bo b;
+
     VkBuffer vk_buffer;
     struct wined3d_allocator_block *memory;
     struct wined3d_bo_slab_vk *slab;
@@ -1627,7 +1635,6 @@ struct wined3d_bo_vk
     VkBufferUsageFlags usage;
     VkMemoryPropertyFlags memory_type;
 
-    struct list users;
     uint64_t command_buffer_id;
     bool host_synced;
 };

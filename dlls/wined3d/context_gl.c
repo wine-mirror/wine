@@ -2686,12 +2686,12 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo,
         if (wined3d_context_gl_create_bo(context_gl, bo->size,
                 bo->binding, bo->usage, bo->coherent, bo->flags, &tmp))
         {
-            list_move_head(&tmp.users, &bo->users);
+            list_move_head(&tmp.b.users, &bo->b.users);
             wined3d_context_gl_destroy_bo(context_gl, bo);
             *bo = tmp;
-            list_init(&bo->users);
-            list_move_head(&bo->users, &tmp.users);
-            LIST_FOR_EACH_ENTRY(bo_user, &bo->users, struct wined3d_bo_user, entry)
+            list_init(&bo->b.users);
+            list_move_head(&bo->b.users, &tmp.b.users);
+            LIST_FOR_EACH_ENTRY(bo_user, &bo->b.users, struct wined3d_bo_user, entry)
             {
                 bo_user->valid = false;
             }
@@ -2887,7 +2887,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     bo->usage = usage;
     bo->flags = flags;
     bo->coherent = coherent;
-    list_init(&bo->users);
+    list_init(&bo->b.users);
     bo->command_fence_id = 0;
 
     return true;

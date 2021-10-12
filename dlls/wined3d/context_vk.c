@@ -413,7 +413,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
     bo->buffer_offset = idx * object_size;
     bo->memory_offset = slab->bo.memory_offset + bo->buffer_offset;
     bo->size = size;
-    list_init(&bo->users);
+    list_init(&bo->b.users);
     bo->command_buffer_id = 0;
     bo->host_synced = false;
 
@@ -492,7 +492,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     bo->size = size;
     bo->usage = usage;
     bo->memory_type = adapter_vk->memory_properties.memoryTypes[memory_type_idx].propertyFlags;
-    list_init(&bo->users);
+    list_init(&bo->b.users);
     bo->command_buffer_id = 0;
     bo->slab = NULL;
     bo->host_synced = false;

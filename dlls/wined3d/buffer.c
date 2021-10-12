@@ -193,7 +193,7 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         return FALSE;
     }
 
-    list_add_head(&buffer_gl->bo.users, &buffer_gl->bo_user.entry);
+    list_add_head(&buffer_gl->bo.b.users, &buffer_gl->bo_user.entry);
     buffer_gl->b.buffer_object = (uintptr_t)bo;
     buffer_invalidate_bo_range(&buffer_gl->b, 0, 0);
 
@@ -1429,7 +1429,7 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
     }
 
     list_init(&buffer_vk->bo_user.entry);
-    list_add_head(&buffer_vk->bo.users, &buffer_vk->bo_user.entry);
+    list_add_head(&buffer_vk->bo.b.users, &buffer_vk->bo_user.entry);
     buffer_vk->b.buffer_object = (uintptr_t)&buffer_vk->bo;
     buffer_invalidate_bo_range(&buffer_vk->b, 0, 0);
 
