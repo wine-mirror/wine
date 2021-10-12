@@ -755,7 +755,7 @@ BOOL symbol_info_locals(void)
     addr.Mode = AddrModeFlat;
     addr.Offset = ihsf.InstructionOffset;
     print_address(&addr, FALSE);
-    dbg_printf(": (%08lx)\n", (DWORD_PTR)ihsf.FrameOffset);
+    dbg_printf(": (%0*lx)\n", ADDRWIDTH, (DWORD_PTR)ihsf.FrameOffset);
     SymEnumSymbols(dbg_curr_process->handle, 0, NULL, info_locals_cb, (void*)(DWORD_PTR)ihsf.FrameOffset);
 
     return TRUE;
@@ -778,7 +778,7 @@ static BOOL CALLBACK symbols_info_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
             mi.ModuleName[len - 5] = '\0';
     }
 
-    dbg_printf("%08lx: %s!%s", (ULONG_PTR)sym->Address, mi.ModuleName, sym->Name);
+    dbg_printf("%0*lx: %s!%s", ADDRWIDTH, (ULONG_PTR)sym->Address, mi.ModuleName, sym->Name);
     type.id = sym->TypeIndex;
     type.module = sym->ModBase;
 

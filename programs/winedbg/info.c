@@ -791,8 +791,8 @@ void info_win32_virtual(DWORD pid)
             type = "";
             prot[0] = '\0';
         }
-        dbg_printf("%08lx %08lx %s %s %s\n",
-                   (DWORD_PTR)addr, (DWORD_PTR)addr + mbi.RegionSize - 1, state, type, prot);
+        dbg_printf("%0*lx %0*lx %s %s %s\n",
+                   ADDRWIDTH, (DWORD_PTR)addr, ADDRWIDTH, (DWORD_PTR)addr + mbi.RegionSize - 1, state, type, prot);
         if (addr + mbi.RegionSize < addr) /* wrap around ? */
             break;
         addr += mbi.RegionSize;
@@ -893,10 +893,10 @@ void info_win32_exception(void)
         break;
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
-            dbg_printf("page fault on %s access to 0x%08lx",
+            dbg_printf("page fault on %s access to 0x%0*lx",
                        rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
                        rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
-                       rec->ExceptionInformation[1]);
+                       ADDRWIDTH, rec->ExceptionInformation[1]);
         else
             dbg_printf("page fault");
         break;
@@ -961,15 +961,15 @@ void info_win32_exception(void)
         break;
     case EXCEPTION_WINE_CXX_EXCEPTION:
         if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == EXCEPTION_WINE_CXX_FRAME_MAGIC)
-            dbg_printf("C++ exception(object = 0x%08lx, type = 0x%08lx)",
-                       rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+            dbg_printf("C++ exception(object = 0x%0*lx, type = 0x%0*lx)",
+                       ADDRWIDTH, rec->ExceptionInformation[1], ADDRWIDTH, rec->ExceptionInformation[2]);
         else if(rec->NumberParameters == 4 && rec->ExceptionInformation[0] == EXCEPTION_WINE_CXX_FRAME_MAGIC)
             dbg_printf("C++ exception(object = %p, type = %p, base = %p)",
                        (void*)rec->ExceptionInformation[1], (void*)rec->ExceptionInformation[2],
                        (void*)rec->ExceptionInformation[3]);
         else
-            dbg_printf("C++ exception with strange parameter count %d or magic 0x%08lx",
-                       rec->NumberParameters, rec->ExceptionInformation[0]);
+            dbg_printf("C++ exception with strange parameter count %d or magic 0x%0*lx",
+                       rec->NumberParameters, ADDRWIDTH, rec->ExceptionInformation[0]);
         break;
     default:
         dbg_printf("0x%08x", rec->ExceptionCode);

@@ -571,7 +571,7 @@ static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
     struct dbg_type     type;
     type.module = sym->ModBase;
     type.id = sym->TypeIndex;
-    dbg_printf("Mod: %08lx ID: %08x\n", type.module, type.id);
+    dbg_printf("Mod: %0*lx ID: %08x\n", ADDRWIDTH, type.module, type.id);
     types_print_type(&type, TRUE);
     dbg_printf("\n");
     return TRUE;
