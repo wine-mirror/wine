@@ -87,11 +87,6 @@ F:	dlls/d3dx11*/
 F:	dlls/d3dx9*/
 F:	dlls/d3dxof/
 
-DirectInput
-P:	Andrew Eikum <aeikum@codeweavers.com>
-P:	Rémi Bernon <rbernon@codeweavers.com>
-F:	dlls/dinput/
-
 DirectMusic
 M:	Michael Stefaniuc <mstefani@winehq.org>
 F:	dlls/dm*/
@@ -184,6 +179,15 @@ F:	dlls/imm32/
 JavaScript
 M:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/jscript/
+
+Joystick input
+P:	Andrew Eikum <aeikum@codeweavers.com>
+P:	Rémi Bernon <rbernon@codeweavers.com>
+F:	dlls/dinput*/
+F:	dlls/windows.gaming.input/
+F:	dlls/winebus.sys/
+F:	dlls/winexinput.sys/
+F:	dlls/xinput*/
 
 Mac OS X graphics driver
 M:	Ken Thomases <ken@codeweavers.com>
