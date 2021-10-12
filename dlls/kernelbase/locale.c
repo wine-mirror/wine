@@ -5579,9 +5579,6 @@ INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, co
         if (unix_cp == CP_UTF8)
         {
             ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
-#ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-            if (ret && dstlen) RtlNormalizeString( NormalizationC, dst, ret, dst, &ret );
-#endif
             break;
         }
         codepage = unix_cp;
