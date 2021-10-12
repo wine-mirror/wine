@@ -89,13 +89,13 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
             buf[i] = ' ';
 
     dbg_printf("Register dump:\n");
-    dbg_printf(" rip:%016lx rsp:%016lx rbp:%016lx eflags:%08x (%s)\n",
+    dbg_printf(" rip:%016I64x rsp:%016I64x rbp:%016I64x eflags:%08x (%s)\n",
                ctx->Rip, ctx->Rsp, ctx->Rbp, ctx->EFlags, buf);
-    dbg_printf(" rax:%016lx rbx:%016lx rcx:%016lx rdx:%016lx\n",
+    dbg_printf(" rax:%016I64x rbx:%016I64x rcx:%016I64x rdx:%016I64x\n",
                ctx->Rax, ctx->Rbx, ctx->Rcx, ctx->Rdx);
-    dbg_printf(" rsi:%016lx rdi:%016lx  r8:%016lx  r9:%016lx r10:%016lx\n",
+    dbg_printf(" rsi:%016I64x rdi:%016I64x  r8:%016I64x  r9:%016I64x r10:%016I64x\n",
                ctx->Rsi, ctx->Rdi, ctx->R8, ctx->R9, ctx->R10 );
-    dbg_printf(" r11:%016lx r12:%016lx r13:%016lx r14:%016lx r15:%016lx\n",
+    dbg_printf(" r11:%016I64x r12:%016I64x r13:%016I64x r14:%016I64x r15:%016I64x\n",
                ctx->R11, ctx->R12, ctx->R13, ctx->R14, ctx->R15 );
 
     if (!all_regs) return;
@@ -104,9 +104,9 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
                ctx->SegCs, ctx->SegDs, ctx->SegEs, ctx->SegFs, ctx->SegGs, ctx->SegSs );
 
     dbg_printf("Debug:\n");
-    dbg_printf(" dr0:%016lx dr1:%016lx dr2:%016lx dr3:%016lx\n",
+    dbg_printf(" dr0:%016I64x dr1:%016I64x dr2:%016I64x dr3:%016I64x\n",
                ctx->Dr0, ctx->Dr1, ctx->Dr2, ctx->Dr3 );
-    dbg_printf(" dr6:%016lx dr7:%016lx\n", ctx->Dr6, ctx->Dr7 );
+    dbg_printf(" dr6:%016I64x dr7:%016I64x\n", ctx->Dr6, ctx->Dr7 );
 
     dbg_printf("Floating point:\n");
     dbg_printf(" flcw:%04x ", LOWORD(ctx->u.FltSave.ControlWord));
@@ -150,8 +150,7 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
     {
         M128A reg = ctx->u.FltSave.FloatRegisters[i];
         if (i == 4) dbg_printf("\n");
-        dbg_printf(" ST%u:%08x%08x%08x%08x ", i,
-                   (DWORD)(reg.High >> 32), (DWORD)reg.High, (DWORD)(reg.Low >> 32), (DWORD)reg.Low );
+        dbg_printf(" ST%u:%016I64x%16I64x ", i, reg.High, reg.Low );
     }
     dbg_printf("\n");
 
@@ -162,7 +161,7 @@ static void be_x86_64_print_context(HANDLE hThread, const dbg_ctx_t *pctx,
 
     for (i = 0; i < 16; i++)
     {
-        dbg_printf( " %sxmm%u: uint=%016lx%016lx", (i > 9) ? "" : " ", i,
+        dbg_printf( " %sxmm%u: uint=%016I64x%016I64x", (i > 9) ? "" : " ", i,
                     ctx->u.FltSave.XmmRegisters[i].High, ctx->u.FltSave.XmmRegisters[i].Low );
         dbg_printf( " double={%g; %g}", *(double *)&ctx->u.FltSave.XmmRegisters[i].Low,
                     *(double *)&ctx->u.FltSave.XmmRegisters[i].High );

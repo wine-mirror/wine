@@ -80,19 +80,19 @@ static void be_arm64_print_context(HANDLE hThread, const dbg_ctx_t *ctx, int all
         if (!((ctx->ctx.Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
             buf[i] = '-';
 
-    dbg_printf(" Pc:%016lx Sp:%016lx Lr:%016lx Cpsr:%08x(%s)\n",
+    dbg_printf(" Pc:%016I64x Sp:%016I64x Lr:%016I64x Cpsr:%08x(%s)\n",
                ctx->ctx.Pc, ctx->ctx.Sp, ctx->ctx.u.s.Lr, ctx->ctx.Cpsr, buf);
-    dbg_printf(" x0: %016lx x1: %016lx x2: %016lx x3: %016lx x4: %016lx\n",
+    dbg_printf(" x0: %016I64x x1: %016I64x x2: %016I64x x3: %016I64x x4: %016I64x\n",
                ctx->ctx.u.s.X0, ctx->ctx.u.s.X1, ctx->ctx.u.s.X2, ctx->ctx.u.s.X3, ctx->ctx.u.s.X4);
-    dbg_printf(" x5: %016lx x6: %016lx x7: %016lx x8: %016lx x9: %016lx\n",
+    dbg_printf(" x5: %016I64x x6: %016I64x x7: %016I64x x8: %016I64x x9: %016I64x\n",
                ctx->ctx.u.s.X5, ctx->ctx.u.s.X6, ctx->ctx.u.s.X7, ctx->ctx.u.s.X8, ctx->ctx.u.s.X9);
-    dbg_printf(" x10:%016lx x11:%016lx x12:%016lx x13:%016lx x14:%016lx\n",
+    dbg_printf(" x10:%016I64x x11:%016I64x x12:%016I64x x13:%016I64x x14:%016I64x\n",
                ctx->ctx.u.s.X10, ctx->ctx.u.s.X11, ctx->ctx.u.s.X12, ctx->ctx.u.s.X13, ctx->ctx.u.s.X14);
-    dbg_printf(" x15:%016lx ip0:%016lx ip1:%016lx x18:%016lx x19:%016lx\n",
+    dbg_printf(" x15:%016I64x ip0:%016I64x ip1:%016I64x x18:%016I64x x19:%016I64x\n",
                ctx->ctx.u.s.X15, ctx->ctx.u.s.X16, ctx->ctx.u.s.X17, ctx->ctx.u.s.X18, ctx->ctx.u.s.X19);
-    dbg_printf(" x20:%016lx x21:%016lx x22:%016lx x23:%016lx x24:%016lx\n",
+    dbg_printf(" x20:%016I64x x21:%016I64x x22:%016I64x x23:%016I64x x24:%016I64x\n",
                ctx->ctx.u.s.X20, ctx->ctx.u.s.X21, ctx->ctx.u.s.X22, ctx->ctx.u.s.X23, ctx->ctx.u.s.X24);
-    dbg_printf(" x25:%016lx x26:%016lx x27:%016lx x28:%016lx Fp:%016lx\n",
+    dbg_printf(" x25:%016I64x x26:%016I64x x27:%016I64x x28:%016I64x Fp:%016I64x\n",
                ctx->ctx.u.s.X25, ctx->ctx.u.s.X26, ctx->ctx.u.s.X27, ctx->ctx.u.s.X28, ctx->ctx.u.s.Fp);
 
     if (all_regs) dbg_printf( "Floating point ARM64 dump not implemented\n" );
