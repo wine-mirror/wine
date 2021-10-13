@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_BASETSD_H
-#define __WINE_BASETSD_H
+#ifndef _BASETSD_H_
+#define _BASETSD_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -303,4 +303,4 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* !defined(__WINE_BASETSD_H) */
+#endif /* !defined(_BASETSD_H_) */
