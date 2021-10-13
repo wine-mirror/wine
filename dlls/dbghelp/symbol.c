@@ -750,13 +750,16 @@ static void symt_fill_sym_info(struct module_pair* pair,
                     sym_info->Flags |= SYMFLAG_LOCAL;
                 switch (V_VT(&data->u.value))
                 {
-                case VT_I4:  sym_info->Value = (ULONG)V_I4(&data->u.value); break;
-                case VT_I2:  sym_info->Value = (ULONG)(LONG_PTR)V_I2(&data->u.value); break;
-                case VT_I1:  sym_info->Value = (ULONG)(LONG_PTR)V_I1(&data->u.value); break;
-                case VT_UI4: sym_info->Value = (ULONG)V_UI4(&data->u.value); break;
-                case VT_UI2: sym_info->Value = (ULONG)V_UI2(&data->u.value); break;
-                case VT_UI1: sym_info->Value = (ULONG)V_UI1(&data->u.value); break;
-                case VT_BYREF: sym_info->Value = (ULONG64)(DWORD_PTR)V_BYREF(&data->u.value); break;
+                case VT_I8:  sym_info->Value = (LONG64)V_I8(&data->u.value); break;
+                case VT_I4:  sym_info->Value = (LONG64)V_I4(&data->u.value); break;
+                case VT_I2:  sym_info->Value = (LONG64)V_I2(&data->u.value); break;
+                case VT_I1:  sym_info->Value = (LONG64)V_I1(&data->u.value); break;
+                case VT_UINT:sym_info->Value = V_UINT(&data->u.value); break;
+                case VT_UI8: sym_info->Value = V_UI8(&data->u.value); break;
+                case VT_UI4: sym_info->Value = V_UI4(&data->u.value); break;
+                case VT_UI2: sym_info->Value = V_UI2(&data->u.value); break;
+                case VT_UI1: sym_info->Value = V_UI1(&data->u.value); break;
+                case VT_BYREF: sym_info->Value = (DWORD_PTR)V_BYREF(&data->u.value); break;
                 case VT_EMPTY: sym_info->Value = 0; break;
                 default:
                     FIXME("Unsupported variant type (%u)\n", V_VT(&data->u.value));
