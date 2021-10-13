@@ -838,6 +838,7 @@ static int get_poll_flags( struct sock *sock, int event )
 
 static void complete_async_poll( struct poll_req *req, unsigned int status )
 {
+    struct poll_socket_output *output = req->output;
     unsigned int i;
 
     for (i = 0; i < req->count; ++i)
@@ -849,8 +850,8 @@ static void complete_async_poll( struct poll_req *req, unsigned int status )
     }
 
     /* pass 0 as result; client will set actual result size */
-    async_request_complete( req->async, status, 0, req->count * sizeof(*req->output), req->output );
     req->output = NULL;
+    async_request_complete( req->async, status, 0, req->count * sizeof(*output), output );
 }
 
 static void complete_async_polls( struct sock *sock, int event, int error )
