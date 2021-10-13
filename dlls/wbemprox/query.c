@@ -1395,7 +1395,8 @@ HRESULT put_propval( const struct view *view, UINT index, const WCHAR *name, VAR
 HRESULT get_properties( const struct view *view, UINT index, LONG flags, SAFEARRAY **props )
 {
     static const WCHAR * const system_props[] =
-        { L"__GENUS", L"__CLASS", L"__RELPATH", L"__PROPERTY_COUNT", L"__SERVER", L"__NAMESPACE", L"__PATH" };
+        { L"__GENUS", L"__CLASS", L"__RELPATH", L"__PROPERTY_COUNT", L"__DERIVATION", L"__SERVER", L"__NAMESPACE",
+          L"__PATH" };
     SAFEARRAY *sa;
     BSTR str;
     UINT i, table_index, result_index, count = 0;
