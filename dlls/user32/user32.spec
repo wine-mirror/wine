@@ -692,7 +692,7 @@
 @ stdcall SetProcessDefaultLayout(long)
 @ stdcall SetProcessDpiAwarenessContext(long)
 @ stdcall SetProcessDpiAwarenessInternal(long)
-@ stdcall SetProcessWindowStation(long)
+@ stdcall SetProcessWindowStation(long) NtUserSetProcessWindowStation
 @ stdcall SetProgmanWindow (long)
 @ stdcall SetPropA(long str long)
 @ stdcall SetPropW(long wstr long)

@@ -1221,7 +1221,7 @@
 @ stub NtUserSetProcessMousewheelRoutingMode
 @ stub NtUserSetProcessRestrictionExemption
 @ stub NtUserSetProcessUIAccessZorder
-@ stub NtUserSetProcessWindowStation
+@ stdcall -syscall NtUserSetProcessWindowStation(long)
 @ stub NtUserSetProp
 @ stub NtUserSetScrollInfo
 @ stub NtUserSetSensorPresence

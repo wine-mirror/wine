@@ -24,5 +24,6 @@
 
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
+BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 
 #endif /* _NTUSER_ */

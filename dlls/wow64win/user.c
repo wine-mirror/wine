@@ -38,3 +38,10 @@ NTSTATUS WINAPI wow64_NtUserGetProcessWindowStation( UINT *args )
 {
     return HandleToUlong( NtUserGetProcessWindowStation() );
 }
+
+NTSTATUS WINAPI wow64_NtUserSetProcessWindowStation( UINT *args )
+{
+    HWINSTA handle = get_handle( &args );
+
+    return NtUserSetProcessWindowStation( handle );
+}

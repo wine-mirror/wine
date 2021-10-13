@@ -295,7 +295,7 @@ static void winstation_init(void)
         handle = CreateWindowStationW( winstation ? winstation : L"WinSta0", 0, WINSTA_ALL_ACCESS, NULL );
         if (handle)
         {
-            SetProcessWindowStation( handle );
+            NtUserSetProcessWindowStation( handle );
             /* only WinSta0 is visible */
             if (!winstation || !wcsicmp( winstation, L"WinSta0" ))
             {

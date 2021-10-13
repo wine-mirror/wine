@@ -59,3 +59,19 @@ HWINSTA WINAPI NtUserGetProcessWindowStation(void)
     SERVER_END_REQ;
     return ret;
 }
+
+/***********************************************************************
+ *           NtUserSetProcessWindowStation  (win32u.@)
+ */
+BOOL WINAPI NtUserSetProcessWindowStation( HWINSTA handle )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( set_process_winstation )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
