@@ -4758,9 +4758,6 @@ static void test_simple_joystick(void)
     todo_wine
     ok( hr == DIERR_UNSUPPORTED, "Escape returned: %#x\n", hr );
 
-    /* FIXME: we have to wait a bit because Wine DInput internal thread keeps a reference */
-    Sleep( 100 );
-
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %d\n", ref );
 
@@ -7226,9 +7223,6 @@ static void test_force_feedback_joystick( void )
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#x\n", hr );
     set_hid_expect( file, NULL, 0 );
-
-    /* FIXME: we have to wait a bit because Wine DInput internal thread keeps a reference */
-    Sleep( 100 );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %d\n", ref );

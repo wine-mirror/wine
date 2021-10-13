@@ -1381,8 +1381,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
                 mouse_hook = NULL;
             }
 
-            if (finished_event)
-                SetEvent(finished_event);
+            SetEvent(finished_event);
         }
     }
 
@@ -1504,17 +1503,13 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface, BOOL acquired)
             WARN( "Unable to (un)register raw device %x:%x\n", dev->raw_device.usUsagePage, dev->raw_device.usUsage );
     }
 
-    if (acquired)
-        hook_change_finished_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    hook_change_finished_event = CreateEventW( NULL, FALSE, FALSE, NULL );
     PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, (LPARAM)hook_change_finished_event );
 
     LeaveCriticalSection(&dinput_hook_crit);
 
-    if (acquired)
-    {
-        WaitForSingleObject(hook_change_finished_event, INFINITE);
-        CloseHandle(hook_change_finished_event);
-    }
+    WaitForSingleObject(hook_change_finished_event, INFINITE);
+    CloseHandle(hook_change_finished_event);
 }
 
 void check_dinput_events(void)
