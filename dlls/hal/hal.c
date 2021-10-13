@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
 #ifdef __i386__
 
-#ifndef _WIN32
+#ifdef __ASM_USE_FASTCALL_WRAPPER
 
 extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
 __ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
@@ -53,12 +53,12 @@ __ASM_STDCALL_FUNC( wrap_fastcall_func2, 12,
 #define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
 #define call_fastcall_func2(func,a,b) wrap_fastcall_func2(func,a,b)
 
-#else  /* _WIN32 */
+#else  /* __ASM_USE_FASTCALL_WRAPPER */
 
 #define call_fastcall_func1(func,a) func(a)
 #define call_fastcall_func2(func,a,b) func(a,b)
 
-#endif  /* _WIN32 */
+#endif  /* __ASM_USE_FASTCALL_WRAPPER */
 
 DEFINE_FASTCALL1_WRAPPER( ExAcquireFastMutex )
 void FASTCALL ExAcquireFastMutex( FAST_MUTEX *mutex )

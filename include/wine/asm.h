@@ -119,6 +119,7 @@
 
 #if defined(__i386__) && !defined(_WIN32)
 
+# define __ASM_USE_FASTCALL_WRAPPER
 # define DEFINE_FASTCALL1_WRAPPER(func) \
     __ASM_FASTCALL_FUNC( func, 4, \
                         "popl %eax\n\t"  \
@@ -144,7 +145,7 @@
 
 #if defined(__i386__) && !defined(__MINGW32__) && (!defined(_MSC_VER) || !defined(__clang__))
 
-#define __ASM_USE_THISCALL_WRAPPER
+# define __ASM_USE_THISCALL_WRAPPER
 # ifdef _MSC_VER
 #  define DEFINE_THISCALL_WRAPPER(func,args) \
     __declspec(naked) void __thiscall_##func(void) \

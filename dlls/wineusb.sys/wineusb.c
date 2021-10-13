@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
-#if defined(__i386__) && !defined(_WIN32)
+#ifdef __ASM_USE_FASTCALL_WRAPPER
 
 extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
 __ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
