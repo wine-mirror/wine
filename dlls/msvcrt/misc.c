@@ -490,7 +490,7 @@ unsigned short CDECL _byteswap_ushort(unsigned short s)
 /*********************************************************************
  * _byteswap_ulong (MSVCR80.@)
  */
-ULONG CDECL _byteswap_ulong(ULONG l)
+__msvcrt_ulong CDECL _byteswap_ulong(__msvcrt_ulong l)
 {
     return (l<<24) + ((l<<8)&0xFF0000) + ((l>>8)&0xFF00) + (l>>24);
 }
