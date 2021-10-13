@@ -1006,6 +1006,19 @@ static HRESULT get_system_propval( const struct view *view, UINT table_index, UI
         if (type) *type = CIM_STRING;
         return S_OK;
     }
+    if (!wcsicmp( name, L"__DERIVATION" ))
+    {
+        if (ret)
+        {
+            SAFEARRAY *sa;
+            FIXME( "returning empty array for __DERIVATION\n" );
+            if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, 0 ))) return E_OUTOFMEMORY;
+            V_VT( ret ) = VT_BSTR | VT_ARRAY;
+            V_ARRAY( ret ) = sa;
+        }
+        if (type) *type = CIM_STRING | CIM_FLAG_ARRAY;
+        return S_OK;
+    }
     FIXME("system property %s not implemented\n", debugstr_w(name));
     return WBEM_E_NOT_FOUND;
 }
