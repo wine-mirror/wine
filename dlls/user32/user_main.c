@@ -303,7 +303,7 @@ static void winstation_init(void)
                 flags.fInherit  = FALSE;
                 flags.fReserved = FALSE;
                 flags.dwFlags   = WSF_VISIBLE;
-                SetUserObjectInformationW( handle, UOI_FLAGS, &flags, sizeof(flags) );
+                NtUserSetObjectInformation( handle, UOI_FLAGS, &flags, sizeof(flags) );
             }
         }
     }

@@ -86,3 +86,13 @@ NTSTATUS WINAPI wow64_NtUserGetObjectInformation( UINT *args )
 
     return NtUserGetObjectInformation( handle, index, info, len, needed );
 }
+
+NTSTATUS WINAPI wow64_NtUserSetObjectInformation( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    INT index = get_ulong( &args );
+    void *info = get_ptr( &args );
+    DWORD len = get_ulong( &args );
+
+    return NtUserSetObjectInformation( handle, index, info, len );
+}

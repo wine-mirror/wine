@@ -461,33 +461,7 @@ BOOL WINAPI GetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
  */
 BOOL WINAPI SetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DWORD len )
 {
-    return SetUserObjectInformationW( handle, index, info, len );
-}
-
-
-/******************************************************************************
- *              SetUserObjectInformationW   (USER32.@)
- */
-BOOL WINAPI SetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DWORD len )
-{
-    BOOL ret;
-    const USEROBJECTFLAGS *obj_flags = info;
-
-    if (index != UOI_FLAGS || !info || len < sizeof(*obj_flags))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    /* FIXME: inherit flag */
-    SERVER_START_REQ( set_user_object_info )
-    {
-        req->handle    = wine_server_obj_handle( handle );
-        req->flags     = SET_USER_OBJECT_SET_FLAGS;
-        req->obj_flags = obj_flags->dwFlags;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return NtUserSetObjectInformation( handle, index, info, len );
 }
 
 

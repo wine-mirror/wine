@@ -246,3 +246,28 @@ BOOL WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
         return FALSE;
     }
 }
+
+/***********************************************************************
+ *           NtUserSetObjectInformation   (win32u.@)
+ */
+BOOL WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len )
+{
+    BOOL ret;
+    const USEROBJECTFLAGS *obj_flags = info;
+
+    if (index != UOI_FLAGS || !info || len < sizeof(*obj_flags))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    /* FIXME: inherit flag */
+    SERVER_START_REQ( set_user_object_info )
+    {
+        req->handle    = wine_server_obj_handle( handle );
+        req->flags     = SET_USER_OBJECT_SET_FLAGS;
+        req->obj_flags = obj_flags->dwFlags;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}

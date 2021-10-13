@@ -1213,7 +1213,7 @@
 @ stub NtUserSetMirrorRendering
 @ stub NtUserSetMonitorWorkArea
 @ stub NtUserSetMouseInputRateLimitingTimer
-@ stub NtUserSetObjectInformation
+@ stdcall -syscall NtUserSetObjectInformation(long long ptr long)
 @ stub NtUserSetParent
 @ stub NtUserSetPrecisionTouchPadConfiguration
 @ stub NtUserSetProcessDpiAwarenessContext
