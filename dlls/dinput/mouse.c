@@ -464,84 +464,6 @@ static void warp_check( SysMouseImpl* This, BOOL force )
 
 
 /******************************************************************************
-  *     Acquire : gets exclusive control of the mouse
-  */
-static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    POINT point;
-    HRESULT res;
-
-    TRACE("(this=%p)\n",This);
-
-    if ((res = IDirectInputDevice2WImpl_Acquire(iface)) != DI_OK) return res;
-
-    /* Init the mouse state */
-    GetCursorPos( &point );
-    if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
-    {
-      This->m_state.lX = point.x;
-      This->m_state.lY = point.y;
-    } else {
-      This->m_state.lX = 0;
-      This->m_state.lY = 0;
-      This->org_coords = point;
-    }
-    This->m_state.lZ = 0;
-    This->m_state.rgbButtons[0] = GetKeyState(VK_LBUTTON) & 0x80;
-    This->m_state.rgbButtons[1] = GetKeyState(VK_RBUTTON) & 0x80;
-    This->m_state.rgbButtons[2] = GetKeyState(VK_MBUTTON) & 0x80;
-
-    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
-    {
-        ShowCursor(FALSE); /* hide cursor */
-        warp_check( This, TRUE );
-    }
-    else if (This->warp_override == WARP_FORCE_ON)
-    {
-        /* Need a window to warp mouse in. */
-        if (!This->base.win) This->base.win = GetDesktopWindow();
-        warp_check( This, TRUE );
-    }
-    else if (This->clipped)
-    {
-        ClipCursor( NULL );
-        This->clipped = FALSE;
-    }
-
-    return DI_OK;
-}
-
-/******************************************************************************
-  *     Unacquire : frees the mouse
-  */
-static HRESULT WINAPI SysMouseWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    HRESULT res;
-
-    TRACE("(this=%p)\n",This);
-
-    if ((res = IDirectInputDevice2WImpl_Unacquire(iface)) != DI_OK) return res;
-
-    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
-    {
-        ClipCursor(NULL);
-        ShowCursor(TRUE); /* show cursor */
-        This->clipped = FALSE;
-    }
-
-    /* And put the mouse cursor back where it was at acquire time */
-    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE || This->warp_override == WARP_FORCE_ON)
-    {
-        TRACE("warping mouse back to %s\n", wine_dbgstr_point(&This->org_coords));
-        SetCursorPos(This->org_coords.x, This->org_coords.y);
-    }
-
-    return DI_OK;
-}
-
-/******************************************************************************
   *     GetDeviceState : returns the "state" of the mouse.
   *
   *   For the moment, only the "standard" return structure (DIMOUSESTATE) is
@@ -674,6 +596,80 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
 
     _dump_OBJECTINSTANCEW(pdidoi);
     return res;
+}
+
+static HRESULT WINAPI SysMouseWImpl_Acquire( IDirectInputDevice8W *iface )
+{
+    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    POINT point;
+    HRESULT res;
+
+    TRACE( "iface %p\n", iface );
+
+    if ((res = IDirectInputDevice2WImpl_Acquire( iface )) != DI_OK) return res;
+
+    /* Init the mouse state */
+    GetCursorPos( &point );
+    if (impl->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
+    {
+        impl->m_state.lX = point.x;
+        impl->m_state.lY = point.y;
+    }
+    else
+    {
+        impl->m_state.lX = 0;
+        impl->m_state.lY = 0;
+        impl->org_coords = point;
+    }
+    impl->m_state.lZ = 0;
+    impl->m_state.rgbButtons[0] = GetKeyState( VK_LBUTTON ) & 0x80;
+    impl->m_state.rgbButtons[1] = GetKeyState( VK_RBUTTON ) & 0x80;
+    impl->m_state.rgbButtons[2] = GetKeyState( VK_MBUTTON ) & 0x80;
+
+    if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
+    {
+        ShowCursor( FALSE ); /* hide cursor */
+        warp_check( impl, TRUE );
+    }
+    else if (impl->warp_override == WARP_FORCE_ON)
+    {
+        /* Need a window to warp mouse in. */
+        if (!impl->base.win) impl->base.win = GetDesktopWindow();
+        warp_check( impl, TRUE );
+    }
+    else if (impl->clipped)
+    {
+        ClipCursor( NULL );
+        impl->clipped = FALSE;
+    }
+
+    return DI_OK;
+}
+
+static HRESULT WINAPI SysMouseWImpl_Unacquire( IDirectInputDevice8W *iface )
+{
+    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT res;
+
+    TRACE( "iface %p\n", iface );
+
+    if ((res = IDirectInputDevice2WImpl_Unacquire( iface )) != DI_OK) return res;
+
+    if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
+    {
+        ClipCursor( NULL );
+        ShowCursor( TRUE ); /* show cursor */
+        impl->clipped = FALSE;
+    }
+
+    /* And put the mouse cursor back where it was at acquire time */
+    if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE || impl->warp_override == WARP_FORCE_ON)
+    {
+        TRACE( "warping mouse back to %s\n", wine_dbgstr_point( &impl->org_coords ) );
+        SetCursorPos( impl->org_coords.x, impl->org_coords.y );
+    }
+
+    return DI_OK;
 }
 
 static const IDirectInputDevice8WVtbl SysMouseWvt =
