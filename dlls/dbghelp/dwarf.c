@@ -3652,10 +3652,7 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk *csw, ULONG_PTR ip,
     struct module_pair pair;
     struct frame_info info;
 
-    if (!(pair.pcs = process_find_by_handle(csw->hProcess)) ||
-        !(pair.requested = module_find_by_addr(pair.pcs, ip, DMT_UNKNOWN)) ||
-        !module_get_debug(&pair))
-        return FALSE;
+    if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
     if (!dwarf2_fetch_frame_info(pair.effective, csw->cpu, ip, &info)) return FALSE;
 
     /* if at very beginning of function, return and use default unwinder */

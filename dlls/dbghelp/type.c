@@ -483,9 +483,7 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
           hProcess, wine_dbgstr_longlong(BaseOfDll), EnumSymbolsCallback,
           UserContext);
 
-    if (!(pair.pcs = process_find_by_handle(hProcess))) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
 
     sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
     sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
@@ -1007,16 +1005,7 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase,
 {
     struct module_pair  pair;
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-
-    pair.requested = module_find_by_addr(pair.pcs, ModBase, DMT_UNKNOWN);
-    if (!module_get_debug(&pair))
-    {
-        FIXME("Someone didn't properly set ModBase (%s)\n", wine_dbgstr_longlong(ModBase));
-        return FALSE;
-    }
-
+    if (!module_init_pair(&pair, hProcess, ModBase)) return FALSE;
     return symt_get_info(pair.effective, symt_index2ptr(pair.effective, TypeId), GetType, pInfo);
 }
 
@@ -1031,10 +1020,7 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
     struct symt*        type;
     DWORD64             size;
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
     type = symt_find_type_by_name(pair.effective, SymTagNull, Name);
     if (!type) return FALSE;
     Symbol->Index = Symbol->TypeIndex = symt_ptr2index(pair.effective, type);

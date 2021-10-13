@@ -1363,10 +1363,7 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
     struct module_pair  pair;
     struct symt_ht*     sym;
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, Address, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, Address)) return FALSE;
     if ((sym = symt_find_nearest(pair.effective, Address)) == NULL) return FALSE;
 
     symt_fill_sym_info(&pair, NULL, &sym->symt, Symbol);
@@ -1717,10 +1714,7 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
     struct symt_ht*             symt;
     struct symt_function*       func;
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, addr, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
     if ((symt = symt_find_nearest(pair.effective, addr)) == NULL) return FALSE;
 
     if (symt->symt.tag != SymTagFunction) return FALSE;
@@ -1862,10 +1856,7 @@ static BOOL symt_get_func_line_prev(HANDLE hProcess, struct internal_line_t* int
     struct line_info*   li;
     struct line_info*   srcli;
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, addr, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
 
     if (key == NULL) return FALSE;
 
@@ -1944,10 +1935,7 @@ static BOOL symt_get_func_line_next(HANDLE hProcess, struct internal_line_t* int
     struct line_info*   srcli;
 
     if (key == NULL) return FALSE;
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, addr, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
 
     /* search current source file */
     for (srcli = key; !srcli->is_source_file; srcli--);
@@ -2344,10 +2332,7 @@ BOOL WINAPI SymAddSymbol(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR name,
 
     TRACE("(%p %s %s %u)\n", hProcess, wine_dbgstr_a(name), wine_dbgstr_longlong(addr), size);
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
-    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
+    if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
 
     return symt_new_custom(pair.effective, name, addr, size) != NULL;
 }
@@ -2400,11 +2385,8 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     if (!cb) return FALSE;
     if (!(dbghelp_options & SYMOPT_LOAD_LINES)) return TRUE;
 
-    pair.pcs = process_find_by_handle(hProcess);
-    if (!pair.pcs) return FALSE;
+    if (!module_init_pair(&pair, hProcess, base)) return FALSE;
     if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", compiland);
-    pair.requested = module_find_by_addr(pair.pcs, base, DMT_UNKNOWN);
-    if (!module_get_debug(&pair)) return FALSE;
     if (!(srcmask = file_regex(srcfile))) return FALSE;
 
     sci.SizeOfStruct = sizeof(sci);

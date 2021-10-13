@@ -3199,10 +3199,7 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
     char*                       strbase;
     BOOL                        ret = TRUE;
 
-    if (!(pair.pcs = process_find_by_handle(csw->hProcess)) ||
-        !(pair.requested = module_find_by_addr(pair.pcs, ip, DMT_UNKNOWN)) ||
-        !module_get_debug(&pair))
-        return FALSE;
+    if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
     if (!pair.effective->format_info[DFI_PDB]) return FALSE;
     pdb_info = pair.effective->format_info[DFI_PDB]->u.pdb_info;
     TRACE("searching %lx => %lx\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);

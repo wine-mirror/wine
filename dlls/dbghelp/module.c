@@ -262,6 +262,13 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     return module;
 }
 
+BOOL module_init_pair(struct module_pair* pair, HANDLE hProcess, DWORD64 addr)
+{
+    if (!(pair->pcs = process_find_by_handle(hProcess))) return FALSE;
+    pair->requested = module_find_by_addr(pair->pcs, addr, DMT_UNKNOWN);
+    return module_get_debug(pair);
+}
+
 /***********************************************************************
  *	module_find_by_nameW
  *
