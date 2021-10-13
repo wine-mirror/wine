@@ -995,7 +995,7 @@
 @ stub NtUserGetSharedWindowData
 @ stub NtUserGetSystemDpiForProcess
 @ stub NtUserGetSystemMenu
-@ stub NtUserGetThreadDesktop
+@ stdcall -syscall NtUserGetThreadDesktop(long)
 @ stub NtUserGetThreadState
 @ stub NtUserGetTitleBarInfo
 @ stub NtUserGetTopLevelWindow

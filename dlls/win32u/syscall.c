@@ -97,6 +97,7 @@ static void * const syscalls[] =
     NtUserCloseDesktop,
     NtUserCloseWindowStation,
     NtUserGetProcessWindowStation,
+    NtUserGetThreadDesktop,
     NtUserSetProcessWindowStation,
 };
 

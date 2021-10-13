@@ -2231,7 +2231,7 @@ HWND WINAPI GetDesktopWindow(void)
 
         SERVER_START_REQ( set_user_object_info )
         {
-            req->handle = wine_server_obj_handle( GetThreadDesktop(GetCurrentThreadId()) );
+            req->handle = wine_server_obj_handle( NtUserGetThreadDesktop(GetCurrentThreadId()) );
             req->flags  = SET_USER_OBJECT_GET_FULL_NAME;
             wine_server_set_reply( req, desktop, sizeof(desktop) - sizeof(WCHAR) );
             if (!wine_server_call( req ))

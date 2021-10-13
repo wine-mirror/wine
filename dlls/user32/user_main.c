@@ -307,7 +307,7 @@ static void winstation_init(void)
             }
         }
     }
-    if (buffer || !GetThreadDesktop( GetCurrentThreadId() ))
+    if (buffer || !NtUserGetThreadDesktop( GetCurrentThreadId() ))
     {
         handle = CreateDesktopW( desktop ? desktop : get_default_desktop(),
                                  NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );

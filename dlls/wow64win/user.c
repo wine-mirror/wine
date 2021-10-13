@@ -52,3 +52,10 @@ NTSTATUS WINAPI wow64_NtUserCloseDesktop( UINT *args )
 
     return NtUserCloseDesktop( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetThreadDesktop( UINT *args )
+{
+    DWORD thread = get_ulong( &args );
+
+    return HandleToUlong( NtUserGetThreadDesktop( thread ));
+}

@@ -25,6 +25,7 @@
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
+HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 
 #endif /* _NTUSER_ */
