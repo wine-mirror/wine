@@ -95,6 +95,7 @@ static void * const syscalls[] =
     NtGdiSwapBuffers,
     NtGdiTransformPoints,
     NtUserCloseWindowStation,
+    NtUserGetProcessWindowStation,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

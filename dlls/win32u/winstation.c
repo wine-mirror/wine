@@ -43,3 +43,19 @@ BOOL WINAPI NtUserCloseWindowStation( HWINSTA handle )
     SERVER_END_REQ;
     return ret;
 }
+
+/***********************************************************************
+ *           NtUSerGetProcessWindowStation  (win32u.@)
+ */
+HWINSTA WINAPI NtUserGetProcessWindowStation(void)
+{
+    HWINSTA ret = 0;
+
+    SERVER_START_REQ( get_process_winstation )
+    {
+        if (!wine_server_call_err( req ))
+            ret = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}

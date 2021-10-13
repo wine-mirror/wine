@@ -979,7 +979,7 @@
 @ stub NtUserGetPriorityClipboardFormat
 @ stub NtUserGetProcessDpiAwarenessContext
 @ stub NtUserGetProcessUIContextInformation
-@ stub NtUserGetProcessWindowStation
+@ stdcall -syscall NtUserGetProcessWindowStation()
 @ stub NtUserGetProp
 @ stub NtUserGetQueueStatus
 @ stub NtUserGetQueueStatusReadonly

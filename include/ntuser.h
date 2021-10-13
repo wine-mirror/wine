@@ -22,6 +22,7 @@
 #include <winuser.h>
 #include <winternl.h>
 
-BOOL WINAPI NtUserCloseWindowStation( HWINSTA handle );
+BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
+HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 
 #endif /* _NTUSER_ */

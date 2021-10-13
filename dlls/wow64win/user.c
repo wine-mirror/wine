@@ -33,3 +33,8 @@ NTSTATUS WINAPI wow64_NtUserCloseWindowStation( UINT *args )
 
     return NtUserCloseWindowStation( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetProcessWindowStation( UINT *args )
+{
+    return HandleToUlong( NtUserGetProcessWindowStation() );
+}

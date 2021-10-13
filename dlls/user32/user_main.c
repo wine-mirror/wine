@@ -290,7 +290,7 @@ static void winstation_init(void)
     }
 
     /* set winstation if explicitly specified, or if we don't have one yet */
-    if (buffer || !GetProcessWindowStation())
+    if (buffer || !NtUserGetProcessWindowStation())
     {
         handle = CreateWindowStationW( winstation ? winstation : L"WinSta0", 0, WINSTA_ALL_ACCESS, NULL );
         if (handle)

@@ -95,7 +95,7 @@ static const USER_DRIVER *load_driver(void)
         USEROBJECTFLAGS flags;
         HWINSTA winstation;
 
-        winstation = GetProcessWindowStation();
+        winstation = NtUserGetProcessWindowStation();
         if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
             || (flags.dwFlags & WSF_VISIBLE))
             driver->pCreateWindow = nodrv_CreateWindow;
