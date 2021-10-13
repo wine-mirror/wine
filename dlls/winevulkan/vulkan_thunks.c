@@ -4122,6 +4122,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *in = (const VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *)in_header;
+            VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->borderColorSwizzle = in->borderColorSwizzle;
+            out->borderColorSwizzleFromImage = in->borderColorSwizzleFromImage;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
         {
             const VkPhysicalDeviceExtendedDynamicStateFeaturesEXT *in = (const VkPhysicalDeviceExtendedDynamicStateFeaturesEXT *)in_header;
@@ -8248,6 +8265,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_4444_formats",
     "VK_EXT_astc_decode_mode",
     "VK_EXT_blend_operation_advanced",
+    "VK_EXT_border_color_swizzle",
     "VK_EXT_buffer_device_address",
     "VK_EXT_calibrated_timestamps",
     "VK_EXT_color_write_enable",
