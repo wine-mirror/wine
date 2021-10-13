@@ -286,7 +286,9 @@ static const struct column col_physicalmemory[] =
 };
 static const struct column col_pnpentity[] =
 {
-    { L"DeviceId", CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"DeviceId",             CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"Manufacturer",         CIM_STRING },
+    { L"Name",                 CIM_STRING },
 };
 static const struct column col_printer[] =
 {
@@ -701,6 +703,8 @@ struct record_physicalmemory
 struct record_pnpentity
 {
     const WCHAR *device_id;
+    const WCHAR *manufacturer;
+    const WCHAR *name;
 };
 struct record_printer
 {
@@ -3063,6 +3067,8 @@ static enum fill_status fill_pnpentity( struct table *table, const struct expr *
                     ARRAY_SIZE(device_id), NULL ))
         {
             rec->device_id = heap_strdupW( device_id );
+            rec->manufacturer = L"The Wine Project";
+            rec->name = L"Wine PnP Device";
 
             table->num_rows++;
             if (!match_row( table, table->num_rows - 1, cond, &status ))
