@@ -119,6 +119,22 @@ void dinput_hooks_unacquire_device(LPDIRECTINPUTDEVICE8W iface)
     LeaveCriticalSection( &dinput_hook_crit );
 }
 
+static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+
+    TRACE( "iface %p.\n", iface );
+
+    EnterCriticalSection( &impl->crit );
+    if (impl->acquired)
+    {
+        impl->vtbl->unacquire( iface );
+        impl->acquired = FALSE;
+        list_remove( &impl->entry );
+    }
+    LeaveCriticalSection( &impl->crit );
+}
+
 static HRESULT create_directinput_instance(REFIID riid, LPVOID *ppDI, IDirectInputImpl **out)
 {
     IDirectInputImpl *This = calloc( 1, sizeof(IDirectInputImpl) );
@@ -1248,7 +1264,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == dev->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
-            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &dev->IDirectInputDevice8W_iface );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
@@ -1256,7 +1272,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == dev->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
-            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &dev->IDirectInputDevice8W_iface );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_rawmouse_list, IDirectInputDeviceImpl, entry )
@@ -1264,7 +1280,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == dev->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
-            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &dev->IDirectInputDevice8W_iface );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_keyboard_list, IDirectInputDeviceImpl, entry )
@@ -1272,7 +1288,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == dev->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
-            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &dev->IDirectInputDevice8W_iface );
         }
     }
     LeaveCriticalSection( &dinput_hook_crit );
@@ -1309,7 +1325,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
                 if (impl->read_event == events[ret])
                 {
                     hr = impl->vtbl->read( &impl->IDirectInputDevice8W_iface );
-                    if (FAILED(hr)) list_remove( &impl->entry );
+                    if (FAILED( hr )) dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
                     break;
                 }
             }

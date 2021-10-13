@@ -1573,7 +1573,6 @@ static HRESULT hid_joystick_internal_read( IDirectInputDevice8W *iface )
         WARN( "GetOverlappedResult/ReadFile failed, error %u\n", GetLastError() );
         CloseHandle(impl->device);
         impl->device = INVALID_HANDLE_VALUE;
-        impl->base.acquired = FALSE;
         hr = DIERR_INPUTLOST;
     }
     LeaveCriticalSection( &impl->base.crit );
