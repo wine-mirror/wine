@@ -1839,6 +1839,14 @@ BOOL codeview_dump_symbols(const void* root, unsigned long size)
                    get_varflags(sym->file_static_v3.varflags));
             break;
 
+        case S_UNAMESPACE_ST:
+            printf("UNameSpace V2 '%s'\n", p_string(&sym->unamespace_v2.pname));
+            break;
+
+        case S_UNAMESPACE:
+            printf("UNameSpace V3 '%s'\n", sym->unamespace_v3.name);
+            break;
+
         default:
             printf("\n\t\t>>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");

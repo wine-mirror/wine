@@ -1958,6 +1958,20 @@ union codeview_symbol
         unsigned short          varflags;
         char                    name[1];
     } file_static_v3;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        struct p_string         pname;
+    } unamespace_v2;
+
+    struct
+    {
+        unsigned short int      len;
+        unsigned short int      id;
+        unsigned char           name[1];
+    } unamespace_v3;
 };
 
 enum BinaryAnnotationOpcode
@@ -2031,6 +2045,7 @@ enum BinaryAnnotationOpcode
 #define S_GTHREAD32_ST  0x100f
 #define S_FRAMEPROC     0x1012
 #define S_COMPILE2_ST   0x1013
+#define S_UNAMESPACE_ST 0x1029
 
 #define S_OBJNAME       0x1101
 #define S_THUNK32       0x1102
