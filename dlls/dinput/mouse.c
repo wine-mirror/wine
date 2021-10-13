@@ -676,16 +676,6 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
-static HRESULT WINAPI SysMouseWImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
-                                                   LPDIACTIONFORMATW lpdiaf,
-                                                   LPCWSTR lpszUserName,
-                                                   DWORD dwFlags)
-{
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-
-    return _build_action_map(iface, lpdiaf, lpszUserName, dwFlags, DIMOUSE_MASK, &c_dfDIMouse2);
-}
-
 static HRESULT WINAPI SysMouseWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                  LPDIACTIONFORMATW lpdiaf,
                                                  LPCWSTR lpszUserName,
@@ -728,7 +718,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_SendDeviceData,
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
-    SysMouseWImpl_BuildActionMap,
+    IDirectInputDevice8WImpl_BuildActionMap,
     SysMouseWImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };

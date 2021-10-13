@@ -1385,16 +1385,6 @@ static HRESULT WINAPI hid_joystick_Poll( IDirectInputDevice8W *iface )
     return hr;
 }
 
-static HRESULT WINAPI hid_joystick_BuildActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
-                                                   const WCHAR *username, DWORD flags )
-{
-    FIXME( "iface %p, format %p, username %s, flags %#x stub!\n", iface, format, debugstr_w(username), flags );
-
-    if (!format) return DIERR_INVALIDPARAM;
-
-    return DIERR_UNSUPPORTED;
-}
-
 static HRESULT WINAPI hid_joystick_SetActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
                                                  const WCHAR *username, DWORD flags )
 {
@@ -1443,7 +1433,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
     /*** IDirectInputDevice8 methods ***/
-    hid_joystick_BuildActionMap,
+    IDirectInputDevice8WImpl_BuildActionMap,
     hid_joystick_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo,
 };

@@ -827,68 +827,6 @@ static BOOL set_app_data(IDirectInputDeviceImpl *dev, int offset, UINT_PTR app_d
     return TRUE;
 }
 
-HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, DWORD devMask, LPCDIDATAFORMAT df)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    WCHAR username[MAX_PATH];
-    DWORD username_size = MAX_PATH;
-    int i;
-    BOOL load_success = FALSE, has_actions = FALSE;
-
-    /* Unless asked the contrary by these flags, try to load a previous mapping */
-    if (!(dwFlags & DIDBAM_HWDEFAULTS))
-    {
-        /* Retrieve logged user name if necessary */
-        if (lpszUserName == NULL)
-            GetUserNameW(username, &username_size);
-        else
-            lstrcpynW(username, lpszUserName, MAX_PATH);
-
-        load_success = load_mapping_settings(This, lpdiaf, username);
-    }
-
-    if (load_success) return DI_OK;
-
-    for (i=0; i < lpdiaf->dwNumActions; i++)
-    {
-        /* Don't touch a user configured action */
-        if (lpdiaf->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
-
-        if ((lpdiaf->rgoAction[i].dwSemantic & devMask) == devMask)
-        {
-            DWORD obj_id = semantic_to_obj_id(This, lpdiaf->rgoAction[i].dwSemantic);
-            DWORD type = DIDFT_GETTYPE(obj_id);
-            DWORD inst = DIDFT_GETINSTANCE(obj_id);
-
-            LPDIOBJECTDATAFORMAT odf;
-
-            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
-            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
-
-            /* Make sure the object exists */
-            odf = dataformat_to_odf_by_type(df, inst, type);
-
-            if (odf != NULL)
-            {
-                lpdiaf->rgoAction[i].dwObjID = obj_id;
-                lpdiaf->rgoAction[i].guidInstance = This->guid;
-                lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
-                has_actions = TRUE;
-            }
-        }
-        else if (!(dwFlags & DIDBAM_PRESERVE))
-        {
-            /* We must clear action data belonging to other devices */
-            memset(&lpdiaf->rgoAction[i].guidInstance, 0, sizeof(GUID));
-            lpdiaf->rgoAction[i].dwHow = DIAH_UNMAPPED;
-        }
-    }
-
-    if (!has_actions) return DI_NOEFFECT;
-
-    return  IDirectInputDevice8WImpl_BuildActionMap(iface, lpdiaf, lpszUserName, dwFlags);
-}
-
 HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, LPCDIDATAFORMAT df)
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
@@ -986,7 +924,7 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
         dps.wsz[0] = '\0';
     else
         lstrcpynW(dps.wsz, username, ARRAY_SIZE(dps.wsz));
-    IDirectInputDevice8_SetProperty(iface, DIPROP_USERNAME, &dps.diph);
+    IDirectInputDevice2WImpl_SetProperty(iface, DIPROP_USERNAME, &dps.diph);
 
     /* Save the settings to disk */
     save_mapping_settings(iface, lpdiaf, username);
@@ -1735,20 +1673,90 @@ HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8W 
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
-						       LPDIACTIONFORMATW lpdiaf,
-						       LPCWSTR lpszUserName,
-						       DWORD dwFlags)
+HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
+                                                        const WCHAR *username, DWORD flags )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", This, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-#define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
-	X(DIDBAM_DEFAULT)
-	X(DIDBAM_PRESERVE)
-	X(DIDBAM_INITIALIZE)
-	X(DIDBAM_HWDEFAULTS)
-#undef X
-  
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    BOOL load_success = FALSE, has_actions = FALSE;
+    DWORD genre, username_len = MAX_PATH;
+    WCHAR username_buf[MAX_PATH];
+    const DIDATAFORMAT *df;
+    DWORD devMask;
+    int i;
+
+    FIXME( "iface %p, format %p, username %s, flags %#x semi-stub!\n", iface, format,
+           debugstr_w(username), flags );
+
+    if (!format) return DIERR_INVALIDPARAM;
+
+    switch (GET_DIDEVICE_TYPE( impl->instance.dwDevType ))
+    {
+    case DIDEVTYPE_KEYBOARD:
+    case DI8DEVTYPE_KEYBOARD:
+        devMask = DIKEYBOARD_MASK;
+        df = &c_dfDIKeyboard;
+        break;
+    case DIDEVTYPE_MOUSE:
+    case DI8DEVTYPE_MOUSE:
+        devMask = DIMOUSE_MASK;
+        df = &c_dfDIMouse2;
+        break;
+    default:
+        devMask = DIGENRE_ANY;
+        df = impl->data_format.wine_df;
+        break;
+    }
+
+    /* Unless asked the contrary by these flags, try to load a previous mapping */
+    if (!(flags & DIDBAM_HWDEFAULTS))
+    {
+        /* Retrieve logged user name if necessary */
+        if (username == NULL) GetUserNameW( username_buf, &username_len );
+        else lstrcpynW( username_buf, username, MAX_PATH );
+        load_success = load_mapping_settings( impl, format, username_buf );
+    }
+
+    if (load_success) return DI_OK;
+
+    for (i = 0; i < format->dwNumActions; i++)
+    {
+        /* Don't touch a user configured action */
+        if (format->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
+
+        genre = format->rgoAction[i].dwSemantic & DIGENRE_ANY;
+        if (devMask == genre || (devMask == DIGENRE_ANY && genre != DIMOUSE_MASK && genre != DIKEYBOARD_MASK))
+        {
+            DWORD obj_id = semantic_to_obj_id( impl, format->rgoAction[i].dwSemantic );
+            DWORD type = DIDFT_GETTYPE( obj_id );
+            DWORD inst = DIDFT_GETINSTANCE( obj_id );
+
+            LPDIOBJECTDATAFORMAT odf;
+
+            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
+            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
+
+            /* Make sure the object exists */
+            odf = dataformat_to_odf_by_type( df, inst, type );
+
+            if (odf != NULL)
+            {
+                format->rgoAction[i].dwObjID = obj_id;
+                format->rgoAction[i].guidInstance = impl->guid;
+                format->rgoAction[i].dwHow = DIAH_DEFAULT;
+                has_actions = TRUE;
+            }
+        }
+        else if (!(flags & DIDBAM_PRESERVE))
+        {
+            /* We must clear action data belonging to other devices */
+            memset( &format->rgoAction[i].guidInstance, 0, sizeof(GUID) );
+            format->rgoAction[i].dwHow = DIAH_UNMAPPED;
+        }
+    }
+
+    if (!has_actions) return DI_NOEFFECT;
+    if (flags & (DIDBAM_DEFAULT|DIDBAM_PRESERVE|DIDBAM_INITIALIZE|DIDBAM_HWDEFAULTS))
+        FIXME("Unimplemented flags %#x\n", flags);
     return DI_OK;
 }
 
