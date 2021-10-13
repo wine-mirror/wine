@@ -1308,7 +1308,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
             {
                 if (impl->read_event == events[ret])
                 {
-                    hr = impl->read_callback( &impl->IDirectInputDevice8W_iface );
+                    hr = impl->vtbl->read( &impl->IDirectInputDevice8W_iface );
                     if (FAILED(hr)) list_remove( &impl->entry );
                     break;
                 }
@@ -1343,7 +1343,7 @@ static DWORD WINAPI hook_thread_proc(void *param)
             mice_cnt = list_count( &acquired_mouse_list );
             LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, IDirectInputDeviceImpl, entry )
             {
-                if (!impl->read_event || !impl->read_callback) continue;
+                if (!impl->read_event || !impl->vtbl->read) continue;
                 if (events_count >= ARRAY_SIZE(events)) break;
                 events[events_count++] = impl->read_event;
             }

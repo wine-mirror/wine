@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_DINPUT_KEYBOARD_MAX_KEYS 256
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt;
+static const struct dinput_device_vtbl keyboard_internal_vtbl;
 
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
@@ -199,7 +200,8 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     int i, idx = 0;
     HRESULT hr;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, rguid, dinput, (void **)&newDevice )))
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &keyboard_internal_vtbl,
+                                               rguid, dinput, (void **)&newDevice )))
         return hr;
     df = newDevice->base.data_format.wine_df;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
@@ -393,22 +395,24 @@ static HRESULT WINAPI SysKeyboardWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
+static HRESULT keyboard_internal_acquire( IDirectInputDevice8W *iface )
 {
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-    HRESULT res;
-
-    TRACE("(%p)\n", This);
-
-    res = IDirectInputDevice2WImpl_Acquire(iface);
-    if (res == DI_OK)
-    {
-        TRACE("clearing keystate\n");
-        memset(This->DInputKeyState, 0, sizeof(This->DInputKeyState));
-    }
-
-    return res;
+    return DI_OK;
 }
+
+static HRESULT keyboard_internal_unacquire( IDirectInputDevice8W *iface )
+{
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
+    memset( This->DInputKeyState, 0, sizeof(This->DInputKeyState) );
+    return DI_OK;
+}
+
+static const struct dinput_device_vtbl keyboard_internal_vtbl =
+{
+    NULL,
+    keyboard_internal_acquire,
+    keyboard_internal_unacquire,
+};
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
@@ -419,7 +423,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice2WImpl_EnumObjects,
     SysKeyboardWImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
-    SysKeyboardWImpl_Acquire,
+    IDirectInputDevice2WImpl_Acquire,
     IDirectInputDevice2WImpl_Unacquire,
     SysKeyboardWImpl_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,

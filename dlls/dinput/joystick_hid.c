@@ -916,83 +916,46 @@ static HRESULT WINAPI hid_joystick_SetProperty( IDirectInputDevice8W *iface, con
     return DI_OK;
 }
 
-static HRESULT WINAPI hid_joystick_Acquire( IDirectInputDevice8W *iface )
+static HRESULT hid_joystick_internal_acquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG report_len = impl->caps.InputReportByteLength;
-    HRESULT hr = DI_OK;
     BOOL ret;
 
-    TRACE( "iface %p.\n", iface );
-
-    EnterCriticalSection( &impl->base.crit );
-    if (impl->base.acquired)
-        hr = DI_NOEFFECT;
-    else if (!impl->base.data_format.user_df)
-        hr = DIERR_INVALIDPARAM;
-    else if ((impl->base.dwCoopLevel & DISCL_FOREGROUND) && impl->base.win != GetForegroundWindow())
-        hr = DIERR_OTHERAPPHASPRIO;
-    else if (impl->device == INVALID_HANDLE_VALUE)
+    if (impl->device == INVALID_HANDLE_VALUE)
     {
         impl->device = CreateFileW( impl->device_path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                     NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
-        if (impl->device == INVALID_HANDLE_VALUE) hr = DIERR_INPUTLOST;
+        if (impl->device == INVALID_HANDLE_VALUE) return DIERR_INPUTLOST;
     }
 
-    if (hr == DI_OK)
+    memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
+    impl->read_ovl.hEvent = impl->base.read_event;
+    ret = ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl );
+    if (!ret && GetLastError() != ERROR_IO_PENDING)
     {
-        memset( &impl->read_ovl, 0, sizeof(impl->read_ovl) );
-        impl->read_ovl.hEvent = impl->base.read_event;
-        ret = ReadFile( impl->device, impl->input_report_buf, report_len, NULL, &impl->read_ovl );
-        if (!ret && GetLastError() != ERROR_IO_PENDING)
-        {
-            CloseHandle( impl->device );
-            impl->device = INVALID_HANDLE_VALUE;
-            hr = DIERR_INPUTLOST;
-        }
-        else
-        {
-            impl->base.acquired = TRUE;
-            IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
-        }
+        CloseHandle( impl->device );
+        impl->device = INVALID_HANDLE_VALUE;
+        return DIERR_INPUTLOST;
     }
-    LeaveCriticalSection( &impl->base.crit );
-    if (hr != DI_OK) return hr;
 
-    dinput_hooks_acquire_device( iface );
-    check_dinput_hooks( iface, TRUE );
-
-    return hr;
+    IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
+    return DI_OK;
 }
 
-static HRESULT WINAPI hid_joystick_Unacquire( IDirectInputDevice8W *iface )
+static HRESULT hid_joystick_internal_unacquire( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    HRESULT hr = DI_OK;
     BOOL ret;
 
-    TRACE( "iface %p.\n", iface );
+    if (impl->device == INVALID_HANDLE_VALUE) return DI_NOEFFECT;
 
-    EnterCriticalSection( &impl->base.crit );
-    if (!impl->base.acquired) hr = DI_NOEFFECT;
-    else
-    {
-        if (impl->device != INVALID_HANDLE_VALUE)
-        {
-            ret = CancelIoEx( impl->device, &impl->read_ovl );
-            if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
-            else WaitForSingleObject( impl->base.read_event, INFINITE );
-        }
-        IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
-        impl->base.acquired = FALSE;
-    }
-    LeaveCriticalSection( &impl->base.crit );
-    if (hr != DI_OK) return hr;
+    ret = CancelIoEx( impl->device, &impl->read_ovl );
+    if (!ret) WARN( "CancelIoEx failed, last error %u\n", GetLastError() );
+    else WaitForSingleObject( impl->base.read_event, INFINITE );
 
-    dinput_hooks_unacquire_device( iface );
-    check_dinput_hooks( iface, FALSE );
-
-    return hr;
+    IDirectInputDevice8_SendForceFeedbackCommand( iface, DISFFC_RESET );
+    return DI_OK;
 }
 
 static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, DWORD len, void *ptr )
@@ -1396,8 +1359,8 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_EnumObjects,
     hid_joystick_GetProperty,
     hid_joystick_SetProperty,
-    hid_joystick_Acquire,
-    hid_joystick_Unacquire,
+    IDirectInputDevice2WImpl_Acquire,
+    IDirectInputDevice2WImpl_Unacquire,
     hid_joystick_GetDeviceState,
     IDirectInputDevice2WImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,
@@ -1532,7 +1495,7 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_value
     return DIENUM_CONTINUE;
 }
 
-static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
+static HRESULT hid_joystick_internal_read( IDirectInputDevice8W *iface )
 {
     static const DIPROPHEADER filter =
     {
@@ -1617,6 +1580,13 @@ static HRESULT hid_joystick_read_state( IDirectInputDevice8W *iface )
 
     return hr;
 }
+
+static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
+{
+    hid_joystick_internal_read,
+    hid_joystick_internal_acquire,
+    hid_joystick_internal_unacquire,
+};
 
 static DWORD device_type_for_version( DWORD type, DWORD version )
 {
@@ -2211,13 +2181,12 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     else
         return DIERR_DEVICENOTREG;
 
-    hr = direct_input_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl, guid,
-                                    dinput, (void **)&impl );
+    hr = direct_input_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl, &hid_joystick_internal_vtbl,
+                                    guid, dinput, (void **)&impl );
     if (FAILED(hr)) return hr;
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
-    impl->base.read_callback = hid_joystick_read_state;
 
     hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
                                    &attrs, &impl->caps, dinput->dwVersion );

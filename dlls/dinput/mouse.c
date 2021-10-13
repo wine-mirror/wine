@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_MOUSE_BUTTONS_INSTANCE  3
 
 static const IDirectInputDevice8WVtbl SysMouseWvt;
+static const struct dinput_device_vtbl mouse_internal_vtbl;
 
 typedef struct SysMouseImpl SysMouseImpl;
 
@@ -143,7 +144,8 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     HKEY hkey, appkey;
     HRESULT hr;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &SysMouseWvt, rguid, dinput, (void **)&newDevice )))
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &SysMouseWvt, &mouse_internal_vtbl,
+                                               rguid, dinput, (void **)&newDevice )))
         return hr;
     df = newDevice->base.data_format.wine_df;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
@@ -462,7 +464,6 @@ static void warp_check( SysMouseImpl* This, BOOL force )
     }
 }
 
-
 /******************************************************************************
   *     GetDeviceState : returns the "state" of the mouse.
   *
@@ -598,15 +599,10 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
-static HRESULT WINAPI SysMouseWImpl_Acquire( IDirectInputDevice8W *iface )
+static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
     POINT point;
-    HRESULT res;
-
-    TRACE( "iface %p\n", iface );
-
-    if ((res = IDirectInputDevice2WImpl_Acquire( iface )) != DI_OK) return res;
 
     /* Init the mouse state */
     GetCursorPos( &point );
@@ -646,14 +642,9 @@ static HRESULT WINAPI SysMouseWImpl_Acquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
-static HRESULT WINAPI SysMouseWImpl_Unacquire( IDirectInputDevice8W *iface )
+static HRESULT mouse_internal_unacquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
-    HRESULT res;
-
-    TRACE( "iface %p\n", iface );
-
-    if ((res = IDirectInputDevice2WImpl_Unacquire( iface )) != DI_OK) return res;
 
     if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
@@ -672,6 +663,13 @@ static HRESULT WINAPI SysMouseWImpl_Unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
+static const struct dinput_device_vtbl mouse_internal_vtbl =
+{
+    NULL,
+    mouse_internal_acquire,
+    mouse_internal_unacquire,
+};
+
 static const IDirectInputDevice8WVtbl SysMouseWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
@@ -681,8 +679,8 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_EnumObjects,
     SysMouseWImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,
-    SysMouseWImpl_Acquire,
-    SysMouseWImpl_Unacquire,
+    IDirectInputDevice2WImpl_Acquire,
+    IDirectInputDevice2WImpl_Unacquire,
     SysMouseWImpl_GetDeviceState,
     SysMouseWImpl_GetDeviceData,
     IDirectInputDevice2WImpl_SetDataFormat,

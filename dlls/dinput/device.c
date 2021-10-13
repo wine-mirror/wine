@@ -886,50 +886,56 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
  *	Acquire
  */
 
-HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
+HRESULT WINAPI IDirectInputDevice2WImpl_Acquire( IDirectInputDevice8W *iface )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    HRESULT res;
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr = DI_OK;
 
-    TRACE("(%p)\n", This);
+    TRACE( "iface %p.\n", iface );
 
-    if (!This->data_format.user_df) return DIERR_INVALIDPARAM;
-    if (This->dwCoopLevel & DISCL_FOREGROUND && This->win != GetForegroundWindow())
-        return DIERR_OTHERAPPHASPRIO;
+    EnterCriticalSection( &impl->crit );
+    if (impl->acquired)
+        hr = DI_NOEFFECT;
+    else if (!impl->data_format.user_df)
+        hr = DIERR_INVALIDPARAM;
+    else if ((impl->dwCoopLevel & DISCL_FOREGROUND) && impl->win != GetForegroundWindow())
+        hr = DIERR_OTHERAPPHASPRIO;
+    else
+    {
+        impl->acquired = TRUE;
+        if (FAILED(hr = impl->vtbl->acquire( iface ))) impl->acquired = FALSE;
+    }
+    LeaveCriticalSection( &impl->crit );
+    if (hr != DI_OK) return hr;
 
-    EnterCriticalSection(&This->crit);
-    res = This->acquired ? S_FALSE : DI_OK;
-    This->acquired = 1;
-    LeaveCriticalSection(&This->crit);
-    if (res != DI_OK) return res;
+    dinput_hooks_acquire_device( iface );
+    check_dinput_hooks( iface, TRUE );
 
-    dinput_hooks_acquire_device(iface);
-    check_dinput_hooks(iface, TRUE);
-
-    return res;
+    return hr;
 }
 
 /******************************************************************************
  *	Unacquire
  */
 
-HRESULT WINAPI IDirectInputDevice2WImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
+HRESULT WINAPI IDirectInputDevice2WImpl_Unacquire( IDirectInputDevice8W *iface )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    HRESULT res;
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr = DI_OK;
 
-    TRACE("(%p)\n", This);
+    TRACE( "iface %p.\n", iface );
 
-    EnterCriticalSection(&This->crit);
-    res = !This->acquired ? DI_NOEFFECT : DI_OK;
-    This->acquired = 0;
-    LeaveCriticalSection(&This->crit);
-    if (res != DI_OK) return res;
+    EnterCriticalSection( &impl->crit );
+    if (!impl->acquired) hr = DI_NOEFFECT;
+    else hr = impl->vtbl->unacquire( iface );
+    impl->acquired = FALSE;
+    LeaveCriticalSection( &impl->crit );
+    if (hr != DI_OK) return hr;
 
-    dinput_hooks_unacquire_device(iface);
-    check_dinput_hooks(iface, FALSE);
+    dinput_hooks_unacquire_device( iface );
+    check_dinput_hooks( iface, FALSE );
 
-    return res;
+    return hr;
 }
 
 /******************************************************************************
@@ -1787,7 +1793,7 @@ HRESULT WINAPI IDirectInputDevice8WImpl_GetImageInfo(LPDIRECTINPUTDEVICE8W iface
     return DI_OK;
 }
 
-HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtbl,
+HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtbl, const struct dinput_device_vtbl *internal_vtbl,
                                    const GUID *guid, IDirectInputImpl *dinput, void **out )
 {
     IDirectInputDeviceImpl *This;
@@ -1811,6 +1817,7 @@ HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *
     InitializeCriticalSection( &This->crit );
     This->dinput = dinput;
     IDirectInput_AddRef( &dinput->IDirectInput7A_iface );
+    This->vtbl = internal_vtbl;
 
     *out = This;
     return DI_OK;

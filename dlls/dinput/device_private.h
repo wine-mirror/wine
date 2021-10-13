@@ -55,6 +55,13 @@ typedef struct
 
 typedef HRESULT dinput_device_read_state( IDirectInputDevice8W *iface );
 
+struct dinput_device_vtbl
+{
+    HRESULT (*read)(IDirectInputDevice8W *);
+    HRESULT (*acquire)(IDirectInputDevice8W *);
+    HRESULT (*unacquire)(IDirectInputDevice8W *);
+};
+
 /* Device implementation */
 typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
 struct IDirectInputDeviceImpl
@@ -89,13 +96,13 @@ struct IDirectInputDeviceImpl
     int                         num_actions; /* number of actions mapped */
     ActionMap                  *action_map;  /* array of mappings */
 
-    /* internal device file reading */
-    HANDLE                    read_event;
-    dinput_device_read_state *read_callback;
+    /* internal device callbacks */
+    HANDLE read_event;
+    const struct dinput_device_vtbl *vtbl;
 };
 
-extern HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtbl, const GUID *guid,
-                                          IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
+extern HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtbl, const struct dinput_device_vtbl *internal_vtbl,
+                                          const GUID *guid, IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
 extern const IDirectInputDevice8AVtbl dinput_device_a_vtbl DECLSPEC_HIDDEN;
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
