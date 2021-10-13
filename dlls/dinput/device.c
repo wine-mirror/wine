@@ -1243,6 +1243,25 @@ ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
     return ref;
 }
 
+HRESULT WINAPI IDirectInputDevice2WImpl_GetCapabilities( IDirectInputDevice8W *iface, DIDEVCAPS *caps )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD size;
+
+    TRACE( "iface %p, caps %p.\n", iface, caps );
+
+    if (!caps) return E_POINTER;
+    if (caps->dwSize != sizeof(DIDEVCAPS_DX3) &&
+        caps->dwSize != sizeof(DIDEVCAPS))
+        return DIERR_INVALIDPARAM;
+
+    size = caps->dwSize;
+    memcpy( caps, &impl->caps, size );
+    caps->dwSize = size;
+
+    return DI_OK;
+}
+
 HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W iface, REFIID riid, LPVOID *ppobj)
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
@@ -1760,6 +1779,8 @@ HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *
     This->ref = 1;
     This->guid = *guid;
     This->instance.dwSize = sizeof(DIDEVICEINSTANCEW);
+    This->caps.dwSize = sizeof(DIDEVCAPS);
+    This->caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     This->data_format.wine_df = format;
     InitializeCriticalSection( &This->crit );
     This->dinput = dinput;

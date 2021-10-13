@@ -205,6 +205,9 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
     fill_keyboard_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion, subtype );
+    newDevice->base.caps.dwDevType = newDevice->base.instance.dwDevType;
+    newDevice->base.caps.dwFirmwareRevision = 100;
+    newDevice->base.caps.dwHardwareRevision = 100;
 
     /* Create copy of default data format */
     memcpy(df, &c_dfDIKeyboard, c_dfDIKeyboard.dwSize);
@@ -223,6 +226,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
+    newDevice->base.caps.dwButtons = idx;
 
     *out = newDevice;
     return DI_OK;
@@ -285,42 +289,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
 
     fill_DataFormat(ptr, len, This->DInputKeyState, &This->base.data_format);
     LeaveCriticalSection(&This->base.crit);
-
-    return DI_OK;
-}
-
-/******************************************************************************
-  *     GetCapabilities : get the device capabilities
-  */
-static HRESULT WINAPI SysKeyboardWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-    BYTE subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
-    DIDEVCAPS devcaps;
-
-    TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
-
-    if ((lpDIDevCaps->dwSize != sizeof(DIDEVCAPS)) && (lpDIDevCaps->dwSize != sizeof(DIDEVCAPS_DX3))) {
-        WARN("invalid parameter\n");
-        return DIERR_INVALIDPARAM;
-    }
-
-    devcaps.dwSize = lpDIDevCaps->dwSize;
-    devcaps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
-    if (This->base.dinput->dwVersion >= 0x0800)
-        devcaps.dwDevType = DI8DEVTYPE_KEYBOARD | (subtype << 8);
-    else
-        devcaps.dwDevType = DIDEVTYPE_KEYBOARD | (subtype << 8);
-    devcaps.dwAxes = 0;
-    devcaps.dwButtons = This->base.data_format.wine_df->dwNumObjs;
-    devcaps.dwPOVs = 0;
-    devcaps.dwFFSamplePeriod = 0;
-    devcaps.dwFFMinTimeResolution = 0;
-    devcaps.dwFirmwareRevision = 100;
-    devcaps.dwHardwareRevision = 100;
-    devcaps.dwFFDriverVersion = 0;
-
-    memcpy(lpDIDevCaps, &devcaps, lpDIDevCaps->dwSize);
 
     return DI_OK;
 }
@@ -469,7 +437,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice2WImpl_QueryInterface,
     IDirectInputDevice2WImpl_AddRef,
     IDirectInputDevice2WImpl_Release,
-    SysKeyboardWImpl_GetCapabilities,
+    IDirectInputDevice2WImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
     SysKeyboardWImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,

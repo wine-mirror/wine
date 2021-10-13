@@ -163,7 +163,6 @@ struct hid_joystick
 
     WCHAR device_path[MAX_PATH];
     HIDD_ATTRIBUTES attrs;
-    DIDEVCAPS dev_caps;
     HIDP_CAPS caps;
 
     struct extra_caps *input_extra_caps;
@@ -621,19 +620,6 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
     return ref;
 }
 
-static HRESULT WINAPI hid_joystick_GetCapabilities( IDirectInputDevice8W *iface, DIDEVCAPS *caps )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-
-    TRACE( "iface %p, caps %p.\n", iface, caps );
-
-    if (!caps) return E_POINTER;
-
-    *caps = impl->dev_caps;
-
-    return DI_OK;
-}
-
 struct enum_objects_params
 {
     LPDIENUMDEVICEOBJECTSCALLBACKW callback;
@@ -1075,7 +1061,7 @@ static HRESULT WINAPI hid_joystick_CreateEffect( IDirectInputDevice8W *iface, co
     if (!out) return E_POINTER;
     *out = NULL;
 
-    if (!(impl->dev_caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
     if (FAILED(hr = hid_joystick_effect_create( impl, out ))) return hr;
 
     hr = IDirectInputEffect_Initialize( *out, DINPUT_instance, impl->base.dinput->dwVersion, guid );
@@ -1184,7 +1170,7 @@ static HRESULT WINAPI hid_joystick_GetEffectInfo( IDirectInputDevice8W *iface, D
 
     if (!info) return E_POINTER;
     if (info->dwSize != sizeof(DIEFFECTINFOW)) return DIERR_INVALIDPARAM;
-    if (!(impl->dev_caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_DEVICENOTREG;
+    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_DEVICENOTREG;
 
     switch ((usage = effect_guid_to_usage( guid )))
     {
@@ -1345,7 +1331,7 @@ static HRESULT WINAPI hid_joystick_SendForceFeedbackCommand( IDirectInputDevice8
     default: return DIERR_INVALIDPARAM;
     }
 
-    if (!(impl->dev_caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
+    if (!(impl->base.caps.dwFlags & DIDC_FORCEFEEDBACK)) return DIERR_UNSUPPORTED;
 
     EnterCriticalSection( &impl->base.crit );
     if (!impl->base.acquired || !(impl->base.dwCoopLevel & DISCL_EXCLUSIVE))
@@ -1428,7 +1414,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_AddRef,
     hid_joystick_Release,
     /*** IDirectInputDevice methods ***/
-    hid_joystick_GetCapabilities,
+    IDirectInputDevice2WImpl_GetCapabilities,
     hid_joystick_EnumObjects,
     hid_joystick_GetProperty,
     hid_joystick_SetProperty,
@@ -1917,9 +1903,9 @@ static BOOL init_objects( struct hid_joystick *impl, struct hid_value_caps *caps
 
     format->dwNumObjs++;
     format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
-    if (instance->dwType & DIDFT_BUTTON) impl->dev_caps.dwButtons++;
-    if (instance->dwType & DIDFT_AXIS) impl->dev_caps.dwAxes++;
-    if (instance->dwType & DIDFT_POV) impl->dev_caps.dwPOVs++;
+    if (instance->dwType & DIDFT_BUTTON) impl->base.caps.dwButtons++;
+    if (instance->dwType & DIDFT_AXIS) impl->base.caps.dwAxes++;
+    if (instance->dwType & DIDFT_POV) impl->base.caps.dwPOVs++;
 
     if (instance->dwType & (DIDFT_BUTTON|DIDFT_AXIS|DIDFT_POV) &&
         (instance->wUsagePage == HID_USAGE_PAGE_GENERIC ||
@@ -2261,10 +2247,8 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
 
     impl->ref = 1;
     impl->base.instance = instance;
+    impl->base.caps.dwDevType = instance.dwDevType;
     impl->attrs = attrs;
-    impl->dev_caps.dwSize = sizeof(impl->dev_caps);
-    impl->dev_caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
-    impl->dev_caps.dwDevType = instance.dwDevType;
     list_init( &impl->effect_list );
 
     preparsed = (struct hid_preparsed_data *)impl->preparsed;
@@ -2302,27 +2286,27 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
 
     if (impl->pid_device_control.id)
     {
-        impl->dev_caps.dwFlags |= DIDC_FORCEFEEDBACK;
+        impl->base.caps.dwFlags |= DIDC_FORCEFEEDBACK;
         if (impl->pid_effect_update.start_delay_caps)
-            impl->dev_caps.dwFlags |= DIDC_STARTDELAY;
+            impl->base.caps.dwFlags |= DIDC_STARTDELAY;
         if (impl->pid_set_envelope.attack_level_caps ||
             impl->pid_set_envelope.attack_time_caps)
-            impl->dev_caps.dwFlags |= DIDC_FFATTACK;
+            impl->base.caps.dwFlags |= DIDC_FFATTACK;
         if (impl->pid_set_envelope.fade_level_caps ||
             impl->pid_set_envelope.fade_time_caps)
-            impl->dev_caps.dwFlags |= DIDC_FFFADE;
+            impl->base.caps.dwFlags |= DIDC_FFFADE;
         if (impl->pid_set_condition.positive_coefficient_caps ||
             impl->pid_set_condition.negative_coefficient_caps)
-            impl->dev_caps.dwFlags |= DIDC_POSNEGCOEFFICIENTS;
+            impl->base.caps.dwFlags |= DIDC_POSNEGCOEFFICIENTS;
         if (impl->pid_set_condition.positive_saturation_caps ||
             impl->pid_set_condition.negative_saturation_caps)
-            impl->dev_caps.dwFlags |= DIDC_SATURATION|DIDC_POSNEGSATURATION;
+            impl->base.caps.dwFlags |= DIDC_SATURATION|DIDC_POSNEGSATURATION;
         if (impl->pid_set_condition.dead_band_caps)
-            impl->dev_caps.dwFlags |= DIDC_DEADBAND;
-        impl->dev_caps.dwFFSamplePeriod = 1000000;
-        impl->dev_caps.dwFFMinTimeResolution = 1000000;
-        impl->dev_caps.dwHardwareRevision = 1;
-        impl->dev_caps.dwFFDriverVersion = 1;
+            impl->base.caps.dwFlags |= DIDC_DEADBAND;
+        impl->base.caps.dwFFSamplePeriod = 1000000;
+        impl->base.caps.dwFFMinTimeResolution = 1000000;
+        impl->base.caps.dwHardwareRevision = 1;
+        impl->base.caps.dwFFDriverVersion = 1;
     }
 
     format = impl->base.data_format.wine_df;

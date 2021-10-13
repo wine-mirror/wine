@@ -149,6 +149,11 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
 
     fill_mouse_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion );
+    newDevice->base.caps.dwDevType = newDevice->base.instance.dwDevType;
+    newDevice->base.caps.dwAxes = 3;
+    newDevice->base.caps.dwButtons = 8;
+    newDevice->base.caps.dwFirmwareRevision = 100;
+    newDevice->base.caps.dwHardwareRevision = 100;
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     get_app_key(&hkey, &appkey);
@@ -644,41 +649,6 @@ static HRESULT WINAPI SysMouseWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 }
 
 /******************************************************************************
-  *     GetCapabilities : get the device capabilities
-  */
-static HRESULT WINAPI SysMouseWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DIDEVCAPS devcaps;
-
-    TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
-
-    if ((lpDIDevCaps->dwSize != sizeof(DIDEVCAPS)) && (lpDIDevCaps->dwSize != sizeof(DIDEVCAPS_DX3))) {
-        WARN("invalid parameter\n");
-        return DIERR_INVALIDPARAM;
-    }
-
-    devcaps.dwSize = lpDIDevCaps->dwSize;
-    devcaps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
-    if (This->base.dinput->dwVersion >= 0x0800)
-	devcaps.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
-    else
-	devcaps.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
-    devcaps.dwAxes = 3;
-    devcaps.dwButtons = 8;
-    devcaps.dwPOVs = 0;
-    devcaps.dwFFSamplePeriod = 0;
-    devcaps.dwFFMinTimeResolution = 0;
-    devcaps.dwFirmwareRevision = 100;
-    devcaps.dwHardwareRevision = 100;
-    devcaps.dwFFDriverVersion = 0;
-
-    memcpy(lpDIDevCaps, &devcaps, lpDIDevCaps->dwSize);
-
-    return DI_OK;
-}
-
-/******************************************************************************
   *     GetObjectInfo : get information about a device object such as a button
   *                     or axis
   */
@@ -732,7 +702,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_QueryInterface,
     IDirectInputDevice2WImpl_AddRef,
     IDirectInputDevice2WImpl_Release,
-    SysMouseWImpl_GetCapabilities,
+    IDirectInputDevice2WImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
     SysMouseWImpl_GetProperty,
     IDirectInputDevice2WImpl_SetProperty,

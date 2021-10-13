@@ -3867,7 +3867,6 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetCapabilities( device, NULL );
     ok( hr == E_POINTER, "GetCapabilities returned %#x\n", hr );
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
-    todo_wine
     ok( hr == DIERR_INVALIDPARAM, "GetCapabilities returned %#x\n", hr );
     caps.dwSize = sizeof(DIDEVCAPS);
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );

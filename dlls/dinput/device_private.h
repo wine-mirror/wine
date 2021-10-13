@@ -68,6 +68,7 @@ struct IDirectInputDeviceImpl
     struct list                 entry;       /* entry into acquired device list */
     HANDLE                      hEvent;
     DIDEVICEINSTANCEW           instance;
+    DIDEVCAPS                   caps;
     DWORD                       dwCoopLevel;
     HWND                        win;
     int                         acquired;
@@ -119,6 +120,7 @@ extern HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lp
 /* And the stubs */
 extern HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice2WImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI IDirectInputDevice2WImpl_GetCapabilities( IDirectInputDevice8W *iface, DIDEVCAPS *caps );
 extern HRESULT WINAPI IDirectInputDevice2WImpl_SetDataFormat(LPDIRECTINPUTDEVICE8W iface, LPCDIDATAFORMAT df) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice2WImpl_SetCooperativeLevel(LPDIRECTINPUTDEVICE8W iface, HWND hwnd, DWORD dwflags) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceInfo( IDirectInputDevice8W *iface,
