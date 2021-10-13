@@ -73,19 +73,6 @@ struct d3d10_matrix
     float m[4][4];
 };
 
-struct d3d10_effect_object
-{
-    struct d3d10_effect_pass *pass;
-    enum d3d10_effect_object_type type;
-    union
-    {
-        ID3D10VertexShader *vs;
-        ID3D10PixelShader *ps;
-        ID3D10GeometryShader *gs;
-        IUnknown *object;
-    } object;
-};
-
 struct d3d10_effect_shader_resource
 {
     D3D10_SHADER_INPUT_TYPE in_type;
@@ -236,9 +223,7 @@ struct d3d10_effect_pass
 
     struct d3d10_effect_technique *technique;
     char *name;
-    DWORD object_count;
     DWORD annotation_count;
-    struct d3d10_effect_object *objects;
     struct d3d10_effect_variable *annotations;
 
     struct d3d10_effect_pass_shader_desc vs;

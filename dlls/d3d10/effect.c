@@ -1734,17 +1734,17 @@ static BOOL parse_fx10_state_group(const char *data, size_t data_size,
 }
 
 static HRESULT parse_fx10_object(const char *data, size_t data_size,
-        const char **ptr, struct d3d10_effect_object *o)
+        const char **ptr, struct d3d10_effect_pass *pass)
 {
     ID3D10EffectVariable *variable = &null_variable.ID3D10EffectVariable_iface;
     const char *data_ptr = NULL;
     DWORD offset, sodecl_offset;
     enum d3d10_effect_object_operation operation;
     HRESULT hr;
-    struct d3d10_effect *effect = o->pass->technique->effect;
+    struct d3d10_effect *effect = pass->technique->effect;
     ID3D10Effect *e = &effect->ID3D10Effect_iface;
     struct d3d10_effect_variable *v;
-    DWORD tmp, variable_idx = 0;
+    DWORD tmp, object_type, variable_idx = 0;
     const char *name;
     size_t name_len;
 
@@ -1754,8 +1754,8 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
         return E_FAIL;
     }
 
-    read_dword(ptr, &o->type);
-    TRACE("Effect object is of type %#x.\n", o->type);
+    read_dword(ptr, &object_type);
+    TRACE("Effect object is of type %#x.\n", object_type);
 
     read_dword(ptr, &tmp);
     TRACE("Effect object index %#x.\n", tmp);
@@ -1771,7 +1771,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
         case D3D10_EOO_CONST:
             TRACE("Copy variable values\n");
 
-            switch (o->type)
+            switch (object_type)
             {
                 case D3D10_EOT_VERTEXSHADER:
                     TRACE("Vertex shader\n");
@@ -1789,7 +1789,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 case D3D10_EOT_STENCIL_REF:
-                    if (!read_value_list(data, data_size, offset, D3D10_SVT_UINT, 0, 1, &o->pass->stencil_ref))
+                    if (!read_value_list(data, data_size, offset, D3D10_SVT_UINT, 0, 1, &pass->stencil_ref))
                     {
                         ERR("Failed to read stencil ref.\n");
                         return E_FAIL;
@@ -1797,7 +1797,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 case D3D10_EOT_SAMPLE_MASK:
-                    if (!read_value_list(data, data_size, offset, D3D10_SVT_UINT, 0, 1, &o->pass->sample_mask))
+                    if (!read_value_list(data, data_size, offset, D3D10_SVT_UINT, 0, 1, &pass->sample_mask))
                     {
                         FIXME("Failed to read sample mask.\n");
                         return E_FAIL;
@@ -1805,7 +1805,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 case D3D10_EOT_BLEND_FACTOR:
-                    if (!read_value_list(data, data_size, offset, D3D10_SVT_FLOAT, 0, 4, &o->pass->blend_factor[0]))
+                    if (!read_value_list(data, data_size, offset, D3D10_SVT_FLOAT, 0, 4, &pass->blend_factor[0]))
                     {
                         FIXME("Failed to read blend factor.\n");
                         return E_FAIL;
@@ -1813,7 +1813,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 default:
-                    FIXME("Unhandled object type %#x\n", o->type);
+                    FIXME("Unhandled object type %#x\n", object_type);
                     return E_FAIL;
             }
             break;
@@ -1873,7 +1873,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             read_dword(&data_ptr, &sodecl_offset);
 
             if (FAILED(hr = parse_fx10_anonymous_shader(effect,
-                    &effect->anonymous_shaders[effect->anonymous_shader_current], o->type)))
+                    &effect->anonymous_shaders[effect->anonymous_shader_current], object_type)))
                 return hr;
 
             v = &effect->anonymous_shaders[effect->anonymous_shader_current].shader;
@@ -1893,7 +1893,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                 TRACE("Stream output declaration: %s.\n", debugstr_a(v->u.shader.stream_output_declaration));
             }
 
-            switch (o->type)
+            switch (object_type)
             {
                 case D3D10_EOT_VERTEXSHADER:
                 case D3D10_EOT_PIXELSHADER:
@@ -1903,7 +1903,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 default:
-                    FIXME("Unhandled object type %#x\n", o->type);
+                    FIXME("Unhandled object type %#x\n", object_type);
                     return E_FAIL;
             }
             break;
@@ -1913,7 +1913,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             return E_FAIL;
     }
 
-    switch (o->type)
+    switch (object_type)
     {
         case D3D10_EOT_RASTERIZER_STATE:
         {
@@ -1927,10 +1927,10 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             if (v->type->element_count)
             {
                 if (variable_idx >= v->type->element_count) return E_FAIL;
-                o->pass->rasterizer = &v->elements[variable_idx];
+                pass->rasterizer = &v->elements[variable_idx];
             }
             else
-                o->pass->rasterizer = v;
+                pass->rasterizer = v;
             break;
         }
 
@@ -1946,10 +1946,10 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             if (v->type->element_count)
             {
                 if (variable_idx >= v->type->element_count) return E_FAIL;
-                o->pass->depth_stencil = &v->elements[variable_idx];
+                pass->depth_stencil = &v->elements[variable_idx];
             }
             else
-                o->pass->depth_stencil = v;
+                pass->depth_stencil = v;
             break;
         }
 
@@ -1965,40 +1965,34 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             if (v->type->element_count)
             {
                 if (variable_idx >= v->type->element_count) return E_FAIL;
-                o->pass->blend = &v->elements[variable_idx];
+                pass->blend = &v->elements[variable_idx];
             }
             else
-                o->pass->blend = v;
+                pass->blend = v;
             break;
         }
 
         case D3D10_EOT_VERTEXSHADER:
         {
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
-            if (FAILED(hr = sv->lpVtbl->GetVertexShader(sv, variable_idx, &o->object.vs)))
-                return hr;
-            o->pass->vs.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
-            o->pass->vs.index = variable_idx;
+            pass->vs.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
+            pass->vs.index = variable_idx;
             break;
         }
 
         case D3D10_EOT_PIXELSHADER:
         {
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
-            if (FAILED(hr = sv->lpVtbl->GetPixelShader(sv, variable_idx, &o->object.ps)))
-                return hr;
-            o->pass->ps.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
-            o->pass->ps.index = variable_idx;
+            pass->ps.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
+            pass->ps.index = variable_idx;
             break;
         }
 
         case D3D10_EOT_GEOMETRYSHADER:
         {
             ID3D10EffectShaderVariable *sv = variable->lpVtbl->AsShader(variable);
-            if (FAILED(hr = sv->lpVtbl->GetGeometryShader(sv, variable_idx, &o->object.gs)))
-                return hr;
-            o->pass->gs.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
-            o->pass->gs.index = variable_idx;
+            pass->gs.shader = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)sv);
+            pass->gs.index = variable_idx;
             break;
         }
 
@@ -2008,7 +2002,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
             break;
 
         default:
-            FIXME("Unhandled object type %#x.\n", o->type);
+            FIXME("Unhandled object type %#x.\n", object_type);
             return E_FAIL;
     }
 
@@ -2018,9 +2012,9 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
 static HRESULT parse_fx10_pass(const char *data, size_t data_size,
         const char **ptr, struct d3d10_effect_pass *p)
 {
+    DWORD offset, object_count;
     HRESULT hr = S_OK;
     unsigned int i;
-    DWORD offset;
 
     read_dword(ptr, &offset);
     TRACE("Pass name at offset %#x.\n", offset);
@@ -2032,8 +2026,8 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
     }
     TRACE("Pass name: %s.\n", debugstr_a(p->name));
 
-    read_dword(ptr, &p->object_count);
-    TRACE("Pass has %u effect objects.\n", p->object_count);
+    read_dword(ptr, &object_count);
+    TRACE("Pass has %u effect objects.\n", object_count);
 
     read_dword(ptr, &p->annotation_count);
     TRACE("Pass has %u annotations.\n", p->annotation_count);
@@ -2045,23 +2039,13 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
         return hr;
     }
 
-    if (!(p->objects = heap_calloc(p->object_count, sizeof(*p->objects))))
-    {
-        ERR("Failed to allocate effect objects memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
     p->vs.shader = &null_shader_variable;
     p->ps.shader = &null_shader_variable;
     p->gs.shader = &null_shader_variable;
 
-    for (i = 0; i < p->object_count; ++i)
+    for (i = 0; i < object_count; ++i)
     {
-        struct d3d10_effect_object *o = &p->objects[i];
-
-        o->pass = p;
-
-        if (FAILED(hr = parse_fx10_object(data, data_size, ptr, o)))
+        if (FAILED(hr = parse_fx10_object(data, data_size, ptr, p)))
             return hr;
     }
 
@@ -2927,42 +2911,6 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
     return parse_dxbc(data, data_size, fx10_chunk_handler, This);
 }
 
-static HRESULT d3d10_effect_object_apply(struct d3d10_effect_object *o)
-{
-    ID3D10Device *device = o->pass->technique->effect->device;
-
-    TRACE("effect object %p, type %#x.\n", o, o->type);
-
-    switch(o->type)
-    {
-        case D3D10_EOT_RASTERIZER_STATE:
-        case D3D10_EOT_DEPTH_STENCIL_STATE:
-        case D3D10_EOT_BLEND_STATE:
-        case D3D10_EOT_STENCIL_REF:
-        case D3D10_EOT_BLEND_FACTOR:
-        case D3D10_EOT_SAMPLE_MASK:
-            break;
-
-        case D3D10_EOT_VERTEXSHADER:
-            ID3D10Device_VSSetShader(device, o->object.vs);
-            return S_OK;
-
-        case D3D10_EOT_PIXELSHADER:
-            ID3D10Device_PSSetShader(device, o->object.ps);
-            return S_OK;
-
-        case D3D10_EOT_GEOMETRYSHADER:
-            ID3D10Device_GSSetShader(device, o->object.gs);
-            return S_OK;
-
-        default:
-            FIXME("Unhandled effect object type %#x.\n", o->type);
-            return E_FAIL;
-    }
-
-    return S_OK;
-}
-
 static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_variable *s,
         D3D10_SHADER_VARIABLE_TYPE type)
 {
@@ -3087,25 +3035,6 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
     }
 }
 
-static void d3d10_effect_object_destroy(struct d3d10_effect_object *o)
-{
-    switch (o->type)
-    {
-        case D3D10_EOT_RASTERIZER_STATE:
-        case D3D10_EOT_DEPTH_STENCIL_STATE:
-        case D3D10_EOT_BLEND_STATE:
-        case D3D10_EOT_VERTEXSHADER:
-        case D3D10_EOT_PIXELSHADER:
-        case D3D10_EOT_GEOMETRYSHADER:
-            if (o->object.object)
-                IUnknown_Release(o->object.object);
-            break;
-
-        default:
-            break;
-    }
-}
-
 static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 {
     unsigned int i;
@@ -3113,15 +3042,6 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
     TRACE("pass %p\n", p);
 
     heap_free(p->name);
-
-    if (p->objects)
-    {
-        for (i = 0; i < p->object_count; ++i)
-        {
-            d3d10_effect_object_destroy(&p->objects[i]);
-        }
-        heap_free(p->objects);
-    }
 
     if (p->annotations)
     {
@@ -4109,23 +4029,55 @@ static void apply_shader_resources(ID3D10Device *device, struct d3d10_effect_var
     }
 }
 
+static void d3d10_effect_pass_set_shader(struct d3d10_effect_pass *pass,
+        const struct d3d10_effect_pass_shader_desc *shader_desc)
+{
+    ID3D10Device *device = pass->technique->effect->device;
+    struct d3d10_effect_variable *v = shader_desc->shader;
+
+    if (v->type->element_count)
+        v = &v->elements[shader_desc->index];
+
+    switch (v->type->basetype)
+    {
+        case D3D10_SVT_VERTEXSHADER:
+            ID3D10Device_VSSetShader(device, v->u.shader.shader.vs);
+            break;
+        case D3D10_SVT_PIXELSHADER:
+            ID3D10Device_PSSetShader(device, v->u.shader.shader.ps);
+            break;
+        case D3D10_SVT_GEOMETRYSHADER:
+            ID3D10Device_GSSetShader(device, v->u.shader.shader.gs);
+            break;
+        default:
+            WARN("Unexpected shader type %u.\n", v->type->basetype);
+    }
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface, UINT flags)
 {
     struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
     ID3D10Device *device = pass->technique->effect->device;
-    HRESULT hr = S_OK;
-    unsigned int i;
 
     TRACE("iface %p, flags %#x\n", iface, flags);
 
     if (flags) FIXME("Ignoring flags (%#x)\n", flags);
 
     if (pass->vs.shader != &null_shader_variable)
+    {
+        d3d10_effect_pass_set_shader(pass, &pass->vs);
         apply_shader_resources(device, pass->vs.shader);
+    }
     if (pass->gs.shader != &null_shader_variable)
+    {
+        d3d10_effect_pass_set_shader(pass, &pass->gs);
         apply_shader_resources(device, pass->gs.shader);
+    }
     if (pass->ps.shader != &null_shader_variable)
+    {
+        d3d10_effect_pass_set_shader(pass, &pass->ps);
         apply_shader_resources(device, pass->ps.shader);
+    }
     if (pass->rasterizer)
         ID3D10Device_RSSetState(device, pass->rasterizer->u.state.object.rasterizer);
     if (pass->depth_stencil)
@@ -4135,13 +4087,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
         ID3D10Device_OMSetBlendState(device, pass->blend->u.state.object.blend,
                 pass->blend_factor, pass->sample_mask);
 
-    for (i = 0; i < pass->object_count; ++i)
-    {
-        hr = d3d10_effect_object_apply(&pass->objects[i]);
-        if (FAILED(hr)) break;
-    }
-
-    return hr;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_ComputeStateBlockMask(ID3D10EffectPass *iface,

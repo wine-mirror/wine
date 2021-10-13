@@ -2909,6 +2909,7 @@ static void test_effect_local_shader(void)
     D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectShaderVariable *null_shader, *null_anon_vs, *null_anon_ps, *null_anon_gs,
         *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs, *gs, *ps, *vs;
+    ID3D10PixelShader *ps_d3d, *ps_d3d_2;
     D3D10_EFFECT_SHADER_DESC shaderdesc;
     D3D10_SIGNATURE_PARAMETER_DESC sign;
     D3D10_STATE_BLOCK_MASK mask;
@@ -3005,6 +3006,12 @@ if (0)
     hr = p->lpVtbl->GetGeometryShaderDesc(p, NULL);
     ok(hr == E_INVALIDARG, "GetGeometryShaderDesc got %x, expected %x\n", hr, E_INVALIDARG);
 
+    v = effect->lpVtbl->GetVariableByName(effect, "p");
+    ps = v->lpVtbl->AsShader(v);
+
+    hr = ps->lpVtbl->GetPixelShader(ps, 0, &ps_d3d);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     /* get the null_shader_variable */
     v = effect->lpVtbl->GetVariableByIndex(effect, 10000);
     null_shader = v->lpVtbl->AsShader(v);
@@ -3023,6 +3030,13 @@ if (0)
     ok(!ret, "Unexpected mask.\n");
     ret = D3D10StateBlockMaskGetSetting(&mask, D3D10_DST_GS, 0);
     ok(!ret, "Unexpected mask.\n");
+
+    ID3D10Device_PSSetShader(device, ps_d3d);
+    hr = p->lpVtbl->Apply(p, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_PSGetShader(device, &ps_d3d_2);
+    ok(ps_d3d_2 == ps_d3d, "Unexpected shader object.\n");
+    ID3D10PixelShader_Release(ps_d3d_2);
 
     hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
     ok(hr == S_OK, "GetVertexShaderDesc got %x, expected %x\n", hr, S_OK);
@@ -3050,6 +3064,12 @@ if (0)
 
     /* pass 1 */
     p = t->lpVtbl->GetPassByIndex(t, 1);
+
+    ID3D10Device_PSSetShader(device, ps_d3d);
+    hr = p->lpVtbl->Apply(p, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D10Device_PSGetShader(device, &ps_d3d_2);
+    ok(!ps_d3d_2, "Unexpected shader object.\n");
 
     /* pass 1 vertexshader */
     hr = p->lpVtbl->GetVertexShaderDesc(p, &pdesc);
@@ -3880,6 +3900,8 @@ todo_wine
     ok(!sign.SystemValueType, "Unexpected system value type %u.\n", sign.SystemValueType);
 
     effect->lpVtbl->Release(effect);
+
+    ID3D10PixelShader_Release(ps_d3d);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
