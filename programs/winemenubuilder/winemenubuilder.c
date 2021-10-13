@@ -1753,6 +1753,30 @@ static WCHAR *freedesktop_mime_type_for_extension(struct list *native_mime_types
     return match ? xwcsdup(match) : NULL;
 }
 
+static WCHAR *reg_enum_keyW(HKEY key, DWORD index)
+{
+    WCHAR *subkey;
+    DWORD size = 1024 * sizeof(WCHAR);
+    LSTATUS ret;
+
+    for (;;)
+    {
+        subkey = xmalloc(size);
+        ret = RegEnumKeyExW(key, index, subkey, &size, NULL, NULL, NULL, NULL);
+        if (ret == ERROR_SUCCESS)
+        {
+            return subkey;
+        }
+        if (ret != ERROR_MORE_DATA)
+        {
+            heap_free(subkey);
+            return NULL;
+        }
+        size *= 2;
+        heap_free(subkey);
+    }
+}
+
 static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
 {
     DWORD size;
@@ -1857,47 +1881,31 @@ static BOOL cleanup_associations(void)
     BOOL hasChanged = FALSE;
     if ((assocKey = open_associations_reg_key()))
     {
-        int i;
-        BOOL done = FALSE;
-        for (i = 0; !done;)
+        int i = 0;
+        for (;;)
         {
-            WCHAR *extensionW = NULL;
-            DWORD size = 1024;
-            LSTATUS ret;
+            WCHAR *extensionW;
+            WCHAR *command;
 
-            do
-            {
-                heap_free(extensionW);
-                extensionW = xmalloc(size * sizeof(WCHAR));
-                ret = RegEnumKeyExW(assocKey, i, extensionW, &size, NULL, NULL, NULL, NULL);
-                size *= 2;
-            } while (ret == ERROR_MORE_DATA);
+            if (!(extensionW = reg_enum_keyW(assocKey, i)))
+                break;
 
-            if (ret == ERROR_SUCCESS)
+            if (!(command = assoc_query(ASSOCSTR_COMMAND, extensionW, L"open")))
             {
-                WCHAR *command;
-                command = assoc_query(ASSOCSTR_COMMAND, extensionW, L"open");
-                if (command == NULL)
+                WCHAR *desktopFile = reg_get_valW(assocKey, extensionW, L"DesktopFile");
+                if (desktopFile)
                 {
-                    WCHAR *desktopFile = reg_get_valW(assocKey, extensionW, L"DesktopFile");
-                    if (desktopFile)
-                    {
-                        WINE_TRACE("removing file type association for %s\n", wine_dbgstr_w(extensionW));
-                        DeleteFileW(desktopFile);
-                    }
-                    RegDeleteKeyW(assocKey, extensionW);
-                    hasChanged = TRUE;
-                    heap_free(desktopFile);
+                    WINE_TRACE("removing file type association for %s\n", wine_dbgstr_w(extensionW));
+                    DeleteFileW(desktopFile);
                 }
-                else
-                    i++;
-                heap_free(command);
+                RegDeleteKeyW(assocKey, extensionW);
+                hasChanged = TRUE;
+                heap_free(desktopFile);
             }
             else
             {
-                if (ret != ERROR_NO_MORE_ITEMS)
-                    WINE_ERR("error %d while reading registry\n", ret);
-                done = TRUE;
+                i++;
+                heap_free(command);
             }
             heap_free(extensionW);
         }
@@ -1998,7 +2006,6 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
 {
     struct wine_rb_tree mimeProgidTree = { winemenubuilder_rb_string_compare };
     struct list nativeMimeTypes = LIST_INIT(nativeMimeTypes);
-    LSTATUS ret = 0;
     int i;
     BOOL hasChanged = FALSE;
 
@@ -2010,18 +2017,12 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
 
     for (i = 0; ; i++)
     {
-        WCHAR *extensionW = NULL;
-        DWORD size = 1024;
+        WCHAR *extensionW;
 
-        do
-        {
-            heap_free(extensionW);
-            extensionW = xmalloc(size * sizeof(WCHAR));
-            ret = RegEnumKeyExW(HKEY_CLASSES_ROOT, i, extensionW, &size, NULL, NULL, NULL, NULL);
-            size *= 2;
-        } while (ret == ERROR_MORE_DATA);
+        if (!(extensionW = reg_enum_keyW(HKEY_CLASSES_ROOT, i)))
+            break;
 
-        if (ret == ERROR_SUCCESS && extensionW[0] == '.' && !is_extension_banned(extensionW))
+        if (extensionW[0] == '.' && !is_extension_banned(extensionW))
         {
             WCHAR *commandW = NULL;
             WCHAR *executableW = NULL;
@@ -2129,8 +2130,6 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
             heap_free(progIdW);
         }
         heap_free(extensionW);
-        if (ret != ERROR_SUCCESS)
-            break;
     }
 
     wine_rb_destroy(&mimeProgidTree, winemenubuilder_rb_destroy, NULL);
