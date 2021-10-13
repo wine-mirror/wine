@@ -1161,7 +1161,7 @@ BOOL codeview_dump_types_from_block(const void* table, unsigned long len)
 
         codeview_dump_one_type(curr_type, type);
         curr_type++;
-        ptr += (type->generic.len + 2 + 3) & ~3;
+        ptr += type->generic.len + 2;
     }
 
     return TRUE;
