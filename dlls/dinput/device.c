@@ -651,21 +651,20 @@ static int id_to_offset(const DataFormat *df, int id)
 static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
 {
     DWORD type = (0x0000ff00 & dwSemantic) >> 8;
-    DWORD offset = 0x000000ff & dwSemantic;
-    DWORD obj_instance = 0;
+    BOOL byofs = (dwSemantic & 0x80000000) != 0;
+    DWORD value = (dwSemantic & 0x000000ff);
     BOOL found = FALSE;
+    DWORD instance;
     int i;
 
-    for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
+    for (i = 0; i < This->data_format.wine_df->dwNumObjs && !found; i++)
     {
         LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
 
-        if (odf->dwOfs == offset)
-        {
-            obj_instance = DIDFT_GETINSTANCE(odf->dwType);
-            found = TRUE;
-            break;
-        }
+        if (byofs && value != odf->dwOfs) continue;
+        if (!byofs && value != DIDFT_GETINSTANCE(odf->dwType)) continue;
+        instance = DIDFT_GETINSTANCE(odf->dwType);
+        found = TRUE;
     }
 
     if (!found) return 0;
@@ -673,7 +672,7 @@ static DWORD semantic_to_obj_id(IDirectInputDeviceImpl* This, DWORD dwSemantic)
     if (type & DIDFT_AXIS)   type = DIDFT_RELAXIS;
     if (type & DIDFT_BUTTON) type = DIDFT_PSHBUTTON;
 
-    return type | (0x0000ff00 & (obj_instance << 8));
+    return type | (0x0000ff00 & (instance << 8));
 }
 
 /*
