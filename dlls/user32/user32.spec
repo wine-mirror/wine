@@ -396,7 +396,7 @@
 @ stdcall GetUpdateRgn(long long long)
 @ stdcall GetUpdatedClipboardFormats(ptr long ptr)
 @ stdcall GetUserObjectInformationA (long long ptr long ptr)
-@ stdcall GetUserObjectInformationW (long long ptr long ptr)
+@ stdcall GetUserObjectInformationW (long long ptr long ptr) NtUserGetObjectInformation
 @ stdcall GetUserObjectSecurity (long ptr ptr long ptr)
 # @ stub GetWinStationInfo
 @ stdcall GetWindow(long long)

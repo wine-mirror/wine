@@ -75,3 +75,14 @@ NTSTATUS WINAPI wow64_NtUserOpenInputDesktop( UINT *args )
 
     return HandleToUlong( NtUserOpenInputDesktop( flags, inherit, access ));
 }
+
+NTSTATUS WINAPI wow64_NtUserGetObjectInformation( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    INT index = get_ulong( &args );
+    void *info = get_ptr( &args );
+    DWORD len = get_ulong( &args );
+    DWORD *needed = get_ptr( &args );
+
+    return NtUserGetObjectInformation( handle, index, info, len, needed );
+}

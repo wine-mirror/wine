@@ -4121,7 +4121,7 @@ BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC pro
 
     /* Report physical monitor information only if window station has visible display surfaces */
     winstation = NtUserGetProcessWindowStation();
-    if (GetUserObjectInformationW( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ))
+    if (NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ))
         is_winstation_visible = flags.dwFlags & WSF_VISIBLE;
 
     if (is_winstation_visible && update_monitor_cache())

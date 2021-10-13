@@ -96,6 +96,7 @@ static void * const syscalls[] =
     NtGdiTransformPoints,
     NtUserCloseDesktop,
     NtUserCloseWindowStation,
+    NtUserGetObjectInformation,
     NtUserGetProcessWindowStation,
     NtUserGetThreadDesktop,
     NtUserOpenInputDesktop,

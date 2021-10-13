@@ -24,6 +24,8 @@
 
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
+BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
+                                           DWORD len, DWORD *needed );
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 HDESK   WINAPI NtUserGetThreadDesktop( DWORD thread );
 HDESK   WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access );

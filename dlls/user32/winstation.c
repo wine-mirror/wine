@@ -437,7 +437,7 @@ BOOL WINAPI GetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
         WCHAR buffer[MAX_PATH];
         DWORD lenA, lenW;
 
-        if (!GetUserObjectInformationW( handle, index, buffer, sizeof(buffer), &lenW )) return FALSE;
+        if (!NtUserGetObjectInformation( handle, index, buffer, sizeof(buffer), &lenW )) return FALSE;
         lenA = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
         if (needed) *needed = lenA;
         if (lenA > len)
@@ -452,98 +452,7 @@ BOOL WINAPI GetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
         if (info) WideCharToMultiByte( CP_ACP, 0, buffer, -1, info, len, NULL, NULL );
         return TRUE;
     }
-    return GetUserObjectInformationW( handle, index, info, len, needed );
-}
-
-
-/***********************************************************************
- *              GetUserObjectInformationW   (USER32.@)
- */
-BOOL WINAPI GetUserObjectInformationW( HANDLE handle, INT index, LPVOID info, DWORD len, LPDWORD needed )
-{
-    BOOL ret;
-
-    switch(index)
-    {
-    case UOI_FLAGS:
-        {
-            USEROBJECTFLAGS *obj_flags = info;
-            if (needed) *needed = sizeof(*obj_flags);
-            if (len < sizeof(*obj_flags))
-            {
-                SetLastError( ERROR_BUFFER_OVERFLOW );
-                return FALSE;
-            }
-            SERVER_START_REQ( set_user_object_info )
-            {
-                req->handle    = wine_server_obj_handle( handle );
-                req->flags     = 0;
-                ret = !wine_server_call_err( req );
-                if (ret)
-                {
-                    /* FIXME: inherit flag */
-                    obj_flags->dwFlags = reply->old_obj_flags;
-                }
-            }
-            SERVER_END_REQ;
-        }
-        return ret;
-
-    case UOI_TYPE:
-        SERVER_START_REQ( set_user_object_info )
-        {
-            req->handle = wine_server_obj_handle( handle );
-            req->flags  = 0;
-            ret = !wine_server_call_err( req );
-            if (ret)
-            {
-                size_t size = reply->is_desktop ? sizeof(L"Desktop") : sizeof(L"WindowStation");
-                if (needed) *needed = size;
-                if (len < size)
-                {
-                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                    ret = FALSE;
-                }
-                else memcpy( info, reply->is_desktop ? L"Desktop" : L"WindowStation", size );
-            }
-        }
-        SERVER_END_REQ;
-        return ret;
-
-    case UOI_NAME:
-        {
-            WCHAR buffer[MAX_PATH];
-            SERVER_START_REQ( set_user_object_info )
-            {
-                req->handle = wine_server_obj_handle( handle );
-                req->flags  = 0;
-                wine_server_set_reply( req, buffer, sizeof(buffer) - sizeof(WCHAR) );
-                ret = !wine_server_call_err( req );
-                if (ret)
-                {
-                    size_t size = wine_server_reply_size( reply );
-                    buffer[size / sizeof(WCHAR)] = 0;
-                    size += sizeof(WCHAR);
-                    if (needed) *needed = size;
-                    if (len < size)
-                    {
-                        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                        ret = FALSE;
-                    }
-                    else memcpy( info, buffer, size );
-                }
-            }
-            SERVER_END_REQ;
-        }
-        return ret;
-
-    case UOI_USER_SID:
-        FIXME( "not supported index %d\n", index );
-        /* fall through */
-    default:
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
+    return NtUserGetObjectInformation( handle, index, info, len, needed );
 }
 
 

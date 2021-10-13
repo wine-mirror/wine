@@ -957,7 +957,7 @@
 @ stub NtUserGetMenuItemRect
 @ stub NtUserGetMessage
 @ stub NtUserGetMouseMovePointsEx
-@ stub NtUserGetObjectInformation
+@ stdcall -syscall NtUserGetObjectInformation(long long long long ptr)
 @ stub NtUserGetOemBitmapSize
 @ stub NtUserGetOpenClipboardWindow
 @ stub NtUserGetOwnerTransformedMonitorRect
