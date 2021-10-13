@@ -43,7 +43,6 @@ struct SysKeyboardImpl
 {
     struct IDirectInputDeviceImpl base;
     BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS];
-    DWORD subtype;
 };
 
 static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
@@ -89,9 +88,9 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD vers
 int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
+    BYTE new_diks, subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
     int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
-    BYTE new_diks;
 
     if (wparam != WM_KEYDOWN && wparam != WM_KEYUP &&
         wparam != WM_SYSKEYDOWN && wparam != WM_SYSKEYUP)
@@ -108,7 +107,8 @@ int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lpa
         case VK_NUMLOCK : dik_code = DIK_NUMLOCK; break;
         case VK_SUBTRACT: dik_code = DIK_SUBTRACT; break;
         default:
-            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode, This->subtype, This->base.dinput->dwVersion);
+            dik_code = map_dik_code( hook->scanCode & 0xff, hook->vkCode, subtype,
+                                     This->base.dinput->dwVersion );
             if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
     }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
@@ -193,6 +193,7 @@ static HRESULT keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVIC
 
 static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboardImpl **out )
 {
+    BYTE subtype = get_keyboard_subtype();
     SysKeyboardImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
@@ -203,7 +204,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     df = newDevice->base.data_format.wine_df;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
-    newDevice->subtype = get_keyboard_subtype();
+    fill_keyboard_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion, subtype );
 
     /* Create copy of default data format */
     memcpy(df, &c_dfDIKeyboard, c_dfDIKeyboard.dwSize);
@@ -217,7 +218,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
         if (!GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), buf, sizeof(buf)))
             continue;
 
-        dik_code = map_dik_code(i, 0, newDevice->subtype, dinput->dwVersion);
+        dik_code = map_dik_code( i, 0, subtype, dinput->dwVersion );
         memcpy(&df->rgodf[idx], &c_dfDIKeyboard.rgodf[dik_code], df->dwObjSize);
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON;
     }
@@ -294,6 +295,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
 static HRESULT WINAPI SysKeyboardWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps)
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
+    BYTE subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
     DIDEVCAPS devcaps;
 
     TRACE("(this=%p,%p)\n",This,lpDIDevCaps);
@@ -306,9 +308,9 @@ static HRESULT WINAPI SysKeyboardWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W ifa
     devcaps.dwSize = lpDIDevCaps->dwSize;
     devcaps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     if (This->base.dinput->dwVersion >= 0x0800)
-        devcaps.dwDevType = DI8DEVTYPE_KEYBOARD | (This->subtype << 8);
+        devcaps.dwDevType = DI8DEVTYPE_KEYBOARD | (subtype << 8);
     else
-        devcaps.dwDevType = DIDEVTYPE_KEYBOARD | (This->subtype << 8);
+        devcaps.dwDevType = DIDEVTYPE_KEYBOARD | (subtype << 8);
     devcaps.dwAxes = 0;
     devcaps.dwButtons = This->base.data_format.wine_df->dwNumObjs;
     devcaps.dwPOVs = 0;
@@ -367,37 +369,20 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
 						     DWORD dwHow)
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
+    BYTE subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
     HRESULT res;
     LONG scan;
 
     res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
     if (res != DI_OK) return res;
 
-    scan = map_dik_to_scan(DIDFT_GETINSTANCE(pdidoi->dwType), This->subtype);
+    scan = map_dik_to_scan( DIDFT_GETINSTANCE( pdidoi->dwType ), subtype );
     if (!GetKeyNameTextW((scan & 0x80) << 17 | (scan & 0x7f) << 16,
                          pdidoi->tszName, ARRAY_SIZE(pdidoi->tszName)))
         return DIERR_OBJECTNOTFOUND;
 
     _dump_OBJECTINSTANCEW(pdidoi);
     return res;
-}
-
-/******************************************************************************
-  *     GetDeviceInfo : get information about a device's identity
-  */
-static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-    TRACE("(this=%p,%p)\n", This, pdidi);
-
-    if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)) {
-        WARN(" dinput3 not supported yet...\n");
-	return DI_OK;
-    }
-
-    fill_keyboard_dideviceinstanceW(pdidi, This->base.dinput->dwVersion, This->subtype);
-    
-    return DI_OK;
 }
 
 /******************************************************************************
@@ -496,7 +481,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
     SysKeyboardWImpl_GetObjectInfo,
-    SysKeyboardWImpl_GetDeviceInfo,
+    IDirectInputDevice2WImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
     IDirectInputDevice2WImpl_CreateEffect,

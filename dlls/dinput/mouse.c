@@ -148,6 +148,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     df = newDevice->base.data_format.wine_df;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
 
+    fill_mouse_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion );
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     get_app_key(&hkey, &appkey);
@@ -705,24 +706,6 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
-/******************************************************************************
-  *     GetDeviceInfo : get information about a device's identity
-  */
-static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    TRACE("(this=%p,%p)\n", This, pdidi);
-
-    if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)) {
-        WARN(" dinput3 not supported yet...\n");
-	return DI_OK;
-    }
-
-    fill_mouse_dideviceinstanceW(pdidi, This->base.dinput->dwVersion);
-    
-    return DI_OK;
-}
-
 static HRESULT WINAPI SysMouseWImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                    LPDIACTIONFORMATW lpdiaf,
                                                    LPCWSTR lpszUserName,
@@ -761,7 +744,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
     SysMouseWImpl_GetObjectInfo,
-    SysMouseWImpl_GetDeviceInfo,
+    IDirectInputDevice2WImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
     IDirectInputDevice2WImpl_CreateEffect,

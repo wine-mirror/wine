@@ -161,7 +161,6 @@ struct hid_joystick
     OVERLAPPED read_ovl;
     PHIDP_PREPARSED_DATA preparsed;
 
-    DIDEVICEINSTANCEW instance;
     WCHAR device_path[MAX_PATH];
     HIDD_ATTRIBUTES attrs;
     DIDEVCAPS dev_caps;
@@ -775,14 +774,14 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
         if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
-        lstrcpynW( value->wsz, impl->instance.tszProductName, MAX_PATH );
+        lstrcpynW( value->wsz, impl->base.instance.tszProductName, MAX_PATH );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_INSTANCENAME:
     {
         DIPROPSTRING *value = (DIPROPSTRING *)header;
         if (header->dwSize != sizeof(DIPROPSTRING)) return DIERR_INVALIDPARAM;
-        lstrcpynW( value->wsz, impl->instance.tszInstanceName, MAX_PATH );
+        lstrcpynW( value->wsz, impl->base.instance.tszInstanceName, MAX_PATH );
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_VIDPID:
@@ -797,7 +796,7 @@ static HRESULT WINAPI hid_joystick_GetProperty( IDirectInputDevice8W *iface, con
     {
         DIPROPDWORD *value = (DIPROPDWORD *)header;
         if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
-        value->dwData = impl->instance.guidInstance.Data3;
+        value->dwData = impl->base.instance.guidInstance.Data3;
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_GUIDANDPATH:
@@ -1058,22 +1057,6 @@ static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, D
     ret = enum_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
     if (ret != DIENUM_CONTINUE) return DI_OK;
     return DIERR_NOTFOUND;
-}
-
-static HRESULT WINAPI hid_joystick_GetDeviceInfo( IDirectInputDevice8W *iface, DIDEVICEINSTANCEW *instance )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-
-    TRACE( "iface %p, instance %p.\n", iface, instance );
-
-    if (!instance) return E_POINTER;
-    if (instance->dwSize != sizeof(DIDEVICEINSTANCE_DX3W) &&
-        instance->dwSize != sizeof(DIDEVICEINSTANCEW))
-        return DIERR_INVALIDPARAM;
-
-    memcpy( instance, &impl->instance, instance->dwSize );
-
-    return S_OK;
 }
 
 static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirectInputEffect **out );
@@ -1457,7 +1440,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
     hid_joystick_GetObjectInfo,
-    hid_joystick_GetDeviceInfo,
+    IDirectInputDevice2WImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
     /*** IDirectInputDevice2 methods ***/
@@ -2277,7 +2260,7 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     if (hr != DI_OK) goto failed;
 
     impl->ref = 1;
-    impl->instance = instance;
+    impl->base.instance = instance;
     impl->attrs = attrs;
     impl->dev_caps.dwSize = sizeof(impl->dev_caps);
     impl->dev_caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;

@@ -1176,6 +1176,25 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetCooperativeLevel(LPDIRECTINPUTDEVICE8
     return hr;
 }
 
+HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceInfo( IDirectInputDevice8W *iface, DIDEVICEINSTANCEW *instance )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD size;
+
+    TRACE( "iface %p, instance %p.\n", iface, instance );
+
+    if (!instance) return E_POINTER;
+    if (instance->dwSize != sizeof(DIDEVICEINSTANCE_DX3W) &&
+        instance->dwSize != sizeof(DIDEVICEINSTANCEW))
+        return DIERR_INVALIDPARAM;
+
+    size = instance->dwSize;
+    memcpy( instance, &impl->instance, size );
+    instance->dwSize = size;
+
+    return S_OK;
+}
+
 /******************************************************************************
   *     SetEventNotification : specifies event to be sent on state change
   */
@@ -1740,6 +1759,7 @@ HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *
     This->IDirectInputDevice8W_iface.lpVtbl = vtbl;
     This->ref = 1;
     This->guid = *guid;
+    This->instance.dwSize = sizeof(DIDEVICEINSTANCEW);
     This->data_format.wine_df = format;
     InitializeCriticalSection( &This->crit );
     This->dinput = dinput;
