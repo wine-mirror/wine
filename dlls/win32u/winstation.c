@@ -75,3 +75,18 @@ BOOL WINAPI NtUserSetProcessWindowStation( HWINSTA handle )
     SERVER_END_REQ;
     return ret;
 }
+
+/***********************************************************************
+ *           NtUserCloseDesktop  (win32u.@)
+ */
+BOOL WINAPI NtUserCloseDesktop( HDESK handle )
+{
+    BOOL ret;
+    SERVER_START_REQ( close_desktop )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}

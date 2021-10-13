@@ -74,7 +74,7 @@
 @ stdcall ClientToScreen(long ptr)
 @ stdcall ClipCursor(ptr)
 @ stdcall CloseClipboard()
-@ stdcall CloseDesktop(long)
+@ stdcall CloseDesktop(long) NtUserCloseDesktop
 @ stdcall CloseTouchInputHandle(long)
 @ stdcall CloseWindow(long)
 @ stdcall CloseWindowStation(long) NtUserCloseWindowStation

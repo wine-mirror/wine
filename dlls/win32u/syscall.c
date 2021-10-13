@@ -94,6 +94,7 @@ static void * const syscalls[] =
     NtGdiSetVirtualResolution,
     NtGdiSwapBuffers,
     NtGdiTransformPoints,
+    NtUserCloseDesktop,
     NtUserCloseWindowStation,
     NtUserGetProcessWindowStation,
     NtUserSetProcessWindowStation,

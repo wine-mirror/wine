@@ -357,22 +357,6 @@ HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK 
 }
 
 
-/***********************************************************************
- *              CloseDesktop  (USER32.@)
- */
-BOOL WINAPI CloseDesktop( HDESK handle )
-{
-    BOOL ret;
-    SERVER_START_REQ( close_desktop )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
 /******************************************************************************
  *              GetThreadDesktop   (USER32.@)
  */

@@ -45,3 +45,10 @@ NTSTATUS WINAPI wow64_NtUserSetProcessWindowStation( UINT *args )
 
     return NtUserSetProcessWindowStation( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserCloseDesktop( UINT *args )
+{
+    HDESK handle = get_handle( &args );
+
+    return NtUserCloseDesktop( handle );
+}
