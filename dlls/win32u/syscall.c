@@ -99,6 +99,7 @@ static void * const syscalls[] =
     NtUserGetProcessWindowStation,
     NtUserGetThreadDesktop,
     NtUserSetProcessWindowStation,
+    NtUserSetThreadDesktop,
 };
 
 static BYTE arguments[ARRAY_SIZE(syscalls)];

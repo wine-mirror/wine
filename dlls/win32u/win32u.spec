@@ -1232,7 +1232,7 @@
 @ stub NtUserSetSystemMenu
 @ stub NtUserSetSystemTimer
 @ stub NtUserSetTargetForResourceBrokering
-@ stub NtUserSetThreadDesktop
+@ stdcall -syscall NtUserSetThreadDesktop(long)
 @ stub NtUserSetThreadInputBlocked
 @ stub NtUserSetThreadLayoutHandles
 @ stub NtUserSetThreadState

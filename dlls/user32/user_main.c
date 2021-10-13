@@ -311,7 +311,7 @@ static void winstation_init(void)
     {
         handle = CreateDesktopW( desktop ? desktop : get_default_desktop(),
                                  NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
-        if (handle) SetThreadDesktop( handle );
+        if (handle) NtUserSetThreadDesktop( handle );
     }
     HeapFree( GetProcessHeap(), 0, buffer );
 

@@ -59,3 +59,10 @@ NTSTATUS WINAPI wow64_NtUserGetThreadDesktop( UINT *args )
 
     return HandleToUlong( NtUserGetThreadDesktop( thread ));
 }
+
+NTSTATUS WINAPI wow64_NtUserSetThreadDesktop( UINT *args )
+{
+    HDESK handle = get_handle( &args );
+
+    return NtUserSetThreadDesktop( handle );
+}

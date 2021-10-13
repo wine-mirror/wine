@@ -362,14 +362,8 @@ HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK 
  */
 BOOL WINAPI SetThreadDesktop( HDESK handle )
 {
-    BOOL ret;
+    BOOL ret = NtUserSetThreadDesktop( handle );
 
-    SERVER_START_REQ( set_thread_desktop )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
     if (ret)  /* reset the desktop windows */
     {
         struct user_thread_info *thread_info = get_user_thread_info();

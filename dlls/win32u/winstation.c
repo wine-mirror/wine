@@ -106,3 +106,21 @@ HDESK WINAPI NtUserGetThreadDesktop( DWORD thread )
     SERVER_END_REQ;
     return ret;
 }
+
+/***********************************************************************
+ *           NtUserSetThreadDesktop   (win32u.@)
+ */
+BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( set_thread_desktop )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    /* FIXME: reset uset thread info */
+    return ret;
+}

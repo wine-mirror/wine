@@ -85,6 +85,7 @@
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
-    SYSCALL_ENTRY( NtUserSetProcessWindowStation )
+    SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
+    SYSCALL_ENTRY( NtUserSetThreadDesktop )
 
 #endif /* __WOW64WIN_SYSCALL_H */
