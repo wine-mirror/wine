@@ -6097,18 +6097,149 @@ static void test_effect_resource_variable(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#if 0
+cbuffer cb <string s = "cb_a"; >
+{
+    float f1 : COLOR0 <string s = "f1_a"; >;
+};
+
+BlendState blendstate <string s = "bs_a"; >;
+Texture2D tex <string s = "tex_a"; >;
+PixelShader ps <string s = "ps_a"; >;
+VertexShader vs <string s = "vs_a"; >;
+GeometryShader gs <string s = "gs_a"; >;
+DepthStencilState ds <string s = "ds_a"; >;
+RasterizerState rs <string s = "rs_a"; >;
+SamplerState s <string s = "s_a"; >;
+RenderTargetView rtv <string s = "rtv_a"; >;
+DepthStencilView dsv <string s = "dsv_a"; >;
+
+technique10 tech <string s = "tech_a"; >
+{
+    pass P0 <string s = "P0_a"; >
+    {
+    }
+};
+#endif
+static DWORD fx_test_annotations[] =
+{
+    0x43425844, 0x2b3e08d4, 0xe3eda7bb, 0x36982de8, 0x0dcab1aa, 0x00000001, 0x000004c6, 0x00000001,
+    0x00000024, 0x30315846, 0x0000049a, 0xfeff1001, 0x00000001, 0x00000001, 0x0000000a, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000276, 0x00000000, 0x00000001, 0x00000001, 0x00000001,
+    0x00000001, 0x00000001, 0x00000001, 0x00000001, 0x00000003, 0x00000000, 0x00000000, 0x53006263,
+    0x6e697274, 0x00070067, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,
+    0x00730000, 0x615f6263, 0x6f6c6600, 0x31007461, 0x01000000, 0x00000000, 0x04000000, 0x10000000,
+    0x04000000, 0x09000000, 0x66000009, 0x4f430031, 0x30524f4c, 0x5f316600, 0x6c420061, 0x53646e65,
+    0x65746174, 0x00006200, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000200,
+    0x656c6200, 0x7473646e, 0x00657461, 0x615f7362, 0x78655400, 0x65727574, 0x99004432, 0x02000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0c000000, 0x74000000, 0x74007865, 0x615f7865,
+    0x78695000, 0x68536c65, 0x72656461, 0x0000c900, 0x00000200, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000500, 0x00737000, 0x615f7370, 0x72655600, 0x53786574, 0x65646168, 0x00f90072,
+    0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00060000, 0x73760000, 0x5f737600,
+    0x65470061, 0x74656d6f, 0x68537972, 0x72656461, 0x00012a00, 0x00000200, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000700, 0x00736700, 0x615f7367, 0x70654400, 0x74536874, 0x69636e65,
+    0x6174536c, 0x5d006574, 0x02000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x03000000,
+    0x64000000, 0x73640073, 0x5200615f, 0x65747361, 0x657a6972, 0x61745372, 0x93006574, 0x02000001,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x04000000, 0x72000000, 0x73720073, 0x5300615f,
+    0x6c706d61, 0x74537265, 0x00657461, 0x000001c7, 0x00000002, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000015, 0x00615f73, 0x646e6552, 0x61547265, 0x74656772, 0x77656956, 0x0001f400,
+    0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00001300, 0x76747200, 0x76747200,
+    0x4400615f, 0x68747065, 0x6e657453, 0x566c6963, 0x00776569, 0x0000022b, 0x00000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000014, 0x00767364, 0x5f767364, 0x65740061, 0x74006863,
+    0x5f686365, 0x30500061, 0x5f305000, 0x00040061, 0x00100000, 0x00000000, 0x00010000, 0xffff0000,
+    0x0001ffff, 0x002a0000, 0x000e0000, 0x002c0000, 0x00530000, 0x00370000, 0x00560000, 0x00000000,
+    0x00000000, 0x00000000, 0x00010000, 0x002a0000, 0x000e0000, 0x005d0000, 0x00890000, 0x006d0000,
+    0x00000000, 0xffff0000, 0x0000ffff, 0x00010000, 0x002a0000, 0x000e0000, 0x00940000, 0x00bf0000,
+    0x00a30000, 0x00000000, 0xffff0000, 0x0001ffff, 0x002a0000, 0x000e0000, 0x00c30000, 0x00f10000,
+    0x00d50000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00010000, 0x002a0000, 0x000e0000, 0x00f40000,
+    0x01220000, 0x01060000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00010000, 0x002a0000, 0x000e0000,
+    0x01250000, 0x01550000, 0x01390000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00010000, 0x002a0000,
+    0x000e0000, 0x01580000, 0x018b0000, 0x016f0000, 0x00000000, 0xffff0000, 0x0000ffff, 0x00010000,
+    0x002a0000, 0x000e0000, 0x018e0000, 0x01bf0000, 0x01a30000, 0x00000000, 0xffff0000, 0x0000ffff,
+    0x00010000, 0x002a0000, 0x000e0000, 0x01c20000, 0x002a0000, 0x01d40000, 0x00000000, 0xffff0000,
+    0x0000ffff, 0x00010000, 0x002a0000, 0x000e0000, 0x01f00000, 0x02210000, 0x02050000, 0x00000000,
+    0xffff0000, 0x0001ffff, 0x002a0000, 0x000e0000, 0x02250000, 0x02580000, 0x023c0000, 0x00000000,
+    0xffff0000, 0x0001ffff, 0x002a0000, 0x000e0000, 0x025c0000, 0x02620000, 0x00010000, 0x00010000,
+    0x002a0000, 0x000e0000, 0x02670000, 0x026e0000, 0x00000000, 0x00010000, 0x002a0000, 0x000e0000,
+    0x02710000, 0x00000000,
+};
+
+static void test_effect_annotations(void)
+{
+    D3D10_EFFECT_VARIABLE_DESC var_desc;
+    ID3D10EffectConstantBuffer *cb;
+    D3D10_EFFECT_DESC effect_desc;
+    ID3D10EffectTechnique *tech;
+    ID3D10EffectVariable *v, *a;
+    ID3D10EffectPass *pass;
+    ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG i, refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_annotations, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect.\n");
+
+    cb = effect->lpVtbl->GetConstantBufferByName(effect, "cb");
+    a = cb->lpVtbl->GetAnnotationByName(cb, "s");
+    ok(a->lpVtbl->IsValid(a), "Expected valid variable.\n");
+    a = cb->lpVtbl->GetAnnotationByName(cb, "S");
+    ok(!a->lpVtbl->IsValid(a), "Unexpected valid variable.\n");
+
+    effect->lpVtbl->GetDesc(effect, &effect_desc);
+    for (i = 0; i < effect_desc.GlobalVariables; ++i)
+    {
+        v = effect->lpVtbl->GetVariableByIndex(effect, i);
+        hr = v->lpVtbl->GetDesc(v, &var_desc);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(var_desc.Annotations == 1, "Unexpected annotations count %u.\n", var_desc.Annotations);
+        v = v->lpVtbl->GetAnnotationByName(v, "s");
+        ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+        a = cb->lpVtbl->GetAnnotationByName(cb, "S");
+        ok(!a->lpVtbl->IsValid(a), "Unexpected valid variable.\n");
+    }
+
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    ok(tech->lpVtbl->IsValid(tech), "Expected valid technique.\n");
+    a = tech->lpVtbl->GetAnnotationByName(tech, "s");
+    ok(a->lpVtbl->IsValid(a), "Expected valid variable.\n");
+    a = tech->lpVtbl->GetAnnotationByName(tech, "S");
+    ok(!a->lpVtbl->IsValid(a), "Unexpected valid variable.\n");
+
+    pass = tech->lpVtbl->GetPassByIndex(tech, 0);
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid technique.\n");
+    a = pass->lpVtbl->GetAnnotationByName(pass, "s");
+    ok(a->lpVtbl->IsValid(a), "Expected valid variable.\n");
+    a = pass->lpVtbl->GetAnnotationByName(pass, "S");
+    ok(!a->lpVtbl->IsValid(a), "Unexpected valid variable.\n");
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_effect_optimize(void)
 {
     D3D10_EFFECT_SHADER_DESC shaderdesc;
+    D3D10_EFFECT_VARIABLE_DESC var_desc;
+    ID3D10EffectConstantBuffer *cb;
     ID3D10EffectShaderVariable *gs;
     D3D10_TECHNIQUE_DESC tech_desc;
+    D3D10_EFFECT_DESC effect_desc;
     ID3D10EffectTechnique *tech;
     D3D10_PASS_DESC pass_desc;
     ID3D10EffectVariable *v;
     ID3D10EffectPass *pass;
     ID3D10Effect *effect;
     ID3D10Device *device;
-    ULONG refcount;
+    ULONG i, refcount;
     HRESULT hr;
     BOOL ret;
 
@@ -6184,6 +6315,91 @@ static void test_effect_optimize(void)
     /* Already optimized */
     hr = effect->lpVtbl->Optimize(effect);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+
+    /* Annotations are stripped. */
+    hr = create_effect(fx_test_annotations, 0, device, NULL, &effect);
+    ok(SUCCEEDED(hr), "Failed to create an effect.\n");
+
+    cb = effect->lpVtbl->GetConstantBufferByName(effect, "cb");
+    hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(var_desc.Annotations == 1, "Unexpected annotations count %u.\n", var_desc.Annotations);
+    v = cb->lpVtbl->GetAnnotationByName(cb, "s");
+    ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+
+    effect->lpVtbl->GetDesc(effect, &effect_desc);
+
+    for (i = 0; i < effect_desc.GlobalVariables; ++i)
+    {
+        v = effect->lpVtbl->GetVariableByIndex(effect, i);
+        hr = v->lpVtbl->GetDesc(v, &var_desc);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(var_desc.Annotations == 1, "Unexpected annotations count %u.\n", var_desc.Annotations);
+        v = v->lpVtbl->GetAnnotationByName(v, "s");
+        ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+    }
+
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    hr = tech->lpVtbl->GetDesc(tech, &tech_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(tech_desc.Annotations == 1, "Unexpected annotations count %u.\n", tech_desc.Annotations);
+    v = tech->lpVtbl->GetAnnotationByName(tech, "s");
+    ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+
+    pass = tech->lpVtbl->GetPassByIndex(tech, 0);
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid technique.\n");
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(pass_desc.Annotations == 1, "Unexpected annotations count %u.\n", pass_desc.Annotations);
+    v = pass->lpVtbl->GetAnnotationByName(pass, "s");
+    ok(v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+
+    hr = effect->lpVtbl->Optimize(effect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+    hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine {
+    ok(!var_desc.Annotations, "Unexpected annotations count %u.\n", var_desc.Annotations);
+    v = cb->lpVtbl->GetAnnotationByName(cb, "s");
+    ok(!v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+}
+
+    effect->lpVtbl->GetDesc(effect, &effect_desc);
+
+    for (i = 0; i < effect_desc.GlobalVariables; ++i)
+    {
+        v = effect->lpVtbl->GetVariableByIndex(effect, i);
+        hr = v->lpVtbl->GetDesc(v, &var_desc);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    todo_wine {
+        ok(!var_desc.Annotations, "Unexpected annotations count %u.\n", var_desc.Annotations);
+        v = v->lpVtbl->GetAnnotationByName(v, "s");
+        ok(!v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+    }
+    }
+
+    tech = effect->lpVtbl->GetTechniqueByIndex(effect, 0);
+    hr = tech->lpVtbl->GetDesc(tech, &tech_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine {
+    ok(!tech_desc.Annotations, "Unexpected annotations count %u.\n", tech_desc.Annotations);
+    v = tech->lpVtbl->GetAnnotationByName(tech, "s");
+    ok(!v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+}
+
+    pass = tech->lpVtbl->GetPassByIndex(tech, 0);
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid technique.\n");
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine {
+    ok(!pass_desc.Annotations, "Unexpected annotations count %u.\n", pass_desc.Annotations);
+    v = pass->lpVtbl->GetAnnotationByName(pass, "s");
+    ok(!v->lpVtbl->IsValid(v), "Expected valid variable.\n");
+}
 
     effect->lpVtbl->Release(effect);
 
@@ -7019,6 +7235,7 @@ START_TEST(effect)
     test_effect_vector_variable();
     test_effect_matrix_variable();
     test_effect_resource_variable();
+    test_effect_annotations();
     test_effect_optimize();
     test_effect_shader_description();
     test_effect_shader_object();
