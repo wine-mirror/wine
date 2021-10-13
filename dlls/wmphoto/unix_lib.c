@@ -39,6 +39,8 @@
 #include "initguid.h"
 #ifdef SONAME_LIBJXRGLUE
 #define ERR JXR_ERR
+#define __in_win    __in
+#define __out_win   __out
 #include <JXRGlue.h>
 #undef ERR
 #endif

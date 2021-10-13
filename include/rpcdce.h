@@ -33,6 +33,8 @@ extern "C" {
 #define OPTIONAL
 #endif
 
+#include <specstrings.h>
+
 #ifndef GUID_DEFINED
 #include <guiddef.h>
 #endif

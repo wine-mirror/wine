@@ -20,6 +20,7 @@
 #define _NTDEF_
 
 #include <basetsd.h>
+#include <specstrings.h>
 
 #ifdef __cplusplus
 extern "C" {

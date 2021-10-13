@@ -82,6 +82,7 @@ SOURCES = \
 	commoncontrols.idl \
 	compobj.h \
 	comsvcs.idl \
+	concurrencysal.h \
 	consoleapi.h \
 	control.idl \
 	cor.idl \
@@ -252,6 +253,7 @@ SOURCES = \
 	dplobby.h \
 	dplobby8.h \
 	dpnathlp.h \
+	driverspecs.h \
 	drmexternals.idl \
 	dsclient.h \
 	dsconf.h \
@@ -672,6 +674,7 @@ SOURCES = \
 	snmp.h \
 	softpub.h \
 	spatialaudioclient.idl \
+	specstrings.h \
 	sperror.h \
 	sql.h \
 	sqlext.h \

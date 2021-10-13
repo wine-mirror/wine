@@ -19,6 +19,8 @@
 #ifndef __WINE_WINERROR_H
 #define __WINE_WINERROR_H
 
+#include <specstrings.h>
+
 #define FACILITY_NULL                         0
 #define FACILITY_RPC                          1
 #define FACILITY_DISPATCH                     2

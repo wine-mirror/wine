@@ -24,6 +24,7 @@
 #include <basetsd.h>
 #include <guiddef.h>
 #include <winapifamily.h>
+#include <specstrings.h>
 
 #ifndef RC_INVOKED
 #include <ctype.h>
