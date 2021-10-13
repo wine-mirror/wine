@@ -827,111 +827,6 @@ static BOOL set_app_data(IDirectInputDeviceImpl *dev, int offset, UINT_PTR app_d
     return TRUE;
 }
 
-HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, LPCDIDATAFORMAT df)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DIDATAFORMAT data_format;
-    DIOBJECTDATAFORMAT *obj_df = NULL;
-    DIPROPDWORD dp;
-    DIPROPRANGE dpr;
-    DIPROPSTRING dps;
-    WCHAR username[MAX_PATH];
-    DWORD username_size = MAX_PATH;
-    int i, action = 0, num_actions = 0;
-    unsigned int offset = 0;
-    ActionMap *action_map;
-
-    if (This->acquired) return DIERR_ACQUIRED;
-
-    data_format.dwSize = sizeof(data_format);
-    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
-    data_format.dwFlags = DIDF_RELAXIS;
-    data_format.dwDataSize = lpdiaf->dwDataSize;
-
-    /* Count the actions */
-    for (i=0; i < lpdiaf->dwNumActions; i++)
-        if (IsEqualGUID(&This->guid, &lpdiaf->rgoAction[i].guidInstance))
-            num_actions++;
-
-    if (num_actions == 0) return DI_NOEFFECT;
-
-    /* Construct the dataformat and actionmap */
-    obj_df = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
-    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
-    data_format.dwNumObjs = num_actions;
-
-    action_map = malloc( sizeof(ActionMap) * num_actions );
-
-    for (i = 0; i < lpdiaf->dwNumActions; i++)
-    {
-        if (IsEqualGUID(&This->guid, &lpdiaf->rgoAction[i].guidInstance))
-        {
-            DWORD inst = DIDFT_GETINSTANCE(lpdiaf->rgoAction[i].dwObjID);
-            DWORD type = DIDFT_GETTYPE(lpdiaf->rgoAction[i].dwObjID);
-            LPDIOBJECTDATAFORMAT obj;
-
-            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
-            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
-
-            obj = dataformat_to_odf_by_type(df, inst, type);
-
-            memcpy(&obj_df[action], obj, df->dwObjSize);
-
-            action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
-            action_map[action].offset = offset;
-            obj_df[action].dwOfs = offset;
-            offset += (type & DIDFT_BUTTON) ? 1 : 4;
-
-            action++;
-        }
-    }
-
-    IDirectInputDevice8_SetDataFormat(iface, &data_format);
-
-    This->action_map = action_map;
-    This->num_actions = num_actions;
-
-    free( obj_df );
-
-    /* Set the device properties according to the action format */
-    dpr.diph.dwSize = sizeof(DIPROPRANGE);
-    dpr.lMin = lpdiaf->lAxisMin;
-    dpr.lMax = lpdiaf->lAxisMax;
-    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    dpr.diph.dwHow = DIPH_DEVICE;
-    IDirectInputDevice8_SetProperty(iface, DIPROP_RANGE, &dpr.diph);
-
-    if (lpdiaf->dwBufferSize > 0)
-    {
-        dp.diph.dwSize = sizeof(DIPROPDWORD);
-        dp.dwData = lpdiaf->dwBufferSize;
-        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-        dp.diph.dwHow = DIPH_DEVICE;
-        IDirectInputDevice8_SetProperty(iface, DIPROP_BUFFERSIZE, &dp.diph);
-    }
-
-    /* Retrieve logged user name if necessary */
-    if (lpszUserName == NULL)
-        GetUserNameW(username, &username_size);
-    else
-        lstrcpynW(username, lpszUserName, MAX_PATH);
-
-    dps.diph.dwSize = sizeof(dps);
-    dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    dps.diph.dwObj = 0;
-    dps.diph.dwHow = DIPH_DEVICE;
-    if (dwFlags & DIDSAM_NOUSER)
-        dps.wsz[0] = '\0';
-    else
-        lstrcpynW(dps.wsz, username, ARRAY_SIZE(dps.wsz));
-    IDirectInputDevice2WImpl_SetProperty(iface, DIPROP_USERNAME, &dps.diph);
-
-    /* Save the settings to disk */
-    save_mapping_settings(iface, lpdiaf, username);
-
-    return DI_OK;
-}
-
 /******************************************************************************
  *	queue_event - add new event to the ring queue
  */
@@ -1757,6 +1652,129 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap( IDirectInputDevice8W *if
     if (!has_actions) return DI_NOEFFECT;
     if (flags & (DIDBAM_DEFAULT|DIDBAM_PRESERVE|DIDBAM_INITIALIZE|DIDBAM_HWDEFAULTS))
         FIXME("Unimplemented flags %#x\n", flags);
+    return DI_OK;
+}
+
+HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
+                                                      const WCHAR *username, DWORD flags )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DIDATAFORMAT data_format;
+    DIOBJECTDATAFORMAT *obj_df = NULL;
+    DIPROPDWORD dp;
+    DIPROPRANGE dpr;
+    DIPROPSTRING dps;
+    WCHAR username_buf[MAX_PATH];
+    DWORD username_len = MAX_PATH;
+    int i, action = 0, num_actions = 0;
+    unsigned int offset = 0;
+    const DIDATAFORMAT *df;
+    ActionMap *action_map;
+
+    FIXME( "iface %p, format %p, username %s, flags %#x semi-stub!\n", iface, format,
+           debugstr_w(username), flags );
+
+    if (!format) return DIERR_INVALIDPARAM;
+
+    switch (GET_DIDEVICE_TYPE( impl->instance.dwDevType ))
+    {
+    case DIDEVTYPE_KEYBOARD:
+    case DI8DEVTYPE_KEYBOARD:
+        df = &c_dfDIKeyboard;
+        break;
+    case DIDEVTYPE_MOUSE:
+    case DI8DEVTYPE_MOUSE:
+        df = &c_dfDIMouse2;
+        break;
+    default:
+        df = impl->data_format.wine_df;
+        break;
+    }
+
+    if (impl->acquired) return DIERR_ACQUIRED;
+
+    data_format.dwSize = sizeof(data_format);
+    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    data_format.dwFlags = DIDF_RELAXIS;
+    data_format.dwDataSize = format->dwDataSize;
+
+    /* Count the actions */
+    for (i = 0; i < format->dwNumActions; i++)
+        if (IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance ))
+            num_actions++;
+
+    if (num_actions == 0) return DI_NOEFFECT;
+
+    /* Construct the dataformat and actionmap */
+    obj_df = malloc( sizeof(DIOBJECTDATAFORMAT) * num_actions );
+    data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
+    data_format.dwNumObjs = num_actions;
+
+    action_map = malloc( sizeof(ActionMap) * num_actions );
+
+    for (i = 0; i < format->dwNumActions; i++)
+    {
+        if (IsEqualGUID( &impl->guid, &format->rgoAction[i].guidInstance ))
+        {
+            DWORD inst = DIDFT_GETINSTANCE( format->rgoAction[i].dwObjID );
+            DWORD type = DIDFT_GETTYPE( format->rgoAction[i].dwObjID );
+            LPDIOBJECTDATAFORMAT obj;
+
+            if (type == DIDFT_PSHBUTTON) type = DIDFT_BUTTON;
+            if (type == DIDFT_RELAXIS) type = DIDFT_AXIS;
+
+            obj = dataformat_to_odf_by_type( df, inst, type );
+
+            memcpy( &obj_df[action], obj, df->dwObjSize );
+
+            action_map[action].uAppData = format->rgoAction[i].uAppData;
+            action_map[action].offset = offset;
+            obj_df[action].dwOfs = offset;
+            offset += (type & DIDFT_BUTTON) ? 1 : 4;
+
+            action++;
+        }
+    }
+
+    IDirectInputDevice8_SetDataFormat( iface, &data_format );
+
+    impl->action_map = action_map;
+    impl->num_actions = num_actions;
+
+    free( obj_df );
+
+    /* Set the device properties according to the action format */
+    dpr.diph.dwSize = sizeof(DIPROPRANGE);
+    dpr.lMin = format->lAxisMin;
+    dpr.lMax = format->lAxisMax;
+    dpr.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dpr.diph.dwHow = DIPH_DEVICE;
+    IDirectInputDevice8_SetProperty( iface, DIPROP_RANGE, &dpr.diph );
+
+    if (format->dwBufferSize > 0)
+    {
+        dp.diph.dwSize = sizeof(DIPROPDWORD);
+        dp.dwData = format->dwBufferSize;
+        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        dp.diph.dwHow = DIPH_DEVICE;
+        IDirectInputDevice8_SetProperty( iface, DIPROP_BUFFERSIZE, &dp.diph );
+    }
+
+    /* Retrieve logged user name if necessary */
+    if (username == NULL) GetUserNameW( username_buf, &username_len );
+    else lstrcpynW( username_buf, username, MAX_PATH );
+
+    dps.diph.dwSize = sizeof(dps);
+    dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dps.diph.dwObj = 0;
+    dps.diph.dwHow = DIPH_DEVICE;
+    if (flags & DIDSAM_NOUSER) dps.wsz[0] = '\0';
+    else lstrcpynW( dps.wsz, username_buf, ARRAY_SIZE(dps.wsz) );
+    IDirectInputDevice2WImpl_SetProperty( iface, DIPROP_USERNAME, &dps.diph );
+
+    /* Save the settings to disk */
+    save_mapping_settings( iface, format, username_buf );
+
     return DI_OK;
 }
 

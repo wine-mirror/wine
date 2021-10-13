@@ -410,17 +410,6 @@ static HRESULT WINAPI SysKeyboardWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     return res;
 }
 
-static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
-                                                    LPDIACTIONFORMATW lpdiaf,
-                                                    LPCWSTR lpszUserName,
-                                                    DWORD dwFlags)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", This, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-
-    return _set_action_map(iface, lpdiaf, lpszUserName, dwFlags, &c_dfDIKeyboard);
-}
-
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
@@ -453,6 +442,6 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice7WImpl_EnumEffectsInFile,
     IDirectInputDevice7WImpl_WriteEffectToFile,
     IDirectInputDevice8WImpl_BuildActionMap,
-    SysKeyboardWImpl_SetActionMap,
+    IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo
 };

@@ -1385,18 +1385,6 @@ static HRESULT WINAPI hid_joystick_Poll( IDirectInputDevice8W *iface )
     return hr;
 }
 
-static HRESULT WINAPI hid_joystick_SetActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
-                                                 const WCHAR *username, DWORD flags )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-
-    TRACE( "iface %p, format %p, username %s, flags %#x.\n", iface, format, debugstr_w(username), flags );
-
-    if (!format) return DIERR_INVALIDPARAM;
-
-    return _set_action_map( iface, format, username, flags, impl->base.data_format.wine_df );
-}
-
 static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
 {
     /*** IUnknown methods ***/
@@ -1434,7 +1422,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice7WImpl_WriteEffectToFile,
     /*** IDirectInputDevice8 methods ***/
     IDirectInputDevice8WImpl_BuildActionMap,
-    hid_joystick_SetActionMap,
+    IDirectInputDevice8WImpl_SetActionMap,
     IDirectInputDevice8WImpl_GetImageInfo,
 };
 
