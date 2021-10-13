@@ -556,7 +556,7 @@
 @ stdcall OpenDesktopA(str long long long)
 @ stdcall OpenDesktopW(wstr long long long)
 @ stdcall OpenIcon(long)
-@ stdcall OpenInputDesktop(long long long)
+@ stdcall OpenInputDesktop(long long long) NtUserOpenInputDesktop
 @ stdcall OpenWindowStationA(str long long)
 @ stdcall OpenWindowStationW(wstr long long)
 @ stdcall PackDDElParam(long long long)

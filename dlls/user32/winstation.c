@@ -426,31 +426,6 @@ BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam 
 }
 
 
-/******************************************************************************
- *              OpenInputDesktop   (USER32.@)
- */
-HDESK WINAPI OpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access )
-{
-    HANDLE ret = 0;
-
-    TRACE( "(%x,%i,%x)\n", flags, inherit, access );
-
-    if (flags)
-        FIXME( "partial stub flags %08x\n", flags );
-
-    SERVER_START_REQ( open_input_desktop )
-    {
-        req->flags      = flags;
-        req->access     = access;
-        req->attributes = inherit ? OBJ_INHERIT : 0;
-        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
-
 /***********************************************************************
  *              GetUserObjectInformationA   (USER32.@)
  */

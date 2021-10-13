@@ -66,3 +66,12 @@ NTSTATUS WINAPI wow64_NtUserSetThreadDesktop( UINT *args )
 
     return NtUserSetThreadDesktop( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserOpenInputDesktop( UINT *args )
+{
+    DWORD flags = get_ulong( &args );
+    BOOL inherit = get_ulong( &args );
+    ACCESS_MASK access = get_ulong( &args );
+
+    return HandleToUlong( NtUserOpenInputDesktop( flags, inherit, access ));
+}
