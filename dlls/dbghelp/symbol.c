@@ -748,18 +748,18 @@ static void symt_fill_sym_info(struct module_pair* pair,
                 if (data->container &&
                     (data->container->tag == SymTagFunction || data->container->tag == SymTagBlock))
                     sym_info->Flags |= SYMFLAG_LOCAL;
-                switch (data->u.value.n1.n2.vt)
+                switch (V_VT(&data->u.value))
                 {
-                case VT_I4:  sym_info->Value = (ULONG)data->u.value.n1.n2.n3.lVal; break;
-                case VT_I2:  sym_info->Value = (ULONG)(LONG_PTR)data->u.value.n1.n2.n3.iVal; break;
-                case VT_I1:  sym_info->Value = (ULONG)(LONG_PTR)data->u.value.n1.n2.n3.cVal; break;
-                case VT_UI4: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.ulVal; break;
-                case VT_UI2: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.uiVal; break;
-                case VT_UI1: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.bVal; break;
-                case VT_I1 | VT_BYREF: sym_info->Value = (ULONG64)(DWORD_PTR)data->u.value.n1.n2.n3.byref; break;
+                case VT_I4:  sym_info->Value = (ULONG)V_I4(&data->u.value); break;
+                case VT_I2:  sym_info->Value = (ULONG)(LONG_PTR)V_I2(&data->u.value); break;
+                case VT_I1:  sym_info->Value = (ULONG)(LONG_PTR)V_I1(&data->u.value); break;
+                case VT_UI4: sym_info->Value = (ULONG)V_UI4(&data->u.value); break;
+                case VT_UI2: sym_info->Value = (ULONG)V_UI2(&data->u.value); break;
+                case VT_UI1: sym_info->Value = (ULONG)V_UI1(&data->u.value); break;
+                case VT_BYREF: sym_info->Value = (ULONG64)(DWORD_PTR)V_BYREF(&data->u.value); break;
                 case VT_EMPTY: sym_info->Value = 0; break;
                 default:
-                    FIXME("Unsupported variant type (%u)\n", data->u.value.n1.n2.vt);
+                    FIXME("Unsupported variant type (%u)\n", V_VT(&data->u.value));
                     sym_info->Value = 0;
                     break;
                 }

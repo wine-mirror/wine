@@ -263,8 +263,8 @@ static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
 
     if (type < LF_NUMERIC)
     {
-        v->n1.n2.vt = VT_UINT;
-        v->n1.n2.n3.uintVal = type;
+        V_VT(v) = VT_UINT;
+        V_UINT(v) = type;
     }
     else
     {
@@ -272,109 +272,108 @@ static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
         {
         case LF_CHAR:
             length += 1;
-            v->n1.n2.vt = VT_I1;
-            v->n1.n2.n3.cVal = *(const char*)leaf;
+            V_VT(v) = VT_I1;
+            V_I1(v) = *(const char*)leaf;
             break;
 
         case LF_SHORT:
             length += 2;
-            v->n1.n2.vt = VT_I2;
-            v->n1.n2.n3.iVal = *(const short*)leaf;
+            V_VT(v) = VT_I2;
+            V_I2(v) = *(const short*)leaf;
             break;
 
         case LF_USHORT:
             length += 2;
-            v->n1.n2.vt = VT_UI2;
-            v->n1.n2.n3.uiVal = *leaf;
+            V_VT(v) = VT_UI2;
+            V_UI2(v) = *leaf;
             break;
 
         case LF_LONG:
             length += 4;
-            v->n1.n2.vt = VT_I4;
-            v->n1.n2.n3.lVal = *(const int*)leaf;
+            V_VT(v) = VT_I4;
+            V_I4(v) = *(const int*)leaf;
             break;
 
         case LF_ULONG:
             length += 4;
-            v->n1.n2.vt = VT_UI4;
-            v->n1.n2.n3.uiVal = *(const unsigned int*)leaf;
+            V_VT(v) = VT_UI4;
+            V_UI4(v) = *(const unsigned int*)leaf;
             break;
 
         case LF_QUADWORD:
             length += 8;
-            v->n1.n2.vt = VT_I8;
-            v->n1.n2.n3.llVal = *(const long long int*)leaf;
+            V_VT(v) = VT_I8;
+            V_I8(v) = *(const long long int*)leaf;
             break;
 
         case LF_UQUADWORD:
             length += 8;
-            v->n1.n2.vt = VT_UI8;
-            v->n1.n2.n3.ullVal = *(const long long unsigned int*)leaf;
+            V_VT(v) = VT_UI8;
+            V_UI8(v) = *(const long long unsigned int*)leaf;
             break;
 
         case LF_REAL32:
             length += 4;
-            v->n1.n2.vt = VT_R4;
-            v->n1.n2.n3.fltVal = *(const float*)leaf;
+            V_VT(v) = VT_R4;
+            V_R4(v) = *(const float*)leaf;
             break;
 
         case LF_REAL48:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 6;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_REAL64:
             length += 8;
-            v->n1.n2.vt = VT_R8;
-            v->n1.n2.n3.fltVal = *(const double*)leaf;
+            V_VT(v) = VT_R8;
+            V_R8(v) = *(const double*)leaf;
             break;
 
         case LF_REAL80:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 10;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_REAL128:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 16;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_COMPLEX32:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 4;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_COMPLEX64:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 8;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_COMPLEX80:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 10;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_COMPLEX128:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 16;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         case LF_VARSTRING:
 	    FIXME("Unsupported numeric leaf type %04x\n", type);
             length += 2 + *leaf;
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
 
         default:
 	    FIXME("Unknown numeric leaf type %04x\n", type);
-            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            V_VT(v) = VT_EMPTY;     /* FIXME */
             break;
         }
     }
