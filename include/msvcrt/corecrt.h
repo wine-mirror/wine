@@ -25,8 +25,16 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifdef __WINE_WINE_PORT_H
-# error You cannot use both wine/port.h and msvcrt headers
+#ifdef __WINE_CONFIG_H
+# error You cannot use config.h with msvcrt
+#endif
+
+#ifndef _WIN32
+# define _WIN32
+#endif
+
+#ifndef WIN32
+# define WIN32
 #endif
 
 #if (defined(__x86_64__) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)

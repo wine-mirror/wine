@@ -17613,7 +17613,8 @@ if test "x$ac_cv_cflags__Wl__delayload_autoconftest_dll" = xyes; then :
   DELAYLOADFLAG="-Wl,-delayload,"
 
 fi ;;
-    *) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-builtin" >&5
+    *) MSVCRTFLAGS="-D_WIN32"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-builtin" >&5
 $as_echo_n "checking whether the compiler supports -fno-builtin... " >&6; }
 if ${ac_cv_cflags__fno_builtin+:} false; then :
   $as_echo_n "(cached) " >&6
