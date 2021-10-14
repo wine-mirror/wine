@@ -414,7 +414,13 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         if (!caps->usage_page) continue;
         if (caps->flags & HID_VALUE_CAPS_IS_BUTTON) continue;
 
-        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+        if (caps->usage_page == HID_USAGE_PAGE_PID)
+        {
+            TRACE( "Ignoring input caps %s, PID specific.\n", debugstr_hid_value_caps( caps ) );
+            value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
+            object += caps->usage_max - caps->usage_min + 1;
+        }
+        else if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
         {
             TRACE( "Ignoring input value %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
             value_ofs += (caps->usage_max - caps->usage_min + 1) * sizeof(LONG);
@@ -469,7 +475,13 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
         if (!caps->usage_page) continue;
         if (!(caps->flags & HID_VALUE_CAPS_IS_BUTTON)) continue;
 
-        if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
+        if (caps->usage_page == HID_USAGE_PAGE_PID)
+        {
+            TRACE( "Ignoring input caps %s, PID specific.\n", debugstr_hid_value_caps( caps ) );
+            button_ofs += caps->usage_max - caps->usage_min + 1;
+            object += caps->usage_max - caps->usage_min + 1;
+        }
+        else if (caps->usage_page >= HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN)
         {
             TRACE( "Ignoring input button %s, vendor specific.\n", debugstr_hid_value_caps( caps ) );
             button_ofs += caps->usage_max - caps->usage_min + 1;
