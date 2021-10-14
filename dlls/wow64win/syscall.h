@@ -83,6 +83,7 @@
     SYSCALL_ENTRY( NtGdiTransformPoints ) \
     SYSCALL_ENTRY( NtUserCloseDesktop ) \
     SYSCALL_ENTRY( NtUserCloseWindowStation ) \
+    SYSCALL_ENTRY( NtUserCreateDesktopEx ) \
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \

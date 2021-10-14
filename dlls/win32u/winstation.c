@@ -128,6 +128,38 @@ BOOL WINAPI NtUserSetProcessWindowStation( HWINSTA handle )
 }
 
 /***********************************************************************
+ *           NtUserCreateDesktopEx   (win32u.@)
+ */
+HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *device,
+                                    DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
+                                    ULONG heap_size )
+{
+    HANDLE ret;
+
+    if ((device && device->Length) || devmode)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ( create_desktop )
+    {
+        req->flags      = flags;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        wine_server_call_err( req );
+        ret = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/***********************************************************************
  *           NtUserCloseDesktop  (win32u.@)
  */
 BOOL WINAPI NtUserCloseDesktop( HDESK handle )

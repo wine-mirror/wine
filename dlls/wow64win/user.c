@@ -73,6 +73,25 @@ NTSTATUS WINAPI wow64_NtUserSetProcessWindowStation( UINT *args )
     return NtUserSetProcessWindowStation( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserCreateDesktopEx( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    UNICODE_STRING32 *device32 = get_ptr( &args );
+    DEVMODEW *devmode = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    ULONG heap_size = get_ulong( &args );
+
+    struct object_attr64 attr;
+    UNICODE_STRING device;
+    HANDLE ret;
+
+    ret = NtUserCreateDesktopEx( objattr_32to64( &attr, attr32 ),
+                                 unicode_str_32to64( &device, device32 ),
+                                 devmode, flags, access, heap_size );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtUserCloseDesktop( UINT *args )
 {
     HDESK handle = get_handle( &args );

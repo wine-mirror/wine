@@ -20,10 +20,14 @@
 #define _NTUSER_
 
 #include <winuser.h>
+#include <wingdi.h>
 #include <winternl.h>
 
 BOOL    WINAPI NtUserCloseDesktop( HDESK handle );
 BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
+HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *device,
+                                      DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
+                                      ULONG heap_size );
 HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK mask, ULONG arg3,
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
 BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,

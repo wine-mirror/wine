@@ -253,31 +253,20 @@ HDESK WINAPI CreateDesktopA( LPCSTR name, LPCSTR device, LPDEVMODEA devmode,
 HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
                              DWORD flags, ACCESS_MASK access, LPSECURITY_ATTRIBUTES sa )
 {
-    HANDLE ret;
-    DWORD len = name ? lstrlenW(name) : 0;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
 
     if (device || devmode)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    SERVER_START_REQ( create_desktop )
-    {
-        req->flags      = flags;
-        req->access     = access;
-        req->attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
-                          ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+
+    RtlInitUnicodeString( &str, name );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
+                                get_winstations_dir_handle(), NULL );
+    if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
+    return NtUserCreateDesktopEx( &attr, NULL, devmode, flags, access, 0 );
 }
 
 

@@ -809,7 +809,7 @@
 @ stub NtUserCreateActivationObject
 @ stub NtUserCreateCaret
 @ stub NtUserCreateDCompositionHwndTarget
-@ stub NtUserCreateDesktopEx
+@ stdcall -syscall NtUserCreateDesktopEx(ptr ptr ptr long long long)
 @ stub NtUserCreateEmptyCursorObject
 @ stub NtUserCreateInputContext
 @ stub NtUserCreateLocalMemHandle
