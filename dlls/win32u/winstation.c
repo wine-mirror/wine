@@ -61,6 +61,25 @@ HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK a
     return ret;
 }
 
+/******************************************************************************
+ *           NtUserOpenWindowStation  (win32u.@)
+ */
+HWINSTA WINAPI NtUserOpenWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK access )
+{
+    HANDLE ret = 0;
+
+    SERVER_START_REQ( open_winstation )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /***********************************************************************
  *           NtUserCloseWindowStation  (win32u.@)
  */

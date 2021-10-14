@@ -163,28 +163,17 @@ HWINSTA WINAPI OpenWindowStationA( LPCSTR name, BOOL inherit, ACCESS_MASK access
  */
 HWINSTA WINAPI OpenWindowStationW( LPCWSTR name, BOOL inherit, ACCESS_MASK access )
 {
-    HANDLE ret = 0;
-    DWORD len = name ? lstrlenW(name) : 0;
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    if (!len)
-    {
-        name = get_winstation_default_name();
-        len = lstrlenW( name );
-    }
-    SERVER_START_REQ( open_winstation )
-    {
-        req->access     = access;
-        req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
-        req->rootdir    = wine_server_obj_handle( get_winstations_dir_handle() );
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+
+    RtlInitUnicodeString( &str, name );
+    if (!str.Length) RtlInitUnicodeString( &str, get_winstation_default_name() );
+
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE,
+                                get_winstations_dir_handle(), NULL );
+    if (inherit) attr.Attributes |= OBJ_INHERIT;
+
+    return NtUserOpenWindowStation( &attr, access );
 }
 
 

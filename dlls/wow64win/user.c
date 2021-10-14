@@ -44,6 +44,16 @@ NTSTATUS WINAPI wow64_NtUserCreateWindowStation( UINT *args )
                                                      arg3, arg4, arg5, arg6, arg7 ));
 }
 
+NTSTATUS WINAPI wow64_NtUserOpenWindowStation( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+
+    struct object_attr64 attr;
+
+    return HandleToUlong( NtUserOpenWindowStation( objattr_32to64( &attr, attr32 ), access ));
+}
+
 NTSTATUS WINAPI wow64_NtUserCloseWindowStation( UINT *args )
 {
     HWINSTA handle = get_handle( &args );

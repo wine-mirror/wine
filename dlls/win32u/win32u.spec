@@ -1094,7 +1094,7 @@
 @ stub NtUserOpenDesktop
 @ stdcall -syscall NtUserOpenInputDesktop(long long long)
 @ stub NtUserOpenThreadDesktop
-@ stub NtUserOpenWindowStation
+@ stdcall -syscall NtUserOpenWindowStation(ptr long)
 @ stub NtUserPaintDesktop
 @ stub NtUserPaintMenuBar
 @ stub NtUserPaintMonitor
