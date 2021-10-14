@@ -2469,7 +2469,12 @@ typedef struct _SYSTEM_CACHE_INFORMATION {
 /* System Information Class 0x17 */
 
 typedef struct _SYSTEM_INTERRUPT_INFORMATION {
-    BYTE Reserved1[24];
+    ULONG ContextSwitches;
+    ULONG DpcCount;
+    ULONG DpcRate;
+    ULONG TimeIncrement;
+    ULONG DpcBypassCount;
+    ULONG ApcBypassCount;
 } SYSTEM_INTERRUPT_INFORMATION, *PSYSTEM_INTERRUPT_INFORMATION;
 
 typedef struct _SYSTEM_CONFIGURATION_INFO {
