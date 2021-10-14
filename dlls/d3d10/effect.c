@@ -94,8 +94,6 @@ static struct d3d10_effect_variable null_matrix_variable = {{(const ID3D10Effect
         &null_local_buffer, &null_type};
 static struct d3d10_effect_variable null_string_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_string_variable_vtbl},
         &null_local_buffer, &null_type};
-static struct d3d10_effect_variable null_shader_resource_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl},
-        &null_local_buffer, &null_type};
 static struct d3d10_effect_variable null_render_target_view_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_render_target_view_variable_vtbl},
         &null_local_buffer, &null_type};
 static struct d3d10_effect_variable null_depth_stencil_view_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_depth_stencil_view_variable_vtbl},
@@ -110,6 +108,16 @@ static struct d3d10_effect_variable null_rasterizer_variable = {{(const ID3D10Ef
         &null_local_buffer, &null_type};
 static struct d3d10_effect_variable null_sampler_variable = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_sampler_variable_vtbl},
         &null_local_buffer, &null_type};
+
+static ID3D10ShaderResourceView *null_srvs[D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+
+static struct d3d10_effect_variable null_shader_resource_variable =
+{
+    .ID3D10EffectVariable_iface.lpVtbl = (ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl,
+    .buffer = &null_local_buffer,
+    .type = &null_type,
+    .u.resource.srv = null_srvs,
+};
 
 /* anonymous_shader_type and anonymous_shader */
 static char anonymous_name[] = "$Anonymous";
@@ -1683,6 +1691,7 @@ static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
                 break;
 
             case D3D10_SVT_TEXTURE:
+                *(void **)out_data = &null_shader_resource_variable;
                 break;
 
             default:
@@ -3909,8 +3918,17 @@ static void apply_shader_resources(ID3D10Device *device, struct d3d10_effect_var
                 }
                 break;
 
-            case D3D10_SIT_TBUFFER:
             case D3D10_SIT_TEXTURE:
+
+                if (rsrc_v->type->basetype == D3D10_SVT_SAMPLER)
+                {
+                    TRACE("Using texture associated with sampler %s.\n", debugstr_a(rsrc_v->name));
+                    rsrc_v = rsrc_v->u.state.desc.sampler.texture;
+                }
+
+                /* fallthrough */
+            case D3D10_SIT_TBUFFER:
+
                 if (sr->in_type == D3D10_SIT_TBUFFER)
                 {
                     update_buffer(device, rsrc_v);
