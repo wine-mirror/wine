@@ -3710,7 +3710,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         D3D10_PASS_DESC *desc)
 {
     struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
-    struct d3d10_effect_shader_variable *s;
+    struct d3d10_effect_variable *vs;
+    ID3D10Blob *input_signature;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -3726,14 +3727,15 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_GetDesc(ID3D10EffectPass *ifa
         return E_INVALIDARG;
     }
 
-    s = &pass->vs.shader->u.shader;
+    vs = d3d10_array_get_element(pass->vs.shader, pass->vs.index);
+    input_signature = vs->u.shader.input_signature;
 
     desc->Name = pass->name;
     desc->Annotations = pass->annotations.count;
-    if (s->input_signature)
+    if (input_signature)
     {
-        desc->pIAInputSignature = ID3D10Blob_GetBufferPointer(s->input_signature);
-        desc->IAInputSignatureSize = ID3D10Blob_GetBufferSize(s->input_signature);
+        desc->pIAInputSignature = ID3D10Blob_GetBufferPointer(input_signature);
+        desc->IAInputSignatureSize = ID3D10Blob_GetBufferSize(input_signature);
     }
     else
     {

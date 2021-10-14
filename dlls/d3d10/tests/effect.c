@@ -2913,6 +2913,7 @@ static void test_effect_local_shader(void)
     D3D10_EFFECT_SHADER_DESC shaderdesc;
     D3D10_SIGNATURE_PARAMETER_DESC sign;
     D3D10_STATE_BLOCK_MASK mask;
+    D3D10_PASS_DESC pass_desc;
     ID3D10Device *device;
     ULONG refcount;
 
@@ -3610,6 +3611,12 @@ if (0)
     ok(typedesc.PackedSize == 0x0, "PackedSize is %#x, expected 0x0\n", typedesc.PackedSize);
     ok(typedesc.UnpackedSize == 0x0, "UnpackedSize is %#x, expected 0x0\n", typedesc.UnpackedSize);
     ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
+
+    /* Get input signature from vertex shader set from array element. */
+    hr = p->lpVtbl->GetDesc(p, &pass_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!pass_desc.pIAInputSignature, "Expected input signature.\n");
+    ok(pass_desc.IAInputSignatureSize == 88, "Unexpected input signature size.\n");
 
     /* pass 6 pixelshader */
     hr = p->lpVtbl->GetPixelShaderDesc(p, &pdesc);
