@@ -1830,7 +1830,7 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
                     return E_FAIL;
                 }
 
-                *(void **)dst = variable;
+                ((void **)dst)[idx] = variable;
             }
             else
             {
@@ -1888,11 +1888,11 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
                     case D3D10_SVT_VERTEXSHADER:
                     case D3D10_SVT_PIXELSHADER:
                     case D3D10_SVT_GEOMETRYSHADER:
-                        *(void **)dst = variable;
+                        ((void **)dst)[idx] = variable;
                         *dst_index = variable_idx;
                         break;
                     default:
-                        *(void **)dst = &variable->elements[variable_idx];
+                        ((void **)dst)[idx] = &variable->elements[variable_idx];
                 }
             }
             else
@@ -1957,7 +1957,7 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
                     return E_FAIL;
             }
 
-            *(void **)dst = variable;
+            ((void **)dst)[idx] = variable;
 
             break;
 
