@@ -3979,6 +3979,8 @@ static void d3d10_effect_pass_set_shader(struct d3d10_effect_pass *pass,
         default:
             WARN("Unexpected shader type %u.\n", v->type->basetype);
     }
+
+    apply_shader_resources(device, v);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface, UINT flags)
@@ -3991,20 +3993,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
     if (flags) FIXME("Ignoring flags (%#x)\n", flags);
 
     if (pass->vs.shader != &null_shader_variable)
-    {
         d3d10_effect_pass_set_shader(pass, &pass->vs);
-        apply_shader_resources(device, pass->vs.shader);
-    }
     if (pass->gs.shader != &null_shader_variable)
-    {
         d3d10_effect_pass_set_shader(pass, &pass->gs);
-        apply_shader_resources(device, pass->gs.shader);
-    }
     if (pass->ps.shader != &null_shader_variable)
-    {
         d3d10_effect_pass_set_shader(pass, &pass->ps);
-        apply_shader_resources(device, pass->ps.shader);
-    }
     if (pass->rasterizer)
         ID3D10Device_RSSetState(device, pass->rasterizer->u.state.object.rasterizer);
     if (pass->depth_stencil)
