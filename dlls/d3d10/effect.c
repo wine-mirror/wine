@@ -1485,36 +1485,34 @@ static HRESULT parse_fx10_annotations(const char *data, size_t data_size, const 
     return hr;
 }
 
-static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, struct d3d10_effect_anonymous_shader *s,
-    enum d3d10_effect_object_type otype)
+static HRESULT parse_fx10_anonymous_shader(struct d3d10_effect *e, D3D_SHADER_VARIABLE_TYPE basetype,
+        struct d3d10_effect_anonymous_shader *s)
 {
     struct d3d10_effect_variable *v = &s->shader;
     struct d3d10_effect_type *t = &s->type;
-    const char *shader = NULL;
+    const char *name = NULL;
 
-    switch (otype)
+    switch (basetype)
     {
-        case D3D10_EOT_VERTEXSHADER:
-            shader = "vertexshader";
-            t->basetype = D3D10_SVT_VERTEXSHADER;
+        case D3D10_SVT_VERTEXSHADER:
+            name = "vertexshader";
             break;
 
-        case D3D10_EOT_PIXELSHADER:
-            shader = "pixelshader";
-            t->basetype = D3D10_SVT_PIXELSHADER;
+        case D3D10_SVT_PIXELSHADER:
+            name = "pixelshader";
             break;
 
-        case D3D10_EOT_GEOMETRYSHADER:
-            shader = "geometryshader";
-            t->basetype = D3D10_SVT_GEOMETRYSHADER;
+        case D3D10_SVT_GEOMETRYSHADER:
+            name = "geometryshader";
             break;
 
         default:
-            FIXME("Unhandled object type %#x.\n", otype);
+            WARN("Unhandled shader type %#x.\n", basetype);
             return E_FAIL;
     }
+    t->basetype = basetype;
 
-    if (!copy_name(shader, &t->name))
+    if (!copy_name(name, &t->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -1918,8 +1916,8 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
 
             TRACE("Effect object starts at offset %#x.\n", value_offset);
 
-            if (FAILED(hr = parse_fx10_anonymous_shader(effect,
-                    &effect->anonymous_shaders[effect->anonymous_shader_current], property_info->id)))
+            if (FAILED(hr = parse_fx10_anonymous_shader(effect, property_info->type,
+                    &effect->anonymous_shaders[effect->anonymous_shader_current])))
                 return hr;
 
             variable = &effect->anonymous_shaders[effect->anonymous_shader_current].shader;
@@ -1938,17 +1936,17 @@ static HRESULT parse_fx10_property_assignment(const char *data, size_t data_size
                 TRACE("Stream output declaration: %s.\n", debugstr_a(variable->u.shader.stream_output_declaration));
             }
 
-            switch (property_info->id)
+            switch (property_info->type)
             {
-                case D3D10_EOT_VERTEXSHADER:
-                case D3D10_EOT_PIXELSHADER:
-                case D3D10_EOT_GEOMETRYSHADER:
+                case D3D10_SVT_VERTEXSHADER:
+                case D3D10_SVT_PIXELSHADER:
+                case D3D10_SVT_GEOMETRYSHADER:
                     if (FAILED(hr = parse_fx10_shader(data, data_size, value_offset, variable)))
                         return hr;
                     break;
 
                 default:
-                    FIXME("Unhandled object type %#x\n", property_info->id);
+                    WARN("Unexpected shader type %#x.\n", property_info->type);
                     return E_FAIL;
             }
 
