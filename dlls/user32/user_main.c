@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
-#define DESKTOP_ALL_ACCESS 0x01ff
-
 HMODULE user32_module = 0;
 
 static CRITICAL_SECTION user_section;
@@ -162,53 +160,6 @@ static void palette_init(void)
 
 
 /***********************************************************************
- *           get_default_desktop
- *
- * Get the name of the desktop to use for this app if not specified explicitly.
- */
-static const WCHAR *get_default_desktop(void)
-{
-    static WCHAR buffer[MAX_PATH + ARRAY_SIZE(L"\\Explorer")];
-    WCHAR *p, *appname = buffer;
-    const WCHAR *ret = NULL;
-    DWORD len;
-    HKEY tmpkey, appkey;
-
-    len = (GetModuleFileNameW( 0, buffer, MAX_PATH ));
-    if (!len || len >= MAX_PATH) return L"Default";
-    if ((p = wcsrchr( appname, '/' ))) appname = p + 1;
-    if ((p = wcsrchr( appname, '\\' ))) appname = p + 1;
-    p = appname + lstrlenW(appname);
-    lstrcpyW( p, L"\\Explorer" );
-
-    /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Explorer */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\AppDefaults", &tmpkey ))
-    {
-        if (RegOpenKeyW( tmpkey, appname, &appkey )) appkey = 0;
-        RegCloseKey( tmpkey );
-        if (appkey)
-        {
-            len = sizeof(buffer);
-            if (!RegQueryValueExW( appkey, L"Desktop", 0, NULL, (LPBYTE)buffer, &len )) ret = buffer;
-            RegCloseKey( appkey );
-            if (ret && *ret) return ret;
-            ret = NULL;
-        }
-    }
-
-    /* @@ Wine registry key: HKCU\Software\Wine\Explorer */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\Explorer", &appkey ))
-    {
-        len = sizeof(buffer);
-        if (!RegQueryValueExW( appkey, L"Desktop", 0, NULL, (LPBYTE)buffer, &len )) ret = buffer;
-        RegCloseKey( appkey );
-        if (ret && *ret) return ret;
-    }
-    return L"Default";
-}
-
-
-/***********************************************************************
  *           dpiaware_init
  *
  * Initialize the DPI awareness style.
@@ -266,66 +217,12 @@ static void dpiaware_init(void)
 
 
 /***********************************************************************
- *           winstation_init
- *
- * Connect to the process window station and desktop.
- */
-static void winstation_init(void)
-{
-    STARTUPINFOW info;
-    WCHAR *winstation = NULL, *desktop = NULL, *buffer = NULL;
-    HANDLE handle;
-
-    GetStartupInfoW( &info );
-    if (info.lpDesktop && *info.lpDesktop)
-    {
-        buffer = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(info.lpDesktop) + 1) * sizeof(WCHAR) );
-        lstrcpyW( buffer, info.lpDesktop );
-        if ((desktop = wcschr( buffer, '\\' )))
-        {
-            *desktop++ = 0;
-            winstation = buffer;
-        }
-        else desktop = buffer;
-    }
-
-    /* set winstation if explicitly specified, or if we don't have one yet */
-    if (buffer || !NtUserGetProcessWindowStation())
-    {
-        handle = CreateWindowStationW( winstation ? winstation : L"WinSta0", 0, WINSTA_ALL_ACCESS, NULL );
-        if (handle)
-        {
-            NtUserSetProcessWindowStation( handle );
-            /* only WinSta0 is visible */
-            if (!winstation || !wcsicmp( winstation, L"WinSta0" ))
-            {
-                USEROBJECTFLAGS flags;
-                flags.fInherit  = FALSE;
-                flags.fReserved = FALSE;
-                flags.dwFlags   = WSF_VISIBLE;
-                NtUserSetObjectInformation( handle, UOI_FLAGS, &flags, sizeof(flags) );
-            }
-        }
-    }
-    if (buffer || !NtUserGetThreadDesktop( GetCurrentThreadId() ))
-    {
-        handle = CreateDesktopW( desktop ? desktop : get_default_desktop(),
-                                 NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
-        if (handle) NtUserSetThreadDesktop( handle );
-    }
-    HeapFree( GetProcessHeap(), 0, buffer );
-
-    register_desktop_class();
-}
-
-
-/***********************************************************************
  *           USER initialisation routine
  */
 static BOOL process_attach(void)
 {
     dpiaware_init();
-    winstation_init();
+    register_desktop_class();
 
     /* Initialize system colors and metrics */
     SYSPARAMS_Init();

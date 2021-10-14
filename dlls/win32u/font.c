@@ -199,18 +199,6 @@ static struct font_gamma_ramp font_gamma_ramp;
 static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
 
-static void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
-{
-    while (len--) *dst++ = (unsigned char)*src++;
-}
-
-static UINT asciiz_to_unicode( WCHAR *dst, const char *src )
-{
-    WCHAR *p = dst;
-    while ((*p++ = *src++));
-    return (p - dst) * sizeof(WCHAR);
-}
-
 UINT get_acp(void)
 {
     return ((const WORD *)NtCurrentTeb()->Peb->AnsiCodePageData)[1];
@@ -553,7 +541,7 @@ static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
     if (file) lstrcatW( path, file );
 }
 
-static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
+HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
 {
     UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
     OBJECT_ATTRIBUTES attr;
@@ -617,7 +605,7 @@ static HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
     return ret;
 }
 
-static HKEY reg_open_hkcu_key( const char *name )
+HKEY reg_open_hkcu_key( const char *name )
 {
     WCHAR nameW[128];
     return reg_open_key( hkcu_key, nameW, asciiz_to_unicode( nameW, name ) - sizeof(WCHAR) );

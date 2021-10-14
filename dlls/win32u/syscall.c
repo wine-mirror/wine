@@ -123,7 +123,9 @@ static NTSTATUS init( void *dispatcher )
 {
     NTSTATUS status;
     if ((status = ntdll_init_syscalls( 1, &syscall_table, dispatcher ))) return status;
-    return gdi_init();
+    if ((status = gdi_init())) return status;
+    winstation_init();
+    return STATUS_SUCCESS;
 }
 
 unixlib_entry_t __wine_unix_call_funcs[] =

@@ -22,16 +22,21 @@
 #pragma makedep unix
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "ntuser.h"
-#include "winternl.h"
+#include "ddk/wdm.h"
+#include "ntgdi_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winstation);
 
+
+#define DESKTOP_ALL_ACCESS 0x01ff
 
 /***********************************************************************
  *           NtUserCreateWindowStation  (win32u.@)
@@ -373,4 +378,135 @@ BOOL WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DW
     }
     SERVER_END_REQ;
     return ret;
+}
+
+static HANDLE get_winstations_dir_handle(void)
+{
+    char bufferA[64];
+    WCHAR buffer[64];
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE dir;
+
+    sprintf( bufferA, "\\Sessions\\%u\\Windows\\WindowStations", NtCurrentTeb()->Peb->SessionId );
+    str.Buffer = buffer;
+    str.Length = str.MaximumLength = asciiz_to_unicode( buffer, bufferA ) - sizeof(WCHAR);
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
+    status = NtOpenDirectoryObject( &dir, DIRECTORY_CREATE_OBJECT | DIRECTORY_TRAVERSE, &attr );
+    return status ? 0 : dir;
+}
+
+/***********************************************************************
+ *           get_default_desktop
+ *
+ * Get the name of the desktop to use for this app if not specified explicitly.
+ */
+static const WCHAR *get_default_desktop( void *buf, size_t buf_size )
+{
+    const WCHAR *p, *appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    KEY_VALUE_PARTIAL_INFORMATION *info = buf;
+    WCHAR *buffer = buf;
+    HKEY tmpkey, appkey;
+    DWORD len;
+
+    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
+
+    if ((p = wcsrchr( appname, '/' ))) appname = p + 1;
+    if ((p = wcsrchr( appname, '\\' ))) appname = p + 1;
+    len = lstrlenW(appname);
+    if (len > MAX_PATH) return defaultW;
+    memcpy( buffer, appname, len * sizeof(WCHAR) );
+    asciiz_to_unicode( buffer + len, "\\Explorer" );
+
+    /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Explorer */
+    if ((tmpkey = reg_open_hkcu_key( "Software\\Wine\\AppDefaults" )))
+    {
+        appkey = reg_open_key( tmpkey, buffer, lstrlenW(buffer) * sizeof(WCHAR) );
+        NtClose( tmpkey );
+        if (appkey)
+        {
+            len = query_reg_ascii_value( appkey, "Desktop", info, buf_size );
+            NtClose( appkey );
+            if (len) return (const WCHAR *)info->Data;
+        }
+    }
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Explorer */
+    if ((appkey = reg_open_hkcu_key( "Software\\Wine\\Explorer" )))
+    {
+        len = query_reg_ascii_value( appkey, "Desktop", info, buf_size );
+        NtClose( appkey );
+        if (len) return (const WCHAR *)info->Data;
+    }
+
+    return defaultW;
+}
+
+/***********************************************************************
+ *           winstation_init
+ *
+ * Connect to the process window station and desktop.
+ */
+void winstation_init(void)
+{
+    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
+    WCHAR *winstation = NULL, *desktop = NULL, *buffer = NULL;
+    HANDLE handle, dir = NULL;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+
+    static const WCHAR winsta0[] = {'W','i','n','S','t','a','0',0};
+
+    if (params->Desktop.Length)
+    {
+        buffer = malloc( params->Desktop.Length + sizeof(WCHAR) );
+        memcpy( buffer, params->Desktop.Buffer, params->Desktop.Length );
+        buffer[params->Desktop.Length / sizeof(WCHAR)] = 0;
+        if ((desktop = wcschr( buffer, '\\' )))
+        {
+            *desktop++ = 0;
+            winstation = buffer;
+        }
+        else desktop = buffer;
+    }
+
+    /* set winstation if explicitly specified, or if we don't have one yet */
+    if (buffer || !NtUserGetProcessWindowStation())
+    {
+        str.Buffer = (WCHAR *)(winstation ? winstation : winsta0);
+        str.Length = str.MaximumLength = lstrlenW( str.Buffer ) * sizeof(WCHAR);
+        dir = get_winstations_dir_handle();
+        InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
+                                    dir, NULL );
+
+        handle = NtUserCreateWindowStation( &attr, WINSTA_ALL_ACCESS, 0, 0, 0, 0, 0 );
+        if (handle)
+        {
+            NtUserSetProcessWindowStation( handle );
+            /* only WinSta0 is visible */
+            if (!winstation || !wcsicmp( winstation, winsta0 ))
+            {
+                USEROBJECTFLAGS flags;
+                flags.fInherit  = FALSE;
+                flags.fReserved = FALSE;
+                flags.dwFlags   = WSF_VISIBLE;
+                NtUserSetObjectInformation( handle, UOI_FLAGS, &flags, sizeof(flags) );
+            }
+        }
+    }
+    if (buffer || !NtUserGetThreadDesktop( GetCurrentThreadId() ))
+    {
+        char buffer[4096];
+        str.Buffer = (WCHAR *)(desktop ? desktop : get_default_desktop( buffer, sizeof(buffer) ));
+        str.Length = str.MaximumLength = lstrlenW( str.Buffer ) * sizeof(WCHAR);
+        if (!dir) dir = get_winstations_dir_handle();
+        InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
+                                    dir, NULL );
+
+        handle = NtUserCreateDesktopEx( &attr, NULL, NULL, 0, DESKTOP_ALL_ACCESS, 0 );
+        if (handle) NtUserSetThreadDesktop( handle );
+    }
+    NtClose( dir );
+    free( buffer );
 }

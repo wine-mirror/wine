@@ -224,7 +224,12 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg );
 extern void wrappers_init( unixlib_handle_t handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS gdi_init(void) DECLSPEC_HIDDEN;
 extern NTSTATUS callbacks_init( void *args ) DECLSPEC_HIDDEN;
+extern void winstation_init(void) DECLSPEC_HIDDEN;
 
+extern HKEY reg_open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
+extern HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
+extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
+                                    KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
 
 static inline WCHAR *win32u_wcsrchr( const WCHAR *str, WCHAR ch )
 {
@@ -315,6 +320,18 @@ static inline LONG win32u_wcstol( LPCWSTR s, LPWSTR *end, INT base )
 #define wcsicmp(s1,s2)  win32u_wcsicmp(s1,s2)
 #define wcsrchr(s,c)    win32u_wcsrchr(s,c)
 #define wcstol(s,e,b)   win32u_wcstol(s,e,b)
+
+static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+{
+    while (len--) *dst++ = (unsigned char)*src++;
+}
+
+static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
+{
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return (p - dst) * sizeof(WCHAR);
+}
 
 DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
                      DWORD srclen ) DECLSPEC_HIDDEN;
