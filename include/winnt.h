@@ -6308,6 +6308,19 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 
 /* Interlocked functions */
 
+#define InterlockedAnd _InterlockedAnd
+#define InterlockedCompareExchange _InterlockedCompareExchange
+#define InterlockedCompareExchange64 _InterlockedCompareExchange64
+#define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
+#define InterlockedDecrement _InterlockedDecrement
+#define InterlockedDecrement16 _InterlockedDecrement16
+#define InterlockedExchange _InterlockedExchange
+#define InterlockedExchangeAdd _InterlockedExchangeAdd
+#define InterlockedExchangePointer _InterlockedExchangePointer
+#define InterlockedIncrement _InterlockedIncrement
+#define InterlockedIncrement16 _InterlockedIncrement16
+#define InterlockedOr _InterlockedOr
+
 #ifdef _MSC_VER
 
 #pragma intrinsic(_InterlockedAnd)
@@ -6332,66 +6345,13 @@ long      _InterlockedIncrement(long volatile*);
 short     _InterlockedIncrement16(short volatile*);
 long      _InterlockedOr(long volatile *,long);
 
-static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile *dest, LONG val )
-{
-    return _InterlockedAnd( (long volatile *)dest, val );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
-{
-    return _InterlockedCompareExchange( (long volatile *)dest, xchg, compare );
-}
-
-static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
-{
-    return _InterlockedCompareExchange64( (long long volatile *)dest, xchg, compare );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
-{
-    return _InterlockedExchange( (long volatile *)dest, val );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
-{
-    return _InterlockedExchangeAdd( (long volatile *)dest, incr );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
-{
-    return _InterlockedIncrement( (long volatile *)dest );
-}
-
-static FORCEINLINE short WINAPI InterlockedIncrement16( short volatile *dest )
-{
-    return _InterlockedIncrement16( dest );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
-{
-    return _InterlockedDecrement( (long volatile *)dest );
-}
-
-static FORCEINLINE short WINAPI InterlockedDecrement16( short volatile *dest )
-{
-    return _InterlockedDecrement16( dest );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
-{
-    return _InterlockedOr( (long volatile *)dest, val );
-}
-
 #ifndef __i386__
 
 #pragma intrinsic(_InterlockedCompareExchangePointer)
 #pragma intrinsic(_InterlockedExchangePointer)
 
-#define InterlockedCompareExchangePointer    _InterlockedCompareExchangePointer
-#define InterlockedExchangePointer           _InterlockedExchangePointer
-
-void *InterlockedCompareExchangePointer(void *volatile*,void*,void*);
-void *InterlockedExchangePointer(void *volatile*,void*);
+void *_InterlockedCompareExchangePointer(void *volatile*,void*,void*);
+void *_InterlockedExchangePointer(void *volatile*,void*);
 
 #else
 
@@ -6531,6 +6491,9 @@ static FORCEINLINE void MemoryBarrier(void)
 #endif  /* __GNUC__ */
 
 #ifdef _WIN64
+
+#define InterlockedCompareExchange128 _InterlockedCompareExchange128
+
 #if defined(_MSC_VER) && !defined(__clang__)
 
 #pragma intrinsic(_InterlockedCompareExchange128)
