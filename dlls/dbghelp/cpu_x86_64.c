@@ -209,6 +209,19 @@ static void dump_unwind_info(struct cpu_stack_walk* csw, ULONG64 base, RUNTIME_F
             case UWOP_PUSH_MACHFRAME:
                 TRACE("PUSH_MACHFRAME %u\n", info->UnwindCode[i].u.OpInfo);
                 break;
+            case UWOP_EPILOG:
+                if (info->Version == 2)
+                {
+                    unsigned int offset;
+                    if (info->UnwindCode[i].u.OpInfo)
+                        offset = info->UnwindCode[i].u.CodeOffset;
+                    else
+                        offset = (info->UnwindCode[i+1].u.OpInfo << 8) + info->UnwindCode[i+1].u.CodeOffset;
+                    TRACE("UWOP_EPILOG %u offset %u\n", info->UnwindCode[i].u.OpInfo, offset);
+                    i += 1;
+                    break;
+                }
+                /* Fall through */
             default:
                 FIXME("unknown code %u\n", info->UnwindCode[i].u.UnwindOp);
                 break;
@@ -490,7 +503,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
             return FALSE;
         }
 
-        if (info->Version != 1)
+        if (info->Version != 1 && info->Version != 2)
         {
             WARN("unknown unwind info version %u at %lx\n", info->Version, base + function->UnwindData);
             return FALSE;
