@@ -618,7 +618,7 @@ static struct d3d10_effect_variable * d3d10_effect_get_variable_by_name(
     return effect->pool ? d3d10_effect_get_variable_by_name(effect->pool, name) : NULL;
 }
 
-static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const void *data, size_t data_size)
+static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v)
 {
     struct d3d10_effect_shader_variable *sv = &v->u.shader;
     struct d3d10_effect_shader_resource *sr;
@@ -846,7 +846,7 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
 
     memcpy(ID3D10Blob_GetBufferPointer(v->u.shader.bytecode), ptr, dxbc_size);
 
-    if (FAILED(hr = get_fx10_shader_resources(v, ptr, dxbc_size)))
+    if (FAILED(hr = get_fx10_shader_resources(v)))
         return hr;
 
     switch (v->type->basetype)
