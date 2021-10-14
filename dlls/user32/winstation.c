@@ -290,24 +290,13 @@ HDESK WINAPI OpenDesktopA( LPCSTR name, DWORD flags, BOOL inherit, ACCESS_MASK a
 
 HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK access )
 {
-    HANDLE ret = 0;
-    DWORD len = name ? lstrlenW(name) : 0;
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    SERVER_START_REQ( open_desktop )
-    {
-        req->winsta     = wine_server_obj_handle( hwinsta );
-        req->flags      = flags;
-        req->access     = access;
-        req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+
+    RtlInitUnicodeString( &str, name );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, hwinsta, NULL );
+    if (inherit) attr.Attributes |= OBJ_INHERIT;
+    return NtUserOpenDesktop( &attr, flags, access );
 }
 
 

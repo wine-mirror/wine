@@ -92,6 +92,19 @@ NTSTATUS WINAPI wow64_NtUserCreateDesktopEx( UINT *args )
     return HandleToUlong( ret );
 }
 
+NTSTATUS WINAPI wow64_NtUserOpenDesktop( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    DWORD flags = get_ulong( &args );
+    ACCESS_MASK access = get_ulong( &args );
+
+    struct object_attr64 attr;
+    HANDLE ret;
+
+    ret = NtUserOpenDesktop( objattr_32to64( &attr, attr32 ), flags, access );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtUserCloseDesktop( UINT *args )
 {
     HDESK handle = get_handle( &args );

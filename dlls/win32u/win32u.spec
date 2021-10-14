@@ -1091,7 +1091,7 @@
 @ stub NtUserNotifyProcessCreate
 @ stub NtUserNotifyWinEvent
 @ stub NtUserOpenClipboard
-@ stub NtUserOpenDesktop
+@ stdcall -syscall NtUserOpenDesktop(ptr long long)
 @ stdcall -syscall NtUserOpenInputDesktop(long long long)
 @ stub NtUserOpenThreadDesktop
 @ stdcall -syscall NtUserOpenWindowStation(ptr long)

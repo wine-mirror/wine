@@ -160,6 +160,30 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
 }
 
 /***********************************************************************
+ *           NtUserOpenDesktop   (win32u.@)
+ */
+HDESK WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MASK access )
+{
+    HANDLE ret = 0;
+    if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    SERVER_START_REQ( open_desktop )
+    {
+        req->winsta     = wine_server_obj_handle( attr->RootDirectory );
+        req->flags      = flags;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+ }
+
+/***********************************************************************
  *           NtUserCloseDesktop  (win32u.@)
  */
 BOOL WINAPI NtUserCloseDesktop( HDESK handle )
