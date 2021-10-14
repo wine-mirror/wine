@@ -309,12 +309,15 @@ call ok(x = "ok", "testOnErrorClear failed")
 sub testForEachError()
     on error resume next
 
-    dim x, y
+    dim x, y, z
     y = false
+    z = false
     for each x in empty
         y = true
     next
+    z = true
     call ok(y, "for each not executed")
+    call ok(z, "line after next not executed")
     call todo_wine_ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
 end sub
 

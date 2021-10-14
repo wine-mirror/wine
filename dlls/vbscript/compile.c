@@ -829,6 +829,10 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
         return hres;
 
     label_set_addr(ctx, loop_ctx.for_end_label);
+
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
