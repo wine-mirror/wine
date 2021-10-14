@@ -4499,9 +4499,9 @@ static void test_effect_state_groups(void)
             rast_desc.AntialiasedLineEnable);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
-    ok(!!technique, "Failed to get technique.\n");
+    ok(technique->lpVtbl->IsValid(technique), "Expected valid technique.\n");
     pass = technique->lpVtbl->GetPassByName(technique, "pass0");
-    ok(!!pass, "Failed to get pass.\n");
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
     hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
     ok(SUCCEEDED(hr), "Failed to get pass desc, hr %#x.\n", hr);
     ok(!strcmp(pass_desc.Name, "pass0"), "Got unexpected Name \"%s\".\n", pass_desc.Name);
@@ -4789,9 +4789,9 @@ static void test_effect_state_group_defaults(void)
             rast_desc.AntialiasedLineEnable);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
-    ok(!!technique, "Failed to get technique.\n");
+    ok(technique->lpVtbl->IsValid(technique), "Expected valid technique.\n");
     pass = technique->lpVtbl->GetPassByName(technique, "pass0");
-    ok(!!pass, "Failed to get pass.\n");
+    ok(pass->lpVtbl->IsValid(pass), "Failed to get pass.\n");
     hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
     ok(SUCCEEDED(hr), "Failed to get pass desc, hr %#x.\n", hr);
     ok(!strcmp(pass_desc.Name, "pass0"), "Got unexpected Name \"%s\".\n", pass_desc.Name);
@@ -6155,9 +6155,9 @@ static void test_effect_resource_variable(void)
 
     /* Apply the pass to bind the resource to the shader. */
     technique = effect->lpVtbl->GetTechniqueByName(effect, "rsrc_test");
-    ok(!!technique, "Got unexpected technique %p.\n", technique);
+    ok(technique->lpVtbl->IsValid(technique), "Expected valid technique.\n");
     pass = technique->lpVtbl->GetPassByName(technique, "p0");
-    ok(!!pass, "Got unexpected pass %p.\n", pass);
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
     hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!pass_desc.pIAInputSignature, "Unexpected input signature.\n");
@@ -6227,9 +6227,9 @@ static void test_effect_resource_variable(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "rsrc_test");
-    ok(!!technique, "Got unexpected technique %p.\n", technique);
+    ok(technique->lpVtbl->IsValid(technique), "Expected valid technique.\n");
     pass = technique->lpVtbl->GetPassByName(technique, "p0");
-    ok(!!pass, "Got unexpected pass %p.\n", pass);
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
     var = effect->lpVtbl->GetVariableByName(effect, "s");
     ok(var->lpVtbl->IsValid(var), "Expected valid variable.\n");
