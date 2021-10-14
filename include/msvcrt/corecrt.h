@@ -51,12 +51,23 @@
 
 #include <sal.h>
 
-#if !defined(_MSC_VER) && !defined(__int64)
-# if defined(_WIN64) && !defined(__MINGW64__)
-#   define __int64 long
-# else
-#   define __int64 long long
-# endif
+#ifndef _MSC_VER
+#  ifndef __int8
+#    define __int8  char
+#  endif
+#  ifndef __int16
+#    define __int16 short
+#  endif
+#  ifndef __int32
+#    define __int32 int
+#  endif
+#  ifndef __int64
+#    if defined(_WIN64) && !defined(__MINGW64__)
+#      define __int64 long
+#    else
+#      define __int64 long long
+#    endif
+#  endif
 #endif
 
 #ifndef NULL
