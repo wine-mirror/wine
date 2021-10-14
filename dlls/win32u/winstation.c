@@ -34,6 +34,34 @@ WINE_DEFAULT_DEBUG_CHANNEL(winstation);
 
 
 /***********************************************************************
+ *           NtUserCreateWindowStation  (win32u.@)
+ */
+HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK access, ULONG arg3,
+                                          ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 )
+{
+    HANDLE ret;
+
+    if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+
+    SERVER_START_REQ( create_winstation )
+    {
+        req->flags      = 0;
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        wine_server_call_err( req );
+        ret = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/***********************************************************************
  *           NtUserCloseWindowStation  (win32u.@)
  */
 BOOL WINAPI NtUserCloseWindowStation( HWINSTA handle )

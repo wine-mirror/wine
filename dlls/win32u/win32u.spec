@@ -816,7 +816,7 @@
 @ stub NtUserCreatePalmRejectionDelayZone
 @ stub NtUserCreateWindowEx
 @ stub NtUserCreateWindowGroup
-@ stub NtUserCreateWindowStation
+@ stdcall -syscall NtUserCreateWindowStation(ptr long long long long long long)
 @ stub NtUserCtxDisplayIOCtl
 @ stub NtUserDdeInitialize
 @ stub NtUserDefSetText

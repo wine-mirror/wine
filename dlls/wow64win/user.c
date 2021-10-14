@@ -27,6 +27,23 @@
 #include "ntuser.h"
 #include "wow64win_private.h"
 
+
+NTSTATUS WINAPI wow64_NtUserCreateWindowStation( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    ULONG arg3 = get_ulong( &args );
+    ULONG arg4 = get_ulong( &args );
+    ULONG arg5 = get_ulong( &args );
+    ULONG arg6 = get_ulong( &args );
+    ULONG arg7 = get_ulong( &args );
+
+    struct object_attr64 attr;
+
+    return HandleToUlong( NtUserCreateWindowStation( objattr_32to64( &attr, attr32 ), access,
+                                                     arg3, arg4, arg5, arg6, arg7 ));
+}
+
 NTSTATUS WINAPI wow64_NtUserCloseWindowStation( UINT *args )
 {
     HWINSTA handle = get_handle( &args );

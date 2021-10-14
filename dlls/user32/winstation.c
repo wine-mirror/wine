@@ -125,33 +125,18 @@ HWINSTA WINAPI CreateWindowStationA( LPCSTR name, DWORD flags, ACCESS_MASK acces
 HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD flags, ACCESS_MASK access,
                                      LPSECURITY_ATTRIBUTES sa )
 {
-    HANDLE ret;
-    DWORD len = name ? lstrlenW(name) : 0;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
 
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    if (!len)
-    {
-        name = get_winstation_default_name();
-        len = lstrlenW( name );
-    }
-    SERVER_START_REQ( create_winstation )
-    {
-        req->flags      = 0;
-        req->access     = access;
-        req->attributes = OBJ_CASE_INSENSITIVE |
-                          ((flags & CWF_CREATE_ONLY) ? 0 : OBJ_OPENIF) |
-                          ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-        req->rootdir    = wine_server_obj_handle( get_winstations_dir_handle() );
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+    RtlInitUnicodeString( &str, name );
+    if (!str.Length) RtlInitUnicodeString( &str, get_winstation_default_name() );
+
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE,
+                                get_winstations_dir_handle(), sa );
+    if (!(flags & CWF_CREATE_ONLY)) attr.Attributes |= OBJ_OPENIF;
+    if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
+
+    return NtUserCreateWindowStation( &attr, access, 0, 0, 0, 0, 0 );
 }
 
 
