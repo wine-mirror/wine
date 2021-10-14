@@ -142,6 +142,13 @@ static inline struct d3d10_effect_variable *impl_from_ID3D10EffectShaderVariable
     return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
 }
 
+static struct d3d10_effect_variable * d3d10_array_get_element(struct d3d10_effect_variable *v,
+        unsigned int index)
+{
+    if (!v->type->element_count) return v;
+    return &v->elements[index];
+}
+
 enum d3d10_effect_container_type
 {
     D3D10_C_NONE,
@@ -2152,7 +2159,8 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
 static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
         const char **ptr, BOOL shared_type_desc, struct d3d10_effect_variable *v)
 {
-    unsigned int i, j;
+    struct d3d10_effect_variable *var;
+    unsigned int i, j, element_count;
     HRESULT hr;
     DWORD offset;
 
@@ -2175,6 +2183,8 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
     /* Shared variable description contains only type information. */
     if (shared_type_desc) return S_OK;
 
+    element_count = max(v->type->element_count, 1);
+
     switch (v->type->basetype)
     {
         case D3D10_SVT_TEXTURE:
@@ -2186,12 +2196,7 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
         case D3D10_SVT_TEXTURE2DMSARRAY:
         case D3D10_SVT_TEXTURE3D:
         case D3D10_SVT_TEXTURECUBE:
-            if (!v->type->element_count)
-                i = 1;
-            else
-                i = v->type->element_count;
-
-            if (!(v->u.resource.srv = heap_calloc(i, sizeof(*v->u.resource.srv))))
+            if (!(v->u.resource.srv = heap_calloc(element_count, sizeof(*v->u.resource.srv))))
             {
                 ERR("Failed to allocate shader resource view array memory.\n");
                 return E_OUTOFMEMORY;
@@ -2218,19 +2223,11 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
         case D3D10_SVT_PIXELSHADER:
         case D3D10_SVT_GEOMETRYSHADER:
             TRACE("Shader type is %s\n", debug_d3d10_shader_variable_type(v->type->basetype));
-            for (i = 0; i < max(v->type->element_count, 1); ++i)
+            for (i = 0; i < element_count; ++i)
             {
                 DWORD shader_offset, sodecl_offset;
-                struct d3d10_effect_variable *var;
 
-                if (!v->type->element_count)
-                {
-                    var = v;
-                }
-                else
-                {
-                    var = &v->elements[i];
-                }
+                var = d3d10_array_get_element(v, i);
 
                 read_dword(ptr, &shader_offset);
                 TRACE("Shader offset: %#x.\n", shader_offset);
@@ -2261,7 +2258,6 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
         case D3D10_SVT_SAMPLER:
             {
                 const struct d3d10_effect_state_storage_info *storage_info;
-                unsigned int count = max(v->type->element_count, 1);
 
                 if (!(storage_info = get_storage_info(v->type->basetype)))
                 {
@@ -2276,15 +2272,11 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
                     return E_FAIL;
                 }
 
-                for (i = 0; i < count; ++i)
+                for (i = 0; i < element_count; ++i)
                 {
-                    struct d3d10_effect_variable *var;
                     unsigned int prop_count;
 
-                    if (v->type->element_count)
-                        var = &v->elements[i];
-                    else
-                        var = v;
+                    var = d3d10_array_get_element(v, i);
 
                     read_dword(ptr, &prop_count);
                     TRACE("State object property count: %#x.\n", prop_count);
@@ -3969,10 +3961,9 @@ static void d3d10_effect_pass_set_shader(struct d3d10_effect_pass *pass,
         const struct d3d10_effect_pass_shader_desc *shader_desc)
 {
     ID3D10Device *device = pass->technique->effect->device;
-    struct d3d10_effect_variable *v = shader_desc->shader;
+    struct d3d10_effect_variable *v;
 
-    if (v->type->element_count)
-        v = &v->elements[shader_desc->index];
+    v = d3d10_array_get_element(shader_desc->shader, shader_desc->index);
 
     switch (v->type->basetype)
     {
@@ -7081,8 +7072,7 @@ static HRESULT d3d10_get_shader_variable(struct d3d10_effect_variable *v, UINT s
 {
     unsigned int i;
 
-    if (v->type->element_count)
-        v = &v->elements[0];
+    v = d3d10_array_get_element(v, 0);
 
     if (!shader_index)
     {
