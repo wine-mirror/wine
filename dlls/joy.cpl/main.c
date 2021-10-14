@@ -867,6 +867,11 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
 
     hr = IDirectInputDevice2_CreateEffect(
         joystick->device, &pdei->guid, &dieffect, &joystick->effects[joystick->cur_effect].effect, NULL);
+    if (FAILED(hr))
+    {
+        FIXME("Failed to create effect with type %s, hr %#x\n", debugstr_guid(&pdei->guid), hr);
+        return DIENUM_CONTINUE;
+    }
 
     joystick->effects[joystick->cur_effect].params = dieffect;
     joystick->effects[joystick->cur_effect].info = *pdei;
