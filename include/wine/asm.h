@@ -21,13 +21,13 @@
 #ifndef __WINE_WINE_ASM_H
 #define __WINE_WINE_ASM_H
 
-#if defined(__APPLE__) || (defined(_WIN32) && defined(__i386__))
+#if defined(__APPLE__) || (defined(__WINE_PE_BUILD) && defined(__i386__))
 # define __ASM_NAME(name) "_" name
 #else
 # define __ASM_NAME(name) name
 #endif
 
-#if defined(_WIN32) && defined(__i386__)
+#if defined(__WINE_PE_BUILD) && defined(__i386__)
 # define __ASM_STDCALL(name,args)  "_" name "@" #args
 # define __ASM_FASTCALL(name,args) "@" name "@" #args
 #else
@@ -55,7 +55,7 @@
 # define __ASM_SEH(str)
 #endif
 
-#ifdef _WIN32
+#ifdef __WINE_PE_BUILD
 # define __ASM_FUNC_TYPE(name) ".def " name "\n\t.scl 2\n\t.type 32\n\t.endef"
 #elif defined(__APPLE__)
 # define __ASM_FUNC_TYPE(name) ""
@@ -67,7 +67,7 @@
 # define __ASM_FUNC_TYPE(name) ".type " name ",@function"
 #endif
 
-#ifdef _WIN32
+#ifdef __WINE_PE_BUILD
 # define __ASM_FUNC_SIZE(name) ""
 #elif defined(__APPLE__)
 # define __ASM_FUNC_SIZE(name) ""
@@ -107,7 +107,7 @@
     __ASM_BLOCK_END
 #endif
 
-#ifdef _WIN32
+#ifdef __WINE_PE_BUILD
 #define __ASM_GLOBAL_IMPORT(name) __ASM_DEFINE_IMPORT(__ASM_NAME(#name))
 #define __ASM_STDCALL_IMPORT(name,args) __ASM_DEFINE_IMPORT(__ASM_STDCALL(#name,args))
 #else
@@ -117,7 +117,7 @@
 
 /* fastcall support */
 
-#if defined(__i386__) && !defined(_WIN32)
+#if defined(__i386__) && !defined(__WINE_PE_BUILD)
 
 # define __ASM_USE_FASTCALL_WRAPPER
 # define DEFINE_FASTCALL1_WRAPPER(func) \
@@ -176,7 +176,7 @@
 
 #endif  /* __i386__ */
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32) && !defined(__APPLE__) && !defined(__ANDROID__)
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)) && !defined(__WINE_PE_BUILD) && !defined(__APPLE__) && !defined(__ANDROID__)
 #define __ASM_OBSOLETE(func) __asm__( ".symver " #func "_obsolete," #func "@WINE_1.0" )
 #else
 #undef __ASM_OBSOLETE

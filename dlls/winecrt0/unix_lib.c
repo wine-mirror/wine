@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef _WIN32
+#ifdef __WINE_PE_BUILD
 
 #include <stdarg.h>
 
@@ -65,4 +65,4 @@ NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, vo
     return p__wine_unix_call( handle, code, args );
 }
 
-#endif  /* _WIN32 */
+#endif  /* __WINE_PE_BUILD */

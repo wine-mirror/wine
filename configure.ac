@@ -696,6 +696,7 @@ dnl **** Check for working dll ****
 AC_SUBST(DLLFLAGS,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDEXECFLAGS,"")
+AC_SUBST(EXTRACFLAGS,"")
 AC_SUBST(UNIXDLLFLAGS,"-fPIC")
 AC_SUBST(UNIXLDFLAGS,["-shared -Wl,-Bsymbolic -Wl,-soname,\$(UNIXLIB)"])
 AC_SUBST(TOP_INSTALL_LIB,"")
@@ -715,6 +716,7 @@ case $host_os in
   cygwin*|mingw32*)
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     LIBEXT="dll"
+    EXTRACFLAGS="-D__WINE_PE_BUILD"
     dnl Disable stdcall fixups to catch prototype mismatches
     case $host_cpu in
       *i[[3456]]86*) WINE_TRY_CFLAGS([-Wl,--disable-stdcall-fixup],
@@ -953,7 +955,7 @@ then
         saved_CFLAGS=$CFLAGS
         saved_LDFLAGS=$LDFLAGS
         AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-"-g -O2"})
-        AC_SUBST(EXTRACROSSCFLAGS,"-DWINE_CROSS_PE -Wall")
+        AC_SUBST(EXTRACROSSCFLAGS,"-D__WINE_PE_BUILD -Wall")
         AC_SUBST(CROSSLDFLAGS)
 
         CC="$CROSSCC"
@@ -1955,10 +1957,9 @@ test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
 
 dnl **** Check for gcc specific options ****
 
-AC_SUBST(EXTRACFLAGS,"")
 if test "x${GCC}" = "xyes"
 then
-  EXTRACFLAGS="-Wall -pipe"
+  EXTRACFLAGS="$EXTRACFLAGS -Wall -pipe"
 
   dnl Check for some compiler flags
   dnl clang needs to be told to fail on unknown options
@@ -2584,10 +2585,7 @@ esac
 dnl **** Generate output files ****
 
 AH_TOP([#ifndef __WINE_CONFIG_H
-#define __WINE_CONFIG_H
-#ifdef WINE_CROSS_PE
-#error config.h should not be used when cross-compiling
-#endif])
+#define __WINE_CONFIG_H])
 AH_BOTTOM([#endif /* __WINE_CONFIG_H */])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])

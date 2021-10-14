@@ -630,7 +630,6 @@ LDAP_CFLAGS
 RT_LIBS
 TOOLSEXT
 MSVCRTFLAGS
-EXTRACFLAGS
 VKD3D_SHADER_LIBS
 VKD3D_SHADER_CFLAGS
 VKD3D_LIBS
@@ -751,6 +750,7 @@ TOP_INSTALL_DEV
 TOP_INSTALL_LIB
 UNIXLDFLAGS
 UNIXDLLFLAGS
+EXTRACFLAGS
 LDEXECFLAGS
 LDDLLFLAGS
 DLLFLAGS
@@ -7935,6 +7935,8 @@ LDDLLFLAGS=""
 
 LDEXECFLAGS=""
 
+EXTRACFLAGS=""
+
 UNIXDLLFLAGS="-fPIC"
 
 UNIXLDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname,\$(UNIXLIB)"
@@ -8311,6 +8313,7 @@ else
 fi
 
     LIBEXT="dll"
+    EXTRACFLAGS="-D__WINE_PE_BUILD"
         case $host_cpu in
       *i[3456]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
 $as_echo_n "checking whether the compiler supports -Wl,--disable-stdcall-fixup... " >&6; }
@@ -9628,7 +9631,7 @@ test -n "$CROSSCC" || CROSSCC="false"
         saved_LDFLAGS=$LDFLAGS
         CROSSCFLAGS=${CROSSCFLAGS:-"-g -O2"}
 
-        EXTRACROSSCFLAGS="-DWINE_CROSS_PE -Wall"
+        EXTRACROSSCFLAGS="-D__WINE_PE_BUILD -Wall"
 
 
 
@@ -16871,11 +16874,9 @@ fi
 test "x$ac_cv_lib_soname_vkd3d" != "x" || enable_d3d12=${enable_d3d12:-no}
 
 
-EXTRACFLAGS=""
-
 if test "x${GCC}" = "xyes"
 then
-  EXTRACFLAGS="-Wall -pipe"
+  EXTRACFLAGS="$EXTRACFLAGS -Wall -pipe"
 
       saved_CFLAGS=$CFLAGS
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5

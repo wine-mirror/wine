@@ -25,7 +25,7 @@
 
 WINBASEAPI void *WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
 
-#ifdef _WIN32
+#ifdef __WINE_PE_BUILD
 
 extern IMAGE_DOS_HEADER __ImageBase;
 
@@ -39,7 +39,7 @@ FARPROC WINAPI __delayLoadHelper2( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, IMAG
     return ResolveDelayLoadedAPI( &__ImageBase, descr, NULL, DelayLoadFailureHook, addr, 0 );
 }
 
-#else /* _WIN32 */
+#else /* __WINE_PE_BUILD */
 
 struct ImgDelayDescr
 {
@@ -79,4 +79,4 @@ static void free_delay_imports(void)
 }
 #endif
 
-#endif /* _WIN32 */
+#endif /* __WINE_PE_BUILD */

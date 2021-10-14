@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef _WIN32
+#ifdef __WINE_PE_BUILD
 
 /* referenced by MSVC to pull crt support for floating points. we don't use it. */
 int _fltused = 0;
