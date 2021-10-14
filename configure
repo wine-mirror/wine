@@ -5675,7 +5675,6 @@ case $host in
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
     with_mingw=${with_mingw:-no}
-    CFLAGS="$CFLAGS -D_WIN32"
     ;;
 esac
 

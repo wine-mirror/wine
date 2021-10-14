@@ -34,7 +34,7 @@
 # include <unistd.h>
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef _WIN32
 # include <direct.h>
 # include <io.h>
 # include <process.h>
@@ -201,7 +201,7 @@ static inline struct strarray strarray_fromstring( const char *str, const char *
 static inline struct strarray strarray_frompath( const char *path )
 {
     if (!path) return empty_strarray;
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef _WIN32
     return strarray_fromstring( path, ";" );
 #else
     return strarray_fromstring( path, ":" );
@@ -253,7 +253,7 @@ static inline void strarray_trace( struct strarray args )
 
 static inline int strarray_spawn( struct strarray args )
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef _WIN32
     strarray_add( &args, NULL );
     return _spawnvp( _P_WAIT, args.str[0], args.str );
 #else
