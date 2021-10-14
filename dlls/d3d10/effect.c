@@ -2326,7 +2326,7 @@ static HRESULT parse_fx10_object_variable(const char *data, size_t data_size,
     return S_OK;
 }
 
-static HRESULT create_variable_buffer(struct d3d10_effect_variable *v, D3D10_CBUFFER_TYPE type)
+static HRESULT create_variable_buffer(struct d3d10_effect_variable *v)
 {
     D3D10_BUFFER_DESC buffer_desc;
     D3D10_SUBRESOURCE_DATA subresource_data;
@@ -2344,7 +2344,7 @@ static HRESULT create_variable_buffer(struct d3d10_effect_variable *v, D3D10_CBU
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
-    if (type == D3D10_CT_CBUFFER)
+    if (v->type->basetype == D3D10_SVT_CBUFFER)
         buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
     else
         buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
@@ -2356,7 +2356,7 @@ static HRESULT create_variable_buffer(struct d3d10_effect_variable *v, D3D10_CBU
     if (FAILED(hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &subresource_data, &v->u.buffer.buffer)))
             return hr;
 
-    if (type == D3D10_CT_TBUFFER)
+    if (v->type->basetype == D3D10_SVT_TBUFFER)
     {
         srv_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
         srv_desc.ViewDimension = D3D_SRV_DIMENSION_BUFFER;
@@ -2561,7 +2561,7 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
 
     if (local && l->type->size_unpacked)
     {
-        if (FAILED(hr = create_variable_buffer(l, d3d10_cbuffer_type)))
+        if (FAILED(hr = create_variable_buffer(l)))
             return hr;
     }
 
