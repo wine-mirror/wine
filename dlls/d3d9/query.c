@@ -123,15 +123,8 @@ static DWORD WINAPI d3d9_query_GetDataSize(IDirect3DQuery9 *iface)
 static HRESULT WINAPI d3d9_query_Issue(IDirect3DQuery9 *iface, DWORD flags)
 {
     struct d3d9_query *query = impl_from_IDirect3DQuery9(iface);
-    HRESULT hr;
-
     TRACE("iface %p, flags %#x.\n", iface, flags);
-
-    wined3d_mutex_lock();
-    hr = wined3d_query_issue(query->wined3d_query, flags);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return wined3d_query_issue(query->wined3d_query, flags);
 }
 
 static HRESULT WINAPI d3d9_query_GetData(IDirect3DQuery9 *iface, void *data, DWORD size, DWORD flags)
