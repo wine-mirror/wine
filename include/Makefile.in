@@ -832,6 +832,7 @@ SOURCES = \
 	wmsbuffer.idl \
 	wmsdk.h \
 	wmsdkidl.idl \
+	wmsecure.idl \
 	wnaspi32.h \
 	wownt16.h \
 	wownt32.h \
