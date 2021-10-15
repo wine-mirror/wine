@@ -620,7 +620,10 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 
 BOOL WINAPI ImeSetActiveContext(HIMC hIMC,BOOL fFlag)
 {
-    FIXME("(%p, %x): stub\n", hIMC, fFlag);
+    static int once;
+
+    if (!once++)
+        FIXME("(%p, %x): stub\n", hIMC, fFlag);
     return TRUE;
 }
 
