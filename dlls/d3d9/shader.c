@@ -54,9 +54,7 @@ static ULONG WINAPI d3d9_vertexshader_AddRef(IDirect3DVertexShader9 *iface)
     if (refcount == 1)
     {
         IDirect3DDevice9Ex_AddRef(shader->parent_device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -72,11 +70,7 @@ static ULONG WINAPI d3d9_vertexshader_Release(IDirect3DVertexShader9 *iface)
     if (!refcount)
     {
         IDirect3DDevice9Ex *device = shader->parent_device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
-
         /* Release the device last, as it may cause the device to be destroyed. */
         IDirect3DDevice9Ex_Release(device);
     }
@@ -203,9 +197,7 @@ static ULONG WINAPI d3d9_pixelshader_AddRef(IDirect3DPixelShader9 *iface)
     if (refcount == 1)
     {
         IDirect3DDevice9Ex_AddRef(shader->parent_device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -221,11 +213,7 @@ static ULONG WINAPI d3d9_pixelshader_Release(IDirect3DPixelShader9 *iface)
     if (!refcount)
     {
         IDirect3DDevice9Ex *device = shader->parent_device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
-
         /* Release the device last, as it may cause the device to be destroyed. */
         IDirect3DDevice9Ex_Release(device);
     }

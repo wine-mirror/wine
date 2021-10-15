@@ -225,9 +225,7 @@ static ULONG WINAPI d3d9_vertex_declaration_AddRef(IDirect3DVertexDeclaration9 *
     if (refcount == 1)
     {
         IDirect3DDevice9Ex_AddRef(declaration->parent_device);
-        wined3d_mutex_lock();
         wined3d_vertex_declaration_incref(declaration->wined3d_declaration);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -243,9 +241,7 @@ static ULONG WINAPI d3d9_vertex_declaration_Release(IDirect3DVertexDeclaration9 
     if (!refcount)
     {
         IDirect3DDevice9Ex *parent_device = declaration->parent_device;
-        wined3d_mutex_lock();
         wined3d_vertex_declaration_decref(declaration->wined3d_declaration);
-        wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
         IDirect3DDevice9Ex_Release(parent_device);

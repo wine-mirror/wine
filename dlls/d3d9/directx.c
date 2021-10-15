@@ -81,9 +81,7 @@ static ULONG WINAPI d3d9_Release(IDirect3D9Ex *iface)
 
     if (!refcount)
     {
-        wined3d_mutex_lock();
         wined3d_decref(d3d9->wined3d);
-        wined3d_mutex_unlock();
 
         heap_free(d3d9->wined3d_outputs);
         heap_free(d3d9);
