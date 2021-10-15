@@ -1536,6 +1536,11 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
 
     if (!refcount)
     {
+        bool in_cs_thread = GetCurrentThreadId() == texture->resource.device->cs->thread_id;
+
+        /* This is called from the CS thread to destroy temporary textures. */
+        if (!in_cs_thread)
+            wined3d_mutex_lock();
         /* Wait for the texture to become idle if it's using user memory,
          * since the application is allowed to free that memory once the
          * texture is destroyed. Note that this implies that
@@ -1550,6 +1555,8 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
             }
         }
         texture->resource.device->adapter->adapter_ops->adapter_destroy_texture(texture);
+        if (!in_cs_thread)
+            wined3d_mutex_unlock();
     }
 
     return refcount;

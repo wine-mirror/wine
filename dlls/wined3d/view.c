@@ -376,7 +376,11 @@ ULONG CDECL wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *v
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
     if (!refcount)
+    {
+        wined3d_mutex_lock();
         view->resource->device->adapter->adapter_ops->adapter_destroy_rendertarget_view(view);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }
@@ -923,7 +927,11 @@ ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_v
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
     if (!refcount)
+    {
+        wined3d_mutex_lock();
         view->resource->device->adapter->adapter_ops->adapter_destroy_shader_resource_view(view);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }
@@ -1441,7 +1449,11 @@ ULONG CDECL wined3d_unordered_access_view_decref(struct wined3d_unordered_access
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
     if (!refcount)
+    {
+        wined3d_mutex_lock();
         view->resource->device->adapter->adapter_ops->adapter_destroy_unordered_access_view(view);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }

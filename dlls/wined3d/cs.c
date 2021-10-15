@@ -99,7 +99,6 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
     {
         SIZE_T i;
 
-        wined3d_mutex_lock();
         for (i = 0; i < list->command_list_count; ++i)
             wined3d_command_list_decref(list->command_lists[i]);
         for (i = 0; i < list->resource_count; ++i)
@@ -109,6 +108,7 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
         for (i = 0; i < list->query_count; ++i)
             wined3d_query_decref(list->queries[i].query);
 
+        wined3d_mutex_lock();
         wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
         wined3d_mutex_unlock();
     }

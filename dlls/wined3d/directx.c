@@ -187,6 +187,7 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
     {
         unsigned int i;
 
+        wined3d_mutex_lock();
         for (i = 0; i < wined3d->adapter_count; ++i)
         {
             struct wined3d_adapter *adapter = wined3d->adapters[i];
@@ -194,6 +195,7 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
             adapter->adapter_ops->adapter_destroy(adapter);
         }
         heap_free(wined3d);
+        wined3d_mutex_unlock();
     }
 
     return refcount;

@@ -263,8 +263,10 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         device->adapter->adapter_ops->adapter_destroy_device(device);
         TRACE("Destroyed device %p.\n", device);
+        wined3d_mutex_unlock();
     }
 
     return refcount;

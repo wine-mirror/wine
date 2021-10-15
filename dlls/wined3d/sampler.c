@@ -41,8 +41,10 @@ ULONG CDECL wined3d_sampler_decref(struct wined3d_sampler *sampler)
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         sampler->parent_ops->wined3d_object_destroyed(sampler->parent);
         sampler->device->adapter->adapter_ops->adapter_destroy_sampler(sampler);
+        wined3d_mutex_unlock();
     }
 
     return refcount;

@@ -708,8 +708,10 @@ ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         buffer->resource.parent_ops->wined3d_object_destroyed(buffer->resource.parent);
         buffer->resource.device->adapter->adapter_ops->adapter_destroy_buffer(buffer);
+        wined3d_mutex_unlock();
     }
 
     return refcount;

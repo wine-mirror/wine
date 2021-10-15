@@ -62,8 +62,10 @@ ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_blend_state_destroy_object, state);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -136,8 +138,10 @@ ULONG CDECL wined3d_depth_stencil_state_decref(struct wined3d_depth_stencil_stat
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_depth_stencil_state_destroy_object, state);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -199,8 +203,10 @@ ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *sta
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
+        wined3d_mutex_unlock();
     }
 
     return refcount;

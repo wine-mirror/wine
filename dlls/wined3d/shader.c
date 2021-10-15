@@ -3439,8 +3439,10 @@ ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         shader->parent_ops->wined3d_object_destroyed(shader->parent);
         wined3d_cs_destroy_object(shader->device->cs, wined3d_shader_destroy_object, shader);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
