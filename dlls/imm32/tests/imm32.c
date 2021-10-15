@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "objbase.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "imm.h"
@@ -273,9 +274,28 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProcA(hWnd,msg,wParam,lParam);
 }
 
+static BOOL is_ime_enabled(void)
+{
+    HIMC himc;
+    HWND wnd;
+
+    wnd = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(wnd != NULL, "CreateWindow failed\n");
+
+    himc = ImmGetContext(wnd);
+    if (!himc)
+    {
+        DestroyWindow(wnd);
+        return FALSE;
+    }
+
+    ImmReleaseContext(wnd, himc);
+    DestroyWindow(wnd);
+    return TRUE;
+}
+
 static BOOL init(void) {
     WNDCLASSEXA wc;
-    HIMC imc;
     HMODULE hmod,huser;
 
     hmod = GetModuleHandleA("imm32.dll");
@@ -305,14 +325,6 @@ static BOOL init(void) {
                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
     if (!hwnd)
         return FALSE;
-
-    imc = ImmGetContext(hwnd);
-    if (!imc)
-    {
-        win_skip("IME support not implemented\n");
-        return FALSE;
-    }
-    ImmReleaseContext(hwnd, imc);
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);
@@ -2122,7 +2134,122 @@ static void test_InvalidIMC(void)
     ok(ret == ERROR_INVALID_HANDLE, "wrong last error %08x!\n", ret);
 }
 
+#define test_apttype(apttype) _test_apttype(apttype, __LINE__)
+static void _test_apttype(APTTYPE apttype, unsigned int line)
+{
+    APTTYPEQUALIFIER qualifier;
+    HRESULT hr, hr_expected;
+    APTTYPE type;
+
+    hr = CoGetApartmentType(&type, &qualifier);
+    hr_expected = (apttype == -1 ? CO_E_NOTINITIALIZED : S_OK);
+    ok_(__FILE__, line)(hr == hr_expected, "CoGetApartmentType returned %x\n", hr);
+    if (FAILED(hr))
+        return;
+
+    ok_(__FILE__, line)(type == apttype, "type %x\n", type);
+    ok_(__FILE__, line)(!qualifier, "qualifier %x\n", qualifier);
+}
+
+static DWORD WINAPI com_initialization_thread(void *arg)
+{
+    HRESULT hr;
+    BOOL r;
+
+    test_apttype(-1);
+    ImmDisableIME(GetCurrentThreadId());
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    ok(r, "ImmSetActiveContext failed\n");
+    test_apttype(APTTYPE_MAINSTA);
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize returned %x\n", hr);
+    CoUninitialize();
+    test_apttype(-1);
+
+    /* Changes IMM behavior so it no longer initialized COM */
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    ok(r, "ImmSetActiveContext failed\n");
+    test_apttype(APTTYPE_MAINSTA);
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "CoInitialize returned %x\n", hr);
+    test_apttype(APTTYPE_MTA);
+    CoUninitialize();
+    test_apttype(-1);
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    ok(r, "ImmSetActiveContext failed\n");
+    test_apttype(-1);
+    return 0;
+}
+
+static void test_com_initialization(void)
+{
+    HANDLE thread;
+    HRESULT hr;
+    HWND wnd;
+    BOOL r;
+
+    thread = CreateThread(NULL, 0, com_initialization_thread, NULL, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    test_apttype(-1);
+    r = ImmSetActiveContext(NULL, (HIMC)0xdeadbeef, TRUE);
+    ok(!r, "ImmSetActiveContext succeeded\n");
+    test_apttype(-1);
+
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    ok(r, "ImmSetActiveContext failed\n");
+    test_apttype(APTTYPE_MAINSTA);
+
+    /* Force default IME window destruction */
+    wnd = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(wnd != NULL, "CreateWindow failed\n");
+    DestroyWindow(wnd);
+    test_apttype(-1);
+
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    ok(r, "ImmSetActiveContext failed\n");
+    test_apttype(APTTYPE_MAINSTA);
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize returned %x\n", hr);
+    CoUninitialize();
+    test_apttype(-1);
+
+    /* Test with default IME window created */
+    wnd = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(wnd != NULL, "CreateWindow failed\n");
+    test_apttype(-1);
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    ok(r, "ImmSetActiveContext failed\n");
+    test_apttype(APTTYPE_MAINSTA);
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize returned %x\n", hr);
+    CoUninitialize();
+    test_apttype(APTTYPE_MAINSTA);
+    DestroyWindow(wnd);
+    test_apttype(-1);
+
+    wnd = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(wnd != NULL, "CreateWindow failed\n");
+    r = ImmSetActiveContext(NULL, NULL, TRUE);
+    CoUninitialize();
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "CoInitialize returned %x\n", hr);
+    test_apttype(APTTYPE_MTA);
+    DestroyWindow(wnd);
+    test_apttype(-1);
+}
+
 START_TEST(imm32) {
+    if (!is_ime_enabled())
+    {
+        win_skip("IME support not implemented\n");
+        return;
+    }
+
+    test_com_initialization();
+
     if (init())
     {
         test_ImmNotifyIME();
