@@ -214,11 +214,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_Unlock(IDirect3DVertexBuffer7 *iface)
     struct d3d_vertex_buffer *buffer = impl_from_IDirect3DVertexBuffer7(iface);
 
     TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
     wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->wined3d_buffer), 0);
-    wined3d_mutex_unlock();
-
     return D3D_OK;
 }
 
