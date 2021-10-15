@@ -72,9 +72,7 @@ static ULONG STDMETHODCALLTYPE d3d11_query_AddRef(ID3D11Query *iface)
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(query->device);
-        wined3d_mutex_lock();
         wined3d_query_incref(query->wined3d_query);
-        wined3d_mutex_unlock();
     }
 
     return refcount;

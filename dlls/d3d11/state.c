@@ -64,9 +64,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_AddRef(ID3D11BlendState *iface)
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(state->device);
-        wined3d_mutex_lock();
         wined3d_blend_state_incref(state->wined3d_state);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -496,9 +494,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_AddRef(ID3D11DepthStenci
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(state->device);
-        wined3d_mutex_lock();
         wined3d_depth_stencil_state_incref(state->wined3d_state);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -896,9 +892,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_AddRef(ID3D11RasterizerSta
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(state->device);
-        wined3d_mutex_lock();
         wined3d_rasterizer_state_incref(state->wined3d_state);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -1284,9 +1278,7 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_AddRef(ID3D11SamplerState *if
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(state->device);
-        wined3d_mutex_lock();
         wined3d_sampler_incref(state->wined3d_sampler);
-        wined3d_mutex_unlock();
     }
 
     return refcount;

@@ -69,9 +69,7 @@ static ULONG STDMETHODCALLTYPE d3d11_vertex_shader_AddRef(ID3D11VertexShader *if
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(shader->device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -365,9 +363,7 @@ static ULONG STDMETHODCALLTYPE d3d11_hull_shader_AddRef(ID3D11HullShader *iface)
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(shader->device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -558,9 +554,7 @@ static ULONG STDMETHODCALLTYPE d3d11_domain_shader_AddRef(ID3D11DomainShader *if
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(shader->device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -761,9 +755,7 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_AddRef(ID3D11GeometryShader
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(shader->device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -1265,9 +1257,7 @@ static ULONG STDMETHODCALLTYPE d3d11_pixel_shader_AddRef(ID3D11PixelShader *ifac
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(shader->device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -1560,9 +1550,7 @@ static ULONG STDMETHODCALLTYPE d3d11_compute_shader_AddRef(ID3D11ComputeShader *
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(shader->device);
-        wined3d_mutex_lock();
         wined3d_shader_incref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
