@@ -662,6 +662,7 @@ static void test_ImmAssociateContextEx(void)
     if (imc)
     {
         HIMC retimc, newimc;
+        HWND focus;
 
         SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, TRUE);
         SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, TRUE);
@@ -703,11 +704,19 @@ static void test_ImmAssociateContextEx(void)
         ok(retimc == newimc, "handles should be the same\n");
         ImmReleaseContext(hwnd,retimc);
 
+        focus = CreateWindowA("button", "button", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        ok(focus != NULL, "CreateWindow failed\n");
         SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SetFocus(focus);
+        todo_wine CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        rc = pImmAssociateContextEx(hwnd, imc, 0);
+        ok(rc, "ImmAssociateContextEx failed\n");
         SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
+        DestroyWindow(focus);
+        todo_wine CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
+        SetFocus(hwnd);
+
         rc = pImmAssociateContextEx(hwnd, NULL, IACE_DEFAULT);
-        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
-        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
 
         SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);

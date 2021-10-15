@@ -592,12 +592,6 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     if (!IsWindow(hWnd) || (hIMC && !data))
         return NULL;
 
-    /*
-     * If already associated just return
-     */
-    if (hIMC && data->IMC.hWnd == hWnd)
-        return hIMC;
-
     if (hIMC && IMM_IsCrossThreadAccess(hWnd, hIMC))
         return NULL;
 
@@ -608,6 +602,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     else if (old == (HIMC)-1)
         old = NULL;
 
+    /* If already associated just return */
     if (old == hIMC)
         return hIMC;
 
@@ -618,8 +613,11 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     else
         SetPropW(hWnd, szwWineIMCProperty, hIMC);
 
-    ImmSetActiveContext(hWnd, old, FALSE);
-    ImmSetActiveContext(hWnd, hIMC, TRUE);
+    if (GetActiveWindow() == hWnd)
+    {
+        ImmSetActiveContext(hWnd, old, FALSE);
+        ImmSetActiveContext(hWnd, hIMC, TRUE);
+    }
     return old;
 }
 
