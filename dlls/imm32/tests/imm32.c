@@ -26,9 +26,43 @@
 #include "imm.h"
 #include "ddk/imm.h"
 
+BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
+
 static BOOL (WINAPI *pImmAssociateContextEx)(HWND,HIMC,DWORD);
 static BOOL (WINAPI *pImmIsUIMessageA)(HWND,UINT,WPARAM,LPARAM);
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE, enabled_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+        expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        if (enabled_ ## func) {\
+            ok(expect_ ##func, "unexpected call " #func "\n"); \
+            called_ ## func = TRUE; \
+        } \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#define SET_ENABLE(func, val) \
+    enabled_ ## func = (val)
+
+DEFINE_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+DEFINE_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
 
 /*
  * msgspy - record and analyse message traces sent to a certain window
@@ -182,6 +216,9 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg)
     {
         case WM_IME_SETCONTEXT:
+            if (wParam) CHECK_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
+            else CHECK_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+            ok(lParam == ISC_SHOWUIALL || !lParam, "lParam = %lx\n", lParam);
             return TRUE;
         case WM_NCCREATE:
             default_ime_wnd = get_ime_window();
@@ -736,6 +773,19 @@ static void test_ImmThreads(void)
 
     ok(himc != otherHimc, "Windows from other threads should have different himc\n");
     ok(otherHimc == threadinfo.himc, "Context from other thread should not change in main thread\n");
+
+    SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, TRUE);
+    SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, TRUE);
+    SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
+    rc = ImmSetActiveContext(hwnd, otherHimc, TRUE);
+    ok(rc, "ImmSetActiveContext failed\n");
+    CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
+    SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+    rc = ImmSetActiveContext(hwnd, otherHimc, FALSE);
+    ok(rc, "ImmSetActiveContext failed\n");
+    CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+    SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, FALSE);
+    SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
 
     h1 = ImmAssociateContext(hwnd,otherHimc);
     ok(h1 == NULL, "Should fail to be able to Associate a default context from a different thread\n");
@@ -1680,6 +1730,7 @@ static void test_InvalidIMC(void)
     CHAR buffer[1000];
     INPUTCONTEXT *ic;
     LOGFONTA lf;
+    BOOL r;
 
     memset(&lf, 0, sizeof(lf));
 
@@ -1696,6 +1747,17 @@ static void test_InvalidIMC(void)
     ok(ret == ERROR_INVALID_HANDLE, "wrong last error %08x!\n", ret);
     imc2 = ImmGetContext(hwnd);
     ok(imc1 == imc2, "imc should not changed! imc1 %p, imc2 %p\n", imc1, imc2);
+
+    SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, TRUE);
+    SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, TRUE);
+    r = ImmSetActiveContext(hwnd, imc_destroy, TRUE);
+    ok(!r, "ImmSetActiveContext succeeded\n");
+    SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+    r = ImmSetActiveContext(hwnd, imc_destroy, FALSE);
+    ok(r, "ImmSetActiveContext failed\n");
+    CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+    SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
+    SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, FALSE);
 
     /* Test associating NULL imc, which is different from an invalid imc */
     oldimc = ImmAssociateContext(hwnd, imc_null);

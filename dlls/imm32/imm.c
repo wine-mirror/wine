@@ -551,6 +551,34 @@ static BOOL IMM_IsCrossThreadAccess(HWND hWnd,  HIMC hIMC)
 }
 
 /***********************************************************************
+ *		ImmSetActiveContext (IMM32.@)
+ */
+BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
+{
+    InputContextData *data = get_imc_data(himc);
+
+    TRACE("(%p, %p, %x)\n", hwnd, himc, activate);
+
+    if (himc && !data && activate)
+        return FALSE;
+
+    if (data)
+    {
+        data->IMC.hWnd = activate ? hwnd : NULL;
+
+        if (data->immKbd->hIME && data->immKbd->pImeSetActiveContext)
+            data->immKbd->pImeSetActiveContext(himc, activate);
+    }
+
+    if (IsWindow(hwnd))
+    {
+        SendMessageW(hwnd, WM_IME_SETCONTEXT, activate, ISC_SHOWUIALL);
+        /* TODO: send WM_IME_NOTIFY */
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  *		ImmAssociateContext (IMM32.@)
  */
 HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
