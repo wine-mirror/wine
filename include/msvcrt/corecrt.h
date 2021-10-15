@@ -122,22 +122,16 @@
 # endif
 #endif
 
-#ifndef __ms_va_list
-# if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined (__GNUC__)
-#  define __ms_va_list __builtin_ms_va_list
-#  define __ms_va_start(list,arg) __builtin_ms_va_start(list,arg)
-#  define __ms_va_end(list) __builtin_ms_va_end(list)
-#  define __ms_va_copy(dest,src) __builtin_ms_va_copy(dest,src)
-# else
-#  define __ms_va_list va_list
-#  define __ms_va_start(list,arg) va_start(list,arg)
-#  define __ms_va_end(list) va_end(list)
-#  ifdef va_copy
-#   define __ms_va_copy(dest,src) va_copy(dest,src)
-#  else
-#   define __ms_va_copy(dest,src) ((dest) = (src))
-#  endif
-# endif
+#if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined (__GNUC__)
+# include <stdarg.h>
+# undef va_list
+# undef va_start
+# undef va_end
+# undef va_copy
+# define va_list __builtin_ms_va_list
+# define va_start(list,arg) __builtin_ms_va_start(list,arg)
+# define va_end(list) __builtin_ms_va_end(list)
+# define va_copy(dest,src) __builtin_ms_va_copy(dest,src)
 #endif
 
 #ifndef WINAPIV

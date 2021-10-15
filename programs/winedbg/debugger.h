@@ -311,7 +311,7 @@ extern int              msgbox_res_id(HWND hwnd, UINT textId, UINT captionId, UI
 extern void             parser_handle(HANDLE);
 extern int              input_read_line(const char* pfx, char* buffer, int size);
 extern int              input_fetch_entire_line(const char* pfx, char** line);
-extern HANDLE           parser_generate_command_file(const char*, ...);
+extern HANDLE           WINAPIV parser_generate_command_file(const char*, ...);
 
   /* debug.l */
 extern void             lexeme_flush(void);
@@ -335,7 +335,7 @@ extern struct expr*     expr_alloc_binary_op(int oper, struct expr*, struct expr
 extern struct expr*     expr_alloc_unary_op(int oper, struct expr*);
 extern struct expr*     expr_alloc_pstruct(struct expr*, const char* element);
 extern struct expr*     expr_alloc_struct(struct expr*, const char* element);
-extern struct expr*     expr_alloc_func_call(const char*, int nargs, ...);
+extern struct expr*     WINAPIV expr_alloc_func_call(const char*, int nargs, ...);
 extern struct expr*     expr_alloc_typecast(struct type_expr_t*, struct expr*);
 extern struct dbg_lvalue expr_eval(struct expr*);
 extern struct expr*     expr_clone(const struct expr* exp, BOOL *local_binding);

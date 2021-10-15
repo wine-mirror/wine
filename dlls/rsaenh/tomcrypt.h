@@ -227,10 +227,10 @@ typedef int ltm_prime_callback(unsigned char *dst, int len, void *dat);
 char *mp_error_to_string(int code);
 
 /* init a null terminated series of arguments */
-int mp_init_multi(mp_int *mp, ...);
+int WINAPIV mp_init_multi(mp_int *mp, ...);
 
 /* clear a null terminated series of arguments */
-void mp_clear_multi(mp_int *mp, ...);
+void WINAPIV mp_clear_multi(mp_int *mp, ...);
 
 /* shrink ram required for a bignum */
 int mp_shrink(mp_int *a);

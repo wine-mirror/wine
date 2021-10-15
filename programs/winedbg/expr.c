@@ -245,7 +245,7 @@ struct expr* expr_alloc_pstruct(struct expr* exp, const char* element)
     return ex;
 }
 
-struct expr* expr_alloc_func_call(const char* funcname, int nargs, ...)
+struct expr* WINAPIV expr_alloc_func_call(const char* funcname, int nargs, ...)
 {
     struct expr*        ex;
     va_list             ap;
