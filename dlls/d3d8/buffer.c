@@ -198,11 +198,9 @@ static HRESULT WINAPI d3d8_vertexbuffer_Lock(IDirect3DVertexBuffer8 *iface, UINT
 
     wined3d_box.left = offset;
     wined3d_box.right = offset + size;
-    wined3d_mutex_lock();
     wined3d_resource = wined3d_buffer_get_resource(buffer->wined3d_buffer);
     hr = wined3d_resource_map(wined3d_resource, 0, &wined3d_map_desc, &wined3d_box,
             wined3dmapflags_from_d3dmapflags(flags, buffer->usage));
-    wined3d_mutex_unlock();
     *data = wined3d_map_desc.data;
 
     return hr;
@@ -214,9 +212,7 @@ static HRESULT WINAPI d3d8_vertexbuffer_Unlock(IDirect3DVertexBuffer8 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
     wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->wined3d_buffer), 0);
-    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -529,11 +525,9 @@ static HRESULT WINAPI d3d8_indexbuffer_Lock(IDirect3DIndexBuffer8 *iface, UINT o
 
     wined3d_box.left = offset;
     wined3d_box.right = offset + size;
-    wined3d_mutex_lock();
     wined3d_resource = wined3d_buffer_get_resource(buffer->wined3d_buffer);
     hr = wined3d_resource_map(wined3d_resource, 0, &wined3d_map_desc, &wined3d_box,
             wined3dmapflags_from_d3dmapflags(flags, buffer->usage));
-    wined3d_mutex_unlock();
     *data = wined3d_map_desc.data;
 
     return hr;
@@ -545,9 +539,7 @@ static HRESULT WINAPI d3d8_indexbuffer_Unlock(IDirect3DIndexBuffer8 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
     wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->wined3d_buffer), 0);
-    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
