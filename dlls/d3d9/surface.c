@@ -67,11 +67,9 @@ static ULONG WINAPI d3d9_surface_AddRef(IDirect3DSurface9 *iface)
     {
         if (surface->parent_device)
             IDirect3DDevice9Ex_AddRef(surface->parent_device);
-        wined3d_mutex_lock();
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_incref(surface->wined3d_rtv);
         wined3d_texture_incref(surface->wined3d_texture);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -103,11 +101,9 @@ static ULONG WINAPI d3d9_surface_Release(IDirect3DSurface9 *iface)
     {
         IDirect3DDevice9Ex *parent_device = surface->parent_device;
 
-        wined3d_mutex_lock();
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_decref(surface->wined3d_rtv);
         wined3d_texture_decref(surface->wined3d_texture);
-        wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
         if (parent_device)
