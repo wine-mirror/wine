@@ -56,12 +56,10 @@ static ULONG WINAPI d3d9_vertexbuffer_AddRef(IDirect3DVertexBuffer9 *iface)
     if (refcount == 1)
     {
         IDirect3DDevice9Ex_AddRef(buffer->parent_device);
-        wined3d_mutex_lock();
         if (buffer->draw_buffer)
             wined3d_buffer_incref(buffer->draw_buffer);
         else
             wined3d_buffer_incref(buffer->wined3d_buffer);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -79,12 +77,10 @@ static ULONG WINAPI d3d9_vertexbuffer_Release(IDirect3DVertexBuffer9 *iface)
         struct wined3d_buffer *draw_buffer = buffer->draw_buffer;
         IDirect3DDevice9Ex *device = buffer->parent_device;
 
-        wined3d_mutex_lock();
         if (draw_buffer)
             wined3d_buffer_decref(draw_buffer);
         else
             wined3d_buffer_decref(buffer->wined3d_buffer);
-        wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
         IDirect3DDevice9Ex_Release(device);
@@ -388,12 +384,10 @@ static ULONG WINAPI d3d9_indexbuffer_AddRef(IDirect3DIndexBuffer9 *iface)
     if (refcount == 1)
     {
         IDirect3DDevice9Ex_AddRef(buffer->parent_device);
-        wined3d_mutex_lock();
         if (buffer->draw_buffer)
             wined3d_buffer_incref(buffer->draw_buffer);
         else
             wined3d_buffer_incref(buffer->wined3d_buffer);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -411,12 +405,10 @@ static ULONG WINAPI d3d9_indexbuffer_Release(IDirect3DIndexBuffer9 *iface)
         struct wined3d_buffer *draw_buffer = buffer->draw_buffer;
         IDirect3DDevice9Ex *device = buffer->parent_device;
 
-        wined3d_mutex_lock();
         if (draw_buffer)
             wined3d_buffer_decref(draw_buffer);
         else
             wined3d_buffer_decref(buffer->wined3d_buffer);
-        wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
         IDirect3DDevice9Ex_Release(device);
