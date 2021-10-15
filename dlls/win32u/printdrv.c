@@ -68,22 +68,19 @@ DWORD WINAPI NtGdiInitSpool(void)
  */
 INT WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job )
 {
-    INT ret;
+    INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("DocName %s, Output %s, Datatype %s, fwType %#x\n",
           debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
           debugstr_w(doc->lpszDatatype), doc->fwType);
 
-    if(!dc) return SP_ERROR;
-
-    if (dc->attr->abort_proc && !dc->attr->abort_proc( hdc, 0 )) ret = 0;
-    else
+    if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStartDoc );
         ret = physdev->funcs->pStartDoc( physdev, doc );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
     return ret;
 }
 
