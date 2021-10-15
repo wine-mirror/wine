@@ -607,10 +607,8 @@ static void d3d11_device_context_set_constant_buffers(ID3D11DeviceContext1 *ifac
         wined3d_buffers[i].size = (counts ? counts[i] : WINED3D_MAX_CONSTANT_BUFFER_SIZE) * sizeof(struct wined3d_vec4);
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_constant_buffers(context->wined3d_context,
             type, start_slot, buffer_count, wined3d_buffers);
-    wined3d_mutex_unlock();
 }
 
 static void d3d11_device_context_set_shader_resource_views(ID3D11DeviceContext1 *iface, enum wined3d_shader_type type,
@@ -633,10 +631,8 @@ static void d3d11_device_context_set_shader_resource_views(ID3D11DeviceContext1 
         wined3d_views[i] = view ? view->wined3d_view : NULL;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader_resource_views(context->wined3d_context,
             type, start_slot, count, wined3d_views);
-    wined3d_mutex_unlock();
 }
 
 static void d3d11_device_context_set_samplers(ID3D11DeviceContext1 *iface, enum wined3d_shader_type type,
@@ -659,9 +655,7 @@ static void d3d11_device_context_set_samplers(ID3D11DeviceContext1 *iface, enum 
         wined3d_samplers[i] = sampler ? sampler->wined3d_sampler : NULL;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_samplers(context->wined3d_context, type, start_slot, count, wined3d_samplers);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_GetDevice(ID3D11DeviceContext1 *iface, ID3D11Device **device)
@@ -735,10 +729,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_PSSetShader(ID3D11DeviceConte
     if (class_instances)
         FIXME("Dynamic linking is not implemented yet.\n");
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_PIXEL,
             ps ? ps->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_PSSetSamplers(ID3D11DeviceContext1 *iface,
@@ -762,10 +754,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_VSSetShader(ID3D11DeviceConte
     if (class_instances)
         FIXME("Dynamic linking is not implemented yet.\n");
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_VERTEX,
             vs ? vs->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DrawIndexed(ID3D11DeviceContext1 *iface,
@@ -856,9 +846,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetInputLayout(ID3D11Device
 
     TRACE("iface %p, input_layout %p.\n", iface, input_layout);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_vertex_declaration(context->wined3d_context, layout ? layout->wined3d_decl : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_IASetVertexBuffers(ID3D11DeviceContext1 *iface,
@@ -888,9 +876,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetVertexBuffers(ID3D11Devi
         streams[i].flags = 0;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_stream_sources(context->wined3d_context, start_slot, buffer_count, streams);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_IASetIndexBuffer(ID3D11DeviceContext1 *iface,
@@ -902,11 +888,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetIndexBuffer(ID3D11Device
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_index_buffer(context->wined3d_context,
             buffer_impl ? buffer_impl->wined3d_buffer : NULL,
             wined3dformat_from_dxgi_format(format), offset);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DrawIndexedInstanced(ID3D11DeviceContext1 *iface,
@@ -964,10 +948,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_GSSetShader(ID3D11DeviceConte
     if (class_instances)
         FIXME("Dynamic linking is not implemented yet.\n");
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY,
             gs ? gs->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_IASetPrimitiveTopology(ID3D11DeviceContext1 *iface,
@@ -981,9 +963,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetPrimitiveTopology(ID3D11
 
     wined3d_primitive_type_from_d3d11_primitive_topology(topology, &primitive_type, &patch_vertex_count);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_primitive_type(context->wined3d_context, primitive_type, patch_vertex_count);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetShaderResources(ID3D11DeviceContext1 *iface,
@@ -1071,9 +1051,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_SetPredication(ID3D11DeviceCo
 
     query = unsafe_impl_from_ID3D11Query((ID3D11Query *)predicate);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_predication(context->wined3d_context, query ? query->wined3d_query : NULL, value);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_GSSetShaderResources(ID3D11DeviceContext1 *iface,
@@ -1197,14 +1175,12 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetBlendState(ID3D11DeviceC
     if (!blend_factor)
         blend_factor = default_blend_factor;
 
-    wined3d_mutex_lock();
     if (!(blend_state_impl = unsafe_impl_from_ID3D11BlendState(blend_state)))
         wined3d_device_context_set_blend_state(context->wined3d_context, NULL,
                 (const struct wined3d_color *)blend_factor, sample_mask);
     else
         wined3d_device_context_set_blend_state(context->wined3d_context, blend_state_impl->wined3d_state,
                 (const struct wined3d_color *)blend_factor, sample_mask);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_OMSetDepthStencilState(ID3D11DeviceContext1 *iface,
@@ -1216,16 +1192,13 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetDepthStencilState(ID3D11
     TRACE("iface %p, depth_stencil_state %p, stencil_ref %u.\n",
             iface, depth_stencil_state, stencil_ref);
 
-    wined3d_mutex_lock();
     if (!(state_impl = unsafe_impl_from_ID3D11DepthStencilState(depth_stencil_state)))
     {
         wined3d_device_context_set_depth_stencil_state(context->wined3d_context, NULL, stencil_ref);
-        wined3d_mutex_unlock();
         return;
     }
 
     wined3d_device_context_set_depth_stencil_state(context->wined3d_context, state_impl->wined3d_state, stencil_ref);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_SOSetTargets(ID3D11DeviceContext1 *iface, UINT buffer_count,
@@ -1246,9 +1219,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_SOSetTargets(ID3D11DeviceCont
         outputs[i].offset = offsets ? offsets[i] : 0;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_stream_outputs(context->wined3d_context, outputs);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DrawAuto(ID3D11DeviceContext1 *iface)
@@ -1323,11 +1294,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_RSSetState(ID3D11DeviceContex
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
-    wined3d_mutex_lock();
     rasterizer_state_impl = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state);
     wined3d_device_context_set_rasterizer_state(context->wined3d_context,
             rasterizer_state_impl ? rasterizer_state_impl->wined3d_state : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_RSSetViewports(ID3D11DeviceContext1 *iface,
@@ -1352,9 +1321,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_RSSetViewports(ID3D11DeviceCo
         wined3d_vp[i].max_z = viewports[i].MaxDepth;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_viewports(context->wined3d_context, viewport_count, wined3d_vp);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_RSSetScissorRects(ID3D11DeviceContext1 *iface,
@@ -1367,9 +1334,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_RSSetScissorRects(ID3D11Devic
     if (rect_count > WINED3D_MAX_VIEWPORTS)
         return;
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_scissor_rects(context->wined3d_context, rect_count, rects);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CopySubresourceRegion(ID3D11DeviceContext1 *iface,
@@ -1616,10 +1581,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_HSSetShader(ID3D11DeviceConte
     if (class_instances)
         FIXME("Dynamic linking is not implemented yet.\n");
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_HULL,
             hs ? hs->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_HSSetSamplers(ID3D11DeviceContext1 *iface,
@@ -1662,10 +1625,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_DSSetShader(ID3D11DeviceConte
     if (class_instances)
         FIXME("Dynamic linking is not implemented yet.\n");
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_DOMAIN,
             ds ? ds->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DSSetSamplers(ID3D11DeviceContext1 *iface,
@@ -1719,10 +1680,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSSetUnorderedAccessViews(ID3
         wined3d_views[i] = view ? view->wined3d_view : NULL;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_unordered_access_views(context->wined3d_context, WINED3D_PIPELINE_COMPUTE,
             start_slot, view_count, wined3d_views, initial_counts);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CSSetShader(ID3D11DeviceContext1 *iface,
@@ -1737,10 +1696,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSSetShader(ID3D11DeviceConte
     if (class_instances)
         FIXME("Dynamic linking is not implemented yet.\n");
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(context->wined3d_context, WINED3D_SHADER_TYPE_COMPUTE,
             cs ? cs->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CSSetSamplers(ID3D11DeviceContext1 *iface,
@@ -4615,10 +4572,8 @@ static void d3d10_device_set_constant_buffers(ID3D10Device1 *iface, enum wined3d
         wined3d_buffers[i].size = WINED3D_MAX_CONSTANT_BUFFER_SIZE * sizeof(struct wined3d_vec4);
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_constant_buffers(device->immediate_context.wined3d_context,
             type, start_slot, buffer_count, wined3d_buffers);
-    wined3d_mutex_unlock();
 }
 
 static void d3d10_device_set_shader_resource_views(ID3D10Device1 *iface, enum wined3d_shader_type type,
@@ -4641,10 +4596,8 @@ static void d3d10_device_set_shader_resource_views(ID3D10Device1 *iface, enum wi
         wined3d_views[i] = view ? view->wined3d_view : NULL;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader_resource_views(device->immediate_context.wined3d_context,
             type, start_slot, count, wined3d_views);
-    wined3d_mutex_unlock();
 }
 
 static void d3d10_device_set_samplers(ID3D10Device1 *iface, enum wined3d_shader_type type,
@@ -4667,10 +4620,8 @@ static void d3d10_device_set_samplers(ID3D10Device1 *iface, enum wined3d_shader_
         wined3d_samplers[i] = sampler ? sampler->wined3d_sampler : NULL;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_samplers(device->immediate_context.wined3d_context,
             type, start_slot, count, wined3d_samplers);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device1 *iface,
@@ -4700,10 +4651,8 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device1 *iface,
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(device->immediate_context.wined3d_context,
             WINED3D_SHADER_TYPE_PIXEL, ps ? ps->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device1 *iface,
@@ -4723,10 +4672,8 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device1 *iface,
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(device->immediate_context.wined3d_context,
             WINED3D_SHADER_TYPE_VERTEX, vs ? vs->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device1 *iface, UINT index_count,
@@ -4774,10 +4721,8 @@ static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device1 *iface
 
     TRACE("iface %p, input_layout %p\n", iface, input_layout);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_vertex_declaration(device->immediate_context.wined3d_context,
             layout ? layout->wined3d_decl : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device1 *iface, UINT start_slot,
@@ -4807,10 +4752,8 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device1 *ifa
         streams[i].flags = 0;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_stream_sources(device->immediate_context.wined3d_context,
             start_slot, buffer_count, streams);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device1 *iface,
@@ -4822,11 +4765,9 @@ static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device1 *iface
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_index_buffer(device->immediate_context.wined3d_context,
             buffer_impl ? buffer_impl->wined3d_buffer : NULL,
             wined3dformat_from_dxgi_format(format), offset);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device1 *iface,
@@ -4879,10 +4820,8 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device1 *iface, ID3
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_shader(device->immediate_context.wined3d_context,
             WINED3D_SHADER_TYPE_GEOMETRY, gs ? gs->wined3d_shader : NULL);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device1 *iface,
@@ -4892,10 +4831,8 @@ static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device1 
 
     TRACE("iface %p, topology %s.\n", iface, debug_d3d10_primitive_topology(topology));
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_primitive_type(device->immediate_context.wined3d_context,
             (enum wined3d_primitive_type)topology, 0);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device1 *iface,
@@ -4924,10 +4861,8 @@ static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device1 *iface, 
     TRACE("iface %p, predicate %p, value %#x.\n", iface, predicate, value);
 
     query = unsafe_impl_from_ID3D10Query((ID3D10Query *)predicate);
-    wined3d_mutex_lock();
     wined3d_device_context_set_predication(device->immediate_context.wined3d_context,
             query ? query->wined3d_query : NULL, value);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *iface,
@@ -5023,9 +4958,7 @@ static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
         outputs[i].offset = offsets ? offsets[i] : 0;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_stream_outputs(device->immediate_context.wined3d_context, outputs);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device1 *iface)
@@ -5067,9 +5000,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,
         wined3d_vp[i].max_z = viewports[i].MaxDepth;
     }
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_viewports(device->immediate_context.wined3d_context, viewport_count, wined3d_vp);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device1 *iface,
@@ -5082,9 +5013,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device1 *ifac
     if (rect_count > WINED3D_MAX_VIEWPORTS)
         return;
 
-    wined3d_mutex_lock();
     wined3d_device_context_set_scissor_rects(device->immediate_context.wined3d_context, rect_count, rects);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *iface,
