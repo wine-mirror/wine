@@ -1474,9 +1474,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_GenerateMips(ID3D11DeviceCont
 
     TRACE("iface %p, view %p.\n", iface, view);
 
-    wined3d_mutex_lock();
     wined3d_device_context_generate_mipmaps(context->wined3d_context, srv->wined3d_view);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_SetResourceMinLOD(ID3D11DeviceContext1 *iface,
@@ -5077,9 +5075,7 @@ static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device1 *iface,
 
     TRACE("iface %p, view %p.\n", iface, view);
 
-    wined3d_mutex_lock();
     wined3d_device_context_generate_mipmaps(device->immediate_context.wined3d_context, srv->wined3d_view);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device1 *iface,
