@@ -1510,11 +1510,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_ResolveSubresource(ID3D11Devi
     wined3d_dst_resource = wined3d_resource_from_d3d11_resource(dst_resource);
     wined3d_src_resource = wined3d_resource_from_d3d11_resource(src_resource);
     wined3d_format = wined3dformat_from_dxgi_format(format);
-    wined3d_mutex_lock();
     wined3d_device_context_resolve_sub_resource(context->wined3d_context,
             wined3d_dst_resource, dst_subresource_idx,
             wined3d_src_resource, src_subresource_idx, wined3d_format);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_ExecuteCommandList(ID3D11DeviceContext1 *iface,
@@ -5100,11 +5098,9 @@ static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device1 *ifa
     wined3d_dst_resource = wined3d_resource_from_d3d10_resource(dst_resource);
     wined3d_src_resource = wined3d_resource_from_d3d10_resource(src_resource);
     wined3d_format = wined3dformat_from_dxgi_format(format);
-    wined3d_mutex_lock();
     wined3d_device_context_resolve_sub_resource(device->immediate_context.wined3d_context,
             wined3d_dst_resource, dst_subresource_idx,
             wined3d_src_resource, src_subresource_idx, wined3d_format);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSGetConstantBuffers(ID3D10Device1 *iface,
