@@ -2241,6 +2241,57 @@ static void test_com_initialization(void)
     test_apttype(-1);
 }
 
+static DWORD WINAPI disable_ime_thread(void *arg)
+{
+    HWND h, def;
+    MSG msg;
+    BOOL r;
+
+    h = CreateWindowA("static", "static", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(h != NULL, "CreateWindow failed\n");
+    def = ImmGetDefaultIMEWnd(h);
+    ok(def != NULL, "ImmGetDefaultIMEWnd returned NULL\n");
+
+    r = ImmDisableIME(arg ? GetCurrentThreadId() : 0);
+    ok(r, "ImmDisableIME failed\n");
+
+    if (arg)
+    {
+        def = ImmGetDefaultIMEWnd(h);
+        todo_wine ok(def != NULL, "ImmGetDefaultIMEWnd returned NULL\n");
+        while(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+    }
+    def = ImmGetDefaultIMEWnd(h);
+    ok(!def, "ImmGetDefaultIMEWnd returned %p\n", def);
+    return 0;
+}
+
+static void test_ImmDisableIME(void)
+{
+    HANDLE thread;
+    HWND def;
+    BOOL r;
+
+    def = ImmGetDefaultIMEWnd(hwnd);
+    ok(def != NULL, "ImmGetDefaultIMEWnd(hwnd) returned NULL\n");
+
+    thread = CreateThread(NULL, 0, disable_ime_thread, 0, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    thread = CreateThread(NULL, 0, disable_ime_thread, (void*)1, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    r = ImmDisableIME(-1);
+    ok(r, "ImmDisableIME(-1) failed\n");
+    def = ImmGetDefaultIMEWnd(hwnd);
+    ok(!def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def);
+}
+
 START_TEST(imm32) {
     if (!is_ime_enabled())
     {
@@ -2276,6 +2327,9 @@ START_TEST(imm32) {
         if (pSendInput)
             test_ime_processkey();
         else win_skip("SendInput is not available\n");
+
+        /* there's no way of enabling IME - keep the test last */
+        test_ImmDisableIME();
     }
     cleanup();
 }

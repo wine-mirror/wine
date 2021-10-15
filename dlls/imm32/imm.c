@@ -992,18 +992,58 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
         return FALSE;
 }
 
+static HWND imm_detach_default_window(IMMThreadData *thread_data)
+{
+    HWND to_destroy;
+
+    imm_couninit_thread(thread_data, TRUE);
+    to_destroy = thread_data->hwndDefault;
+    thread_data->hwndDefault = NULL;
+    thread_data->windowRefs = 0;
+    return to_destroy;
+}
+
 /***********************************************************************
  *		ImmDisableIME (IMM32.@)
  */
 BOOL WINAPI ImmDisableIME(DWORD idThread)
 {
+    IMMThreadData *thread_data;
+    HWND to_destroy;
+
     if (idThread == (DWORD)-1)
+    {
         disable_ime = TRUE;
-    else {
-        IMMThreadData *thread_data = IMM_GetThreadData(NULL, idThread);
+
+        while (1)
+        {
+            to_destroy = 0;
+            EnterCriticalSection(&threaddata_cs);
+            LIST_FOR_EACH_ENTRY(thread_data, &ImmThreadDataList, IMMThreadData, entry)
+            {
+                if (thread_data->hwndDefault)
+                {
+                    to_destroy = imm_detach_default_window(thread_data);
+                    break;
+                }
+            }
+            LeaveCriticalSection(&threaddata_cs);
+
+            if (!to_destroy)
+                break;
+            DestroyWindow(to_destroy);
+        }
+    }
+    else
+    {
+        thread_data = IMM_GetThreadData(NULL, idThread);
         if (!thread_data) return FALSE;
         thread_data->disableIME = TRUE;
+        to_destroy = imm_detach_default_window(thread_data);
         LeaveCriticalSection(&threaddata_cs);
+
+        if (to_destroy)
+            DestroyWindow(to_destroy);
     }
     return TRUE;
 }
@@ -1878,11 +1918,7 @@ void WINAPI __wine_unregister_window(HWND hwnd)
 
     /* Destroy default IME window */
     if (thread_data->windowRefs == 0)
-    {
-        imm_couninit_thread(thread_data, TRUE);
-        to_destroy = thread_data->hwndDefault;
-        thread_data->hwndDefault = NULL;
-    }
+        to_destroy = imm_detach_default_window(thread_data);
     LeaveCriticalSection(&threaddata_cs);
 
     if (to_destroy) DestroyWindow( to_destroy );
