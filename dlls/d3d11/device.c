@@ -1375,10 +1375,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_UpdateSubresource(ID3D11Devic
         wined3d_box_set(&wined3d_box, box->left, box->top, box->right, box->bottom, box->front, box->back);
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
-    wined3d_mutex_lock();
     wined3d_device_context_update_sub_resource(context->wined3d_context, wined3d_resource,
             subresource_idx, box ? &wined3d_box : NULL, data, row_pitch, depth_pitch, 0);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CopyStructureCount(ID3D11DeviceContext1 *iface,
@@ -2787,10 +2785,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_UpdateSubresource1(ID3D11Devi
                 box->front, box->back);
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
-    wined3d_mutex_lock();
     wined3d_device_context_update_sub_resource(context->wined3d_context, wined3d_resource, subresource_idx,
             box ? &wined3d_box : NULL, data, row_pitch, depth_pitch, flags);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DiscardResource(ID3D11DeviceContext1 *iface,
