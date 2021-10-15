@@ -703,6 +703,36 @@ static const UINT64 exp2f_T[] = {
 };
 #endif
 
+/*********************************************************************
+ *      _fdclass (MSVCR120.@)
+ *
+ * Copied from musl: src/math/__fpclassifyf.c
+ */
+short CDECL _fdclass(float x)
+{
+    union { float f; UINT32 i; } u = { x };
+    int e = u.i >> 23 & 0xff;
+
+    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
+    if (e == 0xff) return u.i << 9 ? FP_NAN : FP_INFINITE;
+    return FP_NORMAL;
+}
+
+/*********************************************************************
+ *      _dclass (MSVCR120.@)
+ *
+ * Copied from musl: src/math/__fpclassify.c
+ */
+short CDECL _dclass(double x)
+{
+    union { double f; UINT64 i; } u = { x };
+    int e = u.i >> 52 & 0x7ff;
+
+    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
+    if (e == 0x7ff) return (u.i << 12) ? FP_NAN : FP_INFINITE;
+    return FP_NORMAL;
+}
+
 #ifndef __i386__
 
 /*********************************************************************
@@ -7826,36 +7856,6 @@ void __cdecl __libm_sse2_sqrt_precise(void)
     __asm__ __volatile__( "call " __ASM_NAME( "sse2_sqrt" ) );
 }
 #endif  /* __i386__ */
-
-/*********************************************************************
- *      _fdclass (MSVCR120.@)
- *
- * Copied from musl: src/math/__fpclassifyf.c
- */
-short CDECL _fdclass(float x)
-{
-    union { float f; UINT32 i; } u = { x };
-    int e = u.i >> 23 & 0xff;
-
-    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
-    if (e == 0xff) return u.i << 9 ? FP_NAN : FP_INFINITE;
-    return FP_NORMAL;
-}
-
-/*********************************************************************
- *      _dclass (MSVCR120.@)
- *
- * Copied from musl: src/math/__fpclassify.c
- */
-short CDECL _dclass(double x)
-{
-    union { double f; UINT64 i; } u = { x };
-    int e = u.i >> 52 & 0x7ff;
-
-    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
-    if (e == 0x7ff) return (u.i << 12) ? FP_NAN : FP_INFINITE;
-    return FP_NORMAL;
-}
 
 #if _MSVCR_VER>=120
 
