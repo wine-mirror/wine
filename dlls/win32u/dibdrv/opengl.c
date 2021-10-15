@@ -119,7 +119,7 @@ failed:
 /***********************************************************************
  *		osmesa_get_gl_funcs
  */
-static void CDECL osmesa_get_gl_funcs( struct opengl_funcs *funcs )
+static void osmesa_get_gl_funcs( struct opengl_funcs *funcs )
 {
     funcs->gl = opengl_funcs.gl;
 }
@@ -127,7 +127,7 @@ static void CDECL osmesa_get_gl_funcs( struct opengl_funcs *funcs )
 /***********************************************************************
  *		osmesa_create_context
  */
-static struct wgl_context * CDECL osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
+static struct wgl_context * osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
 {
     struct wgl_context *context;
     UINT gl_format;
@@ -162,7 +162,7 @@ static struct wgl_context * CDECL osmesa_create_context( HDC hdc, const PIXELFOR
 /***********************************************************************
  *		osmesa_delete_context
  */
-static BOOL CDECL osmesa_delete_context( struct wgl_context *context )
+static BOOL osmesa_delete_context( struct wgl_context *context )
 {
     pOSMesaDestroyContext( context->context );
     free( context );
@@ -172,7 +172,7 @@ static BOOL CDECL osmesa_delete_context( struct wgl_context *context )
 /***********************************************************************
  *		osmesa_get_proc_address
  */
-static PROC CDECL osmesa_get_proc_address( const char *proc )
+static PROC osmesa_get_proc_address( const char *proc )
 {
     return (PROC)pOSMesaGetProcAddress( proc );
 }
@@ -180,8 +180,8 @@ static PROC CDECL osmesa_get_proc_address( const char *proc )
 /***********************************************************************
  *		osmesa_make_current
  */
-static BOOL CDECL osmesa_make_current( struct wgl_context *context, void *bits,
-                                       int width, int height, int bpp, int stride )
+static BOOL osmesa_make_current( struct wgl_context *context, void *bits,
+                                 int width, int height, int bpp, int stride )
 {
     BOOL ret;
     GLenum type;
