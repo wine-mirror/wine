@@ -1913,6 +1913,17 @@ interface IWMIStreamProps : IUnknown
     HRESULT GetProperty(const WCHAR *name, WMT_ATTR_DATATYPE *type, BYTE *value, DWORD *size);
 }
 
+[
+    object,
+    local,
+    uuid(342e0eb7-e651-450c-975b-2ace2c90c48e),
+]
+interface IWMCredentialCallback : IUnknown
+{
+    HRESULT AcquireCredentials(WCHAR *realm, WCHAR *site, WCHAR *username, DWORD username_size,
+            WCHAR *password, DWORD password_size, HRESULT hr, DWORD *flags);
+}
+
 cpp_quote("HRESULT WINAPI WMCheckURLExtension(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCheckURLScheme(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
