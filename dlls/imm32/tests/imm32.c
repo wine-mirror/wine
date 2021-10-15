@@ -663,29 +663,55 @@ static void test_ImmAssociateContextEx(void)
     {
         HIMC retimc, newimc;
 
+        SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, TRUE);
+        SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, TRUE);
+
+        ok(GetActiveWindow() == hwnd, "hwnd is not active\n");
         newimc = ImmCreateContext();
         ok(newimc != imc, "handles should not be the same\n");
         rc = pImmAssociateContextEx(NULL, NULL, 0);
         ok(!rc, "ImmAssociateContextEx succeeded\n");
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         rc = pImmAssociateContextEx(hwnd, NULL, 0);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
         rc = pImmAssociateContextEx(NULL, imc, 0);
         ok(!rc, "ImmAssociateContextEx succeeded\n");
 
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         rc = pImmAssociateContextEx(hwnd, imc, 0);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
         retimc = ImmGetContext(hwnd);
         ok(retimc == imc, "handles should be the same\n");
         ImmReleaseContext(hwnd,retimc);
 
+        rc = pImmAssociateContextEx(hwnd, imc, 0);
+        ok(rc, "ImmAssociateContextEx failed\n");
+
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         rc = pImmAssociateContextEx(hwnd, newimc, 0);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
         retimc = ImmGetContext(hwnd);
         ok(retimc == newimc, "handles should be the same\n");
         ImmReleaseContext(hwnd,retimc);
 
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         rc = pImmAssociateContextEx(hwnd, NULL, IACE_DEFAULT);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
+
+        SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
+        SET_ENABLE(WM_IME_SETCONTEXT_DEACTIVATE, FALSE);
     }
     ImmReleaseContext(hwnd,imc);
 }
