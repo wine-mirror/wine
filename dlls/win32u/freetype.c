@@ -295,8 +295,8 @@ static struct list mappings_list = LIST_INIT( mappings_list );
 static UINT default_aa_flags;
 static LCID system_lcid;
 
-static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
-static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
+static BOOL freetype_set_outline_text_metrics( struct gdi_font *font );
+static BOOL freetype_set_bitmap_text_metrics( struct gdi_font *font );
 
 /****************************************
  *   Notes on .fon files
@@ -1432,7 +1432,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
 /*************************************************************
  * freetype_add_font
  */
-static INT CDECL freetype_add_font( const WCHAR *file, DWORD flags )
+static INT freetype_add_font( const WCHAR *file, DWORD flags )
 {
     int ret = 0;
     char *unixname = get_unix_file_name( file );
@@ -1448,7 +1448,7 @@ static INT CDECL freetype_add_font( const WCHAR *file, DWORD flags )
 /*************************************************************
  * freetype_add_mem_font
  */
-static INT CDECL freetype_add_mem_font( void *ptr, SIZE_T size, DWORD flags )
+static INT freetype_add_mem_font( void *ptr, SIZE_T size, DWORD flags )
 {
     return AddFontToList( NULL, NULL, ptr, size, flags );
 }
@@ -1930,7 +1930,7 @@ sym_not_found:
 /*************************************************************
  * freetype_load_fonts
  */
-static void CDECL freetype_load_fonts(void)
+static void freetype_load_fonts(void)
 {
 #ifdef SONAME_LIBFONTCONFIG
     load_fontconfig_fonts();
@@ -2053,7 +2053,7 @@ static LONG load_VDMX(struct gdi_font *font, LONG height);
 /*************************************************************
  * freetype_destroy_font
  */
-static void CDECL freetype_destroy_font( struct gdi_font *font )
+static void freetype_destroy_font( struct gdi_font *font )
 {
     struct font_private_data *data = font->private;
 
@@ -2065,8 +2065,8 @@ static void CDECL freetype_destroy_font( struct gdi_font *font )
 /*************************************************************
  * freetype_get_font_data
  */
-static DWORD CDECL freetype_get_font_data( struct gdi_font *font, DWORD table, DWORD offset,
-                                           void *buf, DWORD cbData)
+static DWORD freetype_get_font_data( struct gdi_font *font, DWORD table, DWORD offset,
+                                     void *buf, DWORD cbData)
 {
     FT_Face ft_face = get_ft_face( font );
     FT_ULong len;
@@ -2390,8 +2390,8 @@ done:
 /*************************************************************
  * fontconfig_enum_family_fallbacks
  */
-static BOOL CDECL fontconfig_enum_family_fallbacks( DWORD pitch_and_family, int index,
-                                                    WCHAR buffer[LF_FACESIZE] )
+static BOOL fontconfig_enum_family_fallbacks( DWORD pitch_and_family, int index,
+                                              WCHAR buffer[LF_FACESIZE] )
 {
 #ifdef SONAME_LIBFONTCONFIG
     FcPattern *pat;
@@ -2431,7 +2431,7 @@ static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
 /*************************************************************
  * freetype_load_font
  */
-static BOOL CDECL freetype_load_font( struct gdi_font *font )
+static BOOL freetype_load_font( struct gdi_font *font )
 {
     struct font_private_data *data;
     INT width = 0, height;
@@ -2504,7 +2504,7 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
 /*************************************************************
  * freetype_get_aa_flags
  */
-static UINT CDECL freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes )
+static UINT freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes )
 {
     /* fixup the antialiasing flags for that font */
     switch (aa_flags)
@@ -2561,7 +2561,7 @@ static FT_UInt get_glyph_index_symbol( struct gdi_font *font, UINT glyph )
 /*************************************************************
  * freetype_get_glyph_index
  */
-static BOOL CDECL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, BOOL use_encoding )
+static BOOL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, BOOL use_encoding )
 {
     FT_Face ft_face = get_ft_face( font );
 
@@ -2587,7 +2587,7 @@ static BOOL CDECL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, 
 /*************************************************************
  * freetype_get_default_glyph
  */
-static UINT CDECL freetype_get_default_glyph( struct gdi_font *font )
+static UINT freetype_get_default_glyph( struct gdi_font *font )
 {
     FT_Face ft_face = get_ft_face( font );
     FT_WinFNT_HeaderRec winfnt;
@@ -3477,9 +3477,9 @@ static FT_Int get_load_flags( UINT format )
 /*************************************************************
  * freetype_get_glyph_outline
  */
-static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
-                                               GLYPHMETRICS *lpgm, ABC *abc, DWORD buflen, void *buf,
-                                               const MAT2 *lpmat, BOOL tategaki )
+static DWORD freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
+                                         GLYPHMETRICS *lpgm, ABC *abc, DWORD buflen, void *buf,
+                                         const MAT2 *lpmat, BOOL tategaki )
 {
     struct gdi_font *base_font = font->base_font ? font->base_font : font;
     FT_Face ft_face = get_ft_face( font );
@@ -3618,7 +3618,7 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
 /*************************************************************
  * freetype_set_bitmap_text_metrics
  */
-static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font )
+static BOOL freetype_set_bitmap_text_metrics( struct gdi_font *font )
 {
     FT_Face ft_face = get_ft_face( font );
     FT_WinFNT_HeaderRec winfnt_header;
@@ -3696,7 +3696,7 @@ static BOOL face_has_symbol_charmap(FT_Face ft_face)
 /*************************************************************
  * freetype_set_outline_text_metrics
  */
-static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
+static BOOL freetype_set_outline_text_metrics( struct gdi_font *font )
 {
     FT_Face ft_face = get_ft_face( font );
     UINT needed;
@@ -3972,7 +3972,7 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
 /*************************************************************
  * freetype_get_char_width_info
  */
-static BOOL CDECL freetype_get_char_width_info( struct gdi_font *font, struct char_width_info *info )
+static BOOL freetype_get_char_width_info( struct gdi_font *font, struct char_width_info *info )
 {
     FT_Face ft_face = get_ft_face( font );
     TT_HoriHeader *pHori;
@@ -3997,7 +3997,7 @@ static BOOL CDECL freetype_get_char_width_info( struct gdi_font *font, struct ch
  * Can be called with NULL gs to calculate the buffer size. Returns
  * the number of ranges found.
  */
-static DWORD CDECL freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET *gs )
+static DWORD freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET *gs )
 {
     FT_Face ft_face = get_ft_face( font );
     DWORD num_ranges = 0;
@@ -4156,7 +4156,7 @@ static DWORD parse_format0_kern_subtable(struct gdi_font *font,
 /*************************************************************
  * freetype_get_kerning_pairs
  */
-static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAIR **pairs )
+static DWORD freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAIR **pairs )
 {
     FT_Face ft_face = get_ft_face( font );
     DWORD length, count = 0;

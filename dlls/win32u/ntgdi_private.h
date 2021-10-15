@@ -305,26 +305,26 @@ struct gdi_font
 
 struct font_backend_funcs
 {
-    void  (CDECL *load_fonts)(void);
-    BOOL  (CDECL *enum_family_fallbacks)( DWORD pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] );
-    INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
-    INT   (CDECL *add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
+    void  (*load_fonts)(void);
+    BOOL  (*enum_family_fallbacks)( DWORD pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] );
+    INT   (*add_font)( const WCHAR *file, DWORD flags );
+    INT   (*add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
 
-    BOOL  (CDECL *load_font)( struct gdi_font *gdi_font );
-    DWORD (CDECL *get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
-                                  void *buf, DWORD count );
-    UINT  (CDECL *get_aa_flags)( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes );
-    BOOL  (CDECL *get_glyph_index)( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding );
-    UINT  (CDECL *get_default_glyph)( struct gdi_font *gdi_font );
-    DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
-                                      GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf,
-                                      const MAT2 *mat, BOOL tategaki );
-    DWORD (CDECL *get_unicode_ranges)( struct gdi_font *font, GLYPHSET *gs );
-    BOOL  (CDECL *get_char_width_info)( struct gdi_font *font, struct char_width_info *info );
-    BOOL  (CDECL *set_outline_text_metrics)( struct gdi_font *font );
-    BOOL  (CDECL *set_bitmap_text_metrics)( struct gdi_font *font );
-    DWORD (CDECL *get_kerning_pairs)( struct gdi_font *gdi_font, KERNINGPAIR **kern_pair );
-    void  (CDECL *destroy_font)( struct gdi_font *font );
+    BOOL  (*load_font)( struct gdi_font *gdi_font );
+    DWORD (*get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
+                            void *buf, DWORD count );
+    UINT  (*get_aa_flags)( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes );
+    BOOL  (*get_glyph_index)( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding );
+    UINT  (*get_default_glyph)( struct gdi_font *gdi_font );
+    DWORD (*get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
+                                GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf,
+                                const MAT2 *mat, BOOL tategaki );
+    DWORD (*get_unicode_ranges)( struct gdi_font *font, GLYPHSET *gs );
+    BOOL  (*get_char_width_info)( struct gdi_font *font, struct char_width_info *info );
+    BOOL  (*set_outline_text_metrics)( struct gdi_font *font );
+    BOOL  (*set_bitmap_text_metrics)( struct gdi_font *font );
+    DWORD (*get_kerning_pairs)( struct gdi_font *gdi_font, KERNINGPAIR **kern_pair );
+    void  (*destroy_font)( struct gdi_font *font );
 };
 
 extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
