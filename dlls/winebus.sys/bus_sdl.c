@@ -161,14 +161,14 @@ static void set_hat_value(struct unix_device *iface, int index, int value)
     switch (value)
     {
     case SDL_HAT_CENTERED: break;
-    case SDL_HAT_UP: y = 1; break;
-    case SDL_HAT_RIGHTUP: y = x = 1; break;
+    case SDL_HAT_DOWN: y = 1; break;
+    case SDL_HAT_RIGHTDOWN: y = x = 1; break;
     case SDL_HAT_RIGHT: x = 1; break;
-    case SDL_HAT_RIGHTDOWN: x = 1; y = -1; break;
-    case SDL_HAT_DOWN: y = -1; break;
-    case SDL_HAT_LEFTDOWN: x = y = -1; break;
+    case SDL_HAT_RIGHTUP: x = 1; y = -1; break;
+    case SDL_HAT_UP: y = -1; break;
+    case SDL_HAT_LEFTUP: x = y = -1; break;
     case SDL_HAT_LEFT: x = -1; break;
-    case SDL_HAT_LEFTUP: x = -1; y = 1; break;
+    case SDL_HAT_LEFTDOWN: x = -1; y = 1; break;
     }
     hid_device_set_hatswitch_x(iface, index, x);
     hid_device_set_hatswitch_y(iface, index, y);
