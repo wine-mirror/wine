@@ -229,6 +229,16 @@ static const GUID *object_usage_to_guid( USAGE usage_page, USAGE usage )
     switch (usage_page)
     {
     case HID_USAGE_PAGE_BUTTON: return &GUID_Button;
+    case HID_USAGE_PAGE_SIMULATION:
+        switch (usage)
+        {
+        case HID_USAGE_SIMULATION_STEERING: return &GUID_XAxis;
+        case HID_USAGE_SIMULATION_ACCELERATOR: return &GUID_YAxis;
+        case HID_USAGE_SIMULATION_BRAKE: return &GUID_RzAxis;
+        case HID_USAGE_SIMULATION_RUDDER: return &GUID_RzAxis;
+        case HID_USAGE_SIMULATION_THROTTLE: return &GUID_Slider;
+        }
+        break;
     case HID_USAGE_PAGE_GENERIC:
         switch (usage)
         {
@@ -378,7 +388,7 @@ static void check_pid_effect_axis_caps( struct hid_joystick *impl, DIDEVICEOBJEC
 static void set_axis_type( DIDEVICEOBJECTINSTANCEW *instance, BOOL *seen, DWORD i, DWORD *count )
 {
     if (!seen[i]) instance->dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( i );
-    else instance->dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + *count++ );
+    else instance->dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + (*count)++ );
     seen[i] = TRUE;
 }
 
@@ -439,17 +449,36 @@ static BOOL enum_objects( struct hid_joystick *impl, const DIPROPHEADER *header,
                 set_axis_type( &instance, seen_axis, j - HID_USAGE_GENERIC_X, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 break;
+            case MAKELONG(HID_USAGE_SIMULATION_STEERING, HID_USAGE_PAGE_SIMULATION):
+                set_axis_type( &instance, seen_axis, 0, &axis );
+                instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
+            case MAKELONG(HID_USAGE_SIMULATION_ACCELERATOR, HID_USAGE_PAGE_SIMULATION):
+                set_axis_type( &instance, seen_axis, 1, &axis );
+                instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
             case MAKELONG(HID_USAGE_GENERIC_WHEEL, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_SIMULATION_THROTTLE, HID_USAGE_PAGE_SIMULATION):
                 set_axis_type( &instance, seen_axis, 2, &axis );
+                instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
+            case MAKELONG(HID_USAGE_SIMULATION_RUDDER, HID_USAGE_PAGE_SIMULATION):
+            case MAKELONG(HID_USAGE_SIMULATION_BRAKE, HID_USAGE_PAGE_SIMULATION):
+                set_axis_type( &instance, seen_axis, 5, &axis );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
                 break;
             case MAKELONG(HID_USAGE_GENERIC_HATSWITCH, HID_USAGE_PAGE_GENERIC):
                 instance.dwType = DIDFT_POV | DIDFT_MAKEINSTANCE( pov++ );
                 instance.dwFlags = 0;
                 break;
-            default:
+            case MAKELONG(HID_USAGE_GENERIC_SLIDER, HID_USAGE_PAGE_GENERIC):
+            case MAKELONG(HID_USAGE_GENERIC_DIAL, HID_USAGE_PAGE_GENERIC):
                 instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
                 instance.dwFlags = DIDOI_ASPECTPOSITION;
+                break;
+            default:
+                instance.dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 + axis++ );
+                instance.dwFlags = 0;
                 break;
             }
             instance.wUsagePage = caps->usage_page;

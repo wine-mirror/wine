@@ -3451,12 +3451,15 @@ static void test_simple_joystick(void)
                 USAGE(4, (0xff01u<<16)|(0x1234)),
                 USAGE(1, HID_USAGE_GENERIC_X),
                 USAGE(1, HID_USAGE_GENERIC_Y),
+                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_RUDDER),
+                USAGE(4, (HID_USAGE_PAGE_DIGITIZER<<16)|HID_USAGE_DIGITIZER_TIP_PRESSURE),
+                USAGE(4, (HID_USAGE_PAGE_CONSUMER<<16)|HID_USAGE_CONSUMER_VOLUME),
                 LOGICAL_MINIMUM(1, 0xe7),
                 LOGICAL_MAXIMUM(1, 0x38),
                 PHYSICAL_MINIMUM(1, 0xe7),
                 PHYSICAL_MAXIMUM(1, 0x38),
                 REPORT_SIZE(1, 8),
-                REPORT_COUNT(1, 4),
+                REPORT_COUNT(1, 7),
                 INPUT(1, Data|Var|Abs),
 
                 USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
@@ -3486,14 +3489,14 @@ static void test_simple_joystick(void)
 
     static const HIDP_CAPS hid_caps =
     {
-        .InputReportByteLength = 6,
+        .InputReportByteLength = 9,
     };
     static const DIDEVCAPS expect_caps =
     {
         .dwSize = sizeof(DIDEVCAPS),
         .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
         .dwDevType = DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK,
-        .dwAxes = 3,
+        .dwAxes = 6,
         .dwPOVs = 1,
         .dwButtons = 2,
     };
@@ -3501,27 +3504,27 @@ static void test_simple_joystick(void)
     {
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x10,0x10,0},
+            .report_buf = {1,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x38,0x38,0xf8},
+            .report_buf = {1,0x10,0x10,0x38,0x38,0x10,0x10,0x10,0xf8},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x01,0x01,0x00},
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x01,0x01,0x00},
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x80,0x80,0xff},
+            .report_buf = {1,0x10,0x10,0x80,0x80,0x10,0x10,0x10,0xff},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x10,0xee,0x54},
+            .report_buf = {1,0x10,0x10,0x10,0xee,0x10,0x10,0x10,0x54},
         },
     };
     static const struct DIJOYSTATE2 expect_state[] =
@@ -3588,7 +3591,41 @@ static void test_simple_joystick(void)
     {
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(6),
+            .tszName = L"Volume",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_CONSUMER,
+            .wUsage = HID_USAGE_CONSUMER_VOLUME,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Unknown,
+            .dwOfs = 0x4,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(7),
+            .tszName = L"Tip Pressure",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_DIGITIZER,
+            .wUsage = HID_USAGE_DIGITIZER_TIP_PRESSURE,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_RzAxis,
+            .dwOfs = 0x8,
+            .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(5),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Rudder",
+            .wCollectionNumber = 1,
+            .wUsagePage = HID_USAGE_PAGE_SIMULATION,
+            .wUsage = HID_USAGE_SIMULATION_RUDDER,
+            .wReportId = 1,
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_YAxis,
+            .dwOfs = 0xc,
             .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(1),
             .dwFlags = DIDOI_ASPECTPOSITION,
             .tszName = L"Y Axis",
@@ -3600,7 +3637,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_XAxis,
-            .dwOfs = 0x4,
+            .dwOfs = 0x10,
             .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(0),
             .dwFlags = DIDOI_ASPECTPOSITION,
             .tszName = L"X Axis",
@@ -3612,7 +3649,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_ZAxis,
-            .dwOfs = 0xc,
+            .dwOfs = 0x18,
             .dwType = DIDFT_ABSAXIS|DIDFT_MAKEINSTANCE(2),
             .dwFlags = DIDOI_ASPECTPOSITION,
             .tszName = L"Wheel",
@@ -3624,7 +3661,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_POV,
-            .dwOfs = 0x10,
+            .dwOfs = 0x1c,
             .dwType = DIDFT_POV|DIDFT_MAKEINSTANCE(0),
             .tszName = L"Hat Switch",
             .wCollectionNumber = 1,
@@ -3635,7 +3672,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = 0x14,
+            .dwOfs = 0x20,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(0),
             .tszName = L"Button 0",
             .wCollectionNumber = 1,
@@ -3646,7 +3683,7 @@ static void test_simple_joystick(void)
         {
             .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
             .guidType = GUID_Button,
-            .dwOfs = 0x15,
+            .dwOfs = 0x21,
             .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(1),
             .tszName = L"Button 1",
             .wCollectionNumber = 1,
@@ -4024,7 +4061,7 @@ static void test_simple_joystick(void)
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
-    ok( res == 5, "got %u expected %u\n", res, 5 );
+    ok( res == 8, "got %u expected %u\n", res, 8 );
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
     ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
@@ -4045,21 +4082,21 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
     ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[1], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[1], guidType );
-    check_member( objinst, expect_objects[1], "%#x", dwOfs );
-    check_member( objinst, expect_objects[1], "%#x", dwType );
-    check_member( objinst, expect_objects[1], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
-    check_member( objinst, expect_objects[1], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[1], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[1], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[1], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[1], "%#04x", wUsage );
-    check_member( objinst, expect_objects[1], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[1], "%#04x", wExponent );
-    check_member( objinst, expect_objects[1], "%u", wReportId );
+    check_member( objinst, expect_objects[4], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[4], guidType );
+    check_member( objinst, expect_objects[4], "%#x", dwOfs );
+    check_member( objinst, expect_objects[4], "%#x", dwType );
+    check_member( objinst, expect_objects[4], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[4], tszName );
+    check_member( objinst, expect_objects[4], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[4], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[4], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[4], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[4], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[4], "%#04x", wUsage );
+    check_member( objinst, expect_objects[4], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[4], "%#04x", wExponent );
+    check_member( objinst, expect_objects[4], "%u", wReportId );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 0x14, DIPH_BYOFFSET );
     ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
@@ -4072,21 +4109,21 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
     ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[5], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[5], guidType );
-    check_member( objinst, expect_objects[5], "%#x", dwOfs );
-    check_member( objinst, expect_objects[5], "%#x", dwType );
-    check_member( objinst, expect_objects[5], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[5], tszName );
-    check_member( objinst, expect_objects[5], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[5], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[5], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[5], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[5], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[5], "%#04x", wUsage );
-    check_member( objinst, expect_objects[5], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[5], "%#04x", wExponent );
-    check_member( objinst, expect_objects[5], "%u", wReportId );
+    check_member( objinst, expect_objects[8], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[8], guidType );
+    check_member( objinst, expect_objects[8], "%#x", dwOfs );
+    check_member( objinst, expect_objects[8], "%#x", dwType );
+    check_member( objinst, expect_objects[8], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[8], tszName );
+    check_member( objinst, expect_objects[8], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[8], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[8], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[8], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[8], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[8], "%#04x", wUsage );
+    check_member( objinst, expect_objects[8], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[8], "%#04x", wExponent );
+    check_member( objinst, expect_objects[8], "%u", wReportId );
 
     hr = IDirectInputDevice8_EnumEffects( device, NULL, NULL, DIEFT_ALL );
     ok( hr == DIERR_INVALIDPARAM, "EnumEffects returned %#x\n", hr );
@@ -4130,21 +4167,21 @@ static void test_simple_joystick(void)
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, DIJOFS_Y, DIPH_BYOFFSET );
     ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
 
-    check_member( objinst, expect_objects[0], "%u", dwSize );
-    check_member_guid( objinst, expect_objects[0], guidType );
-    check_member( objinst, expect_objects[0], "%#x", dwOfs );
-    check_member( objinst, expect_objects[0], "%#x", dwType );
-    check_member( objinst, expect_objects[0], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[0], tszName );
-    check_member( objinst, expect_objects[0], "%u", dwFFMaxForce );
-    check_member( objinst, expect_objects[0], "%u", dwFFForceResolution );
-    check_member( objinst, expect_objects[0], "%u", wCollectionNumber );
-    check_member( objinst, expect_objects[0], "%u", wDesignatorIndex );
-    check_member( objinst, expect_objects[0], "%#04x", wUsagePage );
-    check_member( objinst, expect_objects[0], "%#04x", wUsage );
-    check_member( objinst, expect_objects[0], "%#04x", dwDimension );
-    check_member( objinst, expect_objects[0], "%#04x", wExponent );
-    check_member( objinst, expect_objects[0], "%u", wReportId );
+    check_member( objinst, expect_objects[3], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[3], guidType );
+    check_member( objinst, expect_objects[3], "%#x", dwOfs );
+    check_member( objinst, expect_objects[3], "%#x", dwType );
+    check_member( objinst, expect_objects[3], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[3], tszName );
+    check_member( objinst, expect_objects[3], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[3], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[3], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[3], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[3], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[3], "%#04x", wUsage );
+    check_member( objinst, expect_objects[3], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[3], "%#04x", wExponent );
+    check_member( objinst, expect_objects[3], "%u", wReportId );
 
     hr = IDirectInputDevice8_SetEventNotification( device, (HANDLE)0xdeadbeef );
     todo_wine
