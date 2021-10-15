@@ -1412,11 +1412,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearRenderTargetView(ID3D11D
     if (!view)
         return;
 
-    wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(context->wined3d_context, view->wined3d_view, NULL,
             WINED3DCLEAR_TARGET, &color, 0.0f, 0)))
         ERR("Failed to clear view, hr %#x.\n", hr);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewUint(ID3D11DeviceContext1 *iface,
@@ -1429,10 +1427,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewUint(
             iface, unordered_access_view, values[0], values[1], values[2], values[3]);
 
     view = unsafe_impl_from_ID3D11UnorderedAccessView(unordered_access_view);
-    wined3d_mutex_lock();
     wined3d_device_context_clear_uav_uint(context->wined3d_context,
             view->wined3d_view, (const struct wined3d_uvec4 *)values);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewFloat(ID3D11DeviceContext1 *iface,
@@ -1445,10 +1441,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewFloat
             iface, unordered_access_view, debug_float4(values));
 
     view = unsafe_impl_from_ID3D11UnorderedAccessView(unordered_access_view);
-    wined3d_mutex_lock();
     wined3d_device_context_clear_uav_float(context->wined3d_context,
             view->wined3d_view, (const struct wined3d_vec4 *)values);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_ClearDepthStencilView(ID3D11DeviceContext1 *iface,
@@ -1467,11 +1461,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearDepthStencilView(ID3D11D
 
     wined3d_flags = wined3d_clear_flags_from_d3d11_clear_flags(flags);
 
-    wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(context->wined3d_context, view->wined3d_view, NULL,
             wined3d_flags, NULL, depth, stencil)))
         ERR("Failed to clear view, hr %#x.\n", hr);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_GenerateMips(ID3D11DeviceContext1 *iface,
@@ -5053,11 +5045,9 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *
     if (!view)
         return;
 
-    wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(device->immediate_context.wined3d_context,
             view->wined3d_view, NULL, WINED3DCLEAR_TARGET, &color, 0.0f, 0)))
         ERR("Failed to clear view, hr %#x.\n", hr);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *iface,
@@ -5076,11 +5066,9 @@ static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *
 
     wined3d_flags = wined3d_clear_flags_from_d3d11_clear_flags(flags);
 
-    wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(device->immediate_context.wined3d_context,
             view->wined3d_view, NULL, wined3d_flags, NULL, depth, stencil)))
         ERR("Failed to clear view, hr %#x.\n", hr);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device1 *iface,
