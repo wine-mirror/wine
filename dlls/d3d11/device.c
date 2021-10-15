@@ -2656,9 +2656,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearState(ID3D11DeviceContex
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
     wined3d_device_context_reset_state(context->wined3d_context);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_Flush(ID3D11DeviceContext1 *iface)
