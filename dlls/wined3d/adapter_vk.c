@@ -775,15 +775,15 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
     struct wined3d_bo_slab_vk *slab;
     VkResult vr;
 
-    if (bo->map_ptr)
-        return bo->map_ptr;
+    if (bo->b.map_ptr)
+        return bo->b.map_ptr;
 
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context_vk->c.device);
 
     if ((slab = bo->slab))
     {
-        if (!(bo->map_ptr = wined3d_bo_slab_vk_map(slab, context_vk)))
+        if (!(bo->b.map_ptr = wined3d_bo_slab_vk_map(slab, context_vk)))
         {
             ERR("Failed to map slab.\n");
             return NULL;
@@ -793,19 +793,19 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
     {
         struct wined3d_allocator_chunk_vk *chunk_vk = wined3d_allocator_chunk_vk(bo->memory->chunk);
 
-        if (!(bo->map_ptr = wined3d_allocator_chunk_vk_map(chunk_vk, context_vk)))
+        if (!(bo->b.map_ptr = wined3d_allocator_chunk_vk_map(chunk_vk, context_vk)))
         {
             ERR("Failed to map chunk.\n");
             return NULL;
         }
     }
-    else if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory, 0, VK_WHOLE_SIZE, 0, &bo->map_ptr))) < 0)
+    else if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory, 0, VK_WHOLE_SIZE, 0, &bo->b.map_ptr))) < 0)
     {
         ERR("Failed to map memory, vr %s.\n", wined3d_debug_vkresult(vr));
         return NULL;
     }
 
-    return bo->map_ptr;
+    return bo->b.map_ptr;
 }
 
 static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context_vk *context_vk)
@@ -817,7 +817,7 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
     if (wined3d_map_persistent())
         return;
 
-    bo->map_ptr = NULL;
+    bo->b.map_ptr = NULL;
 
     if ((slab = bo->slab))
     {

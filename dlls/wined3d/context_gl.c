@@ -2893,6 +2893,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     list_init(&bo->b.users);
     bo->command_fence_id = 0;
     bo->b.memory_offset = 0;
+    bo->b.map_ptr = NULL;
 
     return true;
 }

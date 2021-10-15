@@ -1591,6 +1591,7 @@ do {                                                                \
 struct wined3d_bo
 {
     struct list users;
+    void *map_ptr;
     size_t memory_offset;
     bool coherent;
 };
@@ -1628,7 +1629,6 @@ struct wined3d_bo_vk
     struct wined3d_bo_slab_vk *slab;
 
     VkDeviceMemory vk_memory;
-    void *map_ptr;
 
     VkDeviceSize buffer_offset;
     VkDeviceSize size;
