@@ -1124,32 +1124,15 @@ static const struct notification read_test[] =
     { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL }
 };
 
-static const struct notification read_allow_close_test[] =
-{
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NF_ALLOW },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, NF_ALLOW },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, NF_ALLOW },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, NF_ALLOW },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL }
-};
-
-#define read_request_data(a,b,c,d) _read_request_data(a,b,c,d,__LINE__)
-static void _read_request_data(struct test_request *req, struct info *info, const char *expected_data, BOOL closing_connection, unsigned line)
+#define read_request_data(a,b,c) _read_request_data(a,b,c,__LINE__)
+static void _read_request_data(struct test_request *req, struct info *info, const char *expected_data, unsigned line)
 {
     char buffer[1024];
     DWORD len;
     BOOL ret;
 
-    if (closing_connection)
-    {
-        info->test = read_allow_close_test;
-        info->count = ARRAY_SIZE( read_allow_close_test );
-    }
-    else
-    {
-        info->test = read_test;
-        info->count = ARRAY_SIZE( read_test );
-    }
+    info->test = read_test;
+    info->count = ARRAY_SIZE( read_test );
     info->index = 0;
 
     setup_test( info, winhttp_read_data, line );
@@ -1180,7 +1163,7 @@ static void test_persistent_connection(int port)
                        "Content-Length: 1\r\n"
                        "\r\n"
                        "X" );
-    read_request_data( &req, &info, "X", FALSE );
+    read_request_data( &req, &info, "X" );
     close_request( &req, &info, FALSE );
 
     /* chunked connection test */
@@ -1194,7 +1177,7 @@ static void test_persistent_connection(int port)
                        "\r\n"
                        "9\r\n123456789\r\n"
                        "0\r\n\r\n" );
-    read_request_data( &req, &info, "123456789", FALSE );
+    read_request_data( &req, &info, "123456789" );
     close_request( &req, &info, FALSE );
 
     /* HTTP/1.1 connections are persistent by default, no additional header is needed */
@@ -1206,7 +1189,7 @@ static void test_persistent_connection(int port)
                        "Content-Length: 2\r\n"
                        "\r\n"
                        "xx" );
-    read_request_data( &req, &info, "xx", FALSE );
+    read_request_data( &req, &info, "xx" );
     close_request( &req, &info, FALSE );
 
     open_async_request( port, &req, &info, L"/test", TRUE );
@@ -1218,6 +1201,7 @@ static void test_persistent_connection(int port)
                        "Connection: close\r\n"
                        "\r\n"
                        "yy" );
+    read_request_data( &req, &info, "yy" );
     close_request( &req, &info, TRUE );
 
     SetEvent( server_socket_done );
