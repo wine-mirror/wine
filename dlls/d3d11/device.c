@@ -815,10 +815,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_Map(ID3D11DeviceContext1 *
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
 
-    wined3d_mutex_lock();
     hr = wined3d_device_context_map(context->wined3d_context, wined3d_resource, subresource_idx,
             &map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type));
-    wined3d_mutex_unlock();
 
     mapped_subresource->pData = map_desc.data;
     mapped_subresource->RowPitch = map_desc.row_pitch;
@@ -837,9 +835,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_Unmap(ID3D11DeviceContext1 *i
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
 
-    wined3d_mutex_lock();
     wined3d_device_context_unmap(context->wined3d_context, wined3d_resource, subresource_idx);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_PSSetConstantBuffers(ID3D11DeviceContext1 *iface,
