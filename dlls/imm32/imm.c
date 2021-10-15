@@ -583,12 +583,13 @@ BOOL WINAPI ImmSetActiveContext(HWND hwnd, HIMC himc, BOOL activate)
  */
 HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
-    HIMC old = NULL;
     InputContextData *data = get_imc_data(hIMC);
+    HIMC defaultContext;
+    HIMC old;
 
     TRACE("(%p, %p):\n", hWnd, hIMC);
 
-    if(hIMC && !data)
+    if (!IsWindow(hWnd) || (hIMC && !data))
         return NULL;
 
     /*
@@ -600,30 +601,26 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     if (hIMC && IMM_IsCrossThreadAccess(hWnd, hIMC))
         return NULL;
 
-    if (hWnd)
+    defaultContext = get_default_context( hWnd );
+    old = RemovePropW(hWnd, szwWineIMCProperty);
+    if (old == NULL)
+        old = defaultContext;
+    else if (old == (HIMC)-1)
+        old = NULL;
+
+    if (hIMC != defaultContext)
     {
-        HIMC defaultContext = get_default_context( hWnd );
-        old = RemovePropW(hWnd,szwWineIMCProperty);
+        if (hIMC == NULL) /* Meaning disable imm for that window*/
+            SetPropW(hWnd, szwWineIMCProperty, (HANDLE)-1);
+        else
+            SetPropW(hWnd, szwWineIMCProperty, hIMC);
+    }
 
-        if (old == NULL)
-            old = defaultContext;
-        else if (old == (HIMC)-1)
-            old = NULL;
-
-        if (hIMC != defaultContext)
-        {
-            if (hIMC == NULL) /* Meaning disable imm for that window*/
-                SetPropW(hWnd,szwWineIMCProperty,(HANDLE)-1);
-            else
-                SetPropW(hWnd,szwWineIMCProperty,hIMC);
-        }
-
-        if (old)
-        {
-            InputContextData *old_data = old;
-            if (old_data->IMC.hWnd == hWnd)
-                old_data->IMC.hWnd = NULL;
-        }
+    if (old)
+    {
+        InputContextData *old_data = old;
+        if (old_data->IMC.hWnd == hWnd)
+            old_data->IMC.hWnd = NULL;
     }
 
     if (!hIMC)
