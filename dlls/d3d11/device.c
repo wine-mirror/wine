@@ -2704,8 +2704,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_FinishCommandList(ID3D11De
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wined3d_mutex_lock();
-
     if (FAILED(hr = wined3d_deferred_context_record_command_list(context->wined3d_context,
             !!restore, &object->wined3d_list)))
     {
@@ -2713,8 +2711,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_FinishCommandList(ID3D11De
         heap_free(object);
         return hr;
     }
-
-    wined3d_mutex_unlock();
 
     object->ID3D11CommandList_iface.lpVtbl = &d3d11_command_list_vtbl;
     object->refcount = 1;
@@ -3687,15 +3683,12 @@ static HRESULT d3d11_deferred_context_create(struct d3d_device *device,
         return E_OUTOFMEMORY;
     d3d11_device_context_init(object, device, D3D11_DEVICE_CONTEXT_DEFERRED);
 
-    wined3d_mutex_lock();
     if (FAILED(hr = wined3d_deferred_context_create(device->wined3d_device, &object->wined3d_context)))
     {
         WARN("Failed to create wined3d deferred context, hr %#x.\n", hr);
         heap_free(object);
-        wined3d_mutex_unlock();
         return hr;
     }
-    wined3d_mutex_unlock();
 
     TRACE("Created deferred context %p.\n", object);
     *context = object;
