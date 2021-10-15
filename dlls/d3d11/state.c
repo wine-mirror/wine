@@ -80,11 +80,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState *iface
     if (!refcount)
     {
         ID3D11Device2 *device = state->device;
-
-        wined3d_mutex_lock();
         wined3d_blend_state_decref(state->wined3d_state);
-        wined3d_mutex_unlock();
-
         ID3D11Device2_Release(device);
     }
 
@@ -511,9 +507,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStenc
     {
         ID3D11Device2 *device = state->device;
 
-        wined3d_mutex_lock();
         wined3d_depth_stencil_state_decref(state->wined3d_state);
-        wined3d_mutex_unlock();
         ID3D11Device2_Release(device);
     }
 
@@ -908,11 +902,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_Release(ID3D11RasterizerSt
     if (!refcount)
     {
         ID3D11Device2 *device = state->device;
-
-        wined3d_mutex_lock();
         wined3d_rasterizer_state_decref(state->wined3d_state);
-        wined3d_mutex_unlock();
-
         ID3D11Device2_Release(device);
     }
 
@@ -1294,11 +1284,7 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_Release(ID3D11SamplerState *i
     if (!refcount)
     {
         ID3D11Device2 *device = state->device;
-
-        wined3d_mutex_lock();
         wined3d_sampler_decref(state->wined3d_sampler);
-        wined3d_mutex_unlock();
-
         ID3D11Device2_Release(device);
     }
 

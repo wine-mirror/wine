@@ -86,9 +86,7 @@ static ULONG STDMETHODCALLTYPE d3d11_vertex_shader_Release(ID3D11VertexShader *i
     {
         ID3D11Device2 *device = shader->device;
 
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -379,11 +377,7 @@ static ULONG STDMETHODCALLTYPE d3d11_hull_shader_Release(ID3D11HullShader *iface
     if (!refcount)
     {
         ID3D11Device2 *device = shader->device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
-
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -570,11 +564,7 @@ static ULONG STDMETHODCALLTYPE d3d11_domain_shader_Release(ID3D11DomainShader *i
     if (!refcount)
     {
         ID3D11Device2 *device = shader->device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
-
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -771,11 +761,7 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_Release(ID3D11GeometryShade
     if (!refcount)
     {
         ID3D11Device2 *device = shader->device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
-
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -1273,10 +1259,7 @@ static ULONG STDMETHODCALLTYPE d3d11_pixel_shader_Release(ID3D11PixelShader *ifa
     if (!refcount)
     {
         ID3D11Device2 *device = shader->device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -1566,11 +1549,7 @@ static ULONG STDMETHODCALLTYPE d3d11_compute_shader_Release(ID3D11ComputeShader 
     if (!refcount)
     {
         ID3D11Device2 *device = shader->device;
-
-        wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
-        wined3d_mutex_unlock();
-
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);

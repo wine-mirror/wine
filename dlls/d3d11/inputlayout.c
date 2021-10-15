@@ -154,11 +154,7 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_Release(ID3D11InputLayout *ifa
     if (!refcount)
     {
         ID3D11Device2 *device = layout->device;
-
-        wined3d_mutex_lock();
         wined3d_vertex_declaration_decref(layout->wined3d_decl);
-        wined3d_mutex_unlock();
-
         ID3D11Device2_Release(device);
     }
 

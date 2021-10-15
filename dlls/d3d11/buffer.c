@@ -86,9 +86,7 @@ static ULONG STDMETHODCALLTYPE d3d11_buffer_Release(ID3D11Buffer *iface)
     {
         ID3D11Device2 *device = buffer->device;
 
-        wined3d_mutex_lock();
         wined3d_buffer_decref(buffer->wined3d_buffer);
-        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);

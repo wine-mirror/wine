@@ -375,9 +375,7 @@ static ULONG STDMETHODCALLTYPE d3d11_command_list_Release(ID3D11CommandList *ifa
 
     if (!refcount)
     {
-        wined3d_mutex_lock();
         wined3d_command_list_decref(list->wined3d_list);
-        wined3d_mutex_unlock();
         wined3d_private_store_cleanup(&list->private_store);
         ID3D11Device2_Release(list->device);
         heap_free(list);
@@ -4541,9 +4539,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
         d3d11_device_context_cleanup(&device->immediate_context);
         if (device->wined3d_device)
         {
-            wined3d_mutex_lock();
             wined3d_device_decref(device->wined3d_device);
-            wined3d_mutex_unlock();
         }
         wine_rb_destroy(&device->sampler_states, NULL, NULL);
         wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
