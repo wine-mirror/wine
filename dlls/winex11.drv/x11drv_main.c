@@ -645,6 +645,7 @@ void CDECL X11DRV_ThreadDetach(void)
 
     if (data)
     {
+        vulkan_thread_detach();
         if (data->xim) XCloseIM( data->xim );
         if (data->font_set) XFreeFontSet( data->display, data->font_set );
         XCloseDisplay( data->display );

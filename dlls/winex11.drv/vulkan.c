@@ -57,12 +57,16 @@ static XContext vulkan_hwnd_context;
 
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
 
+static struct list surface_list = LIST_INIT( surface_list );
+
 struct wine_vk_surface
 {
     LONG ref;
+    struct list entry;
     Window window;
     VkSurfaceKHR surface; /* native surface */
     HWND hwnd;
+    DWORD hwnd_thread_id;
 };
 
 typedef struct VkXlibSurfaceCreateInfoKHR
@@ -207,6 +211,10 @@ static void wine_vk_surface_release(struct wine_vk_surface *surface)
     if (InterlockedDecrement(&surface->ref))
         return;
 
+    EnterCriticalSection(&context_section);
+    list_remove(&surface->entry);
+    LeaveCriticalSection(&context_section);
+
     if (surface->window)
         XDestroyWindow(gdi_display, surface->window);
 
@@ -219,9 +227,30 @@ void wine_vk_surface_destroy(HWND hwnd)
     EnterCriticalSection(&context_section);
     if (!XFindContext(gdi_display, (XID)hwnd, vulkan_hwnd_context, (char **)&surface))
     {
+        surface->hwnd_thread_id = 0;
+        surface->hwnd = NULL;
         wine_vk_surface_release(surface);
     }
     XDeleteContext(gdi_display, (XID)hwnd, vulkan_hwnd_context);
+    LeaveCriticalSection(&context_section);
+}
+
+void vulkan_thread_detach(void)
+{
+    struct wine_vk_surface *surface, *next;
+    DWORD thread_id = GetCurrentThreadId();
+
+    EnterCriticalSection(&context_section);
+    LIST_FOR_EACH_ENTRY_SAFE(surface, next, &surface_list, struct wine_vk_surface, entry)
+    {
+        if (surface->hwnd_thread_id != thread_id)
+            continue;
+
+        TRACE("Detaching surface %p, hwnd %p.\n", surface, surface->hwnd);
+        XReparentWindow(gdi_display, surface->window, get_dummy_parent(), 0, 0);
+        XSync(gdi_display, False);
+        wine_vk_surface_destroy(surface->hwnd);
+    }
     LeaveCriticalSection(&context_section);
 }
 
@@ -278,7 +307,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
 {
     VkResult res;
     VkXlibSurfaceCreateInfoKHR create_info_host;
-    struct wine_vk_surface *x11_surface, *prev;
+    struct wine_vk_surface *x11_surface;
 
     TRACE("%p %p %p %p\n", instance, create_info, allocator, surface);
 
@@ -298,8 +327,15 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
 
     x11_surface->ref = 1;
     x11_surface->hwnd = create_info->hwnd;
-    x11_surface->window = x11_surface->hwnd ? create_client_window(create_info->hwnd, &default_visual)
-                                            : create_dummy_client_window();
+    if (x11_surface->hwnd)
+    {
+        x11_surface->window = create_client_window(create_info->hwnd, &default_visual);
+        x11_surface->hwnd_thread_id = GetWindowThreadProcessId(x11_surface->hwnd, NULL);
+    }
+    else
+    {
+        x11_surface->window = create_dummy_client_window();
+    }
 
     if (!x11_surface->window)
     {
@@ -323,16 +359,14 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
+    EnterCriticalSection(&context_section);
     if (x11_surface->hwnd)
     {
-        EnterCriticalSection(&context_section);
-        if (!XFindContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char **)&prev))
-        {
-            wine_vk_surface_release(prev);
-        }
+        wine_vk_surface_destroy( x11_surface->hwnd );
         XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
-        LeaveCriticalSection(&context_section);
     }
+    list_add_tail(&surface_list, &x11_surface->entry);
+    LeaveCriticalSection(&context_section);
 
     *surface = (uintptr_t)x11_surface;
 
@@ -710,6 +744,10 @@ const struct vulkan_funcs *get_vulkan_driver(UINT version)
 }
 
 void wine_vk_surface_destroy(HWND hwnd)
+{
+}
+
+void vulkan_thread_detach(void)
 {
 }
 
