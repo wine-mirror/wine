@@ -1128,11 +1128,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargets(ID3D11Devi
 
     dsv = unsafe_impl_from_ID3D11DepthStencilView(depth_stencil_view);
 
-    wined3d_mutex_lock();
-    wined3d_device_context_set_rendertarget_views(context->wined3d_context, 0,
-            ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs, FALSE);
-    wined3d_device_context_set_depth_stencil_view(context->wined3d_context, dsv ? dsv->wined3d_view : NULL);
-    wined3d_mutex_unlock();
+    wined3d_device_context_set_render_targets_and_unordered_access_views(context->wined3d_context,
+            ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs, dsv ? dsv->wined3d_view : NULL, ~0u, NULL, NULL);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargetsAndUnorderedAccessViews(
@@ -4988,12 +4985,8 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device1 *ifa
 
     dsv = unsafe_impl_from_ID3D10DepthStencilView(depth_stencil_view);
 
-    wined3d_mutex_lock();
-    wined3d_device_context_set_rendertarget_views(device->immediate_context.wined3d_context, 0,
-            ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs, FALSE);
-    wined3d_device_context_set_depth_stencil_view(device->immediate_context.wined3d_context,
-            dsv ? dsv->wined3d_view : NULL);
-    wined3d_mutex_unlock();
+    wined3d_device_context_set_render_targets_and_unordered_access_views(device->immediate_context.wined3d_context,
+            ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs, dsv ? dsv->wined3d_view : NULL, ~0u, NULL, NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
