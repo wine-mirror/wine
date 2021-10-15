@@ -144,12 +144,10 @@ static HRESULT WINAPI d3d9_volume_LockBox(IDirect3DVolume9 *iface,
     TRACE("iface %p, locked_box %p, box %p, flags %#x.\n",
             iface, locked_box, box, flags);
 
-    wined3d_mutex_lock();
     if (FAILED(hr = wined3d_resource_map(wined3d_texture_get_resource(volume->wined3d_texture),
             volume->sub_resource_idx, &map_desc, (const struct wined3d_box *)box,
             wined3dmapflags_from_d3dmapflags(flags, 0))))
         map_desc.data = NULL;
-    wined3d_mutex_unlock();
 
     locked_box->RowPitch = map_desc.row_pitch;
     locked_box->SlicePitch = map_desc.slice_pitch;
@@ -167,9 +165,7 @@ static HRESULT WINAPI d3d9_volume_UnlockBox(IDirect3DVolume9 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
     hr = wined3d_resource_unmap(wined3d_texture_get_resource(volume->wined3d_texture), volume->sub_resource_idx);
-    wined3d_mutex_unlock();
 
     if (hr == WINEDDERR_NOTLOCKED)
         return D3DERR_INVALIDCALL;
