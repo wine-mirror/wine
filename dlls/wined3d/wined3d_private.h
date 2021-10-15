@@ -1674,7 +1674,7 @@ struct wined3d_const_bo_address
     const BYTE *addr;
 };
 
-static inline struct wined3d_const_bo_address *wined3d_const_bo_address(struct wined3d_bo_address *data)
+static inline struct wined3d_const_bo_address *wined3d_const_bo_address(const struct wined3d_bo_address *data)
 {
     return (struct wined3d_const_bo_address *)data;
 }
@@ -2358,6 +2358,8 @@ void wined3d_context_gl_draw_textured_quad(struct wined3d_context_gl *context_gl
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 void wined3d_context_gl_enable_clip_distances(struct wined3d_context_gl *context_gl, uint32_t mask) DECLSPEC_HIDDEN;
 void wined3d_context_gl_end_transform_feedback(struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
+void wined3d_context_gl_flush_bo_address(struct wined3d_context_gl *context_gl,
+        const struct wined3d_const_bo_address *data, size_t size) DECLSPEC_HIDDEN;
 void wined3d_context_gl_free_fence(struct wined3d_fence *fence) DECLSPEC_HIDDEN;
 void wined3d_context_gl_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
 void wined3d_context_gl_free_pipeline_statistics_query(struct wined3d_pipeline_statistics_query *query) DECLSPEC_HIDDEN;
@@ -3366,6 +3368,8 @@ struct wined3d_adapter_ops
             unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_copy_bo_address)(struct wined3d_context *context,
             const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size);
+    void (*adapter_flush_bo_address)(struct wined3d_context *context,
+            const struct wined3d_const_bo_address *data, size_t size);
     HRESULT (*adapter_create_swapchain)(struct wined3d_device *device,
             struct wined3d_swapchain_desc *desc,
             struct wined3d_swapchain_state_parent *state_parent, void *parent,
@@ -4113,6 +4117,17 @@ const char *wined3d_debug_view_desc(const struct wined3d_view_desc *d,
         const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 const char *wined3d_debug_vkresult(VkResult vr) DECLSPEC_HIDDEN;
 
+struct wined3d_client_resource
+{
+    /* The resource's persistently mapped address, which we may use to perform
+     * NOOVERWRITE maps from the client thread. */
+    struct wined3d_bo_address addr;
+
+    /* The currently mapped upload BO, if applicable, and box. */
+    struct upload_bo mapped_upload;
+    struct wined3d_box mapped_box;
+};
+
 static inline BOOL wined3d_resource_access_is_managed(unsigned int access)
 {
     return !(~access & (WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU));
@@ -4157,6 +4172,8 @@ struct wined3d_resource
     UINT size;
     DWORD priority;
     void *heap_memory;
+
+    struct wined3d_client_resource client;
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
@@ -6231,6 +6248,12 @@ static inline void wined3d_context_copy_bo_address(struct wined3d_context *conte
         const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     context->device->adapter->adapter_ops->adapter_copy_bo_address(context, dst, src, size);
+}
+
+static inline void wined3d_context_flush_bo_address(struct wined3d_context *context,
+        const struct wined3d_const_bo_address *data, size_t size)
+{
+    context->device->adapter->adapter_ops->adapter_flush_bo_address(context, data, size);
 }
 
 static inline void wined3d_context_vk_reference_bo(const struct wined3d_context_vk *context_vk,

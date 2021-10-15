@@ -2741,43 +2741,70 @@ void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
     return map_ptr;
 }
 
-void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
-        const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
+static void flush_bo_ranges(struct wined3d_context_gl *context_gl, const struct wined3d_const_bo_address *data,
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *bo;
     unsigned int i;
 
-    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
+    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object) || bo->b.coherent)
         return;
 
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
-    if (!bo->b.coherent)
+    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
-        if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+        for (i = 0; i < range_count; ++i)
         {
-            for (i = 0; i < range_count; ++i)
-            {
-                GL_EXTCALL(glFlushMappedBufferRange(bo->binding,
-                        (UINT_PTR)data->addr + ranges[i].offset, ranges[i].size));
-            }
+            GL_EXTCALL(glFlushMappedBufferRange(bo->binding,
+                    (UINT_PTR)data->addr + ranges[i].offset, ranges[i].size));
         }
-        else if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+    }
+    else if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+    {
+        for (i = 0; i < range_count; ++i)
         {
-            for (i = 0; i < range_count; ++i)
-            {
-                GL_EXTCALL(glFlushMappedBufferRangeAPPLE(bo->binding,
-                        (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
-                checkGLcall("glFlushMappedBufferRangeAPPLE");
-            }
+            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(bo->binding,
+                    (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
+            checkGLcall("glFlushMappedBufferRangeAPPLE");
         }
     }
 
+    wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
+    checkGLcall("Flush buffer object");
+}
+
+void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
+        const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_gl *bo;
+
+    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
+        return;
+
+    flush_bo_ranges(context_gl, wined3d_const_bo_address(data), range_count, ranges);
+
+    gl_info = context_gl->gl_info;
+    wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
     GL_EXTCALL(glUnmapBuffer(bo->binding));
     wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
     checkGLcall("Unmap buffer object");
+}
+
+void wined3d_context_gl_flush_bo_address(struct wined3d_context_gl *context_gl,
+        const struct wined3d_const_bo_address *data, size_t size)
+{
+    struct wined3d_range range;
+
+    TRACE("context_gl %p, data %s, size %zu.\n", context_gl, debug_const_bo_address(data), size);
+
+    range.offset = (uintptr_t)data->addr;
+    range.size = size;
+
+    flush_bo_ranges(context_gl, data, 1, &range);
 }
 
 void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
