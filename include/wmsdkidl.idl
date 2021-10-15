@@ -1888,6 +1888,16 @@ interface IWMLicenseRestore : IUnknown
     HRESULT CancelLicenseRestore();
 }
 
+[
+    object,
+    local,
+    uuid(6816dad3-2b4b-4c8e-8149-874c3483a753),
+]
+interface IWMIStreamProps : IUnknown
+{
+    HRESULT GetProperty(const WCHAR *name, WMT_ATTR_DATATYPE *type, BYTE *value, DWORD *size);
+}
+
 cpp_quote("HRESULT WINAPI WMCheckURLExtension(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCheckURLScheme(LPCWSTR);")
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
