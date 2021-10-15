@@ -76,9 +76,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture1d_AddRef(ID3D11Texture1D *iface)
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(texture->device);
-        wined3d_mutex_lock();
         wined3d_texture_incref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -564,9 +562,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_AddRef(ID3D11Texture2D *iface)
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(texture->device);
-        wined3d_mutex_lock();
         wined3d_texture_incref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -1119,9 +1115,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_AddRef(ID3D11Texture3D *iface)
     if (refcount == 1)
     {
         ID3D11Device2_AddRef(texture->device);
-        wined3d_mutex_lock();
         wined3d_texture_incref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
