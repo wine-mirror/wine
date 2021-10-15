@@ -583,3 +583,108 @@ NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
 {
     return NtGdiFlush();
 }
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICloseAdapter( UINT *args )
+{
+    const D3DKMT_CLOSEADAPTER *desc = get_ptr( &args );
+
+    return NtGdiDdDDICloseAdapter( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hAdapter;
+        D3DKMT_CREATEDEVICEFLAGS Flags;
+        D3DKMT_HANDLE hDevice;
+        ULONG pCommandBuffer;
+        UINT CommandBufferSize;
+        ULONG pAllocationList;
+        UINT AllocationListSize;
+        ULONG pPatchLocationList;
+        UINT PatchLocationListSize;
+    } *desc32 = get_ptr( &args );
+
+    D3DKMT_CREATEDEVICE desc =
+    {
+        { desc32->hAdapter },
+        desc32->Flags
+    };
+    NTSTATUS status;
+
+    if (!(status = NtGdiDdDDICreateDevice( &desc )))
+    {
+        desc32->hDevice = desc.hDevice;
+        desc32->pCommandBuffer = PtrToUlong( desc.pCommandBuffer );
+        desc32->CommandBufferSize = desc.CommandBufferSize;
+        desc32->pAllocationList = PtrToUlong( desc.pAllocationList );
+        desc32->AllocationListSize = desc.AllocationListSize;
+        desc32->pPatchLocationList = PtrToUlong( desc.pPatchLocationList );
+        desc32->PatchLocationListSize = desc.PatchLocationListSize;
+    }
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromDeviceName( UINT *args )
+{
+    struct
+    {
+        ULONG pDeviceName;
+        D3DKMT_HANDLE hAdapter;
+        LUID AdapterLuid;
+    } *desc32 = get_ptr( &args );
+
+    D3DKMT_OPENADAPTERFROMDEVICENAME desc = { UlongToPtr( desc32->pDeviceName ) };
+    NTSTATUS status;
+
+    if (!(status = NtGdiDdDDIOpenAdapterFromDeviceName( &desc )))
+    {
+        desc32->hAdapter = desc.hAdapter;
+        desc32->AdapterLuid = desc.AdapterLuid;
+    }
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
+{
+    struct
+    {
+        ULONG hDc;
+        D3DKMT_HANDLE hAdapter;
+        LUID AdapterLuid;
+        D3DDDI_VIDEO_PRESENT_SOURCE_ID VidPnSourceId;
+    } *desc32 = get_ptr( &args );
+
+    D3DKMT_OPENADAPTERFROMHDC desc = { UlongToHandle( desc32->hDc ) };
+    NTSTATUS status;
+
+    if (!(status = NtGdiDdDDIOpenAdapterFromHdc( &desc )))
+    {
+        desc32->hAdapter = desc.hAdapter;
+        desc32->AdapterLuid = desc.AdapterLuid;
+        desc32->VidPnSourceId = desc.VidPnSourceId;
+    }
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromLuid( UINT *args )
+{
+    D3DKMT_OPENADAPTERFROMLUID *desc = get_ptr( &args );
+
+    return NtGdiDdDDIOpenAdapterFromLuid( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIQueryStatistics( UINT *args )
+{
+    D3DKMT_QUERYSTATISTICS *stats = get_ptr( &args );
+
+    return NtGdiDdDDIQueryStatistics( stats );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDISetQueuedLimit( UINT *args )
+{
+    D3DKMT_SETQUEUEDLIMIT *desc = get_ptr( &args );
+
+    return NtGdiDdDDISetQueuedLimit( desc );
+}

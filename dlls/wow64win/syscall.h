@@ -38,6 +38,13 @@
     SYSCALL_ENTRY( NtGdiCreateRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateRoundRectRgn ) \
     SYSCALL_ENTRY( NtGdiCreateSolidBrush ) \
+    SYSCALL_ENTRY( NtGdiDdDDICloseAdapter ) \
+    SYSCALL_ENTRY( NtGdiDdDDICreateDevice ) \
+    SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromDeviceName ) \
+    SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromHdc ) \
+    SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromLuid ) \
+    SYSCALL_ENTRY( NtGdiDdDDIQueryStatistics ) \
+    SYSCALL_ENTRY( NtGdiDdDDISetQueuedLimit ) \
     SYSCALL_ENTRY( NtGdiDeleteClientObj ) \
     SYSCALL_ENTRY( NtGdiDescribePixelFormat ) \
     SYSCALL_ENTRY( NtGdiDrawStream ) \

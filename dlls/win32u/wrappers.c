@@ -574,19 +574,9 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
     return unix_funcs->pNtGdiDdDDICheckVidPnExclusiveOwnership( desc );
 }
 
-NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
-{
-    return unix_funcs->pNtGdiDdDDICloseAdapter( desc );
-}
-
 NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 {
     return unix_funcs->pNtGdiDdDDICreateDCFromMemory( desc );
-}
-
-NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
-{
-    return unix_funcs->pNtGdiDdDDICreateDevice( desc );
 }
 
 NTSTATUS WINAPI NtGdiDdDDIDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *desc )
@@ -602,31 +592,6 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
 {
     return unix_funcs->pNtGdiDdDDIEscape( desc );
-}
-
-NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVICENAME *desc )
-{
-    return unix_funcs->pNtGdiDdDDIOpenAdapterFromDeviceName( desc );
-}
-
-NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc )
-{
-    return unix_funcs->pNtGdiDdDDIOpenAdapterFromHdc( desc );
-}
-
-NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
-{
-    return unix_funcs->pNtGdiDdDDIOpenAdapterFromLuid( desc );
-}
-
-NTSTATUS WINAPI NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats )
-{
-    return unix_funcs->pNtGdiDdDDIQueryStatistics( stats );
-}
-
-NTSTATUS WINAPI NtGdiDdDDISetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc )
-{
-    return unix_funcs->pNtGdiDdDDISetQueuedLimit( desc );
 }
 
 NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )

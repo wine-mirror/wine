@@ -187,14 +187,14 @@
 @ stub NtGdiDdDDICheckOcclusion
 @ stub NtGdiDdDDICheckSharedResourceAccess
 @ stdcall NtGdiDdDDICheckVidPnExclusiveOwnership(ptr)
-@ stdcall NtGdiDdDDICloseAdapter(ptr)
+@ stdcall -syscall NtGdiDdDDICloseAdapter(ptr)
 @ stub NtGdiDdDDIConfigureSharedResource
 @ stub NtGdiDdDDICreateAllocation
 @ stub NtGdiDdDDICreateBundleObject
 @ stub NtGdiDdDDICreateContext
 @ stub NtGdiDdDDICreateContextVirtual
 @ stdcall NtGdiDdDDICreateDCFromMemory(ptr)
-@ stdcall NtGdiDdDDICreateDevice(ptr)
+@ stdcall -syscall NtGdiDdDDICreateDevice(ptr)
 @ stub NtGdiDdDDICreateHwContext
 @ stub NtGdiDdDDICreateHwQueue
 @ stub NtGdiDdDDICreateKeyedMutex
@@ -268,9 +268,9 @@
 @ stub NtGdiDdDDINetDispStartMiracastDisplayDevice
 @ stub NtGdiDdDDINetDispStopMiracastDisplayDevice
 @ stub NtGdiDdDDIOfferAllocations
-@ stdcall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
-@ stdcall NtGdiDdDDIOpenAdapterFromHdc(ptr)
-@ stdcall NtGdiDdDDIOpenAdapterFromLuid(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenAdapterFromHdc(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenAdapterFromLuid(ptr)
 @ stub NtGdiDdDDIOpenBundleObjectNtHandleFromName
 @ stub NtGdiDdDDIOpenKeyedMutex
 @ stub NtGdiDdDDIOpenKeyedMutex2
@@ -305,7 +305,7 @@
 @ stub NtGdiDdDDIQueryRemoteVidPnSourceFromGdiDisplayName
 @ stub NtGdiDdDDIQueryResourceInfo
 @ stub NtGdiDdDDIQueryResourceInfoFromNtHandle
-@ stdcall NtGdiDdDDIQueryStatistics(ptr)
+@ stdcall -syscall NtGdiDdDDIQueryStatistics(ptr)
 @ stub NtGdiDdDDIQueryVidPnExclusiveOwnership
 @ stub NtGdiDdDDIQueryVideoMemoryInfo
 @ stub NtGdiDdDDIReclaimAllocations
@@ -330,7 +330,7 @@
 @ stub NtGdiDdDDISetProcessDeviceRemovalSupport
 @ stub NtGdiDdDDISetProcessSchedulingPriorityBand
 @ stub NtGdiDdDDISetProcessSchedulingPriorityClass
-@ stdcall NtGdiDdDDISetQueuedLimit(ptr)
+@ stdcall -syscall NtGdiDdDDISetQueuedLimit(ptr)
 @ stub NtGdiDdDDISetStablePowerState
 @ stub NtGdiDdDDISetStereoEnabled
 @ stub NtGdiDdDDISetSyncRefreshCountWaitTarget
