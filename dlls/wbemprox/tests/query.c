@@ -1424,6 +1424,7 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     check_property( obj, L"Version", VT_BSTR, CIM_STRING );
     check_property( obj, L"TotalVisibleMemorySize", VT_BSTR, CIM_UINT64 );
     check_property( obj, L"TotalVirtualMemorySize", VT_BSTR, CIM_UINT64 );
+    check_property( obj, L"Status", VT_BSTR, CIM_STRING );
     check_property( obj, L"SystemDrive", VT_BSTR, CIM_STRING );
 
     IWbemClassObject_Release( obj );

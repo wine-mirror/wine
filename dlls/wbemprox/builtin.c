@@ -251,6 +251,7 @@ static const struct column col_operatingsystem[] =
     { L"SerialNumber",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ServicePackMajorVersion", CIM_UINT16 },
     { L"ServicePackMinorVersion", CIM_UINT16 },
+    { L"Status",                  CIM_STRING },
     { L"SuiteMask",               CIM_UINT32 },
     { L"SystemDirectory",         CIM_STRING|COL_FLAG_DYNAMIC },
     { L"SystemDrive",             CIM_STRING|COL_FLAG_DYNAMIC },
@@ -667,6 +668,7 @@ struct record_operatingsystem
     const WCHAR *serialnumber;
     UINT16       servicepackmajor;
     UINT16       servicepackminor;
+    const WCHAR *status;
     UINT32       suitemask;
     const WCHAR *systemdirectory;
     const WCHAR *systemdrive;
@@ -3598,6 +3600,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->serialnumber           = get_osserialnumber();
     rec->servicepackmajor       = ver.wServicePackMajor;
     rec->servicepackminor       = ver.wServicePackMinor;
+    rec->status                 = L"OK";
     rec->suitemask              = 272;     /* Single User + Terminal */
     rec->systemdirectory        = get_systemdirectory();
     rec->systemdrive            = get_systemdrive();
