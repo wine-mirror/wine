@@ -1848,6 +1848,7 @@ static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD
 
 done:
     TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, request->content_read, request->content_length );
+    if (end_of_read_data( request )) finished_reading( request );
     if (async)
     {
         if (!ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, bytes_read );
@@ -1861,7 +1862,6 @@ done:
     }
 
     if (!ret && read) *read = bytes_read;
-    if (end_of_read_data( request )) finished_reading( request );
     return ret;
 }
 
