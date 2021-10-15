@@ -41,3 +41,25 @@ interface INSSBuffer : IUnknown
         [out] BYTE **ppdwBuffer,
         [out] DWORD *pdwLength);
 }
+
+[
+    object,
+    local,
+    uuid(4f528693-1035-43fe-b428-757561ad3a68),
+]
+interface INSSBuffer2 : INSSBuffer
+{
+    HRESULT GetSampleProperties(DWORD size, BYTE *props);
+    HRESULT SetSampleProperties(DWORD size, BYTE *props);
+}
+
+[
+    object,
+    local,
+    uuid(c87ceaaf-75be-4bc4-84eb-ac2798507672),
+]
+interface INSSBuffer3 : INSSBuffer2
+{
+    HRESULT SetProperty(GUID id, void *value, DWORD size);
+    HRESULT GetProperty(GUID id, void *value, DWORD *size);
+}
