@@ -983,7 +983,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
             wined3d_context_vk_reference_bo(context_vk, bo);
         }
 
-        if (!(bo->memory_type & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+        if (!bo->b.coherent)
         {
             range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
             range.pNext = NULL;
@@ -1024,7 +1024,7 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context->device);
 
-    if (!(bo->memory_type & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+    if (!bo->b.coherent)
     {
         range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         range.pNext = NULL;

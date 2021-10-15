@@ -2684,7 +2684,7 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo,
     if ((flags & WINED3D_MAP_DISCARD) && bo->command_fence_id > device_gl->completed_fence_id)
     {
         if (wined3d_context_gl_create_bo(context_gl, bo->size,
-                bo->binding, bo->usage, bo->coherent, bo->flags, &tmp))
+                bo->binding, bo->usage, bo->b.coherent, bo->flags, &tmp))
         {
             list_move_head(&tmp.b.users, &bo->b.users);
             wined3d_context_gl_destroy_bo(context_gl, bo);
@@ -2754,7 +2754,7 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
-    if (!bo->coherent)
+    if (!bo->b.coherent)
     {
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
@@ -2889,7 +2889,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     bo->binding = binding;
     bo->usage = usage;
     bo->flags = flags;
-    bo->coherent = coherent;
+    bo->b.coherent = coherent;
     list_init(&bo->b.users);
     bo->command_fence_id = 0;
     bo->b.memory_offset = 0;

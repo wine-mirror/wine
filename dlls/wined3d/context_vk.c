@@ -492,6 +492,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     bo->size = size;
     bo->usage = usage;
     bo->memory_type = adapter_vk->memory_properties.memoryTypes[memory_type_idx].propertyFlags;
+    bo->b.coherent = !!(bo->memory_type & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     list_init(&bo->b.users);
     bo->command_buffer_id = 0;
     bo->slab = NULL;

@@ -1592,6 +1592,7 @@ struct wined3d_bo
 {
     struct list users;
     size_t memory_offset;
+    bool coherent;
 };
 
 struct wined3d_bo_gl
@@ -1604,7 +1605,6 @@ struct wined3d_bo_gl
     GLenum usage;
 
     GLbitfield flags;
-    bool coherent;
     uint64_t command_fence_id;
 };
 
