@@ -92,10 +92,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture1d_Release(ID3D11Texture1D *iface)
     if (!refcount)
     {
         ID3D11Device2 *device = texture->device;
-
-        wined3d_mutex_lock();
         wined3d_texture_decref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -578,10 +575,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_Release(ID3D11Texture2D *iface)
     if (!refcount)
     {
         ID3D11Device2 *device = texture->device;
-
-        wined3d_mutex_lock();
         wined3d_texture_decref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
@@ -1140,9 +1134,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
     {
         ID3D11Device2 *device = texture->device;
 
-        wined3d_mutex_lock();
         wined3d_texture_decref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D11Device2_Release(device);
