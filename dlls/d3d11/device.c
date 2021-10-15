@@ -1015,9 +1015,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_Begin(ID3D11DeviceContext1 *i
 
     TRACE("iface %p, asynchronous %p.\n", iface, asynchronous);
 
-    wined3d_mutex_lock();
     wined3d_device_context_issue_query(context->wined3d_context, query->wined3d_query, WINED3DISSUE_BEGIN);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_End(ID3D11DeviceContext1 *iface,
@@ -1028,9 +1026,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_End(ID3D11DeviceContext1 *ifa
 
     TRACE("iface %p, asynchronous %p.\n", iface, asynchronous);
 
-    wined3d_mutex_lock();
     wined3d_device_context_issue_query(context->wined3d_context, query->wined3d_query, WINED3DISSUE_END);
-    wined3d_mutex_unlock();
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_context_GetData(ID3D11DeviceContext1 *iface,
