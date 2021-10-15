@@ -1253,10 +1253,8 @@ static void STDMETHODCALLTYPE d3d11_device_context_Dispatch(ID3D11DeviceContext1
     TRACE("iface %p, thread_group_count_x %u, thread_group_count_y %u, thread_group_count_z %u.\n",
             iface, thread_group_count_x, thread_group_count_y, thread_group_count_z);
 
-    wined3d_mutex_lock();
     wined3d_device_context_dispatch(context->wined3d_context,
             thread_group_count_x, thread_group_count_y, thread_group_count_z);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DispatchIndirect(ID3D11DeviceContext1 *iface,
@@ -1269,9 +1267,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_DispatchIndirect(ID3D11Device
 
     buffer_impl = unsafe_impl_from_ID3D11Buffer(buffer);
 
-    wined3d_mutex_lock();
     wined3d_device_context_dispatch_indirect(context->wined3d_context, buffer_impl->wined3d_buffer, offset);
-    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_RSSetState(ID3D11DeviceContext1 *iface,
