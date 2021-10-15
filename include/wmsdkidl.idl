@@ -1082,7 +1082,7 @@ interface IWMReaderAllocatorEx : IUnknown
         [in] void *pvContext);
 
     HRESULT AllocateForOutputEx(
-        [in] WORD wOutputNum,
+        [in] DWORD output,
         [in] DWORD cbBuffer,
         [out] INSSBuffer **ppBuffer,
         [in] DWORD dwFlags,
