@@ -139,6 +139,7 @@
 @ cdecl wined3d_device_context_set_stream_outputs(ptr ptr)
 @ cdecl wined3d_device_context_set_stream_sources(ptr long long ptr)
 @ cdecl wined3d_device_context_set_unordered_access_views(ptr long long long ptr ptr)
+@ cdecl wined3d_device_context_set_render_targets_and_unordered_access_views(ptr long ptr ptr long ptr ptr)
 @ cdecl wined3d_device_context_set_vertex_declaration(ptr ptr)
 @ cdecl wined3d_device_context_set_viewports(ptr long ptr)
 @ cdecl wined3d_device_context_unmap(ptr ptr long)

@@ -1140,7 +1140,11 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargetsAndUnordere
         ID3D11DepthStencilView *depth_stencil_view, UINT uav_start_idx, UINT uav_count,
         ID3D11UnorderedAccessView *const *uavs, const UINT *initial_counts)
 {
+    struct d3d_depthstencil_view *dsv = unsafe_impl_from_ID3D11DepthStencilView(depth_stencil_view);
+    struct wined3d_rendertarget_view *wined3d_rtvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT] = {0};
+    struct wined3d_unordered_access_view *wined3d_uavs[D3D11_PS_CS_UAV_REGISTER_COUNT] = {0};
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+    unsigned int wined3d_initial_counts[D3D11_PS_CS_UAV_REGISTER_COUNT];
     unsigned int i;
 
     TRACE("iface %p, render_target_view_count %u, render_target_views %p, depth_stencil_view %p, "
@@ -1148,18 +1152,29 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargetsAndUnordere
             iface, render_target_view_count, render_target_views, depth_stencil_view,
             uav_start_idx, uav_count, uavs, initial_counts);
 
-    if (render_target_view_count != D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL)
+    if (render_target_view_count == D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL)
+        render_target_view_count = ~0u;
+    else
     {
-        d3d11_device_context_OMSetRenderTargets(iface, render_target_view_count, render_target_views,
-                depth_stencil_view);
+        if (render_target_view_count > ARRAY_SIZE(wined3d_rtvs))
+        {
+            WARN("View count %u exceeds limit.\n", render_target_view_count);
+            render_target_view_count = ARRAY_SIZE(wined3d_rtvs);
+        }
+
+        for (i = 0; i < render_target_view_count; ++i)
+        {
+            struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D11RenderTargetView(render_target_views[i]);
+
+            wined3d_rtvs[i] = rtv ? rtv->wined3d_view : NULL;
+        }
     }
 
-    if (uav_count != D3D11_KEEP_UNORDERED_ACCESS_VIEWS)
+    if (uav_count == D3D11_KEEP_UNORDERED_ACCESS_VIEWS)
+        uav_count = ~0u;
+    else
     {
-        struct wined3d_unordered_access_view *wined3d_views[D3D11_PS_CS_UAV_REGISTER_COUNT] = {0};
-        unsigned int wined3d_initial_counts[D3D11_PS_CS_UAV_REGISTER_COUNT];
-
-        if (!wined3d_bound_range(uav_start_idx, uav_count, ARRAY_SIZE(wined3d_views)))
+        if (!wined3d_bound_range(uav_start_idx, uav_count, ARRAY_SIZE(wined3d_uavs)))
         {
             WARN("View count %u exceeds limit; ignoring call.\n", uav_count);
             return;
@@ -1172,15 +1187,14 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargetsAndUnordere
             struct d3d11_unordered_access_view *view =
                     unsafe_impl_from_ID3D11UnorderedAccessView(uavs[i]);
 
-            wined3d_views[uav_start_idx + i] = view ? view->wined3d_view : NULL;
+            wined3d_uavs[uav_start_idx + i] = view ? view->wined3d_view : NULL;
             wined3d_initial_counts[uav_start_idx + i] = initial_counts ? initial_counts[i] : ~0u;
         }
-
-        wined3d_mutex_lock();
-        wined3d_device_context_set_unordered_access_views(context->wined3d_context, WINED3D_PIPELINE_GRAPHICS,
-                0, ARRAY_SIZE(wined3d_views), wined3d_views, wined3d_initial_counts);
-        wined3d_mutex_unlock();
     }
+
+    wined3d_device_context_set_render_targets_and_unordered_access_views(context->wined3d_context, ARRAY_SIZE(wined3d_rtvs),
+            wined3d_rtvs, dsv ? dsv->wined3d_view : NULL, ARRAY_SIZE(wined3d_uavs), wined3d_uavs,
+            wined3d_initial_counts);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_OMSetBlendState(ID3D11DeviceContext1 *iface,

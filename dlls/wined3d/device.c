@@ -2110,6 +2110,37 @@ out:
     wined3d_mutex_unlock();
 }
 
+void CDECL wined3d_device_context_set_render_targets_and_unordered_access_views(struct wined3d_device_context *context,
+        unsigned int rtv_count, struct wined3d_rendertarget_view *const *render_target_views,
+        struct wined3d_rendertarget_view *depth_stencil_view, UINT uav_count,
+        struct wined3d_unordered_access_view *const *unordered_access_views, const unsigned int *initial_counts)
+{
+    wined3d_mutex_lock();
+    if (rtv_count != ~0u)
+    {
+        if (depth_stencil_view && !(depth_stencil_view->resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL))
+        {
+            WARN("View resource %p has incompatible %s bind flags.\n",
+                    depth_stencil_view->resource, wined3d_debug_bind_flags(depth_stencil_view->resource->bind_flags));
+            goto out;
+        }
+
+        if (FAILED(wined3d_device_context_set_rendertarget_views(context, 0, rtv_count,
+                render_target_views, FALSE)))
+            goto out;
+
+        wined3d_device_context_set_depth_stencil_view(context, depth_stencil_view);
+    }
+
+    if (uav_count != ~0u)
+    {
+        wined3d_device_context_set_unordered_access_views(context, WINED3D_PIPELINE_GRAPHICS, 0, uav_count,
+                unordered_access_views, initial_counts);
+    }
+out:
+    wined3d_mutex_unlock();
+}
+
 static void wined3d_device_context_unbind_srv_for_rtv(struct wined3d_device_context *context,
         const struct wined3d_rendertarget_view *view, BOOL dsv)
 {
