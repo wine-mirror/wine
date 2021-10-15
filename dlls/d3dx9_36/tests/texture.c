@@ -2353,17 +2353,20 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     };
     IDirect3DVolumeTexture9 *volume_texture;
     IDirect3DCubeTexture9 *cube_texture;
+    D3DXCONSTANTTABLE_DESC ctab_desc;
+    ID3DXBuffer *buffer, *buffer2;
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DTexture9 *texture;
     IDirect3DDevice9 *device;
     ID3DXTextureShader *tx;
     unsigned int x, y, z;
-    ID3DXBuffer *buffer;
     unsigned int *data;
     D3DLOCKED_RECT lr;
     D3DLOCKED_BOX lb;
     IDirect3D9 *d3d;
     D3DCAPS9 caps;
+    D3DXHANDLE h;
+    DWORD size;
     HRESULT hr;
     HWND wnd;
 
@@ -2386,14 +2389,41 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
 
     hr = tx->lpVtbl->GetFunction(tx, &buffer);
-    todo_wine ok(SUCCEEDED(hr), "Failed to get texture shader bytecode.\n");
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = tx->lpVtbl->GetFunction(tx, &buffer2);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(buffer2 == buffer, "Unexpected buffer object.\n");
+    ID3DXBuffer_Release(buffer2);
+
+    size = ID3DXBuffer_GetBufferSize(buffer);
+    ok(size == 224, "Unexpected buffer size %u.\n", size);
+
+    ID3DXBuffer_Release(buffer);
+
+    /* Constant buffer */
+    hr = tx->lpVtbl->GetConstantBuffer(tx, &buffer);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to get texture shader constant buffer.\n");
     if (FAILED(hr))
     {
         skip("Texture shaders not supported, skipping further tests.\n");
         IUnknown_Release(tx);
         return;
     }
+
+    size = ID3DXBuffer_GetBufferSize(buffer);
+    ok(!size, "Unexpected buffer size %u.\n", size);
+
     ID3DXBuffer_Release(buffer);
+
+    hr = tx->lpVtbl->GetDesc(tx, &ctab_desc);
+    ok(hr == S_OK, "Failed to get constant description, hr %#x.\n", hr);
+    ok(!ctab_desc.Constants, "Unexpected number of constants %u.\n", ctab_desc.Constants);
+
+    /* Constant table access calls, without constant table. */
+    h = tx->lpVtbl->GetConstant(tx, NULL, 0);
+    ok(!h, "Unexpected handle %p.\n", h);
 
     if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
             640, 480, NULL, NULL, NULL, NULL)))
