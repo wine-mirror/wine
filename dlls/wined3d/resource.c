@@ -388,12 +388,16 @@ GLbitfield wined3d_resource_gl_storage_flags(const struct wined3d_resource *reso
     return flags;
 }
 
-GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
+GLbitfield wined3d_resource_gl_map_flags(const struct wined3d_bo_gl *bo, DWORD d3d_flags)
 {
     GLbitfield ret = 0;
 
     if (d3d_flags & WINED3D_MAP_WRITE)
-        ret |= GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+    {
+        ret |= GL_MAP_WRITE_BIT;
+        if (!bo->coherent)
+            ret |= GL_MAP_FLUSH_EXPLICIT_BIT;
+    }
     if (d3d_flags & WINED3D_MAP_READ)
         ret |= GL_MAP_READ_BIT;
     else

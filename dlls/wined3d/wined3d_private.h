@@ -4217,7 +4217,7 @@ void wined3d_resource_free_sysmem(struct wined3d_resource *resource) DECLSPEC_HI
 const struct wined3d_format *wined3d_resource_get_decompress_format(
         const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 unsigned int wined3d_resource_get_sample_count(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags) DECLSPEC_HIDDEN;
+GLbitfield wined3d_resource_gl_map_flags(const struct wined3d_bo_gl *bo, DWORD d3d_flags) DECLSPEC_HIDDEN;
 GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags) DECLSPEC_HIDDEN;
 GLbitfield wined3d_resource_gl_storage_flags(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource) DECLSPEC_HIDDEN;

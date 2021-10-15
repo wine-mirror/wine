@@ -2712,7 +2712,7 @@ map:
 
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
-        map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, offset, size, wined3d_resource_gl_map_flags(flags)));
+        map_ptr = GL_EXTCALL(glMapBufferRange(bo->binding, offset, size, wined3d_resource_gl_map_flags(bo, flags)));
     }
     else
     {
@@ -2754,21 +2754,24 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
-    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    if (!bo->coherent)
     {
-        for (i = 0; i < range_count; ++i)
+        if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
-            GL_EXTCALL(glFlushMappedBufferRange(bo->binding,
-                    (UINT_PTR)data->addr + ranges[i].offset, ranges[i].size));
+            for (i = 0; i < range_count; ++i)
+            {
+                GL_EXTCALL(glFlushMappedBufferRange(bo->binding,
+                        (UINT_PTR)data->addr + ranges[i].offset, ranges[i].size));
+            }
         }
-    }
-    else if (!bo->coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
-    {
-        for (i = 0; i < range_count; ++i)
+        else if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
         {
-            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(bo->binding,
-                    (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
-            checkGLcall("glFlushMappedBufferRangeAPPLE");
+            for (i = 0; i < range_count; ++i)
+            {
+                GL_EXTCALL(glFlushMappedBufferRangeAPPLE(bo->binding,
+                        (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
+                checkGLcall("glFlushMappedBufferRangeAPPLE");
+            }
         }
     }
 
