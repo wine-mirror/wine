@@ -1,0 +1,8 @@
+MODULE    = robocopy.exe
+
+EXTRADLLFLAGS = -mconsole -municode
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = robocopy.rc
