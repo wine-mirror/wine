@@ -27,6 +27,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "win.h"
+#include "imm.h"
 #include "user_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -41,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
  */
 static HWND set_focus_window( HWND hwnd )
 {
-    HWND previous = 0;
+    HWND previous = 0, ime_default;
     BOOL ret;
 
     SERVER_START_REQ( set_focus_window )
@@ -57,11 +58,21 @@ static HWND set_focus_window( HWND hwnd )
     if (previous)
     {
         SendMessageW( previous, WM_KILLFOCUS, (WPARAM)hwnd, 0 );
+
+        ime_default = ImmGetDefaultIMEWnd( previous );
+        if (ime_default)
+            SendMessageW( ime_default, WM_IME_INTERNAL, IME_INTERNAL_DEACTIVATE, (LPARAM)previous );
+
         if (hwnd != GetFocus()) return previous;  /* changed by the message */
     }
     if (IsWindow(hwnd))
     {
         USER_Driver->pSetFocus(hwnd);
+
+        ime_default = ImmGetDefaultIMEWnd( hwnd );
+        if (ime_default)
+            SendMessageW( ime_default, WM_IME_INTERNAL, IME_INTERNAL_ACTIVATE, (LPARAM)hwnd );
+
         SendMessageW( hwnd, WM_SETFOCUS, (WPARAM)previous, 0 );
     }
     return previous;

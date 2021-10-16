@@ -720,12 +720,12 @@ static void test_ImmAssociateContextEx(void)
         ok(focus != NULL, "CreateWindow failed\n");
         SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
         SetFocus(focus);
-        todo_wine CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
         rc = pImmAssociateContextEx(hwnd, imc, 0);
         ok(rc, "ImmAssociateContextEx failed\n");
         SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         DestroyWindow(focus);
-        todo_wine CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         SetFocus(hwnd);
 
         rc = pImmAssociateContextEx(hwnd, NULL, IACE_DEFAULT);
@@ -2237,6 +2237,13 @@ static void test_com_initialization(void)
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     ok(hr == S_OK, "CoInitialize returned %x\n", hr);
     test_apttype(APTTYPE_MTA);
+    DestroyWindow(wnd);
+    test_apttype(-1);
+
+    wnd = CreateWindowA("static", "static", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, 0);
+    ok(wnd != NULL, "CreateWindow failed\n");
+    ShowWindow(wnd, SW_SHOW);
+    test_apttype(APTTYPE_MAINSTA);
     DestroyWindow(wnd);
     test_apttype(-1);
 }

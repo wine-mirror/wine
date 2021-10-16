@@ -28,11 +28,14 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "controls.h"
+#include "imm.h"
 #include "user_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
+
+BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
 #define IMM_INIT_MAGIC 0x19650412
 static HWND (WINAPI *imm_get_ui_window)(HKL);
@@ -570,12 +573,36 @@ static BOOL is_ime_ui_msg( UINT msg )
     }
 }
 
+static LRESULT ime_internal_msg( WPARAM wParam, LPARAM lParam)
+{
+    HWND hwnd = (HWND)lParam;
+    HIMC himc;
+
+    switch(wParam)
+    {
+    case IME_INTERNAL_ACTIVATE:
+    case IME_INTERNAL_DEACTIVATE:
+        himc = ImmGetContext(hwnd);
+        ImmSetActiveContext(hwnd, himc, wParam == IME_INTERNAL_ACTIVATE);
+        ImmReleaseContext(hwnd, himc);
+        break;
+    default:
+        FIXME("wParam = %lx\n", wParam);
+        break;
+    }
+
+    return 0;
+}
+
 LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     HWND uiwnd;
 
     if (msg==WM_CREATE)
         return TRUE;
+
+    if (msg==WM_IME_INTERNAL)
+        return ime_internal_msg(wParam, lParam);
 
     if (imm_get_ui_window && is_ime_ui_msg(msg))
     {
@@ -593,6 +620,9 @@ LRESULT WINAPI ImeWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     if (msg==WM_CREATE)
         return TRUE;
+
+    if (msg==WM_IME_INTERNAL)
+        return ime_internal_msg(wParam, lParam);
 
     if (imm_get_ui_window && is_ime_ui_msg(msg))
     {
