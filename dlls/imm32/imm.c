@@ -771,7 +771,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     else
         SetPropW(hWnd, szwWineIMCProperty, hIMC);
 
-    if (GetActiveWindow() == hWnd)
+    if (GetFocus() == hWnd)
     {
         ImmSetActiveContext(hWnd, old, FALSE);
         ImmSetActiveContext(hWnd, hIMC, TRUE);

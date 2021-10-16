@@ -207,7 +207,7 @@ static void msg_spy_cleanup(void) {
 static const char wndcls[] = "winetest_imm32_wndcls";
 static enum { PHASE_UNKNOWN, FIRST_WINDOW, SECOND_WINDOW,
               CREATE_CANCEL, NCCREATE_CANCEL, IME_DISABLED } test_phase;
-static HWND hwnd;
+static HWND hwnd, child;
 
 static HWND get_ime_window(void);
 
@@ -324,6 +324,10 @@ static BOOL init(void) {
                            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
     if (!hwnd)
+        return FALSE;
+
+    child = CreateWindowA("edit", "edit", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hwnd, 0, 0, 0);
+    if (!child)
         return FALSE;
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
@@ -726,9 +730,21 @@ static void test_ImmAssociateContextEx(void)
         SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         DestroyWindow(focus);
         CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
-        SetFocus(hwnd);
 
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SetFocus(child);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        rc = pImmAssociateContextEx(hwnd, newimc, 0);
+        ok(rc, "ImmAssociateContextEx failed\n");
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
+        SetFocus(hwnd);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
+
+        SET_EXPECT(WM_IME_SETCONTEXT_DEACTIVATE);
+        SET_EXPECT(WM_IME_SETCONTEXT_ACTIVATE);
         rc = pImmAssociateContextEx(hwnd, NULL, IACE_DEFAULT);
+        CHECK_CALLED(WM_IME_SETCONTEXT_DEACTIVATE);
+        CHECK_CALLED(WM_IME_SETCONTEXT_ACTIVATE);
         ok(rc, "ImmAssociateContextEx failed\n");
 
         SET_ENABLE(WM_IME_SETCONTEXT_ACTIVATE, FALSE);
