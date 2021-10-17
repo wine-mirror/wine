@@ -7432,5 +7432,7 @@ bool wined3d_allocator_init(struct wined3d_allocator *allocator,
         list_init(&allocator->pools[i].chunks);
     }
 
+    allocator->free = NULL;
+
     return true;
 }
