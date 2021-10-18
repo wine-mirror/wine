@@ -3363,6 +3363,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         CloseHandle(handle);
         return INVALID_SOCKET;
     }
+    WSASetLastError(0);
     return ret;
 
 done:
