@@ -136,6 +136,7 @@ typedef struct _wine_modref
     int                   alloc_deps;
     int                   nDeps;
     struct _wine_modref **deps;
+    ULONG                 CheckSum;
 } WINE_MODREF;
 
 static UINT tls_module_count;      /* number of modules with TLS directory */
@@ -220,16 +221,17 @@ static RTL_UNLOAD_EVENT_TRACE unload_traces[RTL_UNLOAD_EVENT_TRACE_NUMBER];
 static RTL_UNLOAD_EVENT_TRACE *unload_trace_ptr;
 static unsigned int unload_trace_seq;
 
-static void module_push_unload_trace( const LDR_DATA_TABLE_ENTRY *ldr )
+static void module_push_unload_trace( const WINE_MODREF *wm )
 {
     RTL_UNLOAD_EVENT_TRACE *ptr = &unload_traces[unload_trace_seq];
+    const LDR_DATA_TABLE_ENTRY *ldr = &wm->ldr;
     unsigned int len = min(sizeof(ptr->ImageName) - sizeof(WCHAR), ldr->BaseDllName.Length);
 
     ptr->BaseAddress = ldr->DllBase;
     ptr->SizeOfImage = ldr->SizeOfImage;
     ptr->Sequence = unload_trace_seq;
     ptr->TimeDateStamp = ldr->TimeDateStamp;
-    ptr->CheckSum = ldr->CheckSum;
+    ptr->CheckSum = wm->CheckSum;
     memcpy(ptr->ImageName, ldr->BaseDllName.Buffer, len);
     ptr->ImageName[len / sizeof(*ptr->ImageName)] = 0;
 
@@ -1222,7 +1224,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS | (builtin ? LDR_WINE_INTERNAL : 0);
     wm->ldr.TlsIndex      = -1;
     wm->ldr.LoadCount     = 1;
-    wm->ldr.CheckSum      = nt->OptionalHeader.CheckSum;
+    wm->CheckSum          = nt->OptionalHeader.CheckSum;
     wm->ldr.TimeDateStamp = nt->FileHeader.TimeDateStamp;
 
     if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, nt_name->Length - 3 * sizeof(WCHAR) )))
@@ -2350,7 +2352,8 @@ static WINE_MODREF *find_existing_module( HMODULE module )
     {
         mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks );
         if (mod->TimeDateStamp != nt->FileHeader.TimeDateStamp) continue;
-        if (mod->CheckSum != nt->OptionalHeader.CheckSum) continue;
+        wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
+        if (wm->CheckSum != nt->OptionalHeader.CheckSum) continue;
         if (NtAreMappedFilesTheSame( mod->DllBase, module ) != STATUS_SUCCESS) continue;
         return CONTAINING_RECORD( mod, WINE_MODREF, ldr );
     }
@@ -3592,7 +3595,7 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
 
         wm->ldr.Flags &= ~LDR_UNLOAD_IN_PROGRESS;
 
-        module_push_unload_trace( &wm->ldr );
+        module_push_unload_trace( wm );
     }
 }
 
