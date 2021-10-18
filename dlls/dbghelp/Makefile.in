@@ -1,5 +1,7 @@
 MODULE    = dbghelp.dll
 IMPORTLIB = dbghelp
+IMPORTS   = $(ZLIB_PE_LIBS)
+EXTRAINCL = $(ZLIB_PE_CFLAGS)
 EXTRADEFS = -D_IMAGEHLP_SOURCE_
 DELAYIMPORTS = version
 
@@ -13,7 +15,6 @@ C_SRCS = \
 	dwarf.c \
 	elf_module.c \
 	image.c \
-	inflate.c \
 	macho_module.c \
 	minidump.c \
 	module.c \

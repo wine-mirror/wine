@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <zlib.h>
 
 #include "windef.h"
 #include "winternl.h"
@@ -38,7 +39,6 @@
 
 #include "dbghelp_private.h"
 #include "image_private.h"
-#include "zlib.h"
 
 #include "wine/debug.h"
 
