@@ -705,6 +705,8 @@ X_PRE_LIBS
 X_CFLAGS
 XMKMF
 PTHREAD_LIBS
+ZLIB_PE_LIBS
+ZLIB_PE_CFLAGS
 EXCESS_PRECISION_CFLAGS
 CROSSDEBUG
 DELAYLOADFLAG
@@ -1788,6 +1790,7 @@ enable_uuid
 enable_wbemuuid
 enable_wine
 enable_wmcodecdspuuid
+enable_zlib
 enable_loader
 enable_nls
 enable_po
@@ -1917,6 +1920,8 @@ CPP
 OBJC
 OBJCFLAGS
 OBJCPP
+ZLIB_PE_CFLAGS
+ZLIB_PE_LIBS
 XMKMF
 XML2_CFLAGS
 XML2_LIBS
@@ -2701,6 +2706,10 @@ Some influential environment variables:
   OBJC        Objective C compiler command
   OBJCFLAGS   Objective C compiler flags
   OBJCPP      Objective C preprocessor
+  ZLIB_PE_CFLAGS
+              C compiler flags for the PE zlib, overriding the bundled version
+  ZLIB_PE_LIBS
+              Linker flags for the PE zlib, overriding the bundled version
   XMKMF       Path to xmkmf, Makefile generator for X Window System
   XML2_CFLAGS C compiler flags for libxml-2.0, overriding pkg-config
   XML2_LIBS   Linker flags for libxml-2.0, overriding pkg-config
@@ -10697,6 +10706,21 @@ This is an error since --with-mingw was requested." "$LINENO" 5 ;;
 esac
 
 fi
+
+
+if ${ZLIB_PE_CFLAGS:+false} :; then :
+  ZLIB_PE_CFLAGS="-I\$(top_srcdir)/libs/zlib -DFAR= -DZ_SOLO"
+else
+  enable_zlib=no
+fi
+if ${ZLIB_PE_LIBS:+false} :; then :
+  ZLIB_PE_LIBS=z
+else
+  enable_zlib=no
+fi
+$as_echo "$as_me:${as_lineno-$LINENO}: zlib cflags: $ZLIB_PE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: zlib libs: $ZLIB_PE_LIBS" >&5
+
 
 
 if test "$ac_cv_header_pthread_h" = "yes"
@@ -19629,6 +19653,8 @@ QUICKTIME_LIBS = $QUICKTIME_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
 EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
+ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
+ZLIB_PE_LIBS = $ZLIB_PE_LIBS
 PTHREAD_LIBS = $PTHREAD_LIBS
 X_CFLAGS = $X_CFLAGS
 X_PRE_LIBS = $X_PRE_LIBS
@@ -20927,6 +20953,7 @@ wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile libs/wmcodecdspuuid enable_wmcodecdspuuid
+wine_fn_config_makefile libs/zlib enable_zlib
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
 wine_fn_config_makefile po enable_po
