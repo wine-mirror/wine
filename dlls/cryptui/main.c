@@ -717,7 +717,7 @@ static void save_cert_mgr_usages(HWND hwnd)
     HeapFree(GetProcessHeap(), 0, str);
 }
 
-static LRESULT CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
+static INT_PTR CALLBACK cert_mgr_advanced_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
     switch (msg)
@@ -1110,7 +1110,7 @@ static int CALLBACK cert_mgr_sort_by_friendly_name(LPARAM lp1, LPARAM lp2,
     return cert_mgr_sort_by_text((HWND)lp, 3, lp1, lp2);
 }
 
-static LRESULT CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     struct CertMgrData *data;
@@ -1517,11 +1517,11 @@ struct SelectStoreInfo
     HCERTSTORE                  store;
 };
 
-static LRESULT CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK select_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     struct SelectStoreInfo *selectInfo;
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
 
     switch (msg)
     {
@@ -2442,10 +2442,10 @@ static void set_general_info(HWND hwnd,
     set_cert_validity_period(hwnd, pCertViewInfo->pCertContext);
 }
 
-static LRESULT CALLBACK user_notice_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK user_notice_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     HWND text;
     struct IssuerStatement *issuerStatement;
 
@@ -2491,7 +2491,7 @@ static void show_user_notice(HWND hwnd, struct IssuerStatement *issuerStatement)
      user_notice_dlg_proc, (LPARAM)issuerStatement);
 }
 
-static LRESULT CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     PROPSHEETPAGEW *page;
@@ -3208,10 +3208,10 @@ static BOOL is_oid_in_list(HWND hwnd, LPCSTR oid)
 
 #define MAX_PURPOSE 255
 
-static LRESULT CALLBACK add_purpose_dlg_proc(HWND hwnd, UINT msg,
+static INT_PTR CALLBACK add_purpose_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     char buf[MAX_PURPOSE + 1];
 
     switch (msg)
@@ -3581,7 +3581,7 @@ static void apply_general_changes(HWND hwnd)
         *data->pfPropertiesChanged = TRUE;
 }
 
-static LRESULT CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
+static INT_PTR CALLBACK cert_properties_general_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
     PROPSHEETPAGEW *page;
@@ -3775,7 +3775,7 @@ static void refresh_details_view(HWND hwnd)
     set_fields_selection(hwnd, data, curSel);
 }
 
-static LRESULT CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK detail_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     PROPSHEETPAGEW *page;
@@ -4130,12 +4130,12 @@ static void show_dialog_for_selected_cert(HWND hwnd)
     }
 }
 
-static LRESULT CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK hierarchy_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
     PROPSHEETPAGEW *page;
     struct hierarchy_data *data;
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     HWND tree = GetDlgItem(hwnd, IDC_CERTPATH);
 
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
@@ -4846,10 +4846,10 @@ struct ImportWizData
     BOOL success;
 };
 
-static LRESULT CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
 
     switch (msg)
     {
@@ -5027,10 +5027,10 @@ static BOOL import_validate_filename(HWND hwnd, struct ImportWizData *data,
     return ret;
 }
 
-static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ImportWizData *data;
 
     switch (msg)
@@ -5125,10 +5125,10 @@ static LRESULT CALLBACK import_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
-static LRESULT CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ImportWizData *data;
 
     switch (msg)
@@ -5342,10 +5342,10 @@ static BOOL do_import(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
     return ret;
 }
 
-static LRESULT CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK import_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ImportWizData *data;
 
     switch (msg)
@@ -5577,10 +5577,10 @@ struct ExportWizData
     BOOL success;
 };
 
-static LRESULT CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK export_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
 
     switch (msg)
     {
@@ -5677,10 +5677,10 @@ static BOOL export_is_key_exportable(HCRYPTPROV hProv, DWORD keySpec)
     return ret;
 }
 
-static LRESULT CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
+static INT_PTR CALLBACK export_private_key_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ExportWizData *data;
 
     switch (msg)
@@ -5807,10 +5807,10 @@ static void export_format_enable_controls(HWND hwnd, const struct ExportWizData 
     }
 }
 
-static LRESULT CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK export_format_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ExportWizData *data;
 
     switch (msg)
@@ -5930,10 +5930,10 @@ static void export_password_mismatch(HWND hwnd, const struct ExportWizData *data
     SetFocus(GetDlgItem(hwnd, IDC_EXPORT_PASSWORD));
 }
 
-static LRESULT CALLBACK export_password_dlg_proc(HWND hwnd, UINT msg,
+static INT_PTR CALLBACK export_password_dlg_proc(HWND hwnd, UINT msg,
  WPARAM wp, LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ExportWizData *data;
 
     switch (msg)
@@ -6219,10 +6219,10 @@ static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
     return filter;
 }
 
-static LRESULT CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK export_file_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ExportWizData *data;
 
     switch (msg)
@@ -6723,10 +6723,10 @@ static BOOL do_export(HANDLE file, PCCRYPTUI_WIZ_EXPORT_INFO pExportInfo,
     return ret;
 }
 
-static LRESULT CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
+static INT_PTR CALLBACK export_finish_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
  LPARAM lp)
 {
-    LRESULT ret = 0;
+    INT_PTR ret = 0;
     struct ExportWizData *data;
 
     switch (msg)
@@ -7260,7 +7260,7 @@ struct SelectCertParam
     PCCERT_CONTEXT cert;
 };
 
-static LRESULT CALLBACK select_cert_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK select_cert_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     struct SelectCertData *data;
 
