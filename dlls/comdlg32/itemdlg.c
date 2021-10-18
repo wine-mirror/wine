@@ -2223,7 +2223,7 @@ static LRESULT on_wm_command(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
     return FALSE;
 }
 
-static LRESULT CALLBACK itemdlg_dlgproc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK itemdlg_dlgproc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
     FileDialogImpl *This = (FileDialogImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 
