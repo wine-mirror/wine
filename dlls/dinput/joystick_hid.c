@@ -150,8 +150,6 @@ struct pid_set_ramp_force
     struct hid_value_caps *end_caps;
 };
 
-#define DEVICE_STATE_MAX_SIZE 1024
-
 struct hid_joystick
 {
     IDirectInputDeviceImpl base;
@@ -171,9 +169,6 @@ struct hid_joystick
     char *output_report_buf;
     USAGE_AND_PAGE *usages_buf;
     ULONG usages_count;
-
-    BYTE device_state_report_id;
-    BYTE device_state[DEVICE_STATE_MAX_SIZE];
 
     BYTE effect_inuse[255];
     struct list effect_list;
@@ -856,13 +851,13 @@ static BOOL set_property_prop_range( struct hid_joystick *impl, struct hid_value
     {
         if (!caps->physical_min) tmp = caps->physical_max / 2;
         else tmp = round( (caps->physical_min + caps->physical_max) / 2.0 );
-        *(LONG *)(impl->device_state + instance->dwOfs) = tmp;
+        *(LONG *)(impl->base.device_state + instance->dwOfs) = tmp;
     }
     else if (instance->dwType & DIDFT_POV)
     {
         tmp = caps->logical_max - caps->logical_min;
         if (tmp > 0) caps->physical_max -= value->lMax / (tmp + 1);
-        *(LONG *)(impl->device_state + instance->dwOfs) = -1;
+        *(LONG *)(impl->base.device_state + instance->dwOfs) = -1;
     }
     return DIENUM_CONTINUE;
 }
@@ -1009,7 +1004,7 @@ static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, 
 
     EnterCriticalSection( &impl->base.crit );
     if (!impl->base.acquired) hr = DIERR_NOTACQUIRED;
-    else fill_DataFormat( ptr, len, impl->device_state, &impl->base.data_format );
+    else fill_DataFormat( ptr, len, impl->base.device_state, &impl->base.data_format );
     LeaveCriticalSection( &impl->base.crit );
 
     return hr;
@@ -1445,11 +1440,11 @@ static BOOL check_device_state_button( struct hid_joystick *impl, struct hid_val
     struct parse_device_state_params *params = data;
     BYTE old_value, value;
 
-    if (instance->wReportId != impl->device_state_report_id) return DIENUM_CONTINUE;
+    if (instance->wReportId != impl->base.device_state_report_id) return DIENUM_CONTINUE;
 
     value = params->buttons[instance->wUsage - 1];
     old_value = params->old_state[instance->dwOfs];
-    impl->device_state[instance->dwOfs] = value;
+    impl->base.device_state[instance->dwOfs] = value;
     if (old_value != value)
         queue_event( iface, instance->dwType, value, params->time, params->seq );
 
@@ -1518,7 +1513,7 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_value
     LONG old_value, value;
     NTSTATUS status;
 
-    if (instance->wReportId != impl->device_state_report_id) return DIENUM_CONTINUE;
+    if (instance->wReportId != impl->base.device_state_report_id) return DIENUM_CONTINUE;
 
     extra = impl->input_extra_caps + (caps - HID_INPUT_VALUE_CAPS( preparsed ));
     status = HidP_GetUsageValue( HidP_Input, instance->wUsagePage, 0, instance->wUsage,
@@ -1529,7 +1524,7 @@ static BOOL read_device_state_value( struct hid_joystick *impl, struct hid_value
     else value = scale_value( logical_value, caps, caps->physical_min, caps->physical_max );
 
     old_value = *(LONG *)(params->old_state + instance->dwOfs);
-    *(LONG *)(impl->device_state + instance->dwOfs) = value;
+    *(LONG *)(impl->base.device_state + instance->dwOfs) = value;
     if (old_value != value)
         queue_event( iface, instance->dwType, value, params->time, params->seq );
 
@@ -1579,12 +1574,12 @@ static HRESULT hid_joystick_internal_read( IDirectInputDevice8W *iface )
                                    impl->preparsed, report_buf, report_len );
         if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_GetUsagesEx returned %#x\n", status );
 
-        if (report_buf[0] == impl->device_state_report_id)
+        if (report_buf[0] == impl->base.device_state_report_id)
         {
             params.time = GetCurrentTime();
             params.seq = impl->base.dinput->evsequence++;
-            memcpy( params.old_state, impl->device_state, format->dwDataSize );
-            memset( impl->device_state, 0, format->dwDataSize );
+            memcpy( params.old_state, impl->base.device_state, format->dwDataSize );
+            memset( impl->base.device_state, 0, format->dwDataSize );
 
             while (count--)
             {
@@ -1599,7 +1594,7 @@ static HRESULT hid_joystick_internal_read( IDirectInputDevice8W *iface )
 
             enum_objects( impl, &filter, DIDFT_AXIS | DIDFT_POV, read_device_state_value, &params );
             enum_objects( impl, &filter, DIDFT_BUTTON, check_device_state_button, &params );
-            if (impl->base.hEvent && memcmp( &params.old_state, impl->device_state, format->dwDataSize ))
+            if (impl->base.hEvent && memcmp( &params.old_state, impl->base.device_state, format->dwDataSize ))
                 SetEvent( impl->base.hEvent );
         }
 
@@ -1884,47 +1879,6 @@ static HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTAN
     return DI_OK;
 }
 
-static BOOL init_objects( struct hid_joystick *impl, struct hid_value_caps *caps,
-                          DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    DIDATAFORMAT *format = impl->base.data_format.wine_df;
-
-    format->dwNumObjs++;
-    format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
-    if (instance->dwType & DIDFT_BUTTON) impl->base.caps.dwButtons++;
-    if (instance->dwType & DIDFT_AXIS) impl->base.caps.dwAxes++;
-    if (instance->dwType & DIDFT_POV) impl->base.caps.dwPOVs++;
-
-    if (instance->dwType & (DIDFT_BUTTON|DIDFT_AXIS|DIDFT_POV) &&
-        (instance->wUsagePage == HID_USAGE_PAGE_GENERIC ||
-         instance->wUsagePage == HID_USAGE_PAGE_BUTTON))
-    {
-        if (!impl->device_state_report_id)
-            impl->device_state_report_id = instance->wReportId;
-        else if (impl->device_state_report_id != instance->wReportId)
-            FIXME( "multiple device state reports found!\n" );
-    }
-
-    return DIENUM_CONTINUE;
-}
-
-static BOOL init_data_format( struct hid_joystick *impl, struct hid_value_caps *caps,
-                              DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    DIDATAFORMAT *format = impl->base.data_format.wine_df;
-    DIOBJECTDATAFORMAT *obj_format;
-    DWORD *index = data;
-
-    obj_format = format->rgodf + *index;
-    obj_format->pguid = object_usage_to_guid( instance->wUsagePage, instance->wUsage );
-    obj_format->dwOfs = instance->dwOfs;
-    obj_format->dwType = instance->dwType;
-    obj_format->dwFlags = instance->dwFlags;
-    (*index)++;
-
-    return DIENUM_CONTINUE;
-}
-
 static BOOL init_pid_reports( struct hid_joystick *impl, struct hid_value_caps *caps,
                               DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
@@ -2203,11 +2157,10 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     struct hid_preparsed_data *preparsed;
     struct hid_joystick *impl = NULL;
     struct extra_caps *extra;
-    DIDATAFORMAT *format = NULL;
     USAGE_AND_PAGE *usages;
-    DWORD size, index;
     char *buffer;
     HRESULT hr;
+    DWORD size;
 
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
 
@@ -2255,7 +2208,6 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
     if (!(usages = malloc( size ))) goto failed;
     impl->usages_buf = usages;
 
-    enum_objects( impl, &filter, DIDFT_ALL, init_objects, NULL );
     enum_objects( impl, &filter, DIDFT_COLLECTION, init_pid_reports, NULL );
     enum_objects( impl, &filter, DIDFT_NODATA, init_pid_caps, NULL );
 
@@ -2296,23 +2248,8 @@ static HRESULT hid_joystick_create_device( IDirectInputImpl *dinput, const GUID 
         impl->base.caps.dwFFDriverVersion = 1;
     }
 
-    format = impl->base.data_format.wine_df;
-    if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
-    {
-        FIXME( "unable to create device, state is too large\n" );
+    if (FAILED(hr = direct_input_device_init( &impl->base.IDirectInputDevice8W_iface )))
         goto failed;
-    }
-
-    size = format->dwNumObjs * sizeof(*format->rgodf);
-    if (!(format->rgodf = calloc( 1, size ))) goto failed;
-    format->dwSize = sizeof(*format);
-    format->dwObjSize = sizeof(*format->rgodf);
-    format->dwFlags = DIDF_ABSAXIS;
-
-    index = 0;
-    enum_objects( impl, &filter, DIDFT_ALL, init_data_format, &index );
-
-    _dump_DIDATAFORMAT( impl->base.data_format.wine_df );
 
     range.lMax = 65535;
     enum_objects( impl, &range.diph, DIDFT_AXIS, set_property_prop_range, &range );

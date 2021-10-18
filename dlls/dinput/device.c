@@ -35,6 +35,7 @@
 #include "winerror.h"
 #include "dinput.h"
 #include "dinputd.h"
+#include "hidusage.h"
 
 #include "initguid.h"
 #include "device_private.h"
@@ -1819,5 +1820,77 @@ HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *
     This->vtbl = internal_vtbl;
 
     *out = This;
+    return DI_OK;
+}
+
+static const GUID *object_instance_guid( const DIDEVICEOBJECTINSTANCEW *instance )
+{
+    if (IsEqualGUID( &instance->guidType, &GUID_XAxis )) return &GUID_XAxis;
+    if (IsEqualGUID( &instance->guidType, &GUID_YAxis )) return &GUID_YAxis;
+    if (IsEqualGUID( &instance->guidType, &GUID_ZAxis )) return &GUID_ZAxis;
+    if (IsEqualGUID( &instance->guidType, &GUID_RxAxis )) return &GUID_RxAxis;
+    if (IsEqualGUID( &instance->guidType, &GUID_RyAxis )) return &GUID_RyAxis;
+    if (IsEqualGUID( &instance->guidType, &GUID_RzAxis )) return &GUID_RzAxis;
+    if (IsEqualGUID( &instance->guidType, &GUID_Slider )) return &GUID_Slider;
+    if (IsEqualGUID( &instance->guidType, &GUID_Button )) return &GUID_Button;
+    if (IsEqualGUID( &instance->guidType, &GUID_Key )) return &GUID_Key;
+    if (IsEqualGUID( &instance->guidType, &GUID_POV )) return &GUID_POV;
+    return &GUID_Unknown;
+}
+
+static BOOL CALLBACK enum_objects_init( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( data );
+    DIDATAFORMAT *format = impl->data_format.wine_df;
+    DIOBJECTDATAFORMAT *obj_format;
+
+    if (!format->rgodf)
+    {
+        format->dwDataSize = max( format->dwDataSize, instance->dwOfs + sizeof(LONG) );
+        if (instance->dwType & DIDFT_BUTTON) impl->caps.dwButtons++;
+        if (instance->dwType & DIDFT_AXIS) impl->caps.dwAxes++;
+        if (instance->dwType & DIDFT_POV) impl->caps.dwPOVs++;
+        if (instance->dwType & (DIDFT_BUTTON|DIDFT_AXIS|DIDFT_POV))
+        {
+            if (!impl->device_state_report_id)
+                impl->device_state_report_id = instance->wReportId;
+            else if (impl->device_state_report_id != instance->wReportId)
+                FIXME( "multiple device state reports found!\n" );
+        }
+    }
+    else
+    {
+        obj_format = format->rgodf + format->dwNumObjs;
+        obj_format->pguid = object_instance_guid( instance );
+        obj_format->dwOfs = instance->dwOfs;
+        obj_format->dwType = instance->dwType;
+        obj_format->dwFlags = instance->dwFlags;
+    }
+
+    format->dwNumObjs++;
+    return DIENUM_CONTINUE;
+}
+
+HRESULT direct_input_device_init( IDirectInputDevice8W *iface )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DIDATAFORMAT *format = impl->data_format.wine_df;
+    ULONG size;
+
+    IDirectInputDevice8_EnumObjects( iface, enum_objects_init, iface, DIDFT_ALL );
+    if (format->dwDataSize > DEVICE_STATE_MAX_SIZE)
+    {
+        FIXME( "unable to create device, state is too large\n" );
+        return DIERR_OUTOFMEMORY;
+    }
+
+    size = format->dwNumObjs * sizeof(*format->rgodf);
+    if (!(format->rgodf = calloc( 1, size ))) return DIERR_OUTOFMEMORY;
+    format->dwSize = sizeof(*format);
+    format->dwObjSize = sizeof(*format->rgodf);
+    format->dwFlags = DIDF_ABSAXIS;
+    format->dwNumObjs = 0;
+    IDirectInputDevice8_EnumObjects( iface, enum_objects_init, iface, DIDFT_ALL );
+
     return DI_OK;
 }
