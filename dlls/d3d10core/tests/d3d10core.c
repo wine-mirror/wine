@@ -15504,8 +15504,8 @@ static void test_stream_output(void)
 
 static void test_stream_output_resume(void)
 {
+    ID3D10Buffer *cb, *so_buffer, *so_buffer2, *buffer;
     struct d3d10core_test_context test_context;
-    ID3D10Buffer *cb, *so_buffer, *buffer;
     unsigned int i, j, idx, offset;
     struct resource_readback rb;
     ID3D10GeometryShader *gs;
@@ -15582,16 +15582,22 @@ static void test_stream_output_resume(void)
 
     cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(constants[0]), &constants[0]);
     so_buffer = create_buffer(device, D3D10_BIND_STREAM_OUTPUT, 1024, NULL);
+    so_buffer2 = create_buffer(device, D3D10_BIND_STREAM_OUTPUT, 1024, NULL);
 
     ID3D10Device_GSSetShader(device, gs);
     ID3D10Device_GSSetConstantBuffers(device, 0, 1, &cb);
 
-    offset = 0;
-    ID3D10Device_SOSetTargets(device, 1, &so_buffer, &offset);
-
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
     check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
+    /* Draw into a SO buffer and then immediately destroy it, to make sure that
+     * wined3d doesn't try to rebind transform feedback buffers while transform
+     * feedback is active. */
+    offset = 0;
+    ID3D10Device_SOSetTargets(device, 1, &so_buffer2, &offset);
+    draw_color_quad(&test_context, &red);
+    ID3D10Device_SOSetTargets(device, 1, &so_buffer, &offset);
+    ID3D10Buffer_Release(so_buffer2);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
 
