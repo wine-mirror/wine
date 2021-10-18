@@ -24,6 +24,7 @@ _ACRTIMP int __cdecl __iscsymf(int);
 _ACRTIMP int __cdecl __toascii(int);
 _ACRTIMP int __cdecl _isblank_l(int,_locale_t);
 _ACRTIMP int __cdecl _isctype(int,int);
+_ACRTIMP int __cdecl _isctype_l(int,int,_locale_t);
 _ACRTIMP int __cdecl _tolower(int);
 _ACRTIMP int __cdecl _tolower_l(int,_locale_t);
 _ACRTIMP int __cdecl _toupper(int);
