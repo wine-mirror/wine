@@ -3323,8 +3323,7 @@ typedef struct _LDR_DATA_TABLE_ENTRY
     ULONG               Flags;
     SHORT               LoadCount;
     SHORT               TlsIndex;
-    HANDLE              SectionHandle;
-    ULONG               CheckSum;
+    LIST_ENTRY          HashLinks;
     ULONG               TimeDateStamp;
     HANDLE              ActivationContext;
     void*               Lock;
