@@ -397,7 +397,10 @@ int CDECL isxdigit(int c)
  */
 int CDECL _isblank_l(int c, _locale_t locale)
 {
-  return c == '\t' || _isctype_l( c, _BLANK, locale );
+#if _MSVCR_VER < 140
+    if (c == '\t') return _BLANK;
+#endif
+    return _isctype_l( c, _BLANK, locale );
 }
 
 /*********************************************************************

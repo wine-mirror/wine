@@ -538,16 +538,19 @@ static void test_lldiv(void)
 
 static void test_isblank(void)
 {
-    int c;
+    int c, r;
 
     for(c = 0; c <= 0xff; c++) {
-        if(c == '\t' || c == ' ') {
-            if(c == '\t')
-                ok(!_isctype(c, _BLANK), "tab shouldn't be blank\n");
-            else
-                ok(_isctype(c, _BLANK), "space should be blank\n");
+        if(c == '\t') {
+            ok(!_isctype(c, _BLANK), "tab shouldn't be blank\n");
             ok(isblank(c), "%d should be blank\n", c);
-            ok(_isblank_l(c, NULL), "%d should be blank\n", c);
+            r = _isblank_l(c, NULL);
+            ok(!r || broken(r == _BLANK), "tab shouldn't be blank (got %x)\n", r);
+        } else if(c == ' ') {
+            ok(_isctype(c, _BLANK), "space should be blank\n");
+            ok(isblank(c), "%d should be blank\n", c);
+            r = _isblank_l(c, NULL);
+            ok(r == _BLANK, "space should be blank (got %x)\n", r);
         } else {
             ok(!_isctype(c, _BLANK), "%d shouldn't be blank\n", c);
             ok(!isblank(c), "%d shouldn't be blank\n", c);
