@@ -10110,7 +10110,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     return message == WM_COMPAREITEM ? -1 : ret;
 }
 
-static INT_PTR CALLBACK StopQuitMsgCheckProcA(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+static LRESULT CALLBACK StopQuitMsgCheckProcA(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
     if (message == WM_CREATE)
         PostMessageA(hwnd, WM_CLOSE, 0, 0);
@@ -14381,7 +14381,7 @@ static void test_dialog_messages(void)
     cls.lpszClassName = "MyDialogClass";
     cls.hInstance = GetModuleHandleA(NULL);
     /* need a cast since a dlgproc is used as a wndproc */
-    cls.lpfnWndProc = test_dlg_proc;
+    cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
     if (!RegisterClassA(&cls)) assert(0);
 
     SetFocus(0);
@@ -14534,7 +14534,7 @@ static void test_EndDialog(void)
     ok(GetClassInfoA(0, "#32770", &cls), "GetClassInfo failed\n");
     cls.lpszClassName = "MyDialogClass";
     cls.hInstance = GetModuleHandleA(NULL);
-    cls.lpfnWndProc = test_dlg_proc;
+    cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
     if (!RegisterClassA(&cls)) assert(0);
 
     flush_sequence();

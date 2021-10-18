@@ -488,7 +488,7 @@ static LRESULT CALLBACK main_window_procA (HWND hwnd, UINT uiMsg, WPARAM wParam,
     return DefWindowProcA (hwnd, uiMsg, wParam, lParam);
 }
 
-static LRESULT CALLBACK disabled_test_proc (HWND hwnd, UINT uiMsg,
+static INT_PTR CALLBACK disabled_test_proc (HWND hwnd, UINT uiMsg,
         WPARAM wParam, LPARAM lParam)
 {
     switch (uiMsg)

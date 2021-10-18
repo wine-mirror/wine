@@ -1046,7 +1046,7 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
 
     if (!func) return 0;
 
-    if (!(proc = handle_to_proc( func )))
+    if (!(proc = handle_to_proc( (WNDPROC)func )))
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc == WINPROC_PROC16)
     {
@@ -1071,7 +1071,7 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
 
     if (!func) return 0;
 
-    if (!(proc = handle_to_proc( func )))
+    if (!(proc = handle_to_proc( (WNDPROC)func )))
         ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
     else if (proc == WINPROC_PROC16)
     {
