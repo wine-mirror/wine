@@ -57,9 +57,11 @@ typedef HRESULT dinput_device_read_state( IDirectInputDevice8W *iface );
 
 struct dinput_device_vtbl
 {
-    HRESULT (*read)(IDirectInputDevice8W *);
-    HRESULT (*acquire)(IDirectInputDevice8W *);
-    HRESULT (*unacquire)(IDirectInputDevice8W *);
+    HRESULT (*read)( IDirectInputDevice8W *iface );
+    HRESULT (*acquire)( IDirectInputDevice8W *iface );
+    HRESULT (*unacquire)( IDirectInputDevice8W *iface );
+    HRESULT (*enum_objects)( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
+                             LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context );
 };
 
 #define DEVICE_STATE_MAX_SIZE 1024

@@ -412,6 +412,7 @@ static const struct dinput_device_vtbl keyboard_internal_vtbl =
     NULL,
     keyboard_internal_acquire,
     keyboard_internal_unacquire,
+    NULL,
 };
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =

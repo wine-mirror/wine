@@ -1140,33 +1140,70 @@ ULONG WINAPI IDirectInputDevice2WImpl_AddRef(LPDIRECTINPUTDEVICE8W iface)
     return ref;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
-        LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID lpvRef, DWORD dwFlags)
+HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects( IDirectInputDevice8W *iface, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
+                                                     void *context, DWORD flags )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DIDEVICEOBJECTINSTANCEW ddoi;
-    int i;
-
-    TRACE("(%p)->(%p,%p flags:%08x)\n", This, lpCallback, lpvRef, dwFlags);
-    TRACE("  - flags = ");
-    _dump_EnumObjects_flags(dwFlags);
-    TRACE("\n");
-
-    if (!lpCallback) return DIERR_INVALIDPARAM;
-
-    /* Only the fields till dwFFMaxForce are relevant */
-    memset(&ddoi, 0, sizeof(ddoi));
-    ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, dwFFMaxForce);
-
-    for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
+    static const DIPROPHEADER filter =
     {
-        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = DIPH_DEVICE,
+    };
+    struct IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    HRESULT hr;
 
-        if (dwFlags != DIDFT_ALL && !(dwFlags & DIDFT_GETTYPE(odf->dwType))) continue;
-        if (IDirectInputDevice_GetObjectInfo(iface, &ddoi, odf->dwType, DIPH_BYID) != DI_OK)
-            continue;
+    TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
 
-	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) break;
+    if (!callback) return DIERR_INVALIDPARAM;
+    if (flags & ~(DIDFT_AXIS | DIDFT_POV | DIDFT_BUTTON | DIDFT_NODATA | DIDFT_COLLECTION))
+        return DIERR_INVALIDPARAM;
+
+    if (!impl->vtbl->enum_objects)
+    {
+        DIDEVICEOBJECTINSTANCEW ddoi;
+        DWORD i;
+
+        /* Only the fields till dwFFMaxForce are relevant */
+        memset( &ddoi, 0, sizeof(ddoi) );
+        ddoi.dwSize = FIELD_OFFSET( DIDEVICEOBJECTINSTANCEW, dwFFMaxForce );
+
+        for (i = 0; i < impl->data_format.wine_df->dwNumObjs; i++)
+        {
+            LPDIOBJECTDATAFORMAT odf = dataformat_to_odf( impl->data_format.wine_df, i );
+
+            if (flags != DIDFT_ALL && !(flags & DIDFT_GETTYPE( odf->dwType ))) continue;
+            if (IDirectInputDevice_GetObjectInfo( iface, &ddoi, odf->dwType, DIPH_BYID ) != DI_OK)
+                continue;
+
+            if (callback( &ddoi, context ) != DIENUM_CONTINUE) break;
+        }
+
+        return DI_OK;
+    }
+
+    if (flags == DIDFT_ALL || (flags & DIDFT_AXIS))
+    {
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, callback, context );
+        if (FAILED(hr)) return hr;
+        if (hr != DIENUM_CONTINUE) return DI_OK;
+    }
+    if (flags == DIDFT_ALL || (flags & DIDFT_POV))
+    {
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_POV, callback, context );
+        if (FAILED(hr)) return hr;
+        if (hr != DIENUM_CONTINUE) return DI_OK;
+    }
+    if (flags == DIDFT_ALL || (flags & DIDFT_BUTTON))
+    {
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_BUTTON, callback, context );
+        if (FAILED(hr)) return hr;
+        if (hr != DIENUM_CONTINUE) return DI_OK;
+    }
+    if (flags == DIDFT_ALL || (flags & (DIDFT_NODATA | DIDFT_COLLECTION)))
+    {
+        hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_NODATA, callback, context );
+        if (FAILED(hr)) return hr;
+        if (hr != DIENUM_CONTINUE) return DI_OK;
     }
 
     return DI_OK;

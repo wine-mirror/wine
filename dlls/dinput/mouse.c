@@ -668,6 +668,7 @@ static const struct dinput_device_vtbl mouse_internal_vtbl =
     NULL,
     mouse_internal_acquire,
     mouse_internal_unacquire,
+    NULL,
 };
 
 static const IDirectInputDevice8WVtbl SysMouseWvt =

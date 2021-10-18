@@ -656,66 +656,6 @@ static ULONG WINAPI hid_joystick_Release( IDirectInputDevice8W *iface )
     return ref;
 }
 
-struct enum_objects_params
-{
-    LPDIENUMDEVICEOBJECTSCALLBACKW callback;
-    void *context;
-};
-
-static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_value_caps *caps,
-                                   DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    struct enum_objects_params *params = data;
-    return params->callback( instance, params->context );
-}
-
-static HRESULT WINAPI hid_joystick_EnumObjects( IDirectInputDevice8W *iface, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
-                                                void *context, DWORD flags )
-{
-    static const DIPROPHEADER filter =
-    {
-        .dwSize = sizeof(filter),
-        .dwHeaderSize = sizeof(filter),
-        .dwHow = DIPH_DEVICE,
-    };
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    struct enum_objects_params params =
-    {
-        .callback = callback,
-        .context = context,
-    };
-    BOOL ret;
-
-    TRACE( "iface %p, callback %p, context %p, flags %#x.\n", iface, callback, context, flags );
-
-    if (!callback) return DIERR_INVALIDPARAM;
-    if (flags & ~(DIDFT_AXIS | DIDFT_POV | DIDFT_BUTTON | DIDFT_NODATA | DIDFT_COLLECTION))
-        return DIERR_INVALIDPARAM;
-
-    if (flags == DIDFT_ALL || (flags & DIDFT_AXIS))
-    {
-        ret = enum_objects( impl, &filter, DIDFT_AXIS, enum_objects_callback, &params );
-        if (ret != DIENUM_CONTINUE) return DI_OK;
-    }
-    if (flags == DIDFT_ALL || (flags & DIDFT_POV))
-    {
-        ret = enum_objects( impl, &filter, DIDFT_POV, enum_objects_callback, &params );
-        if (ret != DIENUM_CONTINUE) return DI_OK;
-    }
-    if (flags == DIDFT_ALL || (flags & DIDFT_BUTTON))
-    {
-        ret = enum_objects( impl, &filter, DIDFT_BUTTON, enum_objects_callback, &params );
-        if (ret != DIENUM_CONTINUE) return DI_OK;
-    }
-    if (flags == DIDFT_ALL || (flags & (DIDFT_NODATA | DIDFT_COLLECTION)))
-    {
-        ret = enum_objects( impl, &filter, DIDFT_NODATA, enum_objects_callback, &params );
-        if (ret != DIENUM_CONTINUE) return DI_OK;
-    }
-
-    return DI_OK;
-}
-
 static BOOL get_property_prop_range( struct hid_joystick *impl, struct hid_value_caps *caps,
                                      DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
@@ -1392,7 +1332,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     hid_joystick_Release,
     /*** IDirectInputDevice methods ***/
     IDirectInputDevice2WImpl_GetCapabilities,
-    hid_joystick_EnumObjects,
+    IDirectInputDevice2WImpl_EnumObjects,
     hid_joystick_GetProperty,
     hid_joystick_SetProperty,
     IDirectInputDevice2WImpl_Acquire,
@@ -1616,11 +1556,33 @@ static HRESULT hid_joystick_internal_read( IDirectInputDevice8W *iface )
     return hr;
 }
 
+struct enum_objects_params
+{
+    LPDIENUMDEVICEOBJECTSCALLBACKW callback;
+    void *context;
+};
+
+static BOOL enum_objects_callback( struct hid_joystick *impl, struct hid_value_caps *caps,
+                                   DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct enum_objects_params *params = data;
+    return params->callback( instance, params->context );
+}
+
+static HRESULT hid_joystick_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *filter, DWORD flags,
+                                                   LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+{
+    struct enum_objects_params params = {.callback = callback, .context = context};
+    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
+    return enum_objects( impl, filter, flags, enum_objects_callback, &params );
+}
+
 static const struct dinput_device_vtbl hid_joystick_internal_vtbl =
 {
     hid_joystick_internal_read,
     hid_joystick_internal_acquire,
     hid_joystick_internal_unacquire,
+    hid_joystick_internal_enum_objects,
 };
 
 static DWORD device_type_for_version( DWORD type, DWORD version )
