@@ -1377,17 +1377,18 @@ static void test_fopen_exclusive( void )
     DWORD len;
     FILE *fp;
 
-    if (!GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "__std_terminate"))
-    {
-        win_skip("skipping fopen x mode tests.\n");
-        return;
-    }
-
     len = GetTempPathA(MAX_PATH, path);
     ok(len, "GetTempPathA failed\n");
     strcat(path, "\\fileexcl.tst");
 
+    SET_EXPECT(global_invalid_parameter_handler);
     fp = fopen(path, "wx");
+    if(called_global_invalid_parameter_handler)
+    {
+        win_skip("skipping fopen x mode tests.\n");
+        return;
+    }
+    expect_global_invalid_parameter_handler = FALSE;
     ok(fp != NULL, "creating file with mode wx failed\n");
     fclose(fp);
 
@@ -1414,7 +1415,7 @@ static void test_fopen_exclusive( void )
     ok(!fp, "creating file with mode xw succeeded\n");
 
     fp = fopen(path, "wbx");
-    ok(fp != NULL, "creating file with mode wx failed\n");
+    ok(fp != NULL, "creating file with mode wbx failed\n");
     fclose(fp);
     unlink(path);
 }
