@@ -138,8 +138,6 @@ static HRESULT mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEIN
 static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseImpl **out )
 {
     SysMouseImpl* newDevice;
-    LPDIDATAFORMAT df = NULL;
-    unsigned i;
     WCHAR buffer[20];
     HKEY hkey, appkey;
     HRESULT hr;
@@ -147,13 +145,10 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &SysMouseWvt, &mouse_internal_vtbl,
                                                rguid, dinput, (void **)&newDevice )))
         return hr;
-    df = newDevice->base.data_format.wine_df;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
 
     fill_mouse_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion );
     newDevice->base.caps.dwDevType = newDevice->base.instance.dwDevType;
-    newDevice->base.caps.dwAxes = 3;
-    newDevice->base.caps.dwButtons = 8;
     newDevice->base.caps.dwFirmwareRevision = 100;
     newDevice->base.caps.dwHardwareRevision = 100;
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
@@ -167,17 +162,11 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
 
-    /* Create copy of default data format */
-    memcpy(df, &c_dfDIMouse2, c_dfDIMouse2.dwSize);
-    if (!(df->rgodf = malloc( df->dwNumObjs * df->dwObjSize ))) goto failed;
-    memcpy(df->rgodf, c_dfDIMouse2.rgodf, df->dwNumObjs * df->dwObjSize);
-
-    /* Because we don't do any detection yet just modify instance and type */
-    for (i = 0; i < df->dwNumObjs; i++)
-        if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_AXIS)
-            df->rgodf[i].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_RELAXIS;
-        else
-            df->rgodf[i].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
+    if (FAILED(hr = direct_input_device_init( &newDevice->base.IDirectInputDevice8W_iface )))
+    {
+        IDirectInputDevice_Release( &newDevice->base.IDirectInputDevice8W_iface );
+        return hr;
+    }
 
     if (dinput->dwVersion >= 0x0800)
     {
@@ -188,12 +177,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
 
     *out = newDevice;
     return DI_OK;
-
-failed:
-    if (df) free( df->rgodf );
-    free( df );
-    free( newDevice );
-    return DIERR_OUTOFMEMORY;
 }
 
 static HRESULT mousedev_create_device( IDirectInputImpl *dinput, REFGUID rguid, IDirectInputDevice8W **out )
@@ -663,12 +646,125 @@ static HRESULT mouse_internal_unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
+static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
+                             DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    if (flags != DIDFT_ALL && !(flags & DIDFT_GETTYPE( instance->dwType ))) return DIENUM_CONTINUE;
+
+    switch (filter->dwHow)
+    {
+    case DIPH_DEVICE:
+        return callback( instance, data );
+    case DIPH_BYOFFSET:
+        if (filter->dwObj != instance->dwOfs) return DIENUM_CONTINUE;
+        return callback( instance, data );
+    case DIPH_BYID:
+        if ((filter->dwObj & 0x00ffffff) != (instance->dwType & 0x00ffffff)) return DIENUM_CONTINUE;
+        return callback( instance, data );
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+static HRESULT mouse_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *header, DWORD flags,
+                                            LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+{
+    DIDEVICEOBJECTINSTANCEW instances[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_XAxis,
+            .dwOfs = DIMOFS_X,
+            .dwType = DIDFT_RELAXIS|DIDFT_MAKEINSTANCE(0),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"X-axis",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_YAxis,
+            .dwOfs = DIMOFS_Y,
+            .dwType = DIDFT_RELAXIS|DIDFT_MAKEINSTANCE(1),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Y-axis",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_ZAxis,
+            .dwOfs = DIMOFS_Z,
+            .dwType = DIDFT_RELAXIS|DIDFT_MAKEINSTANCE(2),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Wheel",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIMOFS_BUTTON0,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(3),
+            .tszName = L"Button 0",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIMOFS_BUTTON1,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(4),
+            .tszName = L"Button 1",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIMOFS_BUTTON2,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(5),
+            .tszName = L"Button 2",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIMOFS_BUTTON3,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(6),
+            .tszName = L"Button 3",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = DIMOFS_BUTTON4,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(7),
+            .tszName = L"Button 4",
+        },
+    };
+    SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    DIDATAFORMAT *format = impl->base.data_format.wine_df;
+    int *offsets = impl->base.data_format.offsets;
+    DIPROPHEADER filter = *header;
+    BOOL ret;
+    DWORD i;
+
+    if (header->dwHow != DIPH_DEVICE && header->dwHow != DIPH_BYOFFSET && header->dwHow != DIPH_BYID)
+        return DIERR_UNSUPPORTED;
+
+    if (filter.dwHow == DIPH_BYOFFSET)
+    {
+        if (!offsets) return DIENUM_CONTINUE;
+        for (i = 0; i < format->dwNumObjs; ++i)
+            if (offsets[i] == filter.dwObj) break;
+        if (i == format->dwNumObjs) return DIENUM_CONTINUE;
+        filter.dwObj = format->rgodf[i].dwOfs;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(instances); ++i)
+    {
+        ret = try_enum_object( &filter, flags, callback, instances + i, context );
+        if (ret != DIENUM_CONTINUE) return DIENUM_STOP;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
 static const struct dinput_device_vtbl mouse_internal_vtbl =
 {
     NULL,
     mouse_internal_acquire,
     mouse_internal_unacquire,
-    NULL,
+    mouse_internal_enum_objects,
 };
 
 static const IDirectInputDevice8WVtbl SysMouseWvt =

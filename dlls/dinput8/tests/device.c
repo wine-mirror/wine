@@ -1068,7 +1068,7 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
 
     winetest_push_context( "obj[%d]", params->index );
 
-    todo_wine
+    todo_wine_if( obj->dwSize == sizeof(DIDEVICEOBJECTINSTANCE_DX3W) )
     check_member( *obj, *exp, "%u", dwSize );
     check_member_guid( *obj, *exp, guidType );
     todo_wine_if( todo->offset )
@@ -1183,11 +1183,7 @@ static void test_mouse_info(void)
             .tszName = L"Button 4",
         },
     };
-    struct check_objects_todos todo_objects[ARRAY_SIZE(expect_objects)] =
-    {
-        {.name = TRUE},
-        {.name = TRUE},
-    };
+    struct check_objects_todos todo_objects[ARRAY_SIZE(expect_objects)] = {{0}};
     struct check_objects_params check_objects_params =
     {
         .expect_count = ARRAY_SIZE(expect_objects),
@@ -1283,7 +1279,6 @@ static void test_mouse_info(void)
     todo_wine
     check_member( caps, expect_caps, "%#x", dwDevType );
     check_member( caps, expect_caps, "%d", dwAxes );
-    todo_wine
     check_member( caps, expect_caps, "%d", dwButtons );
     check_member( caps, expect_caps, "%d", dwPOVs );
     check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
@@ -1410,7 +1405,6 @@ static void test_mouse_info(void)
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
-    todo_wine
     ok( res == 8, "got %u expected %u\n", res, 8 );
     hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
     ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
