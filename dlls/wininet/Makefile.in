@@ -1,6 +1,7 @@
 MODULE    = wininet.dll
 IMPORTLIB = wininet
-IMPORTS   = mpr shlwapi shell32 user32 ws2_32 advapi32
+IMPORTS   = $(ZLIB_PE_LIBS) mpr shlwapi shell32 user32 ws2_32 advapi32
+EXTRAINCL = $(ZLIB_PE_CFLAGS)
 DELAYIMPORTS = secur32 crypt32 cryptui dhcpcsvc iphlpapi
 
 C_SRCS = \
@@ -9,7 +10,6 @@ C_SRCS = \
 	ftp.c \
 	gopher.c \
 	http.c \
-	inflate.c \
 	internet.c \
 	netconnection.c \
 	urlcache.c \

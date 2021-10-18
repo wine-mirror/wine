@@ -28,22 +28,21 @@
  */
 
 #include <stdlib.h>
-
-#include "winsock2.h"
-#include "ws2ipdef.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <zlib.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
 #include "winerror.h"
 #include "winternl.h"
+#include "winsock2.h"
+#include "ws2ipdef.h"
 #define NO_SHLWAPI_STREAM
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_GDI
@@ -53,7 +52,6 @@
 #include "winuser.h"
 
 #include "internet.h"
-#include "zlib.h"
 #include "resource.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
