@@ -320,6 +320,18 @@ static const printenv_t env_win40 = {envname_win40W, subdir_win40W, 0, Version0_
 
 static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_arm, &env_arm64, &env_win40};
 
+#ifdef __i386__
+#define env_arch env_x86
+#elif defined __x86_64__
+#define env_arch env_x64
+#elif defined __arm__
+#define env_arch env_arm
+#elif defined __aarch64__
+#define env_arch env_arm64
+#else
+#error not defined for this cpu
+#endif
+
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
  *
@@ -361,7 +373,7 @@ static const  printenv_t * validate_envW(LPCWSTR env)
     }
     else
     {
-        result = (GetVersion() & 0x80000000) ? &env_win40 : &env_x86;
+        result = (GetVersion() & 0x80000000) ? &env_win40 : &env_arch;
     }
     TRACE("using %p: %s\n", result, debugstr_w(result ? result->envname : NULL));
 
