@@ -329,7 +329,7 @@ static void add_connections_providers(HWND lv)
     RegCloseKey(key);
 }
 
-static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -477,7 +477,7 @@ static void connection_toggle_controls(HWND parent)
     EnableWindow(GetDlgItem(parent, IDC_BTN_BUILD), !checked);
 }
 
-static LRESULT CALLBACK data_link_connection_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK data_link_connection_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -549,7 +549,7 @@ static void advanced_fill_permission_list(HWND parent)
     }
 }
 
-static LRESULT CALLBACK data_link_advanced_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK data_link_advanced_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
@@ -593,7 +593,7 @@ static void create_page_all_columns(HWND lv)
     SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
 }
 
-static LRESULT CALLBACK data_link_all_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static INT_PTR CALLBACK data_link_all_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
 
