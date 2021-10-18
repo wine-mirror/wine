@@ -29,7 +29,6 @@
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "wincon.h"
-#include "commctrl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
@@ -447,8 +446,6 @@ int main( int argc, char *argv[] )
     STARTUPINFOA info;
     char *cmdline, *appname, **first_arg;
     char *p;
-
-    InitCommonControls();
 
     if (!argv[1]) usage();
 
