@@ -65,7 +65,7 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
         {
             USHORT count, i;
             BYTE *strings;
-            struct
+            struct name_record
             {
                 USHORT platform_id;
                 USHORT encoding_id;
@@ -78,7 +78,7 @@ static void get_download_name(PHYSDEV dev, LPOUTLINETEXTMETRICA potm, char **str
             GetFontData(dev->hdc, MS_MAKE_TAG('n','a','m','e'), 0, name, size);
             count = GET_BE_WORD(name + 2);
             strings = name + GET_BE_WORD(name + 4);
-            name_record = (typeof(name_record))(name + 6);
+            name_record = (struct name_record *)(name + 6);
             for(i = 0; i < count; i++, name_record++)
             {
                 name_record->platform_id = GET_BE_WORD(&name_record->platform_id);
@@ -687,7 +687,6 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
         DWORD minMemType1;
         DWORD maxMemType1;
     } *post_header;
-    BYTE *post = NULL;
     DWORD size;
 
     /* set a fallback name that is just 'g<index>' */
@@ -697,13 +696,11 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
     size = GetFontData(hdc, MS_MAKE_TAG('p','o','s','t'), 0, NULL, 0);
     if(size < sizeof(*post_header) || size == GDI_ERROR)
         return;
-    post = HeapAlloc(GetProcessHeap(), 0, size);
-    if(!post)
-        return;
-    size = GetFontData(hdc, MS_MAKE_TAG('p','o','s','t'), 0, post, size);
+    post_header = HeapAlloc(GetProcessHeap(), 0, size);
+    if(!post_header) return;
+    size = GetFontData(hdc, MS_MAKE_TAG('p','o','s','t'), 0, post_header, size);
     if(size < sizeof(*post_header) || size == GDI_ERROR)
         goto cleanup;
-    post_header = (typeof(post_header))(post);
     /* note: only interested in the format for obtaining glyph names */
     post_header->format = GET_BE_DWORD(&post_header->format);
 
@@ -717,7 +714,7 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
     }
     else if(post_header->format == MAKELONG(0, 2))
     {
-        BYTE *post2header = post + sizeof(*post_header);
+        void *post2header = post_header + 1;
         int glyphNameIndex;
 
         size -= sizeof(*post_header);
@@ -739,7 +736,7 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
               HIWORD(post_header->format), LOWORD(post_header->format));
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, post);
+    HeapFree(GetProcessHeap(), 0, post_header);
 }
 
 /****************************************************************************
