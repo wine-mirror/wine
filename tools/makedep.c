@@ -128,6 +128,8 @@ static struct strarray target_flags;
 static struct strarray msvcrt_flags;
 static struct strarray extra_cflags;
 static struct strarray extra_cross_cflags;
+static struct strarray extra_cflags_extlib;
+static struct strarray extra_cross_cflags_extlib;
 static struct strarray cpp_flags;
 static struct strarray lddll_flags;
 static struct strarray libs;
@@ -2270,6 +2272,21 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
 
 
 /*******************************************************************
+ *         remove_warning_flags
+ */
+static struct strarray remove_warning_flags( struct strarray flags )
+{
+    unsigned int i;
+    struct strarray ret = empty_strarray;
+
+    for (i = 0; i < flags.count; i++)
+        if (strncmp( flags.str[i], "-W", 2 ) || !strncmp( flags.str[i], "-Wno-", 5 ))
+            strarray_add( &ret, flags.str[i] );
+    return ret;
+}
+
+
+/*******************************************************************
  *         get_debug_file
  */
 static const char *get_debug_file( struct makefile *make, const char *name )
@@ -3010,7 +3027,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             if (!*dll_ext && make->module && is_crt_module( make->module ))
                 output_filename( "-fno-builtin" );
         }
-        output_filenames( extra_cflags );
+        output_filenames( make->extlib ? extra_cflags_extlib : extra_cflags );
         output_filenames( cpp_flags );
         output_filename( "$(CFLAGS)" );
         output( "\n" );
@@ -3024,7 +3041,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "%s.cross.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CROSSCC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
         output_filenames( defines );
-        output_filenames( extra_cross_cflags );
+        output_filenames( make->extlib ? extra_cross_cflags_extlib : extra_cross_cflags );
         if (make->module && is_crt_module( make->module ))
             output_filename( "-fno-builtin" );
         output_filenames( cpp_flags );
@@ -4310,6 +4327,9 @@ int main( int argc, char *argv[] )
     }
     else
         so_dir = pe_dir = "$(dlldir)";
+
+    extra_cflags_extlib = remove_warning_flags( extra_cflags );
+    extra_cross_cflags_extlib = remove_warning_flags( extra_cross_cflags );
 
     top_makefile->src_dir = root_src_dir;
     subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );
