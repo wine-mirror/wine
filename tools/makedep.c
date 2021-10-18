@@ -74,7 +74,8 @@ struct incl_file
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
     enum incl_type     type;          /* type of include */
-    int                use_msvcrt;    /* put msvcrt headers in the search path? */
+    int                use_msvcrt:1;  /* put msvcrt headers in the search path? */
+    int                is_external:1; /* file from external library? */
     struct incl_file  *owner;
     unsigned int       files_count;   /* files in use */
     unsigned int       files_size;    /* total allocated size */
@@ -185,6 +186,7 @@ struct makefile
     const char     *parent_dir;
     const char     *module;
     const char     *testdll;
+    const char     *extlib;
     const char     *sharedlib;
     const char     *staticlib;
     const char     *staticimplib;
@@ -1390,18 +1392,20 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
             {
                 while (dir[len] == '/') len++;
                 file = open_global_file( make, concat_paths( dir + len, pFile->name ), &pFile->filename );
-                if (file) return file;
             }
-            continue;  /* ignore paths that don't point to the top source dir */
         }
-        if (*dir != '/')
+        else
         {
-            if ((file = open_include_path_file( make, dir, pFile->name, &pFile->filename )))
-                return file;
+            if (*dir == '/') continue;
+            file = open_include_path_file( make, dir, pFile->name, &pFile->filename );
         }
+        if (!file) continue;
+        pFile->is_external = 1;
+        return file;
     }
 
-    if (pFile->type == INCL_SYSTEM && pFile->use_msvcrt)
+    if (pFile->type == INCL_SYSTEM && pFile->use_msvcrt &&
+        !make->extlib && !pFile->included_by->is_external)
     {
         if (!strcmp( pFile->name, "stdarg.h" )) return NULL;
         if (!strcmp( pFile->name, "x86intrin.h" )) return NULL;
@@ -1413,7 +1417,13 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if (pFile->type == INCL_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
-    if ((file = open_file_same_dir( pFile->included_by, pFile->name, &pFile->filename ))) return file;
+    if ((file = open_file_same_dir( pFile->included_by, pFile->name, &pFile->filename )))
+    {
+        pFile->is_external = pFile->included_by->is_external;
+        return file;
+    }
+
+    if (make->extlib) return NULL; /* ignore missing files in external libs */
 
     fprintf( stderr, "%s:%d: error: ", pFile->included_by->file->name, pFile->included_line );
     perror( pFile->name );
@@ -1533,6 +1543,7 @@ static struct incl_file *add_src_file( struct makefile *make, const char *name )
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
     file->use_msvcrt = make->use_msvcrt;
+    file->is_external = !!make->extlib;
     list_add_tail( &make->sources, &file->entry );
     parse_file( make, file, 1 );
     return file;
@@ -1900,8 +1911,8 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
         strarray_add( &source->dependencies, file->filename );
 
         /* sanity checks */
-        if ((!strcmp( file->filename, "include/config.h" ) && file != source->files[0]) ||
-            (!strcmp( file->filename, "include/wine/port.h" ) && file != source->files[1]))
+        if (!strcmp( file->filename, "include/config.h" ) &&
+            file != source->files[0] && !source->is_external)
         {
             input_file_name = source->filename;
             input_line = 0;
@@ -2152,7 +2163,7 @@ static void add_crt_import( const struct makefile *make, struct strarray *import
         }
         else
         {
-            crt_dll = !make->testdll && !make->staticlib ? "ucrtbase" : "msvcrt";
+            crt_dll = !make->testdll && (!make->staticlib || make->extlib) ? "ucrtbase" : "msvcrt";
             strarray_add( imports, crt_dll );
         }
     }
@@ -3353,7 +3364,7 @@ static void output_static_lib( struct makefile *make )
     output_filenames_obj_dir( make, make->unixobj_files );
     output( " && %s $@\n", ranlib );
     add_install_rule( make, make->staticlib, make->staticlib, strmake( "d%s/%s", so_dir, make->staticlib ));
-    if (crosstarget && make->module)
+    if (crosstarget)
     {
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
 
@@ -4073,6 +4084,7 @@ static void load_sources( struct makefile *make )
     make->sharedlib     = get_expanded_make_variable( make, "SHAREDLIB" );
     make->staticlib     = get_expanded_make_variable( make, "STATICLIB" );
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
+    make->extlib        = get_expanded_make_variable( make, "EXTLIB" );
     if (*dll_ext) make->unixlib = get_expanded_make_variable( make, "UNIXLIB" );
 
     make->programs      = get_expanded_make_var_array( make, "PROGRAMS" );
@@ -4084,6 +4096,7 @@ static void load_sources( struct makefile *make )
     make->install_dev   = get_expanded_make_var_array( make, "INSTALL_DEV" );
     make->extra_targets = get_expanded_make_var_array( make, "EXTRA_TARGETS" );
 
+    if (make->extlib) make->staticlib = make->extlib;
     if (make->staticlib) make->module = make->staticlib;
 
     make->disabled   = make->obj_dir && strarray_exists( &disabled_dirs, make->obj_dir );
@@ -4106,7 +4119,7 @@ static void load_sources( struct makefile *make )
     make->include_paths = empty_strarray;
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;
-    strarray_add( &make->define_args, "-D__WINESRC__" );
+    if (!make->extlib) strarray_add( &make->define_args, "-D__WINESRC__" );
 
     value = get_expanded_make_var_array( make, "EXTRAINCL" );
     for (i = 0; i < value.count; i++)

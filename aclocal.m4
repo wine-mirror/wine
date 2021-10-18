@@ -124,6 +124,22 @@ CPPFLAGS=$ac_save_CPPFLAGS
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 
+dnl **** Get flags for an external lib program ****
+dnl
+dnl Usage: WINE_EXTLIB_FLAGS(var,pkg-name,default-libs,default-cflags)
+dnl
+AC_DEFUN([WINE_EXTLIB_FLAGS],
+[AS_VAR_PUSHDEF([ac_cflags],[[$1]_PE_CFLAGS])dnl
+AS_VAR_PUSHDEF([ac_libs],[[$1]_PE_LIBS])dnl
+AC_ARG_VAR(ac_cflags, [C compiler flags for the PE $2, overriding the bundled version])dnl
+AC_ARG_VAR(ac_libs, [Linker flags for the PE $2, overriding the bundled version])dnl
+AS_VAR_IF([ac_cflags],[],[ac_cflags=$4],[enable_$2=no])
+AS_VAR_IF([ac_libs],[],[ac_libs=$3],[enable_$2=no])
+AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 cflags: $ac_cflags"]) >&AS_MESSAGE_LOG_FD
+AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 libs: $ac_libs"]) >&AS_MESSAGE_LOG_FD
+AS_VAR_POPDEF([ac_libs])dnl
+AS_VAR_POPDEF([ac_cflags])])dnl
+
 dnl **** Link C code with an assembly file ****
 dnl
 dnl Usage: WINE_TRY_ASM_LINK(asm-code,includes,function,[action-if-found,[action-if-not-found]])
