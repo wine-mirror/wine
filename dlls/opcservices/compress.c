@@ -19,13 +19,13 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <zlib.h>
 
 #include "windef.h"
 #include "winternl.h"
 #include "msopc.h"
 
 #include "opc_private.h"
-#include "zlib.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
