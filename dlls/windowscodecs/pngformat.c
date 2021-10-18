@@ -251,7 +251,7 @@ HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
     struct decoder *decoder;
     struct decoder_info decoder_info;
 
-    hr = get_unix_decoder(&CLSID_WICPngDecoder, &decoder_info, &decoder);
+    hr = png_decoder_create(&decoder_info, &decoder);
 
     if (SUCCEEDED(hr))
         hr = CommonDecoder_CreateInstance(decoder, &decoder_info, iid, ppv);
@@ -265,7 +265,7 @@ HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv)
     struct encoder *encoder;
     struct encoder_info encoder_info;
 
-    hr = get_unix_encoder(&CLSID_WICPngEncoder, &encoder_info, &encoder);
+    hr = png_encoder_create(&encoder_info, &encoder);
 
     if (SUCCEEDED(hr))
         hr = CommonEncoder_CreateInstance(encoder, &encoder_info, iid, ppv);

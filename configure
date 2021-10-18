@@ -641,8 +641,6 @@ MPG123_LIBS
 MPG123_CFLAGS
 TIFF_LIBS
 TIFF_CFLAGS
-PNG_LIBS
-PNG_CFLAGS
 JXRLIB_LIBS
 JXRLIB_CFLAGS
 JPEG_LIBS
@@ -881,7 +879,6 @@ with_opengl
 with_osmesa
 with_oss
 with_pcap
-with_png
 with_pthread
 with_pulse
 with_quicktime
@@ -1978,8 +1975,6 @@ JPEG_CFLAGS
 JPEG_LIBS
 JXRLIB_CFLAGS
 JXRLIB_LIBS
-PNG_CFLAGS
-PNG_LIBS
 TIFF_CFLAGS
 TIFF_LIBS
 MPG123_CFLAGS
@@ -2666,7 +2661,6 @@ Optional Packages:
   --without-osmesa        do not use the OSMesa library
   --without-oss           do not use the OSS sound support
   --without-pcap          do not use the Packet Capture library
-  --without-png           do not use PNG
   --without-pthread       do not use the pthread library
   --without-pulse         do not use PulseAudio sound support
   --without-quicktime     do not use QuickTime support
@@ -2791,8 +2785,6 @@ Some influential environment variables:
   JXRLIB_CFLAGS
               C compiler flags for jxrlib, overriding pkg-config
   JXRLIB_LIBS Linker flags for jxrlib, overriding pkg-config
-  PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
-  PNG_LIBS    Linker flags for libpng, overriding pkg-config
   TIFF_CFLAGS C compiler flags for libtiff-4, overriding pkg-config
   TIFF_LIBS   Linker flags for libtiff-4, overriding pkg-config
   MPG123_CFLAGS
@@ -4173,12 +4165,6 @@ fi
 # Check whether --with-pcap was given.
 if test "${with_pcap+set}" = set; then :
   withval=$with_pcap; if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi
-fi
-
-
-# Check whether --with-png was given.
-if test "${with_png+set}" = set; then :
-  withval=$with_png;
 fi
 
 
@@ -16022,110 +16008,6 @@ esac
 
 fi
 
-if test "x$with_png" != "xno"
-then
-    if ${PNG_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  PNG_CFLAGS=`$PKG_CONFIG --cflags libpng 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || PNG_CFLAGS=${PNG_CFLAGS:-$X_CFLAGS}
-if ${PNG_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  PNG_LIBS=`$PKG_CONFIG --libs libpng 2>/dev/null`
-fi
-fi
-test "$cross_compiling" = yes || PNG_LIBS=${PNG_LIBS:-$X_LIBS}
-
-$as_echo "$as_me:${as_lineno-$LINENO}: libpng cflags: $PNG_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libpng libs: $PNG_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $PNG_CFLAGS"
-for ac_header in png.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "png.h" "ac_cv_header_png_h" "$ac_includes_default"
-if test "x$ac_cv_header_png_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PNG_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_png_h" = "yes"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lpng" >&5
-$as_echo_n "checking for -lpng... " >&6; }
-if ${ac_cv_lib_soname_png+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lpng $PNG_LIBS -lm -lz $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char png_create_read_struct ();
-int
-main ()
-{
-return png_create_read_struct ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_png=`$ac_cv_path_LDD conftest.exe | grep "png" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_png=`$OTOOL -L conftest$ac_exeext | grep "libpng[0-9]*\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libpng[0-9]*\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_png=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libpng[0-9]*\\.$LIBEXT" | sed -e "s/^.*\\[\\(libpng[0-9]*\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_png:+false} :; then :
-  ac_cv_lib_soname_png=`$LDD conftest$ac_exeext | grep "libpng[0-9]*\\.$LIBEXT" | sed -e "s/^.*\(libpng[0-9]*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_png=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_png:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-       PNG_CFLAGS=""
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_png" >&5
-$as_echo "$ac_cv_lib_soname_png" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBPNG "$ac_cv_lib_soname_png"
-_ACEOF
-
-
-fi
-        else
-            PNG_CFLAGS=""
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ac_cv_lib_soname_png" = "x"; then :
-  case "x$with_png" in
-  x)   as_fn_append wine_warnings "|libpng ${notice_platform}development files not found, PNG won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libpng ${notice_platform}development files not found, PNG won't be supported.
-This is an error since --with-png was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
 if test "x$with_tiff" != "xno"
 then
     if ${TIFF_CFLAGS:+false} :; then :
@@ -19739,8 +19621,6 @@ JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
 JXRLIB_CFLAGS = $JXRLIB_CFLAGS
 JXRLIB_LIBS = $JXRLIB_LIBS
-PNG_CFLAGS = $PNG_CFLAGS
-PNG_LIBS = $PNG_LIBS
 TIFF_CFLAGS = $TIFF_CFLAGS
 TIFF_LIBS = $TIFF_LIBS
 MPG123_CFLAGS = $MPG123_CFLAGS

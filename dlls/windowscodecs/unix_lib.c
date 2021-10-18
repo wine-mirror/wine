@@ -69,10 +69,6 @@ HRESULT CDECL stream_write(IStream *stream, const void *buffer, ULONG write, ULO
 
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result)
 {
-    if (IsEqualGUID(decoder_clsid, &CLSID_WICPngDecoder)||
-        IsEqualGUID(decoder_clsid, &CLSID_WICPngDecoder2))
-        return png_decoder_create(info, result);
-
     if (IsEqualGUID(decoder_clsid, &CLSID_WICTiffDecoder))
         return tiff_decoder_create(info, result);
 
@@ -84,9 +80,6 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
 
 HRESULT CDECL encoder_create(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result)
 {
-    if (IsEqualGUID(encoder_clsid, &CLSID_WICPngEncoder))
-        return png_encoder_create(info, result);
-
     if (IsEqualGUID(encoder_clsid, &CLSID_WICTiffEncoder))
         return tiff_encoder_create(info, result);
 

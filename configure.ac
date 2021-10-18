@@ -75,7 +75,6 @@ AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi])
-AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]))
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
@@ -1812,22 +1811,6 @@ then
 fi
 WINE_NOTICE_WITH(jxrlib,[test "x$ac_cv_lib_soname_jxrglue" = "x"],
                  [jxrlib ${notice_platform}development files not found, JPEG-XR won't be supported.])
-
-dnl **** Check for libpng ****
-if test "x$with_png" != "xno"
-then
-    WINE_PACKAGE_FLAGS(PNG,[libpng],,[$X_CFLAGS],[$X_LIBS],
-        [AC_CHECK_HEADERS([png.h])
-        if test "$ac_cv_header_png_h" = "yes"
-        then
-            WINE_CHECK_SONAME(png,png_create_read_struct,,
-                [PNG_CFLAGS=""],[$PNG_LIBS -lm -lz],[[libpng[[0-9]]*]])
-        else
-            PNG_CFLAGS=""
-        fi])
-fi
-WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
-                 [libpng ${notice_platform}development files not found, PNG won't be supported.])
 
 dnl **** Check for libtiff ****
 if test "x$with_tiff" != "xno"

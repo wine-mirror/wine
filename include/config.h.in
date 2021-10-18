@@ -450,9 +450,6 @@
 /* Define to 1 if you have the `pipe2' function. */
 #undef HAVE_PIPE2
 
-/* Define to 1 if you have the <png.h> header file. */
-#undef HAVE_PNG_H
-
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
 
@@ -1024,9 +1021,6 @@
 
 /* Define to the soname of the libOSMesa library. */
 #undef SONAME_LIBOSMESA
-
-/* Define to the soname of the libpng library. */
-#undef SONAME_LIBPNG
 
 /* Define to the soname of the libsane library. */
 #undef SONAME_LIBSANE
