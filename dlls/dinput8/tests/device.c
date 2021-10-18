@@ -19,12 +19,22 @@
 
 #define DIRECTINPUT_VERSION 0x0800
 
+#include <stdarg.h>
+#include <stddef.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+
 #define COBJMACROS
-#include <windows.h>
+#include "dinput.h"
+#include "hidusage.h"
 
 #include "wine/test.h"
-#include "windef.h"
-#include "dinput.h"
+
+static HINSTANCE instance;
+static BOOL localized; /* object names get translated */
 
 struct enum_data {
     IDirectInput8A *pDI;
@@ -1011,10 +1021,804 @@ static void test_appdata_property(void)
     IDirectInput_Release(pDI);
 }
 
+#define check_member_( file, line, val, exp, fmt, member )                                         \
+    ok_( file, line )((val).member == (exp).member, "got " #member " " fmt ", expected " fmt "\n", \
+                      (val).member, (exp).member)
+#define check_member( val, exp, fmt, member )                                                      \
+    check_member_( __FILE__, __LINE__, val, exp, fmt, member )
+
+#define check_member_guid_( file, line, val, exp, member )                                              \
+    ok_( file, line )(IsEqualGUID( &(val).member, &(exp).member ), "got " #member " %s, expected %s\n", \
+                      debugstr_guid( &(val).member ), debugstr_guid( &(exp).member ))
+#define check_member_guid( val, exp, member )                                                      \
+    check_member_guid_( __FILE__, __LINE__, val, exp, member )
+
+#define check_member_wstr_( file, line, val, exp, member )                                         \
+    ok_( file, line )(!wcscmp( (val).member, (exp).member ), "got " #member " %s, expected %s\n",  \
+                      debugstr_w((val).member), debugstr_w((exp).member))
+#define check_member_wstr( val, exp, member )                                                      \
+    check_member_wstr_( __FILE__, __LINE__, val, exp, member )
+
+struct check_objects_todos
+{
+    BOOL offset;
+    BOOL type;
+    BOOL name;
+};
+
+struct check_objects_params
+{
+    UINT index;
+    UINT stop_count;
+    UINT expect_count;
+    const DIDEVICEOBJECTINSTANCEW *expect_objs;
+    const struct check_objects_todos *todo_objs;
+    BOOL todo_extra;
+};
+
+static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    struct check_objects_params *params = args;
+    const DIDEVICEOBJECTINSTANCEW *exp = params->expect_objs + params->index;
+    const struct check_objects_todos *todo = params->todo_objs + params->index;
+
+    todo_wine_if( params->todo_extra && params->index >= params->expect_count )
+    ok( params->index < params->expect_count, "unexpected extra object\n" );
+    if (params->index >= params->expect_count) return DIENUM_CONTINUE;
+
+    winetest_push_context( "obj[%d]", params->index );
+
+    todo_wine
+    check_member( *obj, *exp, "%u", dwSize );
+    check_member_guid( *obj, *exp, guidType );
+    todo_wine_if( todo->offset )
+    check_member( *obj, *exp, "%#x", dwOfs );
+    todo_wine_if( todo->type )
+    check_member( *obj, *exp, "%#x", dwType );
+    check_member( *obj, *exp, "%#x", dwFlags );
+    if (!localized) todo_wine_if( todo->name ) check_member_wstr( *obj, *exp, tszName );
+    check_member( *obj, *exp, "%u", dwFFMaxForce );
+    check_member( *obj, *exp, "%u", dwFFForceResolution );
+    check_member( *obj, *exp, "%u", wCollectionNumber );
+    check_member( *obj, *exp, "%u", wDesignatorIndex );
+    check_member( *obj, *exp, "%#04x", wUsagePage );
+    check_member( *obj, *exp, "%#04x", wUsage );
+    check_member( *obj, *exp, "%#04x", dwDimension );
+    check_member( *obj, *exp, "%#04x", wExponent );
+    check_member( *obj, *exp, "%u", wReportId );
+
+    winetest_pop_context();
+
+    params->index++;
+    if (params->stop_count && params->index == params->stop_count) return DIENUM_STOP;
+    return DIENUM_CONTINUE;
+}
+
+static BOOL CALLBACK check_object_count( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    DWORD *count = args;
+    *count = *count + 1;
+    return DIENUM_CONTINUE;
+}
+
+static void test_mouse_info(void)
+{
+    static const DIDEVCAPS expect_caps =
+    {
+        .dwSize = sizeof(DIDEVCAPS),
+        .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
+        .dwDevType = (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
+        .dwAxes = 3,
+        .dwButtons = 5,
+    };
+    const DIDEVICEINSTANCEW expect_devinst =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = GUID_SysMouse,
+        .guidProduct = GUID_SysMouse,
+        .dwDevType = (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
+        .tszInstanceName = L"Mouse",
+        .tszProductName = L"Mouse",
+        .guidFFDriver = GUID_NULL,
+    };
+    const DIDEVICEOBJECTINSTANCEW expect_objects[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_XAxis,
+            .dwOfs = 0x0,
+            .dwType = DIDFT_RELAXIS|DIDFT_MAKEINSTANCE(0),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"X-axis",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_YAxis,
+            .dwOfs = 0x4,
+            .dwType = DIDFT_RELAXIS|DIDFT_MAKEINSTANCE(1),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Y-axis",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_ZAxis,
+            .dwOfs = 0x8,
+            .dwType = DIDFT_RELAXIS|DIDFT_MAKEINSTANCE(2),
+            .dwFlags = DIDOI_ASPECTPOSITION,
+            .tszName = L"Wheel",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0xc,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(3),
+            .tszName = L"Button 0",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0xd,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(4),
+            .tszName = L"Button 1",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0xe,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(5),
+            .tszName = L"Button 2",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0xf,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(6),
+            .tszName = L"Button 3",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Button,
+            .dwOfs = 0x10,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(7),
+            .tszName = L"Button 4",
+        },
+    };
+    struct check_objects_todos todo_objects[ARRAY_SIZE(expect_objects)] =
+    {
+        {.name = TRUE},
+        {.name = TRUE},
+    };
+    struct check_objects_params check_objects_params =
+    {
+        .expect_count = ARRAY_SIZE(expect_objects),
+        .expect_objs = expect_objects,
+        .todo_objs = todo_objects,
+        .todo_extra = TRUE,
+    };
+    DIPROPGUIDANDPATH prop_guid_path =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPGUIDANDPATH),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPSTRING prop_string =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPSTRING),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPRANGE prop_range =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPRANGE),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIDEVICEOBJECTINSTANCEW objinst = {0};
+    DIDEVICEINSTANCEW devinst = {0};
+    IDirectInputDevice8W *device;
+    DIDEVCAPS caps = {0};
+    IDirectInput8W *di;
+    ULONG res, ref;
+    HRESULT hr;
+    GUID guid;
+
+    localized = LOWORD( GetKeyboardLayout( 0 ) ) != 0x0409;
+
+    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
+    ok( hr == DI_OK, "DirectInput8Create returned %#x\n", hr );
+    hr = IDirectInput8_CreateDevice( di, &GUID_SysMouse, &device, NULL );
+    ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysMouseEm );
+    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+    guid = GUID_SysMouseEm;
+    memset( &devinst, 0, sizeof(devinst) );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
+    ok( IsEqualGUID( &guid, &GUID_SysMouseEm ), "got %s expected %s\n", debugstr_guid( &guid ),
+        debugstr_guid( &GUID_SysMouseEm ) );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysMouse );
+    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+
+    memset( &devinst, 0, sizeof(devinst) );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
+    check_member( devinst, expect_devinst, "%d", dwSize );
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine
+    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    if (!localized) check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    if (!localized) todo_wine check_member_wstr( devinst, expect_devinst, tszProductName );
+    check_member_guid( devinst, expect_devinst, guidFFDriver );
+    check_member( devinst, expect_devinst, "%04x", wUsagePage );
+    check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    caps.dwSize = sizeof(DIDEVCAPS);
+    hr = IDirectInputDevice8_GetCapabilities( device, &caps );
+    ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
+    check_member( caps, expect_caps, "%d", dwSize );
+    check_member( caps, expect_caps, "%#x", dwFlags );
+    todo_wine
+    check_member( caps, expect_caps, "%#x", dwDevType );
+    check_member( caps, expect_caps, "%d", dwAxes );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwButtons );
+    check_member( caps, expect_caps, "%d", dwPOVs );
+    check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
+    check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwFirmwareRevision );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwHardwareRevision );
+    check_member( caps, expect_caps, "%d", dwFFDriverVersion );
+
+    prop_dword.diph.dwHow = DIPH_BYOFFSET;
+    prop_dword.diph.dwObj = DIMOFS_X;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
+    prop_range.diph.dwHow = DIPH_BYOFFSET;
+    prop_range.diph.dwObj = DIMOFS_X;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_RANGE returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == DIPROPAXISMODE_ABS, "got %u expected %u\n", prop_dword.dwData, DIPROPAXISMODE_ABS );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    ok( prop_dword.dwData == 0, "got %#x expected %#x\n", prop_dword.dwData, 0 );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIMouse2 );
+    ok( hr == DI_OK, "SetDataFormat returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == DIPROPAXISMODE_REL, "got %u expected %u\n", prop_dword.dwData, DIPROPAXISMODE_ABS );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_INSTANCENAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_INSTANCENAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_PRODUCTNAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_PRODUCTNAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_TYPENAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
+    ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#x\n", hr );
+    ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
+    ok( hr == DIERR_INVALIDPARAM, "GetProperty DIPROP_CALIBRATION returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_BYUSAGE;
+    prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_BYOFFSET;
+    prop_dword.diph.dwObj = DIMOFS_X;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+    ok( prop_dword.dwData == 1, "got %d expected 1\n", prop_dword.dwData );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
+    prop_range.lMin = 0xdeadbeef;
+    prop_range.lMax = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_RANGE returned %#x\n", hr );
+    todo_wine
+    ok( prop_range.lMin == DIPROPRANGE_NOMIN, "got %d expected %d\n", prop_range.lMin, DIPROPRANGE_NOMIN );
+    todo_wine
+    ok( prop_range.lMax == DIPROPRANGE_NOMAX, "got %d expected %d\n", prop_range.lMax, DIPROPRANGE_NOMAX );
+
+    res = 0;
+    hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
+    ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
+    todo_wine
+    ok( res == 8, "got %u expected %u\n", res, 8 );
+    hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
+    ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
+    ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
+        check_objects_params.expect_count - check_objects_params.index );
+
+    objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
+    res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetObjectInfo returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, DIMOFS_Y, DIPH_BYOFFSET );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[1], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[1], guidType );
+    check_member( objinst, expect_objects[1], "%#x", dwOfs );
+    check_member( objinst, expect_objects[1], "%#x", dwType );
+    check_member( objinst, expect_objects[1], "%#x", dwFlags );
+    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
+    check_member( objinst, expect_objects[1], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[1], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[1], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[1], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[1], "%#04x", wUsage );
+    check_member( objinst, expect_objects[1], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[1], "%#04x", wExponent );
+    check_member( objinst, expect_objects[1], "%u", wReportId );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 7, DIPH_BYOFFSET );
+    ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
+    res = DIDFT_TGLBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
+    ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
+    res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[3], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[3], guidType );
+    check_member( objinst, expect_objects[3], "%#x", dwOfs );
+    check_member( objinst, expect_objects[3], "%#x", dwType );
+    check_member( objinst, expect_objects[3], "%#x", dwFlags );
+    if (!localized) check_member_wstr( objinst, expect_objects[3], tszName );
+    check_member( objinst, expect_objects[3], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[3], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[3], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[3], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[3], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[3], "%#04x", wUsage );
+    check_member( objinst, expect_objects[3], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[3], "%#04x", wExponent );
+    check_member( objinst, expect_objects[3], "%u", wReportId );
+
+    ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "Release returned %d\n", ref );
+
+    ref = IDirectInput8_Release( di );
+    ok( ref == 0, "Release returned %d\n", ref );
+}
+
+static void test_keyboard_info(void)
+{
+    static const DIDEVCAPS expect_caps =
+    {
+        .dwSize = sizeof(DIDEVCAPS),
+        .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
+        .dwDevType = (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
+        .dwButtons = 128,
+    };
+    const DIDEVICEINSTANCEW expect_devinst =
+    {
+        .dwSize = sizeof(DIDEVICEINSTANCEW),
+        .guidInstance = GUID_SysKeyboard,
+        .guidProduct = GUID_SysKeyboard,
+        .dwDevType = (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
+        .tszInstanceName = L"Keyboard",
+        .tszProductName = L"Keyboard",
+        .guidFFDriver = GUID_NULL,
+    };
+
+    DIDEVICEOBJECTINSTANCEW expect_objects[] =
+    {
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Key,
+            .dwOfs = DIK_ESCAPE,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(DIK_ESCAPE),
+            .tszName = L"Esc",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Key,
+            .dwOfs = DIK_1,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(DIK_1),
+            .tszName = L"1",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Key,
+            .dwOfs = DIK_2,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(DIK_2),
+            .tszName = L"2",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Key,
+            .dwOfs = DIK_3,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(DIK_3),
+            .tszName = L"3",
+        },
+        {
+            .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+            .guidType = GUID_Key,
+            .dwOfs = DIK_4,
+            .dwType = DIDFT_PSHBUTTON|DIDFT_MAKEINSTANCE(DIK_4),
+            .tszName = L"4",
+        },
+    };
+    struct check_objects_todos todo_objects[ARRAY_SIZE(expect_objects)] = {{0}};
+    struct check_objects_params check_objects_params =
+    {
+        .stop_count = ARRAY_SIZE(expect_objects),
+        .expect_count = ARRAY_SIZE(expect_objects),
+        .expect_objs = expect_objects,
+        .todo_objs = todo_objects,
+    };
+    DIPROPGUIDANDPATH prop_guid_path =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPGUIDANDPATH),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPSTRING prop_string =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPSTRING),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIPROPRANGE prop_range =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPRANGE),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    DIDEVICEOBJECTINSTANCEW objinst = {0};
+    DIDEVICEINSTANCEW devinst = {0};
+    IDirectInputDevice8W *device;
+    DIDEVCAPS caps = {0};
+    IDirectInput8W *di;
+    ULONG res, ref;
+    HRESULT hr;
+    GUID guid;
+
+    localized = TRUE; /* Skip name tests, Wine sometimes succeeds depending on the host key names */
+
+    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
+    ok( hr == DI_OK, "DirectInput8Create returned %#x\n", hr );
+    hr = IDirectInput8_CreateDevice( di, &GUID_SysKeyboard, &device, NULL );
+    ok( hr == DI_OK, "CreateDevice returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysKeyboardEm );
+    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+    guid = GUID_SysKeyboardEm;
+    memset( &devinst, 0, sizeof(devinst) );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
+    ok( IsEqualGUID( &guid, &GUID_SysKeyboardEm ), "got %s expected %s\n", debugstr_guid( &guid ),
+        debugstr_guid( &GUID_SysKeyboardEm ) );
+
+    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysKeyboard );
+    ok( hr == DI_OK, "Initialize returned %#x\n", hr );
+
+    memset( &devinst, 0, sizeof(devinst) );
+    devinst.dwSize = sizeof(DIDEVICEINSTANCEW);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#x\n", hr );
+    check_member( devinst, expect_devinst, "%d", dwSize );
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    check_member( devinst, expect_devinst, "%#x", dwDevType );
+    if (!localized) check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    if (!localized) todo_wine check_member_wstr( devinst, expect_devinst, tszProductName );
+    check_member_guid( devinst, expect_devinst, guidFFDriver );
+    check_member( devinst, expect_devinst, "%04x", wUsagePage );
+    check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    caps.dwSize = sizeof(DIDEVCAPS);
+    hr = IDirectInputDevice8_GetCapabilities( device, &caps );
+    ok( hr == DI_OK, "GetCapabilities returned %#x\n", hr );
+    check_member( caps, expect_caps, "%d", dwSize );
+    check_member( caps, expect_caps, "%#x", dwFlags );
+    check_member( caps, expect_caps, "%#x", dwDevType );
+    check_member( caps, expect_caps, "%d", dwAxes );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwButtons );
+    check_member( caps, expect_caps, "%d", dwPOVs );
+    check_member( caps, expect_caps, "%d", dwFFSamplePeriod );
+    check_member( caps, expect_caps, "%d", dwFFMinTimeResolution );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwFirmwareRevision );
+    todo_wine
+    check_member( caps, expect_caps, "%d", dwHardwareRevision );
+    check_member( caps, expect_caps, "%d", dwFFDriverVersion );
+
+    prop_dword.diph.dwHow = DIPH_BYOFFSET;
+    prop_dword.diph.dwObj = 1;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
+    prop_range.diph.dwHow = DIPH_BYOFFSET;
+    prop_range.diph.dwObj = 1;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    todo_wine
+    ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_RANGE returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == DIPROPAXISMODE_ABS, "got %u expected %u\n", prop_dword.dwData, DIPROPAXISMODE_ABS );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_BUFFERSIZE, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_BUFFERSIZE returned %#x\n", hr );
+    ok( prop_dword.dwData == 0, "got %#x expected %#x\n", prop_dword.dwData, 0 );
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
+
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIKeyboard );
+    ok( hr == DI_OK, "SetDataFormat returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AXISMODE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DI_OK, "GetProperty DIPROP_AXISMODE returned %#x\n", hr );
+    todo_wine
+    ok( prop_dword.dwData == DIPROPAXISMODE_REL, "got %u expected %u\n", prop_dword.dwData, DIPROPAXISMODE_ABS );
+
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_VIDPID, &prop_dword.diph );
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GUIDANDPATH returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_INSTANCENAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_INSTANCENAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_PRODUCTNAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_PRODUCTNAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_TYPENAME returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
+    ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#x\n", hr );
+    ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
+    ok( hr == DIERR_INVALIDPARAM, "GetProperty DIPROP_CALIBRATION returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_AUTOCENTER returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_BYUSAGE;
+    prop_dword.diph.dwObj = MAKELONG( HID_USAGE_KEYBOARD_LCTRL, HID_USAGE_PAGE_KEYBOARD );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+
+    prop_dword.diph.dwHow = DIPH_BYOFFSET;
+    prop_dword.diph.dwObj = 1;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_DEADZONE, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_DEADZONE returned %#x\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SATURATION, &prop_dword.diph );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SATURATION returned %#x\n", hr );
+    prop_range.diph.dwHow = DIPH_BYOFFSET;
+    prop_range.diph.dwObj = 1;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_RANGE returned %#x\n", hr );
+
+    res = 0;
+    hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
+    ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
+    if (!localized) todo_wine ok( res == 127, "got %u expected %u\n", res, 127 );
+    hr = IDirectInputDevice8_EnumObjects( device, check_objects, &check_objects_params, DIDFT_ALL );
+    ok( hr == DI_OK, "EnumObjects returned %#x\n", hr );
+    ok( check_objects_params.index >= check_objects_params.expect_count, "missing %u objects\n",
+        check_objects_params.expect_count - check_objects_params.index );
+
+    objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
+    res = MAKELONG( HID_USAGE_KEYBOARD_LCTRL, HID_USAGE_PAGE_KEYBOARD );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
+    todo_wine
+    ok( hr == DIERR_UNSUPPORTED, "GetObjectInfo returned: %#x\n", hr );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 2, DIPH_BYOFFSET );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[1], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[1], guidType );
+    check_member( objinst, expect_objects[1], "%#x", dwOfs );
+    check_member( objinst, expect_objects[1], "%#x", dwType );
+    check_member( objinst, expect_objects[1], "%#x", dwFlags );
+    if (!localized) check_member_wstr( objinst, expect_objects[1], tszName );
+    check_member( objinst, expect_objects[1], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[1], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[1], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[1], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[1], "%#04x", wUsage );
+    check_member( objinst, expect_objects[1], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[1], "%#04x", wExponent );
+    check_member( objinst, expect_objects[1], "%u", wReportId );
+
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 423, DIPH_BYOFFSET );
+    ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
+    res = DIDFT_TGLBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
+    ok( hr == DIERR_NOTFOUND, "GetObjectInfo returned: %#x\n", hr );
+    res = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 3 );
+    hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYID );
+    ok( hr == DI_OK, "GetObjectInfo returned: %#x\n", hr );
+
+    check_member( objinst, expect_objects[2], "%u", dwSize );
+    check_member_guid( objinst, expect_objects[2], guidType );
+    check_member( objinst, expect_objects[2], "%#x", dwOfs );
+    check_member( objinst, expect_objects[2], "%#x", dwType );
+    check_member( objinst, expect_objects[2], "%#x", dwFlags );
+    if (!localized) check_member_wstr( objinst, expect_objects[2], tszName );
+    check_member( objinst, expect_objects[2], "%u", dwFFMaxForce );
+    check_member( objinst, expect_objects[2], "%u", dwFFForceResolution );
+    check_member( objinst, expect_objects[2], "%u", wCollectionNumber );
+    check_member( objinst, expect_objects[2], "%u", wDesignatorIndex );
+    check_member( objinst, expect_objects[2], "%#04x", wUsagePage );
+    check_member( objinst, expect_objects[2], "%#04x", wUsage );
+    check_member( objinst, expect_objects[2], "%#04x", dwDimension );
+    check_member( objinst, expect_objects[2], "%#04x", wExponent );
+    check_member( objinst, expect_objects[2], "%u", wReportId );
+
+    ref = IDirectInputDevice8_Release( device );
+    ok( ref == 0, "Release returned %d\n", ref );
+
+    ref = IDirectInput8_Release( di );
+    ok( ref == 0, "Release returned %d\n", ref );
+}
+
 START_TEST(device)
 {
+    instance = GetModuleHandleW( NULL );
+
     CoInitialize(NULL);
 
+    test_mouse_info();
+    test_keyboard_info();
     test_action_mapping();
     test_save_settings();
     test_mouse_keyboard();
