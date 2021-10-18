@@ -707,6 +707,8 @@ XMKMF
 PTHREAD_LIBS
 ZLIB_PE_LIBS
 ZLIB_PE_CFLAGS
+PNG_PE_LIBS
+PNG_PE_CFLAGS
 EXCESS_PRECISION_CFLAGS
 CROSSDEBUG
 DELAYLOADFLAG
@@ -1785,6 +1787,7 @@ enable_dxerr8
 enable_dxerr9
 enable_dxguid
 enable_mfuuid
+enable_png
 enable_strmiids
 enable_uuid
 enable_wbemuuid
@@ -1920,6 +1923,8 @@ CPP
 OBJC
 OBJCFLAGS
 OBJCPP
+PNG_PE_CFLAGS
+PNG_PE_LIBS
 ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS
 XMKMF
@@ -2706,6 +2711,9 @@ Some influential environment variables:
   OBJC        Objective C compiler command
   OBJCFLAGS   Objective C compiler flags
   OBJCPP      Objective C preprocessor
+  PNG_PE_CFLAGS
+              C compiler flags for the PE png, overriding the bundled version
+  PNG_PE_LIBS Linker flags for the PE png, overriding the bundled version
   ZLIB_PE_CFLAGS
               C compiler flags for the PE zlib, overriding the bundled version
   ZLIB_PE_LIBS
@@ -10707,6 +10715,19 @@ esac
 
 fi
 
+
+if ${PNG_PE_CFLAGS:+false} :; then :
+  PNG_PE_CFLAGS="-I\$(top_srcdir)/libs/png"
+else
+  enable_png=no
+fi
+if ${PNG_PE_LIBS:+false} :; then :
+  PNG_PE_LIBS="png \$(ZLIB_PE_LIBS)"
+else
+  enable_png=no
+fi
+$as_echo "$as_me:${as_lineno-$LINENO}: png cflags: $PNG_PE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: png libs: $PNG_PE_LIBS" >&5
 
 if ${ZLIB_PE_CFLAGS:+false} :; then :
   ZLIB_PE_CFLAGS="-I\$(top_srcdir)/libs/zlib -DFAR= -DZ_SOLO"
@@ -19653,6 +19674,8 @@ QUICKTIME_LIBS = $QUICKTIME_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
 EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
+PNG_PE_CFLAGS = $PNG_PE_CFLAGS
+PNG_PE_LIBS = $PNG_PE_LIBS
 ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS = $ZLIB_PE_LIBS
 PTHREAD_LIBS = $PTHREAD_LIBS
@@ -20948,6 +20971,7 @@ wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
 wine_fn_config_makefile libs/mfuuid enable_mfuuid
+wine_fn_config_makefile libs/png enable_png
 wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
