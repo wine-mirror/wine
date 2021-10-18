@@ -36,13 +36,13 @@ There is still some work to be done:
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <zlib.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
 #include "fci.h"
-#include "zlib.h"
 #include "cabinet.h"
 #include "wine/list.h"
 #include "wine/debug.h"
