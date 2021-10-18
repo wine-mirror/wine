@@ -40,6 +40,8 @@ my $renderedSVGFileName = "$svgFileName.png";
 my @pngFiles;
 my @hotspot;
 
+$ENV{"SOURCE_DATE_EPOCH"} ||= "0";  # for reproducible builds
+
 # Get the programs from the environment variables
 my $convert = $ENV{"CONVERT"} || "convert";
 my $rsvg = $ENV{"RSVG"} || "rsvg-convert";
@@ -73,16 +75,16 @@ sub shell(@)
 }
 
 # add an image to the icon/cursor
-sub add_image($$)
+sub add_image($$$)
 {
-    my ($file, $size) = @_;
+    my ($file, $size, $depth) = @_;
     
     if (defined $hotspot[$size])
     {
         my @coords = @{$hotspot[$size]};
         push @icotool_args, "--hotspot-x=$coords[0]", "--hotspot-y=$coords[1]";
     }
-    push @icotool_args, $size >= 128 ? "--raw=$file" : $file;
+    push @icotool_args, ($size >= 128 && $depth >= 24) ? "--raw=$file" : $file;
     push @pngFiles, $file;
 }
 
@@ -154,7 +156,7 @@ foreach my $element ($xc->findnodes("/x:svg/*[\@id]"))
     {
         shell $convert, $renderedSVGFileName, "-crop", "${width}x${height}+$x+$y", "-depth", $depth, $file;
     }
-    add_image( $file, $size );
+    add_image( $file, $size, $depth );
 }
 
 die "no render directive found in $svgFileName" unless @pngFiles;
