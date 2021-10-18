@@ -1,6 +1,7 @@
 MODULE    = imm32.dll
 IMPORTLIB = imm32
-IMPORTS   = user32 gdi32 advapi32 ole32
+IMPORTS   = user32 gdi32 advapi32
+DELAYIMPORTS = ole32
 
 C_SRCS = \
 	imm.c
