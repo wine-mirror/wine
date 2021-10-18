@@ -232,9 +232,13 @@ static const WCHAR WinNT_CV_PrinterPortsW[] = { 'S','o','f','t','w','a','r','e',
 static       WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
 static const WCHAR envname_x64W[] =   {'W','i','n','d','o','w','s',' ','x','6','4',0};
 static       WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
+static const WCHAR envname_armW[] =   {'W','i','n','d','o','w','s',' ','A','R','M',0};
+static const WCHAR envname_arm64W[] = {'W','i','n','d','o','w','s',' ','A','R','M','6','4',0};
 static const WCHAR subdir_win40W[] = {'w','i','n','4','0',0};
 static const WCHAR subdir_x64W[] =   {'x','6','4',0};
 static const WCHAR subdir_x86W[] =   {'w','3','2','x','8','6',0};
+static const WCHAR subdir_armW[] =   {'a','r','m',0};
+static const WCHAR subdir_arm64W[] =   {'a','r','m','6','4',0};
 static const WCHAR Version0_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','0',0};
 static const WCHAR Version0_SubdirW[] = {'\\','0',0};
 static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
@@ -310,9 +314,11 @@ static const DWORD pi_sizeof[] = {0, sizeof(PRINTER_INFO_1W), sizeof(PRINTER_INF
 
 static const printenv_t env_x64 = {envname_x64W, subdir_x64W, 3, Version3_RegPathW, Version3_SubdirW};
 static const printenv_t env_x86 = {envname_x86W, subdir_x86W, 3, Version3_RegPathW, Version3_SubdirW};
+static const printenv_t env_arm = {envname_armW, subdir_armW, 3, Version3_RegPathW, Version3_SubdirW};
+static const printenv_t env_arm64 = {envname_arm64W, subdir_arm64W, 3, Version3_RegPathW, Version3_SubdirW};
 static const printenv_t env_win40 = {envname_win40W, subdir_win40W, 0, Version0_RegPathW, Version0_SubdirW};
 
-static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_win40};
+static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_arm, &env_arm64, &env_win40};
 
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
