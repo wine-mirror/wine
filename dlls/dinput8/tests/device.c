@@ -1068,7 +1068,6 @@ static BOOL CALLBACK check_objects( const DIDEVICEOBJECTINSTANCEW *obj, void *ar
 
     winetest_push_context( "obj[%d]", params->index );
 
-    todo_wine_if( obj->dwSize == sizeof(DIDEVICEOBJECTINSTANCE_DX3W) )
     check_member( *obj, *exp, "%u", dwSize );
     check_member_guid( *obj, *exp, guidType );
     todo_wine_if( todo->offset )

@@ -1158,29 +1158,6 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects( IDirectInputDevice8W *iface
     if (flags & ~(DIDFT_AXIS | DIDFT_POV | DIDFT_BUTTON | DIDFT_NODATA | DIDFT_COLLECTION))
         return DIERR_INVALIDPARAM;
 
-    if (!impl->vtbl->enum_objects)
-    {
-        DIDEVICEOBJECTINSTANCEW ddoi;
-        DWORD i;
-
-        /* Only the fields till dwFFMaxForce are relevant */
-        memset( &ddoi, 0, sizeof(ddoi) );
-        ddoi.dwSize = FIELD_OFFSET( DIDEVICEOBJECTINSTANCEW, dwFFMaxForce );
-
-        for (i = 0; i < impl->data_format.wine_df->dwNumObjs; i++)
-        {
-            LPDIOBJECTDATAFORMAT odf = dataformat_to_odf( impl->data_format.wine_df, i );
-
-            if (flags != DIDFT_ALL && !(flags & DIDFT_GETTYPE( odf->dwType ))) continue;
-            if (IDirectInputDevice_GetObjectInfo( iface, &ddoi, odf->dwType, DIPH_BYID ) != DI_OK)
-                continue;
-
-            if (callback( &ddoi, context ) != DIENUM_CONTINUE) break;
-        }
-
-        return DI_OK;
-    }
-
     if (flags == DIDFT_ALL || (flags & DIDFT_AXIS))
     {
         hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_AXIS, callback, context );
@@ -1421,7 +1398,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
     memset(pdidoi, 0, pdidoi->dwSize);
     pdidoi->dwSize   = dwSize;
     if (odf->pguid) pdidoi->guidType = *odf->pguid;
-    pdidoi->dwOfs    = This->data_format.offsets ? This->data_format.offsets[idx] : odf->dwOfs;
+    pdidoi->dwOfs    = odf->dwOfs;
     pdidoi->dwType   = odf->dwType;
     pdidoi->dwFlags  = odf->dwFlags;
 

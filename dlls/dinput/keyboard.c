@@ -196,14 +196,11 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
 {
     BYTE subtype = get_keyboard_subtype();
     SysKeyboardImpl* newDevice;
-    LPDIDATAFORMAT df = NULL;
-    int i, idx = 0;
     HRESULT hr;
 
     if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &keyboard_internal_vtbl,
                                                rguid, dinput, (void **)&newDevice )))
         return hr;
-    df = newDevice->base.data_format.wine_df;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
     fill_keyboard_dideviceinstanceW( &newDevice->base.instance, newDevice->base.dinput->dwVersion, subtype );
@@ -211,33 +208,14 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     newDevice->base.caps.dwFirmwareRevision = 100;
     newDevice->base.caps.dwHardwareRevision = 100;
 
-    /* Create copy of default data format */
-    memcpy(df, &c_dfDIKeyboard, c_dfDIKeyboard.dwSize);
-    if (!(df->rgodf = malloc( df->dwNumObjs * df->dwObjSize ))) goto failed;
-
-    for (i = 0; i < df->dwNumObjs; i++)
+    if (FAILED(hr = direct_input_device_init( &newDevice->base.IDirectInputDevice8W_iface )))
     {
-        char buf[MAX_PATH];
-        BYTE dik_code;
-
-        if (!GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), buf, sizeof(buf)))
-            continue;
-
-        dik_code = map_dik_code( i, 0, subtype, dinput->dwVersion );
-        memcpy(&df->rgodf[idx], &c_dfDIKeyboard.rgodf[dik_code], df->dwObjSize);
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON;
+        IDirectInputDevice_Release( &newDevice->base.IDirectInputDevice8W_iface );
+        return hr;
     }
-    df->dwNumObjs = idx;
-    newDevice->base.caps.dwButtons = idx;
 
     *out = newDevice;
     return DI_OK;
-
-failed:
-    if (df) free( df->rgodf );
-    free( df );
-    free( newDevice );
-    return DIERR_OUTOFMEMORY;
 }
 
 static HRESULT keyboarddev_create_device( IDirectInputImpl *dinput, REFGUID rguid, IDirectInputDevice8W **out )
@@ -407,12 +385,75 @@ static HRESULT keyboard_internal_unacquire( IDirectInputDevice8W *iface )
     return DI_OK;
 }
 
+static BOOL try_enum_object( const DIPROPHEADER *filter, DWORD flags, LPDIENUMDEVICEOBJECTSCALLBACKW callback,
+                             DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    if (flags != DIDFT_ALL && !(flags & DIDFT_GETTYPE( instance->dwType ))) return DIENUM_CONTINUE;
+
+    switch (filter->dwHow)
+    {
+    case DIPH_DEVICE:
+        return callback( instance, data );
+    case DIPH_BYOFFSET:
+        if (filter->dwObj != instance->dwOfs) return DIENUM_CONTINUE;
+        return callback( instance, data );
+    case DIPH_BYID:
+        if ((filter->dwObj & 0x00ffffff) != (instance->dwType & 0x00ffffff)) return DIENUM_CONTINUE;
+        return callback( instance, data );
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+static HRESULT keyboard_internal_enum_objects( IDirectInputDevice8W *iface, const DIPROPHEADER *header, DWORD flags,
+                                               LPDIENUMDEVICEOBJECTSCALLBACKW callback, void *context )
+{
+    SysKeyboardImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    BYTE subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
+    DIDEVICEOBJECTINSTANCEW instance =
+    {
+        .dwSize = sizeof(DIDEVICEOBJECTINSTANCEW),
+        .guidType = GUID_Key,
+        .dwOfs = DIK_ESCAPE,
+        .dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( DIK_ESCAPE ),
+    };
+    DIDATAFORMAT *format = impl->base.data_format.wine_df;
+    int *offsets = impl->base.data_format.offsets;
+    DIPROPHEADER filter = *header;
+    DWORD i, dik;
+    BOOL ret;
+
+    if (header->dwHow != DIPH_DEVICE && header->dwHow != DIPH_BYOFFSET && header->dwHow != DIPH_BYID)
+        return DIERR_UNSUPPORTED;
+
+    if (filter.dwHow == DIPH_BYOFFSET)
+    {
+        if (!offsets) return DIENUM_CONTINUE;
+        for (i = 0; i < format->dwNumObjs; ++i)
+            if (offsets[i] == filter.dwObj) break;
+        if (i == format->dwNumObjs) return DIENUM_CONTINUE;
+        filter.dwObj = format->rgodf[i].dwOfs;
+    }
+
+    for (i = 0; i < 512; ++i)
+    {
+        if (!GetKeyNameTextW( i << 16, instance.tszName, ARRAY_SIZE(instance.tszName) )) continue;
+        if (!(dik = map_dik_code( i, 0, subtype, impl->base.dinput->dwVersion ))) continue;
+        instance.dwOfs = dik;
+        instance.dwType = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( dik );
+        ret = try_enum_object( &filter, flags, callback, &instance, context );
+        if (ret != DIENUM_CONTINUE) return DIENUM_STOP;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
 static const struct dinput_device_vtbl keyboard_internal_vtbl =
 {
     NULL,
     keyboard_internal_acquire,
     keyboard_internal_unacquire,
-    NULL,
+    keyboard_internal_enum_objects,
 };
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
