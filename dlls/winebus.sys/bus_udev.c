@@ -59,6 +59,10 @@
 # endif
 #endif
 
+#ifndef BUS_BLUETOOTH
+# define BUS_BLUETOOTH 5
+#endif
+
 #include <pthread.h>
 
 #include "ntstatus.h"
