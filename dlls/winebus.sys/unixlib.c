@@ -61,6 +61,15 @@ BOOL is_xbox_gamepad(WORD vid, WORD pid)
     return FALSE;
 }
 
+BOOL is_dualshock4_gamepad(WORD vid, WORD pid)
+{
+    if (vid != 0x054c) return FALSE;
+    if (pid == 0x05c4) return TRUE; /* DualShock 4 [CUH-ZCT1x] */
+    if (pid == 0x09cc) return TRUE; /* DualShock 4 [CUH-ZCT2x] */
+    if (pid == 0x0ba0) return TRUE; /* Dualshock 4 Wireless Adaptor */
+    return FALSE;
+}
+
 struct mouse_device
 {
     struct unix_device unix_device;

@@ -244,5 +244,6 @@ extern BOOL hid_device_sync_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 extern void hid_device_drop_report(struct unix_device *iface) DECLSPEC_HIDDEN;
 
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
+BOOL is_dualshock4_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 
 #endif /* __WINEBUS_UNIX_PRIVATE_H */

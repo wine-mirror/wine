@@ -120,9 +120,12 @@ static inline struct base_device *impl_from_unix_device(struct unix_device *ifac
     return CONTAINING_RECORD(iface, struct base_device, unix_device);
 }
 
+#define QUIRK_DS4_BT 0x1
+
 struct hidraw_device
 {
     struct base_device base;
+    DWORD quirks;
 };
 
 static inline struct hidraw_device *hidraw_impl_from_unix_device(struct unix_device *iface)
@@ -282,7 +285,7 @@ static NTSTATUS hidraw_device_get_report_descriptor(struct unix_device *iface, B
 static void hidraw_device_read_report(struct unix_device *iface)
 {
     struct hidraw_device *impl = hidraw_impl_from_unix_device(iface);
-    BYTE report_buffer[1024];
+    BYTE report_buffer[1024], *buff = report_buffer;
 
     int size = read(impl->base.device_fd, report_buffer, sizeof(report_buffer));
     if (size == -1)
@@ -290,7 +293,26 @@ static void hidraw_device_read_report(struct unix_device *iface)
     else if (size == 0)
         TRACE_(hid_report)("Failed to read report\n");
     else
-        bus_event_queue_input_report(&event_queue, iface, report_buffer, size);
+    {
+        /* As described in the Linux kernel driver, when connected over bluetooth, DS4 controllers
+         * start sending input through report #17 as soon as they receive a feature report #2, which
+         * the kernel sends anyway for calibration.
+         *
+         * Input report #17 is the same as the default input report #1, with additional gyro data and
+         * two additional bytes in front, but is only described as vendor specific in the report descriptor,
+         * and applications aren't expecting it.
+         *
+         * We have to translate it to input report #1, like native driver does.
+         */
+        if ((impl->quirks & QUIRK_DS4_BT) && report_buffer[0] == 0x11 && size >= 12)
+        {
+            size = 10;
+            buff += 2;
+            buff[0] = 1;
+        }
+
+        bus_event_queue_input_report(&event_queue, iface, buff, size);
+    }
 }
 
 static void hidraw_device_set_output_report(struct unix_device *iface, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
@@ -1149,6 +1171,12 @@ static void get_device_subsystem_info(struct udev_device *dev, char const *subsy
         ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
 }
 
+static void hidraw_set_quirks(struct hidraw_device *impl, DWORD bus_type, WORD vid, WORD pid)
+{
+    if (bus_type == BUS_BLUETOOTH && is_dualshock4_gamepad(vid, pid))
+        impl->quirks |= QUIRK_DS4_BT;
+}
+
 static void udev_add_device(struct udev_device *dev)
 {
     struct device_desc desc =
@@ -1250,6 +1278,7 @@ static void udev_add_device(struct udev_device *dev)
         impl->read_report = hidraw_device_read_report;
         impl->udev_device = udev_device_ref(dev);
         impl->device_fd = fd;
+        hidraw_set_quirks((struct hidraw_device *)impl, bus, desc.vid, desc.pid);
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
     }
