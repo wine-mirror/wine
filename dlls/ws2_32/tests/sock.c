@@ -10794,7 +10794,18 @@ static void test_bind(void)
     WSASetLastError(0xdeadbeef);
     ret = bind(s, NULL, 0);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, NULL, sizeof(addr));
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    addr.sa_family = AF_INET;
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, &addr, 0);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     addr.sa_family = 0xdead;
     WSASetLastError(0xdeadbeef);

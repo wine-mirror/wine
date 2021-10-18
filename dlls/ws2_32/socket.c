@@ -1068,7 +1068,7 @@ int WINAPI bind( SOCKET s, const struct sockaddr *addr, int len )
 
     if (!addr)
     {
-        SetLastError( WSAEAFNOSUPPORT );
+        SetLastError( WSAEFAULT );
         return -1;
     }
 
