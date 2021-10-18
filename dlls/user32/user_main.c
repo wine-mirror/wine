@@ -50,8 +50,6 @@ static HPALETTE hPrimaryPalette;
 
 static DWORD exiting_thread_id;
 
-const struct png_funcs *png_funcs = NULL;
-
 extern void WDML_NotifyThreadDetach(void);
 
 #ifdef __MINGW32__
@@ -231,7 +229,6 @@ static BOOL process_attach(void)
     palette_init();
 
     keyboard_init();
-    __wine_init_unix_lib( user32_module, DLL_PROCESS_ATTACH, NULL, &png_funcs );
     return TRUE;
 }
 
