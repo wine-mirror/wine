@@ -950,40 +950,6 @@ static HRESULT WINAPI hid_joystick_GetDeviceState( IDirectInputDevice8W *iface, 
     return hr;
 }
 
-static BOOL get_object_info( struct hid_joystick *impl, struct hid_value_caps *caps,
-                             DIDEVICEOBJECTINSTANCEW *instance, void *data )
-{
-    DIDEVICEOBJECTINSTANCEW *dest = data;
-    memcpy( dest, instance, dest->dwSize );
-    return DIENUM_STOP;
-}
-
-static HRESULT WINAPI hid_joystick_GetObjectInfo( IDirectInputDevice8W *iface, DIDEVICEOBJECTINSTANCEW *instance,
-                                                  DWORD obj, DWORD how )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    const DIPROPHEADER filter =
-    {
-        .dwSize = sizeof(filter),
-        .dwHeaderSize = sizeof(filter),
-        .dwHow = how,
-        .dwObj = obj
-    };
-    BOOL ret;
-
-    TRACE( "iface %p, instance %p, obj %#x, how %#x.\n", iface, instance, obj, how );
-
-    if (!instance) return E_POINTER;
-    if (instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W) &&
-        instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
-        return DIERR_INVALIDPARAM;
-    if (how == DIPH_DEVICE) return DIERR_INVALIDPARAM;
-
-    ret = enum_objects( impl, &filter, DIDFT_ALL, get_object_info, instance );
-    if (ret != DIENUM_CONTINUE) return DI_OK;
-    return DIERR_NOTFOUND;
-}
-
 static HRESULT hid_joystick_effect_create( struct hid_joystick *joystick, IDirectInputEffect **out );
 
 static HRESULT WINAPI hid_joystick_CreateEffect( IDirectInputDevice8W *iface, const GUID *guid,
@@ -1342,7 +1308,7 @@ static const IDirectInputDevice8WVtbl hid_joystick_vtbl =
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
-    hid_joystick_GetObjectInfo,
+    IDirectInputDevice2WImpl_GetObjectInfo,
     IDirectInputDevice2WImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,

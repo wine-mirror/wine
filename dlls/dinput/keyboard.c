@@ -273,66 +273,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
     return DI_OK;
 }
 
-static DWORD map_dik_to_scan(DWORD dik_code, DWORD subtype)
-{
-    if (dik_code == DIK_PAUSE || dik_code == DIK_NUMLOCK) dik_code ^= 0x80;
-    if (subtype == DIDEVTYPEKEYBOARD_JAPAN106)
-    {
-        switch (dik_code)
-        {
-        case DIK_CIRCUMFLEX:
-            dik_code = 0x0d;
-            break;
-        case DIK_AT:
-            dik_code = 0x1a;
-            break;
-        case DIK_LBRACKET:
-            dik_code = 0x1b;
-            break;
-        case DIK_COLON:
-            dik_code = 0x28;
-            break;
-        case DIK_KANJI:
-            dik_code = 0x29;
-            break;
-        case DIK_RBRACKET:
-            dik_code = 0x2b;
-            break;
-        case DIK_BACKSLASH:
-            dik_code = 0x73;
-            break;
-        }
-    }
-
-    return dik_code;
-}
-
-/******************************************************************************
-  *     GetObjectInfo : get information about a device object such as a button
-  *                     or axis
-  */
-static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
-						     LPDIDEVICEOBJECTINSTANCEW pdidoi,
-						     DWORD dwObj,
-						     DWORD dwHow)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
-    BYTE subtype = GET_DIDEVICE_SUBTYPE( This->base.instance.dwDevType );
-    HRESULT res;
-    LONG scan;
-
-    res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    scan = map_dik_to_scan( DIDFT_GETINSTANCE( pdidoi->dwType ), subtype );
-    if (!GetKeyNameTextW((scan & 0x80) << 17 | (scan & 0x7f) << 16,
-                         pdidoi->tszName, ARRAY_SIZE(pdidoi->tszName)))
-        return DIERR_OBJECTNOTFOUND;
-
-    _dump_OBJECTINSTANCEW(pdidoi);
-    return res;
-}
-
 /******************************************************************************
  *      GetProperty : Retrieves information about the input device.
  */
@@ -359,7 +299,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
 
             didoi.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
 
-            hr = SysKeyboardWImpl_GetObjectInfo(iface, &didoi, ps->diph.dwObj, ps->diph.dwHow);
+            hr = IDirectInputDevice8_GetObjectInfo( iface, &didoi, ps->diph.dwObj, ps->diph.dwHow );
             if (hr == DI_OK)
                 memcpy(ps->wsz, didoi.tszName, sizeof(ps->wsz));
             return hr;
@@ -472,7 +412,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
-    SysKeyboardWImpl_GetObjectInfo,
+    IDirectInputDevice2WImpl_GetObjectInfo,
     IDirectInputDevice2WImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,

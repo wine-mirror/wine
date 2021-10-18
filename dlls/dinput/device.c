@@ -1352,56 +1352,40 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty(
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
-	LPDIRECTINPUTDEVICE8W iface,
-	LPDIDEVICEOBJECTINSTANCEW pdidoi,
-	DWORD dwObj,
-	DWORD dwHow)
+static BOOL CALLBACK get_object_info( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    DWORD dwSize;
-    LPDIOBJECTDATAFORMAT odf;
-    int idx = -1;
+    DIDEVICEOBJECTINSTANCEW *dest = data;
+    DWORD size = dest->dwSize;
 
-    TRACE("(%p) %d(0x%08x) -> %p\n", This, dwHow, dwObj, pdidoi);
+    memcpy( dest, instance, size );
+    dest->dwSize = size;
 
-    if (!pdidoi) return E_POINTER;
-    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW) &&
-        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W))
-        return DIERR_INVALIDPARAM;
+    return DIENUM_STOP;
+}
 
-    switch (dwHow)
+HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo( IDirectInputDevice8W *iface, DIDEVICEOBJECTINSTANCEW *instance,
+                                                       DWORD obj, DWORD how )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8W( iface );
+    const DIPROPHEADER filter =
     {
-    case DIPH_BYOFFSET:
-        if (!This->data_format.offsets) break;
-        for (idx = This->data_format.wine_df->dwNumObjs - 1; idx >= 0; idx--)
-            if (This->data_format.offsets[idx] == dwObj) break;
-        break;
-    case DIPH_BYID:
-        dwObj &= 0x00ffffff;
-        for (idx = This->data_format.wine_df->dwNumObjs - 1; idx >= 0; idx--)
-            if ((dataformat_to_odf(This->data_format.wine_df, idx)->dwType & 0x00ffffff) == dwObj)
-                break;
-        break;
+        .dwSize = sizeof(filter),
+        .dwHeaderSize = sizeof(filter),
+        .dwHow = how,
+        .dwObj = obj
+    };
+    HRESULT hr;
 
-    case DIPH_BYUSAGE:
-        FIXME("dwHow = DIPH_BYUSAGE not implemented\n");
-        break;
-    default:
-        WARN("invalid parameter: dwHow = %08x\n", dwHow);
+    TRACE( "iface %p, instance %p, obj %#x, how %#x.\n", iface, instance, obj, how );
+
+    if (!instance) return E_POINTER;
+    if (instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W) && instance->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW))
         return DIERR_INVALIDPARAM;
-    }
-    if (idx < 0) return DIERR_OBJECTNOTFOUND;
+    if (how == DIPH_DEVICE) return DIERR_INVALIDPARAM;
 
-    odf = dataformat_to_odf(This->data_format.wine_df, idx);
-    dwSize = pdidoi->dwSize; /* save due to memset below */
-    memset(pdidoi, 0, pdidoi->dwSize);
-    pdidoi->dwSize   = dwSize;
-    if (odf->pguid) pdidoi->guidType = *odf->pguid;
-    pdidoi->dwOfs    = odf->dwOfs;
-    pdidoi->dwType   = odf->dwType;
-    pdidoi->dwFlags  = odf->dwFlags;
-
+    hr = impl->vtbl->enum_objects( iface, &filter, DIDFT_ALL, get_object_info, instance );
+    if (FAILED(hr)) return hr;
+    if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
     return DI_OK;
 }
 

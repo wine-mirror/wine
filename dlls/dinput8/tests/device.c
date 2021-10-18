@@ -1413,7 +1413,6 @@ static void test_mouse_info(void)
     objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
     res = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetObjectInfo returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, DIMOFS_Y, DIPH_BYOFFSET );
@@ -1424,7 +1423,7 @@ static void test_mouse_info(void)
     check_member( objinst, expect_objects[1], "%#x", dwOfs );
     check_member( objinst, expect_objects[1], "%#x", dwType );
     check_member( objinst, expect_objects[1], "%#x", dwFlags );
-    if (!localized) todo_wine check_member_wstr( objinst, expect_objects[1], tszName );
+    if (!localized) check_member_wstr( objinst, expect_objects[1], tszName );
     check_member( objinst, expect_objects[1], "%u", dwFFMaxForce );
     check_member( objinst, expect_objects[1], "%u", dwFFForceResolution );
     check_member( objinst, expect_objects[1], "%u", wCollectionNumber );
@@ -1750,7 +1749,6 @@ static void test_keyboard_info(void)
     objinst.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
     res = MAKELONG( HID_USAGE_KEYBOARD_LCTRL, HID_USAGE_PAGE_KEYBOARD );
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, res, DIPH_BYUSAGE );
-    todo_wine
     ok( hr == DIERR_UNSUPPORTED, "GetObjectInfo returned: %#x\n", hr );
 
     hr = IDirectInputDevice8_GetObjectInfo( device, &objinst, 2, DIPH_BYOFFSET );

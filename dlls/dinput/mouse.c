@@ -554,34 +554,6 @@ static HRESULT WINAPI SysMouseWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
     return DI_OK;
 }
 
-/******************************************************************************
-  *     GetObjectInfo : get information about a device object such as a button
-  *                     or axis
-  */
-static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
-        LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow)
-{
-    HRESULT res;
-
-    res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    if (IsEqualGUID( &pdidoi->guidType, &GUID_XAxis ))
-        wcscpy( pdidoi->tszName, L"X-Axis" );
-    else if (IsEqualGUID( &pdidoi->guidType, &GUID_YAxis ))
-        wcscpy( pdidoi->tszName, L"Y-Axis" );
-    else if (IsEqualGUID( &pdidoi->guidType, &GUID_ZAxis ))
-        wcscpy( pdidoi->tszName, L"Wheel" );
-    else if (pdidoi->dwType & DIDFT_BUTTON)
-        swprintf( pdidoi->tszName, MAX_PATH, L"Button %d", DIDFT_GETINSTANCE( pdidoi->dwType ) - 3 );
-
-    if(pdidoi->dwType & DIDFT_AXIS)
-        pdidoi->dwFlags |= DIDOI_ASPECTPOSITION;
-
-    _dump_OBJECTINSTANCEW(pdidoi);
-    return res;
-}
-
 static HRESULT mouse_internal_acquire( IDirectInputDevice8W *iface )
 {
     SysMouseImpl *impl = impl_from_IDirectInputDevice8W( iface );
@@ -783,7 +755,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     IDirectInputDevice2WImpl_SetDataFormat,
     IDirectInputDevice2WImpl_SetEventNotification,
     IDirectInputDevice2WImpl_SetCooperativeLevel,
-    SysMouseWImpl_GetObjectInfo,
+    IDirectInputDevice2WImpl_GetObjectInfo,
     IDirectInputDevice2WImpl_GetDeviceInfo,
     IDirectInputDevice2WImpl_RunControlPanel,
     IDirectInputDevice2WImpl_Initialize,
