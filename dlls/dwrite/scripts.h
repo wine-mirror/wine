@@ -156,5 +156,9 @@ enum unicode_script_id {
     Script_Nyiakeng_Puachue_Hmong = 150,
     Script_Nandinagari = 151,
     Script_Wancho = 152,
-    Script_LastId = 152
+    Script_Chorasmian = 153,
+    Script_Dives_Akuru = 154,
+    Script_Khitan_Small_Script = 155,
+    Script_Yezidi = 156,
+    Script_LastId = 156
 };
