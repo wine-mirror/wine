@@ -109,7 +109,7 @@ HRESULT JpegDecoder_CreateInstance(REFIID iid, void** ppv)
     struct decoder *decoder;
     struct decoder_info decoder_info;
 
-    hr = get_unix_decoder(&CLSID_WICJpegDecoder, &decoder_info, &decoder);
+    hr = jpeg_decoder_create(&decoder_info, &decoder);
 
     if (SUCCEEDED(hr))
         hr = CommonDecoder_CreateInstance(decoder, &decoder_info, iid, ppv);
@@ -123,7 +123,7 @@ HRESULT JpegEncoder_CreateInstance(REFIID iid, void** ppv)
     struct encoder *encoder;
     struct encoder_info encoder_info;
 
-    hr = get_unix_encoder(&CLSID_WICJpegEncoder, &encoder_info, &encoder);
+    hr = jpeg_encoder_create(&encoder_info, &encoder);
 
     if (SUCCEEDED(hr))
         hr = CommonEncoder_CreateInstance(encoder, &encoder_info, iid, ppv);

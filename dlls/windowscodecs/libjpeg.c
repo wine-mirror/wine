@@ -16,35 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
-#include "config.h"
-#include "wine/port.h"
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <setjmp.h>
-
-#ifdef SONAME_LIBJPEG
-/* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
-#define XMD_H
-#define UINT8 JPEG_UINT8
-#define UINT16 JPEG_UINT16
-#define boolean jpeg_boolean
-#undef HAVE_STDLIB_H
-# include <jpeglib.h>
-#undef HAVE_STDLIB_H
-#define HAVE_STDLIB_H 1
-#undef UINT8
-#undef UINT16
-#undef boolean
-#endif
+#include <basetsd.h>
+#include <jpeglib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -58,75 +35,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
-
-#ifdef SONAME_LIBJPEG
 WINE_DECLARE_DEBUG_CHANNEL(jpeg);
-
-static CRITICAL_SECTION init_jpeg_cs;
-static CRITICAL_SECTION_DEBUG init_jpeg_cs_debug =
-{
-    0, 0, &init_jpeg_cs,
-    { &init_jpeg_cs_debug.ProcessLocksList,
-      &init_jpeg_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": init_jpeg_cs") }
-};
-static CRITICAL_SECTION init_jpeg_cs = { &init_jpeg_cs_debug, -1, 0, 0, 0, 0 };
-
-static void *libjpeg_handle;
-
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(jpeg_CreateCompress);
-MAKE_FUNCPTR(jpeg_CreateDecompress);
-MAKE_FUNCPTR(jpeg_destroy_compress);
-MAKE_FUNCPTR(jpeg_destroy_decompress);
-MAKE_FUNCPTR(jpeg_finish_compress);
-MAKE_FUNCPTR(jpeg_read_header);
-MAKE_FUNCPTR(jpeg_read_scanlines);
-MAKE_FUNCPTR(jpeg_resync_to_restart);
-MAKE_FUNCPTR(jpeg_set_defaults);
-MAKE_FUNCPTR(jpeg_start_compress);
-MAKE_FUNCPTR(jpeg_start_decompress);
-MAKE_FUNCPTR(jpeg_std_error);
-MAKE_FUNCPTR(jpeg_write_scanlines);
-#undef MAKE_FUNCPTR
-
-static void *load_libjpeg(void)
-{
-    void *result;
-
-    RtlEnterCriticalSection(&init_jpeg_cs);
-
-    if((libjpeg_handle = dlopen(SONAME_LIBJPEG, RTLD_NOW)) != NULL) {
-
-#define LOAD_FUNCPTR(f) \
-    if((p##f = dlsym(libjpeg_handle, #f)) == NULL) { \
-        ERR("failed to load symbol %s\n", #f); \
-        libjpeg_handle = NULL; \
-        RtlLeaveCriticalSection(&init_jpeg_cs); \
-        return NULL; \
-    }
-
-        LOAD_FUNCPTR(jpeg_CreateCompress);
-        LOAD_FUNCPTR(jpeg_CreateDecompress);
-        LOAD_FUNCPTR(jpeg_destroy_compress);
-        LOAD_FUNCPTR(jpeg_destroy_decompress);
-        LOAD_FUNCPTR(jpeg_finish_compress);
-        LOAD_FUNCPTR(jpeg_read_header);
-        LOAD_FUNCPTR(jpeg_read_scanlines);
-        LOAD_FUNCPTR(jpeg_resync_to_restart);
-        LOAD_FUNCPTR(jpeg_set_defaults);
-        LOAD_FUNCPTR(jpeg_start_compress);
-        LOAD_FUNCPTR(jpeg_start_decompress);
-        LOAD_FUNCPTR(jpeg_std_error);
-        LOAD_FUNCPTR(jpeg_write_scanlines);
-#undef LOAD_FUNCPTR
-    }
-    result = libjpeg_handle;
-
-    RtlLeaveCriticalSection(&init_jpeg_cs);
-
-    return result;
-}
 
 static void error_exit_fn(j_common_ptr cinfo)
 {
@@ -187,7 +96,7 @@ static void CDECL jpeg_decoder_destroy(struct decoder* iface)
 {
     struct jpeg_decoder *This = impl_from_decoder(iface);
 
-    if (This->cinfo_initialized) pjpeg_destroy_decompress(&This->cinfo);
+    if (This->cinfo_initialized) jpeg_destroy_decompress(&This->cinfo);
     free(This->image_data);
     RtlFreeHeap(GetProcessHeap(), 0, This);
 }
@@ -196,7 +105,7 @@ static void source_mgr_init_source(j_decompress_ptr cinfo)
 {
 }
 
-static jpeg_boolean source_mgr_fill_input_buffer(j_decompress_ptr cinfo)
+static boolean source_mgr_fill_input_buffer(j_decompress_ptr cinfo)
 {
     struct jpeg_decoder *This = decoder_from_decompress(cinfo);
     HRESULT hr;
@@ -246,7 +155,7 @@ static HRESULT CDECL jpeg_decoder_initialize(struct decoder* iface, IStream *str
     if (This->cinfo_initialized)
         return WINCODEC_ERR_WRONGSTATE;
 
-    pjpeg_std_error(&This->jerr);
+    jpeg_std_error(&This->jerr);
 
     This->jerr.error_exit = error_exit_fn;
     This->jerr.emit_message = emit_message_fn;
@@ -258,7 +167,7 @@ static HRESULT CDECL jpeg_decoder_initialize(struct decoder* iface, IStream *str
     if (setjmp(jmpbuf))
         return E_FAIL;
 
-    pjpeg_CreateDecompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
+    jpeg_CreateDecompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
 
     This->cinfo_initialized = TRUE;
 
@@ -270,12 +179,12 @@ static HRESULT CDECL jpeg_decoder_initialize(struct decoder* iface, IStream *str
     This->source_mgr.init_source = source_mgr_init_source;
     This->source_mgr.fill_input_buffer = source_mgr_fill_input_buffer;
     This->source_mgr.skip_input_data = source_mgr_skip_input_data;
-    This->source_mgr.resync_to_restart = pjpeg_resync_to_restart;
+    This->source_mgr.resync_to_restart = jpeg_resync_to_restart;
     This->source_mgr.term_source = source_mgr_term_source;
 
     This->cinfo.src = &This->source_mgr;
 
-    ret = pjpeg_read_header(&This->cinfo, TRUE);
+    ret = jpeg_read_header(&This->cinfo, TRUE);
 
     if (ret != JPEG_HEADER_OK) {
         WARN("Jpeg image in stream has bad format, read header returned %d.\n",ret);
@@ -306,7 +215,7 @@ static HRESULT CDECL jpeg_decoder_initialize(struct decoder* iface, IStream *str
         return E_FAIL;
     }
 
-    if (!pjpeg_start_decompress(&This->cinfo))
+    if (!jpeg_start_decompress(&This->cinfo))
     {
         ERR("jpeg_start_decompress failed\n");
         return E_FAIL;
@@ -354,7 +263,7 @@ static HRESULT CDECL jpeg_decoder_initialize(struct decoder* iface, IStream *str
         for (i=0; i<max_rows; i++)
             out_rows[i] = This->image_data + This->stride * (first_scanline+i);
 
-        ret = pjpeg_read_scanlines(&This->cinfo, out_rows, max_rows);
+        ret = jpeg_read_scanlines(&This->cinfo, out_rows, max_rows);
         if (ret == 0)
         {
             ERR("read_scanlines failed\n");
@@ -431,12 +340,6 @@ HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **re
 {
     struct jpeg_decoder *This;
 
-    if (!load_libjpeg())
-    {
-        ERR("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
-        return E_FAIL;
-    }
-
     This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(struct jpeg_decoder));
     if (!This) return E_OUTOFMEMORY;
 
@@ -499,7 +402,7 @@ static void dest_mgr_init_destination(j_compress_ptr cinfo)
     This->dest_mgr.free_in_buffer = sizeof(This->dest_buffer);
 }
 
-static jpeg_boolean dest_mgr_empty_output_buffer(j_compress_ptr cinfo)
+static boolean dest_mgr_empty_output_buffer(j_compress_ptr cinfo)
 {
     struct jpeg_encoder *This = encoder_from_compress(cinfo);
     HRESULT hr;
@@ -540,7 +443,7 @@ static HRESULT CDECL jpeg_encoder_initialize(struct encoder* iface, IStream *str
     struct jpeg_encoder *This = impl_from_encoder(iface);
     jmp_buf jmpbuf;
 
-    pjpeg_std_error(&This->jerr);
+    jpeg_std_error(&This->jerr);
 
     This->jerr.error_exit = error_exit_fn;
     This->jerr.emit_message = emit_message_fn;
@@ -552,7 +455,7 @@ static HRESULT CDECL jpeg_encoder_initialize(struct encoder* iface, IStream *str
     if (setjmp(jmpbuf))
         return E_FAIL;
 
-    pjpeg_CreateCompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_compress_struct));
+    jpeg_CreateCompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_compress_struct));
 
     This->stream = stream;
 
@@ -615,7 +518,7 @@ static HRESULT CDECL jpeg_encoder_create_frame(struct encoder* iface, const stru
     This->cinfo.input_components = This->format->num_components;
     This->cinfo.in_color_space = This->format->color_space;
 
-    pjpeg_set_defaults(&This->cinfo);
+    jpeg_set_defaults(&This->cinfo);
 
     if (frame->dpix != 0.0 && frame->dpiy != 0.0)
     {
@@ -624,7 +527,7 @@ static HRESULT CDECL jpeg_encoder_create_frame(struct encoder* iface, const stru
         This->cinfo.Y_density = frame->dpiy;
     }
 
-    pjpeg_start_compress(&This->cinfo, TRUE);
+    jpeg_start_compress(&This->cinfo, TRUE);
 
     return S_OK;
 }
@@ -677,7 +580,7 @@ static HRESULT CDECL jpeg_encoder_write_lines(struct encoder* iface, BYTE *data,
         else
             current_row = data + (stride * line);
 
-        if (!pjpeg_write_scanlines(&This->cinfo, &current_row, 1))
+        if (!jpeg_write_scanlines(&This->cinfo, &current_row, 1))
         {
             ERR("failed writing scanlines\n");
             free(swapped_data);
@@ -700,7 +603,7 @@ static HRESULT CDECL jpeg_encoder_commit_frame(struct encoder* iface)
 
     This->cinfo.client_data = jmpbuf;
 
-    pjpeg_finish_compress(&This->cinfo);
+    jpeg_finish_compress(&This->cinfo);
 
     return S_OK;
 }
@@ -714,7 +617,7 @@ static void CDECL jpeg_encoder_destroy(struct encoder* iface)
 {
     struct jpeg_encoder *This = impl_from_encoder(iface);
     if (This->cinfo_initialized)
-        pjpeg_destroy_compress(&This->cinfo);
+        jpeg_destroy_compress(&This->cinfo);
     RtlFreeHeap(GetProcessHeap(), 0, This);
 };
 
@@ -731,12 +634,6 @@ static const struct encoder_funcs jpeg_encoder_vtable = {
 HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result)
 {
     struct jpeg_encoder *This;
-
-    if (!load_libjpeg())
-    {
-        ERR("Failed writing JPEG because unable to find %s\n", SONAME_LIBJPEG);
-        return E_FAIL;
-    }
 
     This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(struct jpeg_encoder));
     if (!This) return E_OUTOFMEMORY;
@@ -759,19 +656,3 @@ HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **re
 
     return S_OK;
 }
-
-#else /* !defined(SONAME_LIBJPEG) */
-
-HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **result)
-{
-    ERR("Trying to load JPEG picture, but JPEG support is not compiled in.\n");
-    return E_FAIL;
-}
-
-HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result)
-{
-    ERR("Trying to save JPEG picture, but JPEG support is not compiled in.\n");
-    return E_FAIL;
-}
-
-#endif
