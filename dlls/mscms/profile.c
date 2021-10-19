@@ -1327,7 +1327,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 {
     struct profile prof;
     HPROFILE hprof;
-    void *cmsprofile = NULL;
+    cmsHPROFILE cmsprofile;
     char *data = NULL;
     HANDLE handle = INVALID_HANDLE_VALUE;
     DWORD size;
@@ -1343,7 +1343,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         if (!(data = HeapAlloc( GetProcessHeap(), 0, profile->cbDataSize ))) return NULL;
         memcpy( data, profile->pProfileData, profile->cbDataSize );
 
-        if (lcms_funcs && !(cmsprofile = lcms_funcs->open_profile( data, profile->cbDataSize )))
+        if (!(cmsprofile = cmsOpenProfileFromMem( data, profile->cbDataSize )))
         {
             HeapFree( GetProcessHeap(), 0, data );
             return FALSE;
@@ -1405,7 +1405,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             HeapFree( GetProcessHeap(), 0, data );
             return NULL;
         }
-        if (lcms_funcs && !(cmsprofile = lcms_funcs->open_profile( data, size )))
+        if (!(cmsprofile = cmsOpenProfileFromMem( data, size )))
         {
             CloseHandle( handle );
             HeapFree( GetProcessHeap(), 0, data );
@@ -1426,7 +1426,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 
     if ((hprof = create_profile( &prof ))) return hprof;
 
-    if (cmsprofile) lcms_funcs->close_profile( cmsprofile );
+    cmsCloseProfile( cmsprofile );
     HeapFree( GetProcessHeap(), 0, data );
     CloseHandle( handle );
     return NULL;

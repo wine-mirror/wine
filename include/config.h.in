@@ -195,12 +195,6 @@
 /* Define to 1 if you have the <lber.h> header file. */
 #undef HAVE_LBER_H
 
-/* Define if you have the LittleCMS development environment */
-#undef HAVE_LCMS2
-
-/* Define to 1 if you have the <lcms2.h> header file. */
-#undef HAVE_LCMS2_H
-
 /* Define if you have the OpenLDAP development environment */
 #undef HAVE_LDAP
 

@@ -32,7 +32,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
-const struct lcms_funcs *lcms_funcs = NULL;
+static void lcms_error_handler(cmsContext ctx, cmsUInt32Number error, const char *text)
+{
+    TRACE("%u %s\n", error, debugstr_a(text));
+}
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -42,8 +45,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (__wine_init_unix_lib( hinst, reason, NULL, &lcms_funcs ))
-            ERR( "No liblcms2 support, expect problems\n" );
+        cmsSetLogErrorHandler( lcms_error_handler );
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;

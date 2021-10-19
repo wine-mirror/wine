@@ -40,7 +40,7 @@ static CRITICAL_SECTION_DEBUG mscms_handle_cs_debug =
 static CRITICAL_SECTION mscms_handle_cs = { &mscms_handle_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct profile *profiletable;
-static struct transform *transformtable;
+static cmsHTRANSFORM *transformtable;
 
 static unsigned int num_profile_handles;
 static unsigned int num_transform_handles;
@@ -80,7 +80,7 @@ void release_profile( struct profile *profile )
     LeaveCriticalSection( &mscms_handle_cs );
 }
 
-struct transform *grab_transform( HTRANSFORM handle )
+cmsHTRANSFORM grab_transform( HTRANSFORM handle )
 {
     DWORD_PTR index;
 
@@ -92,10 +92,10 @@ struct transform *grab_transform( HTRANSFORM handle )
         LeaveCriticalSection( &mscms_handle_cs );
         return NULL;
     }
-    return &transformtable[index];
+    return transformtable[index];
 }
 
-void release_transform( struct transform *transform )
+void release_transform( cmsHTRANSFORM transform )
 {
     LeaveCriticalSection( &mscms_handle_cs );
 }
@@ -172,7 +172,7 @@ BOOL close_profile( HPROFILE handle )
         }
         CloseHandle( profile->file );
     }
-    if (profile->cmsprofile) lcms_funcs->close_profile( profile->cmsprofile );
+    if (profile->cmsprofile) cmsCloseProfile( profile->cmsprofile );
     HeapFree( GetProcessHeap(), 0, profile->data );
 
     memset( profile, 0, sizeof(struct profile) );
@@ -184,21 +184,21 @@ BOOL close_profile( HPROFILE handle )
 static HTRANSFORM alloc_transform_handle( void )
 {
     DWORD_PTR index;
-    struct transform *p;
+    cmsHTRANSFORM *p;
     unsigned int count = 128;
 
     for (index = 0; index < num_transform_handles; index++)
     {
-        if (!transformtable[index].cmstransform) return (HTRANSFORM)(index + 1);
+        if (!transformtable[index]) return (HTRANSFORM)(index + 1);
     }
     if (!transformtable)
     {
-        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(struct transform) );
+        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(*p) );
     }
     else
     {
         count = num_transform_handles * 2;
-        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, transformtable, count * sizeof(struct transform) );
+        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, transformtable, count * sizeof(*p) );
     }
     if (!p) return NULL;
 
@@ -208,7 +208,7 @@ static HTRANSFORM alloc_transform_handle( void )
     return (HTRANSFORM)(index + 1);
 }
 
-HTRANSFORM create_transform( struct transform *transform )
+HTRANSFORM create_transform( cmsHTRANSFORM transform )
 {
     HTRANSFORM handle;
 
@@ -217,7 +217,7 @@ HTRANSFORM create_transform( struct transform *transform )
     if ((handle = alloc_transform_handle()))
     {
         DWORD_PTR index = (DWORD_PTR)handle - 1;
-        transformtable[index] = *transform;
+        transformtable[index] = transform;
     }
     LeaveCriticalSection( &mscms_handle_cs );
     return handle;
@@ -226,7 +226,7 @@ HTRANSFORM create_transform( struct transform *transform )
 BOOL close_transform( HTRANSFORM handle )
 {
     DWORD_PTR index;
-    struct transform *transform;
+    cmsHTRANSFORM transform;
 
     EnterCriticalSection( &mscms_handle_cs );
 
@@ -236,11 +236,9 @@ BOOL close_transform( HTRANSFORM handle )
         LeaveCriticalSection( &mscms_handle_cs );
         return FALSE;
     }
-    transform = &transformtable[index];
-
-    lcms_funcs->close_transform( transform->cmstransform );
-
-    memset( transform, 0, sizeof(struct transform) );
+    transform = transformtable[index];
+    transformtable[index] = 0;
+    cmsDeleteTransform( transform );
 
     LeaveCriticalSection( &mscms_handle_cs );
     return TRUE;
