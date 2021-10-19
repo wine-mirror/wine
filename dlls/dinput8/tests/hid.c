@@ -3992,9 +3992,7 @@ static void test_simple_joystick(void)
     ok( prop_dword.dwData == 0, "got %#x expected %#x\n", prop_dword.dwData, 0 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATION, &prop_dword.diph );
@@ -7143,9 +7141,7 @@ static void test_force_feedback_joystick( void )
 
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFLOAD, &prop_dword.diph );

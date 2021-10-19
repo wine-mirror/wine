@@ -1315,9 +1315,7 @@ static void test_mouse_info(void)
     ok( prop_dword.dwData == 0, "got %#x expected %#x\n", prop_dword.dwData, 0 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIMouse2 );
@@ -1638,9 +1636,7 @@ static void test_keyboard_info(void)
     ok( prop_dword.dwData == 0, "got %#x expected %#x\n", prop_dword.dwData, 0 );
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    todo_wine
     ok( hr == DI_OK, "GetProperty DIPROP_FFGAIN returned %#x\n", hr );
-    todo_wine
     ok( prop_dword.dwData == 10000, "got %u expected %u\n", prop_dword.dwData, 10000 );
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIKeyboard );

@@ -1280,6 +1280,13 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty( IDirectInputDevice8W *iface
         }
         return S_FALSE;
     }
+    case (DWORD_PTR)DIPROP_FFGAIN:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)header;
+        if (header->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+        value->dwData = 10000;
+        return DI_OK;
+    }
     case (DWORD_PTR)DIPROP_CALIBRATION:
         return DIERR_INVALIDPARAM;
     default:
