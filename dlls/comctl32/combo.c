@@ -789,6 +789,8 @@ static LRESULT COMBO_ThemedPaint(HTHEME theme, HEADCOMBO *lphc, HDC hdc)
 
     if ((lphc->dwStyle & CBS_DROPDOWNLIST) == CBS_DROPDOWNLIST)
         CBPaintText(lphc, hdc);
+    else
+        InvalidateRect(lphc->hWndEdit, NULL, TRUE);
 
     return 0;
 }
