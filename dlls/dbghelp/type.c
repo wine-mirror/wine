@@ -746,6 +746,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagFunctionType:
         case SymTagFunctionArgType:
         case SymTagLabel:
+        case SymTagFuncDebugStart:
+        case SymTagFuncDebugEnd:
             return FALSE;
         }
         break;
@@ -839,6 +841,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case SymTagArrayType:
         case SymTagBaseType:
         case SymTagTypedef:
+        case SymTagFunction:
         case SymTagBlock:
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
